@@ -13,6 +13,7 @@ import { HealthKitConnectCard } from '../HealthKitConnectCard';
 import { healthConnect } from '@/lib/healthConnect';
 import { Moon, Droplet, Heart, Activity, Wind, Thermometer, Calendar } from 'lucide-react-native';
 import { CircularProgress } from '@/components/charts/CircularProgress';
+import { logger } from '@/lib/security/logger';
 
 export const SantePage: React.FC = () => {
   const { colors } = useTheme();
@@ -41,7 +42,7 @@ export const SantePage: React.FC = () => {
         await loadHealthData();
       }
     } catch (error) {
-      console.error('Error checking HealthKit:', error);
+      logger.error('Error checking HealthKit:', error);
     } finally {
       setLoading(false);
     }
@@ -63,7 +64,7 @@ export const SantePage: React.FC = () => {
 
       setHealthData({ sleep, heartRate, hrv, spo2, temperature, hydration, respiratoryRate });
     } catch (error) {
-      console.error('Error loading health data:', error);
+      logger.error('Error loading health data:', error);
     } finally {
       setLoading(false);
     }
@@ -78,7 +79,7 @@ export const SantePage: React.FC = () => {
         await loadHealthData();
       }
     } catch (error) {
-      console.error('Error connecting HealthKit:', error);
+      logger.error('Error connecting HealthKit:', error);
     } finally {
       setConnecting(false);
     }

@@ -5,6 +5,7 @@ import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { Camera, User } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useCustomPopup } from '@/components/CustomPopup';
+import { logger } from '@/lib/security/logger';
 
 interface ProfileImagePickerProps {
   currentImage?: string | null;
@@ -55,7 +56,7 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
         onImageSelected(manipulated.uri);
       }
     } catch (error) {
-      console.error('Error picking image:', error);
+      logger.error('Error picking image:', error);
       showPopup(
         'Erreur',
         'Impossible de charger la photo. Réessaye.',
@@ -90,7 +91,7 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
         onImageSelected(manipulated.uri);
       }
     } catch (error) {
-      console.error('Error taking photo:', error);
+      logger.error('Error taking photo:', error);
       showPopup(
         'Erreur',
         'Impossible de prendre la photo. Réessaye.',

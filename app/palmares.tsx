@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import {
   Trophy,
   TrendingUp,

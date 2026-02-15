@@ -9,7 +9,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
-import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft,

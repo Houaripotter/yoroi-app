@@ -40,6 +40,7 @@ import { useI18n } from '@/lib/I18nContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { calculatePace, formatDuration, formatDistance, BenchmarkEntry } from '@/lib/carnetService';
 import { LinearGradient } from 'expo-linear-gradient';
+import { logger } from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 48;
@@ -158,7 +159,7 @@ export default function VictoryShareModal({
         });
       }
     } catch (error) {
-      console.error('Error sharing:', error);
+      logger.error('Error sharing:', error);
       showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsLoading(false);
@@ -183,7 +184,7 @@ export default function VictoryShareModal({
         }
       }
     } catch (error) {
-      console.error('Error saving:', error);
+      logger.error('Error saving:', error);
       showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsLoading(false);

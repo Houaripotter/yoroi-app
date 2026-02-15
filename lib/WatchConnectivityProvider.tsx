@@ -22,6 +22,7 @@ import React, { createContext, useContext, ReactNode, useEffect, useState, useCa
 import { Platform, Animated, View, Text, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import { WatchConnectivity } from '@/lib/watchConnectivity.ios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '@/lib/security/logger';
 import { addWeight, getProfile } from '@/lib/database';
 import { getBenchmarks, addBenchmarkEntry } from '@/lib/carnetService';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -241,9 +242,9 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     const log = `[Watch ${timestamp}] ${action}`;
 
     if (details) {
-      console.log(log, details);
+      logger.info(log, details);
     } else {
-      console.log(log);
+      logger.info(log);
     }
   }, []);
 

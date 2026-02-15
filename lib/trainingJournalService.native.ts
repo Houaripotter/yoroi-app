@@ -127,8 +127,11 @@ export const initTrainingJournalDB = () => {
           }
         }
       }
-    } catch (migrationError) {
-      logger.info('[TRAINING_JOURNAL] Migration des colonnes effectuée');
+    } catch (migrationError: any) {
+      const msg = String(migrationError?.message || migrationError || '').toLowerCase();
+      if (!msg.includes('duplicate') && !msg.includes('already exists')) {
+        logger.error('[TRAINING_JOURNAL] Erreur migration colonnes:', migrationError);
+      }
     }
 
     // Table practice_logs
@@ -152,6 +155,7 @@ export const initTrainingJournalDB = () => {
     logger.info('[TRAINING_JOURNAL] Base de données initialisée');
   } catch (error) {
     logger.error('[TRAINING_JOURNAL] Erreur init DB:', error);
+    throw error;
   }
 };
 

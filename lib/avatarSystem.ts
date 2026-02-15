@@ -772,13 +772,8 @@ export async function isPackUnlocked(pack: AvatarPack): Promise<boolean> {
     return false;
   }
 
-  // TEMPORAIRE : Tous les packs sont débloqués pour tous les utilisateurs
-  // TODO: Réactiver le système de déblocage progressif lors de la mise en place de l'abonnement
+  // Tous les packs débloqués (abonnement non encore implémenté)
   return true;
-
-  // Code original (à réactiver pour l'abonnement) :
-  // const unlockedLevel = await getUnlockedLevel();
-  // return unlockedLevel >= metadata.requiredRankLevel;
 }
 
 /**
@@ -797,18 +792,11 @@ export async function getUnlockedPacks(): Promise<AvatarPack[]> {
 export async function getAllPacksWithUnlockStatus(): Promise<
   Array<PackMetadata & { isUnlocked: boolean }>
 > {
-  // TEMPORAIRE : Tous les packs sont débloqués
+  // Tous les packs débloqués (abonnement non encore implémenté)
   return PACK_METADATA.map((pack) => ({
     ...pack,
-    isUnlocked: true, // Tous débloqués par défaut
+    isUnlocked: true,
   }));
-
-  // Code original (à réactiver pour l'abonnement) :
-  // const unlockedLevel = await getUnlockedLevel();
-  // return PACK_METADATA.map((pack) => ({
-  //   ...pack,
-  //   isUnlocked: unlockedLevel >= pack.requiredRankLevel,
-  // }));
 }
 
 // ============================================================================

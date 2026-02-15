@@ -14,6 +14,7 @@ import { RingChart } from '../charts/RingChart';
 import { aggregateWeightData, aggregateCompositionData } from '@/lib/statsAggregation';
 import { getLatestWeight, getLatestMeasurement } from '@/lib/database';
 import { Target, TrendingUp, Activity, Droplet, Bone, Zap, Flame, Ruler } from 'lucide-react-native';
+import { logger } from '@/lib/security/logger';
 
 export const CorpsPage: React.FC = () => {
   const { colors } = useTheme();
@@ -42,7 +43,7 @@ export const CorpsPage: React.FC = () => {
       setLatestWeight(latest);
       setLatestMeasurement(measurement);
     } catch (error) {
-      console.error('Error loading weight data:', error);
+      logger.error('Error loading weight data:', error);
     } finally {
       setLoading(false);
     }

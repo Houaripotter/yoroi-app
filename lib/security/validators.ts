@@ -552,7 +552,7 @@ export async function safeOpenURL(url: string): Promise<boolean> {
     }
   } catch (error) {
     if (__DEV__) {
-      console.error('🚨 safeOpenURL - Erreur:', error);
+      logger.error('safeOpenURL - Erreur:', error);
     }
     return false;
   }

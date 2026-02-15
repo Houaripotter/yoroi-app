@@ -10,7 +10,7 @@ import {
   Easing,
   ListRenderItem,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { Lock, Check, X, ChevronRight, Flame, Scale, Dumbbell, Star, Calendar, Award } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';

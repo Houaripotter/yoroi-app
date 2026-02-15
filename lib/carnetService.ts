@@ -6,6 +6,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WatchConnectivity } from './watchConnectivity.ios';
+import { logger } from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -390,7 +391,7 @@ export const initializeStarterPack = async (): Promise<void> => {
 
     await AsyncStorage.setItem(INITIALIZED_KEY, 'true');
   } catch (error) {
-    console.error('Error initializing starter pack:', error);
+    logger.error('Error initializing starter pack:', error);
   }
 };
 
@@ -404,7 +405,7 @@ export const getBenchmarks = async (): Promise<Benchmark[]> => {
     const data = await AsyncStorage.getItem(BENCHMARKS_KEY);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error('Error getting benchmarks:', error);
+    logger.error('Error getting benchmarks:', error);
     return [];
   }
 };
@@ -438,7 +439,7 @@ export const createBenchmark = async (
     
     return newBenchmark;
   } catch (error) {
-    console.error('Error creating benchmark:', error);
+    logger.error('Error creating benchmark:', error);
     return null;
   }
 };
@@ -486,7 +487,7 @@ export const addBenchmarkEntry = async (
     
     return entry;
   } catch (error) {
-    console.error('Error adding benchmark entry:', error);
+    logger.error('Error adding benchmark entry:', error);
     return null;
   }
 };
@@ -510,7 +511,7 @@ export const deleteBenchmark = async (benchmarkId: string): Promise<boolean> => 
     await AsyncStorage.setItem(BENCHMARKS_KEY, JSON.stringify(filtered));
     return true;
   } catch (error) {
-    console.error('Error deleting benchmark:', error);
+    logger.error('Error deleting benchmark:', error);
     return false;
   }
 };
@@ -525,7 +526,7 @@ export const deleteBenchmarkEntry = async (benchmarkId: string, entryId: string)
     await AsyncStorage.setItem(BENCHMARKS_KEY, JSON.stringify(benchmarks));
     return true;
   } catch (error) {
-    console.error('Error deleting benchmark entry:', error);
+    logger.error('Error deleting benchmark entry:', error);
     return false;
   }
 };
@@ -562,7 +563,7 @@ export const getSkills = async (): Promise<Skill[]> => {
     const data = await AsyncStorage.getItem(SKILLS_KEY);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error('Error getting skills:', error);
+    logger.error('Error getting skills:', error);
     return [];
   }
 };
@@ -601,7 +602,7 @@ export const createSkill = async (
     await AsyncStorage.setItem(SKILLS_KEY, JSON.stringify(skills));
     return newSkill;
   } catch (error) {
-    console.error('Error creating skill:', error);
+    logger.error('Error creating skill:', error);
     return null;
   }
 };
@@ -620,7 +621,7 @@ export const updateSkillStatus = async (
     await AsyncStorage.setItem(SKILLS_KEY, JSON.stringify(skills));
     return true;
   } catch (error) {
-    console.error('Error updating skill status:', error);
+    logger.error('Error updating skill status:', error);
     return false;
   }
 };
@@ -644,7 +645,7 @@ export const addSkillNote = async (
     await AsyncStorage.setItem(SKILLS_KEY, JSON.stringify(skills));
     return true;
   } catch (error) {
-    console.error('Error adding skill note:', error);
+    logger.error('Error adding skill note:', error);
     return false;
   }
 };
@@ -663,7 +664,7 @@ export const incrementDrillCount = async (
     await AsyncStorage.setItem(SKILLS_KEY, JSON.stringify(skills));
     return true;
   } catch (error) {
-    console.error('Error incrementing drill count:', error);
+    logger.error('Error incrementing drill count:', error);
     return false;
   }
 };
@@ -687,7 +688,7 @@ export const deleteSkill = async (skillId: string): Promise<boolean> => {
     await AsyncStorage.setItem(SKILLS_KEY, JSON.stringify(filtered));
     return true;
   } catch (error) {
-    console.error('Error deleting skill:', error);
+    logger.error('Error deleting skill:', error);
     return false;
   }
 };
@@ -706,7 +707,7 @@ export const deleteSkillNote = async (
     await AsyncStorage.setItem(SKILLS_KEY, JSON.stringify(skills));
     return true;
   } catch (error) {
-    console.error('Error deleting skill note:', error);
+    logger.error('Error deleting skill note:', error);
     return false;
   }
 };
@@ -725,7 +726,7 @@ export const updateSkillVideoUrl = async (
     await AsyncStorage.setItem(SKILLS_KEY, JSON.stringify(skills));
     return true;
   } catch (error) {
-    console.error('Error updating skill video URL:', error);
+    logger.error('Error updating skill video URL:', error);
     return false;
   }
 };
@@ -795,7 +796,7 @@ export const getCarnetStats = async (): Promise<{
       totalDrills: skills.reduce((sum, s) => sum + s.drillCount, 0),
     };
   } catch (error) {
-    console.error('Error getting carnet stats:', error);
+    logger.error('Error getting carnet stats:', error);
     return {
       totalBenchmarks: 0,
       totalPRs: 0,
@@ -831,7 +832,7 @@ export const getTrashBenchmarks = async (): Promise<TrashItem<Benchmark>[]> => {
     const data = await AsyncStorage.getItem(TRASH_BENCHMARKS_KEY);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error('Error getting trash benchmarks:', error);
+    logger.error('Error getting trash benchmarks:', error);
     return [];
   }
 };
@@ -844,7 +845,7 @@ export const getTrashSkills = async (): Promise<TrashItem<Skill>[]> => {
     const data = await AsyncStorage.getItem(TRASH_SKILLS_KEY);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error('Error getting trash skills:', error);
+    logger.error('Error getting trash skills:', error);
     return [];
   }
 };
@@ -869,7 +870,7 @@ export const restoreBenchmark = async (benchmarkId: string): Promise<boolean> =>
 
     return true;
   } catch (error) {
-    console.error('Error restoring benchmark:', error);
+    logger.error('Error restoring benchmark:', error);
     return false;
   }
 };
@@ -894,7 +895,7 @@ export const restoreSkill = async (skillId: string): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error('Error restoring skill:', error);
+    logger.error('Error restoring skill:', error);
     return false;
   }
 };
@@ -907,7 +908,7 @@ export const emptyTrash = async (): Promise<boolean> => {
     await AsyncStorage.multiRemove([TRASH_BENCHMARKS_KEY, TRASH_SKILLS_KEY]);
     return true;
   } catch (error) {
-    console.error('Error emptying trash:', error);
+    logger.error('Error emptying trash:', error);
     return false;
   }
 };
@@ -923,7 +924,7 @@ export const getTrashCount = async (): Promise<number> => {
     ]);
     return benchmarks.length + skills.length;
   } catch (error) {
-    console.error('Error getting trash count:', error);
+    logger.error('Error getting trash count:', error);
     return 0;
   }
 };
@@ -968,7 +969,7 @@ export const cleanDemoData = async (): Promise<{ removed: number; message: strin
       message: `${demoBenchmarks.length} record(s) de démo supprimé(s)`,
     };
   } catch (error) {
-    console.error('Error cleaning demo data:', error);
+    logger.error('Error cleaning demo data:', error);
     return {
       removed: 0,
       message: 'Erreur lors du nettoyage',
@@ -1031,11 +1032,11 @@ export const syncCarnetToWatch = async () => {
       });
     } catch (transferError) {
       // Ignorer les erreurs de transferUserInfo, updateApplicationContext suffit souvent
-      console.log('transferUserInfo error (non-blocking):', transferError);
+      logger.info('transferUserInfo error (non-blocking):', transferError);
     }
 
-    console.log(`📡 Carnet synchronisé vers Apple Watch (${recordsToSend.length} records)`);
+    logger.info(`📡 Carnet synchronisé vers Apple Watch (${recordsToSend.length} records)`);
   } catch (e) {
-    console.warn('Échec sync carnet vers Watch:', e);
+    logger.warn('Échec sync carnet vers Watch:', e);
   }
 };

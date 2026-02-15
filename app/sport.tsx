@@ -20,7 +20,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Check, X, Plus, Clock } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { getUserSettings, saveUserSettings, addWorkout, getAllWorkouts, getUserClubs } from '@/lib/storage';
 import { UserClub } from '@/lib/storage';
 import { WorkoutType } from '@/types/workout';

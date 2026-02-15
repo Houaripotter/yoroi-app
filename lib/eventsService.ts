@@ -116,13 +116,13 @@ export async function importEventsFromJSON(): Promise<void> {
     }
 
     // Importer les données depuis les chunks JSON (optimisation mémoire)
-    console.log('📥 Import des événements depuis JSON...');
+    logger.info('📥 Import des événements depuis JSON...');
     logger.info('Import des événements depuis chunks JSON...');
     const europeData = require('@/src/data/events/europe.json');
     const franceData = require('@/src/data/events/france.json');
     const mondeData = require('@/src/data/events/monde.json');
     const eventsData = [...europeData, ...franceData, ...mondeData];
-    console.log(`📊 Total événements à importer: ${eventsData.length} (Europe: ${europeData.length}, France: ${franceData.length}, Monde: ${mondeData.length})`);
+    logger.info(`📊 Total événements à importer: ${eventsData.length} (Europe: ${europeData.length}, France: ${franceData.length}, Monde: ${mondeData.length})`);
 
     // Insertion par batch pour meilleures performances
     const BATCH_SIZE = 100;
@@ -158,12 +158,12 @@ export async function importEventsFromJSON(): Promise<void> {
       logger.info(`Importé ${imported}/${eventsData.length} événements`);
     }
 
-    console.log(`✅ Import terminé: ${imported} événements dans SQLite`);
+    logger.info(`✅ Import terminé: ${imported} événements dans SQLite`);
     logger.info(`✅ Import terminé: ${imported} événements`);
     isInitialized = true;
     clearCache();
   } catch (error) {
-    console.error('❌ Erreur import events:', error);
+    logger.error('❌ Erreur import events:', error);
     logger.error('Erreur import events:', error);
     throw error;
   }
@@ -623,7 +623,7 @@ export async function getEventsByFederation(federation: string): Promise<SportEv
  */
 export async function forceReimportEvents(): Promise<void> {
   try {
-    console.log('🔄 FORCE REIMPORT: Début de la réimportation des événements...');
+    logger.info('🔄 FORCE REIMPORT: Début de la réimportation des événements...');
     const db = await openDatabase();
 
     // Vérifier que la table existe avant de tenter le DELETE
@@ -634,7 +634,7 @@ export async function forceReimportEvents(): Promise<void> {
     if (tableExists && tableExists.count > 0) {
       // Supprimer toutes les anciennes données
       await db.runAsync('DELETE FROM events_catalog');
-      console.log('🗑️ Anciennes données événements supprimées');
+      logger.info('🗑️ Anciennes données événements supprimées');
       logger.info('Anciennes données événements supprimées');
     } else {
       logger.warn('Table events_catalog inexistante, skip DELETE');

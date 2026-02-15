@@ -9,6 +9,7 @@ import { selectionAsync, notificationAsync, NotificationFeedbackType } from 'exp
 import { addClub } from '@/lib/database';
 import { launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
 import { ChevronLeft, Plus, Check, Camera, ChevronDown, ChevronRight, X } from 'lucide-react-native';
+import { logger } from '@/lib/security/logger';
 
 export default function AddClubScreen() {
   const { colors, isDark } = useTheme();
@@ -87,7 +88,7 @@ export default function AddClubScreen() {
       notificationAsync(NotificationFeedbackType.Success);
       router.back();
     } catch (error) {
-      console.error('Erreur création club:', error);
+      logger.error('Erreur création club:', error);
       Alert.alert('Erreur', "Impossible de créer le club. Réessaye dans quelques instants.");
     } finally {
       setIsSubmitting(false);

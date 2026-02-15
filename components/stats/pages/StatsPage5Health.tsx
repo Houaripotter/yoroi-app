@@ -12,6 +12,7 @@ import { SparklineChart } from '@/components/charts/SparklineChart';
 import { Moon, Droplets, Activity, TrendingUp, TrendingDown } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { healthConnect } from '@/lib/healthConnect';
+import { logger } from '@/lib/security/logger';
 
 const CARD_PADDING = 16;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -56,7 +57,7 @@ export const StatsPage5Health: React.FC<StatsPage5HealthProps> = ({
         }
       } catch (error) {
         // En cas d'erreur → pas de données fictives
-        console.error('Error loading health history:', error);
+        logger.error('Error loading health history:', error);
         setHealthHistory([]);
       }
     };

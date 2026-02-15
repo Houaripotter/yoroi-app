@@ -11,6 +11,8 @@
  * - Tests unitaires faciles
  */
 
+import { logger } from '@/lib/security/logger';
+
 export interface ExerciseStats {
   label: string;
   weight?: string;
@@ -152,7 +154,7 @@ export function parseExercisesFromNotes(notes: string | null | undefined): Exerc
 
     return exercises;
   } catch (error) {
-    console.error('Erreur parsing exercices:', error);
+    logger.error('Erreur parsing exercices:', error);
     return [];
   }
 }

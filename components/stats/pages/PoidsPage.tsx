@@ -23,6 +23,7 @@ import { getUserSettings } from '@/lib/storage';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { StatsExplanation } from '../StatsExplanation';
+import { logger } from '@/lib/security/logger';
 
 export const PoidsPage: React.FC = () => {
   const { colors } = useTheme();
@@ -146,7 +147,7 @@ export const PoidsPage: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Error loading weight data:', error);
+      logger.error('Error loading weight data:', error);
     } finally {
       setLoading(false);
     }

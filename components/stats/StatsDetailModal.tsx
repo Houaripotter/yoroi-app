@@ -15,6 +15,7 @@ import { getMetricRange } from '@/constants/metricRanges';
 import { getUserSettings } from '@/lib/storage';
 import { getProfile } from '@/lib/database';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { logger } from '@/lib/security/logger';
 
 type Period = '30j' | '90j' | '6m' | '1a';
 
@@ -117,7 +118,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
           setMissingProfile(true);
         }
       } catch (error) {
-        console.error('Error loading settings:', error);
+        logger.error('Error loading settings:', error);
       }
     };
     if (visible) {

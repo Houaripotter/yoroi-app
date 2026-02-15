@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Rect, Line, G, Text as SvgText } from 'react-native-svg';
-// import Animated, { FadeInUp } from 'react-native-reanimated';
 
 interface BarDataPoint {
   value: number;

@@ -18,7 +18,7 @@ export const safeGetItem = async (key: string): Promise<string | null> => {
 
     // Log détaillé en DEV
     if (__DEV__) {
-      console.warn(`⚠️ AsyncStorage.getItem('${key}') failed:`, error);
+      logger.warn(`⚠️ AsyncStorage.getItem('${key}') failed:`, error);
     }
 
     // Détection stockage plein
@@ -27,7 +27,7 @@ export const safeGetItem = async (key: string): Promise<string | null> => {
       error.message.includes('quota') ||
       error.message.includes('storage')
     )) {
-      console.error('🔴 STOCKAGE PLEIN - Impossible de lire les données');
+      logger.error('🔴 STOCKAGE PLEIN - Impossible de lire les données');
     }
 
     return null;
@@ -47,7 +47,7 @@ export const safeSetItem = async (key: string, value: string): Promise<boolean> 
 
     // Log détaillé en DEV
     if (__DEV__) {
-      console.warn(`⚠️ AsyncStorage.setItem('${key}') failed:`, error);
+      logger.warn(`⚠️ AsyncStorage.setItem('${key}') failed:`, error);
     }
 
     // Détection stockage plein
@@ -56,8 +56,8 @@ export const safeSetItem = async (key: string, value: string): Promise<boolean> 
       error.message.includes('quota') ||
       error.message.includes('storage')
     )) {
-      console.error('🔴 STOCKAGE PLEIN - Impossible de sauvegarder les données');
-      console.error(`Taille tentée: ~${(value.length / 1024).toFixed(2)} KB`);
+      logger.error('🔴 STOCKAGE PLEIN - Impossible de sauvegarder les données');
+      logger.error(`Taille tentée: ~${(value.length / 1024).toFixed(2)} KB`);
     }
 
     return false;
@@ -75,7 +75,7 @@ export const safeRemoveItem = async (key: string): Promise<boolean> => {
     logger.error(`[SafeAsyncStorage] removeItem failed for key: ${key}`, error);
 
     if (__DEV__) {
-      console.warn(`⚠️ AsyncStorage.removeItem('${key}') failed:`, error);
+      logger.warn(`⚠️ AsyncStorage.removeItem('${key}') failed:`, error);
     }
 
     return false;
@@ -92,7 +92,7 @@ export const safeMultiGet = async (keys: string[]): Promise<readonly [string, st
     logger.error(`[SafeAsyncStorage] multiGet failed for keys: ${keys.join(', ')}`, error);
 
     if (__DEV__) {
-      console.warn(`⚠️ AsyncStorage.multiGet failed:`, error);
+      logger.warn(`⚠️ AsyncStorage.multiGet failed:`, error);
     }
 
     // Retourner un tableau vide avec les clés
@@ -111,7 +111,7 @@ export const safeMultiSet = async (keyValuePairs: [string, string][]): Promise<b
     logger.error(`[SafeAsyncStorage] multiSet failed`, error);
 
     if (__DEV__) {
-      console.warn(`⚠️ AsyncStorage.multiSet failed:`, error);
+      logger.warn(`⚠️ AsyncStorage.multiSet failed:`, error);
     }
 
     return false;
@@ -129,7 +129,7 @@ export const safeMultiRemove = async (keys: string[]): Promise<boolean> => {
     logger.error(`[SafeAsyncStorage] multiRemove failed`, error);
 
     if (__DEV__) {
-      console.warn(`⚠️ AsyncStorage.multiRemove failed:`, error);
+      logger.warn(`⚠️ AsyncStorage.multiRemove failed:`, error);
     }
 
     return false;
@@ -146,7 +146,7 @@ export const safeGetAllKeys = async (): Promise<string[]> => {
     logger.error(`[SafeAsyncStorage] getAllKeys failed`, error);
 
     if (__DEV__) {
-      console.warn(`⚠️ AsyncStorage.getAllKeys failed:`, error);
+      logger.warn(`⚠️ AsyncStorage.getAllKeys failed:`, error);
     }
 
     return [];
@@ -164,7 +164,7 @@ export const safeClear = async (): Promise<boolean> => {
     logger.error(`[SafeAsyncStorage] clear failed`, error);
 
     if (__DEV__) {
-      console.warn(`⚠️ AsyncStorage.clear failed:`, error);
+      logger.warn(`⚠️ AsyncStorage.clear failed:`, error);
     }
 
     return false;
@@ -182,7 +182,7 @@ export const safeSetJSON = async <T>(key: string, value: T): Promise<boolean> =>
     logger.error(`[SafeAsyncStorage] setJSON failed for key: ${key}`, error);
 
     if (__DEV__) {
-      console.warn(`⚠️ Failed to stringify object for key '${key}':`, error);
+      logger.warn(`⚠️ Failed to stringify object for key '${key}':`, error);
     }
 
     return false;
@@ -205,7 +205,7 @@ export const safeGetJSON = async <T>(key: string, defaultValue?: T): Promise<T |
     logger.error(`[SafeAsyncStorage] getJSON failed for key: ${key}`, error);
 
     if (__DEV__) {
-      console.warn(`⚠️ Failed to parse JSON for key '${key}':`, error);
+      logger.warn(`⚠️ Failed to parse JSON for key '${key}':`, error);
     }
 
     return defaultValue ?? null;

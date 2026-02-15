@@ -16,6 +16,7 @@ import {
   GoalProgress,
   GlobalGoalStats,
 } from '@/lib/trainingGoalsService';
+import { logger } from '@/lib/security/logger';
 
 export const YearlyCounter: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -62,7 +63,7 @@ export const YearlyCounter: React.FC = () => {
       setYearCount(yearTotal);
       setMonthCount(monthTotal);
     } catch (error) {
-      console.error('Erreur chargement compteur:', error);
+      logger.error('Erreur chargement compteur:', error);
     }
   }, []);
 

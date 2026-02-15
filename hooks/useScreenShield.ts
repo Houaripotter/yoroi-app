@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import * as ScreenCapture from 'expo-screen-capture';
 import { Platform } from 'react-native';
+import { logger } from '@/lib/security/logger';
 
 /**
  * Hook pour empêcher les captures d'écran et l'enregistrement vidéo
@@ -14,7 +15,7 @@ export const useScreenShield = (enabled: boolean = true) => {
       try {
         await ScreenCapture.preventScreenCaptureAsync();
       } catch (e) {
-        console.warn('Failed to prevent screen capture', e);
+        logger.warn('Failed to prevent screen capture', e);
       }
     };
 

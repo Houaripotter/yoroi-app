@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Path, Circle, Line, Defs, LinearGradient, Stop, G, Text as SvgText } from 'react-native-svg';
-// import Animated, { FadeIn } from 'react-native-reanimated';
 
 interface DataPoint {
   value: number;

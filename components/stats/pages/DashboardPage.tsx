@@ -32,6 +32,7 @@ import { format, parseISO, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { StatsExplanation } from '../StatsExplanation';
+import { logger } from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COLUMN_WIDTH = (SCREEN_WIDTH - 44) / 2;
@@ -146,7 +147,7 @@ export const DashboardPage: React.FC = () => {
 
       setAllMetrics(metricsList);
     } catch (e) {
-      console.error("Error loading dashboard data", e);
+      logger.error("Error loading dashboard data", e);
     } finally {
       setLoading(false);
     }

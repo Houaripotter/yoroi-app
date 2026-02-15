@@ -106,18 +106,18 @@ class WatchSyncServiceClass {
    * À appeler au démarrage de l'app
    */
   async initialize(): Promise<boolean> {
-    console.log('========================================');
-    console.log('[WatchSync] Initialisation du service...');
-    console.log('========================================');
+    logger.info('========================================');
+    logger.info('[WatchSync] Initialisation du service...');
+    logger.info('========================================');
 
     if (Platform.OS !== 'ios') {
-      console.log('[WatchSync] Pas sur iOS, service désactivé');
+      logger.info('[WatchSync] Pas sur iOS, service désactivé');
       return false;
     }
 
     if (!isWatchModuleAvailable) {
       this.addError('Module WatchConnectivity non chargé');
-      console.warn('[WatchSync] Module natif non disponible');
+      logger.warn('[WatchSync] Module natif non disponible');
       return false;
     }
 
@@ -136,7 +136,7 @@ class WatchSyncServiceClass {
 
       // 4. Écouter les changements de reachability
       WatchConnectivity.onReachabilityChanged((status) => {
-        console.log('[WatchSync] Reachability changed:', status);
+        logger.info('[WatchSync] Reachability changed:', status);
         this.status.isReachable = status.isReachable;
         this.status.isAvailable = status.isPaired && status.isWatchAppInstalled;
         this.notifyListeners();
@@ -149,25 +149,25 @@ class WatchSyncServiceClass {
 
       // 5. Écouter les données de la Watch
       WatchConnectivity.onDataReceived((event) => {
-        console.log('[WatchSync] Données reçues de la Watch:', event);
+        logger.info('[WatchSync] Données reçues de la Watch:', event);
         this.notifyDataListeners(event.data);
       });
 
       WatchConnectivity.onMessageReceived((message) => {
-        console.log('[WatchSync] Message reçu de la Watch:', message);
+        logger.info('[WatchSync] Message reçu de la Watch:', message);
         this.notifyDataListeners(message);
       });
 
       // 6. Écouter les erreurs
       WatchConnectivity.onError((error) => {
-        console.error('[WatchSync] Erreur Watch:', error);
+        logger.error('[WatchSync] Erreur Watch:', error);
         this.addError(error.error);
       });
 
-      console.log('[WatchSync] Service initialisé avec succès');
-      console.log('[WatchSync] Watch disponible:', this.status.isAvailable);
-      console.log('[WatchSync] Watch reachable:', this.status.isReachable);
-      console.log('[WatchSync] Messages en queue:', this.syncQueue.length);
+      logger.info('[WatchSync] Service initialisé avec succès');
+      logger.info('[WatchSync] Watch disponible:', this.status.isAvailable);
+      logger.info('[WatchSync] Watch reachable:', this.status.isReachable);
+      logger.info('[WatchSync] Messages en queue:', this.syncQueue.length);
 
       // 7. Traiter la queue si Watch disponible
       if (this.status.isReachable) {
@@ -176,7 +176,7 @@ class WatchSyncServiceClass {
 
       return true;
     } catch (error) {
-      console.error('[WatchSync] Erreur initialisation:', error);
+      logger.error('[WatchSync] Erreur initialisation:', error);
       this.addError(`Initialisation échouée: ${error}`);
       return false;
     }
@@ -210,7 +210,7 @@ class WatchSyncServiceClass {
 
       return this.getStatus();
     } catch (error) {
-      console.error('[WatchSync] Erreur updateStatus:', error);
+      logger.error('[WatchSync] Erreur updateStatus:', error);
       return this.getStatus();
     }
   }
@@ -243,7 +243,7 @@ class WatchSyncServiceClass {
    * Synchroniser TOUTES les données utilisateur vers la Watch
    */
   async syncAllData(userData: UserDataForWatch): Promise<boolean> {
-    console.log('[WatchSync] syncAllData - Début');
+    logger.info('[WatchSync] syncAllData - Début');
 
     try {
       // Construire le contexte applicatif
@@ -270,9 +270,9 @@ class WatchSyncServiceClass {
         const photoSizeKB = (userData.profilePhotoBase64.length * 0.75) / 1024;
         if (photoSizeKB <= MAX_PHOTO_SIZE_KB) {
           context.profilePhotoBase64 = userData.profilePhotoBase64;
-          console.log(`[WatchSync] Photo incluse dans context (${photoSizeKB.toFixed(1)}KB)`);
+          logger.info(`[WatchSync] Photo incluse dans context (${photoSizeKB.toFixed(1)}KB)`);
         } else {
-          console.log(`[WatchSync] Photo trop grande (${photoSizeKB.toFixed(1)}KB), transfert fichier requis`);
+          logger.info(`[WatchSync] Photo trop grande (${photoSizeKB.toFixed(1)}KB), transfert fichier requis`);
           // La photo sera envoyée séparément via transferFile
           await this.syncProfilePhoto(userData.profilePhotoBase64);
         }
@@ -286,7 +286,7 @@ class WatchSyncServiceClass {
       // Envoyer le contexte principal
       return await this.sendContext(context);
     } catch (error) {
-      console.error('[WatchSync] Erreur syncAllData:', error);
+      logger.error('[WatchSync] Erreur syncAllData:', error);
       this.addError(`syncAllData échoué: ${error}`);
       return false;
     }
@@ -301,7 +301,7 @@ class WatchSyncServiceClass {
     level?: number;
     rank?: string;
   }): Promise<boolean> {
-    console.log('[WatchSync] syncProfile:', profile);
+    logger.info('[WatchSync] syncProfile:', profile);
     return this.sendContext({
       ...profile,
       syncTimestamp: Date.now(),
@@ -312,10 +312,10 @@ class WatchSyncServiceClass {
    * Synchroniser la photo de profil
    */
   async syncProfilePhoto(base64Image: string): Promise<boolean> {
-    console.log('[WatchSync] syncProfilePhoto - Début');
+    logger.info('[WatchSync] syncProfilePhoto - Début');
 
     const sizeKB = (base64Image.length * 0.75) / 1024;
-    console.log(`[WatchSync] Taille photo: ${sizeKB.toFixed(1)}KB`);
+    logger.info(`[WatchSync] Taille photo: ${sizeKB.toFixed(1)}KB`);
 
     try {
       if (sizeKB <= MAX_PHOTO_SIZE_KB) {
@@ -327,18 +327,18 @@ class WatchSyncServiceClass {
       } else if (sizeKB <= MAX_PHOTO_SIZE_FILE_KB) {
         // Utiliser transferFile
         // Note: Nécessite de créer un fichier temporaire
-        console.log('[WatchSync] Photo envoyée via transferFile');
+        logger.info('[WatchSync] Photo envoyée via transferFile');
         return this.sendUserInfo({
           profilePhotoBase64: base64Image,
           photoTimestamp: Date.now(),
         });
       } else {
-        console.warn(`[WatchSync] Photo trop grande (${sizeKB.toFixed(1)}KB > ${MAX_PHOTO_SIZE_FILE_KB}KB)`);
+        logger.warn(`[WatchSync] Photo trop grande (${sizeKB.toFixed(1)}KB > ${MAX_PHOTO_SIZE_FILE_KB}KB)`);
         this.addError(`Photo trop grande: ${sizeKB.toFixed(1)}KB`);
         return false;
       }
     } catch (error) {
-      console.error('[WatchSync] Erreur syncProfilePhoto:', error);
+      logger.error('[WatchSync] Erreur syncProfilePhoto:', error);
       this.addError(`Photo sync échouée: ${error}`);
       return false;
     }
@@ -348,7 +348,7 @@ class WatchSyncServiceClass {
    * Synchroniser l'avatar
    */
   async syncAvatar(avatarConfig: { pack: string; name: string }): Promise<boolean> {
-    console.log('[WatchSync] syncAvatar:', avatarConfig);
+    logger.info('[WatchSync] syncAvatar:', avatarConfig);
     return this.sendContext({
       avatarConfig,
       avatarTimestamp: Date.now(),
@@ -359,7 +359,7 @@ class WatchSyncServiceClass {
    * Synchroniser le poids
    */
   async syncWeight(weightKg: number, targetKg?: number): Promise<boolean> {
-    console.log('[WatchSync] syncWeight:', weightKg, 'target:', targetKg);
+    logger.info('[WatchSync] syncWeight:', weightKg, 'target:', targetKg);
     return this.sendContext({
       weight: weightKg,
       ...(targetKg !== undefined && { targetWeight: targetKg }),
@@ -371,7 +371,7 @@ class WatchSyncServiceClass {
    * Synchroniser l'hydratation
    */
   async syncHydration(currentMl: number, goalMl: number): Promise<boolean> {
-    console.log('[WatchSync] syncHydration:', currentMl, '/', goalMl);
+    logger.info('[WatchSync] syncHydration:', currentMl, '/', goalMl);
     return this.sendContext({
       waterIntake: currentMl,
       waterGoal: goalMl,
@@ -385,7 +385,7 @@ class WatchSyncServiceClass {
   async syncRecords(records: UserDataForWatch['records']): Promise<boolean> {
     if (!records || records.length === 0) return true;
 
-    console.log('[WatchSync] syncRecords:', records.length, 'records');
+    logger.info('[WatchSync] syncRecords:', records.length, 'records');
 
     // Utiliser userInfo pour garantie de livraison
     return this.sendUserInfo({
@@ -400,7 +400,7 @@ class WatchSyncServiceClass {
    * Synchroniser le streak
    */
   async syncStreak(streak: number): Promise<boolean> {
-    console.log('[WatchSync] syncStreak:', streak);
+    logger.info('[WatchSync] syncStreak:', streak);
     return this.sendContext({
       streak,
       streakTimestamp: Date.now(),
@@ -416,7 +416,7 @@ class WatchSyncServiceClass {
    */
   private async sendContext(data: Record<string, any>): Promise<boolean> {
     if (!this.status.isAvailable) {
-      console.log('[WatchSync] Watch non disponible, mise en queue');
+      logger.info('[WatchSync] Watch non disponible, mise en queue');
       this.addToQueue('context', data);
       return false;
     }
@@ -424,10 +424,10 @@ class WatchSyncServiceClass {
     try {
       await WatchConnectivity.updateApplicationContext(data);
       this.markSyncSuccess();
-      console.log('[WatchSync] Context envoyé avec succès');
+      logger.info('[WatchSync] Context envoyé avec succès');
       return true;
     } catch (error) {
-      console.error('[WatchSync] Erreur envoi context:', error);
+      logger.error('[WatchSync] Erreur envoi context:', error);
       this.addToQueue('context', data);
       return false;
     }
@@ -438,7 +438,7 @@ class WatchSyncServiceClass {
    */
   private async sendUserInfo(data: Record<string, any>): Promise<boolean> {
     if (!this.status.isAvailable) {
-      console.log('[WatchSync] Watch non disponible, mise en queue');
+      logger.info('[WatchSync] Watch non disponible, mise en queue');
       this.addToQueue('userInfo', data);
       return false;
     }
@@ -446,10 +446,10 @@ class WatchSyncServiceClass {
     try {
       await WatchConnectivity.transferUserInfo(data);
       this.markSyncSuccess();
-      console.log('[WatchSync] UserInfo envoyé avec succès');
+      logger.info('[WatchSync] UserInfo envoyé avec succès');
       return true;
     } catch (error) {
-      console.error('[WatchSync] Erreur envoi userInfo:', error);
+      logger.error('[WatchSync] Erreur envoi userInfo:', error);
       this.addToQueue('userInfo', data);
       return false;
     }
@@ -460,7 +460,7 @@ class WatchSyncServiceClass {
    */
   private async sendMessage(data: Record<string, any>): Promise<boolean> {
     if (!this.status.isReachable) {
-      console.log('[WatchSync] Watch pas reachable, mise en queue');
+      logger.info('[WatchSync] Watch pas reachable, mise en queue');
       this.addToQueue('message', data);
       return false;
     }
@@ -468,10 +468,10 @@ class WatchSyncServiceClass {
     try {
       await WatchConnectivity.sendMessageToWatch(data);
       this.markSyncSuccess();
-      console.log('[WatchSync] Message envoyé avec succès');
+      logger.info('[WatchSync] Message envoyé avec succès');
       return true;
     } catch (error) {
-      console.error('[WatchSync] Erreur envoi message:', error);
+      logger.error('[WatchSync] Erreur envoi message:', error);
       this.addToQueue('message', data);
       return false;
     }
@@ -496,20 +496,20 @@ class WatchSyncServiceClass {
     await this.saveQueue();
     this.notifyListeners();
 
-    console.log(`[WatchSync] Ajouté à la queue: ${type} (${this.syncQueue.length} en attente)`);
+    logger.info(`[WatchSync] Ajouté à la queue: ${type} (${this.syncQueue.length} en attente)`);
   }
 
   private async processQueue() {
     if (this.isProcessingQueue || this.syncQueue.length === 0) return;
 
     this.isProcessingQueue = true;
-    console.log(`[WatchSync] Traitement queue: ${this.syncQueue.length} items`);
+    logger.info(`[WatchSync] Traitement queue: ${this.syncQueue.length} items`);
 
     const processedIds: string[] = [];
 
     for (const item of this.syncQueue) {
       if (item.retries >= item.maxRetries) {
-        console.warn(`[WatchSync] Item ${item.id} max retries atteint, abandon`);
+        logger.warn(`[WatchSync] Item ${item.id} max retries atteint, abandon`);
         processedIds.push(item.id);
         continue;
       }
@@ -534,13 +534,13 @@ class WatchSyncServiceClass {
             break;
         }
       } catch (error) {
-        console.error(`[WatchSync] Erreur traitement item ${item.id}:`, error);
+        logger.error(`[WatchSync] Erreur traitement item ${item.id}:`, error);
         item.retries++;
       }
 
       if (success) {
         processedIds.push(item.id);
-        console.log(`[WatchSync] Item ${item.id} envoyé avec succès`);
+        logger.info(`[WatchSync] Item ${item.id} envoyé avec succès`);
       }
     }
 
@@ -556,7 +556,7 @@ class WatchSyncServiceClass {
       this.markSyncSuccess();
     }
 
-    console.log(`[WatchSync] Queue traitée: ${processedIds.length} envoyés, ${this.syncQueue.length} restants`);
+    logger.info(`[WatchSync] Queue traitée: ${processedIds.length} envoyés, ${this.syncQueue.length} restants`);
   }
 
   private async loadQueue() {
@@ -564,10 +564,10 @@ class WatchSyncServiceClass {
       const stored = await AsyncStorage.getItem(SYNC_QUEUE_KEY);
       if (stored) {
         this.syncQueue = JSON.parse(stored);
-        console.log(`[WatchSync] Queue chargée: ${this.syncQueue.length} items`);
+        logger.info(`[WatchSync] Queue chargée: ${this.syncQueue.length} items`);
       }
     } catch (error) {
-      console.error('[WatchSync] Erreur chargement queue:', error);
+      logger.error('[WatchSync] Erreur chargement queue:', error);
     }
   }
 
@@ -575,7 +575,7 @@ class WatchSyncServiceClass {
     try {
       await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(this.syncQueue));
     } catch (error) {
-      console.error('[WatchSync] Erreur sauvegarde queue:', error);
+      logger.error('[WatchSync] Erreur sauvegarde queue:', error);
     }
   }
 
@@ -587,7 +587,7 @@ class WatchSyncServiceClass {
     this.status.pendingItems = 0;
     await this.saveQueue();
     this.notifyListeners();
-    console.log('[WatchSync] Queue vidée');
+    logger.info('[WatchSync] Queue vidée');
   }
 
   /**
@@ -639,7 +639,7 @@ class WatchSyncServiceClass {
     errors: string[];
     watchDiagnostic: any;
   }> {
-    console.log('[WatchSync] Lancement diagnostic...');
+    logger.info('[WatchSync] Lancement diagnostic...');
 
     await this.updateStatus();
 
@@ -647,7 +647,7 @@ class WatchSyncServiceClass {
     try {
       watchDiagnostic = await WatchConnectivity.runDiagnostic();
     } catch (e) {
-      console.error('[WatchSync] Erreur diagnostic Watch:', e);
+      logger.error('[WatchSync] Erreur diagnostic Watch:', e);
     }
 
     return {

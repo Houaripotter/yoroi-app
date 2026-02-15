@@ -12,6 +12,7 @@ import { GripVertical, Home, Grid, LineChart } from 'lucide-react-native';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Page1Monitoring } from './pages/Page1Monitoring';
+import { logger } from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -207,7 +208,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
         }
       }
     } catch (error) {
-      console.error('Error loading page order:', error);
+      logger.error('Error loading page order:', error);
     }
   };
 
@@ -216,7 +217,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
       await AsyncStorage.setItem(PAGE_ORDER_KEY, JSON.stringify(order));
       setPageOrder(order);
     } catch (error) {
-      console.error('Error saving page order:', error);
+      logger.error('Error saving page order:', error);
     }
   };
 

@@ -33,6 +33,7 @@ import {
   getTrashCount,
   TrashItem,
 } from '@/lib/carnetService';
+import { logger } from '@/lib/security/logger';
 
 interface TrainingJournalState {
   // Data
@@ -237,7 +238,7 @@ export function useTrainingJournal(): UseTrainingJournalReturn {
       setTrashSkills(trashSkillsData);
       setTrashCount(trashCountData);
     } catch (error) {
-      console.error('Error loading training journal data:', error);
+      logger.error('Error loading training journal data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -343,7 +344,7 @@ export function useTrainingJournal(): UseTrainingJournalReturn {
       await refreshData();
       closeAddBenchmark();
     } catch (error) {
-      console.error('Error creating benchmark:', error);
+      logger.error('Error creating benchmark:', error);
       throw error;
     } finally {
       setIsSubmitting(false);
@@ -355,7 +356,7 @@ export function useTrainingJournal(): UseTrainingJournalReturn {
       await deleteBenchmark(benchmarkId);
       await refreshData();
     } catch (error) {
-      console.error('Error deleting benchmark:', error);
+      logger.error('Error deleting benchmark:', error);
       throw error;
     }
   }, [refreshData]);
@@ -374,7 +375,7 @@ export function useTrainingJournal(): UseTrainingJournalReturn {
       await refreshData();
       closeAddSkill();
     } catch (error) {
-      console.error('Error creating skill:', error);
+      logger.error('Error creating skill:', error);
       throw error;
     } finally {
       setIsSubmitting(false);
@@ -386,7 +387,7 @@ export function useTrainingJournal(): UseTrainingJournalReturn {
       await deleteSkill(skillId);
       await refreshData();
     } catch (error) {
-      console.error('Error deleting skill:', error);
+      logger.error('Error deleting skill:', error);
       throw error;
     }
   }, [refreshData]);

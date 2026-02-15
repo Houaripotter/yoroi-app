@@ -4,6 +4,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getSelectedLogo, saveSelectedLogo, LogoVariant } from './storage';
+import { logger } from '@/lib/security/logger';
 
 interface LogoContextType {
   selectedLogo: LogoVariant;
@@ -26,7 +27,7 @@ export const LogoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const logo = await getSelectedLogo();
       setSelectedLogo(logo);
     } catch (error) {
-      console.error('[LogoContext] Erreur chargement logo:', error);
+      logger.error('[LogoContext] Erreur chargement logo:', error);
     }
   };
 
@@ -36,7 +37,7 @@ export const LogoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await saveSelectedLogo(logo);
       setSelectedLogo(logo);
     } catch (error) {
-      console.error('[LogoContext] Erreur sauvegarde logo:', error);
+      logger.error('[LogoContext] Erreur sauvegarde logo:', error);
       throw error;
     }
   }, []);

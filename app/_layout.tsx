@@ -150,46 +150,43 @@ export default function RootLayout() {
       try {
         logger.info('Yoroi - Initialisation en arrière-plan...');
 
-        // ✅ Initialiser la base de donnees SQLite PUIS forcer la réimportation des événements
-        initDatabase()
-          .then(() => {
-            logger.info('Base de donnees initialisee');
-            // ⚠️ FORCE REIMPORT: Charger les nouvelles données JSON
-            return forceReimportEvents();
-          })
-          .then(() => logger.info('✅ Catalogue événements reimporté avec succès'))
-          .catch(err => logger.error('Erreur init database ou import événements:', err));
+        // ✅ DB FIRST: Toutes les opérations DB-dépendantes APRÈS initDatabase
+        try {
+          await initDatabase();
+          logger.info('Base de donnees initialisee');
+          await forceReimportEvents();
+          logger.info('Catalogue événements reimporté avec succès');
+        } catch (err) {
+          logger.error('Erreur init database ou import événements:', err);
+        }
 
-        // ✅ Initialiser Apple Watch Service (sync automatique iPhone ↔ Watch)
-        appleWatchService.init()
-          .then(() => logger.info('✅ Apple Watch Service initialisé et sync démarrée'))
-          .catch(err => logger.error('❌ Erreur Apple Watch Service:', err));
+        // ✅ Services indépendants en parallèle (DB déjà prête)
+        await Promise.allSettled([
+          appleWatchService.init()
+            .then(() => logger.info('Apple Watch Service initialisé'))
+            .catch(err => logger.error('Erreur Apple Watch Service:', err)),
 
-        // Migrer le système d'avatars V2 (en arrière-plan)
-        migrateAvatarSystem()
-          .then(() => logger.info('Migration avatars effectuee'))
-          .catch(err => logger.error('Erreur migration avatars:', err));
+          migrateAvatarSystem()
+            .then(() => logger.info('Migration avatars effectuee'))
+            .catch(err => logger.error('Erreur migration avatars:', err)),
 
-        // Auto-import des compétitions (en arrière-plan)
-        autoImportCompetitionsOnFirstLaunch()
-          .then(() => logger.info('✅ Auto-import compétitions terminé'))
-          .catch(err => logger.error('Erreur auto-import compétitions:', err));
+          autoImportCompetitionsOnFirstLaunch()
+            .then(() => logger.info('Auto-import compétitions terminé'))
+            .catch(err => logger.error('Erreur auto-import compétitions:', err)),
 
-        // Notifications - SEULEMENT citations du matin (1x/jour à 8h)
-        // Tout le reste est DÉSACTIVÉ (hydratation, sommeil, health tips, etc.)
-        notificationService.initialize()
-          .then(success => {
-            if (success) {
-              logger.info('✅ Service notifications initialisé (tout OFF sauf citations)');
-              // UNIQUEMENT les citations du jour - 1 seule notif le matin
-              return initCitationNotifications();
-            }
-          })
-          .then(() => logger.info('✅ Citation du jour initialisée (1x matin)'))
-          .catch(err => logger.error('❌ Erreur notifications:', err));
+          notificationService.initialize()
+            .then(success => {
+              if (success) {
+                logger.info('Service notifications initialisé');
+                return initCitationNotifications();
+              }
+            })
+            .then(() => logger.info('Citation du jour initialisée'))
+            .catch(err => logger.error('Erreur notifications:', err)),
+        ]);
 
       } catch (error) {
-        logger.error('❌ Erreur initialisation critique', error);
+        logger.error('Erreur initialisation critique', error);
       }
     };
 

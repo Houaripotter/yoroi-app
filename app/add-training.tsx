@@ -23,7 +23,7 @@ import ConfettiCannon from 'react-native-confetti-cannon';
 import { impactAsync, notificationAsync, selectionAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
@@ -372,7 +372,7 @@ export default function AddTrainingScreen() {
         // Pour l'instant on va utiliser yearlyCount pour le sport et safeObjective pour le but perso
 
       } catch (error) {
-        console.error("Erreur calcul compteurs:", error);
+        logger.error("Erreur calcul compteurs:", error);
       }
     };
 
@@ -1183,15 +1183,6 @@ export default function AddTrainingScreen() {
       // Verifier les badges debloques
       await checkBadges();
 
-      // Vérifier si on doit afficher le rappel de sauvegarde
-      // DÉSACTIVÉ: L'utilisateur préfère gérer la sauvegarde dans l'étape 4
-      // const shouldShowBackupReminder = await backupReminderService.onDataAdded();
-      // if (shouldShowBackupReminder) {
-      //   await backupReminderService.showReminder(() => {
-      //     router.push('/(tabs)/more');
-      //   });
-      // } 
-      
       // AFFICHER LE MODAL DE VALIDATION (Étape 2)
       setCardBackgroundImage(null);
       setShowValidationModal(true);

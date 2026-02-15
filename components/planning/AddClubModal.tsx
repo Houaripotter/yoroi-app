@@ -34,6 +34,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { SPORTS, getSportIcon, getSportColor } from '@/lib/sports';
 import { addClub, updateClub, Club } from '@/lib/database';
 import { setGoal, getGoalBySport } from '@/lib/trainingGoalsService';
+import { logger } from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -168,7 +169,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
       onSave();
       onClose();
     } catch (error) {
-      console.error('Erreur sauvegarde club:', error);
+      logger.error('Erreur sauvegarde club:', error);
       showPopup('Erreur', 'Impossible de sauvegarder le club', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsSubmitting(false);
@@ -208,7 +209,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
         setLogoUri(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('Erreur image:', error);
+      logger.error('Erreur image:', error);
     }
   };
 

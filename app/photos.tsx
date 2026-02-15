@@ -20,7 +20,7 @@ import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { Camera, Image as ImageIcon, GitCompare, Plus, X, Shield, Eye, EyeOff, TrendingDown, Calendar, Award } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { useFocusEffect, router } from 'expo-router';
+import { router } from 'expo-router';
 import { BeforeAfterComparison } from '@/components/BeforeAfterComparison';
 import { Photo, savePhotoToStorage, getPhotosFromStorage, deletePhotoFromStorage, getUserSettings, saveUserSettings } from '@/lib/storage';
 import { getLatestWeight, addWeight } from '@/lib/database';

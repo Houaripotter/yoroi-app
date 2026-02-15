@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import { initTrainingJournalDB } from './trainingJournalService';
+import { logger } from '@/lib/security/logger';
 
 // ============================================
 // YOROI DATABASE - STOCKAGE LOCAL SQLite
@@ -45,9 +46,26 @@ const _performInit = async () => {
       start_weight REAL,
       start_date TEXT,
       avatar_gender TEXT DEFAULT 'homme',
+      profile_photo TEXT,
+      birth_date TEXT,
+      weight_goal TEXT DEFAULT 'lose',
+      age INTEGER,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // Migrations: ajouter les colonnes manquantes si la table existe déjà
+  const profileMigrations = [
+    'ALTER TABLE profile ADD COLUMN profile_photo TEXT;',
+    'ALTER TABLE profile ADD COLUMN birth_date TEXT;',
+    "ALTER TABLE profile ADD COLUMN weight_goal TEXT DEFAULT 'lose';",
+    'ALTER TABLE profile ADD COLUMN age INTEGER;',
+  ];
+  for (const migration of profileMigrations) {
+    try {
+      await database.execAsync(migration);
+    } catch (_e) { /* colonne existe déjà */ }
+  }
 
   // Table Pesees (poids + composition)
   await database.execAsync(`
@@ -1660,7 +1678,7 @@ export const resetDatabase = async (): Promise<void> => {
     try { await database.execAsync('DELETE FROM skills;'); } catch (e) { /* table peut ne pas exister */ }
 
   } catch (error) {
-    console.error('❌ Erreur reset database:', error);
+    logger.error('Erreur reset database:', error);
     throw error;
   }
 };

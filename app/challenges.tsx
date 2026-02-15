@@ -8,7 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft,

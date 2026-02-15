@@ -34,6 +34,7 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
+import { logger } from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -51,7 +52,7 @@ const DEFAULT_TOOLS: ToolOption[] = [
   { id: 'timer', icon: Timer, label: 'Timer', route: '/timer', colors: ['#4ECDC4', '#3DBDB5'], isDefault: true },
   { id: 'journal', icon: BookOpen, label: 'Carnet', route: '/training-journal', colors: ['#F97316', '#EA580C'], isDefault: true },
   { id: 'infirmerie', icon: Heart, label: 'Infirmerie', route: '/infirmary', colors: ['#EF4444', '#DC2626'], isDefault: true },
-  { id: 'share', icon: Share2, label: 'Partager', route: '/social-share/transformation-v2', colors: ['#EC4899', '#BE185D'], isDefault: true },
+  { id: 'share', icon: Share2, label: 'Partager', route: '/share-hub', colors: ['#EC4899', '#BE185D'], isDefault: true },
   { id: 'photos', icon: Camera, label: 'Photos', route: '/photos', colors: ['#8B5CF6', '#7C3AED'], isDefault: true },
   { id: 'goals', icon: Target, label: 'Objectifs', route: '/training-goals', colors: ['#10B981', '#059669'], isDefault: true },
   { id: 'records', icon: Trophy, label: 'Records', route: '/records', colors: ['#F59E0B', '#D97706'], isDefault: true },
@@ -94,7 +95,7 @@ export const HomeToolsMenu: React.FC = () => {
         setEnabledTools(new Set(config.enabled));
       }
     } catch (error) {
-      console.error('Error loading tools config:', error);
+      logger.error('Error loading tools config:', error);
     }
   };
 
@@ -102,7 +103,7 @@ export const HomeToolsMenu: React.FC = () => {
     try {
       await AsyncStorage.setItem(TOOLS_STORAGE_KEY, JSON.stringify({ enabled: Array.from(enabled) }));
     } catch (error) {
-      console.error('Error saving tools config:', error);
+      logger.error('Error saving tools config:', error);
     }
   };
 

@@ -24,7 +24,6 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   Trash2, Archive, CheckCircle, RotateCcw, Search, Filter, Plus, Target, ChevronRight, Share2, Info, Dumbbell, Activity, Timer,
@@ -86,7 +85,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPendingVictory } from '@/lib/victoryTrigger';
 import TrainingJournalOnboarding from '@/components/TrainingJournalOnboarding';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
-// import { useTrainingJournal } from './training-journal/hooks/useTrainingJournal';
 import { renderIcon } from './training-journal/utils/iconMap';
 import { getRelativeDate } from './training-journal/utils/dateHelpers';
 import AddEntryModal from './training-journal/components/AddEntryModal';
@@ -96,6 +94,7 @@ import TrashModal from './training-journal/components/TrashModal';
 import AddBenchmarkModal from './training-journal/components/AddBenchmarkModal';
 import AddSkillModal from './training-journal/components/AddSkillModal';
 import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
+import { logger } from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -233,7 +232,7 @@ export default function TrainingJournalScreen() {
         if (savedWeight) setUserWeight(parseFloat(savedWeight));
         if (savedClub) setClubName(savedClub);
       } catch (e) {
-        console.error('Error loading user prefs:', e);
+        logger.error('Error loading user prefs:', e);
       }
     };
     loadUserPrefs();
@@ -283,7 +282,7 @@ export default function TrainingJournalScreen() {
           setShowOnboarding(true);
         }
       } catch (error) {
-        console.error('Error checking onboarding status:', error);
+        logger.error('Error checking onboarding status:', error);
       }
     };
     checkFirstVisit();
@@ -294,7 +293,7 @@ export default function TrainingJournalScreen() {
       await AsyncStorage.setItem('yoroi_training_journal_onboarding_seen', 'true');
       setShowOnboarding(false);
     } catch (error) {
-      console.error('Error saving onboarding status:', error);
+      logger.error('Error saving onboarding status:', error);
       setShowOnboarding(false);
     }
   };
@@ -334,7 +333,7 @@ export default function TrainingJournalScreen() {
         buttons: [{ text: 'OK', style: 'default' }]
       });
     } catch (error) {
-      console.error('Erreur nettoyage:', error);
+      logger.error('Erreur nettoyage:', error);
     }
   };
 
@@ -369,7 +368,7 @@ export default function TrainingJournalScreen() {
 
       showToast('Bibliothèque complète installée !');
     } catch (error) {
-      console.error('Error installing library:', error);
+      logger.error('Error installing library:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -387,7 +386,7 @@ export default function TrainingJournalScreen() {
       setTrashSkills(trashS);
       setTrashCount(count);
     } catch (error) {
-      console.error('Error loading trash:', error);
+      logger.error('Error loading trash:', error);
     }
   }, []);
 
@@ -454,7 +453,7 @@ export default function TrainingJournalScreen() {
       setBenchmarks(fetchedBenchmarks);
       setSkills(fetchedSkills);
     } catch (error) {
-      console.error('Error loading data:', error);
+      logger.error('Error loading data:', error);
     }
   }, []);
 
@@ -542,7 +541,7 @@ export default function TrainingJournalScreen() {
         setShowAddEntryModal(true);
       }
     } catch (error) {
-      console.error('Error in quick add:', error);
+      logger.error('Error in quick add:', error);
     } finally {
       setIsQuickAdding(false);
     }
@@ -572,7 +571,7 @@ export default function TrainingJournalScreen() {
         loadData();
       }
     } catch (error) {
-      console.error('Error adding benchmark:', error);
+      logger.error('Error adding benchmark:', error);
       showPopup({ title: 'Erreur', message: 'Impossible de créer le suivi', buttons: [{ text: 'OK', style: 'default' }] });
     } finally {
       setIsSubmitting(false);
@@ -599,7 +598,7 @@ export default function TrainingJournalScreen() {
 
       return permanentUri;
     } catch (error) {
-      console.error('Error saving video to permanent storage:', error);
+      logger.error('Error saving video to permanent storage:', error);
       return null;
     }
   };
@@ -689,7 +688,7 @@ export default function TrainingJournalScreen() {
         loadData();
       }
     } catch (error) {
-      console.error('Error adding skill:', error);
+      logger.error('Error adding skill:', error);
       showPopup({ title: 'Erreur', message: 'Impossible de créer la technique', buttons: [{ text: 'OK', style: 'default' }] });
     } finally {
       setIsSubmitting(false);
@@ -830,7 +829,7 @@ export default function TrainingJournalScreen() {
       if (refreshed) setSelectedBenchmark(refreshed);
     }
     } catch (error) {
-      console.error('Error adding entry:', error);
+      logger.error('Error adding entry:', error);
       showPopup({ title: 'Erreur', message: 'Impossible d\'enregistrer', buttons: [{ text: 'OK', style: 'default' }] });
     } finally {
       setIsSubmitting(false);
@@ -883,7 +882,7 @@ export default function TrainingJournalScreen() {
       if (refreshed) setSelectedSkill(refreshed);
       loadData();
     } catch (error) {
-      console.error('Error adding note:', error);
+      logger.error('Error adding note:', error);
       showPopup({ title: 'Erreur', message: 'Impossible d\'ajouter la note', buttons: [{ text: 'OK', style: 'default' }] });
     } finally {
       setIsSubmitting(false);
@@ -942,7 +941,7 @@ export default function TrainingJournalScreen() {
         });
       }
     } catch (error) {
-      console.error('Error restoring benchmark:', error);
+      logger.error('Error restoring benchmark:', error);
       showPopup({
         title: 'Erreur',
         message: 'Impossible de restaurer',
@@ -966,7 +965,7 @@ export default function TrainingJournalScreen() {
         });
       }
     } catch (error) {
-      console.error('Error restoring skill:', error);
+      logger.error('Error restoring skill:', error);
       showPopup({
         title: 'Erreur',
         message: 'Impossible de restaurer',
@@ -1009,7 +1008,7 @@ export default function TrainingJournalScreen() {
                 buttons: [{ text: 'OK', style: 'default' }]
               });
             } catch (error) {
-              console.error('Error emptying trash:', error);
+              logger.error('Error emptying trash:', error);
               showPopup({
                 title: 'Erreur',
                 message: 'Impossible de vider la corbeille',

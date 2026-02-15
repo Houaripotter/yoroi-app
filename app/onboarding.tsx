@@ -56,6 +56,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 import { validators } from '@/lib/security/validators';
+import { logger } from '@/lib/security/logger';
 
 // Fonction pour determiner si une couleur est claire
 const isLightColor = (hexColor: string): boolean => {
@@ -409,7 +410,7 @@ export default function OnboardingScreen() {
 
         router.push('/mode-selection');
       } catch (error) {
-        console.error('Erreur sauvegarde profil:', error);
+        logger.error('Erreur sauvegarde profil:', error);
         router.push('/mode-selection');
       }
     });

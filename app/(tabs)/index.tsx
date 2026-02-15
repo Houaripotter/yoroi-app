@@ -14,7 +14,7 @@ import {
   Modal,
   ActivityIndicator,
 } from 'react-native';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -683,6 +683,7 @@ export default function HomeScreen() {
   }, []);
 
   // Chargement des données
+  const cancelledRef = useRef(false);
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -702,6 +703,7 @@ export default function HomeScreen() {
         getHomeCustomization(),
       ]);
 
+      if (cancelledRef.current) return;
       setProfile(profileData);
       setLatestWeight(weight);
       setWeightHistory(history);
@@ -717,10 +719,12 @@ export default function HomeScreen() {
       setHomeSections(sections);
 
       const bodyComp = await getLatestBodyComposition();
+      if (cancelledRef.current) return;
       setBodyComposition(bodyComp);
 
       // Vérifier le mode screenshot
       const screenshotMode = await AsyncStorage.getItem('@yoroi_screenshot_mode');
+      if (cancelledRef.current) return;
       setIsScreenshotMode(screenshotMode === 'true');
 
       const goal = await getSleepGoal();
@@ -774,7 +778,11 @@ export default function HomeScreen() {
   }, [loadHydration]);
 
   // Charger les données UNIQUEMENT au premier montage (pas à chaque focus)
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    cancelledRef.current = false;
+    loadData();
+    return () => { cancelledRef.current = true; };
+  }, []);
 
   // Helper pour vérifier la visibilité d'une section
   const isSectionVisible = useCallback((sectionId: string): boolean => {
@@ -1879,7 +1887,7 @@ const styles = StyleSheet.create({
   avatarFrame: {
     width: 72,
     height: 72,
-    borderRadius: 20,
+    borderRadius: 36,
     borderWidth: 2,
     overflow: 'hidden',
     justifyContent: 'center',
@@ -2519,8 +2527,6 @@ const styles = StyleSheet.create({
   threeCardsRow: { flexDirection: 'row', gap: 6, marginBottom: 8, paddingHorizontal: 16 },
   compactCard: {
     flex: 1,
-    height: 120, // HAUTEUR FIXE
-    overflow: 'hidden',
   },
 
   // Quick Tools (3 boutons) - ULTRA COMPACTS

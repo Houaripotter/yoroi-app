@@ -453,8 +453,161 @@ export default function HealthConnectScreen() {
           })}
         </View>
 
+        {/* ═══ GUIDE MONTRES CONNECTÉES ═══ */}
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+          CONNECTER TA MONTRE
+        </Text>
+
+        <View style={[styles.watchGuideCard, { backgroundColor: colors.backgroundCard }]}>
+          <Text style={[styles.watchGuideIntro, { color: colors.textSecondary }]}>
+            YOROI récupère tes données via {Platform.OS === 'ios' ? 'Apple Santé' : 'Health Connect'}. Configure ta montre pour y partager ses données.
+          </Text>
+
+          {(Platform.OS === 'ios' ? [
+            {
+              brand: 'Apple Watch',
+              emoji: '\u2328\uFE0F',
+              color: '#333333',
+              steps: [
+                'Automatique ! Les données sont déjà dans Apple Santé.',
+                'Connecte YOROI à Apple Santé ci-dessus.',
+              ],
+            },
+            {
+              brand: 'Garmin',
+              emoji: '\u25B3',
+              color: '#007DC5',
+              steps: [
+                'Ouvre Garmin Connect sur ton iPhone.',
+                'Va dans Réglages > App Santé > Active tout.',
+                'Connecte YOROI à Apple Santé ci-dessus.',
+              ],
+            },
+            {
+              brand: 'Samsung Galaxy Watch',
+              emoji: '\u2609',
+              color: '#1428A0',
+              steps: [
+                'Installe Samsung Health sur ton iPhone.',
+                'Active le partage vers Apple Santé dans Samsung Health > Réglages.',
+                'Connecte YOROI à Apple Santé ci-dessus.',
+              ],
+            },
+            {
+              brand: 'Huawei Watch',
+              emoji: '\u25C6',
+              color: '#CF0A2C',
+              steps: [
+                'Ouvre Huawei Santé sur ton iPhone.',
+                'Va dans Moi > Réglages > Partage de données > Apple Santé.',
+                'Active toutes les catégories.',
+                'Connecte YOROI à Apple Santé ci-dessus.',
+              ],
+            },
+            {
+              brand: 'Fitbit / Polar / Suunto',
+              emoji: '\u25CF',
+              color: '#00B0B9',
+              steps: [
+                'Ouvre l\'app officielle de ta montre.',
+                'Active le partage vers Apple Santé dans les réglages.',
+                'Connecte YOROI à Apple Santé ci-dessus.',
+              ],
+            },
+          ] : [
+            {
+              brand: 'Samsung Galaxy Watch',
+              emoji: '\u2609',
+              color: '#1428A0',
+              steps: [
+                'Ouvre Samsung Health sur ton téléphone.',
+                'Va dans Réglages > Health Connect > Autorisations.',
+                'Active le partage de toutes les données.',
+                'Connecte YOROI à Health Connect ci-dessus.',
+              ],
+            },
+            {
+              brand: 'Garmin',
+              emoji: '\u25B3',
+              color: '#007DC5',
+              steps: [
+                'Ouvre Garmin Connect sur ton téléphone.',
+                'Va dans Réglages > Health Connect > Active tout.',
+                'Connecte YOROI à Health Connect ci-dessus.',
+              ],
+            },
+            {
+              brand: 'Huawei Watch',
+              emoji: '\u25C6',
+              color: '#CF0A2C',
+              steps: [
+                'Ouvre Huawei Santé sur ton téléphone.',
+                'Va dans Moi > Réglages > Health Connect.',
+                'Active le partage de toutes les catégories.',
+                'Connecte YOROI à Health Connect ci-dessus.',
+              ],
+            },
+            {
+              brand: 'Fitbit / Pixel Watch',
+              emoji: '\u25CF',
+              color: '#00B0B9',
+              steps: [
+                'Ouvre l\'app Fitbit.',
+                'Va dans Compte > Health Connect > Active tout.',
+                'Connecte YOROI à Health Connect ci-dessus.',
+              ],
+            },
+            {
+              brand: 'Polar / Suunto / Autres',
+              emoji: '\u25A0',
+              color: '#D5001C',
+              steps: [
+                'Ouvre l\'app officielle de ta montre.',
+                'Cherche "Health Connect" dans les réglages.',
+                'Active le partage des données.',
+                'Connecte YOROI à Health Connect ci-dessus.',
+              ],
+            },
+          ]).map((watch, index) => (
+            <View
+              key={watch.brand}
+              style={[
+                styles.watchBrandSection,
+                index > 0 && { borderTopWidth: 1, borderTopColor: colors.border },
+              ]}
+            >
+              <View style={styles.watchBrandHeader}>
+                <View style={[styles.watchBrandDot, { backgroundColor: watch.color }]}>
+                  <Text style={styles.watchBrandEmoji}>{watch.emoji}</Text>
+                </View>
+                <Text style={[styles.watchBrandName, { color: colors.textPrimary }]}>
+                  {watch.brand}
+                </Text>
+              </View>
+              {watch.steps.map((step, stepIndex) => (
+                <View key={stepIndex} style={styles.watchStep}>
+                  <Text style={[styles.watchStepNumber, { color: watch.color }]}>
+                    {stepIndex + 1}.
+                  </Text>
+                  <Text style={[styles.watchStepText, { color: colors.textSecondary }]}>
+                    {step}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ))}
+
+          <View style={[styles.watchGuideNote, { backgroundColor: `${colors.accent}10` }]}>
+            <Text style={[styles.watchGuideNoteText, { color: colors.accent }]}>
+              {Platform.OS === 'ios'
+                ? 'Toutes les montres qui partagent vers Apple Santé sont compatibles avec YOROI.'
+                : 'Toutes les montres qui partagent vers Health Connect sont compatibles avec YOROI.'}
+            </Text>
+          </View>
+        </View>
+
         {/* Open Health App */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.openAppBtn, { borderColor: colors.border }]}
           onPress={openHealthApp}
         >
@@ -744,6 +897,67 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
     fontStyle: 'italic',
+  },
+  // Guide montres connectées
+  watchGuideCard: {
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+  },
+  watchGuideIntro: {
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 16,
+  },
+  watchBrandSection: {
+    paddingVertical: 14,
+  },
+  watchBrandHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  watchBrandDot: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  watchBrandEmoji: {
+    fontSize: 14,
+    color: '#FFFFFF',
+  },
+  watchBrandName: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginLeft: 10,
+  },
+  watchStep: {
+    flexDirection: 'row',
+    marginLeft: 40,
+    marginBottom: 6,
+  },
+  watchStepNumber: {
+    fontSize: 13,
+    fontWeight: '700',
+    width: 18,
+  },
+  watchStepText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  watchGuideNote: {
+    marginTop: 14,
+    padding: 12,
+    borderRadius: 10,
+  },
+  watchGuideNoteText: {
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 17,
   },
 });
 

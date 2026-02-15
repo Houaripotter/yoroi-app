@@ -15,6 +15,7 @@ import {
   CompetitionStatut,
   CombatResultat,
 } from './fighterMode';
+import { logger } from '@/lib/security/logger';
 
 const STORAGE_KEY_MODE = '@yoroi_user_mode';
 const STORAGE_KEY_SPORT = '@yoroi_user_sport';
@@ -40,7 +41,7 @@ export const getUserMode = async (): Promise<UserMode> => {
     const mode = await AsyncStorage.getItem(STORAGE_KEY_MODE);
     return (mode as UserMode) || 'loisir';
   } catch (error) {
-    console.error('Error getting user mode:', error);
+    logger.error('Error getting user mode:', error);
     return 'loisir';
   }
 };
@@ -49,7 +50,7 @@ export const setUserMode = async (mode: UserMode): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEY_MODE, mode);
   } catch (error) {
-    console.error('Error setting user mode:', error);
+    logger.error('Error setting user mode:', error);
     throw error;
   }
 };
@@ -59,7 +60,7 @@ export const getUserSport = async (): Promise<Sport | null> => {
     const sport = await AsyncStorage.getItem(STORAGE_KEY_SPORT);
     return sport as Sport | null;
   } catch (error) {
-    console.error('Error getting user sport:', error);
+    logger.error('Error getting user sport:', error);
     return null;
   }
 };
@@ -68,7 +69,7 @@ export const setUserSport = async (sport: Sport): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEY_SPORT, sport);
   } catch (error) {
-    console.error('Error setting user sport:', error);
+    logger.error('Error setting user sport:', error);
     throw error;
   }
 };
@@ -77,7 +78,7 @@ export const getUserWeightCategory = async (): Promise<string | null> => {
   try {
     return await AsyncStorage.getItem(STORAGE_KEY_CATEGORY);
   } catch (error) {
-    console.error('Error getting weight category:', error);
+    logger.error('Error getting weight category:', error);
     return null;
   }
 };
@@ -86,7 +87,7 @@ export const setUserWeightCategory = async (category: string): Promise<void> => 
   try {
     await AsyncStorage.setItem(STORAGE_KEY_CATEGORY, category);
   } catch (error) {
-    console.error('Error setting weight category:', error);
+    logger.error('Error setting weight category:', error);
     throw error;
   }
 };
@@ -95,7 +96,7 @@ export const getUserBelt = async (): Promise<string | null> => {
   try {
     return await AsyncStorage.getItem(STORAGE_KEY_BELT);
   } catch (error) {
-    console.error('Error getting belt:', error);
+    logger.error('Error getting belt:', error);
     return null;
   }
 };
@@ -104,7 +105,7 @@ export const setUserBelt = async (belt: string): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEY_BELT, belt);
   } catch (error) {
-    console.error('Error setting belt:', error);
+    logger.error('Error setting belt:', error);
     throw error;
   }
 };
@@ -136,7 +137,7 @@ export const getCompetitions = async (): Promise<Competition[]> => {
     ) as Competition[];
     return result;
   } catch (error) {
-    console.error('Error getting competitions:', error);
+    logger.error('Error getting competitions:', error);
     return [];
   }
 };
@@ -150,7 +151,7 @@ export const getUpcomingCompetitions = async (): Promise<Competition[]> => {
     ) as Competition[];
     return result;
   } catch (error) {
-    console.error('Error getting upcoming competitions:', error);
+    logger.error('Error getting upcoming competitions:', error);
     return [];
   }
 };
@@ -160,7 +161,7 @@ export const getNextCompetition = async (): Promise<Competition | null> => {
     const upcoming = await getUpcomingCompetitions();
     return upcoming[0] || null;
   } catch (error) {
-    console.error('Error getting next competition:', error);
+    logger.error('Error getting next competition:', error);
     return null;
   }
 };
@@ -271,7 +272,7 @@ export const getNextEvent = async (): Promise<{
       sport: nextEvent.sport_tag || nextEvent.category,
     };
   } catch (error) {
-    console.error('Error getting next event from saved events:', error);
+    logger.error('Error getting next event from saved events:', error);
     return null;
   }
 };
@@ -284,7 +285,7 @@ export const getCompetitionById = async (id: number): Promise<Competition | null
     );
     return result || null;
   } catch (error) {
-    console.error('Error getting competition by id:', error);
+    logger.error('Error getting competition by id:', error);
     return null;
   }
 };
@@ -306,7 +307,7 @@ export const addCompetition = async (competition: Omit<Competition, 'id' | 'crea
     );
     return result.lastInsertRowId;
   } catch (error) {
-    console.error('Error adding competition:', error);
+    logger.error('Error adding competition:', error);
     throw error;
   }
 };
@@ -329,7 +330,7 @@ export const updateCompetition = async (id: number, updates: Partial<Competition
     const sql = `UPDATE competitions SET ${fields.join(', ')} WHERE id = ?`;
     db.runSync(sql, values);
   } catch (error) {
-    console.error('Error updating competition:', error);
+    logger.error('Error updating competition:', error);
     throw error;
   }
 };
@@ -338,7 +339,7 @@ export const deleteCompetition = async (id: number): Promise<void> => {
   try {
     db.runSync('DELETE FROM competitions WHERE id = ?', [id]);
   } catch (error) {
-    console.error('Error deleting competition:', error);
+    logger.error('Error deleting competition:', error);
     throw error;
   }
 };
@@ -354,7 +355,7 @@ export const getCombats = async (): Promise<Combat[]> => {
     );
     return result;
   } catch (error) {
-    console.error('Error getting combats:', error);
+    logger.error('Error getting combats:', error);
     return [];
   }
 };
@@ -367,7 +368,7 @@ export const getCombatsByCompetition = async (competitionId: number): Promise<Co
     );
     return result;
   } catch (error) {
-    console.error('Error getting combats by competition:', error);
+    logger.error('Error getting combats by competition:', error);
     return [];
   }
 };
@@ -380,7 +381,7 @@ export const getCombatById = async (id: number): Promise<Combat | null> => {
     );
     return result || null;
   } catch (error) {
-    console.error('Error getting combat by id:', error);
+    logger.error('Error getting combat by id:', error);
     return null;
   }
 };
@@ -409,7 +410,7 @@ export const addCombat = async (combat: Omit<Combat, 'id' | 'created_at'>): Prom
     );
     return result.lastInsertRowId;
   } catch (error) {
-    console.error('Error adding combat:', error);
+    logger.error('Error adding combat:', error);
     throw error;
   }
 };
@@ -432,7 +433,7 @@ export const updateCombat = async (id: number, updates: Partial<Combat>): Promis
     const sql = `UPDATE combats SET ${fields.join(', ')} WHERE id = ?`;
     db.runSync(sql, values);
   } catch (error) {
-    console.error('Error updating combat:', error);
+    logger.error('Error updating combat:', error);
     throw error;
   }
 };
@@ -441,7 +442,7 @@ export const deleteCombat = async (id: number): Promise<void> => {
   try {
     db.runSync('DELETE FROM combats WHERE id = ?', [id]);
   } catch (error) {
-    console.error('Error deleting combat:', error);
+    logger.error('Error deleting combat:', error);
     throw error;
   }
 };
@@ -459,7 +460,7 @@ export const getHydratationToday = async (): Promise<Hydratation[]> => {
     );
     return result;
   } catch (error) {
-    console.error('Error getting hydratation:', error);
+    logger.error('Error getting hydratation:', error);
     return [];
   }
 };
@@ -469,7 +470,7 @@ export const getTotalHydratationToday = async (): Promise<number> => {
     const hydrations = await getHydratationToday();
     return hydrations.reduce((sum, h) => sum + h.quantite_ml, 0);
   } catch (error) {
-    console.error('Error calculating total hydratation:', error);
+    logger.error('Error calculating total hydratation:', error);
     return 0;
   }
 };
@@ -486,7 +487,7 @@ export const addHydratation = async (quantite_ml: number, type: Hydratation['typ
     );
     return result.lastInsertRowId;
   } catch (error) {
-    console.error('Error adding hydratation:', error);
+    logger.error('Error adding hydratation:', error);
     throw error;
   }
 };
@@ -495,7 +496,7 @@ export const deleteHydratation = async (id: number): Promise<void> => {
   try {
     db.runSync('DELETE FROM hydratation WHERE id = ?', [id]);
   } catch (error) {
-    console.error('Error deleting hydratation:', error);
+    logger.error('Error deleting hydratation:', error);
     throw error;
   }
 };
@@ -511,7 +512,7 @@ export const getObjectifsPoids = async (): Promise<ObjectifPoids[]> => {
     );
     return result;
   } catch (error) {
-    console.error('Error getting objectifs poids:', error);
+    logger.error('Error getting objectifs poids:', error);
     return [];
   }
 };
@@ -521,7 +522,7 @@ export const getCurrentObjectifPoids = async (): Promise<ObjectifPoids | null> =
     const objectifs = await getObjectifsPoids();
     return objectifs.find(o => o.statut === 'en_cours') || null;
   } catch (error) {
-    console.error('Error getting current objectif poids:', error);
+    logger.error('Error getting current objectif poids:', error);
     return null;
   }
 };
@@ -541,7 +542,7 @@ export const addObjectifPoids = async (objectif: Omit<ObjectifPoids, 'id' | 'cre
     );
     return result.lastInsertRowId;
   } catch (error) {
-    console.error('Error adding objectif poids:', error);
+    logger.error('Error adding objectif poids:', error);
     throw error;
   }
 };
@@ -564,7 +565,7 @@ export const updateObjectifPoids = async (id: number, updates: Partial<ObjectifP
     const sql = `UPDATE objectifs_poids SET ${fields.join(', ')} WHERE id = ?`;
     db.runSync(sql, values);
   } catch (error) {
-    console.error('Error updating objectif poids:', error);
+    logger.error('Error updating objectif poids:', error);
     throw error;
   }
 };

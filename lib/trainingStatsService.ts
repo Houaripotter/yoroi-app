@@ -4,6 +4,7 @@
 
 import { Platform } from 'react-native';
 import { Sport, SPORT_LABELS } from './trainingJournalService';
+import { logger } from '@/lib/security/logger';
 
 // 🔒 Platform-specific: SQLite only available on native
 const isNativePlatform = Platform.OS === 'ios' || Platform.OS === 'android';
@@ -97,7 +98,7 @@ export const getGlobalStats = (): GlobalStats => {
 
     return stats;
   } catch (error) {
-    console.error('[STATS] Erreur stats globales:', error);
+    logger.error('[STATS] Erreur stats globales:', error);
     return {
       total: 0,
       todo: 0,
@@ -203,7 +204,7 @@ export const getStreakInfo = (): StreakInfo => {
       practicesLast7Days: last7Days,
     };
   } catch (error) {
-    console.error('[STATS] Erreur streak:', error);
+    logger.error('[STATS] Erreur streak:', error);
     return {
       currentStreak: 0,
       longestStreak: 0,
@@ -275,7 +276,7 @@ export const getStatsBySport = (): SportStats[] => {
     // Trier par total décroissant
     return stats.sort((a, b) => b.total - a.total);
   } catch (error) {
-    console.error('[STATS] Erreur stats par sport:', error);
+    logger.error('[STATS] Erreur stats par sport:', error);
     return [];
   }
 };
@@ -312,7 +313,7 @@ export const getPracticesLastDays = (days: number = 7): DailyPractice[] => {
 
     return result;
   } catch (error) {
-    console.error('[STATS] Erreur pratiques par jour:', error);
+    logger.error('[STATS] Erreur pratiques par jour:', error);
     return [];
   }
 };
@@ -364,7 +365,7 @@ export const getPracticeLogsForMonth = (year: number, month: number): PracticeLo
 
     return logs;
   } catch (error) {
-    console.error('[STATS] Erreur logs par mois:', error);
+    logger.error('[STATS] Erreur logs par mois:', error);
     return [];
   }
 };

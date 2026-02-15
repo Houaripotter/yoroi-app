@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+
 import { Lock, Check } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useDevMode } from '@/lib/DevModeContext';

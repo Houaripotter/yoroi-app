@@ -33,6 +33,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { HealthspanChart } from '@/components/HealthspanChart';
+import { logger } from '@/lib/security/logger';
 
 /**
  * Convertit les heures décimales en format lisible "Xh YYmin"
@@ -92,7 +93,7 @@ export const VitalitePage: React.FC = () => {
         }, 2000);
       }
     } catch (error) {
-      console.error('Error checking beta warning:', error);
+      logger.error('Error checking beta warning:', error);
     }
   };
 
@@ -101,7 +102,7 @@ export const VitalitePage: React.FC = () => {
       await AsyncStorage.setItem('@yoroi_vitality_beta_warning_seen', 'true');
       setShowBetaWarning(false);
     } catch (error) {
-      console.error('Error saving beta warning:', error);
+      logger.error('Error saving beta warning:', error);
     }
   };
 
@@ -120,7 +121,7 @@ export const VitalitePage: React.FC = () => {
         await loadHealthData();
       }
     } catch (error) {
-      console.error('Error checking HealthKit:', error);
+      logger.error('Error checking HealthKit:', error);
     } finally {
       setLoading(false);
     }
@@ -183,12 +184,12 @@ export const VitalitePage: React.FC = () => {
           })).reverse() : [],
         });
       } catch (historyError) {
-        console.log('Historical data not available:', historyError);
+        logger.info('Historical data not available:', historyError);
         // Initialiser avec tableaux vides en cas d'erreur
         setVitalHistory({ sleep: [], heartRate: [], hrv: [] });
       }
     } catch (error) {
-      console.error('Error loading health data:', error);
+      logger.error('Error loading health data:', error);
     } finally {
       setLoading(false);
     }
@@ -203,7 +204,7 @@ export const VitalitePage: React.FC = () => {
         await loadHealthData();
       }
     } catch (error) {
-      console.error('Error connecting HealthKit:', error);
+      logger.error('Error connecting HealthKit:', error);
     } finally {
       setConnecting(false);
     }

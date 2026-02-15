@@ -13,6 +13,7 @@ import { getCurrentRank } from '@/lib/ranks';
 import { getLevel } from '@/lib/gamification';
 import { LinearGradient } from 'expo-linear-gradient';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { logger } from '@/lib/security/logger';
 
 // Clés des citations motivantes (pour i18n)
 const quoteKeys = [
@@ -65,7 +66,7 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
         (streakDays >= 100 ? 500 : streakDays >= 30 ? 200 : streakDays >= 7 ? 50 : 0);
       setTotalPoints(points);
     } catch (error) {
-      console.error('Erreur chargement gamification:', error);
+      logger.error('Erreur chargement gamification:', error);
     }
   }, []);
 

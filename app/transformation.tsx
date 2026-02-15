@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { useFocusEffect, router } from 'expo-router';
+import { router } from 'expo-router';
 import { Camera, ChevronRight, RefreshCw, ArrowRight, TrendingDown, TrendingUp, Calendar, Zap, Target, Award } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';

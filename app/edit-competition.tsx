@@ -73,18 +73,12 @@ export default function EditCompetitionScreen() {
   const typeSuggestions = ['Combat', 'Match', 'Course', 'Compétition', 'Tournoi', 'Championnat'];
 
   useEffect(() => {
-    loadCompetition();
-  }, []);
-
-  useEffect(() => {
-    // Mettre à jour les catégories quand le sport change
-    setWeightCategories(getWeightCategories(sport));
-  }, [sport]);
-
-  const loadCompetition = async () => {
-    try {
-      const comp = await getCompetitionById(parseInt(competitionId));
-      if (!comp) {
+    let cancelled = false;
+    const loadComp = async () => {
+      try {
+        const comp = await getCompetitionById(parseInt(competitionId));
+        if (cancelled) return;
+        if (!comp) {
         showPopup('Erreur', 'Compétition introuvable', [
           { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); setTimeout(() => setIsNavigating(false), 1000); router.back(); } } }
         ]);
@@ -114,6 +108,13 @@ export default function EditCompetitionScreen() {
       setLoading(false);
     }
   };
+    loadComp();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    setWeightCategories(getWeightCategories(sport));
+  }, [sport]);
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     if (Platform.OS === 'android') {

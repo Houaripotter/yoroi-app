@@ -13,6 +13,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { ChevronLeft, Target, Plus, Check, Trash2, Edit2 } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '@/lib/security/logger';
 
 // ============================================
 // OBJECTIFS - MES BUTS PERSONNELS
@@ -48,7 +49,7 @@ export default function GoalsScreen() {
         setGoals(JSON.parse(stored));
       }
     } catch (error) {
-      console.error('Erreur chargement objectifs:', error);
+      logger.error('Erreur chargement objectifs:', error);
     }
   };
 
@@ -57,7 +58,7 @@ export default function GoalsScreen() {
       await AsyncStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(newGoals));
       setGoals(newGoals);
     } catch (error) {
-      console.error('Erreur sauvegarde objectifs:', error);
+      logger.error('Erreur sauvegarde objectifs:', error);
     }
   };
 

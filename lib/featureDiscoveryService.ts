@@ -4,6 +4,7 @@
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '@/lib/security/logger';
 
 const DISCOVERY_KEY = 'yoroi_feature_discovery_v2';
 const CHANGELOG_KEY = 'yoroi_last_changelog_version';
@@ -215,7 +216,7 @@ export const loadDiscoveryState = async (): Promise<FeatureDiscoveryState> => {
     }
     return {};
   } catch (error) {
-    console.error('Error loading discovery state:', error);
+    logger.error('Error loading discovery state:', error);
     return {};
   }
 };
@@ -229,7 +230,7 @@ export const markPageAsVisited = async (page: FeaturePage): Promise<void> => {
     state[page] = true;
     await AsyncStorage.setItem(DISCOVERY_KEY, JSON.stringify(state));
   } catch (error) {
-    console.error('Error marking page as visited:', error);
+    logger.error('Error marking page as visited:', error);
   }
 };
 
@@ -241,7 +242,7 @@ export const hasVisitedPage = async (page: FeaturePage): Promise<boolean> => {
     const state = await loadDiscoveryState();
     return state[page] === true;
   } catch (error) {
-    console.error('Error checking page visit:', error);
+    logger.error('Error checking page visit:', error);
     return true; // En cas d'erreur, on ne montre pas le tutoriel
   }
 };
@@ -253,7 +254,7 @@ export const resetAllTutorials = async (): Promise<void> => {
   try {
     await AsyncStorage.removeItem(DISCOVERY_KEY);
   } catch (error) {
-    console.error('Error resetting tutorials:', error);
+    logger.error('Error resetting tutorials:', error);
   }
 };
 
@@ -269,7 +270,7 @@ export const shouldShowChangelog = async (): Promise<boolean> => {
     const lastVersion = await AsyncStorage.getItem(CHANGELOG_KEY);
     return lastVersion !== CURRENT_VERSION;
   } catch (error) {
-    console.error('Error checking changelog:', error);
+    logger.error('Error checking changelog:', error);
     return false;
   }
 };
@@ -281,7 +282,7 @@ export const markChangelogAsRead = async (): Promise<void> => {
   try {
     await AsyncStorage.setItem(CHANGELOG_KEY, CURRENT_VERSION);
   } catch (error) {
-    console.error('Error marking changelog as read:', error);
+    logger.error('Error marking changelog as read:', error);
   }
 };
 
@@ -292,6 +293,6 @@ export const resetChangelog = async (): Promise<void> => {
   try {
     await AsyncStorage.removeItem(CHANGELOG_KEY);
   } catch (error) {
-    console.error('Error resetting changelog:', error);
+    logger.error('Error resetting changelog:', error);
   }
 };

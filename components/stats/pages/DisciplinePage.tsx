@@ -21,6 +21,7 @@ import { Flame, Target, Calendar, Award, Timer } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { StatsExplanation } from '../StatsExplanation';
+import { logger } from '@/lib/security/logger';
 
 export const DisciplinePage: React.FC = () => {
   const { colors } = useTheme();
@@ -119,7 +120,7 @@ export const DisciplinePage: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Error loading training data:', error);
+      logger.error('Error loading training data:', error);
     } finally {
       setLoading(false);
     }

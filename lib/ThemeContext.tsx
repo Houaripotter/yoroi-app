@@ -95,7 +95,7 @@ export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
     // Fallback de sécurité si le contexte est undefined (ne devrait pas arriver)
-    console.error('CRITICAL: useTheme() called but context is undefined. Using default fallback.');
+    logger.error('CRITICAL: useTheme() called but context is undefined. Using default fallback.');
     return {
       theme: defaultTheme,
       colors: defaultTheme.colors,

@@ -28,6 +28,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { ThemeMode } from '@/constants/themes';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+import { logger } from '@/lib/security/logger';
 
 export default function AppearanceScreen() {
   const { colors, themeMode, setThemeMode } = useTheme();
@@ -37,7 +38,7 @@ export default function AppearanceScreen() {
       impactAsync(ImpactFeedbackStyle.Light);
       await setThemeMode(mode);
     } catch (error) {
-      console.error('[Appearance] Erreur changement mode:', error);
+      logger.error('[Appearance] Erreur changement mode:', error);
     }
   };
 

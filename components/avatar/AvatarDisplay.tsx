@@ -128,13 +128,13 @@ export default function AvatarDisplay({
       <View style={containerStyle}>
         <Image
           source={imageSource}
-          // Pour sm: image plus petite pour voir le personnage EN ENTIER (pas coupé)
+          // Pour sm: image grande pour remplir le cercle (95%)
           // Pour autres: 85% standard
           style={isSmall
-            ? { width: '60%', height: '90%' } // Personnage complet visible (dézoomé)
+            ? { width: '95%', height: '95%', borderRadius: dimensions.width / 2 }
             : { width: '85%', height: '85%' }
           }
-          resizeMode="contain"
+          resizeMode={isSmall ? 'cover' : 'contain'}
         />
       </View>
     );

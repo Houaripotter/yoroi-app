@@ -11,6 +11,7 @@ import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { aggregateTrainingData } from '@/lib/statsAggregation';
 import { Flame, Dumbbell, Clock, Target } from 'lucide-react-native';
+import { logger } from '@/lib/security/logger';
 
 export const EntrainementPage: React.FC = () => {
   const { colors } = useTheme();
@@ -28,7 +29,7 @@ export const EntrainementPage: React.FC = () => {
       const data = await aggregateTrainingData(selectedPeriod);
       setTrainingData(data);
     } catch (error) {
-      console.error('Error loading training data:', error);
+      logger.error('Error loading training data:', error);
     } finally {
       setLoading(false);
     }

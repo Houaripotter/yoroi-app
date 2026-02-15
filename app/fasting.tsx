@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { useFocusEffect } from 'expo-router';
+
 import {
   Clock,
   Play,

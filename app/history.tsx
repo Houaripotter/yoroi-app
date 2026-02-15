@@ -15,7 +15,7 @@ import { Calendar, Dna } from 'lucide-react-native';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getAllMeasurements, Measurement, getAllWorkouts, getWorkoutsByMonth, getUserSettings, addWorkout, deleteWorkout, getUserClubs } from '@/lib/storage';
-import { useFocusEffect, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Workout, WorkoutType } from '@/types/workout';

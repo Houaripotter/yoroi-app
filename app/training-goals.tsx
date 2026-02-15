@@ -68,7 +68,7 @@ import {
   GlobalGoalStats,
   TrainingGoal,
 } from '@/lib/trainingGoalsService';
-import { AnimatedHourglass } from '@/components/objectives/AnimatedHourglass';
+import { logger } from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -148,7 +148,7 @@ export default function TrainingGoalsScreen() {
       });
       setCountdowns(map);
     } catch (error) {
-      console.error('Erreur chargement objectifs:', error);
+      logger.error('Erreur chargement objectifs:', error);
     }
   }, []);
 
@@ -163,7 +163,7 @@ export default function TrainingGoalsScreen() {
       setProgressList(progressData);
       setGlobalStats(statsData);
     } catch (error) {
-      console.error('Erreur chargement objectifs entrainement:', error);
+      logger.error('Erreur chargement objectifs entrainement:', error);
     }
   }, []);
 
@@ -398,15 +398,6 @@ export default function TrainingGoalsScreen() {
                     {principalObjective.is_pinned && (
                       <Pin size={14} color={colors.accent} />
                     )}
-                  </View>
-
-                  {/* Sablier */}
-                  <View style={styles.hourglassContainer}>
-                    <AnimatedHourglass
-                      progress={principalCountdown.progress}
-                      size={160}
-                      sandColor={principalObjective.color || colors.accent}
-                    />
                   </View>
 
                   {/* Titre + countdown */}
@@ -722,9 +713,7 @@ export default function TrainingGoalsScreen() {
               {/* Etat vide */}
               {objectives.length === 0 && !showAddForm && (
                 <View style={styles.emptyState}>
-                  <View style={styles.emptyHourglass}>
-                    <AnimatedHourglass progress={0.3} size={100} sandColor={colors.textMuted} />
-                  </View>
+                  <Target size={48} color={colors.textMuted} style={{ marginBottom: 16 }} />
                   <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
                     Aucun objectif
                   </Text>

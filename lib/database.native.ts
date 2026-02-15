@@ -46,9 +46,26 @@ const _performInit = async () => {
       start_weight REAL,
       start_date TEXT,
       avatar_gender TEXT DEFAULT 'homme',
+      profile_photo TEXT,
+      birth_date TEXT,
+      weight_goal TEXT DEFAULT 'lose',
+      age INTEGER,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // Migrations: ajouter les colonnes manquantes si la table existe déjà
+  const profileMigrations = [
+    'ALTER TABLE profile ADD COLUMN profile_photo TEXT;',
+    'ALTER TABLE profile ADD COLUMN birth_date TEXT;',
+    "ALTER TABLE profile ADD COLUMN weight_goal TEXT DEFAULT 'lose';",
+    'ALTER TABLE profile ADD COLUMN age INTEGER;',
+  ];
+  for (const migration of profileMigrations) {
+    try {
+      await database.execAsync(migration);
+    } catch (_e) { /* colonne existe déjà */ }
+  }
 
   // Table Pesees (poids + composition)
   await database.execAsync(`
@@ -417,7 +434,10 @@ export interface Profile {
   start_weight?: number;
   start_date?: string;
   avatar_gender?: 'homme' | 'femme';
-  profile_photo?: string | null; // URI de la photo custom, null = utiliser avatar
+  profile_photo?: string | null;
+  birth_date?: string;
+  weight_goal?: string;
+  age?: number;
   created_at?: string;
 }
 
@@ -639,18 +659,21 @@ export const saveProfile = async (profile: Profile): Promise<void> => {
   if (existing) {
     await database.runAsync(
       `UPDATE profile SET name = ?, height_cm = ?, target_weight = ?, start_weight = ?,
-       start_date = ?, avatar_gender = ?, profile_photo = ? WHERE id = ?`,
+       start_date = ?, avatar_gender = ?, profile_photo = ?, birth_date = ?, weight_goal = ?, age = ? WHERE id = ?`,
       [profile.name, profile.height_cm || null, profile.target_weight || null,
        profile.start_weight || null, profile.start_date || null,
-       profile.avatar_gender || 'homme', profile.profile_photo || null, existing.id!]
+       profile.avatar_gender || 'homme', profile.profile_photo || null,
+       profile.birth_date || null, profile.weight_goal || 'lose', profile.age || null,
+       existing.id!]
     );
   } else {
     await database.runAsync(
-      `INSERT INTO profile (name, height_cm, target_weight, start_weight, start_date, avatar_gender, profile_photo)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO profile (name, height_cm, target_weight, start_weight, start_date, avatar_gender, profile_photo, birth_date, weight_goal, age)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [profile.name, profile.height_cm || null, profile.target_weight || null,
        profile.start_weight || null, profile.start_date || null, profile.avatar_gender || 'homme',
-       profile.profile_photo || null]
+       profile.profile_photo || null, profile.birth_date || null, profile.weight_goal || 'lose',
+       profile.age || null]
     );
   }
 };

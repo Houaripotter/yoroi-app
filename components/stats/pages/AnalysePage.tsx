@@ -15,6 +15,7 @@ import { RadarChart } from '../charts/RadarChart';
 import { aggregateWeightData, aggregateTrainingData, aggregateCompositionData, calculateCorrelation } from '@/lib/statsAggregation';
 import { TrendingUp, Zap, Target, Award, AlertCircle, TrendingDown, Activity } from 'lucide-react-native';
 import { healthConnect } from '@/lib/healthConnect';
+import { logger } from '@/lib/security/logger';
 
 export const AnalysePage: React.FC = () => {
   const { colors } = useTheme();
@@ -99,7 +100,7 @@ export const AnalysePage: React.FC = () => {
         setVitalityScore(Math.round(defaultScore));
       }
     } catch (error) {
-      console.error('Error loading analysis data:', error);
+      logger.error('Error loading analysis data:', error);
     } finally {
       setLoading(false);
     }

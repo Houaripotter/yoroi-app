@@ -3,6 +3,7 @@
 // ============================================
 
 import { Platform } from 'react-native';
+import { logger } from '@/lib/security/logger';
 
 // 🔒 Platform-specific: SQLite only available on native
 const isNativePlatform = Platform.OS === 'ios' || Platform.OS === 'android';
@@ -125,7 +126,11 @@ export const initTrainingJournalDB = () => {
           }
         }
       }
-    } catch (migrationError) {
+    } catch (migrationError: any) {
+      const msg = String(migrationError?.message || migrationError || '').toLowerCase();
+      if (!msg.includes('duplicate') && !msg.includes('already exists')) {
+        logger.error('[TRAINING_JOURNAL] Erreur migration colonnes:', migrationError);
+      }
     }
 
     // Table practice_logs
@@ -147,7 +152,8 @@ export const initTrainingJournalDB = () => {
     `);
 
   } catch (error) {
-    console.error('[TRAINING_JOURNAL] Erreur init DB:', error);
+    logger.error('[TRAINING_JOURNAL] Erreur init DB:', error);
+    throw error;
   }
 };
 
@@ -195,7 +201,7 @@ export const createProgressionItem = (item: Omit<ProgressionItem, 'id' | 'create
     );
     return result.lastInsertRowId;
   } catch (error) {
-    console.error('[TRAINING_JOURNAL] Erreur création item:', error);
+    logger.error('[TRAINING_JOURNAL] Erreur création item:', error);
     throw error;
   }
 };
@@ -215,7 +221,7 @@ export const getProgressionItems = (status?: ProgressionStatus): ProgressionItem
     const items = db.getAllSync(query, params) as ProgressionItem[];
     return items;
   } catch (error) {
-    console.error('[TRAINING_JOURNAL] Erreur récupération items:', error);
+    logger.error('[TRAINING_JOURNAL] Erreur récupération items:', error);
     return [];
   }
 };
@@ -225,7 +231,7 @@ export const getProgressionItemById = (id: number): ProgressionItem | null => {
     const item = db.getFirstSync('SELECT * FROM progression_items WHERE id = ?', [id]) as ProgressionItem | null;
     return item;
   } catch (error) {
-    console.error('[TRAINING_JOURNAL] Erreur récupération item:', error);
+    logger.error('[TRAINING_JOURNAL] Erreur récupération item:', error);
     return null;
   }
 };
@@ -249,7 +255,7 @@ export const updateProgressionItem = (id: number, updates: Partial<ProgressionIt
 
     db.runSync(query, values);
   } catch (error) {
-    console.error('[TRAINING_JOURNAL] Erreur mise à jour item:', error);
+    logger.error('[TRAINING_JOURNAL] Erreur mise à jour item:', error);
     throw error;
   }
 };
@@ -258,7 +264,7 @@ export const deleteProgressionItem = (id: number) => {
   try {
     db.runSync('DELETE FROM progression_items WHERE id = ?', [id]);
   } catch (error) {
-    console.error('[TRAINING_JOURNAL] Erreur suppression item:', error);
+    logger.error('[TRAINING_JOURNAL] Erreur suppression item:', error);
     throw error;
   }
 };
@@ -275,7 +281,7 @@ export const updateItemStatus = (id: number, status: ProgressionStatus) => {
 
     updateProgressionItem(id, updates);
   } catch (error) {
-    console.error('[TRAINING_JOURNAL] Erreur changement statut:', error);
+    logger.error('[TRAINING_JOURNAL] Erreur changement statut:', error);
     throw error;
   }
 };
@@ -355,7 +361,7 @@ export const createPracticeLog = (log: Omit<PracticeLog, 'id' | 'created_at'>): 
 
     return result.lastInsertRowId;
   } catch (error) {
-    console.error('[TRAINING_JOURNAL] Erreur création log:', error);
+    logger.error('[TRAINING_JOURNAL] Erreur création log:', error);
     throw error;
   }
 };
@@ -368,7 +374,7 @@ export const getPracticeLogsByItemId = (itemId: number): PracticeLog[] => {
     ) as PracticeLog[];
     return logs;
   } catch (error) {
-    console.error('[TRAINING_JOURNAL] Erreur récupération logs:', error);
+    logger.error('[TRAINING_JOURNAL] Erreur récupération logs:', error);
     return [];
   }
 };
@@ -381,7 +387,7 @@ export const getLastPracticeLog = (itemId: number): PracticeLog | null => {
     ) as PracticeLog | null;
     return log;
   } catch (error) {
-    console.error('[TRAINING_JOURNAL] Erreur récupération dernier log:', error);
+    logger.error('[TRAINING_JOURNAL] Erreur récupération dernier log:', error);
     return null;
   }
 };
@@ -402,7 +408,7 @@ export const deletePracticeLog = (id: number) => {
     }
 
   } catch (error) {
-    console.error('[TRAINING_JOURNAL] Erreur suppression log:', error);
+    logger.error('[TRAINING_JOURNAL] Erreur suppression log:', error);
     throw error;
   }
 };
@@ -449,7 +455,7 @@ export const getJournalStats = () => {
 
     return stats;
   } catch (error) {
-    console.error('[TRAINING_JOURNAL] Erreur stats:', error);
+    logger.error('[TRAINING_JOURNAL] Erreur stats:', error);
     return {
       total: 0,
       todo: 0,

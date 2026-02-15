@@ -20,7 +20,8 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { useI18n } from '@/lib/I18nContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router, useFocusEffect } from 'expo-router';
+import { logger } from '@/lib/security/logger';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
@@ -462,7 +463,7 @@ export default function PlanningScreen() {
         setRecentBenchmarks(benchmarksWithPRs.slice(0, 6));
       }
     } catch (error) {
-      console.error('Erreur chargement planning:', error);
+      logger.error('Erreur chargement planning:', error);
     }
   }, []);
 
@@ -486,7 +487,7 @@ export default function PlanningScreen() {
         setSavedExternalEventIds(new Set(events.map(e => e.id)));
       }
     } catch (error) {
-      console.error('Error loading saved external events:', error);
+      logger.error('Error loading saved external events:', error);
       // Ne pas bloquer l'app si le storage échoue
     }
   };
@@ -496,27 +497,22 @@ export default function PlanningScreen() {
 
   // Load events from SQLite on mount
   useEffect(() => {
-    const loadEvents = async () => {
+    let cancelled = false;
+    const timer = setTimeout(async () => {
       setCatalogLoading(true);
-      console.log('🔄 Chargement des événements...');
       try {
-        // ⚡ PERFORMANCE: Charger 500 événements maximum
         const events = await getFilteredEvents({ upcomingOnly: true, limit: 500 });
-        setAllCatalogEvents(events as SportEvent[]);
-        console.log('✅ Événements chargés:', events.length, 'événements');
-        if (events.length > 0) {
-          console.log('📅 Premier événement:', events[0].title, '-', events[0].sport_tag);
+        if (!cancelled) {
+          setAllCatalogEvents(events as SportEvent[]);
         }
       } catch (error) {
-        console.error('❌ Erreur chargement événements:', error);
-        setAllCatalogEvents([]);
+        logger.error('Erreur chargement événements:', error);
+        if (!cancelled) setAllCatalogEvents([]);
       } finally {
-        setCatalogLoading(false);
+        if (!cancelled) setCatalogLoading(false);
       }
-    };
-
-    // ⚡ Charger en arrière-plan sans bloquer l'UI
-    setTimeout(() => loadEvents(), 100);
+    }, 100);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, []);
 
   // Filter catalog events
@@ -669,7 +665,7 @@ export default function PlanningScreen() {
 
       showPopup('Ajoute', `"${event.title.substring(0, 30)}..." ajoute a ton planning`);
     } catch (error) {
-      console.error('Error adding external event:', error);
+      logger.error('Error adding external event:', error);
       showPopup('Erreur', 'Impossible d\'ajouter l\'evenement');
     }
   }, [savedExternalEvents, showPopup]);
@@ -688,7 +684,7 @@ export default function PlanningScreen() {
       });
       await AsyncStorage.setItem(SAVED_EVENTS_KEY, JSON.stringify(newSavedEvents));
     } catch (error) {
-      console.error('Error removing external event:', error);
+      logger.error('Error removing external event:', error);
     }
   }, [savedExternalEvents]);
 
@@ -826,7 +822,7 @@ export default function PlanningScreen() {
       notificationAsync(NotificationFeedbackType.Success);
       await loadData();
     } catch (error) {
-      console.error('Erreur suppression seance:', error);
+      logger.error('Erreur suppression seance:', error);
       showPopup('Erreur', 'Impossible de supprimer la seance');
     }
   };

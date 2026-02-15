@@ -38,6 +38,7 @@ import { getProfile } from '@/lib/database';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { StatsExplanation } from '../StatsExplanation';
+import { logger } from '@/lib/security/logger';
 
 export const CompositionPage: React.FC = () => {
   const { colors } = useTheme();
@@ -144,7 +145,7 @@ export const CompositionPage: React.FC = () => {
           .reverse(),
       });
     } catch (error) {
-      console.error('Error loading composition data:', error);
+      logger.error('Error loading composition data:', error);
       setHistoryData({ bodyFat: [], muscle: [], water: [] });
     } finally {
       setLoading(false);

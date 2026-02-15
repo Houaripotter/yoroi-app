@@ -20,6 +20,7 @@ import { ChevronLeft, RefreshCw, CheckCircle, XCircle, AlertTriangle } from 'luc
 import { useTheme } from '@/lib/ThemeContext';
 import { healthConnect } from '@/lib/healthConnect';
 import { WatchConnectivity, isWatchModuleAvailable, getWatchModuleStatus } from '@/lib/watchConnectivity.ios';
+import { logger } from '@/lib/security/logger';
 
 interface DiagnosticResult {
   healthKit: {
@@ -53,11 +54,11 @@ export default function HealthDiagnosticPage() {
 
     try {
       // 1. Diagnostic HealthKit
-      console.log('[Diagnostic Page] Démarrage diagnostic HealthKit...');
+      logger.info('[Diagnostic Page] Démarrage diagnostic HealthKit...');
       const healthKitResult = await healthConnect.runDiagnostic();
 
       // 2. Diagnostic Watch
-      console.log('[Diagnostic Page] Démarrage diagnostic Watch...');
+      logger.info('[Diagnostic Page] Démarrage diagnostic Watch...');
       const watchResult = await WatchConnectivity.runDiagnostic();
 
       setResults({
@@ -80,7 +81,7 @@ export default function HealthDiagnosticPage() {
         },
       });
     } catch (error) {
-      console.error('[Diagnostic Page] Erreur:', error);
+      logger.error('[Diagnostic Page] Erreur:', error);
       setResults({
         healthKit: null,
         watch: null,

@@ -19,6 +19,7 @@ import { router } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/lib/ThemeContext';
+import { logger } from '@/lib/security/logger';
 
 // Même clé que dans Menu → Apparence
 const SHARE_BUTTON_KEY = '@yoroi_stats_share_button_hidden';
@@ -41,7 +42,7 @@ export const ShareFloatingButton: React.FC = () => {
         const hidden = await AsyncStorage.getItem(SHARE_BUTTON_KEY);
         setIsVisible(hidden !== 'true');
       } catch (error) {
-        console.error('Error checking share button visibility:', error);
+        logger.error('Error checking share button visibility:', error);
         setIsVisible(true);
       }
     };

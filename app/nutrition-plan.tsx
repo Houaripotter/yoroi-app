@@ -12,7 +12,7 @@ import {
   Dimensions,
   TextInput,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, Info, ExternalLink, User, Weight, Ruler, Calendar, Zap, Coffee, Sun, Sunset, Moon as MoonIcon, Apple, Utensils, Beef, Droplets } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';

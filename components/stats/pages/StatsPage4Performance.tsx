@@ -10,6 +10,7 @@ import { Trophy, TrendingUp, Target, TrendingDown } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SparklineChart } from '@/components/charts/SparklineChart';
 import { getTrainings, getWeights } from '@/lib/database';
+import { logger } from '@/lib/security/logger';
 
 const CARD_PADDING = 16;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -52,7 +53,7 @@ export const StatsPage4Performance: React.FC<StatsPage4PerformanceProps> = ({
         }
         setPerformanceHistory(history);
       } catch (error) {
-        console.error('Erreur chargement performance:', error);
+        logger.error('Erreur chargement performance:', error);
       }
     };
     loadPerformanceData();

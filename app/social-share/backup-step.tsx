@@ -30,6 +30,7 @@ import { successHaptic } from '@/lib/haptics';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import ratingService from '@/lib/ratingService';
 import { RatingPopup } from '@/components/RatingPopup';
+import { logger } from '@/lib/security/logger';
 
 export default function BackupStepScreen() {
   const { colors, isDark } = useTheme();
@@ -46,7 +47,7 @@ export default function BackupStepScreen() {
       // Afficher le modal de succès
       setShowSuccessModal(true);
     } catch (error) {
-      console.error('Erreur export:', error);
+      logger.error('Erreur export:', error);
       Alert.alert(
         'Erreur de sauvegarde',
         'Impossible d\'exporter tes données. Vérifie que tu as autorisé l\'accès à tes photos et réessaye.',

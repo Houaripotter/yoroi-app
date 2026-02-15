@@ -10,7 +10,7 @@ import {
   Switch,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
@@ -130,7 +130,7 @@ export default function SleepScreen() {
       setWakeTime('07:00');
       setQuality(3);
       setNotes('');
-      loadData();
+      loadData().catch(() => {});
       showPopup(t('sleep.saved'), t('sleep.savedMessage'), [{ text: 'OK', style: 'primary' }]);
     } catch (error: any) {
       const message = error?.message || t('sleep.saveError') || 'Erreur lors de la sauvegarde';
@@ -139,10 +139,14 @@ export default function SleepScreen() {
   };
 
   const handleGoalChange = async (minutes: number) => {
-    const newGoal = Math.max(300, Math.min(600, goal + minutes));
-    setGoal(newGoal);
-    await setSleepGoal(newGoal);
-    impactAsync(ImpactFeedbackStyle.Light);
+    try {
+      const newGoal = Math.max(300, Math.min(600, goal + minutes));
+      setGoal(newGoal);
+      await setSleepGoal(newGoal);
+      impactAsync(ImpactFeedbackStyle.Light);
+    } catch (error) {
+      logger.error('Erreur sauvegarde objectif sommeil:', error);
+    }
   };
 
   const handleToggleNotifications = async (value: boolean) => {

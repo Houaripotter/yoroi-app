@@ -9,6 +9,7 @@ import { X } from 'lucide-react-native';
 import { ModernLineChart } from './charts/ModernLineChart';
 import { PeriodSelector } from './PeriodSelector';
 import { Period } from './StatsHeader';
+import { logger } from '@/lib/security/logger';
 
 interface MetricDetailModalProps {
   visible: boolean;
@@ -46,7 +47,7 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
       const result = await loadData(selectedPeriod);
       setData(result);
     } catch (error) {
-      console.error('Error loading metric data:', error);
+      logger.error('Error loading metric data:', error);
     } finally {
       setLoading(false);
     }

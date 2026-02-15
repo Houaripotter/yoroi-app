@@ -33,6 +33,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import { safeOpenURL } from '@/lib/security/validators';
 import { getSportById } from '@/lib/sports';
+import { logger } from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -206,7 +207,7 @@ export default function EventDetailScreen() {
       try {
         await safeOpenURL(event.registration_link);
       } catch (error) {
-        console.error('Erreur ouverture lien:', error);
+        logger.error('Erreur ouverture lien:', error);
       }
     }
   };

@@ -300,8 +300,11 @@ const importFromiCloud = async (cloudData: SyncData): Promise<void> => {
     for (const measurement of cloudData.data.measurements) {
       try {
         await addMeasurementRecord(measurement);
-      } catch (e) {
-        // Ignorer les doublons
+      } catch (e: any) {
+        const msg = String(e?.message || e || '').toLowerCase();
+        if (!msg.includes('duplicate') && !msg.includes('unique') && !msg.includes('constraint')) {
+          logger.error('[iCloudSync] Erreur import mensuration:', e);
+        }
       }
     }
   }
@@ -311,8 +314,11 @@ const importFromiCloud = async (cloudData: SyncData): Promise<void> => {
     for (const training of cloudData.data.trainings) {
       try {
         await addTraining(training);
-      } catch (e) {
-        // Ignorer les doublons
+      } catch (e: any) {
+        const msg = String(e?.message || e || '').toLowerCase();
+        if (!msg.includes('duplicate') && !msg.includes('unique') && !msg.includes('constraint')) {
+          logger.error('[iCloudSync] Erreur import entrainement:', e);
+        }
       }
     }
   }

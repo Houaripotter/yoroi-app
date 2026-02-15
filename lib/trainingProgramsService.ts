@@ -4,6 +4,7 @@
 
 import { Platform } from 'react-native';
 import { Sport } from './trainingJournalService';
+import { logger } from '@/lib/security/logger';
 
 // 🔒 Platform-specific: SQLite only available on native
 const isNativePlatform = Platform.OS === 'ios' || Platform.OS === 'android';
@@ -89,7 +90,7 @@ export const initProgramsTables = () => {
     `);
 
   } catch (error) {
-    console.error('[PROGRAMS] Erreur initialisation tables:', error);
+    logger.error('[PROGRAMS] Erreur initialisation tables:', error);
   }
 };
 
@@ -112,7 +113,7 @@ export const createProgram = (
     );
     return result.lastInsertRowId;
   } catch (error) {
-    console.error('[PROGRAMS] Erreur création programme:', error);
+    logger.error('[PROGRAMS] Erreur création programme:', error);
     throw error;
   }
 };
@@ -124,7 +125,7 @@ export const getAllPrograms = (): TrainingProgram[] => {
     ) as TrainingProgram[];
     return programs;
   } catch (error) {
-    console.error('[PROGRAMS] Erreur récupération programmes:', error);
+    logger.error('[PROGRAMS] Erreur récupération programmes:', error);
     return [];
   }
 };
@@ -137,7 +138,7 @@ export const getProgramById = (id: number): TrainingProgram | null => {
     ) as TrainingProgram | null;
     return program;
   } catch (error) {
-    console.error('[PROGRAMS] Erreur récupération programme:', error);
+    logger.error('[PROGRAMS] Erreur récupération programme:', error);
     return null;
   }
 };
@@ -158,7 +159,7 @@ export const updateProgram = (
       [name, description || null, sport || null, targetDurationWeeks || null, now, id]
     );
   } catch (error) {
-    console.error('[PROGRAMS] Erreur mise à jour programme:', error);
+    logger.error('[PROGRAMS] Erreur mise à jour programme:', error);
     throw error;
   }
 };
@@ -168,7 +169,7 @@ export const deleteProgram = (id: number): void => {
     // Les program_items seront supprimés automatiquement grâce à ON DELETE CASCADE
     db.runSync('DELETE FROM training_programs WHERE id = ?', [id]);
   } catch (error) {
-    console.error('[PROGRAMS] Erreur suppression programme:', error);
+    logger.error('[PROGRAMS] Erreur suppression programme:', error);
     throw error;
   }
 };
@@ -194,7 +195,7 @@ export const addItemToProgram = (programId: number, itemId: number): void => {
     );
 
   } catch (error) {
-    console.error('[PROGRAMS] Erreur ajout objectif au programme:', error);
+    logger.error('[PROGRAMS] Erreur ajout objectif au programme:', error);
     throw error;
   }
 };
@@ -206,7 +207,7 @@ export const removeItemFromProgram = (programId: number, itemId: number): void =
       [programId, itemId]
     );
   } catch (error) {
-    console.error('[PROGRAMS] Erreur retrait objectif du programme:', error);
+    logger.error('[PROGRAMS] Erreur retrait objectif du programme:', error);
     throw error;
   }
 };
@@ -222,7 +223,7 @@ export const reorderProgramItems = (programId: number, itemOrders: { itemId: num
       });
     });
   } catch (error) {
-    console.error('[PROGRAMS] Erreur réorganisation objectifs:', error);
+    logger.error('[PROGRAMS] Erreur réorganisation objectifs:', error);
     throw error;
   }
 };
@@ -249,7 +250,7 @@ export const getProgramItems = (programId: number) => {
 
     return items;
   } catch (error) {
-    console.error('[PROGRAMS] Erreur récupération objectifs du programme:', error);
+    logger.error('[PROGRAMS] Erreur récupération objectifs du programme:', error);
     return [];
   }
 };
@@ -280,7 +281,7 @@ export const getProgramsWithProgress = (): ProgramWithProgress[] => {
 
     return programsWithProgress;
   } catch (error) {
-    console.error('[PROGRAMS] Erreur stats programmes:', error);
+    logger.error('[PROGRAMS] Erreur stats programmes:', error);
     return [];
   }
 };
@@ -313,7 +314,7 @@ export const getProgramProgress = (programId: number) => {
       completion_rate: completionRate,
     };
   } catch (error) {
-    console.error('[PROGRAMS] Erreur progression programme:', error);
+    logger.error('[PROGRAMS] Erreur progression programme:', error);
     return {
       total: 0,
       todo: 0,

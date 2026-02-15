@@ -5,6 +5,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { VictorySessionData } from '@/components/VictoryShareModal';
+import { logger } from '@/lib/security/logger';
 
 const PENDING_VICTORY_KEY = 'yoroi_pending_victory';
 
@@ -13,7 +14,7 @@ export const triggerVictoryModal = async (sessionData: VictorySessionData): Prom
   try {
     await AsyncStorage.setItem(PENDING_VICTORY_KEY, JSON.stringify(sessionData));
   } catch (error) {
-    console.error('[VICTORY_TRIGGER] Error storing victory data:', error);
+    logger.error('[VICTORY_TRIGGER] Error storing victory data:', error);
   }
 };
 
@@ -27,7 +28,7 @@ export const getPendingVictory = async (): Promise<VictorySessionData | null> =>
     }
     return null;
   } catch (error) {
-    console.error('[VICTORY_TRIGGER] Error reading victory data:', error);
+    logger.error('[VICTORY_TRIGGER] Error reading victory data:', error);
     return null;
   }
 };
@@ -37,7 +38,7 @@ export const clearPendingVictory = async (): Promise<void> => {
   try {
     await AsyncStorage.removeItem(PENDING_VICTORY_KEY);
   } catch (error) {
-    console.error('[VICTORY_TRIGGER] Error clearing victory data:', error);
+    logger.error('[VICTORY_TRIGGER] Error clearing victory data:', error);
   }
 };
 

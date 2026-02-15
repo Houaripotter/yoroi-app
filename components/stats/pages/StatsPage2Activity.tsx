@@ -10,6 +10,7 @@ import AnimatedCounter from '@/components/AnimatedCounter';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SparklineChart } from '@/components/charts/SparklineChart';
 import { healthConnect } from '@/lib/healthConnect';
+import { logger } from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_PADDING = 16;
@@ -57,7 +58,7 @@ export const StatsPage2Activity: React.FC<StatsPage2ActivityProps> = ({
         }
       } catch (error) {
         // En cas d'erreur → pas de données fictives
-        console.error('Error loading activity history:', error);
+        logger.error('Error loading activity history:', error);
         setActivityHistory([]);
       }
     };

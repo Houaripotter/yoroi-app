@@ -31,7 +31,7 @@ import {
   Minus,
 } from 'lucide-react-native';
 import { getAllBodyCompositions, BodyComposition } from '@/lib/bodyComposition';
-import { useFocusEffect } from 'expo-router';
+
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';

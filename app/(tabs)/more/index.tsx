@@ -908,7 +908,7 @@ export default function MoreScreen() {
               // Feedback haptique
               notificationAsync(NotificationFeedbackType.Success);
             } catch (error) {
-              console.error('Error resetting tutorials:', error);
+              logger.error('Error resetting tutorials:', error);
               showPopup(
                 t('common.error'),
                 'Impossible de réinitialiser les tutoriels',
@@ -1186,7 +1186,7 @@ export default function MoreScreen() {
         setCreatorCode('');
       }
     } catch (error) {
-      console.error(error);
+      logger.error('Error in creator mode:', error);
     }
   };
 

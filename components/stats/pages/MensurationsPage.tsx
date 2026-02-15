@@ -19,6 +19,7 @@ import { fr, enUS } from 'date-fns/locale';
 import { WAIST_CIRCUMFERENCE_RANGES_MALE, WAIST_CIRCUMFERENCE_RANGES_FEMALE, getWaistCircumferenceRange, getMetricStatus } from '@/lib/healthRanges';
 import { getUserSettings } from '@/lib/storage';
 import { useScrollContext } from '@/lib/ScrollContext';
+import { logger } from '@/lib/security/logger';
 
 export const MensurationsPage: React.FC = () => {
   const { colors } = useTheme();
@@ -115,7 +116,7 @@ export const MensurationsPage: React.FC = () => {
         setMeasurementHistory(history);
       }
     } catch (error) {
-      console.error('Error loading measurements:', error);
+      logger.error('Error loading measurements:', error);
     } finally {
       setLoading(false);
     }

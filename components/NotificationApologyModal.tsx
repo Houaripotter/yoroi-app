@@ -13,6 +13,7 @@ import { X, Bell, MessageSquare, CheckCircle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/lib/ThemeContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { logger } from '@/lib/security/logger';
 
 // ============================================
 // MODAL D'EXCUSE POUR LES NOTIFICATIONS
@@ -55,7 +56,7 @@ export const NotificationApologyModal: React.FC = () => {
         }, 2000);
       }
     } catch (error) {
-      console.error('Error checking notification apology:', error);
+      logger.error('Error checking notification apology:', error);
     }
   };
 
@@ -67,7 +68,7 @@ export const NotificationApologyModal: React.FC = () => {
       await AsyncStorage.setItem(STORAGE_KEY, 'true');
       setVisible(false);
     } catch (error) {
-      console.error('Error saving notification apology state:', error);
+      logger.error('Error saving notification apology state:', error);
       setVisible(false);
     }
   };

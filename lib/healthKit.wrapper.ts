@@ -4,6 +4,7 @@
 
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { logger } from '@/lib/security/logger';
 
 // Détecter si on est dans Expo Go
 const isExpoGo = Constants.appOwnership === 'expo';
@@ -14,9 +15,9 @@ let HealthKit: any = null;
 if (!isExpoGo && Platform.OS === 'ios') {
   try {
     HealthKit = require('@kingstinct/react-native-healthkit').default;
-    console.log('[HealthKit] Module chargé avec succès');
+    logger.info('[HealthKit] Module chargé avec succès');
   } catch (error) {
-    console.warn('[HealthKit] Module non disponible (probablement Expo Go):', error);
+    logger.warn('[HealthKit] Module non disponible (probablement Expo Go):', error);
   }
 }
 

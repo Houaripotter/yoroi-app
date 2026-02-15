@@ -13,7 +13,7 @@ const sanitize = (data: any): any => {
   if (!data) return data;
   if (typeof data !== 'object') return data;
 
-  const sensitiveKeys = ['weight', 'fat_percent', 'muscle_percent', 'uri', 'email', 'name', 'token', 'password'];
+  const sensitiveKeys = ['weight', 'fat_percent', 'muscle_percent', 'uri', 'email', 'name', 'token', 'password', 'injury', 'pain', 'medication', 'treatment', 'notes', 'note', 'date_of_birth', 'body_fat', 'muscle_mass', 'water', 'bone_mass', 'visceral_fat', 'metabolic_age', 'bmr', 'bmi'];
   const sanitized = { ...data };
 
   Object.keys(sanitized).forEach(key => {

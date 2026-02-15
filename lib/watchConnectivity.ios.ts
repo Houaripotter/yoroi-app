@@ -15,35 +15,36 @@
  *
  * // Écouter les données de la Watch
  * WatchConnectivity.onReceiveFromWatch((data) => {
- *   console.log('Reçu de la Watch:', data);
+ *   logger.info('Reçu de la Watch:', data);
  * });
  * ```
  */
 
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
+import { logger } from '@/lib/security/logger';
 
 // ✅ DIAGNOSTIC: Logger l'état du module au chargement
 const isModuleAvailable = !!NativeModules.WatchConnectivityBridge;
-console.log('========================================');
-console.log('[WatchConnectivity] Module natif disponible:', isModuleAvailable);
-console.log('[WatchConnectivity] Platform:', Platform.OS);
+logger.info('========================================');
+logger.info('[WatchConnectivity] Module natif disponible:', isModuleAvailable);
+logger.info('[WatchConnectivity] Platform:', Platform.OS);
 if (!isModuleAvailable && Platform.OS === 'ios') {
-  console.warn('[WatchConnectivity] ⚠️ ATTENTION: Module WatchConnectivityBridge NON CHARGÉ sur iOS!');
-  console.warn('[WatchConnectivity] La communication iPhone ↔ Watch ne fonctionnera PAS.');
-  console.warn('[WatchConnectivity] Vérifiez que le module natif est correctement linké.');
+  logger.warn('[WatchConnectivity] ⚠️ ATTENTION: Module WatchConnectivityBridge NON CHARGÉ sur iOS!');
+  logger.warn('[WatchConnectivity] La communication iPhone ↔ Watch ne fonctionnera PAS.');
+  logger.warn('[WatchConnectivity] Vérifiez que le module natif est correctement linké.');
 }
-console.log('========================================');
+logger.info('========================================');
 
 const WatchConnectivityModule = isModuleAvailable
   ? NativeModules.WatchConnectivityBridge
   : {
       // Module stub qui retourne des valeurs par défaut au lieu de crasher
       isWatchAvailable: () => {
-        console.warn('[WatchConnectivity] Stub: isWatchAvailable() appelé - module non disponible');
+        logger.warn('[WatchConnectivity] Stub: isWatchAvailable() appelé - module non disponible');
         return Promise.resolve(false);
       },
       isWatchReachable: () => {
-        console.warn('[WatchConnectivity] Stub: isWatchReachable() appelé - module non disponible');
+        logger.warn('[WatchConnectivity] Stub: isWatchReachable() appelé - module non disponible');
         return Promise.resolve(false);
       },
       sendMessageToWatch: () => {
@@ -120,7 +121,7 @@ export const WatchConnectivity = {
     try {
       return await WatchConnectivityModule.isWatchAvailable();
     } catch (error) {
-      console.error('Error checking watch availability:', error);
+      logger.error('Error checking watch availability:', error);
       return false;
     }
   },
@@ -133,7 +134,7 @@ export const WatchConnectivity = {
     try {
       return await WatchConnectivityModule.isWatchReachable();
     } catch (error) {
-      console.error('Error checking watch reachability:', error);
+      logger.error('Error checking watch reachability:', error);
       return false;
     }
   },
@@ -265,9 +266,9 @@ export const WatchConnectivity = {
           timestamp: Date.now(),
         },
       });
-      console.log('✅ Weight update sent to Watch:', weight);
+      logger.info('✅ Weight update sent to Watch:', weight);
     } catch (error) {
-      console.error('❌ Error sending weight to Watch:', error);
+      logger.error('❌ Error sending weight to Watch:', error);
       throw error;
     }
   },
@@ -284,9 +285,9 @@ export const WatchConnectivity = {
           timestamp: Date.now(),
         },
       });
-      console.log('✅ Hydration update sent to Watch:', waterIntake);
+      logger.info('✅ Hydration update sent to Watch:', waterIntake);
     } catch (error) {
-      console.error('❌ Error sending hydration to Watch:', error);
+      logger.error('❌ Error sending hydration to Watch:', error);
       throw error;
     }
   },
@@ -308,9 +309,9 @@ export const WatchConnectivity = {
           timestamp: Date.now(),
         },
       });
-      console.log('✅ Workout session sent to Watch');
+      logger.info('✅ Workout session sent to Watch');
     } catch (error) {
-      console.error('❌ Error sending workout to Watch:', error);
+      logger.error('❌ Error sending workout to Watch:', error);
       throw error;
     }
   },
@@ -331,9 +332,9 @@ export const WatchConnectivity = {
           timestamp: Date.now(),
         },
       });
-      console.log('✅ Records sent to Watch:', records.length);
+      logger.info('✅ Records sent to Watch:', records.length);
     } catch (error) {
-      console.error('❌ Error sending records to Watch:', error);
+      logger.error('❌ Error sending records to Watch:', error);
       throw error;
     }
   },
@@ -350,15 +351,15 @@ export const WatchConnectivity = {
     errors: string[];
     recommendations: string[];
   }> => {
-    console.log('========================================');
-    console.log('[WatchConnectivity] DÉMARRAGE DIAGNOSTIC');
-    console.log('========================================');
+    logger.info('========================================');
+    logger.info('[WatchConnectivity] DÉMARRAGE DIAGNOSTIC');
+    logger.info('========================================');
 
     const errors: string[] = [];
     const recommendations: string[] = [];
 
     // 1. Vérifier le module natif
-    console.log('[Diagnostic] Module natif disponible:', isModuleAvailable);
+    logger.info('[Diagnostic] Module natif disponible:', isModuleAvailable);
     if (!isModuleAvailable) {
       errors.push('Module natif WatchConnectivityBridge non chargé');
       recommendations.push('Vérifiez que le module natif est correctement compilé dans Xcode');
@@ -366,7 +367,7 @@ export const WatchConnectivity = {
     }
 
     // 2. Vérifier la plateforme
-    console.log('[Diagnostic] Plateforme:', Platform.OS);
+    logger.info('[Diagnostic] Plateforme:', Platform.OS);
     if (Platform.OS !== 'ios') {
       errors.push('WatchConnectivity n\'est disponible que sur iOS');
     }
@@ -375,7 +376,7 @@ export const WatchConnectivity = {
     let isAvailable = false;
     try {
       isAvailable = await WatchConnectivity.isWatchAvailable();
-      console.log('[Diagnostic] Watch disponible:', isAvailable);
+      logger.info('[Diagnostic] Watch disponible:', isAvailable);
 
       if (!isAvailable) {
         errors.push('Apple Watch non disponible');
@@ -390,7 +391,7 @@ export const WatchConnectivity = {
     let isReachable = false;
     try {
       isReachable = await WatchConnectivity.isWatchReachable();
-      console.log('[Diagnostic] Watch reachable:', isReachable);
+      logger.info('[Diagnostic] Watch reachable:', isReachable);
 
       if (!isReachable && isAvailable) {
         recommendations.push('Votre Watch est jumelée mais pas à portée');
@@ -405,17 +406,17 @@ export const WatchConnectivity = {
     try {
       if (WatchConnectivityModule.ping) {
         pingResult = await WatchConnectivityModule.ping();
-        console.log('[Diagnostic] Ping result:', pingResult);
+        logger.info('[Diagnostic] Ping result:', pingResult);
       }
     } catch (e) {
-      console.log('[Diagnostic] Ping non disponible ou échoué');
+      logger.info('[Diagnostic] Ping non disponible ou échoué');
     }
 
-    console.log('========================================');
-    console.log('[WatchConnectivity] FIN DIAGNOSTIC');
-    console.log('Erreurs:', errors.length);
-    console.log('Recommandations:', recommendations.length);
-    console.log('========================================');
+    logger.info('========================================');
+    logger.info('[WatchConnectivity] FIN DIAGNOSTIC');
+    logger.info('Erreurs:', errors.length);
+    logger.info('Recommandations:', recommendations.length);
+    logger.info('========================================');
 
     return {
       moduleAvailable: isModuleAvailable,
@@ -456,8 +457,8 @@ export function useWatchConnectivity() {
 
   React.useEffect(() => {
     // Vérifier disponibilité au mount
-    WatchConnectivity.isWatchAvailable().then(setIsAvailable);
-    WatchConnectivity.isWatchReachable().then(setIsReachable);
+    WatchConnectivity.isWatchAvailable().then(setIsAvailable).catch(() => {});
+    WatchConnectivity.isWatchReachable().then(setIsReachable).catch(() => {});
 
     // Écouter les changements de reachability
     const reachabilityListener = WatchConnectivity.onReachabilityChanged((status) => {

@@ -4,6 +4,7 @@
 // Gestion des jours de repos planifiés
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '@/lib/security/logger';
 
 const REST_DAYS_KEY = '@yoroi_rest_days';
 
@@ -18,7 +19,7 @@ export const getRestDays = async (): Promise<RestDay[]> => {
     const data = await AsyncStorage.getItem(REST_DAYS_KEY);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error('Erreur lecture jours repos:', error);
+    logger.error('Erreur lecture jours repos:', error);
     return [];
   }
 };
@@ -40,7 +41,7 @@ export const addRestDay = async (date: string, reason?: string): Promise<void> =
       await AsyncStorage.setItem(REST_DAYS_KEY, JSON.stringify(restDays));
     }
   } catch (error) {
-    console.error('Erreur ajout jour repos:', error);
+    logger.error('Erreur ajout jour repos:', error);
   }
 };
 
@@ -51,7 +52,7 @@ export const removeRestDay = async (date: string): Promise<void> => {
     const filtered = restDays.filter(rd => rd.date !== date);
     await AsyncStorage.setItem(REST_DAYS_KEY, JSON.stringify(filtered));
   } catch (error) {
-    console.error('Erreur suppression jour repos:', error);
+    logger.error('Erreur suppression jour repos:', error);
   }
 };
 
@@ -93,7 +94,7 @@ export const getWeekRestDays = async (): Promise<Set<string>> => {
 
     return weekDays;
   } catch (error) {
-    console.error('Erreur lecture jours repos semaine:', error);
+    logger.error('Erreur lecture jours repos semaine:', error);
     return new Set();
   }
 };
@@ -110,7 +111,7 @@ export const getMonthRestDays = async (year: number, month: number): Promise<Set
         .map(rd => rd.date)
     );
   } catch (error) {
-    console.error('Erreur lecture jours repos mois:', error);
+    logger.error('Erreur lecture jours repos mois:', error);
     return new Set();
   }
 };

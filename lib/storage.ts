@@ -32,7 +32,7 @@ const getDocumentDirectory = (): string | null => {
   // Attendre que FileSystem soit prêt
   const docDir = FileSystem.documentDirectory;
   if (!docDir) {
-    console.warn('documentDirectory non disponible');
+    logger.warn('documentDirectory non disponible');
     return null;
   }
   return docDir;
@@ -48,7 +48,7 @@ const getCacheDirectory = (): string | null => {
   
   const cacheDir = FileSystem.cacheDirectory;
   if (!cacheDir) {
-    console.warn('cacheDirectory non disponible');
+    logger.warn('cacheDirectory non disponible');
     return null;
   }
   return cacheDir;
@@ -107,7 +107,7 @@ export const getSelectedLogo = async (): Promise<LogoVariant> => {
     }
     return 'default';
   } catch (error) {
-    console.error('Erreur chargement logo:', error);
+    logger.error('Erreur chargement logo:', error);
     return 'default';
   }
 };
@@ -116,7 +116,7 @@ export const saveSelectedLogo = async (logoId: LogoVariant): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_LOGO, logoId);
   } catch (error) {
-    console.error('Erreur sauvegarde logo:', error);
+    logger.error('Erreur sauvegarde logo:', error);
   }
 };
 
@@ -166,7 +166,7 @@ export const getHomeLayout = async (): Promise<HomeSection[]> => {
       try {
         saved = JSON.parse(data) as HomeSection[];
       } catch (parseError) {
-        console.error('JSON parse error in getHomeLayout:', parseError);
+        logger.error('JSON parse error in getHomeLayout:', parseError);
         return DEFAULT_HOME_SECTIONS;
       }
       // Merge avec les sections par défaut pour ajouter les nouvelles sections
@@ -187,7 +187,7 @@ export const getHomeLayout = async (): Promise<HomeSection[]> => {
     }
     return DEFAULT_HOME_SECTIONS;
   } catch (error) {
-    console.error('Erreur chargement home layout:', error);
+    logger.error('Erreur chargement home layout:', error);
     return DEFAULT_HOME_SECTIONS;
   }
 };
@@ -196,7 +196,7 @@ export const saveHomeLayout = async (sections: HomeSection[]): Promise<void> => 
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.HOME_LAYOUT, JSON.stringify(sections));
   } catch (error) {
-    console.error('Erreur sauvegarde home layout:', error);
+    logger.error('Erreur sauvegarde home layout:', error);
   }
 };
 
@@ -347,7 +347,7 @@ const ensurePhotosDirectoryExists = async (): Promise<string | null> => {
     }
     return photosDirectory;
   } catch (error) {
-    console.error('❌ Erreur création dossier photos:', error);
+    logger.error('❌ Erreur création dossier photos:', error);
     return null;
   }
 };
@@ -366,7 +366,7 @@ const getData = async <T>(key: string): Promise<T[]> => {
     return data ? JSON.parse(data) : [];
   } catch (error) {
     // Erreur critique - logging multiple pour visibilité
-    console.warn(`⚠️ ERREUR CRITIQUE - Lecture stockage ${key}:`, error);
+    logger.warn(`⚠️ ERREUR CRITIQUE - Lecture stockage ${key}:`, error);
     logger.error(`Erreur AsyncStorage.getItem (${key}):`, error);
 
     // L'app continue avec données vides, mais l'erreur est tracée
@@ -380,7 +380,7 @@ const saveData = async <T>(key: string, data: T[]): Promise<boolean> => {
     return true;
   } catch (error) {
     // Erreur critique - logging multiple pour visibilité
-    console.warn(`⚠️ ERREUR CRITIQUE - Sauvegarde ${key}:`, error);
+    logger.warn(`⚠️ ERREUR CRITIQUE - Sauvegarde ${key}:`, error);
     logger.error(`Erreur AsyncStorage.setItem (${key}):`, error);
 
     // Détection erreur de quota (stockage plein)
@@ -389,7 +389,7 @@ const saveData = async <T>(key: string, data: T[]): Promise<boolean> => {
       error.message.includes('quota') ||
       error.message.includes('storage')
     )) {
-      console.warn('🔴 STOCKAGE PLEIN - Les données ne peuvent pas être sauvegardées');
+      logger.warn('🔴 STOCKAGE PLEIN - Les données ne peuvent pas être sauvegardées');
     }
 
     return false;
@@ -447,7 +447,7 @@ const getSecureMeasurements = async (): Promise<Measurement[]> => {
     const data = await secureStorage.getItem(STORAGE_KEYS.MEASUREMENTS);
     return Array.isArray(data) ? data : [];
   } catch (error) {
-    console.warn(`⚠️ ERREUR CRITIQUE - Lecture stockage sécurisé mesures:`, error);
+    logger.warn(`⚠️ ERREUR CRITIQUE - Lecture stockage sécurisé mesures:`, error);
     logger.error(`Erreur secureStorage.getItem (measurements):`, error);
     return [];
   }
@@ -460,7 +460,7 @@ const saveSecureMeasurements = async (data: Measurement[]): Promise<boolean> => 
   try {
     return await secureStorage.setItem(STORAGE_KEYS.MEASUREMENTS, data);
   } catch (error) {
-    console.warn(`⚠️ ERREUR CRITIQUE - Sauvegarde stockage sécurisé mesures:`, error);
+    logger.warn(`⚠️ ERREUR CRITIQUE - Sauvegarde stockage sécurisé mesures:`, error);
     logger.error(`Erreur secureStorage.setItem (measurements):`, error);
     return false;
   }
@@ -604,7 +604,7 @@ export const savePhotoToStorage = async (
         await FileSystem.copyAsync({ from: sourceUri, to: destinationUri });
         finalUri = destinationUri;
       } catch (copyError) {
-        console.warn('Impossible de copier, utilisation de l\'URI original:', copyError);
+        logger.warn('Impossible de copier, utilisation de l\'URI original:', copyError);
         // Fallback : utiliser l'URI d'origine (toujours dans le sandbox iOS)
       }
     }
@@ -624,7 +624,7 @@ export const savePhotoToStorage = async (
 
     return newPhoto;
   } catch (error: any) {
-    console.error('❌ Erreur sauvegarde photo:', error?.message || error);
+    logger.error('❌ Erreur sauvegarde photo:', error?.message || error);
     Alert.alert('Erreur', 'Impossible de sauvegarder la photo. Réessaie.');
     return null;
   }
@@ -651,7 +651,7 @@ export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
         await FileSystem.deleteAsync(photoToDelete.file_uri);
       }
     } catch (error) {
-      console.warn('Erreur suppression fichier photo:', error);
+      logger.warn('Erreur suppression fichier photo:', error);
     }
   }
 
@@ -674,7 +674,7 @@ export const deleteAllPhotos = async (): Promise<boolean> => {
           }
         }
       } catch (error) {
-        console.warn('Erreur suppression fichier:', error);
+        logger.warn('Erreur suppression fichier:', error);
       }
     }
   }
@@ -694,10 +694,10 @@ export const migratePhotosRemoveBase64 = async (): Promise<void> => {
       // Supprimer le champ base64 de chaque photo
       const cleanedPhotos = photos.map(({ base64, ...rest }: Photo & { base64?: string }) => rest);
       await AsyncStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(cleanedPhotos));
-      console.log(`Migration: base64 supprimé de ${photos.length} photos`);
+      logger.info(`Migration: base64 supprimé de ${photos.length} photos`);
     }
   } catch (error) {
-    console.error('Migration error (remove base64):', error);
+    logger.error('Migration error (remove base64):', error);
   }
 };
 
@@ -714,7 +714,7 @@ export const getUserSettings = async (): Promise<UserSettings> => {
       theme: 'classic',
     };
   } catch (error) {
-    console.error('❌ Erreur lecture paramètres:', error);
+    logger.error('❌ Erreur lecture paramètres:', error);
     return {
       weight_unit: 'kg',
       measurement_unit: 'cm',
@@ -729,7 +729,7 @@ export const saveUserSettings = async (settings: Partial<UserSettings>): Promise
     const newSettings = { ...currentSettings, ...settings };
     return await secureStorage.setItem(STORAGE_KEYS.USER_SETTINGS, newSettings);
   } catch (error) {
-    console.error('❌ Erreur sauvegarde paramètres:', error);
+    logger.error('❌ Erreur sauvegarde paramètres:', error);
     return false;
   }
 };
@@ -771,7 +771,7 @@ export const getUserClubs = async (): Promise<UserClub[]> => {
     await saveUserClubs(defaultClubs);
     return defaultClubs;
   } catch (error) {
-    console.error('❌ Erreur lecture clubs:', error);
+    logger.error('❌ Erreur lecture clubs:', error);
     return [];
   }
 };
@@ -781,7 +781,7 @@ export const saveUserClubs = async (clubs: UserClub[]): Promise<boolean> => {
     await AsyncStorage.setItem(STORAGE_KEYS.USER_CLUBS, JSON.stringify(clubs));
     return true;
   } catch (error) {
-    console.error('❌ Erreur sauvegarde clubs:', error);
+    logger.error('❌ Erreur sauvegarde clubs:', error);
     return false;
   }
 };
@@ -825,7 +825,7 @@ export const getUserGear = async (): Promise<UserGear[]> => {
       try {
         return JSON.parse(data);
       } catch (parseError) {
-        console.error('JSON parse error in getUserGear:', parseError);
+        logger.error('JSON parse error in getUserGear:', parseError);
         return [];
       }
     }
@@ -859,7 +859,7 @@ export const getUserGear = async (): Promise<UserGear[]> => {
     await saveUserGear(defaultGear);
     return defaultGear;
   } catch (error) {
-    console.error('❌ Erreur lecture équipements:', error);
+    logger.error('❌ Erreur lecture équipements:', error);
     return [];
   }
 };
@@ -869,7 +869,7 @@ export const saveUserGear = async (gear: UserGear[]): Promise<boolean> => {
     await AsyncStorage.setItem(STORAGE_KEYS.USER_GEAR, JSON.stringify(gear));
     return true;
   } catch (error) {
-    console.error('❌ Erreur sauvegarde équipements:', error);
+    logger.error('❌ Erreur sauvegarde équipements:', error);
     return false;
   }
 };
@@ -916,30 +916,47 @@ export interface BodyStatusData {
   [key: string]: BodyZoneData;
 }
 
-export const getUserBodyStatus = async (): Promise<BodyStatusData> => {
+let bodyStatusMigrationDone = false;
+
+const migrateBodyStatusToSecureStorage = async (): Promise<void> => {
+  if (bodyStatusMigrationDone) return;
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.USER_BODY_STATUS);
-    if (data) {
-      try {
-        return JSON.parse(data);
-      } catch (parseError) {
-        console.error('JSON parse error in getUserBodyStatus:', parseError);
-        return {};
+    const secureData = await secureStorage.getItem(STORAGE_KEYS.USER_BODY_STATUS);
+    if (secureData && typeof secureData === 'object' && Object.keys(secureData).length > 0) {
+      bodyStatusMigrationDone = true;
+      return;
+    }
+    const oldData = await AsyncStorage.getItem(STORAGE_KEYS.USER_BODY_STATUS);
+    if (oldData) {
+      const parsed = JSON.parse(oldData);
+      if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+        await secureStorage.setItem(STORAGE_KEYS.USER_BODY_STATUS, parsed);
+        await AsyncStorage.removeItem(STORAGE_KEYS.USER_BODY_STATUS);
+        logger.info('[Storage] Migration body status vers SecureStorage réussie');
       }
     }
-    return {};
   } catch (error) {
-    console.error('Erreur lecture statut corporel:', error);
+    logger.error('[Storage] Erreur migration body status:', error);
+  }
+  bodyStatusMigrationDone = true;
+};
+
+export const getUserBodyStatus = async (): Promise<BodyStatusData> => {
+  try {
+    await migrateBodyStatusToSecureStorage();
+    const data = await secureStorage.getItem(STORAGE_KEYS.USER_BODY_STATUS);
+    return (data && typeof data === 'object') ? data : {};
+  } catch (error) {
+    logger.error('Erreur lecture statut corporel:', error);
     return {};
   }
 };
 
 export const saveUserBodyStatus = async (status: BodyStatusData): Promise<boolean> => {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.USER_BODY_STATUS, JSON.stringify(status));
-    return true;
+    return await secureStorage.setItem(STORAGE_KEYS.USER_BODY_STATUS, status);
   } catch (error) {
-    console.error('❌ Erreur sauvegarde statut corporel:', error);
+    logger.error('Erreur sauvegarde statut corporel:', error);
     return false;
   }
 };
@@ -1052,7 +1069,7 @@ export const exportData = async (): Promise<boolean> => {
     
     return true;
   } catch (error: any) {
-    console.error('❌ Erreur export:', error);
+    logger.error('❌ Erreur export:', error);
     Alert.alert('Erreur', `Impossible d'exporter : ${error?.message || 'Erreur inconnue'}`);
     return false;
   }
@@ -1090,7 +1107,7 @@ export const importData = async (): Promise<boolean> => {
     try {
       backup = JSON.parse(fileContent);
     } catch (parseError) {
-      console.error('JSON parse error in importData:', parseError);
+      logger.error('JSON parse error in importData:', parseError);
       Alert.alert('Erreur', 'Le fichier de sauvegarde contient des données JSON invalides.');
       return false;
     }
@@ -1132,7 +1149,7 @@ export const importData = async (): Promise<boolean> => {
     Alert.alert('Succès', 'Données restaurées avec succès !');
     return true;
   } catch (error: any) {
-    console.error('❌ Erreur importation:', error);
+    logger.error('❌ Erreur importation:', error);
     Alert.alert('Erreur', `Impossible d'importer : ${error?.message || 'fichier invalide'}`);
     return false;
   }
@@ -1148,7 +1165,7 @@ export const resetAllData = async (): Promise<boolean> => {
       const { resetDatabase } = await import('./database');
       await resetDatabase();
     } catch (dbError) {
-      console.warn('Erreur reset SQLite (peut être normal si non initialisé):', dbError);
+      logger.warn('Erreur reset SQLite (peut être normal si non initialisé):', dbError);
     }
 
     // Récupérer TOUTES les clés AsyncStorage
@@ -1193,7 +1210,7 @@ export const resetAllData = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error('❌ Erreur réinitialisation:', error);
+    logger.error('❌ Erreur réinitialisation:', error);
     return false;
   }
 };
@@ -1210,7 +1227,7 @@ export const debugShowAllData = async (): Promise<void> => {
       const value = await AsyncStorage.getItem(key);
     }
   } catch (error) {
-    console.error('❌ Erreur debug:', error);
+    logger.error('❌ Erreur debug:', error);
   }
 };
 
@@ -1254,6 +1271,31 @@ export const calculateRecommendedHydration = (weightKg: number): number => {
 /**
  * Obtient les paramètres d'hydratation
  */
+let hydrationSettingsMigrationDone = false;
+
+const migrateHydrationSettingsToSecureStorage = async (): Promise<void> => {
+  if (hydrationSettingsMigrationDone) return;
+  try {
+    const secureData = await secureStorage.getItem(STORAGE_KEYS.HYDRATION_SETTINGS);
+    if (secureData && typeof secureData === 'object') {
+      hydrationSettingsMigrationDone = true;
+      return;
+    }
+    const oldData = await AsyncStorage.getItem(STORAGE_KEYS.HYDRATION_SETTINGS);
+    if (oldData) {
+      const parsed = JSON.parse(oldData);
+      if (parsed) {
+        await secureStorage.setItem(STORAGE_KEYS.HYDRATION_SETTINGS, parsed);
+        await AsyncStorage.removeItem(STORAGE_KEYS.HYDRATION_SETTINGS);
+        logger.info('[Storage] Migration paramètres hydratation vers SecureStorage réussie');
+      }
+    }
+  } catch (error) {
+    logger.error('[Storage] Erreur migration paramètres hydratation:', error);
+  }
+  hydrationSettingsMigrationDone = true;
+};
+
 export const getHydrationSettings = async (): Promise<HydrationSettings> => {
   const defaultSettings: HydrationSettings = {
     dailyGoal: 2.5,
@@ -1262,34 +1304,22 @@ export const getHydrationSettings = async (): Promise<HydrationSettings> => {
     trainingDayBonus: 0.5,
   };
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.HYDRATION_SETTINGS);
-    if (data) {
-      try {
-        return JSON.parse(data);
-      } catch (parseError) {
-        console.error('JSON parse error in getHydrationSettings:', parseError);
-        return defaultSettings;
-      }
-    }
-    // Paramètres par défaut
-    return defaultSettings;
+    await migrateHydrationSettingsToSecureStorage();
+    const data = await secureStorage.getItem(STORAGE_KEYS.HYDRATION_SETTINGS);
+    return (data && typeof data === 'object') ? data : defaultSettings;
   } catch (error) {
-    console.error('Erreur lecture paramètres hydratation:', error);
+    logger.error('Erreur lecture paramètres hydratation:', error);
     return defaultSettings;
   }
 };
 
-/**
- * Sauvegarde les paramètres d'hydratation
- */
 export const saveHydrationSettings = async (settings: Partial<HydrationSettings>): Promise<boolean> => {
   try {
     const currentSettings = await getHydrationSettings();
     const newSettings = { ...currentSettings, ...settings };
-    await AsyncStorage.setItem(STORAGE_KEYS.HYDRATION_SETTINGS, JSON.stringify(newSettings));
-    return true;
+    return await secureStorage.setItem(STORAGE_KEYS.HYDRATION_SETTINGS, newSettings);
   } catch (error) {
-    console.error('❌ Erreur sauvegarde paramètres hydratation:', error);
+    logger.error('Erreur sauvegarde paramètres hydratation:', error);
     return false;
   }
 };
@@ -1302,7 +1332,7 @@ export const getAllHydrationEntries = async (): Promise<HydrationEntry[]> => {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.HYDRATION_LOG);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error('❌ Erreur lecture hydratation:', error);
+    logger.error('❌ Erreur lecture hydratation:', error);
     return [];
   }
 };
@@ -1353,7 +1383,7 @@ export const deleteHydrationEntry = async (id: string): Promise<boolean> => {
     await AsyncStorage.setItem(STORAGE_KEYS.HYDRATION_LOG, JSON.stringify(filtered));
     return true;
   } catch (error) {
-    console.error('❌ Erreur suppression hydratation:', error);
+    logger.error('❌ Erreur suppression hydratation:', error);
     return false;
   }
 };
@@ -1476,7 +1506,7 @@ export const analyzeHydrationWeightCorrelation = async (): Promise<{
       recommendation,
     };
   } catch (error) {
-    console.error('❌ Erreur analyse corrélation:', error);
+    logger.error('❌ Erreur analyse corrélation:', error);
     return null;
   }
 };
@@ -1486,32 +1516,77 @@ export const analyzeHydrationWeightCorrelation = async (): Promise<{
 // GESTION DES RESSENTIS (MOOD)
 // ============================================
 
+let moodMigrationDone = false;
+
+const migrateMoodToSecureStorage = async (): Promise<void> => {
+  if (moodMigrationDone) return;
+  try {
+    const secureData = await secureStorage.getItem(STORAGE_KEYS.MOOD_LOG);
+    if (secureData && Array.isArray(secureData) && secureData.length > 0) {
+      moodMigrationDone = true;
+      return;
+    }
+    const oldData = await AsyncStorage.getItem(STORAGE_KEYS.MOOD_LOG);
+    if (oldData) {
+      const parsed = JSON.parse(oldData);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        await secureStorage.setItem(STORAGE_KEYS.MOOD_LOG, parsed);
+        await AsyncStorage.removeItem(STORAGE_KEYS.MOOD_LOG);
+        logger.info('[Storage] Migration mood vers SecureStorage réussie');
+      }
+    }
+  } catch (error) {
+    logger.error('[Storage] Erreur migration mood:', error);
+  }
+  moodMigrationDone = true;
+};
+
+const getSecureMoods = async (): Promise<MoodEntry[]> => {
+  try {
+    await migrateMoodToSecureStorage();
+    const data = await secureStorage.getItem(STORAGE_KEYS.MOOD_LOG);
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    logger.error('Erreur lecture moods sécurisé:', error);
+    return [];
+  }
+};
+
+const saveSecureMoods = async (moods: MoodEntry[]): Promise<boolean> => {
+  try {
+    return await secureStorage.setItem(STORAGE_KEYS.MOOD_LOG, moods);
+  } catch (error) {
+    logger.error('Erreur sauvegarde moods sécurisé:', error);
+    return false;
+  }
+};
+
 export const saveMood = async (moodData: MoodEntry): Promise<boolean> => {
   try {
-    const moods = await getData<MoodEntry>(STORAGE_KEYS.MOOD_LOG);
+    const moods = await getSecureMoods();
     const newMood: MoodEntry = {
       ...moodData,
       id: generateId(),
     };
     moods.push(newMood);
-    return await saveData(STORAGE_KEYS.MOOD_LOG, moods);
+    return await saveSecureMoods(moods);
   } catch (error) {
-    console.error("❌ Erreur sauvegarde mood:", error);
+    logger.error('Erreur sauvegarde mood:', error);
     return false;
   }
 };
 
 export const getMoods = async (days?: number): Promise<MoodEntry[]> => {
   try {
-    const moods = await getData<MoodEntry>(STORAGE_KEYS.MOOD_LOG);
+    const moods = await getSecureMoods();
     if (!days) return moods;
-    
+
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
-    
+
     return moods.filter(m => new Date(m.date) >= cutoffDate);
   } catch (error) {
-    console.error("❌ Erreur récupération moods:", error);
+    logger.error('Erreur récupération moods:', error);
     return [];
   }
 };
@@ -1519,10 +1594,10 @@ export const getMoods = async (days?: number): Promise<MoodEntry[]> => {
 export const getTodayMood = async (): Promise<MoodEntry | null> => {
   try {
     const today = new Date().toISOString().split("T")[0];
-    const moods = await getData<MoodEntry>(STORAGE_KEYS.MOOD_LOG);
+    const moods = await getSecureMoods();
     return moods.find(m => m.date === today) || null;
   } catch (error) {
-    console.error("❌ Erreur récupération mood du jour:", error);
+    logger.error('Erreur récupération mood du jour:', error);
     return null;
   }
 };

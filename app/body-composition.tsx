@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop, Path, G } from 'react-native-svg';

@@ -176,39 +176,41 @@ const styles = StyleSheet.create({
   rankRow: { flexDirection: 'row', alignItems: 'center' },
 
   // Avatar
-  avatarWrap: { position: 'relative', marginRight: 14 },
+  avatarWrap: { position: 'relative', marginRight: 12, marginVertical: -6 },
   avatarFrame: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    borderWidth: 2,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    borderWidth: 2.5,
     overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  avatarImg: { width: 54, height: 60, resizeMode: 'contain', alignSelf: 'center', marginTop: 2 },
-  avatarPlaceholder: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' },
+  avatarImg: { width: '92%', height: '92%', borderRadius: 50, resizeMode: 'contain' } as any,
+  avatarPlaceholder: { width: '100%', height: '100%', borderRadius: 48, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' },
   levelBadge: {
-    position: 'absolute', bottom: -3, right: -3,
-    width: 22, height: 22, borderRadius: 11,
+    position: 'absolute', bottom: 0, right: 0,
+    width: 26, height: 26, borderRadius: 13,
     justifyContent: 'center', alignItems: 'center',
     borderWidth: 2.5, borderColor: '#FFFFFF',
   },
-  levelText: { fontSize: 11, fontWeight: '900', color: '#FFFFFF' },
+  levelText: { fontSize: 12, fontWeight: '900', color: '#FFFFFF' },
 
   // Info column
   infoCol: { flex: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  rankName: { fontSize: 16, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 2 },
+  rankName: { fontSize: 15, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.5 },
   streakChip: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8 },
   streakChipText: { fontSize: 11, fontWeight: '800', color: '#F97316' },
   rankJp: { fontSize: 11, fontWeight: '500', marginTop: 2 },
 
   // Progress
-  progressRow: { marginTop: 8 },
+  progressRow: { marginTop: 6 },
   progressTrack: { height: 5, borderRadius: 3, overflow: 'hidden', width: '100%' },
   progressFill: { height: '100%', borderRadius: 3, overflow: 'hidden' },
 
   // Next rank
-  nextRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 6 },
+  nextRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 },
   nextDot: { width: 6, height: 6, borderRadius: 3 },
   nextText: { fontSize: 11, fontWeight: '500' },
 });

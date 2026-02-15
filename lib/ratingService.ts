@@ -4,6 +4,7 @@
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '@/lib/security/logger';
 
 const STORAGE_KEYS = {
   ACTION_COUNT: '@yoroi_rating_action_count',
@@ -40,7 +41,7 @@ class RatingService {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.HAS_RATED, 'true');
     } catch (error) {
-      console.error('Error marking as rated:', error);
+      logger.error('Error marking as rated:', error);
     }
   }
 
@@ -71,7 +72,7 @@ class RatingService {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.ACTION_COUNT, '0');
     } catch (error) {
-      console.error('Error resetting action count:', error);
+      logger.error('Error resetting action count:', error);
     }
   }
 
@@ -91,7 +92,7 @@ class RatingService {
       const current = await this.getDismissedCount();
       await AsyncStorage.setItem(STORAGE_KEYS.DISMISSED_COUNT, (current + 1).toString());
     } catch (error) {
-      console.error('Error incrementing dismissed count:', error);
+      logger.error('Error incrementing dismissed count:', error);
     }
   }
 
@@ -110,7 +111,7 @@ class RatingService {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.LAST_PROMPT_DATE, new Date().toISOString());
     } catch (error) {
-      console.error('Error setting last prompt date:', error);
+      logger.error('Error setting last prompt date:', error);
     }
   }
 
@@ -184,7 +185,7 @@ class RatingService {
         STORAGE_KEYS.DISMISSED_COUNT,
       ]);
     } catch (error) {
-      console.error('Error resetting rating service:', error);
+      logger.error('Error resetting rating service:', error);
     }
   }
 }

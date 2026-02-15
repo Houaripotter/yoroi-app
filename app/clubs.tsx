@@ -32,6 +32,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { getClubs, addClub, updateClub, deleteClub, Club } from '@/lib/database';
 import { SPORTS, getSportIcon, getSportColor, getSportName, getClubLogoSource } from '@/lib/sports';
 import { useI18n } from '@/lib/I18nContext';
+import { logger } from '@/lib/security/logger';
 
 // ============================================
 // GESTION DES CLUBS / SALLES
@@ -64,7 +65,7 @@ export default function ClubsScreen() {
       const data = await getClubs();
       setClubs(data);
     } catch (error) {
-      console.error('Erreur chargement clubs:', error);
+      logger.error('Erreur chargement clubs:', error);
     }
   }, []);
 
@@ -190,7 +191,7 @@ export default function ClubsScreen() {
       await loadClubs();
       handleCloseModal();
     } catch (error) {
-      console.error('Erreur sauvegarde:', error);
+      logger.error('Erreur sauvegarde:', error);
       showPopup(t('common.error'), t('screens.clubs.saveError'), [
         { text: t('common.ok'), style: 'primary' }
       ]);
@@ -211,7 +212,7 @@ export default function ClubsScreen() {
               await deleteClub(club.id!);
               await loadClubs();
             } catch (error) {
-              console.error('Erreur suppression:', error);
+              logger.error('Erreur suppression:', error);
               showPopup(t('common.error'), t('screens.clubs.deleteError'), [
                 { text: t('common.ok'), style: 'primary' }
               ]);

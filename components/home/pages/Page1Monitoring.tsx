@@ -26,6 +26,7 @@ import { getTrainings, Training } from '@/lib/database';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop, Polygon, ClipPath, G, Image as SvgImage } from 'react-native-svg';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { RankCitationCard } from '@/components/home/RankCitationCard';
+import { logger } from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const IS_SMALL_SCREEN = SCREEN_WIDTH < 375; // iPhone SE, petits téléphones
@@ -808,7 +809,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         });
         setTrainingCalories(totalCals);
       } catch (error) {
-        console.error('Erreur chargement calories:', error);
+        logger.error('Erreur chargement calories:', error);
       }
     };
     loadTodayTrainings();
@@ -871,7 +872,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           setUserGoal('lose');
         }
       } catch (error) {
-        console.error('Error loading goal:', error);
+        logger.error('Error loading goal:', error);
       }
     };
     loadGoal();
@@ -884,7 +885,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         const data = await getLatestBodyComposition();
         setBodyComposition(data);
       } catch (error) {
-        console.error('Error loading body composition:', error);
+        logger.error('Error loading body composition:', error);
       }
     };
     loadBodyComposition();
@@ -905,7 +906,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         const resolved = Image.resolveAssetSource(image);
         setAvatarImageUri(resolved?.uri || null);
       } catch (error) {
-        console.error('Error loading avatar image:', error);
+        logger.error('Error loading avatar image:', error);
         // Fallback to default
         const defaultImage = require('@/assets/avatars/samurai/samurai_neutral.png');
         const resolved = Image.resolveAssetSource(defaultImage);

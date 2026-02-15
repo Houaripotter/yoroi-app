@@ -12,6 +12,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { ChevronLeft, Moon, Sun, Clock, TrendingUp, Bed, AlertCircle } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '@/lib/security/logger';
 
 // ============================================
 // SLEEP TRACKER - SUIVI DU SOMMEIL
@@ -34,27 +35,29 @@ export default function SleepTrackerScreen() {
   const [sleepDebt, setSleepDebt] = useState(0);
 
   useEffect(() => {
-    loadSleepData();
-  }, []);
+    let cancelled = false;
+    const loadSleepData = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(SLEEP_STORAGE_KEY);
+        if (cancelled) return;
+        if (stored) {
+          const entries: SleepEntry[] = JSON.parse(stored);
+          setSleepEntries(entries);
 
-  const loadSleepData = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(SLEEP_STORAGE_KEY);
-      if (stored) {
-        const entries: SleepEntry[] = JSON.parse(stored);
-        setSleepEntries(entries);
-
-        // Calculer moyenne
-        if (entries.length > 0) {
-          const avg = entries.reduce((sum, e) => sum + e.duration, 0) / entries.length;
-          setAvgSleep(avg);
-          setSleepDebt(Math.max(0, (8 - avg) * entries.length));
+          // Calculer moyenne
+          if (entries.length > 0) {
+            const avg = entries.reduce((sum, e) => sum + e.duration, 0) / entries.length;
+            setAvgSleep(avg);
+            setSleepDebt(Math.max(0, (8 - avg) * entries.length));
+          }
         }
+      } catch (error) {
+        logger.error('Erreur chargement sommeil:', error);
       }
-    } catch (error) {
-      console.error('Erreur chargement sommeil:', error);
-    }
-  };
+    };
+    loadSleepData();
+    return () => { cancelled = true; };
+  }, []);
 
   const getQualityColor = (quality: string) => {
     switch (quality) {
