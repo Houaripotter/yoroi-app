@@ -479,6 +479,15 @@ const getBackupItems = (t: TranslateFunction): MenuItem[] => [
 // ============================================
 const getSecurityItems = (t: TranslateFunction): MenuItem[] => [
   {
+    id: 'privacy-data',
+    label: t('privacy.title'),
+    sublabel: t('privacy.subtitle'),
+    Icon: Shield,
+    route: '/privacy-data',
+    iconColor: '#10B981',
+    iconBg: '#10B98120',
+  },
+  {
     id: 'tutorial',
     label: t('menu.tutorial'),
     sublabel: t('menu.tutorialDescription'),

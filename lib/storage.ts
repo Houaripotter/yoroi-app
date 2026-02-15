@@ -1222,6 +1222,65 @@ export const resetAllData = async (): Promise<boolean> => {
   }
 };
 
+// ============================================
+// NETTOYAGE PAR RÉTENTION DE DONNÉES (RGPD)
+// ============================================
+
+const DATA_RETENTION_KEY = '@yoroi_data_retention';
+
+const RETAINABLE_KEYS = [
+  '@yoroi_measurements',
+  '@yoroi_workouts',
+  '@yoroi_sleep_entries',
+  '@yoroi_hydration_log',
+  '@yoroi_mood_log',
+  '@yoroi_injuries',
+];
+
+/**
+ * Applique la politique de rétention des données.
+ * Supprime les entrées plus anciennes que la durée configurée.
+ * Appelé au démarrage de l'app.
+ */
+export const applyDataRetention = async (): Promise<void> => {
+  try {
+    const retentionStr = await AsyncStorage.getItem(DATA_RETENTION_KEY);
+    const retentionDays = retentionStr ? parseInt(retentionStr, 10) : 0;
+
+    // 0 = conserver tout
+    if (!retentionDays || retentionDays <= 0) return;
+
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+    const cutoffISO = cutoffDate.toISOString();
+
+    for (const key of RETAINABLE_KEYS) {
+      try {
+        const raw = await AsyncStorage.getItem(key);
+        if (!raw) continue;
+
+        const data = JSON.parse(raw);
+        if (!Array.isArray(data)) continue;
+
+        const filtered = data.filter((entry: any) => {
+          const entryDate = entry.date || entry.timestamp || entry.createdAt;
+          if (!entryDate) return true; // keep entries without dates
+          return entryDate >= cutoffISO.slice(0, 10); // Compare YYYY-MM-DD
+        });
+
+        if (filtered.length < data.length) {
+          await AsyncStorage.setItem(key, JSON.stringify(filtered));
+          logger.info(`Data retention: cleaned ${data.length - filtered.length} old entries from ${key}`);
+        }
+      } catch (e) {
+        logger.warn(`Data retention: failed to clean ${key}`, e);
+      }
+    }
+  } catch (error) {
+    logger.error('Data retention error:', error);
+  }
+};
+
 // Fonction de debug pour voir toutes les données restantes
 export const debugShowAllData = async (): Promise<void> => {
   // Fonction désactivée en production pour des raisons de sécurité

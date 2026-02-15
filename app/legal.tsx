@@ -14,6 +14,7 @@ export default function LegalScreen() {
   const isDarkMode = mode === 'dark';
   const [isAccepting, setIsAccepting] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
 
   const handleAccept = async () => {
     if (isAccepting) return;
@@ -152,13 +153,47 @@ export default function LegalScreen() {
               Écoute ton corps ! Si quelque chose ne va pas pendant l'effort, fais une pause.
             </Text>
           </View>
+
+          {/* Privacy Info */}
+          <View style={[styles.reminderBox, {
+            backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.08)',
+            borderColor: isDarkMode ? '#10B981' : '#6EE7B7',
+            marginTop: 16,
+          }]}>
+            <View style={styles.reminderHeader}>
+              <Ionicons name="lock-closed" size={22} color="#10B981" />
+              <Text style={[styles.reminderTitle, { color: '#10B981' }]}>
+                100% hors ligne
+              </Text>
+            </View>
+            <Text style={[styles.reminderText, { color: colors.textPrimary }]}>
+              Tes données restent sur ton appareil. Aucune donnée n'est envoyée sur Internet. Pas de tracking, pas d'analytics, pas de publicité.
+            </Text>
+          </View>
         </View>
+
+        {/* Age Confirmation */}
+        <TouchableOpacity
+          style={styles.ageCheckRow}
+          onPress={() => setAgeConfirmed(!ageConfirmed)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.checkbox, {
+            backgroundColor: ageConfirmed ? colors.accent : 'transparent',
+            borderColor: ageConfirmed ? colors.accent : colors.textMuted,
+          }]}>
+            {ageConfirmed && <Ionicons name="checkmark" size={16} color={colors.textOnAccent} />}
+          </View>
+          <Text style={[styles.ageCheckText, { color: colors.textPrimary }]}>
+            Je confirme avoir au moins 13 ans
+          </Text>
+        </TouchableOpacity>
 
         {/* Accept Button - Friendly */}
         <TouchableOpacity
-          style={[styles.acceptButton, { backgroundColor: colors.accent, opacity: isAccepting ? 0.6 : 1 }]}
+          style={[styles.acceptButton, { backgroundColor: colors.accent, opacity: (isAccepting || !ageConfirmed) ? 0.4 : 1 }]}
           onPress={handleAccept}
-          disabled={isAccepting}
+          disabled={isAccepting || !ageConfirmed}
         >
           <Ionicons name="rocket" size={20} color={colors.textOnAccent} style={{ marginRight: 8 }} />
           <Text style={[styles.acceptButtonText, { color: colors.textOnAccent }]}>
@@ -300,5 +335,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     marginTop: 16,
+  },
+  ageCheckRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+    paddingHorizontal: 4,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ageCheckText: {
+    fontSize: 15,
+    fontWeight: '600',
+    flex: 1,
   },
 });

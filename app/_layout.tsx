@@ -12,6 +12,7 @@ import { DevModeProvider } from '@/lib/DevModeContext';
 import { WatchConnectivityProvider } from '@/lib/WatchConnectivityProvider';
 import DevCodeModal from '@/components/DevCodeModal';
 import { initDatabase } from '@/lib/database';
+import { applyDataRetention } from '@/lib/storage';
 import { autoImportCompetitionsOnFirstLaunch } from '@/lib/importCompetitionsService';
 import { forceReimportEvents } from '@/lib/eventsService';
 import { notificationService } from '@/lib/notificationService';
@@ -183,6 +184,10 @@ export default function RootLayout() {
             })
             .then(() => logger.info('Citation du jour initialisée'))
             .catch(err => logger.error('Erreur notifications:', err)),
+
+          applyDataRetention()
+            .then(() => logger.info('Data retention policy applied'))
+            .catch(err => logger.error('Erreur data retention:', err)),
         ]);
 
       } catch (error) {

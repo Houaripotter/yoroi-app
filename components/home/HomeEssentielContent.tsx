@@ -266,7 +266,7 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = memo(({
       <View style={{ height: 120 }} />
     </ScrollView>
   );
-};
+});
 
 // Quick Tools Row Component
 const QuickToolsRow: React.FC = () => {
@@ -296,7 +296,7 @@ const QuickToolsRow: React.FC = () => {
       ))}
     </View>
   );
-});
+};
 
 const styles = StyleSheet.create({
   container: {
