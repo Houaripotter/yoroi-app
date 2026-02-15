@@ -1,0 +1,6952 @@
+{
+  "timestamp": "2026-02-15T12:00:23.899Z",
+  "totalFiles": 468,
+  "filesWithLucide": 331,
+  "cleanFiles": 397,
+  "filesWithEmoji": 71,
+  "topIcons": [
+    {
+      "icon": "TrendingUp",
+      "count": 101
+    },
+    {
+      "icon": "X",
+      "count": 94
+    },
+    {
+      "icon": "Target",
+      "count": 91
+    },
+    {
+      "icon": "TrendingDown",
+      "count": 80
+    },
+    {
+      "icon": "Calendar",
+      "count": 78
+    },
+    {
+      "icon": "ChevronRight",
+      "count": 75
+    },
+    {
+      "icon": "Zap",
+      "count": 69
+    },
+    {
+      "icon": "ChevronLeft",
+      "count": 69
+    },
+    {
+      "icon": "Check",
+      "count": 67
+    },
+    {
+      "icon": "Flame",
+      "count": 66
+    },
+    {
+      "icon": "Activity",
+      "count": 64
+    },
+    {
+      "icon": "Dumbbell",
+      "count": 61
+    },
+    {
+      "icon": "Trophy",
+      "count": 60
+    },
+    {
+      "icon": "Clock",
+      "count": 60
+    },
+    {
+      "icon": "Moon",
+      "count": 58
+    },
+    {
+      "icon": "Plus",
+      "count": 55
+    },
+    {
+      "icon": "Scale",
+      "count": 51
+    },
+    {
+      "icon": "Minus",
+      "count": 45
+    },
+    {
+      "icon": "Heart",
+      "count": 44
+    },
+    {
+      "icon": "Award",
+      "count": 36
+    }
+  ],
+  "files": [
+    {
+      "file": "components/AchievementCelebration.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Sparkles",
+        "Star"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🎁",
+          "line": 237,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "components/ActivityModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/AdvancedMetricsSection.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronDown",
+        "Droplet",
+        "Zap",
+        "Droplets",
+        "Activity"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/AnimatedSuccessButton.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/AnimatedTabBar.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Home",
+        "BarChart2",
+        "Plus",
+        "Calendar",
+        "Menu"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/AvatarViewerModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "ZoomIn",
+        "ZoomOut"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/BadgeItem.tsx",
+      "hasLucideImport": false,
+      "lucideIcons": [],
+      "emojisFound": [
+        {
+          "emoji": "🔒",
+          "line": 110,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "components/BadgesScreen.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Award"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/BatteryReadyPopup.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Zap",
+        "X",
+        "Dumbbell",
+        "ChevronRight",
+        "Battery",
+        "Flame"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/BeforeAfterComparison.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "ArrowRight",
+        "ChevronLeft",
+        "ChevronRight",
+        "Columns",
+        "SlidersHorizontal",
+        "Share2",
+        "TrendingDown",
+        "Calendar",
+        "Trophy",
+        "Zap"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/BeforeAfterSlider.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronRight",
+        "Share2"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🎉",
+          "line": 291,
+          "allowed": false
+        },
+        {
+          "emoji": "🎉",
+          "line": 391,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/BodyCompositionChart.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Percent",
+        "Activity",
+        "Droplet"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/BodyMap.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Eye",
+        "EyeOff",
+        "ArrowUp",
+        "ArrowDown",
+        "ArrowLeft",
+        "ArrowRight",
+        "Plus",
+        "Minus",
+        "Copy"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✏",
+          "line": 338,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 338,
+          "allowed": false
+        },
+        {
+          "emoji": "✏",
+          "line": 438,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 438,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/BriefingSettings.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Bell",
+        "Clock"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "⚖",
+          "line": 138,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 138,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/ChallengeConfetti.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "CheckCircle2"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/ChargeCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Activity"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/CompetitionCountdownWidget.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Clock",
+        "Trophy",
+        "MapPin",
+        "Calendar",
+        "Scale"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/DailyChallenge.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Target",
+        "Check",
+        "ChevronRight",
+        "Scale",
+        "Dumbbell",
+        "Camera",
+        "Droplets",
+        "BookOpen"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/DevCodeModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Unlock",
+        "Lock"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🔐",
+          "line": 65,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "components/EVAScale.tsx",
+      "hasLucideImport": false,
+      "lucideIcons": [],
+      "emojisFound": [
+        {
+          "emoji": "😊",
+          "line": 20,
+          "allowed": false
+        },
+        {
+          "emoji": "🙂",
+          "line": 20,
+          "allowed": false
+        },
+        {
+          "emoji": "😐",
+          "line": 20,
+          "allowed": false
+        },
+        {
+          "emoji": "😟",
+          "line": 20,
+          "allowed": false
+        },
+        {
+          "emoji": "😣",
+          "line": 20,
+          "allowed": false
+        },
+        {
+          "emoji": "😖",
+          "line": 20,
+          "allowed": false
+        },
+        {
+          "emoji": "😫",
+          "line": 20,
+          "allowed": false
+        },
+        {
+          "emoji": "😭",
+          "line": 20,
+          "allowed": false
+        },
+        {
+          "emoji": "😱",
+          "line": 20,
+          "allowed": false
+        },
+        {
+          "emoji": "🤯",
+          "line": 20,
+          "allowed": false
+        },
+        {
+          "emoji": "💀",
+          "line": 20,
+          "allowed": false
+        },
+        {
+          "emoji": "😊",
+          "line": 120,
+          "allowed": false
+        },
+        {
+          "emoji": "😐",
+          "line": 126,
+          "allowed": false
+        },
+        {
+          "emoji": "😫",
+          "line": 132,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/ErrorBoundary.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "AlertTriangle",
+        "RefreshCw"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/ExercisePickerModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Plus",
+        "Search",
+        "Dumbbell"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/FeatureDiscoveryModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Home",
+        "BarChart3",
+        "Calendar",
+        "Plus",
+        "Menu",
+        "BookOpen",
+        "Scale",
+        "Activity",
+        "Clock",
+        "HeartPulse",
+        "Gauge",
+        "Check",
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/FitForDutyBadge.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Shield",
+        "AlertTriangle",
+        "XCircle"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/FitnessScoreCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingUp",
+        "TrendingDown",
+        "Minus",
+        "ChevronRight",
+        "Droplet",
+        "Scale",
+        "Dumbbell",
+        "Flame",
+        "Target"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/GoalProgressCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Target",
+        "TrendingUp",
+        "Flame",
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/HealthSyncSettings.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Activity",
+        "Download",
+        "Upload",
+        "Check",
+        "X"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "❌",
+          "line": 61,
+          "allowed": false
+        },
+        {
+          "emoji": "❌",
+          "line": 113,
+          "allowed": false
+        },
+        {
+          "emoji": "❌",
+          "line": 136,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/HealthspanChart.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronRight",
+        "Moon",
+        "Activity",
+        "TrendingUp",
+        "TrendingDown",
+        "Minus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/HydrationTracker.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Droplet",
+        "Plus",
+        "ChevronRight",
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/HydrationWidget.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Droplet",
+        "Plus",
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/Icon.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "// Navigation & Actions\n  Timer",
+        "Play",
+        "Pause",
+        "Square",
+        "ChevronLeft",
+        "ChevronRight",
+        "ChevronDown",
+        "ChevronUp",
+        "X",
+        "Check",
+        "Plus",
+        "Minus",
+        "Settings",
+        "Home",
+        "Menu",
+        "// Stats & Data\n  BarChart3",
+        "TrendingUp",
+        "TrendingDown",
+        "Activity",
+        "Target",
+        "Zap",
+        "Flame",
+        "// Health & Fitness\n  Heart",
+        "Droplets",
+        "Moon",
+        "Sun",
+        "Sunrise",
+        "// Body & Physical\n  Ruler",
+        "Scale",
+        "Dumbbell",
+        "// Media\n  Camera",
+        "Image",
+        "Share2",
+        "Download",
+        "Upload",
+        "// Tools\n  Calculator",
+        "Calendar",
+        "Clock",
+        "Bell",
+        "// People & Social\n  User",
+        "Users",
+        "UserPlus",
+        "Award",
+        "Trophy",
+        "Medal",
+        "Crown",
+        "Star",
+        "// Nature & Elements\n  Leaf",
+        "Sparkles",
+        "// Sports & Combat\n  Swords",
+        "Sword",
+        "Shield",
+        "// Places & Buildings\n  Castle",
+        "// Education\n  GraduationCap",
+        "// Communication\n  Mail",
+        "MessageCircle",
+        "Send",
+        "// Files & Data\n  FileText",
+        "FolderOpen",
+        "Save",
+        "Trash2",
+        "// Info\n  Info",
+        "HelpCircle",
+        "AlertTriangle",
+        "AlertCircle",
+        "// Food & Nutrition\n  Utensils",
+        "Apple",
+        "Coffee",
+        "// Misc\n  Gift",
+        "Lock",
+        "Unlock",
+        "Eye",
+        "EyeOff",
+        "ExternalLink",
+        "MapPin",
+        "Grip",
+        "RotateCcw",
+        "RefreshCw",
+        "type LucideIcon"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/LanguageSelector.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Globe",
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/LogoViewer.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/MeasurementsChart.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingDown",
+        "TrendingUp",
+        "Minus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/MetricDisplay.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingDown",
+        "TrendingUp",
+        "Minus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/MotivationPopup.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Flame"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/NotificationApologyModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Bell",
+        "MessageSquare",
+        "CheckCircle"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🙏",
+          "line": 111,
+          "allowed": false
+        },
+        {
+          "emoji": "😅",
+          "line": 116,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/NumericInput.tsx",
+      "hasLucideImport": false,
+      "lucideIcons": [],
+      "emojisFound": [
+        {
+          "emoji": "🔒",
+          "line": 210,
+          "allowed": true
+        },
+        {
+          "emoji": "🔒",
+          "line": 251,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "components/PartnerDetailModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "MapPin",
+        "Instagram",
+        "Youtube",
+        "Globe",
+        "Phone",
+        "Mail",
+        "Calendar",
+        "Award",
+        "Dumbbell",
+        "Heart",
+        "User",
+        "ExternalLink"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/PartnersScreen.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Phone",
+        "MapPin",
+        "Globe",
+        "Instagram",
+        "ExternalLink",
+        "Award",
+        "Users",
+        "Sword",
+        "Heart"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🏯",
+          "line": 254,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/PerformanceRadar.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Info",
+        "TrendingUp",
+        "TrendingDown",
+        "Minus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/PlateauAlert.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "AlertTriangle",
+        "X",
+        "Lightbulb",
+        "RefreshCw",
+        "ThumbsUp",
+        "TrendingDown",
+        "ChevronRight",
+        "Award"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/PredictionCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingDown",
+        "TrendingUp",
+        "Target",
+        "Calendar",
+        "ChevronRight",
+        "X",
+        "AlertTriangle",
+        "Lightbulb",
+        "BarChart3",
+        "Clock",
+        "Minus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/PredictionsList.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Calendar",
+        "Target"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/ProfileImagePicker.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Camera",
+        "User"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/ProgressionCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Trophy",
+        "Star",
+        "Flame",
+        "TrendingUp",
+        "ChevronRight",
+        "Zap",
+        "Target"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/QuestsCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Target",
+        "Flame",
+        "Trophy",
+        "Star",
+        "Zap",
+        "Droplets",
+        "Moon",
+        "Footprints",
+        "Dumbbell",
+        "Award",
+        "Gift",
+        "Lock",
+        "CheckCircle2",
+        "Sparkles",
+        "ChevronRight",
+        "ChevronDown",
+        "ChevronUp",
+        "Camera",
+        "BookOpen",
+        "Snowflake",
+        "Users",
+        "Crown",
+        "Calendar",
+        "TrendingUp",
+        "Coffee",
+        "Salad",
+        "Sofa",
+        "Share2",
+        "ClipboardList"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✓",
+          "line": 735,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/QuickHydration.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Droplets",
+        "Plus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/RPEModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Check",
+        "AlertTriangle",
+        "Flame",
+        "Zap",
+        "Battery",
+        "Target"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/RamadanStats.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingDown",
+        "TrendingUp",
+        "Droplet",
+        "Moon",
+        "Sun"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🌙",
+          "line": 152,
+          "allowed": true
+        },
+        {
+          "emoji": "🌙",
+          "line": 220,
+          "allowed": true
+        },
+        {
+          "emoji": "🌅",
+          "line": 331,
+          "allowed": false
+        },
+        {
+          "emoji": "🌙",
+          "line": 353,
+          "allowed": true
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/RanksModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Check",
+        "Lock",
+        "Flame",
+        "Target",
+        "Swords",
+        "Sword",
+        "Moon",
+        "GraduationCap",
+        "Crown",
+        "Castle",
+        "Shield",
+        "Star",
+        "ChevronRight"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "⛩",
+          "line": 102,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 102,
+          "allowed": false
+        },
+        {
+          "emoji": "⛩",
+          "line": 111,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 111,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/RatingPopup.tsx",
+      "hasLucideImport": false,
+      "lucideIcons": [],
+      "emojisFound": [
+        {
+          "emoji": "❤",
+          "line": 275,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 275,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/ReminderSettings.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Bell",
+        "Clock",
+        "Calendar",
+        "Dumbbell"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "⚖",
+          "line": 38,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 38,
+          "allowed": false
+        },
+        {
+          "emoji": "❌",
+          "line": 75,
+          "allowed": false
+        },
+        {
+          "emoji": "❌",
+          "line": 89,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/RepsWeightModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Plus",
+        "Minus",
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/ReviewModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Star",
+        "Check",
+        "Clock"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/ScoreFormeMini.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronRight",
+        "Activity"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "😄",
+          "line": 37,
+          "allowed": false
+        },
+        {
+          "emoji": "😊",
+          "line": 38,
+          "allowed": false
+        },
+        {
+          "emoji": "😐",
+          "line": 39,
+          "allowed": false
+        },
+        {
+          "emoji": "😔",
+          "line": 40,
+          "allowed": false
+        },
+        {
+          "emoji": "😢",
+          "line": 41,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/SharePromptModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Share2",
+        "X",
+        "Camera",
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/ShareableProgressCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Trophy",
+        "Target",
+        "TrendingUp",
+        "TrendingDown"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "📖",
+          "line": 147,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "components/SleepCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Moon"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/SleepModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Moon",
+        "X",
+        "Brain",
+        "Dumbbell",
+        "Scale",
+        "Clock",
+        "Heart"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🌙",
+          "line": 109,
+          "allowed": true
+        },
+        {
+          "emoji": "💡",
+          "line": 133,
+          "allowed": true
+        },
+        {
+          "emoji": "😴",
+          "line": 150,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/SmartRemindersSettings.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Bell",
+        "Scale",
+        "Dumbbell",
+        "Droplets",
+        "Ruler",
+        "Flame",
+        "RefreshCw",
+        "Brain"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/SocialStatsCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Share2",
+        "TrendingDown",
+        "Flame",
+        "Award"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/StatsDetailModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/StatsGrid.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Activity",
+        "Dumbbell",
+        "Droplet",
+        "Target",
+        "IconNode"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/StoryCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingDown",
+        "Trophy",
+        "Flame",
+        "Target"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/StreakCalendar.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "ChevronRight",
+        "Flame",
+        "Calendar"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/ThemeSelector.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Palette",
+        "Sun",
+        "Moon",
+        "Smartphone",
+        "Check",
+        "Crown"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/TimerAlarmOverlay.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/TipsScreen.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "BookOpen",
+        "Heart",
+        "Moon",
+        "Footprints",
+        "ChevronRight",
+        "Sparkles",
+        "ExternalLink",
+        "Droplet"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "📖",
+          "line": 197,
+          "allowed": true
+        },
+        {
+          "emoji": "🔬",
+          "line": 202,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/TrainingCalendar.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "ChevronRight",
+        "Plus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/TrainingJournalOnboarding.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "BookOpen",
+        "Target",
+        "TrendingUp",
+        "Plus",
+        "X",
+        "ChevronRight",
+        "ChevronLeft"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/UpdateChangelogModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Sparkles",
+        "Heart",
+        "Star",
+        "Instagram",
+        "ExternalLink",
+        "Check",
+        "TrendingUp",
+        "Trash2",
+        "BarChart3",
+        "Moon",
+        "Lock",
+        "Zap",
+        "Target",
+        "Globe",
+        "Palette",
+        "Shield",
+        "Watch",
+        "Camera",
+        "CalendarDays",
+        "Bell",
+        "Scale",
+        "Activity"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/UserAvatar.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Settings"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/VictoryShareModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Camera",
+        "Share2",
+        "Download",
+        "Trophy",
+        "Flame",
+        "Clock",
+        "Target",
+        "Award",
+        "Image as ImageIcon",
+        "Gauge",
+        "Dumbbell",
+        "Timer"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/WatchStatusIndicator.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Watch"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "⚠",
+          "line": 48,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 48,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/WeeklyChallenge.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/WeeklyShareCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Scale",
+        "Ruler",
+        "Dumbbell",
+        "Flame",
+        "Award",
+        "TrendingDown",
+        "TrendingUp"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/WeightCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Scale",
+        "TrendingUp",
+        "TrendingDown",
+        "Minus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/WeightChart.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingDown",
+        "TrendingUp",
+        "Minus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/WeightCompositionCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Scale",
+        "Target"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/WeightInput.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Minus",
+        "Plus"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🔒",
+          "line": 185,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "components/WeightTrendCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingDown",
+        "TrendingUp"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/WelcomeHeader.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/WorkoutCalendar.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/WorkoutModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/WorkoutSummaryModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "RotateCcw",
+        "Check"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🔄",
+          "line": 56,
+          "allowed": true
+        },
+        {
+          "emoji": "️",
+          "line": 60,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/YearlyCounter.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Flame",
+        "Target",
+        "TrendingUp",
+        "ChevronRight",
+        "Settings"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/ZoneSelectionModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "ChevronRight",
+        "Hand",
+        "Footprints",
+        "Brain",
+        "Bone",
+        "Dumbbell",
+        "Target",
+        "ArrowLeft",
+        "Zap",
+        "Heart",
+        "Circle"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/ZoomableImage.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/calendar/AddSessionModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "X",
+        "Check",
+        "Clock"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/calendar/DayDetailModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Plus",
+        "Trash2",
+        "Clock",
+        "Edit3",
+        "Calendar"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/cards/ChargeCardFullWidth.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Zap",
+        "Activity",
+        "TrendingUp",
+        "AlertCircle",
+        "Settings"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/cards/ChargeLottieCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Activity",
+        "Zap"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/cards/HydrationCard2.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Droplets",
+        "Minus",
+        "Settings",
+        "Trophy"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🔵",
+          "line": 28,
+          "allowed": false
+        },
+        {
+          "emoji": "💧",
+          "line": 37,
+          "allowed": true
+        },
+        {
+          "emoji": "💧",
+          "line": 71,
+          "allowed": true
+        },
+        {
+          "emoji": "💧",
+          "line": 77,
+          "allowed": true
+        },
+        {
+          "emoji": "💧",
+          "line": 85,
+          "allowed": true
+        },
+        {
+          "emoji": "💧",
+          "line": 172,
+          "allowed": true
+        },
+        {
+          "emoji": "💧",
+          "line": 178,
+          "allowed": true
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/cards/HydrationCardFullWidth.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Droplets",
+        "Plus",
+        "Minus",
+        "Settings",
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/cards/HydrationLottieCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Droplets",
+        "Minus",
+        "Settings",
+        "Trophy"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🎉",
+          "line": 297,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/cards/SleepCardFullWidth.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Moon",
+        "Plus",
+        "TrendingUp",
+        "AlertTriangle",
+        "CheckCircle",
+        "Settings"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/cards/SleepLottieCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Moon",
+        "Clock",
+        "AlertTriangle",
+        "CheckCircle"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "★",
+          "line": 220,
+          "allowed": false
+        },
+        {
+          "emoji": "★",
+          "line": 222,
+          "allowed": false
+        },
+        {
+          "emoji": "★",
+          "line": 225,
+          "allowed": false
+        },
+        {
+          "emoji": "★",
+          "line": 228,
+          "allowed": false
+        },
+        {
+          "emoji": "★",
+          "line": 231,
+          "allowed": false
+        },
+        {
+          "emoji": "★",
+          "line": 234,
+          "allowed": false
+        },
+        {
+          "emoji": "★",
+          "line": 237,
+          "allowed": false
+        },
+        {
+          "emoji": "★",
+          "line": 240,
+          "allowed": false
+        },
+        {
+          "emoji": "★",
+          "line": 243,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/cards/WeightFullCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingDown",
+        "TrendingUp",
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/cards/WeightLottieCard.backup.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Scale",
+        "TrendingDown",
+        "TrendingUp",
+        "Minus as TrendingStable",
+        "Target"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/cards/WeightLottieCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingDown",
+        "TrendingUp",
+        "Target",
+        "Dumbbell",
+        "Apple",
+        "Droplet"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/charts/ActivityCard.tsx",
+      "hasLucideImport": false,
+      "lucideIcons": [],
+      "emojisFound": [
+        {
+          "emoji": "👣",
+          "line": 80,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/charts/HydrationCard.tsx",
+      "hasLucideImport": false,
+      "lucideIcons": [],
+      "emojisFound": [
+        {
+          "emoji": "💧",
+          "line": 29,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "components/health-charts/CaloriesHistoryChart.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Maximize2"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/health-charts/InsightCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingUp",
+        "TrendingDown",
+        "AlertCircle",
+        "CheckCircle",
+        "Info",
+        "Zap",
+        "type LucideIcon"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/health-charts/SleepHistoryChart.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Maximize2"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/health-charts/TrendLineChart.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingUp",
+        "TrendingDown",
+        "Maximize2"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/health-charts/WeightTrendChart.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Target",
+        "TrendingDown",
+        "TrendingUp",
+        "Maximize2"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/EditableHomeContainer.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/HomeEssentielContent.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "BookOpen",
+        "Target",
+        "FileText",
+        "ChevronRight",
+        "Plus",
+        "Award",
+        "Brain",
+        "Zap"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/HomeShareMenu.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Share2",
+        "X",
+        "Calendar",
+        "Target",
+        "Trophy",
+        "Instagram",
+        "BarChart2"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/HomeTabView.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "GripVertical",
+        "Home",
+        "Grid",
+        "LineChart"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/HomeToolsMenu.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Wrench",
+        "X",
+        "Timer",
+        "BookOpen",
+        "Heart",
+        "Share2",
+        "Camera",
+        "Target",
+        "Trophy",
+        "Settings",
+        "Calculator",
+        "Utensils",
+        "Droplet",
+        "Moon",
+        "Dumbbell"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/ObjectiveSwitch.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Target",
+        "Trophy",
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/RankCitationCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Flame",
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/essentiel/EssentielActivityCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Flame",
+        "Footprints"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/essentiel/EssentielHeader.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Sparkles",
+        "Flame",
+        "Zap",
+        "Trophy",
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/essentiel/EssentielHydrationCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Droplets"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/essentiel/EssentielSleepCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Moon",
+        "Edit3",
+        "Plus",
+        "CheckCircle",
+        "ThumbsUp",
+        "Minus",
+        "AlertTriangle"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/essentiel/EssentielWeekSummary.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "BarChart3",
+        "Scale",
+        "Droplets",
+        "Moon",
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/essentiel/EssentielWeightCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingUp",
+        "TrendingDown",
+        "Minus",
+        "Target",
+        "ArrowRight",
+        "Zap",
+        "Activity"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/pages/Page1Monitoring.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Sparkles",
+        "TrendingUp",
+        "TrendingDown",
+        "Minus",
+        "Target",
+        "Home",
+        "Grid",
+        "LineChart",
+        "Dumbbell",
+        "Apple",
+        "Droplet",
+        "Share2",
+        "X",
+        "Calendar",
+        "CalendarDays",
+        "CalendarRange",
+        "FileText",
+        "BookOpen",
+        "Timer",
+        "Calculator",
+        "Clock",
+        "Camera",
+        "User",
+        "Trophy",
+        "Utensils",
+        "Bell",
+        "Heart",
+        "Users",
+        "BookMarked",
+        "Plus",
+        "Medal",
+        "ListChecks",
+        "Moon",
+        "Crown",
+        "Palette",
+        "Shield",
+        "Swords",
+        "ChevronRight"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✅",
+          "line": 397,
+          "allowed": false
+        },
+        {
+          "emoji": "✅",
+          "line": 755,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/home/pages/Page2ActionGrid.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "BookOpen",
+        "Timer",
+        "Calculator",
+        "Clock",
+        "Camera",
+        "Share2",
+        "User",
+        "Palette",
+        "Sparkles",
+        "Trophy",
+        "Utensils",
+        "Bell",
+        "Heart",
+        "Users",
+        "BookMarked",
+        "Plus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/pages/Page4Stats.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Activity",
+        "Footprints",
+        "Flame",
+        "TrendingUp",
+        "Target"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/home/pages/Page5Reports.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "FileText",
+        "Share2",
+        "TrendingUp",
+        "TrendingDown",
+        "Minus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/lab/ActionLink.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/lab/HydrationScale.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Droplet",
+        "AlertTriangle",
+        "CheckCircle"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/lab/ProtocolChecklist.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/lab/ScientificCredibilityBadge.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "FlaskConical",
+        "GraduationCap",
+        "FileCheck"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/more/MoreTabView.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "User",
+        "Palette",
+        "Settings",
+        "Heart",
+        "Sparkles"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/planning/AddClubModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Check",
+        "Plus",
+        "Minus",
+        "Camera",
+        "Image as ImageIcon",
+        "Target",
+        "AlertCircle"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/planning/EmptyState.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Calendar",
+        "Clock",
+        "BookOpen",
+        "Users",
+        "Trophy",
+        "Plus",
+        "Sparkles",
+        "Target",
+        "Flame"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🗓",
+          "line": 42,
+          "allowed": true
+        },
+        {
+          "emoji": "️",
+          "line": 42,
+          "allowed": false
+        },
+        {
+          "emoji": "📋",
+          "line": 50,
+          "allowed": true
+        },
+        {
+          "emoji": "📖",
+          "line": 58,
+          "allowed": true
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/planning/EnhancedAddSessionModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "X",
+        "Check",
+        "Clock",
+        "Plus"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "📋",
+          "line": 115,
+          "allowed": true
+        },
+        {
+          "emoji": "📋",
+          "line": 116,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "components/planning/EnhancedCalendarView.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Plus",
+        "Moon",
+        "ChevronLeft",
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/planning/EventTicket.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Calendar",
+        "MapPin",
+        "Bell"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🦵",
+          "line": 57,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/planning/EventsDisplay.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronDown",
+        "ChevronUp"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/planning/PlanningTabView.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Calendar",
+        "BookOpen",
+        "Dumbbell",
+        "Clock",
+        "Users"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/planning/ProgrammeView.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Plus",
+        "Moon",
+        "Sun",
+        "Sunset",
+        "ChevronRight",
+        "Clock"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/planning/TimetableView.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Plus",
+        "Clock",
+        "Maximize2",
+        "X",
+        "Moon",
+        "ChevronRight",
+        "Calendar",
+        "ClipboardList"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🔄",
+          "line": 52,
+          "allowed": true
+        },
+        {
+          "emoji": "🔆",
+          "line": 87,
+          "allowed": true
+        },
+        {
+          "emoji": "🌙",
+          "line": 91,
+          "allowed": true
+        },
+        {
+          "emoji": "🔆",
+          "line": 214,
+          "allowed": true
+        },
+        {
+          "emoji": "🖱",
+          "line": 286,
+          "allowed": true
+        },
+        {
+          "emoji": "️",
+          "line": 286,
+          "allowed": false
+        },
+        {
+          "emoji": "➕",
+          "line": 296,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/planning/pages/PlanningPage1Week.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Calendar"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/planning/pages/PlanningPage3Journal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "BookOpen",
+        "CheckCircle2",
+        "Clock"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/planning/pages/PlanningPage4Programs.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Dumbbell",
+        "Clock",
+        "Target",
+        "TrendingUp"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/planning/pages/PlanningPage5Club.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Trophy",
+        "Users",
+        "Target",
+        "Crown",
+        "Medal",
+        "Award"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/social-cards/FighterCardV2.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Flame",
+        "Target",
+        "Scale"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/social-cards/MonthlyRecapCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Calendar",
+        "TrendingDown",
+        "TrendingUp",
+        "Award"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/social-cards/TransformationCardV2.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingDown",
+        "TrendingUp",
+        "Calendar",
+        "Zap"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/social-cards/WeightProgressCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Scale",
+        "TrendingDown",
+        "TrendingUp",
+        "Target",
+        "Minus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/social-cards/YearCounterCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Flame",
+        "Calendar",
+        "Target",
+        "Dumbbell"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/ActivityStats.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Maximize2",
+        "Dumbbell as DumbbellIcon"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/AppleHealthEstimationModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Moon",
+        "Smartphone",
+        "Activity",
+        "Brain",
+        "Clock",
+        "CheckCircle2"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "💡",
+          "line": 219,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/CompositionStats.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Droplets",
+        "Dumbbell",
+        "Bone",
+        "Flame",
+        "Calendar",
+        "TrendingUp",
+        "TrendingDown",
+        "Target",
+        "Maximize2",
+        "Eye"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/DisciplineStats.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Flame",
+        "TrendingDown",
+        "TrendingUp",
+        "Target",
+        "Activity",
+        "Calendar",
+        "Maximize2",
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/EstimationBadge.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Info"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/HealthKitConnectCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Heart",
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/HealthStatusModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "AlertTriangle",
+        "CheckCircle2",
+        "AlertCircle",
+        "TrendingUp",
+        "TrendingDown"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "⚠",
+          "line": 118,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 118,
+          "allowed": false
+        },
+        {
+          "emoji": "⚠",
+          "line": 121,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 121,
+          "allowed": false
+        },
+        {
+          "emoji": "💡",
+          "line": 213,
+          "allowed": true
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/stats/HealthTab.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Heart",
+        "Activity",
+        "Droplet",
+        "Wind",
+        "Zap",
+        "Moon",
+        "TrendingUp",
+        "Dumbbell",
+        "Watch",
+        "Smartphone",
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/MeasurementsStats.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Ruler",
+        "TrendingDown",
+        "TrendingUp",
+        "Maximize2"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/MesuresTab.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Ruler",
+        "TrendingDown",
+        "TrendingUp",
+        "Maximize2"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "📏",
+          "line": 207,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/stats/MetricDetailModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/PerformanceStats.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingUp",
+        "TrendingDown",
+        "Activity",
+        "Moon",
+        "Zap",
+        "Target",
+        "Maximize2"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/PerformanceStatsOld.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Activity",
+        "Zap",
+        "Moon",
+        "TrendingUp",
+        "TrendingDown",
+        "AlertTriangle",
+        "Lightbulb",
+        "Flame",
+        "Sun",
+        "Dumbbell",
+        "Target",
+        "Clock",
+        "Maximize2",
+        "X",
+        "CheckCircle",
+        "ThumbsUp",
+        "Circle as CircleIcon"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/PerformanceTab.tsx",
+      "hasLucideImport": false,
+      "lucideIcons": [],
+      "emojisFound": [
+        {
+          "emoji": "📈",
+          "line": 83,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/stats/PoidsStats.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Scale",
+        "Target",
+        "TrendingDown",
+        "TrendingUp",
+        "Activity",
+        "Maximize2",
+        "Eye"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/PoidsTab.tsx",
+      "hasLucideImport": false,
+      "lucideIcons": [],
+      "emojisFound": [
+        {
+          "emoji": "⚖",
+          "line": 40,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 40,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/stats/ShareFloatingButton.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Share2",
+        "Calendar",
+        "CalendarDays",
+        "CalendarRange",
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/StatsDetailModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "TrendingUp",
+        "TrendingDown",
+        "Minus",
+        "BookOpen",
+        "AlertTriangle",
+        "ExternalLink"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/StatsExplanation.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "HelpCircle",
+        "Info"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/StatsTabViewNew.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Scale",
+        "Activity",
+        "Ruler",
+        "Flame",
+        "Award",
+        "Heart",
+        "LayoutDashboard",
+        "AlertTriangle",
+        "RefreshCw"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/VitaliteStats.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Heart",
+        "Moon",
+        "Droplets",
+        "TrendingDown",
+        "TrendingUp",
+        "Activity",
+        "Maximize2"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/VitalityBetaWarningModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "AlertTriangle",
+        "MessageSquare",
+        "Bug",
+        "ExternalLink"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "⚠",
+          "line": 80,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 80,
+          "allowed": false
+        },
+        {
+          "emoji": "🙏",
+          "line": 148,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/stats/VitalityStats.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Moon",
+        "Droplets",
+        "Heart",
+        "TrendingUp",
+        "TrendingDown",
+        "Clock",
+        "Lightbulb",
+        "Maximize2",
+        "AlertTriangle",
+        "CheckCircle",
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/WeightStats.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingDown",
+        "TrendingUp",
+        "Weight as WeightIcon",
+        "Target",
+        "ArrowDown",
+        "ArrowUp",
+        "Maximize2"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/advanced/HRVCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "CheckCircle",
+        "AlertCircle",
+        "Activity"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/charts/MetricCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingUp",
+        "TrendingDown",
+        "Minus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/charts/MetricRangeIndicator.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Info",
+        "ExternalLink"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/charts/SimpleCompositionCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Activity",
+        "Droplets",
+        "Dumbbell"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/charts/SimpleMetricCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingUp",
+        "TrendingDown",
+        "Minus",
+        "ExternalLink",
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/charts/SparklineCard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingUp",
+        "TrendingDown",
+        "Minus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/AnalysePage.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "TrendingUp",
+        "Zap",
+        "Target",
+        "Award",
+        "AlertCircle",
+        "TrendingDown",
+        "Activity"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/CompositionPage.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Activity",
+        "Droplet",
+        "Bone",
+        "Zap",
+        "Flame",
+        "Target"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/CorpsPage.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Target",
+        "TrendingUp",
+        "Activity",
+        "Droplet",
+        "Bone",
+        "Zap",
+        "Flame",
+        "Ruler"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/DashboardPage.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Scale",
+        "Activity",
+        "Flame",
+        "Heart",
+        "Ruler",
+        "TrendingUp",
+        "Zap",
+        "Moon",
+        "Droplets",
+        "Award",
+        "Maximize2",
+        "Trophy",
+        "Target",
+        "Bone",
+        "Calendar",
+        "Waves",
+        "PlusCircle"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/DisciplinePage.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Flame",
+        "Target",
+        "Calendar",
+        "Award",
+        "Timer"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/EntrainementPage.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Flame",
+        "Dumbbell",
+        "Clock",
+        "Target"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/MensurationsPage.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Ruler"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/PerformancePage.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Award",
+        "TrendingUp",
+        "Target",
+        "Zap"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/PoidsPage.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Target",
+        "TrendingUp",
+        "TrendingDown",
+        "Scale",
+        "Activity",
+        "BarChart3"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/SantePage.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Moon",
+        "Droplet",
+        "Heart",
+        "Activity",
+        "Wind",
+        "Thermometer",
+        "Calendar"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/StatsPage1Overview.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Activity",
+        "Weight",
+        "TrendingUp",
+        "Heart"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/StatsPage2Activity.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Footprints",
+        "Flame",
+        "Navigation",
+        "Clock",
+        "TrendingUp",
+        "TrendingDown"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/StatsPage3Weight.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Ruler",
+        "TrendingUp",
+        "TrendingDown"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/StatsPage4Performance.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Trophy",
+        "TrendingUp",
+        "Target",
+        "TrendingDown"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/StatsPage5Health.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Moon",
+        "Droplets",
+        "Activity",
+        "TrendingUp",
+        "TrendingDown"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/stats/pages/VitalitePage.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Moon",
+        "Droplet",
+        "Heart",
+        "Activity",
+        "Zap",
+        "Plus"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "⚠",
+          "line": 316,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 316,
+          "allowed": false
+        },
+        {
+          "emoji": "💡",
+          "line": 327,
+          "allowed": true
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "components/ui/GlassButton.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "LucideIcon"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/ui/Header.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "components/ui/WellnessCards.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "LucideIcon",
+        "Check"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "💧",
+          "line": 399,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "app/(tabs)/_layout.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Home",
+        "BarChart2",
+        "Plus",
+        "Calendar",
+        "Menu"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/(tabs)/add.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Scale",
+        "Ruler",
+        "Heart",
+        "Camera",
+        "X",
+        "ChevronRight",
+        "Droplets",
+        "Flame",
+        "Dumbbell",
+        "Check",
+        "Bone",
+        "Activity",
+        "Zap",
+        "CircleDot",
+        "Smile",
+        "Meh",
+        "Moon",
+        "Frown",
+        "Calendar",
+        "Cloud",
+        "CheckCircle2",
+        "type LucideIcon"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/(tabs)/index.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Scale",
+        "Droplets",
+        "Camera",
+        "Sparkles",
+        "Flame",
+        "Zap",
+        "Dumbbell",
+        "Trophy",
+        "ChevronRight",
+        "Timer",
+        "Ruler",
+        "Heart",
+        "HeartPulse",
+        "TrendingDown",
+        "TrendingUp",
+        "Minus",
+        "BarChart3",
+        "Medal",
+        "Palette",
+        "Battery",
+        "Moon",
+        "Activity",
+        "FileText",
+        "Target",
+        "Gift",
+        "AlertTriangle",
+        "Crown",
+        "Waves",
+        "Bed",
+        "Bell",
+        "Brain",
+        "Stethoscope",
+        "Scissors",
+        "Settings",
+        "FlaskConical",
+        "Calculator",
+        "Apple",
+        "Clock",
+        "BookOpen",
+        "Plus",
+        "Award",
+        "Calendar",
+        "Share2",
+        "List",
+        "Building2",
+        "Cloud",
+        "Watch",
+        "Shield"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/(tabs)/more/index.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "CheckCircle",
+        "AlertCircle",
+        "AlertTriangle",
+        "Check",
+        "User",
+        "Camera",
+        "Settings",
+        "MessageCircle",
+        "Star",
+        "ChevronRight",
+        "Building2",
+        "Ruler",
+        "Download",
+        "Upload",
+        "Lock",
+        "Share2",
+        "FileText",
+        "LucideIcon",
+        "Utensils",
+        "Timer",
+        "Calculator",
+        "Apple",
+        "Lightbulb",
+        "Activity",
+        "BookOpen",
+        "Palette",
+        "Sparkles",
+        "Heart",
+        "Shield",
+        "Zap",
+        "Crown",
+        "Trophy",
+        "Target",
+        "FlaskConical",
+        "LayoutDashboard",
+        "Sliders",
+        "Info",
+        "Scale",
+        "X",
+        "Swords",
+        "Droplet",
+        "TrendingDown",
+        "Calendar",
+        "Award",
+        "Bell",
+        "Watch",
+        "Globe",
+        "RefreshCw",
+        "Moon",
+        "Sun",
+        "Smartphone",
+        "MessageSquareQuote",
+        "Image as ImageIcon",
+        "Trash2",
+        "Search"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🔥",
+          "line": 785,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "app/(tabs)/planning.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Plus",
+        "Clock",
+        "Calendar",
+        "List",
+        "Dumbbell",
+        "ChevronRight",
+        "ChevronLeft",
+        "Moon",
+        "TrendingUp",
+        "Trophy",
+        "MapPin",
+        "Bell",
+        "ExternalLink",
+        "BookOpen",
+        "Search",
+        "Check",
+        "Globe",
+        "X",
+        "Trash2",
+        "Sun",
+        "Filter",
+        "Circle"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🔄",
+          "line": 501,
+          "allowed": true
+        },
+        {
+          "emoji": "✅",
+          "line": 506,
+          "allowed": false
+        },
+        {
+          "emoji": "📅",
+          "line": 508,
+          "allowed": true
+        },
+        {
+          "emoji": "❌",
+          "line": 511,
+          "allowed": false
+        },
+        {
+          "emoji": "🇫",
+          "line": 2019,
+          "allowed": false
+        },
+        {
+          "emoji": "🇷",
+          "line": 2019,
+          "allowed": false
+        },
+        {
+          "emoji": "🇪",
+          "line": 2020,
+          "allowed": false
+        },
+        {
+          "emoji": "🇺",
+          "line": 2020,
+          "allowed": false
+        },
+        {
+          "emoji": "🌍",
+          "line": 2021,
+          "allowed": true
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/_layout.tsx",
+      "hasLucideImport": false,
+      "lucideIcons": [],
+      "emojisFound": [
+        {
+          "emoji": "📦",
+          "line": 61,
+          "allowed": false
+        },
+        {
+          "emoji": "🚀",
+          "line": 145,
+          "allowed": false
+        },
+        {
+          "emoji": "✅",
+          "line": 160,
+          "allowed": false
+        },
+        {
+          "emoji": "✅",
+          "line": 165,
+          "allowed": false
+        },
+        {
+          "emoji": "❌",
+          "line": 166,
+          "allowed": false
+        },
+        {
+          "emoji": "✅",
+          "line": 175,
+          "allowed": false
+        },
+        {
+          "emoji": "✅",
+          "line": 183,
+          "allowed": false
+        },
+        {
+          "emoji": "✅",
+          "line": 188,
+          "allowed": false
+        },
+        {
+          "emoji": "❌",
+          "line": 189,
+          "allowed": false
+        },
+        {
+          "emoji": "❌",
+          "line": 192,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/activity-detail.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Activity",
+        "Calendar",
+        "Clock",
+        "Dumbbell",
+        "TrendingUp"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/activity-history.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Footprints",
+        "Flame",
+        "Target",
+        "TrendingUp",
+        "TrendingDown",
+        "Minus",
+        "Calendar"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/add-club.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Plus",
+        "Check",
+        "Camera",
+        "ChevronDown",
+        "ChevronRight",
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/add-combat.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Calendar",
+        "Trophy",
+        "Save",
+        "User",
+        "Building2",
+        "Scale",
+        "Clock",
+        "FileText",
+        "Target",
+        "Zap"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/add-competition.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Calendar",
+        "MapPin",
+        "Trophy",
+        "Save"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/add-training.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Check",
+        "ChevronDown",
+        "ChevronRight",
+        "Zap",
+        "Activity",
+        "Trophy",
+        "Dumbbell",
+        "Timer",
+        "Heart",
+        "Share2",
+        "Cloud",
+        "Star",
+        "Plus",
+        "Lightbulb",
+        "X",
+        "Edit3",
+        "Building2",
+        "Sun",
+        "Home",
+        "Calendar",
+        "Clock",
+        "Camera"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🔍",
+          "line": 1353,
+          "allowed": false
+        },
+        {
+          "emoji": "⚠",
+          "line": 2547,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 2547,
+          "allowed": false
+        },
+        {
+          "emoji": "👋",
+          "line": 3005,
+          "allowed": false
+        },
+        {
+          "emoji": "★",
+          "line": 3042,
+          "allowed": false
+        },
+        {
+          "emoji": "❤",
+          "line": 3047,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 3047,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/appearance.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Palette",
+        "Sun",
+        "Moon",
+        "Smartphone",
+        "ArrowLeft",
+        "Image as ImageIcon",
+        "MessageSquareQuote",
+        "User",
+        "ChevronRight",
+        "Shapes"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/avatar-customization.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Lock",
+        "Check"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🥉",
+          "line": 302,
+          "allowed": false
+        },
+        {
+          "emoji": "🥈",
+          "line": 302,
+          "allowed": false
+        },
+        {
+          "emoji": "🥇",
+          "line": 302,
+          "allowed": false
+        },
+        {
+          "emoji": "🌌",
+          "line": 316,
+          "allowed": false
+        },
+        {
+          "emoji": "🐉",
+          "line": 316,
+          "allowed": false
+        },
+        {
+          "emoji": "💙",
+          "line": 323,
+          "allowed": false
+        },
+        {
+          "emoji": "💛",
+          "line": 323,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/avatar-selection-v3.tsx",
+      "hasLucideImport": false,
+      "lucideIcons": [],
+      "emojisFound": [
+        {
+          "emoji": "⚙",
+          "line": 435,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 435,
+          "allowed": false
+        },
+        {
+          "emoji": "😴",
+          "line": 444,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/avatar-selection.tsx",
+      "hasLucideImport": false,
+      "lucideIcons": [],
+      "emojisFound": [
+        {
+          "emoji": "⚙",
+          "line": 620,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 620,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/backup-guide.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Shield",
+        "Cloud",
+        "FolderPlus",
+        "Download",
+        "Upload",
+        "Calendar",
+        "CheckCircle",
+        "AlertTriangle"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/badges.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Lock",
+        "Check",
+        "X",
+        "ChevronRight",
+        "Flame",
+        "Scale",
+        "Dumbbell",
+        "Star",
+        "Calendar",
+        "Award"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/body-composition.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Save",
+        "Droplets",
+        "Flame",
+        "Activity",
+        "Heart",
+        "Zap",
+        "TrendingDown",
+        "TrendingUp",
+        "Info"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/body-status.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "AlertTriangle",
+        "CheckCircle",
+        "Activity"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🫁",
+          "line": 40,
+          "allowed": false
+        },
+        {
+          "emoji": "🦴",
+          "line": 42,
+          "allowed": false
+        },
+        {
+          "emoji": "🦾",
+          "line": 43,
+          "allowed": false
+        },
+        {
+          "emoji": "✋",
+          "line": 44,
+          "allowed": false
+        },
+        {
+          "emoji": "🦵",
+          "line": 45,
+          "allowed": false
+        },
+        {
+          "emoji": "🦵",
+          "line": 46,
+          "allowed": false
+        },
+        {
+          "emoji": "🦶",
+          "line": 47,
+          "allowed": false
+        },
+        {
+          "emoji": "📝",
+          "line": 236,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/calculator.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Calculator",
+        "Flame",
+        "Shield",
+        "Zap"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🦍",
+          "line": 396,
+          "allowed": false
+        },
+        {
+          "emoji": "📚",
+          "line": 420,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/calculators.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Calculator",
+        "Scale",
+        "Flame",
+        "Target",
+        "Droplet",
+        "Heart",
+        "Activity",
+        "User",
+        "ChevronRight",
+        "X",
+        "Info",
+        "Utensils",
+        "Percent",
+        "Dumbbell",
+        "Crown",
+        "AlertCircle",
+        "TrendingUp",
+        "ArrowUp",
+        "MoveHorizontal",
+        "Circle",
+        "type LucideIcon"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/challenges.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Target",
+        "Gift",
+        "CheckCircle2",
+        "Clock",
+        "Flame",
+        "Zap",
+        "Trophy",
+        "Calendar",
+        "Dumbbell",
+        "Droplets",
+        "Moon",
+        "Scale",
+        "Waves",
+        "Bed",
+        "TrendingDown",
+        "Crown",
+        "ChevronDown",
+        "ChevronUp"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✓",
+          "line": 250,
+          "allowed": false
+        },
+        {
+          "emoji": "💡",
+          "line": 259,
+          "allowed": true
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/charge.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Activity",
+        "Zap",
+        "AlertCircle",
+        "CheckCircle",
+        "TrendingUp",
+        "Coffee",
+        "Info",
+        "Calendar",
+        "Target",
+        "Sparkles",
+        "Heart"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/chrono.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Play",
+        "Pause",
+        "RotateCcw",
+        "Plus",
+        "Minus",
+        "Clock",
+        "ChevronDown",
+        "ChevronUp",
+        "Save",
+        "Check",
+        "Shirt",
+        "Moon",
+        "Footprints",
+        "Award",
+        "Activity",
+        "LucideIcon"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/citations.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "MessageSquareQuote",
+        "Bell",
+        "Clock",
+        "CheckCircle",
+        "AlertCircle"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✓",
+          "line": 234,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/clubs.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Plus",
+        "Edit3",
+        "Trash2",
+        "X",
+        "Check",
+        "Building2",
+        "Camera",
+        "Image as ImageIcon"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/combat-detail.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Calendar",
+        "Trophy",
+        "Trash2",
+        "User",
+        "Building2",
+        "Scale",
+        "Clock",
+        "FileText",
+        "Target",
+        "Zap",
+        "TrendingUp",
+        "TrendingDown",
+        "Minus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/competition-detail.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Calendar",
+        "MapPin",
+        "Trophy",
+        "Clock",
+        "Edit",
+        "Trash2",
+        "Plus",
+        "TrendingDown",
+        "Scale"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/competition-sports-selection.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronRight",
+        "Check",
+        "Swords",
+        "Users",
+        "Zap",
+        "Trophy"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/competitions.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Calendar",
+        "MapPin",
+        "Plus",
+        "Trophy",
+        "Clock",
+        "ChevronRight",
+        "Download"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/competitor-profile.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Trophy",
+        "User",
+        "Weight",
+        "Award",
+        "ChevronRight",
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/competitor-space.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "ChevronRight",
+        "Swords",
+        "Calendar",
+        "Award",
+        "TrendingDown",
+        "Droplet",
+        "Trophy",
+        "Target",
+        "Scale"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/components/BMRCalculator.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Info"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/components/IMCCalculator.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Info",
+        "AlertCircle",
+        "Circle"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/components/IMGCalculator.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Info"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/components/IdealWeightCalculator.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/components/MacrosCalculator.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/components/OneRMCalculator.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/components/TDEECalculator.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/components/WaterCalculator.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Info",
+        "Droplet"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/composition-detail.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Scale",
+        "Flame",
+        "Dumbbell",
+        "Droplets",
+        "Zap",
+        "Activity",
+        "Bone",
+        "Heart",
+        "TrendingUp",
+        "TrendingDown",
+        "Minus"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/connected-devices.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Bluetooth",
+        "Scale",
+        "Watch",
+        "Heart",
+        "ChevronRight",
+        "ChevronLeft"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "💡",
+          "line": 113,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "app/creator-mode.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Camera",
+        "Trash2",
+        "BookOpen",
+        "Activity",
+        "User",
+        "Smartphone",
+        "CheckCircle",
+        "AlertCircle",
+        "Syringe",
+        "BarChart3",
+        "Dumbbell",
+        "Moon",
+        "Heart"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/customize-home.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Eye",
+        "EyeOff",
+        "RotateCcw",
+        "Check",
+        "User",
+        "Trophy",
+        "Scale",
+        "Grid",
+        "Moon",
+        "Battery",
+        "Target",
+        "Activity",
+        "Heart",
+        "FileText",
+        "Settings",
+        "Calendar",
+        "Sword",
+        "Info",
+        "ChevronUp",
+        "ChevronDown",
+        "Award",
+        "BookOpen"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/cut-mode.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Target",
+        "Scale",
+        "Calendar",
+        "TrendingDown",
+        "AlertTriangle",
+        "Check",
+        "Flame",
+        "Droplets",
+        "Moon",
+        "Dumbbell",
+        "Trophy",
+        "Zap",
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/edit-competition.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Calendar",
+        "MapPin",
+        "Trophy",
+        "Save",
+        "Target"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/energy.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Battery",
+        "Droplets",
+        "Moon",
+        "Dumbbell",
+        "Flame",
+        "TrendingUp",
+        "Zap",
+        "Target",
+        "ChevronRight",
+        "Activity"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/entry.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Scale",
+        "Save",
+        "Calendar as CalendarIcon",
+        "ChevronDown",
+        "TrendingDown",
+        "TrendingUp",
+        "Minus",
+        "X",
+        "Target",
+        "Zap"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✅",
+          "line": 213,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/event-detail.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Calendar",
+        "MapPin",
+        "ExternalLink",
+        "Tag",
+        "Trophy",
+        "Info",
+        "Globe",
+        "Users",
+        "Timer"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/events-simple.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "MapPin",
+        "ExternalLink",
+        "Search",
+        "ArrowLeft",
+        "Plus",
+        "Check"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🌍",
+          "line": 366,
+          "allowed": true
+        },
+        {
+          "emoji": "🇪",
+          "line": 389,
+          "allowed": false
+        },
+        {
+          "emoji": "🇺",
+          "line": 389,
+          "allowed": false
+        },
+        {
+          "emoji": "🇫",
+          "line": 412,
+          "allowed": false
+        },
+        {
+          "emoji": "🇷",
+          "line": 412,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/events-test.tsx",
+      "hasLucideImport": false,
+      "lucideIcons": [],
+      "emojisFound": [
+        {
+          "emoji": "📅",
+          "line": 44,
+          "allowed": true
+        },
+        {
+          "emoji": "📍",
+          "line": 44,
+          "allowed": false
+        },
+        {
+          "emoji": "🏷",
+          "line": 47,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 47,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/events.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "MapPin",
+        "ExternalLink",
+        "Search",
+        "ArrowLeft",
+        "Plus",
+        "Check",
+        "Calendar",
+        "Filter",
+        "Globe",
+        "Flag",
+        "Bookmark",
+        "ChevronRight",
+        "X",
+        "Sword",
+        "Swords",
+        "Timer",
+        "Target",
+        "Dumbbell",
+        "Mountain",
+        "Activity",
+        "Users",
+        "Zap",
+        "LucideIcon"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🌍",
+          "line": 513,
+          "allowed": true
+        },
+        {
+          "emoji": "🇫",
+          "line": 514,
+          "allowed": false
+        },
+        {
+          "emoji": "🇷",
+          "line": 514,
+          "allowed": false
+        },
+        {
+          "emoji": "🇪",
+          "line": 515,
+          "allowed": false
+        },
+        {
+          "emoji": "🇺",
+          "line": 515,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/export-data.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "FileText",
+        "Download",
+        "Share2",
+        "FileJson",
+        "Table",
+        "CheckCircle"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🔒",
+          "line": 147,
+          "allowed": true
+        },
+        {
+          "emoji": "🔒",
+          "line": 275,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "app/fasting-modes.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Moon",
+        "Sun",
+        "Coffee",
+        "Clock",
+        "Check"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✖",
+          "line": 43,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 43,
+          "allowed": false
+        },
+        {
+          "emoji": "🌙",
+          "line": 50,
+          "allowed": true
+        },
+        {
+          "emoji": "✝",
+          "line": 57,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 57,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 64,
+          "allowed": false
+        },
+        {
+          "emoji": "✡",
+          "line": 71,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 71,
+          "allowed": false
+        },
+        {
+          "emoji": "🙏",
+          "line": 78,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/fasting.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Clock",
+        "Play",
+        "Square",
+        "Settings",
+        "TrendingDown",
+        "Flame",
+        "CheckCircle",
+        "AlertTriangle",
+        "ChevronRight",
+        "X",
+        "MapPin",
+        "Calendar",
+        "Moon",
+        "Star",
+        "Cross",
+        "Swords",
+        "Utensils",
+        "RefreshCw",
+        "Droplets",
+        "Sun"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🔒",
+          "line": 359,
+          "allowed": true
+        },
+        {
+          "emoji": "🍽",
+          "line": 359,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 359,
+          "allowed": false
+        },
+        {
+          "emoji": "🍽",
+          "line": 432,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 432,
+          "allowed": false
+        },
+        {
+          "emoji": "⚙",
+          "line": 626,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 626,
+          "allowed": false
+        },
+        {
+          "emoji": "🌅",
+          "line": 729,
+          "allowed": false
+        },
+        {
+          "emoji": "🌆",
+          "line": 740,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/fighter-card.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Share2",
+        "Download",
+        "Trophy",
+        "Flame",
+        "Target",
+        "Swords",
+        "Calendar",
+        "TrendingUp",
+        "Award",
+        "Zap"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🏯",
+          "line": 314,
+          "allowed": false
+        },
+        {
+          "emoji": "🥷",
+          "line": 317,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/frame-selection.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/gamification-old.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Trophy",
+        "Star",
+        "Crown",
+        "Target",
+        "Flame",
+        "Zap",
+        "Shield",
+        "Award",
+        "Gift",
+        "Lock",
+        "Check",
+        "Swords",
+        "Sword",
+        "Moon",
+        "GraduationCap",
+        "Castle",
+        "Medal",
+        "Sparkles",
+        "TrendingUp",
+        "Heart",
+        "Scale",
+        "Dumbbell",
+        "Camera",
+        "Droplets"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/gamification.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Trophy",
+        "Star",
+        "Crown",
+        "Target",
+        "Flame",
+        "Zap",
+        "Shield",
+        "Award",
+        "Gift",
+        "Lock",
+        "Check",
+        "Swords",
+        "Sword",
+        "Moon",
+        "GraduationCap",
+        "Castle",
+        "Medal",
+        "Sparkles",
+        "TrendingUp",
+        "Heart",
+        "Scale",
+        "Dumbbell",
+        "Camera",
+        "Droplets",
+        "Clock",
+        "ChevronRight",
+        "Play",
+        "BookOpen",
+        "Snowflake",
+        "Users",
+        "Calendar",
+        "Coffee",
+        "Salad",
+        "Sofa",
+        "Share2",
+        "Footprints",
+        "CheckCircle2",
+        "Egg",
+        "ClipboardList"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✓",
+          "line": 1149,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/ghost-camera.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Camera",
+        "Ghost",
+        "Play",
+        "Pause",
+        "RotateCcw",
+        "Upload",
+        "Layers",
+        "Video as VideoIcon",
+        "Circle",
+        "Square"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/goals.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Target",
+        "Plus",
+        "Check",
+        "Trash2",
+        "Edit2"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/health-connect.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Heart",
+        "Footprints",
+        "Moon",
+        "Scale",
+        "Activity",
+        "RefreshCw",
+        "Check",
+        "X",
+        "ExternalLink",
+        "Shield",
+        "Zap",
+        "Clock",
+        "Smartphone",
+        "Watch"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/health-diagnostic.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "RefreshCw",
+        "CheckCircle",
+        "XCircle",
+        "AlertTriangle"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✅",
+          "line": 123,
+          "allowed": false
+        },
+        {
+          "emoji": "❌",
+          "line": 123,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/health-metrics.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Heart",
+        "Activity",
+        "Droplet",
+        "Wind",
+        "Thermometer",
+        "Zap",
+        "Moon",
+        "TrendingUp",
+        "Dumbbell",
+        "Watch",
+        "Calendar"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/health-professionals.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "ChevronRight",
+        "ExternalLink",
+        "Mail",
+        "MapPin",
+        "Star",
+        "X",
+        "ClipboardList"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/heart-zones.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Heart",
+        "Info",
+        "RefreshCw"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "💙",
+          "line": 39,
+          "allowed": false
+        },
+        {
+          "emoji": "💛",
+          "line": 55,
+          "allowed": false
+        },
+        {
+          "emoji": "🧡",
+          "line": 63,
+          "allowed": false
+        },
+        {
+          "emoji": "✓",
+          "line": 179,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/help-tutorials.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/history.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Calendar",
+        "Dna",
+        "ChevronLeft",
+        "ChevronRight",
+        "Plus"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "❌",
+          "line": 128,
+          "allowed": false
+        },
+        {
+          "emoji": "❌",
+          "line": 188,
+          "allowed": false
+        },
+        {
+          "emoji": "❌",
+          "line": 217,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/home-demo.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Droplets",
+        "Moon",
+        "Flame",
+        "Footprints",
+        "Zap",
+        "Trophy",
+        "Target",
+        "TrendingDown",
+        "TrendingUp",
+        "Dumbbell",
+        "Activity",
+        "BookOpen",
+        "CheckCircle2",
+        "Camera",
+        "FileText",
+        "Timer",
+        "Calendar",
+        "Clock",
+        "Calculator",
+        "FlaskConical",
+        "BarChart3",
+        "Battery",
+        "Plus",
+        "Home",
+        "User",
+        "ChevronRight"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✓",
+          "line": 498,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/hydration.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Droplets",
+        "Target",
+        "TrendingUp",
+        "Calendar",
+        "Check",
+        "Plus",
+        "Minus",
+        "Settings",
+        "Bell",
+        "BellOff",
+        "Sun",
+        "CloudRain",
+        "Moon as MoonIcon"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✅",
+          "line": 168,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/ideas.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Lightbulb",
+        "Send",
+        "Bug",
+        "Palette",
+        "Sparkles",
+        "HelpCircle",
+        "Mail",
+        "Check",
+        "Instagram",
+        "Inbox",
+        "ArrowDown"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/infirmary.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Plus",
+        "Activity",
+        "TrendingDown",
+        "Shield"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🔍",
+          "line": 150,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/injury-detail.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "TrendingDown",
+        "TrendingUp",
+        "Activity",
+        "Check",
+        "Trash2",
+        "Stethoscope",
+        "RotateCcw",
+        "Edit3",
+        "Calendar"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/injury-evaluation.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "AlertCircle",
+        "Save",
+        "Zap",
+        "Waves",
+        "Flame",
+        "Sparkles",
+        "Lock",
+        "Dumbbell",
+        "Swords",
+        "AlertTriangle",
+        "RotateCcw",
+        "HelpCircle",
+        "LucideIcon",
+        "Info"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/journal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "BookOpen",
+        "Save",
+        "Search",
+        "Filter",
+        "TrendingUp",
+        "TrendingDown",
+        "Calendar",
+        "X",
+        "ChevronDown",
+        "ChevronUp",
+        "Trash2",
+        "Info",
+        "Sparkles",
+        "Frown",
+        "Meh",
+        "Smile",
+        "Zap",
+        "Flame"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/lab.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "ChevronLeft",
+        "ExternalLink"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/leaderboard.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Crown",
+        "Trophy",
+        "Medal",
+        "Star",
+        "Lock"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/logo-selection.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Check",
+        "Crown",
+        "Sparkles"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/logos.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Image as ImageIcon",
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/mat-time.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Clock",
+        "TrendingUp",
+        "Calendar",
+        "Target",
+        "Award",
+        "Flame"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/measurements-detail.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Ruler",
+        "TrendingDown",
+        "TrendingUp",
+        "Minus"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🔒",
+          "line": 131,
+          "allowed": true
+        },
+        {
+          "emoji": "🔒",
+          "line": 345,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "app/measurements.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Save",
+        "Ruler",
+        "TrendingDown",
+        "TrendingUp",
+        "Minus"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🔒",
+          "line": 355,
+          "allowed": true
+        },
+        {
+          "emoji": "🔒",
+          "line": 492,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "app/mode-selection.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Trophy",
+        "Heart",
+        "ChevronRight",
+        "Swords",
+        "Dumbbell",
+        "Lightbulb"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/notifications.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Bell",
+        "BellOff",
+        "Dumbbell",
+        "Droplets",
+        "Scale",
+        "Flame",
+        "Share2",
+        "Sun",
+        "Brain",
+        "TrendingDown",
+        "BedDouble",
+        "AlertCircle",
+        "Quote",
+        "Sparkles",
+        "ChevronRight",
+        "Moon"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "💡",
+          "line": 635,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "app/nutrition-plan.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Info",
+        "ExternalLink",
+        "User",
+        "Weight",
+        "Ruler",
+        "Calendar",
+        "Zap",
+        "Coffee",
+        "Sun",
+        "Sunset",
+        "Moon as MoonIcon",
+        "Apple",
+        "Utensils",
+        "Beef",
+        "Droplets"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/nutritionists.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Mail"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🍎",
+          "line": 52,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/onboarding.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Scale",
+        "Timer",
+        "Camera",
+        "Trophy",
+        "ChevronRight",
+        "Sparkles",
+        "BarChart3",
+        "Target",
+        "Award",
+        "Zap",
+        "Clock",
+        "Dumbbell",
+        "Volume2",
+        "Image as ImageIcon",
+        "Repeat",
+        "CalendarDays",
+        "Star",
+        "Swords",
+        "Medal",
+        "LineChart",
+        "TrendingUp",
+        "Layout",
+        "HeartHandshake",
+        "User",
+        "Ruler",
+        "Cake",
+        "Check",
+        "UserCircle"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🙏",
+          "line": 172,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/palmares.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Trophy",
+        "TrendingUp",
+        "TrendingDown",
+        "Minus",
+        "Plus",
+        "Calendar",
+        "Filter"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/partners.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "ChevronRight",
+        "ExternalLink",
+        "Mail",
+        "MapPin",
+        "Star",
+        "X",
+        "Phone",
+        "Globe",
+        "Facebook as FacebookIcon",
+        "Swords",
+        "Trophy",
+        "Award",
+        "Zap",
+        "Dumbbell",
+        "User"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/performance-detail.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Flame",
+        "Zap",
+        "TrendingUp",
+        "Activity"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/photos.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Camera",
+        "Image as ImageIcon",
+        "GitCompare",
+        "Plus",
+        "X",
+        "Shield",
+        "Eye",
+        "EyeOff",
+        "TrendingDown",
+        "Calendar",
+        "Award"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "❌",
+          "line": 67,
+          "allowed": false
+        },
+        {
+          "emoji": "❌",
+          "line": 164,
+          "allowed": false
+        },
+        {
+          "emoji": "❌",
+          "line": 197,
+          "allowed": false
+        },
+        {
+          "emoji": "❌",
+          "line": 229,
+          "allowed": false
+        },
+        {
+          "emoji": "🔒",
+          "line": 284,
+          "allowed": true
+        },
+        {
+          "emoji": "🔒",
+          "line": 759,
+          "allowed": true
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/preferences.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronRight",
+        "Check",
+        "Weight",
+        "Ruler",
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/profile.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Target",
+        "Scale",
+        "Ruler",
+        "Calendar",
+        "Edit3",
+        "TrendingDown",
+        "TrendingUp",
+        "Minus",
+        "Award",
+        "X",
+        "Check",
+        "Trophy",
+        "Zap",
+        "Activity",
+        "Camera",
+        "ChevronRight",
+        "User",
+        "Sparkles",
+        "Star"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "📸",
+          "line": 434,
+          "allowed": false
+        },
+        {
+          "emoji": "🖼",
+          "line": 443,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 443,
+          "allowed": false
+        },
+        {
+          "emoji": "🔒",
+          "line": 503,
+          "allowed": true
+        },
+        {
+          "emoji": "🔒",
+          "line": 842,
+          "allowed": true
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/quick-log-combat.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Plus",
+        "Check",
+        "Target",
+        "Trophy",
+        "Zap",
+        "X",
+        "ChevronDown",
+        "ChevronRight",
+        "Star",
+        "Play"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/quick-log-muscu.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Plus",
+        "Minus",
+        "Check",
+        "Trash2",
+        "Clock",
+        "Play",
+        "Pause",
+        "RotateCcw",
+        "TrendingUp",
+        "Calculator",
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/quick-log-other.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Plus",
+        "Minus",
+        "Check",
+        "Clock",
+        "MapPin",
+        "Zap",
+        "Heart",
+        "Activity"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/quick-log-running.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Plus",
+        "Minus",
+        "Check",
+        "Clock",
+        "MapPin",
+        "Zap",
+        "TrendingUp"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/quick-log.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Dumbbell",
+        "Heart",
+        "Users",
+        "Zap",
+        "Activity"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/quick-nutrition.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Utensils",
+        "Zap",
+        "Dumbbell",
+        "Moon",
+        "Trophy",
+        "Clock",
+        "Apple",
+        "Egg",
+        "Droplets",
+        "Flame",
+        "Target",
+        "ExternalLink",
+        "Info",
+        "Scale",
+        "Ruler",
+        "Activity"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "📚",
+          "line": 504,
+          "allowed": false
+        },
+        {
+          "emoji": "📚",
+          "line": 533,
+          "allowed": false
+        },
+        {
+          "emoji": "📚",
+          "line": 562,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/radar-performance.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "TrendingUp",
+        "TrendingDown",
+        "Minus",
+        "Moon",
+        "Droplet",
+        "Flame",
+        "BarChart3",
+        "Target",
+        "Lightbulb",
+        "BookOpen",
+        "Dumbbell",
+        "Heart",
+        "Brain",
+        "Trophy",
+        "GraduationCap",
+        "ChevronRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/records.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Trophy",
+        "Scale",
+        "Flame",
+        "Ruler",
+        "Dumbbell",
+        "Calendar",
+        "TrendingDown",
+        "Zap",
+        "Share2",
+        "RefreshCw",
+        "Award",
+        "Star"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "⚖",
+          "line": 314,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 314,
+          "allowed": false
+        },
+        {
+          "emoji": "📆",
+          "line": 362,
+          "allowed": false
+        },
+        {
+          "emoji": "📏",
+          "line": 378,
+          "allowed": false
+        },
+        {
+          "emoji": "📐",
+          "line": 389,
+          "allowed": false
+        },
+        {
+          "emoji": "⚖",
+          "line": 450,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 450,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/routines.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "ListChecks",
+        "Play",
+        "Clock",
+        "Dumbbell",
+        "Flame",
+        "Snowflake"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/savoir.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Heart",
+        "UtensilsCrossed",
+        "Bed",
+        "TrendingUp",
+        "Droplet",
+        "Activity",
+        "ChevronDown",
+        "ChevronUp",
+        "Scale",
+        "Wheat",
+        "Clock",
+        "Mountain",
+        "Footprints",
+        "Dumbbell",
+        "Pill",
+        "Coffee",
+        "Flame",
+        "AlertTriangle",
+        "Maximize2",
+        "Brain"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/scientific-sources.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "ExternalLink",
+        "BookOpen",
+        "GraduationCap"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/setup.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Target",
+        "TrendingDown",
+        "TrendingUp",
+        "Minus",
+        "ChevronRight",
+        "Shield",
+        "Swords",
+        "Star"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/shapes-demo.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/share-hub.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Trophy",
+        "Calendar",
+        "TrendingUp",
+        "Share2",
+        "Camera",
+        "Lightbulb"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/sleep-input.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Moon",
+        "ChevronLeft",
+        "Check",
+        "Calendar",
+        "Clock"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "💡",
+          "line": 253,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "app/sleep-tracker.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Moon",
+        "Sun",
+        "Clock",
+        "TrendingUp",
+        "Bed",
+        "AlertCircle"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/sleep.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Moon",
+        "Sun",
+        "Clock",
+        "TrendingUp",
+        "TrendingDown",
+        "AlertTriangle",
+        "Star",
+        "Battery",
+        "Target",
+        "CheckCircle2",
+        "Bell",
+        "BellOff",
+        "Minus"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "💤",
+          "line": 344,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "app/social-card.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "📲",
+          "line": 106,
+          "allowed": false
+        },
+        {
+          "emoji": "💡",
+          "line": 125,
+          "allowed": true
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/social-share/backup-step.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Cloud",
+        "FolderPlus",
+        "Download",
+        "Shield",
+        "ArrowRight",
+        "CheckCircle"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "☁",
+          "line": 127,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 127,
+          "allowed": false
+        },
+        {
+          "emoji": "🎉",
+          "line": 190,
+          "allowed": false
+        },
+        {
+          "emoji": "💡",
+          "line": 205,
+          "allowed": true
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/social-share/fighter-card-v2.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Share2",
+        "Download",
+        "Camera",
+        "Image as ImageIcon",
+        "X"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/social-share/last-session.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Share2",
+        "Download",
+        "Camera",
+        "Image as ImageIcon",
+        "Dumbbell",
+        "Clock",
+        "Calendar",
+        "MapPin",
+        "Trophy",
+        "Moon",
+        "Sun",
+        "MapPinned",
+        "ArrowRight"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/social-share/monthly-recap-v2.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Share2",
+        "Download",
+        "Camera",
+        "Image as ImageIcon",
+        "Calendar"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/social-share/monthly-recap.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Share2",
+        "Download",
+        "Square",
+        "Smartphone"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/social-share/transformation-v2.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Share2",
+        "Download",
+        "ChevronRight",
+        "Camera",
+        "RefreshCw",
+        "Smartphone",
+        "Square"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/social-share/weekly-recap-v2.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Share2",
+        "Download",
+        "Camera",
+        "Image as ImageIcon",
+        "Calendar"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/social-share/weight-progress.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Share2",
+        "Download",
+        "Square",
+        "Smartphone",
+        "Camera",
+        "Image as ImageIcon"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/social-share/year-counter-v2.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Share2",
+        "Download",
+        "Camera",
+        "Image as ImageIcon",
+        "Trophy"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/social-share/year-counter.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Share2",
+        "Download",
+        "Square",
+        "Smartphone"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/sport-selection.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronRight",
+        "ChevronLeft",
+        "ChevronDown",
+        "Lightbulb",
+        "Swords",
+        "Award",
+        "Footprints",
+        "Mountain",
+        "Bike",
+        "Waves",
+        "Volleyball",
+        "Trophy",
+        "Dumbbell",
+        "Zap",
+        "Heart",
+        "Flame",
+        "Activity",
+        "Wind",
+        "Snowflake",
+        "Music",
+        "Flag",
+        "Sparkles"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✓",
+          "line": 368,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/sport.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Check",
+        "X",
+        "Plus",
+        "Clock"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "💤",
+          "line": 195,
+          "allowed": true
+        },
+        {
+          "emoji": "💤",
+          "line": 515,
+          "allowed": true
+        },
+        {
+          "emoji": "💤",
+          "line": 579,
+          "allowed": true
+        }
+      ],
+      "isClean": true
+    },
+    {
+      "file": "app/stats.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Flame",
+        "Target",
+        "Activity",
+        "Ruler",
+        "Heart",
+        "TrendingUp"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/themes.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Palette",
+        "Sun",
+        "Moon",
+        "Smartphone",
+        "Crown",
+        "Lock",
+        "ArrowLeft",
+        "Check",
+        "AlertCircle",
+        "Zap",
+        "Flame",
+        "Sparkles",
+        "Heart",
+        "Code",
+        "Droplet",
+        "Eye",
+        "Circle",
+        "Diamond",
+        "// Nouveaux icons pour les 5 thèmes\n  Star",
+        "Coins",
+        "Gem",
+        "Sunset as SunsetIcon",
+        "Flower2"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "⚙",
+          "line": 299,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 299,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/timer.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Play",
+        "Pause",
+        "RotateCcw",
+        "Square",
+        "ChevronLeft",
+        "Swords",
+        "Dumbbell",
+        "Zap",
+        "Timer",
+        "Plus",
+        "Minus",
+        "RefreshCw",
+        "Settings",
+        "SkipForward",
+        "Target"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🦵",
+          "line": 105,
+          "allowed": false
+        },
+        {
+          "emoji": "🦶",
+          "line": 113,
+          "allowed": false
+        },
+        {
+          "emoji": "🤺",
+          "line": 129,
+          "allowed": false
+        },
+        {
+          "emoji": "⚙",
+          "line": 137,
+          "allowed": false
+        },
+        {
+          "emoji": "️",
+          "line": 137,
+          "allowed": false
+        },
+        {
+          "emoji": "✓",
+          "line": 1641,
+          "allowed": false
+        },
+        {
+          "emoji": "🏁",
+          "line": 1658,
+          "allowed": false
+        },
+        {
+          "emoji": "✓",
+          "line": 1708,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/training-goals.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Target",
+        "Plus",
+        "Minus",
+        "Check",
+        "Trash2",
+        "Calendar",
+        "ChevronRight",
+        "ChevronDown",
+        "ChevronUp",
+        "Swords",
+        "Scale",
+        "GraduationCap",
+        "Plane",
+        "MapPin",
+        "Pin",
+        "Trophy",
+        "Clock"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/training-journal/components/AddBenchmarkModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Clock",
+        "Scale"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/training-journal/components/AddEntryModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Calendar",
+        "Clock",
+        "Edit3"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/training-journal/components/AddSkillModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Check",
+        "Camera",
+        "ImageIcon",
+        "Play"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/training-journal/components/BenchmarkDetailModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "X",
+        "Plus",
+        "Trash2"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/training-journal/components/SkillDetailModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "X",
+        "Trash2",
+        "Check",
+        "Plus",
+        "Video",
+        "ExternalLink"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/training-journal/components/TrashModal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "X",
+        "Trash2",
+        "RotateCcw",
+        "Dumbbell",
+        "BookOpen"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/training-journal/utils/iconMap.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Dumbbell",
+        "Timer",
+        "Mountain",
+        "Flame",
+        "Target",
+        "Shield",
+        "Move",
+        "Lock",
+        "Users",
+        "Zap",
+        "Scale",
+        "Swords",
+        "BarChart3",
+        "Footprints",
+        "BookOpen"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/training-journal-old-backup.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Plus",
+        "ChevronDown",
+        "ChevronUp",
+        "Play",
+        "Check",
+        "Trash2",
+        "Star",
+        "BookOpen",
+        "Target",
+        "Trophy",
+        "Calendar",
+        "X",
+        "BarChart3",
+        "Share2"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✓",
+          "line": 478,
+          "allowed": false
+        },
+        {
+          "emoji": "📖",
+          "line": 540,
+          "allowed": true
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/training-journal.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Trash2",
+        "Archive",
+        "CheckCircle",
+        "RotateCcw",
+        "Search",
+        "Filter",
+        "Plus",
+        "Target",
+        "ChevronRight",
+        "Share2",
+        "Info",
+        "Dumbbell",
+        "Activity",
+        "Timer",
+        "Mountain",
+        "Flame",
+        "Shield",
+        "Move",
+        "Lock",
+        "Users",
+        "Zap",
+        "Scale",
+        "Swords",
+        "BarChart3",
+        "Footprints",
+        "BookOpen",
+        "Award",
+        "FileText",
+        "Play",
+        "X",
+        "Clock",
+        "Check",
+        "ImageIcon",
+        "Calendar",
+        "Edit3",
+        "Gauge",
+        "ChevronLeft",
+        "Video",
+        "ExternalLink",
+        "TrendingUp",
+        "Camera"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/transformation.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Camera",
+        "ChevronRight",
+        "RefreshCw",
+        "ArrowRight",
+        "TrendingDown",
+        "TrendingUp",
+        "Calendar",
+        "Zap",
+        "Target",
+        "Award"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "📸",
+          "line": 47,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/vitality-detail.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "Moon",
+        "Droplets",
+        "Heart",
+        "Battery"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/watch-debug.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "RefreshCw",
+        "CheckCircle",
+        "XCircle",
+        "AlertTriangle",
+        "Watch",
+        "Wifi",
+        "WifiOff",
+        "Send",
+        "Trash2",
+        "Zap"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✓",
+          "line": 114,
+          "allowed": false
+        },
+        {
+          "emoji": "✗",
+          "line": 116,
+          "allowed": false
+        },
+        {
+          "emoji": "✓",
+          "line": 120,
+          "allowed": false
+        },
+        {
+          "emoji": "✗",
+          "line": 122,
+          "allowed": false
+        },
+        {
+          "emoji": "⚠",
+          "line": 126,
+          "allowed": false
+        },
+        {
+          "emoji": "✓",
+          "line": 159,
+          "allowed": false
+        },
+        {
+          "emoji": "⚠",
+          "line": 161,
+          "allowed": false
+        },
+        {
+          "emoji": "✗",
+          "line": 166,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/weekly-report.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "FileText",
+        "Share2",
+        "Trophy",
+        "Dumbbell",
+        "Moon",
+        "Scale",
+        "Flame",
+        "Activity",
+        "TrendingDown",
+        "TrendingUp",
+        "BarChart3",
+        "Zap",
+        "Target",
+        "AlertTriangle",
+        "Star"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/weekly-share.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Share2",
+        "Download",
+        "RefreshCw"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "🥷",
+          "line": 35,
+          "allowed": false
+        },
+        {
+          "emoji": "🎌",
+          "line": 37,
+          "allowed": false
+        },
+        {
+          "emoji": "✓",
+          "line": 291,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    },
+    {
+      "file": "app/weight-category-selection.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "Scale",
+        "ChevronRight",
+        "Trophy",
+        "Check"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/weight-cut.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "Scale",
+        "Calendar",
+        "AlertTriangle",
+        "Droplets",
+        "TrendingDown",
+        "Target",
+        "Clock",
+        "CheckCircle",
+        "XCircle"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/weight-predictions.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ArrowLeft",
+        "TrendingUp",
+        "BookOpen",
+        "ExternalLink",
+        "Target",
+        "Calendar"
+      ],
+      "emojisFound": [],
+      "isClean": true
+    },
+    {
+      "file": "app/wellness-demo.tsx",
+      "hasLucideImport": true,
+      "lucideIcons": [
+        "ChevronLeft",
+        "ChevronRight",
+        "Scale",
+        "Droplets",
+        "Moon",
+        "Flame",
+        "Footprints",
+        "Zap",
+        "Trophy",
+        "Target",
+        "TrendingDown",
+        "TrendingUp",
+        "Dumbbell",
+        "Activity",
+        "Star",
+        "BookOpen",
+        "CheckCircle2",
+        "Camera",
+        "Sparkles",
+        "Share2",
+        "FileText",
+        "Apple",
+        "Coffee",
+        "Minus"
+      ],
+      "emojisFound": [
+        {
+          "emoji": "✓",
+          "line": 486,
+          "allowed": false
+        }
+      ],
+      "isClean": false
+    }
+  ],
+  "filesWithUnexpectedEmojis": [
+    "components/BeforeAfterSlider.tsx",
+    "components/BodyMap.tsx",
+    "components/BriefingSettings.tsx",
+    "components/EVAScale.tsx",
+    "components/HealthSyncSettings.tsx",
+    "components/NotificationApologyModal.tsx",
+    "components/PartnersScreen.tsx",
+    "components/QuestsCard.tsx",
+    "components/RamadanStats.tsx",
+    "components/RanksModal.tsx",
+    "components/RatingPopup.tsx",
+    "components/ReminderSettings.tsx",
+    "components/ScoreFormeMini.tsx",
+    "components/SleepModal.tsx",
+    "components/TipsScreen.tsx",
+    "components/WatchStatusIndicator.tsx",
+    "components/WorkoutSummaryModal.tsx",
+    "components/cards/HydrationCard2.tsx",
+    "components/cards/HydrationLottieCard.tsx",
+    "components/cards/SleepLottieCard.tsx",
+    "components/charts/ActivityCard.tsx",
+    "components/home/pages/Page1Monitoring.tsx",
+    "components/planning/EmptyState.tsx",
+    "components/planning/EventTicket.tsx",
+    "components/planning/TimetableView.tsx",
+    "components/stats/HealthStatusModal.tsx",
+    "components/stats/MesuresTab.tsx",
+    "components/stats/PerformanceTab.tsx",
+    "components/stats/PoidsTab.tsx",
+    "components/stats/VitalityBetaWarningModal.tsx",
+    "components/stats/pages/VitalitePage.tsx",
+    "app/(tabs)/planning.tsx",
+    "app/_layout.tsx",
+    "app/add-training.tsx",
+    "app/avatar-customization.tsx",
+    "app/avatar-selection-v3.tsx",
+    "app/avatar-selection.tsx",
+    "app/body-status.tsx",
+    "app/calculator.tsx",
+    "app/challenges.tsx",
+    "app/citations.tsx",
+    "app/entry.tsx",
+    "app/events-simple.tsx",
+    "app/events-test.tsx",
+    "app/events.tsx",
+    "app/fasting-modes.tsx",
+    "app/fasting.tsx",
+    "app/fighter-card.tsx",
+    "app/gamification.tsx",
+    "app/health-diagnostic.tsx",
+    "app/heart-zones.tsx",
+    "app/history.tsx",
+    "app/home-demo.tsx",
+    "app/hydration.tsx",
+    "app/infirmary.tsx",
+    "app/nutritionists.tsx",
+    "app/onboarding.tsx",
+    "app/photos.tsx",
+    "app/profile.tsx",
+    "app/quick-nutrition.tsx",
+    "app/records.tsx",
+    "app/social-card.tsx",
+    "app/social-share/backup-step.tsx",
+    "app/sport-selection.tsx",
+    "app/themes.tsx",
+    "app/timer.tsx",
+    "app/training-journal-old-backup.tsx",
+    "app/transformation.tsx",
+    "app/watch-debug.tsx",
+    "app/weekly-share.tsx",
+    "app/wellness-demo.tsx"
+  ]
+}
