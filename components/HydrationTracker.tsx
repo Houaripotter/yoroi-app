@@ -21,7 +21,7 @@ import {
   hasWorkoutOnDate,
   HydrationSettings,
 } from '@/lib/storage';
-import HealthConnect from '@/lib/healthConnect.ios';
+import HealthConnect from '@/lib/healthConnect';
 
 // ============================================
 // HYDRATION TRACKER - SUIVI D'HYDRATATION
@@ -345,7 +345,7 @@ export const HydrationTracker: React.FC<HydrationTrackerProps> = ({
                 ]}
                 value={customAmount}
                 onChangeText={setCustomAmount}
-                keyboardType="numeric"
+                keyboardType="number-pad"
                 placeholder="250"
                 placeholderTextColor={colors.textMuted}
                 autoFocus

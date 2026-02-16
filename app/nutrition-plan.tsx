@@ -152,10 +152,10 @@ export default function NutritionPlanScreen() {
                   style={[styles.input, { color: colors.textPrimary }]}
                   value={userProfile.weight.toString()}
                   onChangeText={(text) => {
-                    const num = parseInt(text) || 0;
+                    const num = parseFloat(text.replace(',', '.')) || 0;
                     setUserProfile({ ...userProfile, weight: num });
                   }}
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   placeholder="80"
                   placeholderTextColor={colors.textMuted}
                 />
@@ -172,10 +172,10 @@ export default function NutritionPlanScreen() {
                   style={[styles.input, { color: colors.textPrimary }]}
                   value={userProfile.height.toString()}
                   onChangeText={(text) => {
-                    const num = parseInt(text) || 0;
+                    const num = parseFloat(text.replace(',', '.')) || 0;
                     setUserProfile({ ...userProfile, height: num });
                   }}
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   placeholder="175"
                   placeholderTextColor={colors.textMuted}
                 />
@@ -195,7 +195,7 @@ export default function NutritionPlanScreen() {
                     const num = parseInt(text) || 0;
                     setUserProfile({ ...userProfile, age: num });
                   }}
-                  keyboardType="numeric"
+                  keyboardType="number-pad"
                   placeholder="30"
                   placeholderTextColor={colors.textMuted}
                 />

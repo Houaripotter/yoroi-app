@@ -251,7 +251,7 @@ export default function WeightCutScreen() {
               <TextInput
                 style={[styles.input, { color: colors.textPrimary }]}
                 value={currentWeight}
-                onChangeText={setCurrentWeight}
+                onChangeText={(text) => setCurrentWeight(text.replace(',', '.'))}
                 keyboardType="decimal-pad"
                 placeholder="80"
                 placeholderTextColor={colors.textMuted}
@@ -272,7 +272,7 @@ export default function WeightCutScreen() {
               <TextInput
                 style={[styles.input, { color: colors.textPrimary }]}
                 value={targetWeight}
-                onChangeText={setTargetWeight}
+                onChangeText={(text) => setTargetWeight(text.replace(',', '.'))}
                 keyboardType="decimal-pad"
                 placeholder="77"
                 placeholderTextColor={colors.textMuted}

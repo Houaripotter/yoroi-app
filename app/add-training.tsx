@@ -16,7 +16,6 @@ import {
   Keyboard,
   Dimensions,
   KeyboardAvoidingView,
-  findNodeHandle,
   UIManager,
 } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
@@ -823,7 +822,7 @@ export default function AddTrainingScreen() {
                   placeholderTextColor={colors.textMuted + '40'}
                   keyboardType="decimal-pad"
                   value={stats.speed}
-                  onChangeText={(v) => updateStat('speed', v)}
+                  onChangeText={(v) => updateStat('speed', v.replace(',', '.'))}
                   onFocus={scrollToFocusedInput}
                   maxLength={4}
                 />
@@ -839,7 +838,7 @@ export default function AddTrainingScreen() {
                   placeholderTextColor={colors.textMuted + '40'}
                   keyboardType="decimal-pad"
                   value={stats.pente}
-                  onChangeText={(v) => updateStat('pente', v)}
+                  onChangeText={(v) => updateStat('pente', v.replace(',', '.'))}
                   onFocus={scrollToFocusedInput}
                   maxLength={3}
                 />
@@ -859,7 +858,7 @@ export default function AddTrainingScreen() {
                   placeholderTextColor={colors.textMuted + '40'}
                   keyboardType="decimal-pad"
                   value={stats.distance}
-                  onChangeText={(v) => updateStat('distance', v)}
+                  onChangeText={(v) => updateStat('distance', v.replace(',', '.'))}
                   onFocus={scrollToFocusedInput}
                   maxLength={5}
                 />
@@ -2033,7 +2032,7 @@ export default function AddTrainingScreen() {
                                                 placeholderTextColor={colors.textMuted}
                                                 keyboardType="decimal-pad"
                                                 value={stats.weight}
-                                                onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, weight: val } }))}
+                                                onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, weight: val.replace(',', '.') } }))}
                                                 onFocus={scrollToFocusedInput}
                                               />
                                               <Text style={{ color: colors.textMuted, fontSize: 12 }}>x</Text>

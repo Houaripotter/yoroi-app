@@ -780,6 +780,24 @@
     "reminderActivatedMessage": "Tu recevras un rappel pour aller dormir !",
     "reminderScheduled": "Rappel programmé à {{time}}"
   },
+  "sleepInput": {
+    "title": "Ajouter Sommeil",
+    "subtitle": "Enregistre ta nuit",
+    "sleepDuration": "Durée de sommeil",
+    "nightOf": "Nuit du",
+    "selectDate": "Choisir la date",
+    "bedtime": "Heure de coucher",
+    "wakeTime": "Heure de réveil",
+    "insufficient": "Insuffisant",
+    "average": "Moyen",
+    "optimal": "Optimal",
+    "high": "Élevé",
+    "wakeAfterBed": "L'heure de réveil doit être après l'heure de coucher",
+    "maxDuration": "La durée maximale est de 16 heures",
+    "saving": "Enregistrement...",
+    "sleepSaved": "Sommeil enregistré",
+    "saveError": "Erreur lors de la sauvegarde"
+  },
   "hydration": {
     "title": "Hydratation",
     "addWater": "Ajouter de l'eau",
@@ -1709,5 +1727,28 @@
     "deleteAll": "Tout supprimer",
     "deleteAllDescription": "Efface définitivement toutes les données de l'app",
     "privacyPolicy": "Politique de confidentialité"
+  },
+  "import": {
+    "title": "Importer des séances",
+    "subtitle": "GPX (Strava) / TCX (Garmin)",
+    "formatInfo": "Importez vos séances depuis Strava (GPX) ou Garmin (TCX). Les données de durée, distance, FC et calories seront récupérées automatiquement.",
+    "selectFile": "Choisir un fichier",
+    "parsing": "Analyse du fichier en cours...",
+    "unsupportedFormat": "Format non supporté. Utilisez un fichier GPX ou TCX.",
+    "noActivities": "Aucune activité trouvée",
+    "noActivitiesMessage": "Le fichier ne contient aucune activité exploitable.",
+    "readError": "Impossible de lire le fichier.",
+    "activitiesFound": "{{count}} activité(s) trouvée(s)",
+    "selected": "sélectionnée(s)",
+    "selectAll": "Tout sélectionner",
+    "duration": "Durée",
+    "distance": "Distance",
+    "importButton": "Importer {{count}} séance(s)",
+    "changeFile": "Choisir un autre fichier",
+    "importDone": "Import terminé !",
+    "importDoneMessage": "{{count}} séance(s) importée(s) avec succès dans votre planning.",
+    "importAnother": "Importer un autre fichier",
+    "successMessage": "{{count}} séance(s) importée(s) avec succès !",
+    "importError": "Erreur lors de l'import. Veuillez réessayer."
   }
 }

@@ -208,7 +208,7 @@ export default function CalculatorScreen() {
                   value={age}
                   onChangeText={setAge}
                   placeholder="Ex: 28"
-                  keyboardType="numeric"
+                  keyboardType="number-pad"
                   placeholderTextColor={colors.textMuted}
                 />
               </View>
@@ -232,9 +232,9 @@ export default function CalculatorScreen() {
                 <TextInput
                   style={[styles.input, { backgroundColor: colors.backgroundElevated, color: colors.textPrimary, borderColor: colors.border }]}
                   value={height}
-                  onChangeText={setHeight}
+                  onChangeText={(text) => setHeight(text.replace(',', '.'))}
                   placeholder="Ex: 180"
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   placeholderTextColor={colors.textMuted}
                 />
               </View>

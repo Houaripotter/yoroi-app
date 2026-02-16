@@ -170,7 +170,7 @@ export default React.memo(function SkillDetailModal({
                   style={[styles.drillInput, { backgroundColor: colors.background, color: colors.textPrimary, borderColor: colors.border }]}
                   value={drillIncrement}
                   onChangeText={setDrillIncrement}
-                  keyboardType="numeric"
+                  keyboardType="number-pad"
                   placeholder="10"
                   placeholderTextColor={colors.textMuted}
                 />

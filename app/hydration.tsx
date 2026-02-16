@@ -488,7 +488,7 @@ export default function HydrationScreen() {
                 <TextInput
                   style={[styles.goalInput, { color: colors.textPrimary }]}
                   value={goalInput}
-                  onChangeText={setGoalInput}
+                  onChangeText={(text) => setGoalInput(text.replace(',', '.'))}
                   keyboardType="decimal-pad"
                   textAlign="center"
                 />

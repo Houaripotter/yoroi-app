@@ -2577,7 +2577,7 @@ class HealthConnectService {
   async writeSleepData(data: { startDate: Date; endDate: Date }): Promise<boolean> {
     try {
       if (!this.syncStatus.isConnected) {
-        logger.error('[HealthKit] Not connected - cannot write sleep data');
+        logger.info('[HealthKit] Not connected - skipping sleep data write (local save still works)');
         return false;
       }
 

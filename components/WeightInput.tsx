@@ -78,6 +78,23 @@ export const WeightInput = forwardRef<WeightInputHandle, WeightInputProps>(
     }));
 
     const handleIntChange = (text: string) => {
+      // Si l'utilisateur tape une virgule ou un point, aller au champ décimal
+      if (text.includes(',') || text.includes('.')) {
+        const parts = text.split(/[.,]/);
+        const intValue = parts[0].replace(/[^0-9]/g, '');
+        if (intValue.length <= 3) {
+          setIntPart(intValue);
+        }
+        // Passer le focus au champ décimal
+        decRef.current?.focus();
+        // Si des chiffres après la virgule, les pré-remplir
+        if (parts[1]) {
+          const decValue = parts[1].replace(/[^0-9]/g, '').substring(0, 1);
+          if (decValue) setDecPart(decValue);
+        }
+        return;
+      }
+
       const cleaned = text.replace(/[^0-9]/g, '');
       if (cleaned.length <= 3) {
         setIntPart(cleaned);
@@ -154,8 +171,8 @@ export const WeightInput = forwardRef<WeightInputHandle, WeightInputProps>(
               onChangeText={handleIntChange}
               placeholder="00"
               placeholderTextColor={colors.border}
-              keyboardType="number-pad"
-              maxLength={3}
+              keyboardType="decimal-pad"
+              maxLength={5}
               returnKeyType="next"
               onSubmitEditing={() => decRef.current?.focus()}
             />

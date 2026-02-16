@@ -462,7 +462,7 @@ export default function AddCombatScreen() {
                 placeholder="70.5"
                 placeholderTextColor={colors.textMuted}
                 value={poidsPesee}
-                onChangeText={setPoidsPesee}
+                onChangeText={(text) => setPoidsPesee(text.replace(',', '.'))}
                 keyboardType="decimal-pad"
                 maxLength={6}
               />
@@ -482,7 +482,7 @@ export default function AddCombatScreen() {
                 placeholder="72.0"
                 placeholderTextColor={colors.textMuted}
                 value={poidsJourJ}
-                onChangeText={setPoidsJourJ}
+                onChangeText={(text) => setPoidsJourJ(text.replace(',', '.'))}
                 keyboardType="decimal-pad"
                 maxLength={6}
               />

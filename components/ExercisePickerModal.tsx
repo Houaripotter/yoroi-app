@@ -337,7 +337,7 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise, sport }: 
                 <TextInput
                   style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.textPrimary }]}
                   value={reps}
-                  onChangeText={setReps}
+                  onChangeText={(text) => setReps(text.replace(',', '.'))}
                   keyboardType="decimal-pad"
                   placeholder="10"
                   placeholderTextColor={colors.textMuted}
@@ -349,7 +349,7 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise, sport }: 
                 <TextInput
                   style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.textPrimary }]}
                   value={weight}
-                  onChangeText={setWeight}
+                  onChangeText={(text) => setWeight(text.replace(',', '.'))}
                   keyboardType="decimal-pad"
                   placeholder="0"
                   placeholderTextColor={colors.textMuted}

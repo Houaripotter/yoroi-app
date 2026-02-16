@@ -718,11 +718,11 @@ export default function OnboardingScreen() {
                   <TextInput
                     style={[styles.setupInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
                     value={heightCm}
-                    onChangeText={setHeightCm}
+                    onChangeText={(text) => setHeightCm(text.replace(',', '.'))}
                     placeholder="175"
                     placeholderTextColor={colors.textMuted}
-                    keyboardType="number-pad"
-                    maxLength={3}
+                    keyboardType="decimal-pad"
+                    maxLength={5}
                   />
                 </View>
                 <View style={styles.inputGroup}>
@@ -730,7 +730,7 @@ export default function OnboardingScreen() {
                   <TextInput
                     style={[styles.setupInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
                     value={targetWeight}
-                    onChangeText={setTargetWeight}
+                    onChangeText={(text) => setTargetWeight(text.replace(',', '.'))}
                     placeholder="75"
                     placeholderTextColor={colors.textMuted}
                     keyboardType="decimal-pad"

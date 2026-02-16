@@ -53,7 +53,7 @@ import { backupReminderService } from '@/lib/backupReminderService';
 import { exportDataToJSON, exportDataToCSV } from '@/lib/exportService';
 import { draftService, WeightDraft } from '@/lib/draftService';
 import logger from '@/lib/security/logger';
-import HealthConnect from '@/lib/healthConnect.ios';
+import HealthConnect from '@/lib/healthConnect';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 import { RatingPopup } from '@/components/RatingPopup';
@@ -346,24 +346,41 @@ export default function AddScreen() {
     triggerHaptic();
 
     try {
+      if (!weight || weight <= 0 || weight > 500) {
+        showPopup(t('common.error'), 'Poids invalide', [{ text: t('add.ok'), style: 'primary' }]);
+        setIsSaving(false);
+        return;
+      }
+
+      const safeFloat = (val: string | undefined) => {
+        if (!val) return undefined;
+        const n = parseFloat(val.replace(',', '.'));
+        return isNaN(n) ? undefined : n;
+      };
+      const safeInt = (val: string | undefined) => {
+        if (!val) return undefined;
+        const n = parseInt(val);
+        return isNaN(n) ? undefined : n;
+      };
+
       await addWeight({
-        weight: weight ?? 0,
+        weight,
         date: format(selectedDate, 'yyyy-MM-dd'),
-        fat_percent: fatPercent ? parseFloat(fatPercent) : undefined,
-        muscle_percent: musclePercent ? parseFloat(musclePercent) : undefined,
-        water_percent: waterPercent ? parseFloat(waterPercent) : undefined,
-        bone_mass: boneMass ? parseFloat(boneMass) : undefined,
-        visceral_fat: visceralFat ? parseInt(visceralFat) : undefined,
-        metabolic_age: metabolicAge ? parseInt(metabolicAge) : undefined,
-        bmr: bmr ? parseInt(bmr) : undefined,
-        waist: waist ? parseFloat(waist) : undefined,
-        navel: navel ? parseFloat(navel) : undefined,
-        chest: chest ? parseFloat(chest) : undefined,
-        arm: arm ? parseFloat(arm) : undefined,
-        thigh: thigh ? parseFloat(thigh) : undefined,
-        hips: hips ? parseFloat(hips) : undefined,
-        neck: neck ? parseFloat(neck) : undefined,
-        calf: calf ? parseFloat(calf) : undefined,
+        fat_percent: safeFloat(fatPercent),
+        muscle_percent: safeFloat(musclePercent),
+        water_percent: safeFloat(waterPercent),
+        bone_mass: safeFloat(boneMass),
+        visceral_fat: safeInt(visceralFat),
+        metabolic_age: safeInt(metabolicAge),
+        bmr: safeInt(bmr),
+        waist: safeFloat(waist),
+        navel: safeFloat(navel),
+        chest: safeFloat(chest),
+        arm: safeFloat(arm),
+        thigh: safeFloat(thigh),
+        hips: safeFloat(hips),
+        neck: safeFloat(neck),
+        calf: safeFloat(calf),
       });
 
       notificationAsync(NotificationFeedbackType.Success);

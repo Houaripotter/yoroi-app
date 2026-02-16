@@ -266,10 +266,16 @@ export const importDataFromJSON = async (): Promise<boolean> => {
       encoding: FileSystem.EncodingType.UTF8,
     });
 
-    const importedData = JSON.parse(fileContent);
+    let importedData: any;
+    try {
+      importedData = JSON.parse(fileContent);
+    } catch (parseError) {
+      Alert.alert('Erreur', 'Le fichier est corrompu ou invalide (JSON malformé)');
+      return false;
+    }
 
     // Vérifier la version
-    if (!importedData.version || !importedData.appName || importedData.appName !== 'Yoroi') {
+    if (!importedData || !importedData.version || !importedData.appName || importedData.appName !== 'Yoroi') {
       Alert.alert('Erreur', 'Ce fichier n\'est pas un export Yoroi valide');
       return false;
     }
@@ -383,6 +389,10 @@ export const importDataFromJSON = async (): Promise<boolean> => {
             is_outdoor: training.is_outdoor,
             pente: training.pente,
             speed: training.speed,
+            resistance: training.resistance,
+            watts: training.watts,
+            cadence: training.cadence,
+            technique_rating: training.technique_rating,
           });
           importedCount++;
         } catch (error) {
@@ -694,7 +704,13 @@ export const importAllData = async (
 
     const fileUri = result.assets[0].uri;
     const content = await FileSystem.readAsStringAsync(fileUri);
-    const data = JSON.parse(content);
+    let data: any;
+    try {
+      data = JSON.parse(content);
+    } catch {
+      Alert.alert('Erreur', 'Le fichier est corrompu ou invalide (JSON malformé)');
+      return false;
+    }
 
     // Validation basique
     if (!data.version || !data.exportDate) {
@@ -738,11 +754,9 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
     logger.info('Début export séances CSV...');
 
     // Importer les fonctions de base de données
-    const { getAllTrainings, getAllClubs } = require('./database');
-
     // Récupérer toutes les données
-    const trainings = await getAllTrainings();
-    const clubs = await getAllClubs();
+    const trainings = await getTrainings();
+    const clubs = await getClubs();
 
     if (trainings.length === 0) {
       Alert.alert('Aucune donnée', 'Tu n\'as pas encore de séances à exporter');
@@ -866,11 +880,9 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
     logger.info('Début export Excel CSV...');
 
     // Importer les fonctions de base de données
-    const { getAllTrainings, getAllClubs } = require('./database');
-
     // Récupérer toutes les données
-    const trainings = await getAllTrainings();
-    const clubs = await getAllClubs();
+    const trainings = await getTrainings();
+    const clubs = await getClubs();
 
     if (trainings.length === 0) {
       Alert.alert('Aucune donnée', 'Tu n\'as pas encore de séances à exporter');

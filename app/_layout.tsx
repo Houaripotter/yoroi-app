@@ -162,6 +162,7 @@ function RootLayoutContent() {
         <Stack.Screen name="quick-log-other" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="quick-log-running" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="quick-nutrition" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="import-workouts" options={{ presentation: 'card' }} />
         {/* Écrans paramètres & données */}
         <Stack.Screen name="privacy-data" options={{ presentation: 'card' }} />
         <Stack.Screen name="notifications" options={{ presentation: 'card' }} />

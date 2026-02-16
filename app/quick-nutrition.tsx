@@ -413,7 +413,7 @@ export default function QuickNutritionScreen() {
                 <TextInput
                   style={[styles.userDataInput, { color: colors.textPrimary }]}
                   value={bodyWeight}
-                  onChangeText={setBodyWeight}
+                  onChangeText={(text) => setBodyWeight(text.replace(',', '.'))}
                   keyboardType="decimal-pad"
                   maxLength={5}
                 />
@@ -428,7 +428,7 @@ export default function QuickNutritionScreen() {
                 <TextInput
                   style={[styles.userDataInput, { color: colors.textPrimary }]}
                   value={bodyHeight}
-                  onChangeText={setBodyHeight}
+                  onChangeText={(text) => setBodyHeight(text.replace(',', '.'))}
                   keyboardType="decimal-pad"
                   maxLength={3}
                 />

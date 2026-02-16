@@ -223,7 +223,7 @@ export default function CompetitorProfileScreen() {
                 placeholderTextColor={colors.textMuted}
                 keyboardType="decimal-pad"
                 value={weightInput}
-                onChangeText={setWeightInput}
+                onChangeText={(text) => setWeightInput(text.replace(',', '.'))}
               />
               <Text style={[styles.weightUnit, { color: colors.textMuted }]}>kg</Text>
               <TouchableOpacity

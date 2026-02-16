@@ -163,7 +163,7 @@ const MeasurementInput = ({
         <TextInput
           style={styles.measurementInput}
           value={value}
-          onChangeText={onChangeText}
+          onChangeText={(text) => onChangeText(text.replace(',', '.'))}
           placeholder={lastValue ? lastValue.toFixed(1) : '0.0'}
           placeholderTextColor={COLORS.textDim}
           keyboardType="decimal-pad"

@@ -265,7 +265,7 @@ export default function QuickLogRunningScreen() {
               <TextInput
                 style={[styles.stepperValue, { color: colors.textPrimary }]}
                 value={distance}
-                onChangeText={setDistance}
+                onChangeText={(text) => setDistance(text.replace(',', '.'))}
                 keyboardType="decimal-pad"
               />
               <TouchableOpacity

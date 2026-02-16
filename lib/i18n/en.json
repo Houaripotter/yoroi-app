@@ -779,6 +779,24 @@
     "reminderActivatedMessage": "You will receive a reminder to go to sleep!",
     "reminderScheduled": "Reminder scheduled at {{time}}"
   },
+  "sleepInput": {
+    "title": "Add Sleep",
+    "subtitle": "Record your night",
+    "sleepDuration": "Sleep duration",
+    "nightOf": "Night of",
+    "selectDate": "Select date",
+    "bedtime": "Bedtime",
+    "wakeTime": "Wake time",
+    "insufficient": "Insufficient",
+    "average": "Average",
+    "optimal": "Optimal",
+    "high": "High",
+    "wakeAfterBed": "Wake time must be after bedtime",
+    "maxDuration": "Maximum duration is 16 hours",
+    "saving": "Saving...",
+    "sleepSaved": "Sleep saved",
+    "saveError": "Error while saving"
+  },
   "hydration": {
     "title": "Hydration",
     "addWater": "Add water",
@@ -1685,5 +1703,28 @@
     "deleteAll": "Delete all",
     "deleteAllDescription": "Permanently erase all app data",
     "privacyPolicy": "Privacy policy"
+  },
+  "import": {
+    "title": "Import Workouts",
+    "subtitle": "GPX (Strava) / TCX (Garmin)",
+    "formatInfo": "Import your workouts from Strava (GPX) or Garmin (TCX). Duration, distance, heart rate and calories will be extracted automatically.",
+    "selectFile": "Choose a file",
+    "parsing": "Analyzing file...",
+    "unsupportedFormat": "Unsupported format. Please use a GPX or TCX file.",
+    "noActivities": "No activities found",
+    "noActivitiesMessage": "The file contains no usable activities.",
+    "readError": "Unable to read the file.",
+    "activitiesFound": "{{count}} activity(ies) found",
+    "selected": "selected",
+    "selectAll": "Select all",
+    "duration": "Duration",
+    "distance": "Distance",
+    "importButton": "Import {{count}} workout(s)",
+    "changeFile": "Choose another file",
+    "importDone": "Import complete!",
+    "importDoneMessage": "{{count}} workout(s) successfully imported to your planning.",
+    "importAnother": "Import another file",
+    "successMessage": "{{count}} workout(s) successfully imported!",
+    "importError": "Import error. Please try again."
   }
 }

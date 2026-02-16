@@ -662,10 +662,10 @@ export default function ProfileScreen() {
                   <TextInput
                     style={[styles.input, { backgroundColor: colors?.backgroundElevated ?? '#242429', color: colors?.textPrimary ?? '#FFFFFF', borderColor: colors?.border ?? '#333333' }]}
                     value={heightCm}
-                    onChangeText={setHeightCm}
+                    onChangeText={(text) => setHeightCm(text.replace(',', '.'))}
                     placeholder="175"
                     placeholderTextColor={colors?.textMuted ?? '#6B7280'}
-                    keyboardType="number-pad"
+                    keyboardType="decimal-pad"
                     maxLength={3}
                   />
                 </View>
@@ -694,7 +694,7 @@ export default function ProfileScreen() {
                   <TextInput
                     style={[styles.input, { backgroundColor: colors?.backgroundElevated ?? '#242429', color: colors?.textPrimary ?? '#FFFFFF', borderColor: colors?.border ?? '#333333' }]}
                     value={startWeight}
-                    onChangeText={setStartWeight}
+                    onChangeText={(text) => setStartWeight(text.replace(',', '.'))}
                     placeholder="85.0"
                     placeholderTextColor={colors?.textMuted ?? '#6B7280'}
                     keyboardType="decimal-pad"
@@ -706,7 +706,7 @@ export default function ProfileScreen() {
                   <TextInput
                     style={[styles.input, { backgroundColor: colors?.backgroundElevated ?? '#242429', color: colors?.textPrimary ?? '#FFFFFF', borderColor: colors?.border ?? '#333333' }]}
                     value={targetWeight}
-                    onChangeText={setTargetWeight}
+                    onChangeText={(text) => setTargetWeight(text.replace(',', '.'))}
                     placeholder="75.0"
                     placeholderTextColor={colors?.textMuted ?? '#6B7280'}
                     keyboardType="decimal-pad"

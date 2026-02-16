@@ -127,12 +127,13 @@ const EXERCISES: Record<ExerciseType, { name: string; iconComponent: LucideIcon;
 // ============================================
 
 // Composant Input
-const DataInput = ({ label, value, unit, onChange, colors }: {
+const DataInput = ({ label, value, unit, onChange, colors, isInteger }: {
   label: string;
   value: string;
   unit: string;
   onChange: (val: string) => void;
   colors: any;
+  isInteger?: boolean;
 }) => (
   <View style={styles.inputRow}>
     <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{label}</Text>
@@ -140,8 +141,8 @@ const DataInput = ({ label, value, unit, onChange, colors }: {
       <TextInput
         style={[styles.input, { color: colors.textPrimary }]}
         value={value}
-        onChangeText={onChange}
-        keyboardType="decimal-pad"
+        onChangeText={isInteger ? onChange : (text) => onChange(text.replace(',', '.'))}
+        keyboardType={isInteger ? "number-pad" : "decimal-pad"}
         maxLength={5}
         placeholder="0"
         placeholderTextColor={colors.textMuted}
@@ -702,6 +703,7 @@ export default function CalculatorsScreen() {
           unit="ans"
           onChange={setAgeStr}
           colors={colors}
+          isInteger
         />
 
         {userData.weight > 0 && userData.height > 0 && userData.age > 0 && (
@@ -783,6 +785,7 @@ export default function CalculatorsScreen() {
           unit="ans"
           onChange={setAgeStr}
           colors={colors}
+          isInteger
         />
 
         {userData.weight > 0 && userData.height > 0 && userData.age > 0 && (
@@ -842,6 +845,7 @@ export default function CalculatorsScreen() {
           unit="ans"
           onChange={setAgeStr}
           colors={colors}
+          isInteger
         />
 
         <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Niveau d'activite</Text>
@@ -1009,6 +1013,7 @@ export default function CalculatorsScreen() {
           unit="ans"
           onChange={setAgeStr}
           colors={colors}
+          isInteger
         />
 
         <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Ton objectif</Text>
@@ -1212,7 +1217,7 @@ export default function CalculatorsScreen() {
               <TextInput
                 style={[styles.liftInput, { color: colors.textPrimary }]}
                 value={liftWeightStr}
-                onChangeText={setLiftWeightStr}
+                onChangeText={(text) => setLiftWeightStr(text.replace(',', '.'))}
                 keyboardType="decimal-pad"
                 maxLength={5}
               />

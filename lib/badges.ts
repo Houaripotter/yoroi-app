@@ -838,8 +838,7 @@ const calculateStreak = (measurements: Measurement[]): { current: number; max: n
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const firstDate = new Date(uniqueDates[0]);
-  firstDate.setHours(0, 0, 0, 0);
+  const firstDate = new Date(uniqueDates[0] + 'T00:00:00');
 
   // Verifier si la derniere mesure est aujourd'hui ou hier
   const diffDays = Math.floor((today.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -849,9 +848,9 @@ const calculateStreak = (measurements: Measurement[]): { current: number; max: n
 
     // Compter le streak
     for (let i = 1; i < uniqueDates.length; i++) {
-      const prevDate = new Date(uniqueDates[i - 1]);
-      const currDate = new Date(uniqueDates[i]);
-      const diff = Math.floor((prevDate.getTime() - currDate.getTime()) / (1000 * 60 * 60 * 24));
+      const prevDate = new Date(uniqueDates[i - 1] + 'T00:00:00');
+      const currDate = new Date(uniqueDates[i] + 'T00:00:00');
+      const diff = Math.round((prevDate.getTime() - currDate.getTime()) / (1000 * 60 * 60 * 24));
 
       if (diff === 1) {
         tempStreak++;
@@ -1268,6 +1267,9 @@ export const checkAndUnlockBadges = async (): Promise<Badge[]> => {
         break;
       case 'unstoppable':
         shouldUnlock = stats.totalWorkouts >= 750;
+        break;
+      case 'legend':
+        shouldUnlock = stats.totalWorkouts >= 1000;
         break;
 
       // NOUVEAUX BADGES SPECIAUX

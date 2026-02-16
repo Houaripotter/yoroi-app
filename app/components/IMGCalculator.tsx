@@ -92,7 +92,7 @@ export const IMGCalculator = React.memo(function IMGCalculator({ visible, onClos
           <View style={styles.inputRow}>
             <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Poids</Text>
             <View style={[styles.inputContainer, { backgroundColor: colors.cardHover }]}>
-              <TextInput style={[styles.input, { color: colors.textPrimary }]} value={weight} onChangeText={setWeight} keyboardType="decimal-pad" maxLength={5} placeholder="0" placeholderTextColor={colors.textMuted} />
+              <TextInput style={[styles.input, { color: colors.textPrimary }]} value={weight} onChangeText={(text) => setWeight(text.replace(',', '.'))} keyboardType="decimal-pad" maxLength={5} placeholder="0" placeholderTextColor={colors.textMuted} />
               <Text style={[styles.inputUnit, { color: colors.textMuted }]}>kg</Text>
             </View>
           </View>
@@ -100,7 +100,7 @@ export const IMGCalculator = React.memo(function IMGCalculator({ visible, onClos
           <View style={styles.inputRow}>
             <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Taille</Text>
             <View style={[styles.inputContainer, { backgroundColor: colors.cardHover }]}>
-              <TextInput style={[styles.input, { color: colors.textPrimary }]} value={height} onChangeText={setHeight} keyboardType="decimal-pad" maxLength={5} placeholder="0" placeholderTextColor={colors.textMuted} />
+              <TextInput style={[styles.input, { color: colors.textPrimary }]} value={height} onChangeText={(text) => setHeight(text.replace(',', '.'))} keyboardType="decimal-pad" maxLength={5} placeholder="0" placeholderTextColor={colors.textMuted} />
               <Text style={[styles.inputUnit, { color: colors.textMuted }]}>cm</Text>
             </View>
           </View>

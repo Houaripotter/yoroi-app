@@ -664,7 +664,7 @@ export default function TrainingGoalsScreen() {
                             <TextInput
                               style={[styles.textInput, { backgroundColor: colors.backgroundLight, color: colors.textPrimary, borderColor: colors.border }]}
                               value={formTargetWeight}
-                              onChangeText={setFormTargetWeight}
+                              onChangeText={(text) => setFormTargetWeight(text.replace(',', '.'))}
                               placeholder="Ex: 75.0"
                               placeholderTextColor={colors.textMuted}
                               keyboardType="decimal-pad"

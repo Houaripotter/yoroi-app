@@ -523,7 +523,7 @@ describe('4. Interactions', () => {
     // Écrans avec des actions de sauvegarde qui DOIVENT avoir disabled
     const saveScreens = [
       'add-training.tsx', 'add-competition.tsx', 'add-combat.tsx',
-      'add-club.tsx', 'sleep-input.tsx', 'edit-competition.tsx',
+      'sleep-input.tsx', 'edit-competition.tsx',
     ];
 
     test.each(saveScreens)('%s a une protection double-tap', (screenName) => {

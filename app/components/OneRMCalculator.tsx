@@ -30,7 +30,7 @@ export const OneRMCalculator = React.memo(function OneRMCalculator({ visible, on
             <View style={styles.liftInputContainer}>
               <Text style={{ color: colors.textSecondary }}>Charge</Text>
               <View style={[styles.liftInputBox, { backgroundColor: colors.cardHover }]}>
-                <TextInput style={[styles.liftInput, { color: colors.textPrimary }]} value={weight} onChangeText={setWeight} keyboardType="decimal-pad" placeholder="60" placeholderTextColor={colors.textMuted} maxLength={5} />
+                <TextInput style={[styles.liftInput, { color: colors.textPrimary }]} value={weight} onChangeText={(text) => setWeight(text.replace(',', '.'))} keyboardType="decimal-pad" placeholder="60" placeholderTextColor={colors.textMuted} maxLength={5} />
                 <Text style={{ color: colors.textMuted }}>kg</Text>
               </View>
             </View>

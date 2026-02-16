@@ -17,7 +17,7 @@ const FileSystem = FS as typeof FS & {
 };
 import { shareAsync } from 'expo-sharing';
 import { getDocumentAsync } from 'expo-document-picker';
-import { randomUUID, digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
+import { randomUUID, digestStringAsync, CryptoDigestAlgorithm, getRandomBytesAsync } from 'expo-crypto';
 import logger from './logger';
 import { secureStorage } from './secureStorage';
 import { validators, ValidationResult } from './validators';
@@ -251,7 +251,7 @@ async function encryptExport(data: string): Promise<string> {
       );
     }
 
-    const base64 = Buffer.from(encrypted, 'binary').toString('base64');
+    const base64 = btoa(encrypted);
     return `YOROI_ENCRYPTED_V2:${base64}`;
   } catch (error) {
     logger.error('Encryption failed', error);
@@ -270,7 +270,7 @@ async function decryptImport(encrypted: string): Promise<string> {
 
   try {
     const base64 = encrypted.substring('YOROI_ENCRYPTED_V2:'.length);
-    const encryptedData = Buffer.from(base64, 'base64').toString('binary');
+    const encryptedData = atob(base64);
 
     // Générer la même clé
     const key = await generateExportKey();

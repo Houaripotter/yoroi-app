@@ -718,7 +718,7 @@ export default function PhotosScreen() {
               placeholderTextColor={themeColors.textMuted}
               value={weightInput}
               onChangeText={(text) => {
-                setWeightInput(text);
+                setWeightInput(text.replace(',', '.'));
                 if (!useCurrentWeight) setUseCurrentWeight(false);
               }}
               keyboardType="decimal-pad"

@@ -58,7 +58,7 @@ export const IMCCalculator = React.memo(function IMCCalculator({ visible, onClos
               <TextInput
                 style={[styles.input, { color: colors.textPrimary }]}
                 value={weight}
-                onChangeText={setWeight}
+                onChangeText={(text) => setWeight(text.replace(',', '.'))}
                 keyboardType="decimal-pad"
                 maxLength={5}
                 placeholder="0"
@@ -75,7 +75,7 @@ export const IMCCalculator = React.memo(function IMCCalculator({ visible, onClos
               <TextInput
                 style={[styles.input, { color: colors.textPrimary }]}
                 value={height}
-                onChangeText={setHeight}
+                onChangeText={(text) => setHeight(text.replace(',', '.'))}
                 keyboardType="decimal-pad"
                 maxLength={5}
                 placeholder="0"

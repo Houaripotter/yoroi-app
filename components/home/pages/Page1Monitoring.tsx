@@ -351,6 +351,12 @@ const rankBadgeStyles = StyleSheet.create({
     letterSpacing: -0.3,
     textAlign: 'center',
   },
+  levelText: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+    textAlign: 'center',
+  },
   progressTrack: {
     width: '100%',
     height: 5,

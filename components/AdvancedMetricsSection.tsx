@@ -138,7 +138,7 @@ export function AdvancedMetricsSection({
                   placeholderTextColor="#C7C7CC"
                   keyboardType="decimal-pad"
                   value={bodyFat}
-                  onChangeText={setBodyFat}
+                  onChangeText={(t) => setBodyFat(t.replace(',', '.'))}
                   editable={!disabled}
                   maxLength={5}
                 />
@@ -158,7 +158,7 @@ export function AdvancedMetricsSection({
                   placeholderTextColor="#C7C7CC"
                   keyboardType="decimal-pad"
                   value={muscleMass}
-                  onChangeText={setMuscleMass}
+                  onChangeText={(t) => setMuscleMass(t.replace(',', '.'))}
                   editable={!disabled}
                   maxLength={5}
                 />
@@ -180,7 +180,7 @@ export function AdvancedMetricsSection({
                   placeholderTextColor="#C7C7CC"
                   keyboardType="decimal-pad"
                   value={water}
-                  onChangeText={setWater}
+                  onChangeText={(t) => setWater(t.replace(',', '.'))}
                   editable={!disabled}
                   maxLength={5}
                 />
@@ -244,7 +244,7 @@ export function AdvancedMetricsSection({
                   placeholderTextColor="#C7C7CC"
                   keyboardType="decimal-pad"
                   value={waist}
-                  onChangeText={setWaist}
+                  onChangeText={(t) => setWaist(t.replace(',', '.'))}
                   editable={!disabled}
                   maxLength={5}
                 />
@@ -261,7 +261,7 @@ export function AdvancedMetricsSection({
                   placeholderTextColor="#C7C7CC"
                   keyboardType="decimal-pad"
                   value={chest}
-                  onChangeText={setChest}
+                  onChangeText={(t) => setChest(t.replace(',', '.'))}
                   editable={!disabled}
                   maxLength={5}
                 />
@@ -280,7 +280,7 @@ export function AdvancedMetricsSection({
                   placeholderTextColor="#C7C7CC"
                   keyboardType="decimal-pad"
                   value={arms}
-                  onChangeText={setArms}
+                  onChangeText={(t) => setArms(t.replace(',', '.'))}
                   editable={!disabled}
                   maxLength={5}
                 />
@@ -297,7 +297,7 @@ export function AdvancedMetricsSection({
                   placeholderTextColor="#C7C7CC"
                   keyboardType="decimal-pad"
                   value={thighs}
-                  onChangeText={setThighs}
+                  onChangeText={(t) => setThighs(t.replace(',', '.'))}
                   editable={!disabled}
                   maxLength={5}
                 />

@@ -72,7 +72,7 @@ export const MacrosCalculator = React.memo(function MacrosCalculator({ visible, 
               <View key={label} style={styles.inputRow}>
                 <Text style={{ color: colors.textSecondary }}>{label}</Text>
                 <View style={[styles.inputContainer, { backgroundColor: colors.cardHover }]}>
-                  <TextInput style={[styles.input, { color: colors.textPrimary }]} value={value} onChangeText={setter} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={colors.textMuted} maxLength={maxLen} />
+                  <TextInput style={[styles.input, { color: colors.textPrimary }]} value={value} onChangeText={label === 'Age' ? setter : (text) => setter(text.replace(',', '.'))} keyboardType={label === 'Age' ? "number-pad" : "decimal-pad"} placeholder="0" placeholderTextColor={colors.textMuted} maxLength={maxLen} />
                   <Text style={{ color: colors.textMuted }}>{unit}</Text>
                 </View>
               </View>

@@ -61,7 +61,7 @@ export const TDEECalculator = React.memo(function TDEECalculator({ visible, onCl
               <View key={label} style={styles.inputRow}>
                 <Text style={{ color: colors.textSecondary }}>{label}</Text>
                 <View style={[styles.inputContainer, { backgroundColor: colors.cardHover }]}>
-                  <TextInput style={[styles.input, { color: colors.textPrimary }]} value={value} onChangeText={setter} keyboardType="decimal-pad" maxLength={5} placeholder="0" placeholderTextColor={colors.textMuted} />
+                  <TextInput style={[styles.input, { color: colors.textPrimary }]} value={value} onChangeText={label === 'Age' ? setter : (text) => setter(text.replace(',', '.'))} keyboardType={label === 'Age' ? "number-pad" : "decimal-pad"} maxLength={5} placeholder="0" placeholderTextColor={colors.textMuted} />
                   <Text style={{ color: colors.textMuted }}>{unit}</Text>
                 </View>
               </View>

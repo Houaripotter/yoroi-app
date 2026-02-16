@@ -353,8 +353,8 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                     placeholder="100"
                     placeholderTextColor={colors.textMuted}
                     value={newEntryValue}
-                    onChangeText={setNewEntryValue}
-                    keyboardType="numeric"
+                    onChangeText={(text) => setNewEntryValue(text.replace(',', '.'))}
+                    keyboardType="decimal-pad"
                   />
                   <Text style={[styles.unitText, { color: colors.textSecondary }]}>{selectedBenchmark?.unit}</Text>
                 </View>
@@ -367,7 +367,7 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                     placeholderTextColor={colors.textMuted}
                     value={newEntryReps}
                     onChangeText={setNewEntryReps}
-                    keyboardType="numeric"
+                    keyboardType="number-pad"
                   />
                   <Text style={[styles.unitText, { color: colors.textSecondary }]}>reps</Text>
                 </View>
@@ -386,8 +386,8 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                     placeholder="10.5"
                     placeholderTextColor={colors.textMuted}
                     value={newEntryDistance}
-                    onChangeText={setNewEntryDistance}
-                    keyboardType="numeric"
+                    onChangeText={(text) => setNewEntryDistance(text.replace(',', '.'))}
+                    keyboardType="decimal-pad"
                   />
                   <Text style={[styles.unitText, { color: colors.textSecondary }]}>km</Text>
                 </View>
@@ -404,7 +404,7 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                         setRunningTimeHours(text);
                         setTimeout(updateCaloriesFromTime, 100);
                       }}
-                      keyboardType="numeric"
+                      keyboardType="number-pad"
                       maxLength={2}
                     />
                     <Text style={[styles.timeUnit, { color: colors.textMuted }]}>h</Text>
@@ -420,7 +420,7 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                         setRunningTimeMinutes(text);
                         setTimeout(updateCaloriesFromTime, 100);
                       }}
-                      keyboardType="numeric"
+                      keyboardType="number-pad"
                       maxLength={2}
                     />
                     <Text style={[styles.timeUnit, { color: colors.textMuted }]}>m</Text>
@@ -436,7 +436,7 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                         setRunningTimeSeconds(text);
                         setTimeout(updateCaloriesFromTime, 100);
                       }}
-                      keyboardType="numeric"
+                      keyboardType="number-pad"
                       maxLength={2}
                     />
                     <Text style={[styles.timeUnit, { color: colors.textMuted }]}>s</Text>
@@ -461,7 +461,7 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                     placeholderTextColor={colors.textMuted}
                     value={newEntryIncline}
                     onChangeText={setNewEntryIncline}
-                    keyboardType="numeric"
+                    keyboardType="number-pad"
                   />
                   <Text style={[styles.unitText, { color: colors.textSecondary }]}>m</Text>
                 </View>
@@ -480,8 +480,8 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                     placeholder="5.0"
                     placeholderTextColor={colors.textMuted}
                     value={newEntryDistance}
-                    onChangeText={setNewEntryDistance}
-                    keyboardType="numeric"
+                    onChangeText={(text) => setNewEntryDistance(text.replace(',', '.'))}
+                    keyboardType="decimal-pad"
                   />
                   <Text style={[styles.unitText, { color: colors.textSecondary }]}>km</Text>
                 </View>
@@ -493,8 +493,8 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                     placeholder="12.5"
                     placeholderTextColor={colors.textMuted}
                     value={newEntrySpeed}
-                    onChangeText={setNewEntrySpeed}
-                    keyboardType="numeric"
+                    onChangeText={(text) => setNewEntrySpeed(text.replace(',', '.'))}
+                    keyboardType="decimal-pad"
                   />
                   <Text style={[styles.unitText, { color: colors.textSecondary }]}>km/h</Text>
                 </View>
@@ -506,8 +506,8 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                     placeholder="250"
                     placeholderTextColor={colors.textMuted}
                     value={newEntryWatts}
-                    onChangeText={setNewEntryWatts}
-                    keyboardType="numeric"
+                    onChangeText={(text) => setNewEntryWatts(text.replace(',', '.'))}
+                    keyboardType="decimal-pad"
                   />
                   <Text style={[styles.unitText, { color: colors.textSecondary }]}>W</Text>
                 </View>
@@ -520,7 +520,7 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                     placeholderTextColor={colors.textMuted}
                     value={newEntryLevel}
                     onChangeText={setNewEntryLevel}
-                    keyboardType="numeric"
+                    keyboardType="number-pad"
                   />
                   <Text style={[styles.unitText, { color: colors.textSecondary }]}>niveau</Text>
                 </View>
@@ -548,7 +548,7 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                           setNewEntryCalories(estimatedCal.toString());
                         }
                       }}
-                      keyboardType="numeric"
+                      keyboardType="number-pad"
                     />
                     <Text style={[styles.unitText, { color: colors.textSecondary }]}>min</Text>
                   </View>
@@ -563,7 +563,7 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                       placeholderTextColor={colors.textMuted}
                       value={newEntryCalories}
                       onChangeText={setNewEntryCalories}
-                      keyboardType="numeric"
+                      keyboardType="number-pad"
                     />
                   </View>
                 </View>

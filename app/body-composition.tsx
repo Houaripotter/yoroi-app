@@ -130,7 +130,7 @@ const InputField = ({
       <TextInput
         style={styles.input}
         value={value}
-        onChangeText={onChangeText}
+        onChangeText={(text) => onChangeText(text.replace(',', '.'))}
         placeholder={placeholder}
         placeholderTextColor={COLORS.textMuted}
         keyboardType="decimal-pad"
@@ -263,24 +263,43 @@ export default function BodyCompositionScreen() {
   useEffect(() => { loadData(); }, []);
 
   const handleSave = async () => {
-    if (!weight || !bodyFat) {
-      showPopup('Erreur', 'Le poids et le % de masse grasse sont requis', [{ text: 'OK', style: 'primary' }]);
+    const weightVal = parseFloat((weight || '').replace(',', '.'));
+    const bodyFatVal = parseFloat((bodyFat || '').replace(',', '.'));
+
+    if (!weight || !bodyFat || isNaN(weightVal) || isNaN(bodyFatVal)) {
+      showPopup('Erreur', 'Le poids et le % de masse grasse doivent etre des nombres valides', [{ text: 'OK', style: 'primary' }]);
+      return;
+    }
+
+    if (weightVal <= 0 || weightVal > 500 || bodyFatVal < 0 || bodyFatVal > 100) {
+      showPopup('Erreur', 'Verifie les valeurs saisies (poids: 1-500kg, masse grasse: 0-100%)', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
     setIsSubmitting(true);
 
     try {
+      const safeFloat = (val: string | undefined, fallback: number = 0) => {
+        if (!val) return fallback;
+        const n = parseFloat(val.replace(',', '.'));
+        return isNaN(n) ? fallback : n;
+      };
+      const safeInt = (val: string | undefined, fallback?: number) => {
+        if (!val) return fallback;
+        const n = parseInt(val);
+        return isNaN(n) ? fallback : n;
+      };
+
       const data: Omit<BodyComposition, 'id'> = {
         date: format(new Date(), 'yyyy-MM-dd'),
-        weight: parseFloat(weight.replace(',', '.')),
-        bodyFatPercent: parseFloat(bodyFat.replace(',', '.')),
-        muscleMass: muscleMass ? parseFloat(muscleMass.replace(',', '.')) : 0,
-        boneMass: boneMass ? parseFloat(boneMass.replace(',', '.')) : 0,
-        waterPercent: waterPercent ? parseFloat(waterPercent.replace(',', '.')) : 0,
-        visceralFat: visceralFat ? parseInt(visceralFat) : 0,
-        metabolicAge: metabolicAge ? parseInt(metabolicAge) : undefined,
-        bmr: bmr ? parseInt(bmr) : undefined,
+        weight: weightVal,
+        bodyFatPercent: bodyFatVal,
+        muscleMass: safeFloat(muscleMass, 0),
+        boneMass: safeFloat(boneMass, 0),
+        waterPercent: safeFloat(waterPercent, 0),
+        visceralFat: safeInt(visceralFat, 0) ?? 0,
+        metabolicAge: safeInt(metabolicAge),
+        bmr: safeInt(bmr),
       };
 
       await addBodyComposition(data);

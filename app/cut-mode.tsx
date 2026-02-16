@@ -432,7 +432,7 @@ export default function CutModeScreen() {
                 <TextInput
                   style={[styles.formInput, { color: colors.textPrimary, borderColor: colors.border }]}
                   value={targetWeight}
-                  onChangeText={setTargetWeight}
+                  onChangeText={(text) => setTargetWeight(text.replace(',', '.'))}
                   keyboardType="decimal-pad"
                   placeholder="Ex: 70.0"
                   placeholderTextColor={colors.textMuted}
