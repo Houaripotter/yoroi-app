@@ -20,7 +20,7 @@ import { migrateAvatarSystem } from '@/lib/avatarMigration';
 import { initCitationNotifications } from '@/lib/citationNotificationService';
 import { setupNotificationHandler } from '@/lib/eveningHealthTipsService';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/security/logger';
 import { appleWatchService } from '@/lib/appleWatchService';
 
 // ============================================

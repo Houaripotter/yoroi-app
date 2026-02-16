@@ -4,7 +4,7 @@
 // Empêche les double-clics et les appels multiples accidentels
 
 import { useState, useCallback, useRef } from 'react';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/security/logger';
 
 interface UsePreventDoubleClickOptions {
   delay?: number; // Délai en ms entre deux clics (défaut: 500ms)

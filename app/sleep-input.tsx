@@ -23,7 +23,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { healthConnect } from '@/lib/healthConnect';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/security/logger';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 

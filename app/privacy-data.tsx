@@ -40,7 +40,7 @@ import {
   NotificationFeedbackType,
 } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/security/logger';
 
 // ============================================
 // CONSTANTES
