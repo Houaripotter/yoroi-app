@@ -351,12 +351,6 @@ const rankBadgeStyles = StyleSheet.create({
     letterSpacing: -0.3,
     textAlign: 'center',
   },
-  levelText: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 2,
-    textAlign: 'center',
-  },
   progressTrack: {
     width: '100%',
     height: 5,
@@ -1740,11 +1734,6 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 4,
   },
-  levelText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '900',
-  },
   rankBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2288,11 +2277,6 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
-  },
-  profilePhotoImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
   },
   profilePhotoPlaceholder: {
     width: '100%',
@@ -2989,5 +2973,55 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     marginBottom: 16,
+  },
+
+  // ═══════════════════════════════════════════════
+  // RAPPORT HEBDOMADAIRE
+  // ═══════════════════════════════════════════════
+  reportCard: {
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 16,
+  },
+  reportHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  reportTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  shareButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginLeft: 6,
+  },
+  reportStats: {
+    gap: 12,
+  },
+  reportStat: {
+    gap: 4,
+  },
+  reportStatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  reportStatLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  reportStatValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
 });

@@ -99,22 +99,41 @@ export default function HydrationScreen() {
 
   const loadData = async () => {
     try {
-      const [amountStr, goalStr, historyStr] = await Promise.all([
+      const todayISO = new Date().toISOString().split('T')[0];
+      const [amountStr, homeKeyStr, goalStr, historyStr] = await Promise.all([
         AsyncStorage.getItem(HYDRATION_KEY),
+        AsyncStorage.getItem(`${HYDRATION_KEY}_${todayISO}`),
         AsyncStorage.getItem(HYDRATION_GOAL_KEY),
         AsyncStorage.getItem(HYDRATION_HISTORY_KEY),
       ]);
 
+      // Read from hydration screen's own key (liters, JSON format)
+      let amountFromHydrationKey = 0;
       if (amountStr) {
         try {
           const data = JSON.parse(amountStr);
           const today = new Date().toDateString();
           if (data.date === today) {
-            setCurrentAmount(data.amount);
+            amountFromHydrationKey = data.amount;
           }
         } catch {
           // Données corrompues, on ignore
         }
+      }
+
+      // Read from home screen's key (ml, date-keyed format)
+      let amountFromHomeKey = 0;
+      if (homeKeyStr) {
+        const parsedMl = parseInt(homeKeyStr, 10);
+        if (!isNaN(parsedMl) && parsedMl > 0) {
+          amountFromHomeKey = parsedMl / 1000; // Convert ml to liters
+        }
+      }
+
+      // Use the higher value to avoid data loss from stale state overwrites
+      const resolvedAmount = Math.max(amountFromHydrationKey, amountFromHomeKey);
+      if (resolvedAmount > 0) {
+        setCurrentAmount(resolvedAmount);
       }
 
       if (goalStr) {

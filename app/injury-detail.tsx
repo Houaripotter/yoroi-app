@@ -2,7 +2,7 @@
 // YOROI MEDIC - DÉTAIL BLESSURE
 // ============================================
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -51,6 +51,7 @@ import {
   getInjuryRecommendation,
   getPainTypeLabel,
   getInjuryCauseLabel,
+  getZoneDisplayName,
 } from '@/lib/infirmaryService';
 import { TREATMENT_TYPES } from '@/constants/bodyZones';
 import logger from '@/lib/security/logger';
@@ -319,7 +320,7 @@ export default function InjuryDetailScreen() {
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Zone</Text>
             <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
-              {injury.zone_id}
+              {getZoneDisplayName(injury.zone_id, injury.zone_view)}
             </Text>
           </View>
           <View style={styles.infoRow}>

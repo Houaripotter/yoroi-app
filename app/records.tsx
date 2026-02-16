@@ -212,17 +212,17 @@ export default function RecordsScreen() {
               Pas encore de records
             </Text>
             <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-              Ajoute des pesées et des entraînements pour débloquer
-              tes records personnels et voir ta progression !
+              Enregistre tes entraînements pour suivre tes records personnels,
+              tes meilleures performances et ta progression !
             </Text>
 
             <TouchableOpacity
               style={[styles.emptyButton, { backgroundColor: colors.accent }]}
-              onPress={() => router.push('/body-composition' as any)}
+              onPress={() => router.push('/add-training' as any)}
             >
-              <Scale size={20} color={colors.textOnAccent || '#FFFFFF'} />
+              <Dumbbell size={20} color={colors.textOnAccent || '#FFFFFF'} />
               <Text style={[styles.emptyButtonText, { color: colors.textOnAccent || '#FFFFFF' }]}>
-                Ajouter ma première pesée
+                Ajouter mon premier entraînement
               </Text>
             </TouchableOpacity>
           </View>

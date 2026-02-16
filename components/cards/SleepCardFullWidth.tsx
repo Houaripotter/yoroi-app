@@ -138,7 +138,7 @@ export const SleepCardFullWidth = React.memo<SleepCardFullWidthProps>(({
 
   const handleAdd = () => {
     impactAsync(ImpactFeedbackStyle.Light);
-    router.push('/sleep');
+    router.push('/sleep-input');
 
     // Bounce animation
     Animated.sequence([

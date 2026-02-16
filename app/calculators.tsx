@@ -122,16 +122,127 @@ const EXERCISES: Record<ExerciseType, { name: string; iconComponent: LucideIcon;
   },
 };
 
+// ============================================
+// SUB-COMPONENTS (defined outside to avoid re-mount on re-render)
+// ============================================
+
+// Composant Input
+const DataInput = ({ label, value, unit, onChange, colors }: {
+  label: string;
+  value: string;
+  unit: string;
+  onChange: (val: string) => void;
+  colors: any;
+}) => (
+  <View style={styles.inputRow}>
+    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{label}</Text>
+    <View style={[styles.inputContainer, { backgroundColor: colors.cardHover }]}>
+      <TextInput
+        style={[styles.input, { color: colors.textPrimary }]}
+        value={value}
+        onChangeText={onChange}
+        keyboardType="decimal-pad"
+        maxLength={5}
+        placeholder="0"
+        placeholderTextColor={colors.textMuted}
+      />
+      <Text style={[styles.inputUnit, { color: colors.textMuted }]}>{unit}</Text>
+    </View>
+  </View>
+);
+
+// Composant Modal Base
+const CalculatorModal = ({
+  visible,
+  onClose,
+  title,
+  children,
+  colors,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  colors: any;
+}) => (
+  <Modal
+    visible={visible}
+    animationType="slide"
+    presentationStyle="pageSheet"
+    onRequestClose={onClose}
+  >
+    <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+      <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+        <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{title}</Text>
+        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <X size={24} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
+      <ScrollView
+        style={styles.modalContent}
+        contentContainerStyle={styles.modalContentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {children}
+      </ScrollView>
+    </View>
+  </Modal>
+);
+
+// Gender Toggle
+const GenderToggleComponent = ({ gender, onSelect, colors }: {
+  gender: Gender;
+  onSelect: (g: Gender) => void;
+  colors: any;
+}) => (
+  <View style={styles.genderToggle}>
+    <TouchableOpacity
+      style={[
+        styles.genderButton,
+        { backgroundColor: gender === 'male' ? colors.gold : colors.cardHover }
+      ]}
+      onPress={() => onSelect('male')}
+    >
+      <Text style={[
+        styles.genderText,
+        { color: gender === 'male' ? colors.background : colors.textSecondary }
+      ]}>
+        Homme
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      style={[
+        styles.genderButton,
+        { backgroundColor: gender === 'female' ? colors.gold : colors.cardHover }
+      ]}
+      onPress={() => onSelect('female')}
+    >
+      <Text style={[
+        styles.genderText,
+        { color: gender === 'female' ? colors.background : colors.textSecondary }
+      ]}>
+        Femme
+      </Text>
+    </TouchableOpacity>
+  </View>
+);
+
 export default function CalculatorsScreen() {
   const { colors } = useTheme();
 
-  // Donnees utilisateur - VIDES par defaut
-  const [userData, setUserData] = useState<UserData>({
-    weight: 0,
-    height: 0,
-    age: 0,
-    gender: 'male',
-  });
+  // Donnees utilisateur - VIDES par defaut (string state for TextInput)
+  const [weightStr, setWeightStr] = useState('');
+  const [heightStr, setHeightStr] = useState('');
+  const [ageStr, setAgeStr] = useState('');
+  const [gender, setGender] = useState<Gender>('male');
+
+  // Parsed numeric values
+  const userData: UserData = {
+    weight: parseFloat(weightStr) || 0,
+    height: parseFloat(heightStr) || 0,
+    age: parseFloat(ageStr) || 0,
+    gender,
+  };
 
   // Modals
   const [showIMC, setShowIMC] = useState(false);
@@ -148,10 +259,14 @@ export default function CalculatorsScreen() {
   const [goal, setGoal] = useState<Goal>('lose');
   const [exerciseHours, setExerciseHours] = useState(0);
 
-  // Etats pour le calcul 1RM - VIDES par defaut
-  const [liftWeight, setLiftWeight] = useState(0);
-  const [liftReps, setLiftReps] = useState(0);
+  // Etats pour le calcul 1RM - VIDES par defaut (string state for TextInput)
+  const [liftWeightStr, setLiftWeightStr] = useState('');
+  const [liftRepsStr, setLiftRepsStr] = useState('');
   const [selectedExercise, setSelectedExercise] = useState<ExerciseType>('bench');
+
+  // Parsed numeric values for 1RM
+  const liftWeight = parseFloat(liftWeightStr) || 0;
+  const liftReps = parseInt(liftRepsStr) || 0;
 
   // NE PAS charger automatiquement - L'utilisateur doit saisir lui-meme
   // useEffect(() => {
@@ -163,12 +278,15 @@ export default function CalculatorsScreen() {
       const settings = await getUserSettings();
       const latestMeasurement = await getLatestMeasurement();
 
-      setUserData(prev => ({
-        ...prev,
-        weight: latestMeasurement?.weight || prev.weight,
-        height: settings.height || prev.height,
-        gender: settings.gender === 'female' ? 'female' : 'male',
-      }));
+      if (latestMeasurement?.weight) {
+        setWeightStr(String(latestMeasurement.weight));
+      }
+      if (settings.height) {
+        setHeightStr(String(settings.height));
+      }
+      if (settings.gender === 'female') {
+        setGender('female');
+      }
 
       // Mapper l'objectif
       if (settings.goal === 'lose_weight' || settings.goal === 'lose') {
@@ -424,101 +542,6 @@ export default function CalculatorsScreen() {
     }
   };
 
-  // Composant Input
-  const DataInput = ({ label, value, unit, onChange }: {
-    label: string;
-    value: number;
-    unit: string;
-    onChange: (val: number) => void;
-  }) => (
-    <View style={styles.inputRow}>
-      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{label}</Text>
-      <View style={[styles.inputContainer, { backgroundColor: colors.cardHover }]}>
-        <TextInput
-          style={[styles.input, { color: colors.textPrimary }]}
-          value={String(value)}
-          onChangeText={(text) => {
-            const num = parseFloat(text) || 0;
-            onChange(num);
-          }}
-          keyboardType="decimal-pad"
-          maxLength={5}
-        />
-        <Text style={[styles.inputUnit, { color: colors.textMuted }]}>{unit}</Text>
-      </View>
-    </View>
-  );
-
-  // Composant Modal Base
-  const CalculatorModal = ({
-    visible,
-    onClose,
-    title,
-    children,
-  }: {
-    visible: boolean;
-    onClose: () => void;
-    title: string;
-    children: React.ReactNode;
-  }) => (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
-      <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
-        <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-          <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{title}</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <X size={24} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-        <ScrollView
-          style={styles.modalContent}
-          contentContainerStyle={styles.modalContentContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          {children}
-        </ScrollView>
-      </View>
-    </Modal>
-  );
-
-  // Gender Toggle
-  const GenderToggle = () => (
-    <View style={styles.genderToggle}>
-      <TouchableOpacity
-        style={[
-          styles.genderButton,
-          { backgroundColor: userData.gender === 'male' ? colors.gold : colors.cardHover }
-        ]}
-        onPress={() => setUserData(prev => ({ ...prev, gender: 'male' }))}
-      >
-        <Text style={[
-          styles.genderText,
-          { color: userData.gender === 'male' ? colors.background : colors.textSecondary }
-        ]}>
-          Homme
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[
-          styles.genderButton,
-          { backgroundColor: userData.gender === 'female' ? colors.gold : colors.cardHover }
-        ]}
-        onPress={() => setUserData(prev => ({ ...prev, gender: 'female' }))}
-      >
-        <Text style={[
-          styles.genderText,
-          { color: userData.gender === 'female' ? colors.background : colors.textSecondary }
-        ]}>
-          Femme
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-
   return (
     <ScreenWrapper>
       <Header title="Calculateurs" showBack />
@@ -597,18 +620,20 @@ export default function CalculatorsScreen() {
       {/* ============================================ */}
       {/* MODAL IMC */}
       {/* ============================================ */}
-      <CalculatorModal visible={showIMC} onClose={() => setShowIMC(false)} title="IMC - Indice de Masse Corporelle">
+      <CalculatorModal visible={showIMC} onClose={() => setShowIMC(false)} title="IMC - Indice de Masse Corporelle" colors={colors}>
         <DataInput
           label="Poids"
-          value={userData.weight}
+          value={weightStr}
           unit="kg"
-          onChange={(val) => setUserData(prev => ({ ...prev, weight: val }))}
+          onChange={setWeightStr}
+          colors={colors}
         />
         <DataInput
           label="Taille"
-          value={userData.height}
+          value={heightStr}
           unit="cm"
-          onChange={(val) => setUserData(prev => ({ ...prev, height: val }))}
+          onChange={setHeightStr}
+          colors={colors}
         />
 
         {userData.weight > 0 && userData.height > 0 && (
@@ -655,25 +680,28 @@ export default function CalculatorsScreen() {
       {/* ============================================ */}
       {/* MODAL IMG */}
       {/* ============================================ */}
-      <CalculatorModal visible={showIMG} onClose={() => setShowIMG(false)} title="IMG - Indice de Masse Grasse">
-        <GenderToggle />
+      <CalculatorModal visible={showIMG} onClose={() => setShowIMG(false)} title="IMG - Indice de Masse Grasse" colors={colors}>
+        <GenderToggleComponent gender={gender} onSelect={setGender} colors={colors} />
         <DataInput
           label="Poids"
-          value={userData.weight}
+          value={weightStr}
           unit="kg"
-          onChange={(val) => setUserData(prev => ({ ...prev, weight: val }))}
+          onChange={setWeightStr}
+          colors={colors}
         />
         <DataInput
           label="Taille"
-          value={userData.height}
+          value={heightStr}
           unit="cm"
-          onChange={(val) => setUserData(prev => ({ ...prev, height: val }))}
+          onChange={setHeightStr}
+          colors={colors}
         />
         <DataInput
           label="Age"
-          value={userData.age}
+          value={ageStr}
           unit="ans"
-          onChange={(val) => setUserData(prev => ({ ...prev, age: val }))}
+          onChange={setAgeStr}
+          colors={colors}
         />
 
         {userData.weight > 0 && userData.height > 0 && userData.age > 0 && (
@@ -733,25 +761,28 @@ export default function CalculatorsScreen() {
       {/* ============================================ */}
       {/* MODAL BMR */}
       {/* ============================================ */}
-      <CalculatorModal visible={showBMR} onClose={() => setShowBMR(false)} title="BMR - Metabolisme de Base">
-        <GenderToggle />
+      <CalculatorModal visible={showBMR} onClose={() => setShowBMR(false)} title="BMR - Metabolisme de Base" colors={colors}>
+        <GenderToggleComponent gender={gender} onSelect={setGender} colors={colors} />
         <DataInput
           label="Poids"
-          value={userData.weight}
+          value={weightStr}
           unit="kg"
-          onChange={(val) => setUserData(prev => ({ ...prev, weight: val }))}
+          onChange={setWeightStr}
+          colors={colors}
         />
         <DataInput
           label="Taille"
-          value={userData.height}
+          value={heightStr}
           unit="cm"
-          onChange={(val) => setUserData(prev => ({ ...prev, height: val }))}
+          onChange={setHeightStr}
+          colors={colors}
         />
         <DataInput
           label="Age"
-          value={userData.age}
+          value={ageStr}
           unit="ans"
-          onChange={(val) => setUserData(prev => ({ ...prev, age: val }))}
+          onChange={setAgeStr}
+          colors={colors}
         />
 
         {userData.weight > 0 && userData.height > 0 && userData.age > 0 && (
@@ -789,25 +820,28 @@ export default function CalculatorsScreen() {
       {/* ============================================ */}
       {/* MODAL TDEE */}
       {/* ============================================ */}
-      <CalculatorModal visible={showTDEE} onClose={() => setShowTDEE(false)} title="TDEE - Besoins Caloriques">
-        <GenderToggle />
+      <CalculatorModal visible={showTDEE} onClose={() => setShowTDEE(false)} title="TDEE - Besoins Caloriques" colors={colors}>
+        <GenderToggleComponent gender={gender} onSelect={setGender} colors={colors} />
         <DataInput
           label="Poids"
-          value={userData.weight}
+          value={weightStr}
           unit="kg"
-          onChange={(val) => setUserData(prev => ({ ...prev, weight: val }))}
+          onChange={setWeightStr}
+          colors={colors}
         />
         <DataInput
           label="Taille"
-          value={userData.height}
+          value={heightStr}
           unit="cm"
-          onChange={(val) => setUserData(prev => ({ ...prev, height: val }))}
+          onChange={setHeightStr}
+          colors={colors}
         />
         <DataInput
           label="Age"
-          value={userData.age}
+          value={ageStr}
           unit="ans"
-          onChange={(val) => setUserData(prev => ({ ...prev, age: val }))}
+          onChange={setAgeStr}
+          colors={colors}
         />
 
         <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Niveau d'activite</Text>
@@ -881,13 +915,14 @@ export default function CalculatorsScreen() {
       {/* ============================================ */}
       {/* MODAL POIDS IDEAL */}
       {/* ============================================ */}
-      <CalculatorModal visible={showIdealWeight} onClose={() => setShowIdealWeight(false)} title="Poids Ideal">
-        <GenderToggle />
+      <CalculatorModal visible={showIdealWeight} onClose={() => setShowIdealWeight(false)} title="Poids Ideal" colors={colors}>
+        <GenderToggleComponent gender={gender} onSelect={setGender} colors={colors} />
         <DataInput
           label="Taille"
-          value={userData.height}
+          value={heightStr}
           unit="cm"
-          onChange={(val) => setUserData(prev => ({ ...prev, height: val }))}
+          onChange={setHeightStr}
+          colors={colors}
         />
 
         {userData.height > 0 && (
@@ -952,25 +987,28 @@ export default function CalculatorsScreen() {
       {/* ============================================ */}
       {/* MODAL MACROS */}
       {/* ============================================ */}
-      <CalculatorModal visible={showMacros} onClose={() => setShowMacros(false)} title="Repartition Macros">
-        <GenderToggle />
+      <CalculatorModal visible={showMacros} onClose={() => setShowMacros(false)} title="Repartition Macros" colors={colors}>
+        <GenderToggleComponent gender={gender} onSelect={setGender} colors={colors} />
         <DataInput
           label="Poids"
-          value={userData.weight}
+          value={weightStr}
           unit="kg"
-          onChange={(val) => setUserData(prev => ({ ...prev, weight: val }))}
+          onChange={setWeightStr}
+          colors={colors}
         />
         <DataInput
           label="Taille"
-          value={userData.height}
+          value={heightStr}
           unit="cm"
-          onChange={(val) => setUserData(prev => ({ ...prev, height: val }))}
+          onChange={setHeightStr}
+          colors={colors}
         />
         <DataInput
           label="Age"
-          value={userData.age}
+          value={ageStr}
           unit="ans"
-          onChange={(val) => setUserData(prev => ({ ...prev, age: val }))}
+          onChange={setAgeStr}
+          colors={colors}
         />
 
         <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Ton objectif</Text>
@@ -1049,12 +1087,13 @@ export default function CalculatorsScreen() {
       {/* ============================================ */}
       {/* MODAL EAU */}
       {/* ============================================ */}
-      <CalculatorModal visible={showWater} onClose={() => setShowWater(false)} title="Eau Quotidienne">
+      <CalculatorModal visible={showWater} onClose={() => setShowWater(false)} title="Eau Quotidienne" colors={colors}>
         <DataInput
           label="Poids"
-          value={userData.weight}
+          value={weightStr}
           unit="kg"
-          onChange={(val) => setUserData(prev => ({ ...prev, weight: val }))}
+          onChange={setWeightStr}
+          colors={colors}
         />
 
         <View style={styles.inputRow}>
@@ -1130,7 +1169,7 @@ export default function CalculatorsScreen() {
       {/* ============================================ */}
       {/* MODAL 1RM - CALCULATEUR DE FORCE */}
       {/* ============================================ */}
-      <CalculatorModal visible={showOneRM} onClose={() => setShowOneRM(false)} title="1RM - Calculateur de Force">
+      <CalculatorModal visible={showOneRM} onClose={() => setShowOneRM(false)} title="1RM - Calculateur de Force" colors={colors}>
         {/* Selection de l'exercice */}
         <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Exercice</Text>
         <ScrollView
@@ -1172,8 +1211,8 @@ export default function CalculatorsScreen() {
             <View style={[styles.liftInputBox, { backgroundColor: colors.cardHover }]}>
               <TextInput
                 style={[styles.liftInput, { color: colors.textPrimary }]}
-                value={String(liftWeight)}
-                onChangeText={(text) => setLiftWeight(parseFloat(text) || 0)}
+                value={liftWeightStr}
+                onChangeText={setLiftWeightStr}
                 keyboardType="decimal-pad"
                 maxLength={5}
               />
@@ -1188,8 +1227,8 @@ export default function CalculatorsScreen() {
             <View style={[styles.liftInputBox, { backgroundColor: colors.cardHover }]}>
               <TextInput
                 style={[styles.liftInput, { color: colors.textPrimary }]}
-                value={String(liftReps)}
-                onChangeText={(text) => setLiftReps(parseInt(text) || 1)}
+                value={liftRepsStr}
+                onChangeText={setLiftRepsStr}
                 keyboardType="number-pad"
                 maxLength={2}
               />

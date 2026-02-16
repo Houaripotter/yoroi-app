@@ -30,6 +30,7 @@ import {
   INJURY_CAUSES,
   TREATMENT_TYPES,
 } from '@/constants/bodyZones';
+import { INITIAL_DATA } from '@/components/BodyMap';
 
 // ============================================
 // CALCUL DU STATUT FIT FOR DUTY
@@ -196,13 +197,10 @@ export const getInjuriesWithZoneNames = async (
 ): Promise<Injury[]> => {
   const injuries = await getInjuries(status);
 
-  return injuries.map(injury => {
-    const zone = getZoneById(injury.zone_id, injury.zone_view);
-    return {
-      ...injury,
-      zone_name: zone?.name || injury.zone_id,
-    };
-  });
+  return injuries.map(injury => ({
+    ...injury,
+    zone_name: getZoneDisplayName(injury.zone_id, injury.zone_view),
+  }));
 };
 
 // ============================================
@@ -411,6 +409,21 @@ export const completeReminder = async (reminderId: number): Promise<void> => {
 // ============================================
 
 /**
+ * Retourne le nom d'affichage d'une zone corporelle à partir de son ID
+ * Cherche d'abord dans bodyZones constants, puis dans le BodyMap INITIAL_DATA
+ */
+export const getZoneDisplayName = (zoneId: string, zoneView: 'front' | 'back'): string => {
+  // First try the bodyZones constants
+  const zone = getZoneById(zoneId, zoneView);
+  if (zone) return zone.name;
+
+  // Fallback: look up in BodyMap's INITIAL_DATA (uses 'label' instead of 'name')
+  const bodyMapZones = zoneView === 'front' ? INITIAL_DATA.front : INITIAL_DATA.back;
+  const bodyMapZone = bodyMapZones.find(z => z.id === zoneId);
+  return bodyMapZone?.label || zoneId;
+};
+
+/**
  * Retourne le label d'un type de douleur
  */
 export const getPainTypeLabel = (painType: string): string => {
@@ -504,6 +517,7 @@ export default {
   getTreatmentsWithLabels,
   createTreatmentReminder,
   completeReminder,
+  getZoneDisplayName,
   getPainTypeLabel,
   getInjuryCauseLabel,
   getEVAColor,

@@ -453,11 +453,35 @@ export default function HomeScreen() {
 
       // 3. Fallback: AsyncStorage si HealthKit n'a pas de données
       if (hydrationValue === 0) {
-        const stored = await AsyncStorage.getItem(`${HYDRATION_KEY}_${today}`);
-        if (stored) {
-          hydrationValue = parseInt(stored, 10);
+        // Read from both key formats and take the higher value
+        const [storedDateKey, storedJsonKey] = await Promise.all([
+          AsyncStorage.getItem(`${HYDRATION_KEY}_${today}`),
+          AsyncStorage.getItem(HYDRATION_KEY),
+        ]);
+
+        let fromDateKey = 0;
+        if (storedDateKey) {
+          fromDateKey = parseInt(storedDateKey, 10) || 0;
+        }
+
+        let fromJsonKey = 0;
+        if (storedJsonKey) {
+          try {
+            const data = JSON.parse(storedJsonKey);
+            const todayStr = new Date().toDateString();
+            if (data.date === todayStr && data.amount > 0) {
+              fromJsonKey = Math.round(data.amount * 1000); // Convert liters to ml
+            }
+          } catch {
+            // Corrupted data, ignore
+          }
+        }
+
+        // Use the higher value to avoid data loss from stale state overwrites
+        hydrationValue = Math.max(fromDateKey, fromJsonKey);
+        if (hydrationValue > 0) {
           sourceUsed = 'AsyncStorage';
-          logger.info(`[Hydratation] AsyncStorage: ${hydrationValue}ml`);
+          logger.info(`[Hydratation] AsyncStorage: ${hydrationValue}ml (dateKey=${fromDateKey}, jsonKey=${fromJsonKey})`);
         }
       }
 
@@ -769,7 +793,7 @@ export default function HomeScreen() {
           userName: profileData?.name,
           weight: weight?.weight,
           streak: streakDays,
-          level: getLevel(history, allTrainings).level,
+          level: getLevel(history.length * 10 + allTrainings.length * 25 + (streakDays >= 7 ? 50 : 0)).level,
           rank: getCurrentRank(streakDays)?.name,
         }).catch(() => {
           // Silencieux si Watch non disponible
@@ -1045,6 +1069,8 @@ export default function HomeScreen() {
     };
   }, []);
 
+  const batteryStatus = useMemo(() => getBatteryStatus(), [batteryPercent]);
+
   // Rendu icône batterie status
   const renderBatteryIcon = useCallback(() => {
     const iconSize = 12;
@@ -1074,8 +1100,6 @@ export default function HomeScreen() {
       default: return <Target size={iconSize} color={color} />;
     }
   }, [colors.accent, colors.success]);
-
-  const batteryStatus = useMemo(() => getBatteryStatus(), [batteryPercent]);
 
   // === SYSTÈME DE PERSONNALISATION DE L'ORDRE - RENDU DYNAMIQUE ===
   const sortedSections = useMemo(() => {
@@ -1413,7 +1437,6 @@ export default function HomeScreen() {
             <EssentielWeightCard
               currentWeight={currentWeight || undefined}
               objective={targetWeight || undefined}
-              startWeight={startWeight || undefined}
               weekData={weightHistory.slice(0, 30).reverse().map(w => w.weight)} // 30 derniers jours au lieu de 7
               weekLabels={['L', 'M', 'M', 'J', 'V', 'S', 'D']} // Les labels seront dupliqués
               trend={trend}

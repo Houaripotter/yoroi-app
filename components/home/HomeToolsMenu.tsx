@@ -206,14 +206,14 @@ export const HomeToolsMenu: React.FC = () => {
     const defCount = defaultActive.length;
 
     // Espace disponible: entre le bouton et le haut de l'écran (sous Dynamic Island)
-    const topSafeMargin = 90;
+    const topSafeMargin = 130;
     const buttonOffset = Platform.OS === 'ios' ? 115 : 95;
     const maxHeight = SCREEN_HEIGHT - buttonOffset - topSafeMargin - 50;
 
     // Niveaux verticaux: tige additionnelle + point convergence + paires de branches
     const branchPairLevels = Math.ceil(Math.max(defCount - 1, 0) / 2);
     const totalLevels = addCount + (defCount > 0 ? 1 : 0) + branchPairLevels;
-    const vSpace = Math.min(78, Math.max(55, maxHeight / Math.max(totalLevels, 1)));
+    const vSpace = Math.min(85, Math.max(68, maxHeight / Math.max(totalLevels, 1)));
 
     const startY = -68;
 
@@ -290,7 +290,7 @@ export const HomeToolsMenu: React.FC = () => {
                 colors={tool.colors}
                 style={styles.toolButton}
               >
-                <IconComponent size={22} color="#FFFFFF" strokeWidth={2.5} />
+                <IconComponent size={18} color="#FFFFFF" strokeWidth={2.5} />
               </LinearGradient>
               <Text style={[styles.toolLabel, { color: '#FFFFFF' }]} numberOfLines={1}>
                 {tool.label}
@@ -476,9 +476,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   toolButton: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',

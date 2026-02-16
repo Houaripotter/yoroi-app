@@ -66,14 +66,7 @@ export default function SleepScreen() {
   const [stats, setStats] = useState<SleepStats | null>(null);
   const [goal, setGoal] = useState(480); // 8h par défaut
   const [isSaving, setIsSaving] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-
-  // Formulaire
-  const [bedTime, setBedTime] = useState('23:00');
-  const [wakeTime, setWakeTime] = useState('07:00');
-  const [quality, setQuality] = useState(3);
-  const [notes, setNotes] = useState('');
 
   // Notifications
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -102,48 +95,6 @@ export default function SleepScreen() {
 
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadData(); }, []);
-
-  const handleSave = async () => {
-    if (isSaving) return;
-    setIsSaving(true);
-    try {
-      // Validation du format horaire avant sauvegarde
-      const timeRegex = /^\d{1,2}:\d{2}$/;
-      if (!timeRegex.test(bedTime)) {
-        showPopup(t('common.error'), t('sleep.invalidTimeFormat') || 'Format invalide. Utilisez HH:MM (ex: 23:00)', [{ text: 'OK', style: 'primary' }]);
-        return;
-      }
-      if (!timeRegex.test(wakeTime)) {
-        showPopup(t('common.error'), t('sleep.invalidTimeFormat') || 'Format invalide. Utilisez HH:MM (ex: 07:00)', [{ text: 'OK', style: 'primary' }]);
-        return;
-      }
-
-      // Validation des heures/minutes
-      const [bedH, bedM] = bedTime.split(':').map(Number);
-      const [wakeH, wakeM] = wakeTime.split(':').map(Number);
-      if (bedH > 23 || bedM > 59 || wakeH > 23 || wakeM > 59) {
-        showPopup(t('common.error'), t('sleep.invalidTimeFormat') || 'Heure invalide. Les heures doivent être entre 00:00 et 23:59', [{ text: 'OK', style: 'primary' }]);
-        return;
-      }
-
-      try {
-        await addSleepEntry(bedTime, wakeTime, quality, notes);
-        try { notificationAsync(NotificationFeedbackType.Success); } catch (_) {}
-        setShowAddModal(false);
-        setBedTime('23:00');
-        setWakeTime('07:00');
-        setQuality(3);
-        setNotes('');
-        loadData().catch(() => {});
-        showPopup(t('sleep.saved'), t('sleep.savedMessage'), [{ text: 'OK', style: 'primary' }]);
-      } catch (error: any) {
-        const message = error?.message || t('sleep.saveError') || 'Erreur lors de la sauvegarde';
-        showPopup(t('common.error'), message, [{ text: 'OK', style: 'primary' }]);
-      }
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleGoalChange = async (minutes: number) => {
     try {
@@ -368,68 +319,18 @@ export default function SleepScreen() {
           </View>
         </View>
 
-        {/* Ajouter sommeil */}
-        {!showAddModal ? (
-          <TouchableOpacity style={[styles.addBtn, { backgroundColor: '#8B5CF6' }]} onPress={() => setShowAddModal(true)}>
-            <Moon size={18} color="#FFFFFF" />
-            <Text style={styles.addBtnText}>{t('sleep.recordMyNight')}</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={[styles.addCard, { backgroundColor: colors.backgroundCard }]}>
-            <Text style={[styles.addTitle, { color: colors.textPrimary }]}>{t('sleep.myNight')}</Text>
-            
-            <View style={styles.timeRow}>
-              <View style={styles.timeInput}>
-                <Sun size={14} color="#F59E0B" />
-                <Text style={[styles.timeLabel, { color: colors.textMuted }]}>{t('sleep.bedtime')}</Text>
-                <TextInput
-                  style={[styles.timeField, { color: colors.textPrimary, borderColor: colors.border }]}
-                  value={bedTime}
-                  onChangeText={setBedTime}
-                  placeholder="23:00"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="numbers-and-punctuation"
-                  maxLength={5}
-                />
-              </View>
-              <View style={styles.timeInput}>
-                <Moon size={14} color="#8B5CF6" />
-                <Text style={[styles.timeLabel, { color: colors.textMuted }]}>{t('sleep.wakeUp')}</Text>
-                <TextInput
-                  style={[styles.timeField, { color: colors.textPrimary, borderColor: colors.border }]}
-                  value={wakeTime}
-                  onChangeText={setWakeTime}
-                  placeholder="07:00"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="numbers-and-punctuation"
-                  maxLength={5}
-                />
-              </View>
-            </View>
-
-            <Text style={[styles.qualityLabel, { color: colors.textMuted }]}>{t('sleep.sleepQuality')}</Text>
-            <View style={styles.starsRow}>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <TouchableOpacity key={i} onPress={() => { setQuality(i); impactAsync(ImpactFeedbackStyle.Light); }}>
-                  <Star size={28} color={i <= quality ? '#F59E0B' : colors.border} fill={i <= quality ? '#F59E0B' : 'transparent'} />
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <View style={styles.addActions}>
-              <TouchableOpacity onPress={() => setShowAddModal(false)} style={[styles.cancelBtn, { borderColor: colors.border }]}>
-                <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>{t('common.cancel')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity disabled={isSaving} onPress={handleSave} style={[styles.saveBtn, { backgroundColor: '#8B5CF6' }]}>
-                <Text style={styles.saveBtnText}>{t('common.save')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+        {/* Ajouter sommeil - Redirige vers le modal sleep-input */}
+        <TouchableOpacity
+          style={[styles.addBtn, { backgroundColor: '#8B5CF6' }]}
+          onPress={() => router.push('/sleep-input')}
+        >
+          <Moon size={18} color="#FFFFFF" />
+          <Text style={styles.addBtnText}>{t('sleep.recordMyNight')}</Text>
+        </TouchableOpacity>
 
         {/* Historique */}
         <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('sleep.history')}</Text>
-        {entries.slice(0, 7).map((entry) => (
+        {entries.slice(0, 14).map((entry) => (
           <View key={entry.id} style={[styles.entryCard, { backgroundColor: colors.backgroundCard }]}>
             <View>
               <Text style={[styles.entryDate, { color: colors.textMuted }]}>

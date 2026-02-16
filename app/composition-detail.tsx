@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   View,
