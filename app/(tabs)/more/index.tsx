@@ -342,7 +342,7 @@ const getCommunityItems = (t: TranslateFunction): MenuItem[] => [
     label: t('menu.healthPros'),
     sublabel: t('menu.healthProsDescription'),
     Icon: Heart,
-    route: '/partners',
+    route: '/health-professionals',
     iconColor: '#F87171',
     iconBg: '#F8717120',
   },

@@ -27,6 +27,8 @@ import {
   Droplet,
   Moon,
   Dumbbell,
+  Swords,
+  Stethoscope,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { router } from 'expo-router';
@@ -65,6 +67,8 @@ const ADDITIONAL_TOOLS: ToolOption[] = [
   { id: 'hydration', icon: Droplet, label: 'Hydratation', route: '/hydration', colors: ['#3B82F6', '#2563EB'] },
   { id: 'sleep', icon: Moon, label: 'Sommeil', route: '/sleep', colors: ['#6366F1', '#4F46E5'] },
   { id: 'workout', icon: Dumbbell, label: 'Seance', route: '/add-training', colors: ['#EF4444', '#DC2626'] },
+  { id: 'coaches-clubs', icon: Swords, label: 'Coachs & Clubs', route: '/partners', colors: ['#818CF8', '#6366F1'] },
+  { id: 'health-pros', icon: Stethoscope, label: 'Pros de Santé', route: '/health-professionals', colors: ['#F87171', '#EF4444'] },
 ];
 
 const TOOLS_STORAGE_KEY = '@yoroi_tools_config';

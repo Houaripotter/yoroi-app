@@ -142,6 +142,7 @@ export default function HealthProfessionalsScreen() {
                 key={kine.id}
                 professional={kine}
                 colors={colors}
+                isDark={isDark}
                 onPress={() => setSelectedProfessional(kine)}
               />
             ))}
@@ -157,6 +158,7 @@ export default function HealthProfessionalsScreen() {
                   key={nutritionist.id}
                   professional={nutritionist}
                   colors={colors}
+                  isDark={isDark}
                   onPress={() => setSelectedProfessional(nutritionist)}
                 />
               ))
@@ -185,6 +187,7 @@ export default function HealthProfessionalsScreen() {
                   key={osteopath.id}
                   professional={osteopath}
                   colors={colors}
+                  isDark={isDark}
                   onPress={() => setSelectedProfessional(osteopath)}
                 />
               ))
@@ -376,10 +379,11 @@ export default function HealthProfessionalsScreen() {
 interface ProfessionalCardProps {
   professional: Coach | Nutritionist | Osteopath;
   colors: any;
+  isDark: boolean;
   onPress: () => void;
 }
 
-const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, colors, onPress }) => (
+const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, colors, isDark, onPress }) => (
   <TouchableOpacity
     style={[styles.professionalCard, { backgroundColor: colors.backgroundCard }]}
     onPress={onPress}

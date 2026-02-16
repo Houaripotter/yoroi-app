@@ -111,9 +111,11 @@ function RootLayoutContent() {
         <Stack.Screen name="sport" options={{ presentation: 'card' }} />
         <Stack.Screen name="history" options={{ presentation: 'card' }} />
         <Stack.Screen name="body-status" options={{ presentation: 'card' }} />
+        <Stack.Screen name="body-composition" options={{ presentation: 'card' }} />
         <Stack.Screen name="chrono" options={{ presentation: 'card' }} />
         <Stack.Screen name="calculator" options={{ presentation: 'card' }} />
         <Stack.Screen name="badges" options={{ presentation: 'card' }} />
+        <Stack.Screen name="records" options={{ presentation: 'card' }} />
         <Stack.Screen name="infirmary" options={{ presentation: 'card' }} />
         <Stack.Screen name="injury-detail" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="social-card" options={{ presentation: 'modal', animation: 'fade' }} />
@@ -132,7 +134,54 @@ function RootLayoutContent() {
         <Stack.Screen name="hydration" options={{ presentation: 'card' }} />
         <Stack.Screen name="charge" options={{ presentation: 'card' }} />
         <Stack.Screen name="avatar-selection" options={{ presentation: 'card' }} />
+        <Stack.Screen name="avatar-customization" options={{ presentation: 'card' }} />
         <Stack.Screen name="screenshot-mode" options={{ presentation: 'card' }} />
+        {/* Écrans détails & suivi */}
+        <Stack.Screen name="activity-detail" options={{ presentation: 'card' }} />
+        <Stack.Screen name="activity-history" options={{ presentation: 'card' }} />
+        <Stack.Screen name="composition-detail" options={{ presentation: 'card' }} />
+        <Stack.Screen name="measurements" options={{ presentation: 'card' }} />
+        <Stack.Screen name="measurements-detail" options={{ presentation: 'card' }} />
+        <Stack.Screen name="performance-detail" options={{ presentation: 'card' }} />
+        <Stack.Screen name="vitality-detail" options={{ presentation: 'card' }} />
+        <Stack.Screen name="health-metrics" options={{ presentation: 'card' }} />
+        <Stack.Screen name="health-connect" options={{ presentation: 'card' }} />
+        <Stack.Screen name="health-professionals" options={{ presentation: 'card' }} />
+        <Stack.Screen name="sleep-input" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="training-goals" options={{ presentation: 'card' }} />
+        <Stack.Screen name="transformation" options={{ presentation: 'card' }} />
+        <Stack.Screen name="weekly-report" options={{ presentation: 'card' }} />
+        <Stack.Screen name="energy" options={{ presentation: 'card' }} />
+        <Stack.Screen name="challenges" options={{ presentation: 'card' }} />
+        {/* Écrans outils */}
+        <Stack.Screen name="add-training" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="add-club" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="quick-log" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="quick-log-combat" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="quick-log-muscu" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="quick-log-other" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="quick-log-running" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="quick-nutrition" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        {/* Écrans paramètres & données */}
+        <Stack.Screen name="privacy-data" options={{ presentation: 'card' }} />
+        <Stack.Screen name="notifications" options={{ presentation: 'card' }} />
+        <Stack.Screen name="connected-devices" options={{ presentation: 'card' }} />
+        <Stack.Screen name="preferences" options={{ presentation: 'card' }} />
+        <Stack.Screen name="themes" options={{ presentation: 'card' }} />
+        <Stack.Screen name="logo-selection" options={{ presentation: 'card' }} />
+        <Stack.Screen name="export-data" options={{ presentation: 'card' }} />
+        <Stack.Screen name="legal" options={{ presentation: 'card' }} />
+        <Stack.Screen name="ideas" options={{ presentation: 'card' }} />
+        <Stack.Screen name="citations" options={{ presentation: 'card' }} />
+        {/* Écrans compétition & social */}
+        <Stack.Screen name="competitor-space" options={{ presentation: 'card' }} />
+        <Stack.Screen name="cut-mode" options={{ presentation: 'card' }} />
+        <Stack.Screen name="weight-cut" options={{ presentation: 'card' }} />
+        <Stack.Screen name="leaderboard" options={{ presentation: 'card' }} />
+        <Stack.Screen name="fighter-card" options={{ presentation: 'card' }} />
+        <Stack.Screen name="share-card" options={{ presentation: 'modal', animation: 'fade' }} />
+        <Stack.Screen name="event-detail" options={{ presentation: 'card' }} />
+        <Stack.Screen name="events" options={{ presentation: 'card' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />

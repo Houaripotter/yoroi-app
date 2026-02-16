@@ -8,7 +8,7 @@
 import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 
-import { getAvatarConfig, getAvatarImage, getAvatarMeta } from '@/lib/avatarSystem';
+import { getAvatarConfig, getAvatarImage, getAvatarMeta, onAvatarChange } from '@/lib/avatarSystem';
 import { useTheme } from '@/lib/ThemeContext';
 import logger from '@/lib/security/logger';
 
@@ -63,6 +63,14 @@ export default function AvatarDisplay({
   useEffect(() => {
     loadAvatar();
   }, [refreshTrigger]);
+
+  // Écouter les changements d'avatar (quand l'utilisateur sélectionne un nouvel avatar)
+  useEffect(() => {
+    const unsubscribe = onAvatarChange(() => {
+      loadAvatar();
+    });
+    return unsubscribe;
+  }, []);
 
   const loadAvatar = async () => {
     try {

@@ -133,6 +133,14 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     visible: true,
     order: 13,
   },
+  {
+    id: 'partners_row',
+    name: 'Coachs & Pros de Santé',
+    description: 'Coachs sportifs, clubs et professionnels de santé',
+    icon: 'users',
+    visible: true,
+    order: 14,
+  },
 ];
 
 // Charger la configuration

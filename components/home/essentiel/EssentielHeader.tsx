@@ -88,7 +88,14 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
     <>
       {/* Avatar + Salutation + Photo profil */}
       <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => router.push('/avatar-selection')} activeOpacity={0.8}>
+        <TouchableOpacity
+          onPress={() => router.push('/avatar-selection')}
+          activeOpacity={0.8}
+          style={[styles.avatarCircle, {
+            backgroundColor: '#FFFFFF',
+            borderColor: isDark ? '#FFFFFF' : '#000000',
+          }]}
+        >
           <AvatarDisplay size="small" refreshTrigger={refreshTrigger} />
         </TouchableOpacity>
 
@@ -187,6 +194,20 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
 };
 
 const styles = StyleSheet.create({
+  avatarCircle: {
+    width: 105,
+    height: 105,
+    borderRadius: 52.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    borderWidth: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',

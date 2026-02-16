@@ -114,6 +114,18 @@ export const COACHES: Coach[] = [
     imageUrl: require('@/assets/partenaires/kines/younes.jpg'),
     featured: true,
   },
+  {
+    id: 'junior-hfit',
+    name: 'Junior',
+    title: 'Coach Sportif',
+    type: 'coach',
+    specialties: ['MMA', 'Pied-Poing', 'Lutte & Sol', 'Perte de Poids', 'Nutrition', 'Personal Training'],
+    location: 'Marseille',
+    bio: 'Ancien combattant professionnel de MMA et préparateur physique diplômé d\'État. Une expérience internationale forgée en Australie, aux USA et dans d\'autres pays. Diplômé par le terrain et par le papier, Junior combine expertise en sports de combat (MMA, pied-poing, lutte, sol) et coaching nutrition/perte de poids. Un vrai guerrier au service de ta progression.',
+    instagram: '@hfit_trainer',
+    imageUrl: require('@/assets/partenaires/coachs/junior.jpg'),
+    featured: true,
+  },
   // TEMPORAIREMENT MASQUÉ
   // {
   //   id: 'ludovic-fontaine',

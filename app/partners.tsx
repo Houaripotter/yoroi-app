@@ -148,6 +148,7 @@ export default function PartnersScreen() {
                 key={coach.id}
                 coach={coach}
                 colors={colors}
+                isDark={isDark}
                 onPress={() => setSelectedPartner(coach)}
               />
             ))}
@@ -162,6 +163,7 @@ export default function PartnersScreen() {
                 key={club.id}
                 club={club}
                 colors={colors}
+                isDark={isDark}
                 onPress={() => setSelectedPartner(club)}
               />
             ))}
@@ -469,10 +471,11 @@ export default function PartnersScreen() {
 interface CoachCardProps {
   coach: Coach;
   colors: any;
+  isDark: boolean;
   onPress: () => void;
 }
 
-const CoachCard: React.FC<CoachCardProps> = ({ coach, colors, onPress }) => (
+const CoachCard: React.FC<CoachCardProps> = ({ coach, colors, isDark, onPress }) => (
   <TouchableOpacity
     style={[styles.coachCard, { backgroundColor: colors.backgroundCard }]}
     onPress={onPress}
@@ -545,10 +548,11 @@ const CoachCard: React.FC<CoachCardProps> = ({ coach, colors, onPress }) => (
 interface ClubCardProps {
   club: Club;
   colors: any;
+  isDark: boolean;
   onPress: () => void;
 }
 
-const ClubCard: React.FC<ClubCardProps> = ({ club, colors, onPress }) => (
+const ClubCard: React.FC<ClubCardProps> = ({ club, colors, isDark, onPress }) => (
   <TouchableOpacity
     style={[styles.clubCard, { backgroundColor: colors.backgroundCard }]}
     onPress={onPress}

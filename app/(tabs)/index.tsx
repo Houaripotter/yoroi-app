@@ -67,6 +67,7 @@ import {
   Cloud,
   Watch,
   Shield,
+  Swords,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { format, differenceInDays } from 'date-fns';
@@ -479,6 +480,11 @@ export default function HomeScreen() {
 
       // 1. Toujours sauvegarder dans AsyncStorage (backup local)
       await AsyncStorage.setItem(`${HYDRATION_KEY}_${today}`, value.toString());
+
+      // 1b. Sync avec l'écran hydratation : sauvegarder aussi au format qu'il attend (litres, clé sans date)
+      const amountLiters = value / 1000;
+      const todayStr = new Date().toDateString();
+      await AsyncStorage.setItem(HYDRATION_KEY, JSON.stringify({ date: todayStr, amount: amountLiters }));
 
       // 2. ✅ NOUVEAU: Écrire dans Apple Health si on ajoute de l'eau
       if (amountAdded && amountAdded > 0) {
@@ -1555,6 +1561,31 @@ export default function HomeScreen() {
               <Calculator size={24} color="#F59E0B" />
               <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Calculs</Text>
               <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>IMC, BMR...</Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      // Ligne Partenaires: Coachs & Clubs + Pros de Santé
+      case 'partners_row':
+        return (
+          <View key={sectionId} style={styles.batteryToolsRowSingle}>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, flex: 1 }]}
+              onPress={() => handleNavigate('/partners')}
+              activeOpacity={0.85}
+            >
+              <Swords size={24} color="#818CF8" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Coachs & Clubs</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Partenaires</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, flex: 1 }]}
+              onPress={() => handleNavigate('/health-professionals')}
+              activeOpacity={0.85}
+            >
+              <Stethoscope size={24} color="#F87171" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Pros de Sante</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Kines, Nutritionnistes</Text>
             </TouchableOpacity>
           </View>
         );

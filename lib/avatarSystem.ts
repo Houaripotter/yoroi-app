@@ -131,6 +131,29 @@ const DEFAULT_AVATAR: AvatarSelection = {
   gender: 'male',
 };
 
+// ============================================================================
+// EVENT SYSTEM - Notifie les composants quand l'avatar change
+// ============================================================================
+
+type AvatarChangeListener = () => void;
+const _avatarChangeListeners: AvatarChangeListener[] = [];
+
+/**
+ * S'abonner aux changements d'avatar
+ * @returns Fonction de désabonnement
+ */
+export function onAvatarChange(callback: AvatarChangeListener): () => void {
+  _avatarChangeListeners.push(callback);
+  return () => {
+    const idx = _avatarChangeListeners.indexOf(callback);
+    if (idx >= 0) _avatarChangeListeners.splice(idx, 1);
+  };
+}
+
+function notifyAvatarChange(): void {
+  _avatarChangeListeners.forEach(cb => cb());
+}
+
 /**
  * Métadonnées des packs d'avatars
  */
@@ -725,6 +748,8 @@ async function getStoredSelection(): Promise<AvatarSelection> {
 async function saveSelection(selection: AvatarSelection): Promise<void> {
   try {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(selection));
+    // Notifier tous les composants AvatarDisplay du changement
+    notifyAvatarChange();
   } catch (error) {
     logger.error('[AvatarSystem] Erreur sauvegarde storage:', error);
     throw error;

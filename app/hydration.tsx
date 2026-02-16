@@ -155,8 +155,12 @@ export default function HydrationScreen() {
       const today = new Date().toDateString();
       await AsyncStorage.setItem(HYDRATION_KEY, JSON.stringify({ date: today, amount }));
 
-      // Mettre à jour l'historique
+      // Sync avec l'accueil : sauvegarder aussi au format que l'accueil attend (ml, clé avec date ISO)
       const todayISO = new Date().toISOString().split('T')[0];
+      const amountMl = Math.round(amount * 1000);
+      await AsyncStorage.setItem(`${HYDRATION_KEY}_${todayISO}`, amountMl.toString());
+
+      // Mettre à jour l'historique
       const newHistory = history.filter(d => d.date !== todayISO);
       newHistory.unshift({ date: todayISO, amount, goal });
       setHistory(newHistory.slice(0, 30)); // Garder 30 jours

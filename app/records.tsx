@@ -218,7 +218,7 @@ export default function RecordsScreen() {
 
             <TouchableOpacity
               style={[styles.emptyButton, { backgroundColor: colors.accent }]}
-              onPress={() => router.push('/(tabs)')}
+              onPress={() => router.push('/body-composition' as any)}
             >
               <Scale size={20} color={colors.textOnAccent || '#FFFFFF'} />
               <Text style={[styles.emptyButtonText, { color: colors.textOnAccent || '#FFFFFF' }]}>
