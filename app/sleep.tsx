@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   ArrowLeft,
   Moon,
@@ -27,6 +28,7 @@ import {
   Bell,
   BellOff,
   Minus,
+  Calendar,
 } from 'lucide-react-native';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { format, subDays, Locale } from 'date-fns';
@@ -41,7 +43,6 @@ const DATE_LOCALES: Record<string, Locale> = {
 };
 import {
   getSleepEntries,
-  addSleepEntry,
   getSleepStats,
   getSleepGoal,
   setSleepGoal,
@@ -50,10 +51,27 @@ import {
   SleepEntry,
   SleepStats,
 } from '@/lib/sleepService';
-import { notificationService, NotificationSettings } from '@/lib/notificationService';
+import { notificationService } from '@/lib/notificationService';
 import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Couleur de qualité
+const getQualityColor = (quality: number): string => {
+  if (quality <= 1) return '#EF4444';
+  if (quality <= 2) return '#F97316';
+  if (quality <= 3) return '#F59E0B';
+  if (quality <= 4) return '#10B981';
+  return '#8B5CF6';
+};
+
+// Couleur de durée
+const getDurationColor = (minutes: number): string => {
+  if (minutes < 300) return '#EF4444';
+  if (minutes < 420) return '#F59E0B';
+  if (minutes <= 540) return '#10B981';
+  return '#3B82F6';
+};
 
 export default function SleepScreen() {
   const insets = useSafeAreaInsets();
@@ -64,7 +82,7 @@ export default function SleepScreen() {
 
   const [entries, setEntries] = useState<SleepEntry[]>([]);
   const [stats, setStats] = useState<SleepStats | null>(null);
-  const [goal, setGoal] = useState(480); // 8h par défaut
+  const [goal, setGoal] = useState(480);
   const [isSaving, setIsSaving] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
@@ -72,6 +90,9 @@ export default function SleepScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [bedtimeReminder, setBedtimeReminder] = useState('22:30');
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+
+  // Flag pour recharger après retour de sleep-input
+  const needsReload = useRef(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -84,7 +105,6 @@ export default function SleepScreen() {
       setStats(statsData);
       setGoal(goalData);
 
-      // Charger les paramètres de notifications
       const notifSettings = notificationService.getSettings();
       setNotificationsEnabled(notifSettings.sleep.enabled);
       setBedtimeReminder(notifSettings.sleep.bedtimeReminder);
@@ -93,8 +113,20 @@ export default function SleepScreen() {
     }
   }, []);
 
-  // Charger une seule fois au montage (pas à chaque focus)
+  // Charger une seule fois au montage
   useEffect(() => { loadData(); }, []);
+
+  // Recharger quand on revient de sleep-input seulement (pas à chaque focus)
+  useFocusEffect(
+    useCallback(() => {
+      if (needsReload.current) {
+        needsReload.current = false;
+        // Refresh après ajout d'une nuit
+        getSleepEntries().then(setEntries);
+        getSleepStats().then(setStats);
+      }
+    }, [])
+  );
 
   const handleGoalChange = async (minutes: number) => {
     try {
@@ -205,7 +237,7 @@ export default function SleepScreen() {
               <Star size={18} color="#F59E0B" strokeWidth={2.5} />
             </View>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-              {stats?.averageQuality.toFixed(1) || '--'}/5
+              {stats ? (stats.averageQuality % 1 === 0 ? `${stats.averageQuality}` : `${stats.averageQuality.toFixed(1)}`) : '--'}/5
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('sleep.quality')}</Text>
           </View>
@@ -310,43 +342,74 @@ export default function SleepScreen() {
             <Text style={[styles.protocolTitle, { color: colors.textPrimary }]}>{t('sleep.sleepProtocol')}</Text>
           </View>
           <Text style={[styles.protocolText, { color: colors.textSecondary }]}>
-            💤 {t('sleep.protocolDescription')}
+            {t('sleep.protocolDescription')}
           </Text>
           <View style={styles.protocolList}>
-            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>• {t('sleep.protocolItem1')}</Text>
-            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>• {t('sleep.protocolItem2')}</Text>
-            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>• {t('sleep.protocolItem3')}</Text>
+            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>{t('sleep.protocolItem1')}</Text>
+            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>{t('sleep.protocolItem2')}</Text>
+            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>{t('sleep.protocolItem3')}</Text>
           </View>
         </View>
 
-        {/* Ajouter sommeil - Redirige vers le modal sleep-input */}
+        {/* Ajouter sommeil */}
         <TouchableOpacity
           style={[styles.addBtn, { backgroundColor: '#8B5CF6' }]}
-          onPress={() => router.push('/sleep-input')}
+          onPress={() => {
+            needsReload.current = true;
+            router.push('/sleep-input');
+          }}
         >
           <Moon size={18} color="#FFFFFF" />
           <Text style={styles.addBtnText}>{t('sleep.recordMyNight')}</Text>
         </TouchableOpacity>
 
-        {/* Historique */}
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('sleep.history')}</Text>
-        {entries.slice(0, 14).map((entry) => (
-          <View key={entry.id} style={[styles.entryCard, { backgroundColor: colors.backgroundCard }]}>
-            <View>
-              <Text style={[styles.entryDate, { color: colors.textMuted }]}>
-                {format(new Date(entry.date), 'EEEE d MMMM', { locale: dateLocale })}
-              </Text>
-              <Text style={[styles.entryDuration, { color: colors.textPrimary }]}>
-                {formatSleepDuration(entry.duration)}
+        {/* Aperçu historique + lien vers écran dédié */}
+        <TouchableOpacity
+          style={[styles.historyCard, { backgroundColor: colors.backgroundCard }]}
+          onPress={() => router.push('/sleep-history')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.historyHeader}>
+            <View style={[styles.historySectionIcon, { backgroundColor: '#8B5CF615' }]}>
+              <Calendar size={18} color="#8B5CF6" strokeWidth={2.5} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>{t('sleep.history')}</Text>
+              <Text style={[styles.historySubtitle, { color: colors.textMuted }]}>
+                {entries.length > 0
+                  ? `${entries.length} nuit${entries.length > 1 ? 's' : ''} enregistrée${entries.length > 1 ? 's' : ''}`
+                  : 'Aucune nuit enregistrée'}
               </Text>
             </View>
-            <View style={styles.entryStars}>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Star key={i} size={12} color={i <= entry.quality ? '#F59E0B' : colors.border} fill={i <= entry.quality ? '#F59E0B' : 'transparent'} />
-              ))}
+            <View style={[styles.historyArrow, { backgroundColor: '#8B5CF615' }]}>
+              <ArrowLeft size={16} color="#8B5CF6" strokeWidth={2.5} style={{ transform: [{ rotate: '180deg' }] }} />
             </View>
           </View>
-        ))}
+
+          {/* Aperçu des 3 dernières nuits */}
+          {entries.length > 0 && (
+            <View style={styles.historyPreview}>
+              {entries.slice(0, 3).map((entry) => {
+                const dColor = getDurationColor(entry.duration);
+                return (
+                  <View key={entry.id} style={[styles.previewEntry, { borderLeftColor: dColor }]}>
+                    <Text style={[styles.previewDate, { color: colors.textMuted }]}>
+                      {format(new Date(entry.date), 'EEE d', { locale: dateLocale })}
+                    </Text>
+                    <Text style={[styles.previewDuration, { color: dColor }]}>
+                      {formatSleepDuration(entry.duration)}
+                    </Text>
+                    <View style={{ flexDirection: 'row', gap: 1 }}>
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star key={i} size={8} color={i <= entry.quality ? '#F59E0B' : colors.border} fill={i <= entry.quality ? '#F59E0B' : 'transparent'} />
+                      ))}
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </TouchableOpacity>
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -438,30 +501,66 @@ const styles = StyleSheet.create({
   goalValue: { fontSize: 28, fontWeight: '900' },
 
   // Add
-  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14, borderRadius: 12, marginBottom: 16 },
+  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14, borderRadius: 12, marginBottom: 20 },
   addBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
-  addCard: { padding: 16, borderRadius: 14, marginBottom: 16 },
-  addTitle: { fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 16 },
-  timeRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
-  timeInput: { flex: 1, alignItems: 'center' },
-  timeLabel: { fontSize: 10, fontWeight: '600', marginVertical: 4 },
-  timeField: { width: '100%', padding: 12, borderRadius: 10, borderWidth: 1, textAlign: 'center', fontSize: 18, fontWeight: '700' },
-  qualityLabel: { fontSize: 10, fontWeight: '600', textAlign: 'center', marginBottom: 8 },
-  starsRow: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 20 },
-  addActions: { flexDirection: 'row', gap: 10 },
-  cancelBtn: { flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, alignItems: 'center' },
-  cancelBtnText: { fontSize: 14, fontWeight: '600' },
-  saveBtn: { flex: 1, padding: 12, borderRadius: 10, alignItems: 'center' },
-  saveBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
 
-  // Section
-  sectionTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 2, marginBottom: 10 },
-
-  // Entry
-  entryCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 12, marginBottom: 8 },
-  entryDate: { fontSize: 11, fontWeight: '500', textTransform: 'capitalize' },
-  entryDuration: { fontSize: 18, fontWeight: '800', marginTop: 2 },
-  entryStars: { flexDirection: 'row', gap: 2 },
+  // History card
+  historyCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  historySectionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  historyTitle: { fontSize: 15, fontWeight: '800' },
+  historySubtitle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
+  historyArrow: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  historyPreview: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 14,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(139, 92, 246, 0.1)',
+  },
+  previewEntry: {
+    flex: 1,
+    borderLeftWidth: 3,
+    paddingLeft: 8,
+    gap: 2,
+  },
+  previewDate: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'capitalize',
+    letterSpacing: 0.3,
+  },
+  previewDuration: {
+    fontSize: 15,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
 
   // Notifications
   notificationCard: { padding: 16, borderRadius: 14, marginBottom: 12 },
@@ -487,4 +586,3 @@ const styles = StyleSheet.create({
   protocolList: { gap: 6 },
   protocolItem: { fontSize: 12, lineHeight: 18 },
 });
-

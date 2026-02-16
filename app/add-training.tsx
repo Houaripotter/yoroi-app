@@ -49,6 +49,7 @@ import {
   Calendar,
   Clock,
   Camera,
+  FileUp,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
@@ -82,7 +83,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import logger from '@/lib/security/logger';
-import HealthConnect from '@/lib/healthConnect.ios';
+import HealthConnect from '@/lib/healthConnect';
 import { SharePromptModal } from '@/components/SharePromptModal';
 import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
 import { SPORT_OPTIONS, DEFAULT_OPTIONS, SportOption } from '@/constants/sportOptions';
@@ -597,20 +598,20 @@ export default function AddTrainingScreen() {
   const scrollToFocusedInput = useCallback((event: any) => {
     if (!scrollViewRef.current) return;
     const node = event.target;
-    if (node && scrollViewRef.current) {
-      // Utiliser setTimeout pour attendre que le clavier soit entièrement ouvert
+    if (node) {
+      // Utiliser measure() au lieu de measureLayout() pour éviter le crash
       setTimeout(() => {
-        node.measureLayout(
-          findNodeHandle(scrollViewRef.current),
-          (x: number, y: number, width: number, height: number) => {
-            // Scroller pour que l'input soit visible au centre de l'écran visible
-            // On scrolle pour que l'input soit à environ 100px du haut (plus agressif)
-            const targetY = Math.max(0, y - 100);
-            scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
-          },
-          () => {} // onFail
-        );
-      }, 350); // Attendre un peu plus pour que le clavier soit bien ouvert
+        try {
+          node.measure?.((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+            if (pageY !== undefined) {
+              const targetY = Math.max(0, pageY - 150);
+              scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
+            }
+          });
+        } catch {
+          // Silencieux si measure échoue
+        }
+      }, 350);
     }
   }, []);
 
@@ -1043,14 +1044,14 @@ export default function AddTrainingScreen() {
       setIsSubmitting(false); // Libérer le verrou avant le return
 
       // Scroller vers le sélecteur de sport principal
-      if (sportSelectorRef.current && scrollViewRef.current) {
-        sportSelectorRef.current.measureLayout(
-          scrollViewRef.current,
-          (x, y) => {
-            scrollViewRef.current?.scrollTo({ y: y - 100, animated: true });
-          },
-          () => {}
-        );
+      if (sportSelectorRef.current) {
+        try {
+          (sportSelectorRef.current as any).measure?.((x: number, y: number, w: number, h: number, px: number, py: number) => {
+            if (py !== undefined) {
+              scrollViewRef.current?.scrollTo({ y: Math.max(0, py - 150), animated: true });
+            }
+          });
+        } catch { /* silencieux */ }
       }
 
       return;
@@ -1133,16 +1134,16 @@ export default function AddTrainingScreen() {
         exercises: exercises.length > 0 ? exercises : undefined,
         technique_rating: techniqueRating,
         is_outdoor: isOutdoor,
-        distance: distance ? parseFloat(distance.replace(',', '.')) : undefined,
-        calories: calories ? parseInt(calories) : undefined,
+        distance: distance ? (isNaN(parseFloat(distance.replace(',', '.'))) ? undefined : parseFloat(distance.replace(',', '.'))) : undefined,
+        calories: calories ? (isNaN(parseInt(calories)) ? undefined : parseInt(calories)) : undefined,
         intensity: intensity,
-        rounds: rounds ? parseInt(rounds) : undefined,
-        round_duration: roundDuration ? parseInt(roundDuration) : undefined,
-        pente: pente ? parseFloat(pente.replace(',', '.')) : undefined,
-        speed: speed ? parseFloat(speed.replace(',', '.')) : undefined,
-        resistance: resistance ? parseInt(resistance) : undefined,
-        watts: watts ? parseInt(watts) : undefined,
-        cadence: cadence ? parseInt(cadence) : undefined,
+        rounds: rounds ? (isNaN(parseInt(rounds)) ? undefined : parseInt(rounds)) : undefined,
+        round_duration: roundDuration ? (isNaN(parseInt(roundDuration)) ? undefined : parseInt(roundDuration)) : undefined,
+        pente: pente ? (isNaN(parseFloat(pente.replace(',', '.'))) ? undefined : parseFloat(pente.replace(',', '.'))) : undefined,
+        speed: speed ? (isNaN(parseFloat(speed.replace(',', '.'))) ? undefined : parseFloat(speed.replace(',', '.'))) : undefined,
+        resistance: resistance ? (isNaN(parseInt(resistance)) ? undefined : parseInt(resistance)) : undefined,
+        watts: watts ? (isNaN(parseInt(watts)) ? undefined : parseInt(watts)) : undefined,
+        cadence: cadence ? (isNaN(parseInt(cadence)) ? undefined : parseInt(cadence)) : undefined,
       });
 
       if (newId) {
@@ -1177,15 +1178,13 @@ export default function AddTrainingScreen() {
         logger.warn('Export Apple Health échoué (non bloquant):', healthError);
       }
 
-      // Trigger review apres une action positive (on incrementera apres le partage)
-      await incrementReviewTrigger();
-
-      // Verifier les badges debloques
-      await checkBadges();
-
-      // AFFICHER LE MODAL DE VALIDATION (Étape 2)
+      // AFFICHER LE MODAL DE VALIDATION (Étape 2) - avant les checks non-critiques
       setCardBackgroundImage(null);
       setShowValidationModal(true);
+
+      // Trigger review et badges en arrière-plan (non bloquant)
+      incrementReviewTrigger().catch(() => {});
+      checkBadges().catch(() => {});
 
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
@@ -1340,6 +1339,32 @@ export default function AddTrainingScreen() {
           bounces={false}
           overScrollMode="never"
         >
+
+        {/* 📥 IMPORT GPX/TCX */}
+        {selectedSports.length === 0 && (
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              borderRadius: 14,
+              borderWidth: 1,
+              borderColor: colors.border,
+              borderStyle: 'dashed',
+              backgroundColor: colors.backgroundElevated,
+              marginBottom: 16,
+            }}
+            onPress={() => router.push('/import-workouts')}
+          >
+            <FileUp size={18} color={colors.accent} />
+            <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>
+              Importer depuis un fichier (GPX/TCX)
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* 🔍 BARRE DE RECHERCHE - UNIQUEMENT ÉTAPE 1 */}
         {(selectedSports.length === 0 || showAddSportSection) && (

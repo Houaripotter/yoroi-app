@@ -20,7 +20,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Workout, WorkoutType } from '@/types/workout';
 import { ActivityModal } from '@/components/ActivityModal';
-import { checkWorkoutBadges } from '@/lib/badgeService';
+import { checkAndUnlockBadges } from '@/lib/badges';
 import { UserClub } from '@/lib/storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
@@ -212,7 +212,7 @@ export default function HistoryScreen() {
       await fetchHistoryRecords();
 
       // Vérifier et débloquer les badges
-      checkWorkoutBadges();
+      checkAndUnlockBadges().catch(() => {});
     } catch (error) {
       logger.error('❌ [ERREUR GLOBALE]:', error);
     }

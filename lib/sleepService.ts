@@ -117,7 +117,8 @@ export const addSleepEntry = async (
   bedTime: string,
   wakeTime: string,
   quality: number,
-  notes?: string
+  notes?: string,
+  customDate?: string
 ): Promise<SleepEntry> => {
   // Validation du format horaire
   if (!isValidTimeFormat(bedTime)) {
@@ -129,7 +130,7 @@ export const addSleepEntry = async (
 
   try {
     const entries = await getSleepEntries();
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const today = customDate || format(new Date(), 'yyyy-MM-dd');
 
     // Calculer la durée
     const bed = parseTime(bedTime);

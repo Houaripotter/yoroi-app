@@ -179,6 +179,23 @@ export default function HydrationScreen() {
       const amountMl = Math.round(amount * 1000);
       await AsyncStorage.setItem(`${HYDRATION_KEY}_${todayISO}`, amountMl.toString());
 
+      // Sync avec le système de badges (storage.ts hydration log)
+      try {
+        const logData = await AsyncStorage.getItem('@yoroi_hydration_log');
+        const logEntries: Array<{ id: string; date: string; amount: number; timestamp: string }> = logData ? JSON.parse(logData) : [];
+        // Remplacer l'entrée du jour ou en ajouter une
+        const existingIdx = logEntries.findIndex(e => e.date === todayISO);
+        const logEntry = { id: `hydration_screen_${todayISO}`, date: todayISO, amount: amountMl, timestamp: new Date().toISOString() };
+        if (existingIdx >= 0) {
+          logEntries[existingIdx] = logEntry;
+        } else {
+          logEntries.push(logEntry);
+        }
+        await AsyncStorage.setItem('@yoroi_hydration_log', JSON.stringify(logEntries));
+      } catch {
+        // Non bloquant
+      }
+
       // Mettre à jour l'historique
       const newHistory = history.filter(d => d.date !== todayISO);
       newHistory.unshift({ date: todayISO, amount, goal });
@@ -209,7 +226,7 @@ export default function HydrationScreen() {
 
   const addWater = (amountL: number) => {
     impactAsync(ImpactFeedbackStyle.Light);
-    const newAmount = Math.max(0, currentAmount + amountL);
+    const newAmount = Math.min(15, Math.max(0, currentAmount + amountL)); // Max 15L par jour
     setCurrentAmount(newAmount);
     saveAmount(newAmount);
 

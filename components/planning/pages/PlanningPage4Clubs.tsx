@@ -2,51 +2,121 @@
 // PLANNING PAGE 4 - CLUBS
 // ============================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { getTrainings, getClubs, type Training, type Club } from '@/lib/database';
+import { getTrainings, getClubs, deleteClub, type Training, type Club } from '@/lib/database';
+import { getGoalBySport } from '@/lib/trainingGoalsService';
+import { getSportName, getSportColor, getSportIcon } from '@/lib/sports';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Edit3, Trash2, Plus } from 'lucide-react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
+import { AddClubModal } from '@/components/planning/AddClubModal';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
-import { router } from 'expo-router';
+import { logger } from '@/lib/security/logger';
 
 const CARD_PADDING = 16;
+
+interface ClubWithStats extends Club {
+  monthCount: number;
+  weeklyGoal: number;
+}
 
 export const PlanningPage4Clubs: React.FC = () => {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [workouts, setWorkouts] = useState<Training[]>([]);
-  const [clubs, setClubs] = useState<Club[]>([]);
+  const [clubs, setClubs] = useState<ClubWithStats[]>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingClub, setEditingClub] = useState<Club | null>(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      const trainingsData = await getTrainings();
+      const clubsData = await getClubs();
+      setWorkouts(trainingsData);
+
+      // Charger les objectifs hebdomadaires pour chaque club
+      const clubsWithStats: ClubWithStats[] = await Promise.all(
+        clubsData.map(async (club) => {
+          const now = new Date();
+          const monthStart = startOfMonth(now);
+          const monthEnd = endOfMonth(now);
+          const monthWorkouts = trainingsData.filter(w => {
+            const d = new Date(w.date);
+            return w.club_id === club.id && isWithinInterval(d, { start: monthStart, end: monthEnd });
+          });
+
+          // Récupérer l'objectif hebdomadaire
+          let weeklyGoal = 0;
+          try {
+            const goal = await getGoalBySport(club.sport);
+            weeklyGoal = goal?.weekly_target || 0;
+          } catch { /* ignore */ }
+
+          // Séances cette semaine
+          const weekStart = new Date();
+          weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1); // Lundi
+          weekStart.setHours(0, 0, 0, 0);
+          const weekWorkouts = trainingsData.filter(w => {
+            const d = new Date(w.date);
+            return w.club_id === club.id && d >= weekStart;
+          });
+
+          return {
+            ...club,
+            monthCount: monthWorkouts.length,
+            weeklyGoal,
+            weekCount: weekWorkouts.length,
+          };
+        })
+      );
+
+      setClubs(clubsWithStats);
+    } catch (error) {
+      logger.error('Erreur chargement clubs:', error);
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const loadData = async () => {
-    const trainingsData = await getTrainings();
-    const clubsData = await getClubs();
-    setWorkouts(trainingsData);
-    setClubs(clubsData);
+  const handleEdit = (club: Club) => {
+    setEditingClub(club);
+    setShowAddModal(true);
   };
 
-  // Calculer les stats pour ce mois
-  const now = new Date();
-  const monthStart = startOfMonth(now);
-  const monthEnd = endOfMonth(now);
+  const handleDelete = (club: Club) => {
+    showPopup(
+      t('screens.clubs.deleteClub'),
+      t('screens.clubs.deleteConfirm', { name: club.name }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteClub(club.id!);
+              notificationAsync(NotificationFeedbackType.Success);
+              await loadData();
+            } catch (error) {
+              logger.error('Erreur suppression club:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
 
-  const monthWorkouts = workouts.filter(w => {
-    const workoutDate = new Date(w.date);
-    return isWithinInterval(workoutDate, { start: monthStart, end: monthEnd });
-  });
-
-  // Stats par club
-  const clubsWithStats = clubs.map(club => {
-    const clubWorkouts = monthWorkouts.filter(w => w.club_id === club.id);
-    return {
-      ...club,
-      monthCount: clubWorkouts.length,
-    };
-  }).filter(c => c.monthCount > 0);
+  const handleAddNew = () => {
+    setEditingClub(null);
+    setShowAddModal(true);
+  };
 
   const totalSessions = workouts.length;
 
@@ -61,52 +131,78 @@ export const PlanningPage4Clubs: React.FC = () => {
         {t('planning.myClubs')}
       </Text>
 
-      {/* Cartes de clubs */}
-      <View style={styles.clubsGrid}>
-        {clubsWithStats.map((club) => (
-          <TouchableOpacity
-            key={club.id}
-            style={[styles.clubCard, { backgroundColor: colors.backgroundCard }]}
-            activeOpacity={0.7}
-          >
-            {/* Logo du club */}
-            <View style={styles.clubLogoContainer}>
-              {club.logo_uri ? (
-                <Image
-                  source={{ uri: club.logo_uri }}
-                  style={styles.clubLogo}
-                />
-              ) : (
-                <View style={[styles.clubLogoFallback, { backgroundColor: '#3B82F6' }]}>
-                  <Text style={styles.clubLogoFallbackText}>
-                    {club.name.charAt(0)}
-                  </Text>
+      {/* Liste des clubs */}
+      {clubs.length === 0 ? (
+        <View style={[styles.emptyCard, { backgroundColor: colors.backgroundCard }]}>
+          <MaterialCommunityIcons name="office-building-outline" size={48} color={colors.textMuted} />
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+            {t('screens.clubs.noClubs')}
+          </Text>
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+            {t('screens.clubs.addFirstClub')}
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.clubsGrid}>
+          {clubs.map((club) => (
+            <View
+              key={club.id}
+              style={[styles.clubCard, { backgroundColor: colors.backgroundCard }]}
+            >
+              {/* Ligne principale */}
+              <View style={styles.clubRow}>
+                {/* Logo */}
+                <View style={styles.clubLogoContainer}>
+                  {club.logo_uri ? (
+                    <Image source={{ uri: club.logo_uri }} style={styles.clubLogo} />
+                  ) : (
+                    <View style={[styles.clubLogoFallback, { backgroundColor: club.color || getSportColor(club.sport) }]}>
+                      <MaterialCommunityIcons
+                        name={getSportIcon(club.sport) as any}
+                        size={28}
+                        color="#FFFFFF"
+                      />
+                    </View>
+                  )}
                 </View>
-              )}
-            </View>
 
-            {/* Nom et discipline */}
-            <View style={styles.clubInfo}>
-              <Text style={[styles.clubName, { color: colors.textPrimary }]} numberOfLines={2}>
-                {club.name}
-              </Text>
-              <Text style={[styles.clubDiscipline, { color: colors.textMuted }]}>
-                {club.sport || t('sports.musculation')}
-              </Text>
-            </View>
+                {/* Info */}
+                <View style={styles.clubInfo}>
+                  <Text style={[styles.clubName, { color: colors.textPrimary }]} numberOfLines={1}>
+                    {club.name}
+                  </Text>
+                  <Text style={[styles.clubDiscipline, { color: colors.textMuted }]}>
+                    {getSportName(club.sport)}
+                  </Text>
+                  {club.weeklyGoal > 0 && (
+                    <Text style={[styles.clubGoal, { color: colors.accent }]}>
+                      {(club as any).weekCount || 0}/{club.weeklyGoal} /sem
+                    </Text>
+                  )}
+                </View>
 
-            {/* Compteur */}
-            <View style={styles.clubCountBadge}>
-              <Text style={[styles.clubCountNumber, { color: isDark ? colors.accent : colors.textPrimary }]}>
-                {club.monthCount}
-              </Text>
-              <Text style={[styles.clubCountLabel, { color: colors.textMuted }]}>
-                {t('planning.thisMonth')}
-              </Text>
+                {/* Actions */}
+                <View style={styles.clubActions}>
+                  <TouchableOpacity
+                    onPress={() => handleEdit(club)}
+                    style={[styles.actionBtn, { backgroundColor: isDark ? colors.backgroundElevated : '#F3F4F6' }]}
+                    activeOpacity={0.7}
+                  >
+                    <Edit3 size={16} color={colors.accent} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleDelete(club)}
+                    style={[styles.actionBtn, { backgroundColor: isDark ? '#2D1515' : '#FEE2E2' }]}
+                    activeOpacity={0.7}
+                  >
+                    <Trash2 size={16} color="#EF4444" />
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-          </TouchableOpacity>
-        ))}
-      </View>
+          ))}
+        </View>
+      )}
 
       {/* Stats globales */}
       <View style={styles.statsContainer}>
@@ -129,16 +225,33 @@ export const PlanningPage4Clubs: React.FC = () => {
         </View>
       </View>
 
-      {/* Bouton ajouter un club */}
+      {/* Bouton ajouter */}
       <TouchableOpacity
         style={[styles.addButton, { backgroundColor: colors.accent }]}
         activeOpacity={0.8}
-        onPress={() => {
-          router.push('/clubs');
-        }}
+        onPress={handleAddNew}
       >
-        <Text style={styles.addButtonText}>+ {t('planning.addClub')}</Text>
+        <Plus size={20} color="#FFFFFF" strokeWidth={2.5} />
+        <Text style={styles.addButtonText}>{t('planning.addClub')}</Text>
       </TouchableOpacity>
+
+      <View style={{ height: 120 }} />
+
+      {/* Modal ajout/édition */}
+      <AddClubModal
+        visible={showAddModal}
+        editingClub={editingClub}
+        onClose={() => {
+          setShowAddModal(false);
+          setEditingClub(null);
+        }}
+        onSave={() => {
+          setShowAddModal(false);
+          setEditingClub(null);
+          loadData();
+        }}
+      />
+      <PopupComponent />
     </ScrollView>
   );
 };
@@ -159,42 +272,60 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 16,
   },
+
+  // Empty state
+  emptyCard: {
+    borderRadius: 20,
+    padding: 40,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+
+  // Clubs
   clubsGrid: {
     gap: 12,
     marginBottom: 24,
   },
   clubCard: {
     borderRadius: 20,
-    padding: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
   },
+  clubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+  },
   clubLogoContainer: {
-    width: 64,
-    height: 64,
+    width: 56,
+    height: 56,
   },
   clubLogo: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
   },
   clubLogoFallback: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  clubLogoFallbackText: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#FFFFFF',
   },
   clubInfo: {
     flex: 1,
@@ -203,24 +334,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     letterSpacing: -0.5,
-    marginBottom: 4,
   },
   clubDiscipline: {
     fontSize: 13,
     fontWeight: '600',
+    marginTop: 2,
   },
-  clubCountBadge: {
+  clubGoal: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  clubActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  clubCountNumber: {
-    fontSize: 24,
-    fontWeight: '900',
-    letterSpacing: -1,
-  },
-  clubCountLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
+
+  // Stats
   statsContainer: {
     flexDirection: 'row',
     gap: 12,
@@ -247,11 +384,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+
+  // Add button
   addButton: {
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 24,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,

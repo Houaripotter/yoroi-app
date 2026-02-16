@@ -2,6 +2,7 @@
 // YOROI - MODAL D'AJOUT DE CLUB UTILISATEUR
 // ============================================
 // Permet d'ajouter un club avec objectif hebdomadaire obligatoire
+// Selecteur de sport identique a "Configuration de seance"
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -17,17 +18,18 @@ import {
   Platform,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
-import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
+import { notificationAsync, NotificationFeedbackType, selectionAsync } from 'expo-haptics';
 import {
   X,
   Check,
   Plus,
   Minus,
   Camera,
-  Image as ImageIcon,
   Target,
   AlertCircle,
+  ChevronRight,
+  ChevronDown,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/ThemeContext';
@@ -58,6 +60,48 @@ const CLUB_COLORS = [
   '#A855F7', '#EC4899', '#6B7280', '#D4AF37',
 ];
 
+// Categories config - meme ordre que add-training
+const CATEGORIES_LIST = ['cardio', 'fitness', 'combat_grappling', 'combat_striking', 'danse', 'collectif', 'raquettes', 'glisse', 'nature', 'autre'];
+
+const CATEGORY_LABELS: Record<string, string> = {
+  cardio: 'Cardio',
+  fitness: 'Musculation & Fitness',
+  combat_grappling: 'Combat (Grappling)',
+  combat_striking: 'Combat (Pieds-Poings)',
+  danse: 'Danse',
+  collectif: 'Sports Collectifs',
+  raquettes: 'Raquettes',
+  glisse: 'Sports de Glisse',
+  nature: 'Sports Nature',
+  autre: 'Autres',
+};
+
+const CATEGORY_ICONS: Record<string, string> = {
+  cardio: 'run-fast',
+  fitness: 'dumbbell',
+  combat_grappling: 'kabaddi',
+  combat_striking: 'boxing-glove',
+  danse: 'dance-ballroom',
+  collectif: 'soccer',
+  raquettes: 'tennis',
+  glisse: 'snowboard',
+  nature: 'hiking',
+  autre: 'dots-horizontal',
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  cardio: '#10B981',
+  fitness: '#8B5CF6',
+  combat_grappling: '#3B82F6',
+  combat_striking: '#EF4444',
+  danse: '#EC4899',
+  collectif: '#F59E0B',
+  raquettes: '#06B6D4',
+  glisse: '#0EA5E9',
+  nature: '#22C55E',
+  autre: '#6B7280',
+};
+
 // ============================================
 // COMPOSANT
 // ============================================
@@ -68,7 +112,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
   onSave,
   editingClub,
 }) => {
-  const { colors, gradients, isDark } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   // Form state
@@ -76,26 +120,31 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
   const [selectedSport, setSelectedSport] = useState('jjb');
   const [selectedColor, setSelectedColor] = useState(CLUB_COLORS[0]);
   const [logoUri, setLogoUri] = useState<string | null>(null);
-  const [weeklyGoal, setWeeklyGoal] = useState(0); // 0 par defaut = non rempli
+  const [weeklyGoal, setWeeklyGoal] = useState(0);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sport selector state
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Reset form quand le modal s'ouvre
   useEffect(() => {
     if (visible) {
       if (editingClub) {
-        // Mode edition
         setName(editingClub.name);
         setSelectedSport(editingClub.sport);
         setSelectedColor(editingClub.color || CLUB_COLORS[0]);
         setLogoUri(editingClub.logo_uri || null);
-        // Charger l'objectif existant
         loadExistingGoal(editingClub.sport);
+        // Expand la categorie du sport edite
+        const sportData = SPORTS.find(s => s.id === editingClub.sport);
+        if (sportData) setExpandedCategories([sportData.category]);
       } else {
-        // Nouveau club
         resetForm();
       }
       setErrors({});
+      setSearchQuery('');
     }
   }, [visible, editingClub]);
 
@@ -111,6 +160,16 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
     setLogoUri(null);
     setWeeklyGoal(0);
     setErrors({});
+    setExpandedCategories([]);
+  };
+
+  const toggleCategory = (category: string) => {
+    selectionAsync();
+    setExpandedCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
   };
 
   // Validation
@@ -122,13 +181,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
     }
 
     if (weeklyGoal < 1) {
-      newErrors.weeklyGoal = 'Tu dois definir un objectif (minimum 1x/semaine)';
-      // CORRECTION: Afficher un popup pour que l'utilisateur sache POURQUOI ça ne marche pas
-      showPopup(
-        'Objectif requis',
-        'Tu dois définir un objectif hebdomadaire minimum de 1 séance par semaine pour créer un club.',
-        [{ text: 'OK', style: 'primary' }]
-      );
+      newErrors.weeklyGoal = 'Configure ton objectif hebdomadaire avant de valider (minimum 1x/semaine)';
     }
 
     setErrors(newErrors);
@@ -139,13 +192,19 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
   const handleSave = async () => {
     if (!validate()) {
       notificationAsync(NotificationFeedbackType.Error);
+      // Popup visible pour indiquer l'erreur
+      const msgs: string[] = [];
+      if (!name.trim()) msgs.push('• Le nom du club est obligatoire');
+      if (weeklyGoal < 1) msgs.push('• Configure ton objectif hebdomadaire (minimum 1x/semaine)');
+      if (msgs.length > 0) {
+        showPopup('Informations manquantes', msgs.join('\n'), [{ text: 'Compris', style: 'primary' }]);
+      }
       return;
     }
 
     setIsSubmitting(true);
     try {
       if (editingClub?.id) {
-        // Mise a jour
         await updateClub(editingClub.id, {
           name: name.trim(),
           sport: selectedSport,
@@ -153,7 +212,6 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
           logo_uri: logoUri || undefined,
         });
       } else {
-        // Creation
         await addClub({
           name: name.trim(),
           sport: selectedSport,
@@ -162,7 +220,6 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
         });
       }
 
-      // Sauvegarder l'objectif
       await setGoal(selectedSport, weeklyGoal);
 
       notificationAsync(NotificationFeedbackType.Success);
@@ -213,19 +270,6 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
     }
   };
 
-  // Categories de sports
-  const categoryLabels: Record<string, string> = {
-    combat_striking: 'Sports de Frappe',
-    combat_grappling: 'Sports de Prehension',
-    fitness: 'Musculation',
-    cardio: 'Cardio',
-    collectif: 'Collectifs',
-    raquettes: 'Raquettes',
-    autre: 'Autres',
-  };
-
-  const categories = ['combat_grappling', 'combat_striking', 'fitness', 'cardio', 'collectif', 'raquettes', 'autre'];
-
   return (
     <Modal
       visible={visible}
@@ -262,16 +306,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
         >
           {/* Logo */}
           <View style={styles.logoSection}>
-            <TouchableOpacity
-              style={styles.logoPreview}
-              onPress={() => {
-                showPopup('Logo du club', 'Comment ajouter le logo ?', [
-                  { text: 'Galerie', onPress: () => pickImage('gallery'), style: 'primary' },
-                  { text: 'Camera', onPress: () => pickImage('camera'), style: 'primary' },
-                  { text: 'Annuler', style: 'cancel' },
-                ]);
-              }}
-            >
+            <View style={styles.logoPreview}>
               {logoUri ? (
                 <Image source={{ uri: logoUri }} style={styles.logoImage} resizeMode="cover" />
               ) : (
@@ -283,10 +318,25 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
                   />
                 </View>
               )}
-              <View style={[styles.logoBadge, { backgroundColor: colors.accent }]}>
-                <Camera size={14} color="#FFFFFF" />
-              </View>
-            </TouchableOpacity>
+            </View>
+
+            {/* Boutons photo directs (pas de popup intermédiaire) */}
+            <View style={styles.logoButtons}>
+              <TouchableOpacity
+                style={[styles.logoPickerBtn, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
+                onPress={() => pickImage('gallery')}
+              >
+                <Camera size={16} color={colors.accent} />
+                <Text style={[styles.logoPickerBtnText, { color: colors.textPrimary }]}>Galerie</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.logoPickerBtn, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
+                onPress={() => pickImage('camera')}
+              >
+                <Camera size={16} color={colors.accent} />
+                <Text style={[styles.logoPickerBtnText, { color: colors.textPrimary }]}>Camera</Text>
+              </TouchableOpacity>
+            </View>
             {logoUri && (
               <TouchableOpacity
                 style={[styles.removeLogoButton, { borderColor: colors.danger }]}
@@ -328,51 +378,162 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
             )}
           </View>
 
-          {/* Sport */}
+          {/* ================================================ */}
+          {/* SPORT - Style "Configuration de seance"           */}
+          {/* ================================================ */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>Sport</Text>
-            {categories.map((category) => {
-              const sportsInCategory = SPORTS.filter(s => s.category === category);
-              if (sportsInCategory.length === 0) return null;
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
+              Sport <Text style={{ color: colors.danger }}>*</Text>
+            </Text>
 
-              return (
-                <View key={category} style={styles.categoryBlock}>
-                  <Text style={[styles.categoryTitle, { color: colors.textMuted }]}>
-                    {categoryLabels[category]}
-                  </Text>
-                  <View style={styles.sportsGrid}>
-                    {sportsInCategory.map((sport) => (
-                      <TouchableOpacity
-                        key={sport.id}
-                        style={[
-                          styles.sportItem,
-                          {
-                            backgroundColor: selectedSport === sport.id ? colors.accent + '20' : colors.backgroundCard,
-                            borderColor: selectedSport === sport.id ? colors.accent : colors.border,
-                          },
-                        ]}
-                        onPress={() => setSelectedSport(sport.id)}
-                      >
-                        <MaterialCommunityIcons
-                          name={sport.icon as any}
-                          size={22}
-                          color={selectedSport === sport.id ? (isDark ? colors.accent : colors.textPrimary) : colors.textPrimary}
-                        />
-                        <Text
-                          style={[
-                            styles.sportName,
-                            { color: selectedSport === sport.id ? (isDark ? colors.accent : colors.textPrimary) : colors.textPrimary },
-                          ]}
-                          numberOfLines={1}
-                        >
-                          {sport.name}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+            {/* Barre de recherche */}
+            <View style={[styles.searchBar, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}>
+              <MaterialCommunityIcons name="magnify" size={24} color={colors.accent} />
+              <TextInput
+                style={[styles.searchInput, { color: colors.textPrimary }]}
+                placeholder="Rechercher un sport..."
+                placeholderTextColor={colors.textMuted}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCapitalize="none"
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <X size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Categories expandables */}
+            {(() => {
+              const filteredCategories = CATEGORIES_LIST.filter(category => {
+                let sports = SPORTS.filter(s => s.category === category);
+                if (searchQuery.length > 0) {
+                  sports = sports.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
+                }
+                return sports.length > 0;
+              });
+
+              if (filteredCategories.length === 0 && searchQuery.length > 0) {
+                return (
+                  <View style={{ padding: 40, alignItems: 'center' }}>
+                    <Text style={{ color: colors.textMuted, textAlign: 'center' }}>
+                      Aucun sport trouve pour "{searchQuery}"
+                    </Text>
                   </View>
-                </View>
-              );
-            })}
+                );
+              }
+
+              return filteredCategories.map((category) => {
+                let sportsInCategory = SPORTS.filter(s => s.category === category);
+                if (searchQuery.length > 0) {
+                  sportsInCategory = sportsInCategory.filter(s =>
+                    s.name.toLowerCase().includes(searchQuery.toLowerCase())
+                  );
+                }
+                if (sportsInCategory.length === 0) return null;
+
+                const isExpanded = expandedCategories.includes(category) || searchQuery.length > 0;
+                const hasSelectedSport = sportsInCategory.some(s => s.id === selectedSport);
+                const catColor = CATEGORY_COLORS[category] || '#6B7280';
+
+                return (
+                  <View key={category} style={styles.categorySection}>
+                    {/* Header de categorie cliquable */}
+                    <TouchableOpacity
+                      style={[
+                        styles.categoryHeader,
+                        {
+                          backgroundColor: isExpanded ? catColor + '10' : colors.card,
+                          borderColor: hasSelectedSport ? catColor : colors.border,
+                        },
+                        hasSelectedSport && { backgroundColor: catColor + '15' },
+                      ]}
+                      onPress={() => toggleCategory(category)}
+                    >
+                      <View style={styles.categoryHeaderLeft}>
+                        <View style={[styles.categoryIconBadge, { backgroundColor: catColor + '20' }]}>
+                          <MaterialCommunityIcons
+                            name={CATEGORY_ICONS[category] as any}
+                            size={20}
+                            color={catColor}
+                          />
+                        </View>
+                        <Text style={[
+                          styles.categoryLabel,
+                          { color: hasSelectedSport ? catColor : colors.textPrimary },
+                        ]}>
+                          {CATEGORY_LABELS[category]}
+                        </Text>
+                      </View>
+                      <View style={styles.categoryHeaderRight}>
+                        <Text style={[styles.categorySportCount, { color: colors.textMuted }]}>
+                          {sportsInCategory.length}
+                        </Text>
+                        {isExpanded ? (
+                          <ChevronDown size={20} color={colors.textMuted} />
+                        ) : (
+                          <ChevronRight size={20} color={colors.textMuted} />
+                        )}
+                      </View>
+                    </TouchableOpacity>
+
+                    {/* Grille de sports - 4 colonnes */}
+                    {isExpanded && (
+                      <View style={styles.sportsGrid}>
+                        {sportsInCategory.map((sport) => {
+                          const isSelected = selectedSport === sport.id;
+
+                          return (
+                            <TouchableOpacity
+                              key={sport.id}
+                              style={[
+                                styles.sportGridItem,
+                                {
+                                  backgroundColor: colors.card,
+                                  borderColor: colors.border,
+                                },
+                                isSelected && {
+                                  borderColor: colors.gold,
+                                  backgroundColor: colors.gold + '15',
+                                },
+                              ]}
+                              onPress={() => {
+                                setSelectedSport(sport.id);
+                                selectionAsync();
+                              }}
+                            >
+                              <View style={[styles.sportGridIcon, { backgroundColor: sport.color + '20' }]}>
+                                <MaterialCommunityIcons
+                                  name={sport.icon as any}
+                                  size={28}
+                                  color={isSelected ? colors.gold : sport.color}
+                                />
+                              </View>
+                              <Text
+                                style={[
+                                  styles.sportGridName,
+                                  { color: colors.textPrimary },
+                                  isSelected && { color: colors.gold, fontWeight: '700' },
+                                ]}
+                                numberOfLines={1}
+                              >
+                                {sport.name}
+                              </Text>
+                              {isSelected && (
+                                <View style={[styles.sportGridCheck, { backgroundColor: colors.gold }]}>
+                                  <Check size={12} color="#FFFFFF" strokeWidth={3} />
+                                </View>
+                              )}
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    )}
+                  </View>
+                );
+              });
+            })()}
           </View>
 
           {/* OBJECTIF HEBDOMADAIRE - OBLIGATOIRE */}
@@ -423,7 +584,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
               <TouchableOpacity
                 style={[styles.goalButton, { backgroundColor: colors.backgroundElevated }]}
                 onPress={() => {
-                  setWeeklyGoal(weeklyGoal + 1);
+                  setWeeklyGoal(Math.min(14, weeklyGoal + 1));
                   if (errors.weeklyGoal) setErrors({ ...errors, weeklyGoal: undefined });
                 }}
               >
@@ -550,6 +711,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  logoButtons: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  logoPickerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  logoPickerBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
   removeLogoButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -603,35 +782,103 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // Sports
-  categoryBlock: {
+  // Search Bar
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 54,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    gap: 12,
+    borderWidth: 1,
     marginBottom: 16,
   },
-  categoryTitle: {
-    fontSize: 11,
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+  },
+
+  // Category sections - style "Configuration de seance"
+  categorySection: {
+    marginBottom: 12,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  categoryHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  categoryIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoryLabel: {
+    fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 8,
   },
+  categoryHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  categorySportCount: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  // Sports grid - 4 colonnes comme add-training
   sportsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
+    padding: 4,
+    marginTop: 8,
   },
-  sportItem: {
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 10,
+  sportGridItem: {
+    width: '23.5%',
+    aspectRatio: 0.85,
+    borderRadius: 14,
     borderWidth: 1,
-    minWidth: 75,
+    padding: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+    position: 'relative',
   },
-  sportName: {
-    fontSize: 10,
+  sportGridIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  sportGridName: {
+    fontSize: 9,
     fontWeight: '600',
-    marginTop: 4,
     textAlign: 'center',
+  },
+  sportGridCheck: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Goal Selector

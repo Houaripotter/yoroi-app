@@ -47,6 +47,7 @@ import {
   Sun,
   Filter,
   Circle,
+  Edit3,
 } from 'lucide-react-native';
 
 // Import events catalog service (SQLite optimized)
@@ -56,7 +57,7 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterv
 import { fr } from 'date-fns/locale';
 import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '@/constants/design';
-import { getTrainings, getClubs, addTraining, deleteTraining, Club, Training, getCompetitions, Competition } from '@/lib/database';
+import { getTrainings, getClubs, addTraining, deleteTraining, deleteClub, Club, Training, getCompetitions, Competition } from '@/lib/database';
 import { getSportIcon } from '@/constants/sportIcons';
 import { getProgressionItems, ProgressionItem } from '@/lib/trainingJournalService';
 import { getCarnetStats, getSkills, getBenchmarks, Skill, Benchmark } from '@/lib/carnetService';
@@ -1646,25 +1647,69 @@ export default function PlanningScreen() {
                     : colors.textMuted;
 
                   return (
-                    <TouchableOpacity
+                    <View
                       key={club.id}
                       style={[styles.clubCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-                      onPress={() => {
-                        impactAsync(ImpactFeedbackStyle.Light);
-                        // Ouvrir le modal d'edition du club
-                        setEditingClub(club);
-                        setShowAddClubModal(true);
-                      }}
                     >
-                      <View style={[styles.clubLogoBg, { backgroundColor: display.type === 'color' ? `${display.color}20` : colors.backgroundElevated }]}>
-                        {display.type === 'image' ? (
-                          <Image source={display.source} style={styles.clubLogoLarge} />
-                        ) : (
-                          <View style={[styles.clubColorLarge, { backgroundColor: display.color }]} />
-                        )}
+                      {/* Boutons Edit / Delete en haut à droite */}
+                      <View style={styles.clubCardActions}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            impactAsync(ImpactFeedbackStyle.Light);
+                            setEditingClub(club);
+                            setShowAddClubModal(true);
+                          }}
+                          style={[styles.clubActionBtn, { backgroundColor: isDark ? colors.backgroundElevated : '#F3F4F6' }]}
+                        >
+                          <Edit3 size={14} color={colors.accent} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => {
+                            impactAsync(ImpactFeedbackStyle.Medium);
+                            showPopup(
+                              'Supprimer le club',
+                              `Supprimer "${club.name}" ? Cette action est irréversible.`,
+                              [
+                                { text: 'Annuler', style: 'cancel' },
+                                {
+                                  text: 'Supprimer',
+                                  style: 'destructive',
+                                  onPress: async () => {
+                                    try {
+                                      await deleteClub(club.id!);
+                                      await loadData();
+                                    } catch (error) {
+                                      showPopup('Erreur', 'Impossible de supprimer le club', [{ text: 'OK', style: 'primary' }]);
+                                    }
+                                  },
+                                },
+                              ]
+                            );
+                          }}
+                          style={[styles.clubActionBtn, { backgroundColor: isDark ? '#2D1515' : '#FEE2E2' }]}
+                        >
+                          <Trash2 size={14} color="#EF4444" />
+                        </TouchableOpacity>
                       </View>
-                      <Text style={[styles.clubName, { color: colors.textPrimary }]} numberOfLines={1}>{club.name}</Text>
-                      <Text style={[styles.clubSport, { color: colors.textSecondary }]}>{club.sport}</Text>
+
+                      <TouchableOpacity
+                        onPress={() => {
+                          impactAsync(ImpactFeedbackStyle.Light);
+                          setEditingClub(club);
+                          setShowAddClubModal(true);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <View style={[styles.clubLogoBg, { backgroundColor: display.type === 'color' ? `${display.color}20` : colors.backgroundElevated }]}>
+                          {display.type === 'image' ? (
+                            <Image source={display.source} style={styles.clubLogoLarge} />
+                          ) : (
+                            <View style={[styles.clubColorLarge, { backgroundColor: display.color }]} />
+                          )}
+                        </View>
+                        <Text style={[styles.clubName, { color: colors.textPrimary }]} numberOfLines={1}>{club.name}</Text>
+                        <Text style={[styles.clubSport, { color: colors.textSecondary }]}>{club.sport}</Text>
+                      </TouchableOpacity>
 
                       {/* Objectif hebdomadaire */}
                       {hasGoal ? (
@@ -1692,7 +1737,7 @@ export default function PlanningScreen() {
                           <Text style={[styles.clubStatsLabel, { color: colors.textMuted }]}>ce mois</Text>
                         </View>
                       )}
-                    </TouchableOpacity>
+                    </View>
                   );
                 })}
               </View>
@@ -3123,6 +3168,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#1A1A1A',
+    position: 'relative',
+  },
+  clubCardActions: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    flexDirection: 'row',
+    gap: 6,
+    zIndex: 10,
+  },
+  clubActionBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   clubLogoBg: {
     width: 64,
