@@ -2,40 +2,138 @@
   "expo": {
     "name": "Yoroi",
     "slug": "yoroi",
-    "displayName": "Yoroi",
-    "description": "Track your fitness journey with Yoroi",
-    "githubUrl": "https://github.com/your-username/yoroi",
-    "version": "1.0.0",
+    "description": "YOROI - Votre compagnon fitness pour le suivi de poids, composition corporelle et entraînements. 100% offline, vos données restent sur votre appareil.",
+    "version": "2.2.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "icon": "./assets/logo d'app/logo1.png",
+    "scheme": "yoroi",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/logo d'app/logo1.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.houari.yoroi"
+      "bundleIdentifier": "com.houari.yoroi",
+      "buildNumber": "5",
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "YOROI lit vos données de poids, composition corporelle, sommeil, pas, fréquence cardiaque et calories pour afficher vos statistiques de progression, calculer vos objectifs personnalisés et suivre votre évolution physique au fil du temps.",
+        "NSHealthUpdateUsageDescription": "YOROI enregistre vos pesées quotidiennes, vos séances d'entraînement, vos données d'hydratation et de sommeil pour synchroniser automatiquement vos progrès entre tous vos appareils.",
+        "NSSupportsLiveActivities": true
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.background-delivery": true
+      },
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyTrackingDomains": [],
+        "NSPrivacyCollectedDataTypes": [
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeHealthAndFitness",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": ["NSPrivacyCollectedDataTypePurposeAppFunctionality"]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePhotos",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": ["NSPrivacyCollectedDataTypePurposeAppFunctionality"]
+          }
+        ],
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          }
+        ]
+      }
     },
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/logo d'app/logo1.png"
     },
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "YOROI a besoin d'accéder à vos photos pour définir votre photo de profil.",
+          "cameraPermission": "YOROI a besoin d'accéder à la caméra pour prendre une photo de profil."
+        }
+      ],
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "YOROI lit vos données de poids, composition corporelle, sommeil, pas, fréquence cardiaque et calories pour afficher vos statistiques de progression, calculer vos objectifs personnalisés et suivre votre évolution physique au fil du temps.",
+          "NSHealthUpdateUsageDescription": "YOROI enregistre vos pesées quotidiennes, vos séances d'entraînement, vos données d'hydratation et de sommeil pour synchroniser automatiquement vos progrès entre tous vos appareils.",
+          "background": true
+        }
+      ],
+      "expo-secure-store",
+      [
+        "react-native-health-connect",
+        {
+          "readPermissions": [
+            "android.permission.health.READ_STEPS",
+            "android.permission.health.READ_WEIGHT",
+            "android.permission.health.READ_BODY_FAT",
+            "android.permission.health.READ_SLEEP",
+            "android.permission.health.READ_HEART_RATE",
+            "android.permission.health.READ_HEART_RATE_VARIABILITY",
+            "android.permission.health.READ_RESTING_HEART_RATE",
+            "android.permission.health.READ_DISTANCE",
+            "android.permission.health.READ_TOTAL_CALORIES_BURNED",
+            "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+            "android.permission.health.READ_BASAL_METABOLIC_RATE",
+            "android.permission.health.READ_HYDRATION",
+            "android.permission.health.READ_OXYGEN_SATURATION",
+            "android.permission.health.READ_VO2_MAX",
+            "android.permission.health.READ_RESPIRATORY_RATE",
+            "android.permission.health.READ_BODY_TEMPERATURE",
+            "android.permission.health.READ_LEAN_BODY_MASS",
+            "android.permission.health.READ_EXERCISE"
+          ],
+          "writePermissions": [
+            "android.permission.health.WRITE_WEIGHT",
+            "android.permission.health.WRITE_BODY_FAT",
+            "android.permission.health.WRITE_HYDRATION",
+            "android.permission.health.WRITE_SLEEP",
+            "android.permission.health.WRITE_EXERCISE"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
     },
     "android": {
-      "package": "com.houari.yoroi"
+      "package": "com.houari.yoroi",
+      "permissions": [
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_WEIGHT",
+        "android.permission.health.READ_SLEEP",
+        "android.permission.health.READ_HEART_RATE",
+        "android.permission.health.READ_DISTANCE",
+        "android.permission.health.READ_TOTAL_CALORIES_BURNED",
+        "android.permission.health.WRITE_WEIGHT",
+        "android.permission.health.WRITE_STEPS",
+        "android.permission.CAMERA"
+      ]
     },
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "3743da81-d416-4eb3-b7a5-45e2094947cb"
+        "projectId": "a96c06d9-6d8e-4c8a-92b4-a2c38b9a047a"
       }
-    }
+    },
+    "owner": "houari24"
   }
 }

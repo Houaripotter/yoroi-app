@@ -5,7 +5,7 @@ export function SkeletonLoader() {
   const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
-    Animated.loop(
+    const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, {
           toValue: 1,
@@ -18,7 +18,12 @@ export function SkeletonLoader() {
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    animation.start();
+
+    return () => {
+      animation.stop();
+    };
   }, []);
 
   return (

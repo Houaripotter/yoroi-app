@@ -1,0 +1,292 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  Modal,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+  Platform,
+} from 'react-native';
+import { BlurView } from 'expo-blur';
+import { X, Bell, MessageSquare, CheckCircle } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '@/lib/ThemeContext';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { logger } from '@/lib/security/logger';
+
+// ============================================
+// MODAL D'EXCUSE POUR LES NOTIFICATIONS
+// S'affiche une seule fois après la mise à jour
+// ============================================
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const STORAGE_KEY = '@yoroi_notification_apology_shown';
+const ONBOARDING_KEY = '@yoroi_user_settings';
+
+export const NotificationApologyModal: React.FC = () => {
+  const { colors, isDark } = useTheme();
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    checkIfShouldShow();
+  }, []);
+
+  const checkIfShouldShow = async () => {
+    try {
+      // D'abord vérifier si l'onboarding est terminé
+      const userSettingsJson = await AsyncStorage.getItem(ONBOARDING_KEY);
+      if (!userSettingsJson) {
+        // Onboarding pas encore fait, ne pas afficher le modal
+        return;
+      }
+
+      const userSettings = JSON.parse(userSettingsJson);
+      if (!userSettings.onboardingCompleted) {
+        // Onboarding pas encore terminé
+        return;
+      }
+
+      const hasShown = await AsyncStorage.getItem(STORAGE_KEY);
+      if (!hasShown) {
+        // Attendre 2 secondes après le chargement pour une meilleure UX
+        // (laisse le temps à l'app de se stabiliser après l'onboarding)
+        setTimeout(() => {
+          setVisible(true);
+        }, 2000);
+      }
+    } catch (error) {
+      logger.error('Error checking notification apology:', error);
+    }
+  };
+
+  const handleClose = async () => {
+    if (Platform.OS !== 'web') {
+      impactAsync(ImpactFeedbackStyle.Light);
+    }
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, 'true');
+      setVisible(false);
+    } catch (error) {
+      logger.error('Error saving notification apology state:', error);
+      setVisible(false);
+    }
+  };
+
+  if (!visible) return null;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+    >
+      <View style={styles.overlay}>
+        {Platform.OS === 'ios' ? (
+          <BlurView intensity={90} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.7)' }]} />
+        )}
+
+        <View style={styles.container}>
+          <View style={[styles.modal, { backgroundColor: colors.backgroundCard }]}>
+            {/* Bouton fermer */}
+            <TouchableOpacity
+              style={[styles.closeButton, { backgroundColor: colors.background }]}
+              onPress={handleClose}
+              activeOpacity={0.7}
+            >
+              <X size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+
+            {/* Icône principale */}
+            <View style={styles.iconContainer}>
+              <View style={[styles.iconCircle, { backgroundColor: `${colors.accent}15` }]}>
+                <Bell size={48} color={colors.accentText} strokeWidth={2} />
+              </View>
+            </View>
+
+            {/* Titre */}
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
+              Mes excuses ! 🙏
+            </Text>
+
+            {/* Message d'excuse */}
+            <Text style={[styles.message, { color: colors.textSecondary }]}>
+              Désolé pour les notifications en pagaille. Je sais que c'était soulant ! 😅
+            </Text>
+
+            {/* Bonne nouvelle */}
+            <View style={[styles.goodNewsBox, { backgroundColor: colors.background }]}>
+              <CheckCircle size={20} color="#10B981" strokeWidth={2.5} />
+              <Text style={[styles.goodNewsText, { color: colors.textPrimary }]}>
+                <Text style={styles.goodNewsBold}>Bonne nouvelle :</Text> J'ai tout désactivé maintenant !
+              </Text>
+            </View>
+
+            {/* Instructions */}
+            <View style={styles.instructionsBox}>
+              <View style={styles.instructionItem}>
+                <View style={[styles.bullet, { backgroundColor: colors.accent }]} />
+                <Text style={[styles.instructionText, { color: colors.textSecondary }]}>
+                  Tu peux les <Text style={[styles.bold, { color: colors.textPrimary }]}>activer toi-même</Text> dans les réglages
+                </Text>
+              </View>
+              <View style={styles.instructionItem}>
+                <View style={[styles.bullet, { backgroundColor: colors.accent }]} />
+                <Text style={[styles.instructionText, { color: colors.textSecondary }]}>
+                  Si un problème persiste, utilise la <Text style={[styles.bold, { color: colors.textPrimary }]}>boîte à idées</Text> pour me signaler les bugs
+                </Text>
+              </View>
+            </View>
+
+            {/* Bouton comprendre */}
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: colors.accent }]}
+              onPress={handleClose}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.buttonText}>Compris !</Text>
+            </TouchableOpacity>
+
+            {/* Footer */}
+            <View style={styles.footer}>
+              <MessageSquare size={14} color={colors.textMuted} />
+              <Text style={[styles.footerText, { color: colors.textMuted }]}>
+                Merci de ta patience - Houari
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  container: {
+    width: SCREEN_WIDTH - 48,
+    maxWidth: 400,
+  },
+  modal: {
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  iconCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 12,
+    letterSpacing: -0.5,
+  },
+  message: {
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  goodNewsBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+  },
+  goodNewsText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+  goodNewsBold: {
+    fontWeight: '800',
+    color: '#10B981',
+  },
+  instructionsBox: {
+    gap: 12,
+    marginBottom: 24,
+  },
+  instructionItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  bullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 7,
+  },
+  instructionText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  bold: {
+    fontWeight: '700',
+  },
+  button: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  footerText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+});

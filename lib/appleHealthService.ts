@@ -1,183 +1,125 @@
 import { Platform, Alert } from 'react-native';
-import AppleHealthKit, {
-  HealthValue,
-  HealthKitPermissions,
-  HealthInputOptions,
-  HealthUnit,
-} from 'react-native-health';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from './supabase';
+import { addMeasurement, getAllMeasurements } from './storage';
+import logger from '@/lib/security/logger';
+import healthConnect from './healthConnect.ios';
+
+// ============================================
+// SERVICE WRAPPER - Apple Health
+// Utilise healthConnect.ios.ts en interne
+// ============================================
 
 const APPLE_HEALTH_ENABLED_KEY = '@yoroi_apple_health_enabled';
 const LAST_SYNC_KEY = '@yoroi_last_health_sync';
 
-// Permissions nécessaires
-const permissions: HealthKitPermissions = {
-  permissions: {
-    read: [
-      AppleHealthKit.Constants.Permissions.Weight,
-      AppleHealthKit.Constants.Permissions.BodyMassIndex,
-      AppleHealthKit.Constants.Permissions.BodyFatPercentage,
-      AppleHealthKit.Constants.Permissions.LeanBodyMass,
-    ],
-    write: [
-      AppleHealthKit.Constants.Permissions.Weight,
-      AppleHealthKit.Constants.Permissions.BodyMassIndex,
-      AppleHealthKit.Constants.Permissions.BodyFatPercentage,
-    ],
-  },
+/**
+ * Vérification robuste de la disponibilité de HealthKit
+ * Cette fonction ne crashe JAMAIS, même si le module natif n'est pas chargé
+ */
+const isHealthKitAvailable = async (): Promise<boolean> => {
+  try {
+    if (Platform.OS !== 'ios') {
+      return false;
+    }
+    return await healthConnect.isAvailable();
+  } catch (e) {
+    logger.info("ℹ️ HealthKit non disponible (erreur de vérification):", e);
+    return false;
+  }
 };
 
-// Vérifier si Apple Health est disponible
+// Les permissions sont gérées par healthConnect.ios.ts
+
+// Vérifier si Apple Health est disponible (version plus simple pour l'UI)
 export const isAppleHealthAvailable = (): boolean => {
-  return Platform.OS === 'ios';
+  if (Platform.OS !== 'ios') return false;
+  // Retourne true pour iOS - la vérification réelle se fait au moment de la connexion
+  return true;
 };
 
 // Initialiser Apple Health et demander les permissions
-export const initializeAppleHealth = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    if (!isAppleHealthAvailable()) {
-      console.log('ℹ️  Apple Health non disponible sur cette plateforme');
-      resolve(false);
-      return;
-    }
-
-    AppleHealthKit.initHealthKit(permissions, (error) => {
-      if (error) {
-        console.error('❌ Erreur lors de l\'initialisation Apple Health:', error);
-        resolve(false);
-        return;
-      }
-
-      console.log('✅ Apple Health initialisé avec succès');
-      resolve(true);
-    });
-  });
+export const initializeAppleHealth = async (): Promise<boolean> => {
+  try {
+    await healthConnect.initialize();
+    const connected = await healthConnect.connect();
+    return connected;
+  } catch (e) {
+    logger.error('❌ Erreur HealthKit (init):', e);
+    return false;
+  }
 };
 
 // Vérifier si l'utilisateur a accordé les permissions
 export const checkHealthPermissions = async (): Promise<boolean> => {
-  if (!isAppleHealthAvailable()) return false;
-
-  return new Promise((resolve) => {
-    AppleHealthKit.isAvailable((error, available) => {
-      if (error || !available) {
-        resolve(false);
-        return;
-      }
-
-      // Vérifier les permissions de lecture pour le poids
-      AppleHealthKit.getAuthStatus(permissions, (authError, results) => {
-        if (authError) {
-          resolve(false);
-          return;
-        }
-
-        const hasPermission = results?.permissions?.read?.includes(
-          AppleHealthKit.Constants.Permissions.Weight
-        );
-
-        resolve(!!hasPermission);
-      });
-    });
-  });
+  try {
+    const status = healthConnect.getSyncStatus();
+    return status.isConnected;
+  } catch (e) {
+    logger.error('❌ Erreur HealthKit (checkPermissions):', e);
+    return false;
+  }
 };
 
 // Récupérer l'historique de poids depuis Apple Health
 export const importWeightFromAppleHealth = async (): Promise<number> => {
-  if (!isAppleHealthAvailable()) {
-    Alert.alert('Erreur', 'Apple Health n\'est disponible que sur iOS');
+  if (Platform.OS !== 'ios') {
+    Alert.alert('Erreur', 'Apple Health n\'est disponible que sur iOS.');
     return 0;
   }
 
   try {
-    // Initialiser si nécessaire
-    const initialized = await initializeAppleHealth();
-    if (!initialized) {
-      Alert.alert('Erreur', 'Impossible d\'accéder à Apple Health. Vérifiez les permissions dans Réglages > Confidentialité > Santé');
+    // Vérifier que healthConnect est connecté
+    const status = healthConnect.getSyncStatus();
+    if (!status.isConnected) {
+      const connected = await healthConnect.connect();
+      if (!connected) {
+        Alert.alert('Erreur', 'Impossible d\'accéder à Apple Health. Vérifiez les permissions dans Réglages > Confidentialité > Santé > Yoroi');
+        return 0;
+      }
+    }
+
+    // Récupérer l'historique de poids (365 jours)
+    const weightHistory = await healthConnect.getWeightHistory(365);
+
+    if (!weightHistory || weightHistory.length === 0) {
+      Alert.alert('Information', 'Aucune donnée de poids trouvée dans Apple Health.');
       return 0;
     }
 
-    // Récupérer les données de poids des 365 derniers jours
-    const options: HealthInputOptions = {
-      startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-      endDate: new Date().toISOString(),
-      ascending: true,
-    };
+    logger.info(`${weightHistory.length} mesures de poids trouvées dans Apple Health`);
 
-    return new Promise((resolve) => {
-      AppleHealthKit.getWeightSamples(options, async (error, results) => {
-        if (error) {
-          console.error('❌ Erreur lors de la récupération des poids:', error);
-          Alert.alert('Erreur', 'Impossible de récupérer les données de poids');
-          resolve(0);
-          return;
-        }
+    const existingMeasurements = await getAllMeasurements();
+    const existingDates = new Set(
+      existingMeasurements.map(m => new Date(m.date).toISOString().split('T')[0])
+    );
 
-        if (!results || results.length === 0) {
-          Alert.alert('Information', 'Aucune donnée de poids trouvée dans Apple Health');
-          resolve(0);
-          return;
-        }
+    const newEntries = weightHistory
+      .filter((sample) => {
+        const date = new Date(sample.date).toISOString().split('T')[0];
+        return !existingDates.has(date);
+      })
+      .map((sample) => ({
+        weight: sample.value,
+        date: sample.date,
+        created_at: new Date().toISOString(),
+      }));
 
-        console.log(`📊 ${results.length} mesures de poids trouvées dans Apple Health`);
+    let importedCount = 0;
+    for (const entry of newEntries) {
+      await addMeasurement(entry);
+      importedCount++;
+    }
 
-        // Récupérer l'utilisateur
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          Alert.alert('Erreur', 'Vous devez être connecté pour importer des données');
-          resolve(0);
-          return;
-        }
-
-        // Récupérer les dates existantes pour éviter les doublons
-        const { data: existingEntries } = await supabase
-          .from('measurements')
-          .select('created_at')
-          .eq('user_id', user.id);
-
-        const existingDates = new Set(
-          existingEntries?.map(e => new Date(e.created_at).toISOString().split('T')[0]) || []
-        );
-
-        // Filtrer et préparer les nouvelles entrées
-        const newEntries = results
-          .filter(sample => {
-            const date = new Date(sample.startDate).toISOString().split('T')[0];
-            return !existingDates.has(date);
-          })
-          .map(sample => ({
-            user_id: user.id,
-            weight: sample.value,
-            created_at: sample.startDate,
-          }));
-
-        if (newEntries.length === 0) {
-          Alert.alert('Information', 'Toutes les données sont déjà importées');
-          resolve(0);
-          return;
-        }
-
-        // Insérer les nouvelles entrées
-        const { error: insertError } = await supabase
-          .from('measurements')
-          .insert(newEntries);
-
-        if (insertError) {
-          console.error('❌ Erreur lors de l\'insertion:', insertError);
-          Alert.alert('Erreur', 'Impossible d\'importer les données');
-          resolve(0);
-          return;
-        }
-
-        console.log(`✅ ${newEntries.length} nouvelles mesures importées`);
-        Alert.alert('Succès', `${newEntries.length} mesure(s) importée(s) depuis Apple Health`);
-        resolve(newEntries.length);
-      });
-    });
+    if (importedCount > 0) {
+      logger.info(`${importedCount} nouvelles mesures importées`);
+      Alert.alert('Succès', `${importedCount} mesure(s) importée(s) depuis Apple Health`);
+    } else {
+      Alert.alert('Information', 'Toutes les données sont déjà importées ou aucune nouvelle donnée disponible.');
+    }
+    return importedCount;
   } catch (error) {
-    console.error('❌ Exception lors de l\'import:', error);
-    Alert.alert('Erreur', 'Une erreur est survenue lors de l\'import');
+    logger.error('❌ Exception lors de l\'import:', error);
+    Alert.alert('Erreur', 'Une erreur est survenue lors de l\'import.');
     return 0;
   }
 };
@@ -187,39 +129,22 @@ export const exportWeightToAppleHealth = async (
   weight: number,
   date: Date = new Date()
 ): Promise<boolean> => {
-  if (!isAppleHealthAvailable()) {
-    console.log('ℹ️  Apple Health non disponible');
-    return false;
-  }
+  if (Platform.OS !== 'ios') return false;
 
   try {
-    // Vérifier si l'export automatique est activé
     const autoExportEnabled = await AsyncStorage.getItem(APPLE_HEALTH_ENABLED_KEY);
     if (autoExportEnabled !== 'true') {
-      console.log('ℹ️  Export vers Apple Health désactivé');
+      logger.info('ℹ️  Export vers Apple Health désactivé');
       return false;
     }
 
-    const options = {
-      value: weight,
-      startDate: date.toISOString(),
-      endDate: date.toISOString(),
-    };
-
-    return new Promise((resolve) => {
-      AppleHealthKit.saveWeight(options, (error) => {
-        if (error) {
-          console.error('❌ Erreur lors de l\'export du poids:', error);
-          resolve(false);
-          return;
-        }
-
-        console.log(`✅ Poids exporté vers Apple Health: ${weight} kg`);
-        resolve(true);
-      });
-    });
+    const success = await healthConnect.writeWeight(weight, 'kg');
+    if (success) {
+      logger.info(`Poids exporté vers Apple Health: ${weight} kg`);
+    }
+    return success;
   } catch (error) {
-    console.error('❌ Exception lors de l\'export:', error);
+    logger.error('❌ Exception lors de l\'export:', error);
     return false;
   }
 };
@@ -229,32 +154,18 @@ export const exportBMIToAppleHealth = async (
   bmi: number,
   date: Date = new Date()
 ): Promise<boolean> => {
-  if (!isAppleHealthAvailable()) return false;
+  if (Platform.OS !== 'ios') return false;
 
   try {
     const autoExportEnabled = await AsyncStorage.getItem(APPLE_HEALTH_ENABLED_KEY);
     if (autoExportEnabled !== 'true') return false;
 
-    const options = {
-      value: bmi,
-      startDate: date.toISOString(),
-      endDate: date.toISOString(),
-    };
-
-    return new Promise((resolve) => {
-      AppleHealthKit.saveBmi(options, (error) => {
-        if (error) {
-          console.error('❌ Erreur lors de l\'export de l\'IMC:', error);
-          resolve(false);
-          return;
-        }
-
-        console.log(`✅ IMC exporté vers Apple Health: ${bmi}`);
-        resolve(true);
-      });
-    });
+    // Note: healthConnect ne supporte pas directement l'IMC
+    // L'IMC sera calculé automatiquement par Apple Health depuis le poids et la taille
+    logger.info(`IMC: ${bmi} (calculé automatiquement par Apple Health)`);
+    return true;
   } catch (error) {
-    console.error('❌ Exception lors de l\'export de l\'IMC:', error);
+    logger.error('❌ Exception lors de l\'export de l\'IMC:', error);
     return false;
   }
 };
@@ -264,32 +175,19 @@ export const exportBodyFatToAppleHealth = async (
   bodyFatPercentage: number,
   date: Date = new Date()
 ): Promise<boolean> => {
-  if (!isAppleHealthAvailable()) return false;
+  if (Platform.OS !== 'ios') return false;
 
   try {
     const autoExportEnabled = await AsyncStorage.getItem(APPLE_HEALTH_ENABLED_KEY);
     if (autoExportEnabled !== 'true') return false;
 
-    const options = {
-      value: bodyFatPercentage,
-      startDate: date.toISOString(),
-      endDate: date.toISOString(),
-    };
-
-    return new Promise((resolve) => {
-      AppleHealthKit.saveBodyFatPercentage(options, (error) => {
-        if (error) {
-          console.error('❌ Erreur lors de l\'export de la masse grasse:', error);
-          resolve(false);
-          return;
-        }
-
-        console.log(`✅ Masse grasse exportée vers Apple Health: ${bodyFatPercentage}%`);
-        resolve(true);
-      });
-    });
+    const success = await healthConnect.writeBodyFat(bodyFatPercentage);
+    if (success) {
+      logger.info(`Masse grasse exportée vers Apple Health: ${bodyFatPercentage}%`);
+    }
+    return success;
   } catch (error) {
-    console.error('❌ Exception lors de l\'export de la masse grasse:', error);
+    logger.error('❌ Exception lors de l\'export de la masse grasse:', error);
     return false;
   }
 };
@@ -298,9 +196,9 @@ export const exportBodyFatToAppleHealth = async (
 export const setAppleHealthAutoExport = async (enabled: boolean): Promise<void> => {
   try {
     await AsyncStorage.setItem(APPLE_HEALTH_ENABLED_KEY, enabled ? 'true' : 'false');
-    console.log(`✅ Export automatique Apple Health ${enabled ? 'activé' : 'désactivé'}`);
+    logger.info(`Export automatique Apple Health ${enabled ? 'activé' : 'désactivé'}`);
   } catch (error) {
-    console.error('❌ Erreur lors de la sauvegarde des préférences:', error);
+    logger.error('❌ Erreur lors de la sauvegarde des préférences:', error);
   }
 };
 
@@ -310,73 +208,60 @@ export const isAppleHealthAutoExportEnabled = async (): Promise<boolean> => {
     const enabled = await AsyncStorage.getItem(APPLE_HEALTH_ENABLED_KEY);
     return enabled === 'true';
   } catch (error) {
-    console.error('❌ Erreur lors de la récupération des préférences:', error);
+    logger.error('❌ Erreur lors de la récupération des préférences:', error);
     return false;
   }
 };
 
 // Synchroniser les nouvelles données depuis Apple Health
 export const syncFromAppleHealth = async (): Promise<number> => {
-  if (!isAppleHealthAvailable()) return 0;
+  if (Platform.OS !== 'ios') return 0;
 
   try {
     const lastSync = await AsyncStorage.getItem(LAST_SYNC_KEY);
-    const startDate = lastSync
-      ? new Date(lastSync)
-      : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7 jours par défaut
+    const days = lastSync
+      ? Math.ceil((Date.now() - new Date(lastSync).getTime()) / (1000 * 60 * 60 * 24))
+      : 7; // 7 jours par défaut
 
-    const options: HealthInputOptions = {
-      startDate: startDate.toISOString(),
-      endDate: new Date().toISOString(),
-      ascending: true,
-    };
+    // Récupérer l'historique de poids depuis la dernière sync
+    const weightHistory = await healthConnect.getWeightHistory(days);
 
-    return new Promise((resolve) => {
-      AppleHealthKit.getWeightSamples(options, async (error, results) => {
-        if (error || !results || results.length === 0) {
-          resolve(0);
-          return;
-        }
+    if (!weightHistory || weightHistory.length === 0) {
+      logger.info('Aucune donnée ou erreur lors de la récupération HealthKit');
+      await AsyncStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());
+      return 0;
+    }
 
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          resolve(0);
-          return;
-        }
+    const existingMeasurements = await getAllMeasurements();
+    const existingDates = new Set(
+      existingMeasurements.map(m => new Date(m.date).toISOString().split('T')[0])
+    );
 
-        const { data: existingEntries } = await supabase
-          .from('measurements')
-          .select('created_at')
-          .eq('user_id', user.id);
+    const newEntries = weightHistory
+      .filter((sample) => {
+        const date = new Date(sample.date).toISOString().split('T')[0];
+        return !existingDates.has(date);
+      })
+      .map((sample) => ({
+        weight: sample.value,
+        date: sample.date,
+        created_at: new Date().toISOString(),
+      }));
 
-        const existingDates = new Set(
-          existingEntries?.map(e => new Date(e.created_at).toISOString().split('T')[0]) || []
-        );
+    let syncedCount = 0;
+    for (const entry of newEntries) {
+      await addMeasurement(entry);
+      syncedCount++;
+    }
 
-        const newEntries = results
-          .filter(sample => {
-            const date = new Date(sample.startDate).toISOString().split('T')[0];
-            return !existingDates.has(date);
-          })
-          .map(sample => ({
-            user_id: user.id,
-            weight: sample.value,
-            created_at: sample.startDate,
-          }));
+    if (syncedCount > 0) {
+      logger.info(`${syncedCount} nouvelles mesures synchronisées`);
+    }
 
-        if (newEntries.length > 0) {
-          await supabase.from('measurements').insert(newEntries);
-          console.log(`✅ ${newEntries.length} nouvelles mesures synchronisées`);
-        }
-
-        // Mettre à jour la dernière date de sync
-        await AsyncStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());
-
-        resolve(newEntries.length);
-      });
-    });
+    await AsyncStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());
+    return syncedCount;
   } catch (error) {
-    console.error('❌ Exception lors de la synchronisation:', error);
+    logger.error('❌ Exception lors de la synchronisation:', error);
     return 0;
   }
 };

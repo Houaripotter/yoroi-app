@@ -1,0 +1,43 @@
+// ============================================
+// HEALTHKIT WRAPPER - Safe import with Expo Go fallback
+// ============================================
+
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import { logger } from '@/lib/security/logger';
+
+// Détecter si on est dans Expo Go
+const isExpoGo = Constants.appOwnership === 'expo';
+
+let HealthKit: any = null;
+
+// Tenter d'importer HealthKit seulement si pas dans Expo Go
+if (!isExpoGo && Platform.OS === 'ios') {
+  try {
+    HealthKit = require('@kingstinct/react-native-healthkit').default;
+    logger.info('[HealthKit] Module chargé avec succès');
+  } catch (error) {
+    logger.warn('[HealthKit] Module non disponible (probablement Expo Go):', error);
+  }
+}
+
+// Mock pour Expo Go ou si le module n'est pas disponible
+const MockHealthKit = {
+  isHealthDataAvailable: () => false,
+  requestAuthorization: async () => ({}),
+  queryQuantitySamples: async () => [],
+  queryCategorySamples: async () => [],
+  queryWorkoutSamples: async () => [],
+  queryStatistics: async () => ({ sumQuantity: 0 }),
+  saveQuantitySample: async () => true,
+  saveCategorySample: async () => true, // Pour l'écriture du sommeil
+  saveWorkoutSample: async () => true,
+};
+
+// Exporter le module réel ou le mock
+export default HealthKit || MockHealthKit;
+
+// Export pour savoir si HealthKit est disponible
+export const isHealthKitAvailable = HealthKit !== null;
+export const isRunningInExpoGo = isExpoGo;
+export const isMockMode = HealthKit === null; // ✅ NOUVEAU : Détecter mode mock

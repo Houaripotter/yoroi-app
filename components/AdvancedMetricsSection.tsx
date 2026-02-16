@@ -56,7 +56,7 @@ export function AdvancedMetricsSection({
     Animated.timing(height, {
       toValue: newExpanded ? 1 : 0,
       duration: 300,
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: utilisé pour interpoler height via maxHeight (layout property)
     }).start();
     Animated.timing(rotation, {
       toValue: newExpanded ? 180 : 0,
@@ -88,7 +88,7 @@ export function AdvancedMetricsSection({
               <Activity size={20} color="#007AFF" strokeWidth={2.5} />
             </View>
             <View>
-              <Text style={styles.headerTitle}>Données Tanita & Mensurations</Text>
+              <Text style={styles.headerTitle}>Composition Corporelle & Mensurations</Text>
               <Text style={styles.headerSubtitle}>Optionnel • Balance impédancemètre</Text>
             </View>
           </View>
@@ -123,7 +123,7 @@ export function AdvancedMetricsSection({
         ]}
       >
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>TANITA BC-545N</Text>
+          <Text style={styles.sectionTitle}>COMPOSITION CORPORELLE</Text>
 
           <View style={styles.row}>
             <View style={styles.field}>
@@ -140,6 +140,7 @@ export function AdvancedMetricsSection({
                   value={bodyFat}
                   onChangeText={setBodyFat}
                   editable={!disabled}
+                  maxLength={5}
                 />
                 <Text style={styles.unit}>%</Text>
               </View>
@@ -159,6 +160,7 @@ export function AdvancedMetricsSection({
                   value={muscleMass}
                   onChangeText={setMuscleMass}
                   editable={!disabled}
+                  maxLength={5}
                 />
                 <Text style={styles.unit}>kg</Text>
               </View>
@@ -180,6 +182,7 @@ export function AdvancedMetricsSection({
                   value={water}
                   onChangeText={setWater}
                   editable={!disabled}
+                  maxLength={5}
                 />
                 <Text style={styles.unit}>%</Text>
               </View>
@@ -199,6 +202,7 @@ export function AdvancedMetricsSection({
                   value={visceralFat}
                   onChangeText={setVisceralFat}
                   editable={!disabled}
+                  maxLength={5}
                 />
                 <Text style={styles.unit}>1-59</Text>
               </View>
@@ -218,6 +222,7 @@ export function AdvancedMetricsSection({
                 value={metabolicAge}
                 onChangeText={setMetabolicAge}
                 editable={!disabled}
+                maxLength={5}
               />
               <Text style={styles.unit}>ans</Text>
             </View>
@@ -241,6 +246,7 @@ export function AdvancedMetricsSection({
                   value={waist}
                   onChangeText={setWaist}
                   editable={!disabled}
+                  maxLength={5}
                 />
                 <Text style={styles.unit}>cm</Text>
               </View>
@@ -257,6 +263,7 @@ export function AdvancedMetricsSection({
                   value={chest}
                   onChangeText={setChest}
                   editable={!disabled}
+                  maxLength={5}
                 />
                 <Text style={styles.unit}>cm</Text>
               </View>
@@ -275,6 +282,7 @@ export function AdvancedMetricsSection({
                   value={arms}
                   onChangeText={setArms}
                   editable={!disabled}
+                  maxLength={5}
                 />
                 <Text style={styles.unit}>cm</Text>
               </View>
@@ -291,6 +299,7 @@ export function AdvancedMetricsSection({
                   value={thighs}
                   onChangeText={setThighs}
                   editable={!disabled}
+                  maxLength={5}
                 />
                 <Text style={styles.unit}>cm</Text>
               </View>

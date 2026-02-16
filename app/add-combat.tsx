@@ -1,0 +1,666 @@
+// ============================================
+// YOROI - AJOUTER UN COMBAT
+// ============================================
+
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Platform,
+  Keyboard,
+} from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
+import { router, useLocalSearchParams } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
+import {
+  Calendar,
+  Trophy,
+  Save,
+  User,
+  Building2,
+  Scale,
+  Clock,
+  FileText,
+  Target,
+  Zap,
+} from 'lucide-react-native';
+import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
+import { ScreenWrapper } from '@/components/ScreenWrapper';
+import { Header } from '@/components/ui/Header';
+import { addCombat, getCompetitions } from '@/lib/fighterModeService';
+import { Competition, CombatResultat, CombatMethode } from '@/lib/fighterMode';
+import { SPACING, RADIUS } from '@/constants/appTheme';
+import logger from '@/lib/security/logger';
+
+const RESULTATS: { value: CombatResultat; label: string; color: string }[] = [
+  { value: 'victoire', label: 'Victoire', color: '#4CAF50' },
+  { value: 'defaite', label: 'Défaite', color: '#F44336' },
+  { value: 'nul', label: 'Nul', color: '#9E9E9E' },
+];
+
+const METHODES: { value: CombatMethode; label: string }[] = [
+  { value: 'soumission', label: 'Soumission' },
+  { value: 'ko', label: 'KO' },
+  { value: 'tko', label: 'TKO' },
+  { value: 'points', label: 'Points' },
+  { value: 'decision', label: 'Décision' },
+  { value: 'dq', label: 'Disqualification' },
+];
+
+export default function AddCombatScreen() {
+  const { colors } = useTheme();
+  const { locale } = useI18n();
+  const { showPopup, PopupComponent } = useCustomPopup();
+  const params = useLocalSearchParams();
+  const competitionIdParam = params.competitionId as string | undefined;
+
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [resultat, setResultat] = useState<CombatResultat>('victoire');
+  const [methode, setMethode] = useState<CombatMethode | ''>('');
+  const [technique, setTechnique] = useState('');
+  const [round, setRound] = useState('');
+  const [temps, setTemps] = useState('');
+  const [adversaireNom, setAdversaireNom] = useState('');
+  const [adversaireClub, setAdversaireClub] = useState('');
+  const [poidsPesee, setPoidsPesee] = useState('');
+  const [poidsJourJ, setPoidsJourJ] = useState('');
+  const [notes, setNotes] = useState('');
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState<number | null>(
+    competitionIdParam ? parseInt(competitionIdParam) : null
+  );
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    loadCompetitions();
+  }, []);
+
+  const loadCompetitions = async () => {
+    const comps = await getCompetitions();
+    setCompetitions(comps);
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
+  };
+
+  const handleSave = async () => {
+    Keyboard.dismiss();
+    if (!adversaireNom.trim()) {
+      showPopup('Erreur', 'Saisis le nom de l\'adversaire', [{ text: 'OK', style: 'primary' }]);
+      return;
+    }
+
+    setIsSaving(true);
+    notificationAsync(NotificationFeedbackType.Success);
+
+    try {
+      await addCombat({
+        competition_id: selectedCompetitionId || undefined,
+        date: date.toISOString().split('T')[0],
+        resultat,
+        methode: methode || undefined,
+        technique: technique.trim() || undefined,
+        round: round ? parseInt(round) : undefined,
+        temps: temps.trim() || undefined,
+        adversaire_nom: adversaireNom.trim(),
+        adversaire_club: adversaireClub.trim() || undefined,
+        poids_pesee: poidsPesee ? parseFloat(poidsPesee) : undefined,
+        poids_jour_j: poidsJourJ ? parseFloat(poidsJourJ) : undefined,
+        notes: notes.trim() || undefined,
+      });
+
+      router.back();
+    } catch (error) {
+      logger.error('Error saving combat:', error);
+
+      // Messages d'erreur contextuels selon le type d'erreur
+      let userMessage = 'Impossible de sauvegarder le combat.';
+
+      if (error instanceof Error) {
+        if (error.message.includes('UNIQUE constraint')) {
+          userMessage = 'Ce combat existe déjà. Choisis une autre date ou modifie les détails.';
+        } else if (error.message.includes('NOT NULL constraint')) {
+          userMessage = 'Tous les champs obligatoires doivent être remplis (date, résultat).';
+        } else if (error.message.includes('storage') || error.message.includes('quota')) {
+          userMessage = 'Stockage plein. Libère de l\'espace sur ton téléphone et réessaye.';
+        } else {
+          userMessage = 'Impossible de sauvegarder. Vérifie que tous les champs sont bien remplis et réessaye.';
+        }
+      }
+
+      showPopup('Erreur de sauvegarde', userMessage, [{ text: 'OK', style: 'primary' }]);
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <ScreenWrapper>
+      <Header title="Nouveau Combat" showBack />
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Competition (Optional) */}
+        {competitions.length > 0 && (
+          <View style={styles.field}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>
+              Compétition (optionnel)
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.competitionsRow}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.competitionChip,
+                  {
+                    backgroundColor:
+                      selectedCompetitionId === null
+                        ? colors.accent
+                        : colors.backgroundCard,
+                    borderColor:
+                      selectedCompetitionId === null ? colors.accent : colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  impactAsync(ImpactFeedbackStyle.Light);
+                  setSelectedCompetitionId(null);
+                }}
+              >
+                <Text
+                  style={[
+                    styles.competitionChipText,
+                    {
+                      color:
+                        selectedCompetitionId === null
+                          ? colors.textOnGold
+                          : colors.textPrimary,
+                    },
+                  ]}
+                >
+                  Combat libre
+                </Text>
+              </TouchableOpacity>
+
+              {competitions.map((comp) => (
+                <TouchableOpacity
+                  key={comp.id}
+                  style={[
+                    styles.competitionChip,
+                    {
+                      backgroundColor:
+                        selectedCompetitionId === comp.id
+                          ? colors.accent
+                          : colors.backgroundCard,
+                      borderColor:
+                        selectedCompetitionId === comp.id
+                          ? colors.accent
+                          : colors.border,
+                    },
+                  ]}
+                  onPress={() => {
+                    impactAsync(ImpactFeedbackStyle.Light);
+                    setSelectedCompetitionId(comp.id);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.competitionChipText,
+                      {
+                        color:
+                          selectedCompetitionId === comp.id
+                            ? colors.textOnGold
+                            : colors.textPrimary,
+                      },
+                    ]}
+                  >
+                    {comp.nom}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Date */}
+        <View style={styles.field}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Date du combat *
+          </Text>
+          <TouchableOpacity
+            style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}
+            onPress={() => setShowDatePicker(true)}
+            activeOpacity={0.7}
+          >
+            <Calendar size={20} color={colors.textMuted} />
+            <Text style={[styles.inputText, { color: colors.textPrimary }]}>
+              {date.toLocaleDateString(locale, {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={handleDateChange}
+            maximumDate={new Date()}
+          />
+        )}
+
+        {/* Adversaire */}
+        <View style={styles.field}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Adversaire *
+          </Text>
+          <View style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}>
+            <User size={20} color={colors.textMuted} />
+            <TextInput
+              style={[styles.input, { color: colors.textPrimary }]}
+              placeholder="Nom de l'adversaire"
+              placeholderTextColor={colors.textMuted}
+              value={adversaireNom}
+              onChangeText={setAdversaireNom}
+              maxLength={100}
+            />
+          </View>
+        </View>
+
+        {/* Club adversaire */}
+        <View style={styles.field}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Club de l'adversaire
+          </Text>
+          <View style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}>
+            <Building2 size={20} color={colors.textMuted} />
+            <TextInput
+              style={[styles.input, { color: colors.textPrimary }]}
+              placeholder="Ex: Gracie Barra Paris"
+              placeholderTextColor={colors.textMuted}
+              value={adversaireClub}
+              onChangeText={setAdversaireClub}
+              maxLength={100}
+            />
+          </View>
+        </View>
+
+        {/* Résultat */}
+        <View style={styles.field}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Résultat *
+          </Text>
+          <View style={styles.resultatRow}>
+            {RESULTATS.map((res) => (
+              <TouchableOpacity
+                key={res.value}
+                style={[
+                  styles.resultatChip,
+                  {
+                    backgroundColor:
+                      resultat === res.value ? res.color : colors.backgroundCard,
+                    borderColor:
+                      resultat === res.value ? res.color : colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  impactAsync(ImpactFeedbackStyle.Medium);
+                  setResultat(res.value);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.resultatText,
+                    {
+                      color:
+                        resultat === res.value ? '#FFFFFF' : colors.textPrimary,
+                    },
+                  ]}
+                >
+                  {res.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Méthode */}
+        <View style={styles.field}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Méthode</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.methodesRow}
+          >
+            {METHODES.map((meth) => (
+              <TouchableOpacity
+                key={meth.value}
+                style={[
+                  styles.methodeChip,
+                  {
+                    backgroundColor:
+                      methode === meth.value ? colors.accent : colors.backgroundCard,
+                    borderColor:
+                      methode === meth.value ? colors.accent : colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  impactAsync(ImpactFeedbackStyle.Light);
+                  setMethode(meth.value);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.methodeText,
+                    {
+                      color:
+                        methode === meth.value ? colors.textOnGold : colors.textPrimary,
+                    },
+                  ]}
+                >
+                  {meth.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Technique */}
+        {(methode === 'soumission' || methode === 'ko' || methode === 'tko') && (
+          <View style={styles.field}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>
+              Technique
+            </Text>
+            <View
+              style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}
+            >
+              <Zap size={20} color={colors.textMuted} />
+              <TextInput
+                style={[styles.input, { color: colors.textPrimary }]}
+                placeholder="Ex: Triangle, Crochet gauche..."
+                placeholderTextColor={colors.textMuted}
+                value={technique}
+                onChangeText={setTechnique}
+                maxLength={100}
+              />
+            </View>
+          </View>
+        )}
+
+        {/* Round et Temps */}
+        <View style={styles.row}>
+          <View style={[styles.field, { flex: 1 }]}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>Round</Text>
+            <View
+              style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}
+            >
+              <Target size={20} color={colors.textMuted} />
+              <TextInput
+                style={[styles.input, { color: colors.textPrimary }]}
+                placeholder="1"
+                placeholderTextColor={colors.textMuted}
+                value={round}
+                onChangeText={setRound}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+            </View>
+          </View>
+
+          <View style={[styles.field, { flex: 1 }]}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>Temps</Text>
+            <View
+              style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}
+            >
+              <Clock size={20} color={colors.textMuted} />
+              <TextInput
+                style={[styles.input, { color: colors.textPrimary }]}
+                placeholder="3:42"
+                placeholderTextColor={colors.textMuted}
+                value={temps}
+                onChangeText={setTemps}
+                maxLength={10}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Poids pesée et Poids jour J */}
+        <View style={styles.row}>
+          <View style={[styles.field, { flex: 1 }]}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>
+              Poids pesée
+            </Text>
+            <View
+              style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}
+            >
+              <Scale size={20} color={colors.textMuted} />
+              <TextInput
+                style={[styles.input, { color: colors.textPrimary }]}
+                placeholder="70.5"
+                placeholderTextColor={colors.textMuted}
+                value={poidsPesee}
+                onChangeText={setPoidsPesee}
+                keyboardType="decimal-pad"
+                maxLength={6}
+              />
+            </View>
+          </View>
+
+          <View style={[styles.field, { flex: 1 }]}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>
+              Poids jour J
+            </Text>
+            <View
+              style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}
+            >
+              <Scale size={20} color={colors.textMuted} />
+              <TextInput
+                style={[styles.input, { color: colors.textPrimary }]}
+                placeholder="72.0"
+                placeholderTextColor={colors.textMuted}
+                value={poidsJourJ}
+                onChangeText={setPoidsJourJ}
+                keyboardType="decimal-pad"
+                maxLength={6}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Notes */}
+        <View style={styles.field}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Notes</Text>
+          <View
+            style={[
+              styles.textareaContainer,
+              { backgroundColor: colors.backgroundCard },
+            ]}
+          >
+            <FileText size={20} color={colors.textMuted} />
+            <TextInput
+              style={[styles.textarea, { color: colors.textPrimary }]}
+              placeholder="Stratégie, points à améliorer..."
+              placeholderTextColor={colors.textMuted}
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              maxLength={2000}
+            />
+          </View>
+        </View>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* Save Button */}
+      <View style={[styles.bottomContainer, { backgroundColor: colors.background }]}>
+        <TouchableOpacity
+          style={[
+            styles.saveButton,
+            { backgroundColor: colors.accent, opacity: isSaving ? 0.5 : 1 },
+          ]}
+          onPress={handleSave}
+          disabled={isSaving}
+          activeOpacity={0.8}
+        >
+          <Save size={20} color={colors.textOnGold} />
+          <Text style={[styles.saveButtonText, { color: colors.textOnGold }]}>
+            {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <PopupComponent />
+    </ScreenWrapper>
+  );
+}
+
+const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    padding: SPACING.lg,
+  },
+  field: {
+    marginBottom: SPACING.lg,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: SPACING.sm,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.lg,
+    minHeight: 52,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  inputText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  textareaContainer: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg,
+    minHeight: 100,
+  },
+  textarea: {
+    flex: 1,
+    fontSize: 15,
+  },
+
+  // Competitions
+  competitionsRow: {
+    gap: SPACING.sm,
+    paddingRight: SPACING.lg,
+  },
+  competitionChip: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.lg,
+    borderWidth: 2,
+  },
+  competitionChipText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  // Résultat
+  resultatRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  resultatChip: {
+    flex: 1,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg,
+    borderWidth: 2,
+    alignItems: 'center',
+  },
+  resultatText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  // Méthodes
+  methodesRow: {
+    gap: SPACING.sm,
+    paddingRight: SPACING.lg,
+  },
+  methodeChip: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.lg,
+    borderWidth: 2,
+  },
+  methodeText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  // Bottom
+  bottomContainer: {
+    padding: SPACING.lg,
+    paddingBottom: SPACING.xl,
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.lg,
+    borderRadius: RADIUS.xl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+});

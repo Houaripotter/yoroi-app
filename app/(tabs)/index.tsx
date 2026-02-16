@@ -1,673 +1,3424 @@
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
-  ActivityIndicator,
-  Dimensions,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
   View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+  Image,
+  Animated,
+  Share,
+  Alert,
+  Platform,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
-import { LineChart } from 'react-native-gifted-charts';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SoftCard } from '@/components/SoftCard';
-import { ProgressRing } from '@/components/ProgressRing';
-import { ProgressSteps } from '@/components/ProgressSteps';
-import { WeightTrendCard } from '@/components/WeightTrendCard';
-import { PredictionsList } from '@/components/PredictionsList';
-import { UserAvatar } from '@/components/UserAvatar';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import {
+  Scale,
+  Droplets,
+  Camera,
+  Sparkles,
+  Flame,
+  Zap,
+  Dumbbell,
+  Trophy,
+  ChevronRight,
+  Timer,
+  Ruler,
+  Heart,
+  HeartPulse,
+  TrendingDown,
+  TrendingUp,
+  Minus,
+  BarChart3,
+  Medal,
+  Palette,
+  Battery,
+  Moon,
+  Activity,
+  FileText,
+  Target,
+  Gift,
+  AlertTriangle,
+  Crown,
+  Waves,
+  Bed,
+  Bell,
+  Brain,
+  Stethoscope,
+  Scissors,
+  Settings,
+  FlaskConical,
+  Calculator,
+  Apple,
+  Clock,
+  BookOpen,
+  Plus,
+  Award,
+  Calendar,
+  Share2,
+  List,
+  Building2,
+  Cloud,
+  Watch,
+  Shield,
+} from 'lucide-react-native';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { format, differenceInDays } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { getProfile, getLatestWeight, getWeights, calculateStreak, getTrainings, Profile, Weight, Training } from '@/lib/database';
+import { getLatestBodyComposition } from '@/lib/bodyComposition';
+import { getSessionQuote, Citation } from '@/lib/citations';
+import { getCurrentRank } from '@/lib/ranks';
+import { getLevel } from '@/lib/gamification';
+import AvatarDisplay from '@/components/AvatarDisplay';
+import { RanksModal } from '@/components/RanksModal';
+import { LogoViewer } from '@/components/LogoViewer';
+import { MotivationPopup } from '@/components/MotivationPopup';
+import { getUserMode, getNextEvent } from '@/lib/fighterModeService';
+import { UserMode } from '@/lib/fighterMode';
+import { calculateReadinessScore, ReadinessScore } from '@/lib/readinessService';
+import { getJournalStats } from '@/lib/trainingJournalService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BatteryReadyPopup } from '@/components/BatteryReadyPopup';
+import { PerformanceRadar } from '@/components/PerformanceRadar';
+import { HealthspanChart } from '@/components/HealthspanChart';
+import { HydrationCard2 } from '@/components/cards/HydrationCard2';
+import { WatchSyncService } from '@/lib/watchSyncService';
+import { WeightLottieCard } from '@/components/cards/WeightLottieCard';
+import { WeightFullCard } from '@/components/cards/WeightFullCard';
+import { SleepLottieCard } from '@/components/cards/SleepLottieCard';
+import { ChargeLottieCard } from '@/components/cards/ChargeLottieCard';
+import { AnimatedCompositionCircle } from '@/components/AnimatedCompositionCircle';
+import { StreakCalendar } from '@/components/StreakCalendar';
+import { AvatarViewerModal } from '@/components/AvatarViewerModal';
+import HealthConnect from '@/lib/healthConnect.ios';
+import { healthConnect as healthConnectService } from '@/lib/healthConnect';
+import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
+import { UpdateChangelogModal } from '@/components/UpdateChangelogModal';
+import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
+import { RatingPopup } from '@/components/RatingPopup';
+import ratingService from '@/lib/ratingService';
+import { addHydration as addHydrationToQuests } from '@/lib/quests';
+import { HomeToolsMenu } from '@/components/home/HomeToolsMenu';
+
+// Mode Essentiel
+import { useViewMode } from '@/hooks/useViewMode';
+import { ViewModeSwitch } from '@/components/home/ViewModeSwitch';
+import { ViewModeHint } from '@/components/home/ViewModeHint';
+import { HomeEssentielContent } from '@/components/home/HomeEssentielContent';
+import CompactObjectiveSwitch from '@/components/home/CompactObjectiveSwitch';
+import { EssentielWeightCard } from '@/components/home/essentiel/EssentielWeightCard';
+import { EssentielActivityCard } from '@/components/home/essentiel/EssentielActivityCard';
+import { EssentielWeekSummary } from '@/components/home/essentiel/EssentielWeekSummary';
+import { HomeTabView } from '@/components/home/HomeTabView';
+
+// Composants animés premium
+import AnimatedAvatar from '@/components/AnimatedAvatar';
+import AnimatedCounter from '@/components/AnimatedCounter';
+import AnimatedProgressBar from '@/components/AnimatedProgressBar';
 import { AnimatedCard } from '@/components/AnimatedCard';
-import { InteractiveLineChart } from '@/components/InteractiveLineChart';
-import { SkeletonLoader } from '@/components/SkeletonLoader';
-import { MetricSelector } from '@/components/MetricSelector';
-import { BMICard } from '@/components/BMICard';
-import { MetricType, METRIC_CONFIGS, WeightEntry } from '@/types/health';
-import { useMemo, useEffect, useState } from 'react';
-import { Platform } from 'react-native';
-import { useFocusEffect, router } from 'expo-router';
-import { useCallback } from 'react';
-import { theme } from '@/lib/theme';
-import { getAllMeasurements, getUserSettings } from '@/lib/storage';
+import AnimatedRing from '@/components/AnimatedRing';
+import { AnimatedBattery } from '@/components/AnimatedBattery';
+import PulsingBadge from '@/components/PulsingBadge';
+import AnimatedWaterBottle from '@/components/AnimatedWaterBottle';
+import AnimatedSleepWave from '@/components/AnimatedSleepWave';
+import AnimatedRank from '@/components/AnimatedRank';
 
-const motivationalQuotes = [
-  "⛩️ Être et durer ⛩️",
-  "⛩️ Ce qui ne te tue pas te rend plus fort ⛩️",
-  "⛩️ La discipline est mère du succès ⛩️",
-  "⛩️ Tomber sept fois, se relever huit ⛩️",
-  "⛩️ Dieu n'impose à aucune âme une charge supérieure à sa capacité ⛩️",
-  "⛩️ Le seul combat perdu d'avance est celui auquel on renonce ⛩️",
-];
+// Services
+import { getSleepStats, getSleepAdvice, formatSleepDuration, SleepStats, getSleepGoal } from '@/lib/sleepService';
+import { getWeeklyLoadStats, formatLoad, getRiskColor, WeeklyLoadStats } from '@/lib/trainingLoadService';
+import { getDailyChallenges, ActiveChallenge } from '@/lib/challengesService';
+import { generateWeeklyReport, formatReportForSharing, WeeklyReport } from '@/lib/weeklyReportService';
+import { getHomeCustomization, isSectionVisible as checkSectionVisible, HomeSection } from '@/lib/homeCustomizationService';
+import logger from '@/lib/security/logger';
 
-export default function DashboardScreen() {
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [selectedMetric, setSelectedMetric] = useState<MetricType>('weight');
-  const [weightEntries, setWeightEntries] = useState<WeightEntry>([]);
-  const [currentWeight, setCurrentWeight] = useState<number | null>(null);
-  const [weightHistoryData, setWeightHistoryData] = useState<any[]>([]); // Nouvel état pour les données du graphique
-  const [goalWeight, setGoalWeight] = useState(75.0);
-  const [startWeight] = useState(95.0);
-  const [height] = useState(175);
-  const [currentQuote, setCurrentQuote] = useState('');
-  const [selectedPeriod, setSelectedPeriod] = useState<'7' | '30' | '90' | 'all'>('30');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const HYDRATION_KEY = '@yoroi_hydration_today';
+const HYDRATION_GOAL_KEY = '@yoroi_hydration_goal';
+const DEFAULT_HYDRATION_GOAL = 2500;
+
+// ============================================
+// ÉCRAN ACCUEIL - VERSION COMPLÈTE YOROI
+// ============================================
+
+export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
+  const { t, language } = useI18n();
+  const params = useLocalSearchParams();
+
+  // Mode d'affichage (Complet / Essentiel)
+  const { mode, toggleMode, isLoading: isLoadingMode } = useViewMode();
+
+  // État "Voir plus" pour mode Complet
+  const [showMoreSections, setShowMoreSections] = useState(false);
+
+  // États de base
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [latestWeight, setLatestWeight] = useState<Weight | null>(null);
+  const [weightHistory, setWeightHistory] = useState<Weight[]>([]);
+  const [streak, setStreak] = useState(0);
+  const [trainings, setTrainings] = useState<Training[]>([]);
+  const [dailyQuote, setDailyQuote] = useState<Citation | null>(null);
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [ranksModalVisible, setRanksModalVisible] = useState(false);
+  const [logoViewerVisible, setLogoViewerVisible] = useState(false);
+  const [avatarViewerVisible, setAvatarViewerVisible] = useState(false);
+
+  // Mode Compétiteur - Toggle ON/OFF
+  const [isCompetitorMode, setIsCompetitorMode] = useState(false);
+
+
+  // État nextEvent pour afficher les compétitions
+  const [nextEvent, setNextEvent] = useState<{
+    type: 'competition' | 'combat' | null;
+    name: string;
+    daysLeft: number;
+    date: string;
+    sport?: string;
+  } | null>(null);
+
+  // État readiness pour l'énergie (calculé depuis sommeil, hydratation, charge, streak)
+  const [readinessScore, setReadinessScore] = useState<number>(0);
+  const [batteryFillPercent, setBatteryFillPercent] = useState<number>(0);
+
+  // Mode Screenshot pour les données de démo
+  const [isScreenshotMode, setIsScreenshotMode] = useState<boolean>(false);
+  const batteryIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Trigger pour rafraîchir l'avatar après changement
+  const [avatarRefreshTrigger, setAvatarRefreshTrigger] = useState(0);
+
+  // Tutoriel de découverte
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [showWhatIsNew, setShowWhatIsNew] = useState(false);
+
+  // Protection anti-spam navigation
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Pop-up de notation
+  const [showRatingPopup, setShowRatingPopup] = useState(false);
+
+  // Vérifier si c'est la première visite ou une mise à jour
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+
+    const checkFirstVisit = async () => {
+      try {
+        // 1. Gérer le message de mise à jour (What's New)
+        const lastVersionSeen = await AsyncStorage.getItem('@yoroi_last_version_seen');
+        const currentVersion = '2.0.0'; // À mettre à jour à chaque build Store
+
+        if (lastVersionSeen !== currentVersion) {
+          setShowWhatIsNew(true);
+          await AsyncStorage.setItem('@yoroi_last_version_seen', currentVersion);
+        }
+
+        // 2. Gérer le tutoriel home
+        const visited = await hasVisitedPage('home');
+        if (!visited && !showWhatIsNew) {
+          timer = setTimeout(() => setShowTutorial(true), 1000);
+        }
+      } catch (error) {
+        logger.error('Erreur vérification première visite:', error);
+        // Ne pas bloquer l'app si le storage échoue
+      }
+    };
+    checkFirstVisit();
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+
+  // Afficher la popup de notation après navigation depuis l'étape 4
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+
+    if (params.showRating === 'true') {
+      timer = setTimeout(() => {
+        setShowRatingPopup(true);
+      }, 500);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [params.showRating]);
+
+  const handleCloseTutorial = useCallback(async () => {
+    await markPageAsVisited('home');
+    setShowTutorial(false);
+  }, []);
+
+  // Fermer sans marquer comme vu (bouton "Plus tard")
+  const handleLaterTutorial = useCallback(() => {
+    setShowTutorial(false);
+  }, []);
+
+  // ✅ FIX PERF: Avatar chargé une seule fois au montage (pas à chaque focus)
+  // Supprimé useFocusEffect qui causait des re-renders inutiles
+
+  // Animation de remplissage de la batterie - UNIQUEMENT au changement de score
+  const hasAnimatedBattery = useRef(false);
+  useEffect(() => {
+    // Ne pas re-animer si déjà fait et score identique
+    if (hasAnimatedBattery.current && batteryFillPercent === readinessScore) {
+      return;
+    }
+
+    // Clear any existing interval
+    if (batteryIntervalRef.current) {
+      clearInterval(batteryIntervalRef.current);
+    }
+
+    // Première animation: partir de 0
+    // Retour sur écran: garder la valeur actuelle
+    const startValue = hasAnimatedBattery.current ? batteryFillPercent : 0;
+    if (!hasAnimatedBattery.current) {
+      setBatteryFillPercent(0);
+    }
+
+    let currentValue = startValue;
+    const targetValue = readinessScore;
+
+    // Démarrer l'animation après un délai
+    const startTimeout = setTimeout(() => {
+      batteryIntervalRef.current = setInterval(() => {
+        currentValue += 3;
+        if (currentValue >= targetValue) {
+          currentValue = targetValue;
+          setBatteryFillPercent(targetValue);
+          hasAnimatedBattery.current = true;
+          if (batteryIntervalRef.current) {
+            clearInterval(batteryIntervalRef.current);
+            batteryIntervalRef.current = null;
+          }
+        } else {
+          setBatteryFillPercent(currentValue);
+        }
+      }, 40);
+    }, hasAnimatedBattery.current ? 0 : 500);
+
+    return () => {
+      clearTimeout(startTimeout);
+      if (batteryIntervalRef.current) {
+        clearInterval(batteryIntervalRef.current);
+        batteryIntervalRef.current = null;
+      }
+    };
+  }, [readinessScore]);
+
+  // Animation toggle compétiteur
+  const toggleAnim = useRef(new Animated.Value(isCompetitorMode ? 1 : 0)).current;
+  const toggleScaleAnim = useRef(new Animated.Value(1)).current;
+  const toggleGlowAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
-    setCurrentQuote(motivationalQuotes[randomIndex]);
-  }, []);
+    // Animation du slide avec bounce
+    Animated.spring(toggleAnim, {
+      toValue: isCompetitorMode ? 1 : 0,
+      friction: 5,
+      tension: 50,
+      useNativeDriver: true,
+    }).start();
 
-  const fetchDashboardData = useCallback(async () => {
-    setLoading(true);
-
-    try {
-      // Récupération de toutes les mesures localement
-      const measurements = await getAllMeasurements();
-
-      // Récupération du poids le plus récent
-      if (measurements.length > 0) {
-        setCurrentWeight(measurements[0].weight);
-      } else {
-        setCurrentWeight(null);
-      }
-
-      // Récupération de l'objectif de poids depuis les paramètres
-      const settings = await getUserSettings();
-      setGoalWeight(settings.weight_goal || 75.0);
-
-      // Limiter aux 90 dernières mesures pour le calcul des tendances
-      const historyData = measurements.slice(0, 90);
-
-      if (historyData.length > 0) {
-        // Transformer les données pour weightEntries (ordre descendant pour calcul de tendance)
-        const entriesData = historyData.map((item) => ({
-          date: item.date,
-          weight: item.weight,
-          bodyFat: item.body_fat,
-          muscleMass: item.muscle_mass,
-          water: item.water,
-        }));
-        setWeightEntries(entriesData);
-
-        // Transformer les données pour LineChart (ordre ascendant pour affichage)
-        const formattedData = [...historyData].reverse().map((item) => ({
-          value: item.weight,
-          label: new Date(item.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
-        }));
-        setWeightHistoryData(formattedData);
-      } else {
-        setWeightHistoryData([]);
-        setWeightEntries([]);
-      }
-
-      console.log('✅ Données chargées depuis le stockage local');
-    } catch (error) {
-      console.error('❌ Erreur chargement données:', error);
-      setCurrentWeight(null);
-      setWeightHistoryData([]);
-      setWeightEntries([]);
+    // Animation glow pulsant quand activé
+    if (isCompetitorMode) {
+      const glowLoop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(toggleGlowAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(toggleGlowAnim, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      glowLoop.start();
+      return () => glowLoop.stop();
+    } else {
+      toggleGlowAnim.setValue(0);
     }
+  }, [isCompetitorMode]);
 
-    setLoading(false);
+  // Animations citation cerveau + bulle
+  const quoteFadeAnim = useRef(new Animated.Value(0)).current;
+  const quoteScaleAnim = useRef(new Animated.Value(0.95)).current;
+  const quotePulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // Animation apparition de la citation
+    if (dailyQuote) {
+      Animated.parallel([
+        Animated.timing(quoteFadeAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(quoteScaleAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [dailyQuote]);
+
+  useEffect(() => {
+    // Animation pulse cerveau (infinie)
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(quotePulseAnim, {
+          toValue: 1.15,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(quotePulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
   }, []);
 
-  // Supprimer loadData car les données sont maintenant gérées par fetchDashboardData
-  // const loadData = () => {
-  //   setWeightEntries([
-  //     { date: '2024-11-27', weight: 89.5, bodyFat: 22.3, muscleMass: 68.5, water: 55.2 },
-  //     { date: '2024-11-26', weight: 89.7, bodyFat: 22.5, muscleMass: 68.3, water: 55.0 },
-  //     { date: '2024-11-25', weight: 89.8, bodyFat: 22.6, muscleMass: 68.2, water: 54.9 },
-  //     { date: '2024-11-24', weight: 90.0, bodyFat: 22.8, muscleMass: 68.0, water: 54.8 },
-  //     { date: '2024-11-23', weight: 90.3, bodyFat: 23.0, muscleMass: 67.8, water: 54.6 },
-  //     { date: '2024-11-22', weight: 90.2, bodyFat: 22.9, muscleMass: 67.9, water: 54.7 },
-  //     { date: '2024-11-21', weight: 90.5, bodyFat: 23.2, muscleMass: 67.6, water: 54.5 },
-  //     { date: '2024-11-20', weight: 90.8, bodyFat: 23.4, muscleMass: 67.4, water: 54.3 },
-  //     { date: '2024-11-19', weight: 91.0, bodyFat: 23.6, muscleMass: 67.2, water: 54.2 },
-  //     { date: '2024-11-18', weight: 91.2, bodyFat: 23.8, muscleMass: 67.0, water: 54.0 },
-  //     { date: '2024-11-17', weight: 91.5, bodyFat: 24.0, muscleMass: 66.8, water: 53.8 },
-  //     { date: '2024-11-16', weight: 91.8, bodyFat: 24.2, muscleMass: 66.6, water: 53.6 },
-  //     { date: '2024-11-15', weight: 92.0, bodyFat: 24.4, muscleMass: 66.4, water: 53.5 },
-  //     { date: '2024-11-14', weight: 92.3, bodyFat: 24.6, muscleMass: 66.2, water: 53.3 },
-  //   ]);
-  // };
+  const [userMode, setUserMode] = useState<UserMode>('loisir');
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchDashboardData();
-    }, [fetchDashboardData])
+  // Hydratation
+  const [hydration, setHydration] = useState(0);
+  const [hydrationGoal, setHydrationGoal] = useState(DEFAULT_HYDRATION_GOAL);
+  const waterAnim = useRef(new Animated.Value(0)).current;
+
+  // Nouveaux états
+  const [sleepStats, setSleepStats] = useState<SleepStats | null>(null);
+  const [loadStats, setLoadStats] = useState<WeeklyLoadStats | null>(null);
+  const [dailyChallenges, setDailyChallenges] = useState<ActiveChallenge[]>([]);
+  const [weeklyReport, setWeeklyReport] = useState<WeeklyReport | null>(null);
+  const [bodyComposition, setBodyComposition] = useState<any>(null);
+  const [sleepGoal, setSleepGoal] = useState(480); // 8h par défaut
+
+  // Personnalisation de l'accueil
+  const [homeSections, setHomeSections] = useState<HomeSection[]>([]);
+
+  // Activité (pas et calories)
+  const [steps, setSteps] = useState(0);
+  const [stepsGoal, setStepsGoal] = useState(10000);
+  const [calories, setCalories] = useState(0);
+
+  // Hydratation functions
+  // ✅ FIX: Charger depuis Apple Health EN PRIORITÉ, puis AsyncStorage en fallback
+  const loadHydration = useCallback(async () => {
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd');
+
+      // 1. Charger l'objectif depuis AsyncStorage
+      const goalStored = await AsyncStorage.getItem(HYDRATION_GOAL_KEY);
+      const goal = goalStored ? parseFloat(goalStored) : DEFAULT_HYDRATION_GOAL;
+      setHydrationGoal(goal);
+
+      // 2. ✅ PRIORITÉ: Essayer Apple Health d'abord
+      let hydrationValue = 0;
+      let sourceUsed = 'none';
+
+      try {
+        const healthKitData = await HealthConnect.getTodayHydration();
+        if (healthKitData && healthKitData.amount > 0) {
+          hydrationValue = healthKitData.amount; // Déjà en ml
+          sourceUsed = 'HealthKit';
+          logger.info(`[Hydratation] Apple Health: ${hydrationValue}ml`);
+        }
+      } catch (healthKitError) {
+        logger.info('[Hydratation] Apple Health non disponible, fallback AsyncStorage');
+      }
+
+      // 3. Fallback: AsyncStorage si HealthKit n'a pas de données
+      if (hydrationValue === 0) {
+        const stored = await AsyncStorage.getItem(`${HYDRATION_KEY}_${today}`);
+        if (stored) {
+          hydrationValue = parseInt(stored, 10);
+          sourceUsed = 'AsyncStorage';
+          logger.info(`[Hydratation] AsyncStorage: ${hydrationValue}ml`);
+        }
+      }
+
+      // 4. Mettre à jour l'UI
+      if (hydrationValue > 0) {
+        setHydration(hydrationValue);
+        animateWater(hydrationValue, goal);
+      }
+
+      logger.info(`[Hydratation] Source utilisée: ${sourceUsed}, Valeur: ${hydrationValue}ml`);
+    } catch (error) {
+      logger.error('Erreur hydratation:', error);
+    }
+  }, []);
+
+  // ✅ FIX: Sauvegarder dans AsyncStorage ET Apple Health
+  const saveHydration = useCallback(async (value: number, amountAdded?: number) => {
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd');
+
+      // 1. Toujours sauvegarder dans AsyncStorage (backup local)
+      await AsyncStorage.setItem(`${HYDRATION_KEY}_${today}`, value.toString());
+
+      // 2. ✅ NOUVEAU: Écrire dans Apple Health si on ajoute de l'eau
+      if (amountAdded && amountAdded > 0) {
+        try {
+          await HealthConnect.writeHydration(amountAdded);
+          logger.info(`[Hydratation] +${amountAdded}ml écrit dans Apple Health`);
+        } catch (healthKitError) {
+          logger.info('[Hydratation] Écriture Apple Health échouée (permissions?)');
+        }
+      }
+    } catch (error) {
+      logger.error('Erreur sauvegarde hydratation:', error);
+    }
+  }, []);
+
+  const animateWater = useCallback((value: number, goal: number = DEFAULT_HYDRATION_GOAL) => {
+    Animated.spring(waterAnim, {
+      toValue: Math.min(value / goal, 1),
+      tension: 30,
+      friction: 8,
+      useNativeDriver: false, // REQUIS: utilisé pour interpoler height/width d'eau (layout properties)
+    }).start();
+  }, [waterAnim]);
+
+  // ✅ FIX: Écrire dans Apple Health, sync Watch ET mettre à jour les quêtes
+  const addWater = useCallback((amount: number) => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    const newValue = Math.max(0, hydration + amount);
+    setHydration(newValue);
+    // Passer le montant ajouté pour l'écrire dans Apple Health
+    saveHydration(newValue, amount > 0 ? amount : undefined);
+    animateWater(newValue, hydrationGoal);
+
+    // ✅ NOUVEAU: Sync vers Apple Watch
+    WatchSyncService.syncHydration(newValue, hydrationGoal).catch(() => {
+      // Silencieux si Watch non disponible
+    });
+
+    // ✅ FIX: Mettre à jour la quête d'hydratation (en litres)
+    if (amount > 0) {
+      const litersToAdd = amount / 1000;
+      addHydrationToQuests(litersToAdd).catch(() => {
+        // Silencieux si erreur
+      });
+    }
+  }, [hydration, hydrationGoal, saveHydration, animateWater]);
+
+  // Protection navigation anti-spam
+  const handleNavigate = useCallback((route: string) => {
+    if (isNavigating) return;
+    setIsNavigating(true);
+    router.push(route as any);
+    setTimeout(() => setIsNavigating(false), 1000);
+  }, [isNavigating]);
+
+  // Handlers de navigation mémorisés pour éviter les callbacks inline
+  const handleNavigateProfile = useCallback(() => {
+    handleNavigate('/profile');
+  }, [handleNavigate]);
+
+  const handleNavigateAvatarSelection = useCallback(() => {
+    handleNavigate('/avatar-selection');
+  }, [handleNavigate]);
+
+  const handleNavigateActivityDetail = useCallback(() => {
+    handleNavigate('/activity-detail');
+  }, [handleNavigate]);
+
+  const handleNavigateGamification = useCallback(() => {
+    handleNavigate('/gamification');
+  }, [handleNavigate]);
+
+  const handleNavigateWeightStats = useCallback(() => {
+    handleNavigate('/stats?tab=poids');
+  }, [handleNavigate]);
+
+  const handleNavigateSleep = useCallback(() => {
+    handleNavigate('/sleep');
+  }, [handleNavigate]);
+
+  const handleNavigateCharge = useCallback(() => {
+    handleNavigate('/charge');
+  }, [handleNavigate]);
+
+  const handleNavigateTrainingJournal = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/training-journal');
+  }, [handleNavigate]);
+
+  const handleNavigateInfirmary = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/infirmary');
+  }, [handleNavigate]);
+
+  const handleNavigateChallenges = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/challenges');
+  }, [handleNavigate]);
+
+  const handleNavigateRadarPerformance = useCallback(() => {
+    handleNavigate('/radar-performance');
+  }, [handleNavigate]);
+
+  const handleNavigateHealthStats = useCallback(() => {
+    // CORRECTION: L'onglet s'appelle 'sante' dans StatsTabViewNew, pas 'vitalite'
+    handleNavigate('/stats?tab=sante');
+  }, [handleNavigate]);
+
+  const handleNavigateAddWeight = useCallback(() => {
+    handleNavigate('/add');
+  }, [handleNavigate]);
+
+  const handleNavigateTimer = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/timer');
+  }, [handleNavigate]);
+
+  const handleNavigatePlanning = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/planning');
+  }, [handleNavigate]);
+
+  const handleNavigateProgramme = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/planning?tab=programme');
+  }, [handleNavigate]);
+
+  const handleNavigateEnergy = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/energy');
+  }, [handleNavigate]);
+
+  const handleNavigateSavoir = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/savoir');
+  }, [handleNavigate]);
+
+  const handleNavigateCalculators = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/calculators');
+  }, [handleNavigate]);
+
+  const handleToggleCompetitorMode = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Medium);
+    setIsCompetitorMode(!isCompetitorMode);
+  }, [isCompetitorMode]);
+
+  const handleNavigateFasting = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/fasting');
+  }, [handleNavigate]);
+
+  const handleNavigatePhotos = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/photos');
+  }, [handleNavigate]);
+
+  const handleNavigateCutMode = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/cut-mode');
+  }, [handleNavigate]);
+
+  const handleNavigatePalmares = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/palmares');
+  }, [handleNavigate]);
+
+  const handleNavigateHydration = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/hydration');
+  }, [handleNavigate]);
+
+  const handleNavigateBodyComposition = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/body-composition');
+  }, [handleNavigate]);
+
+  // Handlers pour les modaux
+  const handleCloseRanksModal = useCallback(() => {
+    setRanksModalVisible(false);
+  }, []);
+
+  const handleCloseLogoViewer = useCallback(() => {
+    setLogoViewerVisible(false);
+  }, []);
+
+  const handleCloseAvatarViewer = useCallback(() => {
+    setAvatarViewerVisible(false);
+  }, []);
+
+  const handleCloseWhatIsNew = useCallback(() => {
+    setShowWhatIsNew(false);
+  }, []);
+
+  const handleCloseRatingPopup = useCallback(async () => {
+    setShowRatingPopup(false);
+    await ratingService.onPopupDismissed();
+  }, []);
+
+  const handleRated = useCallback(async () => {
+    setShowRatingPopup(false);
+    await ratingService.onRated();
+  }, []);
+
+  // Chargement des données
+  const cancelledRef = useRef(false);
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [profileData, weight, history, streakDays, quote, allTrainings, mode, sleep, load, challenges, report, event, sections] = await Promise.all([
+        getProfile(),
+        getLatestWeight(),
+        getWeights(30),
+        calculateStreak(),
+        getSessionQuote(language as any),
+        getTrainings(),
+        getUserMode(),
+        getSleepStats(),
+        getWeeklyLoadStats(),
+        getDailyChallenges(),
+        generateWeeklyReport(),
+        getNextEvent(),
+        getHomeCustomization(),
+      ]);
+
+      if (cancelledRef.current) return;
+      setProfile(profileData);
+      setLatestWeight(weight);
+      setWeightHistory(history);
+      setStreak(streakDays);
+      setDailyQuote(quote);
+      setTrainings(allTrainings);
+      setUserMode(mode);
+      setSleepStats(sleep);
+      setLoadStats(load);
+      setDailyChallenges(challenges);
+      setWeeklyReport(report);
+      setNextEvent(event);
+      setHomeSections(sections);
+
+      const bodyComp = await getLatestBodyComposition();
+      if (cancelledRef.current) return;
+      setBodyComposition(bodyComp);
+
+      // Vérifier le mode screenshot
+      const screenshotMode = await AsyncStorage.getItem('@yoroi_screenshot_mode');
+      if (cancelledRef.current) return;
+      setIsScreenshotMode(screenshotMode === 'true');
+
+      const goal = await getSleepGoal();
+      setSleepGoal(goal);
+
+      // Charger les pas et calories depuis Apple Health
+      try {
+        const stepsData = await HealthConnect.getTodaySteps();
+        if (stepsData?.count) {
+          setSteps(stepsData.count);
+        }
+        const caloriesData = await HealthConnect.getTodayCalories();
+        if (caloriesData?.active) {
+          setCalories(Math.round(caloriesData.active));
+        }
+      } catch (error) {
+        logger.info('Données activité non disponibles depuis Apple Health');
+      }
+
+      setTotalPoints(history.length * 10 + allTrainings.length * 25 + (streakDays >= 7 ? 50 : 0));
+      loadHydration();
+
+      // Calculer le score de readiness basé sur : sommeil, charge, hydratation, streak
+      try {
+        const readiness = await calculateReadinessScore(streakDays);
+        setReadinessScore(Math.round(readiness.score));
+      } catch {
+        setReadinessScore(0);
+      }
+
+      // ✅ NOUVEAU: Sync initiale vers Apple Watch (en arrière-plan)
+      WatchSyncService.initialize().then(() => {
+        // Sync les données principales vers la Watch
+        WatchSyncService.syncAllData({
+          userName: profileData?.name,
+          weight: weight?.weight,
+          streak: streakDays,
+          level: getLevel(history, allTrainings).level,
+          rank: getCurrentRank(streakDays)?.name,
+        }).catch(() => {
+          // Silencieux si Watch non disponible
+        });
+      }).catch(() => {
+        // Module Watch non disponible
+      });
+    } catch (error) {
+      logger.error('Erreur:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadHydration]);
+
+  // Charger les données UNIQUEMENT au premier montage (pas à chaque focus)
+  useEffect(() => {
+    cancelledRef.current = false;
+    loadData();
+    return () => { cancelledRef.current = true; };
+  }, []);
+
+  // Auto-sync: synchroniser les donnees de sante si derniere sync > 15 min
+  useEffect(() => {
+    const autoSync = async () => {
+      try {
+        await healthConnectService.initialize();
+        const status = healthConnectService.getSyncStatus();
+        if (!status.isConnected || !status.lastSync) return;
+
+        const lastSyncTime = new Date(status.lastSync).getTime();
+        const fifteenMinutes = 15 * 60 * 1000;
+        if (Date.now() - lastSyncTime > fifteenMinutes) {
+          logger.info('[AutoSync] Last sync > 15 min, syncing...');
+          await healthConnectService.syncAll();
+          logger.info('[AutoSync] Auto-sync complete');
+        }
+      } catch (e) {
+        // Auto-sync is best-effort, don't crash
+        logger.warn('[AutoSync] Error:', e);
+      }
+    };
+    autoSync();
+  }, []);
+
+  // Helper pour vérifier la visibilité d'une section
+  const isSectionVisible = useCallback((sectionId: string): boolean => {
+    return checkSectionVisible(homeSections, sectionId);
+  }, [homeSections]);
+
+  // Rotation automatique des citations toutes les 5 minutes
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const newQuote = await getSessionQuote(language as any);
+      setDailyQuote(newQuote);
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, [language]);
+
+  // Calculs
+  const rank = getCurrentRank(streak);
+  // Niveau unifié basé sur le rang (streak), pas sur les XP
+  const rankLevel = { ashigaru: 1, bushi: 2, samurai: 3, ronin: 4, shogun: 5 }[rank?.id || 'ashigaru'] || 1;
+  const level = getLevel(totalPoints); // Gardé pour compatibilité
+  const currentWeight = latestWeight?.weight || null;
+  const startWeight = profile?.start_weight || (weightHistory.length > 0 ? weightHistory[weightHistory.length - 1]?.weight : null);
+  const targetWeight = profile?.target_weight || null;
+  const weightLost = currentWeight && startWeight ? startWeight - currentWeight : 0;
+  const totalToLose = startWeight && targetWeight ? Math.max(0, startWeight - targetWeight) : null;
+  const remainingToLose = currentWeight && targetWeight ? Math.max(0, currentWeight - targetWeight) : null;
+  const weightProgress = useMemo(() =>
+    totalToLose && currentWeight ? Math.min(1, Math.max(0, (startWeight! - currentWeight) / totalToLose)) : 0,
+    [totalToLose, currentWeight, startWeight]
   );
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchDashboardData();
-    setRefreshing(false);
-  }, [fetchDashboardData]);
-
-  const chartData = useMemo(() => {
-    const recentEntries = weightEntries.slice(0, 14).reverse();
-    return recentEntries.map((entry) => ({
-      value: entry[selectedMetric] || entry.weight,
-      date: entry.date,
-    }));
-  }, [weightEntries, selectedMetric]);
-
-  const currentMetricConfig = METRIC_CONFIGS[selectedMetric];
-
-  const progressSteps = useMemo(() => {
-    const totalSteps = 8;
-    const stepSize = (startWeight - goalWeight) / (totalSteps - 1);
-    return Array.from({ length: totalSteps }, (_, i) => ({
-      weight: startWeight - stepSize * i,
-      completed: currentWeight <= startWeight - stepSize * i,
-    }));
-  }, [currentWeight, startWeight, goalWeight]);
-
-  const weightTrends = useMemo(() => {
-    const calculateMovingAverage = (entries: WeightEntry[], start: number, end: number) => {
-      if (entries.length === 0) return 0;
-      const relevantEntries = entries.slice(start, end);
-      const sum = relevantEntries.reduce((acc, entry) => acc + entry.weight, 0);
-      return sum / relevantEntries.length;
+  // ✅ FIX PERF: Mémoriser le calcul de tendance
+  const { avgWeeklyLoss, trend } = useMemo(() => {
+    if (weightHistory.length < 7) {
+      return { avgWeeklyLoss: 0, trend: 'stable' as const };
+    }
+    const avg = (weightHistory[weightHistory.length - 1]?.weight - weightHistory[0]?.weight) / (weightHistory.length / 7);
+    return {
+      avgWeeklyLoss: avg,
+      trend: (avg < -0.1 ? 'down' : avg > 0.1 ? 'up' : 'stable') as 'down' | 'up' | 'stable'
     };
+  }, [weightHistory]);
 
-    // Tendance 7 jours (moyenne mobile)
-    let sevenDayChange = 0;
-    if (weightEntries.length >= 14) {
-      const last7DaysAvg = calculateMovingAverage(weightEntries, 0, 7); // Jours 1-7
-      const prev7DaysAvg = calculateMovingAverage(weightEntries, 7, 14); // Jours 8-14
-      sevenDayChange = last7DaysAvg - prev7DaysAvg;
-    }
-
-    // Tendance 30 jours (moyenne mobile)
-    let thirtyDayChange = 0;
-    if (weightEntries.length >= 60) {
-      const last30DaysAvg = calculateMovingAverage(weightEntries, 0, 30);
-      const prev30DaysAvg = calculateMovingAverage(weightEntries, 30, 60);
-      thirtyDayChange = last30DaysAvg - prev30DaysAvg;
-    }
-
-    // Tendance 90 jours (moyenne mobile)
-    let ninetyDayChange = 0;
-    if (weightEntries.length >= 90) {
-      const last45DaysAvg = calculateMovingAverage(weightEntries, 0, 45);
-      const prev45DaysAvg = calculateMovingAverage(weightEntries, 45, 90);
-      ninetyDayChange = last45DaysAvg - prev45DaysAvg;
-    }
-
-    const totalChange = currentWeight !== null ? currentWeight - startWeight : 0;
-
-    return [
-      { period: '7j', change: sevenDayChange, isPositive: sevenDayChange < 0 },
-      { period: '30j', change: thirtyDayChange, isPositive: thirtyDayChange < 0 },
-      { period: '90j', change: ninetyDayChange, isPositive: ninetyDayChange < 0 },
-      { period: 'Total', change: totalChange, isPositive: totalChange < 0 },
-    ];
-  }, [weightEntries, currentWeight, startWeight]);
-
-  const predictions = useMemo(() => [
-    { label: 'Dans 7 jours', weight: 88.8, date: '8 Déc 2024' },
-    { label: 'Dans 1 mois', weight: 86.5, date: '1 Jan 2025' },
-    { label: 'Dans 3 mois', weight: 82.0, date: '1 Mars 2025' },
-    { label: `Objectif (${goalWeight}kg)`, weight: goalWeight, date: '15 Juin 2025', isGoal: true },
-  ], []);
-
-  const filteredWeightData = useMemo(() => {
-    if (weightHistoryData.length === 0) return [];
-
-    const daysMap = {
-      '7': 7,
-      '30': 30,
-      '90': 90,
-      'all': weightHistoryData.length
-    };
-
-    const daysToShow = daysMap[selectedPeriod];
-    return weightHistoryData.slice(-daysToShow);
-  }, [weightHistoryData, selectedPeriod]);
-
-  const getGreeting = () => {
+  // Salutation
+  const getGreeting = useCallback(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Bonjour';
-    if (hour < 18) return 'Bon après-midi';
+    if (hour >= 5 && hour < 12) return 'Bonjour';
+    if (hour >= 12 && hour < 18) return 'Bon après-midi';
     return 'Bonsoir';
-  };
+  }, []);
 
-  if (loading) {
-    return <SkeletonLoader />;
-  }
+  // Calcul Batterie Athlète
+  const calculateBatteryPercent = useCallback(() => {
+    let score = 15; // Base minimum pour un nouvel utilisateur
+    score += Math.min(streak * 2, 20);
+    score += (hydration / hydrationGoal) * 15;
+    if (sleepStats && sleepStats.averageDuration >= 420) score += 15;
+    else if (sleepStats && sleepStats.averageDuration >= 360) score += 5;
+    if (trainings.length > 0) {
+      const lastTraining = new Date(trainings[0].date);
+      const daysSince = differenceInDays(new Date(), lastTraining);
+      if (daysSince <= 1) score += 10;
+      else if (daysSince > 3) score -= 10;
+    }
+    return Math.max(0, Math.min(100, score));
+  }, [streak, hydration, hydrationGoal, sleepStats, trainings]);
 
-  const screenWidth = Dimensions.get('window').width;
+  const batteryPercent = useMemo(() => calculateBatteryPercent(), [streak, hydration, hydrationGoal, sleepStats, trainings]);
+  const last7Weights = useMemo(() => weightHistory.slice(0, 7).reverse(), [weightHistory]);
 
-  return (
-    <View style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#00C4B4"
-            colors={['#00C4B4']}
-            progressBackgroundColor="#FFFFFF"
-          />
-        }
-      >
-        {/* Citation motivante en haut du ScrollView */}
-        <View style={styles.quoteContainer}>
-          <Text style={styles.quoteText}>{currentQuote}</Text>
-        </View>
-        {/* Header existant */}
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <View>
-              <Text style={styles.greeting}>{getGreeting()} Houari,</Text>
-              <Text style={styles.title}>Votre Progression</Text>
+  // ✅ FIX PERF: Mémoriser chartHistory pour éviter recréation à chaque render
+  const chartHistory = useMemo(() => last7Weights.map(w => w.weight), [last7Weights]);
+
+  // ✅ FIX PERF: Mémoriser le calcul des sessions de la semaine
+  const weeklySessionCount = useMemo(() => {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const uniqueDays = new Set(
+      trainings
+        .filter(t => new Date(t.date) >= weekAgo)
+        .map(t => t.date.split('T')[0])
+    );
+    return uniqueDays.size;
+  }, [trainings]);
+
+  // Partager le rapport
+  const shareReport = useCallback(async () => {
+    if (!weeklyReport) return;
+    try {
+      const text = formatReportForSharing(weeklyReport);
+      await Share.share({ message: text });
+    } catch (error) {
+      logger.error('Erreur partage:', error);
+    }
+  }, [weeklyReport]);
+
+  // Batterie status - avec icônes au lieu d'emojis
+  const getBatteryStatus = useCallback(() => {
+    if (batteryPercent >= 80) return { color: '#10B981', label: 'Prêt à tout donner', iconType: 'flame' as const };
+    if (batteryPercent >= 60) return { color: '#F59E0B', label: 'Bonne forme', iconType: 'zap' as const };
+    if (batteryPercent >= 40) return { color: '#F97316', label: 'Fatigue modérée', iconType: 'activity' as const };
+    return { color: '#EF4444', label: 'Repos nécessaire', iconType: 'moon' as const };
+  }, [batteryPercent]);
+
+  // Animation batterie
+  const batteryAnim = useRef(new Animated.Value(0)).current;
+  const weightPulseAnim = useRef(new Animated.Value(1)).current;
+  const streakFlameAnim = useRef(new Animated.Value(1)).current;
+  const weightProgressAnim = useRef(new Animated.Value(0)).current;
+  const sleepDebtAnim = useRef(new Animated.Value(0)).current;
+  const sleepZzzAnim1 = useRef(new Animated.Value(0)).current;
+  const sleepZzzAnim2 = useRef(new Animated.Value(0)).current;
+  const sleepZzzAnim3 = useRef(new Animated.Value(0)).current;
+  const chargePulseAnim = useRef(new Animated.Value(1)).current;
+  const chargeWaveAnim = useRef(new Animated.Value(0)).current;
+  
+  // Animer la batterie quand le pourcentage change
+  React.useEffect(() => {
+    Animated.timing(batteryAnim, {
+      toValue: batteryPercent / 100,
+      duration: 1000,
+      useNativeDriver: false, // REQUIS: utilisé pour interpoler height de batterie (layout property)
+    }).start();
+  }, [batteryPercent]);
+
+  // Animation progress poids
+  React.useEffect(() => {
+    Animated.timing(weightProgressAnim, {
+      toValue: weightProgress,
+      duration: 600,
+      useNativeDriver: false, // REQUIS: utilisé pour interpoler width de barre (layout property)
+    }).start();
+  }, [weightProgress]);
+
+  // ✅ FIX PERF: Animation pulse poids avec cleanup
+  React.useEffect(() => {
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(weightPulseAnim, { toValue: 1.02, duration: 2000, useNativeDriver: true }),
+        Animated.timing(weightPulseAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
+      ])
+    );
+    pulseLoop.start();
+    return () => pulseLoop.stop();
+  }, []);
+
+  // ✅ FIX PERF: Animation flamme streak avec cleanup
+  React.useEffect(() => {
+    const flameLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(streakFlameAnim, { toValue: 1.1, duration: 1500, useNativeDriver: true }),
+        Animated.timing(streakFlameAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
+      ])
+    );
+    flameLoop.start();
+    return () => flameLoop.stop();
+  }, []);
+
+  // Animation dette sommeil
+  React.useEffect(() => {
+    if (sleepStats) {
+      const debtPercent = Math.min(100, (sleepStats.sleepDebtHours / 10) * 100);
+      Animated.timing(sleepDebtAnim, {
+        toValue: debtPercent / 100,
+        duration: 800,
+        useNativeDriver: false, // REQUIS: utilisé pour interpoler height/width (layout property)
+      }).start();
+    }
+  }, [sleepStats]);
+
+  // ✅ FIX PERF: Animation Zzz sommeil avec cleanup
+  React.useEffect(() => {
+    const createZzzAnimation = (anim: Animated.Value, delay: number) => {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim, {
+            toValue: 0,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+    };
+
+    const zzz1 = createZzzAnimation(sleepZzzAnim1, 0);
+    const zzz2 = createZzzAnimation(sleepZzzAnim2, 300);
+    const zzz3 = createZzzAnimation(sleepZzzAnim3, 600);
+
+    zzz1.start();
+    zzz2.start();
+    zzz3.start();
+
+    return () => {
+      zzz1.stop();
+      zzz2.stop();
+      zzz3.stop();
+    };
+  }, []);
+
+  // ✅ FIX PERF: Animation charge avec cleanup
+  React.useEffect(() => {
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(chargePulseAnim, { toValue: 1.08, duration: 1500, useNativeDriver: true }),
+        Animated.timing(chargePulseAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
+      ])
+    );
+
+    const waveLoop = Animated.loop(
+      Animated.timing(chargeWaveAnim, {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: false, // REQUIS: utilisé pour animer vague (translateX/Y via interpolation)
+      })
+    );
+
+    pulseLoop.start();
+    waveLoop.start();
+
+    return () => {
+      pulseLoop.stop();
+      waveLoop.stop();
+    };
+  }, []);
+
+  // Rendu icône batterie status
+  const renderBatteryIcon = useCallback(() => {
+    const iconSize = 12;
+    switch (batteryStatus.iconType) {
+      case 'flame': return <Flame size={iconSize} color={batteryStatus.color} />;
+      case 'zap': return <Zap size={iconSize} color={batteryStatus.color} />;
+      case 'activity': return <Activity size={iconSize} color={batteryStatus.color} />;
+      case 'moon': return <Moon size={iconSize} color={batteryStatus.color} />;
+    }
+  }, [batteryStatus]);
+
+  // Rendu icône défi
+  const renderChallengeIcon = useCallback((iconName: string, color: string = colors.accent) => {
+    const iconSize = 20;
+    switch (iconName) {
+      case 'dumbbell': return <Dumbbell size={iconSize} color={color} />;
+      case 'droplets': return <Droplets size={iconSize} color="#06B6D4" />;
+      case 'moon': return <Moon size={iconSize} color="#8B5CF6" />;
+      case 'scale': return <Scale size={iconSize} color={color} />;
+      case 'flame': return <Flame size={iconSize} color="#F97316" />;
+      case 'zap': return <Zap size={iconSize} color="#F59E0B" />;
+      case 'waves': return <Waves size={iconSize} color="#06B6D4" />;
+      case 'bed': return <Bed size={iconSize} color="#8B5CF6" />;
+      case 'trophy': return <Trophy size={iconSize} color="#F59E0B" />;
+      case 'trending-down': return <TrendingDown size={iconSize} color={colors.success} />;
+      case 'crown': return <Crown size={iconSize} color="#F59E0B" />;
+      default: return <Target size={iconSize} color={color} />;
+    }
+  }, [colors.accent, colors.success]);
+
+  const batteryStatus = useMemo(() => getBatteryStatus(), [batteryPercent]);
+
+  // === SYSTÈME DE PERSONNALISATION DE L'ORDRE - RENDU DYNAMIQUE ===
+  const sortedSections = useMemo(() => {
+    return [...homeSections].sort((a, b) => a.order - b.order);
+  }, [homeSections]);
+
+  // Fonction pour rendre chaque section dans l'ordre personnalisé
+  // PERF: useCallback pour éviter les re-créations à chaque render
+  const renderDynamicSection = useCallback((sectionId: string) => {
+    if (!isSectionVisible(sectionId)) return null;
+
+    switch (sectionId) {
+      case 'header':
+        return (
+          <View key={sectionId}>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* HEADER SIMPLE & ÉLÉGANT */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <View style={styles.header}>
+              {/* Photo de profil (Gauche) - Design élégant */}
+              <TouchableOpacity
+                onPress={handleNavigateProfile}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.profilePhotoWrapper, { borderColor: colors.accent }]}>
+                  <View style={[styles.profilePhotoContainer, { backgroundColor: colors.backgroundCard }]}>
+                    {profile?.profile_photo ? (
+                      <Image
+                        source={{ uri: profile.profile_photo }}
+                        style={styles.profilePhotoImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <LinearGradient
+                        colors={[`${colors.accent}30`, `${colors.accent}10`]}
+                        style={styles.profilePlaceholder}
+                      >
+                        <Ionicons name="person" size={28} color={colors.accent} />
+                      </LinearGradient>
+                    )}
+                  </View>
+                </View>
+              </TouchableOpacity>
+
+              {/* Texte (Centre) */}
+              <View style={styles.headerText}>
+                <Text style={[styles.greeting, { color: colors.textMuted }]}>{getGreeting()}</Text>
+                <View style={styles.userNameRow}>
+                  <Text style={[styles.userName, { color: colors.textPrimary }]}>{profile?.name || 'Champion'}</Text>
+                  <ViewModeSwitch mode={mode} onToggle={toggleMode} />
+                </View>
+              </View>
+
+              {/* Avatar (Droite) - Design élégant */}
+              <TouchableOpacity
+                style={styles.avatarWrapper}
+                onPress={handleNavigateAvatarSelection}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.avatarFrame, {
+                  backgroundColor: colors.backgroundCard,
+                  borderColor: `${colors.accent}40`,
+                }]}>
+                  <AvatarDisplay size="small" refreshTrigger={avatarRefreshTrigger} />
+                </View>
+                {/* Badge niveau discret */}
+                <View style={[styles.levelBadgeSmall, { backgroundColor: colors.accent }]}>
+                  <Text style={styles.levelBadgeText}>{level.level}</Text>
+                </View>
+              </TouchableOpacity>
             </View>
-            <UserAvatar size={48} />
-          </View>
-        </View>
 
-        <AnimatedCard delay={100}>
-          <SoftCard style={styles.progressCard}>
-            <Text style={styles.sectionTitle}>PROGRESSION</Text>
-            <ProgressRing current={currentWeight ?? 0} goal={goalWeight} size={240} />
-            <ProgressSteps steps={progressSteps} current={currentWeight ?? 0} />
-          </SoftCard>
-        </AnimatedCard>
-
-        <AnimatedCard delay={200}>
-          <SoftCard style={styles.chartCard}>
-            <View style={styles.chartHeader}>
-              <Text style={styles.sectionTitle}>ÉVOLUTION PONDÉRALE</Text>
-
-              {/* Boutons de sélection de période */}
-              <View style={styles.periodButtons}>
-                {[
-                  { key: '7', label: '7J' },
-                  { key: '30', label: '30J' },
-                  { key: '90', label: '90J' },
-                  { key: 'all', label: 'Tout' }
-                ].map((period) => (
-                  <TouchableOpacity
-                    key={period.key}
-                    style={[
-                      styles.periodButton,
-                      selectedPeriod === period.key && styles.periodButtonActive
-                    ]}
-                    onPress={() => setSelectedPeriod(period.key as '7' | '30' | '90' | 'all')}
-                    activeOpacity={0.7}
-                  >
+            {/* Citation motivante - Design épuré */}
+            {dailyQuote && (
+              <Animated.View
+                style={[
+                  { paddingHorizontal: 16, marginTop: 16 },
+                  { opacity: quoteFadeAnim, transform: [{ scale: quoteScaleAnim }] }
+                ]}
+              >
+                <View style={[styles.quoteCardClean, {
+                  backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+                  borderColor: isDark ? `${colors.accent}20` : 'rgba(0,0,0,0.06)',
+                  shadowColor: isDark ? colors.accent : '#000',
+                }]}>
+                  <View style={[styles.quoteAccentBar, { backgroundColor: `${colors.accent}90` }]} />
+                  <View style={styles.quoteCleanContent}>
                     <Text
-                      style={[
-                        styles.periodButtonText,
-                        selectedPeriod === period.key && styles.periodButtonTextActive
-                      ]}
+                      style={[styles.quoteCleanText, { color: isDark ? colors.textPrimary : '#1A1A2E' }]}
+                      numberOfLines={3}
                     >
-                      {period.label}
+                      «{'\u00A0'}{dailyQuote.text}{'\u00A0'}»
                     </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {filteredWeightData.length >= 2 ? (
-              <LineChart
-                data={filteredWeightData}
-                width={screenWidth - 80}
-                height={220}
-                color="#34D399"
-                hideDataPoints={false}
-                dataPointsColor="#34D399"
-                dataPointsRadius={6}
-                showVerticalLines
-                spacing={Math.max(30, (screenWidth - 120) / (filteredWeightData.length))}
-                initialSpacing={20}
-                isAnimated
-                animationDuration={800}
-                onDataPointClick={(dataPoint) => {
-                  alert(`📊 ${dataPoint.label}\nPoids: ${dataPoint.value} kg`);
-                }}
-                rulesColor={theme.colors.borderLight}
-                rulesType="solid"
-                xAxisColor={theme.colors.border}
-                yAxisColor={theme.colors.border}
-                yAxisLabelSuffix=" kg"
-                verticalLinesColor={theme.colors.borderLight}
-                thickness={3}
-                hideRules={false}
-                hideYAxisText={false}
-                showFractionalValues
-                backgroundColor={theme.colors.surface}
-                textShiftY={-8}
-                textShiftX={-5}
-                textColor={theme.colors.textPrimary}
-                areaChart
-                startFillColor="rgba(52, 211, 153, 0.3)"
-                endFillColor="rgba(52, 211, 153, 0.05)"
-                startOpacity={0.9}
-                endOpacity={0.2}
-                curved
-              />
-            ) : (
-              <View style={styles.chartEmptyState}>
-                <Text style={styles.chartEmptyStateIcon}>📈</Text>
-                <Text style={styles.chartEmptyStateTitle}>
-                  Pas encore de courbe
-                </Text>
-                <Text style={styles.chartEmptyStateText}>
-                  Ajoutez au moins 2 mesures pour voir votre évolution
-                </Text>
-              </View>
+                    <Text style={[styles.quoteCleanLabel, { color: colors.textMuted }]}>
+                      {t('home.quoteOfTheDay')}
+                    </Text>
+                  </View>
+                </View>
+              </Animated.View>
             )}
-          </SoftCard>
-        </AnimatedCard>
 
-        {weightEntries.length >= 14 && (
-          <AnimatedCard delay={300}>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>TENDANCES PONDÉRALES</Text>
-              <View style={styles.trendsGrid}>
-                {weightTrends.map((trend, index) => (
-                  <WeightTrendCard
-                    key={index}
-                    period={trend.period}
-                    change={trend.change}
-                    isPositive={trend.isPositive}
-                  />
+            {/* Hint pour informer du switch de mode */}
+            <ViewModeHint />
+          </View>
+        );
+
+      case 'stats_compact':
+        return (
+          <View style={styles.statsRowCompact} key={sectionId}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateActivityDetail}>
+              <MaterialCommunityIcons name="walk" size={14} color="#3B82F6" />
+              <View style={styles.statTextColumn}>
+                <AnimatedCounter value={steps} style={[styles.statValueCompactHorizontal, { color: '#3B82F6' }]} duration={800} />
+                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>pas</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateGamification}>
+              <Animated.View style={{ transform: [{ scale: streakFlameAnim }] }}>
+                <Flame size={14} color="#F97316" />
+              </Animated.View>
+              <View style={styles.statTextColumn}>
+                <AnimatedCounter value={streak} style={[styles.statValueCompactHorizontal, { color: '#F97316' }]} duration={800} />
+                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>jours</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateGamification}>
+              <Zap size={14} color={isDark ? colors.accent : '#000000'} />
+              <View style={styles.statTextColumn}>
+                <AnimatedCounter value={level.level} style={[styles.statValueCompactHorizontal, { color: isDark ? colors.accent : '#000000' }]} duration={800} />
+                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>niveau</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateGamification}>
+              <Trophy size={14} color={rank?.color} />
+              <View style={styles.statTextColumn}>
+                <AnimatedRank rank={rank?.name?.split(' ')[0] ?? ''} color={rank?.color} style={styles.statValueCompactHorizontal} delay={300} />
+                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>rang</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case 'weight_hydration':
+        return (
+          <View key={sectionId} style={{ marginBottom: 20 }}>
+            {/* Poids - Full Width Premium */}
+            <WeightFullCard
+              currentWeight={currentWeight || 0}
+              targetWeight={targetWeight ?? undefined}
+              startWeight={weightHistory[0]?.weight ?? undefined}
+              history={chartHistory}
+              onPress={handleNavigateWeightStats}
+            />
+          </View>
+        );
+
+      // Anciennes sections remplacees par les nouvelles lignes tools_row_*
+      // Ces cases sont gardes pour la compatibilite avec les anciennes configurations
+
+      case 'sleep_charge':
+        return (
+          <View style={styles.gridLottieContainer} key={sectionId}>
+            {/* 3 cartes compactes : Hydratation | Sommeil | Charge */}
+            <View style={styles.threeCardsRow}>
+              <View style={styles.compactCard}>
+                <HydrationCard2
+                  currentMl={hydration}
+                  goalMl={hydrationGoal}
+                  onAddMl={(amountMl) => addWater(amountMl)}
+                />
+              </View>
+              <TouchableOpacity onPress={handleNavigateSleep} activeOpacity={0.9} style={styles.compactCard}>
+                <SleepLottieCard
+                  hours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
+                  quality={sleepStats?.lastNightQuality ? (sleepStats.lastNightQuality / 5) * 100 : 0}
+                  debt={sleepStats?.sleepDebtHours || 0}
+                  goal={sleepGoal / 60}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleNavigateCharge} activeOpacity={0.9} style={styles.compactCard}>
+                <ChargeLottieCard
+                  level={loadStats?.riskLevel || 'optimal'}
+                  totalLoad={loadStats?.totalLoad || 0}
+                  maxLoad={2000}
+                  sessions={weeklySessionCount}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+        );
+
+      case 'quick_tools':
+        return (
+          <View style={styles.quickToolsContainer} key={sectionId}>
+            <TouchableOpacity
+              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
+              onPress={handleNavigateTrainingJournal}
+              activeOpacity={0.8}
+            >
+              <BookOpen size={20} color="#F97316" strokeWidth={2} />
+              <Text style={[styles.quickToolText, { color: colors.textPrimary }]}>Carnet</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
+              onPress={handleNavigateInfirmary}
+              activeOpacity={0.8}
+            >
+              <View style={styles.redCrossIconSmall}>
+                <View style={[styles.crossVerticalIconSmall, { backgroundColor: '#EF4444' }]} />
+                <View style={[styles.crossHorizontalIconSmall, { backgroundColor: '#EF4444' }]} />
+              </View>
+              <Text style={[styles.quickToolText, { color: colors.textPrimary }]}>Blessures</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
+              onPress={handleNavigateChallenges}
+              activeOpacity={0.8}
+            >
+              <Award size={20} color="#8B5CF6" strokeWidth={2} />
+              <Text style={[styles.quickToolText, { color: colors.textPrimary }]}>Objectifs</Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case 'challenges':
+        return (
+          <AnimatedCard index={1} key={sectionId}>
+            <TouchableOpacity style={[styles.challengesCard, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateChallenges} activeOpacity={0.8}>
+              <View style={styles.challengesHeader}>
+                <Target size={16} color={colors.accentText} />
+                <Text style={styles.sectionTitle}>DÉFIS DU JOUR</Text>
+                <ChevronRight size={14} color={colors.textMuted} />
+              </View>
+              <View style={styles.challengesList}>
+                {dailyChallenges.slice(0, 3).map((challenge) => (
+                  <View key={challenge.id} style={styles.challengeItem}>
+                    <View style={styles.challengeIconWrap}>
+                      {renderChallengeIcon(challenge.icon)}
+                    </View>
+                    <View style={styles.challengeInfo}>
+                      <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>{challenge.title}</Text>
+                      <View style={[styles.challengeProgress, { backgroundColor: colors.border }]}>
+                        <View style={[styles.challengeFill, {
+                          width: `${Math.min(100, (challenge.progress.current / challenge.progress.target) * 100)}%`,
+                          backgroundColor: challenge.progress.completed ? colors.success : colors.accent
+                        }]} />
+                      </View>
+                    </View>
+                    <PulsingBadge
+                      color={challenge.progress.completed ? colors.success : colors.accent}
+                      enabled={challenge.progress.completed}
+                      style={[styles.rewardBadge, { backgroundColor: challenge.progress.completed ? colors.successLight : colors.accentMuted }]}
+                    >
+                      <Gift size={10} color={challenge.progress.completed ? colors.success : colors.accent} />
+                      <Text style={[styles.rewardText, { color: challenge.progress.completed ? colors.success : (isDark ? colors.accent : colors.textPrimary) }]}>
+                        +{challenge.reward.xp}
+                      </Text>
+                    </PulsingBadge>
+                  </View>
                 ))}
               </View>
+            </TouchableOpacity>
+          </AnimatedCard>
+        );
+
+      case 'performance_radar':
+        return (
+          <AnimatedCard index={2} key={sectionId}>
+            <TouchableOpacity onPress={handleNavigateRadarPerformance} activeOpacity={0.8}>
+              <PerformanceRadar />
+            </TouchableOpacity>
+          </AnimatedCard>
+        );
+
+      case 'healthspan':
+        return (
+          <AnimatedCard index={3} key={sectionId}>
+            <TouchableOpacity onPress={handleNavigateHealthStats} activeOpacity={0.8}>
+              <HealthspanChart screenshotMode={isScreenshotMode} />
+            </TouchableOpacity>
+          </AnimatedCard>
+        );
+
+      case 'weekly_report':
+        if (!weeklyReport) return null;
+        return (
+          <AnimatedCard index={4} key={sectionId}>
+            <TouchableOpacity style={[styles.reportCard, { backgroundColor: colors.backgroundCard }]} onPress={shareReport}>
+              <View style={styles.reportHeader}>
+                <FileText size={16} color={colors.accentText} />
+                <Text style={styles.sectionTitle}>RAPPORT DE MISSION</Text>
+              </View>
+              <View style={styles.reportContent}>
+                <View style={[styles.gradeBadge, {
+                  backgroundColor: colors.accent,
+                  shadowColor: colors.accent,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8,
+                  elevation: 6,
+                }]}>
+                  <Text style={[styles.gradeText, { color: colors.textOnAccent }]}>{weeklyReport?.verdict?.grade ?? '-'}</Text>
+                </View>
+                <View style={styles.reportInfo}>
+                  <Text style={[styles.reportTitle, { color: colors.textPrimary }]}>{weeklyReport?.verdict?.title ?? 'Rapport'}</Text>
+                  <View style={styles.scoreContainer}>
+                    <Text style={[styles.reportScore, { color: colors.textPrimary }]}>
+                      Score: <Text style={{ fontWeight: '900', fontSize: 16 }}>{weeklyReport.overallScore}</Text>/100
+                    </Text>
+                    <View style={[styles.progressBarBg, { backgroundColor: colors.border }]}>
+                      <View
+                        style={[
+                          styles.progressBarFill,
+                          {
+                            width: `${weeklyReport.overallScore}%`,
+                            backgroundColor: weeklyReport.overallScore > 70 ? '#10B981' : weeklyReport.overallScore > 50 ? '#F59E0B' : '#EF4444'
+                          }
+                        ]}
+                      />
+                    </View>
+                  </View>
+                </View>
+                <ChevronRight size={16} color={colors.textMuted} />
+              </View>
+            </TouchableOpacity>
+          </AnimatedCard>
+        );
+
+      // Grand graphique de poids (style Light)
+      case 'weight_graph_large':
+        return (
+          <View key={sectionId} style={{ marginTop: 16 }}>
+            <EssentielWeightCard
+              currentWeight={currentWeight || undefined}
+              objective={targetWeight || undefined}
+              startWeight={startWeight || undefined}
+              weekData={weightHistory.slice(0, 30).reverse().map(w => w.weight)} // 30 derniers jours au lieu de 7
+              weekLabels={['L', 'M', 'M', 'J', 'V', 'S', 'D']} // Les labels seront dupliqués
+              trend={trend}
+              onAddWeight={handleNavigateAddWeight}
+              onViewStats={handleNavigateWeightStats}
+            />
+          </View>
+        );
+
+      // Résumé activité (pas)
+      case 'activity_summary':
+        return (
+          <View key={sectionId} style={{ marginTop: 16 }}>
+            <EssentielActivityCard
+              steps={steps}
+              stepsGoal={stepsGoal}
+            />
+          </View>
+        );
+
+      // Anciennes sections supprimees - retournent null pour compatibilite
+      case 'streak_calendar':
+      case 'fighter_mode':
+      case 'planning_row':
+        return null;
+
+      case 'training_journal':
+      case 'actions_row':
+      case 'battery_tools':
+        return null;
+
+      // Ligne 1: Carnet, Timer, Calendrier, Emploi du temps
+      case 'tools_row_1':
+        return (
+          <View style={styles.batteryToolsRowSingle} key={sectionId}>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={handleNavigateTrainingJournal}
+              activeOpacity={0.85}
+            >
+              <BookOpen size={24} color="#F97316" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Carnet</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Entrainement</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={handleNavigateTimer}
+              activeOpacity={0.85}
+            >
+              <Timer size={24} color={colors.accentText} />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Timer</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Round/Repos</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={handleNavigatePlanning}
+              activeOpacity={0.85}
+            >
+              <Calendar size={24} color="#3B82F6" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Calendrier</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Planning</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={handleNavigateProgramme}
+              activeOpacity={0.85}
+            >
+              <List size={24} color="#8B5CF6" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Planning</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Sportif</Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      // Carte Blessures (full width avec croix rouge)
+      case 'blessures_banner':
+        return (
+          <TouchableOpacity
+            key={sectionId}
+            style={[styles.blessuresBanner, { backgroundColor: colors.backgroundCard }]}
+            onPress={handleNavigateInfirmary}
+            activeOpacity={0.85}
+          >
+            <View style={styles.blessuresCrossContainer}>
+              <View style={styles.redCrossIconLarge}>
+                <View style={[styles.crossVerticalIconLarge, { backgroundColor: '#EF4444' }]} />
+                <View style={[styles.crossHorizontalIconLarge, { backgroundColor: '#EF4444' }]} />
+              </View>
             </View>
-          </AnimatedCard>
-        )}
+            <View style={styles.blessuresTextContainer}>
+              <Text style={[styles.blessuresTitle, { color: colors.textPrimary }]}>Blessures</Text>
+              <Text style={[styles.blessuresSubtitle, { color: colors.textMuted }]}>Suivez vos blessures</Text>
+            </View>
+            <ChevronRight size={24} color={colors.textMuted} />
+          </TouchableOpacity>
+        );
 
-        {weightEntries.length >= 7 && (
-          <AnimatedCard delay={400}>
-            <SoftCard>
-              <PredictionsList predictions={predictions} />
-            </SoftCard>
-          </AnimatedCard>
-        )}
+      // Ligne 2: Energie, Savoir, Calculateurs
+      case 'tools_row_2':
+        return (
+          <View style={styles.batteryToolsRowSingle} key={sectionId}>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={handleNavigateEnergy}
+              activeOpacity={0.85}
+            >
+              {/* Pile/Batterie horizontale allongée */}
+              <View style={styles.batteryHorizontal}>
+                {/* Corps de la pile */}
+                <View style={[styles.batteryBodyH, { borderColor: colors.border }]}>
+                  {/* Remplissage */}
+                  <View style={[
+                    styles.batteryFillH,
+                    {
+                      width: `${batteryPercent}%`,
+                      backgroundColor: batteryPercent >= 60 ? '#10B981' : batteryPercent >= 30 ? '#F59E0B' : '#EF4444',
+                    }
+                  ]} />
+                  {/* Pourcentage au centre */}
+                  <Text style={[styles.batteryTextH, { color: batteryPercent >= 50 ? '#FFF' : colors.textPrimary }]}>
+                    {Math.round(batteryPercent)}%
+                  </Text>
+                </View>
+                {/* Tête de la pile (à droite) */}
+                <View style={[styles.batteryHeadH, {
+                  backgroundColor: batteryPercent >= 60 ? '#10B981' : batteryPercent >= 30 ? '#F59E0B' : '#EF4444'
+                }]} />
+              </View>
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Energie</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={handleNavigateSavoir}
+              activeOpacity={0.85}
+            >
+              <FlaskConical size={24} color="#8B5CF6" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Savoir</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Culture G</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={handleNavigateCalculators}
+              activeOpacity={0.85}
+            >
+              <Calculator size={24} color="#F59E0B" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Calculs</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>IMC, BMR...</Text>
+            </TouchableOpacity>
+          </View>
+        );
 
-        {chartData.length > 0 && (
-          <AnimatedCard delay={550}>
-            <SoftCard>
-              <Text style={styles.sectionTitle}>ÉVOLUTION (14 JOURS)</Text>
-              <MetricSelector selected={selectedMetric} onSelect={setSelectedMetric} />
-              <InteractiveLineChart
-                data={chartData}
-                width={screenWidth - 80}
-                color={currentMetricConfig.color}
-                unit={currentMetricConfig.unit}
-              />
-            </SoftCard>
-          </AnimatedCard>
-        )}
-
-        <AnimatedCard delay={625}>
-          <SoftCard>
-            {currentWeight && currentWeight > 0 ? (
-              <BMICard weight={currentWeight} height={height} />
-            ) : (
-              <View style={styles.emptyStateCard}>
-                <Text style={styles.emptyStateEmoji}>📊</Text>
-                <Text style={styles.emptyStateTitle}>Ajoutez votre première mesure</Text>
-                <Text style={styles.emptyStateSubtext}>
-                  Commencez votre suivi pour voir votre IMC et vos statistiques
+      // Ligne 3: Mode Compet (toggle avec J-XX), Jeune, Photo, Partager
+      case 'tools_row_3':
+        return (
+          <View key={sectionId}>
+            <View style={styles.batteryToolsRowSingle}>
+              {/* Toggle Mode Compétiteur - Affiche J-XX si activé */}
+              <TouchableOpacity
+                style={[
+                  styles.toolCardSmall,
+                  {
+                    backgroundColor: isCompetitorMode ? colors.accent + '20' : colors.backgroundCard,
+                    borderWidth: isCompetitorMode ? 2 : 0,
+                    borderColor: colors.accent,
+                  }
+                ]}
+                onPress={handleToggleCompetitorMode}
+                activeOpacity={0.85}
+              >
+                {isCompetitorMode && nextEvent ? (
+                  // Afficher J-XX quand activé et qu'il y a un événement
+                  <View style={[styles.countdownBadge, { backgroundColor: colors.accent }]}>
+                    <Text style={[styles.countdownText, { color: colors.textOnAccent }]}>J-{nextEvent.daysLeft}</Text>
+                  </View>
+                ) : (
+                  // Afficher l'icône Trophy quand désactivé
+                  <Trophy size={24} color={isCompetitorMode ? colors.accent : colors.textMuted} />
+                )}
+                <Text style={[styles.toolCardTitleSmall, { color: isCompetitorMode ? (isDark ? colors.accent : colors.textPrimary) : colors.textPrimary }]}>
+                  Objectif
                 </Text>
+                {/* Mini Switch */}
+                <View style={[styles.miniSwitch, { backgroundColor: isCompetitorMode ? colors.accent : colors.border }]}>
+                  <Animated.View
+                    style={[
+                      styles.miniSwitchThumb,
+                      {
+                        transform: [{
+                          translateX: toggleAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0, 12],
+                          })
+                        }]
+                      }
+                    ]}
+                  />
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                onPress={handleNavigateFasting}
+                activeOpacity={0.85}
+              >
+                <Clock size={24} color="#F97316" />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Jeûne</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Intermittent</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                onPress={handleNavigatePhotos}
+                activeOpacity={0.85}
+              >
+                <Camera size={24} color="#10B981" />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Photo</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Avant/Apres</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Section Compétiteur - 4 petits carrés quand toggle ON */}
+            {isCompetitorMode && (
+              <View style={[styles.batteryToolsRowSingle, { marginTop: 8 }]}>
                 <TouchableOpacity
-                  style={styles.emptyStateButton}
-                  onPress={() => router.push('/(tabs)/entry')}
-                  activeOpacity={0.8}
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                  onPress={handleNavigateCutMode}
+                  activeOpacity={0.85}
                 >
-                  <Text style={styles.emptyStateButtonText}>Ajouter une mesure</Text>
+                  <TrendingDown size={24} color="#EF4444" />
+                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Mode Cut</Text>
+                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Perte poids</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                  onPress={handleNavigatePalmares}
+                  activeOpacity={0.85}
+                >
+                  <Medal size={24} color="#F59E0B" />
+                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Palmares</Text>
+                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Resultats</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                  onPress={handleNavigateHydration}
+                  activeOpacity={0.85}
+                >
+                  <Droplets size={24} color="#06B6D4" />
+                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Hydratation</Text>
+                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Suivi eau</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                  onPress={handleNavigateBodyComposition}
+                  activeOpacity={0.85}
+                >
+                  <Scale size={24} color="#8B5CF6" />
+                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Pesee</Text>
+                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Composition</Text>
                 </TouchableOpacity>
               </View>
             )}
-          </SoftCard>
-        </AnimatedCard>
-
-        <AnimatedCard delay={700}>
-          <View style={styles.motivationCard}>
-          <Text style={styles.motivationEmoji}>🎯</Text>
-          {currentWeight && currentWeight > 0 && currentWeight < startWeight ? (
-            <>
-              <Text style={styles.motivationText}>
-                Excellent progrès ! Vous avez perdu {(startWeight - currentWeight).toFixed(1)} kg.
-              </Text>
-              <Text style={styles.motivationSubtext}>
-                Plus que {(currentWeight - goalWeight).toFixed(1)} kg pour atteindre votre objectif !
-              </Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.motivationText}>
-                Commencez votre suivi aujourd'hui !
-              </Text>
-              <Text style={styles.motivationSubtext}>
-                Chaque grand voyage commence par un premier pas
-              </Text>
-            </>
-          )}
           </View>
-        </AnimatedCard>
-      </ScrollView>
-    </View>
+        );
+
+      default:
+        return null;
+    }
+  }, [
+    colors,
+    profile,
+    dailyQuote,
+    mode,
+    hydration,
+    hydrationGoal,
+    sleepStats,
+    bodyComposition,
+    batteryFillPercent,
+    isSectionVisible,
+    handleNavigateProfile,
+    handleNavigateAvatarSelection,
+    handleNavigateActivityDetail,
+    handleNavigateGamification,
+    handleNavigateWeightStats,
+    handleNavigateSleep,
+    handleNavigateCharge,
+    handleNavigateTrainingJournal,
+    handleNavigateInfirmary,
+    handleNavigateChallenges,
+    handleNavigateRadarPerformance,
+    handleNavigateHealthStats,
+    handleNavigateAddWeight,
+    handleNavigateTimer,
+    handleNavigatePlanning,
+    handleNavigateProgramme,
+    handleNavigateEnergy,
+    handleNavigateSavoir,
+    handleNavigateCalculators,
+    handleToggleCompetitorMode,
+    handleNavigateFasting,
+    handleNavigatePhotos,
+    handleNavigateCutMode,
+    handleNavigatePalmares,
+    handleNavigateHydration,
+    handleNavigateBodyComposition,
+    addWater,
+    shareReport,
+    avatarRefreshTrigger,
+    getGreeting,
+    toggleMode,
+    isDark,
+    t,
+    quoteFadeAnim,
+    quoteScaleAnim,
+    quotePulseAnim,
+    streakFlameAnim,
+    steps,
+    streak,
+    level,
+    rank,
+    currentWeight,
+    targetWeight,
+    startWeight,
+    last7Weights,
+    trend,
+    sleepGoal,
+    loadStats,
+    trainings,
+    dailyChallenges,
+    renderChallengeIcon,
+    weeklyReport,
+    isScreenshotMode,
+    isCompetitorMode,
+    nextEvent,
+    toggleAnim,
+    batteryPercent,
+  ]);
+
+  // Défis du jour formatés
+  const formattedChallenges = useMemo(() => {
+    return dailyChallenges.map(challenge => ({
+      id: challenge.id,
+      title: challenge.title,
+      completed: challenge.progress.completed,
+    }));
+  }, [dailyChallenges]);
+
+  // Workload status
+  const workloadStatus = useMemo<'none' | 'light' | 'moderate' | 'intense'>(() => {
+    if (!loadStats || loadStats.sessionsCount === 0) return 'none';
+    const totalLoad = loadStats.totalLoad;
+    if (totalLoad < 1500) return 'light';
+    if (totalLoad > 2500) return 'intense';
+    return 'moderate';
+  }, [loadStats]);
+
+  // Afficher loading pendant le chargement initial
+  if (isLoading) {
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
+
+  return (
+    <ErrorBoundary>
+      <View style={[styles.screen, { backgroundColor: colors.background }]}>
+        <MotivationPopup />
+
+      <HomeTabView
+        userName={profile?.name}
+        profilePhoto={profile?.profile_photo}
+        dailyQuote={dailyQuote?.text}
+        steps={steps}
+        streak={streak}
+        level={rankLevel}
+        rankName={rank?.name}
+        rankColor={rank?.color}
+        currentWeight={currentWeight ?? undefined}
+        targetWeight={targetWeight ?? undefined}
+        startWeight={startWeight ?? undefined}
+        weightHistory={weightHistory.map(w => w.weight)}
+        weightTrend={trend as 'up' | 'down' | 'stable'}
+        hydration={hydration}
+        hydrationGoal={hydrationGoal}
+        sleepHours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
+        sleepDebt={sleepStats?.sleepDebtHours || 0}
+        sleepGoal={sleepGoal / 60}
+        workloadStatus={workloadStatus === 'none' ? undefined : workloadStatus}
+        dailyChallenges={formattedChallenges}
+        stepsGoal={stepsGoal}
+        calories={calories}
+        bodyFat={isScreenshotMode ? 16.2 : bodyComposition?.bodyFat}
+        muscleMass={isScreenshotMode ? 43.5 : bodyComposition?.muscleMass}
+        waterPercentage={isScreenshotMode ? 58.4 : bodyComposition?.waterPercentage}
+        weeklyReport={weeklyReport ? {
+          weightChange: weeklyReport.weightChange,
+          trainingsCount: weeklyReport.totalTrainings,
+          avgSleepHours: weeklyReport.avgSleepHours,
+          hydrationRate: 0, // Not available in WeeklyReport
+          totalSteps: 0, // Not available in WeeklyReport
+        } : undefined}
+        onAddWeight={() => handleNavigate('/(tabs)/add')}
+        onAddWater={addWater}
+        onShareReport={shareReport}
+        refreshTrigger={avatarRefreshTrigger}
+      />
+
+      <RanksModal visible={ranksModalVisible} onClose={handleCloseRanksModal} currentStreak={streak} />
+      <LogoViewer visible={logoViewerVisible} onClose={handleCloseLogoViewer} />
+      <BatteryReadyPopup batteryPercent={batteryPercent} />
+      <AvatarViewerModal visible={avatarViewerVisible} onClose={handleCloseAvatarViewer} />
+
+      {/* MESSAGE DE MISE À JOUR ET DISCLAIMER PROFESSIONNEL (TON COMPOSANT) */}
+      <UpdateChangelogModal
+        visible={showWhatIsNew}
+        onClose={handleCloseWhatIsNew}
+      />
+
+      {/* Tutoriel de découverte */}
+      {showTutorial && (
+        <FeatureDiscoveryModal
+          visible={true}
+          tutorial={PAGE_TUTORIALS.home}
+          onClose={handleCloseTutorial}
+          onSkip={handleLaterTutorial}
+        />
+      )}
+
+      {/* Pop-up de notation */}
+      <RatingPopup
+        visible={showRatingPopup}
+        onClose={handleCloseRatingPopup}
+        onRated={handleRated}
+      />
+
+      {/* Bouton flottant de sauvegarde */}
+      {/* <TouchableOpacity
+        style={[styles.backupFab, { backgroundColor: colors.accent }]}
+        onPress={() => handleNavigate('/backup')}
+        activeOpacity={0.85}
+      >
+        <Cloud size={20} color="#FFFFFF" />
+      </TouchableOpacity> */}
+
+
+      {/* Bouton outils flottant */}
+      <HomeToolsMenu />
+      </View>
+    </ErrorBoundary>
   );
 }
 
+// ═══════════════════════════════════════════════
+// STYLES
+// ═══════════════════════════════════════════════
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
+  screen: { flex: 1 },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingHorizontal: 16 },
+
+  // Header - Design Simple & Élégant
+  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  logo: { width: 70, height: 70, borderRadius: 14 },
+
+  // Photo de profil - Cercle élégant avec bordure subtile
+  profilePhotoWrapper: {
+    padding: 3,
+    borderRadius: 44,
+    borderWidth: 2,
+    borderStyle: 'solid',
   },
-  centered: {
+  profilePhotoContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: theme.spacing.lg,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  loadingText: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
-    letterSpacing: 0.3,
+  profilePhotoImage: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
   },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: theme.spacing.xl,
-    paddingTop: 60,
-    gap: theme.spacing.xxl,
-    paddingBottom: 40,
-  },
-  header: {
-    marginBottom: theme.spacing.sm,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  profilePlaceholder: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  greeting: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
-    letterSpacing: 0.3,
+
+  // Avatar - Forme élégante avec badge niveau
+  avatarWrapper: {
+    position: 'relative',
+  },
+  avatarFrame: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 2,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  levelBadgeSmall: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  levelBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+
+  avatarContainerRight: {
+    width: 80,
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerText: { flex: 1, marginHorizontal: 12 },
+  greeting: { fontSize: 14, fontWeight: '600' },
+  userNameRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  userName: { fontSize: 22, fontWeight: '900' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // Styles legacy (gardés pour compatibilité)
+  // ═══════════════════════════════════════════════════════════════
+
+  headerGradientBg: {
+    marginHorizontal: 0,
+    marginTop: 0,
+    paddingTop: 12,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+
+  headerMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  profileContainerV4: {
+    position: 'relative',
+  },
+  profileBorderGold: {
+    width: 82,
+    height: 82,
+    borderRadius: 41,
+    padding: 3,
+  },
+  profileInnerV4: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    overflow: 'hidden',
+    backgroundColor: '#1a1a2e',
+  },
+  profileImgV4: {
+    width: 76,
+    height: 76,
+  },
+  profilePlaceholderV4: {
+    width: 76,
+    height: 76,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#2a2a4e',
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#22C55E',
+    borderWidth: 3,
+    borderColor: '#1a1a2e',
+  },
+
+  // Center Info V4
+  centerInfoV4: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  greetingV4: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.7)',
+  },
+  nameV4: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    marginTop: 2,
+  },
+  levelBarContainer: {
+    width: '100%',
+    marginTop: 10,
+  },
+  levelBarBg: {
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  levelBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  levelBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    justifyContent: 'center',
+    gap: 8,
+  },
+  levelBadgeV4: {
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  levelNumV4: {
+    color: '#1a1a2e',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  xpTextV4: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
+  // Avatar V4
+  avatarContainerV4: {
+    position: 'relative',
+  },
+  avatarFrameV4: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 3,
+    borderColor: '#FF6B35',
+    overflow: 'hidden',
+    backgroundColor: '#1a1a2e',
+  },
+  energyBadge: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF6B35',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 3,
+    borderWidth: 2,
+    borderColor: '#1a1a2e',
+  },
+  energyText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+
+  // Stats Bar V4
+  statsBarV4: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    marginTop: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 16,
+    paddingVertical: 12,
+  },
+  statItemV4: {
+    alignItems: 'center',
+    flex: 1,
+    gap: 4,
+  },
+  statItemRankV4: {
+    alignItems: 'center',
+    flex: 1.3,
+    gap: 4,
+  },
+  statValueV4: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  statLabelV4: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  rankTextV4: {
+    color: '#FFD700',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+
+  // Quote V4
+  quoteContainerV4: {
+    paddingHorizontal: 16,
+    marginTop: 16,
+  },
+  quoteCardV4: {
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  quoteAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
+  },
+  quoteTextV4: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    fontStyle: 'italic',
+    lineHeight: 21,
+    paddingLeft: 8,
+  },
+  quoteLabel: {
+    position: 'absolute',
+    top: 8,
+    right: 12,
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+
+  // Mode Switch
+  modeSwitchContainer: {
+    alignItems: 'center',
+    marginTop: 14,
     marginBottom: 4,
   },
-  title: {
-    fontSize: theme.fontSize.display,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
-    letterSpacing: -0.5,
+  avatarBtn: {
+    width: 75,
+    height: 95,
   },
-  progressCard: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xxxl,
-    borderRadius: theme.radius.xxl,
+  avatarContainer: {
+    height: 95,
+    width: 75,
+    overflow: 'visible',
   },
-  section: {
-    gap: theme.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textSecondary,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: theme.spacing.md,
-  },
-  trendsGrid: {
+
+  // Décoration japonaise inline (dans le header)
+  japaneseDecorInline: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    justifyContent: 'center',
+    gap: 4,
+    marginTop: 2,
   },
-  chartCard: {
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.md,
+  decorEmoji: { fontSize: 12 },
+  decorTorii: { fontSize: 14 },
+
+  // Ligne de 5 actions : Blessures, Timer, Compétiteur?, Photo, Savoir
+  actionsRow5: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 12,
+  },
+  actionBtn5: {
+    flex: 1,
     alignItems: 'center',
-    borderRadius: theme.radius.xxl,
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+    gap: 5,
+    minHeight: 105,
   },
-  chartHeader: {
+  actionLabel5: {
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  actionSubLabel5: {
+    fontSize: 9,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: -1,
+  },
+  actionBtn5Toggle: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+    gap: 5,
+    minHeight: 105,
+  },
+  toggleLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  toggleTrack: {
+    width: 42,
+    height: 22,
+    borderRadius: 11,
+    padding: 2,
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  toggleThumb: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 3,
+    elevation: 4,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
+  toggleDays: {
+    fontSize: 11,
+    fontWeight: '900',
+  },
+
+  // Actions rapides en haut (carrés) - RÉDUITES
+  actionsRowTop: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  actionBtnSquare: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 14, paddingHorizontal: 12, borderRadius: 12, gap: 4, minHeight: 78 },
+  actionLabelSquare: { fontSize: 10, fontWeight: '700', textAlign: 'center' },
+  timerFractionMini: {
+    alignItems: 'center',
+    gap: 2,
+    marginTop: 2,
+  },
+  timerFractionTop: {
+    fontSize: 9,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  timerFractionLine: {
+    width: 40,
+    height: 1,
+    marginVertical: 1,
+  },
+  timerFractionBottom: {
+    fontSize: 8,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+
+  // Quote
+  quoteCard: { flexDirection: 'row', alignItems: 'flex-start', padding: 10, borderRadius: 10, marginBottom: 12, gap: 6 },
+  quoteText: { flex: 1, fontSize: 11, fontStyle: 'italic', lineHeight: 16 },
+
+  // Stats
+  // Carte poids principale
+  weightCard: { padding: 16, borderRadius: 14, marginBottom: 12 },
+  weightHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
+  weightTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 1, flex: 1 },
+  weightMain: { marginBottom: 12 },
+  weightValue: { fontSize: 36, fontWeight: '900' },
+  weightUnit: { fontSize: 20, fontWeight: '600' },
+  weightInfo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
+  weightChange: { fontSize: 13, fontWeight: '700' },
+  weightDate: { fontSize: 11 },
+  weightCompactValue: { fontSize: 28, fontWeight: '900' },
+  weightUnitSmall: { fontSize: 14, fontWeight: '700' },
+  weightSub: { fontSize: 11, marginTop: 2 },
+  progressBar: { height: 8, borderRadius: 6, backgroundColor: 'rgba(0,0,0,0.06)', overflow: 'hidden', marginTop: 8 },
+  progressFill: { height: '100%', borderRadius: 6 },
+  remainingText: { fontSize: 11, fontWeight: '700', marginTop: 4 },
+  compRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
+  compItem: { alignItems: 'center', gap: 2 },
+  compLabel: { fontSize: 9, fontWeight: '600' },
+  compValue: { fontSize: 14, fontWeight: '800' },
+  compPlaceholder: { alignItems: 'center', justifyContent: 'center', marginTop: 8, paddingVertical: 12, gap: 4 },
+  compPlaceholderText: { fontSize: 10, fontWeight: '600' },
+  debtProgressWrapper: { marginTop: 6, position: 'relative' },
+  debtProgressBar: { height: 6, borderRadius: 3, backgroundColor: 'rgba(0,0,0,0.06)', overflow: 'hidden' },
+  debtProgressFill: { height: '100%', borderRadius: 3 },
+  sleepZzzContainer: { flexDirection: 'row', alignItems: 'center', gap: 1, position: 'absolute', right: 4, top: -12 },
+  sleepZzz: { fontSize: 14, fontWeight: '900', color: '#8B5CF6', textShadowColor: 'rgba(255,255,255,0.8)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 3 },
+  sleepQualityRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  sleepDot: { width: 6, height: 6, borderRadius: 3 },
+  sleepQualityText: { fontSize: 9, fontWeight: '600' },
+  sleepDetailsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
+  sleepDetailItem: { alignItems: 'center', gap: 2 },
+  sleepDetailLabel: { fontSize: 8, fontWeight: '600' },
+  sleepDetailValue: { fontSize: 11, fontWeight: '700' },
+  sleepQualityStars: { flexDirection: 'row', gap: 2 },
+  sleepInfoRow: { flexDirection: 'row', gap: 4, marginTop: 6 },
+  sleepInfoBadge: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 },
+  sleepInfoText: { fontSize: 9, fontWeight: '700' },
+  sleepTrendBadge: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 },
+  sleepTrendText: { fontSize: 9, fontWeight: '700' },
+  sleepWeekChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, marginTop: 6, height: 24, width: '100%', overflow: 'hidden' },
+  sleepWeekBar: { flex: 1, justifyContent: 'flex-end', height: '100%', maxWidth: '14%' },
+  sleepWeekBarFill: { borderRadius: 2, minHeight: 3, width: '100%' },
+  sleepCircleContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: 8, gap: 12 },
+  sleepCircleInfo: { alignItems: 'center', gap: 2 },
+  sleepCircleValue: { fontSize: 18, fontWeight: '900' },
+  sleepCircleLabel: { fontSize: 9, fontWeight: '600' },
+  sleepWaveContainer: { alignItems: 'center', marginVertical: 4 },
+  sleepWaveInfo: { alignItems: 'center', gap: 2, marginTop: -15 },
+  sleepOverlayInfo: { position: 'absolute', top: 10, left: 10, zIndex: 10 },
+  sleepValue: { fontSize: 20, fontWeight: '900', marginBottom: 2 },
+  sleepLabel: { fontSize: 11, fontWeight: '600' },
+  chargeGaugeContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: 8, gap: 12 },
+  chargeGaugeInfo: { alignItems: 'center', gap: 2 },
+  chargeGaugeValue: { fontSize: 18, fontWeight: '900' },
+  chargeGaugeLabel: { fontSize: 9, fontWeight: '600' },
+  loadProgressBar: { height: 8, borderRadius: 4, backgroundColor: 'rgba(0,0,0,0.06)', overflow: 'hidden', marginTop: 6, position: 'relative' },
+  loadProgressFill: { height: '100%', borderRadius: 4, position: 'relative', overflow: 'hidden' },
+  loadWave: { position: 'absolute', top: 0, bottom: 0, width: '50%', backgroundColor: 'rgba(255,255,255,0.3)', transform: [{ skewX: '-20deg' }] },
+  loadIndicatorRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  loadDot: { width: 6, height: 6, borderRadius: 3 },
+  loadIndicatorText: { fontSize: 9, fontWeight: '600' },
+  loadDetailsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
+  loadDetailItem: { alignItems: 'center', gap: 2 },
+  loadDetailLabel: { fontSize: 8, fontWeight: '600' },
+  loadDetailValue: { fontSize: 11, fontWeight: '700' },
+  loadInfoRow: { flexDirection: 'row', gap: 4, marginTop: 6 },
+  loadInfoBadge: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 },
+  loadInfoText: { fontSize: 9, fontWeight: '700' },
+  loadTrendBadge: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 },
+  loadTrendText: { fontSize: 9, fontWeight: '700' },
+  loadWeekChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, marginTop: 6, height: 24, width: '100%', overflow: 'hidden' },
+  loadWeekBar: { flex: 1, justifyContent: 'flex-end', height: '100%', maxWidth: '14%' },
+  loadWeekBarFill: { borderRadius: 2, minHeight: 3, width: '100%' },
+  loadAdvice: { fontSize: 8, fontWeight: '500', marginTop: 4, fontStyle: 'italic' },
+
+  statsRow: { flexDirection: 'row', gap: 6, marginBottom: 12 },
+  statCard: { flex: 1, alignItems: 'center', padding: 6, borderRadius: 10 },
+  statValue: { fontSize: 14, fontWeight: '800', marginTop: 2 },
+  statLabel: { fontSize: 7, fontWeight: '600' },
+  statsRowCompact: { flexDirection: 'row', gap: 3, marginBottom: 6, marginTop: 2 },
+  statCardCompact: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 6, borderRadius: 8, gap: 3 },
+  statCardCompactVertical: { flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 6, borderRadius: 8, gap: 2, minHeight: 60 },
+  statCardCompactHorizontal: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 4, paddingHorizontal: 5, borderRadius: 6, gap: 4, minHeight: 38 },
+  statTextColumn: { flexDirection: 'column', alignItems: 'flex-start', gap: 0 },
+  statTextContainer: { flexDirection: 'column', alignItems: 'flex-start' },
+  statValueCompact: { fontSize: 18, fontWeight: '900', marginTop: 0 },
+  statValueCompactVertical: { fontSize: 16, fontWeight: '800', marginTop: 0 },
+  statValueCompactHorizontal: { fontSize: 13, fontWeight: '800', lineHeight: 14 },
+  statLabelCompact: { fontSize: 7, fontWeight: '600', lineHeight: 8, marginTop: -1 },
+
+  // Battery + Tools - UNE SEULE LIGNE DE 4 CARTES
+  batteryToolsRowSingle: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 8,
+  },
+
+  // Batterie compacte (quart de largeur)
+  batteryCardSmall: {
+    flex: 1,
+    padding: 8,
+    borderRadius: 14,
+    minHeight: 95,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  batteryHorizontalSmall: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 1,
     width: '100%',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
   },
-  periodButtons: {
+  batteryHBodySmall: {
+    flex: 1,
+    height: 18,
+    borderWidth: 2,
+    borderRadius: 6,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  batteryHLevelSmall: {
+    height: '100%',
+    borderRadius: 2,
+    position: 'relative',
+  },
+  batteryShineSmall: {
+    position: 'absolute',
+    top: 1,
+    left: 2,
+    right: 2,
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 1,
+  },
+  batteryHHeadSmall: {
+    width: 6,
+    height: 12,
+    borderTopRightRadius: 3,
+    borderBottomRightRadius: 3,
+  },
+  batteryPercentSmall: {
+    fontSize: 16,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+
+  // Pile/Batterie horizontale allongée pour carte Energie
+  batteryHorizontal: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  periodButton: {
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.radius.full,
-    backgroundColor: theme.colors.borderLight,
-    minWidth: 50,
+  batteryBodyH: {
+    width: 50,
+    height: 24,
+    borderWidth: 2,
+    borderRadius: 4,
+    overflow: 'hidden',
+    position: 'relative',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  periodButtonActive: {
-    backgroundColor: '#34D399',
+  batteryFillH: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 2,
   },
-  periodButtonText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textSecondary,
+  batteryTextH: {
+    fontSize: 11,
+    fontWeight: '800',
+    textAlign: 'center',
+    zIndex: 1,
+  },
+  batteryHeadH: {
+    width: 4,
+    height: 10,
+    borderTopRightRadius: 2,
+    borderBottomRightRadius: 2,
+    marginLeft: -1,
+  },
+
+  // Tool cards small (quart de largeur)
+  toolCardSmall: {
+    flex: 1,
+    padding: 8,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    minHeight: 95,
+  },
+  toolCardTitleSmall: {
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+    width: '100%',
+  },
+  toolCardSubtitleSmall: {
+    fontSize: 10,
+    fontWeight: '600',
+    textAlign: 'center',
+    width: '100%',
+  },
+
+  // Tools Scroll - Ligne horizontale scrollable
+  toolsScrollContainer: {
+    marginBottom: 8,
+  },
+  toolsScrollContent: {
+    paddingHorizontal: 8,
+    gap: 8,
+  },
+  toolCardScroll: {
+    width: 80,
+    padding: 10,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    minHeight: 95,
+  },
+
+  // Grid 2x2
+  gridContainer: { gap: 12, marginBottom: 10, width: '100%' },
+  gridRow: { flexDirection: 'row', gap: 12 },
+  squareCard: { flex: 1, aspectRatio: 1, borderRadius: 14, overflow: 'hidden' },
+
+  // Grid Lottie - Layout simplifié pour cartes uniformes avec PLUS D'AIR
+  gridLottieContainer: { marginBottom: 20, paddingHorizontal: 8 },
+  gridLottieRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+
+  // Layout 3 cartes compactes
+  threeCardsRow: { flexDirection: 'row', gap: 6, marginBottom: 8, paddingHorizontal: 16 },
+  compactCard: {
+    flex: 1,
+  },
+
+  // Quick Tools (3 boutons) - ULTRA COMPACTS
+  quickToolsContainer: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  quickToolButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  quickToolText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  gridCard: { flex: 1, padding: 16, borderRadius: 14, minHeight: 180, overflow: 'hidden' },
+  gridCardLarge: { flex: 1, padding: 16, borderRadius: 14, minHeight: 160 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
+  cardTitle: { fontSize: 8, fontWeight: '700', letterSpacing: 1, flex: 1, textAlign: 'center', width: '100%' },
+  cardTitleLarge: { fontSize: 10, fontWeight: '700', letterSpacing: 1, flex: 1, textAlign: 'center', width: '100%' },
+  bigValue: { fontSize: 26, fontWeight: '900', textAlign: 'center', width: '100%' },
+  bigValueLarge: { fontSize: 32, fontWeight: '900', marginTop: 4, textAlign: 'center', width: '100%' },
+  unit: { fontSize: 12, fontWeight: '600', textAlign: 'center', width: '100%' },
+  subValue: { fontSize: 10, fontWeight: '600', marginTop: 2, textAlign: 'center', width: '100%' },
+  subValueLarge: { fontSize: 12, fontWeight: '600', marginTop: 4, textAlign: 'center', width: '100%' },
+  miniChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, marginTop: 8, height: 24 },
+  miniBar: { flex: 1, borderRadius: 2, minHeight: 3 },
+  weightTrendContainer: { marginTop: 6, width: '100%', overflow: 'hidden' },
+  weightTrendChart: { height: 35, width: '100%', overflow: 'hidden' },
+  weightTrendInfo: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
+  weightTrendLabel: { fontSize: 8, fontWeight: '600', textAlign: 'center' },
+
+  // Hydration - Bidon de sport
+  bidonWrap: { alignItems: 'center', justifyContent: 'center', flex: 1, marginVertical: 8 },
+  bidonContainer: { alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  bidon: { alignItems: 'center' },
+  bidonCap: { width: 18, height: 8, borderTopLeftRadius: 5, borderTopRightRadius: 5 },
+  bidonCapTop: { width: 10, height: 3, borderRadius: 2, alignSelf: 'center', marginTop: 2 },
+  bidonBody: { width: 40, height: 55, borderWidth: 2, borderRadius: 8, borderTopLeftRadius: 3, borderTopRightRadius: 3, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: 'rgba(6,182,212,0.08)', position: 'relative' },
+  bidonWater: { width: '100%', backgroundColor: '#06B6D4', borderBottomLeftRadius: 6, borderBottomRightRadius: 6, opacity: 0.85 },
+  bidonShine: { position: 'absolute', top: 4, left: 3, width: 5, height: 30, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 2 },
+  bidonGrads: { position: 'absolute', right: 3, top: 6, bottom: 6, justifyContent: 'space-between' },
+  bidonGrad: { width: 6, height: 1 },
+  hydroValueContainer: { alignItems: 'center', marginTop: 4 },
+  hydroValue: { fontSize: 18, fontWeight: '900', textAlign: 'center' },
+  hydroGoal: { fontSize: 11, fontWeight: '600', marginTop: 2, textAlign: 'center' },
+  hydroBtns: { flexDirection: 'row', gap: 4, marginTop: 4 },
+  hydroBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, minWidth: 50 },
+  hydroBtnTxt: { fontSize: 14, fontWeight: '700', color: '#06B6D4' },
+
+  // Alert
+  alertBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, gap: 3, marginTop: 4 },
+  alertText: { fontSize: 9, fontWeight: '600', color: '#EF4444' },
+
+  // Challenges
+  challengesCard: { padding: 14, borderRadius: 14, marginBottom: 12 },
+  challengesHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
+  challengesList: { gap: 10 },
+  challengeItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  challengeIconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(99,102,241,0.1)', alignItems: 'center', justifyContent: 'center' },
+  challengeInfo: { flex: 1 },
+  challengeTitle: { fontSize: 12, fontWeight: '600', marginBottom: 3 },
+  challengeProgress: { height: 4, borderRadius: 2, overflow: 'hidden' },
+  challengeFill: { height: '100%', borderRadius: 2 },
+  rewardBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 8, gap: 3 },
+  rewardText: { fontSize: 10, fontWeight: '700' },
+
+  // Report
+  reportCard: {
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  reportHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  reportContent: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  gradeBadge: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  gradeText: { fontSize: 20, fontWeight: '900', color: '#FFFFFF' },
+  reportInfo: { flex: 1 },
+  reportTitle: { fontSize: 13, fontWeight: '700', marginBottom: 4 },
+  scoreContainer: { gap: 6 },
+  reportScore: { fontSize: 12, fontWeight: '600' },
+  progressBarBg: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  shareBtn: { fontSize: 20 },
+
+  // Section
+  sectionTitle: { fontSize: 9, fontWeight: '700', letterSpacing: 1, color: '#6B7280' },
+  sectionHeader: { fontSize: 9, fontWeight: '700', letterSpacing: 1, color: '#6B7280', marginBottom: 8, marginTop: 4 },
+
+  // Actions
+  actionsRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  actionBtn: { flex: 1, alignItems: 'center', padding: 12, borderRadius: 12, gap: 3 },
+  actionLabel: { fontSize: 10, fontWeight: '700' },
+  actionSubLabel: { fontSize: 8, fontWeight: '500', textAlign: 'center', marginTop: -1 },
+
+  // Actions Row 4 cartes - MÊME DIMENSION QUE LIGNE ÉNERGIE
+  actionsRow4: { flexDirection: 'row', gap: 6, marginBottom: 8 },
+  actionBtn4: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 14,
+    gap: 5,
+    minHeight: 105,
+  },
+  actionBtn4Toggle: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 14,
+    gap: 5,
+    minHeight: 105,
+  },
+  actionLabel4: { fontSize: 11, fontWeight: '700', textAlign: 'center', width: '100%' },
+  actionSubLabel4: { fontSize: 9, fontWeight: '500', textAlign: 'center', marginTop: -1, width: '100%' },
+
+  // Tools
+  toolsRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  toolBtn: { flex: 1, alignItems: 'center', padding: 10, borderRadius: 10, gap: 4 },
+  toolLabel: { fontSize: 8, fontWeight: '600' },
+
+  // Fighter
+  fighterRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  fighterBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 10, borderRadius: 10, gap: 6 },
+  fighterBtnText: { fontSize: 11, fontWeight: '600' },
+
+  // Mode Compétiteur
+  modeCompetContainer: {
+    padding: 16,
+    borderRadius: 16,
+  },
+  modeCompetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  modeCompetIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeCompetTitle: {
+    fontSize: 18,
+    fontWeight: '700',
     letterSpacing: 0.3,
   },
-  periodButtonTextActive: {
+
+  // Toggle switch mode compétition
+  competToggleSwitch: {
+    width: 52,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  competToggleThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+
+  // Mode compétition désactivé
+  competModeOffCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  competModeOffText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+
+  // Compte à rebours compétition
+  competCountdownCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 2,
+    marginBottom: 16,
+  },
+  competCountdownLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  competCountdownIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  competCountdownInfo: {
+    flex: 1,
+    gap: 3,
+  },
+  competCountdownName: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  competCountdownDate: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  competCountdownBadge: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  competCountdownDays: {
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+
+  // Pas de compétition
+  competNoEventCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    gap: 12,
+    marginBottom: 16,
+  },
+  competNoEventIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  competNoEventContent: {
+    flex: 1,
+    gap: 3,
+  },
+  competNoEventTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  competNoEventDesc: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+
+  modeCompetActions: {
+    gap: 10,
+  },
+  modeCompetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    gap: 12,
+    borderWidth: 1,
+  },
+  modeCompetBtnIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeCompetBtnContent: {
+    flex: 1,
+    gap: 2,
+  },
+  modeCompetBtnLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modeCompetBtnDesc: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+
+  // Bouton personnaliser
+  customizeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginTop: 24,
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  customizeButtonText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 12,
+  },
+
+  // Bouton Voir plus
+  showMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 16,
+    marginBottom: 8,
+    marginHorizontal: 16,
+    gap: 8,
+  },
+  showMoreButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  // Competition Toggle - État actif (avec compétition)
+  competToggleActive: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  competIconGlow: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  competCountdown: {
+    alignItems: 'center',
+    gap: 1,
+    marginTop: 2,
+  },
+  competDaysLabel: {
+    fontSize: 8,
+    fontWeight: '600',
+  },
+  competDaysNumber: {
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  competDaysUnit: {
+    fontSize: 9,
+    fontWeight: '600',
+  },
+  // Competition Toggle - État inactif (pas de compétition)
+  competToggleInactive: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  competInactiveText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  competInactiveSubtext: {
+    fontSize: 8,
+    fontWeight: '500',
+  },
+
+  // Section Compétiteur - Apparaît quand le toggle est ON
+  competitorSection: {
+    padding: 16,
+    borderRadius: 14,
+    marginBottom: 8,
+    gap: 12,
+  },
+  competitorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  competitorTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  competEventCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 10,
+  },
+  competEventInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  competEventName: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  competEventDate: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  competEventCountdown: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  competEventDays: {
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  competAddBtn: {
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    borderStyle: 'dashed',
+  },
+  competAddText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  // 3 petits carrés pour Mode Cut/Palmarès/Compétitions
+  actionsRow3: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 8,
+  },
+  actionBtn3: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 14,
+    gap: 5,
+    minHeight: 105,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  actionLabel3: {
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+    width: '100%',
+  },
+  actionSubLabel3: {
+    fontSize: 9,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: -1,
+    width: '100%',
+  },
+
+  // Jauge d'énergie moderne
+  energyGaugeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    gap: 6,
+    paddingHorizontal: 4,
+  },
+  energyBarBackground: {
+    flex: 1,
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  energyBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+
+  // Badge J-XX pour le compte à rebours
+  countdownBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    minWidth: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countdownText: {
     color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
   },
-  chartEmptyState: {
+
+  // Mini Switch pour le toggle Mode Compét
+  miniSwitch: {
+    width: 28,
+    height: 16,
+    borderRadius: 8,
+    padding: 2,
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  miniSwitchThumb: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+
+  // Carnet d'Entraînement
+  trainingJournalCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  trainingJournalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  trainingJournalIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    height: 220,
-    paddingHorizontal: theme.spacing.xl,
-    gap: theme.spacing.sm,
   },
-  chartEmptyStateIcon: {
-    fontSize: 48,
-    opacity: 0.3,
-    marginBottom: theme.spacing.sm,
+  trainingJournalTitleContainer: {
+    flex: 1,
+    gap: 2,
   },
-  chartEmptyStateTitle: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textPrimary,
-    textAlign: 'center',
+  trainingJournalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
   },
-  chartEmptyStateText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: theme.fontSize.md * 1.5,
+  trainingJournalSubtitle: {
+    fontSize: 12,
+    fontWeight: '500',
   },
-  chart: {
-    marginVertical: theme.spacing.md,
-    borderRadius: theme.radius.md,
-  },
-  motivationCard: {
-    backgroundColor: theme.colors.mintPastel,
-    padding: theme.spacing.xxl,
-    borderRadius: theme.radius.xxl,
+  trainingJournalStats: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    ...theme.shadow.sm,
+    justifyContent: 'space-between',
   },
-  motivationEmoji: {
-    fontSize: 48,
-    marginBottom: theme.spacing.sm,
-  },
-  motivationText: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textPrimary,
-    textAlign: 'center',
-    letterSpacing: 0.2,
-  },
-  motivationSubtext: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    letterSpacing: 0.1,
-  },
-  quoteContainer: {
+  trainingJournalStat: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.xxl,
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: Platform.OS === 'ios' ? 20 : 0,
-    paddingVertical: theme.spacing.xl,
+    gap: 8,
   },
-  quoteText: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.bold,
+  trainingJournalStatIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trainingJournalStatInfo: {
+    gap: 2,
+  },
+  trainingJournalStatValue: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  trainingJournalStatLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  trainingJournalDivider: {
+    width: 1,
+    height: 30,
+    marginHorizontal: 8,
+  },
+
+  // Croix rouge pour Journal des Blessures
+  redCrossIcon: {
+    width: 28,
+    height: 28,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crossVerticalIcon: {
+    position: 'absolute',
+    width: 10,
+    height: 28,
+    borderRadius: 2,
+  },
+  crossHorizontalIcon: {
+    position: 'absolute',
+    width: 28,
+    height: 10,
+    borderRadius: 2,
+  },
+
+  // Croix rouge SMALL pour boutons circulaires
+  redCrossIconSmall: {
+    width: 22,
+    height: 22,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crossVerticalIconSmall: {
+    position: 'absolute',
+    width: 8,
+    height: 22,
+    borderRadius: 2,
+  },
+  crossHorizontalIconSmall: {
+    position: 'absolute',
+    width: 22,
+    height: 8,
+    borderRadius: 2,
+  },
+
+  // Bannière Blessures (full width)
+  blessuresBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 8,
+  },
+  blessuresCrossContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: '#EF444420',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  redCrossIconLarge: {
+    width: 30,
+    height: 30,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crossVerticalIconLarge: {
+    position: 'absolute',
+    width: 10,
+    height: 30,
+    borderRadius: 3,
+  },
+  crossHorizontalIconLarge: {
+    position: 'absolute',
+    width: 30,
+    height: 10,
+    borderRadius: 3,
+  },
+  blessuresTextContainer: {
+    flex: 1,
+  },
+  blessuresTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  blessuresSubtitle: {
+    fontSize: 13,
+  },
+
+  // Actions Row 4 - CIRCULAR BUTTONS
+  actionBtnCircle: {
+    flex: 1,
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999, // Perfect circle
+    gap: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  actionLabelCircle: {
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  actionSubLabelCircle: {
+    fontSize: 7,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: -2,
+  },
+
+  // ═══════════════════════════════════════════════
+  // CITATION - BULLE DE PENSÉE ANIMÉE
+  // ═══════════════════════════════════════════════
+
+  speechBubbleContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+
+  // Citation - Design épuré
+  quoteCardClean: {
+    flexDirection: 'row' as const,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    gap: 12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  quoteAccentBar: {
+    width: 3,
+    borderRadius: 2,
+    minHeight: 36,
+  },
+  quoteCleanContent: {
+    flex: 1,
+  },
+  quoteCleanText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    fontStyle: 'italic' as const,
+    lineHeight: 21,
+    letterSpacing: 0.15,
+  },
+  quoteCleanLabel: {
+    fontSize: 9.5,
+    fontWeight: '700' as const,
+    letterSpacing: 1.2,
+    marginTop: 8,
+    textTransform: 'uppercase' as const,
+  },
+
+  // Legacy styles (kept for compatibility)
+  brainContainer: {
+    position: 'relative' as const,
+  },
+  brainCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    borderWidth: 2,
+  },
+  ideaSparks: {
+    position: 'relative' as const,
+    width: 60,
+    height: 20,
+  },
+
+  speechBubble: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
+    position: 'relative',
+  },
+
+  // Queue de la bulle
+  bubbleTail: {
+    position: 'absolute',
+    left: -10,
+    top: 24,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+    transform: [{ rotate: '-45deg' }],
+  },
+
+  // Texte de la citation
+  quoteTextBubble: {
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 22,
+    color: '#1A1A1A',
     fontStyle: 'italic',
-    color: '#4A5568',
-    textAlign: 'center',
-    lineHeight: theme.fontSize.xl * 1.4,
+    letterSpacing: 0.2,
+    marginBottom: 12,
   },
-  emptyStateCard: {
-    alignItems: 'center',
+
+  // Badge "Citation du jour"
+  quoteBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  quoteBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  // Bouton flottant de sauvegarde
+  backupFab: {
+    position: 'absolute',
+    bottom: 100,
+    right: 16,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     justifyContent: 'center',
-    paddingVertical: theme.spacing.xxxl,
-    gap: theme.spacing.md,
-  },
-  emptyStateEmoji: {
-    fontSize: 56,
-    marginBottom: theme.spacing.sm,
-  },
-  emptyStateTitle: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
-    textAlign: 'center',
-    letterSpacing: -0.3,
-  },
-  emptyStateSubtext: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: theme.fontSize.md * 1.5,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  emptyStateButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xxl,
-    borderRadius: theme.radius.xl,
-    marginTop: theme.spacing.md,
-    ...theme.shadow.sm,
-  },
-  emptyStateButtonText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.surface,
-    letterSpacing: 0.3,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });

@@ -1,15 +1,92 @@
 import { BadgeId } from '@/types/badges';
 import { Alert, Platform } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
+import logger from '@/lib/security/logger';
 import {
   unlockBadge as unlockBadgeLocal,
   isBadgeUnlocked,
   getAllMeasurements,
   getUserSettings,
-  calculateWeightStreak,
   getAllWorkouts,
-  calculateWorkoutStreak,
 } from './storage';
+
+// Calculer la série de jours consécutifs de pesée
+const calculateWeightStreak = async (): Promise<number> => {
+  const measurements = await getAllMeasurements();
+  if (!measurements || measurements.length === 0) return 0;
+
+  // Trier par date décroissante
+  const sorted = [...measurements].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  let streak = 1;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const firstDate = new Date(sorted[0].date);
+  firstDate.setHours(0, 0, 0, 0);
+
+  // Si la dernière mesure n'est pas aujourd'hui ou hier, pas de streak
+  const diffFromToday = Math.floor((today.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffFromToday > 1) return 0;
+
+  for (let i = 1; i < sorted.length; i++) {
+    const prevDate = new Date(sorted[i - 1].date);
+    const currDate = new Date(sorted[i].date);
+    prevDate.setHours(0, 0, 0, 0);
+    currDate.setHours(0, 0, 0, 0);
+
+    const diff = Math.floor((prevDate.getTime() - currDate.getTime()) / (1000 * 60 * 60 * 24));
+    if (diff === 1) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+};
+
+// Calculer la série de jours consécutifs d'entraînement
+const calculateWorkoutStreak = async (): Promise<number> => {
+  const workouts = await getAllWorkouts();
+  if (!workouts || workouts.length === 0) return 0;
+
+  // Trier par date décroissante
+  const sorted = [...workouts].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  let streak = 1;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const firstDate = new Date(sorted[0].date);
+  firstDate.setHours(0, 0, 0, 0);
+
+  // Si le dernier workout n'est pas aujourd'hui ou hier, pas de streak
+  const diffFromToday = Math.floor((today.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffFromToday > 1) return 0;
+
+  // Grouper par date unique
+  const uniqueDates = [...new Set(sorted.map(w => {
+    const d = new Date(w.date);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  }))].sort((a, b) => b - a);
+
+  for (let i = 1; i < uniqueDates.length; i++) {
+    const diff = Math.floor((uniqueDates[i - 1] - uniqueDates[i]) / (1000 * 60 * 60 * 24));
+    if (diff === 1) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+};
 
 // Débloquer un badge et afficher une notification
 export const unlockBadge = async (badgeId: BadgeId): Promise<boolean> => {
@@ -24,13 +101,13 @@ export const unlockBadge = async (badgeId: BadgeId): Promise<boolean> => {
     const success = await unlockBadgeLocal(badgeId);
 
     if (success) {
-      console.log('✅ Badge débloqué:', badgeId);
+      logger.info('Badge débloqué:', badgeId);
       return true;
     }
 
     return false;
   } catch (error) {
-    console.error('❌ Exception:', error);
+    logger.error('❌ Exception:', error);
     return false;
   }
 };
@@ -47,8 +124,8 @@ export const checkWeightBadges = async () => {
 
     // Badge "Première pesée"
     if (measurements.length >= 1) {
-      const unlocked = await unlockBadge('first_weight');
-      if (unlocked) unlockedBadges.push('first_weight');
+      const unlocked = await unlockBadge('first_step');
+      if (unlocked) unlockedBadges.push('first_step');
     }
 
     // Badge "7 jours consécutifs"
@@ -98,7 +175,7 @@ export const checkWeightBadges = async () => {
       showBadgeNotification(unlockedBadges);
     }
   } catch (error) {
-    console.error('❌ Erreur lors de la vérification des badges de poids:', error);
+    logger.error('❌ Erreur lors de la vérification des badges de poids:', error);
   }
 };
 
@@ -114,8 +191,8 @@ export const checkWorkoutBadges = async () => {
 
     // Badge "Premier entraînement"
     if (workouts.length >= 1) {
-      const unlocked = await unlockBadge('first_workout');
-      if (unlocked) unlockedBadges.push('first_workout');
+      const unlocked = await unlockBadge('bushi');
+      if (unlocked) unlockedBadges.push('bushi');
     }
 
     // Badge "Sportif du mois" (20 entraînements dans le mois en cours)
@@ -135,20 +212,20 @@ export const checkWorkoutBadges = async () => {
       showBadgeNotification(unlockedBadges);
     }
   } catch (error) {
-    console.error('❌ Erreur lors de la vérification des badges d\'entraînement:', error);
+    logger.error('❌ Erreur lors de la vérification des badges d\'entraînement:', error);
   }
 };
 
 // Afficher une notification pour un nouveau badge
 const showBadgeNotification = (badgeIds: BadgeId[]) => {
   if (Platform.OS !== 'web') {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
   }
 
   const badgeNames = badgeIds.map(id => {
     switch (id) {
-      case 'first_weight': return 'Première pesée';
-      case 'first_workout': return 'Premier entraînement';
+      case 'first_step': return 'Première pesée';
+      case 'bushi': return 'Premier entraînement';
       case 'complete_profile': return 'Profil complet';
       case 'streak_7': return '7 jours consécutifs';
       case 'streak_30': return '30 jours consécutifs';
@@ -161,10 +238,10 @@ const showBadgeNotification = (badgeIds: BadgeId[]) => {
   });
 
   const message = badgeIds.length === 1
-    ? `Nouveau badge débloqué : ${badgeNames[0]} 🎉`
-    : `${badgeIds.length} nouveaux badges débloqués ! 🎉`;
+    ? `Nouveau badge débloqué : ${badgeNames[0]}`
+    : `${badgeIds.length} nouveaux badges débloqués !`;
 
-  Alert.alert('🏆 Félicitations !', message, [{ text: 'Super !' }]);
+  Alert.alert('Félicitations !', message, [{ text: 'Super !' }]);
 };
 
 // Vérifier tous les badges

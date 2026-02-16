@@ -1,17 +1,18 @@
 import { StyleSheet, TouchableOpacity, View, Image } from 'react-native';
-import { useRouter } from 'expo-router';
 import { Settings } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface UserAvatarProps {
   imageUrl?: string;
   size?: number;
+  onPress?: () => void;
 }
 
-export function UserAvatar({ imageUrl, size = 40 }: UserAvatarProps) {
-  const router = useRouter();
-
+export function UserAvatar({ imageUrl, size = 40, onPress }: UserAvatarProps) {
   const handlePress = () => {
-    router.push('/(tabs)/settings');
+    if (onPress) {
+      onPress();
+    }
   };
 
   return (
@@ -28,7 +29,7 @@ export function UserAvatar({ imageUrl, size = 40 }: UserAvatarProps) {
           />
         ) : (
           <View style={[styles.placeholder, { width: size, height: size, borderRadius: size / 2 }]}>
-            <Settings size={size * 0.5} color="#007AFF" strokeWidth={2.5} />
+            <Ionicons name="settings" size={size * 0.5} color="#4D96FF" />
           </View>
         )}
       </View>

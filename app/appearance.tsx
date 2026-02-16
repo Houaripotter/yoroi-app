@@ -1,0 +1,319 @@
+// ============================================
+// YOROI - MENU APPARENCE
+// ============================================
+
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import { router } from 'expo-router';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import {
+  Palette,
+  Sun,
+  Moon,
+  Smartphone,
+  ArrowLeft,
+  Image as ImageIcon,
+  MessageSquareQuote,
+  User,
+  ChevronRight,
+  Shapes,
+} from 'lucide-react-native';
+import { useTheme } from '@/lib/ThemeContext';
+import { ThemeMode } from '@/constants/themes';
+import { ScreenWrapper } from '@/components/ScreenWrapper';
+import { SPACING, RADIUS } from '@/constants/appTheme';
+import { logger } from '@/lib/security/logger';
+
+export default function AppearanceScreen() {
+  const { colors, themeMode, setThemeMode } = useTheme();
+
+  const handleModeChange = async (mode: ThemeMode) => {
+    try {
+      impactAsync(ImpactFeedbackStyle.Light);
+      await setThemeMode(mode);
+    } catch (error) {
+      logger.error('[Appearance] Erreur changement mode:', error);
+    }
+  };
+
+  const handleNavigate = (route: string) => {
+    impactAsync(ImpactFeedbackStyle.Medium);
+    router.push(route as any);
+  };
+
+  const menuItems = [
+    {
+      id: 'themes',
+      title: 'Thèmes',
+      description: 'Personnalise les couleurs',
+      icon: Palette,
+      route: '/themes',
+      color: colors.accent,
+    },
+    {
+      id: 'logos',
+      title: 'Logo de l\'app',
+      description: 'Change le logo de l\'application',
+      icon: ImageIcon,
+      route: '/logo-selection',
+      color: '#8B5CF6',
+    },
+    {
+      id: 'citations',
+      title: 'Citations',
+      description: 'Style et notifications',
+      icon: MessageSquareQuote,
+      route: '/citations',
+      color: '#10B981',
+    },
+    {
+      id: 'avatar',
+      title: 'Avatar',
+      description: 'Personnalise ton personnage',
+      icon: User,
+      route: '/avatar-selection',
+      color: '#F59E0B',
+    },
+    {
+      id: 'frames',
+      title: 'Cadres photo',
+      description: 'Choisis la forme de ton avatar',
+      icon: Shapes,
+      route: '/frame-selection',
+      color: '#EC4899',
+    },
+  ];
+
+  return (
+    <ScreenWrapper>
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Bouton retour + En-tête */}
+        <View style={styles.topSection}>
+          <TouchableOpacity
+            style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              router.back();
+            }}
+            activeOpacity={0.7}
+          >
+            <ArrowLeft size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+
+          <View style={styles.header}>
+            <View style={[styles.iconContainer, { backgroundColor: colors.backgroundElevated }]}>
+              <Palette size={28} color={colors.accentText} />
+            </View>
+            <View style={styles.headerText}>
+              <Text style={[styles.title, { color: colors.textPrimary }]}>
+                Apparence
+              </Text>
+              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+                Personnalise ton expérience
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Mode d'affichage */}
+        <View style={[styles.modeSection, { backgroundColor: colors.backgroundCard }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Mode d'affichage
+          </Text>
+          <View style={styles.modesContainer}>
+            {[
+              { mode: 'dark' as ThemeMode, label: 'Sombre', icon: Moon },
+              { mode: 'light' as ThemeMode, label: 'Clair', icon: Sun },
+              { mode: 'auto' as ThemeMode, label: 'Auto', icon: Smartphone },
+            ].map(({ mode, label, icon: Icon }) => {
+              const isActive = themeMode === mode;
+              return (
+                <TouchableOpacity
+                  key={mode}
+                  style={[
+                    styles.modeButton,
+                    { backgroundColor: colors.backgroundElevated },
+                    isActive && { backgroundColor: colors.accent },
+                  ]}
+                  onPress={() => handleModeChange(mode)}
+                  activeOpacity={0.7}
+                >
+                  <Icon
+                    size={20}
+                    color={isActive ? colors.textOnAccent : colors.textPrimary}
+                  />
+                  <Text
+                    style={[
+                      styles.modeLabel,
+                      { color: isActive ? colors.textOnAccent : colors.textPrimary },
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Menu de navigation */}
+        <View style={styles.menuSection}>
+          <Text style={[styles.menuTitle, { color: colors.textPrimary }]}>
+            Personnalisation
+          </Text>
+
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.menuCard, { backgroundColor: colors.backgroundCard }]}
+                onPress={() => handleNavigate(item.route)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.menuIconContainer, { backgroundColor: `${item.color}15` }]}>
+                  <Icon size={24} color={item.color} strokeWidth={2} />
+                </View>
+
+                <View style={styles.menuContent}>
+                  <Text style={[styles.menuItemTitle, { color: colors.textPrimary }]}>
+                    {item.title}
+                  </Text>
+                  <Text style={[styles.menuItemDescription, { color: colors.textMuted }]}>
+                    {item.description}
+                  </Text>
+                </View>
+
+                <ChevronRight size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+    </ScreenWrapper>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    padding: SPACING.lg,
+  },
+  topSection: {
+    marginBottom: SPACING.md,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.sm,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
+  },
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: SPACING.md,
+  },
+  headerText: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    marginBottom: 4,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 15,
+  },
+
+  // Mode section
+  modeSection: {
+    padding: SPACING.lg,
+    borderRadius: RADIUS.xl,
+    marginBottom: SPACING.xl,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: SPACING.md,
+  },
+  modesContainer: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  modeButton: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    gap: SPACING.xs,
+  },
+  modeLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // Menu section
+  menuSection: {
+    marginBottom: SPACING.xl,
+  },
+  menuTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: SPACING.md,
+    letterSpacing: -0.3,
+  },
+  menuCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    borderRadius: RADIUS.xl,
+    marginBottom: SPACING.md,
+    gap: SPACING.md,
+  },
+  menuIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuContent: {
+    flex: 1,
+  },
+  menuItemTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    marginBottom: 4,
+    letterSpacing: -0.2,
+  },
+  menuItemDescription: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
+});

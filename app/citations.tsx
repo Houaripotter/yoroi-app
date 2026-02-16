@@ -1,0 +1,516 @@
+// ============================================
+// YOROI - ÉCRAN CITATIONS
+// ============================================
+
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Switch,
+} from 'react-native';
+import { router } from 'expo-router';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
+import {
+  ArrowLeft,
+  MessageSquareQuote,
+  Bell,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+} from 'lucide-react-native';
+import { useTheme } from '@/lib/ThemeContext';
+import { ScreenWrapper } from '@/components/ScreenWrapper';
+import { SPACING, RADIUS } from '@/constants/appTheme';
+import {
+  CITATION_STYLE_OPTIONS,
+  getCitationStyle,
+  setCitationStyle,
+  CitationStyle,
+  getCitationNotifSettings,
+  setCitationNotifSettings,
+  CitationNotifSettings,
+} from '@/lib/citations';
+import {
+  updateCitationNotifications,
+  sendImmediateCitationNotification,
+  requestNotificationPermissions,
+} from '@/lib/citationNotificationService';
+import { useCustomPopup } from '@/components/CustomPopup';
+import logger from '@/lib/security/logger';
+
+export default function CitationsScreen() {
+  const { colors } = useTheme();
+  const [selectedCitationStyle, setSelectedCitationStyle] = useState<CitationStyle>('all');
+  const [citationNotifSettings, setCitationNotifSettingsState] = useState<CitationNotifSettings>({
+    enabled: false,
+    frequency: 1,
+    time: '08:00',
+  });
+  const [loading, setLoading] = useState(true);
+
+  const { showPopup, PopupComponent } = useCustomPopup();
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      // Charger le style de citation sélectionné
+      const citationStyle = await getCitationStyle();
+      setSelectedCitationStyle(citationStyle);
+
+      // Charger les paramètres de notification de citations
+      const notifSettings = await getCitationNotifSettings();
+      setCitationNotifSettingsState(notifSettings);
+    } catch (error) {
+      logger.error('[Citations] Erreur chargement:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCitationStyleChange = async (style: CitationStyle) => {
+    try {
+      impactAsync(ImpactFeedbackStyle.Medium);
+      await setCitationStyle(style);
+      setSelectedCitationStyle(style);
+      notificationAsync(NotificationFeedbackType.Success);
+    } catch (error) {
+      logger.error('[Citations] Erreur changement style citation:', error);
+      showPopup('Erreur', 'Impossible de changer le style de citation', [{ text: 'OK', style: 'primary' }]);
+    }
+  };
+
+  const handleCitationNotifToggle = async (enabled: boolean) => {
+    try {
+      impactAsync(ImpactFeedbackStyle.Light);
+
+      if (enabled) {
+        // Demander les permissions d'abord
+        const hasPermission = await requestNotificationPermissions();
+        if (!hasPermission) {
+          showPopup(
+            'Permissions requises',
+            'Pour recevoir les citations motivantes, autorise les notifications dans les reglages de ton appareil.',
+            [{ text: 'OK', style: 'primary' }],
+            <AlertCircle size={32} color="#F59E0B" />
+          );
+          return;
+        }
+      }
+
+      const newSettings = { ...citationNotifSettings, enabled };
+      await setCitationNotifSettings(newSettings);
+      setCitationNotifSettingsState(newSettings);
+
+      // Planifier ou annuler les notifications
+      const success = await updateCitationNotifications(newSettings);
+
+      if (enabled && success) {
+        notificationAsync(NotificationFeedbackType.Success);
+        showPopup(
+          'Notifications activees',
+          `Tu recevras ${citationNotifSettings.frequency} citation${citationNotifSettings.frequency > 1 ? 's' : ''} par jour pour te motiver !\n\nLes notifications sont planifiees pour les 7 prochains jours.`,
+          [
+            { text: 'OK', style: 'default' },
+            {
+              text: 'Tester maintenant',
+              style: 'primary',
+              onPress: async () => {
+                await sendImmediateCitationNotification();
+              },
+            },
+          ],
+          <CheckCircle size={32} color="#10B981" />
+        );
+      }
+    } catch (error) {
+      logger.error('[Citations] Erreur toggle notif citation:', error);
+      showPopup('Erreur', 'Impossible de modifier les notifications', [{ text: 'OK', style: 'primary' }]);
+    }
+  };
+
+  const handleCitationFrequencyChange = async (frequency: number) => {
+    try {
+      impactAsync(ImpactFeedbackStyle.Light);
+      const newSettings = { ...citationNotifSettings, frequency };
+      await setCitationNotifSettings(newSettings);
+      setCitationNotifSettingsState(newSettings);
+
+      // Replanifier les notifications avec la nouvelle fréquence
+      if (newSettings.enabled) {
+        await updateCitationNotifications(newSettings);
+      }
+    } catch (error) {
+      logger.error('[Citations] Erreur changement fréquence notif citation:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <ScreenWrapper>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+          <Text style={[styles.loadingText, { color: colors.textMuted }]}>
+            Chargement...
+          </Text>
+        </View>
+      </ScreenWrapper>
+    );
+  }
+
+  return (
+    <ScreenWrapper>
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Bouton retour + En-tête */}
+        <View style={styles.topSection}>
+          <TouchableOpacity
+            style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              router.back();
+            }}
+            activeOpacity={0.7}
+          >
+            <ArrowLeft size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+
+          <View style={styles.header}>
+            <View style={[styles.iconContainer, { backgroundColor: colors.backgroundElevated }]}>
+              <MessageSquareQuote size={24} color={colors.accent} />
+            </View>
+            <View style={styles.headerText}>
+              <Text style={[styles.title, { color: colors.textPrimary }]}>
+                Citations
+              </Text>
+              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+                Style et notifications motivantes
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Section: Style de Citations */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Style de Citations
+          </Text>
+          <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
+            Choisis le type de citations qui vous inspire
+          </Text>
+
+          <View style={styles.citationsGrid}>
+            {CITATION_STYLE_OPTIONS.map((option) => {
+              const isSelected = selectedCitationStyle === option.id;
+              const IconComponent = option.iconComponent;
+
+              return (
+                <TouchableOpacity
+                  key={option.id}
+                  style={[
+                    styles.citationCard,
+                    { backgroundColor: colors.backgroundCard },
+                    isSelected && {
+                      borderColor: colors.accent,
+                      borderWidth: 2,
+                    },
+                  ]}
+                  onPress={() => handleCitationStyleChange(option.id)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.citationHeader}>
+                    <View style={[styles.citationIconContainer, { backgroundColor: `${colors.accent}15` }]}>
+                      <IconComponent size={24} color={colors.accent} />
+                    </View>
+                    {isSelected && (
+                      <View style={[styles.activeIndicator, { backgroundColor: colors.accent }]}>
+                        <Text style={styles.activeText}>✓</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={[styles.citationLabel, { color: colors.textPrimary }]}>
+                    {option.label}
+                  </Text>
+                  <Text style={[styles.citationLabelJp, { color: colors.textMuted }]}>
+                    {option.labelJp}
+                  </Text>
+                  <Text style={[styles.citationDescription, { color: colors.textSecondary }]}>
+                    {option.description}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Section: Notifications de Citations */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Notifications de Citations
+          </Text>
+          <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
+            Recevez des citations motivantes chaque jour
+          </Text>
+
+          {/* Toggle activer/désactiver */}
+          <View style={[styles.notifCard, { backgroundColor: colors.backgroundCard }]}>
+            <View style={styles.notifRow}>
+              <View style={[styles.notifIconContainer, { backgroundColor: `${colors.accent}15` }]}>
+                <Bell size={22} color={colors.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.notifLabel, { color: colors.textPrimary }]}>
+                  Activer les notifications
+                </Text>
+                <Text style={[styles.notifSublabel, { color: colors.textMuted }]}>
+                  Reçois ta dose de motivation quotidienne
+                </Text>
+              </View>
+              <Switch
+                value={citationNotifSettings.enabled}
+                onValueChange={handleCitationNotifToggle}
+                trackColor={{ false: colors.border, true: colors.accent }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
+            {/* Choix de la fréquence */}
+            {citationNotifSettings.enabled && (
+              <>
+                <View style={[styles.notifDivider, { backgroundColor: colors.border }]} />
+                <View style={styles.frequencySection}>
+                  <View style={styles.frequencyHeader}>
+                    <Clock size={18} color={colors.textMuted} />
+                    <Text style={[styles.frequencyLabel, { color: colors.textPrimary }]}>
+                      Fréquence par jour
+                    </Text>
+                  </View>
+                  <View style={styles.frequencyOptions}>
+                    {[1, 2, 3, 4, 5].map((freq) => (
+                      <TouchableOpacity
+                        key={freq}
+                        style={[
+                          styles.frequencyOption,
+                          {
+                            backgroundColor: citationNotifSettings.frequency === freq
+                              ? colors.accent
+                              : colors.backgroundElevated,
+                          },
+                        ]}
+                        onPress={() => handleCitationFrequencyChange(freq)}
+                        activeOpacity={0.7}
+                      >
+                        <Text
+                          style={[
+                            styles.frequencyOptionText,
+                            {
+                              color: citationNotifSettings.frequency === freq
+                                ? '#000000'
+                                : colors.textPrimary,
+                            },
+                          ]}
+                        >
+                          {freq}x
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <Text style={[styles.frequencyHint, { color: colors.textMuted }]}>
+                    {citationNotifSettings.frequency === 1 && 'Une citation le matin pour bien démarrer'}
+                    {citationNotifSettings.frequency === 2 && 'Matin et après-midi pour rester motivé'}
+                    {citationNotifSettings.frequency === 3 && 'Matin, midi et soir pour une motivation continue'}
+                    {citationNotifSettings.frequency === 4 && 'Toutes les 4-5 heures pour te booster'}
+                    {citationNotifSettings.frequency === 5 && 'Mode guerrier : citations régulières !'}
+                  </Text>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Custom Popup */}
+      <PopupComponent />
+    </ScreenWrapper>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    padding: SPACING.lg,
+    paddingBottom: 100,
+  },
+  loadingText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 50,
+  },
+  topSection: {
+    marginBottom: SPACING.xl,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: RADIUS.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 15,
+  },
+  section: {
+    marginBottom: SPACING.xl,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  sectionDescription: {
+    fontSize: 13,
+    marginBottom: SPACING.md,
+  },
+  citationsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+  },
+  citationCard: {
+    width: '48%',
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    position: 'relative',
+    minHeight: 140,
+  },
+  citationHeader: {
+    marginBottom: SPACING.sm,
+    alignItems: 'flex-start',
+  },
+  citationIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.xs,
+  },
+  citationLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  citationLabelJp: {
+    fontSize: 13,
+    marginBottom: SPACING.xs,
+  },
+  citationDescription: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  activeIndicator: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  notifCard: {
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+  },
+  notifRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  notifIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notifLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  notifSublabel: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  notifDivider: {
+    height: 1,
+    marginVertical: SPACING.md,
+  },
+  frequencySection: {
+    gap: SPACING.sm,
+  },
+  frequencyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  frequencyLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  frequencyOptions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  frequencyOption: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+  },
+  frequencyOptionText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  frequencyHint: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: SPACING.xs,
+  },
+});

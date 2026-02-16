@@ -1,7 +1,8 @@
 export type BadgeId =
   // Débutant
-  | 'first_weight'
-  | 'first_workout'
+  | 'first_step'
+  | 'assidu'
+  | 'bushi'
   | 'complete_profile'
   // Régularité
   | 'streak_7'
@@ -10,7 +11,9 @@ export type BadgeId =
   // Progression
   | 'lost_1kg'
   | 'lost_5kg'
-  | 'goal_reached';
+  | 'goal_reached'
+  | 'herculean_strength'
+  | 'data_master';
 
 export type BadgeCategory = 'beginner' | 'consistency' | 'progress';
 
@@ -33,23 +36,32 @@ export interface UserBadge {
 
 export const BADGES: Record<BadgeId, Badge> = {
   // DÉBUTANT
-  first_weight: {
-    id: 'first_weight',
-    name: 'Première pesée',
+  first_step: {
+    id: 'first_step',
+    name: 'Premier pas',
     description: 'Enregistrer sa première mesure',
     icon: '🎯',
     category: 'beginner',
     color: '#34D399',
-    requirement: 'Ajouter votre première mesure de poids',
+    requirement: 'Ajouter ta première mesure de poids',
   },
-  first_workout: {
-    id: 'first_workout',
-    name: 'Premier entraînement',
-    description: 'Enregistrer son premier entraînement',
-    icon: '💪',
+  assidu: {
+    id: 'assidu',
+    name: 'Assidu',
+    description: '10 mesures enregistrées',
+    icon: '📈',
+    category: 'beginner',
+    color: '#F59E0B',
+    requirement: 'Enregistrer 10 mesures de poids',
+  },
+  bushi: {
+    id: 'bushi',
+    name: 'Bushi',
+    description: '10 entraînements enregistrés',
+    icon: '🥋',
     category: 'beginner',
     color: '#3B82F6',
-    requirement: 'Enregistrer votre premier entraînement',
+    requirement: 'Enregistrer 10 entraînements',
   },
   complete_profile: {
     id: 'complete_profile',
@@ -58,7 +70,7 @@ export const BADGES: Record<BadgeId, Badge> = {
     icon: '👤',
     category: 'beginner',
     color: '#8B5CF6',
-    requirement: 'Remplir votre profil (nom, taille, objectif)',
+    requirement: 'Remplir ton profil (nom, taille, objectif)',
   },
 
   // RÉGULARITÉ
@@ -98,7 +110,7 @@ export const BADGES: Record<BadgeId, Badge> = {
     icon: '📉',
     category: 'progress',
     color: '#10B981',
-    requirement: 'Perdre au moins 1 kg par rapport à votre poids initial',
+    requirement: 'Perdre au moins 1 kg par rapport à ton poids initial',
   },
   lost_5kg: {
     id: 'lost_5kg',
@@ -107,7 +119,7 @@ export const BADGES: Record<BadgeId, Badge> = {
     icon: '🎉',
     category: 'progress',
     color: '#10B981',
-    requirement: 'Perdre au moins 5 kg par rapport à votre poids initial',
+    requirement: 'Perdre au moins 5 kg par rapport à ton poids initial',
   },
   goal_reached: {
     id: 'goal_reached',
@@ -116,7 +128,25 @@ export const BADGES: Record<BadgeId, Badge> = {
     icon: '🏆',
     category: 'progress',
     color: '#FFD700',
-    requirement: 'Atteindre votre poids objectif',
+    requirement: 'Atteindre ton poids objectif',
+  },
+  herculean_strength: {
+    id: 'herculean_strength',
+    name: 'Force Herculéenne',
+    description: '50 entraînements enregistrés',
+    icon: '🏋️',
+    category: 'progress',
+    color: '#DC2626',
+    requirement: 'Enregistrer 50 entraînements',
+  },
+  data_master: {
+    id: 'data_master',
+    name: 'Maître des données',
+    description: '100 mesures enregistrées',
+    icon: '📊',
+    category: 'progress',
+    color: '#059669',
+    requirement: 'Enregistrer 100 mesures de poids',
   },
 };
 

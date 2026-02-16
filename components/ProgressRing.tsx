@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, G, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { AnimatedNumber } from './AnimatedNumber';
-import { theme } from '@/lib/theme';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface ProgressRingProps {
   current: number;
@@ -10,6 +10,7 @@ interface ProgressRingProps {
 }
 
 export function ProgressRing({ current, goal, size = 200 }: ProgressRingProps) {
+  const { colors } = useTheme();
   const progress = Math.min(Math.max((goal - current) / (goal - 90) * 100, 0), 100);
 
   const strokeWidth = 16;
@@ -22,8 +23,8 @@ export function ProgressRing({ current, goal, size = 200 }: ProgressRingProps) {
       <Svg width={size} height={size / 2 + 20} style={styles.svg}>
         <Defs>
           <LinearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <Stop offset="0%" stopColor={theme.colors.gradientStart} stopOpacity="1" />
-            <Stop offset="100%" stopColor={theme.colors.gradientEnd} stopOpacity="1" />
+            <Stop offset="0%" stopColor={colors.accent} stopOpacity="1" />
+            <Stop offset="100%" stopColor={colors.accentLight} stopOpacity="1" />
           </LinearGradient>
         </Defs>
         <G rotation="-180" origin={`${size / 2}, ${size / 2}`}>
@@ -31,7 +32,7 @@ export function ProgressRing({ current, goal, size = 200 }: ProgressRingProps) {
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke={theme.colors.borderLight}
+            stroke={colors.border}
             strokeWidth={strokeWidth}
             fill="none"
             strokeDasharray={`${circumference} ${circumference}`}
@@ -54,13 +55,13 @@ export function ProgressRing({ current, goal, size = 200 }: ProgressRingProps) {
         <AnimatedNumber
           value={current}
           decimals={1}
-          style={styles.currentWeight}
+          style={{ ...styles.currentWeight, color: colors.textPrimary }}
           duration={1500}
           delay={200}
         />
-        <Text style={styles.unit}>kg</Text>
+        <Text style={[styles.unit, { color: colors.textSecondary }]}>kg</Text>
       </View>
-      <Text style={styles.label}>Poids actuel</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Poids actuel</Text>
     </View>
   );
 }
@@ -82,20 +83,17 @@ const styles = StyleSheet.create({
   },
   currentWeight: {
     fontSize: 56,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
+    fontWeight: '800',
     letterSpacing: -2,
   },
   unit: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textSecondary,
+    fontSize: 20,
+    fontWeight: '700',
     letterSpacing: 0.3,
   },
   label: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
+    fontSize: 15,
+    fontWeight: '600',
     marginTop: 8,
     letterSpacing: 0.3,
   },

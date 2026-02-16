@@ -1,0 +1,11 @@
+# Exclure temporairement le Watch App du build EAS
+# On le rajoutera manuellement dans Xcode après
+ios/YoroiWatch Watch App/
+ios/*.xcodeproj/*Watch*
+ios/*.xcworkspace/*Watch*
+
+# Fichiers lourds inutiles
+node_modules/.cache/
+.expo/
+*.log
+*.tmp

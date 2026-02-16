@@ -4,5 +4,13 @@
   <dict>
     <key>aps-environment</key>
     <string>development</string>
+    <key>com.apple.developer.healthkit</key>
+    <true/>
+    <key>com.apple.developer.healthkit.background-delivery</key>
+    <true/>
+    <key>com.apple.security.application-groups</key>
+    <array>
+      <string>group.com.yoroi.app</string>
+    </array>
   </dict>
 </plist>

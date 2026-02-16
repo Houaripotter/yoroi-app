@@ -1,7 +1,8 @@
 import { Modal, StyleSheet, Text, View, TouchableOpacity, Image, Pressable } from 'react-native';
 import { X } from 'lucide-react-native';
 import { WorkoutType, WORKOUT_TYPES } from '@/types/workout';
-import { theme } from '@/lib/theme';
+import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 
 interface WorkoutModalProps {
   visible: boolean;
@@ -11,9 +12,13 @@ interface WorkoutModalProps {
 }
 
 export function WorkoutModal({ visible, selectedDate, onClose, onSelectWorkout }: WorkoutModalProps) {
+  const { colors, themeName } = useTheme();
+  const { locale } = useI18n();
+  const isWellness = false;
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
+    return date.toLocaleDateString(locale, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -29,20 +34,30 @@ export function WorkoutModal({ visible, selectedDate, onClose, onSelectWorkout }
       onRequestClose={onClose}
     >
       <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.modalContainer} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={[
+          styles.modalContainer,
+          { backgroundColor: colors.card },
+          isWellness && {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.15,
+            shadowRadius: 20,
+            elevation: 10,
+          }
+        ]} onPress={(e) => e.stopPropagation()}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.title}>Ajouter un entraînement</Text>
-              <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
+              <Text style={[styles.title, { color: colors.textPrimary }]}>Ajouter un entraînement</Text>
+              <Text style={[styles.dateText, { color: colors.textSecondary }]}>{formatDate(selectedDate)}</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={24} color={theme.colors.textSecondary} strokeWidth={2.5} />
+              <X size={24} color={colors.textSecondary} strokeWidth={2.5} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.workoutOptions}>
             <TouchableOpacity
-              style={styles.workoutCard}
+              style={[styles.workoutCard, { backgroundColor: colors.cardHover }]}
               onPress={() => {
                 onSelectWorkout('gracie_barra');
                 onClose();
@@ -56,27 +71,27 @@ export function WorkoutModal({ visible, selectedDate, onClose, onSelectWorkout }
                   resizeMode="contain"
                 />
               </View>
-              <Text style={styles.workoutLabel}>{WORKOUT_TYPES.gracie_barra.label}</Text>
-              <Text style={styles.workoutShortLabel}>{WORKOUT_TYPES.gracie_barra.shortLabel}</Text>
+              <Text style={[styles.workoutLabel, { color: colors.textPrimary }]}>{WORKOUT_TYPES.gracie_barra.label}</Text>
+              <Text style={[styles.workoutShortLabel, { color: colors.textSecondary }]}>{WORKOUT_TYPES.gracie_barra.shortLabel}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.workoutCard}
+              style={[styles.workoutCard, { backgroundColor: colors.cardHover }]}
               onPress={() => {
                 onSelectWorkout('basic_fit');
                 onClose();
               }}
               activeOpacity={0.8}
             >
-              <View style={[styles.logoContainer, { backgroundColor: theme.colors.orangePastel }]}>
+              <View style={[styles.logoContainer, { backgroundColor: colors.warningLight }]}>
                 <Image
                   source={WORKOUT_TYPES.basic_fit.logo}
                   style={styles.logo}
                   resizeMode="contain"
                 />
               </View>
-              <Text style={styles.workoutLabel}>{WORKOUT_TYPES.basic_fit.label}</Text>
-              <Text style={styles.workoutShortLabel}>{WORKOUT_TYPES.basic_fit.shortLabel}</Text>
+              <Text style={[styles.workoutLabel, { color: colors.textPrimary }]}>{WORKOUT_TYPES.basic_fit.label}</Text>
+              <Text style={[styles.workoutShortLabel, { color: colors.textSecondary }]}>{WORKOUT_TYPES.basic_fit.shortLabel}</Text>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -91,71 +106,69 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.spacing.xl,
+    padding: 24,
   },
   modalContainer: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xxl,
-    padding: theme.spacing.xxl,
+    borderRadius: 24,
+    padding: 28,
     width: '100%',
     maxWidth: 400,
-    ...theme.shadow.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: theme.spacing.xxl,
+    marginBottom: 28,
   },
   title: {
-    fontSize: theme.fontSize.xxl,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.xs,
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 4,
   },
   dateText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
+    fontSize: 15,
+    fontWeight: '600',
     textTransform: 'capitalize',
   },
   closeButton: {
-    padding: theme.spacing.sm,
+    padding: 8,
   },
   workoutOptions: {
     flexDirection: 'row',
-    gap: theme.spacing.lg,
+    gap: 16,
   },
   workoutCard: {
     flex: 1,
     alignItems: 'center',
-    padding: theme.spacing.xl,
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.radius.xl,
-    gap: theme.spacing.md,
+    padding: 24,
+    borderRadius: 16,
+    gap: 12,
   },
   logoContainer: {
     width: 80,
     height: 80,
-    borderRadius: theme.radius.lg,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
+    marginBottom: 8,
   },
   logo: {
     width: 50,
     height: 50,
   },
   workoutLabel: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
     textAlign: 'center',
   },
   workoutShortLabel: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '600',
     textTransform: 'uppercase',
   },
 });

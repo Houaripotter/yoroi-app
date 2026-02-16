@@ -23,7 +23,7 @@ export function AnimatedNumber({
       toValue: value,
       duration,
       delay,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
   }, [value, duration, delay]);
 
