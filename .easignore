@@ -32,6 +32,9 @@ jest.config.js
 *.log
 *.tmp
 
+# Local env (machine-specific paths that break EAS server)
+ios/.xcode.env.local
+
 # Docs
 docs
 scrapers

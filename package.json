@@ -12,7 +12,8 @@
     "ios": "expo run:ios",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "test:stress": "jest --testPathPattern=stress --verbose"
+    "test:stress": "jest --testPathPattern=stress --verbose",
+    "postinstall": "npx patch-package"
   },
   "dependencies": {
     "@expo/metro-config": "^54.0.12",
@@ -72,6 +73,7 @@
     "react-native-gesture-handler": "~2.28.0",
     "react-native-gifted-charts": "^1.4.70",
     "react-native-health-connect": "^3.5.0",
+    "react-native-nitro-modules": "^0.33.9",
     "react-native-pager-view": "6.9.1",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
@@ -92,6 +94,7 @@
     "eslint-config-expo": "~10.0.0",
     "jest": "^29.7.0",
     "jest-expo": "~54.0.0",
+    "patch-package": "^8.0.1",
     "react-test-renderer": "19.1.0",
     "typescript": "~5.9.2"
   },
