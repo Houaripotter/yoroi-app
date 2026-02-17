@@ -97,7 +97,8 @@ android {
     namespace 'com.houari.yoroi'
     defaultConfig {
         applicationId 'com.houari.yoroi'
-        minSdkVersion rootProject.ext.minSdkVersion
+        minSdkVersion Integer.parseInt(findProperty('android.minSdkVersion') ?: rootProject.ext.minSdkVersion.toString())
+        // Health Connect (react-native-health-connect) requires minSdk 26
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 5
         versionName "2.2.0"

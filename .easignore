@@ -1,31 +1,53 @@
-# Build caches (3+ GB)
-android/app/build/
-android/build/
-ios/build/
+# Dependencies (EAS runs npm install on the server)
+node_modules
 
-# Exclure temporairement le Watch App du build EAS
-ios/YoroiWatch Watch App/
-ios/*.xcodeproj/*Watch*
-ios/*.xcworkspace/*Watch*
+# Build caches
+android/app/build
+android/app/.cxx
+android/build
+android/.gradle
+android/.idea
+ios/build
+ios/Pods
+
+# Expo output
+.expo
+dist
+web-build
+
+# Watch App (temporaire)
+ios/YoroiWatch Watch App
 
 # Test & coverage
-__tests__/
-coverage/
+__tests__
+coverage
 jest.config.js
 
-# Fichiers lourds inutiles
-node_modules/.cache/
-.expo/
+# Git
+.git
+
+# Dev tools
+.claude
+.aider*
 *.log
 *.tmp
 
-# Docs & scripts dev
-docs/
-scrapers/
-scripts/
+# Docs
+docs
+scrapers
+scripts
 *.md
 !README.md
 
-# Backup & corrupt dirs
-ios_backup_*/
-node_modules.corrupt*/
+# Backups & corrupt
+ios_backup_*
+node_modules.corrupt*
+
+# Finder duplicates
+*\ 2
+*\ 2.*
+*\ 3
+*\ 3.*
+*\ 2/
+*\ 3/
+ios/bundle_test
