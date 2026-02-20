@@ -19,6 +19,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "android": {
+        "credentialsSource": "local"
+      },
       "ios": {
         "credentialsSource": "remote",
         "scheme": "Yoroi",

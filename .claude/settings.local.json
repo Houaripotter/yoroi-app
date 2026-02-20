@@ -98,7 +98,8 @@
       "Bash(for f in /Users/houari/Desktop/APP_Houari/yoroi_app/assets/logo dapp/*.png)",
       "Bash(do echo '=== $\\(basename $f\\) ===')",
       "Bash(timeout 120 npx expo export:*)",
-      "Bash(eas submit:*)"
+      "Bash(eas submit:*)",
+      "Bash(open:*)"
     ],
     "deny": [],
     "ask": []
