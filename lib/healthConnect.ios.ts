@@ -147,7 +147,7 @@ export interface HealthPermissions {
 export interface SyncStatus {
   lastSync: string | null;
   isConnected: boolean;
-  provider: 'apple_health' | 'google_fit' | null;
+  provider: 'apple_health' | 'health_connect' | null;
   permissions: HealthPermissions;
   failureReason?: 'USER_DENIED' | 'MODULE_NOT_LOADED' | 'DEVICE_NOT_SUPPORTED' | 'UNKNOWN';
 }

@@ -150,7 +150,7 @@ export interface HealthPermissions {
 export interface SyncStatus {
   lastSync: string | null;
   isConnected: boolean;
-  provider: 'apple_health' | 'google_fit' | null;
+  provider: 'apple_health' | 'health_connect' | null;
   permissions: HealthPermissions;
   failureReason?: 'USER_DENIED' | 'MODULE_NOT_LOADED' | 'DEVICE_NOT_SUPPORTED' | 'HEALTH_CONNECT_NOT_INSTALLED' | 'UNKNOWN';
 }
@@ -264,7 +264,7 @@ class HealthConnectService {
   private syncStatus: SyncStatus = {
     lastSync: null,
     isConnected: false,
-    provider: 'google_fit',
+    provider: 'health_connect',
     permissions: {
       weight: false,
       steps: false,
@@ -300,7 +300,7 @@ class HealthConnectService {
         this.syncStatus = JSON.parse(savedStatus);
       }
 
-      this.syncStatus.provider = 'google_fit';
+      this.syncStatus.provider = 'health_connect';
 
       // Initialize Health Connect SDK
       const HC = getHealthConnect();

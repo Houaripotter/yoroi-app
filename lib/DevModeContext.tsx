@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { randomUUID, digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
+import { digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
 import logger from '@/lib/security/logger';
 
 // ============================================
