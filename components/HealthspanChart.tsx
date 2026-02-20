@@ -7,7 +7,6 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { format, subDays, Locale } from 'date-fns';
 import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

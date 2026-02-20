@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -29,12 +29,9 @@ import {
   Star,
 } from 'lucide-react-native';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { useTheme } from '@/lib/ThemeContext';
 import { generateWeeklyReport, formatReportForSharing, WeeklyReport } from '@/lib/weeklyReportService';
-import { formatSleepDuration } from '@/lib/sleepService';
 import { getRiskColor, formatLoad } from '@/lib/trainingLoadService';
 import logger from '@/lib/security/logger';
 

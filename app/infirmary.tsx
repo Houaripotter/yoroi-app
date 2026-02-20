@@ -2,18 +2,17 @@
 // YOROI MEDIC - SUIVI BLESSURES
 // ============================================
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 
-import { ArrowLeft, Plus, Activity, TrendingDown, Shield } from 'lucide-react-native';
+import { ArrowLeft, TrendingDown, Shield } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
@@ -32,14 +31,10 @@ import {
   getInjuriesWithZoneNames,
   getDaysSinceInjury,
   getEVAColor,
-  getEVAEmoji,
 } from '@/lib/infirmaryService';
 import logger from '@/lib/security/logger';
-import {
-  BodyZone,
-  FIT_FOR_DUTY_STATUS,
-  getZoneById,
-} from '@/constants/bodyZones';
+
+
 
 export default function InfirmaryScreen() {
   const { colors, isDark } = useTheme();

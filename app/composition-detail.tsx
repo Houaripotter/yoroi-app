@@ -10,11 +10,8 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import Animated, {
-  FadeIn,
-  FadeInDown,
-  SlideInRight,
-} from 'react-native-reanimated';
+
+
 import { useTheme } from '@/lib/ThemeContext';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import {

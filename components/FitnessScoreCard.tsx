@@ -7,11 +7,9 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   TrendingUp,
   TrendingDown,
-  Minus,
   ChevronRight,
   Droplet,
   Scale,

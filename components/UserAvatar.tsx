@@ -1,5 +1,4 @@
 import { StyleSheet, TouchableOpacity, View, Image } from 'react-native';
-import { Settings } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface UserAvatarProps {

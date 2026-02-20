@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import { getCurrentRank } from '@/lib/ranks';
-import { TrendingDown, Trophy, Flame, Target } from 'lucide-react-native';
+import { TrendingDown, Trophy, Flame } from 'lucide-react-native';
 import { Icon } from '@/components/Icon';
 
 // ============================================

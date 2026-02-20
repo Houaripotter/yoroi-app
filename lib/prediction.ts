@@ -6,7 +6,7 @@
 // 100% Offline
 // ============================================
 
-import { getAllMeasurements, getUserSettings, Measurement } from './storage';
+import { getAllMeasurements, getUserSettings } from './storage';
 import logger from '@/lib/security/logger';
 
 // ============================================

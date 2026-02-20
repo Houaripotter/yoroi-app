@@ -20,7 +20,7 @@ import { RecoveryCircle } from '../advanced/RecoveryCircle';
 import { SleepPhasesBar } from '../advanced/SleepPhasesBar';
 import { HRVCard } from '../advanced/HRVCard';
 import { healthConnect } from '@/lib/healthConnect';
-import { Moon, Droplet, Heart, Activity, Zap } from 'lucide-react-native';
+import { Moon, Droplet, Heart, Activity, Zap , Plus } from 'lucide-react-native';
 import { CircularProgress } from '@/components/charts/CircularProgress';
 import { SLEEP_DURATION_RANGES, HRV_RANGES, RESTING_HEART_RATE_RANGES, getMetricStatus } from '@/lib/healthRanges';
 import { format } from 'date-fns';
@@ -31,7 +31,6 @@ import { EstimationBadge } from '../EstimationBadge';
 import { VitalityBetaWarningModal } from '../VitalityBetaWarningModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { Plus } from 'lucide-react-native';
 import { HealthspanChart } from '@/components/HealthspanChart';
 import { logger } from '@/lib/security/logger';
 

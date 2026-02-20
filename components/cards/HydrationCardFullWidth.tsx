@@ -36,7 +36,7 @@ export const HydrationCardFullWidth = React.memo<HydrationCardFullWidthProps>(({
   const waveAnim = useRef(new Animated.Value(0)).current;
   const [waveOffset, setWaveOffset] = useState(0);
   const [showBubbles, setShowBubbles] = useState(false);
-  const [bubbles, setBubbles] = useState<Array<{id: number, x: number, y: number, size: number}>>([]);
+  const [bubbles, setBubbles] = useState<{id: number, x: number, y: number, size: number}[]>([]);
 
   useEffect(() => {
     const animation = Animated.loop(

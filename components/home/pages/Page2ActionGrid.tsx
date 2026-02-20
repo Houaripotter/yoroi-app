@@ -3,7 +3,7 @@
 // Version simplifiée sans drag & drop
 // ============================================
 
-import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, FlatList } from 'react-native';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';

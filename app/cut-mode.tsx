@@ -19,7 +19,6 @@ import {
   Calendar,
   TrendingDown,
   AlertTriangle,
-  Check,
   Flame,
   Droplets,
   Moon,
@@ -29,7 +28,7 @@ import {
   X,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { format, differenceInDays, addDays } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getWeights } from '@/lib/database';

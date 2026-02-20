@@ -23,6 +23,9 @@
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 import { logger } from '@/lib/security/logger';
 
+// Pour les imports named
+import React from 'react';
+
 // ✅ DIAGNOSTIC: Logger l'état du module au chargement
 const isModuleAvailable = !!NativeModules.WatchConnectivityBridge;
 logger.info('========================================');
@@ -319,12 +322,12 @@ export const WatchConnectivity = {
   /**
    * Envoie tous les records à la Watch
    */
-  sendRecordsUpdate: async (records: Array<{
+  sendRecordsUpdate: async (records: {
     exercise: string;
     weight: number;
     reps: number;
     date: string;
-  }>): Promise<void> => {
+  }[]): Promise<void> => {
     try {
       await WatchConnectivity.updateApplicationContext({
         recordsUpdate: {
@@ -489,9 +492,6 @@ export function useWatchConnectivity() {
     sendRecords: WatchConnectivity.sendRecordsUpdate,
   };
 }
-
-// Pour les imports named
-import React from 'react';
 
 // ✅ NOUVEAU: Exports pour diagnostic
 export const isWatchModuleAvailable = isModuleAvailable;

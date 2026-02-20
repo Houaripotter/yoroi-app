@@ -7,6 +7,12 @@
 
 import * as FS from 'expo-file-system';
 import Constants from 'expo-constants';
+import { shareAsync } from 'expo-sharing';
+import { getDocumentAsync } from 'expo-document-picker';
+import { digestStringAsync, CryptoDigestAlgorithm, getRandomBytesAsync } from 'expo-crypto';
+import logger from './logger';
+import { secureStorage } from './secureStorage';
+import { validators, ValidationResult } from './validators';
 
 // Type assertion pour expo-file-system
 const FileSystem = FS as typeof FS & {
@@ -15,12 +21,6 @@ const FileSystem = FS as typeof FS & {
   writeAsStringAsync: (path: string, content: string, options?: any) => Promise<void>;
   readAsStringAsync: (path: string, options?: any) => Promise<string>;
 };
-import { shareAsync } from 'expo-sharing';
-import { getDocumentAsync } from 'expo-document-picker';
-import { randomUUID, digestStringAsync, CryptoDigestAlgorithm, getRandomBytesAsync } from 'expo-crypto';
-import logger from './logger';
-import { secureStorage } from './secureStorage';
-import { validators, ValidationResult } from './validators';
 
 // ============================================
 // CONFIGURATION

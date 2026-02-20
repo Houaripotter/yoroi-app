@@ -19,7 +19,6 @@ import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ChevronLeft,
-  Utensils,
   Zap,
   Dumbbell,
   Moon,
@@ -29,17 +28,14 @@ import {
   Egg,
   Droplets,
   Flame,
-  Target,
   ExternalLink,
   Info,
   Scale,
   Ruler,
-  Activity,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
-import { getUserSettings } from '@/lib/storage';
-import { getAllMeasurements } from '@/lib/storage';
+import { getUserSettings , getAllMeasurements } from '@/lib/storage';
 import logger from '@/lib/security/logger';
 
 // ============================================

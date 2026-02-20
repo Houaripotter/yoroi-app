@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
-  Image,
   Modal,
 } from 'react-native';
 import { router } from 'expo-router';

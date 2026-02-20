@@ -8,7 +8,7 @@
 import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 
-import { getAvatarConfig, getAvatarImage, getAvatarMeta, onAvatarChange } from '@/lib/avatarSystem';
+import { getAvatarConfig, getAvatarImage, onAvatarChange } from '@/lib/avatarSystem';
 import { useTheme } from '@/lib/ThemeContext';
 import logger from '@/lib/security/logger';
 

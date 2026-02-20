@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Platform } from 'react-native';
-import { Target, Trophy, ChevronRight } from 'lucide-react-native';
+import { Target, Trophy } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { getCompetitions, Competition } from '@/lib/database';
+import { getCompetitions } from '@/lib/database';
 import { differenceInDays, parseISO } from 'date-fns';
 import logger from '@/lib/security/logger';
 import { useTheme } from '@/lib/ThemeContext';

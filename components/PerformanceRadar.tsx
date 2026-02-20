@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import Svg, { Polygon, Line, Circle, Defs, RadialGradient, Stop, Text as SvgText } from 'react-native-svg';
 import { Info, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';

@@ -988,14 +988,14 @@ export const syncCarnetToWatch = async () => {
 
     // Préparer les données simplifiées pour la montre
     // On envoie TOUS les records (pas juste les PRs) pour avoir l'historique complet
-    const watchRecords: Array<{
+    const watchRecords: {
       exercise: string;
       weight: number;
       reps: number;
       date: string;
       category: string;
       muscleGroup: string;
-    }> = [];
+    }[] = [];
 
     for (const b of benchmarks) {
       // Envoyer toutes les entrées, pas juste le PR

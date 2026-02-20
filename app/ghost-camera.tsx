@@ -21,7 +21,6 @@ import { launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   ChevronLeft,
-  Camera,
   Ghost,
   Play,
   Pause,

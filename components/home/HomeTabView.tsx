@@ -2,13 +2,13 @@
 // YOROI - HOME TAB VIEW (iOS Style Horizontal Navigation)
 // ============================================
 
-import React, { useRef, useState, useEffect, useCallback, useMemo, memo } from 'react';
+import React, { useRef, useState, useEffect, memo } from 'react';
 import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text, Modal, Animated, SafeAreaView } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { GripVertical, Home, Grid, LineChart } from 'lucide-react-native';
+import { GripVertical } from 'lucide-react-native';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Page1Monitoring } from './pages/Page1Monitoring';
@@ -62,11 +62,11 @@ interface HomeTabViewProps {
   onLongPressTab?: () => void;
 
   // Page 3 - Performance
-  dailyChallenges?: Array<{
+  dailyChallenges?: {
     id: string;
     title: string;
     completed: boolean;
-  }>;
+  }[];
 
   // Page 4 - Stats
   stepsGoal?: number;

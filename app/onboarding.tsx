@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
-import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   Scale,
@@ -24,29 +24,24 @@ import {
   Camera,
   Trophy,
   ChevronRight,
-  Sparkles,
   BarChart3,
   Target,
   Award,
   Zap,
   Clock,
   Dumbbell,
-  Volume2,
   Image as ImageIcon,
-  Repeat,
   CalendarDays,
   Star,
   Swords,
   Medal,
   LineChart,
   TrendingUp,
-  Layout,
   HeartHandshake,
   User,
   Ruler,
   Cake,
   Check,
-  UserCircle,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/ThemeContext';

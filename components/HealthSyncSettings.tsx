@@ -5,7 +5,7 @@ import {
   StyleSheet,
   Switch,
   TouchableOpacity,
-
+  Platform,
   ActivityIndicator,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -13,15 +13,7 @@ import { Activity, Download, Upload, Check, X } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
-import {
-  isAppleHealthAvailable,
-  initializeAppleHealth,
-  importWeightFromAppleHealth,
-  syncFromAppleHealth,
-  setAppleHealthAutoExport,
-  isAppleHealthAutoExportEnabled,
-  checkHealthPermissions,
-} from '@/lib/appleHealthService';
+import HealthService from '@/lib/healthService';
 
 const LAST_SYNC_KEY = '@yoroi_last_health_sync';
 
@@ -36,13 +28,13 @@ export function HealthSyncSettings() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
-  // Vérifier si Apple Health est disponible
-  const available = isAppleHealthAvailable();
+  const available = HealthService.isAvailable();
+  const providerName = HealthService.getProviderName();
 
   useEffect(() => {
     if (available) {
       loadSettings();
-      checkPermissions();
+      checkPerms();
     } else {
       setLoading(false);
     }
@@ -50,7 +42,7 @@ export function HealthSyncSettings() {
 
   const loadSettings = async () => {
     try {
-      const enabled = await isAppleHealthAutoExportEnabled();
+      const enabled = await HealthService.isAutoExportEnabled();
       setAutoExportEnabled(enabled);
 
       const lastSyncStr = await AsyncStorage.getItem(LAST_SYNC_KEY);
@@ -64,35 +56,37 @@ export function HealthSyncSettings() {
     }
   };
 
-  const checkPermissions = async () => {
-    const permission = await checkHealthPermissions();
+  const checkPerms = async () => {
+    const permission = await HealthService.checkPermissions();
     setHasPermission(permission);
   };
 
   const handleToggleAutoExport = async (value: boolean) => {
     if (value && !hasPermission) {
-      // Demander les permissions
-      const granted = await initializeAppleHealth();
+      const granted = await HealthService.requestPermissions();
       setHasPermission(granted);
 
       if (!granted) {
+        const settingsHint = Platform.OS === 'ios'
+          ? 'Réglages > Confidentialité > Santé > Yoroi'
+          : 'Réglages > Applications > Health Connect > Yoroi';
         showPopup(
           'Permission requise',
-          'L\'accès à l\'app Santé est nécessaire pour l\'export automatique. Autorise l\'accès dans Réglages > Confidentialité > Santé > Yoroi',
+          `L'accès à ${providerName} est nécessaire pour l'export automatique. Autorise l'accès dans ${settingsHint}`,
           [{ text: 'OK', style: 'primary' }]
         );
         return;
       }
     }
 
-    await setAppleHealthAutoExport(value);
+    await HealthService.setAutoExport(value);
     setAutoExportEnabled(value);
 
     showPopup(
       'Succès',
       value
-        ? 'Les nouvelles mesures seront automatiquement envoyées vers l\'app Santé'
-        : 'L\'export automatique vers l\'app Santé a été désactivé',
+        ? `Les nouvelles mesures seront automatiquement envoyées vers ${providerName}`
+        : `L'export automatique vers ${providerName} a été désactivé`,
       [{ text: 'OK', style: 'primary' }]
     );
   };
@@ -101,7 +95,7 @@ export function HealthSyncSettings() {
     setSyncing(true);
 
     try {
-      const count = await importWeightFromAppleHealth();
+      const count = await HealthService.importWeightHistory();
 
       if (count > 0) {
         // Mettre à jour la dernière sync
@@ -120,7 +114,7 @@ export function HealthSyncSettings() {
     setSyncing(true);
 
     try {
-      const count = await syncFromAppleHealth();
+      const count = await HealthService.syncNewData();
 
       if (count > 0) {
         showPopup('Succès', `${count} nouvelle(s) mesure(s) synchronisee(s)`, [{ text: 'OK', style: 'primary' }]);
@@ -171,7 +165,7 @@ export function HealthSyncSettings() {
     elevation: 2,
   };
 
-  // Si Apple Health n'est pas disponible (Android ou web)
+  // Si aucun service de santé n'est disponible
   if (!available) {
     return (
       <View style={[styles.unavailableContainer, { backgroundColor: colors.card }, cardShadow]}>
@@ -179,7 +173,9 @@ export function HealthSyncSettings() {
           <X size={20} color="#94A3B8" strokeWidth={2.5} />
         </View>
         <Text style={[styles.unavailableText, { color: colors.textSecondary }]}>
-          App Santé n'est disponible que sur iOS
+          {Platform.OS === 'web'
+            ? 'Les données de santé ne sont pas disponibles sur le web'
+            : 'Aucun service de santé disponible sur cet appareil'}
         </Text>
       </View>
     );
@@ -238,7 +234,7 @@ export function HealthSyncSettings() {
         />
       </View>
 
-      {/* Import depuis Apple Health */}
+      {/* Import depuis le provider de santé */}
       <TouchableOpacity
         style={[styles.actionButton, { backgroundColor: colors.card }, cardShadow]}
         onPress={handleImport}
@@ -254,7 +250,7 @@ export function HealthSyncSettings() {
             )}
           </View>
           <View>
-            <Text style={[styles.actionButtonTitle, { color: colors.textPrimary }]}>Importer depuis l'app Santé</Text>
+            <Text style={[styles.actionButtonTitle, { color: colors.textPrimary }]}>Importer depuis {providerName}</Text>
             <Text style={[styles.actionButtonSubtitle, { color: colors.textSecondary }]}>
               Récupérer l'historique de poids (365 jours)
             </Text>

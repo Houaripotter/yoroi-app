@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addMeasurement, getAllMeasurements } from './storage';
 import logger from '@/lib/security/logger';
 import healthConnect from './healthConnect.ios';
+import { isHealthKitAvailable, isRunningInExpoGo } from './healthKit.wrapper';
 
 // ============================================
 // SERVICE WRAPPER - Apple Health
@@ -33,8 +34,8 @@ const isHealthKitAvailable = async (): Promise<boolean> => {
 // Vérifier si Apple Health est disponible (version plus simple pour l'UI)
 export const isAppleHealthAvailable = (): boolean => {
   if (Platform.OS !== 'ios') return false;
-  // Retourne true pour iOS - la vérification réelle se fait au moment de la connexion
-  return true;
+  if (isRunningInExpoGo) return false;
+  return isHealthKitAvailable;
 };
 
 // Initialiser Apple Health et demander les permissions

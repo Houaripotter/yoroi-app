@@ -1,5 +1,5 @@
-import { getSleepStats, SleepStats } from './sleepService';
-import { getWeeklyLoadStats, WeeklyLoadStats } from './trainingLoadService';
+import { getSleepStats } from './sleepService';
+import { getWeeklyLoadStats } from './trainingLoadService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 

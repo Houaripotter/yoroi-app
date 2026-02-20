@@ -18,7 +18,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronLeft,
   FileText,
-  Download,
   Share2,
   FileJson,
   Table,

@@ -12,10 +12,8 @@ import {
 import { safeOpenURL } from '@/lib/security/validators';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
-import logger from '@/lib/security/logger';
 import { ProtocolChecklist } from '@/components/lab/ProtocolChecklist';
 import { HydrationScale } from '@/components/lab/HydrationScale';
 import { LAB_PROTOCOLS } from '@/data/labProtocols';

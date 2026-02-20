@@ -15,11 +15,9 @@ import { router } from 'expo-router';
 import {
   ArrowLeft,
   Activity,
-  Zap,
   AlertCircle,
   CheckCircle,
   TrendingUp,
-  Coffee,
   Info,
   Calendar,
   Target,

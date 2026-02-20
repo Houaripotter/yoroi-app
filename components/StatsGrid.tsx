@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { View, Text } from 'react-native';
-import { Activity, Dumbbell, Droplet, Target, IconNode } from 'lucide-react-native';
+import { Activity, Dumbbell, Droplet, Target } from 'lucide-react-native';
 
 interface StatItem {
   label: string;

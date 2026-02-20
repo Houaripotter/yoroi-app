@@ -8,35 +8,25 @@ import {
   TextInput,
   Platform,
   Image,
-  Animated,
   ActivityIndicator,
   Modal,
-  Share,
-  Switch,
   Keyboard,
   Dimensions,
   KeyboardAvoidingView,
-  UIManager,
 } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { impactAsync, notificationAsync, selectionAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   Check,
   ChevronDown,
   ChevronRight,
-  Zap,
   Activity,
-  Trophy,
   Dumbbell,
-  Timer,
-  Heart,
   Share2,
-  Cloud,
   Star,
   Plus,
   Lightbulb,
@@ -51,12 +41,10 @@ import {
   FileUp,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { Header } from '@/components/ui/Header';
-import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
 import { useBadges } from '@/lib/BadgeContext';
 import { addTraining, getClubs, Club, Exercise, getProfile, getTrainings, getWeights, calculateStreak } from '@/lib/database';
-import { SPORTS, MUSCLES, getSportIcon, getSportName, getClubLogoSource } from '@/lib/sports';
+import { SPORTS, getSportIcon, getSportName, getClubLogoSource } from '@/lib/sports';
 import { getCurrentRank } from '@/lib/ranks';
 import { getAvatarConfig, getAvatarImage } from '@/lib/avatarSystem';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -65,7 +53,17 @@ import { getUserSettings } from '@/lib/storage';
 import { openBrowserAsync } from 'expo-web-browser';
 import { SessionCard } from '@/components/social-cards/SessionCard';
 import { RADIUS, SPACING, TYPOGRAPHY } from '@/constants/design';
-import { useWindowDimensions, useIsSmallScreen } from '@/hooks/useWindowDimensions';
+import { successHaptic, errorHaptic, lightHaptic } from '@/lib/haptics';
+import { playWorkoutCompleteSound } from '@/lib/soundManager';
+import { incrementReviewTrigger } from '@/lib/reviewService';
+import { useReviewModal } from '@/components/ReviewModal';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { ExercisePickerModal } from '@/components/ExercisePickerModal';
+import logger from '@/lib/security/logger';
+import HealthConnect from '@/lib/healthConnect';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
+import { SPORT_OPTIONS, DEFAULT_OPTIONS, SportOption } from '@/constants/sportOptions';
 
 // Constantes statiques pour les styles (StyleSheet ne peut pas utiliser de hooks)
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -73,19 +71,6 @@ const IS_SMALL_SCREEN = SCREEN_WIDTH < 375;
 
 // Constants for non-theme values
 const FONT_SIZE = TYPOGRAPHY.size;
-import { successHaptic, errorHaptic, lightHaptic } from '@/lib/haptics';
-import { backupReminderService } from '@/lib/backupReminderService';
-import { playWorkoutCompleteSound } from '@/lib/soundManager';
-import { incrementReviewTrigger, shouldAskForReview } from '@/lib/reviewService';
-import { useReviewModal } from '@/components/ReviewModal';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { ExercisePickerModal } from '@/components/ExercisePickerModal';
-import logger from '@/lib/security/logger';
-import HealthConnect from '@/lib/healthConnect';
-import { SharePromptModal } from '@/components/SharePromptModal';
-import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
-import { SPORT_OPTIONS, DEFAULT_OPTIONS, SportOption } from '@/constants/sportOptions';
 
 // ============================================
 // NOUVEL ENTRAINEMENT - VERSION SIMPLIFIEE

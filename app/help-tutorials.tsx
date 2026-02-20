@@ -15,7 +15,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/lib/ThemeContext';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { PAGE_TUTORIALS, FeaturePage, PageTutorial } from '@/lib/featureDiscoveryService';
+import { PAGE_TUTORIALS, PageTutorial } from '@/lib/featureDiscoveryService';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 

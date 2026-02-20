@@ -14,17 +14,14 @@ import {
   Dimensions,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Check, X, Plus, Clock } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { useRouter } from 'expo-router';
-import { getUserSettings, saveUserSettings, addWorkout, getAllWorkouts, getUserClubs } from '@/lib/storage';
-import { UserClub } from '@/lib/storage';
-import { WorkoutType } from '@/types/workout';
-import { WORKOUT_TYPES } from '@/types/workout';
+import { getUserSettings, saveUserSettings, addWorkout, getAllWorkouts, getUserClubs , UserClub } from '@/lib/storage';
+import { WorkoutType  } from '@/types/workout';
 import { RewardOverlay } from '@/components/RewardOverlay';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
@@ -41,7 +38,7 @@ export default function SportScreen() {
   const { colors: themeColors } = useTheme();
   const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const [routine, setRoutine] = useState<{ [key: string]: Array<RoutineBlock> }>({});
+  const [routine, setRoutine] = useState<{ [key: string]: RoutineBlock[] }>({});
   const [loading, setLoading] = useState(true);
   const [customLogos, setCustomLogos] = useState<{ [key: string]: string }>({});
   const [selectedClubGlobal, setSelectedClubGlobal] = useState<string | null>(null);
@@ -61,14 +58,14 @@ export default function SportScreen() {
   const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
   // Obtenir les clubs depuis le stockage ou utiliser les défauts
-  const getAvailableClubs = (): Array<{
+  const getAvailableClubs = (): {
     id: string;
     name: string;
     type: WorkoutType;
     logo: any;
     emoji?: string;
     color: string;
-  }> => {
+  }[] => {
     if (userClubs.length > 0) {
       return userClubs.map(club => ({
         id: club.id,

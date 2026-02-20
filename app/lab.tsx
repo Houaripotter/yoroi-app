@@ -6,14 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
-  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { X, ChevronLeft, ExternalLink } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { LAB_ARTICLES, LabArticle, getArticlesByCategory } from '@/data/labArticles';
-import { LAB_PROTOCOLS, LabProtocol } from '@/data/labProtocols';
+import { LAB_ARTICLES, LabArticle } from '@/data/labArticles';
+import { LAB_PROTOCOLS } from '@/data/labProtocols';
 import { ProtocolChecklist } from '@/components/lab/ProtocolChecklist';
 import { HydrationScale } from '@/components/lab/HydrationScale';
 import { ActionLink } from '@/components/lab/ActionLink';

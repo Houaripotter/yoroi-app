@@ -7,12 +7,12 @@ import { Maximize2 } from 'lucide-react-native';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface CaloriesHistoryChartProps {
-  data: Array<{
+  data: {
     date: string;
     active: number;
     basal: number;
     total: number;
-  }>;
+  }[];
   colors: any;
   onPress?: () => void;
 }

@@ -24,8 +24,6 @@ import {
   Check,
   Clock,
   MapPin,
-  Zap,
-  Heart,
   Activity,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -33,11 +31,9 @@ import { useTheme } from '@/lib/ThemeContext';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   Sport,
-  ProgressionItem,
   createProgressionItem,
   createPracticeLog,
   getProgressionItems,
-  getLastPracticeLog,
 } from '@/lib/trainingJournalService';
 
 type OtherActivity = 'bike' | 'swimming' | 'yoga' | 'hiking' | 'autre';

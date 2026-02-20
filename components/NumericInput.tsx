@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { TextInput, View, Text, StyleSheet, TextInputProps } from 'react-native';
+import { TextInput, View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 // 🔒 SÉCURITÉ: Validation des inputs
 import {
@@ -9,8 +9,7 @@ import {
   validateMuscleMass,
   validateWater,
   validateBodyMeasurement,
-  validateHydrationEntry,
-  VALIDATION_LIMITS
+  validateHydrationEntry
 } from '@/lib/security/validators';
 import logger from '@/lib/security/logger';
 

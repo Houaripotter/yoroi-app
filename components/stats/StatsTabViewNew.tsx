@@ -15,7 +15,7 @@ import { MensurationsPage } from './pages/MensurationsPage';
 import { DisciplinePage } from './pages/DisciplinePage';
 import { PerformancePage } from './pages/PerformancePage';
 import { VitalitePage } from './pages/VitalitePage';
-import { Scale, Activity, Ruler, Flame, Award, Heart, LayoutDashboard, AlertTriangle, RefreshCw } from 'lucide-react-native';
+import { Scale, Activity, Ruler, Flame, Award, Heart, LayoutDashboard } from 'lucide-react-native';
 import { ScrollProvider } from '@/lib/ScrollContext';
 import { HomeToolsMenu } from '@/components/home/HomeToolsMenu';
 import { ErrorBoundary } from '@/components/ErrorBoundary';

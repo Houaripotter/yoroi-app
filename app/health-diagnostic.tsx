@@ -19,7 +19,7 @@ import { router } from 'expo-router';
 import { ChevronLeft, RefreshCw, CheckCircle, XCircle, AlertTriangle } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { healthConnect } from '@/lib/healthConnect';
-import { WatchConnectivity, isWatchModuleAvailable, getWatchModuleStatus } from '@/lib/watchConnectivity.ios';
+import { WatchConnectivity, isWatchModuleAvailable } from '@/lib/watchConnectivity.ios';
 import { logger } from '@/lib/security/logger';
 
 interface DiagnosticResult {

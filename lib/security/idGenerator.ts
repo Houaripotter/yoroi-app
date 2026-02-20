@@ -5,8 +5,6 @@
 // Remplace Math.random() par une génération cryptographiquement
 // sûre pour éviter les collisions et la prévisibilité.
 
-import { randomUUID, digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
-import { Platform } from 'react-native';
 import logger from '@/lib/security/logger';
 
 /**

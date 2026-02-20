@@ -18,16 +18,13 @@ import {
   getWeeklyQuestsProgress,
   getMonthlyQuestsProgress,
   checkAndUpdateQuests,
-  addHydration,
-  getDailyHydration,
   completeQuest,
   uncompleteQuest,
   Quest,
   QuestProgress,
   QuestId,
 } from '@/lib/quests';
-import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { notificationAsync, NotificationFeedbackType , impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 import {
   Target,
@@ -39,8 +36,6 @@ import {
   Moon,
   Footprints,
   Dumbbell,
-  Award,
-  Gift,
   Lock,
   CheckCircle2,
   Sparkles,
@@ -53,7 +48,6 @@ import {
   Users,
   Crown,
   Calendar,
-  TrendingUp,
   Coffee,
   Salad,
   Sofa,

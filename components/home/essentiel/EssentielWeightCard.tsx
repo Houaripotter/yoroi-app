@@ -1,9 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated, Easing } from 'react-native';
-import { TrendingUp, TrendingDown, Minus, Target, ArrowRight, Zap, Activity } from 'lucide-react-native';
+import { TrendingUp, TrendingDown, Minus, Target, ArrowRight, Activity } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle, Path, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 
 const { width: screenWidth } = Dimensions.get('window');
 

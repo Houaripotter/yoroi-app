@@ -3,7 +3,7 @@
 // Photo-First UX + Asset-Based Footer + Re-Share Support
 // ============================================
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,11 +13,10 @@ import {
   Image,
   Dimensions,
   ActivityIndicator,
-  Platform,
   ScrollView,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import {

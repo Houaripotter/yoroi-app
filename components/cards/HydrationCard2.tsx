@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 
-import { scale, getGridColumns } from '@/constants/responsive';
+import { getGridColumns } from '@/constants/responsive';
 import logger from '@/lib/security/logger';
 
 const { width: screenWidth } = Dimensions.get('window');

@@ -24,7 +24,7 @@ import {
 import Svg, { Path, Circle, Line, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
 import { Card } from '@/components/ui/Card';
-import { calculatePrediction, PredictionResult, PredictionPoint } from '@/lib/prediction';
+import { calculatePrediction, PredictionResult } from '@/lib/prediction';
 import logger from '@/lib/security/logger';
 
 // ============================================

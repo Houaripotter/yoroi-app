@@ -17,7 +17,6 @@ import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 import { getClubLogoSource } from '@/lib/sports';
 import { format, addDays, startOfWeek, endOfWeek, getWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { exportMultipleTrainingsToCalendar } from '@/lib/calendarService';
 import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');

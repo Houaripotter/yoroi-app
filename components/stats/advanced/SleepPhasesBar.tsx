@@ -47,7 +47,7 @@ export const SleepPhasesBar: React.FC<SleepPhasesBarProps> = ({
   }));
 
   // Grouper les phases identiques consécutives
-  const groupedPhases: Array<{ type: string; percentage: number; duration: number }> = [];
+  const groupedPhases: { type: string; percentage: number; duration: number }[] = [];
   phasesWithPercentage.forEach(phase => {
     const last = groupedPhases[groupedPhases.length - 1];
     if (last && last.type === phase.type) {

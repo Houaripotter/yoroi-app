@@ -27,8 +27,7 @@ import {
   AlertCircle,
   Quote,
   Sparkles,
-  ChevronRight,
-} from 'lucide-react-native';
+ Moon } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import { notificationService, NotificationSettings } from '@/lib/notificationService';
@@ -42,7 +41,6 @@ import {
   saveHealthTipSettings,
   HealthTipSettings
 } from '@/lib/eveningHealthTipsService';
-import { Moon } from 'lucide-react-native';
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();

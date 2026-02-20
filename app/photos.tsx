@@ -15,16 +15,14 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
-import { Camera, Image as ImageIcon, GitCompare, Plus, X, Shield, Eye, EyeOff, TrendingDown, Calendar, Award } from 'lucide-react-native';
+import { Camera, Image as ImageIcon, GitCompare, X, Shield, Eye, EyeOff, TrendingDown, Calendar, Award } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { router } from 'expo-router';
 import { BeforeAfterComparison } from '@/components/BeforeAfterComparison';
-import { Photo, savePhotoToStorage, getPhotosFromStorage, deletePhotoFromStorage, getUserSettings, saveUserSettings } from '@/lib/storage';
+import { Photo, savePhotoToStorage, getPhotosFromStorage, deletePhotoFromStorage } from '@/lib/storage';
 import { getLatestWeight, addWeight } from '@/lib/database';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';

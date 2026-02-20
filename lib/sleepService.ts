@@ -4,8 +4,7 @@
 // Gestion du sommeil, dette de sommeil, et récupération
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { format, subDays, differenceInMinutes, parseISO, startOfWeek, endOfWeek } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { format, subDays } from 'date-fns';
 import logger from '@/lib/security/logger';
 
 // ============================================

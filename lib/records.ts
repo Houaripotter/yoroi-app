@@ -6,7 +6,7 @@
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getAllMeasurements, getAllWorkouts, Measurement, Workout } from './storage';
+import { getAllMeasurements, getAllWorkouts } from './storage';
 import { getMeasurements } from './database';
 import logger from '@/lib/security/logger';
 

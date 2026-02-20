@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Footprints, Flame, Target, TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react-native';
+import { ArrowLeft, Flame, Target, TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';

@@ -13,7 +13,6 @@ import {
   getOrCreateWeeklyChallenge,
   claimChallengeReward,
   WeeklyChallenge as WeeklyChallengeType,
-  Challenge,
 } from '@/lib/challenges';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { Check } from 'lucide-react-native';

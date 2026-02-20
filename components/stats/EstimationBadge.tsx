@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Info } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';

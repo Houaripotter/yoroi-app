@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Text, StyleSheet, TextStyle, ViewStyle, StyleProp, Animated, Easing } from 'react-native';
+import { Text, StyleSheet, TextStyle, ViewStyle, StyleProp, Animated } from 'react-native';
 
 interface AnimatedRankProps {
   rank: string;

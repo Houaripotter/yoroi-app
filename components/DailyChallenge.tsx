@@ -12,12 +12,10 @@ import {
   Animated,
   Platform,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import {
   Target,
   Check,
-  ChevronRight,
   Scale,
   Dumbbell,
   Camera,

@@ -13,7 +13,7 @@ import { MetricCard } from '../charts/MetricCard';
 import { RingChart } from '../charts/RingChart';
 import { aggregateWeightData, aggregateCompositionData } from '@/lib/statsAggregation';
 import { getLatestWeight, getLatestMeasurement } from '@/lib/database';
-import { Target, TrendingUp, Activity, Droplet, Bone, Zap, Flame, Ruler } from 'lucide-react-native';
+import { Target, TrendingUp, Activity, Bone, Zap, Flame, Ruler } from 'lucide-react-native';
 import { logger } from '@/lib/security/logger';
 
 export const CorpsPage: React.FC = () => {

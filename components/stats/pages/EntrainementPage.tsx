@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View, StyleSheet, ActivityIndicator, Text } from 'react-native';
+import { ScrollView, View, StyleSheet, ActivityIndicator } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';

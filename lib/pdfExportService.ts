@@ -6,7 +6,7 @@
 import { printToFileAsync } from 'expo-print';
 import { shareAsync } from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
-import { Platform, Alert } from 'react-native';
+import { Alert } from 'react-native';
 import { getAllMeasurements, getUserSettings } from './storage';
 import { getMeasurements, getTrainings } from './database';
 import logger from '@/lib/security/logger';
@@ -25,16 +25,16 @@ interface PDFReportData {
   weightGoal?: number;
   targetDate?: string;
   // Mesures
-  weights: Array<{
+  weights: {
     date: string;
     weight: number;
     bodyFat?: number;
     muscle?: number;
     water?: number;
     bmi?: number;
-  }>;
+  }[];
   // Mensurations
-  measurements: Array<{
+  measurements: {
     date: string;
     waist?: number;
     hips?: number;
@@ -43,13 +43,13 @@ interface PDFReportData {
     right_arm?: number;
     left_thigh?: number;
     right_thigh?: number;
-  }>;
+  }[];
   // Entrainements
-  trainings: Array<{
+  trainings: {
     date: string;
     sport: string;
     duration_minutes: number;
-  }>;
+  }[];
 }
 
 // ═══════════════════════════════════════════════

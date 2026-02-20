@@ -15,12 +15,12 @@ export interface YearStats {
   percentage: number;             // Progression %
   weeklyGoal: number;             // Objectif hebdo total de l'utilisateur
   yearlyGoal: number;             // Objectif annuel (weeklyGoal * 52)
-  activityBreakdown: Array<{      // Top 5 clubs
+  activityBreakdown: {      // Top 5 clubs
     clubName: string;
     clubLogo?: any;                // Source du logo (require ou {uri})
     count: number;
     percentage: number;
-  }>;
+  }[];
   bestStreak: number;
   currentStreak: number;
   busiestMonth: {

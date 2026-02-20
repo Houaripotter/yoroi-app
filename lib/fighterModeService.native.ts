@@ -13,8 +13,6 @@ import {
   Hydratation,
   ObjectifPoids,
   UserProfile,
-  CompetitionStatut,
-  CombatResultat,
 } from './fighterMode';
 
 const STORAGE_KEY_MODE = '@yoroi_user_mode';

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { View, Animated, Easing, StyleSheet } from 'react-native';
+import { Animated, Easing, StyleSheet } from 'react-native';
 import Svg, { Rect, Path, G } from 'react-native-svg';
 
 const AnimatedG = Animated.createAnimatedComponent(G);

@@ -13,7 +13,7 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop, Path, G } from 'react-native-svg';
+import Svg, { Circle } from 'react-native-svg';
 import {
   ChevronLeft,
   Save,
@@ -22,21 +22,17 @@ import {
   Activity,
   Heart,
   Zap,
-  TrendingDown,
-  TrendingUp,
   Info,
 } from 'lucide-react-native';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import {
   BodyComposition,
   addBodyComposition,
   getLatestBodyComposition,
-  analyzeBodyComposition,
   calculateBMR,
 } from '@/lib/bodyComposition';
 import { getProfile } from '@/lib/database';
-import { successHaptic, lightHaptic } from '@/lib/haptics';
+import { successHaptic } from '@/lib/haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS, GRADIENTS, BODY_COMP_COLORS } from '@/constants/design';
 import logger from '@/lib/security/logger';

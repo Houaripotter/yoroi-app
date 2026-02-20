@@ -3,7 +3,7 @@
 // ============================================
 // Échelle Visuelle Analogique pour noter la douleur (0-10)
 
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useTheme } from '@/lib/ThemeContext';

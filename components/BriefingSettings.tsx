@@ -10,7 +10,6 @@ import {
   StyleSheet,
   Switch,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { Bell, Clock } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';

@@ -19,7 +19,7 @@ import { logger } from '@/lib/security/logger';
 
 type Period = '30j' | '90j' | '6m' | '1a';
 
-const PERIODS: Array<{ value: Period; label: string }> = [
+const PERIODS: { value: Period; label: string }[] = [
   { value: '30j', label: '30J' },
   { value: '90j', label: '90J' },
   { value: '6m', label: '6M' },

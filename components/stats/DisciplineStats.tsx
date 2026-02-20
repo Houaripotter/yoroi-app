@@ -6,7 +6,7 @@ import { fr } from 'date-fns/locale';
 import { SparklineChart } from '../charts/SparklineChart';
 import { Flame, TrendingDown, TrendingUp, Target, Activity, Calendar, Maximize2, Check } from 'lucide-react-native';
 import { StatsDetailModal } from '../StatsDetailModal';
-import { getHistoryDays, scale, isIPad } from '@/constants/responsive';
+import { getHistoryDays, isIPad } from '@/constants/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const STATS_COLUMNS = isIPad() ? 4 : 2;

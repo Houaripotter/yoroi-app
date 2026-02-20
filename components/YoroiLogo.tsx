@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { RADIUS, SHADOWS } from '@/constants/appTheme';
+import { SHADOWS } from '@/constants/appTheme';
 import { getSelectedLogo, LOGO_OPTIONS, LogoVariant } from '@/lib/storage';
 
 interface YoroiLogoProps {

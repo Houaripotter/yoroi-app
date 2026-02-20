@@ -17,7 +17,7 @@ import {
   Clock,
 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useWeekSchedule, SessionDetail } from '@/hooks/useWeekSchedule';
+import { useWeekSchedule } from '@/hooks/useWeekSchedule';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 
 const DAYS = [

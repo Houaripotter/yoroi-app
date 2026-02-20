@@ -21,8 +21,6 @@ import {
   Moon,
   TrendingUp,
   Dumbbell,
-  Watch,
-  Calendar,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -96,28 +94,28 @@ export default function HealthMetricsScreen() {
   const [weightGoal, setWeightGoal] = useState<number | undefined>();
 
   // Historical data states
-  const [hrvHistory, setHrvHistory] = useState<Array<{ date: string; value: number }>>([]);
-  const [restingHRHistory, setRestingHRHistory] = useState<Array<{ date: string; value: number }>>([]);
-  const [heartRateHistory, setHeartRateHistory] = useState<Array<{ date: string; value: number }>>([]);
-  const [oxygenSaturationHistory, setOxygenSaturationHistory] = useState<Array<{ date: string; value: number }>>([]);
-  const [bodyTemperatureHistory, setBodyTemperatureHistory] = useState<Array<{ date: string; value: number }>>([]);
-  const [weightHistory, setWeightHistory] = useState<Array<{ date: string; value: number }>>([]);
-  const [vo2MaxHistory, setVO2MaxHistory] = useState<Array<{ date: string; value: number }>>([]);
-  const [stepsHistory, setStepsHistory] = useState<Array<{ date: string; value: number }>>([]);
-  const [sleepHistory, setSleepHistory] = useState<Array<{
+  const [hrvHistory, setHrvHistory] = useState<{ date: string; value: number }[]>([]);
+  const [restingHRHistory, setRestingHRHistory] = useState<{ date: string; value: number }[]>([]);
+  const [heartRateHistory, setHeartRateHistory] = useState<{ date: string; value: number }[]>([]);
+  const [oxygenSaturationHistory, setOxygenSaturationHistory] = useState<{ date: string; value: number }[]>([]);
+  const [bodyTemperatureHistory, setBodyTemperatureHistory] = useState<{ date: string; value: number }[]>([]);
+  const [weightHistory, setWeightHistory] = useState<{ date: string; value: number }[]>([]);
+  const [vo2MaxHistory, setVO2MaxHistory] = useState<{ date: string; value: number }[]>([]);
+  const [stepsHistory, setStepsHistory] = useState<{ date: string; value: number }[]>([]);
+  const [sleepHistory, setSleepHistory] = useState<{
     date: string;
     deep: number;
     rem: number;
     core: number;
     awake: number;
     total: number;
-  }>>([]);
-  const [caloriesHistory, setCaloriesHistory] = useState<Array<{
+  }[]>([]);
+  const [caloriesHistory, setCaloriesHistory] = useState<{
     date: string;
     active: number;
     basal: number;
     total: number;
-  }>>([]);
+  }[]>([]);
 
   // Insights
   const [insights, setInsights] = useState<Insight[]>([]);
@@ -126,7 +124,7 @@ export default function HealthMetricsScreen() {
   const [selectedModal, setSelectedModal] = useState<{
     type: 'hrv' | 'restingHR' | 'heartRate' | 'spo2' | 'temperature' | 'weight' | 'vo2max' | 'sleep' | 'calories' | null;
     title: string;
-    data: Array<{ date: string; value: number }>;
+    data: { date: string; value: number }[];
     color: string;
     unit: string;
     icon?: React.ReactNode;

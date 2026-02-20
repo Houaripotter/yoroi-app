@@ -8,18 +8,15 @@ import {
   TextInput,
   StatusBar,
   Dimensions,
-  Animated,
   Image,
   Pressable,
-  Platform,
   Keyboard,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
-import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
 import {
   ChevronLeft,
   Target,
@@ -48,14 +45,13 @@ import {
   getWeightProgress,
   calculateStreak,
   Profile,
-} from '@/lib/database';
-import { getCurrentRank, getNextRank, getDaysToNextRank, getRankProgress } from '@/lib/ranks';
+ getWeights, getTrainings } from '@/lib/database';
+import { getCurrentRank } from '@/lib/ranks';
 import { getLevel } from '@/lib/gamification';
 import { getUnlockedBadges } from '@/lib/badges';
-import { getWeights, getTrainings } from '@/lib/database';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY } from '@/constants/design';
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '@/constants/design';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 // 🔒 SÉCURITÉ: Protection contre les screenshots

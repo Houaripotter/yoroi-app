@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { setStringAsync, getStringAsync } from 'expo-clipboard';
+import { setStringAsync } from 'expo-clipboard';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   Eye,
@@ -27,7 +27,6 @@ import {
 import { useTheme } from '@/lib/ThemeContext';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SPACING, RADIUS } from '@/constants/appTheme';
-import { BodyZone as BodyZoneData } from '@/constants/bodyZones';
 
 // ============================================
 // TYPES
@@ -45,7 +44,7 @@ export interface BodyZone {
 
 interface BodyMapProps {
   onZonePress: (zone: BodyZone, view: 'front' | 'back') => void;
-  injuredZones?: Array<{ zone_id: string; zone_view: 'front' | 'back'; eva_score: number }>;
+  injuredZones?: { zone_id: string; zone_view: 'front' | 'back'; eva_score: number }[];
   isCreatorMode?: boolean;
 }
 

@@ -11,7 +11,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Share2, TrendingDown, Flame, Award } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { SPACING } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
 
 interface SocialStatsCardProps {

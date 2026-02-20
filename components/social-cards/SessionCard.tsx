@@ -11,7 +11,7 @@ import { View, Text, StyleSheet, Image, Dimensions, ScrollView } from 'react-nat
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Training } from '@/lib/database';
-import { getClubLogoSource, getSportIcon, getSportName } from '@/lib/sports';
+import { getClubLogoSource, getSportName } from '@/lib/sports';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

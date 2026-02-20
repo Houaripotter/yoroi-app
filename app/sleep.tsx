@@ -16,7 +16,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import {
   ArrowLeft,
   Moon,
-  Sun,
   Clock,
   TrendingUp,
   TrendingDown,
@@ -31,16 +30,11 @@ import {
   Calendar,
 } from 'lucide-react-native';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
-import { format, subDays, Locale } from 'date-fns';
+import { format, Locale } from 'date-fns';
 import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-
-// Map des locales date-fns par langue
-const DATE_LOCALES: Record<string, Locale> = {
-  fr, en: enUS, es, pt, de, it, ru, ar, zh: zhCN
-};
 import {
   getSleepEntries,
   getSleepStats,
@@ -53,6 +47,11 @@ import {
 } from '@/lib/sleepService';
 import { notificationService } from '@/lib/notificationService';
 import logger from '@/lib/security/logger';
+
+// Map des locales date-fns par langue
+const DATE_LOCALES: Record<string, Locale> = {
+  fr, en: enUS, es, pt, de, it, ru, ar, zh: zhCN
+};
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 

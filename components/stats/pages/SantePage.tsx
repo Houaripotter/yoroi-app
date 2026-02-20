@@ -11,7 +11,7 @@ import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { HealthKitConnectCard } from '../HealthKitConnectCard';
 import { healthConnect } from '@/lib/healthConnect';
-import { Moon, Droplet, Heart, Activity, Wind, Thermometer, Calendar } from 'lucide-react-native';
+import { Moon, Droplet, Heart, Activity, Wind, Thermometer } from 'lucide-react-native';
 import { CircularProgress } from '@/components/charts/CircularProgress';
 import { logger } from '@/lib/security/logger';
 

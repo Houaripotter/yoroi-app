@@ -4,12 +4,12 @@
 // Composant pour changer la langue de l'app (9 langues)
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { Globe, Check } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n, SUPPORTED_LANGUAGES } from '@/lib/I18nContext';
-import { SPACING, RADIUS } from '@/constants/appTheme';
+import { SPACING } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
 
 export function LanguageSelector() {

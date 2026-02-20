@@ -12,15 +12,14 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
-  Platform,
   Modal,
   Pressable,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle , notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop, Path, G } from 'react-native-svg';
+import Svg, { Circle } from 'react-native-svg';
 import {
   ChevronLeft,
   Trophy,
@@ -50,11 +49,22 @@ import {
   Clock,
   ChevronRight,
   Play,
-} from 'lucide-react-native';
+
+  BookOpen,
+  Snowflake,
+  Users,
+  Calendar,
+  Coffee,
+  Salad,
+  Sofa,
+  Share2,
+  Footprints,
+  CheckCircle2,
+  ClipboardList} from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { RANKS, getCurrentRank, getNextRank, getRankProgress, getDaysToNextRank } from '@/lib/ranks';
-import { LEVELS, getLevel, getNextLevel, getLevelProgress } from '@/lib/gamification';
+import { getLevel, getNextLevel, getLevelProgress } from '@/lib/gamification';
 import { getProfile, getWeights, getTrainings, calculateStreak } from '@/lib/database';
 import { AnimatedCard } from '@/components/AnimatedCard';
 import { AchievementCelebration } from '@/components/AchievementCelebration';
@@ -71,23 +81,7 @@ import {
   uncompleteQuest,
   Quest,
   QuestProgress,
-  QuestId,
 } from '@/lib/quests';
-import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
-import {
-  BookOpen,
-  Snowflake,
-  Users,
-  Calendar,
-  Coffee,
-  Salad,
-  Sofa,
-  Share2,
-  Footprints,
-  CheckCircle2,
-  Egg,
-  ClipboardList,
-} from 'lucide-react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 

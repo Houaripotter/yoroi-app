@@ -7,12 +7,11 @@ import {
   TouchableOpacity,
   Modal,
   Animated,
-  Easing,
   ListRenderItem,
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
-import { Lock, Check, X, ChevronRight, Flame, Scale, Dumbbell, Star, Calendar, Award } from 'lucide-react-native';
+import { Lock, Check, X, Flame, Scale, Dumbbell, Star, Calendar, Award } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';

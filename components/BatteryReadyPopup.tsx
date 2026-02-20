@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
-import { Zap, X, Dumbbell, ChevronRight, Battery, Flame } from 'lucide-react-native';
+import { X, Dumbbell, ChevronRight, Flame } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';

@@ -6,7 +6,7 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { Moon, Plus, TrendingUp, AlertTriangle, CheckCircle, Settings } from 'lucide-react-native';
+import { Moon, Plus, TrendingUp, Settings } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import AnimatedCounter from '@/components/AnimatedCounter';

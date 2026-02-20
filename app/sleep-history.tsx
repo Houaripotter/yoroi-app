@@ -3,7 +3,7 @@
  * Écran dédié à l'historique complet du sommeil
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,6 @@ import {
   Sun,
   Star,
   Calendar,
-  Clock,
   Trash2,
 } from 'lucide-react-native';
 import { format, Locale } from 'date-fns';

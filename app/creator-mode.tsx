@@ -1,23 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { useTheme } from '@/lib/ThemeContext';
 import { Card } from '@/components/ui/Card';
 import {
-  Camera,
   Trash2,
   BookOpen,
   Activity,
-  User,
   Smartphone,
   CheckCircle,
-  AlertCircle,
   Syringe,
-  BarChart3,
-  Dumbbell,
-  Moon,
-  Heart
+  BarChart3
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';

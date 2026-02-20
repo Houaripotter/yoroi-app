@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Redirect } from "expo-router";
-import { ActivityIndicator, View, Text } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getUserSettings, saveUserSettings } from "@/lib/storage";
 import { getProfile } from "@/lib/database";

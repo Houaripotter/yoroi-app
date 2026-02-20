@@ -2,7 +2,7 @@
 // YOROI - ÉCRAN PLAN NUTRITIONNEL
 // ============================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, Info, ExternalLink, User, Weight, Ruler, Calendar, Zap, Coffee, Sun, Sunset, Moon as MoonIcon, Apple, Utensils, Beef, Droplets } from 'lucide-react-native';
+import { ChevronLeft, Info, ExternalLink, User, Weight, Ruler, Calendar, Zap, Apple, Beef, Droplets } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import { getLatestWeight, getProfile, Profile } from '@/lib/database';
@@ -27,7 +27,7 @@ import {
   NutritionPlan,
   SCIENTIFIC_SOURCES,
 } from '@/lib/nutrition';
-import { SPACING, RADIUS } from '@/constants/appTheme';
+import { SPACING } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

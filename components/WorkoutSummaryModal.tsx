@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { X, RotateCcw, Check } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { COLORS, SPACING, RADIUS, FONT } from '@/constants/appTheme';
+import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 
 interface WorkoutSummaryModalProps {
   visible: boolean;

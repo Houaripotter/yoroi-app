@@ -5,17 +5,12 @@
 
 import {
   Injury,
-  InjuryEvaHistory,
   InjuryTreatment,
-  TreatmentReminder,
   getInjuries,
   getActiveInjuries,
-  getInjuryById,
   addInjury,
   updateInjury,
   addEvaHistory,
-  getEvaHistory,
-  getLatestEva,
   addTreatment,
   getTreatments,
   addReminder,

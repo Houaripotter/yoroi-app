@@ -182,7 +182,7 @@ export default function HydrationScreen() {
       // Sync avec le système de badges (storage.ts hydration log)
       try {
         const logData = await AsyncStorage.getItem('@yoroi_hydration_log');
-        const logEntries: Array<{ id: string; date: string; amount: number; timestamp: string }> = logData ? JSON.parse(logData) : [];
+        const logEntries: { id: string; date: string; amount: number; timestamp: string }[] = logData ? JSON.parse(logData) : [];
         // Remplacer l'entrée du jour ou en ajouter une
         const existingIdx = logEntries.findIndex(e => e.date === todayISO);
         const logEntry = { id: `hydration_screen_${todayISO}`, date: todayISO, amount: amountMl, timestamp: new Date().toISOString() };

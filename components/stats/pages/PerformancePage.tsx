@@ -3,7 +3,7 @@
 // ============================================
 
 import React, { useState } from 'react';
-import { ScrollView, View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { ScrollView, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useI18n } from '@/lib/I18nContext';
 import { useTheme } from '@/lib/ThemeContext';
 import { useScrollContext } from '@/lib/ScrollContext';

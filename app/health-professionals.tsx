@@ -11,7 +11,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
   Modal,
   Platform,
 } from 'react-native';
@@ -30,7 +29,7 @@ import {
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
-import { SPACING, RADIUS } from '@/constants/appTheme';
+import { SPACING } from '@/constants/appTheme';
 import { COACHES, NUTRITIONISTS, OSTEOPATHS, Coach, Nutritionist, Osteopath } from '@/data/partners';
 
 export default function HealthProfessionalsScreen() {

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
+import { StyleSheet, Animated } from 'react-native';
 import { CheckCircle2 } from 'lucide-react-native';
 
 interface ChallengeConfettiProps {

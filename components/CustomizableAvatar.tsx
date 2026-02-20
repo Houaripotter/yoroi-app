@@ -12,9 +12,6 @@ import {
   AVATAR_FRAMES,
   AVATAR_BACKGROUNDS,
   AVATAR_EFFECTS,
-  FrameType,
-  BackgroundType,
-  EffectType,
   getAvatarCustomization,
 } from '@/lib/avatarCustomization';
 import { getAvatarConfig, getAvatarImage, type AvatarConfig } from '@/lib/avatarSystem';

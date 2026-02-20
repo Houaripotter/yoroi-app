@@ -14,9 +14,8 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
-import { X, AlertTriangle, CheckCircle2, AlertCircle, TrendingUp, TrendingDown } from 'lucide-react-native';
+import { X, AlertTriangle, CheckCircle2, AlertCircle, TrendingUp } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 

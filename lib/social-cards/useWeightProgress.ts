@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getWeights, getProfile, Weight, Profile } from '@/lib/database';
+import { getWeights, getProfile } from '@/lib/database';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -18,21 +18,21 @@ export interface WeightProgressStats {
   progressPercent: number;  // % de progression vers l'objectif
 
   // Historique recent (30 derniers jours)
-  recentHistory: Array<{
+  recentHistory: {
     date: string;
     weight: number;
-  }>;
+  }[];
 
   // Evolution mensuelle
   monthlyChange: number;    // changement ce mois
   weeklyChange: number;     // changement cette semaine
 
   // Badges / Achievements
-  milestones: Array<{
+  milestones: {
     name: string;
     value: number;
     achieved: boolean;
-  }>;
+  }[];
 
   // Meta
   startDate?: string;

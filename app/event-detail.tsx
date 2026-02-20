@@ -10,7 +10,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Image,
   Dimensions,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -20,8 +19,6 @@ import {
   Calendar,
   MapPin,
   ExternalLink,
-  Tag,
-  Trophy,
   Info,
   Globe,
   Users,

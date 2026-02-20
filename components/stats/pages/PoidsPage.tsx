@@ -16,7 +16,7 @@ import { HistoryScrollCard } from '../charts/HistoryScrollCard';
 import { SimpleMetricCard } from '../charts/SimpleMetricCard';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { aggregateWeightData } from '@/lib/statsAggregation';
-import { Target, TrendingUp, TrendingDown, Scale, Activity, BarChart3 } from 'lucide-react-native';
+import { Target, TrendingUp, TrendingDown, Scale, BarChart3 } from 'lucide-react-native';
 import { BMI_RANGES, getMetricStatus } from '@/lib/healthRanges';
 import { getProfile, getAllWeights } from '@/lib/database';
 import { getUserSettings } from '@/lib/storage';

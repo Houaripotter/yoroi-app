@@ -752,7 +752,7 @@ export interface FastingWeightCorrelation {
  * Analyser la correlation entre jeune et perte de poids
  */
 export const analyzeFastingWeightCorrelation = async (
-  measurements: Array<{ date: string; weight: number }>
+  measurements: { date: string; weight: number }[]
 ): Promise<FastingWeightCorrelation | null> => {
   try {
     const history = await getFastingHistory();

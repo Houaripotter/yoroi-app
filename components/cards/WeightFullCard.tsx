@@ -6,8 +6,8 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, Animated, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { TrendingDown, TrendingUp, ChevronRight } from 'lucide-react-native';
-import Svg, { Line, Circle, Path, Defs, LinearGradient as SvgLinearGradient, Stop, Text as SvgText } from 'react-native-svg';
+import { ChevronRight } from 'lucide-react-native';
+import Svg, { Line, Circle, Path, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 32;

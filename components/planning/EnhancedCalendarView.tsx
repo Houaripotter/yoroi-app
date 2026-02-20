@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { Plus, Moon } from 'lucide-react-native';
+import { Plus, Moon , ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { getMonthRestDays } from '@/lib/restDaysService';
 import {
   format,
@@ -25,6 +25,9 @@ import {
   endOfWeek,
 } from 'date-fns';
 import { fr, enUS, es, de, it, pt, ru, ar, zhCN, type Locale } from 'date-fns/locale';
+import { Training, Club } from '@/lib/database';
+import { getClubLogoSource } from '@/lib/sports';
+import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 
 // Mapping des langues vers les locales date-fns
 const DATE_LOCALES: Record<string, Locale> = {
@@ -38,10 +41,6 @@ const DATE_LOCALES: Record<string, Locale> = {
   ar: ar,
   zh: zhCN,
 };
-import { Training, Club } from '@/lib/database';
-import { getClubLogoSource } from '@/lib/sports';
-import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 
 interface EnhancedCalendarViewProps {
   currentMonth: Date;

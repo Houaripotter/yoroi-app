@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Dimensions, Animated, Easing } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Activity, Zap } from 'lucide-react-native';
-import { scale, getGridColumns } from '@/constants/responsive';
+import { getGridColumns } from '@/constants/responsive';
 
 const { width: screenWidth } = Dimensions.get('window');
 // paddingHorizontal 16*2 = 32, gaps entre cartes = 8 * (colonnes - 1)

@@ -4,8 +4,7 @@
 // Calcul de la charge d'entraînement basé sur RPE x Durée
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { format, subDays, startOfWeek, endOfWeek } from 'date-fns';
-import { getTrainings, Training } from '@/lib/database';
+import { format, subDays } from 'date-fns';
 import logger from '@/lib/security/logger';
 
 // ============================================

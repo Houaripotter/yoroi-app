@@ -5,7 +5,7 @@
 
 import { useMemo } from 'react';
 import { useTheme } from '@/lib/ThemeContext';
-import { TIFFANY, COLORS } from '@/constants/appTheme';
+import { TIFFANY } from '@/constants/appTheme';
 
 /**
  * Hook qui retourne les couleurs dynamiques basees sur le theme actif

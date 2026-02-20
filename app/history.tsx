@@ -11,17 +11,15 @@ import {
   Image,
 } from 'react-native';
 import { LineChart, BarChart } from 'react-native-gifted-charts';
-import { Calendar, Dna } from 'lucide-react-native';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
+import { Calendar, Dna , ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { getAllMeasurements, Measurement, getAllWorkouts, getWorkoutsByMonth, getUserSettings, addWorkout, deleteWorkout, getUserClubs } from '@/lib/storage';
+import { getAllMeasurements, Measurement, getAllWorkouts, getUserSettings, addWorkout, deleteWorkout, getUserClubs , UserClub } from '@/lib/storage';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Workout, WorkoutType } from '@/types/workout';
 import { ActivityModal } from '@/components/ActivityModal';
 import { checkAndUnlockBadges } from '@/lib/badges';
-import { UserClub } from '@/lib/storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import logger from '@/lib/security/logger';
@@ -355,7 +353,7 @@ export default function HistoryScreen() {
       }).filter(item => item.value > 0);
       
       return data.length > 0 ? { metric, data } : null;
-    }).filter(item => item !== null) as Array<{ metric: MeasurementMetricOption; data: Array<{ value: number; label: string; date: string }> }>;
+    }).filter(item => item !== null) as { metric: MeasurementMetricOption; data: { value: number; label: string; date: string }[] }[];
   }, [filteredRecords]);
 
   if (loading) {

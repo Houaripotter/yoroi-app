@@ -6,6 +6,8 @@
 import { getProgressionItems, getPracticeLogsByItemId, PracticeLog, ProgressionItem } from './trainingJournalService';
 import * as FS from 'expo-file-system';
 import { shareAsync } from 'expo-sharing';
+import { Alert } from 'react-native';
+import logger from '@/lib/security/logger';
 
 // Type assertion pour expo-file-system
 const FileSystem = FS as typeof FS & {
@@ -13,8 +15,6 @@ const FileSystem = FS as typeof FS & {
   writeAsStringAsync: (path: string, content: string, options?: any) => Promise<void>;
   readAsStringAsync: (path: string, options?: any) => Promise<string>;
 };
-import { Alert } from 'react-native';
-import logger from '@/lib/security/logger';
 
 export interface ExportData {
   exercises: ProgressionItem[];

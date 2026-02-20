@@ -13,17 +13,9 @@ import {
 } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { CheckCircle, AlertCircle, AlertTriangle, Check } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
-import { requestReview, isAvailableAsync } from 'expo-store-review';
-import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
-import { randomUUID, digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
+import { CheckCircle, AlertCircle, AlertTriangle, Check ,
   User,
   Camera,
-  Settings,
   MessageCircle,
   Star,
   ChevronRight,
@@ -31,7 +23,6 @@ import {
   Ruler,
   Download,
   Upload,
-  Lock,
   Share2,
   FileText,
   LucideIcon,
@@ -47,35 +38,33 @@ import {
   Heart,
   Shield,
   Zap,
-  Crown,
   Trophy,
-  Target,
   FlaskConical,
-  LayoutDashboard,
   Sliders,
   Info,
   Scale,
   X,
   Swords,
-  Droplet,
-  TrendingDown,
   Calendar,
   Award,
   Bell,
   Watch,
   Globe,
-  RefreshCw,
   Moon,
   Sun,
   Smartphone,
   MessageSquareQuote,
   Image as ImageIcon,
   Trash2,
-  Search,
 } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
+import { digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import { MoreTabView } from '@/components/more/MoreTabView';
-import { exportDataToJSON, exportDataToCSV, exportTrainingsToCSV, exportTrainingsToExcelCSV, importDataFromJSON, exportEditableCSV, importEditableCSV, exportEmptyTemplate } from '@/lib/exportService';
+import { exportDataToJSON, importDataFromJSON, exportEditableCSV, importEditableCSV, exportEmptyTemplate } from '@/lib/exportService';
 import { scale, scaleModerate } from '@/constants/responsive';
 import { generateProgressPDF } from '@/lib/pdfExport';
 import { getWeightCategoriesBySportAndGender, WeightCategory, sportHasWeightCategories } from '@/lib/weightCategories';
@@ -83,15 +72,14 @@ import { UserMode, Sport, SPORT_LABELS } from '@/lib/fighterMode';
 import { getUserMode, setUserMode as saveUserMode } from '@/lib/fighterModeService';
 import { resetAllData } from '@/lib/storage';
 // Screenshot mode is now handled via /screenshot-mode route only
-import { getHomeCustomization, saveHomeCustomization, isSectionVisible, HomeSection } from '@/lib/homeCustomizationService';
-import { generateScreenshotDemoData, clearScreenshotDemoData, isScreenshotModeEnabled, DEMO_PROFILES, setActiveDemoProfile, DemoProfileKey } from '@/lib/screenshotDemoData';
+import { generateScreenshotDemoData, clearScreenshotDemoData, DEMO_PROFILES, setActiveDemoProfile, DemoProfileKey } from '@/lib/screenshotDemoData';
 import logger from '@/lib/security/logger';
 import { useI18n } from '@/lib/I18nContext';
+import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
+import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited, resetAllTutorials } from '@/lib/featureDiscoveryService';
 
 // Type pour la fonction de traduction
 type TranslateFunction = (key: string, options?: any) => string;
-import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
-import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited, resetAllTutorials } from '@/lib/featureDiscoveryService';
 
 // ============================================
 // ECRAN PLUS - DESIGN MODERNE

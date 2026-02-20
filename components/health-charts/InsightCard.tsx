@@ -8,7 +8,6 @@ import {
   CheckCircle,
   Info,
   Zap,
-  type LucideIcon,
 } from 'lucide-react-native';
 
 export type InsightType = 'success' | 'warning' | 'danger' | 'info' | 'neutral';

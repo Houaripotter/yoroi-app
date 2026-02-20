@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import Svg, { Line, Circle, Polyline, Defs, LinearGradient, Stop, Path } from 'react-native-svg';
+import Svg, { Line, Circle, Defs, LinearGradient, Stop, Path } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 

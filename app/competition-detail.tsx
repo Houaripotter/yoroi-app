@@ -20,7 +20,6 @@ import {
   Edit,
   Trash2,
   Plus,
-  TrendingDown,
   Scale,
 } from 'lucide-react-native';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';

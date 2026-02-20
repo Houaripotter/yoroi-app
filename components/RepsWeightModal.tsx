@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { X, Plus, Minus, Check } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { COLORS, SPACING, RADIUS, FONT } from '@/constants/appTheme';
+import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 
 interface RepsWeightModalProps {
   visible: boolean;

@@ -7,14 +7,14 @@ import { Maximize2 } from 'lucide-react-native';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface SleepHistoryChartProps {
-  data: Array<{
+  data: {
     date: string;
     deep: number;
     rem: number;
     core: number;
     awake: number;
     total: number;
-  }>;
+  }[];
   colors: any;
   onPress?: () => void;
 }

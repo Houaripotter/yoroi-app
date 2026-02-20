@@ -12,7 +12,6 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
-  Platform,
   Image,
 } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';

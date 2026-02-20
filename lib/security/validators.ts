@@ -7,6 +7,11 @@
 
 import logger from './logger';
 
+/**
+ * Ouvre une URL de manière sécurisée via Linking
+ */
+import { Linking } from 'react-native';
+
 // ============================================
 // CONSTANTES DE VALIDATION
 // ============================================
@@ -523,11 +528,6 @@ export function validateLinkingURL(url: any): ValidationResult {
 
   return { valid: true, sanitized: trimmedUrl };
 }
-
-/**
- * Ouvre une URL de manière sécurisée via Linking
- */
-import { Linking, Alert } from 'react-native';
 
 export async function safeOpenURL(url: string): Promise<boolean> {
   const validation = validateLinkingURL(url);

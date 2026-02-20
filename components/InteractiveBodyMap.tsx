@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Path, G, Circle } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
 

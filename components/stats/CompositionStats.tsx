@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView , Dimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Weight } from '@/lib/database';
 import { format } from 'date-fns';
@@ -7,8 +7,7 @@ import { fr } from 'date-fns/locale';
 import { SparklineChart } from './charts/SparklineChart';
 import { Droplets, Dumbbell, Bone, Flame, Calendar, TrendingUp, TrendingDown, Target, Maximize2, Eye } from 'lucide-react-native';
 import { StatsDetailModal } from './StatsDetailModal';
-import { getHistoryDays, getChartDataPoints, scale, isIPad } from '@/constants/responsive';
-import { Dimensions } from 'react-native';
+import { getHistoryDays, getChartDataPoints, isIPad } from '@/constants/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // Largeur des cartes statistiques - 2 colonnes sur iPhone, 4 colonnes sur iPad

@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Trophy, Star, Flame, TrendingUp, ChevronRight, Zap, Target } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { getCurrentRank, getNextRank, getRankProgress, getDaysToNextRank, RANKS } from '@/lib/ranks';
+import { getCurrentRank, getNextRank, getRankProgress, getDaysToNextRank } from '@/lib/ranks';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Icon } from '@/components/Icon';
 

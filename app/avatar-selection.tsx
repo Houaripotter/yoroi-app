@@ -30,7 +30,6 @@ import {
   getLevelProgress,
   getAvatarImage,
   getAllPacksWithUnlockStatus,
-  getPackName,
   getPackType,
   getCollectionCharacters,
   type AvatarPack,

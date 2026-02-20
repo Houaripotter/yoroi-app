@@ -19,7 +19,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Trophy, Heart, ChevronRight, Swords, Dumbbell, Lightbulb } from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { setUserMode } from '@/lib/fighterModeService';
 import { UserMode } from '@/lib/fighterMode';

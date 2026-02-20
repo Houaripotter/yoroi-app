@@ -8,7 +8,6 @@ import { useTheme } from '@/lib/ThemeContext';
 import { X } from 'lucide-react-native';
 import { getCurrentRank } from '@/lib/ranks';
 import { getLevelProgress } from '@/lib/gamification';
-import { Icon } from '@/components/Icon';
 
 interface WelcomeHeaderProps {
   userName: string;

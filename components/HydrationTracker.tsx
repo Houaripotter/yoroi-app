@@ -19,7 +19,6 @@ import {
   addHydrationEntry,
   getHydrationSettings,
   hasWorkoutOnDate,
-  HydrationSettings,
 } from '@/lib/storage';
 import HealthConnect from '@/lib/healthConnect';
 

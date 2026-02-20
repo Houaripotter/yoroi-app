@@ -9,7 +9,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
 } from 'react-native';
 import { Palette, Sun, Moon, Smartphone, Check, Crown } from 'lucide-react-native';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';

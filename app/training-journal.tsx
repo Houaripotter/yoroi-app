@@ -13,21 +13,14 @@ import {
   TextInput,
   Modal,
   Dimensions,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
   Animated,
-  Alert,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import {
-  Trash2, Archive, CheckCircle, RotateCcw, Search, Filter, Plus, Target, ChevronRight, Share2, Info, Dumbbell, Activity, Timer,
-  Mountain, Flame, Shield, Move, Lock, Users, Zap, Scale, Swords, BarChart3, Footprints, BookOpen, Award, FileText, Play, X, Clock, Check, ImageIcon, Calendar, Edit3, Gauge, ChevronLeft, Video, ExternalLink, TrendingUp, Camera
+  Trash2, Search, Plus, Target, ChevronRight, Share2, Dumbbell, BookOpen, Award, FileText, Play, X, Check, ChevronLeft, TrendingUp
 } from 'lucide-react-native';
 import { useWatch } from '@/lib/WatchConnectivityProvider';
 import { useTheme } from '@/lib/ThemeContext';
@@ -40,7 +33,6 @@ import {
   Skill,
   BenchmarkCategory,
   BenchmarkUnit,
-  BenchmarkEntry,
   SkillCategory,
   SkillStatus,
   WeightUnit,
@@ -55,22 +47,16 @@ import {
   parseTimeToSeconds,
   calculateCalories,
   calculatePace,
-  METS_VALUES,
-  COMBAT_METS,
   getSkills,
   createSkill,
   updateSkillStatus,
   addSkillNote,
   incrementDrillCount,
   deleteSkill,
-  deleteSkillNote,
   updateSkillVideoUrl,
   BENCHMARK_CATEGORIES,
   SKILL_CATEGORIES,
   SKILL_STATUS_CONFIG,
-  getCarnetStats,
-  getRPELabel,
-  getRPEColor,
   cleanDemoData,
   getTrashBenchmarks,
   getTrashSkills,
@@ -80,7 +66,7 @@ import {
   getTrashCount,
   TrashItem,
 } from '@/lib/carnetService';
-import VictoryShareModal, { VictorySessionData, createVictoryData, createVictoryFromEntry } from '@/components/VictoryShareModal';
+import VictoryShareModal, { VictorySessionData, createVictoryFromEntry } from '@/components/VictoryShareModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPendingVictory } from '@/lib/victoryTrigger';
 import TrainingJournalOnboarding from '@/components/TrainingJournalOnboarding';

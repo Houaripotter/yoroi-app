@@ -7,7 +7,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Target, TrendingUp, Flame, Check } from 'lucide-react-native';
+import { Target, Check } from 'lucide-react-native';
 import { GoalProgress, GlobalGoalStats } from '@/lib/trainingGoalsService';
 
 interface GoalProgressCardProps {

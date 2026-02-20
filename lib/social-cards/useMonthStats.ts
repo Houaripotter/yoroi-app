@@ -25,13 +25,13 @@ export interface MonthStats {
   totalDays: number;              // 28-31 selon mois
   totalTrainings: number;         // Nombre total d'entrainements
   percentage: number;
-  calendar: Array<{               // Grille complète du mois
+  calendar: {               // Grille complète du mois
     day: number;                  // 1-31
     isActive: boolean;
     isToday: boolean;
     isWeekend: boolean;
     dayOfWeek: number;            // 0-6 (Dimanche = 0)
-  }>;
+  }[];
   // Entrainements par club
   clubTrainings: ClubTrainingCount[];
   evolution: {

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Text, TextStyle, Animated } from 'react-native';
+import { TextStyle, Animated } from 'react-native';
 
 interface AnimatedNumberProps {
   value: number;

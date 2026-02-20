@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
-  Image,
 } from 'react-native';
 import { X, ZoomIn, ZoomOut } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';

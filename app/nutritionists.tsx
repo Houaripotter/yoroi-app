@@ -15,7 +15,6 @@ import { ChevronLeft, Mail } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
-import { NUTRITIONISTS } from '@/data/partners';
 
 export default function NutritionistsScreen() {
   const { colors } = useTheme();

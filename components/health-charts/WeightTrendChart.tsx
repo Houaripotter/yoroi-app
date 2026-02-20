@@ -13,7 +13,7 @@ const PADDING_TOP = 20;
 const PADDING_BOTTOM = 40;
 
 interface WeightTrendChartProps {
-  data: Array<{ date: string; value: number }>;
+  data: { date: string; value: number }[];
   goal?: number;
   colors: any;
   period: number;

@@ -15,7 +15,6 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { safeOpenURL } from '@/lib/security/validators';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -28,9 +27,7 @@ import {
   Plus,
   Check,
   Calendar,
-  Filter,
   Globe,
-  Flag,
   Bookmark,
   ChevronRight,
   X,
@@ -43,7 +40,6 @@ import {
   Activity,
   Users,
   Zap,
-  LucideIcon,
 } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { ScreenWrapper } from '@/components/ScreenWrapper';

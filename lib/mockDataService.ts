@@ -1,4 +1,4 @@
-import { format, subDays, startOfDay } from 'date-fns';
+import { subDays } from 'date-fns';
 
 // ============================================
 // MOCK DATA SERVICE - Version "Creator Mode" pour Screenshots parfaits

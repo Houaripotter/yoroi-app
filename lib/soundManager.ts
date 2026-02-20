@@ -1,5 +1,4 @@
 import { Audio } from 'expo-av';
-import { Platform } from 'react-native';
 import logger from '@/lib/security/logger';
 
 // ============================================

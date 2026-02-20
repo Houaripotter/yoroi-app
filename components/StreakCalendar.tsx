@@ -10,11 +10,9 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import { router } from 'expo-router';
-import { ChevronLeft, ChevronRight, Flame, Calendar } from 'lucide-react-native';
+import { Flame, Calendar } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { format, subDays, startOfWeek, addDays, isSameDay, isToday } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { format, subDays, startOfWeek, addDays, isToday } from 'date-fns';
 import { getTrainings } from '@/lib/database';
 import logger from '@/lib/security/logger';
 

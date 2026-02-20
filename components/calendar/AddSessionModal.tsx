@@ -19,7 +19,7 @@ import { fr } from 'date-fns/locale';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { Club, Training } from '@/lib/database';
-import { getSessionTypesForSport, DURATION_PRESETS, getDefaultSessionType } from '@/lib/sessionTypes';
+import { getSessionTypesForSport, DURATION_PRESETS } from '@/lib/sessionTypes';
 import { getClubLogoSource } from '@/lib/sports';
 import logger from '@/lib/security/logger';
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Modal, StyleSheet, Text, View, TouchableOpacity, Pressable } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { X } from 'lucide-react-native';
-import { WorkoutType, WORKOUT_TYPES } from '@/types/workout';
+import { WorkoutType } from '@/types/workout';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 

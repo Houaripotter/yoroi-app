@@ -159,7 +159,7 @@ function parseGPX(xmlContent: string): ParseResult {
       const sportType = trk.type || gpx.metadata?.type || '';
 
       const segments = ensureArray(trk.trkseg);
-      const allPoints: Array<{ lat: number; lon: number; time?: string; hr?: number }> = [];
+      const allPoints: { lat: number; lon: number; time?: string; hr?: number }[] = [];
 
       for (const seg of segments) {
         const points = ensureArray(seg.trkpt);

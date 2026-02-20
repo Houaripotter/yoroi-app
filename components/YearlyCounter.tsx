@@ -4,7 +4,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useFocusEffect } from 'expo-router';
 import { router } from 'expo-router';
 import { Flame, Target, TrendingUp, ChevronRight, Settings } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';

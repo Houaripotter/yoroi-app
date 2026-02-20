@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Share,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -17,7 +16,6 @@ import {
   Ruler,
   Dumbbell,
   Calendar,
-  TrendingDown,
   Zap,
   Share2,
   RefreshCw,

@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView, Animated } from 'react-native';
+import { StyleSheet, Text, Pressable, ScrollView, Animated } from 'react-native';
 import { MetricType, METRIC_CONFIGS } from '@/types/health';
 import { useTheme } from '@/lib/ThemeContext';
 

@@ -27,11 +27,9 @@ import {
   Castle,
   Shield,
   Star,
-  ChevronRight,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { RANKS, Rank, getCurrentRank, getNextRank, getDaysToNextRank, getRankProgress } from '@/lib/ranks';
-import { SPACING, RADIUS } from '@/constants/appTheme';
 
 interface RanksModalProps {
   visible: boolean;

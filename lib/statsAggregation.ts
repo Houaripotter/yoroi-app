@@ -4,7 +4,7 @@
 // Calcul de moyennes, tendances, min/max
 // ============================================
 
-import { getWeights, Weight, getTrainings, Training, getMeasurements, Measurement } from './database';
+import { getWeights, getTrainings, getMeasurements } from './database';
 import { getWeeklyLoadStats } from './trainingLoadService';
 import logger from './security/logger';
 
@@ -13,7 +13,7 @@ export type Period = '7j' | '30j' | '90j' | '6m' | '1a' | 'tout';
 export interface AggregatedStats {
   period: Period;
   metric: string;
-  values: Array<{ date: string; value: number }>;
+  values: { date: string; value: number }[];
   average: number;
   min: number;
   max: number;

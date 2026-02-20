@@ -8,7 +8,7 @@ import { fr } from 'date-fns/locale';
 
 interface TrendLineChartProps {
   title: string;
-  data: Array<{ date: string; value: number }>;
+  data: { date: string; value: number }[];
   color: string;
   unit: string;
   colors: any;

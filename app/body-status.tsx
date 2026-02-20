@@ -11,10 +11,8 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { X, AlertTriangle, CheckCircle, Activity } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { getUserBodyStatus, saveUserBodyStatus } from '@/lib/storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
@@ -36,7 +34,7 @@ interface BodyStatusData {
   [key: string]: BodyZoneData;
 }
 
-const BODY_ZONES: Array<{ key: BodyZone; icon: string }> = [
+const BODY_ZONES: { key: BodyZone; icon: string }[] = [
   { key: 'neck', icon: '🫁' },
   { key: 'shoulders', icon: '' },
   { key: 'back', icon: '🦴' },

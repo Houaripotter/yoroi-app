@@ -17,7 +17,7 @@ import {
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@/lib/ThemeContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { requestReview, isAvailableAsync } from 'expo-store-review';
+import { requestReview } from 'expo-store-review';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Star, Check, Clock } from 'lucide-react-native';
 import logger from '@/lib/security/logger';

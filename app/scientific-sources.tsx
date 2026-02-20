@@ -16,7 +16,6 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, ExternalLink, BookOpen, GraduationCap } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { RADAR_REFERENCES } from '@/lib/radarService';
 
 export default function ScientificSourcesScreen() {
   const insets = useSafeAreaInsets();

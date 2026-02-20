@@ -7,19 +7,16 @@ import {
   TouchableOpacity,
   RefreshControl,
   Platform,
-  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
   Heart,
   Activity,
   Droplet,
-  Wind,
   Zap,
   Moon,
   TrendingUp,
   Dumbbell,
-  Watch,
   Smartphone,
   ChevronRight,
 } from 'lucide-react-native';

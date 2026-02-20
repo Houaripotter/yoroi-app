@@ -15,7 +15,7 @@ import {
   saveHomeLayout,
   saveSelectedLogo,
 } from './storage';
-import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs, addClub, addMeasurementRecord, updateClub, saveProfile } from './database';
+import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs, addClub, addMeasurementRecord, saveProfile } from './database';
 import { getAllBodyCompositions, addBodyComposition } from './bodyComposition';
 import { getUnlockedBadges, unlockBadge } from './badges';
 import logger from '@/lib/security/logger';

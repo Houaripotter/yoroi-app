@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
-import { TrendingDown, TrendingUp, Weight as WeightIcon, Target, ArrowDown, ArrowUp, Maximize2 } from 'lucide-react-native';
+import { Weight as WeightIcon, Target, ArrowDown, ArrowUp, Maximize2 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Weight } from '@/lib/database';
 import { format, parseISO } from 'date-fns';
@@ -8,7 +8,7 @@ import { fr } from 'date-fns/locale';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { SparklineChart } from '../charts/SparklineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
-import { getHistoryDays, scale, scaleModerate, isIPad } from '@/constants/responsive';
+import { getHistoryDays, scale, isIPad } from '@/constants/responsive';
 
 const { width } = Dimensions.get('window');
 // iPhone garde le padding original de 16, iPad utilise scale(8)

@@ -4,7 +4,7 @@
 // Données de démonstration complètes et attrayantes pour les captures d'écran
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { initDatabase, addWeight, addMeasurementRecord, addTraining, resetDatabase, openDatabase } from './database';
+import { initDatabase, addWeight, addMeasurementRecord, resetDatabase, openDatabase } from './database';
 import { format, subDays, addDays } from 'date-fns';
 import logger from '@/lib/security/logger';
 import { createBenchmark, addBenchmarkEntry, createSkill, resetCarnet } from './carnetService';

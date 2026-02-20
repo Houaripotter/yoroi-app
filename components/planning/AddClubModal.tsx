@@ -33,7 +33,7 @@ import {
 } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/ThemeContext';
-import { SPORTS, getSportIcon, getSportColor } from '@/lib/sports';
+import { SPORTS, getSportIcon } from '@/lib/sports';
 import { addClub, updateClub, Club } from '@/lib/database';
 import { setGoal, getGoalBySport } from '@/lib/trainingGoalsService';
 import { logger } from '@/lib/security/logger';

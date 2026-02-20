@@ -2,7 +2,7 @@
 // YOROI MEDIC - DÉTAIL BLESSURE
 // ============================================
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -25,7 +25,6 @@ import {
   Stethoscope,
   RotateCcw,
   Edit3,
-  Calendar,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/lib/ThemeContext';
@@ -37,7 +36,6 @@ import {
   InjuryEvaHistory,
   getInjuryById,
   getEvaHistory,
-  getTreatments,
   deleteInjury,
 } from '@/lib/database';
 import {

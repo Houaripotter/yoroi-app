@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
-import Svg, { Circle, Path, G } from 'react-native-svg';
+import { StyleSheet, Animated } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
 
 interface SleepCircleProps {

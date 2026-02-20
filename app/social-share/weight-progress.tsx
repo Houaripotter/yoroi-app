@@ -18,7 +18,7 @@ import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedba
 import { captureRef } from 'react-native-view-shot';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
-import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
 import { ChevronLeft, Share2, Download, Square, Smartphone, Camera, Image as ImageIcon } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';

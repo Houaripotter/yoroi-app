@@ -21,13 +21,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronLeft,
   Plus,
-  Check,
   Target,
   Trophy,
-  Zap,
   X,
-  ChevronDown,
-  ChevronRight,
   Star,
   Play,
 } from 'lucide-react-native';

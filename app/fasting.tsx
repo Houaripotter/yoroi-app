@@ -13,17 +13,13 @@ import { useCustomPopup } from '@/components/CustomPopup';
 
 import {
   Clock,
-  Play,
   Square,
   Settings,
-  TrendingDown,
   Flame,
-  CheckCircle,
   AlertTriangle,
   ChevronRight,
   X,
   MapPin,
-  Calendar,
   Moon,
   Star,
   Cross,
@@ -62,7 +58,6 @@ import {
   formatCountdown,
   formatTime,
   formatDate,
-  formatDuration,
 } from '@/lib/fasting';
 
 // ============================================

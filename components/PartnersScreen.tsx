@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';
-import { X, Phone, MapPin, Globe, Instagram, ExternalLink, Award, Users, Sword, Heart } from 'lucide-react-native';
+import { X, MapPin, Instagram, ExternalLink, Award, Users } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface PartnersScreenProps {

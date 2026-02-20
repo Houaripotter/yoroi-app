@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,6 @@ import {
   Droplet,
   Heart,
   Activity,
-  User,
   ChevronRight,
   X,
   Info,

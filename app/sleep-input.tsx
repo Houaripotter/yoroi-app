@@ -26,7 +26,7 @@ import { addSleepEntry } from '@/lib/sleepService';
 import { healthConnect } from '@/lib/healthConnect';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { logger } from '@/lib/security/logger';
-import { format, subDays, Locale } from 'date-fns';
+import { format, Locale } from 'date-fns';
 import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 
 const DATE_LOCALES: Record<string, Locale> = {

@@ -3,12 +3,11 @@
 // ============================================
 // Génère un bilan hebdomadaire à partager sur les réseaux
 
-import { format, subDays, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { getWeights, getTrainings, Training, Weight } from '@/lib/database';
-import { getSleepStats, formatSleepDuration } from '@/lib/sleepService';
+import { getWeights, getTrainings,  calculateStreak } from '@/lib/database';
+import { getSleepStats } from '@/lib/sleepService';
 import { getWeeklyLoadStats } from '@/lib/trainingLoadService';
-import { calculateStreak } from '@/lib/database';
 
 // ============================================
 // TYPES

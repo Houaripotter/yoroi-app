@@ -6,7 +6,7 @@
 // ============================================
 
 import { Platform } from 'react-native';
-import { getAllMeasurements, getUserSettings, getAllWorkouts } from '@/lib/storage';
+import { getAllMeasurements, getUserSettings } from '@/lib/storage';
 import logger from '@/lib/security/logger';
 
 // Note: Pour que le widget fonctionne, il faut:
@@ -25,7 +25,7 @@ export interface WidgetData {
 }
 
 // Calculer le streak actuel
-const calculateStreak = (measurements: Array<{ date: string; weight: number }>): number => {
+const calculateStreak = (measurements: { date: string; weight: number }[]): number => {
   if (measurements.length === 0) return 0;
 
   const sorted = [...measurements].sort(

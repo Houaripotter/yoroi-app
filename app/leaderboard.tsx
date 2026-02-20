@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
-import { ChevronLeft, Crown, Trophy, Medal, Star, Lock } from 'lucide-react-native';
+import { ChevronLeft, Crown, Medal, Star, Lock } from 'lucide-react-native';
 
 // ============================================
 // LEADERBOARD - CLASSEMENT

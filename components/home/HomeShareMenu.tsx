@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,16 +12,13 @@ import {
   Share2,
   X,
   Calendar,
-  Target,
   Trophy,
-  Instagram,
   BarChart2,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { router, useFocusEffect } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SHARE_BUTTON_KEY = '@yoroi_stats_share_button_hidden';

@@ -3,7 +3,7 @@
 // Interface simple pour logger rapidement
 // ============================================
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -17,8 +17,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronLeft,
   Dumbbell,
-  Heart,
-  Users,
   Zap,
   Activity,
 } from 'lucide-react-native';

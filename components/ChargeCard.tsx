@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, memo, useMemo } from 'react';
+import React, { useEffect, useRef, memo, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Activity } from 'lucide-react-native';

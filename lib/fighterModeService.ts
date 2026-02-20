@@ -12,8 +12,6 @@ import {
   Hydratation,
   ObjectifPoids,
   UserProfile,
-  CompetitionStatut,
-  CombatResultat,
 } from './fighterMode';
 import { logger } from '@/lib/security/logger';
 
@@ -228,13 +226,13 @@ export const getNextEvent = async (): Promise<{
     const saved = await AsyncStorage.getItem('my_saved_events');
     if (!saved) return null;
 
-    const events = JSON.parse(saved) as Array<{
+    const events = JSON.parse(saved) as {
       id: string;
       title: string;
       date_start: string;
       sport_tag?: string;
       category?: string;
-    }>;
+    }[];
 
     if (!events || events.length === 0) return null;
 

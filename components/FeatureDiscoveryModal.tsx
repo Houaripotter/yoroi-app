@@ -30,7 +30,6 @@ import {
   HeartPulse,
   Gauge,
   Check,
-  ChevronRight,
 } from 'lucide-react-native';
 import { PageTutorial } from '@/lib/featureDiscoveryService';
 

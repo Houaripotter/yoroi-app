@@ -7,7 +7,7 @@ import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { getTrainings, getClubs, type Training, type Club } from '@/lib/database';
-import { startOfWeek, endOfWeek, eachDayOfInterval, format, isSameDay, addDays } from 'date-fns';
+import { startOfWeek, endOfWeek, eachDayOfInterval, format, isSameDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 const CARD_PADDING = 16;

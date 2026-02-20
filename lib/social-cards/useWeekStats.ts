@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { getTrainings, getWeights } from '@/lib/database';
 import { getClubLogoSource } from '@/lib/sports';
-import type { Training, Weight } from '@/lib/database';
+import type { Training } from '@/lib/database';
 import logger from '@/lib/security/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -28,21 +28,21 @@ export interface WeekStats {
   percentage: number;             // activeDays / 7 * 100
 
   // Calendrier de la semaine
-  calendar: Array<{
+  calendar: {
     date: Date;
     dayName: string;              // "Lun", "Mar", etc.
     dayNumber: number;            // 1-31
     isActive: boolean;
     isToday: boolean;
     sessions: number;             // Nombre de séances ce jour
-  }>;
+  }[];
 
   // Clubs
-  clubs: Array<{
+  clubs: {
     clubName: string;
     clubLogo?: any;
     count: number;                // Nombre de séances
-  }>;
+  }[];
 
   // Évolution
   evolution: {

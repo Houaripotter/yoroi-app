@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
+import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { StatsHeader, Period } from '../StatsHeader';
@@ -16,7 +16,7 @@ import { getLatestMeasurement, getMeasurements } from '@/lib/database';
 import { Ruler } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
-import { WAIST_CIRCUMFERENCE_RANGES_MALE, WAIST_CIRCUMFERENCE_RANGES_FEMALE, getWaistCircumferenceRange, getMetricStatus } from '@/lib/healthRanges';
+import { getWaistCircumferenceRange, getMetricStatus } from '@/lib/healthRanges';
 import { getUserSettings } from '@/lib/storage';
 import { useScrollContext } from '@/lib/ScrollContext';
 import { logger } from '@/lib/security/logger';

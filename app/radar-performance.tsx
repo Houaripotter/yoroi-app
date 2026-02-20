@@ -12,12 +12,11 @@ import {
   TouchableOpacity,
   Dimensions,
   Animated,
-  Linking,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon, Line, Circle, Text as SvgText, Defs, RadialGradient, Stop } from 'react-native-svg';
-import { ArrowLeft, TrendingUp, TrendingDown, Minus, Moon, Droplet, Flame, BarChart3, Target, Lightbulb, BookOpen, Dumbbell, Heart, Brain, Trophy, GraduationCap, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, TrendingUp, TrendingDown, Minus, Moon, Droplet, Flame, Target, Lightbulb, Dumbbell, Heart, Brain, Trophy, GraduationCap, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import {
   calculateRadarScores,

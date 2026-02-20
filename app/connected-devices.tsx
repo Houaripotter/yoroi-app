@@ -36,6 +36,8 @@ import {
   Clock,
   Smartphone,
   Wifi,
+  AlertTriangle,
+  Search,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -46,6 +48,7 @@ import {
   getProviderIcon,
   SyncStatus,
 } from '@/lib/healthConnect';
+import HealthService from '@/lib/healthService';
 import { getDetectedSources, getDetectedWeightSources, DetectedSource } from '@/lib/database';
 
 // ============================================
@@ -140,6 +143,25 @@ const BRAND_CONFIGS: BrandConfig[] = [
     ],
   },
   {
+    key: 'fitbit',
+    name: 'Fitbit',
+    color: '#00B0B9',
+    emoji: 'F',
+    types: ['FC', 'HRV', 'Sommeil', 'Pas', 'SpO2', 'Distance'],
+    stepsIOS: [
+      'Ouvre l\'app Fitbit sur ton iPhone',
+      'Va dans Compte > Activite et bien-etre > Apple Sante',
+      'Active toutes les categories de donnees',
+      'Reviens ici et synchronise',
+    ],
+    stepsAndroid: [
+      'Ouvre l\'app Fitbit sur ton telephone',
+      'Va dans Compte > Activite et bien-etre > Health Connect',
+      'Active toutes les categories de donnees',
+      'Reviens ici et synchronise',
+    ],
+  },
+  {
     key: 'scales',
     name: 'Balances connectees',
     color: '#8B5CF6',
@@ -207,7 +229,7 @@ const DATA_MATRIX: Record<string, string[]> = {
   whoop:        ['heart_rate', 'hrv', 'sleep', 'calories_active'],
   apple_watch:  ['heart_rate', 'hrv', 'sleep', 'steps', 'calories_active', 'vo2max', 'spo2', 'distance'],
   samsung:      ['heart_rate', 'sleep', 'steps', 'calories_active', 'distance'],
-  fitbit:       ['heart_rate', 'hrv', 'sleep', 'steps', 'calories_active', 'spo2', 'distance'],
+  fitbit:       ['heart_rate', 'hrv', 'sleep', 'steps', 'calories_active', 'spo2', 'distance', 'weight'],
   xiaomi:       ['weight', 'body_fat', 'heart_rate', 'sleep', 'steps'],
   renpho:       ['weight', 'body_fat', 'lean_mass'],
   eufy:         ['weight', 'body_fat', 'lean_mass'],
@@ -230,6 +252,14 @@ export default function ConnectedDevicesScreen() {
   const [detectedSources, setDetectedSources] = useState<DetectedSource[]>([]);
   const [expandedBrand, setExpandedBrand] = useState<string | null>(null);
   const [showDataMatrix, setShowDataMatrix] = useState(false);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [diagResult, setDiagResult] = useState<{
+    available: boolean;
+    permissions: boolean;
+    hasWeight: boolean;
+    weightValue?: number;
+    weightDate?: string;
+  } | null>(null);
 
   useEffect(() => {
     loadData();
@@ -353,6 +383,41 @@ export default function ConnectedDevicesScreen() {
       logger.error('[ConnectedDevices] Sync error:', error);
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleDiagnose = async () => {
+    if (isDiagnosing) return;
+    impactAsync(ImpactFeedbackStyle.Medium);
+    setIsDiagnosing(true);
+    setDiagResult(null);
+
+    try {
+      const available = HealthService.isAvailable();
+
+      let permissions = false;
+      if (available) {
+        permissions = await HealthService.checkPermissions();
+      }
+
+      let hasWeight = false;
+      let weightValue: number | undefined;
+      let weightDate: string | undefined;
+      if (permissions) {
+        const weights = await HealthService.getWeight(7);
+        if (weights && weights.length > 0) {
+          hasWeight = true;
+          weightValue = weights[0].value;
+          weightDate = weights[0].date;
+        }
+      }
+
+      setDiagResult({ available, permissions, hasWeight, weightValue, weightDate });
+    } catch (error) {
+      logger.error('[ConnectedDevices] Diagnostic error:', error);
+      setDiagResult({ available: false, permissions: false, hasWeight: false });
+    } finally {
+      setIsDiagnosing(false);
     }
   };
 
@@ -586,7 +651,84 @@ export default function ConnectedDevicesScreen() {
           );
         })}
 
-        {/* ═══ SECTION 4: MATRICE DE DONNEES ═══ */}
+        {/* ═══ SECTION 4: VERIFIER LA CONNEXION ═══ */}
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+          VERIFIER LA CONNEXION
+        </Text>
+
+        <View style={[styles.diagCard, { backgroundColor: colors.backgroundCard }]}>
+          <TouchableOpacity
+            style={[styles.diagBtn, { backgroundColor: colors.accent }]}
+            onPress={handleDiagnose}
+            disabled={isDiagnosing}
+            activeOpacity={0.7}
+          >
+            {isDiagnosing ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Search size={18} color="#FFFFFF" />
+            )}
+            <Text style={styles.diagBtnText}>
+              {isDiagnosing ? 'Verification...' : 'Verifier la connexion'}
+            </Text>
+          </TouchableOpacity>
+
+          {diagResult && (
+            <View style={styles.diagResults}>
+              {[
+                {
+                  label: `${providerName} disponible`,
+                  ok: diagResult.available,
+                },
+                {
+                  label: 'Permissions accordees',
+                  ok: diagResult.permissions,
+                },
+                {
+                  label: diagResult.hasWeight && diagResult.weightValue
+                    ? `Dernier poids : ${diagResult.weightValue.toFixed(1)} kg`
+                    : 'Donnees de poids recues',
+                  ok: diagResult.hasWeight,
+                },
+              ].map((item, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.diagRow,
+                    index > 0 && { borderTopWidth: 1, borderTopColor: colors.border },
+                  ]}
+                >
+                  <View style={[styles.diagDot, { backgroundColor: item.ok ? '#10B981' : '#EF4444' }]} />
+                  <Text style={[styles.diagLabel, { color: colors.textPrimary }]}>
+                    {item.label}
+                  </Text>
+                  {item.ok ? (
+                    <Check size={16} color="#10B981" />
+                  ) : (
+                    <X size={16} color="#EF4444" />
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {diagResult && !diagResult.hasWeight && (
+            <View style={[styles.diagHelp, { backgroundColor: '#F59E0B10' }]}>
+              <AlertTriangle size={16} color="#F59E0B" />
+              <Text style={[styles.diagHelpText, { color: colors.textSecondary }]}>
+                {!diagResult.available
+                  ? Platform.OS === 'android'
+                    ? "Installe Health Connect depuis le Play Store, puis reviens ici."
+                    : "L'app Sante n'est pas disponible sur cet appareil."
+                  : !diagResult.permissions
+                    ? `Autorise YOROI a acceder a ${providerName} en appuyant sur "Connecter" ci-dessus.`
+                    : `Assure-toi que ton appareil est bien connecte a ${providerName} dans les reglages de l'app de ton appareil (Garmin Connect, Withings, Fitbit...). Les donnees peuvent prendre quelques minutes a se synchroniser.`}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* ═══ SECTION 5: MATRICE DE DONNEES ═══ */}
         <TouchableOpacity
           style={[styles.matrixToggle, { backgroundColor: colors.backgroundCard }]}
           onPress={() => {
@@ -1000,6 +1142,57 @@ const styles = StyleSheet.create({
     width: 60,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Diagnostic
+  diagCard: {
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 20,
+  },
+  diagBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  diagBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  diagResults: {
+    marginTop: 14,
+  },
+  diagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    gap: 10,
+  },
+  diagDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  diagLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  diagHelp: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginTop: 10,
+    padding: 12,
+    borderRadius: 10,
+  },
+  diagHelpText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
   },
   // Benefits
   benefitsCard: {

@@ -2,7 +2,7 @@
 // YOROI - PALMARÈS / HISTORIQUE COMBATS
 // ============================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,6 @@ import {
   Minus,
   Plus,
   Calendar,
-  Filter,
 } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';

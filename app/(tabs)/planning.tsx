@@ -11,7 +11,6 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   TextInput,
-  FlatList,
   ActivityIndicator,
   Modal,
 } from 'react-native';
@@ -31,12 +30,9 @@ import {
   List,
   Dumbbell,
   ChevronRight,
-  ChevronLeft,
-  Moon,
   TrendingUp,
   Trophy,
   MapPin,
-  Bell,
   ExternalLink,
   BookOpen,
   Search,
@@ -51,15 +47,12 @@ import {
 } from 'lucide-react-native';
 
 // Import events catalog service (SQLite optimized)
-import { getFilteredEvents, SportEvent as ImportedSportEvent } from '@/lib/eventsService';
+import { getFilteredEvents } from '@/lib/eventsService';
 import { toggleRestDay } from '@/lib/restDaysService';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay, startOfWeek, endOfWeek, addDays, getDay } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, startOfWeek, endOfWeek, addDays, getDay } from 'date-fns';
 import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '@/constants/design';
-import { getTrainings, getClubs, addTraining, deleteTraining, deleteClub, Club, Training, getCompetitions, Competition } from '@/lib/database';
-import { getSportIcon } from '@/constants/sportIcons';
-import { getProgressionItems, ProgressionItem } from '@/lib/trainingJournalService';
+import { getTrainings, getClubs, deleteTraining, deleteClub, Club, Training, getCompetitions, Competition } from '@/lib/database';
 import { getCarnetStats, getSkills, getBenchmarks, Skill, Benchmark } from '@/lib/carnetService';
 import { DayDetailModal } from '@/components/calendar';
 import { getClubLogoSource, getSportById } from '@/lib/sports';
@@ -68,7 +61,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { TimetableView, EnhancedCalendarView, AddClubModal } from '@/components/planning';
 import { EmptyState } from '@/components/planning/EmptyState';
 import { getAllGoalsProgress, GoalProgress } from '@/lib/trainingGoalsService';
-import { triggerVictoryModal, createCalendarVictoryData } from '@/lib/victoryTrigger';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 import { RatingPopup } from '@/components/RatingPopup';

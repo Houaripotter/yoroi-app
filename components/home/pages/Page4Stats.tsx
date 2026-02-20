@@ -7,7 +7,7 @@ import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView } from
 import { useTheme } from '@/lib/ThemeContext';
 import { WeightLottieCard } from '@/components/cards/WeightLottieCard';
 import { AnimatedCompositionCircle } from '@/components/AnimatedCompositionCircle';
-import { Activity, Footprints, Flame, TrendingUp, Target } from 'lucide-react-native';
+import { Footprints, Flame, Target } from 'lucide-react-native';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import { LinearGradient } from 'expo-linear-gradient';
 

@@ -19,7 +19,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   Calendar,
-  Trophy,
   Save,
   User,
   Building2,

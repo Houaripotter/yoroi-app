@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY } from '@/constants/design';
+import { COLORS, SHADOWS, SPACING, TYPOGRAPHY } from '@/constants/design';
 
 // ============================================
 // HEADER - DESIGN SIMPLE ET PROPRE

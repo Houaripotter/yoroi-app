@@ -21,11 +21,9 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
-import { exportDataToJSON } from '@/lib/exportService';
-import { importAllData } from '@/lib/exportService';
+import { exportDataToJSON , importAllData } from '@/lib/exportService';
 import { successHaptic } from '@/lib/haptics';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
 
 // ============================================

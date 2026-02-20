@@ -13,46 +13,31 @@ import {
   ActivityIndicator,
   Dimensions,
   ScrollView,
-  Image,
-  TextInput,
-  Switch,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  X,
   Share2,
-  Download,
   Camera,
-  Image as ImageIcon,
   Dumbbell,
-  Clock,
-  Calendar,
-  MapPin,
-  Trophy,
   Moon,
   Sun,
-  MapPinned,
   ArrowRight,
 } from 'lucide-react-native';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
-import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
 import { captureRef } from 'react-native-view-shot';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { getTrainings, Training, getClubs, getProfile, calculateStreak } from '@/lib/database';
-import { SPORTS, getSportName, getSportIcon, getSportColor, getClubLogoSource } from '@/lib/sports';
 import { getAvatarConfig, getAvatarImage } from '@/lib/avatarSystem';
 import { getCurrentRank } from '@/lib/ranks';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SessionCard } from '@/components/social-cards/SessionCard';
 import { parseExercisesFromNotes } from '@/lib/exerciseParser';
 

@@ -9,7 +9,7 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
-import { calculateStreak, getLatestWeight, getWeeklyPlan, getProfile, getTrainings, type Training } from '@/lib/database';
+import { calculateStreak, getLatestWeight, getWeeklyPlan, getProfile, getTrainings } from '@/lib/database';
 import { getCurrentRank } from '@/lib/ranks';
 
 // ============================================

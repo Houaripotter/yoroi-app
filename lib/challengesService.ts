@@ -4,8 +4,6 @@
 // Défis quotidiens, hebdomadaires et mensuels avec récompenses
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
 import { getDailyHydration } from '@/lib/quests';
 

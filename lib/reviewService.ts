@@ -1,4 +1,4 @@
-import { requestReview, isAvailableAsync } from 'expo-store-review';
+import { isAvailableAsync } from 'expo-store-review';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 

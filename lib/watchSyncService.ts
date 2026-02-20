@@ -49,14 +49,14 @@ export interface UserDataForWatch {
   streak?: number;
 
   // Records
-  records?: Array<{
+  records?: {
     exercise: string;
     weight: number;
     reps: number;
     date: string;
     category: string;
     muscleGroup: string;
-  }>;
+  }[];
 }
 
 export interface SyncQueueItem {
@@ -94,8 +94,8 @@ class WatchSyncServiceClass {
     moduleLoaded: isWatchModuleAvailable,
     errors: [],
   };
-  private listeners: Array<(status: WatchSyncStatus) => void> = [];
-  private dataListeners: Array<(data: any) => void> = [];
+  private listeners: ((status: WatchSyncStatus) => void)[] = [];
+  private dataListeners: ((data: any) => void)[] = [];
 
   // ============================================
   // INITIALISATION

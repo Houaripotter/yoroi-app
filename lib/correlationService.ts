@@ -1,6 +1,6 @@
 import { getTrainings } from './database';
 import { getTrainingLoads } from './trainingLoadService';
-import { getSleepStats, getSleepEntries } from './sleepService';
+import { getSleepEntries } from './sleepService';
 import { getHydrationHistory, getAverageHydration } from './storage';
 import { startOfDay, subDays, differenceInDays } from 'date-fns';
 import logger from '@/lib/security/logger';

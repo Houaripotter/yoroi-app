@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { X } from 'lucide-react-native';
-import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const IS_SMALL_SCREEN = SCREEN_WIDTH < 375 || SCREEN_HEIGHT < 700;

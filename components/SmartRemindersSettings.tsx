@@ -7,9 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
 import {
-  Bell,
   Scale,
   Dumbbell,
   Droplets,

@@ -3,7 +3,7 @@
 // ============================================
 
 import { Platform } from 'react-native';
-import { Sport, SPORT_LABELS } from './trainingJournalService';
+import { Sport } from './trainingJournalService';
 import logger from '@/lib/security/logger';
 
 // 🔒 Platform-specific: SQLite only available on native

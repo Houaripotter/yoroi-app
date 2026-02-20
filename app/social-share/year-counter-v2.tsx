@@ -12,7 +12,6 @@ import {
   ActivityIndicator,
   Dimensions,
   ScrollView,
-  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -25,7 +24,7 @@ import {
 } from 'lucide-react-native';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
-import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
 import { captureRef } from 'react-native-view-shot';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 

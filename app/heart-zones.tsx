@@ -7,7 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import { Heart, Info, RefreshCw } from 'lucide-react-native';
+import { Heart, Info } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';

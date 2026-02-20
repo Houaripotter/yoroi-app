@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
@@ -24,7 +24,6 @@ import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  runOnJS,
   withSpring,
 } from 'react-native-reanimated';
 

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
-import { ChevronLeft, Target, Plus, Check, Trash2, Edit2 } from 'lucide-react-native';
+import { ChevronLeft, Target, Plus, Check, Trash2 } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '@/lib/security/logger';

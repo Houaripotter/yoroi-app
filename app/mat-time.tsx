@@ -4,7 +4,7 @@
 // Suivi du temps passe sur le tatami
 // Pour JJB, MMA, Judo, Lutte...
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,

@@ -25,7 +25,7 @@ import {
   Coach,
   Club,
 } from '@/data/partners';
-import { SPACING, RADIUS } from '@/constants/appTheme';
+import { SPACING } from '@/constants/appTheme';
 
 const getClubIcon = (type: string, color: string = '#999') => {
   if (type.toLowerCase().includes('jiu-jitsu') || type.toLowerCase().includes('jjb')) {

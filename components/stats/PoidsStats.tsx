@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Weight } from '@/lib/database';
 import { format } from 'date-fns';
@@ -7,9 +7,7 @@ import { fr } from 'date-fns/locale';
 import { SparklineChart } from './charts/SparklineChart';
 import { Scale, Target, TrendingDown, TrendingUp, Activity, Maximize2, Eye } from 'lucide-react-native';
 import { StatsDetailModal } from './StatsDetailModal';
-import { ModernLineChart } from './charts/ModernLineChart';
-import { getHistoryDays, scale, isIPad } from '@/constants/responsive';
-import { getUserSettings } from '@/lib/storage';
+import { getHistoryDays, isIPad } from '@/constants/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const STATS_COLUMNS = isIPad() ? 4 : 2;

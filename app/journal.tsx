@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,6 @@ import {
   Save,
   Search,
   Filter,
-  TrendingUp,
   TrendingDown,
   Calendar,
   X,

@@ -28,7 +28,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { parseWorkoutFile, activityToTraining, ParsedActivity } from '@/lib/workoutImporter';
 import { addTraining } from '@/lib/database';
-import { SPORTS, getSportById, getSportIcon, getSportName } from '@/lib/sports';
+import { SPORTS, getSportById, getSportName } from '@/lib/sports';
 import logger from '@/lib/security/logger';
 
 const { width: screenWidth } = Dimensions.get('window');

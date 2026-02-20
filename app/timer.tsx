@@ -26,13 +26,12 @@ import {
   Plus,
   Minus,
   RefreshCw,
-  Settings,
   SkipForward,
   Target,
 } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
-import { COLORS, SPACING, RADIUS, FONT, SHADOWS } from '@/constants/appTheme';
+import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 import { soundManager } from '@/lib/sounds';
 import { RepsWeightModal } from '@/components/RepsWeightModal';
 import { WorkoutSummaryModal } from '@/components/WorkoutSummaryModal';
@@ -185,13 +184,13 @@ export default function TimerScreen() {
   // === MUSCULATION ===
   const [musculationRest, setMusculationRest] = useState(90);
   const [seriesCount, setSeriesCount] = useState(0);
-  const [seriesHistory, setSeriesHistory] = useState<Array<{
+  const [seriesHistory, setSeriesHistory] = useState<{
     seriesNumber: number;
     timestamp: Date;
     restDuration: number;
     reps?: number;
     weight?: number;
-  }>>([]);
+  }[]>([]);
   const [showRepsWeightModal, setShowRepsWeightModal] = useState(false);
   const [trackRepsWeight, setTrackRepsWeight] = useState(false); // Toggle pour activer/désactiver
 

@@ -14,17 +14,15 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, Circle, Line, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
+import Svg, { Path, Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import {
   ChevronLeft,
   Save,
-  Ruler,
   TrendingDown,
   TrendingUp,
   Minus,
 } from 'lucide-react-native';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import {
   BodyMeasurement,
   addMeasurement,

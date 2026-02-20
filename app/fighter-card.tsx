@@ -4,7 +4,7 @@
 // Carte de stats style Yoroi pour partager sur Instagram
 // Design premium avec stats et infos combattant
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -26,7 +26,6 @@ import {
   ChevronLeft,
   Share2,
   Download,
-  Trophy,
   Flame,
   Target,
   Swords,
@@ -41,7 +40,6 @@ import { useI18n } from '@/lib/I18nContext';
 import { getUserSettings, getLatestMeasurement } from '@/lib/storage';
 import { getCurrentRank, RANKS } from '@/lib/ranks';
 import { getTrainingStats, calculateStreak, getProfile } from '@/lib/database';
-import { getGreeting, YOROI_VOCAB } from '@/lib/teamYoroi';
 import { getAllGoalsProgress, getGlobalGoalStats, GoalProgress, GlobalGoalStats } from '@/lib/trainingGoalsService';
 import logger from '@/lib/security/logger';
 

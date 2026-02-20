@@ -4,7 +4,6 @@
 // Gestion des blessures et suivi EVA
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { format } from 'date-fns';
 import logger from '@/lib/security/logger';
 import secureStorage from '@/lib/security/secureStorage';
 

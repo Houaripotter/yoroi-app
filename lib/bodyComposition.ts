@@ -14,7 +14,6 @@
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { format } from 'date-fns';
 import logger from '@/lib/security/logger';
 import secureStorage from '@/lib/security/secureStorage';
 import { healthConnect } from '@/lib/healthConnect';

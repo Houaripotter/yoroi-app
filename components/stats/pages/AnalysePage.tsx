@@ -12,8 +12,8 @@ import { MetricCard } from '../charts/MetricCard';
 import { ModernLineChart } from '../charts/ModernLineChart';
 import { ComparisonChart } from '../charts/ComparisonChart';
 import { RadarChart } from '../charts/RadarChart';
-import { aggregateWeightData, aggregateTrainingData, aggregateCompositionData, calculateCorrelation } from '@/lib/statsAggregation';
-import { TrendingUp, Zap, Target, Award, AlertCircle, TrendingDown, Activity } from 'lucide-react-native';
+import { aggregateWeightData, aggregateTrainingData, aggregateCompositionData } from '@/lib/statsAggregation';
+import { TrendingUp, Zap, Target, Award, TrendingDown, Activity } from 'lucide-react-native';
 import { healthConnect } from '@/lib/healthConnect';
 import { logger } from '@/lib/security/logger';
 

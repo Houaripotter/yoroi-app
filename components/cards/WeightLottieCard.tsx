@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions, Animated, Easing, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Animated, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { TrendingDown, TrendingUp, Target, Dumbbell, Apple, Droplet } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { scale, scaleModerate, getHistoryDays, getGridColumns } from '@/constants/responsive';
+import { scale, scaleModerate, getGridColumns } from '@/constants/responsive';
 
 const { width: screenWidth } = Dimensions.get('window');
 const columns = getGridColumns();

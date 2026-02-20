@@ -815,7 +815,7 @@ export async function getUnlockedPacks(): Promise<AvatarPack[]> {
  * STRATÉGIE MARKETING : Tous les packs sont débloqués par défaut
  */
 export async function getAllPacksWithUnlockStatus(): Promise<
-  Array<PackMetadata & { isUnlocked: boolean }>
+  (PackMetadata & { isUnlocked: boolean })[]
 > {
   // Tous les packs débloqués (abonnement non encore implémenté)
   return PACK_METADATA.map((pack) => ({

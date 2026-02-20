@@ -4,7 +4,6 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Home, BarChart2, Plus, Calendar, Menu } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { RADIUS, SHADOWS } from '@/constants/appTheme';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useRef } from 'react';
 

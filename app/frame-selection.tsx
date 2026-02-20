@@ -19,7 +19,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Svg, { Path, Circle, Rect, Polygon, Ellipse, Defs, ClipPath } from 'react-native-svg';
+import Svg, { Path, Circle, Rect, Polygon } from 'react-native-svg';
 import { logger } from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

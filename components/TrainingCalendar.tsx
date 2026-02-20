@@ -10,7 +10,7 @@ import {
 import { useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, getDay, addMonths, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, getDay, addMonths, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '@/lib/ThemeContext';
 import { Club } from '@/lib/database';

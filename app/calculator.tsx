@@ -6,12 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  SafeAreaView,
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { X, Calculator, Flame, Shield, Zap } from 'lucide-react-native';
+import { Calculator, Flame, Shield, Zap } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getUserSettings } from '@/lib/storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';

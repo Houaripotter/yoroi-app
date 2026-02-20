@@ -186,7 +186,7 @@ function RootLayoutContent() {
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
-      <DevCodeModal />
+      {__DEV__ && <DevCodeModal />}
     </View>
   );
 }

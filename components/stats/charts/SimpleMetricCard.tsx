@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { TrendingUp, TrendingDown, Minus, ExternalLink, ChevronRight } from 'lucide-react-native';
+import { TrendingUp, TrendingDown, Minus, ExternalLink } from 'lucide-react-native';
 
 export interface MetricZone {
   label: string;

@@ -20,7 +20,6 @@ import {
   Trophy,
   Plus,
   Sparkles,
-  Target,
   Flame,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';

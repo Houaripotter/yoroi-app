@@ -13,7 +13,7 @@ import {
   Dimensions,
   Image,
 } from 'react-native';
-import { Share2, X, Camera, Check } from 'lucide-react-native';
+import { Share2, Camera, Check } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { BlurView } from 'expo-blur';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';

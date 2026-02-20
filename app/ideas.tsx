@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -33,7 +33,6 @@ import {
 import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, FONT, SHADOWS, TIFFANY } from '@/constants/appTheme';
 import { MotiView, AnimatePresence } from 'moti';
-import { BlurView } from 'expo-blur';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 

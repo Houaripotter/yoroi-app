@@ -1,6 +1,6 @@
 import { printToFileAsync } from 'expo-print';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
-import { format, subDays } from 'date-fns';
+import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { getAllMeasurements } from './storage';
 import { getMeasurements, getProfile, Measurement } from './database';

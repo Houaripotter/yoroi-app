@@ -287,7 +287,7 @@ export interface UserSettings {
   reminder_days?: number[];
   routine_image_uri?: string | null;
   custom_club_logos?: { [key: string]: string };
-  weekly_routine?: { [key: string]: Array<{ time: string; activity: string }> };
+  weekly_routine?: { [key: string]: { time: string; activity: string }[] };
   gender?: 'male' | 'female';
   userClan?: 'GB' | 'MFC' | 'Ronin';
   userClubs?: UserClub[];

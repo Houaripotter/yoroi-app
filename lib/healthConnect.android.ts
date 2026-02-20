@@ -115,7 +115,7 @@ export interface HealthData {
     date: string;
     source?: string;
   };
-  workouts?: Array<{
+  workouts?: {
     id: string;
     activityType: string;
     startDate: string;
@@ -126,7 +126,7 @@ export interface HealthData {
     averageHeartRate?: number;
     maxHeartRate?: number;
     source?: string;
-  }>;
+  }[];
 }
 
 export interface HealthPermissions {
@@ -1178,7 +1178,7 @@ class HealthConnectService {
   // HISTORIQUES
   // ============================================
 
-  async getWeightHistory(days: number = 30): Promise<Array<{ date: string; value: number; source?: string }>> {
+  async getWeightHistory(days: number = 30): Promise<{ date: string; value: number; source?: string }[]> {
     const HC = getHealthConnect();
     if (!HC) return [];
 
@@ -1204,7 +1204,7 @@ class HealthConnectService {
     return [];
   }
 
-  async getSleepHistory(days: number = 7): Promise<Array<{
+  async getSleepHistory(days: number = 7): Promise<{
     date: string;
     deep: number;
     rem: number;
@@ -1213,7 +1213,7 @@ class HealthConnectService {
     total: number;
     duration?: number;
     source?: string;
-  }>> {
+  }[]> {
     const HC = getHealthConnect();
     if (!HC) return [];
 
@@ -1271,7 +1271,7 @@ class HealthConnectService {
     return [];
   }
 
-  async getStepsHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+  async getStepsHistory(days: number = 7): Promise<{ date: string; value: number }[]> {
     const HC = getHealthConnect();
     if (!HC) return [];
 
@@ -1304,7 +1304,7 @@ class HealthConnectService {
     return [];
   }
 
-  async getHRVHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+  async getHRVHistory(days: number = 7): Promise<{ date: string; value: number }[]> {
     const HC = getHealthConnect();
     if (!HC) return [];
 
@@ -1337,7 +1337,7 @@ class HealthConnectService {
     return [];
   }
 
-  async getHeartRateHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+  async getHeartRateHistory(days: number = 7): Promise<{ date: string; value: number }[]> {
     const HC = getHealthConnect();
     if (!HC) return [];
 
@@ -1378,7 +1378,7 @@ class HealthConnectService {
     return [];
   }
 
-  async getRestingHRHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+  async getRestingHRHistory(days: number = 7): Promise<{ date: string; value: number }[]> {
     const HC = getHealthConnect();
     if (!HC) return [];
 
@@ -1403,12 +1403,12 @@ class HealthConnectService {
     return [];
   }
 
-  async getCaloriesHistory(days: number = 7): Promise<Array<{
+  async getCaloriesHistory(days: number = 7): Promise<{
     date: string;
     active: number;
     basal: number;
     total: number;
-  }>> {
+  }[]> {
     const HC = getHealthConnect();
     if (!HC) return [];
 
@@ -1445,7 +1445,7 @@ class HealthConnectService {
     return [];
   }
 
-  async getVO2MaxHistory(days: number = 30): Promise<Array<{ date: string; value: number }>> {
+  async getVO2MaxHistory(days: number = 30): Promise<{ date: string; value: number }[]> {
     const HC = getHealthConnect();
     if (!HC) return [];
 
@@ -1470,7 +1470,7 @@ class HealthConnectService {
     return [];
   }
 
-  async getOxygenSaturationHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+  async getOxygenSaturationHistory(days: number = 7): Promise<{ date: string; value: number }[]> {
     const HC = getHealthConnect();
     if (!HC) return [];
 
@@ -1495,7 +1495,7 @@ class HealthConnectService {
     return [];
   }
 
-  async getBodyTemperatureHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+  async getBodyTemperatureHistory(days: number = 7): Promise<{ date: string; value: number }[]> {
     const HC = getHealthConnect();
     if (!HC) return [];
 
@@ -1728,11 +1728,11 @@ class HealthConnectService {
   async writeSleepData(sleepData: {
     startTime: Date;
     endTime: Date;
-    stages?: Array<{
+    stages?: {
       stage: 'awake' | 'light' | 'deep' | 'rem';
       startTime: Date;
       endTime: Date;
-    }>;
+    }[];
   }): Promise<boolean> {
     const HC = getHealthConnect();
     if (!HC) {

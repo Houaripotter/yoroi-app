@@ -5,7 +5,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { HelpCircle, Info } from 'lucide-react-native';
+import { Info } from 'lucide-react-native';
 
 interface StatsExplanationProps {
   title: string;

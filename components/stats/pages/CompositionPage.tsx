@@ -16,17 +16,11 @@ import { SimpleMetricCard } from '../charts/SimpleMetricCard';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
 import { ScrollableLineChart } from '../charts/ScrollableLineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
-import { getLatestWeight, getAllWeights } from '@/lib/database';
-import { Activity, Droplet, Bone, Zap, Flame, Target } from 'lucide-react-native';
+import { getLatestWeight, getAllWeights , getProfile } from '@/lib/database';
+import { Activity, Droplet, Bone, Zap, Flame } from 'lucide-react-native';
 import {
-  BODY_FAT_RANGES_MALE,
-  BODY_FAT_RANGES_FEMALE,
-  MUSCLE_MASS_RANGES_MALE,
-  MUSCLE_MASS_RANGES_FEMALE,
   WATER_PERCENTAGE_RANGES,
   VISCERAL_FAT_RANGES,
-  BONE_MASS_RANGES_MALE,
-  BONE_MASS_RANGES_FEMALE,
   getBMRRange,
   getMetricStatus,
   getBodyFatRange,
@@ -34,7 +28,6 @@ import {
   getBoneMassRange
 } from '@/lib/healthRanges';
 import { getUserSettings } from '@/lib/storage';
-import { getProfile } from '@/lib/database';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { StatsExplanation } from '../StatsExplanation';

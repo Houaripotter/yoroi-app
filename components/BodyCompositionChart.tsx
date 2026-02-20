@@ -107,7 +107,7 @@ export const BodyCompositionChart: React.FC<BodyCompositionChartProps> = ({
   };
 
   // Créer un path pour une courbe
-  const createPath = (chartData: Array<{ x: number; y: number; value: number; date: string }>) => {
+  const createPath = (chartData: { x: number; y: number; value: number; date: string }[]) => {
     if (chartData.length === 0) return '';
 
     let path = `M ${chartData[0].x} ${chartData[0].y}`;

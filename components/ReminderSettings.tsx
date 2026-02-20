@@ -6,10 +6,9 @@ import {
   Switch,
   TouchableOpacity,
   Platform,
-  ScrollView,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Bell, Clock, Calendar, Dumbbell } from 'lucide-react-native';
+import { Bell, Clock } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useCustomPopup } from '@/components/CustomPopup';
 import AsyncStorage from '@react-native-async-storage/async-storage';

@@ -3,7 +3,7 @@
 // ============================================
 
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity, Share } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { StreakCalendar } from '@/components/StreakCalendar';
 import { FileText, Share2, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';

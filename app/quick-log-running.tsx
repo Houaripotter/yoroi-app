@@ -34,7 +34,6 @@ import {
   PracticeLog,
   getProgressionItems,
   createProgressionItem,
-  getLastPracticeLog,
   createPracticeLog,
   getPracticeLogsByItemId,
 } from '@/lib/trainingJournalService';

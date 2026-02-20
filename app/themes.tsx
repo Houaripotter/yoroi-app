@@ -38,7 +38,6 @@ import {
   Sunset as SunsetIcon,
   Flower2,
 } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import { ThemeMode, themeColors } from '@/constants/themes';
 import { appearanceService, WARRIOR_THEMES } from '@/lib/appearanceService';

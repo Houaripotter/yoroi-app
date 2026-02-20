@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Animated, Pressable } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Pressable } from 'react-native';
 import { Sparkles, Flame, Zap, Trophy, ChevronRight } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';

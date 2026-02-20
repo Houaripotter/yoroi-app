@@ -3,15 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Dimensions,
   Image,
   Animated,
   Share,
-  Alert,
-  Platform,
-  Modal,
   ActivityIndicator,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -30,7 +26,6 @@ import {
   Timer,
   TrendingDown,
   Medal,
-  Battery,
   Moon,
   Activity,
   FileText,
@@ -42,20 +37,15 @@ import {
   Stethoscope,
   FlaskConical,
   Calculator,
-  Apple,
   Clock,
   BookOpen,
-  Plus,
   Award,
   Calendar,
   List,
-  Cloud,
-  Watch,
   Swords,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { format, differenceInDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -71,20 +61,16 @@ import { LogoViewer } from '@/components/LogoViewer';
 import { MotivationPopup } from '@/components/MotivationPopup';
 import { getUserMode, getNextEvent } from '@/lib/fighterModeService';
 import { UserMode } from '@/lib/fighterMode';
-import { calculateReadinessScore, ReadinessScore } from '@/lib/readinessService';
-import { getJournalStats } from '@/lib/trainingJournalService';
+import { calculateReadinessScore } from '@/lib/readinessService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BatteryReadyPopup } from '@/components/BatteryReadyPopup';
 import { PerformanceRadar } from '@/components/PerformanceRadar';
 import { HealthspanChart } from '@/components/HealthspanChart';
 import { HydrationCard2 } from '@/components/cards/HydrationCard2';
 import { WatchSyncService } from '@/lib/watchSyncService';
-import { WeightLottieCard } from '@/components/cards/WeightLottieCard';
 import { WeightFullCard } from '@/components/cards/WeightFullCard';
 import { SleepLottieCard } from '@/components/cards/SleepLottieCard';
 import { ChargeLottieCard } from '@/components/cards/ChargeLottieCard';
-import { AnimatedCompositionCircle } from '@/components/AnimatedCompositionCircle';
-import { StreakCalendar } from '@/components/StreakCalendar';
 import { AvatarViewerModal } from '@/components/AvatarViewerModal';
 import HealthConnect, { healthConnect as healthConnectService } from '@/lib/healthConnect';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
@@ -99,28 +85,19 @@ import { HomeToolsMenu } from '@/components/home/HomeToolsMenu';
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewModeSwitch } from '@/components/home/ViewModeSwitch';
 import { ViewModeHint } from '@/components/home/ViewModeHint';
-import { HomeEssentielContent } from '@/components/home/HomeEssentielContent';
-import CompactObjectiveSwitch from '@/components/home/CompactObjectiveSwitch';
 import { EssentielWeightCard } from '@/components/home/essentiel/EssentielWeightCard';
 import { EssentielActivityCard } from '@/components/home/essentiel/EssentielActivityCard';
-import { EssentielWeekSummary } from '@/components/home/essentiel/EssentielWeekSummary';
 import { HomeTabView } from '@/components/home/HomeTabView';
 
 // Composants animés premium
-import AnimatedAvatar from '@/components/AnimatedAvatar';
 import AnimatedCounter from '@/components/AnimatedCounter';
-import AnimatedProgressBar from '@/components/AnimatedProgressBar';
 import { AnimatedCard } from '@/components/AnimatedCard';
-import AnimatedRing from '@/components/AnimatedRing';
-import { AnimatedBattery } from '@/components/AnimatedBattery';
 import PulsingBadge from '@/components/PulsingBadge';
-import AnimatedWaterBottle from '@/components/AnimatedWaterBottle';
-import AnimatedSleepWave from '@/components/AnimatedSleepWave';
 import AnimatedRank from '@/components/AnimatedRank';
 
 // Services
-import { getSleepStats, getSleepAdvice, formatSleepDuration, SleepStats, getSleepGoal } from '@/lib/sleepService';
-import { getWeeklyLoadStats, formatLoad, getRiskColor, WeeklyLoadStats } from '@/lib/trainingLoadService';
+import { getSleepStats, SleepStats, getSleepGoal } from '@/lib/sleepService';
+import { getWeeklyLoadStats, WeeklyLoadStats } from '@/lib/trainingLoadService';
 import { getDailyChallenges, ActiveChallenge } from '@/lib/challengesService';
 import { generateWeeklyReport, formatReportForSharing, WeeklyReport } from '@/lib/weeklyReportService';
 import { getHomeCustomization, isSectionVisible as checkSectionVisible, HomeSection } from '@/lib/homeCustomizationService';

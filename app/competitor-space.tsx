@@ -17,8 +17,6 @@ import {
   TrendingDown,
   Droplet,
   Trophy,
-  Target,
-  Scale,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';

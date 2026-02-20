@@ -27,18 +27,22 @@ interface DevModeContextType {
 // CONFIGURATION
 // ============================================
 
-// Hash SHA-256 du code secret (ne pas stocker le code en clair)
-// SECURITE: Changer ce hash si le code est compromis (utiliser un nouveau code + son hash SHA-256)
-const DEV_CODE_HASH = 'a29f7cbfdfd1e85b6a9d62adbc8c5cbdfab817a6c2ed7a3671fa22c9e51c7be2';
 const STORAGE_KEY = '@yoroi_dev_mode';
 const TAP_THRESHOLD = 5; // Nombre de taps pour afficher le champ de code
 const TAP_TIMEOUT = 2000; // Reset des taps après 2 secondes
 
+// Hash SHA-256 du code secret — uniquement disponible en __DEV__
+// En production, le code secret est désactivé (le DevCodeModal n'est pas rendu)
+const DEV_CODE_HASH = __DEV__
+  ? 'a29f7cbfdfd1e85b6a9d62adbc8c5cbdfab817a6c2ed7a3671fa22c9e51c7be2'
+  : '';
+
 /**
  * Vérifie si le code entré correspond au code secret
- * Compare les hash pour ne jamais exposer le code en clair
+ * Désactivé en production — retourne toujours false
  */
 async function verifyDevCode(inputCode: string): Promise<boolean> {
+  if (!__DEV__) return false;
   try {
     const inputHash = await digestStringAsync(
       CryptoDigestAlgorithm.SHA256,
@@ -85,8 +89,10 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Gérer les taps secrets (mémoïsé)
+  // Gérer les taps secrets — désactivé en production
   const handleSecretTap = useCallback(() => {
+    if (!__DEV__) return;
+
     const newCount = tapCount + 1;
     setTapCount(newCount);
 
@@ -134,7 +140,9 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
   // Mémoïser la value pour éviter les re-renders en cascade
   const contextValue = useMemo(() => ({
     isDevMode,
-    isPro: true, // 🎁 TOUT GRATUIT POUR LES TESTS !
+    // TODO: Remplacer par un vrai système d'achat in-app (StoreKit / Google Play Billing)
+    // isPro devra être contrôlé par un flag AsyncStorage '@yoroi_pro' géré par l'IAP
+    isPro: true,
     tapCount,
     showCodeInput,
     handleSecretTap,

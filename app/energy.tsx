@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Rect, Defs, LinearGradient, Stop, G, Path, Circle } from 'react-native-svg';
+import Svg, { Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
 import {
   ArrowLeft,
   Battery,
@@ -18,15 +18,12 @@ import {
   Moon,
   Dumbbell,
   Flame,
-  TrendingUp,
   Zap,
-  Target,
   ChevronRight,
   Activity,
 } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { format, differenceInDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 import { useTheme } from '@/lib/ThemeContext';
 import { calculateStreak, getTrainings, Training } from '@/lib/database';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, memo } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import { ScrollView, View, StyleSheet, TouchableOpacity, Text, Animated } from 'react-native';
 import { router } from 'expo-router';
 import { EssentielHeader } from './essentiel/EssentielHeader';
@@ -6,13 +6,11 @@ import { EssentielWeightCard } from './essentiel/EssentielWeightCard';
 import { HydrationCard2 } from '@/components/cards/HydrationCard2';
 import { SleepLottieCard } from '@/components/cards/SleepLottieCard';
 import { EssentielActivityCard } from './essentiel/EssentielActivityCard';
-import { EssentielWeekSummary } from './essentiel/EssentielWeekSummary';
-import { PerformanceRadar } from '@/components/PerformanceRadar';
 import { QuestsCard } from '@/components/QuestsCard';
 import { ViewMode } from '@/hooks/useViewMode';
 import { Profile } from '@/lib/database';
 import { useTheme } from '@/lib/ThemeContext';
-import { BookOpen, Target, FileText, ChevronRight, Plus, Award, Brain, Zap } from 'lucide-react-native';
+import { BookOpen, Plus, Award, Brain, Zap } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useI18n } from '@/lib/I18nContext';
 

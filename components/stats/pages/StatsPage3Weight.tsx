@@ -3,7 +3,7 @@
 // ============================================
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { WeightLottieCard } from '@/components/cards/WeightLottieCard';
 import { AnimatedCompositionCircle } from '@/components/AnimatedCompositionCircle';

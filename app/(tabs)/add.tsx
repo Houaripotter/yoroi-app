@@ -43,7 +43,7 @@ import {
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/design';
+import { SPACING, RADIUS } from '@/constants/design';
 import { addWeight } from '@/lib/database';
 import { format, Locale } from 'date-fns';
 import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';

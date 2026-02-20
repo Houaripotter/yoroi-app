@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
-import Svg, { Path, Defs, ClipPath, LinearGradient, Stop, Circle, Rect } from 'react-native-svg';
+import Svg, { Path, Defs, ClipPath, LinearGradient, Stop, Circle } from 'react-native-svg';
 
 interface AnimatedWaterBottleProps {
   fillPercentage: number; // 0-1 (0 = vide, 1 = plein)
@@ -19,7 +19,7 @@ const AnimatedWaterBottle = ({
 }: AnimatedWaterBottleProps) => {
   const waveAnim = useRef(new Animated.Value(0)).current;
   const [waveOffset, setWaveOffset] = useState(0);
-  const [bubbles, setBubbles] = useState<Array<{id: number, x: number, y: number, size: number}>>([]);
+  const [bubbles, setBubbles] = useState<{id: number, x: number, y: number, size: number}[]>([]);
 
   // Animation de vague continue
   useEffect(() => {

@@ -28,7 +28,6 @@ import {
   AlertTriangle,
   RotateCcw,
   HelpCircle,
-  LucideIcon,
   Info,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
