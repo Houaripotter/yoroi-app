@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, Text, AppState, AppStateStatus, LogBox } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';

@@ -104,7 +104,7 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     description: 'Suivi nuits',
     icon: 'Moon',
     color: '#6366F1',
-    route: '/sleep-tracker',
+    route: '/sleep',
     order: 7,
     theme: 'health',
   },

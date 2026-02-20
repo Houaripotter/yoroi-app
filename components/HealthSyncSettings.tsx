@@ -5,7 +5,7 @@ import {
   StyleSheet,
   Switch,
   TouchableOpacity,
-  Platform,
+
   ActivityIndicator,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
