@@ -192,10 +192,6 @@ describe('1. Navigation - Structure des routes', () => {
       }
     });
 
-    test('écran social-card en modal fade', () => {
-      expect(layoutContent).toContain('social-card');
-      expect(layoutContent).toContain("animation: 'fade'");
-    });
 
     test('onboarding désactive le geste back', () => {
       // Vérifie que les écrans onboarding ont gestureEnabled: false

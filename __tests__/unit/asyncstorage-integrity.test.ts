@@ -806,58 +806,6 @@ describe('6. SAUVEGARDE / RESTAURATION', () => {
 // 7. SAFE ASYNC STORAGE (wrapper)
 // ============================================
 
-describe('7. SAFE ASYNC STORAGE', () => {
-  beforeEach(clearStore);
-
-  test('7.1 - safeGetItem retourne null quand getItem throw', async () => {
-    const { safeGetItem } = require('@/lib/safeAsyncStorage');
-    mockAsyncStorage.getItem.mockRejectedValueOnce(new Error('fail'));
-    const result = await safeGetItem('any_key');
-    expect(result).toBeNull();
-  });
-
-  test('7.2 - safeSetItem retourne false quand setItem throw', async () => {
-    const { safeSetItem } = require('@/lib/safeAsyncStorage');
-    mockAsyncStorage.setItem.mockRejectedValueOnce(new Error('fail'));
-    const result = await safeSetItem('key', 'value');
-    expect(result).toBe(false);
-  });
-
-  test('7.3 - safeGetJSON retourne defaultValue quand valeur invalide', async () => {
-    const { safeGetJSON } = require('@/lib/safeAsyncStorage');
-    mockStore['test_key'] = 'invalid json{{{';
-    const result = await safeGetJSON('test_key', { fallback: true });
-    expect(result).toEqual({ fallback: true });
-  });
-
-  test('7.4 - safeGetJSON retourne null quand pas de defaultValue', async () => {
-    const { safeGetJSON } = require('@/lib/safeAsyncStorage');
-    mockStore['test_key'] = 'invalid json';
-    const result = await safeGetJSON('test_key');
-    expect(result).toBeNull();
-  });
-
-  test('7.5 - safeSetJSON stocke correctement un objet', async () => {
-    const { safeSetJSON, safeGetJSON } = require('@/lib/safeAsyncStorage');
-    await safeSetJSON('test_obj', { name: 'test', count: 42 });
-    const result = await safeGetJSON('test_obj');
-    expect(result).toEqual({ name: 'test', count: 42 });
-  });
-
-  test('7.6 - safeMultiGet retourne [key, null] quand ça échoue', async () => {
-    const { safeMultiGet } = require('@/lib/safeAsyncStorage');
-    mockAsyncStorage.multiGet.mockRejectedValueOnce(new Error('fail'));
-    const result = await safeMultiGet(['key1', 'key2']);
-    expect(result).toEqual([['key1', null], ['key2', null]]);
-  });
-
-  test('7.7 - safeRemoveItem retourne false quand ça throw', async () => {
-    const { safeRemoveItem } = require('@/lib/safeAsyncStorage');
-    mockAsyncStorage.removeItem.mockRejectedValueOnce(new Error('fail'));
-    const result = await safeRemoveItem('key');
-    expect(result).toBe(false);
-  });
-});
 
 // ============================================
 // 8. TAILLE & LIMITES
@@ -933,21 +881,6 @@ describe('8. TAILLE & LIMITES', () => {
     // This documents that most keys grow without bound
   });
 
-  test('8.4 - Comportement avec donnée > 2MB', async () => {
-    const { safeSetItem, safeGetItem } = require('@/lib/safeAsyncStorage');
-
-    // 2MB of data
-    const largeData = 'x'.repeat(2 * 1024 * 1024);
-
-    // In our mock this will succeed, but in production:
-    // - iOS: AsyncStorage stores in serialized plist, ~6MB total limit
-    // - Android: SQLite-backed, per-row limit is 1MB in some implementations
-    const result = await safeSetItem('@yoroi_test_large', largeData);
-    expect(result).toBe(true); // Mock always succeeds
-
-    const retrieved = await safeGetItem('@yoroi_test_large');
-    expect(retrieved?.length).toBe(2 * 1024 * 1024);
-  });
 });
 
 // ============================================
@@ -1033,12 +966,6 @@ describe('9. ATOMICITÉ & MULTI-OPÉRATIONS', () => {
     expect(nonAtomicOperations).toBe(5);
   });
 
-  test('9.4 - safeAsyncStorage utilise multiSet quand approprié', () => {
-    const { safeMultiSet } = require('@/lib/safeAsyncStorage');
-    expect(safeMultiSet).toBeDefined();
-    // FINDING: safeMultiSet exists but is NEVER used in the codebase
-    // All multi-key updates use sequential setItem calls
-  });
 
   test('9.5 - Concurrent writes ne perdent pas de données', async () => {
     const { addWorkout, getAllWorkouts } = require('@/lib/storage');

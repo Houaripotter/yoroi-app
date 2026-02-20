@@ -128,16 +128,6 @@ jest.mock('expo-font', () => ({
   loadAsync: jest.fn(),
 }));
 
-// --- lottie-react-native ---
-jest.mock('lottie-react-native', () => {
-  const React = require('react');
-  const { View } = require('react-native');
-  return {
-    __esModule: true,
-    default: React.forwardRef((props: any, ref: any) => React.createElement(View, { ...props, ref })),
-  };
-});
-
 // --- react-native-svg ---
 jest.mock('react-native-svg', () => {
   const React = require('react');
