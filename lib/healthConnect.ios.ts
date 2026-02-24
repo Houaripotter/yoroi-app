@@ -6,9 +6,18 @@
 
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// Demo data removed - DEMO_MODE is disabled for production
 import logger from '@/lib/security/logger';
 import { saveHealthDataBatch, saveHealthData, addWeight } from './database';
 import type { HealthDataRecord } from './database';
+
+// ============================================
+// MODE DÉMO - Active les fausses données
+// ============================================
+// ATTENTION: Mettre à FALSE pour utiliser les vraies données Apple Health
+// PRODUCTION: Désactivé pour l'App Store
+// NOTE: Désactivé - les données vides s'afficheront si non connecté à HealthKit
+const DEMO_MODE = false;
 
 // Apple HealthKit (iOS) - Safe wrapper with Expo Go fallback
 import HealthKit, { isHealthKitAvailable, isRunningInExpoGo } from './healthKit.wrapper';
@@ -112,7 +121,7 @@ export interface HealthData {
     date: string;
     source?: string;
   };
-  workouts?: {
+  workouts?: Array<{
     id: string;
     activityType: string;        // Running, Cycling, MMA, etc.
     startDate: string;
@@ -123,7 +132,7 @@ export interface HealthData {
     averageHeartRate?: number;    // BPM
     maxHeartRate?: number;        // BPM
     source?: string;
-  }[];
+  }>;
 }
 
 export interface HealthPermissions {
@@ -147,7 +156,7 @@ export interface HealthPermissions {
 export interface SyncStatus {
   lastSync: string | null;
   isConnected: boolean;
-  provider: 'apple_health' | 'health_connect' | null;
+  provider: 'apple_health' | 'google_fit' | null;
   permissions: HealthPermissions;
   failureReason?: 'USER_DENIED' | 'MODULE_NOT_LOADED' | 'DEVICE_NOT_SUPPORTED' | 'UNKNOWN';
 }
@@ -296,29 +305,6 @@ class HealthConnectService {
       workouts: false,
     },
   };
-
-  // ============================================
-  // DATA VALIDATION
-  // ============================================
-
-  private isValidWeight(kg: number): boolean {
-    return typeof kg === 'number' && isFinite(kg) && kg >= 20 && kg <= 300;
-  }
-
-  private isValidHeartRate(bpm: number): boolean {
-    return typeof bpm === 'number' && isFinite(bpm) && bpm >= 30 && bpm <= 250;
-  }
-
-  private isValidSteps(count: number): boolean {
-    return typeof count === 'number' && isFinite(count) && count >= 0;
-  }
-
-  private isNotFutureDate(dateStr: string): boolean {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return false;
-    const fiveMinFromNow = Date.now() + 5 * 60 * 1000;
-    return date.getTime() <= fiveMinFromNow;
-  }
 
   /**
    * Check if the error is a HealthKit authorization/permission error
@@ -581,6 +567,15 @@ class HealthConnectService {
   }
 
   async connect(): Promise<boolean> {
+    // Mode démo : simuler une connexion réussie
+    if (DEMO_MODE && __DEV__) {
+      this.syncStatus.isConnected = true;
+      this.syncStatus.lastSync = new Date().toISOString();
+      delete this.syncStatus.failureReason;
+      await this.saveSyncStatus();
+      return true;
+    }
+
     try {
       const available = await this.isAvailable();
       if (!available) {
@@ -775,13 +770,8 @@ class HealthConnectService {
 
       if (samples && samples.length > 0) {
         const latest = samples[0];
-        const value = Math.round(latest.quantity * 10) / 10;
-        if (!this.isValidWeight(value)) {
-          logger.warn(`[HealthKit] Poids ignoré (hors plage 20-300kg): ${value}`);
-          return null;
-        }
         return {
-          value,
+          value: Math.round(latest.quantity * 10) / 10,
           unit: 'kg',
           date: new Date(latest.startDate).toISOString(),
           source: normalizeSourceName(extractIOSSourceName(latest)),
@@ -837,11 +827,9 @@ class HealthConnectService {
           }, 0);
 
           if (totalSteps > 0) {
+            // Limite de sécurité : 100 000 pas par jour max pour éviter les bugs de capteurs
             const safeSteps = Math.min(Math.round(totalSteps), 100000);
-            if (!this.isValidSteps(safeSteps)) {
-              logger.warn(`[HealthKit] Pas ignorés (valeur invalide): ${safeSteps}`);
-              return null;
-            }
+
             return {
               count: safeSteps,
               date: today.toISOString(),
@@ -1049,11 +1037,7 @@ class HealthConnectService {
       const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierHeartRate', queryOptions);
 
       if (samples && samples.length > 0) {
-        const values = samples.map((s: any) => s.quantity).filter((v: number) => this.isValidHeartRate(v));
-        if (values.length === 0) {
-          logger.warn('[HealthKit] Toutes les valeurs FC sont hors plage (30-250 bpm)');
-          return null;
-        }
+        const values = samples.map((s: any) => s.quantity);
         const current = values[0]; // Plus récent
         const average = values.reduce((a: number, b: number) => a + b, 0) / values.length;
         const min = Math.min(...values);
@@ -1428,10 +1412,12 @@ class HealthConnectService {
   // HISTORICAL DATA (TRENDS)
   // ============================================
 
-  async getHRVHistory(days: number = 7): Promise<{ date: string; value: number }[]> {
+  async getHRVHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+    // Demo mode disabled
+
     // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
-      logger.warn('[HealthKit] Module non chargé - utilisez un dev build (pas Expo Go) pour accéder aux données HRV');
+      logger.warn('[HealthKit] Module not loaded, cannot fetch HRV history');
       return [];
     }
 
@@ -1469,10 +1455,12 @@ class HealthConnectService {
     return [];
   }
 
-  async getRestingHRHistory(days: number = 7): Promise<{ date: string; value: number }[]> {
+  async getRestingHRHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+    // Demo mode disabled
+
     // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
-      logger.warn('[HealthKit] Module non chargé - utilisez un dev build (pas Expo Go) pour accéder à la FC repos');
+      logger.warn('[HealthKit] Module not loaded, cannot fetch resting HR history');
       return [];
     }
 
@@ -1510,10 +1498,12 @@ class HealthConnectService {
     return [];
   }
 
-  async getHeartRateHistory(days: number = 7): Promise<{ date: string; value: number }[]> {
+  async getHeartRateHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+    // Demo mode disabled
+
     // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
-      logger.warn('[HealthKit] Module non chargé - utilisez un dev build (pas Expo Go) pour accéder à la FC');
+      logger.warn('[HealthKit] Module not loaded, cannot fetch heart rate history');
       return [];
     }
 
@@ -1551,10 +1541,12 @@ class HealthConnectService {
     return [];
   }
 
-  async getOxygenSaturationHistory(days: number = 7): Promise<{ date: string; value: number }[]> {
+  async getOxygenSaturationHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+    // Demo mode disabled
+
     // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
-      logger.warn('[HealthKit] Module non chargé - utilisez un dev build (pas Expo Go) pour accéder à la SpO2');
+      logger.warn('[HealthKit] Module not loaded, cannot fetch SpO2 history');
       return [];
     }
 
@@ -1593,10 +1585,12 @@ class HealthConnectService {
     return [];
   }
 
-  async getBodyTemperatureHistory(days: number = 7): Promise<{ date: string; value: number }[]> {
+  async getBodyTemperatureHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+    // Demo mode disabled
+
     // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
-      logger.warn('[HealthKit] Module non chargé - utilisez un dev build (pas Expo Go) pour accéder à la température');
+      logger.warn('[HealthKit] Module not loaded, cannot fetch temperature history');
       return [];
     }
 
@@ -1634,10 +1628,12 @@ class HealthConnectService {
     return [];
   }
 
-  async getWeightHistory(days: number = 30): Promise<{ date: string; value: number; source?: string }[]> {
+  async getWeightHistory(days: number = 30): Promise<Array<{ date: string; value: number; source?: string }>> {
+    // Demo mode disabled
+
     // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
-      logger.warn('[HealthKit] Module non chargé - utilisez un dev build (pas Expo Go) pour accéder au poids');
+      logger.warn('[HealthKit] Module not loaded, cannot fetch weight history');
       return [];
     }
 
@@ -1658,13 +1654,11 @@ class HealthConnectService {
       logger.info('[HealthKit] getWeightHistory: Échantillons reçus:', samples?.length || 0);
 
       if (samples && samples.length > 0) {
-        const result = samples
-          .map((s: any) => ({
-            date: new Date(s.startDate).toISOString().split('T')[0],
-            value: Math.round(s.quantity * 10) / 10,
-            source: s.sourceRevision?.source?.name || s.device?.name || 'Unknown',
-          }))
-          .filter((s: { value: number }) => this.isValidWeight(s.value));
+        const result = samples.map((s: any) => ({
+          date: new Date(s.startDate).toISOString().split('T')[0],
+          value: Math.round(s.quantity * 10) / 10,
+          source: s.sourceRevision?.source?.name || s.device?.name || 'Unknown',
+        }));
 
         logger.info('[HealthKit] getWeightHistory: Poids trouvés:', result.length);
         return result;
@@ -1675,7 +1669,7 @@ class HealthConnectService {
     return [];
   }
 
-  async getSleepHistory(days: number = 7): Promise<{
+  async getSleepHistory(days: number = 7): Promise<Array<{
     date: string;
     deep: number;
     rem: number;
@@ -1684,10 +1678,12 @@ class HealthConnectService {
     total: number;
     duration?: number;
     source?: string; // ✅ NOUVEAU: Ajouter la source pour debug
-  }[]> {
+  }>> {
+    // Demo mode disabled
+
     // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
-      logger.warn('[HealthKit] Module non chargé - utilisez un dev build (pas Expo Go) pour accéder au sommeil');
+      logger.warn('[HealthKit] Module not loaded, cannot fetch sleep history');
       return [];
     }
 
@@ -1773,15 +1769,17 @@ class HealthConnectService {
     return [];
   }
 
-  async getCaloriesHistory(days: number = 7): Promise<{
+  async getCaloriesHistory(days: number = 7): Promise<Array<{
     date: string;
     active: number;
     basal: number;
     total: number;
-  }[]> {
+  }>> {
+    // Demo mode disabled
+
     // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
-      logger.warn('[HealthKit] Module non chargé - utilisez un dev build (pas Expo Go) pour accéder aux calories');
+      logger.warn('[HealthKit] Module not loaded, cannot fetch calories history');
       return [];
     }
 
@@ -1836,10 +1834,12 @@ class HealthConnectService {
     return [];
   }
 
-  async getVO2MaxHistory(days: number = 30): Promise<{ date: string; value: number }[]> {
+  async getVO2MaxHistory(days: number = 30): Promise<Array<{ date: string; value: number }>> {
+    // Demo mode disabled
+
     // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
-      logger.warn('[HealthKit] Module non chargé - utilisez un dev build (pas Expo Go) pour accéder au VO2 Max');
+      logger.warn('[HealthKit] Module not loaded, cannot fetch VO2 Max history');
       return [];
     }
 
@@ -1866,10 +1866,12 @@ class HealthConnectService {
     return [];
   }
 
-  async getStepsHistory(days: number = 7): Promise<{ date: string; value: number }[]> {
+  async getStepsHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+    // Demo mode disabled
+
     // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
-      logger.warn('[HealthKit] Module non chargé - utilisez un dev build (pas Expo Go) pour accéder aux pas');
+      logger.warn('[HealthKit] Module not loaded, cannot fetch steps history');
       return [];
     }
 
@@ -1917,11 +1919,12 @@ class HealthConnectService {
   }
 
   async getAllHealthData(): Promise<HealthData> {
+    // Demo mode disabled for production
+
     try {
       // Vérifier si le module est disponible avant de lancer les requêtes
       const available = await this.isAvailable();
       if (!available) {
-        logger.warn('[HealthKit] Apple Health non disponible - vérifiez que vous utilisez un dev build (pas Expo Go) sur un appareil iOS');
         return {
           weight: undefined,
           steps: undefined,
@@ -2027,15 +2030,11 @@ class HealthConnectService {
   async writeWeight(weight: number, unit: 'kg' | 'lbs' = 'kg'): Promise<boolean> {
     // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
-      logger.error('[HealthKit] Module non chargé - utilisez un dev build (pas Expo Go) pour écrire le poids');
+      logger.error('[HealthKit] Module not loaded - cannot write weight');
       throw new Error('HealthKit module not available');
     }
 
     const weightInKg = unit === 'lbs' ? weight * 0.453592 : weight;
-
-    if (!this.isValidWeight(weightInKg)) {
-      throw new Error(`Poids invalide (${weightInKg} kg) - doit être entre 20 et 300 kg`);
-    }
 
     try {
       // ✅ CHECK FOR DUPLICATES: Prevent writing same weight twice on same day
@@ -2076,19 +2075,15 @@ class HealthConnectService {
   async writeHydration(amountMl: number): Promise<boolean> {
     // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
-      logger.error('[HealthKit] Module non chargé - utilisez un dev build (pas Expo Go) pour écrire l\'hydratation');
+      logger.error('[HealthKit] Module not loaded - cannot write hydration');
       throw new Error('HealthKit module not available');
-    }
-
-    if (typeof amountMl !== 'number' || !isFinite(amountMl) || amountMl <= 0 || amountMl > 10000) {
-      throw new Error(`Hydratation invalide (${amountMl} ml) - doit être entre 1 et 10000 ml`);
     }
 
     // Apple Health attend des litres, on convertit
     const amountLiters = amountMl / 1000;
 
     try {
-      await HealthKit.saveQuantitySamples('HKQuantityTypeIdentifierDietaryWater', amountLiters, {
+      await HealthKit.saveQuantitySample('HKQuantityTypeIdentifierDietaryWater', amountLiters, {
         start: new Date(),
         end: new Date(),
       });
@@ -2102,12 +2097,8 @@ class HealthConnectService {
   async writeBodyFat(percentage: number): Promise<boolean> {
     // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
-      logger.error('[HealthKit] Module non chargé - utilisez un dev build (pas Expo Go) pour écrire la masse grasse');
+      logger.error('[HealthKit] Module not loaded - cannot write body fat');
       throw new Error('HealthKit module not available');
-    }
-
-    if (typeof percentage !== 'number' || !isFinite(percentage) || percentage < 2 || percentage > 70) {
-      throw new Error(`Masse grasse invalide (${percentage}%) - doit être entre 2 et 70%`);
     }
 
     try {
@@ -2516,6 +2507,13 @@ class HealthConnectService {
   }
 
   getSyncStatus(): SyncStatus {
+    if (DEMO_MODE && __DEV__) {
+      return {
+        ...this.syncStatus,
+        isConnected: true,
+        lastSync: new Date().toISOString(),
+      };
+    }
     return { ...this.syncStatus };
   }
 

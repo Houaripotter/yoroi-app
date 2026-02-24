@@ -1,452 +1,314 @@
-import { Platform, View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, DeviceEventEmitter } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { Home, BarChart2, Plus, Calendar, Menu } from 'lucide-react-native';
+import { Home, BarChart2, Plus, Calendar, Wrench, User, Settings, BookOpen } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { getTabOrder, getLeftTabs, getRightTabs, TAB_ORDER_CHANGED_EVENT } from '@/lib/tabOrderService';
+import type { TabItem } from '@/lib/tabOrderService';
 
 // ============================================
-// TAB LAYOUT - DYNAMIC THEME SUPPORT
-// ============================================
-// Tab bar with dynamic colors from ThemeContext
-// Tous les onglets uniformes et symétriques
+// TAB LAYOUT - FLOATING PILL TAB BAR
+// 3 gauche | + | 4 droite - equilibre et propre
 // ============================================
 
-const ICON_SIZE = 24; // Taille uniforme pour toutes les icônes
-const ICON_SIZE_ACTIVE = 26; // Plus grand quand actif
-const ICON_STROKE_WIDTH_ACTIVE = 3;
-const ICON_STROKE_WIDTH_INACTIVE = 2;
+const { width: SCREEN_W } = Dimensions.get('window');
 
-// ============================================
-// FONCTION POUR DÉTECTER SI UNE COULEUR EST SOMBRE
-// Si l'accent est sombre sur fond noir -> utiliser blanc (effet projecteur)
-// ============================================
-const isColorDark = (hexColor: string): boolean => {
-  // Enlever le # si présent
-  const hex = hexColor.replace('#', '');
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  // Calcul de luminance (seuil: 128 sur 255)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-  return luminance < 128;
+const ICON_SIZE = 20;
+const ICON_SIZE_ACTIVE = 22;
+const PILL_H = 62;
+const PILL_BOTTOM = 20;
+const PILL_R = 20;
+const PILL_MARGIN = 10;
+const PLUS_SIZE = 48;
+const PLUS_SPACER = 54;
+
+const isColorDark = (hex: string): boolean => {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) < 128;
 };
 
-// Couleur active pour tab bar (fond noir = besoin de couleur claire)
-const getTabBarActiveColor = (accentColor: string): string => {
-  // Si l'accent est sombre, utiliser blanc pour être visible sur fond noir
-  if (isColorDark(accentColor)) {
-    return '#FFFFFF';
-  }
-  // Sinon garder la couleur accent
-  return accentColor;
+// Icones par route
+const ROUTE_ICONS: Record<string, any> = {
+  index: Home,
+  stats: BarChart2,
+  carnet: BookOpen,
+  planning: Calendar,
+  more: Wrench,
+  profile: User,
+  settings: Settings,
 };
 
-const triggerHaptic = () => {
-  if (Platform.OS !== 'web') {
-    impactAsync(ImpactFeedbackStyle.Light);
-  }
+// Labels par route
+const ROUTE_LABELS: Record<string, string> = {
+  index: 'Accueil',
+  stats: 'Stats',
+  carnet: 'Carnet',
+  planning: 'Planning',
+  more: 'Outils',
+  profile: 'Profil',
+  settings: 'Reglages',
 };
 
 // ============================================
-// BOUTON BUZZER CENTRAL - DESIGN BRILLANT
+// CUSTOM FLOATING PILL TAB BAR
 // ============================================
-function CentralBuzzerButton() {
-  const { colors, isDark, themeColor } = useTheme();
+function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
+  const { colors, isDark } = useTheme();
   const router = useRouter();
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const plusScale = useRef(new Animated.Value(1)).current;
+  const [tabOrder, setTabOrder] = useState<TabItem[] | null>(null);
 
-  // Spécification YOROI: Si thème Classic -> Toujours fond NOIR et + BLANC
-  const isClassicTheme = themeColor === 'classic';
-  const isLightMode = !isDark;
-  
-  // Par défaut (thèmes colorés comme indigo, volt, etc.)
-  // On utilise TOUJOURS la couleur du thème (accent), même en mode clair
-  let buttonBgColor = colors.accent;
-  let plusIconColor = colors.textOnAccent;
-  let buttonBgColorDark = colors.accentDark;
-
-  // Override pour le thème Classic UNIQUEMENT
-  if (isClassicTheme) {
-    buttonBgColor = '#000000';
-    plusIconColor = '#FFFFFF';
-    buttonBgColorDark = '#1A1A1A';
-  }
-
-  const pulseColor = isClassicTheme ? 'rgba(0,0,0,0.15)' : (isLightMode ? 'rgba(0,0,0,0.08)' : `${colors.accent}20`);
-  const pulseBorderColor = isClassicTheme ? 'rgba(0,0,0,0.25)' : (isLightMode ? 'rgba(0,0,0,0.15)' : `${colors.accent}40`);
-
-  // Animation pulse continue pour l'anneau externe
-  const startPulse = () => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.3,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  };
-
-  // Démarrer l'animation au montage
-  React.useEffect(() => {
-    startPulse();
-
-    return () => {
-      pulseAnim.stopAnimation();
-    };
+  useEffect(() => {
+    getTabOrder().then(setTabOrder);
   }, []);
 
-  const handlePress = () => {
-    // Haptic feedback fort
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(TAB_ORDER_CHANGED_EVENT, () => {
+      getTabOrder().then(setTabOrder);
+    });
+    return () => sub.remove();
+  }, []);
+
+  const pillBg = isDark ? '#1A1A1E' : colors.accent;
+  const activeColor = isDark
+    ? (isColorDark(colors.accent) ? '#FFFFFF' : colors.accent)
+    : '#FFFFFF';
+  const inactiveColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.5)';
+  const dotColor = activeColor;
+
+  // Bouton +
+  const light = !isDark;
+  const plusBg = light ? '#FFFFFF' : colors.accent;
+  const plusBgDark = light ? '#F0F0F0' : colors.accentDark;
+  const plusIcon = light ? colors.accent : colors.textOnAccent;
+
+  // Contour pilule
+  const pillBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.35)';
+
+  const handlePlusPress = () => {
     impactAsync(ImpactFeedbackStyle.Heavy);
-
-    // Animation de pression
     Animated.sequence([
-      Animated.spring(scaleAnim, {
-        toValue: 0.85,
-        useNativeDriver: true,
-        speed: 50,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        speed: 20,
-        bounciness: 10,
-      }),
+      Animated.spring(plusScale, { toValue: 0.85, useNativeDriver: true, speed: 50 }),
+      Animated.spring(plusScale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 10 }),
     ]).start();
-
-    // Navigation vers l'écran d'ajout complet (poids, mensurations, etc.)
     router.push('/add');
   };
 
-  return (
-    <View style={styles.buzzerContainer}>
-      {/* Anneau externe pulsant */}
-      <Animated.View
-        style={[
-          styles.pulseRing,
-          {
-            transform: [{ scale: pulseAnim }],
-            backgroundColor: pulseColor,
-            borderColor: pulseBorderColor,
-          },
-        ]}
-      />
+  // Ordre: 3 gauche | + | 3 droite (equilibre)
+  const leftNames = tabOrder ? getLeftTabs(tabOrder).map(t => t.id).filter(id => id !== 'profile') : ['index', 'stats', 'carnet'];
+  const rightNames = tabOrder ? getRightTabs(tabOrder).map(t => t.id).filter(id => id !== 'profile') : ['planning', 'more', 'settings'];
 
-      {/* Bouton principal */}
-      <Animated.View
-        style={[
-          styles.buzzerButton,
-          {
-            transform: [{ scale: scaleAnim }],
-          },
-          isClassicTheme && {
-            shadowColor: '#FFFFFF',
-            shadowOpacity: 0.2,
-            shadowRadius: 8,
-          }
-        ]}
+  const leftRoutes = leftNames
+    .map(name => state.routes.find(r => r.name === name))
+    .filter(Boolean) as typeof state.routes;
+  const rightRoutes = rightNames
+    .map(name => state.routes.find(r => r.name === name))
+    .filter(Boolean) as typeof state.routes;
+
+  const renderTab = (route: typeof state.routes[0]) => {
+    const routeIndex = state.routes.indexOf(route);
+    const isFocused = state.index === routeIndex;
+    const IconComp = ROUTE_ICONS[route.name];
+    const label = ROUTE_LABELS[route.name] || route.name;
+    if (!IconComp) return null;
+
+    const onPress = () => {
+      impactAsync(ImpactFeedbackStyle.Light);
+      if (!isFocused) {
+        navigation.navigate(route.name);
+      }
+    };
+
+    return (
+      <TouchableOpacity
+        key={route.key}
+        onPress={onPress}
+        activeOpacity={0.7}
+        style={styles.tabBtn}
       >
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={handlePress}
-          style={styles.buzzerTouchable}
+        <IconComp
+          size={isFocused ? ICON_SIZE_ACTIVE : ICON_SIZE}
+          color={isFocused ? activeColor : inactiveColor}
+          strokeWidth={isFocused ? 2.5 : 1.8}
+        />
+        <Text
+          style={[
+            styles.tabLabel,
+            { color: isFocused ? activeColor : inactiveColor },
+            isFocused && styles.tabLabelActive,
+          ]}
+          numberOfLines={1}
         >
+          {label}
+        </Text>
+        {/* Point indicateur actif */}
+        {isFocused && (
+          <View style={[styles.activeDot, { backgroundColor: dotColor }]} />
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <View style={styles.pillOuter} pointerEvents="box-none">
+      {/* Bouton + flottant - integre dans la pilule */}
+      <Animated.View style={[styles.plusBtn, { transform: [{ scale: plusScale }] }]}>
+        <TouchableOpacity activeOpacity={0.85} onPress={handlePlusPress} style={styles.plusTouch}>
           <LinearGradient
-            colors={[buttonBgColor, buttonBgColorDark, buttonBgColor]}
+            colors={[plusBg, plusBgDark]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[
-              styles.buzzerGradient,
-              isClassicTheme && {
-                borderColor: 'rgba(255,255,255,0.5)',
-                borderWidth: 2,
+              styles.plusGrad,
+              {
+                borderWidth: 2.5,
+                borderColor: light ? colors.accent + '25' : 'rgba(255,255,255,0.15)',
               },
-              isLightMode && !isClassicTheme && {
-                shadowColor: '#000000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.2,
-                shadowRadius: 8,
-                elevation: 8,
-                borderWidth: 2,
-                borderColor: 'rgba(0,0,0,0.1)',
-              }
             ]}
           >
-            {/* Effet de brillance en haut */}
-            <View style={[styles.shineEffect, isLightMode && { backgroundColor: 'rgba(255,255,255,0.6)' }]} />
-
-            {/* Icône + */}
-            <Plus
-              size={28}
-              color={plusIconColor}
-              strokeWidth={3.5}
-            />
+            <Plus size={22} color={plusIcon} strokeWidth={2.8} />
           </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
+
+      {/* Pilule - 3 | + | 4 */}
+      <View style={[
+        styles.pill,
+        {
+          backgroundColor: pillBg,
+          borderColor: pillBorder,
+          shadowColor: isDark ? '#000' : colors.accentDark,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDark ? 0.4 : 0.25,
+          shadowRadius: 16,
+        },
+      ]}>
+        {/* 3 onglets a gauche */}
+        <View style={styles.tabGroup}>
+          {leftRoutes.map(renderTab)}
+        </View>
+
+        {/* Espace pour le bouton + */}
+        <View style={styles.plusSpacer} />
+
+        {/* 4 onglets a droite */}
+        <View style={styles.tabGroup}>
+          {rightRoutes.map(renderTab)}
+        </View>
+      </View>
     </View>
   );
 }
 
 export default function TabLayout() {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-
-  // Tab bar TOUJOURS noire (mode clair et sombre)
-  const tabBarBg = '#0D0D0F';
-  const tabBarInactiveColor = 'rgba(255,255,255,0.45)';
-  const tabBarBorderColor = 'rgba(255,255,255,0.08)';
-
-  // Couleur active: si accent sombre -> blanc (effet projecteur)
-  const tabBarActiveColor = getTabBarActiveColor(colors.accent);
-
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: tabBarActiveColor,
-        tabBarInactiveTintColor: tabBarInactiveColor,
-        tabBarStyle: [
-          styles.tabBar,
-          {
-            backgroundColor: tabBarBg,
-            borderTopColor: tabBarBorderColor,
-            // Glow effect FORT avec couleur active
-            shadowColor: tabBarActiveColor,
-            shadowOffset: { width: 0, height: -6 },
-            shadowOpacity: 0.5,
-            shadowRadius: 20,
-          }
-        ],
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: '800',
-          marginTop: 4,
-          letterSpacing: 1.5,
-          textTransform: 'uppercase',
-          textShadowColor: tabBarActiveColor,
-          textShadowOffset: { width: 0, height: 0 },
-          textShadowRadius: 8,
-        },
-        tabBarItemStyle: styles.tabBarItem,
-      }}
-      screenListeners={{
-        tabPress: () => {
-          triggerHaptic();
-        },
-      }}
+      tabBar={(props) => <FloatingPillTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
-      {/* 1. ACCUEIL */}
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t('tabs.home'),
-          tabBarIcon: ({ focused }) => (
-            <View style={[
-              styles.iconContainer,
-              focused && {
-                shadowColor: tabBarActiveColor,
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 1,
-                shadowRadius: 12,
-                elevation: 10,
-              }
-            ]}>
-              <Home
-                size={focused ? ICON_SIZE_ACTIVE : ICON_SIZE}
-                color={focused ? tabBarActiveColor : tabBarInactiveColor}
-                strokeWidth={focused ? ICON_STROKE_WIDTH_ACTIVE : ICON_STROKE_WIDTH_INACTIVE}
-              />
-            </View>
-          ),
-        }}
-      />
-
-      {/* 2. STATS */}
-      <Tabs.Screen
-        name="stats"
-        options={{
-          title: t('tabs.stats'),
-          tabBarIcon: ({ focused }) => (
-            <View style={[
-              styles.iconContainer,
-              focused && {
-                shadowColor: tabBarActiveColor,
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 1,
-                shadowRadius: 12,
-                elevation: 10,
-              }
-            ]}>
-              <BarChart2
-                size={focused ? ICON_SIZE_ACTIVE : ICON_SIZE}
-                color={focused ? tabBarActiveColor : tabBarInactiveColor}
-                strokeWidth={focused ? ICON_STROKE_WIDTH_ACTIVE : ICON_STROKE_WIDTH_INACTIVE}
-              />
-            </View>
-          ),
-        }}
-      />
-
-      {/* 3. AJOUTER - BOUTON BUZZER CENTRAL */}
-      <Tabs.Screen
-        name="add"
-        options={{
-          title: '',
-          tabBarButton: () => <CentralBuzzerButton />,
-        }}
-      />
-
-      {/* 4. PLANNING */}
-      <Tabs.Screen
-        name="planning"
-        options={{
-          title: t('tabs.planning'),
-          tabBarIcon: ({ focused }) => (
-            <View style={[
-              styles.iconContainer,
-              focused && {
-                shadowColor: tabBarActiveColor,
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 1,
-                shadowRadius: 12,
-                elevation: 10,
-              }
-            ]}>
-              <Calendar
-                size={focused ? ICON_SIZE_ACTIVE : ICON_SIZE}
-                color={focused ? tabBarActiveColor : tabBarInactiveColor}
-                strokeWidth={focused ? ICON_STROKE_WIDTH_ACTIVE : ICON_STROKE_WIDTH_INACTIVE}
-              />
-            </View>
-          ),
-        }}
-      />
-
-      {/* 5. MENU */}
-      <Tabs.Screen
-        name="more"
-        options={{
-          title: t('tabs.menu'),
-          tabBarIcon: ({ focused }) => (
-            <View style={[
-              styles.iconContainer,
-              focused && {
-                shadowColor: tabBarActiveColor,
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 1,
-                shadowRadius: 12,
-                elevation: 10,
-              }
-            ]}>
-              <Menu
-                size={focused ? ICON_SIZE_ACTIVE : ICON_SIZE}
-                color={focused ? tabBarActiveColor : tabBarInactiveColor}
-                strokeWidth={focused ? ICON_STROKE_WIDTH_ACTIVE : ICON_STROKE_WIDTH_INACTIVE}
-              />
-            </View>
-          ),
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: '' }} />
+      <Tabs.Screen name="stats" options={{ title: '' }} />
+      <Tabs.Screen name="carnet" options={{ title: '' }} />
+      <Tabs.Screen name="planning" options={{ title: '' }} />
+      <Tabs.Screen name="add" options={{ title: '' }} />
+      <Tabs.Screen name="more" options={{ title: '' }} />
+      <Tabs.Screen name="profile" options={{ title: '' }} />
+      <Tabs.Screen name="settings" options={{ title: '' }} />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
-  tabBar: {
+  pillOuter: {
     position: 'absolute',
-    bottom: 0,
+    bottom: PILL_BOTTOM,
     left: 0,
     right: 0,
-    height: 85,
-    paddingBottom: 25,
-    paddingTop: 12,
-    paddingHorizontal: 10,
-    borderTopWidth: 1,
-    elevation: 0,
-  },
-  tabBarLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    marginTop: 4,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-  },
-  tabBarItem: {
-    paddingTop: 4,
-  },
-  iconContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    height: ICON_SIZE,
-    width: ICON_SIZE,
   },
 
-  // ============================================
-  // STYLES BOUTON BUZZER CENTRAL
-  // ============================================
-  buzzerContainer: {
+  pill: {
+    width: SCREEN_W - (PILL_MARGIN * 2),
+    height: PILL_H,
+    borderRadius: PILL_R,
+    borderWidth: 1.5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 12,
+    paddingHorizontal: 4,
+  },
+
+  // Groupe de tabs (gauche ou droite)
+  tabGroup: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+  },
+
+  // Chaque onglet
+  tabBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
-    marginTop: -4, // Ajuster la position verticale
+    paddingVertical: 6,
+    paddingHorizontal: 2,
+    minWidth: 40,
   },
-  pulseRing: {
+
+  // Label sous l'icone
+  tabLabel: {
+    fontSize: 9,
+    fontWeight: '500',
+    marginTop: 3,
+  },
+  tabLabelActive: {
+    fontWeight: '800',
+  },
+
+  // Point sous l'onglet actif
+  activeDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 3,
+  },
+
+  plusSpacer: {
+    width: PLUS_SPACER,
+  },
+
+  plusBtn: {
     position: 'absolute',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
-    opacity: 0.4,
-  },
-  buzzerButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    // Ombres multiples pour effet 3D profond
+    top: -20,
+    zIndex: 10,
+    width: PLUS_SIZE,
+    height: PLUS_SIZE,
+    borderRadius: PLUS_SIZE / 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 10,
+    shadowRadius: 10,
+    elevation: 15,
   },
-  buzzerTouchable: {
+  plusTouch: {
     width: '100%',
     height: '100%',
-    borderRadius: 26,
+    borderRadius: PLUS_SIZE / 2,
     overflow: 'hidden',
   },
-  buzzerGradient: {
+  plusGrad: {
     width: '100%',
     height: '100%',
-    borderRadius: 26,
+    borderRadius: PLUS_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
-    // Bordure brillante
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  shineEffect: {
-    position: 'absolute',
-    top: 6,
-    left: 10,
-    right: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(255,255,255,0.4)',
-    opacity: 0.6,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
 });

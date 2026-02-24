@@ -3,12 +3,17 @@ import {
   View,
   Text,
   StyleSheet,
+  ScrollView,
   TouchableOpacity,
   Dimensions,
   Image,
   Animated,
   Share,
+  Alert,
+  Platform,
+  Modal,
   ActivityIndicator,
+  DeviceEventEmitter,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,34 +23,56 @@ import {
   Scale,
   Droplets,
   Camera,
+  Sparkles,
   Flame,
   Zap,
   Dumbbell,
   Trophy,
   ChevronRight,
   Timer,
+  Ruler,
+  Heart,
+  HeartPulse,
   TrendingDown,
+  TrendingUp,
+  Minus,
+  BarChart3,
   Medal,
+  Palette,
+  Battery,
   Moon,
   Activity,
   FileText,
   Target,
   Gift,
+  AlertTriangle,
   Crown,
   Waves,
   Bed,
+  Bell,
+  Brain,
   Stethoscope,
+  Scissors,
+  Settings,
   FlaskConical,
   Calculator,
+  Apple,
   Clock,
   BookOpen,
+  Plus,
   Award,
   Calendar,
+  Share2,
   List,
+  Building2,
+  Cloud,
+  Watch,
+  Shield,
   Swords,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { format, differenceInDays } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -61,43 +88,54 @@ import { LogoViewer } from '@/components/LogoViewer';
 import { MotivationPopup } from '@/components/MotivationPopup';
 import { getUserMode, getNextEvent } from '@/lib/fighterModeService';
 import { UserMode } from '@/lib/fighterMode';
-import { calculateReadinessScore } from '@/lib/readinessService';
+import { calculateReadinessScore, ReadinessScore } from '@/lib/readinessService';
+import { getJournalStats } from '@/lib/trainingJournalService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BatteryReadyPopup } from '@/components/BatteryReadyPopup';
 import { PerformanceRadar } from '@/components/PerformanceRadar';
 import { HealthspanChart } from '@/components/HealthspanChart';
 import { HydrationCard2 } from '@/components/cards/HydrationCard2';
 import { WatchSyncService } from '@/lib/watchSyncService';
+import { WeightLottieCard } from '@/components/cards/WeightLottieCard';
 import { WeightFullCard } from '@/components/cards/WeightFullCard';
 import { SleepLottieCard } from '@/components/cards/SleepLottieCard';
 import { ChargeLottieCard } from '@/components/cards/ChargeLottieCard';
+import { AnimatedCompositionCircle } from '@/components/AnimatedCompositionCircle';
+import { StreakCalendar } from '@/components/StreakCalendar';
 import { AvatarViewerModal } from '@/components/AvatarViewerModal';
 import HealthConnect, { healthConnect as healthConnectService } from '@/lib/healthConnect';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
-import { UpdateChangelogModal } from '@/components/UpdateChangelogModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
 import { addHydration as addHydrationToQuests } from '@/lib/quests';
-import { HomeToolsMenu } from '@/components/home/HomeToolsMenu';
 
 // Mode Essentiel
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewModeSwitch } from '@/components/home/ViewModeSwitch';
 import { ViewModeHint } from '@/components/home/ViewModeHint';
+import { HomeEssentielContent } from '@/components/home/HomeEssentielContent';
+import CompactObjectiveSwitch from '@/components/home/CompactObjectiveSwitch';
 import { EssentielWeightCard } from '@/components/home/essentiel/EssentielWeightCard';
 import { EssentielActivityCard } from '@/components/home/essentiel/EssentielActivityCard';
+import { EssentielWeekSummary } from '@/components/home/essentiel/EssentielWeekSummary';
 import { HomeTabView } from '@/components/home/HomeTabView';
 
 // Composants animés premium
+import AnimatedAvatar from '@/components/AnimatedAvatar';
 import AnimatedCounter from '@/components/AnimatedCounter';
+import AnimatedProgressBar from '@/components/AnimatedProgressBar';
 import { AnimatedCard } from '@/components/AnimatedCard';
+import AnimatedRing from '@/components/AnimatedRing';
+import { AnimatedBattery } from '@/components/AnimatedBattery';
 import PulsingBadge from '@/components/PulsingBadge';
+import AnimatedWaterBottle from '@/components/AnimatedWaterBottle';
+import AnimatedSleepWave from '@/components/AnimatedSleepWave';
 import AnimatedRank from '@/components/AnimatedRank';
 
 // Services
-import { getSleepStats, SleepStats, getSleepGoal } from '@/lib/sleepService';
-import { getWeeklyLoadStats, WeeklyLoadStats } from '@/lib/trainingLoadService';
+import { getSleepStats, getSleepAdvice, formatSleepDuration, SleepStats, getSleepGoal } from '@/lib/sleepService';
+import { getWeeklyLoadStats, formatLoad, getRiskColor, WeeklyLoadStats } from '@/lib/trainingLoadService';
 import { getDailyChallenges, ActiveChallenge } from '@/lib/challengesService';
 import { generateWeeklyReport, formatReportForSharing, WeeklyReport } from '@/lib/weeklyReportService';
 import { getHomeCustomization, isSectionVisible as checkSectionVisible, HomeSection } from '@/lib/homeCustomizationService';
@@ -114,7 +152,7 @@ const DEFAULT_HYDRATION_GOAL = 2500;
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, screenBackground } = useTheme();
   const { t, language } = useI18n();
   const params = useLocalSearchParams();
 
@@ -162,7 +200,6 @@ export default function HomeScreen() {
 
   // Tutoriel de découverte
   const [showTutorial, setShowTutorial] = useState(false);
-  const [showWhatIsNew, setShowWhatIsNew] = useState(false);
 
   // Protection anti-spam navigation
   const [isNavigating, setIsNavigating] = useState(false);
@@ -173,22 +210,13 @@ export default function HomeScreen() {
 
   // Vérifier si c'est la première visite ou une mise à jour
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
     const checkFirstVisit = async () => {
       try {
-        // 1. Gérer le message de mise à jour (What's New)
-        const lastVersionSeen = await AsyncStorage.getItem('@yoroi_last_version_seen');
-        const currentVersion = '2.0.0'; // À mettre à jour à chaque build Store
-
-        if (lastVersionSeen !== currentVersion) {
-          setShowWhatIsNew(true);
-          await AsyncStorage.setItem('@yoroi_last_version_seen', currentVersion);
-        }
-
-        // 2. Gérer le tutoriel home
+        // Gérer le tutoriel home
         const visited = await hasVisitedPage('home');
-        if (!visited && !showWhatIsNew) {
+        if (!visited) {
           timer = setTimeout(() => setShowTutorial(true), 1000);
         }
       } catch (error) {
@@ -205,7 +233,7 @@ export default function HomeScreen() {
 
   // Afficher la popup de notation après navigation depuis l'étape 4
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
     if (params.showRating === 'true') {
       timer = setTimeout(() => {
@@ -391,9 +419,14 @@ export default function HomeScreen() {
     try {
       const today = format(new Date(), 'yyyy-MM-dd');
 
-      // 1. Charger l'objectif depuis AsyncStorage
+      // 1. Charger l'objectif depuis AsyncStorage (stocké en litres par hydration.tsx)
       const goalStored = await AsyncStorage.getItem(HYDRATION_GOAL_KEY);
-      const goal = goalStored ? parseFloat(goalStored) : DEFAULT_HYDRATION_GOAL;
+      let goal = DEFAULT_HYDRATION_GOAL; // 2500ml par défaut
+      if (goalStored) {
+        const parsed = parseFloat(goalStored);
+        // Si la valeur est < 20, c'est en litres (ex: 2.5) → convertir en ml
+        goal = parsed < 20 ? parsed * 1000 : parsed;
+      }
       setHydrationGoal(goal);
 
       // 2. ✅ PRIORITÉ: Essayer Apple Health d'abord
@@ -659,9 +692,6 @@ export default function HomeScreen() {
     setAvatarViewerVisible(false);
   }, []);
 
-  const handleCloseWhatIsNew = useCallback(() => {
-    setShowWhatIsNew(false);
-  }, []);
 
   const handleCloseRatingPopup = useCallback(async () => {
     setShowRatingPopup(false);
@@ -768,12 +798,20 @@ export default function HomeScreen() {
     }
   }, [loadHydration]);
 
-  // Charger les données UNIQUEMENT au premier montage (pas à chaque focus)
+  // Charger les données au montage + quand on revient d'un écran d'ajout (via param refresh)
   useEffect(() => {
     cancelledRef.current = false;
     loadData();
     return () => { cancelledRef.current = true; };
-  }, []);
+  }, [params.refresh]);
+
+  // Écouter l'événement global de refresh (plus fiable que les params pour les tabs)
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
+      loadData();
+    });
+    return () => sub.remove();
+  }, [loadData]);
 
   // Auto-sync: synchroniser les donnees de sante si derniere sync > 15 min
   useEffect(() => {
@@ -1142,7 +1180,7 @@ export default function HomeScreen() {
               >
                 <View style={[styles.quoteCardClean, {
                   backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
-                  borderColor: isDark ? `${colors.accent}20` : 'rgba(0,0,0,0.06)',
+                  borderColor: isDark ? `${colors.accent}20` : colors.secondary,
                   shadowColor: isDark ? colors.accent : '#000',
                 }]}>
                   <View style={[styles.quoteAccentBar, { backgroundColor: `${colors.accent}90` }]} />
@@ -1169,14 +1207,14 @@ export default function HomeScreen() {
       case 'stats_compact':
         return (
           <View style={styles.statsRowCompact} key={sectionId}>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateActivityDetail}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateActivityDetail}>
               <MaterialCommunityIcons name="walk" size={14} color="#3B82F6" />
               <View style={styles.statTextColumn}>
                 <AnimatedCounter value={steps} style={[styles.statValueCompactHorizontal, { color: '#3B82F6' }]} duration={800} />
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>pas</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateGamification}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateGamification}>
               <Animated.View style={{ transform: [{ scale: streakFlameAnim }] }}>
                 <Flame size={14} color="#F97316" />
               </Animated.View>
@@ -1185,14 +1223,14 @@ export default function HomeScreen() {
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>jours</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateGamification}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateGamification}>
               <Zap size={14} color={isDark ? colors.accent : '#000000'} />
               <View style={styles.statTextColumn}>
                 <AnimatedCounter value={level.level} style={[styles.statValueCompactHorizontal, { color: isDark ? colors.accent : '#000000' }]} duration={800} />
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>niveau</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateGamification}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateGamification}>
               <Trophy size={14} color={rank?.color} />
               <View style={styles.statTextColumn}>
                 <AnimatedRank rank={rank?.name?.split(' ')[0] ?? ''} color={rank?.color} style={styles.statValueCompactHorizontal} delay={300} />
@@ -1203,18 +1241,8 @@ export default function HomeScreen() {
         );
 
       case 'weight_hydration':
-        return (
-          <View key={sectionId} style={{ marginBottom: 20 }}>
-            {/* Poids - Full Width Premium */}
-            <WeightFullCard
-              currentWeight={currentWeight || 0}
-              targetWeight={targetWeight ?? undefined}
-              startWeight={weightHistory[0]?.weight ?? undefined}
-              history={chartHistory}
-              onPress={handleNavigateWeightStats}
-            />
-          </View>
-        );
+        // Section supprimée - le poids est géré en haut de l'écran
+        return null;
 
       // Anciennes sections remplacees par les nouvelles lignes tools_row_*
       // Ces cases sont gardes pour la compatibilite avec les anciennes configurations
@@ -1222,15 +1250,8 @@ export default function HomeScreen() {
       case 'sleep_charge':
         return (
           <View style={styles.gridLottieContainer} key={sectionId}>
-            {/* 3 cartes compactes : Hydratation | Sommeil | Charge */}
+            {/* 2 cartes compactes : Sommeil | Charge */}
             <View style={styles.threeCardsRow}>
-              <View style={styles.compactCard}>
-                <HydrationCard2
-                  currentMl={hydration}
-                  goalMl={hydrationGoal}
-                  onAddMl={(amountMl) => addWater(amountMl)}
-                />
-              </View>
               <TouchableOpacity onPress={handleNavigateSleep} activeOpacity={0.9} style={styles.compactCard}>
                 <SleepLottieCard
                   hours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
@@ -1255,7 +1276,7 @@ export default function HomeScreen() {
         return (
           <View style={styles.quickToolsContainer} key={sectionId}>
             <TouchableOpacity
-              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
+              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
               onPress={handleNavigateTrainingJournal}
               activeOpacity={0.8}
             >
@@ -1264,7 +1285,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
+              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
               onPress={handleNavigateInfirmary}
               activeOpacity={0.8}
             >
@@ -1276,7 +1297,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
+              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
               onPress={handleNavigateChallenges}
               activeOpacity={0.8}
             >
@@ -1289,7 +1310,7 @@ export default function HomeScreen() {
       case 'challenges':
         return (
           <AnimatedCard index={1} key={sectionId}>
-            <TouchableOpacity style={[styles.challengesCard, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateChallenges} activeOpacity={0.8}>
+            <TouchableOpacity style={[styles.challengesCard, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateChallenges} activeOpacity={0.8}>
               <View style={styles.challengesHeader}>
                 <Target size={16} color={colors.accentText} />
                 <Text style={styles.sectionTitle}>DÉFIS DU JOUR</Text>
@@ -1349,7 +1370,7 @@ export default function HomeScreen() {
         if (!weeklyReport) return null;
         return (
           <AnimatedCard index={4} key={sectionId}>
-            <TouchableOpacity style={[styles.reportCard, { backgroundColor: colors.backgroundCard }]} onPress={shareReport}>
+            <TouchableOpacity style={[styles.reportCard, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={shareReport}>
               <View style={styles.reportHeader}>
                 <FileText size={16} color={colors.accentText} />
                 <Text style={styles.sectionTitle}>RAPPORT DE MISSION</Text>
@@ -1390,21 +1411,9 @@ export default function HomeScreen() {
           </AnimatedCard>
         );
 
-      // Grand graphique de poids (style Light)
+      // Grand graphique de poids (supprimé - géré en haut de l'écran)
       case 'weight_graph_large':
-        return (
-          <View key={sectionId} style={{ marginTop: 16 }}>
-            <EssentielWeightCard
-              currentWeight={currentWeight || undefined}
-              objective={targetWeight || undefined}
-              weekData={weightHistory.slice(0, 30).reverse().map(w => w.weight)} // 30 derniers jours au lieu de 7
-              weekLabels={['L', 'M', 'M', 'J', 'V', 'S', 'D']} // Les labels seront dupliqués
-              trend={trend}
-              onAddWeight={handleNavigateAddWeight}
-              onViewStats={handleNavigateWeightStats}
-            />
-          </View>
-        );
+        return null;
 
       // Résumé activité (pas)
       case 'activity_summary':
@@ -1433,7 +1442,7 @@ export default function HomeScreen() {
         return (
           <View style={styles.batteryToolsRowSingle} key={sectionId}>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
               onPress={handleNavigateTrainingJournal}
               activeOpacity={0.85}
             >
@@ -1442,7 +1451,7 @@ export default function HomeScreen() {
               <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Entrainement</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
               onPress={handleNavigateTimer}
               activeOpacity={0.85}
             >
@@ -1451,7 +1460,7 @@ export default function HomeScreen() {
               <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Round/Repos</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
               onPress={handleNavigatePlanning}
               activeOpacity={0.85}
             >
@@ -1460,7 +1469,7 @@ export default function HomeScreen() {
               <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Planning</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
               onPress={handleNavigateProgramme}
               activeOpacity={0.85}
             >
@@ -1476,7 +1485,7 @@ export default function HomeScreen() {
         return (
           <TouchableOpacity
             key={sectionId}
-            style={[styles.blessuresBanner, { backgroundColor: colors.backgroundCard }]}
+            style={[styles.blessuresBanner, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
             onPress={handleNavigateInfirmary}
             activeOpacity={0.85}
           >
@@ -1499,7 +1508,7 @@ export default function HomeScreen() {
         return (
           <View style={styles.batteryToolsRowSingle} key={sectionId}>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
               onPress={handleNavigateEnergy}
               activeOpacity={0.85}
             >
@@ -1528,7 +1537,7 @@ export default function HomeScreen() {
               <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Energie</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
               onPress={handleNavigateSavoir}
               activeOpacity={0.85}
             >
@@ -1537,7 +1546,7 @@ export default function HomeScreen() {
               <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Culture G</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
               onPress={handleNavigateCalculators}
               activeOpacity={0.85}
             >
@@ -1553,7 +1562,7 @@ export default function HomeScreen() {
         return (
           <View key={sectionId} style={styles.batteryToolsRowSingle}>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, flex: 1 }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, flex: 1, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
               onPress={() => handleNavigate('/partners')}
               activeOpacity={0.85}
             >
@@ -1562,7 +1571,7 @@ export default function HomeScreen() {
               <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Partenaires</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, flex: 1 }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, flex: 1, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
               onPress={() => handleNavigate('/health-professionals')}
               activeOpacity={0.85}
             >
@@ -1621,7 +1630,7 @@ export default function HomeScreen() {
                 </View>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
                 onPress={handleNavigateFasting}
                 activeOpacity={0.85}
               >
@@ -1630,7 +1639,7 @@ export default function HomeScreen() {
                 <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Intermittent</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
                 onPress={handleNavigatePhotos}
                 activeOpacity={0.85}
               >
@@ -1644,7 +1653,7 @@ export default function HomeScreen() {
             {isCompetitorMode && (
               <View style={[styles.batteryToolsRowSingle, { marginTop: 8 }]}>
                 <TouchableOpacity
-                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
                   onPress={handleNavigateCutMode}
                   activeOpacity={0.85}
                 >
@@ -1653,7 +1662,7 @@ export default function HomeScreen() {
                   <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Perte poids</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
                   onPress={handleNavigatePalmares}
                   activeOpacity={0.85}
                 >
@@ -1662,7 +1671,7 @@ export default function HomeScreen() {
                   <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Resultats</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
                   onPress={handleNavigateHydration}
                   activeOpacity={0.85}
                 >
@@ -1671,7 +1680,7 @@ export default function HomeScreen() {
                   <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Suivi eau</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
                   onPress={handleNavigateBodyComposition}
                   activeOpacity={0.85}
                 >
@@ -1778,7 +1787,7 @@ export default function HomeScreen() {
   // Afficher loading pendant le chargement initial
   if (isLoading) {
     return (
-      <View style={[styles.screen, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.screen, { backgroundColor: screenBackground, justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
@@ -1786,7 +1795,7 @@ export default function HomeScreen() {
 
   return (
     <ErrorBoundary>
-      <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <View style={[styles.screen, { backgroundColor: screenBackground }]}>
         <MotivationPopup />
 
       <HomeTabView
@@ -1799,6 +1808,7 @@ export default function HomeScreen() {
         rankName={rank?.name}
         rankColor={rank?.color}
         currentWeight={currentWeight ?? undefined}
+        heightCm={profile?.height_cm ?? undefined}
         targetWeight={targetWeight ?? undefined}
         startWeight={startWeight ?? undefined}
         weightHistory={weightHistory.map(w => w.weight)}
@@ -1812,9 +1822,9 @@ export default function HomeScreen() {
         dailyChallenges={formattedChallenges}
         stepsGoal={stepsGoal}
         calories={calories}
-        bodyFat={isScreenshotMode ? 16.2 : bodyComposition?.bodyFat}
-        muscleMass={isScreenshotMode ? 43.5 : bodyComposition?.muscleMass}
-        waterPercentage={isScreenshotMode ? 58.4 : bodyComposition?.waterPercentage}
+        bodyFat={isScreenshotMode ? 16.2 : latestWeight?.fat_percent}
+        muscleMass={isScreenshotMode ? 43.5 : latestWeight?.muscle_percent ? (latestWeight.muscle_percent / 100) * (latestWeight?.weight || 0) : undefined}
+        waterPercentage={isScreenshotMode ? 58.4 : latestWeight?.water_percent}
         weeklyReport={weeklyReport ? {
           weightChange: weeklyReport.weightChange,
           trainingsCount: weeklyReport.totalTrainings,
@@ -1833,11 +1843,6 @@ export default function HomeScreen() {
       <BatteryReadyPopup batteryPercent={batteryPercent} />
       <AvatarViewerModal visible={avatarViewerVisible} onClose={handleCloseAvatarViewer} />
 
-      {/* MESSAGE DE MISE À JOUR ET DISCLAIMER PROFESSIONNEL (TON COMPOSANT) */}
-      <UpdateChangelogModal
-        visible={showWhatIsNew}
-        onClose={handleCloseWhatIsNew}
-      />
 
       {/* Tutoriel de découverte */}
       {showTutorial && (
@@ -1866,8 +1871,6 @@ export default function HomeScreen() {
       </TouchableOpacity> */}
 
 
-      {/* Bouton outils flottant */}
-      <HomeToolsMenu />
       </View>
     </ErrorBoundary>
   );
