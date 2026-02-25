@@ -4,7 +4,8 @@
 // Gestion du sommeil, dette de sommeil, et récupération
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { format, subDays } from 'date-fns';
+import { format, subDays, differenceInMinutes, parseISO, startOfWeek, endOfWeek } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -455,11 +456,81 @@ export const generateSleepShareText = async (): Promise<string> => {
   }
 };
 
+/**
+ * Ajoute une entree de sommeil depuis HealthKit (avec source='healthkit' pour dedup)
+ * Ne remplace PAS les entrees manuelles existantes pour la meme date.
+ */
+export const addSleepEntryFromHealthKit = async (entry: {
+  date: string; // YYYY-MM-DD
+  bedTime: string; // HH:MM
+  wakeTime: string; // HH:MM
+  duration: number; // minutes
+  quality: number; // 1-5
+  phases?: {
+    deep?: number;
+    rem?: number;
+    core?: number;
+    awake?: number;
+    inBed?: number;
+  };
+}): Promise<SleepEntry | null> => {
+  try {
+    const entries = await getSleepEntries();
+    const existing = entries.find(e => e.date === entry.date);
+
+    // Ne pas ecraser une entree manuelle existante
+    if (existing && !existing.id.startsWith('hk_')) {
+      return null;
+    }
+
+    const newEntry: SleepEntry = {
+      id: `hk_${entry.date}`,
+      date: entry.date,
+      bedTime: entry.bedTime,
+      wakeTime: entry.wakeTime,
+      duration: entry.duration,
+      quality: entry.quality,
+      notes: entry.phases
+        ? `HealthKit | Profond: ${entry.phases.deep || 0}min, REM: ${entry.phases.rem || 0}min, Leger: ${entry.phases.core || 0}min`
+        : 'HealthKit',
+    };
+
+    // Remplacer une ancienne entree HealthKit ou ajouter
+    const existingIndex = entries.findIndex(e => e.date === entry.date);
+    if (existingIndex >= 0) {
+      entries[existingIndex] = newEntry;
+    } else {
+      entries.unshift(newEntry);
+    }
+
+    await AsyncStorage.setItem(STORAGE_KEYS.SLEEP_ENTRIES, JSON.stringify(entries));
+    return newEntry;
+  } catch (error) {
+    logger.error('Erreur ajout sommeil HealthKit:', error);
+    return null;
+  }
+};
+
+/**
+ * Recupere les entrees de sommeil pour une date donnee
+ */
+export const getSleepEntriesByDate = async (date: string): Promise<SleepEntry[]> => {
+  try {
+    const entries = await getSleepEntries();
+    return entries.filter(e => e.date === date);
+  } catch (error) {
+    logger.error('Erreur lecture sommeil par date:', error);
+    return [];
+  }
+};
+
 export default {
   getSleepGoal,
   setSleepGoal,
   getSleepEntries,
+  getSleepEntriesByDate,
   addSleepEntry,
+  addSleepEntryFromHealthKit,
   getTodaySleep,
   getSleepStats,
   formatSleepDuration,

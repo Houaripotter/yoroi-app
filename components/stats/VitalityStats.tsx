@@ -110,24 +110,29 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
     const history: { date: string; duration: number }[] = [];
     const today = new Date();
 
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      const key = `sleep_${dateStr}`;
+    try {
+      // Lire depuis sleepService au lieu de cles AsyncStorage inexistantes
+      const { getSleepEntries: getEntries } = await import('@/lib/sleepService');
+      const entries = await getEntries();
 
-      try {
-        const value = await AsyncStorage.getItem(key);
-        if (value) {
-          const sleepData = JSON.parse(value);
-          // Duration is in minutes, convert to hours
-          const duration = sleepData.duration ? sleepData.duration / 60 : 0;
-          history.push({ date: dateStr, duration });
-        } else {
-          history.push({ date: dateStr, duration: 0 });
-        }
-      } catch {
-        history.push({ date: dateStr, duration: 0 });
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+
+        const entry = entries.find((e: any) => e.date === dateStr);
+        // Duration is in minutes, convert to hours
+        history.push({
+          date: dateStr,
+          duration: entry ? entry.duration / 60 : 0,
+        });
+      }
+    } catch {
+      // Fallback: retourner 7 jours vides
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        history.push({ date: date.toISOString().split('T')[0], duration: 0 });
       }
     }
     return history;
@@ -397,6 +402,8 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
                   const y = PADDING_TOP + ((CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM) * (1 - Math.min(entry.duration, 10) / 10));
                   return { x, y, duration: entry.duration };
                 });
+
+                if (chartData.length < 2) return null;
 
                 let path = `M ${chartData[0].x} ${chartData[0].y}`;
                 for (let i = 1; i < chartData.length; i++) {

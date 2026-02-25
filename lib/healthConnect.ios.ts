@@ -8,8 +8,9 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Demo data removed - DEMO_MODE is disabled for production
 import logger from '@/lib/security/logger';
-import { saveHealthDataBatch, saveHealthData, addWeight } from './database';
-import type { HealthDataRecord } from './database';
+import { saveHealthDataBatch, saveHealthData, addWeight, addTraining } from './database';
+import type { HealthDataRecord, Training } from './database';
+import { addSleepEntryFromHealthKit } from './sleepService';
 
 // ============================================
 // MODE DÉMO - Active les fausses données
@@ -20,7 +21,7 @@ import type { HealthDataRecord } from './database';
 const DEMO_MODE = false;
 
 // Apple HealthKit (iOS) - Safe wrapper with Expo Go fallback
-import HealthKit, { isHealthKitAvailable, isRunningInExpoGo } from './healthKit.wrapper';
+import HealthKit, { isHealthKitAvailable, isRunningInExpoGo, healthKitDiagnostic, isMockMode } from './healthKit.wrapper';
 
 // CRITIQUE: Ne pas importer directement depuis kingstinct au top-level pour éviter NitroModules error dans Expo Go
 let WorkoutActivityType: any = {};
@@ -280,6 +281,72 @@ const STORAGE_KEYS = {
 // Code 9 = errorUserExitedWorkoutSession (user exited workout session)
 // Code 10 = errorRequiredAuthorizationDenied (required authorization was denied)
 // ============================================
+
+// ============================================
+// WORKOUT TYPE MAPPING: Apple HealthKit -> Yoroi sport types
+// ============================================
+const WORKOUT_TYPE_MAP: Record<string, string> = {
+  // Course
+  'HKWorkoutActivityTypeRunning': 'running',
+  'running': 'running',
+  // Musculation
+  'HKWorkoutActivityTypeTraditionalStrengthTraining': 'musculation',
+  'HKWorkoutActivityTypeFunctionalStrengthTraining': 'musculation',
+  'HKWorkoutActivityTypeCoreTraining': 'musculation',
+  'HKWorkoutActivityTypeCrossTraining': 'musculation',
+  'traditionalStrengthTraining': 'musculation',
+  'functionalStrengthTraining': 'musculation',
+  // Sports de combat -> jjb
+  'HKWorkoutActivityTypeMartialArts': 'jjb',
+  'HKWorkoutActivityTypeBoxing': 'jjb',
+  'HKWorkoutActivityTypeWrestling': 'jjb',
+  'HKWorkoutActivityTypeMixedCardio': 'jjb',
+  'martialArts': 'jjb',
+  'boxing': 'jjb',
+  'wrestling': 'jjb',
+  // Marche/Rando
+  'HKWorkoutActivityTypeWalking': 'autre',
+  'HKWorkoutActivityTypeHiking': 'autre',
+  'walking': 'autre',
+  'hiking': 'autre',
+  // Velo
+  'HKWorkoutActivityTypeCycling': 'autre',
+  'cycling': 'autre',
+  // Natation
+  'HKWorkoutActivityTypeSwimming': 'autre',
+  'swimming': 'autre',
+  // Yoga/Flexibility
+  'HKWorkoutActivityTypeYoga': 'autre',
+  'HKWorkoutActivityTypePilates': 'autre',
+  'HKWorkoutActivityTypeFlexibility': 'autre',
+  'yoga': 'autre',
+  // Sports collectifs
+  'HKWorkoutActivityTypeSoccer': 'autre',
+  'HKWorkoutActivityTypeBasketball': 'autre',
+  'HKWorkoutActivityTypeTennis': 'autre',
+  'soccer': 'autre',
+  'basketball': 'autre',
+};
+
+/**
+ * Convertir un type de workout Apple en type Yoroi
+ */
+const mapWorkoutType = (activityType: string): string => {
+  return WORKOUT_TYPE_MAP[activityType] || 'autre';
+};
+
+/**
+ * Nom lisible pour un type de workout
+ */
+const getWorkoutLabel = (activityType: string): string => {
+  const labels: Record<string, string> = {
+    running: 'Course',
+    musculation: 'Musculation',
+    jjb: 'Combat',
+    autre: 'Autre',
+  };
+  return labels[mapWorkoutType(activityType)] || 'Autre';
+};
 
 class HealthConnectService {
   private isInitialized = false;
@@ -786,9 +853,9 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const queryOptions = this.createQueryOptions(today, new Date());
+      const queryOptions = this.createQueryOptions(today, new Date(), { limit: 1000 });
       if (!queryOptions) {
-        logger.error('[HealthKit] Impossible de créer les options de requête pour les steps');
+        logger.error('[HealthKit] Impossible de creer les options de requete pour les steps');
         return null;
       }
 
@@ -869,19 +936,16 @@ class HealthConnectService {
 
           // Accepter: Apple Watch, Santé (données manuelles), apps tierces de sommeil
           // Rejeter: com.apple.health.sleep-analysis-time (estimations automatiques iPhone)
+          // FIX: Parentheses correctes pour eviter de rejeter les donnees Apple Watch
           const isAutoEstimation = bundleId.includes('sleep-analysis-time') ||
-                                   bundleId.includes('com.apple.health') && !source.toLowerCase().includes('watch');
-
-          if (isAutoEstimation) {
-            logger.info('[HealthKit] Ignoré estimation auto:', source, bundleId);
-          }
+                                   (bundleId.includes('com.apple.health') && !source.toLowerCase().includes('watch'));
 
           return !isAutoEstimation;
         });
 
-        logger.info('[HealthKit] Échantillons sommeil filtrés (vrais):', filteredSamples.length);
+        logger.info('[HealthKit] Echantillons sommeil filtres (vrais):', filteredSamples.length);
 
-        // Si pas de vraies données, essayer quand même avec toutes les données
+        // Si pas de vraies donnees, utiliser TOUTES les donnees
         const samplesToUse = filteredSamples.length > 0 ? filteredSamples : samples;
 
         let totalMinutes = 0;
@@ -949,10 +1013,9 @@ class HealthConnectService {
           awake: Math.round(awakeMinutes),
         });
 
-        // ✅ FIX: Assouplir la limite minimum de 3h à 1h pour ne pas rater les siestes/nuits courtes
-        // Limite de sécurité : une nuit entre 1h et 16h
-        if (totalMinutes < 60 || totalMinutes > 960) {
-          logger.info('[HealthKit] Sommeil rejeté (durée invalide):', totalMinutes, 'minutes');
+        // Limite de securite : entre 30min (sieste) et 16h
+        if (totalMinutes < 30 || totalMinutes > 960) {
+          logger.info('[HealthKit] Sommeil rejete (duree invalide):', totalMinutes, 'minutes');
           return null;
         }
 
@@ -2355,7 +2418,7 @@ class HealthConnectService {
         });
       }
 
-      // ══════ SOMMEIL → SQLite ══════
+      // ══════ SOMMEIL → SQLite + sleepService ══════
       if (data.sleep && data.sleep.duration > 0) {
         records.push({
           date: today,
@@ -2373,6 +2436,35 @@ class HealthConnectService {
             phases: data.sleep.phases,
           }),
         });
+
+        // Bridge: ecrire aussi dans sleepService pour que sleep.tsx affiche les donnees
+        try {
+          const sleepDate = data.sleep.startTime
+            ? new Date(data.sleep.startTime).toISOString().split('T')[0]
+            : today;
+          const bedTime = data.sleep.startTime
+            ? new Date(data.sleep.startTime).toTimeString().slice(0, 5)
+            : '23:00';
+          const wakeTime = data.sleep.endTime
+            ? new Date(data.sleep.endTime).toTimeString().slice(0, 5)
+            : '07:00';
+
+          const qualityMap: Record<string, number> = { poor: 1, fair: 2, good: 3, excellent: 5 };
+          const qualityNum = qualityMap[data.sleep.quality || 'good'] || 3;
+
+          await addSleepEntryFromHealthKit({
+            date: sleepDate,
+            bedTime,
+            wakeTime,
+            duration: Math.round(data.sleep.duration),
+            quality: qualityNum,
+            phases: data.sleep.phases,
+          });
+          logger.info(`[syncAll] Sommeil bridge sleepService: ${data.sleep.duration} min`);
+        } catch (e) {
+          logger.warn('[syncAll] Erreur bridge sommeil:', e);
+        }
+
         logger.info(`[syncAll] Sommeil: ${data.sleep.duration} min (${data.sleep.quality})`);
       }
 
@@ -2435,6 +2527,54 @@ class HealthConnectService {
         }
       }
 
+      // ══════ WORKOUTS → SQLite (table trainings) ══════
+      if (data.workouts && data.workouts.length > 0) {
+        // Charger les fingerprints deja importes pour dedup
+        let importedFingerprints: Set<string> = new Set();
+        try {
+          const saved = await AsyncStorage.getItem('@yoroi_imported_workouts');
+          if (saved) importedFingerprints = new Set(JSON.parse(saved));
+        } catch {}
+
+        let workoutsSaved = 0;
+        for (const workout of data.workouts) {
+          const fingerprint = `${workout.startDate}_${workout.activityType}_${workout.duration}`;
+          if (importedFingerprints.has(fingerprint)) continue;
+
+          try {
+            const sport = mapWorkoutType(workout.activityType);
+            const trainingDate = new Date(workout.startDate).toISOString().split('T')[0];
+            const startTime = new Date(workout.startDate).toTimeString().slice(0, 5);
+
+            const training: Training = {
+              sport,
+              session_type: getWorkoutLabel(workout.activityType),
+              date: trainingDate,
+              start_time: startTime,
+              duration_minutes: workout.duration,
+              distance: workout.distance,
+              calories: workout.calories,
+              heart_rate: workout.averageHeartRate,
+              notes: `Apple Health - ${workout.activityType}`,
+            };
+
+            await addTraining(training);
+            importedFingerprints.add(fingerprint);
+            workoutsSaved++;
+          } catch (e) {
+            logger.warn('[syncAll] Erreur sauvegarde workout:', e);
+          }
+        }
+
+        // Sauvegarder les fingerprints (garder les 500 derniers pour eviter une croissance infinie)
+        const fingerprintsArray = Array.from(importedFingerprints).slice(-500);
+        await AsyncStorage.setItem('@yoroi_imported_workouts', JSON.stringify(fingerprintsArray));
+        if (workoutsSaved > 0) {
+          savedCount += workoutsSaved;
+          logger.info(`[syncAll] ${workoutsSaved} workouts importes depuis Apple Health`);
+        }
+      }
+
       // ══════ SAUVEGARDER TOUT EN BATCH dans SQLite ══════
       if (records.length > 0) {
         try {
@@ -2453,6 +2593,21 @@ class HealthConnectService {
             }
           }
         }
+      }
+
+      // ══════ IMPORT HISTORIQUE SOMMEIL (au premier sync) ══════
+      try {
+        const hasSyncedSleepHistory = await AsyncStorage.getItem('@yoroi_sleep_history_synced');
+        if (!hasSyncedSleepHistory && data.sleep) {
+          // Import 30 jours d'historique sommeil dans sleepService
+          const imported = await this.syncSleepHistory(30);
+          if (imported > 0) {
+            await AsyncStorage.setItem('@yoroi_sleep_history_synced', 'true');
+            logger.info(`[syncAll] Historique sommeil importe: ${imported} nuits`);
+          }
+        }
+      } catch (e) {
+        logger.warn('[syncAll] Erreur import historique sommeil:', e);
       }
 
       // ══════ AUSSI sauvegarder dans AsyncStorage (cache rapide pour UI) ══════
@@ -2542,6 +2697,171 @@ class HealthConnectService {
    * Nettoyer toutes les données en cache
    * Utile quand l'utilisateur se déconnecte ou pour résoudre des problèmes
    */
+  /**
+   * Mode Strava: Observer les nouveaux workouts en background
+   * Active le background delivery pour les workouts et envoie une notification
+   */
+  async setupWorkoutObserver(): Promise<void> {
+    if (!HealthKit) {
+      logger.warn('[WorkoutObserver] HealthKit module not loaded');
+      return;
+    }
+
+    try {
+      // Activer le background delivery pour les workouts
+      if (typeof HealthKit.enableBackgroundDelivery === 'function') {
+        await HealthKit.enableBackgroundDelivery(
+          'HKWorkoutTypeIdentifier',
+          2 // UpdateFrequency.immediate = 2
+        );
+        logger.info('[WorkoutObserver] Background delivery active pour workouts');
+      }
+
+      // S'abonner aux changements de workouts
+      if (typeof HealthKit.subscribeToChanges === 'function') {
+        await HealthKit.subscribeToChanges('HKWorkoutTypeIdentifier', async () => {
+          logger.info('[WorkoutObserver] Nouveau workout detecte !');
+          try {
+            // Lire les derniers workouts
+            const recentWorkouts = await this.getIOSWorkouts();
+            if (!recentWorkouts || recentWorkouts.length === 0) return;
+
+            // Charger les fingerprints pour eviter les doublons
+            let importedFingerprints: Set<string> = new Set();
+            try {
+              const saved = await AsyncStorage.getItem('@yoroi_imported_workouts');
+              if (saved) importedFingerprints = new Set(JSON.parse(saved));
+            } catch {}
+
+            // Traiter le workout le plus recent
+            const latestWorkout = recentWorkouts[0];
+            const fingerprint = `${latestWorkout.startDate}_${latestWorkout.activityType}_${latestWorkout.duration}`;
+
+            if (importedFingerprints.has(fingerprint)) return;
+
+            // Sauvegarder dans la base
+            const sport = mapWorkoutType(latestWorkout.activityType);
+            const trainingDate = new Date(latestWorkout.startDate).toISOString().split('T')[0];
+            const startTime = new Date(latestWorkout.startDate).toTimeString().slice(0, 5);
+
+            const training: Training = {
+              sport,
+              session_type: getWorkoutLabel(latestWorkout.activityType),
+              date: trainingDate,
+              start_time: startTime,
+              duration_minutes: latestWorkout.duration,
+              distance: latestWorkout.distance,
+              calories: latestWorkout.calories,
+              heart_rate: latestWorkout.averageHeartRate,
+              notes: `Apple Health - ${latestWorkout.activityType}`,
+            };
+
+            const trainingId = await addTraining(training);
+            importedFingerprints.add(fingerprint);
+
+            // Sauvegarder les fingerprints
+            const fingerprintsArray = Array.from(importedFingerprints).slice(-500);
+            await AsyncStorage.setItem('@yoroi_imported_workouts', JSON.stringify(fingerprintsArray));
+
+            // Envoyer notification de felicitation
+            await this.sendWorkoutCompletionNotification(latestWorkout, trainingId);
+
+            logger.info(`[WorkoutObserver] Workout sauvegarde: ${sport} ${latestWorkout.duration}min`);
+          } catch (e) {
+            logger.error('[WorkoutObserver] Erreur traitement workout:', e);
+          }
+        });
+        logger.info('[WorkoutObserver] Abonnement aux changements de workouts actif');
+      } else {
+        logger.info('[WorkoutObserver] subscribeToChanges non disponible - observer desactive');
+      }
+    } catch (error) {
+      logger.error('[WorkoutObserver] Erreur setup:', error);
+    }
+  }
+
+  /**
+   * Envoyer une notification de felicitation apres un workout
+   */
+  private async sendWorkoutCompletionNotification(
+    workout: NonNullable<HealthData['workouts']>[0],
+    trainingId?: number
+  ): Promise<void> {
+    try {
+      const Notif = await import('expo-notifications');
+
+      const sportLabel = getWorkoutLabel(workout.activityType);
+      const durationH = Math.floor(workout.duration / 60);
+      const durationM = workout.duration % 60;
+      const durationStr = durationH > 0
+        ? `${durationH}h${durationM > 0 ? ` ${durationM}min` : ''}`
+        : `${durationM} min`;
+
+      let body = durationStr;
+      if (workout.distance) body += ` - ${workout.distance} km`;
+      if (workout.calories) body += ` - ${workout.calories} cal`;
+
+      await Notif.scheduleNotificationAsync({
+        content: {
+          title: `Bravo pour ta ${sportLabel.toLowerCase()} !`,
+          body,
+          data: {
+            type: 'workout_complete',
+            workoutId: trainingId?.toString() || workout.id,
+          },
+          sound: 'default',
+        },
+        trigger: null, // Immediate
+      });
+
+      logger.info('[WorkoutObserver] Notification envoyee');
+    } catch (e) {
+      logger.warn('[WorkoutObserver] Erreur notification:', e);
+    }
+  }
+
+  /**
+   * Importer l'historique de sommeil HealthKit dans sleepService (dedup par date)
+   */
+  async syncSleepHistory(days: number = 30): Promise<number> {
+    try {
+      const history = await this.getSleepHistory(days);
+      if (!history || history.length === 0) return 0;
+
+      let imported = 0;
+      for (const night of history) {
+        if (night.total < 30) continue; // Ignorer les nuits trop courtes
+
+        // Estimer bedTime/wakeTime depuis la date et la duree
+        const qualityNum = night.deep > 60 ? 5 : night.deep > 30 ? 4 : night.total > 360 ? 3 : 2;
+        const totalHours = Math.floor(night.total / 60);
+        const bedHour = 24 - Math.min(totalHours, 10); // Estimation: coucher = minuit - duree
+        const wakeHour = bedHour + totalHours;
+
+        const result = await addSleepEntryFromHealthKit({
+          date: night.date,
+          bedTime: `${(bedHour % 24).toString().padStart(2, '0')}:00`,
+          wakeTime: `${(wakeHour % 24).toString().padStart(2, '0')}:00`,
+          duration: night.total,
+          quality: qualityNum,
+          phases: {
+            deep: night.deep,
+            rem: night.rem,
+            core: night.core,
+            awake: night.awake,
+          },
+        });
+        if (result) imported++;
+      }
+
+      logger.info(`[syncSleepHistory] ${imported}/${history.length} nuits importees`);
+      return imported;
+    } catch (error) {
+      logger.error('[syncSleepHistory] Erreur:', error);
+      return 0;
+    }
+  }
+
   async clearCache(): Promise<void> {
     try {
       await AsyncStorage.multiRemove([
@@ -2823,21 +3143,39 @@ class HealthConnectService {
     };
     errors: string[];
     recommendations: string[];
+    wrapperDiagnostic: typeof healthKitDiagnostic;
   }> {
     const errors: string[] = [];
     const recommendations: string[] = [];
 
     logger.info('========================================');
-    logger.info('[HealthKit] DÉMARRAGE DIAGNOSTIC COMPLET');
+    logger.info('[HealthKit] DEMARRAGE DIAGNOSTIC COMPLET');
     logger.info('========================================');
 
-    // 1. Vérifier si HealthKit est disponible
+    // 0. Log wrapper diagnostic
+    logger.info('[Diagnostic] Wrapper diagnostic:', JSON.stringify(healthKitDiagnostic, null, 2));
+
+    if (healthKitDiagnostic.moduleError) {
+      errors.push('Module HealthKit: ' + healthKitDiagnostic.moduleError);
+    }
+    if (isMockMode) {
+      errors.push('HealthKit est en mode MOCK (module natif non disponible) - les donnees seront vides');
+      recommendations.push('Installez l\'app via EAS Build (pas Expo Go) pour activer le module natif HealthKit');
+    }
+    if (healthKitDiagnostic.isExpoGo) {
+      errors.push('Expo Go detecte - les modules natifs (HealthKit, NitroModules) ne fonctionnent pas dans Expo Go');
+      recommendations.push('Utilisez un Development Build (npx expo run:ios ou EAS Build) pour tester HealthKit');
+    }
+
+    // 1. Verifier si HealthKit est disponible
     const healthKitAvailable = await this.isAvailable();
     logger.info('[Diagnostic] HealthKit disponible:', healthKitAvailable);
 
     if (!healthKitAvailable) {
-      errors.push('HealthKit non disponible sur cet appareil');
-      recommendations.push('Vérifiez que vous êtes sur un appareil iOS physique (pas simulateur)');
+      if (!errors.some(e => e.includes('Module HealthKit'))) {
+        errors.push('HealthKit non disponible sur cet appareil');
+      }
+      recommendations.push('Verifiez que vous etes sur un appareil iOS physique (pas simulateur)');
     }
 
     // 2. Vérifier la connexion
@@ -2925,6 +3263,7 @@ class HealthConnectService {
       },
       errors,
       recommendations,
+      wrapperDiagnostic: { ...healthKitDiagnostic },
     };
   }
 }

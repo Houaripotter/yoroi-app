@@ -575,7 +575,7 @@ export default function HomeScreen() {
   }, [handleNavigate]);
 
   const handleNavigateWeightStats = useCallback(() => {
-    handleNavigate('/stats?tab=poids');
+    handleNavigate('/stats?tab=corps');
   }, [handleNavigate]);
 
   const handleNavigateSleep = useCallback(() => {
@@ -819,12 +819,19 @@ export default function HomeScreen() {
       try {
         await healthConnectService.initialize();
         const status = healthConnectService.getSyncStatus();
-        if (!status.isConnected || !status.lastSync) return;
 
-        const lastSyncTime = new Date(status.lastSync).getTime();
+        // Permettre le sync meme si pas encore formellement "connecte"
+        // (le module HealthKit est charge et les permissions peuvent etre accordees via Reglages iOS)
+        if (!status.isConnected) {
+          // Tenter quand meme un syncAll si le module est disponible
+          const available = await healthConnectService.isAvailable();
+          if (!available) return;
+        }
+
+        const lastSyncTime = status.lastSync ? new Date(status.lastSync).getTime() : 0;
         const fifteenMinutes = 15 * 60 * 1000;
         if (Date.now() - lastSyncTime > fifteenMinutes) {
-          logger.info('[AutoSync] Last sync > 15 min, syncing...');
+          logger.info('[AutoSync] Syncing health data...');
           await healthConnectService.syncAll();
           logger.info('[AutoSync] Auto-sync complete');
         }

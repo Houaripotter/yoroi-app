@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, Text, AppState, AppStateStatus, LogBox } from 'react-native';
+import { View, ActivityIndicator, Text, AppState, AppStateStatus, LogBox, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
@@ -22,6 +22,8 @@ import { setupNotificationHandler } from '@/lib/eveningHealthTipsService';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/security/logger';
 import { appleWatchService } from '@/lib/appleWatchService';
+import { healthConnect } from '@/lib/healthConnect';
+import * as Notifications from 'expo-notifications';
 
 // ============================================
 // PRODUCTION: Désactiver tous les console.log
@@ -51,18 +53,25 @@ const LOADING_COLORS = {
 
 function RootLayoutContent() {
   const { isDark, colors } = useTheme();
+  const router = useRouter();
 
-  // 🔒 SÉCURITÉ: Sauvegarde automatique quand l'app passe en background
+  // Sauvegarde automatique quand l'app passe en background
   useEffect(() => {
     // Handler pour les clics sur notifications
     const notifSubscription = setupNotificationHandler();
 
+    // Deep link: quand l'utilisateur tape sur une notification workout
+    const workoutNotifSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data;
+      if (data?.type === 'workout_complete' && data?.workoutId) {
+        // Naviguer vers le partage social avec les details du workout
+        router.push(`/social-share/last-session?workoutId=${data.workoutId}` as any);
+      }
+    });
+
     const appStateSubscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
-        logger.info('📦 App going to background - auto-save triggered');
         try {
-          // Les données sont déjà sauvegardées automatiquement dans AsyncStorage
-          // Cette fonction est un placeholder pour futures optimisations
           await AsyncStorage.flushGetRequests();
         } catch (error) {
           logger.error('Auto-save failed', error);
@@ -72,6 +81,7 @@ function RootLayoutContent() {
 
     return () => {
       notifSubscription.remove();
+      workoutNotifSubscription.remove();
       appStateSubscription.remove();
     };
   }, []);
@@ -108,12 +118,17 @@ function RootLayoutContent() {
         <Stack.Screen name="add-measurement" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="entry" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="savoir" options={{ presentation: 'card' }} />
+        <Stack.Screen name="sport" options={{ presentation: 'card' }} />
         <Stack.Screen name="history" options={{ presentation: 'card' }} />
+        <Stack.Screen name="body-status" options={{ presentation: 'card' }} />
         <Stack.Screen name="body-composition" options={{ presentation: 'card' }} />
+        <Stack.Screen name="chrono" options={{ presentation: 'card' }} />
+        <Stack.Screen name="calculator" options={{ presentation: 'card' }} />
         <Stack.Screen name="badges" options={{ presentation: 'card' }} />
         <Stack.Screen name="records" options={{ presentation: 'card' }} />
         <Stack.Screen name="infirmary" options={{ presentation: 'card' }} />
         <Stack.Screen name="injury-detail" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="social-card" options={{ presentation: 'modal', animation: 'fade' }} />
         <Stack.Screen name="competitions" options={{ presentation: 'card' }} />
         <Stack.Screen name="add-competition" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="competition-detail" options={{ presentation: 'card' }} />
@@ -121,23 +136,31 @@ function RootLayoutContent() {
         <Stack.Screen name="combat-detail" options={{ presentation: 'card' }} />
         <Stack.Screen name="palmares" options={{ presentation: 'card' }} />
         <Stack.Screen name="radar-performance" options={{ presentation: 'card' }} />
+        <Stack.Screen name="customize-home" options={{ presentation: 'card' }} />
+        <Stack.Screen name="competition-sports-selection" options={{ presentation: 'card' }} />
         <Stack.Screen name="competitor-profile" options={{ presentation: 'card' }} />
         <Stack.Screen name="gamification" options={{ presentation: 'card' }} />
         <Stack.Screen name="sleep" options={{ presentation: 'card' }} />
         <Stack.Screen name="hydration" options={{ presentation: 'card' }} />
         <Stack.Screen name="charge" options={{ presentation: 'card' }} />
         <Stack.Screen name="avatar-selection" options={{ presentation: 'card' }} />
+        <Stack.Screen name="avatar-customization" options={{ presentation: 'card' }} />
         <Stack.Screen name="screenshot-mode" options={{ presentation: 'card' }} />
         {/* Écrans détails & suivi */}
         <Stack.Screen name="activity-detail" options={{ presentation: 'card' }} />
         <Stack.Screen name="activity-history" options={{ presentation: 'card' }} />
+        <Stack.Screen name="composition-detail" options={{ presentation: 'card' }} />
         <Stack.Screen name="measurements" options={{ presentation: 'card' }} />
+        <Stack.Screen name="measurements-detail" options={{ presentation: 'card' }} />
+        <Stack.Screen name="performance-detail" options={{ presentation: 'card' }} />
+        <Stack.Screen name="vitality-detail" options={{ presentation: 'card' }} />
         <Stack.Screen name="health-metrics" options={{ presentation: 'card' }} />
         <Stack.Screen name="health-connect" options={{ presentation: 'card' }} />
         <Stack.Screen name="health-professionals" options={{ presentation: 'card' }} />
         <Stack.Screen name="sleep-input" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="training-goals" options={{ presentation: 'card' }} />
         <Stack.Screen name="transformation" options={{ presentation: 'card' }} />
+        <Stack.Screen name="weekly-report" options={{ presentation: 'card' }} />
         <Stack.Screen name="energy" options={{ presentation: 'card' }} />
         <Stack.Screen name="challenges" options={{ presentation: 'card' }} />
         {/* Écrans outils */}
@@ -148,11 +171,13 @@ function RootLayoutContent() {
         <Stack.Screen name="quick-log-muscu" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="quick-log-other" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="quick-log-running" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="quick-nutrition" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="import-workouts" options={{ presentation: 'card' }} />
         {/* Écrans paramètres & données */}
         <Stack.Screen name="privacy-data" options={{ presentation: 'card' }} />
         <Stack.Screen name="notifications" options={{ presentation: 'card' }} />
         <Stack.Screen name="connected-devices" options={{ presentation: 'card' }} />
+        <Stack.Screen name="preferences" options={{ presentation: 'card' }} />
         <Stack.Screen name="themes" options={{ presentation: 'card' }} />
         <Stack.Screen name="logo-selection" options={{ presentation: 'card' }} />
         <Stack.Screen name="export-data" options={{ presentation: 'card' }} />
@@ -162,12 +187,16 @@ function RootLayoutContent() {
         {/* Écrans compétition & social */}
         <Stack.Screen name="competitor-space" options={{ presentation: 'card' }} />
         <Stack.Screen name="cut-mode" options={{ presentation: 'card' }} />
+        <Stack.Screen name="weight-cut" options={{ presentation: 'card' }} />
         <Stack.Screen name="leaderboard" options={{ presentation: 'card' }} />
+        <Stack.Screen name="fighter-card" options={{ presentation: 'card' }} />
+        <Stack.Screen name="share-card" options={{ presentation: 'modal', animation: 'fade' }} />
         <Stack.Screen name="event-detail" options={{ presentation: 'card' }} />
+        <Stack.Screen name="events" options={{ presentation: 'card' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
-      {__DEV__ && <DevCodeModal />}
+      <DevCodeModal />
     </View>
   );
 }
@@ -220,6 +249,34 @@ export default function RootLayout() {
             .then(() => logger.info('Data retention policy applied'))
             .catch(err => logger.error('Erreur data retention:', err)),
         ]);
+
+        // HealthKit: demander permission au premier lancement (iOS uniquement)
+        if (Platform.OS === 'ios') {
+          try {
+            const hasAsked = await AsyncStorage.getItem('@yoroi_healthkit_asked');
+            if (!hasAsked) {
+              // Delai de 2s pour ne pas surcharger l'utilisateur au lancement
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              await healthConnect.initialize();
+              const connected = await healthConnect.connect();
+              if (connected) {
+                logger.info('[HealthKit] Permission accordee au premier lancement');
+                // Lancer l'observer workout en background
+                await healthConnect.setupWorkoutObserver();
+              }
+              await AsyncStorage.setItem('@yoroi_healthkit_asked', 'true');
+            } else {
+              // Deja demande: initialiser et relancer l'observer si connecte
+              await healthConnect.initialize();
+              const status = healthConnect.getSyncStatus();
+              if (status.isConnected) {
+                await healthConnect.setupWorkoutObserver();
+              }
+            }
+          } catch (err) {
+            logger.error('Erreur init HealthKit:', err);
+          }
+        }
 
       } catch (error) {
         logger.error('Erreur initialisation critique', error);
