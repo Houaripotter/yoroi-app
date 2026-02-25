@@ -1,9 +1,9 @@
 // ===================================================
-// YOROI - SYSTÈME DE 18 THÈMES PREMIUM
-// 9 couleurs × 2 modes (Dark/Light)
+// YOROI - 10 COMBOS DE COULEURS
+// 10 couleurs × 2 modes (Dark/Light)
 // ===================================================
 
-export type ThemeColor = 'volt' | 'tiffany' | 'magma' | 'sakura' | 'matrix' | 'blaze' | 'phantom' | 'ghost' | 'ocean' | 'classic' | 'indigo' | 'gold' | 'emerald' | 'sunset' | 'lavender';
+export type ThemeColor = 'charcoal' | 'mint' | 'royal' | 'ocean' | 'pumpkin' | 'vista' | 'lavender' | 'peach' | 'fizz' | 'cadet' | 'tiffany' | 'obsidian' | 'sakura' | 'emerald' | 'amber' | 'slate';
 export type ThemeMode = 'dark' | 'light' | 'auto';
 
 export interface ThemeColors {
@@ -123,6 +123,9 @@ export interface ThemeColors {
 
   // Texte accent lisible (pour éviter jaune/cyan/vert sur fond blanc)
   accentText: string;   // Version sombre de l'accent pour le texte en mode light
+
+  // Couleur companion (2e couleur du combo, toujours visible)
+  companion: string;
 }
 
 export interface Theme {
@@ -148,6 +151,7 @@ interface BaseColors {
   accentDark: string;
   accentLight: string;
   accentText?: string;  // Version lisible de l'accent pour le texte
+  companion: string;    // 2e couleur du combo
   textPrimary: string;
   textSecondary: string;
   textMuted: string;
@@ -228,20 +232,20 @@ const createThemeColors = (base: BaseColors, isDark: boolean): ThemeColors => {
     dangerLight: isDark ? 'rgba(255, 69, 58, 0.15)' : 'rgba(215, 0, 21, 0.12)',
     dangerMuted: isDark ? 'rgba(255, 69, 58, 0.1)' : 'rgba(215, 0, 21, 0.08)',
 
-    // Secondary (purple)
-    secondary: '#8B5CF6',
-    secondaryDark: '#7C3AED',
-    secondaryLight: '#A78BFA',
-    secondaryMuted: isDark ? 'rgba(139, 92, 246, 0.15)' : 'rgba(139, 92, 246, 0.1)',
+    // Secondary (= companion, la 2e couleur du combo)
+    secondary: base.companion,
+    secondaryDark: base.accentDark,
+    secondaryLight: base.companion,
+    secondaryMuted: isDark ? (base.companion + '25') : (base.companion + '18'),
 
-    // Purple (alias for secondary)
-    purple: '#8B5CF6',
-    purpleLight: isDark ? 'rgba(139, 92, 246, 0.15)' : 'rgba(139, 92, 246, 0.1)',
-    purpleMuted: isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.08)',
+    // Purple (alias for secondary = companion)
+    purple: base.companion,
+    purpleLight: isDark ? (base.companion + '25') : (base.companion + '18'),
+    purpleMuted: isDark ? (base.companion + '18') : (base.companion + '14'),
 
-    // Chart colors
+    // Chart colors - accent + companion comme duo
     chart1: base.accent,
-    chart2: '#8B5CF6',
+    chart2: base.companion,
     chart3: isDark ? '#06B6D4' : '#0891B2',
     chart4: isDark ? '#F97316' : '#EA580C',
 
@@ -261,443 +265,201 @@ const createThemeColors = (base: BaseColors, isDark: boolean): ThemeColors => {
     glass: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
     glassBorder: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
 
-    // Chart bar colors - NOIR en light, BLANC en dark
-    barPrimary: isDark ? '#FFFFFF' : '#1A1A1A',
+    // Chart bar colors - companion + accent comme duo
+    barPrimary: base.companion,
     barAccent: base.accent,
   };
 };
 
 // ===================================================
-// DÉFINITION DES 18 THÈMES
+// DÉFINITION DES 10 COMBOS × 2 MODES = 20 THÈMES
 // ===================================================
 
 export const themes: Record<string, Theme> = {
 
-  // VOLT - Jaune Électrique ULTRA VIBRANT
-  volt_dark: {
-    id: 'volt_dark',
-    colorId: 'volt',
+  // ─────────────────────────────────────────────
+  // 1. CHARCOAL - Rouge Cadillac + Off-White
+  // Accent: #D2042D | Light BG: #FAF9F6
+  // ─────────────────────────────────────────────
+
+  charcoal_dark: {
+    id: 'charcoal_dark',
+    colorId: 'charcoal',
     mode: 'dark',
-    name: 'Volt',
+    name: 'Charcoal',
     icon: '',
-    kanji: '雷',
+    kanji: '炭',
     colors: createThemeColors({
       background: '#0A0A0A',
       backgroundCard: '#151515',
       backgroundElevated: '#1F1F1F',
       backgroundLight: '#2A2A2A',
-      accent: '#FFFF00',          // Jaune pur électrique
-      accentDark: '#FFEE00',
-      accentLight: '#FFFF66',     // Ultra lumineux
+      accent: '#D2042D',
+      accentDark: '#B0021F',
+      accentLight: '#E83350',
+      companion: '#FAF9F6',
       textPrimary: '#FFFFFF',
-      textSecondary: '#F0F0F0',   // Plus clair pour lisibilité
-      textMuted: '#AAAAAA',      // Plus clair pour lisibilité
-      textOnAccent: '#000000',    // NOIR sur jaune vif ✓
-      border: '#2A2A22',
-      borderLight: '#3A3A30',
-      glow: 'rgba(255, 255, 0, 0.6)',        // Glow plus intense
-      glowStrong: 'rgba(255, 255, 0, 0.85)',
-    }, true),
-  },
-
-  volt_light: {
-    id: 'volt_light',
-    colorId: 'volt',
-    mode: 'light',
-    name: 'Volt',
-    icon: '',
-    kanji: '雷',
-    colors: createThemeColors({
-      background: '#FFFFFF',
-      backgroundCard: '#FFFFFF',
-      backgroundElevated: '#FFFFFF',
-      backgroundLight: '#FAFAFA',
-      accent: '#FFFF00',          // Jaune fluo électrique IDENTIQUE au dark
-      accentDark: '#FFEE00',
-      accentLight: '#FFFF66',
-      textPrimary: '#000000',
-      textSecondary: '#222222',
-      textMuted: '#555555',
-      textOnAccent: '#000000',    // NOIR sur jaune fluo ✓
-      border: '#EEEEEE',
-      borderLight: '#F5F5F5',
-      glow: 'rgba(255, 255, 0, 0.6)',        // Glow intense comme dark
-      glowStrong: 'rgba(255, 255, 0, 0.85)',
-    }, false),
-  },
-
-  // TIFFANY - BLEU TIFFANY & CO FLUO (Robin's Egg Blue)
-  tiffany_dark: {
-    id: 'tiffany_dark',
-    colorId: 'tiffany',
-    mode: 'dark',
-    name: 'Tiffany',
-    icon: '',
-    kanji: '氷',
-    colors: createThemeColors({
-      background: '#0A0A0A',
-      backgroundCard: '#151515',
-      backgroundElevated: '#1F1F1F',
-      backgroundLight: '#2A2A2A',
-      accent: '#0FFFEF',          // TIFFANY BLUE FLUO - Turquoise distinct!
-      accentDark: '#00E8D8',
-      accentLight: '#7FFFF4',     // Tiffany clair brillant
-      textPrimary: '#FFFFFF',
-      textSecondary: '#F0F5F5',   // Plus clair
-      textMuted: '#A0B0B0',      // Plus clair
-      textOnAccent: '#000000',    // NOIR sur tiffany fluo ✓
-      border: '#1F2D2B',
-      borderLight: '#2A3836',
-      glow: 'rgba(15, 255, 239, 0.6)',
-      glowStrong: 'rgba(15, 255, 239, 0.85)',
-    }, true),
-  },
-
-  tiffany_light: {
-    id: 'tiffany_light',
-    colorId: 'tiffany',
-    mode: 'light',
-    name: 'Tiffany',
-    icon: '',
-    kanji: '氷',
-    colors: createThemeColors({
-      background: '#FFFFFF',
-      backgroundCard: '#FFFFFF',
-      backgroundElevated: '#FFFFFF',
-      backgroundLight: '#FAFAFA',
-      accent: '#0FFFEF',          // TIFFANY BLUE FLUO - Turquoise distinct!
-      accentDark: '#00E8D8',
-      accentLight: '#7FFFF4',
-      textPrimary: '#000000',
-      textSecondary: '#222222',
-      textMuted: '#555555',
-      textOnAccent: '#000000',    // NOIR sur tiffany fluo ✓
-      border: '#EEEEEE',
-      borderLight: '#F5F5F5',
-      glow: 'rgba(15, 255, 239, 0.6)',
-      glowStrong: 'rgba(15, 255, 239, 0.85)',
-    }, false),
-  },
-
-  // MAGMA - Rouge Combat INCANDESCENT
-  magma_dark: {
-    id: 'magma_dark',
-    colorId: 'magma',
-    mode: 'dark',
-    name: 'Magma',
-    icon: '',
-    kanji: '炎',
-    colors: createThemeColors({
-      background: '#0A0A0A',
-      backgroundCard: '#151515',
-      backgroundElevated: '#1F1F1F',
-      backgroundLight: '#2A2A2A',
-      accent: '#FF0000',          // Rouge pur incandescent
-      accentDark: '#EE0000',
-      accentLight: '#FF4444',     // Rouge flamboyant
-      textPrimary: '#FFFFFF',
-      textSecondary: '#F5F0F0',
-      textMuted: '#B8A0A0',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
       textOnAccent: '#FFFFFF',
-      border: '#2F1F1F',
-      borderLight: '#3A2A2A',
-      glow: 'rgba(255, 0, 0, 0.6)',
-      glowStrong: 'rgba(255, 0, 0, 0.85)',
+      border: '#2A1F1F',
+      borderLight: '#352A2A',
+      glow: 'rgba(210, 4, 45, 0.4)',
+      glowStrong: 'rgba(210, 4, 45, 0.6)',
     }, true),
   },
 
-  magma_light: {
-    id: 'magma_light',
-    colorId: 'magma',
+  charcoal_light: {
+    id: 'charcoal_light',
+    colorId: 'charcoal',
     mode: 'light',
-    name: 'Magma',
+    name: 'Charcoal',
     icon: '',
-    kanji: '炎',
+    kanji: '炭',
     colors: createThemeColors({
       background: '#FFFFFF',
       backgroundCard: '#FFFFFF',
       backgroundElevated: '#FFFFFF',
-      backgroundLight: '#FAFAFA',
-      accent: '#FF0000',          // Rouge vif intense
-      accentDark: '#DD0000',
-      accentLight: '#FF3333',
-      textPrimary: '#000000',
-      textSecondary: '#222222',
-      textMuted: '#555555',
-      textOnAccent: '#FFFFFF',
-      border: '#EEEEEE',
-      borderLight: '#F5F5F5',
-      glow: 'rgba(255, 0, 0, 0.5)',
-      glowStrong: 'rgba(255, 0, 0, 0.75)',
-    }, false),
-  },
-
-  // SAKURA - ROSE CERISE VRAI (pas magenta/violet!)
-  sakura_dark: {
-    id: 'sakura_dark',
-    colorId: 'sakura',
-    mode: 'dark',
-    name: 'Sakura',
-    icon: '',
-    kanji: '桜',
-    colors: createThemeColors({
-      background: '#0A0A0A',
-      backgroundCard: '#151515',
-      backgroundElevated: '#1F1F1F',
-      backgroundLight: '#2A2A2A',
-      accent: '#FF69B4',          // HOT PINK - Vrai rose fluo cerise!
-      accentDark: '#FF5BA7',
-      accentLight: '#FF8DC7',     // Rose bonbon brillant
-      textPrimary: '#FFFFFF',
-      textSecondary: '#F5F0F5',
-      textMuted: '#B8A0B0',
-      textOnAccent: '#000000',    // Noir sur rose
-      border: '#2A1F25',
-      borderLight: '#352A30',
-      glow: 'rgba(255, 105, 180, 0.6)',
-      glowStrong: 'rgba(255, 105, 180, 0.85)',
-    }, true),
-  },
-
-  sakura_light: {
-    id: 'sakura_light',
-    colorId: 'sakura',
-    mode: 'light',
-    name: 'Sakura',
-    icon: '',
-    kanji: '桜',
-    colors: createThemeColors({
-      background: '#FFFFFF',
-      backgroundCard: '#FFFFFF',
-      backgroundElevated: '#FFFFFF',
-      backgroundLight: '#FAFAFA',
-      accent: '#FF69B4',          // HOT PINK - Vrai rose fluo cerise!
-      accentDark: '#FF5BA7',
-      accentLight: '#FF8DC7',
-      textPrimary: '#000000',
-      textSecondary: '#222222',
-      textMuted: '#555555',
-      textOnAccent: '#000000',    // Noir sur rose
-      border: '#EEEEEE',
-      borderLight: '#F5F5F5',
-      glow: 'rgba(255, 105, 180, 0.6)',
-      glowStrong: 'rgba(255, 105, 180, 0.85)',
-    }, false),
-  },
-
-  // MATRIX - Vert Néon ÉLECTRIQUE
-  matrix_dark: {
-    id: 'matrix_dark',
-    colorId: 'matrix',
-    mode: 'dark',
-    name: 'Matrix',
-    icon: '',
-    kanji: '電',
-    colors: createThemeColors({
-      background: '#0A0A0A',
-      backgroundCard: '#151515',
-      backgroundElevated: '#1F1F1F',
-      backgroundLight: '#2A2A2A',
-      accent: '#00FF00',          // Vert pur néon Matrix
-      accentDark: '#00EE00',
-      accentLight: '#66FF66',     // Vert ultra brillant
-      textPrimary: '#FFFFFF',
-      textSecondary: '#F0F5F0',
-      textMuted: '#A0B8A0',
-      textOnAccent: '#000000',
-      border: '#1F2A1F',
-      borderLight: '#2A352A',
-      glow: 'rgba(0, 255, 0, 0.6)',
-      glowStrong: 'rgba(0, 255, 0, 0.85)',
-    }, true),
-  },
-
-  matrix_light: {
-    id: 'matrix_light',
-    colorId: 'matrix',
-    mode: 'light',
-    name: 'Matrix',
-    icon: '',
-    kanji: '電',
-    colors: createThemeColors({
-      background: '#FFFFFF',
-      backgroundCard: '#FFFFFF',
-      backgroundElevated: '#FFFFFF',
-      backgroundLight: '#FAFAFA',
-      accent: '#00FF00',          // Vert néon MATRIX pur identique au dark
-      accentDark: '#00EE00',
-      accentLight: '#33FF33',
-      textPrimary: '#000000',
-      textSecondary: '#222222',
-      textMuted: '#555555',
-      textOnAccent: '#000000',
-      border: '#EEEEEE',
-      borderLight: '#F5F5F5',
-      glow: 'rgba(0, 255, 0, 0.6)',        // Glow intense
-      glowStrong: 'rgba(0, 255, 0, 0.85)',
-    }, false),
-  },
-
-  // BLAZE - PÊCHE FLUO MAGNIFIQUE
-  blaze_dark: {
-    id: 'blaze_dark',
-    colorId: 'blaze',
-    mode: 'dark',
-    name: 'Blaze',
-    icon: '',
-    kanji: '火',
-    colors: createThemeColors({
-      background: '#0A0A0A',
-      backgroundCard: '#151515',
-      backgroundElevated: '#1F1F1F',
-      backgroundLight: '#2A2A2A',
-      accent: '#FF8574',          // PÊCHE FLUO - Corail lumineux!
-      accentDark: '#FF7563',
-      accentLight: '#FFA090',     // Pêche clair brillant
-      textPrimary: '#FFFFFF',
-      textSecondary: '#E8E5E0',
-      textMuted: '#B0A098',
-      textOnAccent: '#000000',
-      border: '#2F2520',
-      borderLight: '#3A302A',
-      glow: 'rgba(255, 133, 116, 0.6)',
-      glowStrong: 'rgba(255, 133, 116, 0.85)',
-    }, true),
-  },
-
-  blaze_light: {
-    id: 'blaze_light',
-    colorId: 'blaze',
-    mode: 'light',
-    name: 'Blaze',
-    icon: '',
-    kanji: '火',
-    colors: createThemeColors({
-      background: '#FFFFFF',
-      backgroundCard: '#FFFFFF',
-      backgroundElevated: '#FFFFFF',
-      backgroundLight: '#FAFAFA',
-      accent: '#FF8574',          // PÊCHE FLUO - Corail lumineux!
-      accentDark: '#FF7563',
-      accentLight: '#FFA090',
-      textPrimary: '#000000',
-      textSecondary: '#1A1A1A',
-      textMuted: '#666666',
-      textOnAccent: '#000000',    // NOIR sur pêche fluo ✓
-      border: '#EEEEEE',
-      borderLight: '#F5F5F5',
-      glow: 'rgba(255, 133, 116, 0.6)',
-      glowStrong: 'rgba(255, 133, 116, 0.85)',
-    }, false),
-  },
-
-  // PHANTOM - Violet Mystère NÉON
-  phantom_dark: {
-    id: 'phantom_dark',
-    colorId: 'phantom',
-    mode: 'dark',
-    name: 'Phantom',
-    icon: '',
-    kanji: '影',
-    colors: createThemeColors({
-      background: '#0A0A0A',
-      backgroundCard: '#151515',
-      backgroundElevated: '#1F1F1F',
-      backgroundLight: '#2A2A2A',
-      accent: '#CC00FF',          // Violet néon électrique
-      accentDark: '#BB00EE',
-      accentLight: '#DD66FF',     // Violet ultra brillant
-      textPrimary: '#FFFFFF',
-      textSecondary: '#E5E0F0',
-      textMuted: '#9888B8',
-      textOnAccent: '#FFFFFF',
-      border: '#251F2F',
-      borderLight: '#2F2A3A',
-      glow: 'rgba(204, 0, 255, 0.6)',
-      glowStrong: 'rgba(204, 0, 255, 0.85)',
-    }, true),
-  },
-
-  phantom_light: {
-    id: 'phantom_light',
-    colorId: 'phantom',
-    mode: 'light',
-    name: 'Phantom',
-    icon: '',
-    kanji: '影',
-    colors: createThemeColors({
-      background: '#FFFFFF',
-      backgroundCard: '#FFFFFF',
-      backgroundElevated: '#FFFFFF',
-      backgroundLight: '#FAFAFA',
-      accent: '#9900CC', // Violet plus fonce pour meilleur contraste WCAG AA (etait #CC00FF)
-      accentDark: '#7700AA',
-      accentLight: '#BB33EE',
-      textPrimary: '#000000',
-      textSecondary: '#1A1A1A',
-      textMuted: '#505050', // Ameliore contraste (etait #666666)
-      textOnAccent: '#FFFFFF',
-      border: '#EEEEEE',
-      borderLight: '#F5F5F5',
-      glow: 'rgba(153, 0, 204, 0.6)',
-      glowStrong: 'rgba(153, 0, 204, 0.85)',
-    }, false),
-  },
-
-  // GHOST - Minimaliste
-  ghost_dark: {
-    id: 'ghost_dark',
-    colorId: 'ghost',
-    mode: 'dark',
-    name: 'Ghost',
-    icon: '',
-    kanji: '魂',
-    colors: createThemeColors({
-      background: '#0A0A0A',
-      backgroundCard: '#151515',
-      backgroundElevated: '#1F1F1F',
-      backgroundLight: '#2A2A2A',
-      accent: '#FFFFFF',
-      accentDark: '#E0E0E0',
-      accentLight: '#FFFFFF',
-      textPrimary: '#FFFFFF',
-      textSecondary: '#C8C8C8',
-      textMuted: '#909090',
-      textOnAccent: '#000000',
-      border: '#252525',
-      borderLight: '#303030',
-      glow: 'rgba(255, 255, 255, 0.2)',
-      glowStrong: 'rgba(255, 255, 255, 0.35)',
-    }, true),
-  },
-
-  ghost_light: {
-    id: 'ghost_light',
-    colorId: 'ghost',
-    mode: 'light',
-    name: 'Ghost',
-    icon: '',
-    kanji: '魂',
-    colors: createThemeColors({
-      background: '#FAFAFA',
-      backgroundCard: '#F5F5F5',
-      backgroundElevated: '#F0F0F0',
-      backgroundLight: '#EAEAEA',
-      accent: '#5A5A5A', // Ameliore contraste WCAG AA (etait #888888)
-      accentDark: '#404040',
-      accentLight: '#707070',
+      backgroundLight: '#F8F8F8',
+      accent: '#D2042D',
+      accentDark: '#B0021F',
+      accentLight: '#E83350',
+      companion: '#FAF9F6',
       textPrimary: '#1A1A1A',
-      textSecondary: '#2A2A2A', // Ameliore contraste (etait #3A3A3A)
-      textMuted: '#505050', // Ameliore contraste (etait #666666)
+      textSecondary: '#333333',
+      textMuted: '#666666',
       textOnAccent: '#FFFFFF',
-      border: '#DEDEDE',
-      borderLight: '#EEEEEE',
-      glow: 'rgba(0, 0, 0, 0.08)',
-      glowStrong: 'rgba(0, 0, 0, 0.15)',
+      border: '#E8E6E2',
+      borderLight: '#F0EEEA',
+      glow: 'rgba(210, 4, 45, 0.2)',
+      glowStrong: 'rgba(210, 4, 45, 0.35)',
     }, false),
   },
 
-  // OCEAN - Bleu Profond ÉLECTRIQUE
+  // ─────────────────────────────────────────────
+  // 2. MINT - Vert Menthe + Blanc Fumé
+  // Accent: #69A481 | Light BG: #E7EDEB
+  // ─────────────────────────────────────────────
+
+  mint_dark: {
+    id: 'mint_dark',
+    colorId: 'mint',
+    mode: 'dark',
+    name: 'Mint',
+    icon: '',
+    kanji: '葉',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#69A481',
+      accentDark: '#528A6A',
+      accentLight: '#85BA99',
+      companion: '#E7EDEB',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#FFFFFF',
+      border: '#1F2A22',
+      borderLight: '#2A3530',
+      glow: 'rgba(105, 164, 129, 0.4)',
+      glowStrong: 'rgba(105, 164, 129, 0.6)',
+    }, true),
+  },
+
+  mint_light: {
+    id: 'mint_light',
+    colorId: 'mint',
+    mode: 'light',
+    name: 'Mint',
+    icon: '',
+    kanji: '葉',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#69A481',
+      accentDark: '#528A6A',
+      accentLight: '#85BA99',
+      companion: '#E7EDEB',
+      accentText: '#4A7A5E',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#FFFFFF',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(105, 164, 129, 0.2)',
+      glowStrong: 'rgba(105, 164, 129, 0.35)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
+  // 3. ROYAL - Bleu Royal + Blanc
+  // Accent: #00539C | Light BG: #FFFFFF
+  // ─────────────────────────────────────────────
+
+  royal_dark: {
+    id: 'royal_dark',
+    colorId: 'royal',
+    mode: 'dark',
+    name: 'Royal',
+    icon: '',
+    kanji: '王',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#00539C',
+      accentDark: '#003D75',
+      accentLight: '#2A7BC4',
+      companion: '#FFFFFF',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#FFFFFF',
+      border: '#1F1F2A',
+      borderLight: '#2A2A35',
+      glow: 'rgba(0, 83, 156, 0.4)',
+      glowStrong: 'rgba(0, 83, 156, 0.6)',
+    }, true),
+  },
+
+  royal_light: {
+    id: 'royal_light',
+    colorId: 'royal',
+    mode: 'light',
+    name: 'Royal',
+    icon: '',
+    kanji: '王',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#00539C',
+      accentDark: '#003D75',
+      accentLight: '#2A7BC4',
+      companion: '#FFFFFF',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#FFFFFF',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(0, 83, 156, 0.2)',
+      glowStrong: 'rgba(0, 83, 156, 0.35)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
+  // 4. OCEAN - Bleu Océan + Ciel Nuageux ★ PRÉFÉRÉ
+  // Accent: #2872A1 | Light BG: #CBDDE9
+  // ─────────────────────────────────────────────
+
   ocean_dark: {
     id: 'ocean_dark',
     colorId: 'ocean',
@@ -710,17 +472,18 @@ export const themes: Record<string, Theme> = {
       backgroundCard: '#151515',
       backgroundElevated: '#1F1F1F',
       backgroundLight: '#2A2A2A',
-      accent: '#00D4FF',          // Bleu cyan ultra vif
-      accentDark: '#00BBEE',
-      accentLight: '#66E5FF',     // Bleu océan brillant
+      accent: '#2872A1',
+      accentDark: '#1D5B82',
+      accentLight: '#4A94C0',
+      companion: '#CBDDE9',
       textPrimary: '#FFFFFF',
-      textSecondary: '#D0E5F0',
-      textMuted: '#7898B8',
-      textOnAccent: '#000000',
-      border: '#1F2A30',
-      borderLight: '#2A3540',
-      glow: 'rgba(0, 212, 255, 0.6)',
-      glowStrong: 'rgba(0, 212, 255, 0.85)',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#FFFFFF',
+      border: '#1F2530',
+      borderLight: '#2A3040',
+      glow: 'rgba(40, 114, 161, 0.4)',
+      glowStrong: 'rgba(40, 114, 161, 0.6)',
     }, true),
   },
 
@@ -735,310 +498,171 @@ export const themes: Record<string, Theme> = {
       background: '#FFFFFF',
       backgroundCard: '#FFFFFF',
       backgroundElevated: '#FFFFFF',
-      backgroundLight: '#FAFAFA',
-      accent: '#00D4FF',          // Bleu cyan électrique identique au dark
-      accentDark: '#00CCFF',
-      accentLight: '#33DDFF',
-      textPrimary: '#000000',
-      textSecondary: '#1A1A1A',
-      textMuted: '#666666',
-      textOnAccent: '#000000',    // NOIR sur cyan vif ✓
-      border: '#EEEEEE',
-      borderLight: '#F5F5F5',
-      glow: 'rgba(0, 212, 255, 0.6)',        // Glow cyan intense
-      glowStrong: 'rgba(0, 212, 255, 0.85)',
+      backgroundLight: '#F8F8F8',
+      accent: '#2872A1',
+      accentDark: '#1D5B82',
+      accentLight: '#4A94C0',
+      companion: '#CBDDE9',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#5A5A5A',
+      textOnAccent: '#FFFFFF',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(40, 114, 161, 0.2)',
+      glowStrong: 'rgba(40, 114, 161, 0.35)',
     }, false),
   },
 
-  // ⬛ CLASSIC - Noir & Blanc Pur
-  classic_dark: {
-    id: 'classic_dark',
-    colorId: 'classic',
+  // ─────────────────────────────────────────────
+  // 5. PUMPKIN - Orange Citrouille + Charcoal
+  // Accent: #FD802E | Light BG: #233D4C
+  // ─────────────────────────────────────────────
+
+  pumpkin_dark: {
+    id: 'pumpkin_dark',
+    colorId: 'pumpkin',
     mode: 'dark',
-    name: 'Classic',
-    icon: '⬛',
-    kanji: '墨',
+    name: 'Pumpkin',
+    icon: '',
+    kanji: '橙',
     colors: createThemeColors({
       background: '#0A0A0A',
       backgroundCard: '#151515',
       backgroundElevated: '#1F1F1F',
       backgroundLight: '#2A2A2A',
-      accent: '#FFFFFF',
-      accentDark: '#E0E0E0',
-      accentLight: '#FFFFFF',
+      accent: '#FD802E',
+      accentDark: '#E06A15',
+      accentLight: '#FFA060',
+      companion: '#233D4C',
       textPrimary: '#FFFFFF',
-      textSecondary: '#F0F0F0',   // Amélioré (était #B8B8B8)
-      textMuted: '#AAAAAA',      // Amélioré (était #808080)
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
       textOnAccent: '#000000',
-      border: '#2A2A2A',
-      borderLight: '#353535',
-      glow: 'rgba(255, 255, 255, 0.15)',
-      glowStrong: 'rgba(255, 255, 255, 0.25)',
+      border: '#2A2520',
+      borderLight: '#353028',
+      glow: 'rgba(253, 128, 46, 0.4)',
+      glowStrong: 'rgba(253, 128, 46, 0.6)',
     }, true),
   },
 
-  classic_light: {
-    id: 'classic_light',
-    colorId: 'classic',
+  pumpkin_light: {
+    id: 'pumpkin_light',
+    colorId: 'pumpkin',
     mode: 'light',
-    name: 'Classic',
+    name: 'Pumpkin',
     icon: '',
-    kanji: '墨',
+    kanji: '橙',
     colors: createThemeColors({
       background: '#FFFFFF',
-      backgroundCard: '#F8F8F8',
-      backgroundElevated: '#F0F0F0',
-      backgroundLight: '#FAFAFA',
-      accent: '#1A1A1A',           // NOIR pour mode clair
-      accentDark: '#000000',
-      accentLight: '#333333',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#FD802E',
+      accentDark: '#E06A15',
+      accentLight: '#FFA060',
+      companion: '#233D4C',
+      accentText: '#D06820',
       textPrimary: '#1A1A1A',
-      textSecondary: '#222222',    // Amélioré
-      textMuted: '#555555',       // Amélioré
-      textOnAccent: '#FFFFFF',     // Blanc sur noir
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#000000',
       border: '#E5E5E5',
-      borderLight: '#EEEEEE',
-      glow: 'rgba(0, 0, 0, 0.08)',
-      glowStrong: 'rgba(0, 0, 0, 0.15)',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(253, 128, 46, 0.3)',
+      glowStrong: 'rgba(253, 128, 46, 0.5)',
     }, false),
   },
 
-  // 💜 INDIGO - Bleu-Violet Profond
-  indigo_dark: {
-    id: 'indigo_dark',
-    colorId: 'indigo',
-    mode: 'dark',
-    name: 'Indigo',
-    icon: '💜',
-    kanji: '藍',
-    colors: createThemeColors({
-      background: '#0A0A14',
-      backgroundCard: '#12121F',
-      backgroundElevated: '#1A1A2E',
-      backgroundLight: '#22223A',
-      accent: '#6366F1',
-      accentDark: '#4F46E5',
-      accentLight: '#818CF8',
-      textPrimary: '#FFFFFF',
-      textSecondary: '#C7C7D9',
-      textMuted: '#8B8BA3',
-      textOnAccent: '#FFFFFF',
-      border: '#2A2A45',
-      borderLight: '#3A3A55',
-      glow: 'rgba(99, 102, 241, 0.4)',
-      glowStrong: 'rgba(99, 102, 241, 0.6)',
-    }, true),
-  },
+  // ─────────────────────────────────────────────
+  // 6. VISTA - Bleu Vista + Mindaro
+  // Accent: #84ABD6 | Light BG: #FEFFB9
+  // ─────────────────────────────────────────────
 
-  indigo_light: {
-    id: 'indigo_light',
-    colorId: 'indigo',
-    mode: 'light',
-    name: 'Indigo',
+  vista_dark: {
+    id: 'vista_dark',
+    colorId: 'vista',
+    mode: 'dark',
+    name: 'Vista',
     icon: '',
-    kanji: '藍',
-    colors: createThemeColors({
-      background: '#F8F8FF',
-      backgroundCard: '#FFFFFF',
-      backgroundElevated: '#F0F0FF',
-      backgroundLight: '#E8E8F8',
-      accent: '#4F46E5',
-      accentDark: '#4338CA',
-      accentLight: '#6366F1',
-      textPrimary: '#1A1A2E',
-      textSecondary: '#3A3A55',
-      textMuted: '#5A5A75',
-      textOnAccent: '#FFFFFF',
-      border: '#E0E0F0',
-      borderLight: '#EEEEFC',
-      glow: 'rgba(79, 70, 229, 0.15)',
-      glowStrong: 'rgba(79, 70, 229, 0.25)',
-    }, false),
-  },
-
-  // 🏆 GOLD - Or Brillant FLUO
-  gold_dark: {
-    id: 'gold_dark',
-    colorId: 'gold',
-    mode: 'dark',
-    name: 'Gold',
-    icon: '🏆',
-    kanji: '金',
+    kanji: '空',
     colors: createThemeColors({
       background: '#0A0A0A',
-      backgroundCard: '#151510',
-      backgroundElevated: '#1F1F18',
-      backgroundLight: '#2A2A20',
-      accent: '#FFD700',           // OR PUR BRILLANT
-      accentDark: '#FFCC00',
-      accentLight: '#FFE44D',      // Or clair lumineux
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#84ABD6',
+      accentDark: '#6890BA',
+      accentLight: '#A0C2E4',
+      companion: '#FEFFB9',
       textPrimary: '#FFFFFF',
-      textSecondary: '#F0E8D0',
-      textMuted: '#B8A870',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
       textOnAccent: '#000000',
-      border: '#3D3820',
-      borderLight: '#4D4828',
-      glow: 'rgba(255, 215, 0, 0.5)',
-      glowStrong: 'rgba(255, 215, 0, 0.75)',
+      border: '#1F252A',
+      borderLight: '#2A3035',
+      glow: 'rgba(132, 171, 214, 0.4)',
+      glowStrong: 'rgba(132, 171, 214, 0.6)',
     }, true),
   },
 
-  gold_light: {
-    id: 'gold_light',
-    colorId: 'gold',
+  vista_light: {
+    id: 'vista_light',
+    colorId: 'vista',
     mode: 'light',
-    name: 'Gold',
+    name: 'Vista',
     icon: '',
-    kanji: '金',
+    kanji: '空',
     colors: createThemeColors({
-      background: '#FFFDF8',
+      background: '#FFFFFF',
       backgroundCard: '#FFFFFF',
-      backgroundElevated: '#FFFAED',
-      backgroundLight: '#FFF5D8',
-      accent: '#FFD700',           // OR PUR BRILLANT
-      accentDark: '#E6C200',
-      accentLight: '#FFE44D',
-      textPrimary: '#1A1505',
-      textSecondary: '#3D3515',
-      textMuted: '#5D5025',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#84ABD6',
+      accentDark: '#6890BA',
+      accentLight: '#A0C2E4',
+      companion: '#FEFFB9',
+      accentText: '#5580A5',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
       textOnAccent: '#000000',
-      border: '#F0E8C8',
-      borderLight: '#F8F0D8',
-      glow: 'rgba(255, 215, 0, 0.3)',
-      glowStrong: 'rgba(255, 215, 0, 0.5)',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(132, 171, 214, 0.2)',
+      glowStrong: 'rgba(132, 171, 214, 0.35)',
     }, false),
   },
 
-  // 💎 EMERALD - Emeraude Profond
-  emerald_dark: {
-    id: 'emerald_dark',
-    colorId: 'emerald',
-    mode: 'dark',
-    name: 'Emerald',
-    icon: '💎',
-    kanji: '翠',
-    colors: createThemeColors({
-      background: '#05100D',
-      backgroundCard: '#0A1A15',
-      backgroundElevated: '#10251F',
-      backgroundLight: '#153028',
-      accent: '#10B981',
-      accentDark: '#059669',
-      accentLight: '#34D399',
-      textPrimary: '#FFFFFF',
-      textSecondary: '#B8E0D0',
-      textMuted: '#70A898',
-      textOnAccent: '#000000',
-      border: '#1A3D32',
-      borderLight: '#254D42',
-      glow: 'rgba(16, 185, 129, 0.4)',
-      glowStrong: 'rgba(16, 185, 129, 0.6)',
-    }, true),
-  },
+  // ─────────────────────────────────────────────
+  // 7. LAVENDER - Rose Blush + Lavande
+  // Accent: #D37E91 | Light BG: #FFE8EE
+  // ─────────────────────────────────────────────
 
-  emerald_light: {
-    id: 'emerald_light',
-    colorId: 'emerald',
-    mode: 'light',
-    name: 'Emerald',
-    icon: '',
-    kanji: '翠',
-    colors: createThemeColors({
-      background: '#F5FFFC',
-      backgroundCard: '#FFFFFF',
-      backgroundElevated: '#E8FFF5',
-      backgroundLight: '#D8FFED',
-      accent: '#059669',
-      accentDark: '#047857',
-      accentLight: '#10B981',
-      textPrimary: '#0A1A15',
-      textSecondary: '#153028',
-      textMuted: '#2D5045',
-      textOnAccent: '#FFFFFF',
-      border: '#C8E8DC',
-      borderLight: '#D8F0E8',
-      glow: 'rgba(5, 150, 105, 0.15)',
-      glowStrong: 'rgba(5, 150, 105, 0.25)',
-    }, false),
-  },
-
-  // 🌅 SUNSET - Rouge-Orangé Flamboyant (différent de Blaze)
-  sunset_dark: {
-    id: 'sunset_dark',
-    colorId: 'sunset',
-    mode: 'dark',
-    name: 'Sunset',
-    icon: '🌅',
-    kanji: '夕',
-    colors: createThemeColors({
-      background: '#0A0A0A',
-      backgroundCard: '#1A1210',
-      backgroundElevated: '#251815',
-      backgroundLight: '#301F1A',
-      accent: '#FF4500',           // ORANGERED - Plus rouge que Blaze
-      accentDark: '#E63E00',
-      accentLight: '#FF6A33',
-      textPrimary: '#FFFFFF',
-      textSecondary: '#F0D8D0',
-      textMuted: '#B09088',
-      textOnAccent: '#FFFFFF',
-      border: '#402520',
-      borderLight: '#503228',
-      glow: 'rgba(255, 69, 0, 0.5)',
-      glowStrong: 'rgba(255, 69, 0, 0.75)',
-    }, true),
-  },
-
-  sunset_light: {
-    id: 'sunset_light',
-    colorId: 'sunset',
-    mode: 'light',
-    name: 'Sunset',
-    icon: '',
-    kanji: '夕',
-    colors: createThemeColors({
-      background: '#FFFAF8',
-      backgroundCard: '#FFFFFF',
-      backgroundElevated: '#FFF2ED',
-      backgroundLight: '#FFE8E0',
-      accent: '#FF4500',           // ORANGERED - Plus rouge que Blaze
-      accentDark: '#E63E00',
-      accentLight: '#FF6A33',
-      textPrimary: '#1A0D08',
-      textSecondary: '#402418',
-      textMuted: '#604030',
-      textOnAccent: '#FFFFFF',
-      border: '#F0D8D0',
-      borderLight: '#F8E8E0',
-      glow: 'rgba(255, 69, 0, 0.2)',
-      glowStrong: 'rgba(255, 69, 0, 0.35)',
-    }, false),
-  },
-
-  // 🪻 LAVENDER - Lavande Douce
   lavender_dark: {
     id: 'lavender_dark',
     colorId: 'lavender',
     mode: 'dark',
     name: 'Lavender',
-    icon: '🪻',
-    kanji: '紫',
+    icon: '',
+    kanji: '花',
     colors: createThemeColors({
-      background: '#0D0A10',
-      backgroundCard: '#15121A',
-      backgroundElevated: '#1E1A25',
-      backgroundLight: '#272230',
-      accent: '#A78BFA',
-      accentDark: '#8B5CF6',
-      accentLight: '#C4B5FD',
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#D37E91',
+      accentDark: '#B86578',
+      accentLight: '#E09AAA',
+      companion: '#FFE8EE',
       textPrimary: '#FFFFFF',
-      textSecondary: '#D8D0E8',
-      textMuted: '#9890A8',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
       textOnAccent: '#000000',
-      border: '#352D40',
-      borderLight: '#453D55',
-      glow: 'rgba(167, 139, 250, 0.4)',
-      glowStrong: 'rgba(167, 139, 250, 0.6)',
+      border: '#2A1F22',
+      borderLight: '#352A2E',
+      glow: 'rgba(211, 126, 145, 0.4)',
+      glowStrong: 'rgba(211, 126, 145, 0.6)',
     }, true),
   },
 
@@ -1048,23 +672,563 @@ export const themes: Record<string, Theme> = {
     mode: 'light',
     name: 'Lavender',
     icon: '',
-    kanji: '紫',
+    kanji: '花',
     colors: createThemeColors({
-      background: '#FAF8FF',
+      background: '#FFFFFF',
       backgroundCard: '#FFFFFF',
-      backgroundElevated: '#F0ECFF',
-      backgroundLight: '#E8E0FF',
-      accent: '#8B5CF6',
-      accentDark: '#7C3AED',
-      accentLight: '#A78BFA',
-      textPrimary: '#15121A',
-      textSecondary: '#352D40',
-      textMuted: '#554D65',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#D37E91',
+      accentDark: '#B86578',
+      accentLight: '#E09AAA',
+      companion: '#FFE8EE',
+      accentText: '#B06070',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#000000',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(211, 126, 145, 0.2)',
+      glowStrong: 'rgba(211, 126, 145, 0.35)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
+  // 8. PEACH - Cherry Crush + Peach Cream
+  // Accent: #E74F5E | Light BG: #FDDFC5
+  // ─────────────────────────────────────────────
+
+  peach_dark: {
+    id: 'peach_dark',
+    colorId: 'peach',
+    mode: 'dark',
+    name: 'Peach',
+    icon: '',
+    kanji: '桃',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#E74F5E',
+      accentDark: '#CC3545',
+      accentLight: '#F07080',
+      companion: '#FDDFC5',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
       textOnAccent: '#FFFFFF',
-      border: '#E0D8F0',
-      borderLight: '#EDE8F8',
-      glow: 'rgba(139, 92, 246, 0.15)',
-      glowStrong: 'rgba(139, 92, 246, 0.25)',
+      border: '#2A1F20',
+      borderLight: '#352A2C',
+      glow: 'rgba(231, 79, 94, 0.4)',
+      glowStrong: 'rgba(231, 79, 94, 0.6)',
+    }, true),
+  },
+
+  peach_light: {
+    id: 'peach_light',
+    colorId: 'peach',
+    mode: 'light',
+    name: 'Peach',
+    icon: '',
+    kanji: '桃',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#E74F5E',
+      accentDark: '#CC3545',
+      accentLight: '#F07080',
+      companion: '#FDDFC5',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#FFFFFF',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(231, 79, 94, 0.2)',
+      glowStrong: 'rgba(231, 79, 94, 0.35)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
+  // 9. FIZZ - Indigo Dusk + Peach Fizz ★ 2e PRÉFÉRÉ
+  // Accent: #3E4260 | Light BG: #FFEAD7
+  // ─────────────────────────────────────────────
+
+  fizz_dark: {
+    id: 'fizz_dark',
+    colorId: 'fizz',
+    mode: 'dark',
+    name: 'Fizz',
+    icon: '',
+    kanji: '泡',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#3E4260',
+      accentDark: '#2E3250',
+      accentLight: '#5A5E7A',
+      companion: '#FFEAD7',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#FFFFFF',
+      border: '#1F2030',
+      borderLight: '#2A2B3A',
+      glow: 'rgba(62, 66, 96, 0.4)',
+      glowStrong: 'rgba(62, 66, 96, 0.6)',
+    }, true),
+  },
+
+  fizz_light: {
+    id: 'fizz_light',
+    colorId: 'fizz',
+    mode: 'light',
+    name: 'Fizz',
+    icon: '',
+    kanji: '泡',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#3E4260',
+      accentDark: '#2E3250',
+      accentLight: '#5A5E7A',
+      companion: '#FFEAD7',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#FFFFFF',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(62, 66, 96, 0.2)',
+      glowStrong: 'rgba(62, 66, 96, 0.35)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
+  // 10. CADET - Bleu Cadet + Menthe Glacée
+  // Accent: #5E9EA0 | Light BG: #F0F5DF
+  // ─────────────────────────────────────────────
+
+  cadet_dark: {
+    id: 'cadet_dark',
+    colorId: 'cadet',
+    mode: 'dark',
+    name: 'Cadet',
+    icon: '',
+    kanji: '翠',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#5E9EA0',
+      accentDark: '#488588',
+      accentLight: '#7AB5B7',
+      companion: '#F0F5DF',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#000000',
+      border: '#1F2A2A',
+      borderLight: '#2A3535',
+      glow: 'rgba(94, 158, 160, 0.4)',
+      glowStrong: 'rgba(94, 158, 160, 0.6)',
+    }, true),
+  },
+
+  cadet_light: {
+    id: 'cadet_light',
+    colorId: 'cadet',
+    mode: 'light',
+    name: 'Cadet',
+    icon: '',
+    kanji: '翠',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#5E9EA0',
+      accentDark: '#488588',
+      accentLight: '#7AB5B7',
+      companion: '#F0F5DF',
+      accentText: '#3A7A7C',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#000000',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(94, 158, 160, 0.2)',
+      glowStrong: 'rgba(94, 158, 160, 0.35)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
+  // 11. TIFFANY - Bleu Tiffany + Noir (Tiffany x Nike)
+  // Accent: #0ABAB5 | Companion: #1A1A1A
+  // ─────────────────────────────────────────────
+
+  tiffany_dark: {
+    id: 'tiffany_dark',
+    colorId: 'tiffany',
+    mode: 'dark',
+    name: 'Tiffany',
+    icon: '',
+    kanji: '宝',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#0ABAB5',
+      accentDark: '#089A96',
+      accentLight: '#3DD4CF',
+      companion: '#1A1A1A',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#000000',
+      border: '#1A2A2A',
+      borderLight: '#253535',
+      glow: 'rgba(10, 186, 181, 0.4)',
+      glowStrong: 'rgba(10, 186, 181, 0.6)',
+    }, true),
+  },
+
+  tiffany_light: {
+    id: 'tiffany_light',
+    colorId: 'tiffany',
+    mode: 'light',
+    name: 'Tiffany',
+    icon: '',
+    kanji: '宝',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#0ABAB5',
+      accentDark: '#089A96',
+      accentLight: '#3DD4CF',
+      companion: '#1A1A1A',
+      accentText: '#078A87',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#000000',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(10, 186, 181, 0.2)',
+      glowStrong: 'rgba(10, 186, 181, 0.35)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
+  // 12. OBSIDIAN - Or Antique + Obsidienne
+  // Accent: #C9A84C | Companion: #2C2C2C
+  // ─────────────────────────────────────────────
+
+  obsidian_dark: {
+    id: 'obsidian_dark',
+    colorId: 'obsidian',
+    mode: 'dark',
+    name: 'Obsidian',
+    icon: '',
+    kanji: '黒',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#C9A84C',
+      accentDark: '#A8893A',
+      accentLight: '#DBBF6A',
+      companion: '#2C2C2C',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#000000',
+      border: '#2A2518',
+      borderLight: '#352F22',
+      glow: 'rgba(201, 168, 76, 0.4)',
+      glowStrong: 'rgba(201, 168, 76, 0.6)',
+    }, true),
+  },
+
+  obsidian_light: {
+    id: 'obsidian_light',
+    colorId: 'obsidian',
+    mode: 'light',
+    name: 'Obsidian',
+    icon: '',
+    kanji: '黒',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#C9A84C',
+      accentDark: '#A8893A',
+      accentLight: '#DBBF6A',
+      companion: '#2C2C2C',
+      accentText: '#9A8035',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#000000',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(201, 168, 76, 0.2)',
+      glowStrong: 'rgba(201, 168, 76, 0.35)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
+  // 13. SAKURA - Rose Cerisier + Ivoire Chaud
+  // Accent: #E891A8 | Companion: #F5E6D3
+  // ─────────────────────────────────────────────
+
+  sakura_dark: {
+    id: 'sakura_dark',
+    colorId: 'sakura',
+    mode: 'dark',
+    name: 'Sakura',
+    icon: '',
+    kanji: '桜',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#E891A8',
+      accentDark: '#D07090',
+      accentLight: '#F0ACBE',
+      companion: '#F5E6D3',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#000000',
+      border: '#2A1F24',
+      borderLight: '#352A30',
+      glow: 'rgba(232, 145, 168, 0.4)',
+      glowStrong: 'rgba(232, 145, 168, 0.6)',
+    }, true),
+  },
+
+  sakura_light: {
+    id: 'sakura_light',
+    colorId: 'sakura',
+    mode: 'light',
+    name: 'Sakura',
+    icon: '',
+    kanji: '桜',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#E891A8',
+      accentDark: '#D07090',
+      accentLight: '#F0ACBE',
+      companion: '#F5E6D3',
+      accentText: '#C06882',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#000000',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(232, 145, 168, 0.2)',
+      glowStrong: 'rgba(232, 145, 168, 0.35)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
+  // 14. EMERALD - Vert Emeraude + Foret Profonde
+  // Accent: #50C878 | Companion: #1B3A2D
+  // ─────────────────────────────────────────────
+
+  emerald_dark: {
+    id: 'emerald_dark',
+    colorId: 'emerald',
+    mode: 'dark',
+    name: 'Emerald',
+    icon: '',
+    kanji: '翡',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#50C878',
+      accentDark: '#3DA860',
+      accentLight: '#70D890',
+      companion: '#1B3A2D',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#000000',
+      border: '#1A2A20',
+      borderLight: '#25352A',
+      glow: 'rgba(80, 200, 120, 0.4)',
+      glowStrong: 'rgba(80, 200, 120, 0.6)',
+    }, true),
+  },
+
+  emerald_light: {
+    id: 'emerald_light',
+    colorId: 'emerald',
+    mode: 'light',
+    name: 'Emerald',
+    icon: '',
+    kanji: '翡',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#50C878',
+      accentDark: '#3DA860',
+      accentLight: '#70D890',
+      companion: '#1B3A2D',
+      accentText: '#2E9A55',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#000000',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(80, 200, 120, 0.2)',
+      glowStrong: 'rgba(80, 200, 120, 0.35)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
+  // 15. AMBER - Ambre Dore + Bois Fonce
+  // Accent: #FFBF00 | Companion: #2D1810
+  // ─────────────────────────────────────────────
+
+  amber_dark: {
+    id: 'amber_dark',
+    colorId: 'amber',
+    mode: 'dark',
+    name: 'Amber',
+    icon: '',
+    kanji: '琥',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#FFBF00',
+      accentDark: '#D9A200',
+      accentLight: '#FFD040',
+      companion: '#2D1810',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#000000',
+      border: '#2A2515',
+      borderLight: '#353020',
+      glow: 'rgba(255, 191, 0, 0.4)',
+      glowStrong: 'rgba(255, 191, 0, 0.6)',
+    }, true),
+  },
+
+  amber_light: {
+    id: 'amber_light',
+    colorId: 'amber',
+    mode: 'light',
+    name: 'Amber',
+    icon: '',
+    kanji: '琥',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#FFBF00',
+      accentDark: '#D9A200',
+      accentLight: '#FFD040',
+      companion: '#2D1810',
+      accentText: '#B88A00',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#000000',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(255, 191, 0, 0.2)',
+      glowStrong: 'rgba(255, 191, 0, 0.35)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
+  // 16. SLATE - Pervenche + Lilas Pale
+  // Accent: #7C8CFF | Companion: #E8E4F0
+  // ─────────────────────────────────────────────
+
+  slate_dark: {
+    id: 'slate_dark',
+    colorId: 'slate',
+    mode: 'dark',
+    name: 'Slate',
+    icon: '',
+    kanji: '夜',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#7C8CFF',
+      accentDark: '#5A6AE0',
+      accentLight: '#9EAAFF',
+      companion: '#E8E4F0',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#000000',
+      border: '#1F1F2A',
+      borderLight: '#2A2A38',
+      glow: 'rgba(124, 140, 255, 0.4)',
+      glowStrong: 'rgba(124, 140, 255, 0.6)',
+    }, true),
+  },
+
+  slate_light: {
+    id: 'slate_light',
+    colorId: 'slate',
+    mode: 'light',
+    name: 'Slate',
+    icon: '',
+    kanji: '夜',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#7C8CFF',
+      accentDark: '#5A6AE0',
+      accentLight: '#9EAAFF',
+      companion: '#E8E4F0',
+      accentText: '#5560CC',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#000000',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(124, 140, 255, 0.2)',
+      glowStrong: 'rgba(124, 140, 255, 0.35)',
     }, false),
   },
 };
@@ -1073,23 +1237,23 @@ export const themes: Record<string, Theme> = {
 // LISTE DES COULEURS POUR LE SÉLECTEUR
 // ===================================================
 
-export const themeColors: { id: ThemeColor; name: string; icon: string; kanji: string; color: string }[] = [
-  { id: 'classic', name: 'Classic', icon: '', kanji: '墨', color: '#1A1A1A' },
-  { id: 'tiffany', name: 'Tiffany', icon: '', kanji: '氷', color: '#0FFFEF' },  // Bleu Tiffany & Co fluo
-  { id: 'volt', name: 'Volt', icon: '', kanji: '雷', color: '#FFFF00' },
-  { id: 'magma', name: 'Magma', icon: '', kanji: '炎', color: '#FF0000' },
-  { id: 'sakura', name: 'Sakura', icon: '', kanji: '桜', color: '#FF69B4' },  // ROSE CERISE (Hot Pink)
-  { id: 'matrix', name: 'Matrix', icon: '', kanji: '電', color: '#00FF00' },
-  { id: 'blaze', name: 'Blaze', icon: '', kanji: '火', color: '#FF8574' },   // PÊCHE FLUO
-  { id: 'phantom', name: 'Phantom', icon: '', kanji: '影', color: '#CC00FF' },
-  { id: 'ghost', name: 'Ghost', icon: '', kanji: '魂', color: '#888888' },
-  { id: 'ocean', name: 'Ocean', icon: '', kanji: '海', color: '#00D4FF' },
-  // 5 Nouveaux thèmes
-  { id: 'indigo', name: 'Indigo', icon: '', kanji: '藍', color: '#6366F1' },   // Bleu-violet profond
-  { id: 'gold', name: 'Gold', icon: '', kanji: '金', color: '#FFD700' },       // Or pur brillant
-  { id: 'emerald', name: 'Emerald', icon: '', kanji: '翠', color: '#10B981' }, // Émeraude profond
-  { id: 'sunset', name: 'Sunset', icon: '', kanji: '夕', color: '#FF4500' },   // Rouge-orangé flamboyant
-  { id: 'lavender', name: 'Lavender', icon: '', kanji: '紫', color: '#A78BFA' }, // Lavande douce
+export const themeColors: { id: ThemeColor; name: string; icon: string; kanji: string; color: string; companion: string }[] = [
+  { id: 'ocean', name: 'Ocean', icon: '', kanji: '海', color: '#2872A1', companion: '#CBDDE9' },
+  { id: 'fizz', name: 'Fizz', icon: '', kanji: '泡', color: '#3E4260', companion: '#FFEAD7' },
+  { id: 'charcoal', name: 'Charcoal', icon: '', kanji: '炭', color: '#D2042D', companion: '#FAF9F6' },
+  { id: 'mint', name: 'Mint', icon: '', kanji: '葉', color: '#69A481', companion: '#E7EDEB' },
+  { id: 'royal', name: 'Royal', icon: '', kanji: '王', color: '#00539C', companion: '#FFFFFF' },
+  { id: 'pumpkin', name: 'Pumpkin', icon: '', kanji: '橙', color: '#FD802E', companion: '#233D4C' },
+  { id: 'vista', name: 'Vista', icon: '', kanji: '空', color: '#84ABD6', companion: '#FEFFB9' },
+  { id: 'lavender', name: 'Lavender', icon: '', kanji: '花', color: '#D37E91', companion: '#FFE8EE' },
+  { id: 'peach', name: 'Peach', icon: '', kanji: '桃', color: '#E74F5E', companion: '#FDDFC5' },
+  { id: 'cadet', name: 'Cadet', icon: '', kanji: '翠', color: '#5E9EA0', companion: '#F0F5DF' },
+  { id: 'tiffany', name: 'Tiffany', icon: '', kanji: '宝', color: '#0ABAB5', companion: '#1A1A1A' },
+  { id: 'obsidian', name: 'Obsidian', icon: '', kanji: '黒', color: '#C9A84C', companion: '#2C2C2C' },
+  { id: 'sakura', name: 'Sakura', icon: '', kanji: '桜', color: '#E891A8', companion: '#F5E6D3' },
+  { id: 'emerald', name: 'Emerald', icon: '', kanji: '翡', color: '#50C878', companion: '#1B3A2D' },
+  { id: 'amber', name: 'Amber', icon: '', kanji: '琥', color: '#FFBF00', companion: '#2D1810' },
+  { id: 'slate', name: 'Slate', icon: '', kanji: '夜', color: '#7C8CFF', companion: '#E8E4F0' },
 ];
 
 // ===================================================
@@ -1098,7 +1262,7 @@ export const themeColors: { id: ThemeColor; name: string; icon: string; kanji: s
 
 export const getTheme = (colorId: ThemeColor, mode: 'dark' | 'light'): Theme => {
   const key = `${colorId}_${mode}`;
-  return themes[key] || themes.volt_dark;
+  return themes[key] || themes.ocean_dark;
 };
 
 export const getThemeKey = (colorId: ThemeColor, mode: 'dark' | 'light'): string => {
@@ -1106,27 +1270,26 @@ export const getThemeKey = (colorId: ThemeColor, mode: 'dark' | 'light'): string
 };
 
 // Thème par défaut
-export const defaultThemeColor: ThemeColor = 'classic';
+export const defaultThemeColor: ThemeColor = 'ocean';
 export const defaultThemeMode: ThemeMode = 'light';
 
-// Thèmes Premium (pour monétisation future)
-export const premiumThemeColors: ThemeColor[] = ['volt', 'magma', 'sakura', 'matrix', 'blaze', 'phantom', 'ghost', 'ocean'];
-export const freeThemeColors: ThemeColor[] = ['classic', 'tiffany'];
+// Tous les thèmes sont gratuits
+export const premiumThemeColors: ThemeColor[] = [];
+export const freeThemeColors: ThemeColor[] = ['charcoal', 'mint', 'royal', 'ocean', 'pumpkin', 'vista', 'lavender', 'peach', 'fizz', 'cadet', 'tiffany', 'obsidian', 'sakura', 'emerald', 'amber', 'slate'];
 
-export const isPremiumTheme = (colorId: ThemeColor): boolean => {
-  // Tous les thèmes sont maintenant gratuits
+export const isPremiumTheme = (_colorId: ThemeColor): boolean => {
   return false;
 };
 
 // ===================================================
-// GRADIENTS (compatibilité) - ULTRA VIBRANTS
+// GRADIENTS (compatibilité)
 // ===================================================
 
 export const GRADIENTS = {
-  primary: ['#FFFF00', '#FFEE00'] as [string, string],     // Jaune électrique
-  secondary: ['#CC00FF', '#BB00EE'] as [string, string],   // Violet néon
-  success: ['#00FF00', '#00EE00'] as [string, string],     // Vert néon
-  gold: ['#FFFF00', '#FFEE00'] as [string, string],        // Or brillant
-  danger: ['#FF0000', '#EE0000'] as [string, string],      // Rouge pur
-  info: ['#00D4FF', '#00BBEE'] as [string, string],        // Bleu cyan
+  primary: ['#2872A1', '#1D5B82'] as [string, string],     // Ocean blue
+  secondary: ['#8B5CF6', '#7C3AED'] as [string, string],   // Violet
+  success: ['#30D158', '#248A3D'] as [string, string],      // Vert
+  gold: ['#FD802E', '#E06A15'] as [string, string],         // Orange pumpkin
+  danger: ['#E74F5E', '#CC3545'] as [string, string],       // Rouge peach
+  info: ['#2872A1', '#1D5B82'] as [string, string],         // Bleu océan
 };

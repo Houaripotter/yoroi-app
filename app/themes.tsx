@@ -22,22 +22,25 @@ import {
   ArrowLeft,
   Check,
   AlertCircle,
-  Zap,
   Flame,
   Sparkles,
   Heart,
-  Code,
   Droplet,
-  Eye,
   Circle,
   Diamond,
-  // Nouveaux icons pour les 5 thèmes
   Star,
-  Coins,
-  Gem,
-  Sunset as SunsetIcon,
   Flower2,
+  CloudSun,
+  Cherry,
+  Leaf,
+  Gem,
+  Mountain,
+  Flower,
+  Trees,
+  Compass,
+  Zap,
 } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import { ThemeMode, themeColors } from '@/constants/themes';
 import { appearanceService, WARRIOR_THEMES } from '@/lib/appearanceService';
@@ -47,13 +50,19 @@ import { SPACING, RADIUS } from '@/constants/appTheme';
 import { getWeights, getTrainings, getPhotos } from '@/lib/database';
 import { POINTS_ACTIONS } from '@/lib/gamification';
 import { useCustomPopup } from '@/components/CustomPopup';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useDevMode } from '@/lib/DevModeContext';
 import logger from '@/lib/security/logger';
 
 // Helper pour obtenir la couleur d'un thème
 const getThemeColor = (themeColorId: string): string => {
   const theme = themeColors.find(t => t.id === themeColorId);
   return theme?.color || '#FFFFFF';
+};
+
+// Helper pour obtenir la couleur companion d'un thème
+const getThemeCompanion = (themeColorId: string): string => {
+  const theme = themeColors.find(t => t.id === themeColorId);
+  return theme?.companion || '#FFFFFF';
 };
 
 // Helper pour déterminer si une couleur est claire (nécessite texte noir) ou foncée (nécessite texte blanc)
@@ -78,47 +87,49 @@ const getThemeIcon = (themeColorId: string, color: string, size: number = 28) =>
   const iconProps = { size, color, strokeWidth: 2 };
 
   switch (themeColorId) {
-    case 'volt':
-      return <Zap {...iconProps} fill={color} />;       // Éclair électrique
-    case 'tiffany':
-      return <Diamond {...iconProps} />;                 // Diamant Tiffany
-    case 'magma':
-      return <Flame {...iconProps} fill={color} />;     // Flamme
-    case 'sakura':
-      return <Heart {...iconProps} fill={color} />;     // Coeur rose
-    case 'matrix':
-      return <Code {...iconProps} />;                    // Code Matrix
-    case 'blaze':
-      return <Sun {...iconProps} fill={color} />;       // Soleil pêche
-    case 'phantom':
-      return <Sparkles {...iconProps} />;               // Étoiles violet
-    case 'ghost':
-      return <Eye {...iconProps} />;                    // Oeil fantôme
+    case 'charcoal':
+      return <Flame {...iconProps} fill={color} />;
+    case 'mint':
+      return <Leaf {...iconProps} fill={color} />;
+    case 'royal':
+      return <Star {...iconProps} fill={color} />;
     case 'ocean':
-      return <Droplet {...iconProps} fill={color} />;   // Goutte océan
-    // 5 Nouveaux thèmes
-    case 'indigo':
-      return <Star {...iconProps} fill={color} />;      // Étoile indigo
-    case 'gold':
-      return <Coins {...iconProps} fill={color} />;     // Pièces dorées
-    case 'emerald':
-      return <Gem {...iconProps} fill={color} />;       // Gemme émeraude
-    case 'sunset':
-      return <SunsetIcon {...iconProps} fill={color} />; // Coucher de soleil
+      return <Droplet {...iconProps} fill={color} />;
+    case 'pumpkin':
+      return <Sun {...iconProps} fill={color} />;
+    case 'vista':
+      return <CloudSun {...iconProps} />;
     case 'lavender':
-      return <Flower2 {...iconProps} fill={color} />;   // Fleur lavande
-    case 'classic':
+      return <Heart {...iconProps} fill={color} />;
+    case 'peach':
+      return <Cherry {...iconProps} fill={color} />;
+    case 'fizz':
+      return <Sparkles {...iconProps} />;
+    case 'cadet':
+      return <Diamond {...iconProps} />;
+    case 'tiffany':
+      return <Gem {...iconProps} fill={color} />;
+    case 'obsidian':
+      return <Mountain {...iconProps} />;
+    case 'sakura':
+      return <Flower {...iconProps} fill={color} />;
+    case 'emerald':
+      return <Trees {...iconProps} />;
+    case 'amber':
+      return <Compass {...iconProps} fill={color} />;
+    case 'slate':
+      return <Zap {...iconProps} />;
     default:
-      return <Circle {...iconProps} fill={color} />;    // Cercle classic
+      return <Circle {...iconProps} fill={color} />;
   }
 };
 
 export default function ThemesScreen() {
   const { colors, themeColor, themeMode, setThemeColor, setThemeMode } = useTheme();
   const { t } = useI18n();
+  const { isDevMode: creatorModeActive } = useDevMode();
   const [userXP, setUserXP] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [creatorModeActive, setCreatorModeActive] = useState(false);
 
   const { showPopup, PopupComponent } = useCustomPopup();
 
@@ -128,11 +139,6 @@ export default function ThemesScreen() {
 
   const loadSettings = async () => {
     try {
-      // Vérifier si Mode Créateur actif
-      const creatorMode = await AsyncStorage.getItem('@yoroi_creator_mode');
-      const isCreator = creatorMode === 'true';
-      setCreatorModeActive(isCreator);
-
       // Calculer l'XP basé sur l'activité de l'utilisateur
       const [weights, trainings, photos] = await Promise.all([
         getWeights(),
@@ -141,7 +147,7 @@ export default function ThemesScreen() {
       ]);
 
       // Calcul simplifié de l'XP - Mode Créateur = XP infini (999999)
-      if (isCreator) {
+      if (creatorModeActive) {
         setUserXP(999999);
       } else {
         const calculatedXP =
@@ -304,6 +310,7 @@ export default function ThemesScreen() {
               const isUnlocked = appearanceService.isWarriorThemeUnlocked(theme.id, userXP);
               const isActive = currentWarriorTheme?.id === theme.id;
               const themeAccentColor = getThemeColor(theme.themeColor);
+              const themeCompanionColor = getThemeCompanion(theme.themeColor);
 
               return (
                 <TouchableOpacity
@@ -313,7 +320,7 @@ export default function ThemesScreen() {
                     { backgroundColor: colors.backgroundCard },
                     isActive && {
                       borderColor: themeAccentColor,
-                      borderWidth: 2,
+                      borderWidth: 2.5,
                     },
                     !isUnlocked && { opacity: 0.5 },
                   ]}
@@ -321,31 +328,37 @@ export default function ThemesScreen() {
                   disabled={!isUnlocked}
                   activeOpacity={0.7}
                 >
-                  <View style={styles.themeHeader}>
-                    {/* Icône avec glow par le bas */}
-                    <View style={styles.themeIconWrapper}>
-                      <View style={styles.themeIconContainer}>
-                        {getThemeIcon(theme.themeColor, themeAccentColor, 28)}
-                      </View>
-                      {/* Glow effect par le bas */}
-                      <View
-                        style={[
-                          styles.iconGlow,
-                          {
-                            backgroundColor: themeAccentColor,
-                            shadowColor: themeAccentColor,
-                          },
-                        ]}
-                      />
-                    </View>
-                    <View style={[styles.colorCircle, { backgroundColor: themeAccentColor }]} />
+                  {/* Bannière bicolore en haut */}
+                  <View style={styles.colorBanner}>
+                    <View style={[styles.colorHalf, { backgroundColor: themeAccentColor, borderTopLeftRadius: isActive ? 11 : 13 }]} />
+                    <View style={[styles.colorHalf, { backgroundColor: themeCompanionColor, borderTopRightRadius: isActive ? 11 : 13 }]} />
                   </View>
-                  <Text style={[styles.themeName, { color: colors.textPrimary }]}>
-                    {theme.name}
-                  </Text>
-                  <Text style={[styles.themeDescription, { color: colors.textMuted }]}>
-                    {isUnlocked ? theme.description : `${theme.unlockXP} XP`}
-                  </Text>
+
+                  {/* Contenu */}
+                  <View style={styles.themeContent}>
+                    <Text style={[styles.themeName, { color: colors.textPrimary }]}>
+                      {theme.name}
+                    </Text>
+                    {/* Noms des deux couleurs */}
+                    {isUnlocked && theme.description ? (
+                      <View style={styles.colorNamesRow}>
+                        <View style={[styles.colorDot, { backgroundColor: themeAccentColor }]} />
+                        <Text style={[styles.colorNameText, { color: colors.textMuted }]}>
+                          {theme.description.split(' + ')[0]}
+                        </Text>
+                        <Text style={[styles.colorNamePlus, { color: colors.textMuted }]}> + </Text>
+                        <View style={[styles.colorDot, { backgroundColor: themeCompanionColor }]} />
+                        <Text style={[styles.colorNameText, { color: colors.textMuted }]}>
+                          {theme.description.split(' + ')[1]}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={[styles.themeDescription, { color: colors.textMuted }]}>
+                        {`${theme.unlockXP} XP`}
+                      </Text>
+                    )}
+                  </View>
+
                   {!isUnlocked && (
                     <View style={styles.lockBadge}>
                       <Lock size={14} color={colors.textMuted} />
@@ -473,51 +486,41 @@ const styles = StyleSheet.create({
   },
   themeCard: {
     width: '48%',
-    padding: SPACING.md,
     borderRadius: RADIUS.lg,
     position: 'relative',
-    minHeight: 110,
+    overflow: 'hidden',
   },
-  themeHeader: {
+  colorBanner: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  themeIconWrapper: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  themeIconContainer: {
-    width: 48,
     height: 48,
-    borderRadius: 14,
+  },
+  colorHalf: {
+    flex: 1,
+  },
+  themeContent: {
+    padding: SPACING.sm,
+    paddingTop: 10,
+    paddingBottom: 12,
+  },
+  colorNamesRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
+    flexWrap: 'wrap',
+    marginTop: 2,
   },
-  iconGlow: {
-    position: 'absolute',
-    bottom: -4,
-    left: '50%',
-    marginLeft: -16,
-    width: 32,
-    height: 12,
-    borderRadius: 16,
-    opacity: 0.7,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.8,
-    shadowRadius: 12,
-    elevation: 8,
-    transform: [{ scaleX: 1.2 }],
+  colorDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 3,
   },
-  colorCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+  colorNameText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+  },
+  colorNamePlus: {
+    fontSize: 10,
+    fontWeight: '500',
   },
   lockBadge: {
     position: 'absolute',
@@ -531,9 +534,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   themeName: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 4,
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 2,
   },
   themeDescription: {
     fontSize: 12,
@@ -543,9 +546,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
