@@ -11,6 +11,7 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   TextInput,
+  FlatList,
   ActivityIndicator,
   Modal,
 } from 'react-native';
@@ -25,16 +26,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   Plus,
-  Clock,
   Calendar,
-  List,
   Dumbbell,
   ChevronRight,
   TrendingUp,
   Trophy,
   MapPin,
   ExternalLink,
-  BookOpen,
   Search,
   Check,
   Globe,
@@ -42,18 +40,18 @@ import {
   Trash2,
   Sun,
   Filter,
-  Circle,
   Edit3,
 } from 'lucide-react-native';
 
 // Import events catalog service (SQLite optimized)
-import { getFilteredEvents } from '@/lib/eventsService';
+import { getFilteredEvents, SportEvent as ImportedSportEvent } from '@/lib/eventsService';
 import { toggleRestDay } from '@/lib/restDaysService';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, startOfWeek, endOfWeek, addDays, getDay } from 'date-fns';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay, startOfWeek, endOfWeek, addDays, getDay } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '@/constants/design';
-import { getTrainings, getClubs, deleteTraining, deleteClub, Club, Training, getCompetitions, Competition } from '@/lib/database';
-import { getCarnetStats, getSkills, getBenchmarks, Skill, Benchmark } from '@/lib/carnetService';
+import { getTrainings, getClubs, addTraining, deleteTraining, deleteClub, Club, Training, getCompetitions, Competition } from '@/lib/database';
+import { getSportIcon } from '@/constants/sportIcons';
 import { DayDetailModal } from '@/components/calendar';
 import { getClubLogoSource, getSportById } from '@/lib/sports';
 import { PartnerDetailModal, Partner } from '@/components/PartnerDetailModal';
@@ -61,11 +59,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { TimetableView, EnhancedCalendarView, AddClubModal } from '@/components/planning';
 import { EmptyState } from '@/components/planning/EmptyState';
 import { getAllGoalsProgress, GoalProgress } from '@/lib/trainingGoalsService';
+import { triggerVictoryModal, createCalendarVictoryData } from '@/lib/victoryTrigger';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
-import { HomeToolsMenu } from '@/components/home/HomeToolsMenu';
 
 // ============================================
 // PLANNING SCREEN - SWIPEABLE VIEWS
@@ -75,7 +73,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IS_SMALL_SCREEN = SCREEN_WIDTH < 375; // iPhone SE, petits téléphones
 const DAYS_FR = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
 
-type ViewMode = 'calendar' | 'programme' | 'clubs' | 'competitions' | 'journal';
+type ViewMode = 'calendar' | 'clubs' | 'competitions';
 
 // Types for external events catalog
 interface SportEvent {
@@ -114,10 +112,10 @@ const SAVED_EVENTS_KEY = 'my_saved_events';
 
 export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, screenBackground } = useTheme();
   const { t, locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const [viewMode, setViewMode] = useState<ViewMode>('competitions'); // Prochains RDV en premier
+  const [viewMode, setViewMode] = useState<ViewMode>('calendar'); // Calendrier en premier
   const [workouts, setWorkouts] = useState<Training[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -152,7 +150,7 @@ export default function PlanningScreen() {
     const checkFirstVisit = async () => {
       const visited = await hasVisitedPage('planning');
       if (!visited) {
-        timer = setTimeout(() => setShowTutorial(true), 1000);
+        timer = setTimeout(() => setShowTutorial(true), 1000) as unknown as NodeJS.Timeout;
       }
     };
     checkFirstVisit();
@@ -186,10 +184,6 @@ export default function PlanningScreen() {
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
 
-  // Journal/Carnet state - Now uses carnetService
-  const [journalStats, setJournalStats] = useState({ total: 0, in_progress: 0, mastered: 0, totalRecords: 0 });
-  const [recentSkills, setRecentSkills] = useState<Skill[]>([]);
-  const [recentBenchmarks, setRecentBenchmarks] = useState<Benchmark[]>([]);
 
   // Clubs & Objectifs state
   const [showAddClubModal, setShowAddClubModal] = useState(false);
@@ -387,74 +381,6 @@ export default function PlanningScreen() {
       setCompetitions(competitionsData);
       setGoalsProgress(goalsData);
 
-      // Charger les stats du carnet depuis carnetService
-      const carnetStats = await getCarnetStats();
-      setJournalStats({
-        total: carnetStats.totalSkills,
-        in_progress: carnetStats.skillsInProgress,
-        mastered: carnetStats.skillsMastered,
-        totalRecords: carnetStats.totalBenchmarks,
-      });
-
-      // Check for screenshot mode
-      const isScreenshotMode = await AsyncStorage.getItem('@yoroi_journal_screenshot_mode') === 'true';
-
-      if (isScreenshotMode) {
-        // MOCK DATA FOR SCREENSHOTS
-        const mockBenchmarks: Benchmark[] = [
-          {
-            id: 'bench_1', name: 'Développé Couché', category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#EF4444', createdAt: new Date().toISOString(), muscleGroup: 'PECTORAUX',
-            entries: [
-              { id: 'e1', value: 100, reps: 5, date: new Date().toISOString(), rpe: 9, notes: 'Record personnel !' }
-            ]
-          },
-          {
-            id: 'bench_2', name: 'Squat', category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#EF4444', createdAt: new Date().toISOString(), muscleGroup: 'JAMBES',
-            entries: [
-              { id: 'e2', value: 140, reps: 3, date: new Date().toISOString(), rpe: 9, notes: 'Technique solide' }
-            ]
-          },
-          {
-            id: 'bench_3', name: '10km', category: 'running', unit: 'time', iconName: 'timer', color: '#3B82F6', createdAt: new Date().toISOString(), muscleGroup: 'CARDIO',
-            entries: [
-              { id: 'e3', value: 2400, date: new Date().toISOString(), duration: 40, distance: 10, notes: 'Allure 4:00/km' }
-            ]
-          }
-        ];
-
-        const mockSkills: Skill[] = [
-          {
-            id: 'skill_1', name: 'Triangle', category: 'jjb_soumission', status: 'mastered', drillCount: 150, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-            notes: []
-          },
-          {
-            id: 'skill_2', name: 'Passage Toreando', category: 'jjb_passage', status: 'in_progress', drillCount: 45, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-            notes: []
-          },
-          {
-            id: 'skill_3', name: 'Berimbolo', category: 'jjb_garde', status: 'to_learn', drillCount: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-            notes: []
-          }
-        ];
-
-        setRecentBenchmarks(mockBenchmarks);
-        setRecentSkills(mockSkills);
-        setJournalStats({
-          total: mockSkills.length,
-          in_progress: mockSkills.filter(s => s.status === 'in_progress').length,
-          mastered: mockSkills.filter(s => s.status === 'mastered').length,
-          totalRecords: mockBenchmarks.length,
-        });
-      } else {
-        // Garder les 6 dernières techniques/skills (2 lignes de 3)
-        const skills = await getSkills();
-        setRecentSkills(skills.slice(0, 6));
-        // Garder les 6 derniers records/benchmarks (2 lignes de 3)
-        const benchmarks = await getBenchmarks();
-        // Filter benchmarks that have entries (PRs)
-        const benchmarksWithPRs = benchmarks.filter(b => b.entries && b.entries.length > 0);
-        setRecentBenchmarks(benchmarksWithPRs.slice(0, 6));
-      }
     } catch (error) {
       logger.error('Erreur chargement planning:', error);
     }
@@ -894,8 +820,6 @@ export default function PlanningScreen() {
   // Gérer le clic sur un onglet
   const tabs: { key: ViewMode; label: string; sublabel?: string; icon: any; color: string; description: string }[] = [
     { key: 'calendar', label: t('planning.calendar'), icon: Calendar, color: colors.accent, description: t('planning.calendarDescription') },
-    { key: 'programme', label: t('planning.timetable'), icon: List, color: '#8B5CF6', description: t('planning.timetableDescription') },
-    { key: 'journal', label: t('planning.journal'), icon: BookOpen, color: '#EF4444', description: t('planning.journalDescription') },
     { key: 'clubs', label: t('planning.clubs'), icon: Dumbbell, color: '#10B981', description: t('planning.clubsDescription') },
     { key: 'competitions', label: t('planning.events'), icon: Trophy, color: '#F59E0B', description: t('planning.eventsDescription') },
   ];
@@ -914,21 +838,6 @@ export default function PlanningScreen() {
     });
   };
 
-  // ============================================
-  // SCROLL INITIAL vers Prochains RDV (competitions)
-  // ============================================
-  useEffect(() => {
-    // Scroll vers l'onglet competitions (index 4) au montage
-    const competitionsIndex = tabs.findIndex(t => t.key === 'competitions');
-    if (competitionsIndex >= 0 && horizontalScrollRef.current) {
-      setTimeout(() => {
-        horizontalScrollRef.current?.scrollTo({
-          x: competitionsIndex * SCREEN_WIDTH,
-          animated: false,
-        });
-      }, 100);
-    }
-  }, []);
 
   // Gérer le scroll horizontal des pages
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -971,11 +880,11 @@ export default function PlanningScreen() {
 
   return (
     <ErrorBoundary>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
+      <View style={[styles.container, { backgroundColor: screenBackground }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={screenBackground} />
 
       {/* Header avec tabs circulaires - zIndex élevé pour rester visible */}
-      <View style={[styles.tabsHeader, { backgroundColor: colors.background, zIndex: 100, elevation: 10 }]}>
+      <View style={[styles.tabsHeader, { backgroundColor: screenBackground, zIndex: 100, elevation: 10 }]}>
         <ScrollView
           ref={tabScrollRef}
           horizontal
@@ -1054,13 +963,63 @@ export default function PlanningScreen() {
         bounces={false}
         decelerationRate="fast"
       >
-        {/* Page Calendrier */}
+        {/* Page Calendrier (avec clubs + emploi du temps intégrés) */}
         <View style={styles.page}>
           <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
           >
+            {/* MES CLUBS - Badges horizontaux cliquables */}
+            {clubs.length > 0 && (
+              <View style={[styles.compactClubsSection, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                <View style={styles.compactClubsHeader}>
+                  <Dumbbell size={14} color={colors.textPrimary} strokeWidth={2.5} />
+                  <Text style={[styles.compactClubsTitle, { color: colors.textPrimary }]}>Mes Clubs</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      impactAsync(ImpactFeedbackStyle.Light);
+                      setEditingClub(null);
+                      setShowAddClubModal(true);
+                    }}
+                    style={[styles.compactClubAddBtn, { backgroundColor: colors.accent }]}
+                  >
+                    <Plus size={14} color={colors.textOnGold} strokeWidth={3} />
+                  </TouchableOpacity>
+                </View>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.compactClubsScroll}
+                >
+                  {clubs.map((club) => {
+                    const display = getClubDisplay(club);
+                    return (
+                      <TouchableOpacity
+                        key={club.id}
+                        style={[styles.compactClubBadge, { backgroundColor: (display.type === 'color' ? `${display.color}15` : colors.backgroundElevated), borderColor: display.type === 'color' ? `${display.color}30` : colors.border }]}
+                        onPress={() => {
+                          impactAsync(ImpactFeedbackStyle.Light);
+                          setEditingClub(club);
+                          setShowAddClubModal(true);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <View style={[styles.compactClubLogo, { backgroundColor: display.type === 'color' ? `${display.color}25` : colors.backgroundElevated }]}>
+                          {display.type === 'image' ? (
+                            <Image source={display.source} style={styles.compactClubLogoImg} />
+                          ) : (
+                            <View style={[styles.compactClubDot, { backgroundColor: display.color }]} />
+                          )}
+                        </View>
+                        <Text style={[styles.compactClubName, { color: colors.textPrimary }]} numberOfLines={1}>{club.name}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+
             {/* MONTHLY STATS BY CLUB - COMPACT */}
             {monthlyClubStats.length > 0 && (
               <View style={[styles.monthlyStatsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
@@ -1096,7 +1055,7 @@ export default function PlanningScreen() {
               </View>
             )}
 
-            {/* NOUVEAU CALENDRIER AMÉLIORÉ */}
+            {/* CALENDRIER AMÉLIORÉ */}
             <EnhancedCalendarView
               currentMonth={currentMonth}
               workouts={workouts}
@@ -1105,476 +1064,15 @@ export default function PlanningScreen() {
               onDayPress={handleDayPress}
               selectedDate={selectedDate}
             />
-            <View style={{ height: 120 }} />
-          </ScrollView>
-        </View>
 
-        {/* Page Programme */}
-        <View style={styles.page}>
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.content}
-            showsVerticalScrollIndicator={false}
-          >
-            <TimetableView
-              onAddSession={handleAddSessionFromProgramme}
-              onSessionPress={handleSessionPress}
-              refreshTrigger={refreshTrigger}
-            />
-            <View style={{ height: 120 }} />
-          </ScrollView>
-        </View>
-
-        {/* Page Carnet d'entraînement */}
-        <View style={styles.page}>
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.content}
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('planning.journal')}</Text>
-
-            {journalStats.total === 0 && journalStats.totalRecords === 0 ? (
-              <EmptyState
-                type="journal"
-                onAction={() => {
-                  impactAsync(ImpactFeedbackStyle.Medium);
-                  router.push('/training-journal');
-                }}
+            {/* EMPLOI DU TEMPS DE LA SEMAINE (intégré) */}
+            <View style={{ marginTop: 8 }}>
+              <TimetableView
+                onAddSession={handleAddSessionFromProgramme}
+                onSessionPress={handleSessionPress}
+                refreshTrigger={refreshTrigger}
               />
-            ) : (
-              <>
-                {/* Stats du carnet - Records + Techniques */}
-                <View style={[styles.journalStatsContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-                  <View style={styles.journalStatsRow}>
-                    <View style={styles.journalStatItem}>
-                      <Text style={[styles.journalStatValue, { color: '#EF4444' }]}>{journalStats.totalRecords}</Text>
-                      <Text style={[styles.journalStatLabel, { color: colors.textMuted }]}>Records</Text>
-                    </View>
-                    <View style={[styles.journalStatDivider, { backgroundColor: colors.border }]} />
-                    <View style={styles.journalStatItem}>
-                      <Text style={[styles.journalStatValue, { color: isDark ? colors.accent : colors.textPrimary }]}>{journalStats.total}</Text>
-                      <Text style={[styles.journalStatLabel, { color: colors.textMuted }]}>Techniques</Text>
-                    </View>
-                    <View style={[styles.journalStatDivider, { backgroundColor: colors.border }]} />
-                    <View style={styles.journalStatItem}>
-                      <Text style={[styles.journalStatValue, { color: '#10B981' }]}>{journalStats.mastered}</Text>
-                      <Text style={[styles.journalStatLabel, { color: colors.textMuted }]}>Maîtrisées</Text>
-                    </View>
-                  </View>
-                </View>
-
-                {/* Mes Records - GRID 3 colonnes groupés par catégorie */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text style={[styles.subsectionTitle, { color: colors.textSecondary, marginTop: 0 }]}>Mes Records</Text>
-                    <TouchableOpacity
-                      onPress={() => router.push('/training-journal')}
-                      style={{
-                        backgroundColor: '#EF4444',
-                        width: 24,
-                        height: 24,
-                        borderRadius: 12,
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <Plus size={14} color="#FFFFFF" strokeWidth={3} />
-                    </TouchableOpacity>
-                  </View>
-                  <TouchableOpacity onPress={() => router.push('/training-journal')} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{ color: isDark ? colors.accent : colors.textPrimary, fontSize: 12, fontWeight: '600' }}>Voir tout</Text>
-                    <ChevronRight size={14} color={isDark ? colors.accent : colors.textPrimary} />
-                  </TouchableOpacity>
-                </View>
-                {recentBenchmarks.length === 0 ? (
-                  <View style={[styles.emptyJournalCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border, paddingVertical: 20 }]}>
-                    <Trophy size={32} color={colors.textMuted} />
-                    <Text style={[styles.emptyJournalTitle, { color: colors.textPrimary, fontSize: 14 }]}>Aucun record</Text>
-                  </View>
-                ) : (
-              <>
-                {/* Grouper les benchmarks par catégorie */}
-                {(() => {
-                  const categoryLabels: Record<string, string> = {
-                    force: 'Musculation',
-                    running: 'Running',
-                    trail: 'Trail',
-                    hyrox: 'Hyrox',
-                    bodyweight: 'Poids de corps',
-                  };
-                  const categoryColors: Record<string, string> = {
-                    force: '#EF4444',
-                    running: '#3B82F6',
-                    trail: '#10B981',
-                    hyrox: '#F97316',
-                    bodyweight: '#8B5CF6',
-                  };
-                  // Grouper par catégorie
-                  const grouped = recentBenchmarks.reduce((acc, b) => {
-                    const cat = b.category || 'other';
-                    if (!acc[cat]) acc[cat] = [];
-                    acc[cat].push(b);
-                    return acc;
-                  }, {} as Record<string, typeof recentBenchmarks>);
-
-                  return Object.entries(grouped).map(([category, benchmarks]) => (
-                    <View key={category}>
-                      {/* Titre de la catégorie */}
-                      <Text style={{
-                        fontSize: 13,
-                        fontWeight: '700',
-                        color: categoryColors[category] || colors.textMuted,
-                        marginTop: 12,
-                        marginBottom: 6,
-                        marginLeft: 4,
-                      }}>
-                        {categoryLabels[category] || category}
-                      </Text>
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 }}>
-                        {/* Limiter à 3 éléments par catégorie pour un beau screenshot */}
-                        {benchmarks.slice(0, 3).map((benchmark, index) => {
-                          const lastEntry = benchmark.entries?.length > 0
-                            ? benchmark.entries[benchmark.entries.length - 1]
-                            : null;
-                          const color = categoryColors[benchmark.category] || colors.accent;
-
-                          // Format date
-                          const formatDate = (dateStr: string) => {
-                            const date = new Date(dateStr);
-                            const day = date.getDate();
-                            const month = date.toLocaleDateString(locale, { month: 'short' });
-                            return `${day} ${month}`;
-                          };
-
-                          // Format display based on category
-                          const getDisplay = () => {
-                            if (!lastEntry) return { main: '--', sub: 'Pas de record' };
-
-                            if (benchmark.category === 'force') {
-                              // Force: show weight + kg, then reps
-                              return {
-                                main: `${lastEntry.value} ${benchmark.unit}`,
-                                sub: lastEntry.reps ? `× ${lastEntry.reps} reps` : '',
-                              };
-                            }
-                            if (benchmark.category === 'bodyweight' || benchmark.unit === 'reps') {
-                              // Bodyweight: show reps
-                              return {
-                                main: `${lastEntry.value} reps`,
-                                sub: '',
-                              };
-                            }
-                            // Running/Trail - show time in h:min format with unit
-                            if (lastEntry.duration && lastEntry.value) {
-                              const totalMin = lastEntry.duration;
-                              const hours = Math.floor(totalMin / 60);
-                              const mins = Math.round(totalMin % 60);
-                              const pacePerKm = totalMin / lastEntry.value;
-                              const paceMin = Math.floor(pacePerKm);
-                              const paceSec = Math.round((pacePerKm - paceMin) * 60);
-
-                              let timeStr;
-                              if (hours > 0) {
-                                timeStr = `${hours}h${mins.toString().padStart(2, '0')}min`;
-                              } else {
-                                timeStr = `${mins}min`;
-                              }
-                              return {
-                                main: timeStr,
-                                sub: `${paceMin}:${paceSec.toString().padStart(2, '0')}/km`,
-                              };
-                            }
-                            return { main: `${lastEntry.value}`, sub: benchmark.unit };
-                          };
-                          const display = getDisplay();
-
-                          return (
-                            <TouchableOpacity
-                              key={benchmark.id || index}
-                              style={{ width: '33.33%', padding: 4 }}
-                              onPress={() => router.push('/training-journal')}
-                              activeOpacity={0.7}
-                            >
-                              <View style={{
-                                backgroundColor: colors.backgroundCard,
-                                borderRadius: 12,
-                                padding: 10,
-                                borderWidth: 1,
-                                borderColor: colors.border,
-                                alignItems: 'center',
-                                minHeight: 110,
-                              }}>
-                                {/* Icon + PR badge */}
-                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                                  <View style={{
-                                    backgroundColor: `${color}20`,
-                                    borderRadius: 8,
-                                    padding: 5,
-                                  }}>
-                                    <Trophy size={14} color={color} />
-                                  </View>
-                                  {lastEntry && (
-                                    <View style={{
-                                      backgroundColor: `${color}20`,
-                                      borderRadius: 4,
-                                      paddingHorizontal: 5,
-                                      paddingVertical: 2,
-                                      marginLeft: 4,
-                                    }}>
-                                      <Text style={{ color, fontSize: 9, fontWeight: '700' }}>PR</Text>
-                                    </View>
-                                  )}
-                                </View>
-                                {/* Main value - BIG */}
-                                <Text style={{
-                                  fontSize: 17,
-                                  fontWeight: '800',
-                                  color: lastEntry ? color : colors.textMuted,
-                                  textAlign: 'center',
-                                }} numberOfLines={1}>
-                                  {display.main}
-                                </Text>
-                                {/* Sub info (reps or pace) */}
-                                {display.sub ? (
-                                  <Text style={{
-                                    fontSize: 11,
-                                    color: colors.textMuted,
-                                    textAlign: 'center',
-                                    marginTop: 2,
-                                  }} numberOfLines={1}>
-                                    {display.sub}
-                                  </Text>
-                                ) : null}
-                                {/* Name */}
-                                <Text style={{
-                                  fontSize: 11,
-                                  fontWeight: '600',
-                                  color: colors.textSecondary,
-                                  textAlign: 'center',
-                                  marginTop: 4,
-                                }} numberOfLines={1}>
-                                  {benchmark.name}
-                                </Text>
-                                {/* Date */}
-                                {lastEntry && (
-                                  <Text style={{
-                                    fontSize: 10,
-                                    color: colors.textMuted,
-                                    textAlign: 'center',
-                                    marginTop: 3,
-                                  }}>
-                                    {formatDate(lastEntry.date)}
-                                  </Text>
-                                )}
-                              </View>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    </View>
-                  ));
-                })()}
-              </>
-            )}
-
-            {/* Mes Techniques - GRID 3 colonnes groupées par catégorie */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={[styles.subsectionTitle, { color: colors.textSecondary, marginTop: 0 }]}>Mes Techniques</Text>
-                <TouchableOpacity
-                  onPress={() => router.push('/training-journal')}
-                  style={{
-                    backgroundColor: '#8B5CF6',
-                    width: 24,
-                    height: 24,
-                    borderRadius: 12,
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <Plus size={14} color="#FFFFFF" strokeWidth={3} />
-                </TouchableOpacity>
-              </View>
-              <TouchableOpacity onPress={() => router.push('/training-journal')} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ color: isDark ? colors.accent : colors.textPrimary, fontSize: 12, fontWeight: '600' }}>Voir tout</Text>
-                <ChevronRight size={14} color={isDark ? colors.accent : colors.textPrimary} />
-              </TouchableOpacity>
             </View>
-            {recentSkills.length === 0 ? (
-              <View style={[styles.emptyJournalCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border, paddingVertical: 20 }]}>
-                <BookOpen size={32} color={colors.textMuted} />
-                <Text style={[styles.emptyJournalTitle, { color: colors.textPrimary, fontSize: 14 }]}>Aucune technique</Text>
-              </View>
-            ) : (
-              <>
-                {/* Grouper les techniques par catégorie */}
-                {(() => {
-                  const categoryLabels: Record<string, string> = {
-                    jjb_garde: 'JJB - Garde',
-                    jjb_passage: 'JJB - Passage',
-                    jjb_soumission: 'JJB - Soumission',
-                    lutte: 'Lutte',
-                    striking: 'Striking',
-                    other: 'Autre',
-                  };
-                  const categoryColors: Record<string, string> = {
-                    jjb_garde: '#8B5CF6',
-                    jjb_passage: '#0ABAB5',
-                    jjb_soumission: '#EC4899',
-                    lutte: '#F97316',
-                    striking: '#EF4444',
-                    other: '#6B7280',
-                  };
-                  // Grouper par catégorie
-                  const grouped = recentSkills.reduce((acc, s) => {
-                    const cat = s.category || 'other';
-                    if (!acc[cat]) acc[cat] = [];
-                    acc[cat].push(s);
-                    return acc;
-                  }, {} as Record<string, typeof recentSkills>);
-
-                  return Object.entries(grouped).map(([category, skills]) => (
-                    <View key={category}>
-                      {/* Titre de la catégorie */}
-                      <Text style={{
-                        fontSize: 13,
-                        fontWeight: '700',
-                        color: categoryColors[category] || colors.textMuted,
-                        marginTop: 12,
-                        marginBottom: 6,
-                        marginLeft: 4,
-                      }}>
-                        {categoryLabels[category] || category}
-                      </Text>
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 }}>
-                        {/* Limiter à 3 éléments par catégorie pour un beau screenshot */}
-                        {skills.slice(0, 3).map((skill, index) => {
-                          const color = categoryColors[skill.category] || colors.accent;
-                          const statusColor = skill.status === 'mastered' ? '#10B981' : skill.status === 'in_progress' ? '#F97316' : '#EF4444';
-                          const statusLabel = skill.status === 'mastered' ? 'Maîtrisé' : skill.status === 'in_progress' ? 'En cours' : 'À faire';
-
-                          // Format date
-                          const formatDate = (dateStr: string) => {
-                            const date = new Date(dateStr);
-                            const day = date.getDate();
-                            const month = date.toLocaleDateString(locale, { month: 'short' });
-                            return `${day} ${month}`;
-                          };
-
-                          return (
-                            <TouchableOpacity
-                              key={skill.id || index}
-                              style={{ width: '33.33%', padding: 4 }}
-                              onPress={() => router.push('/training-journal')}
-                              activeOpacity={0.7}
-                            >
-                              <View style={{
-                                backgroundColor: colors.backgroundCard,
-                                borderRadius: 12,
-                                padding: 10,
-                                borderWidth: 1,
-                                borderColor: colors.border,
-                                alignItems: 'center',
-                                minHeight: 110,
-                              }}>
-                                {/* Icon + Status badge */}
-                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                                  <View style={{
-                                    backgroundColor: `${color}20`,
-                                    borderRadius: 8,
-                                    padding: 5,
-                                  }}>
-                                    <BookOpen size={14} color={color} />
-                                  </View>
-                                  <View style={{
-                                    backgroundColor: `${statusColor}20`,
-                                    borderRadius: 4,
-                                    paddingHorizontal: 5,
-                                    paddingVertical: 2,
-                                    marginLeft: 4,
-                                  }}>
-                                    {skill.status === 'mastered' ? (
-                                      <Check size={8} color={statusColor} strokeWidth={3} />
-                                    ) : skill.status === 'in_progress' ? (
-                                      <Clock size={8} color={statusColor} strokeWidth={2.5} />
-                                    ) : (
-                                      <Circle size={8} color={statusColor} strokeWidth={2} />
-                                    )}
-                                  </View>
-                                </View>
-                                {/* Status text */}
-                                <Text style={{
-                                  fontSize: 12,
-                                  fontWeight: '700',
-                                  color: statusColor,
-                                  textAlign: 'center',
-                                }}>
-                                  {statusLabel}
-                                </Text>
-                                {/* Name */}
-                                <Text style={{
-                                  fontSize: 11,
-                                  fontWeight: '600',
-                                  color: colors.textPrimary,
-                                  textAlign: 'center',
-                                  marginTop: 4,
-                                }} numberOfLines={2}>
-                                  {skill.name}
-                                </Text>
-                                {/* Drill count if any */}
-                                {skill.drillCount > 0 && (
-                                  <Text style={{
-                                    fontSize: 10,
-                                    color: colors.textMuted,
-                                    textAlign: 'center',
-                                    marginTop: 2,
-                                  }}>
-                                    {skill.drillCount} drills
-                                  </Text>
-                                )}
-                                {/* Date */}
-                                <Text style={{
-                                  fontSize: 10,
-                                  color: colors.textMuted,
-                                  textAlign: 'center',
-                                  marginTop: 3,
-                                }}>
-                                  {formatDate(skill.updatedAt || skill.createdAt)}
-                                </Text>
-                              </View>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    </View>
-                  ));
-                })()}
-              </>
-            )}
-                </>
-              )}
-
-            {/* Bouton pour accéder au carnet complet */}
-            <TouchableOpacity
-              style={[styles.openJournalButton, { backgroundColor: colors.accent }]}
-              onPress={() => router.push('/training-journal')}
-              activeOpacity={0.8}
-            >
-              <BookOpen size={20} color={colors.textOnGold} />
-              <Text style={[styles.openJournalButtonText, { color: colors.textOnGold }]}>Ouvrir le Carnet complet</Text>
-              <ChevronRight size={20} color={colors.textOnGold} />
-            </TouchableOpacity>
-
-            {/* Bouton pour logger rapidement */}
-            <TouchableOpacity
-              style={[styles.quickLogButton, { backgroundColor: colors.backgroundCard, borderColor: isDark ? colors.accent : colors.textPrimary }]}
-              onPress={() => router.push('/quick-log')}
-              activeOpacity={0.8}
-            >
-              <Plus size={20} color={isDark ? colors.accent : colors.textPrimary} />
-              <Text style={[styles.quickLogButtonText, { color: isDark ? colors.accent : colors.textPrimary }]}>Logger une séance</Text>
-            </TouchableOpacity>
 
             <View style={{ height: 120 }} />
           </ScrollView>
@@ -1587,7 +1085,7 @@ export default function PlanningScreen() {
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
           >
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('planning.clubs')}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('planning.clubs')}</Text>
 
             {/* Carte Plein Air - affichée si entraînements outdoor */}
             {outdoorStats.total > 0 && (
@@ -2493,9 +1991,9 @@ export default function PlanningScreen() {
                           </View>
                         </View>
 
-                        {/* Events Grid - 2 par sport */}
+                        {/* Events Grid - 2 par sport si vue globale, tous si filtre sport actif */}
                         <View style={styles.catalogEventsGrid}>
-                          {events.slice(0, 2).map((event) => {
+                          {(catalogSportFilter !== 'all' ? events : events.slice(0, 2)).map((event) => {
                             const eventDate = new Date(event.date_start);
                             const formattedDate = eventDate.toLocaleDateString(locale, {
                               day: 'numeric',
@@ -2597,8 +2095,8 @@ export default function PlanningScreen() {
                           })}
                         </View>
 
-                        {/* See More Button - Affiche si plus de 2 événements */}
-                        {events.length > 2 && (
+                        {/* See More Button - Affiche si plus de 2 événements et vue globale */}
+                        {events.length > 2 && catalogSportFilter === 'all' && (
                           <TouchableOpacity
                             style={[styles.catalogSeeMoreBtnNew, { backgroundColor: sportInfo.color + '15', borderColor: sportInfo.color + '30' }]}
                             onPress={() => {
@@ -2723,8 +2221,6 @@ export default function PlanningScreen() {
 
       <PopupComponent />
 
-      {/* Bouton outils flottant */}
-      <HomeToolsMenu />
       </View>
     </ErrorBoundary>
   );
@@ -2876,6 +2372,68 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 20,
+  },
+
+  // COMPACT CLUBS (top of calendar page)
+  compactClubsSection: {
+    borderRadius: RADIUS.xl,
+    padding: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+  },
+  compactClubsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  compactClubsTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    flex: 1,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  compactClubAddBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactClubsScroll: {
+    gap: 8,
+    paddingRight: 8,
+  },
+  compactClubBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  compactClubLogo: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactClubLogoImg: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
+  compactClubDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  compactClubName: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 
   // CALENDAR HEADER
