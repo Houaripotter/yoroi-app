@@ -1,6 +1,6 @@
 // ============================================
-// METRIC RANGE INDICATOR - Indicateur de position avec dégradé
-// Affiche où se situe l'utilisateur sur une échelle (vert → orange → rouge)
+// METRIC RANGE INDICATOR - Segments colorés par zone
+// Affiche où se situe l'utilisateur sur une échelle avec des segments distincts
 // ============================================
 
 import React from 'react';
@@ -8,7 +8,6 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Info, ExternalLink } from 'lucide-react-native';
 
 export interface MetricRange {
@@ -23,7 +22,7 @@ export interface MetricRange {
   }[];
   unit: string;
   source?: string;
-  sourceUrl?: string; // URL cliquable vers l'étude/source
+  sourceUrl?: string;
   explanation?: string;
 }
 
@@ -41,20 +40,9 @@ export const MetricRangeIndicator: React.FC<MetricRangeIndicatorProps> = ({
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
 
-  // Calculer la position du curseur (0 à 1)
-  const normalizedPosition = Math.max(0, Math.min(1, (value - range.min) / (range.max - range.min)));
-
   // Trouver dans quelle zone se trouve la valeur
   const currentZone = range.zones.find(zone => value >= zone.start && value <= zone.end);
   const statusColor = currentZone?.color || '#94A3B8';
-
-  // Créer le dégradé de couleurs
-  const gradientColors = range.zones.length >= 2
-    ? (range.zones.map(zone => zone.color) as unknown as readonly [string, string, ...string[]])
-    : ['#2BCBBA', '#FC5C65'] as const;
-  const gradientLocations = range.zones.length >= 2
-    ? (range.zones.map((zone, index) => (zone.start - range.min) / (range.max - range.min)) as unknown as readonly [number, number, ...number[]])
-    : [0, 1] as const;
 
   return (
     <View style={styles.container}>
@@ -85,56 +73,50 @@ export const MetricRangeIndicator: React.FC<MetricRangeIndicatorProps> = ({
         )}
       </View>
 
-      {/* Barre avec dégradé */}
-      <View style={styles.barContainer}>
-        <LinearGradient
-          colors={gradientColors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          locations={gradientLocations}
-          style={styles.gradientBar}
-        >
-          {/* Curseur de position */}
-          <View
-            style={[
-              styles.cursor,
-              {
-                left: `${normalizedPosition * 100}%`,
-                backgroundColor: statusColor,
-                shadowColor: statusColor,
-              },
-            ]}
-          >
-            <View style={[styles.cursorInner, { backgroundColor: colors.backgroundCard }]} />
-          </View>
-        </LinearGradient>
+      {/* Segments colorés */}
+      <View style={styles.segmentsContainer}>
+        {range.zones.map((zone, index) => {
+          const isActive = currentZone?.label === zone.label;
+          const segmentWidth = ((zone.end - zone.start) / (range.max - range.min)) * 100;
+          return (
+            <View
+              key={index}
+              style={[
+                styles.segment,
+                {
+                  backgroundColor: zone.color,
+                  opacity: isActive ? 1 : 0.25,
+                  height: isActive ? 10 : 6,
+                  flex: segmentWidth,
+                },
+              ]}
+            />
+          );
+        })}
       </View>
 
-      {/* Légende avec zones */}
+      {/* Labels des zones */}
       <View style={styles.legend}>
-        <Text style={[styles.legendValue, { color: colors.textMuted }]}>
-          {range.min}
-        </Text>
-        <View style={styles.legendLabels}>
-          {range.zones.map((zone, index) => (
+        {range.zones.map((zone, index) => {
+          const isActive = currentZone?.label === zone.label;
+          return (
             <Text
               key={index}
               style={[
                 styles.legendLabel,
-                { color: currentZone?.label === zone.label ? zone.color : colors.textMuted },
-                currentZone?.label === zone.label && styles.legendLabelActive,
+                {
+                  color: isActive ? zone.color : colors.textMuted,
+                  fontWeight: isActive ? '800' : '600',
+                },
               ]}
             >
               {t(`healthRanges.zones.${zone.label}`) || zone.label}
             </Text>
-          ))}
-        </View>
-        <Text style={[styles.legendValue, { color: colors.textMuted }]}>
-          {range.max}
-        </Text>
+          );
+        })}
       </View>
 
-      {/* Source scientifique - cliquable si URL disponible */}
+      {/* Source scientifique */}
       {range.source && (
         <TouchableOpacity
           style={styles.sourceContainer}
@@ -197,63 +179,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  barContainer: {
-    height: 24,
-    marginBottom: 12,
-    position: 'relative',
-  },
-  gradientBar: {
-    flex: 1,
-    borderRadius: 12,
-    position: 'relative',
-  },
-  cursor: {
-    position: 'absolute',
-    top: -4,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginLeft: -16,
-    justifyContent: 'center',
+  segmentsContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
+    gap: 3,
+    marginBottom: 12,
   },
-  cursorInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  segment: {
+    borderRadius: 4,
   },
   legend: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 4,
-  },
-  legendValue: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  legendLabels: {
-    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-around',
     flexWrap: 'wrap',
     gap: 4,
+    marginTop: 4,
   },
   legendLabel: {
-    fontSize: 9,
-    fontWeight: '600',
+    fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
-  },
-  legendLabelActive: {
-    fontWeight: '800',
   },
   sourceContainer: {
     flexDirection: 'row',

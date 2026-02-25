@@ -1,7 +1,6 @@
 // ============================================
-// SCROLLABLE LINE CHART - Graphique scrollable coloré
-// Toutes les dates et valeurs affichées, grille colorée
-// Tap pour agrandir en plein écran
+// SCROLLABLE LINE CHART - Graphique scrollable
+// Fond card arrondi, gradient elegant, design pro
 // ============================================
 
 import React, { useRef, useMemo, useState } from 'react';
@@ -24,27 +23,8 @@ interface ScrollableLineChartProps {
   onPress?: () => void;
 }
 
-// Map language codes to date-fns locales
 const DATE_LOCALES: Record<string, Locale> = {
-  fr: fr,
-  en: enUS,
-  es: es,
-  de: de,
-  it: it,
-  pt: pt,
-  ru: ru,
-  ar: ar,
-  zh: zhCN,
-};
-
-// Couleurs complémentaires pour les différents éléments
-const getComplementaryColors = (accentColor: string, isDark: boolean) => {
-  return {
-    dateColor: isDark ? '#FF9F43' : '#E67E22', // Orange pour les dates
-    yAxisColor: isDark ? '#26DE81' : '#00B894', // Vert pour l'axe Y
-    gridColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', // Grille subtile
-    gridAccent: accentColor, // Couleur du thème pour grille accent
-  };
+  fr: fr, en: enUS, es: es, de: de, it: it, pt: pt, ru: ru, ar: ar, zh: zhCN,
 };
 
 export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
@@ -60,99 +40,11 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
   const scrollViewRef = useRef<ScrollView>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Utiliser la couleur accent du thème si pas de couleur spécifiée
   const lineColor = color || colors.accent;
-  const complementaryColors = getComplementaryColors(lineColor, isDark);
-
-  // Get the correct date-fns locale
   const dateLocale = DATE_LOCALES[language] || fr;
 
-  // Calculer les données du graphique
+  // Calculer les donnees du graphique
   const chartData = useMemo(() => {
-    if (!data || data.length === 0) return null;
-
-    const values = data.map(d => d.value);
-    const minValue = Math.min(...values);
-    const maxValue = Math.max(...values);
-    const range = maxValue - minValue || 1;
-    const padding = range * 0.2; // 20% padding pour plus d'espace
-
-    const yMin = minValue - padding;
-    const yMax = maxValue + padding;
-    const yRange = yMax - yMin;
-
-    // Dimensions - plus d'espace entre les points
-    const POINT_WIDTH = compact ? 60 : 85;
-    const chartWidth = Math.max(SCREEN_WIDTH - 40, data.length * POINT_WIDTH);
-    const chartHeight = compact ? 140 : height;
-    const paddingTop = compact ? 40 : 55; // Plus d'espace pour les valeurs au-dessus des points
-    const paddingBottom = 45; // Plus d'espace pour les dates
-    const paddingLeft = 90; // AUGMENTE ENCORE pour eviter chevauchement Y-axis et valeurs points
-    const paddingRight = 30; // Augmenté pour les dernières valeurs
-    const graphHeight = chartHeight - paddingTop - paddingBottom;
-    const graphWidth = chartWidth - paddingLeft - paddingRight;
-
-    // Calculer les points
-    const points = data.map((d, i) => {
-      const x = paddingLeft + (i / Math.max(data.length - 1, 1)) * graphWidth;
-      const y = paddingTop + graphHeight - ((d.value - yMin) / yRange) * graphHeight;
-      return { x, y, value: d.value, date: d.date };
-    });
-
-    // Créer le path de la ligne (courbe bezier)
-    let linePath = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 1; i < points.length; i++) {
-      const prev = points[i - 1];
-      const curr = points[i];
-      const cpx1 = prev.x + (curr.x - prev.x) * 0.4;
-      const cpx2 = prev.x + (curr.x - prev.x) * 0.6;
-      linePath += ` C ${cpx1} ${prev.y} ${cpx2} ${curr.y} ${curr.x} ${curr.y}`;
-    }
-
-    // Créer le path du gradient (area sous la ligne)
-    const areaPath = linePath +
-      ` L ${points[points.length - 1].x} ${paddingTop + graphHeight}` +
-      ` L ${points[0].x} ${paddingTop + graphHeight} Z`;
-
-    // Labels Y (valeurs sur l'axe)
-    const yLabels = [];
-    const numYLabels = compact ? 3 : 5;
-    for (let i = 0; i < numYLabels; i++) {
-      const value = yMin + (yRange * i) / (numYLabels - 1);
-      const y = paddingTop + graphHeight - (i / (numYLabels - 1)) * graphHeight;
-      yLabels.push({ value: value.toFixed(1), y });
-    }
-
-    // Labels de dates - TOUTES les dates
-    const labels = data.map((d, index) => {
-      if (!d.date) return `J${index + 1}`;
-      try {
-        const date = typeof d.date === 'string' ? parseISO(d.date) : d.date;
-        return format(date, 'd/MM', { locale: dateLocale });
-      } catch (e) {
-        return `J${index + 1}`;
-      }
-    });
-
-    return {
-      points,
-      linePath,
-      areaPath,
-      yLabels,
-      labels,
-      chartWidth,
-      chartHeight,
-      paddingTop,
-      paddingBottom,
-      paddingLeft,
-      graphHeight,
-      yMin,
-      yMax,
-    };
-  }, [data, compact, height, dateLocale]);
-
-  // Version plein écran du graphique
-  const fullscreenChartData = useMemo(() => {
     if (!data || data.length === 0) return null;
 
     const values = data.map(d => d.value);
@@ -165,13 +57,12 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
     const yMax = maxValue + padding;
     const yRange = yMax - yMin;
 
-    // Dimensions plein écran (paysage simulé)
-    const POINT_WIDTH = 100;
-    const chartWidth = Math.max(SCREEN_WIDTH - 60, data.length * POINT_WIDTH);
-    const chartHeight = SCREEN_HEIGHT * 0.6;
-    const paddingTop = 60;
-    const paddingBottom = 60;
-    const paddingLeft = 95; // Plus d'espace pour eviter chevauchement
+    const POINT_WIDTH = compact ? 60 : 85;
+    const chartWidth = Math.max(SCREEN_WIDTH - 40, data.length * POINT_WIDTH);
+    const chartHeight = compact ? 140 : height;
+    const paddingTop = compact ? 40 : 55;
+    const paddingBottom = 45;
+    const paddingLeft = 60;
     const paddingRight = 30;
     const graphHeight = chartHeight - paddingTop - paddingBottom;
     const graphWidth = chartWidth - paddingLeft - paddingRight;
@@ -196,10 +87,72 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
       ` L ${points[0].x} ${paddingTop + graphHeight} Z`;
 
     const yLabels = [];
-    const numYLabels = 6;
+    const numYLabels = compact ? 3 : 5;
     for (let i = 0; i < numYLabels; i++) {
       const value = yMin + (yRange * i) / (numYLabels - 1);
       const y = paddingTop + graphHeight - (i / (numYLabels - 1)) * graphHeight;
+      yLabels.push({ value: value.toFixed(1), y });
+    }
+
+    const labels = data.map((d, index) => {
+      if (!d.date) return `J${index + 1}`;
+      try {
+        const date = typeof d.date === 'string' ? parseISO(d.date) : d.date;
+        return format(date, 'd/MM', { locale: dateLocale });
+      } catch (e) {
+        return `J${index + 1}`;
+      }
+    });
+
+    return { points, linePath, areaPath, yLabels, labels, chartWidth, chartHeight, paddingTop, paddingBottom, paddingLeft, graphHeight, yMin, yMax };
+  }, [data, compact, height, dateLocale]);
+
+  // Version plein ecran
+  const fullscreenChartData = useMemo(() => {
+    if (!data || data.length === 0) return null;
+
+    const values = data.map(d => d.value);
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+    const range = maxValue - minValue || 1;
+    const padding = range * 0.2;
+    const yMin = minValue - padding;
+    const yMax = maxValue + padding;
+    const yRange = yMax - yMin;
+
+    const POINT_WIDTH = 100;
+    const chartWidth = Math.max(SCREEN_WIDTH - 60, data.length * POINT_WIDTH);
+    const chartHeight = SCREEN_HEIGHT * 0.6;
+    const paddingTop = 60;
+    const paddingBottom = 60;
+    const paddingLeft = 65;
+    const paddingRight = 30;
+    const graphHeight = chartHeight - paddingTop - paddingBottom;
+    const graphWidth = chartWidth - paddingLeft - paddingRight;
+
+    const points = data.map((d, i) => {
+      const x = paddingLeft + (i / Math.max(data.length - 1, 1)) * graphWidth;
+      const y = paddingTop + graphHeight - ((d.value - yMin) / yRange) * graphHeight;
+      return { x, y, value: d.value, date: d.date };
+    });
+
+    let linePath = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1];
+      const curr = points[i];
+      const cpx1 = prev.x + (curr.x - prev.x) * 0.4;
+      const cpx2 = prev.x + (curr.x - prev.x) * 0.6;
+      linePath += ` C ${cpx1} ${prev.y} ${cpx2} ${curr.y} ${curr.x} ${curr.y}`;
+    }
+
+    const areaPath = linePath +
+      ` L ${points[points.length - 1].x} ${paddingTop + graphHeight}` +
+      ` L ${points[0].x} ${paddingTop + graphHeight} Z`;
+
+    const yLabels = [];
+    for (let i = 0; i < 6; i++) {
+      const value = yMin + (yRange * i) / 5;
+      const y = paddingTop + graphHeight - (i / 5) * graphHeight;
       yLabels.push({ value: value.toFixed(1), y });
     }
 
@@ -213,26 +166,15 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
       }
     });
 
-    return {
-      points,
-      linePath,
-      areaPath,
-      yLabels,
-      labels,
-      chartWidth,
-      chartHeight,
-      paddingTop,
-      paddingBottom,
-      paddingLeft,
-      graphHeight,
-      yMin,
-      yMax,
-    };
+    return { points, linePath, areaPath, yLabels, labels, chartWidth, chartHeight, paddingTop, paddingBottom, paddingLeft, graphHeight, yMin, yMax };
   }, [data, dateLocale]);
 
   if (!chartData) {
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: colors.backgroundCard }]}>
+      <View style={[styles.emptyContainer, {
+        backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+      }]}>
         <Text style={[styles.emptyText, { color: colors.textMuted }]}>
           {t('stats.noData')}
         </Text>
@@ -240,24 +182,24 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
     );
   }
 
-  // Rendu du graphique (réutilisable pour normal et fullscreen)
   const renderChart = (chartInfo: typeof chartData, isFullscreenMode: boolean = false) => {
     if (!chartInfo) return null;
 
-    const fontSize = isFullscreenMode ? { value: 12, date: 11, yAxis: 11 } : { value: compact ? 9 : 10, date: compact ? 8 : 9, yAxis: 10 };
+    const fontSize = isFullscreenMode
+      ? { value: 13, date: 12, yAxis: 12 }
+      : { value: compact ? 10 : 12, date: compact ? 9 : 11, yAxis: 11 };
 
     return (
       <Svg width={chartInfo.chartWidth} height={chartInfo.chartHeight}>
         <Defs>
-          {/* Gradient pour l'area sous la ligne */}
-          <LinearGradient id={`areaGradient-${isFullscreenMode ? 'fs' : 'normal'}`} x1="0%" y1="0%" x2="0%" y2="100%">
-            <Stop offset="0%" stopColor={lineColor} stopOpacity={isDark ? 0.5 : 0.4} />
-            <Stop offset="40%" stopColor={lineColor} stopOpacity={isDark ? 0.25 : 0.2} />
+          <LinearGradient id={`areaGrad-${isFullscreenMode ? 'fs' : 'n'}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <Stop offset="0%" stopColor={lineColor} stopOpacity={isDark ? 0.45 : 0.35} />
+            <Stop offset="50%" stopColor={lineColor} stopOpacity={isDark ? 0.15 : 0.12} />
             <Stop offset="100%" stopColor={lineColor} stopOpacity={0.02} />
           </LinearGradient>
         </Defs>
 
-        {/* Lignes horizontales de grille avec couleur du thème */}
+        {/* Lignes horizontales de grille */}
         {chartInfo.yLabels.map((label, i) => (
           <Line
             key={`grid-${i}`}
@@ -265,31 +207,32 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
             y1={label.y}
             x2={chartInfo.chartWidth - 15}
             y2={label.y}
-            stroke={i === 0 ? `${lineColor}40` : complementaryColors.gridColor}
-            strokeWidth={i === 0 ? 1.5 : 1}
-            strokeDasharray={i === 0 ? "0" : "5,5"}
+            stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}
+            strokeWidth={1}
+            strokeDasharray="4,6"
           />
         ))}
 
-        {/* Labels Y (axe gauche) - couleur verte */}
+        {/* Labels Y */}
         {chartInfo.yLabels.map((label, i) => (
           <SvgText
             key={`ylabel-${i}`}
-            x={chartInfo.paddingLeft - 20}
+            x={chartInfo.paddingLeft - 10}
             y={label.y + 4}
-            fill={complementaryColors.yAxisColor}
+            fill={colors.textMuted}
             fontSize={fontSize.yAxis}
             fontWeight="700"
             textAnchor="end"
+            opacity={0.7}
           >
             {label.value}
           </SvgText>
         ))}
 
-        {/* Area sous la courbe avec gradient */}
+        {/* Area gradient */}
         <Path
           d={chartInfo.areaPath}
-          fill={`url(#areaGradient-${isFullscreenMode ? 'fs' : 'normal'})`}
+          fill={`url(#areaGrad-${isFullscreenMode ? 'fs' : 'n'})`}
         />
 
         {/* Ligne principale */}
@@ -302,97 +245,113 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
           fill="none"
         />
 
-        {/* Points et valeurs - TOUS affichés */}
-        {chartInfo.points.map((point, index) => (
+        {/* Points et valeurs */}
+        {chartInfo.points.map((point, index) => {
+          // Décaler les labels proches de l'axe Y vers la droite
+          const nearLeftEdge = point.x < chartInfo.paddingLeft + 30;
+          const valueAnchor = nearLeftEdge ? 'start' : 'middle';
+          const valueX = nearLeftEdge ? point.x + 8 : point.x;
+
+          // Anti-chevauchement vertical: décaler si le point précédent est trop proche
+          let valueY = Math.max(point.y - (isFullscreenMode ? 16 : (compact ? 10 : 13)), 16);
+          if (index > 0) {
+            const prevPoint = chartInfo.points[index - 1];
+            const prevValueY = Math.max(prevPoint.y - (isFullscreenMode ? 16 : (compact ? 10 : 13)), 16);
+            if (Math.abs(valueY - prevValueY) < 14 && Math.abs(point.x - prevPoint.x) < 60) {
+              valueY = valueY - 20;
+            }
+          }
+
+          return (
           <G key={`point-${index}`}>
-            {/* Glow du point */}
+            {/* Glow */}
             <Circle
               cx={point.x}
               cy={point.y}
-              r={isFullscreenMode ? 12 : (compact ? 7 : 9)}
+              r={isFullscreenMode ? 10 : (compact ? 6 : 8)}
               fill={lineColor}
-              opacity={0.15}
+              opacity={0.12}
             />
-            {/* Point externe (bordure) */}
+            {/* Point externe */}
             <Circle
               cx={point.x}
               cy={point.y}
-              r={isFullscreenMode ? 7 : (compact ? 4 : 5)}
+              r={isFullscreenMode ? 5.5 : (compact ? 3.5 : 4.5)}
               fill={isDark ? colors.backgroundCard : '#FFFFFF'}
               stroke={lineColor}
-              strokeWidth={isFullscreenMode ? 3 : (compact ? 2 : 2.5)}
+              strokeWidth={isFullscreenMode ? 2.5 : 2}
             />
-            {/* Point interne coloré */}
+            {/* Point interne */}
             <Circle
               cx={point.x}
               cy={point.y}
-              r={isFullscreenMode ? 3 : (compact ? 2 : 2.5)}
+              r={isFullscreenMode ? 2.5 : (compact ? 1.5 : 2)}
               fill={lineColor}
             />
 
-            {/* Valeur au-dessus du point - TOUTES affichées */}
+            {/* Valeur au-dessus */}
             <SvgText
-              x={point.x}
-              y={Math.max(point.y - (isFullscreenMode ? 18 : (compact ? 12 : 14)), 18)}
-              fill={lineColor}
+              x={valueX}
+              y={valueY}
+              fill={isDark ? '#FFFFFF' : '#1a1a1a'}
               fontSize={fontSize.value}
               fontWeight="800"
-              textAnchor="middle"
+              textAnchor={valueAnchor}
+              opacity={0.9}
             >
               {point.value.toFixed(1)}{unit}
             </SvgText>
 
-            {/* Label de date - TOUTES affichées en orange */}
+            {/* Date */}
             <SvgText
               x={point.x}
               y={chartInfo.chartHeight - (isFullscreenMode ? 15 : 10)}
-              fill={complementaryColors.dateColor}
+              fill={lineColor}
               fontSize={fontSize.date}
               fontWeight="700"
               textAnchor="middle"
+              opacity={0.8}
             >
               {chartInfo.labels[index]}
             </SvgText>
           </G>
-        ))}
+          );
+        })}
       </Svg>
     );
   };
 
   return (
-    <View style={styles.container}>
-      {/* Graphique principal - cliquable pour agrandir */}
+    <View style={[styles.container, {
+      backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+    }]}>
+      {/* Graphique principal scrollable */}
       <ScrollView
         ref={scrollViewRef}
         horizontal
-        showsHorizontalScrollIndicator={true}
+        showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         bounces={false}
         decelerationRate="fast"
         style={styles.scrollView}
       >
-        <Pressable onPress={() => {
-          if (onPress) {
-            onPress();
-          } else {
-            setIsFullscreen(true);
-          }
-        }}>
+        <Pressable onPress={() => { onPress ? onPress() : setIsFullscreen(true); }}>
           {renderChart(chartData, false)}
         </Pressable>
       </ScrollView>
 
-      {/* Indicateur de scroll + tap pour agrandir */}
+      {/* Hint */}
       {!compact && (
-        <View style={[styles.hintContainer, { backgroundColor: `${lineColor}12` }]}>
-          <Ionicons name="swap-horizontal-outline" size={14} color={lineColor} />
+        <View style={[styles.hintContainer, { backgroundColor: `${lineColor}10` }]}>
+          <Ionicons name="swap-horizontal-outline" size={13} color={lineColor} />
           <Text style={[styles.hintText, { color: lineColor }]}>
-            Faites défiler • Appuyez pour agrandir
+            D{'\u00E9'}filer {'\u2022'} Appuyer pour agrandir
           </Text>
         </View>
       )}
 
-      {/* Modal plein écran */}
+      {/* Modal plein ecran */}
       <Modal
         visible={isFullscreen}
         animationType="fade"
@@ -400,7 +359,6 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
         onRequestClose={() => setIsFullscreen(false)}
       >
         <View style={[styles.modalContainer, { backgroundColor: isDark ? 'rgba(0,0,0,0.95)' : 'rgba(255,255,255,0.98)' }]}>
-          {/* Bouton fermer */}
           <TouchableOpacity
             style={[styles.closeButton, { backgroundColor: colors.error }]}
             onPress={() => setIsFullscreen(false)}
@@ -408,12 +366,10 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
             <Ionicons name="close" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          {/* Titre */}
-          <Text style={[styles.modalTitle, { color: colors.text }]}>
+          <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
             {t('stats.weight') || 'Poids'} {unit}
           </Text>
 
-          {/* Graphique plein écran scrollable */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={true}
@@ -424,28 +380,6 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
           >
             {fullscreenChartData && renderChart(fullscreenChartData, true)}
           </ScrollView>
-
-          {/* Légende */}
-          <View style={styles.legendContainer}>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: complementaryColors.dateColor }]} />
-              <Text style={[styles.legendText, { color: colors.textMuted }]}>
-                {t('stats.dates') || 'Dates'}
-              </Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: complementaryColors.yAxisColor }]} />
-              <Text style={[styles.legendText, { color: colors.textMuted }]}>
-                {t('stats.values') || 'Valeurs'}
-              </Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: lineColor }]} />
-              <Text style={[styles.legendText, { color: colors.textMuted }]}>
-                {t('stats.evolution') || 'Évolution'}
-              </Text>
-            </View>
-          </View>
         </View>
       </Modal>
     </View>
@@ -455,15 +389,25 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+    borderRadius: 20,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   scrollView: {
     width: '100%',
   },
   scrollContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   emptyContainer: {
-    borderRadius: 16,
+    borderRadius: 20,
+    borderWidth: 1,
     padding: 40,
     alignItems: 'center',
     justifyContent: 'center',
@@ -474,20 +418,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   hintContainer: {
-    marginTop: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    marginBottom: 12,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
     borderRadius: 10,
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
   hintText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
   },
-  // Modal styles
   modalContainer: {
     flex: 1,
     paddingTop: 60,
@@ -522,25 +465,5 @@ const styles = StyleSheet.create({
   modalScrollContent: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-  },
-  legendContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 24,
-    paddingTop: 20,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  legendText: {
-    fontSize: 12,
-    fontWeight: '600',
   },
 });

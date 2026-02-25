@@ -9,29 +9,21 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { DashboardPage } from './pages/DashboardPage';
-import { PoidsPage } from './pages/PoidsPage';
-import { CompositionPage } from './pages/CompositionPage';
-import { MensurationsPage } from './pages/MensurationsPage';
-import { DisciplinePage } from './pages/DisciplinePage';
-import { PerformancePage } from './pages/PerformancePage';
+import { CorpsTabPage } from './pages/CorpsTabPage';
+import { TrainingTabPage } from './pages/TrainingTabPage';
 import { VitalitePage } from './pages/VitalitePage';
-import { Scale, Activity, Ruler, Flame, Award, Heart, LayoutDashboard } from 'lucide-react-native';
+import { Scale, Flame, Heart, LayoutDashboard, AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { ScrollProvider } from '@/lib/ScrollContext';
-import { HomeToolsMenu } from '@/components/home/HomeToolsMenu';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Page definitions - titles are set dynamically in component
-// Santé en premier car c'est l'indicateur principal de santé
+// Page definitions - 4 onglets consolidés
 const PAGE_DEFS = [
   { id: 'dashboard', titleKey: 'Résumé', icon: LayoutDashboard, component: DashboardPage },
+  { id: 'corps', titleKey: 'Corps', icon: Scale, component: CorpsTabPage },
+  { id: 'training', titleKey: 'Training', icon: Flame, component: TrainingTabPage },
   { id: 'sante', titleKey: 'stats.health', icon: Heart, component: VitalitePage },
-  { id: 'poids', titleKey: 'stats.weight', icon: Scale, component: PoidsPage },
-  { id: 'composition', titleKey: 'stats.composition', icon: Activity, component: CompositionPage },
-  { id: 'mensurations', titleKey: 'stats.measurements', icon: Ruler, component: MensurationsPage },
-  { id: 'discipline', titleKey: 'stats.discipline', icon: Flame, component: DisciplinePage },
-  { id: 'performance', titleKey: 'stats.performance', icon: Award, component: PerformancePage },
 ];
 
 interface StatsTabViewNewProps {
@@ -39,7 +31,7 @@ interface StatsTabViewNewProps {
 }
 
 export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) => {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, screenBackground, screenText, screenTextMuted } = useTheme();
   const { t } = useI18n();
 
   // Create pages with translated titles
@@ -52,8 +44,8 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
   const [currentPage, setCurrentPage] = useState(0);
 
   // Calculer si tous les onglets rentrent dans l'écran
-  const tabWidth = 44;
-  const tabGap = 12;
+  const tabWidth = 100; // Largeur estimée d'une pilule (icone + texte)
+  const tabGap = 8;
   const totalTabsWidth = (PAGES.length * (tabWidth + tabGap)) + 32;
   const allTabsFit = totalTabsWidth <= SCREEN_WIDTH;
 
@@ -103,8 +95,8 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
       // ... rest of handleScroll logic
       
       // Calculer la largeur totale des onglets
-      const tabWidth = 44; // Largeur d'un cercle
-      const tabGap = 12; // Gap entre onglets
+      const tabWidth = 100; // Largeur d'une pilule
+      const tabGap = 8; // Gap entre onglets
       const totalTabsWidth = (PAGES.length * (tabWidth + tabGap)) + 32; // +32 pour padding
 
       // Si tous les onglets rentrent dans l'écran, ne pas scroller
@@ -113,7 +105,7 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
       }
 
       // Sinon, auto-scroll pour centrer l'onglet actif
-      const scrollOffset = page * (tabWidth + tabGap) - SCREEN_WIDTH / 2 + (tabWidth / 2) + 16;
+      const scrollOffset = page * (100 + 8) - SCREEN_WIDTH / 2 + (100 / 2) + 16;
       tabScrollRef.current?.scrollTo({
         x: Math.max(0, scrollOffset),
         animated: true,
@@ -138,10 +130,10 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
 
   return (
     <ScrollProvider>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: screenBackground }]}>
         {/* Header avec tabs circulaires */}
         <View style={[styles.header, {
-          backgroundColor: colors.background,
+          backgroundColor: screenBackground,
         }]}>
         <ScrollView
           ref={tabScrollRef}
@@ -161,30 +153,25 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
             return (
               <TouchableOpacity
                 key={page.id}
-                style={styles.tabWrapper}
-                onPress={() => scrollToPage(index)}
-                activeOpacity={0.7}
-              >
-                <View style={[
-                  styles.circleTab,
+                style={[
+                  styles.tab,
                   {
                     backgroundColor: isActive
                       ? colors.accent
-                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)')
+                      : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)')
                   },
-                ]}>
-                  <Icon
-                    size={18}
-                    color={isActive ? colors.textOnAccent : colors.textMuted}
-                    strokeWidth={2.5}
-                  />
-                </View>
+                ]}
+                onPress={() => scrollToPage(index)}
+                activeOpacity={0.7}
+              >
+                <Icon
+                  size={14}
+                  color={isActive ? colors.textOnAccent : screenTextMuted}
+                  strokeWidth={2.5}
+                />
                 <Text style={[
-                  styles.tabTitle,
-                  {
-                    color: isActive ? colors.accent : colors.textMuted,
-                    fontWeight: isActive ? '800' : '600',
-                  }
+                  styles.tabLabel,
+                  { color: isActive ? colors.textOnAccent : screenTextMuted },
                 ]}>
                   {page.title}
                 </Text>
@@ -227,8 +214,6 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
         })}
       </ScrollView>
 
-      {/* Bouton outils flottant */}
-      <HomeToolsMenu />
       </View>
     </ScrollProvider>
   );
@@ -246,39 +231,32 @@ const styles = StyleSheet.create({
     flexGrow: 0,
   },
   tabsContent: {
-    paddingLeft: 16,
-    paddingRight: 80, // Padding plus grand à droite pour montrer qu'il y a plus d'onglets
-    gap: 12,
+    paddingHorizontal: 16,
+    gap: 8,
     alignItems: 'flex-start',
   },
   tabsContentCentered: {
-    paddingLeft: 16,
-    paddingRight: 16, // Padding normal si tous les onglets rentrent
+    paddingHorizontal: 16,
     justifyContent: 'center',
     flexGrow: 1,
   },
-  tabWrapper: {
+  tab: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
-  circleTab: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tabTitle: {
-    fontSize: 9,
+  tabLabel: {
+    fontSize: 13,
     fontWeight: '600',
-    letterSpacing: 0.2,
-    textAlign: 'center',
   },
   scrollContent: {
     flexDirection: 'row',
   },
   page: {
     width: SCREEN_WIDTH,
-    minHeight: SCREEN_HEIGHT,
+    height: SCREEN_HEIGHT - 120,
   },
 });

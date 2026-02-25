@@ -15,11 +15,11 @@ interface PeriodSelectorProps {
   onChange: (period: Period) => void;
 }
 
-const PERIODS: { value: Period; label: string }[] = [
-  { value: '30j', label: '30J' },
-  { value: '90j', label: '90J' },
-  { value: '6m', label: '6M' },
-  { value: '1a', label: '1A' },
+const PERIODS: Array<{ value: Period; label: string }> = [
+  { value: '30j', label: '30 jours' },
+  { value: '90j', label: '90 jours' },
+  { value: '6m', label: '6 mois' },
+  { value: '1a', label: '1 an' },
 ];
 
 export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
@@ -77,6 +77,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
     flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   pill: {
     paddingVertical: 6,

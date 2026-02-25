@@ -19,11 +19,11 @@ import { logger } from '@/lib/security/logger';
 
 type Period = '30j' | '90j' | '6m' | '1a';
 
-const PERIODS: { value: Period; label: string }[] = [
-  { value: '30j', label: '30J' },
-  { value: '90j', label: '90J' },
-  { value: '6m', label: '6M' },
-  { value: '1a', label: '1A' },
+const PERIODS: Array<{ value: Period; label: string }> = [
+  { value: '30j', label: '30 jours' },
+  { value: '90j', label: '90 jours' },
+  { value: '6m', label: '6 mois' },
+  { value: '1a', label: '1 an' },
 ];
 
 const getPeriodDays = (period: Period): number => {
@@ -452,8 +452,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     paddingTop: 20,
     paddingBottom: 40,
-    maxHeight: '90%',
-    minHeight: '60%',
+    height: '92%',
   },
   header: {
     flexDirection: 'row',
@@ -498,6 +497,7 @@ const styles = StyleSheet.create({
     gap: 6,
     marginBottom: 16,
     flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   periodPill: {
     paddingVertical: 6,

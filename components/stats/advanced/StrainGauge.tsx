@@ -6,6 +6,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
+import { useTheme } from '@/lib/ThemeContext';
 import Animated, {
   useAnimatedProps,
   useSharedValue,
@@ -32,8 +33,9 @@ const STRAIN_ZONES = [
 export const StrainGauge: React.FC<StrainGaugeProps> = ({
   strain,
   label = 'CHARGE',
-  size = 200,
+  size = 160,
 }) => {
+  const { colors, isDark } = useTheme();
   const STROKE_WIDTH = 14;
   const RADIUS = (size - STROKE_WIDTH) / 2;
   const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -59,80 +61,92 @@ export const StrainGauge: React.FC<StrainGaugeProps> = ({
   const currentZone = getCurrentZone(strain);
 
   return (
-    <View style={styles.container}>
-      <Svg width={size} height={size}>
-        {/* Cercle de fond avec segments colorés */}
-        {STRAIN_ZONES.map((zone, index) => {
-          const startAngle = -90 + (zone.min / 21) * 360;
-          const endAngle = -90 + (zone.max / 21) * 360;
-          const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
+    <View style={[styles.wrapper, {
+      backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+      shadowColor: isDark ? 'transparent' : '#000',
+    }]}>
+      <View style={styles.container}>
+        <Svg width={size} height={size}>
+          {/* Cercle de fond avec segments colorés */}
+          {STRAIN_ZONES.map((zone, index) => {
+            const startAngle = -90 + (zone.min / 21) * 360;
+            const endAngle = -90 + (zone.max / 21) * 360;
+            const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
 
-          const startX = size / 2 + RADIUS * Math.cos((startAngle * Math.PI) / 180);
-          const startY = size / 2 + RADIUS * Math.sin((startAngle * Math.PI) / 180);
-          const endX = size / 2 + RADIUS * Math.cos((endAngle * Math.PI) / 180);
-          const endY = size / 2 + RADIUS * Math.sin((endAngle * Math.PI) / 180);
+            const startX = size / 2 + RADIUS * Math.cos((startAngle * Math.PI) / 180);
+            const startY = size / 2 + RADIUS * Math.sin((startAngle * Math.PI) / 180);
+            const endX = size / 2 + RADIUS * Math.cos((endAngle * Math.PI) / 180);
+            const endY = size / 2 + RADIUS * Math.sin((endAngle * Math.PI) / 180);
 
-          return (
-            <Path
-              key={index}
-              d={`M ${startX} ${startY} A ${RADIUS} ${RADIUS} 0 ${largeArcFlag} 1 ${endX} ${endY}`}
-              stroke={zone.color}
-              strokeWidth={STROKE_WIDTH * 0.3}
-              fill="none"
-              opacity={0.2}
-            />
-          );
-        })}
+            return (
+              <Path
+                key={index}
+                d={`M ${startX} ${startY} A ${RADIUS} ${RADIUS} 0 ${largeArcFlag} 1 ${endX} ${endY}`}
+                stroke={zone.color}
+                strokeWidth={STROKE_WIDTH * 0.3}
+                fill="none"
+                opacity={0.2}
+              />
+            );
+          })}
 
-        {/* Cercle de progression */}
-        <AnimatedCircle
-          cx={size / 2}
-          cy={size / 2}
-          r={RADIUS}
-          stroke={currentZone.color}
-          strokeWidth={STROKE_WIDTH}
-          fill="none"
-          strokeDasharray={CIRCUMFERENCE}
-          animatedProps={animatedProps}
-          strokeLinecap="round"
-          rotation="-90"
-          origin={`${size / 2}, ${size / 2}`}
-        />
-      </Svg>
+          {/* Cercle de progression */}
+          <AnimatedCircle
+            cx={size / 2}
+            cy={size / 2}
+            r={RADIUS}
+            stroke={currentZone.color}
+            strokeWidth={STROKE_WIDTH}
+            fill="none"
+            strokeDasharray={CIRCUMFERENCE}
+            animatedProps={animatedProps}
+            strokeLinecap="round"
+            rotation="-90"
+            origin={`${size / 2}, ${size / 2}`}
+          />
+        </Svg>
 
-      {/* Contenu central */}
-      <View style={styles.centerContent}>
-        <Text style={[styles.value, { color: currentZone.color }]}>
-          {strain.toFixed(1)}
-        </Text>
-        <Text style={styles.label}>{label}</Text>
-        <Text style={[styles.zone, { color: currentZone.color }]}>
-          {currentZone.label}
-        </Text>
+        {/* Contenu central */}
+        <View style={styles.centerContent}>
+          <Text style={[styles.value, { color: currentZone.color }]}>
+            {strain.toFixed(1)}
+          </Text>
+          <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
+          <Text style={[styles.zone, { color: currentZone.color }]}>
+            {currentZone.label}
+          </Text>
+        </View>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    borderRadius: 20,
+    padding: 20,
+    marginVertical: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 16,
   },
   centerContent: {
     position: 'absolute',
     alignItems: 'center',
   },
   value: {
-    fontSize: 52,
+    fontSize: 42,
     fontWeight: '800',
     letterSpacing: -1.5,
   },
   label: {
     fontSize: 11,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.5)',
     textTransform: 'uppercase',
     letterSpacing: 1.2,
     marginTop: 2,
