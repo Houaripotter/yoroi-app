@@ -832,7 +832,14 @@ export default function HomeScreen() {
         const fifteenMinutes = 15 * 60 * 1000;
         if (Date.now() - lastSyncTime > fifteenMinutes) {
           logger.info('[AutoSync] Syncing health data...');
-          await healthConnectService.syncAll();
+          const data = await healthConnectService.syncAll();
+          // Mettre a jour les valeurs affichees apres sync
+          if (data?.steps?.count) {
+            setSteps(data.steps.count);
+          }
+          if (data?.calories?.active) {
+            setCalories(Math.round(data.calories.active));
+          }
           logger.info('[AutoSync] Auto-sync complete');
         }
       } catch (e) {

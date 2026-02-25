@@ -3,26 +3,27 @@
 // ============================================
 
 import React, { useState, useEffect, useRef, useMemo, memo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, Animated, FlatList, Easing } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, Animated, FlatList, Easing, Switch, DeviceEventEmitter } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { router } from 'expo-router';
-import { Sparkles, TrendingUp, TrendingDown, Minus, Target, Dumbbell, Apple, Droplet, Share2, FileText, BookOpen, Timer, Calculator, Clock, Camera, User, Trophy, Utensils, Bell, Heart, Users, BookMarked, Plus, Medal, ListChecks, Moon, Crown, Palette } from 'lucide-react-native';
+import { TrendingUp, TrendingDown, Minus, Plus, Dumbbell, Droplet, Share2, FileText, Moon, Zap, Bell, BellOff, Check, Target, Calendar, Activity, AlertTriangle, CheckCircle, Clock, Settings, Footprints, Flame } from 'lucide-react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { getAvatarConfig, getAvatarImage } from '@/lib/avatarSystem';
-import { HydrationCardFullWidth } from '@/components/cards/HydrationCardFullWidth';
-import { SleepCardFullWidth } from '@/components/cards/SleepCardFullWidth';
-import { ChargeCardFullWidth } from '@/components/cards/ChargeCardFullWidth';
-import { QuestsCard } from '@/components/QuestsCard';
+// HydrationCardFullWidth removed - integrated into Report grid card
+// QuestsCard déplacé dans HomeTabView page 2
 import { LinearGradient } from 'expo-linear-gradient';
-import { getActionGridOrder, ActionGridItem } from '@/lib/actionGridCustomizationService';
+// actionGridCustomizationService removed - tools moved to Menu tab
 import { getUserSettings } from '@/lib/storage';
 import { getLatestBodyComposition, BodyComposition } from '@/lib/bodyComposition';
 import { getTrainings } from '@/lib/database';
-import Svg, { Path, Defs, ClipPath, G, Image as SvgImage } from 'react-native-svg';
+import Svg, { Path, Circle as SvgCircle, Rect as SvgRect, Defs, ClipPath, G, Image as SvgImage, LinearGradient as SvgLinearGradient, Stop, Ellipse, Line, Text as SvgText } from 'react-native-svg';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { RankCitationCard } from '@/components/home/RankCitationCard';
+import { FramedProfilePhoto } from '@/components/FramedProfilePhoto';
 import { logger } from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -411,6 +412,7 @@ interface Page1MonitoringProps {
   bodyFat?: number;
   muscleMass?: number;
   waterPercentage?: number;
+  heightCm?: number;
   userGoal?: 'lose' | 'maintain' | 'gain';
   weeklyReport?: WeeklyReport;
   onAddWeight?: () => void;
@@ -419,330 +421,537 @@ interface Page1MonitoringProps {
   refreshTrigger?: number;
 }
 
-// ============================================
-// COMPOSANT GRILLE D'OUTILS (4 colonnes)
-// ============================================
-const TOOLS_GRID_PADDING = 12;
-const TOOLS_GRID_GAP = 10;
-const TOOLS_COLUMNS = 4;
-const toolCardWidth = (SCREEN_WIDTH - TOOLS_GRID_PADDING * 2 - TOOLS_GRID_GAP * (TOOLS_COLUMNS - 1)) / TOOLS_COLUMNS;
+// ToolsGrid supprimé - déplacé dans onglet Menu
 
-const ICON_MAP: { [key: string]: React.ComponentType<any> } = {
-  'BookOpen': BookOpen,
-  'Timer': Timer,
-  'BookMarked': BookMarked,
-  'Calculator': Calculator,
-  'Clock': Clock,
-  'Camera': Camera,
-  'Share2': Share2,
-  'User': User,
-  'Palette': Palette,
-  'Sparkles': Sparkles,
-  'Trophy': Trophy,
-  'Utensils': Utensils,
-  'Bell': Bell,
-  'Heart': Heart,
-  'Users': Users,
-  'Plus': Plus,
-  'Medal': Medal,
-  'ListChecks': ListChecks,
-  'Moon': Moon,
-  'Crown': Crown,
-  'Target': Target,
-};
+// ToolsGrid component and styles removed
 
-const getIconComponent = (iconName: string) => {
-  return ICON_MAP[iconName] || BookOpen;
-};
+// WeightProgressWithCharacter removed - weight info integrated into Report grid card
 
-// Map tool IDs to translation keys
-const TOOL_TRANSLATION_KEYS: { [key: string]: { label: string } } = {
-  'blessures': { label: 'tools.injuries' },
-  'infirmerie': { label: 'tools.injuries' },
-  'timer': { label: 'tools.timer' },
-  'carnet': { label: 'tools.journal' },
-  'calculateurs': { label: 'tools.calculators' },
-  'jeune': { label: 'tools.fasting' },
-  'nutrition': { label: 'tools.nutrition' },
-  'health': { label: 'tools.appleHealth' },
-  'savoir': { label: 'tools.knowledge' },
-  'dojo': { label: 'tools.myDojo' },
-  'notifications': { label: 'tools.notifications' },
-  'partager': { label: 'tools.share' },
-  'clubs': { label: 'tools.clubsCoach' },
-  'competiteur': { label: 'tools.compete' },
-  'profil': { label: 'tools.profile' },
-  'themes': { label: 'tools.themes' },
-  'photos': { label: 'tools.photos' },
-};
+// ═══════════════════════════════════════════════
+// HYDRATION GRID CARD - 3 Pages Swipeables
+// ═══════════════════════════════════════════════
+const H_CARD_W = (SCREEN_WIDTH - CARD_PADDING * 2 - 12) / 2;
+const CARD_BORDER_W = 1.5; // borderWidth en mode clair
+const H_CARD_PAGE_W = H_CARD_W - CARD_BORDER_W * 2; // largeur intérieure pour pages ScrollView
+const H_CARD_INNER = H_CARD_W - 28; // contenu intérieur (padding 14*2)
+const H_BOTTLE_W = 55;
+const H_BOTTLE_H = 82;
+const HYDRATION_HISTORY_KEY = '@yoroi_hydration_history';
+const HYDRATION_GOAL_KEY = '@yoroi_hydration_goal';
 
-const ToolsGrid: React.FC = memo(() => {
-  const { colors, isDark } = useTheme();
-  const { t } = useI18n();
-  const [gridItems, setGridItems] = useState<ActionGridItem[]>([]);
-
-  useEffect(() => {
-    loadGridOrder();
-  }, []);
-
-  const loadGridOrder = async () => {
-    const items = await getActionGridOrder();
-    setGridItems(items);
-  };
-
-  const handleItemPress = useCallback((item: ActionGridItem) => {
-    impactAsync(ImpactFeedbackStyle.Light);
-    router.push(item.route as any);
-  }, []);
-
-  // Organiser en rangées de 4
-  const rows = useMemo(() => {
-    const result: ActionGridItem[][] = [];
-    for (let i = 0; i < gridItems.length; i += TOOLS_COLUMNS) {
-      result.push(gridItems.slice(i, i + TOOLS_COLUMNS));
-    }
-    return result;
-  }, [gridItems]);
-
-  return (
-    <View style={toolsGridStyles.container}>
-      {rows.map((row, rowIndex) => (
-        <View key={`row-${rowIndex}`} style={toolsGridStyles.row}>
-          {row.map((item) => {
-            const Icon = getIconComponent(item.icon);
-            return (
-              <TouchableOpacity
-                key={item.id}
-                onPress={() => handleItemPress(item)}
-                style={toolsGridStyles.gridItemWrapper}
-                activeOpacity={0.85}
-              >
-                <View style={[toolsGridStyles.gridItem, { backgroundColor: colors.backgroundCard }]}>
-                  <View style={[toolsGridStyles.iconCircle, { backgroundColor: `${item.color}15` }]}>
-                    {item.id === 'infirmerie' ? (
-                      <View style={toolsGridStyles.redCross}>
-                        <View style={[toolsGridStyles.crossVertical, { backgroundColor: item.color }]} />
-                        <View style={[toolsGridStyles.crossHorizontal, { backgroundColor: item.color }]} />
-                      </View>
-                    ) : (
-                      <Icon size={18} color={item.color} strokeWidth={2.5} />
-                    )}
-                  </View>
-                  <Text style={[toolsGridStyles.label, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {item.label}
-                  </Text>
-                  <Text style={[toolsGridStyles.description, { color: colors.textMuted }]} numberOfLines={1}>
-                    {item.description}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-          {row.length < TOOLS_COLUMNS &&
-            Array.from({ length: TOOLS_COLUMNS - row.length }).map((_, i) => (
-              <View key={`empty-${i}`} style={{ width: toolCardWidth }} />
-            ))}
-        </View>
-      ))}
-    </View>
-  );
-});
-
-const toolsGridStyles = StyleSheet.create({
-  container: {
-    marginTop: 12,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: TOOLS_GRID_GAP,
-  },
-  gridItemWrapper: {
-    width: toolCardWidth,
-    borderRadius: 14,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  gridItem: {
-    aspectRatio: 0.8,
-    padding: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 2,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.03)',
-  },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  redCross: {
-    width: 20,
-    height: 20,
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  crossVertical: {
-    position: 'absolute',
-    width: 6,
-    height: 20,
-    borderRadius: 2,
-  },
-  crossHorizontal: {
-    position: 'absolute',
-    width: 20,
-    height: 6,
-    borderRadius: 2,
-  },
-  label: {
-    fontSize: 11,
-    fontWeight: '800', // Plus gras
-    textAlign: 'center',
-    letterSpacing: 0,
-    lineHeight: 13,
-  },
-  description: {
-    fontSize: 9,
-    fontWeight: '500',
-    textAlign: 'center',
-    lineHeight: 11,
-    opacity: 0.6,
-  },
-});
-
-// ============================================
-// COMPOSANT BARRE DE PROGRESSION POIDS (Simple avec couleurs du thème)
-// ============================================
-interface WeightProgressProps {
-  currentWeight: number;
-  targetWeight: number;
-  startWeight: number;
-  userGoal: 'lose' | 'maintain' | 'gain';
-  isDark: boolean;
+interface HydrationGridCardProps {
+  hydration: number;
+  hydrationGoal: number;
+  onAddWater?: (ml: number) => void;
   colors: any;
+  isDark: boolean;
 }
 
-// Composant optimisé avec React.memo
-const WeightProgressWithCharacter: React.FC<WeightProgressProps> = memo(({
-  currentWeight,
-  targetWeight,
-  startWeight,
-  userGoal,
-  isDark,
-  colors,
-}) => {
-  // Calcul du pourcentage de progression - Optimisé avec useMemo
-  const progress = useMemo(() => {
-    if (targetWeight <= 0 || startWeight <= 0) return 50;
+const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, isDark }: HydrationGridCardProps) => {
+  const cardBg = isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF';
+  const safeGoal = hydrationGoal >= 500 ? hydrationGoal : 2500;
+  const pct = Math.min(100, Math.round((hydration / safeGoal) * 100));
+  const goalReached = pct >= 100;
+  const accentColor = goalReached ? '#10B981' : '#06B6D4';
+  const TOTAL_PAGES = 3;
 
-    if (userGoal === 'lose') {
-      const totalToLose = startWeight - targetWeight;
-      if (totalToLose <= 0) return 100;
-      const lost = startWeight - currentWeight;
-      return Math.min(100, Math.max(0, (lost / totalToLose) * 100));
-    } else if (userGoal === 'gain') {
-      const totalToGain = targetWeight - startWeight;
-      if (totalToGain <= 0) return 100;
-      const gained = currentWeight - startWeight;
-      return Math.min(100, Math.max(0, (gained / totalToGain) * 100));
+  // Page state
+  const [currentPage, setCurrentPage] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Scroll natif pour détecter la page courante
+  const handlePageScroll = useCallback((e: any) => {
+    const offsetX = e.nativeEvent.contentOffset.x;
+    const page = Math.round(offsetX / H_CARD_PAGE_W);
+    if (page !== currentPage && page >= 0 && page < TOTAL_PAGES) {
+      setCurrentPage(page);
     }
-    return 50;
-  }, [targetWeight, startWeight, currentWeight, userGoal]);
+  }, [currentPage]);
 
-  // Déterminer si le thème est "classic" (noir/blanc)
-  const isClassicTheme = colors.accent === '#000000' || colors.accent === '#FFFFFF' ||
-                         colors.accent === '#1a1a1a' || colors.accent === '#f5f5f5';
+  // Wave animation (toujours active, pas de restart)
+  const waveAnim = useRef(new Animated.Value(0)).current;
+  const [waveOffset, setWaveOffset] = useState(0);
+  const [showBubbles, setShowBubbles] = useState(false);
+  const [bubblePositions, setBubblePositions] = useState<Array<{id: number, x: number, y: number, size: number}>>([]);
 
-  // Couleur de la barre de progression = couleur du thème
-  // Pour classic: blanc en dark mode, noir en light mode
-  const barColor = isClassicTheme
-    ? (isDark ? '#FFFFFF' : '#000000')
-    : colors.accent;
+  // Toast
+  const [showToast, setShowToast] = useState(false);
+  const [lastAmount, setLastAmount] = useState(0);
+  const toastAnim = useRef(new Animated.Value(0)).current;
 
-  // Couleur du contour/track
-  // Dark mode: blanc, Light mode: noir
-  const trackBorderColor = isDark ? '#FFFFFF' : '#000000';
+  // Page 2: History
+  const [history, setHistory] = useState<Array<{date: string, amount: number, goal: number}>>([]);
+
+  // Page 3: Goal editing + notifications
+  const [editGoal, setEditGoal] = useState(safeGoal / 1000);
+  const [notifEnabled, setNotifEnabled] = useState(false);
+  const [goalSaved, setGoalSaved] = useState(false);
+
+  // Load data
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const histStr = await AsyncStorage.getItem(HYDRATION_HISTORY_KEY);
+        if (histStr) setHistory(JSON.parse(histStr));
+        const notifStr = await AsyncStorage.getItem('@yoroi_notification_settings');
+        if (notifStr) {
+          const s = JSON.parse(notifStr);
+          setNotifEnabled(s?.hydration?.enabled === true);
+        }
+      } catch {}
+    };
+    load();
+  }, []);
+
+  useEffect(() => { setEditGoal(safeGoal / 1000); }, [safeGoal]);
+
+  // Wave animation (tourne en continu, pas de dépendance à currentPage)
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.timing(waveAnim, { toValue: 1, duration: 2500, easing: Easing.linear, useNativeDriver: false })
+    );
+    animation.start();
+    const listener = waveAnim.addListener(({ value }) => setWaveOffset(value * Math.PI * 2));
+    return () => { animation.stop(); waveAnim.removeListener(listener); };
+  }, []);
+
+  // Bubbles
+  useEffect(() => {
+    if (showBubbles && pct > 5) {
+      const newB = Array.from({ length: 5 }, (_, i) => ({
+        id: Date.now() + i, x: H_BOTTLE_W * 0.2 + Math.random() * H_BOTTLE_W * 0.6,
+        y: H_BOTTLE_H * 0.5 + Math.random() * H_BOTTLE_H * 0.3, size: 2 + Math.random() * 3,
+      }));
+      setBubblePositions(newB);
+      setTimeout(() => setBubblePositions([]), 600);
+    }
+  }, [showBubbles]);
+
+  // Bottle geometry (plus petite)
+  const bW = H_BOTTLE_W, bH = H_BOTTLE_H;
+  const neckW = bW * 0.32, neckH = bH * 0.1, neckX = (bW - neckW) / 2, cR = bW * 0.12;
+  const bottlePath = `M ${neckX} ${neckH} L ${neckX} 2 Q ${neckX} 0 ${neckX+3} 0 L ${neckX+neckW-3} 0 Q ${neckX+neckW} 0 ${neckX+neckW} 2 L ${neckX+neckW} ${neckH} Q ${bW} ${neckH} ${bW-cR} ${neckH+cR} L ${bW-cR} ${bH-cR} Q ${bW-cR} ${bH} ${bW-cR*2} ${bH} L ${cR*2} ${bH} Q ${cR} ${bH} ${cR} ${bH-cR} L ${cR} ${neckH+cR} Q 0 ${neckH} ${neckX} ${neckH} Z`;
+  const clampedFill = Math.min(Math.max(pct / 100, 0), 1);
+  const bodyH = bH - neckH;
+  const waterTopY = bH - (bodyH * clampedFill);
+  const generateWaterPath = () => {
+    if (clampedFill <= 0) return '';
+    let path = `M 0 ${bH} L 0 ${waterTopY}`;
+    for (let x = 0; x <= bW; x += 2) { path += ` L ${x} ${waterTopY + Math.sin((x / bW) * Math.PI * 2 + waveOffset) * 2.5}`; }
+    return path + ` L ${bW} ${bH} Z`;
+  };
+  const goalL = safeGoal / 1000;
+  // Générer toutes les graduations : entiers + demi-valeurs
+  const allGradSteps: number[] = [];
+  for (let s = 0.5; s <= goalL + 0.01; s += 0.5) allGradSteps.push(parseFloat(s.toFixed(1)));
+  const leftX = cR + 3, rightX = bW - cR - 3;
+
+  // DROITE : entiers (1L, 2L, 3L, 4L, 5L...)
+  const rightGradLabels = allGradSteps
+    .filter(v => v === Math.floor(v))
+    .map(v => {
+      const posY = bH - ((v / goalL) * bodyH);
+      if (posY < neckH - 2 || posY > bH - 3) return null;
+      return { v, posY, label: `${v}L` };
+    }).filter(Boolean) as Array<{v: number; posY: number; label: string}>;
+
+  // GAUCHE : demi-valeurs (0.5L, 1.5L, 2.5L...)
+  const leftGradLabels = allGradSteps
+    .filter(v => v !== Math.floor(v))
+    .map(v => {
+      const posY = bH - ((v / goalL) * bodyH);
+      if (posY < neckH - 2 || posY > bH - 3) return null;
+      return { v, posY, label: `${v}L` };
+    }).filter(Boolean) as Array<{v: number; posY: number; label: string}>;
+
+  const handleAdd = (amount: number) => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    setLastAmount(amount);
+    setShowToast(true);
+    if (amount > 0) { setShowBubbles(true); setTimeout(() => setShowBubbles(false), 100); }
+    Animated.sequence([
+      Animated.timing(toastAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.delay(1000),
+      Animated.timing(toastAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+    ]).start(() => setShowToast(false));
+    onAddWater?.(amount);
+  };
+
+  const handleSaveGoal = async () => {
+    try {
+      // Sauvegarder en litres (format utilisé par hydration.tsx)
+      await AsyncStorage.setItem(HYDRATION_GOAL_KEY, editGoal.toString());
+      notificationAsync(NotificationFeedbackType.Success);
+      setGoalSaved(true);
+      setTimeout(() => setGoalSaved(false), 2000);
+      // Notifier le parent pour recharger les données
+      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+    } catch {}
+  };
+
+  const handleToggleNotif = async (val: boolean) => {
+    setNotifEnabled(val);
+    impactAsync(ImpactFeedbackStyle.Light);
+    try {
+      const str = await AsyncStorage.getItem('@yoroi_notification_settings');
+      const settings = str ? JSON.parse(str) : {};
+      settings.hydration = { ...settings.hydration, enabled: val, useSlots: true };
+      await AsyncStorage.setItem('@yoroi_notification_settings', JSON.stringify(settings));
+    } catch {}
+  };
+
+  // Stats page 2
+  const last7 = history.slice(0, 7);
+  const successDays = last7.filter(d => d.amount >= d.goal).length;
+  const successRate = last7.length > 0 ? Math.round((successDays / last7.length) * 100) : 0;
+  const avgAmount = last7.length > 0 ? last7.reduce((a, d) => a + d.amount, 0) / last7.length : 0;
+  const dayLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
   return (
-    <View style={progressStyles.container}>
-      {/* Barre de progression avec contour */}
-      <View style={[
-        progressStyles.track,
-        {
-          backgroundColor: 'transparent',
-          borderWidth: 1.5,
-          borderColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)',
-        }
-      ]}>
-        {/* Barre de progression remplie */}
-        <View
-          style={[
-            progressStyles.fill,
-            {
-              width: `${Math.min(100, Math.max(2, progress))}%`,
-              backgroundColor: barColor,
-            }
-          ]}
-        />
-      </View>
+    <View style={[hStyles.card, { backgroundColor: cardBg, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+      {/* Toast */}
+      {showToast && (
+        <Animated.View style={[hStyles.toast, {
+          backgroundColor: isDark ? 'rgba(30,30,30,0.95)' : 'rgba(255,255,255,0.96)',
+          opacity: toastAnim,
+          transform: [{ translateY: toastAnim.interpolate({ inputRange: [0, 1], outputRange: [-15, 0] }) }],
+        }]}>
+          <Text style={[hStyles.toastText, { color: lastAmount > 0 ? '#10B981' : '#EF4444' }]}>
+            {lastAmount > 0 ? `+${lastAmount}ml` : `${lastAmount}ml`}
+          </Text>
+        </Animated.View>
+      )}
 
-      {/* Labels - poids de départ et objectif en couleur du thème */}
-      <View style={progressStyles.labels}>
-        <Text style={[progressStyles.label, { color: colors.accent }]}>
-          {startWeight.toFixed(1)} kg
-        </Text>
-        <Text style={[progressStyles.progressText, { color: colors.accent }]}>
-          {progress.toFixed(0)}%
-        </Text>
-        <Text style={[progressStyles.label, { color: colors.accent }]}>
-          {targetWeight > 0 ? targetWeight.toFixed(1) : currentWeight.toFixed(1)} kg
-        </Text>
+      {/* FlatList-style scroll natif — ultra-fluide iOS */}
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handlePageScroll}
+        scrollEventThrottle={16}
+        bounces={false}
+        nestedScrollEnabled
+        snapToInterval={H_CARD_PAGE_W}
+        snapToAlignment="start"
+        decelerationRate="fast"
+      >
+
+          {/* ═══ PAGE 1: Bouteille + Boutons ═══ */}
+          <View style={{ width: H_CARD_PAGE_W, paddingHorizontal: 14 }}>
+            <View style={hStyles.header}>
+              <View style={hStyles.titleRow}>
+                <Droplet size={13} color={accentColor} fill={accentColor} />
+                <Text style={[hStyles.title, { color: colors.textMuted }]}>Hydratation</Text>
+              </View>
+              <TouchableOpacity onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/hydration'); }} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <Ionicons name="settings-outline" size={15} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Bouteille + Graduations collées (tout en SVG) */}
+            <TouchableOpacity onPress={() => router.push('/hydration')} activeOpacity={0.7} style={hStyles.bottleArea}>
+              {(() => {
+                const PAD_L = 32; // espace pour labels gauche (0.5L, 1.5L...)
+                const PAD_R = 24; // espace pour labels droite (1L, 2L...)
+                const svgW = PAD_L + bW + PAD_R;
+                const svgH = bH;
+                const oX = PAD_L; // offset X de la bouteille
+                // Recalculer le path de la bouteille décalé
+                const shiftedBottlePath = `M ${oX+neckX} ${neckH} L ${oX+neckX} 2 Q ${oX+neckX} 0 ${oX+neckX+3} 0 L ${oX+neckX+neckW-3} 0 Q ${oX+neckX+neckW} 0 ${oX+neckX+neckW} 2 L ${oX+neckX+neckW} ${neckH} Q ${oX+bW} ${neckH} ${oX+bW-cR} ${neckH+cR} L ${oX+bW-cR} ${bH-cR} Q ${oX+bW-cR} ${bH} ${oX+bW-cR*2} ${bH} L ${oX+cR*2} ${bH} Q ${oX+cR} ${bH} ${oX+cR} ${bH-cR} L ${oX+cR} ${neckH+cR} Q ${oX} ${neckH} ${oX+neckX} ${neckH} Z`;
+                const shiftedWaterPath = () => {
+                  if (clampedFill <= 0) return '';
+                  let p = `M ${oX} ${bH} L ${oX} ${waterTopY}`;
+                  for (let x = 0; x <= bW; x += 2) { p += ` L ${oX+x} ${waterTopY + Math.sin((x / bW) * Math.PI * 2 + waveOffset) * 2.5}`; }
+                  return p + ` L ${oX+bW} ${bH} Z`;
+                };
+                const bottleLeftEdge = oX + cR; // bord gauche du corps
+                const bottleRightEdge = oX + bW - cR; // bord droit du corps
+                return (
+                  <Svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`}>
+                    <Defs>
+                      <SvgLinearGradient id="hWG" x1="0" y1="0" x2="0" y2="1">
+                        <Stop offset="0" stopColor={accentColor} stopOpacity="1" />
+                        <Stop offset="1" stopColor={accentColor} stopOpacity="0.45" />
+                      </SvgLinearGradient>
+                      <ClipPath id="hBC"><Path d={shiftedBottlePath} /></ClipPath>
+                    </Defs>
+                    <Path d={shiftedBottlePath} fill={`${accentColor}08`} />
+                    {/* Lignes internes de graduation */}
+                    {allGradSteps.map((v) => {
+                      const posY = bH - ((v / goalL) * bodyH);
+                      if (posY < neckH + 3 || posY > bH - 3) return null;
+                      return <Path key={`g${v}`} d={`M ${oX+leftX} ${posY} L ${oX+rightX} ${posY}`} stroke={accentColor} strokeWidth={v === Math.floor(v) ? 1.2 : 0.6} opacity={v === Math.floor(v) ? 0.3 : 0.15} strokeDasharray={v === Math.floor(v) ? '' : '3,3'} clipPath="url(#hBC)" />;
+                    })}
+                    {clampedFill > 0 && <Path d={shiftedWaterPath()} fill="url(#hWG)" clipPath="url(#hBC)" />}
+                    {bubblePositions.map(b => <SvgCircle key={b.id} cx={oX+b.x} cy={b.y} r={b.size} fill="white" opacity={0.6} />)}
+                    <Path d={shiftedBottlePath} fill="none" stroke={accentColor} strokeWidth={2} opacity={0.5} />
+                    {/* GAUCHE : demi-valeurs (0.5L, 1.5L, 2.5L...) - tirets collés */}
+                    {leftGradLabels.map(({ v, posY, label }) => (
+                      <G key={`left${v}`}>
+                        <Line x1={bottleLeftEdge - 7} y1={posY} x2={bottleLeftEdge} y2={posY} stroke="#000000" strokeWidth={2} />
+                        <SvgText x={bottleLeftEdge - 9} y={posY + 3.5} textAnchor="end" fontSize={9} fontWeight="500" fill="#000000">{label}</SvgText>
+                      </G>
+                    ))}
+                    {/* DROITE : entiers (1L, 2L, 3L...) - tirets collés */}
+                    {rightGradLabels.map(({ v, posY, label }) => (
+                      <G key={`right${v}`}>
+                        <Line x1={bottleRightEdge} y1={posY} x2={bottleRightEdge + 7} y2={posY} stroke="#000000" strokeWidth={2} />
+                        <SvgText x={bottleRightEdge + 9} y={posY + 3.5} textAnchor="start" fontSize={10} fontWeight="500" fill="#000000">{label}</SvgText>
+                      </G>
+                    ))}
+                  </Svg>
+                );
+              })()}
+            </TouchableOpacity>
+
+            {/* Valeur */}
+            <View style={hStyles.valueCenter}>
+              <Text style={[hStyles.bigValue, { color: goalReached ? '#10B981' : colors.textPrimary }]}>
+                {hydration < 1000 ? `${Math.round(hydration)}ml` : `${(hydration / 1000).toFixed(2)}L`}
+                <Text style={[hStyles.gradInline, { color: colors.textMuted }]}> / {(safeGoal / 1000).toFixed(1)}L</Text>
+              </Text>
+            </View>
+
+            {/* Progress bar */}
+            <View style={[hStyles.progressTrack, { backgroundColor: isDark ? 'rgba(6,182,212,0.1)' : 'rgba(6,182,212,0.08)' }]}>
+              <View style={[hStyles.progressFill, { width: `${pct}%`, backgroundColor: accentColor }]} />
+            </View>
+            <Text style={[hStyles.pctText, { color: accentColor }]}>{pct}%</Text>
+
+            {/* Boutons */}
+            <View style={hStyles.buttons}>
+              <TouchableOpacity style={[hStyles.btnMinus, { backgroundColor: isDark ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.08)' }]} onPress={() => handleAdd(-250)}>
+                <Minus size={14} color="#EF4444" strokeWidth={2.5} />
+              </TouchableOpacity>
+              <TouchableOpacity style={[hStyles.btn, { backgroundColor: isDark ? 'rgba(6,182,212,0.08)' : 'rgba(6,182,212,0.05)' }]} onPress={() => handleAdd(250)}>
+                <Text style={{ color: '#06B6D4', fontWeight: '400', fontSize: 11 }}>+250</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[hStyles.btn, { backgroundColor: isDark ? 'rgba(6,182,212,0.12)' : 'rgba(6,182,212,0.08)' }]} onPress={() => handleAdd(500)}>
+                <Text style={{ color: '#06B6D4', fontWeight: '400', fontSize: 11 }}>+500</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[hStyles.btn, { backgroundColor: isDark ? 'rgba(6,182,212,0.16)' : 'rgba(6,182,212,0.1)' }]} onPress={() => handleAdd(1000)}>
+                <Text style={{ color: '#06B6D4', fontWeight: '400', fontSize: 11 }}>+1L</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* ═══ PAGE 2: Cette semaine ═══ */}
+          <View style={{ width: H_CARD_PAGE_W, paddingHorizontal: 14 }}>
+            <View style={hStyles.header}>
+              <View style={hStyles.titleRow}>
+                <Calendar size={13} color="#8B5CF6" />
+                <Text style={[hStyles.title, { color: colors.textMuted }]}>Cette semaine</Text>
+              </View>
+              <TouchableOpacity onPress={() => router.push('/hydration')} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <Ionicons name="stats-chart-outline" size={15} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* 3 stats */}
+            <View style={hStyles.statsRow}>
+              <View style={hStyles.statItem}>
+                <View style={[hStyles.statIconBg, { backgroundColor: '#10B98115' }]}>
+                  <TrendingUp size={13} color="#10B981" />
+                </View>
+                <Text style={[hStyles.statValue, { color: colors.textPrimary }]}>{successRate}%</Text>
+                <Text style={[hStyles.statLabel, { color: colors.textMuted }]}>Réussite</Text>
+              </View>
+              <View style={hStyles.statItem}>
+                <View style={[hStyles.statIconBg, { backgroundColor: '#06B6D415' }]}>
+                  <Droplet size={13} color="#06B6D4" />
+                </View>
+                <Text style={[hStyles.statValue, { color: colors.textPrimary }]}>{avgAmount.toFixed(1)}L</Text>
+                <Text style={[hStyles.statLabel, { color: colors.textMuted }]}>Moy/jour</Text>
+              </View>
+              <View style={hStyles.statItem}>
+                <View style={[hStyles.statIconBg, { backgroundColor: '#8B5CF615' }]}>
+                  <Check size={13} color="#8B5CF6" />
+                </View>
+                <Text style={[hStyles.statValue, { color: colors.textPrimary }]}>{successDays}/7</Text>
+                <Text style={[hStyles.statLabel, { color: colors.textMuted }]}>Réussis</Text>
+              </View>
+            </View>
+
+            {/* Bar chart 7 jours */}
+            <View style={hStyles.weekBars}>
+              {dayLabels.map((day, i) => {
+                const dayData = last7[6 - i];
+                const dayPct = dayData ? Math.min((dayData.amount / dayData.goal) * 100, 100) : 0;
+                const isToday = i === new Date().getDay() - 1 || (i === 6 && new Date().getDay() === 0);
+                return (
+                  <View key={i} style={hStyles.dayCol}>
+                    <View style={[hStyles.barBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+                      <View style={[hStyles.barFill, { height: `${dayPct}%`, backgroundColor: dayPct >= 100 ? '#10B981' : '#06B6D4' }]} />
+                    </View>
+                    <Text style={[hStyles.dayLabel, { color: isToday ? '#06B6D4' : colors.textMuted }, isToday && { fontWeight: '900' }]}>{day}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* ═══ PAGE 3: Réglages ═══ */}
+          <View style={{ width: H_CARD_PAGE_W, paddingHorizontal: 14 }}>
+            <View style={hStyles.header}>
+              <View style={hStyles.titleRow}>
+                <Target size={13} color="#F59E0B" />
+                <Text style={[hStyles.title, { color: colors.textMuted }]}>Réglages</Text>
+              </View>
+              <TouchableOpacity onPress={() => router.push('/hydration')} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <Ionicons name="open-outline" size={15} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[hStyles.settingLabel, { color: colors.textMuted }]}>Objectif quotidien</Text>
+            <View style={hStyles.goalRow}>
+              <TouchableOpacity style={[hStyles.goalBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]} onPress={() => setEditGoal(Math.max(0.5, editGoal - 0.25))}>
+                <Minus size={18} color={colors.textPrimary} strokeWidth={2.5} />
+              </TouchableOpacity>
+              <View style={hStyles.goalDisplay}>
+                <Text style={[hStyles.goalValue, { color: colors.textPrimary }]}>{editGoal.toFixed(1)}</Text>
+                <Text style={[hStyles.goalUnit, { color: colors.textMuted }]}>litres</Text>
+              </View>
+              <TouchableOpacity style={[hStyles.goalBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]} onPress={() => setEditGoal(Math.min(5, editGoal + 0.25))}>
+                <Plus size={18} color={colors.textPrimary} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={[hStyles.saveBtn, { backgroundColor: goalSaved ? '#10B981' : '#06B6D4' }]} onPress={handleSaveGoal}>
+              <Check size={14} color="#FFF" strokeWidth={3} />
+              <Text style={hStyles.saveBtnText}>{goalSaved ? 'Enregistré !' : 'Enregistrer'}</Text>
+            </TouchableOpacity>
+
+            <View style={hStyles.notifSection}>
+              <View style={hStyles.notifRow}>
+                {notifEnabled ? <Bell size={14} color="#06B6D4" /> : <BellOff size={14} color={colors.textMuted} />}
+                <Text style={[hStyles.notifLabel, { color: colors.textPrimary }]}>Rappels</Text>
+                <Switch
+                  value={notifEnabled}
+                  onValueChange={handleToggleNotif}
+                  trackColor={{ false: isDark ? '#333' : '#DDD', true: '#06B6D480' }}
+                  thumbColor={notifEnabled ? '#06B6D4' : '#999'}
+                  style={{ transform: [{ scaleX: 0.75 }, { scaleY: 0.75 }] }}
+                />
+              </View>
+              {notifEnabled && (
+                <Text style={[hStyles.notifHint, { color: colors.textMuted }]}>Matin, midi et soir</Text>
+              )}
+            </View>
+
+            <TouchableOpacity style={[hStyles.moreBtn, { backgroundColor: isDark ? 'rgba(6,182,212,0.12)' : 'rgba(6,182,212,0.06)' }]} onPress={() => router.push('/hydration')}>
+              <Text style={hStyles.moreBtnText}>Tous les paramètres</Text>
+            </TouchableOpacity>
+          </View>
+
+      </ScrollView>
+
+      {/* Dot indicators — ronds noirs comme la carte Poids */}
+      <View style={hStyles.dots}>
+        {[0, 1, 2].map(i => (
+          <TouchableOpacity
+            key={i}
+            onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setCurrentPage(i); scrollRef.current?.scrollTo({ x: i * H_CARD_PAGE_W, animated: true }); }}
+            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+          >
+            <View style={{
+              width: currentPage === i ? 7 : 5,
+              height: currentPage === i ? 7 : 5,
+              borderRadius: 4,
+              backgroundColor: currentPage === i
+                ? (isDark ? '#FFFFFF' : '#1A1A2E')
+                : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'),
+            }} />
+          </TouchableOpacity>
+        ))}
       </View>
     </View>
   );
 });
 
-const progressStyles = StyleSheet.create({
-  container: {
-    marginTop: 10,
-    marginBottom: 8,
-  },
-  track: {
-    height: 10,
-    borderRadius: 5,
-    overflow: 'hidden',
+const hStyles = StyleSheet.create({
+  card: {
+    width: H_CARD_W,
+    borderRadius: 16,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
     position: 'relative',
+    overflow: 'hidden',
   },
-  fill: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    borderRadius: 5,
+  toast: {
+    position: 'absolute', top: 10, left: 20, right: 20, alignSelf: 'center', zIndex: 100,
+    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 6, elevation: 4,
+    alignItems: 'center',
   },
-  labels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
+  toastText: { fontSize: 14, fontWeight: '900' },
+
+  // Header
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  title: { fontSize: 12, fontWeight: '700' },
+
+  // Page 1: Bottle
+  bottleArea: { alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  gradLabels: { position: 'relative', height: H_BOTTLE_H, width: 30, marginLeft: 2 },
+  gradItem: { position: 'absolute', flexDirection: 'row', alignItems: 'center', gap: 2, left: 0 },
+  gradDash: { height: 1.5, borderRadius: 1 },
+  gradText: { fontWeight: '800' },
+  // Nouvelles graduations gauche/droite
+  gradLabelsLeft: { position: 'absolute', left: -2, top: 0, height: H_BOTTLE_H, width: 30 },
+  gradLabelsRight: { position: 'absolute', right: -2, top: 0, height: H_BOTTLE_H, width: 26 },
+  gradItemLeft: { position: 'absolute', flexDirection: 'row', alignItems: 'center', right: 0 },
+  gradItemRight: { position: 'absolute', flexDirection: 'row', alignItems: 'center', left: 0 },
+  gradDashTouch: { width: 8, height: 2, backgroundColor: '#000000', borderRadius: 1 },
+  gradTextBold: { fontSize: 10, fontWeight: '500', marginHorizontal: 2 },
+  valueCenter: { alignItems: 'center', marginBottom: 4 },
+  bigValue: { fontSize: 24, fontWeight: '900', letterSpacing: -1.2, textAlign: 'center' },
+  gradInline: { fontSize: 11, fontWeight: '600' },
+  progressTrack: { height: 4, borderRadius: 2, overflow: 'hidden', marginBottom: 2 },
+  progressFill: { height: '100%', borderRadius: 2 },
+  pctText: { fontSize: 10, fontWeight: '800', textAlign: 'center', marginBottom: 6 },
+  buttons: { flexDirection: 'row', gap: 3, alignItems: 'center' },
+  btnMinus: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  btn: { flex: 1, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  btnTextCyan: { color: '#06B6D4', fontWeight: '800', fontSize: 10 },
+  btnTextWhite: { color: '#FFFFFF', fontWeight: '800', fontSize: 10 },
+
+  // Page 2: Stats
+  statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  statItem: { alignItems: 'center', gap: 3, flex: 1 },
+  statIconBg: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  statValue: { fontSize: 15, fontWeight: '900' },
+  statLabel: { fontSize: 8, fontWeight: '600' },
+  weekBars: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', flex: 1, paddingTop: 4 },
+  dayCol: { flex: 1, alignItems: 'center', gap: 3 },
+  barBg: { width: 14, height: 70, borderRadius: 7, overflow: 'hidden', justifyContent: 'flex-end' },
+  barFill: { width: '100%', borderRadius: 7 },
+  dayLabel: { fontSize: 9, fontWeight: '600' },
+
+  // Page 3: Settings
+  settingLabel: { fontSize: 10, fontWeight: '600', marginBottom: 6, textAlign: 'center' },
+  goalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 8 },
+  goalBtn: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  goalDisplay: { alignItems: 'center' },
+  goalValue: { fontSize: 30, fontWeight: '900', letterSpacing: -1 },
+  goalUnit: { fontSize: 10, fontWeight: '600', marginTop: -2 },
+  saveBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 9, borderRadius: 10, marginBottom: 10,
   },
-  label: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  progressText: {
-    fontSize: 11,
-    fontWeight: '800',
-  },
+  saveBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
+  notifSection: { marginBottom: 6 },
+  notifRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  notifLabel: { fontSize: 13, fontWeight: '700', flex: 1 },
+  notifHint: { fontSize: 9, fontWeight: '500', marginTop: 2, marginLeft: 20 },
+  moreBtn: { paddingVertical: 9, borderRadius: 10, alignItems: 'center', marginTop: 2 },
+  moreBtnText: { color: '#06B6D4', fontSize: 11, fontWeight: '700' },
+
+  // Dots
+  dots: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 5, marginTop: 4, paddingBottom: 2 },
+  dot: { height: 5, borderRadius: 3 },
 });
 
 const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
@@ -769,6 +978,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   bodyFat,
   muscleMass,
   waterPercentage,
+  heightCm,
   userGoal: propUserGoal,
   weeklyReport,
   onAddWeight,
@@ -782,26 +992,42 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   const [bodyComposition, setBodyComposition] = useState<BodyComposition | null>(null);
   const [trainingCalories, setTrainingCalories] = useState(0);
   const [avatarImageUri, setAvatarImageUri] = useState<string | null>(null);
+  const [poidsPage, setPoidsPage] = useState(0);
+  const [sommeilPage, setSommeilPage] = useState(0);
+  const [chargePage, setChargePage] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Calculer les calories des entraînements du jour
+  // ── Animations Sommeil ──
+  const sleepMoonFloat = useRef(new Animated.Value(0)).current;
+  const sleepStar1 = useRef(new Animated.Value(0.3)).current;
+  const sleepStar2 = useRef(new Animated.Value(0.6)).current;
+  const sleepStar3 = useRef(new Animated.Value(0.4)).current;
+  const sleepZzz1Op = useRef(new Animated.Value(0)).current;
+  const sleepZzz1Y = useRef(new Animated.Value(0)).current;
+  const sleepZzz2Op = useRef(new Animated.Value(0)).current;
+  const sleepZzz2Y = useRef(new Animated.Value(0)).current;
+  const sleepZzz3Op = useRef(new Animated.Value(0)).current;
+  const sleepZzz3Y = useRef(new Animated.Value(0)).current;
+  const sleepBreathe = useRef(new Animated.Value(1)).current;
+
+  // ── Animations Charge ──
+  const chargePulse = useRef(new Animated.Value(1)).current;
+  const chargeWave = useRef(new Animated.Value(0)).current;
+  const chargeZapScale = useRef(new Animated.Value(1)).current;
+  const chargeZapOpacity = useRef(new Animated.Value(1)).current;
+
+  // Calculer les calories des entraînements du jour (uniquement calories réelles)
   useEffect(() => {
     const loadTodayTrainings = async () => {
       try {
         const today = new Date().toISOString().split('T')[0];
-        const trainings = await getTrainings(1); // Derniers 24h
+        const trainings = await getTrainings(1);
         const todayTrainings = trainings.filter(t => t.date === today);
 
         let totalCals = 0;
         todayTrainings.forEach(training => {
-          if (training.calories) {
+          if (training.calories && training.calories > 0) {
             totalCals += training.calories;
-          } else if (training.duration_minutes || training.duration) {
-            // Estimation: ~7 cal/min pour sport modéré, ajusté par intensité
-            const duration = training.duration_minutes || training.duration || 0;
-            const intensity = training.intensity || 5;
-            const calPerMin = 5 + (intensity * 0.5); // 5-10 cal/min selon intensité
-            totalCals += Math.round(duration * calPerMin);
           }
         });
         setTrainingCalories(totalCals);
@@ -820,14 +1046,44 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
     return t('home.greetingEvening');
   };
 
-  // Localized month names
-  const monthNames = useMemo(() => [
-    t('dates.januaryShort'), t('dates.februaryShort'), t('dates.marchShort'),
-    t('dates.aprilShort'), t('dates.mayShort'), t('dates.juneShort'),
-    t('dates.julyShort'), t('dates.augustShort'), t('dates.septemberShort'),
-    t('dates.octoberShort'), t('dates.novemberShort'), t('dates.decemberShort')
-  ], [t]);
 
+
+  // Utiliser le startWeight passé en prop, sinon le poids le plus ancien de l'historique (dernier élément car trié du plus récent au plus ancien)
+  const startWeight = propStartWeight || (weightHistory.length > 0 ? weightHistory[weightHistory.length - 1] : currentWeight);
+
+  // Animation aiguille jauge poids (0 → progression réelle)
+  const needleAnim = useRef(new Animated.Value(0)).current;
+  const needleHasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (currentWeight <= 0 || targetWeight <= 0) return;
+    // Calcul progression: startWeight → targetWeight, ou on est?
+    // Si currentWeight == targetWeight → 100% (1.0)
+    // Si loin de l'objectif → proche de 0%
+    const diff = Math.abs(currentWeight - targetWeight);
+    const maxRange = Math.max(Math.abs(startWeight - targetWeight), 1);
+    const progress = diff < 0.5 ? 1.0 : Math.max(0.05, Math.min(1.0, 1 - diff / maxRange));
+
+    if (!needleHasAnimated.current) {
+      // Première animation: part de 0 avec easing
+      needleHasAnimated.current = true;
+      Animated.timing(needleAnim, {
+        toValue: progress,
+        duration: 1400,
+        delay: 500,
+        easing: Easing.out(Easing.back(1.2)),
+        useNativeDriver: false,
+      }).start();
+    } else {
+      // Mise à jour silencieuse si les données changent
+      Animated.timing(needleAnim, {
+        toValue: progress,
+        duration: 600,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [currentWeight, targetWeight, startWeight]);
 
   // Animations citation - apparition simple
   const quoteFadeAnim = useRef(new Animated.Value(0)).current;
@@ -917,11 +1173,89 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   useEffect(() => {
   }, []);
 
+  // ── Sommeil animations ──
+  useEffect(() => {
+    const anims: Animated.CompositeAnimation[] = [];
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    const float = Animated.loop(Animated.sequence([
+      Animated.timing(sleepMoonFloat, { toValue: -4, duration: 3000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(sleepMoonFloat, { toValue: 4, duration: 3000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+    ]));
+    float.start(); anims.push(float);
+    const twinkle = (anim: Animated.Value, delay: number) => Animated.loop(Animated.sequence([
+      Animated.delay(delay),
+      Animated.timing(anim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+      Animated.timing(anim, { toValue: 0.2, duration: 1000, useNativeDriver: true }),
+    ]));
+    [{ a: sleepStar1, d: 0 }, { a: sleepStar2, d: 300 }, { a: sleepStar3, d: 600 }].forEach(({ a, d }, i) => {
+      const t = setTimeout(() => { const tw = twinkle(a, d); tw.start(); anims.push(tw); }, 100 + i * 50);
+      timeouts.push(t);
+    });
+    const animZzz = (op: Animated.Value, ty: Animated.Value, delay: number) => Animated.loop(Animated.sequence([
+      Animated.delay(delay),
+      Animated.parallel([
+        Animated.timing(op, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.timing(ty, { toValue: -15, duration: 1500, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      ]),
+      Animated.timing(op, { toValue: 0, duration: 500, useNativeDriver: true }),
+      Animated.timing(ty, { toValue: 0, duration: 0, useNativeDriver: true }),
+    ]));
+    [{ o: sleepZzz1Op, y: sleepZzz1Y, d: 0 }, { o: sleepZzz2Op, y: sleepZzz2Y, d: 500 }, { o: sleepZzz3Op, y: sleepZzz3Y, d: 1000 }].forEach(({ o, y, d }, i) => {
+      const t = setTimeout(() => { const z = animZzz(o, y, d); z.start(); anims.push(z); }, 250 + i * 50);
+      timeouts.push(t);
+    });
+    const t7 = setTimeout(() => {
+      const breathe = Animated.loop(Animated.sequence([
+        Animated.timing(sleepBreathe, { toValue: 1.02, duration: 2500, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(sleepBreathe, { toValue: 1, duration: 2500, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ]));
+      breathe.start(); anims.push(breathe);
+    }, 400);
+    timeouts.push(t7);
+    return () => { anims.forEach(a => a.stop()); timeouts.forEach(t => clearTimeout(t)); };
+  }, []);
 
+  // ── Charge config ──
+  const getChargeConfig = useCallback(() => {
+    switch (workloadStatus) {
+      case 'none': return { label: 'Repos', color: '#94A3B8', pct: 0, speed: 2000, icon: 'moon', msg: 'Aucune séance récente', msgShort: 'Pas de séance', advice: 'Tu peux t\'entraîner sans risque !', adviceShort: 'Prêt à foncer', rec: 'Ton corps est reposé. C\'est le moment idéal pour une bonne séance.', rest: '' };
+      case 'light': return { label: 'Légère', color: '#10B981', pct: 30, speed: 1200, icon: 'shield', msg: 'Corps bien reposé', msgShort: 'Bien reposé', advice: 'Tu peux t\'entraîner à fond !', adviceShort: 'Feu vert total', rec: 'Ta récupération est excellente. Profites-en pour une séance intense.', rest: '12h' };
+      case 'moderate': return { label: 'Modérée', color: '#F59E0B', pct: 65, speed: 800, icon: 'zap', msg: 'Corps sollicité', msgShort: 'Sollicité', advice: 'Entraîne-toi mais reste à l\'écoute', adviceShort: 'Prudence', rec: 'Tu peux continuer mais évite les séances trop longues. Pense à bien t\'étirer.', rest: '24h' };
+      case 'intense': return { label: 'Élevée', color: '#EF4444', pct: 90, speed: 500, icon: 'alert', msg: 'Risque de blessure', msgShort: 'Attention', advice: 'Repose-toi, ton corps en a besoin', adviceShort: 'Repos conseillé', rec: 'Tu as beaucoup sollicité ton corps. Un jour de repos évitera une blessure.', rest: '48h' };
+      default: return { label: 'Modérée', color: '#F59E0B', pct: 65, speed: 800, icon: 'zap', msg: 'Corps sollicité', msgShort: 'Sollicité', advice: 'Entraîne-toi mais reste à l\'écoute', adviceShort: 'Prudence', rec: 'Continue ta routine en restant attentif à ton corps.', rest: '24h' };
+    }
+  }, [workloadStatus]);
+  const chargeConfig = getChargeConfig();
+
+  // ── Charge animations ──
+  useEffect(() => {
+    const speed = chargeConfig.speed;
+    const pulse = Animated.loop(Animated.sequence([
+      Animated.timing(chargePulse, { toValue: 1.1, duration: speed / 2, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      Animated.timing(chargePulse, { toValue: 1, duration: speed / 2, easing: Easing.in(Easing.ease), useNativeDriver: true }),
+    ]));
+    pulse.start();
+    const wave = Animated.loop(Animated.sequence([
+      Animated.timing(chargeWave, { toValue: 1, duration: 2000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(chargeWave, { toValue: 0, duration: 2000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+    ]));
+    wave.start();
+    const zapSc = Animated.loop(Animated.sequence([
+      Animated.timing(chargeZapScale, { toValue: 1.2, duration: speed / 2, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(chargeZapScale, { toValue: 1, duration: speed / 2, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+    ]));
+    zapSc.start();
+    const zapOp = Animated.loop(Animated.sequence([
+      Animated.timing(chargeZapOpacity, { toValue: 0.6, duration: speed / 2, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(chargeZapOpacity, { toValue: 1, duration: speed / 2, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+    ]));
+    zapOp.start();
+    return () => { pulse.stop(); wave.stop(); zapSc.stop(); zapOp.stop(); };
+  }, [chargeConfig.speed]);
+
+  const chargeWaveOpacity = chargeWave.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.6] });
 
   const weightDiff = currentWeight - targetWeight;
-  // Utiliser le startWeight passé en prop, sinon le poids le plus ancien de l'historique (dernier élément car trié du plus récent au plus ancien)
-  const startWeight = propStartWeight || (weightHistory.length > 0 ? weightHistory[weightHistory.length - 1] : currentWeight);
   const totalLoss = startWeight - currentWeight;
   const progressPercentage = Math.abs(((startWeight - currentWeight) / (startWeight - targetWeight)) * 100);
 
@@ -968,10 +1302,14 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   const TrendIcon = getTrendIcon();
   const trendColor = weightTrend === 'down' ? '#10B981' : weightTrend === 'up' ? '#EF4444' : '#94A3B8';
 
+  const cardBg = isDark
+    ? 'rgba(255,255,255,0.06)'
+    : '#FFFFFF';
+
   return (
     <ScrollView
       ref={scrollViewRef}
-      style={[styles.container, { backgroundColor: colors.background, overflow: 'visible' }]}
+      style={[styles.container, { backgroundColor: isDark ? '#1A1A1E' : colors.accent, overflow: 'visible' }]}
       contentContainerStyle={[styles.scrollContent, { overflow: 'visible' }]}
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled={true}
@@ -983,35 +1321,45 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         {/* Row principale - Bien alignée aux bords */}
         <View style={styles.headerRowClean}>
 
-          {/* GAUCHE - Photo de profil (rond) */}
+          {/* GAUCHE - Photo de profil (forme selectionnee) */}
           <TouchableOpacity
             onPress={() => router.push('/profile')}
             activeOpacity={0.8}
             style={styles.leftSection}
           >
-            <View style={[styles.profileFrame, {
-              borderColor: isDark ? '#FFFFFF' : '#000000',
-              backgroundColor: '#FFFFFF',
-            }]}>
-              {profilePhoto ? (
-                <Image source={{ uri: profilePhoto }} style={styles.profileImg} />
-              ) : (
-                <View style={[styles.profilePlaceholder, { backgroundColor: '#FFFFFF' }]}>
-                  <Ionicons name="person" size={44} color={isDark ? '#666' : '#999'} />
-                </View>
-              )}
-            </View>
+            <FramedProfilePhoto
+              uri={profilePhoto}
+              size={70}
+              borderColor="#FFFFFF"
+              borderWidth={2.5}
+              placeholderIconSize={34}
+            />
           </TouchableOpacity>
 
           {/* CENTRE - Texte */}
           <View style={styles.centerSection}>
-            <Text style={[styles.greetingClean, { color: colors.textMuted }]}>
+            <Text style={[styles.greetingClean, { color: isDark ? 'rgba(255,255,255,0.6)' : '#FFFFFF' }]}>
               {getGreeting()}
             </Text>
-            <Text style={[styles.nameClean, { color: colors.textPrimary }]}>
+            <Text style={[styles.nameClean, { color: '#FFFFFF' }]}>
               {userName}
             </Text>
           </View>
+
+          {/* DROITE - Bouton Reglages */}
+          <TouchableOpacity
+            style={[styles.settingsBtn, {
+              backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.25)',
+              borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)',
+            }]}
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              router.push('/(tabs)/settings');
+            }}
+            activeOpacity={0.7}
+          >
+            <Settings size={20} color="#FFFFFF" strokeWidth={2} />
+          </TouchableOpacity>
 
         </View>
 
@@ -1019,327 +1367,756 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         <RankCitationCard streak={streak} dailyQuote={dailyQuote} avatarUri={avatarImageUri} />
       </View>
 
-      {/* GRAPHIQUE POIDS - Redesign Complet Premium */}
-      <View style={[styles.weightCardPremium, { backgroundColor: colors.backgroundCard }]}>
-        <TouchableOpacity
-          onPress={() => router.push('/stats?tab=poids')}
-          activeOpacity={0.9}
-        >
-        {/* Header - Réorganisé */}
-        <View style={styles.weightHeader}>
-          <View style={styles.weightHeaderLeft}>
-            <LinearGradient
-              colors={['#10B981', '#059669']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.weightIcon}
-            >
-              <Ionicons name="fitness" size={18} color="#FFFFFF" />
-            </LinearGradient>
-            <View>
-              <Text style={[styles.weightTitle, { color: colors.textPrimary }]}>
-                Poids actuel
-              </Text>
-              <Text style={[styles.weightSubtitle, { color: colors.textMuted, marginTop: 2 }]}>
-                Objectif {targetWeight} kg
-              </Text>
-            </View>
-          </View>
+      {/* REPORT 2x2 - Poids, Hydratation, Sommeil, Charge */}
+      <View style={styles.reportGrid}>
+        {/* Rangée 1: Poids + Hydratation (même hauteur) */}
+        <View style={styles.reportGridRow}>
+        {/* Poids - Carte multi-pages swipeable (Jauge / Compo / Prédictions) */}
+        {(() => {
+          const POIDS_CARD_W = H_CARD_PAGE_W - 28;
+          const poidsPages = 4;
 
-          {/* Badge Mode à droite - Simplifié */}
-          <View style={[styles.goalModeBadge, {
-            backgroundColor: `${colors.accent}15`,
-            borderWidth: 1.5,
-            borderColor: `${colors.accent}50`
-          }]}>
-            <Text style={[styles.goalModeText, { color: colors.accent }]}>
-              {userGoal === 'lose' ? 'Perte de poids' : userGoal === 'gain' ? 'Prise de masse' : 'Maintien'}
-            </Text>
-          </View>
-        </View>
+          // Composition data - UNIQUEMENT les données saisies manuellement par l'user
+          // On ignore bodyComposition venant d'Apple Health pour éviter les faux positifs
+          const rawMuscle = muscleMass ?? null;
+          const rawFatPct = bodyFat ?? null;
+          const rawWaterPct = waterPercentage ?? null;
+          const hasMuscle = rawMuscle != null && rawMuscle > 0;
+          const hasFat = rawFatPct != null && rawFatPct > 0;
+          const hasWater = rawWaterPct != null && rawWaterPct > 0;
+          const muscleKg = hasMuscle ? rawMuscle : 0;
+          const fatPct = hasFat ? rawFatPct : 0;
+          const waterPct = hasWater ? rawWaterPct : 0;
+          const fatKg = hasFat && currentWeight > 0 ? (fatPct / 100) * currentWeight : 0;
+          const waterKg = hasWater && currentWeight > 0 ? (waterPct / 100) * currentWeight : 0;
+          const musclePct = hasMuscle && currentWeight > 0 ? (muscleKg / currentWeight) * 100 : 0;
 
-        {/* Ligne optimisée: Perdu - Poids - Restant (2 couleurs max: accent + textPrimary) */}
-        <View style={styles.weightOptimizedRow}>
-          {/* Perdu à gauche */}
-          <View style={styles.weightSideMetric}>
-            <Text style={[styles.metricTopLabel, { color: colors.textMuted }]}>
-              {userGoal === 'lose' ? 'PERDU' : userGoal === 'gain' ? 'PRIS' : 'ÉVOLUTION'}
-            </Text>
-            <Text style={[styles.metricTopValue, { color: colors.accent }]}>
-              {userGoal === 'lose' ? '-' : '+'}{Math.abs(totalLoss).toFixed(1)} kg
-            </Text>
-          </View>
+          // Rounded square arc helper for Daily Intake style
+          const makeRoundedSquareArc = (size: number, progress: number, color: string, bgColor: string) => {
+            const s = size;
+            const sw = 4;
+            const r = 10; // corner radius
+            const offset = sw / 2;
+            const inner = s - sw;
+            // Total perimeter of the rounded rect
+            const straight = (inner - 2 * r) * 4;
+            const curved = 2 * Math.PI * r;
+            const totalPerim = straight + curved;
+            const dashLen = totalPerim * Math.min(progress, 1);
+            const gapLen = totalPerim - dashLen;
 
-          {/* Poids au centre */}
-          <View style={styles.weightCenterMetric}>
-            <View style={styles.weightValueRow}>
-              <Text style={[styles.weightValueLarge, { color: colors.textPrimary }]}>
-                {currentWeight.toFixed(1)}
-              </Text>
-              <Text style={[styles.weightUnit, { color: colors.textMuted }]}>kg</Text>
-            </View>
-          </View>
-
-          {/* Restant à droite */}
-          <View style={[styles.weightSideMetric, { alignItems: 'flex-end' }]}>
-            <Text style={[styles.metricTopLabel, { color: colors.textMuted }]}>
-              {Math.abs(weightDiff) <= 0.1 ? 'ATTEINT' : 'RESTE'}
-            </Text>
-            <Text style={[styles.metricTopValue, { color: colors.accent }]}>
-              {Math.abs(weightDiff).toFixed(1)} kg
-            </Text>
-          </View>
-        </View>
-
-        {/* Barre de progression du poids avec personnage animé */}
-        {currentWeight > 0 && (
-          <WeightProgressWithCharacter
-            currentWeight={currentWeight}
-            targetWeight={targetWeight}
-            startWeight={startWeight}
-            userGoal={userGoal}
-            isDark={isDark}
-            colors={colors}
-          />
-        )}
-
-        {/* Composition corporelle - Chaque élément cliquable */}
-        <View style={[styles.bodyComposition, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
-          {/* Muscle - navigation vers composition */}
-          <TouchableOpacity
-            style={styles.compositionItem}
-            onPress={() => {
-              impactAsync(ImpactFeedbackStyle.Light);
-              router.push('/(tabs)/stats?tab=composition');
-            }}
-            activeOpacity={0.7}
-          >
-            <Dumbbell size={14} color="#EF4444" strokeWidth={2.5} />
-            <View style={styles.compositionInfo}>
-              <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.muscle')}</Text>
-              <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
-                {(muscleMass ?? bodyComposition?.muscleMass) ? `${(muscleMass ?? bodyComposition?.muscleMass ?? 0).toFixed(1)} kg` : '--'}
-              </Text>
-              <Text style={[styles.compositionPercent, { color: '#EF4444' }]}>
-                {(muscleMass ?? bodyComposition?.muscleMass) && currentWeight > 0
-                  ? `${(((muscleMass ?? bodyComposition?.muscleMass ?? 0) / currentWeight) * 100).toFixed(0)}%`
-                  : '--%'}
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <View style={styles.compositionDivider} />
-
-          {/* Graisse - navigation vers composition */}
-          <TouchableOpacity
-            style={styles.compositionItem}
-            onPress={() => {
-              impactAsync(ImpactFeedbackStyle.Light);
-              router.push('/(tabs)/stats?tab=composition');
-            }}
-            activeOpacity={0.7}
-          >
-            <Apple size={14} color="#F59E0B" strokeWidth={2.5} />
-            <View style={styles.compositionInfo}>
-              <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.fat')}</Text>
-              <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
-                {(bodyFat ?? bodyComposition?.bodyFatPercent) != null && currentWeight > 0
-                  ? `${(((bodyFat ?? bodyComposition?.bodyFatPercent ?? 0) / 100) * currentWeight).toFixed(1)} kg`
-                  : '--'}
-              </Text>
-              <Text style={[styles.compositionPercent, { color: '#F59E0B' }]}>
-                {(bodyFat ?? bodyComposition?.bodyFatPercent) != null ? `${(bodyFat ?? bodyComposition?.bodyFatPercent ?? 0).toFixed(0)}%` : '--%'}
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <View style={styles.compositionDivider} />
-
-          {/* Eau - navigation vers composition */}
-          <TouchableOpacity
-            style={styles.compositionItem}
-            onPress={() => {
-              impactAsync(ImpactFeedbackStyle.Light);
-              router.push('/(tabs)/stats?tab=composition');
-            }}
-            activeOpacity={0.7}
-          >
-            <Droplet size={14} color="#3B82F6" strokeWidth={2.5} />
-            <View style={styles.compositionInfo}>
-              <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.water')}</Text>
-              <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
-                {(waterPercentage ?? bodyComposition?.waterPercent) != null && currentWeight > 0
-                  ? `${(((waterPercentage ?? bodyComposition?.waterPercent ?? 0) / 100) * currentWeight).toFixed(1)} kg`
-                  : '--'}
-              </Text>
-              <Text style={[styles.compositionPercent, { color: '#3B82F6' }]}>
-                {(waterPercentage ?? bodyComposition?.waterPercent) != null ? `${(waterPercentage ?? bodyComposition?.waterPercent ?? 0).toFixed(0)}%` : '--%'}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-        </TouchableOpacity>
-
-        {/* OPTIMISATION: Mémoriser les calculs de poids pour éviter recalcul à chaque render */}
-        {useMemo(() => {
-          // Prendre les 30 derniers poids (le plus récent est à l'index 0 car weightHistory est trié DESC)
-          const last30Weights = weightHistory.slice(0, 30);
-          const weights = last30Weights;
-          const maxWeightValue = Math.max(...weights);
-          const minWeightValue = Math.min(...weights);
-          const weightRange = (maxWeightValue - minWeightValue) || 1;
+            return (
+              <Svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>
+                {/* Background rounded rect */}
+                <Path
+                  d={`M ${offset + r} ${offset} L ${s - offset - r} ${offset} Q ${s - offset} ${offset} ${s - offset} ${offset + r} L ${s - offset} ${s - offset - r} Q ${s - offset} ${s - offset} ${s - offset - r} ${s - offset} L ${offset + r} ${s - offset} Q ${offset} ${s - offset} ${offset} ${s - offset - r} L ${offset} ${offset + r} Q ${offset} ${offset} ${offset + r} ${offset}`}
+                  fill="none"
+                  stroke={bgColor}
+                  strokeWidth={sw}
+                />
+                {/* Progress arc */}
+                <Path
+                  d={`M ${offset + r} ${offset} L ${s - offset - r} ${offset} Q ${s - offset} ${offset} ${s - offset} ${offset + r} L ${s - offset} ${s - offset - r} Q ${s - offset} ${s - offset} ${s - offset - r} ${s - offset} L ${offset + r} ${s - offset} Q ${offset} ${s - offset} ${offset} ${s - offset - r} L ${offset} ${offset + r} Q ${offset} ${offset} ${offset + r} ${offset}`}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={sw}
+                  strokeDasharray={`${dashLen} ${gapLen}`}
+                  strokeLinecap="round"
+                />
+              </Svg>
+            );
+          };
 
           return (
-            <>
-              {/* GRAPHIQUE SIMPLE SCROLLABLE AVEC FLATLIST */}
-              {/* TouchableOpacity supprimé pour permettre le scroll horizontal */}
-              <View>
-                <FlatList
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.simpleChart}
-                  contentContainerStyle={styles.simpleChartContent}
-                  data={last30Weights}
-                  scrollEnabled={true}
-                  nestedScrollEnabled={true}
-                  keyExtractor={(item, index) => `weight-${index}`}
-                  getItemLayout={(data, index) => ({
-                    length: 42,
-                    offset: 42 * index,
-                    index,
-                  })}
-                  removeClippedSubviews={true}
-                  maxToRenderPerBatch={15}
-                  windowSize={5}
-                  renderItem={({ item: weight, index }) => {
-                    // Hauteur proportionnelle avec base minimum de 30%
-                    // Cela évite les "chutes" visuelles dramatiques
-                    const rawPercent = ((weight - minWeightValue) / weightRange) * 70; // Max 70% de variation
-                    const heightPercent = 30 + rawPercent; // Base de 30% + variation
+          <View style={[styles.reportGridCard, { backgroundColor: cardBg, flex: 1, padding: 0, overflow: 'hidden', borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+            {/* Header fixe avec icone */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingTop: 10, paddingBottom: 2 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Ionicons name="scale-outline" size={14} color="#10B981" />
+                <Text style={[styles.reportGridCardTitle, { color: colors.textMuted }]}>Poids</Text>
+              </View>
+              <View style={{
+                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6,
+              }}>
+                <Text style={{ fontSize: 7, fontWeight: '800', color: isDark ? '#FFFFFF' : '#1A1A2E', textTransform: 'uppercase', letterSpacing: 0.2 }}>
+                  {userGoal === 'lose' ? 'Perte de poids' : userGoal === 'gain' ? 'Prise de poids' : 'Maintien du poids'}
+                </Text>
+              </View>
+            </View>
 
-                    // Calculer la date réelle (inversé: récent à gauche, ancien à droite)
-                    const today = new Date();
-                    const daysAgo = index;
-                    const date = new Date(today);
-                    date.setDate(date.getDate() - daysAgo);
-                    const dayOfMonth = date.getDate();
-                    const monthLabel = monthNames[date.getMonth()];
+            {/* ScrollView horizontal — scroll natif ultra-fluide */}
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={(e) => {
+                const x = e.nativeEvent.contentOffset.x;
+                const pageW = e.nativeEvent.layoutMeasurement.width;
+                const page = Math.round(x / pageW);
+                if (page !== poidsPage) setPoidsPage(page);
+              }}
+              scrollEventThrottle={16}
+              bounces={false}
+              decelerationRate="fast"
+              nestedScrollEnabled
+            >
+              {/* ═══ PAGE 1: Arc progression perte de poids ═══ */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/stats?tab=poids'); }}
+                style={{ width: H_CARD_PAGE_W, paddingHorizontal: 14, paddingVertical: 6, justifyContent: 'center' }}
+              >
+                {(() => {
+                  // Calcul progression - seulement si objectif defini
+                  const hasGoal = targetWeight > 0 && targetWeight !== currentWeight;
+                  const totalToLose = hasGoal ? Math.abs(startWeight - targetWeight) : 0;
+                  const lost = hasGoal
+                    ? (userGoal === 'gain'
+                      ? Math.max(0, currentWeight - startWeight)
+                      : Math.max(0, startWeight - currentWeight))
+                    : 0;
+                  const remaining = hasGoal
+                    ? (userGoal === 'gain'
+                      ? Math.max(0, targetWeight - currentWeight)
+                      : Math.max(0, currentWeight - targetWeight))
+                    : 0;
+                  const progress = totalToLose > 0 ? Math.min(1, lost / totalToLose) : 0;
 
-                    return (
-                      <View style={styles.simpleChartBar}>
-                        <Text style={[styles.simpleChartWeight, { color: colors.textPrimary }]}>
-                          {weight.toFixed(1)}
-                        </Text>
-                        <View style={styles.simpleChartBarBg}>
-                          <LinearGradient
-                            colors={[colors.accent, colors.accent + 'CC', colors.accent + '99']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 0, y: 1 }}
-                            style={[
-                              styles.simpleChartBarFill,
-                              { height: `${heightPercent}%` }
-                            ]}
-                          />
+                  // Arc semi-circulaire avec 10 segments pilules epais
+                  const AW = 180;
+                  const AH = 100;
+                  const acx = AW / 2;
+                  const acy = AH;
+                  const arcRadius = 70;
+                  const totalSegments = 10;
+                  const filledSegments = Math.round(progress * totalSegments);
+                  const pillW = 11;
+                  const pillH = 26;
+                  const pillR = 5.5;
+                  const emptyColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)';
+
+                  return (
+                    <View style={{ alignItems: 'center' }}>
+                      {/* Arc + poids centre dedans */}
+                      <View style={{ width: AW, height: AH + 14, alignItems: 'center', justifyContent: 'flex-end' }}>
+                        <Svg width={AW} height={AH + 14} viewBox={`0 0 ${AW} ${AH + 14}`} style={{ position: 'absolute', top: 0, left: 0 }}>
+                          {Array.from({ length: totalSegments }, (_, i) => {
+                            const angle = Math.PI - (i / (totalSegments - 1)) * Math.PI;
+                            const px = acx + arcRadius * Math.cos(angle);
+                            const py = acy - arcRadius * Math.sin(angle);
+                            const rotDeg = 90 - (angle * 180 / Math.PI);
+                            const isFilled = i < filledSegments;
+                            return (
+                              <G key={i} transform={`translate(${px}, ${py}) rotate(${rotDeg})`}>
+                                <SvgRect
+                                  x={-pillW / 2}
+                                  y={-pillH / 2}
+                                  width={pillW}
+                                  height={pillH}
+                                  rx={pillR}
+                                  ry={pillR}
+                                  fill={isFilled ? colors.accent : emptyColor}
+                                />
+                              </G>
+                            );
+                          })}
+                        </Svg>
+                        {/* Poids centre dans l'arc */}
+                        <View style={{ marginBottom: 2, alignItems: 'center' }}>
+                          <Text style={{ fontSize: 28, fontWeight: '900', color: colors.textPrimary, textAlign: 'center', letterSpacing: -0.5 }}>
+                            {currentWeight > 0 ? currentWeight.toFixed(1) : '--'}
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMuted }}> kg</Text>
+                          </Text>
+                          <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted, textAlign: 'center', marginTop: -1 }}>
+                            {!hasGoal ? 'Definis ton objectif' : progress > 0 ? `${(progress * 100).toFixed(0)}% atteint` : 'Debut du parcours'}
+                          </Text>
                         </View>
-                        <Text style={[styles.simpleChartDate, { color: colors.textPrimary }]}>
-                          {dayOfMonth}
+                      </View>
+
+                      {/* 3 stats en bas : Perdu | Objectif | Reste - espacement egal */}
+                      <View style={{ flexDirection: 'row', marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', width: '100%' }}>
+                        {/* Perdu */}
+                        <View style={{ alignItems: 'center', flex: 1 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 4 }}>
+                            <TrendingDown size={9} color="#10B981" strokeWidth={2.5} />
+                            <Text style={{ fontSize: 9, fontWeight: '700', color: '#10B981', textTransform: 'uppercase', letterSpacing: 0.5 }}>Perdu</Text>
+                          </View>
+                          <Text style={{ fontSize: 15, fontWeight: '800', color: '#10B981' }}>
+                            {hasGoal ? lost.toFixed(1) : '0.0'}<Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted }}> kg</Text>
+                          </Text>
+                        </View>
+                        {/* Objectif - cliquable pour definir */}
+                        <TouchableOpacity
+                          onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/goals'); }}
+                          activeOpacity={0.6}
+                          style={{ alignItems: 'center', flex: 1 }}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 4 }}>
+                            <Target size={9} color={colors.accent} strokeWidth={2.5} />
+                            <Text style={{ fontSize: 9, fontWeight: '700', color: colors.accent, textTransform: 'uppercase', letterSpacing: 0.5 }}>Objectif</Text>
+                          </View>
+                          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.textPrimary }}>
+                            {hasGoal ? targetWeight.toFixed(1) : '--'}<Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted }}> kg</Text>
+                          </Text>
+                        </TouchableOpacity>
+                        {/* Reste */}
+                        <View style={{ alignItems: 'center', flex: 1 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 4 }}>
+                            <TrendingUp size={9} color="#EF4444" strokeWidth={2.5} />
+                            <Text style={{ fontSize: 9, fontWeight: '700', color: '#EF4444', textTransform: 'uppercase', letterSpacing: 0.5 }}>Reste</Text>
+                          </View>
+                          <Text style={{ fontSize: 15, fontWeight: '800', color: '#EF4444' }}>
+                            {hasGoal ? remaining.toFixed(1) : '--'}<Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted }}> kg</Text>
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })()}
+              </TouchableOpacity>
+
+              {/* ═══ PAGE 3: Composition + Mini graphique scrollable ═══ */}
+              <View style={{ width: H_CARD_PAGE_W, paddingHorizontal: 8, paddingBottom: 4 }}>
+                {/* Composition compacte */}
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/stats?tab=corps'); }}
+                >
+                  <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, textAlign: 'center', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>Composition</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
+                    {/* Muscle */}
+                    <View style={{ alignItems: 'center' }}>
+                      <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                        {makeRoundedSquareArc(44, hasMuscle ? musclePct / 100 : 0, '#EF4444', isDark ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.1)')}
+                        <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center' }}>
+                          <Dumbbell size={16} color="#EF4444" strokeWidth={2.2} />
+                        </View>
+                      </View>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: colors.textPrimary, marginTop: 3 }}>
+                        {hasMuscle ? muscleKg.toFixed(1) : '--'}
+                        <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted }}>{hasMuscle ? ' kg' : ''}</Text>
+                      </Text>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: '#EF4444' }}>{hasMuscle ? `${musclePct.toFixed(0)}%` : '--%'}</Text>
+                    </View>
+                    {/* Graisse */}
+                    <View style={{ alignItems: 'center' }}>
+                      <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                        {makeRoundedSquareArc(44, hasFat ? fatPct / 100 : 0, '#F59E0B', isDark ? 'rgba(245,158,11,0.15)' : 'rgba(245,158,11,0.1)')}
+                        <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center' }}>
+                          {/* Icone personne ronde style silhouette */}
+                          <Svg width={18} height={18} viewBox="0 0 32 32">
+                            <SvgCircle cx={16} cy={7} r={4.5} fill="#F59E0B" />
+                            <Path d="M8 28 C8 18, 8 14, 16 14 C24 14, 24 18, 24 28 Z" fill="#F59E0B" />
+                            <SvgCircle cx={7} cy={20} r={3} fill="#F59E0B" />
+                            <SvgCircle cx={25} cy={20} r={3} fill="#F59E0B" />
+                          </Svg>
+                        </View>
+                      </View>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: colors.textPrimary, marginTop: 3 }}>
+                        {hasFat ? fatKg.toFixed(1) : '--'}
+                        <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted }}>{hasFat ? ' kg' : ''}</Text>
+                      </Text>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: '#F59E0B' }}>{hasFat ? `${fatPct.toFixed(0)}%` : '--%'}</Text>
+                    </View>
+                    {/* Eau */}
+                    <View style={{ alignItems: 'center' }}>
+                      <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                        {makeRoundedSquareArc(44, hasWater ? waterPct / 100 : 0, '#3B82F6', isDark ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.1)')}
+                        <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center' }}>
+                          <Droplet size={16} color="#3B82F6" strokeWidth={2.2} />
+                        </View>
+                      </View>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: colors.textPrimary, marginTop: 3 }}>
+                        {hasWater ? waterKg.toFixed(1) : '--'}
+                        <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted }}>{hasWater ? ' kg' : ''}</Text>
+                      </Text>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: '#3B82F6' }}>{hasWater ? `${waterPct.toFixed(0)}%` : '--%'}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+
+                {/* Mini graphique scrollable */}
+                {weightHistory.length > 0 && (() => {
+                  const last15 = weightHistory.slice(0, 15);
+                  const maxW = Math.max(...last15);
+                  const minW = Math.min(...last15);
+                  const range = (maxW - minW) || 1;
+                  return (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      nestedScrollEnabled={true}
+                      style={{ marginTop: 6 }}
+                      contentContainerStyle={{ alignItems: 'flex-end', paddingHorizontal: 2 }}
+                    >
+                      {last15.map((w, index) => {
+                        const pct = 30 + ((w - minW) / range) * 60;
+                        const today = new Date();
+                        const d = new Date(today);
+                        d.setDate(d.getDate() - index);
+                        return (
+                          <View key={`mc-${index}`} style={{ width: 30, alignItems: 'center', gap: 2 }}>
+                            <Text style={{ fontSize: 7, fontWeight: '700', color: colors.textPrimary }}>{w.toFixed(1)}</Text>
+                            <View style={{ width: 16, height: 50, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 4, justifyContent: 'flex-end', overflow: 'hidden' }}>
+                              <LinearGradient
+                                colors={[colors.accent, colors.accent + '99']}
+                                start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
+                                style={{ width: '100%', height: `${pct}%`, borderRadius: 3, minHeight: 4 }}
+                              />
+                            </View>
+                            <Text style={{ fontSize: 7, fontWeight: '600', color: colors.textMuted }}>{d.getDate()}</Text>
+                          </View>
+                        );
+                      })}
+                    </ScrollView>
+                  );
+                })()}
+              </View>
+
+              {/* ═══ PAGE 4: Prédictions ═══ */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/weight-predictions'); }}
+                style={{ width: H_CARD_PAGE_W, paddingHorizontal: 14, paddingBottom: 8, justifyContent: 'center' }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 10 }}>
+                  <TrendingUp size={12} color="#8B5CF6" strokeWidth={2.5} />
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#8B5CF6', letterSpacing: 0.5, textTransform: 'uppercase' }}>Prédictions</Text>
+                </View>
+                <View style={{ gap: 8 }}>
+                  {[
+                    { label: '30 jours', months: 1 },
+                    { label: '90 jours', months: 3 },
+                    { label: '6 mois', months: 6 },
+                    { label: '1 an', months: 12 },
+                  ].map((p) => (
+                    <View key={p.label} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{p.label}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textPrimary }}>
+                        {weightHistory.length >= 2 && currentWeight > 0 ? `${calculatePrediction(p.months).toFixed(1)} kg` : '-- kg'}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </TouchableOpacity>
+
+              {/* ═══ PAGE 5: IMC (BMI) - Compteur balance ═══ */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/body-composition'); }}
+                style={{ width: H_CARD_PAGE_W, paddingHorizontal: 6, paddingBottom: 4, justifyContent: 'center' }}
+              >
+                {(() => {
+                  const bmi = heightCm && heightCm > 0 && currentWeight > 0 ? currentWeight / ((heightCm / 100) ** 2) : 0;
+
+                  if (bmi === 0) {
+                    return (
+                      <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 20 }}>
+                        <Ionicons name="body-outline" size={24} color={colors.textMuted} />
+                        <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted, textAlign: 'center', marginTop: 6, lineHeight: 16 }}>
+                          Renseigne ta taille{'\n'}dans ton profil
                         </Text>
-                        <Text style={[styles.simpleChartMonth, { color: colors.textMuted }]}>
-                          {monthLabel}
-                        </Text>
+                        <TouchableOpacity
+                          onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/profile'); }}
+                          style={{ marginTop: 6, backgroundColor: colors.accent + '20', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 }}
+                        >
+                          <Text style={{ fontSize: 10, fontWeight: '700', color: colors.accent }}>Mon profil</Text>
+                        </TouchableOpacity>
                       </View>
                     );
-                  }}
-                />
-              </View>
-            </>
+                  }
+
+                  // Category
+                  let bmiLabel = '';
+                  let bmiColor = '#22C55E';
+                  if (bmi < 16) { bmiLabel = 'Dénutrition'; bmiColor = '#DC2626'; }
+                  else if (bmi < 18.5) { bmiLabel = 'Maigreur'; bmiColor = '#F97316'; }
+                  else if (bmi < 25) { bmiLabel = 'Normal'; bmiColor = '#22C55E'; }
+                  else if (bmi < 30) { bmiLabel = 'Surpoids'; bmiColor = '#F97316'; }
+                  else if (bmi < 35) { bmiLabel = 'Obésité I'; bmiColor = '#EF4444'; }
+                  else if (bmi < 40) { bmiLabel = 'Obésité II'; bmiColor = '#DC2626'; }
+                  else { bmiLabel = 'Obésité III'; bmiColor = '#991B1B'; }
+
+                  // Gauge constants - BIGGER
+                  const GW = 160;
+                  const GH = 100;
+                  const gcx = GW / 2;
+                  const gcy = GH - 2;
+                  const gr = 50;
+                  const gsw = 14;
+                  const BMI_MIN = 15;
+                  const BMI_MAX = 40;
+                  const clampedBmi = Math.max(BMI_MIN, Math.min(BMI_MAX, bmi));
+                  const bmiProgress = (clampedBmi - BMI_MIN) / (BMI_MAX - BMI_MIN);
+
+                  // Colored segments
+                  const toArc = (v: number) => Math.max(0, Math.min(1, (v - BMI_MIN) / (BMI_MAX - BMI_MIN)));
+                  const bmiSegs = [
+                    { from: toArc(BMI_MIN), to: toArc(18.5), color: '#F97316' },
+                    { from: toArc(18.5), to: toArc(25), color: '#22C55E' },
+                    { from: toArc(25), to: toArc(30), color: '#F97316' },
+                    { from: toArc(30), to: toArc(BMI_MAX), color: '#EF4444' },
+                  ];
+                  const makeBmiArc = (p1: number, p2: number) => {
+                    const a1 = Math.PI * (1 - p1), a2 = Math.PI * (1 - p2);
+                    return `M ${gcx + gr * Math.cos(a1)} ${gcy - gr * Math.sin(a1)} A ${gr} ${gr} 0 0 1 ${gcx + gr * Math.cos(a2)} ${gcy - gr * Math.sin(a2)}`;
+                  };
+
+                  // Label positions around the arc
+                  const labelR = gr + gsw / 2 + 14;
+                  const bmiLabelsArr = [15, 18, 25, 30, 35, 40];
+                  const labelPositions = bmiLabelsArr.map(v => {
+                    const p = (v - BMI_MIN) / (BMI_MAX - BMI_MIN);
+                    const a = Math.PI * (1 - p);
+                    return { v, x: gcx + labelR * Math.cos(a), y: gcy - labelR * Math.sin(a) };
+                  });
+
+                  // Needle
+                  const needleAngle = Math.PI * (1 - bmiProgress);
+                  const nLen = gr + gsw / 2;
+                  const nx = gcx + nLen * Math.cos(needleAngle);
+                  const ny = gcy - nLen * Math.sin(needleAngle);
+
+                  // Legend categories
+                  const cats = [
+                    { label: 'Maigreur', color: '#F97316' },
+                    { label: 'Normal', color: '#22C55E' },
+                    { label: 'Surpoids', color: '#F97316' },
+                    { label: 'Obésité', color: '#EF4444' },
+                  ];
+
+                  return (
+                    <View style={{ alignItems: 'center' }}>
+                      {/* Gauge SVG */}
+                      <View style={{ width: GW, height: GH, overflow: 'visible', marginTop: 2 }}>
+                        <Svg width={GW} height={GH} viewBox={`0 0 ${GW} ${GH}`} style={{ overflow: 'visible' }}>
+                          {/* Background */}
+                          <Path d={makeBmiArc(0, 1)} stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'} strokeWidth={gsw + 4} fill="none" strokeLinecap="butt" />
+                          {/* Colored segments */}
+                          {bmiSegs.map((s, i) => (
+                            <Path key={i} d={makeBmiArc(s.from, s.to)} stroke={s.color} strokeWidth={gsw} fill="none" strokeLinecap="butt" />
+                          ))}
+                          {/* Numbers around arc */}
+                          {labelPositions.map((lp) => (
+                            <SvgText key={lp.v} x={lp.x} y={lp.y + 3} fontSize={9} fontWeight="800" fill={isDark ? '#FFFFFF' : '#6B7280'} textAnchor="middle">{lp.v}</SvgText>
+                          ))}
+                          {/* Needle */}
+                          <Line x1={gcx} y1={gcy} x2={nx} y2={ny} stroke={isDark ? '#FFFFFF' : '#1A1A2E'} strokeWidth={3} strokeLinecap="round" />
+                          {/* Center pivot */}
+                          <SvgCircle cx={gcx} cy={gcy} r={5} fill={isDark ? '#1A1A2E' : '#FFFFFF'} stroke={isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'} strokeWidth={2} />
+                        </Svg>
+                      </View>
+
+                      {/* Value + label */}
+                      <Text style={{ fontSize: 26, fontWeight: '900', color: colors.textPrimary, textAlign: 'center', letterSpacing: -0.5, marginTop: 2 }}>
+                        {bmi.toFixed(1)}
+                      </Text>
+                      <Text style={{ fontSize: 12, fontWeight: '800', color: bmiColor, textAlign: 'center', marginTop: 0 }}>{bmiLabel}</Text>
+
+                      {/* Legend: thick bars + labels */}
+                      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                        {cats.map((c) => (
+                          <View key={c.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <View style={{ width: 16, height: 5, borderRadius: 2.5, backgroundColor: c.color }} />
+                            <Text style={{ fontSize: 8, fontWeight: '700', color: colors.textMuted }}>{c.label}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  );
+                })()}
+              </TouchableOpacity>
+            </ScrollView>
+
+            {/* Dots indicator */}
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 5, paddingBottom: 6, paddingTop: 2 }}>
+              {[0, 1, 2, 3].map(i => (
+                <View key={i} style={{
+                  width: poidsPage === i ? 7 : 5,
+                  height: poidsPage === i ? 7 : 5,
+                  borderRadius: poidsPage === i ? 3.5 : 2.5,
+                  backgroundColor: poidsPage === i
+                    ? (isDark ? '#FFFFFF' : '#1A1A2E')
+                    : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'),
+                }} />
+              ))}
+            </View>
+          </View>
           );
-        }, [weightHistory, colors, userGoal])}
+        })()}
 
-        {/* Prédictions - Afficher seulement si on a des données de poids */}
-        {weightHistory.length >= 2 && currentWeight > 0 && (
-          <TouchableOpacity
-            style={[styles.predictionsContainer, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)' }]}
-            onPress={() => router.push('/weight-predictions')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.predictionsHeader}>
-              <TrendingUp size={14} color="#8B5CF6" strokeWidth={2.5} />
-              <Text style={[styles.predictionsTitle, { color: '#8B5CF6' }]}>
-                {t('home.predictions.title')}
-              </Text>
-            </View>
-
-            <View style={styles.predictionsRow}>
-              <View style={styles.predictionItem}>
-                <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.30days')}</Text>
-                <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                  {calculatePrediction(1).toFixed(1)} kg
-                </Text>
-              </View>
-
-              <View style={styles.predictionDivider} />
-
-              <View style={styles.predictionItem}>
-                <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.90days')}</Text>
-                <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                  {calculatePrediction(3).toFixed(1)} kg
-                </Text>
-              </View>
-
-              <View style={styles.predictionDivider} />
-
-              <View style={styles.predictionItem}>
-                <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.6months')}</Text>
-                <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                  {calculatePrediction(6).toFixed(1)} kg
-                </Text>
-              </View>
-
-              <View style={styles.predictionDivider} />
-
-              <View style={styles.predictionItem}>
-                <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.1year')}</Text>
-                <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                  {calculatePrediction(12).toFixed(1)} kg
-                </Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-
-        {/* BOUTON SHARE SUPPRIMÉ - utiliser celui dans QuestsCard */}
-      </View>
-
-      {/* DÉFIS DU JOUR - Quêtes avec XP */}
-      <View style={{ marginBottom: 16, marginTop: 8 }}>
-        <QuestsCard />
-      </View>
-
-      {/* VITALS - Pleine largeur verticalement */}
-      <View style={styles.vitalsSection}>
-        <HydrationCardFullWidth
-          currentMl={hydration}
-          goalMl={hydrationGoal}
-          onAddMl={onAddWater}
+        {/* Hydratation - bouteille SVG animée */}
+        <HydrationGridCard
+          hydration={hydration}
+          hydrationGoal={hydrationGoal}
+          onAddWater={onAddWater}
+          colors={colors}
+          isDark={isDark}
         />
+        </View>
 
-        <SleepCardFullWidth
-          hours={sleepHours}
-          debt={sleepDebt}
-          goal={sleepGoal}
-          onPress={() => router.push('/sleep')}
-        />
+        {/* Rangée 2: Sommeil + Charge (même hauteur) */}
+        <View style={styles.reportGridRow}>
+        {/* ═══ SOMMEIL - 3 pages swipeable ═══ */}
+        {(() => {
+          const CARD_W = H_CARD_PAGE_W;
+          const sleepStatus = sleepHours === 0 ? { text: 'Aucune donnée', color: '#9CA3AF' } : sleepHours >= 7 ? { text: 'Excellent', color: '#10B981' } : sleepHours >= 5 ? { text: 'Correct', color: '#F59E0B' } : { text: 'Insuffisant', color: '#EF4444' };
+          const sleepQuality = sleepGoal > 0 ? Math.min(Math.round((sleepHours / sleepGoal) * 100), 100) : 0;
+          const sleepMinutes = Math.round((sleepHours % 1) * 60);
+          const sleepH = Math.floor(sleepHours);
+          // Couleurs bleu nuit
+          const NIGHT = '#1E3A5F';
+          const NIGHT_MID = '#2563EB';
+          const NIGHT_LIGHT = '#60A5FA';
+          const NIGHT_SOFT = '#93C5FD';
+          const STAR_COLOR = '#FDE68A';
+          const MOON_COLOR = '#FBBF24';
+          return (
+          <View style={[styles.reportGridCard, { backgroundColor: cardBg, flex: 1, padding: 0, overflow: 'hidden', borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+            {/* Header avec bouton + */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 10, paddingBottom: 2 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Moon size={14} color={NIGHT_MID} />
+                <Text style={[styles.reportGridCardTitle, { color: colors.textMuted }]}>Sommeil</Text>
+              </View>
+              <TouchableOpacity onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/sleep-input'); }} activeOpacity={0.7}
+                style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: NIGHT_MID, justifyContent: 'center', alignItems: 'center' }}>
+                <Plus size={14} color="#FFFFFF" strokeWidth={3} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={(e) => { setSommeilPage(Math.round(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width)); }} scrollEventThrottle={16}>
+              {/* ── Page 1: Ciel étoilé pleine largeur + Valeur ── */}
+              <TouchableOpacity activeOpacity={0.8} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/sleep'); }} style={{ width: CARD_W, paddingBottom: 6 }}>
+                <View style={{ height: 100, justifyContent: 'center', alignItems: 'center', position: 'relative', marginTop: 2 }}>
+                  {/* Fond ciel nuit - pleine largeur */}
+                  <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 10, borderRadius: 0, backgroundColor: isDark ? '#0F172A' : '#1E293B', overflow: 'hidden' }}>
+                    <LinearGradient colors={isDark ? ['#0F172A', '#1E3A5F'] : ['#1E293B', '#1E3A5F']} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+                  </View>
+                  {/* Etoiles dorees */}
+                  <Animated.View style={{ position: 'absolute', top: 8, left: 14, opacity: sleepStar1 }}><Text style={{ fontSize: 6, color: STAR_COLOR }}>✦</Text></Animated.View>
+                  <Animated.View style={{ position: 'absolute', top: 20, left: 32, opacity: sleepStar2 }}><Text style={{ fontSize: 4, color: STAR_COLOR }}>✦</Text></Animated.View>
+                  <Animated.View style={{ position: 'absolute', top: 6, left: 55, opacity: sleepStar3 }}><Text style={{ fontSize: 5, color: STAR_COLOR }}>✦</Text></Animated.View>
+                  <Animated.View style={{ position: 'absolute', top: 14, right: 18, opacity: sleepStar1 }}><Text style={{ fontSize: 6, color: STAR_COLOR }}>✦</Text></Animated.View>
+                  <Animated.View style={{ position: 'absolute', top: 26, right: 34, opacity: sleepStar2 }}><Text style={{ fontSize: 4, color: '#E2E8F0' }}>✦</Text></Animated.View>
+                  <Animated.View style={{ position: 'absolute', top: 8, right: 50, opacity: sleepStar3 }}><Text style={{ fontSize: 5, color: STAR_COLOR }}>✦</Text></Animated.View>
+                  {/* Lune doree flottante */}
+                  <Animated.View style={{ position: 'absolute', top: 6, right: 16, transform: [{ translateY: sleepMoonFloat }] }}>
+                    <Svg width={22} height={22} viewBox="0 0 24 24"><Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill={MOON_COLOR} /></Svg>
+                  </Animated.View>
+                  {/* Scene lit en bleu nuit */}
+                  <Animated.View style={{ marginTop: 16, transform: [{ scale: sleepBreathe }] }}>
+                    <Svg width={72} height={44} viewBox="0 0 80 50">
+                      <Path d="M 5 45 L 5 39" stroke={NIGHT_SOFT} strokeWidth="2.5" strokeLinecap="round" />
+                      <Path d="M 75 45 L 75 39" stroke={NIGHT_SOFT} strokeWidth="2.5" strokeLinecap="round" />
+                      <Path d="M 3 39 L 77 39" stroke={NIGHT_LIGHT} strokeWidth="3" strokeLinecap="round" />
+                      <Ellipse cx="40" cy="34" rx="35" ry="5" fill={NIGHT_MID} opacity={0.6} />
+                      <Ellipse cx="14" cy="30" rx="9" ry="4.5" fill={NIGHT_SOFT} opacity={0.7} />
+                      <Ellipse cx="14" cy="29" rx="7" ry="3.5" fill="#DBEAFE" />
+                      <Path d="M 8 31 Q 25 24 45 29 Q 60 33 70 31 L 70 36 Q 50 38 30 37 Q 15 35 8 36 Z" fill={NIGHT_LIGHT} opacity={0.7} />
+                      <SvgCircle cx="18" cy="24" r="6.5" fill="#FDE68A" />
+                      <Path d="M 13 21 Q 18 17 23 21" stroke="#92400E" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+                      <Path d="M 15 24 Q 17 25 19 24" stroke="#78350F" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+                      <Path d="M 16 27 Q 18 28 20 27" stroke="#78350F" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+                      <Ellipse cx="28" cy="27" rx="3.5" ry="2" fill="#FDE68A" />
+                    </Svg>
+                  </Animated.View>
+                  {/* ZzZ en bleu */}
+                  <View style={{ position: 'absolute', top: 44, left: 55 }}>
+                    <Animated.Text style={{ fontSize: 8, fontWeight: '900', fontStyle: 'italic', color: NIGHT_SOFT, position: 'absolute', left: 0, top: 0, opacity: sleepZzz1Op, transform: [{ translateY: sleepZzz1Y }] }}>z</Animated.Text>
+                    <Animated.Text style={{ fontSize: 11, fontWeight: '900', fontStyle: 'italic', color: NIGHT_LIGHT, position: 'absolute', left: 6, top: -5, opacity: sleepZzz2Op, transform: [{ translateY: sleepZzz2Y }] }}>Z</Animated.Text>
+                    <Animated.Text style={{ fontSize: 14, fontWeight: '900', fontStyle: 'italic', color: NIGHT_MID, position: 'absolute', left: 13, top: -12, opacity: sleepZzz3Op, transform: [{ translateY: sleepZzz3Y }] }}>Z</Animated.Text>
+                  </View>
+                </View>
+                {/* Valeur + badge */}
+                <View style={{ alignItems: 'center', marginTop: 2, paddingHorizontal: 10 }}>
+                  <Text style={{ fontSize: 22, fontWeight: '900', color: colors.textPrimary, letterSpacing: -1 }}>{sleepHours > 0 ? `${sleepH}h${sleepMinutes.toString().padStart(2, '0')}` : '--'}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                    <View style={{ backgroundColor: sleepStatus.color + '18', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                      <Text style={{ fontSize: 9, fontWeight: '700', color: sleepStatus.color }}>{sleepStatus.text}</Text>
+                    </View>
+                    {sleepGoal > 0 && (
+                      <Text style={{ fontSize: 9, fontWeight: '500', color: colors.textMuted }}>Objectif {sleepGoal}h</Text>
+                    )}
+                  </View>
+                </View>
+              </TouchableOpacity>
 
-      <ChargeCardFullWidth
-        level={workloadStatus}
-        onPress={() => router.push('/charge')}
-      />
+              {/* ── Page 2: Métriques ── */}
+              <View style={{ width: CARD_W, paddingHorizontal: 12, paddingBottom: 6, justifyContent: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  {sleepDebt > 0 ? <AlertTriangle size={12} color="#EF4444" /> : <CheckCircle size={12} color="#10B981" />}
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>Dette</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: sleepDebt > 0 ? '#EF4444' : '#10B981', marginLeft: 'auto' }}>{sleepDebt > 0 ? `${sleepDebt.toFixed(1)}h` : '0h'}</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <Moon size={12} color={NIGHT_MID} />
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>Qualité</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: sleepQuality >= 80 ? '#10B981' : sleepQuality >= 60 ? '#F59E0B' : '#EF4444', marginLeft: 'auto' }}>{sleepQuality}%</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <Target size={12} color={NIGHT_MID} />
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>Objectif</Text>
+                  <View style={{ marginLeft: 'auto', backgroundColor: sleepHours >= sleepGoal ? '#10B98120' : '#F59E0B20', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: sleepHours >= sleepGoal ? '#10B981' : '#F59E0B' }}>{sleepGoal}h</Text>
+                  </View>
+                </View>
+                <View style={{ height: 6, borderRadius: 3, backgroundColor: isDark ? 'rgba(37,99,235,0.15)' : 'rgba(37,99,235,0.1)', overflow: 'hidden' }}>
+                  <LinearGradient colors={[NIGHT_MID, NIGHT]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: '100%', width: `${Math.min(sleepQuality, 100)}%`, borderRadius: 3 }} />
+                </View>
+              </View>
+
+              {/* ── Page 3: Tendance + Actions ── */}
+              <View style={{ width: CARD_W, paddingHorizontal: 12, paddingBottom: 6, justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ width: 56, height: 56, alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+                  <Svg width={56} height={56} viewBox="0 0 60 60">
+                    <SvgCircle cx="30" cy="30" r="25" stroke={isDark ? 'rgba(37,99,235,0.15)' : 'rgba(37,99,235,0.1)'} strokeWidth="5" fill="none" />
+                    <SvgCircle cx="30" cy="30" r="25" stroke={NIGHT_MID} strokeWidth="5" fill="none" strokeLinecap="round" strokeDasharray={`${(sleepQuality / 100) * 157} 157`} transform="rotate(-90 30 30)" />
+                  </Svg>
+                  <View style={{ position: 'absolute', alignItems: 'center' }}><Text style={{ fontSize: 13, fontWeight: '900', color: NIGHT_MID }}>{sleepQuality}%</Text></View>
+                </View>
+                <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted, textAlign: 'center', marginBottom: 6 }}>{sleepHours >= sleepGoal ? 'Objectif atteint !' : `Encore ${(sleepGoal - sleepHours).toFixed(1)}h`}</Text>
+                {/* Boutons */}
+                <TouchableOpacity onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/sleep-input'); }} activeOpacity={0.7}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: NIGHT_MID + '18', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, marginBottom: 4 }}>
+                  <Plus size={12} color={NIGHT_MID} strokeWidth={2.5} />
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: NIGHT_MID }}>Ajouter</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/sleep'); }} activeOpacity={0.7}>
+                  <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted }}>Voir détails</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+            {/* Dots */}
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 5, paddingBottom: 6, paddingTop: 2 }}>
+              {[0, 1, 2].map(i => (<View key={i} style={{ width: sommeilPage === i ? 8 : 6, height: sommeilPage === i ? 8 : 6, borderRadius: sommeilPage === i ? 4 : 3, backgroundColor: sommeilPage === i ? (isDark ? '#FFFFFF' : '#1A1A2E') : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)') }} />))}
+            </View>
+          </View>
+          );
+        })()}
+
+        {/* ═══ CHARGE - 3 pages swipeable ═══ */}
+        {(() => {
+          const CARD_W = H_CARD_PAGE_W;
+          const cc = chargeConfig;
+          return (
+          <View style={[styles.reportGridCard, { backgroundColor: cardBg, flex: 1, padding: 0, overflow: 'hidden', borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+            {/* Header */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 10, paddingBottom: 2 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Activity size={14} color={cc.color} />
+                <Text style={[styles.reportGridCardTitle, { color: colors.textMuted }]}>Forme</Text>
+              </View>
+              <View style={{ backgroundColor: cc.color + '18', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 }}>
+                <Text style={{ fontSize: 7, fontWeight: '800', color: cc.color, textTransform: 'uppercase', letterSpacing: 0.2 }}>{cc.adviceShort}</Text>
+              </View>
+            </View>
+            <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={(e) => { setChargePage(Math.round(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width)); }} scrollEventThrottle={16}>
+              {/* ── Page 1: Message principal clair ── */}
+              <TouchableOpacity activeOpacity={0.8} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/charge'); }} style={{ width: CARD_W, paddingHorizontal: 12, paddingBottom: 4 }}>
+                {/* Emoji + animation pulsante */}
+                <View style={{ height: 46, justifyContent: 'center', alignItems: 'center' }}>
+                  <Animated.View style={{ transform: [{ scale: chargePulse }] }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: cc.color + '15', justifyContent: 'center', alignItems: 'center' }}>
+                      {cc.icon === 'moon' ? <Moon size={20} color={cc.color} /> : cc.icon === 'shield' ? <CheckCircle size={20} color={cc.color} /> : cc.icon === 'zap' ? <Zap size={20} color={cc.color} /> : <AlertTriangle size={20} color={cc.color} />}
+                    </View>
+                  </Animated.View>
+                  {/* Onde */}
+                  <Animated.View style={{ position: 'absolute', width: 50, height: 50, borderRadius: 25, borderWidth: 1.5, borderColor: cc.color, opacity: chargeWaveOpacity }} />
+                </View>
+                {/* Message humain principal */}
+                <Text style={{ fontSize: 12, fontWeight: '800', color: cc.color, textAlign: 'center', marginTop: 2 }} numberOfLines={2}>{cc.advice}</Text>
+                {/* Sous-texte */}
+                <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted, textAlign: 'center', marginTop: 3 }}>{cc.msgShort}</Text>
+              </TouchableOpacity>
+
+              {/* ── Page 2: Jauge + explication ── */}
+              <View style={{ width: CARD_W, paddingHorizontal: 12, paddingBottom: 4, justifyContent: 'center' }}>
+                {/* Jauge visuelle */}
+                <View style={{ alignItems: 'center', marginBottom: 6 }}>
+                  <View style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
+                    <Svg width={48} height={48} viewBox="0 0 60 60">
+                      <SvgCircle cx="30" cy="30" r="25" stroke={isDark ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0.06)'} strokeWidth="5" fill="none" />
+                      <SvgCircle cx="30" cy="30" r="25" stroke={cc.color} strokeWidth="5" fill="none" strokeLinecap="round" strokeDasharray={`${(cc.pct / 100) * 157} 157`} transform="rotate(-90 30 30)" />
+                    </Svg>
+                    <View style={{ position: 'absolute', alignItems: 'center' }}>
+                      <Text style={{ fontSize: 15, fontWeight: '900', color: cc.color }}>{cc.pct}%</Text>
+                    </View>
+                  </View>
+                </View>
+                {/* Niveau */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 4 }}>
+                  <Zap size={12} color={cc.color} />
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: cc.color }}>Charge {cc.label.toLowerCase()}</Text>
+                </View>
+                {/* Barre de charge */}
+                <View style={{ height: 6, borderRadius: 3, backgroundColor: cc.color + '20', overflow: 'hidden', marginBottom: 6, marginTop: 4 }}>
+                  <View style={{ height: '100%', width: `${Math.max(cc.pct, 2)}%`, borderRadius: 3, backgroundColor: cc.color }} />
+                </View>
+                {/* Explication courte */}
+                <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted, textAlign: 'center' }} numberOfLines={2}>{cc.msg}</Text>
+              </View>
+
+              {/* ── Page 3: Conseil détaillé ── */}
+              <TouchableOpacity activeOpacity={0.8} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/charge'); }} style={{ width: CARD_W, paddingHorizontal: 10, paddingBottom: 4, justifyContent: 'center' }}>
+                {/* Icône conseil */}
+                <View style={{ alignItems: 'center', marginBottom: 4 }}>
+                  <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: cc.color + '15', justifyContent: 'center', alignItems: 'center' }}>
+                    <TrendingUp size={16} color={cc.color} strokeWidth={2.5} />
+                  </View>
+                </View>
+                {/* Conseil complet */}
+                <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textPrimary, textAlign: 'center', lineHeight: 14, marginBottom: 4 }} numberOfLines={4}>{cc.rec}</Text>
+                {/* Temps de repos si applicable */}
+                {cc.rest !== '' && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: cc.color + '12', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, alignSelf: 'center', marginBottom: 4 }}>
+                    <Clock size={10} color={cc.color} />
+                    <Text style={{ fontSize: 9, fontWeight: '700', color: cc.color }}>Repos min: {cc.rest}</Text>
+                  </View>
+                )}
+                <TouchableOpacity onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/charge'); }} activeOpacity={0.7} style={{ alignSelf: 'center' }}>
+                  <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted, textDecorationLine: 'underline' }}>En savoir plus</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            </ScrollView>
+            {/* Séparateur horizontal */}
+            <View style={{ width: '80%', height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', alignSelf: 'center', marginTop: 4 }} />
+            {/* Pas + Calories empilés (cliquable → page charge) */}
+            <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/charge'); }} style={{ paddingHorizontal: 14, paddingTop: 5, paddingBottom: 2, gap: 2 }}>
+              {/* Pas */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Footprints size={16} color={steps > 0 ? '#3B82F6' : colors.textMuted} />
+                <Text style={{ fontSize: 16, fontWeight: '800', color: steps > 0 ? '#3B82F6' : colors.textMuted }}>{steps > 0 ? steps.toLocaleString('fr-FR') : '--'}</Text>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted }}>pas</Text>
+              </View>
+              {/* Calories: HealthKit actives si dispo, sinon trainings DB */}
+              {(() => {
+                const displayCal = calories > 0 ? calories : trainingCalories;
+                return (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Flame size={16} color={displayCal > 0 ? '#F97316' : colors.textMuted} />
+                    <Text style={{ fontSize: 16, fontWeight: '800', color: displayCal > 0 ? '#F97316' : colors.textMuted }}>{displayCal > 0 ? displayCal.toLocaleString('fr-FR') : '--'}</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted }}>kcal</Text>
+                  </View>
+                );
+              })()}
+            </TouchableOpacity>
+            {/* Dots */}
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 5, paddingBottom: 6, paddingTop: 2 }}>
+              {[0, 1, 2].map(i => (<View key={i} style={{ width: chargePage === i ? 8 : 6, height: chargePage === i ? 8 : 6, borderRadius: chargePage === i ? 4 : 3, backgroundColor: chargePage === i ? (isDark ? '#FFFFFF' : '#1A1A2E') : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)') }} />))}
+            </View>
+          </View>
+          );
+        })()}
+        </View>
       </View>
+
+      {/* Défis déplacés en page 2 du HomeTabView */}
+
 
       {/* RAPPORT HEBDOMADAIRE (Transféré de Analyse) */}
       {weeklyReport && (
-        <View style={[styles.reportCard, { backgroundColor: colors.backgroundCard }]}>
+        <View style={[styles.reportCard, { backgroundColor: cardBg, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
           <View style={styles.reportHeader}>
             <View style={styles.reportTitleRow}>
               <FileText size={24} color={colors.accentText} strokeWidth={2} />
@@ -1447,67 +2224,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         </View>
       )}
 
-      {/* STATS ROW - PAS / KCAL / SÉRIE - Déplacé en bas */}
-      <View style={styles.activityStatsRow}>
-        {/* Pas */}
-        <TouchableOpacity
-          style={[styles.compactCard, { backgroundColor: colors.backgroundCard }]}
-          onPress={() => {
-            impactAsync(ImpactFeedbackStyle.Light);
-            router.push('/activity-history?tab=steps');
-          }}
-          activeOpacity={0.8}
-        >
-          <View style={[styles.compactIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
-            <MaterialCommunityIcons name="shoe-print" size={18} color="#3B82F6" />
-          </View>
-          <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{steps.toLocaleString()}</Text>
-          <Text style={[styles.compactLabel, { color: colors.textMuted }]}>{t('home.stepsLabel')}</Text>
-        </TouchableOpacity>
-
-        {/* Calories */}
-        <TouchableOpacity
-          style={[styles.compactCard, { backgroundColor: colors.backgroundCard }]}
-          onPress={() => {
-            impactAsync(ImpactFeedbackStyle.Light);
-            router.push('/activity-history?tab=calories');
-          }}
-          activeOpacity={0.8}
-        >
-          <View style={[styles.compactIcon, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
-            <MaterialCommunityIcons name="fire" size={18} color="#EF4444" />
-          </View>
-          <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{((calories > 0 ? calories : Math.round(steps * 0.04)) + trainingCalories).toLocaleString()}</Text>
-          <Text style={[styles.compactLabel, { color: colors.textMuted }]}>kcal</Text>
-        </TouchableOpacity>
-
-        {/* Série */}
-        <TouchableOpacity
-          style={[styles.compactCard, { backgroundColor: colors.backgroundCard }]}
-          onPress={() => {
-            impactAsync(ImpactFeedbackStyle.Light);
-            router.push('/records');
-          }}
-          activeOpacity={0.8}
-        >
-          <View style={[styles.compactIcon, { backgroundColor: 'rgba(249, 115, 22, 0.1)' }]}>
-            <Ionicons name="flame" size={18} color="#F97316" />
-          </View>
-          <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{streak}</Text>
-          <Text style={[styles.compactLabel, { color: colors.textMuted }]}>{t('home.streakLabel')}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* GRILLE OUTILS - 4 colonnes */}
-      <View style={styles.toolsSection}>
-        <Text style={[styles.toolsSectionTitle, { color: colors.textPrimary }]}>
-          {t('tools.title')}
-        </Text>
-        <Text style={[styles.toolsSectionSubtitle, { color: colors.textMuted }]}>
-          {t('tools.subtitle')}
-        </Text>
-        <ToolsGrid />
-      </View>
+      {/* PAS / KCAL / SÉRIE et OUTILS supprimés - déplacés dans onglet Menu */}
 
     </ScrollView>
   );
@@ -1523,8 +2240,76 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: 0,
     paddingHorizontal: CARD_PADDING,
-    paddingBottom: IS_SMALL_SCREEN ? 230 : 250, // Plus d'espace pour scroller complètement
+    paddingBottom: IS_SMALL_SCREEN ? 230 : 250,
   },
+  // Grille 2x2
+  reportGrid: {
+    gap: 12,
+    marginBottom: 16,
+  },
+  reportGridRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  reportGridCard: {
+    width: (SCREEN_WIDTH - CARD_PADDING * 2 - 12) / 2,
+    borderRadius: 16,
+    padding: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  reportGridCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  reportGridIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reportGridCardTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  reportGridCardValue: {
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -1,
+  },
+  reportGridCardUnit: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  reportGridCardSub: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  reportGridProgressTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(59, 130, 246, 0.12)',
+    marginTop: 10,
+    overflow: 'hidden',
+  },
+  reportGridProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  reportGridChargeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 8,
+  },
+
   // Fond qui couvre les onglets
   contentBackground: {
     marginTop: -120,
@@ -1562,10 +2347,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileFrame: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    borderWidth: 2.5,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     overflow: 'hidden',
   },
   profileImg: {
@@ -1577,6 +2361,17 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  // DROITE - Bouton Reglages
+  settingsBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 15,
   },
 
   // CENTRE - Texte
@@ -2526,286 +3321,6 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
 
-  // Weight Card Premium
-  weightCardPremium: {
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  weightHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  weightHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  weightIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  weightTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  weightSubtitle: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  goalModeBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  goalModeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  trendBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-  },
-  trendText: {
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  // Ligne optimisée poids
-  weightOptimizedRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 4,
-  },
-  weightSideMetric: {
-    flex: 1,
-    alignItems: 'flex-start',
-  },
-  weightCenterMetric: {
-    flex: 1.5,
-    alignItems: 'center',
-  },
-  weightValueRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 6,
-  },
-  weightValueLarge: {
-    fontSize: IS_VERY_SMALL_SCREEN ? 38 : (IS_SMALL_SCREEN ? 42 : 48), // Responsive selon taille écran
-    fontWeight: '900',
-    letterSpacing: IS_SMALL_SCREEN ? -2 : -3,
-  },
-  weightUnit: {
-    fontSize: IS_SMALL_SCREEN ? 18 : 20,
-    fontWeight: '700',
-  },
-  metricTopLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  metricTopValue: {
-    fontSize: 17,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    marginTop: 3,
-  },
-  // GRAPHIQUE SIMPLE SCROLLABLE
-  simpleChart: {
-    marginTop: 12,
-    marginBottom: 12,
-  },
-  simpleChartContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 8,
-  },
-  simpleChartBar: {
-    width: 42, // Largeur fixe pour chaque barre - SCROLLABLE
-    alignItems: 'center',
-    gap: 4,
-  },
-  simpleChartWeight: {
-    fontSize: 9,
-    fontWeight: '700',
-  },
-  simpleChartBarBg: {
-    width: 26,
-    height: 75,
-    backgroundColor: 'rgba(128, 128, 128, 0.1)',
-    borderRadius: 6,
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
-  },
-  simpleChartBarFill: {
-    width: '100%',
-    borderRadius: 4,
-    minHeight: 6,
-  },
-  simpleChartDate: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  simpleChartMonth: {
-    fontSize: 8,
-    fontWeight: '600',
-  },
-  simpleChartConnector: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 28,
-    marginHorizontal: 4,
-  },
-  simpleChartArrow: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  simpleChartArrowIcon: {
-    fontSize: 10,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  predictionsContainer: {
-    borderRadius: 14,
-    padding: 12,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(139, 92, 246, 0.2)',
-  },
-  predictionsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 10,
-  },
-  predictionsTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  predictionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  predictionItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  predictionLabel: {
-    fontSize: 9,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 3,
-  },
-  predictionValue: {
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  predictionDivider: {
-    width: 1,
-    height: 20,
-    backgroundColor: 'rgba(139, 92, 246, 0.2)',
-  },
-
-  // Composition corporelle - COMPACT
-  bodyComposition: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingVertical: IS_SMALL_SCREEN ? 10 : 12,
-    paddingHorizontal: IS_SMALL_SCREEN ? 6 : 12,
-    borderRadius: 14,
-    marginBottom: 12,
-  },
-  compositionItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-  },
-  compositionDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginBottom: 2,
-  },
-  compositionInfo: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  compositionLabel: {
-    fontSize: 9,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-  compositionValue: {
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  compositionPercent: {
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  compositionDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-  },
-  // Barre de progression poids
-  weightProgressBar: {
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  weightProgressTrack: {
-    height: 6,
-    backgroundColor: 'rgba(0,0,0,0.08)',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  weightProgressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  weightProgressLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
-  },
-  weightProgressLabel: {
-    fontSize: 9,
-    fontWeight: '600',
-  },
-
-  // Vitals - Pleine largeur
-  vitalsSection: {
-    gap: 16,
-    marginBottom: 40, // Plus d'espace pour séparer les vitals du radar/rapport
-  },
 
   // ═══════════════════════════════════════════════
   // CITATION - NUAGE SIMPLE ☁️
@@ -2957,25 +3472,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: -0.5,
-  },
-
-  // ═══════════════════════════════════════════════
-  // SECTION OUTILS
-  // ═══════════════════════════════════════════════
-  toolsSection: {
-    marginTop: 24,
-    marginBottom: 20,
-  },
-  toolsSectionTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    letterSpacing: -0.8,
-    marginBottom: 4,
-  },
-  toolsSectionSubtitle: {
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 16,
   },
 
   // ═══════════════════════════════════════════════

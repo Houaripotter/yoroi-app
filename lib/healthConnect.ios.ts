@@ -171,6 +171,7 @@ export const SOURCE_NAME_MAP: Record<string, string> = {
   'Health Mate': 'withings', 'Withings': 'withings', 'Withings Health Mate': 'withings',
   // Garmin
   'Garmin Connect': 'garmin', 'com.garmin.android.apps.connectmobile': 'garmin',
+  'Garmin': 'garmin', 'com.garmin.connect.mobile': 'garmin',
   // Polar
   'Polar Flow': 'polar', 'com.polar.polarflow': 'polar', 'Polar Beat': 'polar',
   // Whoop
@@ -289,63 +290,113 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
   // Course
   'HKWorkoutActivityTypeRunning': 'running',
   'running': 'running',
+  // Trail
+  'HKWorkoutActivityTypeHiking': 'trail',
+  'hiking': 'trail',
+  // Marche
+  'HKWorkoutActivityTypeWalking': 'marche',
+  'walking': 'marche',
   // Musculation
   'HKWorkoutActivityTypeTraditionalStrengthTraining': 'musculation',
   'HKWorkoutActivityTypeFunctionalStrengthTraining': 'musculation',
   'HKWorkoutActivityTypeCoreTraining': 'musculation',
-  'HKWorkoutActivityTypeCrossTraining': 'musculation',
   'traditionalStrengthTraining': 'musculation',
   'functionalStrengthTraining': 'musculation',
-  // Sports de combat -> jjb
+  // Hyrox / CrossTraining
+  'HKWorkoutActivityTypeCrossTraining': 'hyrox',
+  'HKWorkoutActivityTypeHighIntensityIntervalTraining': 'hyrox',
+  'crossTraining': 'hyrox',
+  // Sports de combat
   'HKWorkoutActivityTypeMartialArts': 'jjb',
-  'HKWorkoutActivityTypeBoxing': 'jjb',
+  'HKWorkoutActivityTypeBoxing': 'boxe',
   'HKWorkoutActivityTypeWrestling': 'jjb',
   'HKWorkoutActivityTypeMixedCardio': 'jjb',
   'martialArts': 'jjb',
-  'boxing': 'jjb',
+  'boxing': 'boxe',
   'wrestling': 'jjb',
-  // Marche/Rando
-  'HKWorkoutActivityTypeWalking': 'autre',
-  'HKWorkoutActivityTypeHiking': 'autre',
-  'walking': 'autre',
-  'hiking': 'autre',
   // Velo
-  'HKWorkoutActivityTypeCycling': 'autre',
-  'cycling': 'autre',
+  'HKWorkoutActivityTypeCycling': 'velo',
+  'cycling': 'velo',
   // Natation
-  'HKWorkoutActivityTypeSwimming': 'autre',
-  'swimming': 'autre',
+  'HKWorkoutActivityTypeSwimming': 'natation',
+  'swimming': 'natation',
   // Yoga/Flexibility
-  'HKWorkoutActivityTypeYoga': 'autre',
-  'HKWorkoutActivityTypePilates': 'autre',
-  'HKWorkoutActivityTypeFlexibility': 'autre',
-  'yoga': 'autre',
-  // Sports collectifs
-  'HKWorkoutActivityTypeSoccer': 'autre',
-  'HKWorkoutActivityTypeBasketball': 'autre',
-  'HKWorkoutActivityTypeTennis': 'autre',
-  'soccer': 'autre',
-  'basketball': 'autre',
+  'HKWorkoutActivityTypeYoga': 'yoga',
+  'HKWorkoutActivityTypePilates': 'yoga',
+  'HKWorkoutActivityTypeFlexibility': 'yoga',
+  'yoga': 'yoga',
+  // Football
+  'HKWorkoutActivityTypeSoccer': 'football',
+  'soccer': 'football',
+  // Basketball
+  'HKWorkoutActivityTypeBasketball': 'basketball',
+  'basketball': 'basketball',
+  // Tennis
+  'HKWorkoutActivityTypeTennis': 'tennis',
+  'tennis': 'tennis',
+  // Elliptique / Stepper
+  'HKWorkoutActivityTypeElliptical': 'cardio',
+  'HKWorkoutActivityTypeStairClimbing': 'cardio',
+  'elliptical': 'cardio',
+  // Rameur
+  'HKWorkoutActivityTypeRowing': 'cardio',
+  'rowing': 'cardio',
+  // Danse
+  'HKWorkoutActivityTypeDance': 'danse',
+  'dance': 'danse',
 };
 
 /**
- * Convertir un type de workout Apple en type Yoroi
+ * Convertir un type de workout Apple en type Yoroi (pour la base)
+ * Les types DB sont: musculation, jjb, running, autre
  */
 const mapWorkoutType = (activityType: string): string => {
-  return WORKOUT_TYPE_MAP[activityType] || 'autre';
+  const mapped = WORKOUT_TYPE_MAP[activityType];
+  if (!mapped) return 'autre';
+  // Mapper vers les types valides de la DB
+  const dbTypeMap: Record<string, string> = {
+    running: 'running',
+    trail: 'running',
+    marche: 'autre',
+    musculation: 'musculation',
+    hyrox: 'autre',
+    jjb: 'jjb',
+    boxe: 'jjb',
+    velo: 'autre',
+    natation: 'autre',
+    yoga: 'autre',
+    football: 'autre',
+    basketball: 'autre',
+    tennis: 'autre',
+    cardio: 'autre',
+    danse: 'autre',
+  };
+  return dbTypeMap[mapped] || 'autre';
 };
 
 /**
- * Nom lisible pour un type de workout
+ * Nom lisible detaille pour la notification (sport specifique)
  */
 const getWorkoutLabel = (activityType: string): string => {
+  const mapped = WORKOUT_TYPE_MAP[activityType];
   const labels: Record<string, string> = {
     running: 'Course',
+    trail: 'Trail',
+    marche: 'Marche',
     musculation: 'Musculation',
-    jjb: 'Combat',
-    autre: 'Autre',
+    hyrox: 'HYROX',
+    jjb: 'JJB',
+    boxe: 'Boxe',
+    velo: 'Velo',
+    natation: 'Natation',
+    yoga: 'Yoga',
+    football: 'Football',
+    basketball: 'Basketball',
+    tennis: 'Tennis',
+    cardio: 'Cardio',
+    danse: 'Danse',
   };
-  return labels[mapWorkoutType(activityType)] || 'Autre';
+  return labels[mapped || ''] || 'Seance';
 };
 
 class HealthConnectService {
@@ -2797,13 +2848,41 @@ class HealthConnectService {
         ? `${durationH}h${durationM > 0 ? ` ${durationM}min` : ''}`
         : `${durationM} min`;
 
-      let body = durationStr;
-      if (workout.distance) body += ` - ${workout.distance} km`;
-      if (workout.calories) body += ` - ${workout.calories} cal`;
+      // Corps de la notification avec details enrichis
+      const details: string[] = [durationStr];
+      if (workout.distance) details.push(`${workout.distance} km`);
+      if (workout.calories) details.push(`${workout.calories} cal`);
+      if (workout.averageHeartRate) details.push(`${workout.averageHeartRate} bpm`);
+      const body = details.join(' - ');
+
+      // Source (Garmin, Apple Watch, etc.)
+      const source = workout.source ? normalizeSourceName(workout.source) : '';
+      const sourceEmoji = source === 'garmin' ? ' (Garmin)' : source === 'apple_watch' ? ' (Apple Watch)' : '';
+
+      // Titre personnalise selon le sport
+      const titres: Record<string, string> = {
+        'Course': 'Belle course !',
+        'Trail': 'Beau trail !',
+        'Marche': 'Belle marche !',
+        'Musculation': 'Belle seance de muscu !',
+        'HYROX': 'Seance HYROX terminee !',
+        'JJB': 'Beau roulage !',
+        'Boxe': 'Belle seance de boxe !',
+        'Velo': 'Belle sortie velo !',
+        'Natation': 'Belle nage !',
+        'Yoga': 'Belle seance de yoga !',
+        'Football': 'Beau match de foot !',
+        'Basketball': 'Beau match de basket !',
+        'Tennis': 'Belle partie de tennis !',
+        'Cardio': 'Belle seance de cardio !',
+        'Danse': 'Belle seance de danse !',
+      };
+
+      const title = (titres[sportLabel] || `Bravo pour ta ${sportLabel.toLowerCase()} !`) + sourceEmoji;
 
       await Notif.scheduleNotificationAsync({
         content: {
-          title: `Bravo pour ta ${sportLabel.toLowerCase()} !`,
+          title,
           body,
           data: {
             type: 'workout_complete',
@@ -2814,7 +2893,7 @@ class HealthConnectService {
         trigger: null, // Immediate
       });
 
-      logger.info('[WorkoutObserver] Notification envoyee');
+      logger.info(`[WorkoutObserver] Notification envoyee: ${title}`);
     } catch (e) {
       logger.warn('[WorkoutObserver] Erreur notification:', e);
     }
