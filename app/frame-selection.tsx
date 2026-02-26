@@ -50,11 +50,11 @@ export type FrameShape =
   | 'blob'
   | 'arch'
   | 'pentagon'
-  | 'cross'
-  | 'leaf'
+  | 'ovale'
+  | 'oeuf'
   | 'tv'
-  | 'badge'
-  | 'flower';
+  | 'plaque'
+  | 'tonneau';
 
 interface FrameOption {
   id: FrameShape;
@@ -75,11 +75,11 @@ const FRAME_OPTIONS: FrameOption[] = [
   { id: 'blob', name: 'Blob' },
   { id: 'arch', name: 'Arche' },
   { id: 'pentagon', name: 'Pentagone' },
-  { id: 'cross', name: 'Croix' },
-  { id: 'leaf', name: 'Feuille' },
+  { id: 'ovale', name: 'Ovale' },
+  { id: 'oeuf', name: 'Oeuf' },
   { id: 'tv', name: 'TV Retro' },
-  { id: 'badge', name: 'Badge' },
-  { id: 'flower', name: 'Fleur' },
+  { id: 'plaque', name: 'Plaque' },
+  { id: 'tonneau', name: 'Tonneau' },
 ];
 
 // Composant pour afficher une forme
@@ -313,34 +313,15 @@ const FrameShapePreview: React.FC<{
         );
       }
 
-      case 'cross': {
-        const cp = 5;
-        const cw = (size - cp * 2) * 0.33; // arm width
-        const cr = cw * 0.3; // corner rounding
+      case 'ovale': {
+        // Ovale horizontal - ellipse plus large que haute
+        const orx = innerSize / 2 - 2;
+        const ory = orx * 0.7;
         return (
           <Path
-            d={`M ${size/2 - cw/2 + cr},${cp}
-                L ${size/2 + cw/2 - cr},${cp}
-                Q ${size/2 + cw/2},${cp} ${size/2 + cw/2},${cp + cr}
-                L ${size/2 + cw/2},${size/2 - cw/2}
-                L ${size - cp - cr},${size/2 - cw/2}
-                Q ${size - cp},${size/2 - cw/2} ${size - cp},${size/2 - cw/2 + cr}
-                L ${size - cp},${size/2 + cw/2 - cr}
-                Q ${size - cp},${size/2 + cw/2} ${size - cp - cr},${size/2 + cw/2}
-                L ${size/2 + cw/2},${size/2 + cw/2}
-                L ${size/2 + cw/2},${size - cp - cr}
-                Q ${size/2 + cw/2},${size - cp} ${size/2 + cw/2 - cr},${size - cp}
-                L ${size/2 - cw/2 + cr},${size - cp}
-                Q ${size/2 - cw/2},${size - cp} ${size/2 - cw/2},${size - cp - cr}
-                L ${size/2 - cw/2},${size/2 + cw/2}
-                L ${cp + cr},${size/2 + cw/2}
-                Q ${cp},${size/2 + cw/2} ${cp},${size/2 + cw/2 - cr}
-                L ${cp},${size/2 - cw/2 + cr}
-                Q ${cp},${size/2 - cw/2} ${cp + cr},${size/2 - cw/2}
-                L ${size/2 - cw/2},${size/2 - cw/2}
-                L ${size/2 - cw/2},${cp + cr}
-                Q ${size/2 - cw/2},${cp} ${size/2 - cw/2 + cr},${cp}
-                Z`}
+            d={`M ${size/2 - orx},${size/2}
+                A ${orx} ${ory} 0 1 1 ${size/2 + orx},${size/2}
+                A ${orx} ${ory} 0 1 1 ${size/2 - orx},${size/2} Z`}
             fill={fillColor}
             stroke={color}
             strokeWidth={strokeWidth}
@@ -348,15 +329,16 @@ const FrameShapePreview: React.FC<{
         );
       }
 
-      case 'leaf': {
-        const lp = 5;
+      case 'oeuf': {
+        // Forme oeuf - plus large en bas, plus etroit en haut
+        const ep = 5;
         return (
           <Path
-            d={`M ${lp} ${size / 2}
-                Q ${lp} ${lp}, ${size / 2} ${lp}
-                Q ${size - lp} ${lp}, ${size - lp} ${size / 2}
-                Q ${size - lp} ${size - lp}, ${size / 2} ${size - lp}
-                Q ${lp} ${size - lp}, ${lp} ${size / 2}
+            d={`M ${size/2} ${ep}
+                C ${size * 0.72} ${ep}, ${size - ep} ${size * 0.3}, ${size - ep} ${size * 0.55}
+                C ${size - ep} ${size * 0.82}, ${size * 0.72} ${size - ep}, ${size/2} ${size - ep}
+                C ${size * 0.28} ${size - ep}, ${ep} ${size * 0.82}, ${ep} ${size * 0.55}
+                C ${ep} ${size * 0.3}, ${size * 0.28} ${ep}, ${size/2} ${ep}
                 Z`}
             fill={fillColor}
             stroke={color}
@@ -385,17 +367,13 @@ const FrameShapePreview: React.FC<{
         );
       }
 
-      case 'badge': {
-        const bp = 5;
+      case 'plaque': {
+        // Rectangle avec coins coupes a 45 degres
+        const pp = 5;
+        const cut = (size - pp * 2) * 0.2;
         return (
-          <Path
-            d={`M ${size/2} ${bp}
-                L ${size - bp} ${size * 0.2}
-                L ${size - bp} ${size * 0.6}
-                L ${size/2} ${size - bp}
-                L ${bp} ${size * 0.6}
-                L ${bp} ${size * 0.2}
-                Z`}
+          <Polygon
+            points={`${pp + cut},${pp} ${size - pp - cut},${pp} ${size - pp},${pp + cut} ${size - pp},${size - pp - cut} ${size - pp - cut},${size - pp} ${pp + cut},${size - pp} ${pp},${size - pp - cut} ${pp},${pp + cut}`}
             fill={fillColor}
             stroke={color}
             strokeWidth={strokeWidth}
@@ -404,26 +382,25 @@ const FrameShapePreview: React.FC<{
         );
       }
 
-      case 'flower': {
-        const fcx = size / 2;
-        const fcy = size / 2;
-        const fr = innerSize / 2 - 2;
-        const petalR = fr * 0.52;
-        const petalDist = fr * 0.55;
-        let d = '';
-        for (let i = 0; i < 6; i++) {
-          const angle = (Math.PI / 3) * i - Math.PI / 2;
-          const px = fcx + petalDist * Math.cos(angle);
-          const py = fcy + petalDist * Math.sin(angle);
-          d += `M ${px + petalR} ${py} A ${petalR} ${petalR} 0 1 1 ${px - petalR} ${py} A ${petalR} ${petalR} 0 1 1 ${px + petalR} ${py} `;
-        }
+      case 'tonneau': {
+        // Tonneau - rectangle avec cotes convexes (gonfles)
+        const tp = 5;
+        const bulge = (size - tp * 2) * 0.12;
         return (
           <Path
-            d={d}
+            d={`M ${tp + 8},${tp}
+                L ${size - tp - 8},${tp}
+                Q ${size - tp},${tp} ${size - tp},${tp + 8}
+                Q ${size - tp + bulge},${size/2} ${size - tp},${size - tp - 8}
+                Q ${size - tp},${size - tp} ${size - tp - 8},${size - tp}
+                L ${tp + 8},${size - tp}
+                Q ${tp},${size - tp} ${tp},${size - tp - 8}
+                Q ${tp - bulge},${size/2} ${tp},${tp + 8}
+                Q ${tp},${tp} ${tp + 8},${tp}
+                Z`}
             fill={fillColor}
             stroke={color}
             strokeWidth={strokeWidth}
-            fillRule="nonzero"
           />
         );
       }
@@ -702,24 +679,23 @@ export default function FrameSelectionScreen() {
           const pts = Array.from({length:5},(_,i)=>{const a=(Math.PI*2/5)*i-Math.PI/2;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;});
           return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} Z`;
         }
-        case 'cross': {
-          const cw = inner * 0.33;
-          const cr = cw * 0.3;
-          return `M ${sz/2-cw/2+cr},${p} L ${sz/2+cw/2-cr},${p} Q ${sz/2+cw/2},${p} ${sz/2+cw/2},${p+cr} L ${sz/2+cw/2},${sz/2-cw/2} L ${sz-p-cr},${sz/2-cw/2} Q ${sz-p},${sz/2-cw/2} ${sz-p},${sz/2-cw/2+cr} L ${sz-p},${sz/2+cw/2-cr} Q ${sz-p},${sz/2+cw/2} ${sz-p-cr},${sz/2+cw/2} L ${sz/2+cw/2},${sz/2+cw/2} L ${sz/2+cw/2},${sz-p-cr} Q ${sz/2+cw/2},${sz-p} ${sz/2+cw/2-cr},${sz-p} L ${sz/2-cw/2+cr},${sz-p} Q ${sz/2-cw/2},${sz-p} ${sz/2-cw/2},${sz-p-cr} L ${sz/2-cw/2},${sz/2+cw/2} L ${p+cr},${sz/2+cw/2} Q ${p},${sz/2+cw/2} ${p},${sz/2+cw/2-cr} L ${p},${sz/2-cw/2+cr} Q ${p},${sz/2-cw/2} ${p+cr},${sz/2-cw/2} L ${sz/2-cw/2},${sz/2-cw/2} L ${sz/2-cw/2},${p+cr} Q ${sz/2-cw/2},${p} ${sz/2-cw/2+cr},${p} Z`;
+        case 'ovale': {
+          const orx=inner/2, ory=orx*0.7;
+          return `M ${sz/2-orx},${sz/2} A ${orx} ${ory} 0 1 1 ${sz/2+orx},${sz/2} A ${orx} ${ory} 0 1 1 ${sz/2-orx},${sz/2} Z`;
         }
-        case 'leaf':
-          return `M ${p} ${sz/2} Q ${p} ${p}, ${sz/2} ${p} Q ${sz-p} ${p}, ${sz-p} ${sz/2} Q ${sz-p} ${sz-p}, ${sz/2} ${sz-p} Q ${p} ${sz-p}, ${p} ${sz/2} Z`;
+        case 'oeuf':
+          return `M ${sz/2} ${p} C ${sz*0.72} ${p}, ${sz-p} ${sz*0.3}, ${sz-p} ${sz*0.55} C ${sz-p} ${sz*0.82}, ${sz*0.72} ${sz-p}, ${sz/2} ${sz-p} C ${sz*0.28} ${sz-p}, ${p} ${sz*0.82}, ${p} ${sz*0.55} C ${p} ${sz*0.3}, ${sz*0.28} ${p}, ${sz/2} ${p} Z`;
         case 'tv': {
           const tw=sz-p*2, tbr=tw*0.22;
           return `M ${p+tbr},${p} L ${sz-p-tbr},${p} Q ${sz-p},${p} ${sz-p},${p+tbr} L ${sz-p},${sz-p-tbr} Q ${sz-p},${sz-p} ${sz-p-tbr},${sz-p} L ${p+tbr},${sz-p} Q ${p},${sz-p} ${p},${sz-p-tbr} L ${p},${p+tbr} Q ${p},${p} ${p+tbr},${p} Z`;
         }
-        case 'badge':
-          return `M ${sz/2} ${p} L ${sz-p} ${sz*0.2} L ${sz-p} ${sz*0.6} L ${sz/2} ${sz-p} L ${p} ${sz*0.6} L ${p} ${sz*0.2} Z`;
-        case 'flower': {
-          const fcx=sz/2, fcy=sz/2, fr=inner/2, fpr=fr*0.52, fpd=fr*0.55;
-          let fd='';
-          for(let i=0;i<6;i++){const a=(Math.PI/3)*i-Math.PI/2;const fx=fcx+fpd*Math.cos(a);const fy=fcy+fpd*Math.sin(a);fd+=`M ${fx+fpr} ${fy} A ${fpr} ${fpr} 0 1 1 ${fx-fpr} ${fy} A ${fpr} ${fpr} 0 1 1 ${fx+fpr} ${fy} `;}
-          return fd;
+        case 'plaque': {
+          const cut=inner*0.2;
+          return `M ${p+cut},${p} L ${sz-p-cut},${p} L ${sz-p},${p+cut} L ${sz-p},${sz-p-cut} L ${sz-p-cut},${sz-p} L ${p+cut},${sz-p} L ${p},${sz-p-cut} L ${p},${p+cut} Z`;
+        }
+        case 'tonneau': {
+          const bulge=inner*0.12;
+          return `M ${p+8},${p} L ${sz-p-8},${p} Q ${sz-p},${p} ${sz-p},${p+8} Q ${sz-p+bulge},${sz/2} ${sz-p},${sz-p-8} Q ${sz-p},${sz-p} ${sz-p-8},${sz-p} L ${p+8},${sz-p} Q ${p},${sz-p} ${p},${sz-p-8} Q ${p-bulge},${sz/2} ${p},${p+8} Q ${p},${p} ${p+8},${p} Z`;
         }
         default: return '';
       }

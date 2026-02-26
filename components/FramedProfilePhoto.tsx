@@ -108,14 +108,14 @@ function getClipPath(shape: FrameShape, s: number): string {
       return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} Z`;
     }
 
-    case 'cross': {
-      const cw = inner * 0.33;
-      const cr = cw * 0.3;
-      return `M ${s/2-cw/2+cr},${pad} L ${s/2+cw/2-cr},${pad} Q ${s/2+cw/2},${pad} ${s/2+cw/2},${pad+cr} L ${s/2+cw/2},${s/2-cw/2} L ${s-pad-cr},${s/2-cw/2} Q ${s-pad},${s/2-cw/2} ${s-pad},${s/2-cw/2+cr} L ${s-pad},${s/2+cw/2-cr} Q ${s-pad},${s/2+cw/2} ${s-pad-cr},${s/2+cw/2} L ${s/2+cw/2},${s/2+cw/2} L ${s/2+cw/2},${s-pad-cr} Q ${s/2+cw/2},${s-pad} ${s/2+cw/2-cr},${s-pad} L ${s/2-cw/2+cr},${s-pad} Q ${s/2-cw/2},${s-pad} ${s/2-cw/2},${s-pad-cr} L ${s/2-cw/2},${s/2+cw/2} L ${pad+cr},${s/2+cw/2} Q ${pad},${s/2+cw/2} ${pad},${s/2+cw/2-cr} L ${pad},${s/2-cw/2+cr} Q ${pad},${s/2-cw/2} ${pad+cr},${s/2-cw/2} L ${s/2-cw/2},${s/2-cw/2} L ${s/2-cw/2},${pad+cr} Q ${s/2-cw/2},${pad} ${s/2-cw/2+cr},${pad} Z`;
+    case 'ovale': {
+      const orx = inner / 2;
+      const ory = orx * 0.7;
+      return `M ${s/2 - orx},${s/2} A ${orx} ${ory} 0 1 1 ${s/2 + orx},${s/2} A ${orx} ${ory} 0 1 1 ${s/2 - orx},${s/2} Z`;
     }
 
-    case 'leaf':
-      return `M ${pad} ${s/2} Q ${pad} ${pad}, ${s/2} ${pad} Q ${s-pad} ${pad}, ${s-pad} ${s/2} Q ${s-pad} ${s-pad}, ${s/2} ${s-pad} Q ${pad} ${s-pad}, ${pad} ${s/2} Z`;
+    case 'oeuf':
+      return `M ${s/2} ${pad} C ${s*0.72} ${pad}, ${s-pad} ${s*0.3}, ${s-pad} ${s*0.55} C ${s-pad} ${s*0.82}, ${s*0.72} ${s-pad}, ${s/2} ${s-pad} C ${s*0.28} ${s-pad}, ${pad} ${s*0.82}, ${pad} ${s*0.55} C ${pad} ${s*0.3}, ${s*0.28} ${pad}, ${s/2} ${pad} Z`;
 
     case 'tv': {
       const tw = s - pad * 2;
@@ -123,23 +123,14 @@ function getClipPath(shape: FrameShape, s: number): string {
       return `M ${pad+tbr},${pad} L ${s-pad-tbr},${pad} Q ${s-pad},${pad} ${s-pad},${pad+tbr} L ${s-pad},${s-pad-tbr} Q ${s-pad},${s-pad} ${s-pad-tbr},${s-pad} L ${pad+tbr},${s-pad} Q ${pad},${s-pad} ${pad},${s-pad-tbr} L ${pad},${pad+tbr} Q ${pad},${pad} ${pad+tbr},${pad} Z`;
     }
 
-    case 'badge':
-      return `M ${s/2} ${pad} L ${s-pad} ${s*0.2} L ${s-pad} ${s*0.6} L ${s/2} ${s-pad} L ${pad} ${s*0.6} L ${pad} ${s*0.2} Z`;
+    case 'plaque': {
+      const cut = inner * 0.2;
+      return `M ${pad+cut},${pad} L ${s-pad-cut},${pad} L ${s-pad},${pad+cut} L ${s-pad},${s-pad-cut} L ${s-pad-cut},${s-pad} L ${pad+cut},${s-pad} L ${pad},${s-pad-cut} L ${pad},${pad+cut} Z`;
+    }
 
-    case 'flower': {
-      const fcx = s / 2;
-      const fcy = s / 2;
-      const fr = inner / 2;
-      const fpr = fr * 0.52;
-      const fpd = fr * 0.55;
-      let fd = '';
-      for (let i = 0; i < 6; i++) {
-        const a = (Math.PI / 3) * i - Math.PI / 2;
-        const fx = fcx + fpd * Math.cos(a);
-        const fy = fcy + fpd * Math.sin(a);
-        fd += `M ${fx+fpr} ${fy} A ${fpr} ${fpr} 0 1 1 ${fx-fpr} ${fy} A ${fpr} ${fpr} 0 1 1 ${fx+fpr} ${fy} `;
-      }
-      return fd;
+    case 'tonneau': {
+      const bulge = inner * 0.12;
+      return `M ${pad+8},${pad} L ${s-pad-8},${pad} Q ${s-pad},${pad} ${s-pad},${pad+8} Q ${s-pad+bulge},${s/2} ${s-pad},${s-pad-8} Q ${s-pad},${s-pad} ${s-pad-8},${s-pad} L ${pad+8},${s-pad} Q ${pad},${s-pad} ${pad},${s-pad-8} Q ${pad-bulge},${s/2} ${pad},${pad+8} Q ${pad},${pad} ${pad+8},${pad} Z`;
     }
 
     default:
