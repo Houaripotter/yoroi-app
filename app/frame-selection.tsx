@@ -54,7 +54,13 @@ export type FrameShape =
   | 'oeuf'
   | 'tv'
   | 'plaque'
-  | 'tonneau';
+  | 'tonneau'
+  | 'capsule'
+  | 'coquille'
+  | 'trapeze'
+  | 'ogive'
+  | 'marquise'
+  | 'medaillon';
 
 interface FrameOption {
   id: FrameShape;
@@ -80,6 +86,12 @@ const FRAME_OPTIONS: FrameOption[] = [
   { id: 'tv', name: 'TV Retro' },
   { id: 'plaque', name: 'Plaque' },
   { id: 'tonneau', name: 'Tonneau' },
+  { id: 'capsule', name: 'Capsule' },
+  { id: 'coquille', name: 'Coquille' },
+  { id: 'trapeze', name: 'Trapeze' },
+  { id: 'ogive', name: 'Ogive' },
+  { id: 'marquise', name: 'Marquise' },
+  { id: 'medaillon', name: 'Medaillon' },
 ];
 
 // Composant pour afficher une forme
@@ -405,6 +417,126 @@ const FrameShapePreview: React.FC<{
         );
       }
 
+      case 'capsule': {
+        // Capsule verticale - forme pilule
+        const capInset = size * 0.15;
+        const capR = (size - capInset * 2) / 2;
+        const capP = 5;
+        return (
+          <Path
+            d={`M ${capInset} ${capP + capR}
+                A ${capR} ${capR} 0 0 1 ${size - capInset} ${capP + capR}
+                L ${size - capInset} ${size - capP - capR}
+                A ${capR} ${capR} 0 0 1 ${capInset} ${size - capP - capR}
+                Z`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'coquille': {
+        // Coquille - cercle festonne avec 10 ondulations
+        const scCx = size / 2;
+        const scCy = size / 2;
+        const scR = innerSize / 2 - 4;
+        const scN = 10;
+        let scD = '';
+        for (let i = 0; i < scN; i++) {
+          const a1 = (2 * Math.PI * i / scN) - Math.PI / 2;
+          const a2 = (2 * Math.PI * (i + 1) / scN) - Math.PI / 2;
+          const x1 = scCx + scR * Math.cos(a1);
+          const y1 = scCy + scR * Math.sin(a1);
+          const x2 = scCx + scR * Math.cos(a2);
+          const y2 = scCy + scR * Math.sin(a2);
+          const midA = (a1 + a2) / 2;
+          const cpx = scCx + scR * 1.18 * Math.cos(midA);
+          const cpy = scCy + scR * 1.18 * Math.sin(midA);
+          if (i === 0) scD += `M ${x1},${y1} `;
+          scD += `Q ${cpx},${cpy} ${x2},${y2} `;
+        }
+        scD += 'Z';
+        return (
+          <Path
+            d={scD}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'trapeze': {
+        // Trapeze arrondi - plus large en bas
+        const trP = 6;
+        const trInset = (size - trP * 2) * 0.14;
+        return (
+          <Polygon
+            points={`${trP + trInset},${trP} ${size - trP - trInset},${trP} ${size - trP},${size - trP} ${trP},${size - trP}`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+          />
+        );
+      }
+
+      case 'ogive': {
+        // Ogive - arche gothique pointue en haut
+        const ogP = 5;
+        const ogArcR = (size - ogP * 2) * 0.9;
+        return (
+          <Path
+            d={`M ${ogP} ${size - ogP}
+                L ${ogP} ${size * 0.45}
+                A ${ogArcR} ${ogArcR} 0 0 1 ${size / 2} ${ogP}
+                A ${ogArcR} ${ogArcR} 0 0 1 ${size - ogP} ${size * 0.45}
+                L ${size - ogP} ${size - ogP}
+                Z`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'marquise': {
+        // Marquise - forme d'oeil/amande
+        const mP = 5;
+        return (
+          <Path
+            d={`M ${size / 2} ${mP}
+                C ${size * 0.85} ${size * 0.25}, ${size * 0.85} ${size * 0.75}, ${size / 2} ${size - mP}
+                C ${size * 0.15} ${size * 0.75}, ${size * 0.15} ${size * 0.25}, ${size / 2} ${mP}
+                Z`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'medaillon': {
+        // Medaillon - dodecagone (12 cotes) arrondi
+        const mdCx = size / 2;
+        const mdCy = size / 2;
+        const mdR = innerSize / 2 - 2;
+        const mdPoints = Array.from({ length: 12 }, (_, i) => {
+          const angle = (Math.PI * 2 / 12) * i - Math.PI / 2;
+          return `${mdCx + mdR * Math.cos(angle)},${mdCy + mdR * Math.sin(angle)}`;
+        }).join(' ');
+        return (
+          <Polygon
+            points={mdPoints}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+          />
+        );
+      }
+
       default:
         return (
           <Circle
@@ -696,6 +828,31 @@ export default function FrameSelectionScreen() {
         case 'tonneau': {
           const bulge=inner*0.12;
           return `M ${p+8},${p} L ${sz-p-8},${p} Q ${sz-p},${p} ${sz-p},${p+8} Q ${sz-p+bulge},${sz/2} ${sz-p},${sz-p-8} Q ${sz-p},${sz-p} ${sz-p-8},${sz-p} L ${p+8},${sz-p} Q ${p},${sz-p} ${p},${sz-p-8} Q ${p-bulge},${sz/2} ${p},${p+8} Q ${p},${p} ${p+8},${p} Z`;
+        }
+        case 'capsule': {
+          const ci=sz*0.15, cr=(sz-ci*2)/2;
+          return `M ${ci} ${p+cr} A ${cr} ${cr} 0 0 1 ${sz-ci} ${p+cr} L ${sz-ci} ${sz-p-cr} A ${cr} ${cr} 0 0 1 ${ci} ${sz-p-cr} Z`;
+        }
+        case 'coquille': {
+          const scR=inner/2-2, scN=10;
+          let scD='';
+          for(let i=0;i<scN;i++){const a1=(2*Math.PI*i/scN)-Math.PI/2;const a2=(2*Math.PI*(i+1)/scN)-Math.PI/2;const x1=sz/2+scR*Math.cos(a1);const y1=sz/2+scR*Math.sin(a1);const x2=sz/2+scR*Math.cos(a2);const y2=sz/2+scR*Math.sin(a2);const mA=(a1+a2)/2;const cpx=sz/2+scR*1.18*Math.cos(mA);const cpy=sz/2+scR*1.18*Math.sin(mA);if(i===0)scD+=`M ${x1},${y1} `;scD+=`Q ${cpx},${cpy} ${x2},${y2} `;}
+          return scD+'Z';
+        }
+        case 'trapeze': {
+          const ti=inner*0.14;
+          return `M ${p+ti},${p} L ${sz-p-ti},${p} L ${sz-p},${sz-p} L ${p},${sz-p} Z`;
+        }
+        case 'ogive': {
+          const oR=inner*0.9;
+          return `M ${p} ${sz-p} L ${p} ${sz*0.45} A ${oR} ${oR} 0 0 1 ${sz/2} ${p} A ${oR} ${oR} 0 0 1 ${sz-p} ${sz*0.45} L ${sz-p} ${sz-p} Z`;
+        }
+        case 'marquise':
+          return `M ${sz/2} ${p} C ${sz*0.85} ${sz*0.25}, ${sz*0.85} ${sz*0.75}, ${sz/2} ${sz-p} C ${sz*0.15} ${sz*0.75}, ${sz*0.15} ${sz*0.25}, ${sz/2} ${p} Z`;
+        case 'medaillon': {
+          const mr=inner/2;
+          const pts=Array.from({length:12},(_,i)=>{const a=(Math.PI*2/12)*i-Math.PI/2;return `${sz/2+mr*Math.cos(a)},${sz/2+mr*Math.sin(a)}`;});
+          return `M ${pts[0]} ${pts.slice(1).map(pt=>`L ${pt}`).join(' ')} Z`;
         }
         default: return '';
       }

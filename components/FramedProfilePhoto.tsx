@@ -133,6 +133,54 @@ function getClipPath(shape: FrameShape, s: number): string {
       return `M ${pad+8},${pad} L ${s-pad-8},${pad} Q ${s-pad},${pad} ${s-pad},${pad+8} Q ${s-pad+bulge},${s/2} ${s-pad},${s-pad-8} Q ${s-pad},${s-pad} ${s-pad-8},${s-pad} L ${pad+8},${s-pad} Q ${pad},${s-pad} ${pad},${s-pad-8} Q ${pad-bulge},${s/2} ${pad},${pad+8} Q ${pad},${pad} ${pad+8},${pad} Z`;
     }
 
+    case 'capsule': {
+      const ci = s * 0.15;
+      const cr = (s - ci * 2) / 2;
+      return `M ${ci} ${pad + cr} A ${cr} ${cr} 0 0 1 ${s - ci} ${pad + cr} L ${s - ci} ${s - pad - cr} A ${cr} ${cr} 0 0 1 ${ci} ${s - pad - cr} Z`;
+    }
+
+    case 'coquille': {
+      const scR = inner / 2 - 2;
+      const scN = 10;
+      let scD = '';
+      for (let i = 0; i < scN; i++) {
+        const a1 = (2 * Math.PI * i / scN) - Math.PI / 2;
+        const a2 = (2 * Math.PI * (i + 1) / scN) - Math.PI / 2;
+        const x1 = s / 2 + scR * Math.cos(a1);
+        const y1 = s / 2 + scR * Math.sin(a1);
+        const x2 = s / 2 + scR * Math.cos(a2);
+        const y2 = s / 2 + scR * Math.sin(a2);
+        const mA = (a1 + a2) / 2;
+        const cpx = s / 2 + scR * 1.18 * Math.cos(mA);
+        const cpy = s / 2 + scR * 1.18 * Math.sin(mA);
+        if (i === 0) scD += `M ${x1},${y1} `;
+        scD += `Q ${cpx},${cpy} ${x2},${y2} `;
+      }
+      return scD + 'Z';
+    }
+
+    case 'trapeze': {
+      const ti = inner * 0.14;
+      return `M ${pad + ti},${pad} L ${s - pad - ti},${pad} L ${s - pad},${s - pad} L ${pad},${s - pad} Z`;
+    }
+
+    case 'ogive': {
+      const oR = inner * 0.9;
+      return `M ${pad} ${s - pad} L ${pad} ${s * 0.45} A ${oR} ${oR} 0 0 1 ${s / 2} ${pad} A ${oR} ${oR} 0 0 1 ${s - pad} ${s * 0.45} L ${s - pad} ${s - pad} Z`;
+    }
+
+    case 'marquise':
+      return `M ${s / 2} ${pad} C ${s * 0.85} ${s * 0.25}, ${s * 0.85} ${s * 0.75}, ${s / 2} ${s - pad} C ${s * 0.15} ${s * 0.75}, ${s * 0.15} ${s * 0.25}, ${s / 2} ${pad} Z`;
+
+    case 'medaillon': {
+      const mr = inner / 2;
+      const pts = Array.from({ length: 12 }, (_, i) => {
+        const a = (Math.PI * 2 / 12) * i - Math.PI / 2;
+        return `${s / 2 + mr * Math.cos(a)},${s / 2 + mr * Math.sin(a)}`;
+      });
+      return `M ${pts[0]} ${pts.slice(1).map(pt => `L ${pt}`).join(' ')} Z`;
+    }
+
     default:
       return '';
   }
