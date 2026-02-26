@@ -47,12 +47,9 @@ export type FrameShape =
   | 'star'
   | 'heart'
   | 'drop'
-  | 'blob'
   | 'arch'
   | 'pentagon'
   | 'ovale'
-  | 'oeuf'
-  | 'tv'
   | 'plaque'
   | 'tonneau'
   | 'capsule'
@@ -61,12 +58,15 @@ export type FrameShape =
   | 'ogive'
   | 'marquise'
   | 'medaillon'
-  | 'losange-arrondi'
   | 'sceau'
   | 'ticket'
-  | 'cloche'
   | 'stade'
-  | 'coussin';
+  | 'triangle-arrondi'
+  | 'demi-cercle'
+  | 'heptagone'
+  | 'ecran'
+  | 'nuage'
+  | 'eventail';
 
 interface FrameOption {
   id: FrameShape;
@@ -84,12 +84,9 @@ const FRAME_OPTIONS: FrameOption[] = [
   { id: 'star', name: 'Etoile' },
   { id: 'heart', name: 'Coeur' },
   { id: 'drop', name: 'Goutte' },
-  { id: 'blob', name: 'Blob' },
   { id: 'arch', name: 'Arche' },
   { id: 'pentagon', name: 'Pentagone' },
   { id: 'ovale', name: 'Ovale' },
-  { id: 'oeuf', name: 'Oeuf' },
-  { id: 'tv', name: 'TV Retro' },
   { id: 'plaque', name: 'Plaque' },
   { id: 'tonneau', name: 'Tonneau' },
   { id: 'capsule', name: 'Capsule' },
@@ -98,12 +95,15 @@ const FRAME_OPTIONS: FrameOption[] = [
   { id: 'ogive', name: 'Ogive' },
   { id: 'marquise', name: 'Marquise' },
   { id: 'medaillon', name: 'Medaillon' },
-  { id: 'losange-arrondi', name: 'Losange arrondi' },
   { id: 'sceau', name: 'Sceau' },
   { id: 'ticket', name: 'Ticket' },
-  { id: 'cloche', name: 'Cloche' },
   { id: 'stade', name: 'Stade' },
-  { id: 'coussin', name: 'Coussin' },
+  { id: 'triangle-arrondi', name: 'Triangle' },
+  { id: 'demi-cercle', name: 'Demi-cercle' },
+  { id: 'heptagone', name: 'Heptagone' },
+  { id: 'ecran', name: 'Ecran' },
+  { id: 'nuage', name: 'Nuage' },
+  { id: 'eventail', name: 'Eventail' },
 ];
 
 // Composant pour afficher une forme
@@ -303,21 +303,6 @@ const FrameShapePreview: React.FC<{
         );
       }
 
-      case 'blob':
-        return (
-          <Path
-            d={`M ${size * 0.5} ${size * 0.1}
-                C ${size * 0.8} ${size * 0.05}, ${size * 0.95} ${size * 0.3}, ${size * 0.9} ${size * 0.5}
-                C ${size * 0.95} ${size * 0.75}, ${size * 0.7} ${size * 0.95}, ${size * 0.5} ${size * 0.9}
-                C ${size * 0.25} ${size * 0.95}, ${size * 0.05} ${size * 0.7}, ${size * 0.1} ${size * 0.5}
-                C ${size * 0.05} ${size * 0.25}, ${size * 0.25} ${size * 0.05}, ${size * 0.5} ${size * 0.1}
-                Z`}
-            fill={fillColor}
-            stroke={color}
-            strokeWidth={strokeWidth}
-          />
-        );
-
       case 'pentagon': {
         const px = size / 2;
         const py = size / 2;
@@ -346,44 +331,6 @@ const FrameShapePreview: React.FC<{
             d={`M ${size/2 - orx},${size/2}
                 A ${orx} ${ory} 0 1 1 ${size/2 + orx},${size/2}
                 A ${orx} ${ory} 0 1 1 ${size/2 - orx},${size/2} Z`}
-            fill={fillColor}
-            stroke={color}
-            strokeWidth={strokeWidth}
-          />
-        );
-      }
-
-      case 'oeuf': {
-        // Forme oeuf - plus large en bas, plus etroit en haut
-        const ep = 5;
-        return (
-          <Path
-            d={`M ${size/2} ${ep}
-                C ${size * 0.72} ${ep}, ${size - ep} ${size * 0.3}, ${size - ep} ${size * 0.55}
-                C ${size - ep} ${size * 0.82}, ${size * 0.72} ${size - ep}, ${size/2} ${size - ep}
-                C ${size * 0.28} ${size - ep}, ${ep} ${size * 0.82}, ${ep} ${size * 0.55}
-                C ${ep} ${size * 0.3}, ${size * 0.28} ${ep}, ${size/2} ${ep}
-                Z`}
-            fill={fillColor}
-            stroke={color}
-            strokeWidth={strokeWidth}
-          />
-        );
-      }
-
-      case 'tv': {
-        const tp = 6;
-        const tw = size - tp * 2;
-        const th = size - tp * 2;
-        const tbr = tw * 0.22;
-        return (
-          <Rect
-            x={tp}
-            y={tp}
-            width={tw}
-            height={th}
-            rx={tbr}
-            ry={tbr}
             fill={fillColor}
             stroke={color}
             strokeWidth={strokeWidth}
@@ -549,24 +496,6 @@ const FrameShapePreview: React.FC<{
         );
       }
 
-      case 'losange-arrondi': {
-        // Losange avec cotes courbes convexes
-        const lp = 5;
-        return (
-          <Path
-            d={`M ${size/2} ${lp}
-                Q ${size * 0.78} ${size * 0.22}, ${size - lp} ${size/2}
-                Q ${size * 0.78} ${size * 0.78}, ${size/2} ${size - lp}
-                Q ${size * 0.22} ${size * 0.78}, ${lp} ${size/2}
-                Q ${size * 0.22} ${size * 0.22}, ${size/2} ${lp}
-                Z`}
-            fill={fillColor}
-            stroke={color}
-            strokeWidth={strokeWidth}
-          />
-        );
-      }
-
       case 'sceau': {
         // Sceau - cercle avec bord crante style cachet de cire
         const seCx = size / 2;
@@ -616,23 +545,6 @@ const FrameShapePreview: React.FC<{
         );
       }
 
-      case 'cloche': {
-        // Cloche - dome en haut, evasee en bas
-        const clP = 5;
-        return (
-          <Path
-            d={`M ${clP} ${size - clP}
-                C ${clP} ${size * 0.55}, ${clP} ${size * 0.35}, ${size * 0.25} ${size * 0.2}
-                Q ${size/2} ${clP}, ${size * 0.75} ${size * 0.2}
-                C ${size - clP} ${size * 0.35}, ${size - clP} ${size * 0.55}, ${size - clP} ${size - clP}
-                Z`}
-            fill={fillColor}
-            stroke={color}
-            strokeWidth={strokeWidth}
-          />
-        );
-      }
-
       case 'stade': {
         // Stade - pilule horizontale (plus large que haute)
         const stInset = size * 0.15;
@@ -653,27 +565,102 @@ const FrameShapePreview: React.FC<{
         );
       }
 
-      case 'coussin': {
-        // Coussin - carre avec cotes legerement concaves
-        const coP = 5;
-        const coInset = (size - coP * 2) * 0.08;
+      case 'triangle-arrondi': {
+        const trP = 6;
+        return (
+          <Polygon
+            points={`${size/2},${trP} ${size - trP},${size - trP} ${trP},${size - trP}`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+          />
+        );
+      }
+
+      case 'demi-cercle': {
+        const dcP = 5;
+        const dcR = (size - dcP * 2) / 2;
         return (
           <Path
-            d={`M ${coP + 8} ${coP}
-                L ${size - coP - 8} ${coP}
-                Q ${size - coP} ${coP}, ${size - coP} ${coP + 8}
-                Q ${size - coP + coInset} ${size * 0.35}, ${size - coP + coInset} ${size/2}
-                Q ${size - coP + coInset} ${size * 0.65}, ${size - coP} ${size - coP - 8}
-                Q ${size - coP} ${size - coP}, ${size - coP - 8} ${size - coP}
-                L ${coP + 8} ${size - coP}
-                Q ${coP} ${size - coP}, ${coP} ${size - coP - 8}
-                Q ${coP - coInset} ${size * 0.65}, ${coP - coInset} ${size/2}
-                Q ${coP - coInset} ${size * 0.35}, ${coP} ${coP + 8}
-                Q ${coP} ${coP}, ${coP + 8} ${coP}
+            d={`M ${dcP} ${size - dcP}
+                A ${dcR} ${dcR} 0 1 1 ${size - dcP} ${size - dcP}
                 Z`}
             fill={fillColor}
             stroke={color}
             strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'heptagone': {
+        const hpCx = size / 2;
+        const hpCy = size / 2;
+        const hpR = innerSize / 2 - 2;
+        const hpPoints = Array.from({ length: 7 }, (_, i) => {
+          const angle = (Math.PI * 2 / 7) * i - Math.PI / 2;
+          return `${hpCx + hpR * Math.cos(angle)},${hpCy + hpR * Math.sin(angle)}`;
+        }).join(' ');
+        return (
+          <Polygon
+            points={hpPoints}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+          />
+        );
+      }
+
+      case 'ecran': {
+        const ecP = 5;
+        const ecH = (size - ecP * 2) * 0.68;
+        const ecY = (size - ecH) / 2;
+        const ecR = ecH * 0.22;
+        return (
+          <Rect
+            x={ecP}
+            y={ecY}
+            width={size - ecP * 2}
+            height={ecH}
+            rx={ecR}
+            ry={ecR}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'nuage': {
+        const nP = 5;
+        return (
+          <Path
+            d={`M ${nP} ${size * 0.65}
+                Q ${nP} ${size * 0.4}, ${size * 0.25} ${size * 0.32}
+                Q ${size * 0.3} ${size * 0.15}, ${size/2} ${size * 0.2}
+                Q ${size * 0.7} ${size * 0.15}, ${size * 0.75} ${size * 0.32}
+                Q ${size - nP} ${size * 0.4}, ${size - nP} ${size * 0.65}
+                Q ${size - nP} ${size - nP}, ${size/2} ${size - nP}
+                Q ${nP} ${size - nP}, ${nP} ${size * 0.65}
+                Z`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'eventail': {
+        const evP = 6;
+        const evInset = (size - evP * 2) * 0.14;
+        return (
+          <Polygon
+            points={`${evP},${evP} ${size - evP},${evP} ${size - evP - evInset},${size - evP} ${evP + evInset},${size - evP}`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
           />
         );
       }
@@ -953,7 +940,6 @@ export default function FrameSelectionScreen() {
         }
         case 'heart': return `M ${sz/2} ${sz-p-2} C ${sz*0.15} ${sz*0.68}, ${p} ${sz*0.48}, ${p} ${sz*0.35} C ${p} ${sz*0.2}, ${sz*0.2} ${p+2}, ${sz*0.35} ${p+2} C ${sz*0.42} ${p+2}, ${sz*0.48} ${sz*0.15}, ${sz/2} ${sz*0.22} C ${sz*0.52} ${sz*0.15}, ${sz*0.58} ${p+2}, ${sz*0.65} ${p+2} C ${sz*0.8} ${p+2}, ${sz-p} ${sz*0.2}, ${sz-p} ${sz*0.35} C ${sz-p} ${sz*0.48}, ${sz*0.85} ${sz*0.68}, ${sz/2} ${sz-p-2} Z`;
         case 'drop': return `M ${sz/2} ${p} Q ${sz-p} ${sz*0.4}, ${sz-p} ${sz*0.6} C ${sz-p} ${sz-p}, ${sz/2} ${sz-p}, ${sz/2} ${sz-p} C ${sz/2} ${sz-p}, ${p} ${sz-p}, ${p} ${sz*0.6} Q ${p} ${sz*0.4}, ${sz/2} ${p} Z`;
-        case 'blob': return `M ${sz*0.5} ${sz*0.1} C ${sz*0.8} ${sz*0.05}, ${sz*0.95} ${sz*0.3}, ${sz*0.9} ${sz*0.5} C ${sz*0.95} ${sz*0.75}, ${sz*0.7} ${sz*0.95}, ${sz*0.5} ${sz*0.9} C ${sz*0.25} ${sz*0.95}, ${sz*0.05} ${sz*0.7}, ${sz*0.1} ${sz*0.5} C ${sz*0.05} ${sz*0.25}, ${sz*0.25} ${sz*0.05}, ${sz*0.5} ${sz*0.1} Z`;
         case 'arch': {
           const aR=(sz-p*2)/2;
           return `M ${p} ${sz-p} L ${p} ${p+aR} A ${aR} ${aR} 0 0 1 ${sz-p} ${p+aR} L ${sz-p} ${sz-p} Z`;
@@ -966,12 +952,6 @@ export default function FrameSelectionScreen() {
         case 'ovale': {
           const orx=inner/2, ory=orx*0.7;
           return `M ${sz/2-orx},${sz/2} A ${orx} ${ory} 0 1 1 ${sz/2+orx},${sz/2} A ${orx} ${ory} 0 1 1 ${sz/2-orx},${sz/2} Z`;
-        }
-        case 'oeuf':
-          return `M ${sz/2} ${p} C ${sz*0.72} ${p}, ${sz-p} ${sz*0.3}, ${sz-p} ${sz*0.55} C ${sz-p} ${sz*0.82}, ${sz*0.72} ${sz-p}, ${sz/2} ${sz-p} C ${sz*0.28} ${sz-p}, ${p} ${sz*0.82}, ${p} ${sz*0.55} C ${p} ${sz*0.3}, ${sz*0.28} ${p}, ${sz/2} ${p} Z`;
-        case 'tv': {
-          const tw=sz-p*2, tbr=tw*0.22;
-          return `M ${p+tbr},${p} L ${sz-p-tbr},${p} Q ${sz-p},${p} ${sz-p},${p+tbr} L ${sz-p},${sz-p-tbr} Q ${sz-p},${sz-p} ${sz-p-tbr},${sz-p} L ${p+tbr},${sz-p} Q ${p},${sz-p} ${p},${sz-p-tbr} L ${p},${p+tbr} Q ${p},${p} ${p+tbr},${p} Z`;
         }
         case 'plaque': {
           const cut=inner*0.2;
@@ -1006,8 +986,6 @@ export default function FrameSelectionScreen() {
           const pts=Array.from({length:12},(_,i)=>{const a=(Math.PI*2/12)*i-Math.PI/2;return `${sz/2+mr*Math.cos(a)},${sz/2+mr*Math.sin(a)}`;});
           return `M ${pts[0]} ${pts.slice(1).map(pt=>`L ${pt}`).join(' ')} Z`;
         }
-        case 'losange-arrondi':
-          return `M ${sz/2} ${p} Q ${sz*0.78} ${sz*0.22}, ${sz-p} ${sz/2} Q ${sz*0.78} ${sz*0.78}, ${sz/2} ${sz-p} Q ${sz*0.22} ${sz*0.78}, ${p} ${sz/2} Q ${sz*0.22} ${sz*0.22}, ${sz/2} ${p} Z`;
         case 'sceau': {
           const seOuter=inner/2, seInner=seOuter*0.88, seN=16;
           let seD='';
@@ -1018,15 +996,30 @@ export default function FrameSelectionScreen() {
           const tkR=inner*0.08;
           return `M ${p} ${p} L ${sz-p} ${p} L ${sz-p} ${sz/2-tkR} A ${tkR} ${tkR} 0 0 0 ${sz-p} ${sz/2+tkR} L ${sz-p} ${sz-p} L ${p} ${sz-p} L ${p} ${sz/2+tkR} A ${tkR} ${tkR} 0 0 0 ${p} ${sz/2-tkR} Z`;
         }
-        case 'cloche':
-          return `M ${p} ${sz-p} C ${p} ${sz*0.55}, ${p} ${sz*0.35}, ${sz*0.25} ${sz*0.2} Q ${sz/2} ${p}, ${sz*0.75} ${sz*0.2} C ${sz-p} ${sz*0.35}, ${sz-p} ${sz*0.55}, ${sz-p} ${sz-p} Z`;
         case 'stade': {
           const stI=sz*0.15, stR=(sz-stI*2)/2;
           return `M ${p+stR} ${stI} L ${sz-p-stR} ${stI} A ${stR} ${stR} 0 0 1 ${sz-p-stR} ${sz-stI} L ${p+stR} ${sz-stI} A ${stR} ${stR} 0 0 1 ${p+stR} ${stI} Z`;
         }
-        case 'coussin': {
-          const coI=inner*0.08;
-          return `M ${p+8} ${p} L ${sz-p-8} ${p} Q ${sz-p} ${p} ${sz-p} ${p+8} Q ${sz-p+coI} ${sz*0.35}, ${sz-p+coI} ${sz/2} Q ${sz-p+coI} ${sz*0.65}, ${sz-p} ${sz-p-8} Q ${sz-p} ${sz-p} ${sz-p-8} ${sz-p} L ${p+8} ${sz-p} Q ${p} ${sz-p} ${p} ${sz-p-8} Q ${p-coI} ${sz*0.65}, ${p-coI} ${sz/2} Q ${p-coI} ${sz*0.35}, ${p} ${p+8} Q ${p} ${p} ${p+8} ${p} Z`;
+        case 'triangle-arrondi':
+          return `M ${sz/2},${p} L ${sz-p},${sz-p} L ${p},${sz-p} Z`;
+        case 'demi-cercle': {
+          const dcR=(sz-p*2)/2;
+          return `M ${p} ${sz-p} A ${dcR} ${dcR} 0 1 1 ${sz-p} ${sz-p} Z`;
+        }
+        case 'heptagone': {
+          const cx=sz/2, cy=sz/2, r=inner/2;
+          const pts=Array.from({length:7},(_,i)=>{const a=(Math.PI*2/7)*i-Math.PI/2;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;});
+          return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} L ${pts[5]} L ${pts[6]} Z`;
+        }
+        case 'ecran': {
+          const ecH=inner*0.68, ecY=(sz-ecH)/2, ecR=ecH*0.22;
+          return `M ${p+ecR},${ecY} L ${sz-p-ecR},${ecY} Q ${sz-p},${ecY} ${sz-p},${ecY+ecR} L ${sz-p},${ecY+ecH-ecR} Q ${sz-p},${ecY+ecH} ${sz-p-ecR},${ecY+ecH} L ${p+ecR},${ecY+ecH} Q ${p},${ecY+ecH} ${p},${ecY+ecH-ecR} L ${p},${ecY+ecR} Q ${p},${ecY} ${p+ecR},${ecY} Z`;
+        }
+        case 'nuage':
+          return `M ${p} ${sz*0.65} Q ${p} ${sz*0.4}, ${sz*0.25} ${sz*0.32} Q ${sz*0.3} ${sz*0.15}, ${sz/2} ${sz*0.2} Q ${sz*0.7} ${sz*0.15}, ${sz*0.75} ${sz*0.32} Q ${sz-p} ${sz*0.4}, ${sz-p} ${sz*0.65} Q ${sz-p} ${sz-p}, ${sz/2} ${sz-p} Q ${p} ${sz-p}, ${p} ${sz*0.65} Z`;
+        case 'eventail': {
+          const evI=inner*0.14;
+          return `M ${p},${p} L ${sz-p},${p} L ${sz-p-evI},${sz-p} L ${p+evI},${sz-p} Z`;
         }
         default: return '';
       }
