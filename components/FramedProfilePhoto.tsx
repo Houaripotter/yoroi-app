@@ -181,6 +181,41 @@ function getClipPath(shape: FrameShape, s: number): string {
       return `M ${pts[0]} ${pts.slice(1).map(pt => `L ${pt}`).join(' ')} Z`;
     }
 
+    case 'losange-arrondi':
+      return `M ${s/2} ${pad} Q ${s*0.78} ${s*0.22}, ${s-pad} ${s/2} Q ${s*0.78} ${s*0.78}, ${s/2} ${s-pad} Q ${s*0.22} ${s*0.78}, ${pad} ${s/2} Q ${s*0.22} ${s*0.22}, ${s/2} ${pad} Z`;
+
+    case 'sceau': {
+      const seOuter = inner / 2;
+      const seInner = seOuter * 0.88;
+      const seN = 16;
+      let seD = '';
+      for (let i = 0; i < seN * 2; i++) {
+        const a = (Math.PI * i / seN) - Math.PI / 2;
+        const r = i % 2 === 0 ? seOuter : seInner;
+        seD += (i === 0 ? `M ` : `L `) + `${s/2 + r * Math.cos(a)},${s/2 + r * Math.sin(a)} `;
+      }
+      return seD + 'Z';
+    }
+
+    case 'ticket': {
+      const tkR = inner * 0.08;
+      return `M ${pad} ${pad} L ${s-pad} ${pad} L ${s-pad} ${s/2-tkR} A ${tkR} ${tkR} 0 0 0 ${s-pad} ${s/2+tkR} L ${s-pad} ${s-pad} L ${pad} ${s-pad} L ${pad} ${s/2+tkR} A ${tkR} ${tkR} 0 0 0 ${pad} ${s/2-tkR} Z`;
+    }
+
+    case 'cloche':
+      return `M ${pad} ${s-pad} C ${pad} ${s*0.55}, ${pad} ${s*0.35}, ${s*0.25} ${s*0.2} Q ${s/2} ${pad}, ${s*0.75} ${s*0.2} C ${s-pad} ${s*0.35}, ${s-pad} ${s*0.55}, ${s-pad} ${s-pad} Z`;
+
+    case 'stade': {
+      const stI = s * 0.15;
+      const stR = (s - stI * 2) / 2;
+      return `M ${pad + stR} ${stI} L ${s - pad - stR} ${stI} A ${stR} ${stR} 0 0 1 ${s - pad - stR} ${s - stI} L ${pad + stR} ${s - stI} A ${stR} ${stR} 0 0 1 ${pad + stR} ${stI} Z`;
+    }
+
+    case 'coussin': {
+      const coI = inner * 0.08;
+      return `M ${pad+8} ${pad} L ${s-pad-8} ${pad} Q ${s-pad} ${pad} ${s-pad} ${pad+8} Q ${s-pad+coI} ${s*0.35}, ${s-pad+coI} ${s/2} Q ${s-pad+coI} ${s*0.65}, ${s-pad} ${s-pad-8} Q ${s-pad} ${s-pad} ${s-pad-8} ${s-pad} L ${pad+8} ${s-pad} Q ${pad} ${s-pad} ${pad} ${s-pad-8} Q ${pad-coI} ${s*0.65}, ${pad-coI} ${s/2} Q ${pad-coI} ${s*0.35}, ${pad} ${pad+8} Q ${pad} ${pad} ${pad+8} ${pad} Z`;
+    }
+
     default:
       return '';
   }

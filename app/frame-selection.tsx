@@ -3,7 +3,7 @@
 // 12 formes pour photo de profil + positionnement
 // ============================================
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -60,7 +60,13 @@ export type FrameShape =
   | 'trapeze'
   | 'ogive'
   | 'marquise'
-  | 'medaillon';
+  | 'medaillon'
+  | 'losange-arrondi'
+  | 'sceau'
+  | 'ticket'
+  | 'cloche'
+  | 'stade'
+  | 'coussin';
 
 interface FrameOption {
   id: FrameShape;
@@ -92,6 +98,12 @@ const FRAME_OPTIONS: FrameOption[] = [
   { id: 'ogive', name: 'Ogive' },
   { id: 'marquise', name: 'Marquise' },
   { id: 'medaillon', name: 'Medaillon' },
+  { id: 'losange-arrondi', name: 'Losange arrondi' },
+  { id: 'sceau', name: 'Sceau' },
+  { id: 'ticket', name: 'Ticket' },
+  { id: 'cloche', name: 'Cloche' },
+  { id: 'stade', name: 'Stade' },
+  { id: 'coussin', name: 'Coussin' },
 ];
 
 // Composant pour afficher une forme
@@ -537,6 +549,135 @@ const FrameShapePreview: React.FC<{
         );
       }
 
+      case 'losange-arrondi': {
+        // Losange avec cotes courbes convexes
+        const lp = 5;
+        return (
+          <Path
+            d={`M ${size/2} ${lp}
+                Q ${size * 0.78} ${size * 0.22}, ${size - lp} ${size/2}
+                Q ${size * 0.78} ${size * 0.78}, ${size/2} ${size - lp}
+                Q ${size * 0.22} ${size * 0.78}, ${lp} ${size/2}
+                Q ${size * 0.22} ${size * 0.22}, ${size/2} ${lp}
+                Z`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'sceau': {
+        // Sceau - cercle avec bord crante style cachet de cire
+        const seCx = size / 2;
+        const seCy = size / 2;
+        const seOuter = innerSize / 2 - 2;
+        const seInner = seOuter * 0.88;
+        const seN = 16;
+        let seD = '';
+        for (let i = 0; i < seN * 2; i++) {
+          const a = (Math.PI * i / seN) - Math.PI / 2;
+          const r = i % 2 === 0 ? seOuter : seInner;
+          const x = seCx + r * Math.cos(a);
+          const y = seCy + r * Math.sin(a);
+          seD += (i === 0 ? `M ` : `L `) + `${x},${y} `;
+        }
+        seD += 'Z';
+        return (
+          <Path
+            d={seD}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+          />
+        );
+      }
+
+      case 'ticket': {
+        // Rectangle avec encoches semi-circulaires sur les cotes
+        const tkP = 5;
+        const tkR = innerSize * 0.08;
+        return (
+          <Path
+            d={`M ${tkP} ${tkP}
+                L ${size - tkP} ${tkP}
+                L ${size - tkP} ${size/2 - tkR}
+                A ${tkR} ${tkR} 0 0 0 ${size - tkP} ${size/2 + tkR}
+                L ${size - tkP} ${size - tkP}
+                L ${tkP} ${size - tkP}
+                L ${tkP} ${size/2 + tkR}
+                A ${tkR} ${tkR} 0 0 0 ${tkP} ${size/2 - tkR}
+                Z`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'cloche': {
+        // Cloche - dome en haut, evasee en bas
+        const clP = 5;
+        return (
+          <Path
+            d={`M ${clP} ${size - clP}
+                C ${clP} ${size * 0.55}, ${clP} ${size * 0.35}, ${size * 0.25} ${size * 0.2}
+                Q ${size/2} ${clP}, ${size * 0.75} ${size * 0.2}
+                C ${size - clP} ${size * 0.35}, ${size - clP} ${size * 0.55}, ${size - clP} ${size - clP}
+                Z`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'stade': {
+        // Stade - pilule horizontale (plus large que haute)
+        const stInset = size * 0.15;
+        const stR = (size - stInset * 2) / 2;
+        const stP = 5;
+        return (
+          <Path
+            d={`M ${stP + stR} ${stInset}
+                L ${size - stP - stR} ${stInset}
+                A ${stR} ${stR} 0 0 1 ${size - stP - stR} ${size - stInset}
+                L ${stP + stR} ${size - stInset}
+                A ${stR} ${stR} 0 0 1 ${stP + stR} ${stInset}
+                Z`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'coussin': {
+        // Coussin - carre avec cotes legerement concaves
+        const coP = 5;
+        const coInset = (size - coP * 2) * 0.08;
+        return (
+          <Path
+            d={`M ${coP + 8} ${coP}
+                L ${size - coP - 8} ${coP}
+                Q ${size - coP} ${coP}, ${size - coP} ${coP + 8}
+                Q ${size - coP + coInset} ${size * 0.35}, ${size - coP + coInset} ${size/2}
+                Q ${size - coP + coInset} ${size * 0.65}, ${size - coP} ${size - coP - 8}
+                Q ${size - coP} ${size - coP}, ${size - coP - 8} ${size - coP}
+                L ${coP + 8} ${size - coP}
+                Q ${coP} ${size - coP}, ${coP} ${size - coP - 8}
+                Q ${coP - coInset} ${size * 0.65}, ${coP - coInset} ${size/2}
+                Q ${coP - coInset} ${size * 0.35}, ${coP} ${coP + 8}
+                Q ${coP} ${coP}, ${coP + 8} ${coP}
+                Z`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
       default:
         return (
           <Circle
@@ -623,6 +764,8 @@ export default function FrameSelectionScreen() {
   const hasPhotoRef = useRef(false);
   hasPhotoRef.current = !!photoUri;
   const panStart = useRef({ x: 0, y: 0 });
+  const rafId = useRef<number | null>(null);
+  const pendingPos = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -664,7 +807,16 @@ export default function FrameSelectionScreen() {
         const maxOffset = PREVIEW_SIZE * (curScale - 1) / 2 + 10;
         const newX = Math.max(-maxOffset, Math.min(maxOffset, panStart.current.x + gesture.dx));
         const newY = Math.max(-maxOffset, Math.min(maxOffset, panStart.current.y + gesture.dy));
-        setTransform(prev => ({ ...prev, translateX: newX, translateY: newY }));
+        pendingPos.current = { x: newX, y: newY };
+        if (!rafId.current) {
+          rafId.current = requestAnimationFrame(() => {
+            if (pendingPos.current) {
+              setTransform(prev => ({ ...prev, translateX: pendingPos.current!.x, translateY: pendingPos.current!.y }));
+              pendingPos.current = null;
+            }
+            rafId.current = null;
+          });
+        }
       },
       onPanResponderRelease: () => {
         saveTransform(transformRef.current);
@@ -854,6 +1006,28 @@ export default function FrameSelectionScreen() {
           const pts=Array.from({length:12},(_,i)=>{const a=(Math.PI*2/12)*i-Math.PI/2;return `${sz/2+mr*Math.cos(a)},${sz/2+mr*Math.sin(a)}`;});
           return `M ${pts[0]} ${pts.slice(1).map(pt=>`L ${pt}`).join(' ')} Z`;
         }
+        case 'losange-arrondi':
+          return `M ${sz/2} ${p} Q ${sz*0.78} ${sz*0.22}, ${sz-p} ${sz/2} Q ${sz*0.78} ${sz*0.78}, ${sz/2} ${sz-p} Q ${sz*0.22} ${sz*0.78}, ${p} ${sz/2} Q ${sz*0.22} ${sz*0.22}, ${sz/2} ${p} Z`;
+        case 'sceau': {
+          const seOuter=inner/2, seInner=seOuter*0.88, seN=16;
+          let seD='';
+          for(let i=0;i<seN*2;i++){const a=(Math.PI*i/seN)-Math.PI/2;const r=i%2===0?seOuter:seInner;seD+=(i===0?`M `:`L `)+`${sz/2+r*Math.cos(a)},${sz/2+r*Math.sin(a)} `;}
+          return seD+'Z';
+        }
+        case 'ticket': {
+          const tkR=inner*0.08;
+          return `M ${p} ${p} L ${sz-p} ${p} L ${sz-p} ${sz/2-tkR} A ${tkR} ${tkR} 0 0 0 ${sz-p} ${sz/2+tkR} L ${sz-p} ${sz-p} L ${p} ${sz-p} L ${p} ${sz/2+tkR} A ${tkR} ${tkR} 0 0 0 ${p} ${sz/2-tkR} Z`;
+        }
+        case 'cloche':
+          return `M ${p} ${sz-p} C ${p} ${sz*0.55}, ${p} ${sz*0.35}, ${sz*0.25} ${sz*0.2} Q ${sz/2} ${p}, ${sz*0.75} ${sz*0.2} C ${sz-p} ${sz*0.35}, ${sz-p} ${sz*0.55}, ${sz-p} ${sz-p} Z`;
+        case 'stade': {
+          const stI=sz*0.15, stR=(sz-stI*2)/2;
+          return `M ${p+stR} ${stI} L ${sz-p-stR} ${stI} A ${stR} ${stR} 0 0 1 ${sz-p-stR} ${sz-stI} L ${p+stR} ${sz-stI} A ${stR} ${stR} 0 0 1 ${p+stR} ${stI} Z`;
+        }
+        case 'coussin': {
+          const coI=inner*0.08;
+          return `M ${p+8} ${p} L ${sz-p-8} ${p} Q ${sz-p} ${p} ${sz-p} ${p+8} Q ${sz-p+coI} ${sz*0.35}, ${sz-p+coI} ${sz/2} Q ${sz-p+coI} ${sz*0.65}, ${sz-p} ${sz-p-8} Q ${sz-p} ${sz-p} ${sz-p-8} ${sz-p} L ${p+8} ${sz-p} Q ${p} ${sz-p} ${p} ${sz-p-8} Q ${p-coI} ${sz*0.65}, ${p-coI} ${sz/2} Q ${p-coI} ${sz*0.35}, ${p} ${p+8} Q ${p} ${p} ${p+8} ${p} Z`;
+        }
         default: return '';
       }
     };
@@ -910,6 +1084,56 @@ export default function FrameSelectionScreen() {
       />
     );
   };
+
+  // Memoize la grille pour eviter de re-render 30 cartes pendant le drag photo
+  const framesGrid = useMemo(() => (
+    <>
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+        Formes disponibles
+      </Text>
+      <View style={styles.grid}>
+        {FRAME_OPTIONS.map((frame) => {
+          const isSelected = selectedFrame === frame.id;
+          return (
+            <TouchableOpacity
+              key={frame.id}
+              style={[
+                styles.frameCard,
+                { backgroundColor: colors.backgroundCard },
+                isSelected && { borderColor: colors.accent, borderWidth: 2 },
+              ]}
+              onPress={() => handleSelectFrame(frame.id)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.framePreview}>
+                <FrameShapePreview
+                  shape={frame.id}
+                  size={FRAME_SIZE - 30}
+                  color={isSelected ? colors.accent : colors.textMuted}
+                  fillColor={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'}
+                  isSelected={isSelected}
+                />
+              </View>
+              <Text
+                style={[
+                  styles.frameName,
+                  { color: isSelected ? colors.accent : colors.textPrimary }
+                ]}
+                numberOfLines={1}
+              >
+                {frame.name}
+              </Text>
+              {isSelected && (
+                <View style={[styles.checkBadge, { backgroundColor: colors.accent }]}>
+                  <Check size={12} color={colors.textOnAccent} strokeWidth={3} />
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </>
+  ), [selectedFrame, colors, isDark]);
 
   return (
     <ScreenWrapper>
@@ -1032,52 +1256,8 @@ export default function FrameSelectionScreen() {
           </View>
         )}
 
-        {/* Grid of frames */}
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-          Formes disponibles
-        </Text>
-
-        <View style={styles.grid}>
-          {FRAME_OPTIONS.map((frame) => {
-            const isSelected = selectedFrame === frame.id;
-            return (
-              <TouchableOpacity
-                key={frame.id}
-                style={[
-                  styles.frameCard,
-                  { backgroundColor: colors.backgroundCard },
-                  isSelected && { borderColor: colors.accent, borderWidth: 2 },
-                ]}
-                onPress={() => handleSelectFrame(frame.id)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.framePreview}>
-                  <FrameShapePreview
-                    shape={frame.id}
-                    size={FRAME_SIZE - 30}
-                    color={isSelected ? colors.accent : colors.textMuted}
-                    fillColor={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'}
-                    isSelected={isSelected}
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.frameName,
-                    { color: isSelected ? colors.accent : colors.textPrimary }
-                  ]}
-                  numberOfLines={1}
-                >
-                  {frame.name}
-                </Text>
-                {isSelected && (
-                  <View style={[styles.checkBadge, { backgroundColor: colors.accent }]}>
-                    <Check size={12} color={colors.textOnAccent} strokeWidth={3} />
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        {/* Grid of frames - memoize pour ne pas re-render pendant le drag */}
+        {framesGrid}
 
         <View style={{ height: 100 }} />
       </ScrollView>
