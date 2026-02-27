@@ -10,6 +10,7 @@ import { BadgeProvider } from '@/lib/BadgeContext';
 import { I18nProvider } from '@/lib/I18nContext';
 import { DevModeProvider } from '@/lib/DevModeContext';
 import { WatchConnectivityProvider } from '@/lib/WatchConnectivityProvider';
+import { AvatarProvider } from '@/lib/AvatarContext';
 import DevCodeModal from '@/components/DevCodeModal';
 import { initDatabase } from '@/lib/database';
 import { applyDataRetention } from '@/lib/storage';
@@ -63,9 +64,16 @@ function RootLayoutContent() {
     // Deep link: quand l'utilisateur tape sur une notification workout
     const workoutNotifSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data;
+      const actionId = response.actionIdentifier;
+
       if (data?.type === 'workout_complete' && data?.workoutId) {
-        // Naviguer vers le partage social avec les details du workout
-        router.push(`/social-share/last-session?workoutId=${data.workoutId}` as any);
+        if (actionId === 'share') {
+          // Action "Partager" - aller directement au partage social
+          router.push(`/social-share/last-session?workoutId=${data.workoutId}` as any);
+        } else {
+          // Tap sur la notification ou action "Voir" - aller au detail workout
+          router.push(`/social-share/last-session?workoutId=${data.workoutId}` as any);
+        }
       }
     });
 
@@ -266,10 +274,12 @@ export default function RootLayout() {
               }
               await AsyncStorage.setItem('@yoroi_healthkit_asked', 'true');
             } else {
-              // Deja demande: initialiser et relancer l'observer si connecte
+              // Deja demande: initialiser et relancer l'observer
               await healthConnect.initialize();
               const status = healthConnect.getSyncStatus();
-              if (status.isConnected) {
+              // Toujours tenter l'observer si HealthKit est disponible (meme si pas "connecte" formellement)
+              const available = await healthConnect.isAvailable();
+              if (status.isConnected || available) {
                 await healthConnect.setupWorkoutObserver();
               }
             }
@@ -313,11 +323,13 @@ export default function RootLayout() {
         <I18nProvider>
           <ThemeProvider>
             <DevModeProvider>
-              <BadgeProvider>
-                <WatchConnectivityProvider>
-                  <RootLayoutContent />
-                </WatchConnectivityProvider>
-              </BadgeProvider>
+              <AvatarProvider>
+                <BadgeProvider>
+                  <WatchConnectivityProvider>
+                    <RootLayoutContent />
+                  </WatchConnectivityProvider>
+                </BadgeProvider>
+              </AvatarProvider>
             </DevModeProvider>
           </ThemeProvider>
         </I18nProvider>

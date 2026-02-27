@@ -5,12 +5,12 @@
     "description": "YOROI - Votre compagnon fitness pour le suivi de poids, composition corporelle et entraînements. 100% offline, vos données restent sur votre appareil.",
     "version": "2.2.0",
     "orientation": "portrait",
-    "icon": "./assets/logo d'app/logo1.png",
+    "icon": "./assets/logo d'app/yoroi-logo3.png",
     "scheme": "yoroi",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/logo d'app/logo1.png",
+      "image": "./assets/logo d'app/yoroi-logo3.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
@@ -109,6 +109,67 @@
             "android.permission.health.WRITE_EXERCISE"
           ]
         }
+      ],
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "Logo1",
+            "ios": "./assets/logo d'app/logo1.png",
+            "android": {
+              "foregroundImage": "./assets/logo d'app/logo1.png",
+              "backgroundColor": "#000000"
+            }
+          },
+          {
+            "name": "Yoroi1",
+            "ios": "./assets/logo d'app/yoroi-logo1.png",
+            "android": {
+              "foregroundImage": "./assets/logo d'app/yoroi-logo1.png",
+              "backgroundColor": "#2563EB"
+            }
+          },
+          {
+            "name": "Yoroi2",
+            "ios": "./assets/logo d'app/yoroi-logo2.png",
+            "android": {
+              "foregroundImage": "./assets/logo d'app/yoroi-logo2.png",
+              "backgroundColor": "#000000"
+            }
+          },
+          {
+            "name": "Yoroi3",
+            "ios": "./assets/logo d'app/yoroi-logo3.png",
+            "android": {
+              "foregroundImage": "./assets/logo d'app/yoroi-logo3.png",
+              "backgroundColor": "#10B981"
+            }
+          },
+          {
+            "name": "Yoroi4",
+            "ios": "./assets/logo d'app/yoroi-logo4.png",
+            "android": {
+              "foregroundImage": "./assets/logo d'app/yoroi-logo4.png",
+              "backgroundColor": "#000000"
+            }
+          },
+          {
+            "name": "Yoroi5",
+            "ios": "./assets/logo d'app/yoroi-logo5.png",
+            "android": {
+              "foregroundImage": "./assets/logo d'app/yoroi-logo5.png",
+              "backgroundColor": "#10B981"
+            }
+          },
+          {
+            "name": "Yoroi6",
+            "ios": "./assets/logo d'app/yoroi-logo6.png",
+            "android": {
+              "foregroundImage": "./assets/logo d'app/yoroi-logo6.png",
+              "backgroundColor": "#000000"
+            }
+          }
+        ]
       ]
     ],
     "experiments": {

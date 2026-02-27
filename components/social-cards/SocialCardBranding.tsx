@@ -63,12 +63,19 @@ export const SocialCardFooter = React.memo<{ variant?: 'dark' | 'light' }>(({
           <Text style={[styles.footerTagline, { color: textColor }]}>Suivi du poids & sport</Text>
         </View>
 
-        {/* App Store Badge à droite */}
-        <Image
-          source={require('@/assets/images/appstore.png')}
-          style={styles.footerAppStoreBadgeSide}
-          resizeMode="contain"
-        />
+        {/* Store Badges à droite */}
+        <View style={styles.footerStoreBadges}>
+          <Image
+            source={require('@/assets/images/appstore.png')}
+            style={styles.footerAppStoreBadgeSide}
+            resizeMode="contain"
+          />
+          <Image
+            source={require('@/assets/images/android.png')}
+            style={styles.footerAndroidBadgeSide}
+            resizeMode="contain"
+          />
+        </View>
       </View>
     </View>
   );
@@ -90,11 +97,18 @@ export const SocialCardFooterCompact = React.memo<{ variant?: 'dark' | 'light' }
       <View style={[styles.footerSeparator, { backgroundColor: separatorColor }]} />
       <Text style={[styles.footerBrandNameCompact, { color: textColor }]}>Yoroi</Text>
       <Text style={[styles.footerTaglineCompact, { color: textColor }]}>Suivi du poids & sport</Text>
-      <Image
-        source={require('@/assets/images/appstore.png')}
-        style={styles.footerAppStoreBadgeSmall}
-        resizeMode="contain"
-      />
+      <View style={styles.footerStoreBadgesCompact}>
+        <Image
+          source={require('@/assets/images/appstore.png')}
+          style={styles.footerAppStoreBadgeSmall}
+          resizeMode="contain"
+        />
+        <Image
+          source={require('@/assets/images/android.png')}
+          style={styles.footerAndroidBadgeSmall}
+          resizeMode="contain"
+        />
+      </View>
     </View>
   );
 });
@@ -195,9 +209,17 @@ const styles = StyleSheet.create({
     marginTop: 2,
     textAlign: 'center',
   },
+  footerStoreBadges: {
+    alignItems: 'center',
+    gap: 3,
+  },
   footerAppStoreBadgeSide: {
     width: 80,
-    height: 48,
+    height: 24,
+  },
+  footerAndroidBadgeSide: {
+    width: 80,
+    height: 24,
   },
 
   // Footer Compact
@@ -217,10 +239,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginTop: 0,
   },
+  footerStoreBadgesCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 3,
+  },
   footerAppStoreBadgeSmall: {
     width: 65,
     height: 20,
-    marginTop: 3,
+  },
+  footerAndroidBadgeSmall: {
+    width: 65,
+    height: 20,
   },
 
   // Watermark

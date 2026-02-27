@@ -7,8 +7,9 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAllMeasurements } from './storage';
-import { getTrainings, getMeasurements } from './database';
+import { getTrainings, getMeasurements, getWeights, calculateStreak } from './database';
 import logger from '@/lib/security/logger';
+import { calculateAndStoreUnifiedPoints } from './gamification';
 
 // ═══════════════════════════════════════════════
 // TYPES
@@ -796,6 +797,15 @@ export const updateQuestProgress = async (
 
   await saveQuestsState(state);
 
+  // Recalculer les points unifies si XP gagne
+  if (xpEarned > 0) {
+    try {
+      const [weights, streak] = await Promise.all([getWeights(), calculateStreak()]);
+      const trainings = await getTrainings();
+      await calculateAndStoreUnifiedPoints(weights.length, trainings.length, streak);
+    } catch { /* non-bloquant */ }
+  }
+
   return { completed: questProgress.completed, xpEarned };
 };
 
@@ -823,6 +833,35 @@ export const checkAndUpdateQuests = async (): Promise<QuestId[]> => {
   // Ouvrir l'app (toujours valide)
   const appResult = await updateQuestProgress('daily_open_app', 1);
   if (appResult.completed && appResult.xpEarned > 0) completedQuests.push('daily_open_app');
+
+  // Pas du jour (synchro HealthKit/Google Fit)
+  try {
+    const HealthService = require('./healthService').default;
+    const stepsData = await HealthService.getSteps();
+    const steps = stepsData?.value ?? stepsData ?? 0;
+    if (typeof steps === 'number' && steps > 0) {
+      const stepsResult = await updateQuestProgress('daily_steps', steps);
+      if (stepsResult.completed && stepsResult.xpEarned > 0) completedQuests.push('daily_steps');
+    }
+  } catch (e) {
+    // HealthKit non disponible, on ignore
+  }
+
+  // Sommeil (synchro HealthKit/Google Fit)
+  try {
+    const HealthService = require('./healthService').default;
+    const sleepData = await HealthService.getSleep(1);
+    if (sleepData && sleepData.length > 0) {
+      const lastSleep = sleepData[0];
+      const sleepHours = typeof lastSleep === 'number' ? lastSleep : (lastSleep?.duration ?? lastSleep?.value ?? 0);
+      if (sleepHours > 0) {
+        const sleepResult = await updateQuestProgress('daily_sleep', sleepHours);
+        if (sleepResult.completed && sleepResult.xpEarned > 0) completedQuests.push('daily_sleep');
+      }
+    }
+  } catch (e) {
+    // HealthKit non disponible, on ignore
+  }
 
   // Entrainement du jour
   const trainings = await getTrainings();
@@ -945,6 +984,15 @@ export const uncompleteQuest = async (questId: QuestId): Promise<{ success: bool
   state.totalXp = Math.max(0, state.totalXp - xpRemoved);
 
   await saveQuestsState(state);
+
+  // Recalculer les points unifies apres retrait XP
+  if (xpRemoved > 0) {
+    try {
+      const [weights, streak] = await Promise.all([getWeights(), calculateStreak()]);
+      const trainings = await getTrainings();
+      await calculateAndStoreUnifiedPoints(weights.length, trainings.length, streak);
+    } catch { /* non-bloquant */ }
+  }
 
   return { success: true, xpRemoved };
 };

@@ -1,6 +1,6 @@
 // ============================================
 // YOROI - SELECTION DES CADRES PHOTO
-// 12 formes pour photo de profil + positionnement
+// 30 formes + accessoires decoratifs
 // ============================================
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -24,18 +24,20 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import Svg, { Path, Circle, Rect, Polygon, Defs, ClipPath, Image as SvgImage } from 'react-native-svg';
+import Svg, { Path, Circle, Rect, Polygon, Defs, ClipPath, Image as SvgImage, G } from 'react-native-svg';
 import { getProfile, saveProfile } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
 
 export const FRAME_SHAPE_CHANGED_EVENT = 'FRAME_SHAPE_CHANGED';
+export const FRAME_ACCESSORY_CHANGED_EVENT = 'FRAME_ACCESSORY_CHANGED';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const FRAME_SIZE = (SCREEN_WIDTH - SPACING.lg * 2 - SPACING.md * 2) / 3;
 
 export const FRAME_STORAGE_KEY = '@yoroi_frame_shape';
+export const ACCESSORY_STORAGE_KEY = '@yoroi_frame_accessory';
 
-// Definition des 18 formes disponibles
+// 30 formes - toutes avec assez d'aire pour une photo
 export type FrameShape =
   | 'circle'
   | 'rounded-square'
@@ -54,22 +56,38 @@ export type FrameShape =
   | 'tonneau'
   | 'capsule'
   | 'coquille'
-  | 'trapeze'
-  | 'ogive'
-  | 'marquise'
   | 'medaillon'
   | 'sceau'
   | 'ticket'
   | 'stade'
-  | 'triangle-arrondi'
-  | 'demi-cercle'
-  | 'heptagone'
-  | 'ecran'
   | 'nuage'
-  | 'eventail';
+  | 'tv-retro'
+  | 'clover'
+  | 'soft-diamond'
+  | 'egg'
+  | 'wide-barrel'
+  | 'leaf-wide'
+  | 'nonagon'
+  | 'super-ellipse';
+
+// Accessoires decoratifs (rendus par-dessus la bordure, style badge notification)
+export type FrameAccessory =
+  | 'none'
+  | 'flower'
+  | 'bow'
+  | 'crown'
+  | 'halo'
+  | 'mini-star'
+  | 'mini-heart'
+  | 'lightning';
 
 interface FrameOption {
   id: FrameShape;
+  name: string;
+}
+
+interface AccessoryOption {
+  id: FrameAccessory;
   name: string;
 }
 
@@ -91,20 +109,349 @@ const FRAME_OPTIONS: FrameOption[] = [
   { id: 'tonneau', name: 'Tonneau' },
   { id: 'capsule', name: 'Capsule' },
   { id: 'coquille', name: 'Coquille' },
-  { id: 'trapeze', name: 'Trapeze' },
-  { id: 'ogive', name: 'Ogive' },
-  { id: 'marquise', name: 'Marquise' },
   { id: 'medaillon', name: 'Medaillon' },
   { id: 'sceau', name: 'Sceau' },
   { id: 'ticket', name: 'Ticket' },
   { id: 'stade', name: 'Stade' },
-  { id: 'triangle-arrondi', name: 'Triangle' },
-  { id: 'demi-cercle', name: 'Demi-cercle' },
-  { id: 'heptagone', name: 'Heptagone' },
-  { id: 'ecran', name: 'Ecran' },
   { id: 'nuage', name: 'Nuage' },
-  { id: 'eventail', name: 'Eventail' },
+  { id: 'tv-retro', name: 'TV Retro' },
+  { id: 'clover', name: 'Trefle' },
+  { id: 'soft-diamond', name: 'Coussin' },
+  { id: 'egg', name: 'Oeuf' },
+  { id: 'wide-barrel', name: 'Barrique' },
+  { id: 'leaf-wide', name: 'Feuille' },
+  { id: 'nonagon', name: 'Nonagone' },
+  { id: 'super-ellipse', name: 'Super Ellipse' },
 ];
+
+const ACCESSORY_OPTIONS: AccessoryOption[] = [
+  { id: 'none', name: 'Aucun' },
+  { id: 'flower', name: 'Fleur' },
+  { id: 'bow', name: 'Noeud' },
+  { id: 'crown', name: 'Couronne' },
+  { id: 'halo', name: 'Aureole' },
+  { id: 'mini-star', name: 'Etoile' },
+  { id: 'mini-heart', name: 'Coeur' },
+  { id: 'lightning', name: 'Eclair' },
+];
+
+// ============================================
+// ACCESSORY SVG RENDERER
+// Gros ornements decoratifs EXTERIEURS au cadre
+// Positionnes sur le bord comme un noeud cadeau
+// ============================================
+export function renderAccessorySvg(
+  accessory: FrameAccessory,
+  frameSize: number,
+  accentColor: string,
+): React.ReactNode {
+  if (accessory === 'none') return null;
+
+  // Taille de l'accessoire
+  const s = frameSize * 0.38;
+
+  // Position par defaut : bord droit en haut (pour fleur, noeud, etoile, coeur, eclair)
+  const cx = frameSize - s * 0.15;
+  const cy = frameSize * 0.18;
+
+  // Position CENTRE HAUT (pour couronne et aureole - au-dessus de la tete)
+  const topCx = frameSize / 2;
+  const topCy = -s * 0.15;
+
+  switch (accessory) {
+    case 'flower': {
+      // Grosse fleur 5 petales sur le bord droit
+      const petalR = s * 0.24;
+      const petalDist = s * 0.28;
+      const centerR = s * 0.15;
+      return (
+        <G>
+          <Circle cx={cx + 1} cy={cy + 1.5} r={s * 0.45} fill="rgba(0,0,0,0.12)" />
+          {Array.from({ length: 5 }, (_, i) => {
+            const a = (Math.PI * 2 / 5) * i - Math.PI / 2;
+            return (
+              <Circle
+                key={i}
+                cx={cx + petalDist * Math.cos(a)}
+                cy={cy + petalDist * Math.sin(a)}
+                r={petalR}
+                fill={accentColor}
+                stroke="#FFFFFF"
+                strokeWidth={1.5}
+              />
+            );
+          })}
+          <Circle cx={cx} cy={cy} r={centerR} fill="#FFD700" stroke="#FFFFFF" strokeWidth={1} />
+        </G>
+      );
+    }
+
+    case 'bow': {
+      // Gros noeud papillon cadeau - bord droit
+      const w = s * 0.48;
+      const h = s * 0.32;
+      return (
+        <G>
+          <Path
+            d={`M ${cx + 1} ${cy + 1.5}
+                C ${cx - w + 1} ${cy - h * 1.4 + 1.5}, ${cx - w * 1.1 + 1} ${cy + h * 1.4 + 1.5}, ${cx + 1} ${cy + 1.5}
+                C ${cx + w + 1} ${cy - h * 1.4 + 1.5}, ${cx + w * 1.1 + 1} ${cy + h * 1.4 + 1.5}, ${cx + 1} ${cy + 1.5} Z`}
+            fill="rgba(0,0,0,0.12)"
+          />
+          <Path
+            d={`M ${cx} ${cy}
+                C ${cx - w} ${cy - h * 1.4}, ${cx - w * 1.1} ${cy + h * 1.4}, ${cx} ${cy} Z`}
+            fill={accentColor}
+            stroke="#FFFFFF"
+            strokeWidth={1.5}
+          />
+          <Path
+            d={`M ${cx} ${cy}
+                C ${cx + w} ${cy - h * 1.4}, ${cx + w * 1.1} ${cy + h * 1.4}, ${cx} ${cy} Z`}
+            fill={accentColor}
+            stroke="#FFFFFF"
+            strokeWidth={1.5}
+          />
+          <Path
+            d={`M ${cx - s * 0.08} ${cy + s * 0.05}
+                L ${cx - s * 0.18} ${cy + s * 0.35}
+                L ${cx - s * 0.06} ${cy + s * 0.25}
+                L ${cx + s * 0.06} ${cy + s * 0.25}
+                L ${cx + s * 0.18} ${cy + s * 0.35}
+                L ${cx + s * 0.08} ${cy + s * 0.05} Z`}
+            fill={accentColor}
+            stroke="#FFFFFF"
+            strokeWidth={1}
+          />
+          <Circle cx={cx} cy={cy} r={s * 0.08} fill="#FFFFFF" />
+        </G>
+      );
+    }
+
+    case 'crown': {
+      // Couronne doree CENTREE EN HAUT - au dessus de la tete
+      const crownW = frameSize * 0.28;
+      const crownH = frameSize * 0.18;
+      const crCx = topCx;
+      const crBase = topCy + crownH * 0.65;
+      const crTop = topCy - crownH * 0.35;
+      return (
+        <G>
+          {/* Ombre */}
+          <Path
+            d={`M ${crCx - crownW} ${crBase + 2}
+                L ${crCx - crownW} ${crTop + crownH * 0.3 + 2}
+                L ${crCx - crownW * 0.5} ${crTop + crownH * 0.6 + 2}
+                L ${crCx} ${crTop + 2}
+                L ${crCx + crownW * 0.5} ${crTop + crownH * 0.6 + 2}
+                L ${crCx + crownW} ${crTop + crownH * 0.3 + 2}
+                L ${crCx + crownW} ${crBase + 2} Z`}
+            fill="rgba(0,0,0,0.1)"
+          />
+          {/* Corps */}
+          <Path
+            d={`M ${crCx - crownW} ${crBase}
+                L ${crCx - crownW} ${crTop + crownH * 0.3}
+                L ${crCx - crownW * 0.5} ${crTop + crownH * 0.6}
+                L ${crCx} ${crTop}
+                L ${crCx + crownW * 0.5} ${crTop + crownH * 0.6}
+                L ${crCx + crownW} ${crTop + crownH * 0.3}
+                L ${crCx + crownW} ${crBase}
+                Z`}
+            fill="#FFD700"
+            stroke="#FFFFFF"
+            strokeWidth={2}
+            strokeLinejoin="round"
+          />
+          {/* Bande base */}
+          <Rect
+            x={crCx - crownW}
+            y={crBase - crownH * 0.12}
+            width={crownW * 2}
+            height={crownH * 0.2}
+            rx={2}
+            fill="#DAA520"
+            stroke="#FFFFFF"
+            strokeWidth={1}
+          />
+          {/* Gemmes */}
+          <Circle cx={crCx} cy={crTop + crownH * 0.1} r={frameSize * 0.025} fill={accentColor} stroke="#FFFFFF" strokeWidth={1} />
+          <Circle cx={crCx - crownW * 0.5} cy={crTop + crownH * 0.5} r={frameSize * 0.02} fill={accentColor} stroke="#FFFFFF" strokeWidth={0.8} />
+          <Circle cx={crCx + crownW * 0.5} cy={crTop + crownH * 0.5} r={frameSize * 0.02} fill={accentColor} stroke="#FFFFFF" strokeWidth={0.8} />
+        </G>
+      );
+    }
+
+    case 'halo': {
+      // Aureole CENTREE EN HAUT - arc dore au-dessus de la tete
+      const haloW = frameSize * 0.35;
+      const haloH = frameSize * 0.12;
+      const haloCy = topCy + frameSize * 0.02;
+      return (
+        <G>
+          {/* Ombre aureole */}
+          <Path
+            d={`M ${topCx - haloW} ${haloCy + 2}
+                A ${haloW} ${haloH} 0 1 1 ${topCx + haloW} ${haloCy + 2}`}
+            fill="none"
+            stroke="rgba(0,0,0,0.1)"
+            strokeWidth={frameSize * 0.045}
+            strokeLinecap="round"
+          />
+          {/* Aureole principale - anneau */}
+          <Path
+            d={`M ${topCx - haloW} ${haloCy}
+                A ${haloW} ${haloH} 0 1 1 ${topCx + haloW} ${haloCy}`}
+            fill="none"
+            stroke={accentColor}
+            strokeWidth={frameSize * 0.04}
+            strokeLinecap="round"
+            opacity={0.9}
+          />
+          {/* Bord lumineux exterieur */}
+          <Path
+            d={`M ${topCx - haloW + 2} ${haloCy - 1}
+                A ${haloW - 2} ${haloH - 1} 0 1 1 ${topCx + haloW - 2} ${haloCy - 1}`}
+            fill="none"
+            stroke="rgba(255,255,255,0.5)"
+            strokeWidth={frameSize * 0.012}
+            strokeLinecap="round"
+          />
+          {/* Bord lumineux interieur */}
+          <Path
+            d={`M ${topCx - haloW + 3} ${haloCy + 2}
+                A ${haloW - 3} ${haloH + 1} 0 1 1 ${topCx + haloW - 3} ${haloCy + 2}`}
+            fill="none"
+            stroke="rgba(255,255,255,0.3)"
+            strokeWidth={frameSize * 0.008}
+            strokeLinecap="round"
+          />
+        </G>
+      );
+    }
+
+    case 'mini-star': {
+      // Grosse etoile brillante - bord droit
+      const outerR = s * 0.4;
+      const innerR = outerR * 0.42;
+      const pts = Array.from({ length: 10 }, (_, i) => {
+        const rad = i % 2 === 0 ? outerR : innerR;
+        const a = (Math.PI / 5) * i - Math.PI / 2;
+        return `${cx + rad * Math.cos(a)},${cy + rad * Math.sin(a)}`;
+      }).join(' ');
+      return (
+        <G>
+          <Polygon
+            points={Array.from({ length: 10 }, (_, i) => {
+              const rad = i % 2 === 0 ? outerR : innerR;
+              const a = (Math.PI / 5) * i - Math.PI / 2;
+              return `${cx + 1 + rad * Math.cos(a)},${cy + 1.5 + rad * Math.sin(a)}`;
+            }).join(' ')}
+            fill="rgba(0,0,0,0.12)"
+          />
+          <Polygon
+            points={pts}
+            fill="#FFD700"
+            stroke="#FFFFFF"
+            strokeWidth={1.5}
+            strokeLinejoin="round"
+          />
+          <Circle cx={cx - outerR * 0.15} cy={cy - outerR * 0.2} r={s * 0.04} fill="rgba(255,255,255,0.6)" />
+        </G>
+      );
+    }
+
+    case 'mini-heart': {
+      // Gros coeur - bord droit
+      const hs = s * 0.45;
+      return (
+        <G>
+          <Path
+            d={`M ${cx + 1} ${cy + hs * 0.85 + 1.5}
+                C ${cx - hs * 0.9 + 1} ${cy + hs * 0.3 + 1.5}, ${cx - hs + 1} ${cy - hs * 0.3 + 1.5}, ${cx - hs + 1} ${cy - hs * 0.45 + 1.5}
+                C ${cx - hs + 1} ${cy - hs * 0.85 + 1.5}, ${cx - hs * 0.3 + 1} ${cy - hs * 0.9 + 1.5}, ${cx + 1} ${cy - hs * 0.35 + 1.5}
+                C ${cx + hs * 0.3 + 1} ${cy - hs * 0.9 + 1.5}, ${cx + hs + 1} ${cy - hs * 0.85 + 1.5}, ${cx + hs + 1} ${cy - hs * 0.45 + 1.5}
+                C ${cx + hs + 1} ${cy - hs * 0.3 + 1.5}, ${cx + hs * 0.9 + 1} ${cy + hs * 0.3 + 1.5}, ${cx + 1} ${cy + hs * 0.85 + 1.5} Z`}
+            fill="rgba(0,0,0,0.12)"
+          />
+          <Path
+            d={`M ${cx} ${cy + hs * 0.85}
+                C ${cx - hs * 0.9} ${cy + hs * 0.3}, ${cx - hs} ${cy - hs * 0.3}, ${cx - hs} ${cy - hs * 0.45}
+                C ${cx - hs} ${cy - hs * 0.85}, ${cx - hs * 0.3} ${cy - hs * 0.9}, ${cx} ${cy - hs * 0.35}
+                C ${cx + hs * 0.3} ${cy - hs * 0.9}, ${cx + hs} ${cy - hs * 0.85}, ${cx + hs} ${cy - hs * 0.45}
+                C ${cx + hs} ${cy - hs * 0.3}, ${cx + hs * 0.9} ${cy + hs * 0.3}, ${cx} ${cy + hs * 0.85} Z`}
+            fill="#FF4466"
+            stroke="#FFFFFF"
+            strokeWidth={1.5}
+          />
+          <Circle cx={cx - hs * 0.3} cy={cy - hs * 0.45} r={s * 0.05} fill="rgba(255,255,255,0.4)" />
+        </G>
+      );
+    }
+
+    case 'lightning': {
+      // Eclair dans un cercle - bord droit
+      const er = s * 0.32;
+      return (
+        <G>
+          <Circle cx={cx + 1} cy={cy + 1.5} r={er + 2} fill="rgba(0,0,0,0.12)" />
+          <Circle cx={cx} cy={cy} r={er + 2} fill={accentColor} stroke="#FFFFFF" strokeWidth={1.5} />
+          <Path
+            d={`M ${cx + er * 0.15} ${cy - er * 0.8}
+                L ${cx - er * 0.3} ${cy + er * 0.05}
+                L ${cx + er * 0.05} ${cy + er * 0.05}
+                L ${cx - er * 0.15} ${cy + er * 0.8}
+                L ${cx + er * 0.3} ${cy - er * 0.05}
+                L ${cx - er * 0.05} ${cy - er * 0.05}
+                Z`}
+            fill="#FFD700"
+            stroke="#FFFFFF"
+            strokeWidth={0.8}
+          />
+        </G>
+      );
+    }
+
+    default:
+      return null;
+  }
+}
+
+// ============================================
+// ACCESSORY PREVIEW for grid
+// ============================================
+const AccessoryPreview: React.FC<{
+  accessory: FrameAccessory;
+  size: number;
+  accentColor: string;
+  bgColor: string;
+  isSelected: boolean;
+}> = ({ accessory, size, accentColor, bgColor, isSelected }) => {
+  if (accessory === 'none') {
+    return (
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <Circle cx={size / 2} cy={size / 2} r={size * 0.3} fill="none" stroke={isSelected ? accentColor : '#888'} strokeWidth={2} strokeDasharray="4,3" />
+        <Path
+          d={`M ${size * 0.35} ${size * 0.35} L ${size * 0.65} ${size * 0.65}`}
+          stroke={isSelected ? accentColor : '#888'}
+          strokeWidth={1.5}
+        />
+      </Svg>
+    );
+  }
+
+  // Pour la preview dans la grille, on centre l'accessoire
+  // en utilisant un viewBox decale pour compenser la position "bord droit"
+  const previewScale = 1.8;
+  const vbSize = size * previewScale;
+  const offsetX = vbSize * 0.32;
+  const offsetY = -vbSize * 0.08;
+  return (
+    <Svg width={size} height={size} viewBox={`${offsetX} ${offsetY} ${vbSize} ${vbSize}`}>
+      {renderAccessorySvg(accessory, vbSize, accentColor)}
+    </Svg>
+  );
+};
 
 // Composant pour afficher une forme
 const FrameShapePreview: React.FC<{
@@ -146,9 +493,7 @@ const FrameShapePreview: React.FC<{
           />
         );
 
-      case 'squircle':
-        // iOS-style squircle
-        const sq = innerSize / 2;
+      case 'squircle': {
         return (
           <Path
             d={`M ${size/2} 5
@@ -161,8 +506,9 @@ const FrameShapePreview: React.FC<{
             strokeWidth={strokeWidth}
           />
         );
+      }
 
-      case 'hexagon':
+      case 'hexagon': {
         const hx = size / 2;
         const hy = size / 2;
         const hr = innerSize / 2 - 2;
@@ -178,14 +524,15 @@ const FrameShapePreview: React.FC<{
             strokeWidth={strokeWidth}
           />
         );
+      }
 
-      case 'octagon':
+      case 'octagon': {
         const ox = size / 2;
         const oy = size / 2;
-        const or = innerSize / 2 - 2;
+        const or2 = innerSize / 2 - 2;
         const octPoints = Array.from({ length: 8 }, (_, i) => {
           const angle = (Math.PI / 4) * i - Math.PI / 8;
-          return `${ox + or * Math.cos(angle)},${oy + or * Math.sin(angle)}`;
+          return `${ox + or2 * Math.cos(angle)},${oy + or2 * Math.sin(angle)}`;
         }).join(' ');
         return (
           <Polygon
@@ -195,11 +542,11 @@ const FrameShapePreview: React.FC<{
             strokeWidth={strokeWidth}
           />
         );
+      }
 
-      case 'diamond':
+      case 'diamond': {
         const dx = size / 2;
         const dy = size / 2;
-        const dr = innerSize / 2 - 2;
         return (
           <Polygon
             points={`${dx},${5} ${size - 5},${dy} ${dx},${size - 5} ${5},${dy}`}
@@ -208,6 +555,7 @@ const FrameShapePreview: React.FC<{
             strokeWidth={strokeWidth}
           />
         );
+      }
 
       case 'shield':
         return (
@@ -226,11 +574,10 @@ const FrameShapePreview: React.FC<{
         );
 
       case 'star': {
-        // Etoile epaisse style badge - beaucoup plus remplie
         const sx = size / 2;
         const sy = size / 2;
         const outerR = innerSize / 2 - 2;
-        const innerR = outerR * 0.58; // Plus epais = plus rempli
+        const innerR = outerR * 0.58;
         const starPoints = Array.from({ length: 10 }, (_, i) => {
           const r = i % 2 === 0 ? outerR : innerR;
           const angle = (Math.PI / 5) * i - Math.PI / 2;
@@ -248,7 +595,6 @@ const FrameShapePreview: React.FC<{
       }
 
       case 'heart': {
-        // Coeur bien proportionne et arrondi
         const s = size;
         const p = 5;
         return (
@@ -285,9 +631,8 @@ const FrameShapePreview: React.FC<{
         );
 
       case 'arch': {
-        // Arche - demi-cercle en haut, cotes droits, bas plat
         const ap = 5;
-        const aR = (size - ap * 2) / 2; // rayon du demi-cercle
+        const aR = (size - ap * 2) / 2;
         return (
           <Path
             d={`M ${ap} ${size - ap}
@@ -323,7 +668,6 @@ const FrameShapePreview: React.FC<{
       }
 
       case 'ovale': {
-        // Ovale horizontal - ellipse plus large que haute
         const orx = innerSize / 2 - 2;
         const ory = orx * 0.7;
         return (
@@ -339,7 +683,6 @@ const FrameShapePreview: React.FC<{
       }
 
       case 'plaque': {
-        // Rectangle avec coins coupes a 45 degres
         const pp = 5;
         const cut = (size - pp * 2) * 0.2;
         return (
@@ -354,7 +697,6 @@ const FrameShapePreview: React.FC<{
       }
 
       case 'tonneau': {
-        // Tonneau - rectangle avec cotes convexes (gonfles)
         const tp = 5;
         const bulge = (size - tp * 2) * 0.12;
         return (
@@ -377,7 +719,6 @@ const FrameShapePreview: React.FC<{
       }
 
       case 'capsule': {
-        // Capsule verticale - forme pilule
         const capInset = size * 0.15;
         const capR = (size - capInset * 2) / 2;
         const capP = 5;
@@ -396,7 +737,6 @@ const FrameShapePreview: React.FC<{
       }
 
       case 'coquille': {
-        // Coquille - cercle festonne avec 10 ondulations
         const scCx = size / 2;
         const scCy = size / 2;
         const scR = innerSize / 2 - 4;
@@ -426,58 +766,7 @@ const FrameShapePreview: React.FC<{
         );
       }
 
-      case 'trapeze': {
-        // Trapeze arrondi - plus large en bas
-        const trP = 6;
-        const trInset = (size - trP * 2) * 0.14;
-        return (
-          <Polygon
-            points={`${trP + trInset},${trP} ${size - trP - trInset},${trP} ${size - trP},${size - trP} ${trP},${size - trP}`}
-            fill={fillColor}
-            stroke={color}
-            strokeWidth={strokeWidth}
-            strokeLinejoin="round"
-          />
-        );
-      }
-
-      case 'ogive': {
-        // Ogive - arche gothique pointue en haut
-        const ogP = 5;
-        const ogArcR = (size - ogP * 2) * 0.9;
-        return (
-          <Path
-            d={`M ${ogP} ${size - ogP}
-                L ${ogP} ${size * 0.45}
-                A ${ogArcR} ${ogArcR} 0 0 1 ${size / 2} ${ogP}
-                A ${ogArcR} ${ogArcR} 0 0 1 ${size - ogP} ${size * 0.45}
-                L ${size - ogP} ${size - ogP}
-                Z`}
-            fill={fillColor}
-            stroke={color}
-            strokeWidth={strokeWidth}
-          />
-        );
-      }
-
-      case 'marquise': {
-        // Marquise - forme d'oeil/amande
-        const mP = 5;
-        return (
-          <Path
-            d={`M ${size / 2} ${mP}
-                C ${size * 0.85} ${size * 0.25}, ${size * 0.85} ${size * 0.75}, ${size / 2} ${size - mP}
-                C ${size * 0.15} ${size * 0.75}, ${size * 0.15} ${size * 0.25}, ${size / 2} ${mP}
-                Z`}
-            fill={fillColor}
-            stroke={color}
-            strokeWidth={strokeWidth}
-          />
-        );
-      }
-
       case 'medaillon': {
-        // Medaillon - dodecagone (12 cotes) arrondi
         const mdCx = size / 2;
         const mdCy = size / 2;
         const mdR = innerSize / 2 - 2;
@@ -497,7 +786,6 @@ const FrameShapePreview: React.FC<{
       }
 
       case 'sceau': {
-        // Sceau - cercle avec bord crante style cachet de cire
         const seCx = size / 2;
         const seCy = size / 2;
         const seOuter = innerSize / 2 - 2;
@@ -524,7 +812,6 @@ const FrameShapePreview: React.FC<{
       }
 
       case 'ticket': {
-        // Rectangle avec encoches semi-circulaires sur les cotes
         const tkP = 5;
         const tkR = innerSize * 0.08;
         return (
@@ -546,7 +833,6 @@ const FrameShapePreview: React.FC<{
       }
 
       case 'stade': {
-        // Stade - pilule horizontale (plus large que haute)
         const stInset = size * 0.15;
         const stR = (size - stInset * 2) / 2;
         const stP = 5;
@@ -558,73 +844,6 @@ const FrameShapePreview: React.FC<{
                 L ${stP + stR} ${size - stInset}
                 A ${stR} ${stR} 0 0 1 ${stP + stR} ${stInset}
                 Z`}
-            fill={fillColor}
-            stroke={color}
-            strokeWidth={strokeWidth}
-          />
-        );
-      }
-
-      case 'triangle-arrondi': {
-        const trP = 6;
-        return (
-          <Polygon
-            points={`${size/2},${trP} ${size - trP},${size - trP} ${trP},${size - trP}`}
-            fill={fillColor}
-            stroke={color}
-            strokeWidth={strokeWidth}
-            strokeLinejoin="round"
-          />
-        );
-      }
-
-      case 'demi-cercle': {
-        const dcP = 5;
-        const dcR = (size - dcP * 2) / 2;
-        return (
-          <Path
-            d={`M ${dcP} ${size - dcP}
-                A ${dcR} ${dcR} 0 1 1 ${size - dcP} ${size - dcP}
-                Z`}
-            fill={fillColor}
-            stroke={color}
-            strokeWidth={strokeWidth}
-          />
-        );
-      }
-
-      case 'heptagone': {
-        const hpCx = size / 2;
-        const hpCy = size / 2;
-        const hpR = innerSize / 2 - 2;
-        const hpPoints = Array.from({ length: 7 }, (_, i) => {
-          const angle = (Math.PI * 2 / 7) * i - Math.PI / 2;
-          return `${hpCx + hpR * Math.cos(angle)},${hpCy + hpR * Math.sin(angle)}`;
-        }).join(' ');
-        return (
-          <Polygon
-            points={hpPoints}
-            fill={fillColor}
-            stroke={color}
-            strokeWidth={strokeWidth}
-            strokeLinejoin="round"
-          />
-        );
-      }
-
-      case 'ecran': {
-        const ecP = 5;
-        const ecH = (size - ecP * 2) * 0.68;
-        const ecY = (size - ecH) / 2;
-        const ecR = ecH * 0.22;
-        return (
-          <Rect
-            x={ecP}
-            y={ecY}
-            width={size - ecP * 2}
-            height={ecH}
-            rx={ecR}
-            ry={ecR}
             fill={fillColor}
             stroke={color}
             strokeWidth={strokeWidth}
@@ -651,16 +870,174 @@ const FrameShapePreview: React.FC<{
         );
       }
 
-      case 'eventail': {
-        const evP = 6;
-        const evInset = (size - evP * 2) * 0.14;
+      // ===== 8 NEW SHAPES =====
+
+      case 'tv-retro': {
+        // TV retro - rectangle avec bords bombes (large, pas etroit)
+        const tp2 = 5;
+        const tw = innerSize;
+        const th = innerSize * 0.82;
+        const ty = (size - th) / 2;
+        const bulge2 = tw * 0.06;
+        return (
+          <Path
+            d={`M ${tp2 + 12},${ty}
+                L ${size - tp2 - 12},${ty}
+                Q ${size - tp2},${ty} ${size - tp2},${ty + 12}
+                Q ${size - tp2 + bulge2},${size/2} ${size - tp2},${ty + th - 12}
+                Q ${size - tp2},${ty + th} ${size - tp2 - 12},${ty + th}
+                L ${tp2 + 12},${ty + th}
+                Q ${tp2},${ty + th} ${tp2},${ty + th - 12}
+                Q ${tp2 - bulge2},${size/2} ${tp2},${ty + 12}
+                Q ${tp2},${ty} ${tp2 + 12},${ty}
+                Z`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'clover': {
+        // Trefle a 4 feuilles - 4 cercles qui se chevauchent avec large zone centrale
+        const clCx = size / 2;
+        const clCy = size / 2;
+        const clR = innerSize * 0.27;
+        const clOffset = innerSize * 0.18;
+        return (
+          <G>
+            <Circle cx={clCx} cy={clCy - clOffset} r={clR} fill={fillColor} stroke={color} strokeWidth={strokeWidth} />
+            <Circle cx={clCx + clOffset} cy={clCy} r={clR} fill={fillColor} stroke={color} strokeWidth={strokeWidth} />
+            <Circle cx={clCx} cy={clCy + clOffset} r={clR} fill={fillColor} stroke={color} strokeWidth={strokeWidth} />
+            <Circle cx={clCx - clOffset} cy={clCy} r={clR} fill={fillColor} stroke={color} strokeWidth={strokeWidth} />
+            {/* Zone centrale - remplissage pour masquer les bordures internes */}
+            <Circle cx={clCx} cy={clCy} r={clOffset * 0.9} fill={fillColor} />
+          </G>
+        );
+      }
+
+      case 'soft-diamond': {
+        // Diamant arrondi / coussin - losange avec courbes douces
+        const sdP = 5;
+        const sdW = innerSize / 2;
+        return (
+          <Path
+            d={`M ${size/2} ${sdP}
+                Q ${size - sdP + 4} ${sdP + 4}, ${size - sdP} ${size/2}
+                Q ${size - sdP + 4} ${size - sdP - 4}, ${size/2} ${size - sdP}
+                Q ${sdP - 4} ${size - sdP - 4}, ${sdP} ${size/2}
+                Q ${sdP - 4} ${sdP + 4}, ${size/2} ${sdP}
+                Z`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'egg': {
+        // Oeuf - cercle plus large en bas, plus etroit en haut, bonne surface
+        const ep = 5;
+        const eW = innerSize * 0.45;
+        const eH = innerSize / 2;
+        return (
+          <Path
+            d={`M ${size/2} ${ep}
+                C ${size/2 + eW * 0.85} ${ep}, ${size/2 + eW} ${size * 0.3}, ${size/2 + eW} ${size * 0.45}
+                C ${size/2 + eW} ${size * 0.65}, ${size/2 + eW * 0.9} ${size - ep}, ${size/2} ${size - ep}
+                C ${size/2 - eW * 0.9} ${size - ep}, ${size/2 - eW} ${size * 0.65}, ${size/2 - eW} ${size * 0.45}
+                C ${size/2 - eW} ${size * 0.3}, ${size/2 - eW * 0.85} ${ep}, ${size/2} ${ep}
+                Z`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'wide-barrel': {
+        // Barrique - tonneau horizontal, plus large que haut
+        const wbP = 5;
+        const wbH = innerSize * 0.78;
+        const wbY = (size - wbH) / 2;
+        const wbBulge = wbH * 0.1;
+        return (
+          <Path
+            d={`M ${wbP + 6},${wbY}
+                L ${size - wbP - 6},${wbY}
+                Q ${size - wbP},${wbY} ${size - wbP},${wbY + 6}
+                L ${size - wbP},${wbY + wbH - 6}
+                Q ${size - wbP},${wbY + wbH} ${size - wbP - 6},${wbY + wbH}
+                L ${wbP + 6},${wbY + wbH}
+                Q ${wbP},${wbY + wbH} ${wbP},${wbY + wbH - 6}
+                L ${wbP},${wbY + 6}
+                Q ${wbP},${wbY} ${wbP + 6},${wbY}
+                Z`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'leaf-wide': {
+        // Feuille large - forme organique avec pointes douces, bonne surface
+        const lfP = 5;
+        return (
+          <Path
+            d={`M ${size/2} ${lfP}
+                Q ${size - lfP + 3} ${lfP - 3}, ${size - lfP} ${size/2}
+                Q ${size - lfP + 3} ${size - lfP + 3}, ${size/2} ${size - lfP}
+                Q ${lfP - 3} ${size - lfP + 3}, ${lfP} ${size/2}
+                Q ${lfP - 3} ${lfP - 3}, ${size/2} ${lfP}
+                Z`}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+
+      case 'nonagon': {
+        // Nonagone - 9 cotes, entre octogone et cercle
+        const nCx = size / 2;
+        const nCy = size / 2;
+        const nR = innerSize / 2 - 2;
+        const nonPoints = Array.from({ length: 9 }, (_, i) => {
+          const angle = (Math.PI * 2 / 9) * i - Math.PI / 2;
+          return `${nCx + nR * Math.cos(angle)},${nCy + nR * Math.sin(angle)}`;
+        }).join(' ');
         return (
           <Polygon
-            points={`${evP},${evP} ${size - evP},${evP} ${size - evP - evInset},${size - evP} ${evP + evInset},${size - evP}`}
+            points={nonPoints}
             fill={fillColor}
             stroke={color}
             strokeWidth={strokeWidth}
             strokeLinejoin="round"
+          />
+        );
+      }
+
+      case 'super-ellipse': {
+        // Super ellipse - entre carre arrondi et cercle, forme Piet Hein
+        const seP = 6;
+        const seR = (size - seP * 2) / 2;
+        const n = 4; // exposant (2=ellipse, inf=rect)
+        const pts: string[] = [];
+        for (let i = 0; i <= 64; i++) {
+          const t = (2 * Math.PI * i) / 64;
+          const cosT = Math.cos(t);
+          const sinT = Math.sin(t);
+          const x = size / 2 + seR * Math.sign(cosT) * Math.pow(Math.abs(cosT), 2 / n);
+          const y = size / 2 + seR * Math.sign(sinT) * Math.pow(Math.abs(sinT), 2 / n);
+          pts.push(`${x},${y}`);
+        }
+        return (
+          <Polygon
+            points={pts.join(' ')}
+            fill={fillColor}
+            stroke={color}
+            strokeWidth={strokeWidth}
           />
         );
       }
@@ -733,6 +1110,148 @@ const saveTransform = async (t: PhotoTransform) => {
 };
 
 // ============================================
+// CLIP PATH GENERATOR (shared between preview and FramedProfilePhoto)
+// ============================================
+export function generateClipPath(shape: FrameShape, s: number, pad: number = 4): string {
+  const inner = s - pad * 2;
+
+  switch (shape) {
+    case 'circle': return '';
+    case 'rounded-square': {
+      const r = inner * 0.2;
+      return `M ${pad+r},${pad} L ${pad+inner-r},${pad} Q ${pad+inner},${pad} ${pad+inner},${pad+r} L ${pad+inner},${pad+inner-r} Q ${pad+inner},${pad+inner} ${pad+inner-r},${pad+inner} L ${pad+r},${pad+inner} Q ${pad},${pad+inner} ${pad},${pad+inner-r} L ${pad},${pad+r} Q ${pad},${pad} ${pad+r},${pad} Z`;
+    }
+    case 'squircle': return `M ${s/2} ${pad} C ${s-pad-3} ${pad}, ${s-pad} ${pad+3}, ${s-pad} ${s/2} C ${s-pad} ${s-pad-3}, ${s-pad-3} ${s-pad}, ${s/2} ${s-pad} C ${pad+3} ${s-pad}, ${pad} ${s-pad-3}, ${pad} ${s/2} C ${pad} ${pad+3}, ${pad+3} ${pad}, ${s/2} ${pad} Z`;
+    case 'hexagon': {
+      const cx=s/2, cy=s/2, r=inner/2;
+      const pts = Array.from({length:6},(_,i)=>{const a=(Math.PI/3)*i-Math.PI/2;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;});
+      return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} L ${pts[5]} Z`;
+    }
+    case 'octagon': {
+      const cx=s/2, cy=s/2, r=inner/2;
+      const pts = Array.from({length:8},(_,i)=>{const a=(Math.PI/4)*i-Math.PI/8;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;});
+      return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} L ${pts[5]} L ${pts[6]} L ${pts[7]} Z`;
+    }
+    case 'diamond': return `M ${s/2},${pad} L ${s-pad},${s/2} L ${s/2},${s-pad} L ${pad},${s/2} Z`;
+    case 'shield': return `M ${s/2} ${pad} L ${s-pad} ${s*0.25} L ${s-pad} ${s*0.55} Q ${s-pad} ${s*0.75}, ${s/2} ${s-pad} Q ${pad} ${s*0.75}, ${pad} ${s*0.55} L ${pad} ${s*0.25} Z`;
+    case 'star': {
+      const cx=s/2, cy=s/2, outerR=inner/2, innerR=outerR*0.58;
+      const pts = Array.from({length:10},(_,i)=>{const r=i%2===0?outerR:innerR;const a=(Math.PI/5)*i-Math.PI/2;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;});
+      return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} L ${pts[5]} L ${pts[6]} L ${pts[7]} L ${pts[8]} L ${pts[9]} Z`;
+    }
+    case 'heart': return `M ${s/2} ${s-pad-2} C ${s*0.15} ${s*0.68}, ${pad} ${s*0.48}, ${pad} ${s*0.35} C ${pad} ${s*0.2}, ${s*0.2} ${pad+2}, ${s*0.35} ${pad+2} C ${s*0.42} ${pad+2}, ${s*0.48} ${s*0.15}, ${s/2} ${s*0.22} C ${s*0.52} ${s*0.15}, ${s*0.58} ${pad+2}, ${s*0.65} ${pad+2} C ${s*0.8} ${pad+2}, ${s-pad} ${s*0.2}, ${s-pad} ${s*0.35} C ${s-pad} ${s*0.48}, ${s*0.85} ${s*0.68}, ${s/2} ${s-pad-2} Z`;
+    case 'drop': return `M ${s/2} ${pad} Q ${s-pad} ${s*0.4}, ${s-pad} ${s*0.6} C ${s-pad} ${s-pad}, ${s/2} ${s-pad}, ${s/2} ${s-pad} C ${s/2} ${s-pad}, ${pad} ${s-pad}, ${pad} ${s*0.6} Q ${pad} ${s*0.4}, ${s/2} ${pad} Z`;
+    case 'arch': {
+      const aR=(s-pad*2)/2;
+      return `M ${pad} ${s-pad} L ${pad} ${pad+aR} A ${aR} ${aR} 0 0 1 ${s-pad} ${pad+aR} L ${s-pad} ${s-pad} Z`;
+    }
+    case 'pentagon': {
+      const cx=s/2, cy=s/2, r=inner/2;
+      const pts = Array.from({length:5},(_,i)=>{const a=(Math.PI*2/5)*i-Math.PI/2;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;});
+      return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} Z`;
+    }
+    case 'ovale': {
+      const orx=inner/2, ory=orx*0.7;
+      return `M ${s/2-orx},${s/2} A ${orx} ${ory} 0 1 1 ${s/2+orx},${s/2} A ${orx} ${ory} 0 1 1 ${s/2-orx},${s/2} Z`;
+    }
+    case 'plaque': {
+      const cut=inner*0.2;
+      return `M ${pad+cut},${pad} L ${s-pad-cut},${pad} L ${s-pad},${pad+cut} L ${s-pad},${s-pad-cut} L ${s-pad-cut},${s-pad} L ${pad+cut},${s-pad} L ${pad},${s-pad-cut} L ${pad},${pad+cut} Z`;
+    }
+    case 'tonneau': {
+      const bulge=inner*0.12;
+      return `M ${pad+8},${pad} L ${s-pad-8},${pad} Q ${s-pad},${pad} ${s-pad},${pad+8} Q ${s-pad+bulge},${s/2} ${s-pad},${s-pad-8} Q ${s-pad},${s-pad} ${s-pad-8},${s-pad} L ${pad+8},${s-pad} Q ${pad},${s-pad} ${pad},${s-pad-8} Q ${pad-bulge},${s/2} ${pad},${pad+8} Q ${pad},${pad} ${pad+8},${pad} Z`;
+    }
+    case 'capsule': {
+      const ci=s*0.15, cr=(s-ci*2)/2;
+      return `M ${ci} ${pad+cr} A ${cr} ${cr} 0 0 1 ${s-ci} ${pad+cr} L ${s-ci} ${s-pad-cr} A ${cr} ${cr} 0 0 1 ${ci} ${s-pad-cr} Z`;
+    }
+    case 'coquille': {
+      const scR=inner/2-2, scN=10;
+      let scD='';
+      for(let i=0;i<scN;i++){const a1=(2*Math.PI*i/scN)-Math.PI/2;const a2=(2*Math.PI*(i+1)/scN)-Math.PI/2;const x1=s/2+scR*Math.cos(a1);const y1=s/2+scR*Math.sin(a1);const x2=s/2+scR*Math.cos(a2);const y2=s/2+scR*Math.sin(a2);const mA=(a1+a2)/2;const cpx=s/2+scR*1.18*Math.cos(mA);const cpy=s/2+scR*1.18*Math.sin(mA);if(i===0)scD+=`M ${x1},${y1} `;scD+=`Q ${cpx},${cpy} ${x2},${y2} `;}
+      return scD+'Z';
+    }
+    case 'medaillon': {
+      const mr=inner/2;
+      const pts=Array.from({length:12},(_,i)=>{const a=(Math.PI*2/12)*i-Math.PI/2;return `${s/2+mr*Math.cos(a)},${s/2+mr*Math.sin(a)}`;});
+      return `M ${pts[0]} ${pts.slice(1).map(pt=>`L ${pt}`).join(' ')} Z`;
+    }
+    case 'sceau': {
+      const seOuter=inner/2, seInner=seOuter*0.88, seN=16;
+      let seD='';
+      for(let i=0;i<seN*2;i++){const a=(Math.PI*i/seN)-Math.PI/2;const r=i%2===0?seOuter:seInner;seD+=(i===0?`M `:`L `)+`${s/2+r*Math.cos(a)},${s/2+r*Math.sin(a)} `;}
+      return seD+'Z';
+    }
+    case 'ticket': {
+      const tkR=inner*0.08;
+      return `M ${pad} ${pad} L ${s-pad} ${pad} L ${s-pad} ${s/2-tkR} A ${tkR} ${tkR} 0 0 0 ${s-pad} ${s/2+tkR} L ${s-pad} ${s-pad} L ${pad} ${s-pad} L ${pad} ${s/2+tkR} A ${tkR} ${tkR} 0 0 0 ${pad} ${s/2-tkR} Z`;
+    }
+    case 'stade': {
+      const stI=s*0.15, stR=(s-stI*2)/2;
+      return `M ${pad+stR} ${stI} L ${s-pad-stR} ${stI} A ${stR} ${stR} 0 0 1 ${s-pad-stR} ${s-stI} L ${pad+stR} ${s-stI} A ${stR} ${stR} 0 0 1 ${pad+stR} ${stI} Z`;
+    }
+    case 'nuage':
+      return `M ${pad} ${s*0.65} Q ${pad} ${s*0.4}, ${s*0.25} ${s*0.32} Q ${s*0.3} ${s*0.15}, ${s/2} ${s*0.2} Q ${s*0.7} ${s*0.15}, ${s*0.75} ${s*0.32} Q ${s-pad} ${s*0.4}, ${s-pad} ${s*0.65} Q ${s-pad} ${s-pad}, ${s/2} ${s-pad} Q ${pad} ${s-pad}, ${pad} ${s*0.65} Z`;
+
+    // ===== 8 NEW SHAPES =====
+    case 'tv-retro': {
+      const tw = inner;
+      const th = inner * 0.82;
+      const ty = (s - th) / 2;
+      const bulge2 = tw * 0.06;
+      return `M ${pad+12},${ty} L ${s-pad-12},${ty} Q ${s-pad},${ty} ${s-pad},${ty+12} Q ${s-pad+bulge2},${s/2} ${s-pad},${ty+th-12} Q ${s-pad},${ty+th} ${s-pad-12},${ty+th} L ${pad+12},${ty+th} Q ${pad},${ty+th} ${pad},${ty+th-12} Q ${pad-bulge2},${s/2} ${pad},${ty+12} Q ${pad},${ty} ${pad+12},${ty} Z`;
+    }
+    case 'clover': {
+      // Trefle - 4 lobes arrondis
+      const clR = inner * 0.27;
+      const clO = inner * 0.18;
+      const cx2 = s / 2;
+      const cy2 = s / 2;
+      // Generate path for 4 overlapping circles as a union
+      // Approximate with a smooth path
+      return `M ${cx2} ${cy2-clO-clR} A ${clR} ${clR} 0 1 1 ${cx2+clO} ${cy2-clO} Q ${cx2+clO+clR*0.5} ${cy2-clO-clR*0.5} ${cx2+clO+clR} ${cy2} A ${clR} ${clR} 0 1 1 ${cx2+clO} ${cy2+clO} Q ${cx2+clO+clR*0.5} ${cy2+clO+clR*0.5} ${cx2} ${cy2+clO+clR} A ${clR} ${clR} 0 1 1 ${cx2-clO} ${cy2+clO} Q ${cx2-clO-clR*0.5} ${cy2+clO+clR*0.5} ${cx2-clO-clR} ${cy2} A ${clR} ${clR} 0 1 1 ${cx2-clO} ${cy2-clO} Q ${cx2-clO-clR*0.5} ${cy2-clO-clR*0.5} ${cx2} ${cy2-clO-clR} Z`;
+    }
+    case 'soft-diamond': {
+      return `M ${s/2} ${pad} Q ${s-pad+4} ${pad+4}, ${s-pad} ${s/2} Q ${s-pad+4} ${s-pad-4}, ${s/2} ${s-pad} Q ${pad-4} ${s-pad-4}, ${pad} ${s/2} Q ${pad-4} ${pad+4}, ${s/2} ${pad} Z`;
+    }
+    case 'egg': {
+      const eW = inner * 0.45;
+      return `M ${s/2} ${pad} C ${s/2+eW*0.85} ${pad}, ${s/2+eW} ${s*0.3}, ${s/2+eW} ${s*0.45} C ${s/2+eW} ${s*0.65}, ${s/2+eW*0.9} ${s-pad}, ${s/2} ${s-pad} C ${s/2-eW*0.9} ${s-pad}, ${s/2-eW} ${s*0.65}, ${s/2-eW} ${s*0.45} C ${s/2-eW} ${s*0.3}, ${s/2-eW*0.85} ${pad}, ${s/2} ${pad} Z`;
+    }
+    case 'wide-barrel': {
+      const wbH = inner * 0.78;
+      const wbY = (s - wbH) / 2;
+      return `M ${pad+6},${wbY} L ${s-pad-6},${wbY} Q ${s-pad},${wbY} ${s-pad},${wbY+6} L ${s-pad},${wbY+wbH-6} Q ${s-pad},${wbY+wbH} ${s-pad-6},${wbY+wbH} L ${pad+6},${wbY+wbH} Q ${pad},${wbY+wbH} ${pad},${wbY+wbH-6} L ${pad},${wbY+6} Q ${pad},${wbY} ${pad+6},${wbY} Z`;
+    }
+    case 'leaf-wide': {
+      return `M ${s/2} ${pad} Q ${s-pad+3} ${pad-3}, ${s-pad} ${s/2} Q ${s-pad+3} ${s-pad+3}, ${s/2} ${s-pad} Q ${pad-3} ${s-pad+3}, ${pad} ${s/2} Q ${pad-3} ${pad-3}, ${s/2} ${pad} Z`;
+    }
+    case 'nonagon': {
+      const cx=s/2, cy=s/2, r=inner/2;
+      const pts=Array.from({length:9},(_,i)=>{const a=(Math.PI*2/9)*i-Math.PI/2;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;});
+      return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} L ${pts[5]} L ${pts[6]} L ${pts[7]} L ${pts[8]} Z`;
+    }
+    case 'super-ellipse': {
+      const seR = inner / 2;
+      const n = 4;
+      const pts: string[] = [];
+      for (let i = 0; i <= 64; i++) {
+        const t = (2 * Math.PI * i) / 64;
+        const cosT = Math.cos(t);
+        const sinT = Math.sin(t);
+        const x = s / 2 + seR * Math.sign(cosT) * Math.pow(Math.abs(cosT), 2 / n);
+        const y = s / 2 + seR * Math.sign(sinT) * Math.pow(Math.abs(sinT), 2 / n);
+        pts.push(`${x},${y}`);
+      }
+      return `M ${pts[0]} ${pts.slice(1).map(p => `L ${p}`).join(' ')} Z`;
+    }
+
+    default: return '';
+  }
+}
+
+// ============================================
 // PREVIEW SIZE
 // ============================================
 const PREVIEW_SIZE = 160;
@@ -740,6 +1259,7 @@ const PREVIEW_SIZE = 160;
 export default function FrameSelectionScreen() {
   const { colors, isDark } = useTheme();
   const [selectedFrame, setSelectedFrame] = useState<FrameShape>('circle');
+  const [selectedAccessory, setSelectedAccessory] = useState<FrameAccessory>('none');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoHistory, setPhotoHistory] = useState<string[]>([]);
   const [transform, setTransform] = useState<PhotoTransform>({ scale: 1, translateX: 0, translateY: 0 });
@@ -759,12 +1279,14 @@ export default function FrameSelectionScreen() {
       const saved = await AsyncStorage.getItem(FRAME_STORAGE_KEY);
       if (saved) setSelectedFrame(saved as FrameShape);
 
+      const savedAccessory = await AsyncStorage.getItem(ACCESSORY_STORAGE_KEY);
+      if (savedAccessory) setSelectedAccessory(savedAccessory as FrameAccessory);
+
       const profile = await getProfile();
       let history = await loadPhotoHistory();
 
       if (profile?.profile_photo) {
         setPhotoUri(profile.profile_photo);
-        // Ajouter la photo actuelle a l'historique si pas deja dedans
         if (!history.includes(profile.profile_photo)) {
           history = [profile.profile_photo, ...history].slice(0, 5);
           await savePhotoHistory(history);
@@ -826,6 +1348,17 @@ export default function FrameSelectionScreen() {
     }
   };
 
+  const handleSelectAccessory = async (accId: FrameAccessory) => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    setSelectedAccessory(accId);
+    try {
+      await AsyncStorage.setItem(ACCESSORY_STORAGE_KEY, accId);
+      DeviceEventEmitter.emit(FRAME_ACCESSORY_CHANGED_EVENT, accId);
+    } catch (error) {
+      logger.error('Error saving accessory:', error);
+    }
+  };
+
   const handlePickPhoto = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -837,17 +1370,14 @@ export default function FrameSelectionScreen() {
         const uri = result.assets[0].uri;
         setPhotoUri(uri);
 
-        // Sauvegarder comme photo de profil
         const profile = await getProfile();
         if (profile) {
           await saveProfile({ ...profile, profile_photo: uri });
         }
 
-        // Ajouter a l'historique
         const updated = await addToPhotoHistory(uri);
         setPhotoHistory(updated);
 
-        // Reset transform
         const resetT = { scale: 1, translateX: 0, translateY: 0 };
         setTransform(resetT);
         await saveTransform(resetT);
@@ -887,7 +1417,6 @@ export default function FrameSelectionScreen() {
     impactAsync(ImpactFeedbackStyle.Light);
     setTransform(prev => {
       const newScale = Math.max(1, prev.scale - 0.2);
-      // Recentrer si necessaire
       const maxOffset = PREVIEW_SIZE * (newScale - 1) / 2;
       const updated = {
         scale: newScale,
@@ -907,135 +1436,45 @@ export default function FrameSelectionScreen() {
   };
 
   // ============================================
-  // RENDER LIVE PREVIEW avec photo
+  // RENDER LIVE PREVIEW avec photo + accessoire
   // ============================================
   const renderLivePreview = () => {
     const s = PREVIEW_SIZE;
-    const getPreviewClipPath = (shape: FrameShape, sz: number): string => {
-      const p = 4;
-      const inner = sz - p * 2;
-      switch (shape) {
-        case 'circle': return '';
-        case 'rounded-square': {
-          const r = inner * 0.2;
-          return `M ${p+r},${p} L ${p+inner-r},${p} Q ${p+inner},${p} ${p+inner},${p+r} L ${p+inner},${p+inner-r} Q ${p+inner},${p+inner} ${p+inner-r},${p+inner} L ${p+r},${p+inner} Q ${p},${p+inner} ${p},${p+inner-r} L ${p},${p+r} Q ${p},${p} ${p+r},${p} Z`;
-        }
-        case 'squircle': return `M ${sz/2} ${p} C ${sz-p-3} ${p}, ${sz-p} ${p+3}, ${sz-p} ${sz/2} C ${sz-p} ${sz-p-3}, ${sz-p-3} ${sz-p}, ${sz/2} ${sz-p} C ${p+3} ${sz-p}, ${p} ${sz-p-3}, ${p} ${sz/2} C ${p} ${p+3}, ${p+3} ${p}, ${sz/2} ${p} Z`;
-        case 'hexagon': {
-          const cx=sz/2, cy=sz/2, r=inner/2;
-          const pts = Array.from({length:6},(_,i)=>{const a=(Math.PI/3)*i-Math.PI/2;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;});
-          return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} L ${pts[5]} Z`;
-        }
-        case 'octagon': {
-          const cx=sz/2, cy=sz/2, r=inner/2;
-          const pts = Array.from({length:8},(_,i)=>{const a=(Math.PI/4)*i-Math.PI/8;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;});
-          return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} L ${pts[5]} L ${pts[6]} L ${pts[7]} Z`;
-        }
-        case 'diamond': return `M ${sz/2},${p} L ${sz-p},${sz/2} L ${sz/2},${sz-p} L ${p},${sz/2} Z`;
-        case 'shield': return `M ${sz/2} ${p} L ${sz-p} ${sz*0.25} L ${sz-p} ${sz*0.55} Q ${sz-p} ${sz*0.75}, ${sz/2} ${sz-p} Q ${p} ${sz*0.75}, ${p} ${sz*0.55} L ${p} ${sz*0.25} Z`;
-        case 'star': {
-          const cx=sz/2, cy=sz/2, outerR=inner/2, innerR=outerR*0.58;
-          const pts = Array.from({length:10},(_,i)=>{const r=i%2===0?outerR:innerR;const a=(Math.PI/5)*i-Math.PI/2;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;});
-          return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} L ${pts[5]} L ${pts[6]} L ${pts[7]} L ${pts[8]} L ${pts[9]} Z`;
-        }
-        case 'heart': return `M ${sz/2} ${sz-p-2} C ${sz*0.15} ${sz*0.68}, ${p} ${sz*0.48}, ${p} ${sz*0.35} C ${p} ${sz*0.2}, ${sz*0.2} ${p+2}, ${sz*0.35} ${p+2} C ${sz*0.42} ${p+2}, ${sz*0.48} ${sz*0.15}, ${sz/2} ${sz*0.22} C ${sz*0.52} ${sz*0.15}, ${sz*0.58} ${p+2}, ${sz*0.65} ${p+2} C ${sz*0.8} ${p+2}, ${sz-p} ${sz*0.2}, ${sz-p} ${sz*0.35} C ${sz-p} ${sz*0.48}, ${sz*0.85} ${sz*0.68}, ${sz/2} ${sz-p-2} Z`;
-        case 'drop': return `M ${sz/2} ${p} Q ${sz-p} ${sz*0.4}, ${sz-p} ${sz*0.6} C ${sz-p} ${sz-p}, ${sz/2} ${sz-p}, ${sz/2} ${sz-p} C ${sz/2} ${sz-p}, ${p} ${sz-p}, ${p} ${sz*0.6} Q ${p} ${sz*0.4}, ${sz/2} ${p} Z`;
-        case 'arch': {
-          const aR=(sz-p*2)/2;
-          return `M ${p} ${sz-p} L ${p} ${p+aR} A ${aR} ${aR} 0 0 1 ${sz-p} ${p+aR} L ${sz-p} ${sz-p} Z`;
-        }
-        case 'pentagon': {
-          const cx=sz/2, cy=sz/2, r=inner/2;
-          const pts = Array.from({length:5},(_,i)=>{const a=(Math.PI*2/5)*i-Math.PI/2;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;});
-          return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} Z`;
-        }
-        case 'ovale': {
-          const orx=inner/2, ory=orx*0.7;
-          return `M ${sz/2-orx},${sz/2} A ${orx} ${ory} 0 1 1 ${sz/2+orx},${sz/2} A ${orx} ${ory} 0 1 1 ${sz/2-orx},${sz/2} Z`;
-        }
-        case 'plaque': {
-          const cut=inner*0.2;
-          return `M ${p+cut},${p} L ${sz-p-cut},${p} L ${sz-p},${p+cut} L ${sz-p},${sz-p-cut} L ${sz-p-cut},${sz-p} L ${p+cut},${sz-p} L ${p},${sz-p-cut} L ${p},${p+cut} Z`;
-        }
-        case 'tonneau': {
-          const bulge=inner*0.12;
-          return `M ${p+8},${p} L ${sz-p-8},${p} Q ${sz-p},${p} ${sz-p},${p+8} Q ${sz-p+bulge},${sz/2} ${sz-p},${sz-p-8} Q ${sz-p},${sz-p} ${sz-p-8},${sz-p} L ${p+8},${sz-p} Q ${p},${sz-p} ${p},${sz-p-8} Q ${p-bulge},${sz/2} ${p},${p+8} Q ${p},${p} ${p+8},${p} Z`;
-        }
-        case 'capsule': {
-          const ci=sz*0.15, cr=(sz-ci*2)/2;
-          return `M ${ci} ${p+cr} A ${cr} ${cr} 0 0 1 ${sz-ci} ${p+cr} L ${sz-ci} ${sz-p-cr} A ${cr} ${cr} 0 0 1 ${ci} ${sz-p-cr} Z`;
-        }
-        case 'coquille': {
-          const scR=inner/2-2, scN=10;
-          let scD='';
-          for(let i=0;i<scN;i++){const a1=(2*Math.PI*i/scN)-Math.PI/2;const a2=(2*Math.PI*(i+1)/scN)-Math.PI/2;const x1=sz/2+scR*Math.cos(a1);const y1=sz/2+scR*Math.sin(a1);const x2=sz/2+scR*Math.cos(a2);const y2=sz/2+scR*Math.sin(a2);const mA=(a1+a2)/2;const cpx=sz/2+scR*1.18*Math.cos(mA);const cpy=sz/2+scR*1.18*Math.sin(mA);if(i===0)scD+=`M ${x1},${y1} `;scD+=`Q ${cpx},${cpy} ${x2},${y2} `;}
-          return scD+'Z';
-        }
-        case 'trapeze': {
-          const ti=inner*0.14;
-          return `M ${p+ti},${p} L ${sz-p-ti},${p} L ${sz-p},${sz-p} L ${p},${sz-p} Z`;
-        }
-        case 'ogive': {
-          const oR=inner*0.9;
-          return `M ${p} ${sz-p} L ${p} ${sz*0.45} A ${oR} ${oR} 0 0 1 ${sz/2} ${p} A ${oR} ${oR} 0 0 1 ${sz-p} ${sz*0.45} L ${sz-p} ${sz-p} Z`;
-        }
-        case 'marquise':
-          return `M ${sz/2} ${p} C ${sz*0.85} ${sz*0.25}, ${sz*0.85} ${sz*0.75}, ${sz/2} ${sz-p} C ${sz*0.15} ${sz*0.75}, ${sz*0.15} ${sz*0.25}, ${sz/2} ${p} Z`;
-        case 'medaillon': {
-          const mr=inner/2;
-          const pts=Array.from({length:12},(_,i)=>{const a=(Math.PI*2/12)*i-Math.PI/2;return `${sz/2+mr*Math.cos(a)},${sz/2+mr*Math.sin(a)}`;});
-          return `M ${pts[0]} ${pts.slice(1).map(pt=>`L ${pt}`).join(' ')} Z`;
-        }
-        case 'sceau': {
-          const seOuter=inner/2, seInner=seOuter*0.88, seN=16;
-          let seD='';
-          for(let i=0;i<seN*2;i++){const a=(Math.PI*i/seN)-Math.PI/2;const r=i%2===0?seOuter:seInner;seD+=(i===0?`M `:`L `)+`${sz/2+r*Math.cos(a)},${sz/2+r*Math.sin(a)} `;}
-          return seD+'Z';
-        }
-        case 'ticket': {
-          const tkR=inner*0.08;
-          return `M ${p} ${p} L ${sz-p} ${p} L ${sz-p} ${sz/2-tkR} A ${tkR} ${tkR} 0 0 0 ${sz-p} ${sz/2+tkR} L ${sz-p} ${sz-p} L ${p} ${sz-p} L ${p} ${sz/2+tkR} A ${tkR} ${tkR} 0 0 0 ${p} ${sz/2-tkR} Z`;
-        }
-        case 'stade': {
-          const stI=sz*0.15, stR=(sz-stI*2)/2;
-          return `M ${p+stR} ${stI} L ${sz-p-stR} ${stI} A ${stR} ${stR} 0 0 1 ${sz-p-stR} ${sz-stI} L ${p+stR} ${sz-stI} A ${stR} ${stR} 0 0 1 ${p+stR} ${stI} Z`;
-        }
-        case 'triangle-arrondi':
-          return `M ${sz/2},${p} L ${sz-p},${sz-p} L ${p},${sz-p} Z`;
-        case 'demi-cercle': {
-          const dcR=(sz-p*2)/2;
-          return `M ${p} ${sz-p} A ${dcR} ${dcR} 0 1 1 ${sz-p} ${sz-p} Z`;
-        }
-        case 'heptagone': {
-          const cx=sz/2, cy=sz/2, r=inner/2;
-          const pts=Array.from({length:7},(_,i)=>{const a=(Math.PI*2/7)*i-Math.PI/2;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;});
-          return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} L ${pts[5]} L ${pts[6]} Z`;
-        }
-        case 'ecran': {
-          const ecH=inner*0.68, ecY=(sz-ecH)/2, ecR=ecH*0.22;
-          return `M ${p+ecR},${ecY} L ${sz-p-ecR},${ecY} Q ${sz-p},${ecY} ${sz-p},${ecY+ecR} L ${sz-p},${ecY+ecH-ecR} Q ${sz-p},${ecY+ecH} ${sz-p-ecR},${ecY+ecH} L ${p+ecR},${ecY+ecH} Q ${p},${ecY+ecH} ${p},${ecY+ecH-ecR} L ${p},${ecY+ecR} Q ${p},${ecY} ${p+ecR},${ecY} Z`;
-        }
-        case 'nuage':
-          return `M ${p} ${sz*0.65} Q ${p} ${sz*0.4}, ${sz*0.25} ${sz*0.32} Q ${sz*0.3} ${sz*0.15}, ${sz/2} ${sz*0.2} Q ${sz*0.7} ${sz*0.15}, ${sz*0.75} ${sz*0.32} Q ${sz-p} ${sz*0.4}, ${sz-p} ${sz*0.65} Q ${sz-p} ${sz-p}, ${sz/2} ${sz-p} Q ${p} ${sz-p}, ${p} ${sz*0.65} Z`;
-        case 'eventail': {
-          const evI=inner*0.14;
-          return `M ${p},${p} L ${sz-p},${p} L ${sz-p-evI},${sz-p} L ${p+evI},${sz-p} Z`;
-        }
-        default: return '';
-      }
-    };
-
-    const clipPath = getPreviewClipPath(selectedFrame, s);
+    const clipPath = generateClipPath(selectedFrame, s);
     const isCircle = !clipPath;
     const clipId = `preview-clip-${selectedFrame}`;
+    const overflow = s * 0.25; // marge pour debordement accessoire
+    const hasAcc = selectedAccessory !== 'none';
 
     const imageSize = s * transform.scale;
     const imageX = (s - imageSize) / 2 + transform.translateX;
     const imageY = (s - imageSize) / 2 + transform.translateY;
 
+    // Overlay accessoire qui deborde du cadre
+    const accOverlay = hasAcc ? (
+      <View
+        style={{
+          position: 'absolute',
+          top: -overflow,
+          left: -overflow,
+          width: s + overflow * 2,
+          height: s + overflow * 2,
+        }}
+        pointerEvents="none"
+      >
+        <Svg
+          width={s + overflow * 2}
+          height={s + overflow * 2}
+          viewBox={`${-overflow} ${-overflow} ${s + overflow * 2} ${s + overflow * 2}`}
+        >
+          {renderAccessorySvg(selectedAccessory, s, colors.accent)}
+        </Svg>
+      </View>
+    ) : null;
+
     if (photoUri) {
       return (
-        <View style={{ width: s, height: s }} {...panResponder.panHandlers}>
+        <View style={{ width: s, height: s, overflow: 'visible' }} {...panResponder.panHandlers}>
           <Svg width={s} height={s}>
             <Defs>
               <ClipPath id={clipId}>
@@ -1047,6 +1486,7 @@ export default function FrameSelectionScreen() {
               </ClipPath>
             </Defs>
             <SvgImage
+              key={photoUri}
               href={{ uri: photoUri }}
               x={imageX}
               y={imageY}
@@ -1062,19 +1502,23 @@ export default function FrameSelectionScreen() {
               <Path d={clipPath} fill="none" stroke={colors.accent} strokeWidth={3} />
             )}
           </Svg>
+          {accOverlay}
         </View>
       );
     }
 
-    // Pas de photo - forme vide
+    // Pas de photo - forme vide + accessoire
     return (
-      <FrameShapePreview
-        shape={selectedFrame}
-        size={s}
-        color={colors.accent}
-        fillColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
-        isSelected={true}
-      />
+      <View style={{ width: s, height: s, overflow: 'visible' }}>
+        <FrameShapePreview
+          shape={selectedFrame}
+          size={s}
+          color={colors.accent}
+          fillColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+          isSelected={true}
+        />
+        {accOverlay}
+      </View>
     );
   };
 
@@ -1128,6 +1572,57 @@ export default function FrameSelectionScreen() {
     </>
   ), [selectedFrame, colors, isDark]);
 
+  // Memoize la grille des accessoires
+  const accessoriesGrid = useMemo(() => (
+    <>
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: SPACING.xl }]}>
+        Accessoires
+      </Text>
+      <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+        Ajoute un ornement sur le bord de ta photo
+      </Text>
+      <View style={styles.accessoryRow}>
+        {ACCESSORY_OPTIONS.map((acc) => {
+          const isSelected = selectedAccessory === acc.id;
+          return (
+            <TouchableOpacity
+              key={acc.id}
+              style={[
+                styles.accessoryCard,
+                { backgroundColor: colors.backgroundCard },
+                isSelected && { borderColor: colors.accent, borderWidth: 2 },
+              ]}
+              onPress={() => handleSelectAccessory(acc.id)}
+              activeOpacity={0.7}
+            >
+              <AccessoryPreview
+                accessory={acc.id}
+                size={40}
+                accentColor={isSelected ? colors.accent : colors.textMuted}
+                bgColor={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'}
+                isSelected={isSelected}
+              />
+              <Text
+                style={[
+                  styles.accessoryName,
+                  { color: isSelected ? colors.accent : colors.textPrimary }
+                ]}
+                numberOfLines={1}
+              >
+                {acc.name}
+              </Text>
+              {isSelected && (
+                <View style={[styles.accessoryCheck, { backgroundColor: colors.accent }]}>
+                  <Check size={10} color={colors.textOnAccent} strokeWidth={3} />
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </>
+  ), [selectedAccessory, colors, isDark]);
+
   return (
     <ScreenWrapper>
       <ScrollView
@@ -1169,6 +1664,7 @@ export default function FrameSelectionScreen() {
           {/* Nom de la forme */}
           <Text style={[styles.previewName, { color: colors.textPrimary }]}>
             {FRAME_OPTIONS.find(f => f.id === selectedFrame)?.name}
+            {selectedAccessory !== 'none' ? ` + ${ACCESSORY_OPTIONS.find(a => a.id === selectedAccessory)?.name}` : ''}
           </Text>
 
           {/* Controles de positionnement */}
@@ -1249,6 +1745,9 @@ export default function FrameSelectionScreen() {
           </View>
         )}
 
+        {/* Accessoires decoratifs */}
+        {accessoriesGrid}
+
         {/* Grid of frames - memoize pour ne pas re-render pendant le drag */}
         {framesGrid}
 
@@ -1290,6 +1789,7 @@ const styles = StyleSheet.create({
     padding: SPACING.xl,
     borderRadius: RADIUS.xl,
     marginBottom: SPACING.xl,
+    overflow: 'visible',
   },
   previewLabel: {
     fontSize: 12,
@@ -1300,6 +1800,7 @@ const styles = StyleSheet.create({
   },
   previewFrame: {
     marginBottom: SPACING.md,
+    overflow: 'visible',
   },
   previewName: {
     fontSize: 18,
@@ -1383,6 +1884,45 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: SPACING.md,
   },
+  sectionSubtitle: {
+    fontSize: 13,
+    marginBottom: SPACING.md,
+    marginTop: -6,
+  },
+
+  // Accessoires
+  accessoryRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    marginBottom: SPACING.xl,
+  },
+  accessoryCard: {
+    width: (SCREEN_WIDTH - SPACING.lg * 2 - SPACING.sm * 3) / 4,
+    aspectRatio: 0.9,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: SPACING.xs,
+    position: 'relative',
+  },
+  accessoryName: {
+    fontSize: 10,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  accessoryCheck: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

@@ -12,7 +12,7 @@ import { router } from 'expo-router';
 import { TrendingUp, TrendingDown, Minus, Plus, Dumbbell, Droplet, Share2, FileText, Moon, Zap, Bell, BellOff, Check, Target, Calendar, Activity, AlertTriangle, CheckCircle, Clock, Settings, Footprints, Flame } from 'lucide-react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { getAvatarConfig, getAvatarImage } from '@/lib/avatarSystem';
+import { useAvatar } from '@/lib/AvatarContext';
 // HydrationCardFullWidth removed - integrated into Report grid card
 // QuestsCard déplacé dans HomeTabView page 2
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,6 +25,7 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { RankCitationCard } from '@/components/home/RankCitationCard';
 import { FramedProfilePhoto } from '@/components/FramedProfilePhoto';
 import { logger } from '@/lib/security/logger';
+import HomeChallengesSection from '@/components/home/HomeChallengesSection';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const IS_SMALL_SCREEN = SCREEN_WIDTH < 375; // iPhone SE, petits téléphones
@@ -449,11 +450,19 @@ interface HydrationGridCardProps {
 
 const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, isDark }: HydrationGridCardProps) => {
   const cardBg = isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF';
-  const safeGoal = hydrationGoal >= 500 ? hydrationGoal : 2500;
+  const TOTAL_PAGES = 3;
+
+  // Goal local : se met à jour instantanément à la sauvegarde + sync depuis la prop parent
+  const [localGoalMl, setLocalGoalMl] = useState(hydrationGoal >= 500 ? hydrationGoal : 2500);
+  useEffect(() => {
+    const fromProp = hydrationGoal >= 500 ? hydrationGoal : 2500;
+    setLocalGoalMl(fromProp);
+  }, [hydrationGoal]);
+
+  const safeGoal = localGoalMl;
   const pct = Math.min(100, Math.round((hydration / safeGoal) * 100));
   const goalReached = pct >= 100;
   const accentColor = goalReached ? '#10B981' : '#06B6D4';
-  const TOTAL_PAGES = 3;
 
   // Page state
   const [currentPage, setCurrentPage] = useState(0);
@@ -581,11 +590,13 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
     try {
       // Sauvegarder en litres (format utilisé par hydration.tsx)
       await AsyncStorage.setItem(HYDRATION_GOAL_KEY, editGoal.toString());
+      // Mise à jour locale INSTANTANÉE (graduations + bouteille + %)
+      setLocalGoalMl(Math.round(editGoal * 1000));
       notificationAsync(NotificationFeedbackType.Success);
       setGoalSaved(true);
       setTimeout(() => setGoalSaved(false), 2000);
-      // Notifier le parent pour recharger les données
-      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+      // Notifier le home screen pour sync globale
+      DeviceEventEmitter.emit('HYDRATION_GOAL_CHANGED', { goalLiters: editGoal });
     } catch {}
   };
 
@@ -707,8 +718,8 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
             {/* Valeur */}
             <View style={hStyles.valueCenter}>
               <Text style={[hStyles.bigValue, { color: goalReached ? '#10B981' : colors.textPrimary }]}>
-                {hydration < 1000 ? `${Math.round(hydration)}ml` : `${(hydration / 1000).toFixed(2)}L`}
-                <Text style={[hStyles.gradInline, { color: colors.textMuted }]}> / {(safeGoal / 1000).toFixed(1)}L</Text>
+                {hydration < 1000 ? `${Math.round(hydration)}ml` : `${parseFloat((hydration / 1000).toFixed(2))}L`}
+                <Text style={[hStyles.gradInline, { color: colors.textMuted }]}> / {parseFloat((safeGoal / 1000).toFixed(2))}L</Text>
               </Text>
             </View>
 
@@ -808,7 +819,7 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
                 <Minus size={18} color={colors.textPrimary} strokeWidth={2.5} />
               </TouchableOpacity>
               <View style={hStyles.goalDisplay}>
-                <Text style={[hStyles.goalValue, { color: colors.textPrimary }]}>{editGoal.toFixed(1)}</Text>
+                <Text style={[hStyles.goalValue, { color: colors.textPrimary }]}>{parseFloat(editGoal.toFixed(2))}</Text>
                 <Text style={[hStyles.goalUnit, { color: colors.textMuted }]}>litres</Text>
               </View>
               <TouchableOpacity style={[hStyles.goalBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]} onPress={() => setEditGoal(Math.min(5, editGoal + 0.25))}>
@@ -988,6 +999,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 }) => {
   const { colors, isDark, themeColor } = useTheme();
   const { t, locale } = useI18n();
+  const { avatarImage: contextAvatarImage } = useAvatar();
   const [userGoal, setUserGoal] = useState<'lose' | 'maintain' | 'gain'>(propUserGoal || 'lose');
   const [bodyComposition, setBodyComposition] = useState<BodyComposition | null>(null);
   const [trainingCalories, setTrainingCalories] = useState(0);
@@ -1144,30 +1156,13 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
     loadBodyComposition();
   }, [refreshTrigger]);
 
-  // Load avatar image for octagon display
+  // Avatar from context - resolve to URI for SVG rendering
   useEffect(() => {
-    const loadAvatarImage = async () => {
-      try {
-        const config = await getAvatarConfig();
-        const image = getAvatarImage(
-          config.pack,
-          config.packType === 'character' ? config.state : undefined,
-          config.collectionCharacter,
-          config.gender
-        );
-        // Resolve the require() to get the actual URI
-        const resolved = Image.resolveAssetSource(image);
-        setAvatarImageUri(resolved?.uri || null);
-      } catch (error) {
-        logger.error('Error loading avatar image:', error);
-        // Fallback to default
-        const defaultImage = require('@/assets/avatars/samurai/samurai_neutral.png');
-        const resolved = Image.resolveAssetSource(defaultImage);
-        setAvatarImageUri(resolved?.uri || null);
-      }
-    };
-    loadAvatarImage();
-  }, [refreshTrigger]);
+    if (contextAvatarImage) {
+      const resolved = Image.resolveAssetSource(contextAvatarImage);
+      setAvatarImageUri(resolved?.uri || null);
+    }
+  }, [contextAvatarImage]);
 
   // Check if share button was dismissed
   useEffect(() => {
@@ -2225,6 +2220,11 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
       )}
 
       {/* PAS / KCAL / SÉRIE et OUTILS supprimés - déplacés dans onglet Menu */}
+
+      {/* DÉFIS DU JOUR - Quêtes avec XP */}
+      <View style={{ marginBottom: 16, marginTop: 8 }}>
+        <HomeChallengesSection />
+      </View>
 
     </ScrollView>
   );

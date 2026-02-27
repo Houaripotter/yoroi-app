@@ -1,14 +1,24 @@
 // ============================================
 // FRAMED PROFILE PHOTO - Applique la forme selectionnee
-// Utilise le cadre choisi dans frame-selection
+// + accessoire decoratif EXTERIEUR (deborde du cadre)
 // ============================================
 
 import React, { useState, useEffect, memo } from 'react';
-import { View, Image, StyleSheet, DeviceEventEmitter } from 'react-native';
-import Svg, { Path, Circle, Rect, Polygon, Defs, ClipPath, Image as SvgImage } from 'react-native-svg';
+import { View, StyleSheet, DeviceEventEmitter } from 'react-native';
+import Svg, { Path, Circle, Defs, ClipPath, Image as SvgImage, G } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { FRAME_STORAGE_KEY, FRAME_SHAPE_CHANGED_EVENT, type FrameShape, type PhotoTransform } from '@/app/frame-selection';
+import {
+  FRAME_STORAGE_KEY,
+  FRAME_SHAPE_CHANGED_EVENT,
+  ACCESSORY_STORAGE_KEY,
+  FRAME_ACCESSORY_CHANGED_EVENT,
+  generateClipPath,
+  renderAccessorySvg,
+  type FrameShape,
+  type FrameAccessory,
+  type PhotoTransform,
+} from '@/app/frame-selection';
 import { useTheme } from '@/lib/ThemeContext';
 
 const PHOTO_TRANSFORM_KEY = '@yoroi_frame_transform';
@@ -21,217 +31,6 @@ interface FramedProfilePhotoProps {
   placeholderIconSize?: number;
 }
 
-// Genere le clipPath SVG pour chaque forme
-function getClipPath(shape: FrameShape, s: number): string {
-  const pad = 2;
-  const inner = s - pad * 2;
-
-  switch (shape) {
-    case 'circle':
-      // Pas de path, on utilise <Circle> directement
-      return '';
-
-    case 'rounded-square': {
-      const r = inner * 0.2;
-      return `M ${pad + r},${pad} L ${pad + inner - r},${pad} Q ${pad + inner},${pad} ${pad + inner},${pad + r} L ${pad + inner},${pad + inner - r} Q ${pad + inner},${pad + inner} ${pad + inner - r},${pad + inner} L ${pad + r},${pad + inner} Q ${pad},${pad + inner} ${pad},${pad + inner - r} L ${pad},${pad + r} Q ${pad},${pad} ${pad + r},${pad} Z`;
-    }
-
-    case 'squircle':
-      return `M ${s / 2} ${pad} C ${s - pad - 3} ${pad}, ${s - pad} ${pad + 3}, ${s - pad} ${s / 2} C ${s - pad} ${s - pad - 3}, ${s - pad - 3} ${s - pad}, ${s / 2} ${s - pad} C ${pad + 3} ${s - pad}, ${pad} ${s - pad - 3}, ${pad} ${s / 2} C ${pad} ${pad + 3}, ${pad + 3} ${pad}, ${s / 2} ${pad} Z`;
-
-    case 'hexagon': {
-      const cx = s / 2;
-      const cy = s / 2;
-      const r = inner / 2;
-      const pts = Array.from({ length: 6 }, (_, i) => {
-        const a = (Math.PI / 3) * i - Math.PI / 2;
-        return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
-      });
-      return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} L ${pts[5]} Z`;
-    }
-
-    case 'octagon': {
-      const cx = s / 2;
-      const cy = s / 2;
-      const r = inner / 2;
-      const pts = Array.from({ length: 8 }, (_, i) => {
-        const a = (Math.PI / 4) * i - Math.PI / 8;
-        return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
-      });
-      return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} L ${pts[5]} L ${pts[6]} L ${pts[7]} Z`;
-    }
-
-    case 'diamond':
-      return `M ${s / 2},${pad} L ${s - pad},${s / 2} L ${s / 2},${s - pad} L ${pad},${s / 2} Z`;
-
-    case 'shield':
-      return `M ${s / 2} ${pad} L ${s - pad} ${s * 0.25} L ${s - pad} ${s * 0.55} Q ${s - pad} ${s * 0.75}, ${s / 2} ${s - pad} Q ${pad} ${s * 0.75}, ${pad} ${s * 0.55} L ${pad} ${s * 0.25} Z`;
-
-    case 'star': {
-      // Etoile epaisse style badge
-      const cx = s / 2;
-      const cy = s / 2;
-      const outerR = inner / 2;
-      const innerR = outerR * 0.58;
-      const pts = Array.from({ length: 10 }, (_, i) => {
-        const r = i % 2 === 0 ? outerR : innerR;
-        const a = (Math.PI / 5) * i - Math.PI / 2;
-        return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
-      });
-      return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} L ${pts[5]} L ${pts[6]} L ${pts[7]} L ${pts[8]} L ${pts[9]} Z`;
-    }
-
-    case 'heart':
-      // Coeur bien proportionne et arrondi
-      return `M ${s/2} ${s - pad - 2} C ${s * 0.15} ${s * 0.68}, ${pad} ${s * 0.48}, ${pad} ${s * 0.35} C ${pad} ${s * 0.2}, ${s * 0.2} ${pad + 2}, ${s * 0.35} ${pad + 2} C ${s * 0.42} ${pad + 2}, ${s * 0.48} ${s * 0.15}, ${s/2} ${s * 0.22} C ${s * 0.52} ${s * 0.15}, ${s * 0.58} ${pad + 2}, ${s * 0.65} ${pad + 2} C ${s * 0.8} ${pad + 2}, ${s - pad} ${s * 0.2}, ${s - pad} ${s * 0.35} C ${s - pad} ${s * 0.48}, ${s * 0.85} ${s * 0.68}, ${s/2} ${s - pad - 2} Z`;
-
-    case 'drop':
-      return `M ${s / 2} ${pad} Q ${s - pad} ${s * 0.4}, ${s - pad} ${s * 0.6} C ${s - pad} ${s - pad}, ${s / 2} ${s - pad}, ${s / 2} ${s - pad} C ${s / 2} ${s - pad}, ${pad} ${s - pad}, ${pad} ${s * 0.6} Q ${pad} ${s * 0.4}, ${s / 2} ${pad} Z`;
-
-    case 'arch': {
-      // Arche - demi-cercle en haut, cotes droits, bas plat
-      const aR = (s - pad * 2) / 2;
-      return `M ${pad} ${s - pad} L ${pad} ${pad + aR} A ${aR} ${aR} 0 0 1 ${s - pad} ${pad + aR} L ${s - pad} ${s - pad} Z`;
-    }
-
-    case 'pentagon': {
-      const cx = s / 2;
-      const cy = s / 2;
-      const r = inner / 2;
-      const pts = Array.from({ length: 5 }, (_, i) => {
-        const a = (Math.PI * 2 / 5) * i - Math.PI / 2;
-        return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
-      });
-      return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} Z`;
-    }
-
-    case 'ovale': {
-      const orx = inner / 2;
-      const ory = orx * 0.7;
-      return `M ${s/2 - orx},${s/2} A ${orx} ${ory} 0 1 1 ${s/2 + orx},${s/2} A ${orx} ${ory} 0 1 1 ${s/2 - orx},${s/2} Z`;
-    }
-
-    case 'plaque': {
-      const cut = inner * 0.2;
-      return `M ${pad+cut},${pad} L ${s-pad-cut},${pad} L ${s-pad},${pad+cut} L ${s-pad},${s-pad-cut} L ${s-pad-cut},${s-pad} L ${pad+cut},${s-pad} L ${pad},${s-pad-cut} L ${pad},${pad+cut} Z`;
-    }
-
-    case 'tonneau': {
-      const bulge = inner * 0.12;
-      return `M ${pad+8},${pad} L ${s-pad-8},${pad} Q ${s-pad},${pad} ${s-pad},${pad+8} Q ${s-pad+bulge},${s/2} ${s-pad},${s-pad-8} Q ${s-pad},${s-pad} ${s-pad-8},${s-pad} L ${pad+8},${s-pad} Q ${pad},${s-pad} ${pad},${s-pad-8} Q ${pad-bulge},${s/2} ${pad},${pad+8} Q ${pad},${pad} ${pad+8},${pad} Z`;
-    }
-
-    case 'capsule': {
-      const ci = s * 0.15;
-      const cr = (s - ci * 2) / 2;
-      return `M ${ci} ${pad + cr} A ${cr} ${cr} 0 0 1 ${s - ci} ${pad + cr} L ${s - ci} ${s - pad - cr} A ${cr} ${cr} 0 0 1 ${ci} ${s - pad - cr} Z`;
-    }
-
-    case 'coquille': {
-      const scR = inner / 2 - 2;
-      const scN = 10;
-      let scD = '';
-      for (let i = 0; i < scN; i++) {
-        const a1 = (2 * Math.PI * i / scN) - Math.PI / 2;
-        const a2 = (2 * Math.PI * (i + 1) / scN) - Math.PI / 2;
-        const x1 = s / 2 + scR * Math.cos(a1);
-        const y1 = s / 2 + scR * Math.sin(a1);
-        const x2 = s / 2 + scR * Math.cos(a2);
-        const y2 = s / 2 + scR * Math.sin(a2);
-        const mA = (a1 + a2) / 2;
-        const cpx = s / 2 + scR * 1.18 * Math.cos(mA);
-        const cpy = s / 2 + scR * 1.18 * Math.sin(mA);
-        if (i === 0) scD += `M ${x1},${y1} `;
-        scD += `Q ${cpx},${cpy} ${x2},${y2} `;
-      }
-      return scD + 'Z';
-    }
-
-    case 'trapeze': {
-      const ti = inner * 0.14;
-      return `M ${pad + ti},${pad} L ${s - pad - ti},${pad} L ${s - pad},${s - pad} L ${pad},${s - pad} Z`;
-    }
-
-    case 'ogive': {
-      const oR = inner * 0.9;
-      return `M ${pad} ${s - pad} L ${pad} ${s * 0.45} A ${oR} ${oR} 0 0 1 ${s / 2} ${pad} A ${oR} ${oR} 0 0 1 ${s - pad} ${s * 0.45} L ${s - pad} ${s - pad} Z`;
-    }
-
-    case 'marquise':
-      return `M ${s / 2} ${pad} C ${s * 0.85} ${s * 0.25}, ${s * 0.85} ${s * 0.75}, ${s / 2} ${s - pad} C ${s * 0.15} ${s * 0.75}, ${s * 0.15} ${s * 0.25}, ${s / 2} ${pad} Z`;
-
-    case 'medaillon': {
-      const mr = inner / 2;
-      const pts = Array.from({ length: 12 }, (_, i) => {
-        const a = (Math.PI * 2 / 12) * i - Math.PI / 2;
-        return `${s / 2 + mr * Math.cos(a)},${s / 2 + mr * Math.sin(a)}`;
-      });
-      return `M ${pts[0]} ${pts.slice(1).map(pt => `L ${pt}`).join(' ')} Z`;
-    }
-
-    case 'sceau': {
-      const seOuter = inner / 2;
-      const seInner = seOuter * 0.88;
-      const seN = 16;
-      let seD = '';
-      for (let i = 0; i < seN * 2; i++) {
-        const a = (Math.PI * i / seN) - Math.PI / 2;
-        const r = i % 2 === 0 ? seOuter : seInner;
-        seD += (i === 0 ? `M ` : `L `) + `${s/2 + r * Math.cos(a)},${s/2 + r * Math.sin(a)} `;
-      }
-      return seD + 'Z';
-    }
-
-    case 'ticket': {
-      const tkR = inner * 0.08;
-      return `M ${pad} ${pad} L ${s-pad} ${pad} L ${s-pad} ${s/2-tkR} A ${tkR} ${tkR} 0 0 0 ${s-pad} ${s/2+tkR} L ${s-pad} ${s-pad} L ${pad} ${s-pad} L ${pad} ${s/2+tkR} A ${tkR} ${tkR} 0 0 0 ${pad} ${s/2-tkR} Z`;
-    }
-
-    case 'stade': {
-      const stI = s * 0.15;
-      const stR = (s - stI * 2) / 2;
-      return `M ${pad + stR} ${stI} L ${s - pad - stR} ${stI} A ${stR} ${stR} 0 0 1 ${s - pad - stR} ${s - stI} L ${pad + stR} ${s - stI} A ${stR} ${stR} 0 0 1 ${pad + stR} ${stI} Z`;
-    }
-
-    case 'triangle-arrondi':
-      return `M ${s/2},${pad} L ${s-pad},${s-pad} L ${pad},${s-pad} Z`;
-
-    case 'demi-cercle': {
-      const dcR = (s - pad * 2) / 2;
-      return `M ${pad} ${s - pad} A ${dcR} ${dcR} 0 1 1 ${s - pad} ${s - pad} Z`;
-    }
-
-    case 'heptagone': {
-      const cx = s / 2;
-      const cy = s / 2;
-      const r = inner / 2;
-      const pts = Array.from({ length: 7 }, (_, i) => {
-        const a = (Math.PI * 2 / 7) * i - Math.PI / 2;
-        return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
-      });
-      return `M ${pts[0]} L ${pts[1]} L ${pts[2]} L ${pts[3]} L ${pts[4]} L ${pts[5]} L ${pts[6]} Z`;
-    }
-
-    case 'ecran': {
-      const ecH = inner * 0.68;
-      const ecY = (s - ecH) / 2;
-      const ecR = ecH * 0.22;
-      return `M ${pad+ecR},${ecY} L ${s-pad-ecR},${ecY} Q ${s-pad},${ecY} ${s-pad},${ecY+ecR} L ${s-pad},${ecY+ecH-ecR} Q ${s-pad},${ecY+ecH} ${s-pad-ecR},${ecY+ecH} L ${pad+ecR},${ecY+ecH} Q ${pad},${ecY+ecH} ${pad},${ecY+ecH-ecR} L ${pad},${ecY+ecR} Q ${pad},${ecY} ${pad+ecR},${ecY} Z`;
-    }
-
-    case 'nuage':
-      return `M ${pad} ${s*0.65} Q ${pad} ${s*0.4}, ${s*0.25} ${s*0.32} Q ${s*0.3} ${s*0.15}, ${s/2} ${s*0.2} Q ${s*0.7} ${s*0.15}, ${s*0.75} ${s*0.32} Q ${s-pad} ${s*0.4}, ${s-pad} ${s*0.65} Q ${s-pad} ${s-pad}, ${s/2} ${s-pad} Q ${pad} ${s-pad}, ${pad} ${s*0.65} Z`;
-
-    case 'eventail': {
-      const evI = inner * 0.14;
-      return `M ${pad},${pad} L ${s-pad},${pad} L ${s-pad-evI},${s-pad} L ${pad+evI},${s-pad} Z`;
-    }
-
-    default:
-      return '';
-  }
-}
-
 const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
   uri,
   size,
@@ -241,11 +40,15 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
 }) => {
   const { isDark, colors } = useTheme();
   const [frameShape, setFrameShape] = useState<FrameShape>('circle');
+  const [accessory, setAccessory] = useState<FrameAccessory>('none');
   const [transform, setTransform] = useState<PhotoTransform>({ scale: 1, translateX: 0, translateY: 0 });
 
   useEffect(() => {
     AsyncStorage.getItem(FRAME_STORAGE_KEY).then(saved => {
       if (saved) setFrameShape(saved as FrameShape);
+    });
+    AsyncStorage.getItem(ACCESSORY_STORAGE_KEY).then(saved => {
+      if (saved) setAccessory(saved as FrameAccessory);
     });
     AsyncStorage.getItem(PHOTO_TRANSFORM_KEY).then(raw => {
       if (raw) {
@@ -253,10 +56,16 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
       }
     });
 
-    const sub = DeviceEventEmitter.addListener(FRAME_SHAPE_CHANGED_EVENT, (shape: FrameShape) => {
+    const sub1 = DeviceEventEmitter.addListener(FRAME_SHAPE_CHANGED_EVENT, (shape: FrameShape) => {
       setFrameShape(shape);
     });
-    return () => sub.remove();
+    const sub2 = DeviceEventEmitter.addListener(FRAME_ACCESSORY_CHANGED_EVENT, (acc: FrameAccessory) => {
+      setAccessory(acc);
+    });
+    return () => {
+      sub1.remove();
+      sub2.remove();
+    };
   }, []);
 
   // Adapter le transform a la taille du composant (sauvegarde a 160px)
@@ -265,20 +74,50 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
   const imgX = (size - imgSize) / 2 + transform.translateX * ratio;
   const imgY = (size - imgSize) / 2 + transform.translateY * ratio;
 
-  const clipPath = getClipPath(frameShape, size);
+  const clipPath = generateClipPath(frameShape, size, 2);
   const isCircle = !clipPath;
+
+  // L'accessoire deborde : on utilise un overlay SVG positionne en absolu
+  // avec overflow visible et un padding pour le debordement
+  const overflow = size * 0.25; // marge pour le debordement de l'accessoire
+  const hasAccessory = accessory !== 'none';
+
+  const accessoryOverlay = hasAccessory ? (
+    <View
+      style={{
+        position: 'absolute',
+        top: -overflow,
+        left: -overflow,
+        width: size + overflow * 2,
+        height: size + overflow * 2,
+        // overflow visible pour que l'accessoire deborde
+      }}
+      pointerEvents="none"
+    >
+      <Svg
+        width={size + overflow * 2}
+        height={size + overflow * 2}
+        viewBox={`${-overflow} ${-overflow} ${size + overflow * 2} ${size + overflow * 2}`}
+      >
+        {renderAccessorySvg(accessory, size, colors.accent)}
+      </Svg>
+    </View>
+  ) : null;
 
   // Formes simples avec borderRadius (circle)
   if (isCircle) {
     if (!uri) {
       return (
-        <View style={[{
-          width: size, height: size, borderRadius: size / 2,
-          overflow: 'hidden', backgroundColor: '#FFFFFF', borderWidth: bw, borderColor,
-        }]}>
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
-            <Ionicons name="person" size={placeholderIconSize} color={isDark ? '#666' : '#999'} />
+        <View style={{ width: size, height: size, overflow: 'visible' }}>
+          <View style={[{
+            width: size, height: size, borderRadius: size / 2,
+            overflow: 'hidden', backgroundColor: '#FFFFFF', borderWidth: bw, borderColor,
+          }]}>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+              <Ionicons name="person" size={placeholderIconSize} color={isDark ? '#666' : '#999'} />
+            </View>
           </View>
+          {accessoryOverlay}
         </View>
       );
     }
@@ -286,7 +125,7 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
     // Circle avec transform via SVG pour le positionnement
     const clipId = `frame-circle-${size}`;
     return (
-      <View style={{ width: size, height: size }}>
+      <View style={{ width: size, height: size, overflow: 'visible' }}>
         <Svg width={size} height={size}>
           <Defs>
             <ClipPath id={clipId}>
@@ -302,6 +141,7 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
           />
           <Circle cx={size/2} cy={size/2} r={size/2 - bw/2} fill="none" stroke={borderColor} strokeWidth={bw} />
         </Svg>
+        {accessoryOverlay}
       </View>
     );
   }
@@ -310,7 +150,7 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
   const clipId = `frame-clip-${frameShape}-${size}`;
 
   return (
-    <View style={{ width: size, height: size }}>
+    <View style={{ width: size, height: size, overflow: 'visible' }}>
       <Svg width={size} height={size}>
         <Defs>
           <ClipPath id={clipId}>
@@ -341,6 +181,9 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
           <Ionicons name="person" size={placeholderIconSize} color={isDark ? '#666' : '#999'} />
         </View>
       )}
+
+      {/* Accessoire decoratif - overlay qui deborde */}
+      {accessoryOverlay}
     </View>
   );
 });

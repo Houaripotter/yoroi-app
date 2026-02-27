@@ -48,7 +48,7 @@ import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import { getWeights, getTrainings, getPhotos } from '@/lib/database';
-import { POINTS_ACTIONS } from '@/lib/gamification';
+import { POINTS_ACTIONS, getUnifiedPoints } from '@/lib/gamification';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useDevMode } from '@/lib/DevModeContext';
 import logger from '@/lib/security/logger';
@@ -146,16 +146,12 @@ export default function ThemesScreen() {
         getPhotos(),
       ]);
 
-      // Calcul simplifié de l'XP - Mode Créateur = XP infini (999999)
+      // XP unifie (inclut activite + quetes + challenges + sante)
       if (creatorModeActive) {
         setUserXP(999999);
       } else {
-        const calculatedXP =
-          weights.length * POINTS_ACTIONS.peser +
-          trainings.length * POINTS_ACTIONS.entrainement +
-          photos.length * POINTS_ACTIONS.photo;
-
-        setUserXP(calculatedXP);
+        const unifiedXP = await getUnifiedPoints();
+        setUserXP(unifiedXP);
       }
     } catch (error) {
       logger.error('[Themes] Erreur chargement:', error);

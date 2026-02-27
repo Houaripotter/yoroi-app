@@ -34,7 +34,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { getTrainings, Training, getClubs, getProfile, calculateStreak } from '@/lib/database';
-import { getAvatarConfig, getAvatarImage } from '@/lib/avatarSystem';
+import { useAvatar } from '@/lib/AvatarContext';
 import { getCurrentRank } from '@/lib/ranks';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -49,6 +49,7 @@ const GOLD_COLOR = '#D4AF37';
 
 export default function LastSessionScreen() {
   const { colors, isDark } = useTheme();
+  const { avatarImage: contextAvatar } = useAvatar();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id?: string }>();
   const cardRef = useRef<View>(null);
@@ -90,11 +91,10 @@ export default function LastSessionScreen() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [trainings, clubs, profile, avatarConfig, streak] = await Promise.all([
+        const [trainings, clubs, profile, streak] = await Promise.all([
           getTrainings(),
           getClubs(),
           getProfile(),
-          getAvatarConfig(),
           calculateStreak(),
         ]);
 
@@ -108,15 +108,9 @@ export default function LastSessionScreen() {
           }
         }
 
-        // Charger l'avatar
-        if (avatarConfig) {
-          const image = getAvatarImage(
-            avatarConfig.pack,
-            avatarConfig.state,
-            avatarConfig.collectionCharacter,
-            avatarConfig.gender
-          );
-          setUserAvatar(image);
+        // Avatar via context
+        if (contextAvatar) {
+          setUserAvatar(contextAvatar);
         }
 
         // Charger le rang

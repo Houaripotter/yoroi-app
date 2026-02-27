@@ -681,11 +681,16 @@ export default function VictoryShareModal({
                           ]}>Suivi du poids & sport</Text>
                         </View>
 
-                        {/* RIGHT: App Store */}
+                        {/* RIGHT: Store Badges */}
                         <View style={styles.footerRight}>
                           <Image
                             source={require('@/assets/images/appstore.png')}
                             style={styles.footerAppStoreIcon}
+                            resizeMode="contain"
+                          />
+                          <Image
+                            source={require('@/assets/images/android.png')}
+                            style={styles.footerAndroidIcon}
                             resizeMode="contain"
                           />
                         </View>
@@ -1213,8 +1218,13 @@ const styles = StyleSheet.create({
   footerRight: {
     alignItems: 'flex-end',
     justifyContent: 'center',
+    gap: 3,
   },
   footerAppStoreIcon: {
+    width: 70,
+    height: 22,
+  },
+  footerAndroidIcon: {
     width: 70,
     height: 22,
   },

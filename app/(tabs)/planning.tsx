@@ -14,6 +14,7 @@ import {
   FlatList,
   ActivityIndicator,
   Modal,
+  Alert,
 } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -21,7 +22,7 @@ import { useI18n } from '@/lib/I18nContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '@/lib/security/logger';
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
@@ -41,6 +42,8 @@ import {
   Sun,
   Filter,
   Edit3,
+  Clock,
+  Star,
 } from 'lucide-react-native';
 
 // Import events catalog service (SQLite optimized)
@@ -53,7 +56,7 @@ import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '@/constants/design';
 import { getTrainings, getClubs, addTraining, deleteTraining, deleteClub, Club, Training, getCompetitions, Competition } from '@/lib/database';
 import { getSportIcon } from '@/constants/sportIcons';
 import { DayDetailModal } from '@/components/calendar';
-import { getClubLogoSource, getSportById } from '@/lib/sports';
+import { getClubLogoSource, getSportById, getSportIcon as getSportIconLib, getSportColor, getSportName } from '@/lib/sports';
 import { PartnerDetailModal, Partner } from '@/components/PartnerDetailModal';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { TimetableView, EnhancedCalendarView, AddClubModal } from '@/components/planning';
@@ -107,8 +110,9 @@ const EUROPEAN_COUNTRIES = [
   'Iceland', 'Serbia', 'Ukraine', 'Belarus', 'Albania', 'Europe',
 ];
 
-// AsyncStorage key for saved events
+// AsyncStorage keys
 const SAVED_EVENTS_KEY = 'my_saved_events';
+const FAVORITE_SPORTS_KEY = '@yoroi_favorite_sports';
 
 export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
@@ -136,6 +140,10 @@ export default function PlanningScreen() {
   const [selectedSportInCategory, setSelectedSportInCategory] = useState<string>('all');
   const [expandedOrganizers, setExpandedOrganizers] = useState<{ [key: string]: boolean }>({});
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Modal sessions par club/sport
+  const [showSessionsModal, setShowSessionsModal] = useState(false);
+  const [sessionsFilter, setSessionsFilter] = useState<{ id: string | number; name: string; logoUri?: string; color?: string; icon?: string; isSportOnly?: boolean } | null>(null);
 
   // Tutoriel de découverte
   const [showTutorial, setShowTutorial] = useState(false);
@@ -183,6 +191,9 @@ export default function PlanningScreen() {
   const [catalogSubFilter, setCatalogSubFilter] = useState<string>('all'); // Distance, GI/NO GI, etc.
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
+  const [favoriteSports, setFavoriteSports] = useState<Set<string>>(new Set());
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [expandedSports, setExpandedSports] = useState<Set<string>>(new Set());
 
 
   // Clubs & Objectifs state
@@ -202,6 +213,7 @@ export default function PlanningScreen() {
   };
 
   // Protection anti-spam navigation
+  const hasNavigatedAway = useRef(false);
   const [isNavigatingToAdd, setIsNavigatingToAdd] = useState(false);
   const [isNavigatingFromProgramme, setIsNavigatingFromProgramme] = useState(false);
 
@@ -380,7 +392,6 @@ export default function PlanningScreen() {
       setClubs(clubsData);
       setCompetitions(competitionsData);
       setGoalsProgress(goalsData);
-
     } catch (error) {
       logger.error('Erreur chargement planning:', error);
     }
@@ -391,6 +402,18 @@ export default function PlanningScreen() {
     loadData();
     loadSavedExternalEvents();
   }, []);
+
+  // Recharger quand on revient d'un ajout/edition (sync calendrier + emploi du temps)
+  const navigation = useNavigation();
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (hasNavigatedAway.current) {
+        hasNavigatedAway.current = false;
+        loadData();
+      }
+    });
+    return unsubscribe;
+  }, [navigation, loadData]);
 
   // Plus de redirection automatique - le carnet s'affiche maintenant dans le swipe
 
@@ -414,15 +437,21 @@ export default function PlanningScreen() {
   // Get all events from SQLite (async loaded)
   const [allCatalogEvents, setAllCatalogEvents] = useState<SportEvent[]>([]);
 
-  // Load events from SQLite on mount
+  // Load events + favorite sports on mount
   useEffect(() => {
     let cancelled = false;
     const timer = setTimeout(async () => {
       setCatalogLoading(true);
       try {
-        const events = await getFilteredEvents({ upcomingOnly: true, limit: 500 });
+        const [events, favStr] = await Promise.all([
+          getFilteredEvents({ upcomingOnly: true, limit: 500 }),
+          AsyncStorage.getItem(FAVORITE_SPORTS_KEY),
+        ]);
         if (!cancelled) {
           setAllCatalogEvents(events as SportEvent[]);
+          if (favStr) {
+            try { setFavoriteSports(new Set(JSON.parse(favStr))); } catch {}
+          }
         }
       } catch (error) {
         logger.error('Erreur chargement événements:', error);
@@ -432,6 +461,20 @@ export default function PlanningScreen() {
       }
     }, 100);
     return () => { cancelled = true; clearTimeout(timer); };
+  }, []);
+
+  // Toggle favorite sport
+  const toggleFavoriteSport = useCallback(async (sportTag: string) => {
+    setFavoriteSports(prev => {
+      const next = new Set(prev);
+      if (next.has(sportTag)) {
+        next.delete(sportTag);
+      } else {
+        next.add(sportTag);
+      }
+      AsyncStorage.setItem(FAVORITE_SPORTS_KEY, JSON.stringify([...next]));
+      return next;
+    });
   }, []);
 
   // Filter catalog events
@@ -566,11 +609,22 @@ export default function PlanningScreen() {
       groups[sportTag].push(event);
     });
 
-    // Trier les sports par nombre d'événements (décroissant)
-    const sortedSports = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length);
+    // Ordre par défaut des sports
+    const defaultOrder = ['jjb', 'running', 'hyrox', 'trail', 'judo', 'grappling', 'marathon', 'crossfit', 'triathlon', 'obstacle', 'cycling', 'powerlifting', 'climbing'];
+    // Trier: favoris d'abord, puis ordre par défaut, puis le reste
+    const sortedSports = Object.keys(groups).sort((a, b) => {
+      const aFav = favoriteSports.has(a) ? 1 : 0;
+      const bFav = favoriteSports.has(b) ? 1 : 0;
+      if (aFav !== bFav) return bFav - aFav;
+      const aIdx = defaultOrder.indexOf(a);
+      const bIdx = defaultOrder.indexOf(b);
+      const aOrder = aIdx >= 0 ? aIdx : 999;
+      const bOrder = bIdx >= 0 ? bIdx : 999;
+      return aOrder - bOrder;
+    });
 
     return { groups, sortedSports };
-  }, [filteredCatalogEvents]);
+  }, [filteredCatalogEvents, favoriteSports]);
 
   // Add external event to saved list
   const addExternalEventToSaved = useCallback(async (event: SportEvent) => {
@@ -676,7 +730,7 @@ export default function PlanningScreen() {
 
   // Monthly stats by club (including outdoor workouts)
   const monthlyClubStats = useMemo(() => {
-    const stats: Record<number | string, { count: number; club: Club | { id: string; name: string; sport: string; color: string; isOutdoor: true } }> = {};
+    const stats: Record<number | string, { count: number; club: Club | { id: string; name: string; sport: string; color: string; isOutdoor?: true; isSportOnly?: true; icon?: string } }> = {};
     let outdoorCount = 0;
 
     workouts.forEach(w => {
@@ -694,6 +748,24 @@ export default function PlanningScreen() {
             }
             stats[w.club_id].count++;
           }
+        } else {
+          // Sports sans club - grouper par sport
+          const sport = w.sport || 'autre';
+          const key = `sport_${sport}`;
+          if (!stats[key]) {
+            stats[key] = {
+              count: 0,
+              club: {
+                id: key,
+                name: getSportName(sport),
+                sport,
+                color: getSportColor(sport),
+                isSportOnly: true,
+                icon: getSportIconLib(sport),
+              }
+            };
+          }
+          stats[key].count++;
         }
       }
     });
@@ -708,7 +780,7 @@ export default function PlanningScreen() {
 
     return Object.values(stats)
       .sort((a, b) => b.count - a.count)
-      .slice(0, 5); // Augmenté à 5 pour inclure outdoor
+      .slice(0, 8);
   }, [workouts, currentMonth, clubs]);
 
   // Handler: clic sur un jour du calendrier
@@ -723,6 +795,7 @@ export default function PlanningScreen() {
     // Protection anti-spam
     if (isNavigatingToAdd) return;
     setIsNavigatingToAdd(true);
+    hasNavigatedAway.current = true;
 
     setShowDayModal(false);
     // Naviguer vers add-training avec la date sélectionnée
@@ -734,10 +807,88 @@ export default function PlanningScreen() {
     }, 300);
   };
 
-  // Handler: supprimer une seance
+  // Handler: editer une seance
+  const handleEditSession = (session: Training) => {
+    setShowDayModal(false);
+    hasNavigatedAway.current = true;
+    const dateStr = session.date || (selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'));
+    setTimeout(() => {
+      router.push(`/add-training?date=${dateStr}&editId=${session.id}`);
+    }, 300);
+  };
+
+  // Handler: clic sur un badge dans "Ce mois"
+  const handleBadgePress = (club: any) => {
+    if (!club.id) return;
+    impactAsync(ImpactFeedbackStyle.Light);
+    const isSport = 'isSportOnly' in club && club.isSportOnly;
+    setSessionsFilter({
+      id: club.id,
+      name: club.name,
+      logoUri: club.logo_uri,
+      color: club.color,
+      icon: isSport ? club.icon : undefined,
+      isSportOnly: isSport,
+    });
+    setShowSessionsModal(true);
+  };
+
+  // Sessions filtrees pour le modal
+  const filteredModalSessions = useMemo(() => {
+    if (!sessionsFilter) return [];
+    return workouts
+      .filter(w => {
+        if (!isSameMonth(new Date(w.date), currentMonth)) return false;
+        if (sessionsFilter.isSportOnly) {
+          // Filtrer par sport sans club
+          const sportKey = `sport_${w.sport || 'autre'}`;
+          return !w.club_id && sportKey === sessionsFilter.id;
+        }
+        if (String(sessionsFilter.id) === 'outdoor') return w.is_outdoor;
+        return w.club_id === sessionsFilter.id;
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [sessionsFilter, workouts, currentMonth]);
+
+  const filteredTotalDuration = useMemo(() => {
+    return filteredModalSessions.reduce((sum, s) => sum + (s.duration_minutes || 0), 0);
+  }, [filteredModalSessions]);
+
+  const formatDurationShort = (min: number): string => {
+    if (min < 60) return `${min}min`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return m > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${h}h`;
+  };
+
+  // Handler: supprimer une seance (avec corbeille inline pour garantir le fonctionnement)
   const handleDeleteSession = async (id: number) => {
     try {
-      await deleteTraining(id);
+      // Importer directement la connexion pour bypasser le cache module
+      const SQLite = require('expo-sqlite');
+      const database = await SQLite.openDatabaseAsync('yoroi.db');
+
+      // Creer la table corbeille si elle n'existe pas
+      await database.execAsync(`CREATE TABLE IF NOT EXISTS trash_trainings (id INTEGER PRIMARY KEY AUTOINCREMENT, original_id INTEGER, club_id INTEGER, sport TEXT, session_type TEXT, date TEXT, start_time TEXT, duration_minutes INTEGER, notes TEXT, muscles TEXT, exercises TEXT, technique_rating INTEGER, is_outdoor INTEGER DEFAULT 0, pente REAL, speed REAL, resistance INTEGER, watts INTEGER, cadence INTEGER, distance REAL, calories INTEGER, intensity INTEGER, rounds INTEGER, round_duration INTEGER, created_at TEXT, deleted_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
+
+      // Lire la seance
+      const row = await database.getFirstAsync('SELECT * FROM trainings WHERE id = ?', [id]);
+
+      // Supprimer
+      await database.runAsync('DELETE FROM trainings WHERE id = ?', [id]);
+
+      // Mettre en corbeille
+      if (row) {
+        try {
+          await database.runAsync(
+            `INSERT INTO trash_trainings (original_id, club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [row.id, row.club_id || null, row.sport || null, row.session_type || null, row.date, row.start_time || null, row.duration_minutes || null, row.notes || null, row.muscles || null, row.exercises || null, row.technique_rating || null, row.is_outdoor || 0, row.distance || null, row.calories || null, row.intensity || null, row.rounds || null, row.round_duration || null, row.pente || null, row.speed || null, row.resistance || null, row.watts || null, row.cadence || null, row.created_at || null]
+          );
+        } catch (trashErr) {
+          logger.error('Erreur corbeille insert:', trashErr);
+        }
+      }
+
       notificationAsync(NotificationFeedbackType.Success);
       await loadData();
     } catch (error) {
@@ -793,6 +944,7 @@ export default function PlanningScreen() {
     // Protection anti-spam
     if (isNavigatingFromProgramme) return;
     setIsNavigatingFromProgramme(true);
+    hasNavigatedAway.current = true;
 
     impactAsync(ImpactFeedbackStyle.Medium);
     // Calculer la prochaine date pour ce jour de la semaine
@@ -941,14 +1093,36 @@ export default function PlanningScreen() {
               </TouchableOpacity>
             );
           })}
+          {/* Bouton Corbeille */}
+          <TouchableOpacity
+            style={styles.tabWrapper}
+            onPress={() => router.push('/trash' as any)}
+            activeOpacity={0.7}
+          >
+            <View style={[
+              styles.circleTab,
+              { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' },
+            ]}>
+              <Trash2
+                size={18}
+                color={colors.textMuted}
+                strokeWidth={2.5}
+              />
+            </View>
+            <Text style={[styles.tabTitle, { color: colors.textMuted }]}>
+              Corbeille
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
 
-        {/* Description de la page active */}
-        <View style={styles.descriptionContainer}>
-          <Text style={[styles.pageDescription, { color: colors.textSecondary }]}>
-            {tabs.find(t => t.key === viewMode)?.description || ''}
-          </Text>
-        </View>
+        {/* Description de la page active (masquée pour events car header card) */}
+        {viewMode !== 'competitions' && (
+          <View style={styles.descriptionContainer}>
+            <Text style={[styles.pageDescription, { color: colors.textSecondary }]}>
+              {tabs.find(t => t.key === viewMode)?.description || ''}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* ScrollView horizontal avec pagination */}
@@ -970,56 +1144,6 @@ export default function PlanningScreen() {
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
           >
-            {/* MES CLUBS - Badges horizontaux cliquables */}
-            {clubs.length > 0 && (
-              <View style={[styles.compactClubsSection, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-                <View style={styles.compactClubsHeader}>
-                  <Dumbbell size={14} color={colors.textPrimary} strokeWidth={2.5} />
-                  <Text style={[styles.compactClubsTitle, { color: colors.textPrimary }]}>Mes Clubs</Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      impactAsync(ImpactFeedbackStyle.Light);
-                      setEditingClub(null);
-                      setShowAddClubModal(true);
-                    }}
-                    style={[styles.compactClubAddBtn, { backgroundColor: colors.accent }]}
-                  >
-                    <Plus size={14} color={colors.textOnGold} strokeWidth={3} />
-                  </TouchableOpacity>
-                </View>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.compactClubsScroll}
-                >
-                  {clubs.map((club) => {
-                    const display = getClubDisplay(club);
-                    return (
-                      <TouchableOpacity
-                        key={club.id}
-                        style={[styles.compactClubBadge, { backgroundColor: (display.type === 'color' ? `${display.color}15` : colors.backgroundElevated), borderColor: display.type === 'color' ? `${display.color}30` : colors.border }]}
-                        onPress={() => {
-                          impactAsync(ImpactFeedbackStyle.Light);
-                          setEditingClub(club);
-                          setShowAddClubModal(true);
-                        }}
-                        activeOpacity={0.7}
-                      >
-                        <View style={[styles.compactClubLogo, { backgroundColor: display.type === 'color' ? `${display.color}25` : colors.backgroundElevated }]}>
-                          {display.type === 'image' ? (
-                            <Image source={display.source} style={styles.compactClubLogoImg} />
-                          ) : (
-                            <View style={[styles.compactClubDot, { backgroundColor: display.color }]} />
-                          )}
-                        </View>
-                        <Text style={[styles.compactClubName, { color: colors.textPrimary }]} numberOfLines={1}>{club.name}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            )}
-
             {/* MONTHLY STATS BY CLUB - COMPACT */}
             {monthlyClubStats.length > 0 && (
               <View style={[styles.monthlyStatsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
@@ -1034,12 +1158,28 @@ export default function PlanningScreen() {
                 >
                   {monthlyClubStats.map(({ count, club }) => {
                     const isOutdoor = 'isOutdoor' in club && club.isOutdoor;
-                    const display = isOutdoor ? null : getClubDisplay(club as Club);
+                    const isSport = 'isSportOnly' in club && club.isSportOnly;
+                    const display = (isOutdoor || isSport) ? null : getClubDisplay(club as Club);
                     return (
-                      <View key={club.id} style={styles.monthlyStatItem}>
-                        <View style={[styles.monthlyStatIcon, { backgroundColor: isOutdoor ? '#22C55E20' : (display?.type === 'color' ? `${display.color}20` : colors.backgroundElevated) }]}>
+                      <TouchableOpacity
+                        key={club.id}
+                        style={styles.monthlyStatItem}
+                        onPress={() => handleBadgePress(club)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={[styles.monthlyStatIcon, {
+                          backgroundColor: isOutdoor ? '#22C55E20'
+                            : isSport ? `${club.color}20`
+                            : (display?.type === 'color' ? `${display.color}20` : colors.backgroundElevated)
+                        }]}>
                           {isOutdoor ? (
                             <Sun size={24} color="#22C55E" strokeWidth={2} />
+                          ) : isSport && 'icon' in club ? (
+                            <MaterialCommunityIcons
+                              name={(club as any).icon as any}
+                              size={24}
+                              color={club.color}
+                            />
                           ) : display?.type === 'image' ? (
                             <Image source={display.source} style={styles.clubLogoSmall} />
                           ) : (
@@ -1047,8 +1187,8 @@ export default function PlanningScreen() {
                           )}
                         </View>
                         <Text style={[styles.monthlyStatCount, { color: club.color || colors.accent }]}>x{count}</Text>
-                        <Text style={[styles.monthlyStatName, { color: colors.textSecondary }]}>{club.name}</Text>
-                      </View>
+                        <Text style={[styles.monthlyStatName, { color: colors.textSecondary }]} numberOfLines={2}>{club.name}</Text>
+                      </TouchableOpacity>
                     );
                   })}
                 </ScrollView>
@@ -1071,6 +1211,8 @@ export default function PlanningScreen() {
                 onAddSession={handleAddSessionFromProgramme}
                 onSessionPress={handleSessionPress}
                 refreshTrigger={refreshTrigger}
+                workouts={workouts}
+                clubs={clubs}
               />
             </View>
 
@@ -1274,47 +1416,87 @@ export default function PlanningScreen() {
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
           >
-            {/* Segmented Control: Mes RDV / Trouver */}
-            <View style={[styles.eventsSegmentControl, { backgroundColor: colors.backgroundCard }]}>
-              <TouchableOpacity
-                style={[
-                  styles.eventsSegmentButton,
-                  eventsTabMode === 'my_events' && { backgroundColor: '#F59E0B' },
-                ]}
-                onPress={() => {
-                  impactAsync(ImpactFeedbackStyle.Light);
-                  setEventsTabMode('my_events');
-                }}
-                activeOpacity={0.8}
-              >
-                <Trophy size={16} color={eventsTabMode === 'my_events' ? '#FFFFFF' : colors.textSecondary} />
-                <Text style={[
-                  styles.eventsSegmentText,
-                  { color: eventsTabMode === 'my_events' ? '#FFFFFF' : colors.textSecondary },
-                ]}>
-                  Mes RDV
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.eventsSegmentButton,
-                  eventsTabMode === 'catalog' && { backgroundColor: '#8B5CF6' },
-                ]}
-                onPress={() => {
-                  impactAsync(ImpactFeedbackStyle.Light);
-                  setEventsTabMode('catalog');
-                }}
-                activeOpacity={0.8}
-              >
-                <Globe size={16} color={eventsTabMode === 'catalog' ? '#FFFFFF' : colors.textSecondary} />
-                <Text style={[
-                  styles.eventsSegmentText,
-                  { color: eventsTabMode === 'catalog' ? '#FFFFFF' : colors.textSecondary },
-                ]}>
-                  Trouver
-                </Text>
-              </TouchableOpacity>
+            {/* Header Card - même couleur que la tabbar */}
+            <View style={[styles.eventsHeaderCard, { backgroundColor: colors.accent }]}>
+              <View style={styles.eventsRegionRow}>
+                {([
+                  { key: 'france', label: 'France' },
+                  { key: 'europe', label: 'Europe' },
+                  { key: 'monde', label: 'Monde' },
+                ] as const).map((region) => (
+                  <TouchableOpacity
+                    key={region.key}
+                    style={styles.eventsRegionTab}
+                    onPress={() => {
+                      impactAsync(ImpactFeedbackStyle.Light);
+                      setCatalogLocationFilter(region.key);
+                      if (eventsTabMode === 'my_events') setEventsTabMode('catalog');
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[
+                      styles.eventsRegionTabText,
+                      { color: catalogLocationFilter === region.key ? '#FFFFFF' : 'rgba(255,255,255,0.5)' },
+                      catalogLocationFilter === region.key && styles.eventsRegionTabTextActive,
+                    ]}>
+                      {region.label}
+                    </Text>
+                    {catalogLocationFilter === region.key && (
+                      <View style={[styles.eventsRegionUnderline, { backgroundColor: '#FFFFFF' }]} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={[styles.eventsHeaderSep, { backgroundColor: 'rgba(255,255,255,0.2)' }]} />
+              <View style={styles.eventsSubRow}>
+                <View style={[styles.eventsMiniToggle, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+                  <TouchableOpacity
+                    style={[
+                      styles.eventsMiniToggleBtn,
+                      eventsTabMode === 'my_events' && [styles.eventsMiniToggleBtnActive, { backgroundColor: '#FFFFFF' }],
+                    ]}
+                    onPress={() => {
+                      impactAsync(ImpactFeedbackStyle.Light);
+                      setEventsTabMode('my_events');
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[
+                      styles.eventsMiniToggleText,
+                      { color: eventsTabMode === 'my_events' ? colors.accent : 'rgba(255,255,255,0.7)' },
+                    ]}>Mes RDV</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.eventsMiniToggleBtn,
+                      eventsTabMode === 'catalog' && [styles.eventsMiniToggleBtnActive, { backgroundColor: '#FFFFFF' }],
+                    ]}
+                    onPress={() => {
+                      impactAsync(ImpactFeedbackStyle.Light);
+                      setEventsTabMode('catalog');
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[
+                      styles.eventsMiniToggleText,
+                      { color: eventsTabMode === 'catalog' ? colors.accent : 'rgba(255,255,255,0.7)' },
+                    ]}>Catalogue</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  style={[styles.eventsFilterIcon, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+                  onPress={() => {
+                    impactAsync(ImpactFeedbackStyle.Light);
+                    setShowFiltersModal(true);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Filter size={18} color="#FFFFFF" />
+                  {(catalogCategoryFilter !== 'all' || catalogSportFilter !== 'all') && (
+                    <View style={[styles.eventsFilterDot, { backgroundColor: '#FFFFFF' }]} />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* ====== VIEW: MES RDV ====== */}
@@ -1471,42 +1653,21 @@ export default function PlanningScreen() {
             {/* ====== VIEW: TROUVER (CATALOG) ====== */}
             {eventsTabMode === 'catalog' && (
               <>
-                {/* Search Bar + Filtres Compact */}
-                <View style={[styles.searchAndFilters, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-                  <View style={styles.searchBarCompact}>
-                    <Search size={18} color={colors.textSecondary} />
-                    <TextInput
-                      style={[styles.catalogSearchInput, { color: colors.textPrimary }]}
-                      placeholder="Rechercher..."
-                      placeholderTextColor={colors.textMuted}
-                      value={catalogSearchQuery}
-                      onChangeText={setCatalogSearchQuery}
-                    />
-                    {catalogSearchQuery.length > 0 && (
-                      <TouchableOpacity onPress={() => setCatalogSearchQuery('')}>
-                        <X size={16} color={colors.textSecondary} />
-                      </TouchableOpacity>
-                    )}
-                  </View>
-
-                  {/* Bouton Filtres */}
-                  <TouchableOpacity
-                    style={[styles.filterButton, { backgroundColor: colors.accent }]}
-                    onPress={() => {
-                      impactAsync(ImpactFeedbackStyle.Light);
-                      setShowFiltersModal(true);
-                    }}
-                  >
-                    <Filter size={18} color="#FFFFFF" />
-                    <Text style={styles.filterButtonText}>Filtres</Text>
-                    {(catalogLocationFilter !== 'monde' || catalogCategoryFilter !== 'all') && (
-                      <View style={styles.filterBadge}>
-                        <Text style={styles.filterBadgeText}>
-                          {(catalogLocationFilter !== 'monde' ? 1 : 0) + (catalogCategoryFilter !== 'all' ? 1 : 0)}
-                        </Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
+                {/* Search Bar */}
+                <View style={[styles.eventsSearchBar, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                  <Search size={16} color={colors.textMuted} />
+                  <TextInput
+                    style={[styles.eventsSearchInput, { color: colors.textPrimary }]}
+                    placeholder="Rechercher un evenement..."
+                    placeholderTextColor={colors.textMuted}
+                    value={catalogSearchQuery}
+                    onChangeText={setCatalogSearchQuery}
+                  />
+                  {catalogSearchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => setCatalogSearchQuery('')}>
+                      <X size={16} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                  )}
                 </View>
 
                 {/* Modal Filtres - Design Premium */}
@@ -1525,8 +1686,7 @@ export default function PlanningScreen() {
                       style={[styles.filterModalPanel, { backgroundColor: isDark ? '#1A1A1E' : '#FFFFFF' }]}
                       activeOpacity={1}
                     >
-                      {/* Header avec gradient */}
-                      <View style={[styles.filterModalHeader, { backgroundColor: '#8B5CF6' }]}>
+                      <View style={[styles.filterModalHeader, { backgroundColor: colors.accent }]}>
                         <View style={styles.filterModalHeaderContent}>
                           <Filter size={22} color="#FFFFFF" />
                           <Text style={styles.filterModalTitle}>Filtres</Text>
@@ -1547,9 +1707,9 @@ export default function PlanningScreen() {
                         </View>
                         <View style={styles.filterLocationGrid}>
                           {([
-                            { key: 'france', emoji: '🇫🇷', label: 'France', color: '#3B82F6' },
-                            { key: 'europe', emoji: '🇪🇺', label: 'Europe', color: '#8B5CF6' },
-                            { key: 'monde', emoji: '🌍', label: 'Monde', color: '#10B981' },
+                            { key: 'france', icon: 'flag' as const, label: 'France', color: '#3B82F6' },
+                            { key: 'europe', icon: 'earth' as const, label: 'Europe', color: '#8B5CF6' },
+                            { key: 'monde', icon: 'globe-model' as const, label: 'Monde', color: '#10B981' },
                           ] as const).map((loc) => (
                             <TouchableOpacity
                               key={loc.key}
@@ -1565,7 +1725,7 @@ export default function PlanningScreen() {
                                 setCatalogLocationFilter(loc.key);
                               }}
                             >
-                              <Text style={styles.filterLocationEmoji}>{loc.emoji}</Text>
+                              <MaterialCommunityIcons name={loc.icon} size={22} color={catalogLocationFilter === loc.key ? '#FFFFFF' : loc.color} />
                               <Text style={[
                                 styles.filterLocationLabel,
                                 { color: catalogLocationFilter === loc.key ? '#FFFFFF' : colors.textPrimary },
@@ -1922,7 +2082,7 @@ export default function PlanningScreen() {
                           <Text style={[styles.filterResetBtnText, { color: colors.textSecondary }]}>Reset</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                          style={styles.filterApplyBtnNew}
+                          style={[styles.filterApplyBtnNew, { backgroundColor: colors.accent }]}
                           onPress={() => {
                             impactAsync(ImpactFeedbackStyle.Medium);
                             setShowFiltersModal(false);
@@ -1937,9 +2097,16 @@ export default function PlanningScreen() {
                 </Modal>
 
                 {/* Results count */}
-                <Text style={[styles.catalogResultsCount, { color: colors.textMuted }]}>
-                  {filteredCatalogEvents.length} evenement{filteredCatalogEvents.length > 1 ? 's' : ''} trouve{filteredCatalogEvents.length > 1 ? 's' : ''}
-                </Text>
+                <View style={styles.eventsResultsRow}>
+                  <View style={[styles.eventsResultsBadge, { backgroundColor: colors.accent + '15' }]}>
+                    <Text style={[styles.eventsResultsNumber, { color: colors.accent }]}>
+                      {filteredCatalogEvents.length}
+                    </Text>
+                  </View>
+                  <Text style={[styles.eventsResultsLabel, { color: colors.textSecondary }]}>
+                    evenement{filteredCatalogEvents.length > 1 ? 's' : ''} disponible{filteredCatalogEvents.length > 1 ? 's' : ''}
+                  </Text>
+                </View>
 
                 {/* Events List - Grouped by Sport */}
                 {catalogLoading ? (
@@ -1960,165 +2127,323 @@ export default function PlanningScreen() {
                     </Text>
                   </View>
                 ) : (
-                  groupedCatalogEvents.sortedSports.map((sportTag) => {
-                    const events = groupedCatalogEvents.groups[sportTag];
-                    const sport = getSportById(sportTag);
-                    const sportInfo = sport ? {
-                      label: sport.name,
-                      icon: sport.icon,
-                      color: sport.color,
-                    } : {
-                      label: sportTag.charAt(0).toUpperCase() + sportTag.slice(1),
-                      icon: 'trophy',
-                      color: '#6B7280',
-                    };
+                  <>
+                    {/* Back button when sport filter active */}
+                    {catalogSportFilter !== 'all' && (
+                      <TouchableOpacity
+                        style={[styles.eventsBackChip, { backgroundColor: colors.backgroundCard }]}
+                        onPress={() => {
+                          impactAsync(ImpactFeedbackStyle.Light);
+                          setCatalogSportFilter('all');
+                          setCatalogSubFilter('all');
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <ChevronRight size={16} color={colors.accent} style={{ transform: [{ rotate: '180deg' }] }} />
+                        <Text style={[styles.eventsBackChipText, { color: colors.accent }]}>Tous les sports</Text>
+                      </TouchableOpacity>
+                    )}
 
-                    return (
-                      <View key={sportTag} style={styles.catalogSportSection}>
-                        {/* Sport Header */}
-                        {/* Sport Header - Design épuré sans barre */}
-                        <View style={[styles.catalogSportHeaderNew, { backgroundColor: sportInfo.color + '10' }]}>
-                          <View style={[styles.catalogSportIconCircle, { backgroundColor: sportInfo.color }]}>
-                            <MaterialCommunityIcons name={sportInfo.icon as any} size={20} color="#FFFFFF" />
-                          </View>
-                          <Text style={[styles.catalogSportTitleNew, { color: colors.textPrimary }]}>
-                            {sportInfo.label}
-                          </Text>
-                          <View style={[styles.catalogSportCountBadge, { backgroundColor: sportInfo.color + '20' }]}>
-                            <Text style={[styles.catalogSportCountText, { color: sportInfo.color }]}>
-                              {events.length}
+                    {groupedCatalogEvents.sortedSports.map((sportTag, sportIndex) => {
+                      const events = groupedCatalogEvents.groups[sportTag];
+                      const sport = getSportById(sportTag);
+                      const sportInfo = sport ? {
+                        label: sport.name,
+                        icon: sport.icon,
+                        color: sport.color,
+                      } : {
+                        label: sportTag.charAt(0).toUpperCase() + sportTag.slice(1),
+                        icon: 'trophy' as const,
+                        color: '#6B7280',
+                      };
+                      const isExpanded = expandedSports.has(sportTag);
+                      const extraEvents = events.slice(6);
+                      const isFav = favoriteSports.has(sportTag);
+
+                      return (
+                        <View key={sportTag}>
+                          {/* Séparateur couleur thème entre sports */}
+                          {sportIndex > 0 && (
+                            <View style={{
+                              height: 4,
+                              marginHorizontal: 16,
+                              marginBottom: 14,
+                              borderRadius: 2,
+                              backgroundColor: colors.accent,
+                            }} />
+                          )}
+                          <View style={styles.eventsSportSectionOpen}>
+                          {/* Sport Header */}
+                          <View style={[styles.eventsSportHeader, { backgroundColor: colors.backgroundCard }]}>
+                            <View style={[styles.eventsSportIconCircle, { backgroundColor: sportInfo.color }]}>
+                              <MaterialCommunityIcons name={sportInfo.icon as any} size={18} color="#FFFFFF" />
+                            </View>
+                            <Text style={[styles.eventsSportTitle, { color: colors.textPrimary }]}>
+                              {sportInfo.label}
                             </Text>
+                            <TouchableOpacity
+                              onPress={() => {
+                                impactAsync(ImpactFeedbackStyle.Light);
+                                toggleFavoriteSport(sportTag);
+                              }}
+                              activeOpacity={0.6}
+                              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            >
+                              <Star
+                                size={20}
+                                color={isFav ? '#F59E0B' : colors.textMuted}
+                                fill={isFav ? '#F59E0B' : 'transparent'}
+                              />
+                            </TouchableOpacity>
+                            <View style={[styles.eventsSportCountBadge, { backgroundColor: sportInfo.color + '18' }]}>
+                              <Text style={[styles.eventsSportCountText, { color: sportInfo.color }]}>
+                                {events.length}
+                              </Text>
+                            </View>
                           </View>
-                        </View>
 
-                        {/* Events Grid - 2 par sport si vue globale, tous si filtre sport actif */}
-                        <View style={styles.catalogEventsGrid}>
-                          {(catalogSportFilter !== 'all' ? events : events.slice(0, 2)).map((event) => {
-                            const eventDate = new Date(event.date_start);
-                            const formattedDate = eventDate.toLocaleDateString(locale, {
-                              day: 'numeric',
-                              month: 'short',
-                            });
-                            const isSaved = savedExternalEventIds.has(event.id);
-                            const city = event.location?.city || 'Lieu inconnu';
-                            const country = event.location?.country || '';
+                          {/* Horizontal scroll of first 6 cards */}
+                          <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.eventsHorizontalScroll}
+                          >
+                            {events.slice(0, 6).map((event) => {
+                              const eventDate = new Date(event.date_start);
+                              const isSaved = savedExternalEventIds.has(event.id);
+                              const city = event.location?.city || 'Lieu inconnu';
+                              const country = event.location?.country || '';
 
-                            const categoryColor =
-                              event.category === 'combat' ? '#EF4444' :
-                              event.category === 'endurance' ? '#10B981' :
-                              event.category === 'force' ? '#F59E0B' :
-                              event.category === 'nature' ? '#8B5CF6' : '#6B7280';
-
-                            return (
-                              <TouchableOpacity
-                                key={event.id}
-                                style={[styles.catalogEventCardNew, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-                                onPress={() => {
-                                  impactAsync(ImpactFeedbackStyle.Medium);
-                                  router.push({
-                                    pathname: '/event-detail',
-                                    params: {
-                                      id: event.id,
-                                      title: event.title,
-                                      date_start: event.date_start,
-                                      city: event.location?.city || '',
-                                      country: event.location?.country || '',
-                                      full_address: event.location?.full_address || '',
-                                      category: event.category,
-                                      sport_tag: event.sport_tag,
-                                      registration_link: event.registration_link || '',
-                                      federation: event.federation || '',
-                                      image_logo_url: event.image_logo_url || '',
-                                    }
-                                  });
-                                }}
-                                activeOpacity={0.7}
-                              >
-                                {/* Visual Header avec gradient et icône */}
-                                <View style={[styles.catalogEventImageContainer, { backgroundColor: categoryColor }]}>
-                                  {/* Pattern décoratif en arrière-plan */}
-                                  <View style={styles.catalogEventPattern}>
-                                    <MaterialCommunityIcons name={sportInfo.icon as any} size={90} color="rgba(255,255,255,0.08)" />
+                              return (
+                                <TouchableOpacity
+                                  key={event.id}
+                                  style={[styles.eventsCard, {
+                                    backgroundColor: colors.backgroundCard,
+                                    shadowColor: isDark ? '#000' : '#00000020',
+                                  }]}
+                                  onPress={() => {
+                                    impactAsync(ImpactFeedbackStyle.Medium);
+                                    router.push({
+                                      pathname: '/event-detail',
+                                      params: {
+                                        id: event.id,
+                                        title: event.title,
+                                        date_start: event.date_start,
+                                        city: event.location?.city || '',
+                                        country: event.location?.country || '',
+                                        full_address: event.location?.full_address || '',
+                                        category: event.category,
+                                        sport_tag: event.sport_tag,
+                                        registration_link: event.registration_link || '',
+                                        federation: event.federation || '',
+                                        image_logo_url: event.image_logo_url || '',
+                                      }
+                                    });
+                                  }}
+                                  activeOpacity={0.7}
+                                >
+                                  {/* Sport color banner */}
+                                  <View style={[styles.eventsCardBanner, { backgroundColor: sportInfo.color }]}>
+                                    {event.image_logo_url && !failedImages.has(event.id) ? (
+                                      <Image
+                                        source={{ uri: event.image_logo_url }}
+                                        style={styles.eventsCardImage}
+                                        resizeMode="cover"
+                                        onError={() => setFailedImages(prev => new Set(prev).add(event.id))}
+                                      />
+                                    ) : (
+                                      <>
+                                        <View style={styles.eventsCardBannerPattern}>
+                                          <MaterialCommunityIcons name={sportInfo.icon as any} size={60} color="rgba(255,255,255,0.1)" />
+                                        </View>
+                                        <View style={styles.eventsCardBannerIcon}>
+                                          <MaterialCommunityIcons name={sportInfo.icon as any} size={24} color="#FFFFFF" />
+                                        </View>
+                                      </>
+                                    )}
+                                    {/* Date Badge */}
+                                    <View style={[styles.eventsCardDateBadge, { backgroundColor: colors.background + 'EE' }]}>
+                                      <Text style={[styles.eventsCardDateBadgeDay, { color: sportInfo.color }]}>
+                                        {eventDate.getDate()}
+                                      </Text>
+                                      <Text style={[styles.eventsCardDateBadgeMonth, { color: colors.textSecondary }]}>
+                                        {eventDate.toLocaleDateString(locale, { month: 'short' }).toUpperCase()}
+                                      </Text>
+                                    </View>
+                                    {/* Save Button */}
+                                    <TouchableOpacity
+                                      style={[styles.eventsCardSaveBtn, { backgroundColor: isSaved ? '#10B981' : 'rgba(255,255,255,0.25)' }]}
+                                      onPress={(e) => {
+                                        e.stopPropagation();
+                                        toggleExternalEventInSaved(event);
+                                      }}
+                                      activeOpacity={0.7}
+                                    >
+                                      {isSaved ? (
+                                        <Check size={16} color="#FFFFFF" strokeWidth={3} />
+                                      ) : (
+                                        <Plus size={16} color="#FFFFFF" strokeWidth={2.5} />
+                                      )}
+                                    </TouchableOpacity>
                                   </View>
-                                  {/* Icône centrale dans un cercle */}
-                                  <View style={styles.catalogEventIconCircle}>
-                                    <MaterialCommunityIcons name={sportInfo.icon as any} size={28} color="#FFFFFF" />
-                                  </View>
-                                  {/* Date Badge */}
-                                  <View style={[styles.catalogEventDateBadge, { backgroundColor: colors.background + 'EE' }]}>
-                                    <Text style={[styles.catalogEventDateDay, { color: categoryColor }]}>
-                                      {eventDate.getDate()}
+
+                                  {/* Card info */}
+                                  <View style={styles.eventsCardInfo}>
+                                    <Text style={[styles.eventsCardTitle, { color: colors.textPrimary }]} numberOfLines={2}>
+                                      {event.title}
                                     </Text>
-                                    <Text style={[styles.catalogEventDateMonth, { color: colors.textSecondary }]}>
-                                      {eventDate.toLocaleDateString(locale, { month: 'short' }).toUpperCase()}
-                                    </Text>
+                                    <View style={styles.eventsCardLocation}>
+                                      <MapPin size={11} color={colors.textMuted} />
+                                      <Text style={[styles.eventsCardLocationText, { color: colors.textMuted }]} numberOfLines={1}>
+                                        {city}{country ? `, ${country}` : ''}
+                                      </Text>
+                                    </View>
+                                    {event.registration_link && (
+                                      <View style={[styles.eventsCardLinkBadge, { backgroundColor: sportInfo.color + '12' }]}>
+                                        <ExternalLink size={10} color={sportInfo.color} />
+                                        <Text style={[styles.eventsCardLinkText, { color: sportInfo.color }]}>
+                                          Inscription
+                                        </Text>
+                                      </View>
+                                    )}
                                   </View>
-                                  {/* Save Button */}
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </ScrollView>
+
+                          {/* Expanded cards grid (vertical, 2 columns) */}
+                          {isExpanded && extraEvents.length > 0 && (
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 12, marginTop: 12 }}>
+                              {extraEvents.map((event) => {
+                                const eventDate = new Date(event.date_start);
+                                const isSaved = savedExternalEventIds.has(event.id);
+                                const city = event.location?.city || 'Lieu inconnu';
+                                const country = event.location?.country || '';
+
+                                return (
                                   <TouchableOpacity
-                                    style={[styles.catalogEventSaveBtn, { backgroundColor: isSaved ? '#10B981' : categoryColor }]}
-                                    onPress={(e) => {
-                                      e.stopPropagation();
-                                      toggleExternalEventInSaved(event);
+                                    key={event.id}
+                                    style={[styles.eventsCard, {
+                                      backgroundColor: colors.backgroundCard,
+                                      shadowColor: isDark ? '#000' : '#00000020',
+                                      width: '47%' as any,
+                                    }]}
+                                    onPress={() => {
+                                      impactAsync(ImpactFeedbackStyle.Medium);
+                                      router.push({
+                                        pathname: '/event-detail',
+                                        params: {
+                                          id: event.id,
+                                          title: event.title,
+                                          date_start: event.date_start,
+                                          city: event.location?.city || '',
+                                          country: event.location?.country || '',
+                                          full_address: event.location?.full_address || '',
+                                          category: event.category,
+                                          sport_tag: event.sport_tag,
+                                          registration_link: event.registration_link || '',
+                                          federation: event.federation || '',
+                                          image_logo_url: event.image_logo_url || '',
+                                        }
+                                      });
                                     }}
                                     activeOpacity={0.7}
                                   >
-                                    {isSaved ? (
-                                      <Check size={16} color="#FFFFFF" strokeWidth={3} />
-                                    ) : (
-                                      <Plus size={16} color="#FFFFFF" strokeWidth={2.5} />
-                                    )}
-                                  </TouchableOpacity>
-                                </View>
-
-                                {/* Event Info */}
-                                <View style={styles.catalogEventInfo}>
-                                  <Text style={[styles.catalogEventTitleNew, { color: colors.textPrimary }]} numberOfLines={2}>
-                                    {event.title}
-                                  </Text>
-                                  <View style={styles.catalogEventLocationRow}>
-                                    <MapPin size={12} color={colors.textMuted} />
-                                    <Text style={[styles.catalogEventLocationText, { color: colors.textMuted }]} numberOfLines={1}>
-                                      {city}{country ? `, ${country}` : ''}
-                                    </Text>
-                                  </View>
-                                  {event.registration_link && (
-                                    <View style={[styles.catalogEventLinkBadge, { backgroundColor: categoryColor + '15' }]}>
-                                      <ExternalLink size={10} color={categoryColor} />
-                                      <Text style={[styles.catalogEventLinkText, { color: categoryColor }]}>
-                                        Inscription
-                                      </Text>
+                                    <View style={[styles.eventsCardBanner, { backgroundColor: sportInfo.color }]}>
+                                      {event.image_logo_url && !failedImages.has(event.id) ? (
+                                        <Image
+                                          source={{ uri: event.image_logo_url }}
+                                          style={styles.eventsCardImage}
+                                          resizeMode="cover"
+                                          onError={() => setFailedImages(prev => new Set(prev).add(event.id))}
+                                        />
+                                      ) : (
+                                        <>
+                                          <View style={styles.eventsCardBannerPattern}>
+                                            <MaterialCommunityIcons name={sportInfo.icon as any} size={60} color="rgba(255,255,255,0.1)" />
+                                          </View>
+                                          <View style={styles.eventsCardBannerIcon}>
+                                            <MaterialCommunityIcons name={sportInfo.icon as any} size={24} color="#FFFFFF" />
+                                          </View>
+                                        </>
+                                      )}
+                                      <View style={[styles.eventsCardDateBadge, { backgroundColor: colors.background + 'EE' }]}>
+                                        <Text style={[styles.eventsCardDateBadgeDay, { color: sportInfo.color }]}>
+                                          {eventDate.getDate()}
+                                        </Text>
+                                        <Text style={[styles.eventsCardDateBadgeMonth, { color: colors.textSecondary }]}>
+                                          {eventDate.toLocaleDateString(locale, { month: 'short' }).toUpperCase()}
+                                        </Text>
+                                      </View>
+                                      <TouchableOpacity
+                                        style={[styles.eventsCardSaveBtn, { backgroundColor: isSaved ? '#10B981' : 'rgba(255,255,255,0.25)' }]}
+                                        onPress={(e) => {
+                                          e.stopPropagation();
+                                          toggleExternalEventInSaved(event);
+                                        }}
+                                        activeOpacity={0.7}
+                                      >
+                                        {isSaved ? (
+                                          <Check size={16} color="#FFFFFF" strokeWidth={3} />
+                                        ) : (
+                                          <Plus size={16} color="#FFFFFF" strokeWidth={2.5} />
+                                        )}
+                                      </TouchableOpacity>
                                     </View>
-                                  )}
-                                </View>
-                              </TouchableOpacity>
-                            );
-                          })}
+                                    <View style={styles.eventsCardInfo}>
+                                      <Text style={[styles.eventsCardTitle, { color: colors.textPrimary }]} numberOfLines={2}>
+                                        {event.title}
+                                      </Text>
+                                      <View style={styles.eventsCardLocation}>
+                                        <MapPin size={11} color={colors.textMuted} />
+                                        <Text style={[styles.eventsCardLocationText, { color: colors.textMuted }]} numberOfLines={1}>
+                                          {city}{country ? `, ${country}` : ''}
+                                        </Text>
+                                      </View>
+                                      {event.registration_link && (
+                                        <View style={[styles.eventsCardLinkBadge, { backgroundColor: sportInfo.color + '12' }]}>
+                                          <ExternalLink size={10} color={sportInfo.color} />
+                                          <Text style={[styles.eventsCardLinkText, { color: sportInfo.color }]}>
+                                            Inscription
+                                          </Text>
+                                        </View>
+                                      )}
+                                    </View>
+                                  </TouchableOpacity>
+                                );
+                              })}
+                            </View>
+                          )}
+
+                          {/* See More / Collapse Button */}
+                          {events.length > 6 && (
+                            <TouchableOpacity
+                              style={[styles.eventsSeeMoreBtn, { borderColor: sportInfo.color + '40', backgroundColor: colors.backgroundCard }]}
+                              onPress={() => {
+                                impactAsync(ImpactFeedbackStyle.Light);
+                                setExpandedSports(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(sportTag)) {
+                                    next.delete(sportTag);
+                                  } else {
+                                    next.add(sportTag);
+                                  }
+                                  return next;
+                                });
+                              }}
+                            >
+                              <Text style={[styles.eventsSeeMoreText, { color: sportInfo.color }]}>
+                                {isExpanded ? 'Replier' : `Voir les ${events.length - 6} autres`}
+                              </Text>
+                              <ChevronRight size={16} color={sportInfo.color} style={{ transform: [{ rotate: isExpanded ? '-90deg' : '90deg' }] }} />
+                            </TouchableOpacity>
+                          )}
+                          </View>
                         </View>
-
-                        {/* See More Button - Affiche si plus de 2 événements et vue globale */}
-                        {events.length > 2 && catalogSportFilter === 'all' && (
-                          <TouchableOpacity
-                            style={[styles.catalogSeeMoreBtnNew, { backgroundColor: sportInfo.color + '15', borderColor: sportInfo.color + '30' }]}
-                            onPress={() => {
-                              impactAsync(ImpactFeedbackStyle.Light);
-                              setCatalogSportFilter(sportTag);
-                            }}
-                          >
-                            <Text style={[styles.catalogSeeMoreTextNew, { color: sportInfo.color }]}>
-                              Voir les {events.length - 2} autres
-                            </Text>
-                            <ChevronRight size={18} color={sportInfo.color} />
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    );
-                  })
-                )}
-
-                {filteredCatalogEvents.length > 2500 && (
-                  <Text style={[styles.catalogMoreText, { color: colors.textMuted }]}>
-                    + {filteredCatalogEvents.length - 2500} autres evenements...
-                  </Text>
+                      );
+                    })}
+                  </>
                 )}
               </>
             )}
@@ -2129,7 +2454,7 @@ export default function PlanningScreen() {
           {/* Bouton flottant "+" pour ajouter un RDV */}
           {eventsTabMode === 'my_events' && savedExternalEvents.length > 0 && (
             <TouchableOpacity
-              style={[styles.floatingAddButton, { backgroundColor: '#F59E0B' }]}
+              style={[styles.floatingAddButton, { backgroundColor: colors.accent }]}
               onPress={() => router.push('/add-competition')}
               activeOpacity={0.8}
             >
@@ -2174,6 +2499,7 @@ export default function PlanningScreen() {
         onClose={() => setShowDayModal(false)}
         onAddPress={handleOpenAddModal}
         onDeleteSession={handleDeleteSession}
+        onEditSession={handleEditSession}
       />
 
       {/* Modal détail partenaire (Club/Coach) */}
@@ -2218,6 +2544,124 @@ export default function PlanningScreen() {
         onRated={handleRated}
         actionType="session"
       />
+
+      {/* Modal sessions par club/sport */}
+      <Modal visible={showSessionsModal} animationType="slide" transparent>
+        <View style={sessionsModalStyles.overlay}>
+          <View style={[sessionsModalStyles.container, { backgroundColor: colors.background, paddingBottom: insets.bottom + 16 }]}>
+            <View style={[sessionsModalStyles.handle, { backgroundColor: colors.border }]} />
+            <View style={sessionsModalStyles.header}>
+              <View style={{ flex: 1 }}>
+                <Text style={[sessionsModalStyles.title, { color: colors.textPrimary }]}>
+                  {sessionsFilter?.name || ''}
+                </Text>
+                <Text style={[sessionsModalStyles.subtitle, { color: colors.textMuted }]}>
+                  {filteredModalSessions.length} seance{filteredModalSessions.length > 1 ? 's' : ''} ce mois
+                  {filteredTotalDuration > 0 ? ` - ${formatDurationShort(filteredTotalDuration)}` : ''}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowSessionsModal(false)} style={sessionsModalStyles.closeBtn}>
+                <X size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={sessionsModalStyles.list} showsVerticalScrollIndicator={false}>
+              {filteredModalSessions.map((session) => {
+                const club = session.club_id ? clubs.find(c => c.id === session.club_id) : undefined;
+                const sportColor = getSportColor(session.sport || 'autre');
+                const sportIcon = getSportIconLib(session.sport || 'autre');
+                return (
+                  <View
+                    key={session.id}
+                    style={[sessionsModalStyles.sessionCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                  >
+                    <View style={[sessionsModalStyles.sessionIcon, { backgroundColor: `${sportColor}20` }]}>
+                      {club?.logo_uri ? (
+                        <Image source={getClubLogoSource(club.logo_uri)} style={{ width: 28, height: 28, borderRadius: 14 }} />
+                      ) : (
+                        <MaterialCommunityIcons name={sportIcon as any} size={22} color={sportColor} />
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[sessionsModalStyles.sessionTitle, { color: colors.textPrimary }]}>
+                        {club?.name || getSportName(session.sport || 'autre')}
+                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                        <Calendar size={12} color={colors.textMuted} />
+                        <Text style={[sessionsModalStyles.sessionMeta, { color: colors.textSecondary }]}>
+                          {format(new Date(session.date), 'EEEE d MMM', { locale: fr })}
+                        </Text>
+                        {session.start_time && (
+                          <>
+                            <Clock size={12} color={colors.textMuted} />
+                            <Text style={[sessionsModalStyles.sessionMeta, { color: colors.textSecondary }]}>
+                              {session.start_time}
+                            </Text>
+                          </>
+                        )}
+                        <Text style={[sessionsModalStyles.sessionMeta, { color: colors.textSecondary }]}>
+                          {formatDurationShort(session.duration_minutes || 60)}
+                        </Text>
+                      </View>
+                      {session.notes ? (
+                        <Text style={[sessionsModalStyles.sessionNote, { color: colors.textMuted }]} numberOfLines={1}>
+                          {session.notes}
+                        </Text>
+                      ) : null}
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setShowSessionsModal(false);
+                          handleEditSession(session);
+                        }}
+                        hitSlop={8}
+                      >
+                        <Edit3 size={16} color={colors.textMuted} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          if (!session.id) return;
+                          impactAsync(ImpactFeedbackStyle.Medium);
+                          const sessionId = session.id;
+                          const sessionName = club?.name || getSportName(session.sport || 'autre');
+                          Alert.alert(
+                            'Supprimer',
+                            `${sessionName} - sera deplace dans la corbeille`,
+                            [
+                              { text: 'Annuler', style: 'cancel' },
+                              {
+                                text: 'Supprimer',
+                                style: 'destructive',
+                                onPress: async () => {
+                                  await handleDeleteSession(sessionId);
+                                },
+                              },
+                            ]
+                          );
+                        }}
+                        hitSlop={8}
+                      >
+                        <Trash2 size={16} color={colors.error || '#EF4444'} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })}
+              {filteredModalSessions.length === 0 && (
+                <Text style={[sessionsModalStyles.emptyText, { color: colors.textMuted }]}>
+                  Aucune seance ce mois
+                </Text>
+              )}
+            </ScrollView>
+            <TouchableOpacity
+              style={[sessionsModalStyles.closeButton, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+              onPress={() => setShowSessionsModal(false)}
+            >
+              <Text style={[sessionsModalStyles.closeButtonText, { color: colors.textPrimary }]}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <PopupComponent />
 
@@ -2490,7 +2934,7 @@ const styles = StyleSheet.create({
   monthlyStatItem: {
     alignItems: 'center',
     marginRight: SPACING.xs,
-    width: 75,
+    width: 85,
   },
   monthlyStatIcon: {
     width: 38,
@@ -3263,27 +3707,298 @@ const styles = StyleSheet.create({
   },
 
   // ============================================
-  // EVENTS TAB - SEGMENTED CONTROL & CATALOG
+  // EVENTS TAB - HEADER CARD + REGION TABS
   // ============================================
-  eventsSegmentControl: {
-    flexDirection: 'row',
-    marginTop: 12,
-    marginBottom: 8,
-    borderRadius: 12,
-    padding: 4,
+  eventsHeaderCard: {
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginTop: 8,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  eventsSegmentButton: {
+  eventsRegionRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 0,
+  },
+  eventsRegionTab: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  eventsRegionTabTextActive: {
+    fontWeight: '800',
+  },
+  eventsRegionTabText: {
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  eventsRegionUnderline: {
+    height: 3,
+    borderRadius: 2,
+    width: '80%',
+    marginTop: 4,
+  },
+  eventsHeaderSep: {
+    height: 1,
+    marginVertical: 8,
+    marginHorizontal: 4,
+  },
+  eventsSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  eventsMiniToggle: {
     flex: 1,
+    flexDirection: 'row',
+    borderRadius: 10,
+    padding: 3,
+  },
+  eventsMiniToggleBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 7,
+    borderRadius: 8,
+  },
+  eventsMiniToggleBtnActive: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  eventsMiniToggleText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  eventsFilterIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  eventsFilterDot: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  eventsSearchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+    gap: 8,
+  },
+  eventsSearchInput: {
+    flex: 1,
+    fontSize: 14,
+    paddingVertical: 2,
+  },
+  eventsResultsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  eventsResultsBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  eventsResultsNumber: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  eventsResultsLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  eventsSportSectionOpen: {
+    marginBottom: 24,
+    paddingHorizontal: 4,
+  },
+  eventsSportHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 10,
+    gap: 10,
+    borderRadius: 14,
+  },
+  eventsSportIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eventsSportTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    flex: 1,
+  },
+  eventsSportCountBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  eventsSportCountText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  eventsHorizontalScroll: {
+    paddingLeft: 4,
+    paddingRight: 16,
+    gap: 12,
+    paddingBottom: 4,
+  },
+  eventsCard: {
+    width: 200,
+    borderRadius: 16,
+    overflow: 'hidden' as const,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  eventsCardBanner: {
+    height: 90,
+    position: 'relative' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden' as const,
+  },
+  eventsCardImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  eventsCardBannerPattern: {
+    position: 'absolute' as const,
+    right: -10,
+    bottom: -10,
+    opacity: 0.15,
+  },
+  eventsCardBannerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eventsCardDateBadge: {
+    position: 'absolute' as const,
+    bottom: 6,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  eventsCardDateBadgeDay: {
+    fontSize: 15,
+    fontWeight: '900',
+    lineHeight: 17,
+  },
+  eventsCardDateBadgeMonth: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  eventsCardSaveBtn: {
+    position: 'absolute' as const,
+    top: 8,
+    right: 8,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eventsCardInfo: {
+    padding: 10,
+    gap: 4,
+  },
+  eventsCardTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 17,
+  },
+  eventsCardLocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  eventsCardLocationText: {
+    fontSize: 11,
+    fontWeight: '500',
+    flex: 1,
+  },
+  eventsCardLinkBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginTop: 2,
+  },
+  eventsCardLinkText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  eventsSeeMoreBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 10,
     gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    alignSelf: 'center',
+    marginTop: 10,
   },
-  eventsSegmentText: {
-    fontSize: 14,
-    fontWeight: '600',
+  eventsSeeMoreText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  eventsBackChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 4,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  eventsBackChipText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
 
   // Catalog styles
@@ -4316,5 +5031,109 @@ const styles = StyleSheet.create({
   },
   dot: {
     borderRadius: 4,
+  },
+  trashLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginTop: 12,
+  },
+  trashLinkText: {
+    fontSize: 14,
+    fontWeight: '500',
+    flex: 1,
+  },
+});
+
+const sessionsModalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  container: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    maxHeight: '80%',
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    textTransform: 'capitalize',
+  },
+  subtitle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  closeBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  list: {
+    maxHeight: 400,
+  },
+  sessionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 8,
+    gap: 12,
+  },
+  sessionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sessionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  sessionMeta: {
+    fontSize: 12,
+  },
+  sessionNote: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  emptyText: {
+    textAlign: 'center',
+    paddingVertical: 40,
+    fontSize: 14,
+  },
+  closeButton: {
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginTop: 12,
+    borderWidth: 1,
+  },
+  closeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

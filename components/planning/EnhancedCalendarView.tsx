@@ -26,7 +26,8 @@ import {
 } from 'date-fns';
 import { fr, enUS, es, de, it, pt, ru, ar, zhCN, type Locale } from 'date-fns/locale';
 import { Training, Club } from '@/lib/database';
-import { getClubLogoSource } from '@/lib/sports';
+import { getClubLogoSource, getSportIcon, getSportColor } from '@/lib/sports';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 
 // Mapping des langues vers les locales date-fns
@@ -200,6 +201,11 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
                   .map((id) => clubs.find((c) => c.id === id))
                   .filter(Boolean) as Club[];
 
+                // Get unique sports without club for this day
+                const noClubSports = [
+                  ...new Set(dayWorkouts.filter((w) => !w.club_id).map((w) => w.sport || 'autre')),
+                ].slice(0, 3 - uniqueClubs.length);
+
                 // Vérifier si c'est un jour de repos
                 const dateStr = format(day, 'yyyy-MM-dd');
                 const isRest = restDays.has(dateStr);
@@ -238,14 +244,14 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
                       {format(day, 'd')}
                     </Text>
 
-                    {/* Logos des clubs (max 2-3) */}
+                    {/* Logos des clubs + icones sport (max 2-3) */}
                     {hasTraining && (
                       <View style={styles.clubLogosContainer}>
                         {uniqueClubs.map((club, i) => {
                           const display = getClubDisplay(club);
                           return display.type === 'image' ? (
                             <Image
-                              key={i}
+                              key={`club-${i}`}
                               source={display.source}
                               style={[
                                 styles.calendarClubLogo,
@@ -254,7 +260,7 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
                             />
                           ) : (
                             <View
-                              key={i}
+                              key={`club-${i}`}
                               style={[
                                 styles.calendarClubDot,
                                 {
@@ -263,6 +269,30 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
                                 },
                               ]}
                             />
+                          );
+                        })}
+
+                        {/* Sport icons for workouts without club */}
+                        {noClubSports.map((sport, i) => {
+                          const sportColor = getSportColor(sport);
+                          const offset = uniqueClubs.length + i;
+                          return (
+                            <View
+                              key={`sport-${sport}`}
+                              style={[
+                                styles.calendarSportIcon,
+                                {
+                                  backgroundColor: `${sportColor}30`,
+                                  marginLeft: offset > 0 ? -4 : 0,
+                                },
+                              ]}
+                            >
+                              <MaterialCommunityIcons
+                                name={getSportIcon(sport) as any}
+                                size={12}
+                                color={sportColor}
+                              />
+                            </View>
                           );
                         })}
 
@@ -402,6 +432,15 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+  },
+  calendarSportIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#FFFFFF',
   },

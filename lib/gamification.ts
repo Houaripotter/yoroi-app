@@ -3,6 +3,9 @@
 // ============================================
 // Style Pokemon : Avatar qui evolue avec des paliers clairs
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
+
 export interface Level {
   level: number;
   name: string;
@@ -150,6 +153,121 @@ export const calculateTotalPoints = async (
   return total;
 };
 
+// ============================================
+// SYSTEME DE POINTS UNIFIES
+// ============================================
+// Agrege TOUTES les sources de points/XP
+
+const UNIFIED_POINTS_KEY = '@yoroi_unified_total_points';
+const UNIFIED_BREAKDOWN_KEY = '@yoroi_unified_breakdown';
+
+export interface UnifiedPointsBreakdown {
+  activityPoints: number;
+  questsXp: number;
+  challengesXp: number;
+  challengeServiceXp: number;
+  healthBonus: number;
+  total: number;
+}
+
+/**
+ * Calcule et stocke les points unifies depuis TOUTES les sources.
+ * Appeler apres chaque action qui modifie les points.
+ */
+export const calculateAndStoreUnifiedPoints = async (
+  weightsCount: number,
+  trainingsCount: number,
+  streak: number,
+): Promise<number> => {
+  try {
+    // 1. Points d'activite (pesees, entrainements, streak)
+    const activityPoints =
+      weightsCount * POINTS_ACTIONS.peser +
+      trainingsCount * POINTS_ACTIONS.entrainement +
+      (streak >= 100 ? POINTS_ACTIONS.streak_100 : streak >= 30 ? POINTS_ACTIONS.streak_30 : streak >= 7 ? POINTS_ACTIONS.streak_7 : 0);
+
+    // 2. XP quetes
+    let questsXp = 0;
+    try {
+      const questsData = await AsyncStorage.getItem('@yoroi_quests_state');
+      if (questsData) {
+        const state = JSON.parse(questsData);
+        questsXp = state.totalXp || 0;
+      }
+    } catch { /* ignore */ }
+
+    // 3. XP challenges hebdo
+    let challengesXp = 0;
+    try {
+      const xpData = await AsyncStorage.getItem('@yoroi_user_xp');
+      if (xpData) challengesXp = parseInt(xpData, 10) || 0;
+    } catch { /* ignore */ }
+
+    // 4. XP challenge service
+    let challengeServiceXp = 0;
+    try {
+      const xpData = await AsyncStorage.getItem('@yoroi_challenge_xp');
+      if (xpData) challengeServiceXp = parseInt(xpData, 10) || 0;
+    } catch { /* ignore */ }
+
+    // 5. Bonus sante (Phase 3)
+    let healthBonus = 0;
+    try {
+      const bonusData = await AsyncStorage.getItem('@yoroi_health_daily_bonus');
+      if (bonusData) healthBonus = parseInt(bonusData, 10) || 0;
+    } catch { /* ignore */ }
+
+    const total = activityPoints + questsXp + challengesXp + challengeServiceXp + healthBonus;
+
+    const breakdown: UnifiedPointsBreakdown = {
+      activityPoints,
+      questsXp,
+      challengesXp,
+      challengeServiceXp,
+      healthBonus,
+      total,
+    };
+
+    await AsyncStorage.setItem(UNIFIED_POINTS_KEY, total.toString());
+    await AsyncStorage.setItem(UNIFIED_BREAKDOWN_KEY, JSON.stringify(breakdown));
+
+    return total;
+  } catch (error) {
+    logger.error('[Gamification] Erreur calcul points unifies:', error);
+    return 0;
+  }
+};
+
+/**
+ * Lecture rapide du total de points unifies.
+ */
+export const getUnifiedPoints = async (): Promise<number> => {
+  try {
+    const data = await AsyncStorage.getItem(UNIFIED_POINTS_KEY);
+    return data ? parseInt(data, 10) : 0;
+  } catch {
+    return 0;
+  }
+};
+
+/**
+ * Lecture du detail des points unifies (pour affichage).
+ */
+export const getUnifiedPointsBreakdown = async (): Promise<UnifiedPointsBreakdown> => {
+  try {
+    const data = await AsyncStorage.getItem(UNIFIED_BREAKDOWN_KEY);
+    if (data) return JSON.parse(data);
+  } catch { /* ignore */ }
+  return {
+    activityPoints: 0,
+    questsXp: 0,
+    challengesXp: 0,
+    challengeServiceXp: 0,
+    healthBonus: 0,
+    total: 0,
+  };
+};
+
 export default {
   LEVELS,
   POINTS_ACTIONS,
@@ -157,4 +275,7 @@ export default {
   getNextLevel,
   getLevelProgress,
   calculateTotalPoints,
+  calculateAndStoreUnifiedPoints,
+  getUnifiedPoints,
+  getUnifiedPointsBreakdown,
 };

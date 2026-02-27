@@ -3,902 +3,1605 @@
     "id": "marathon_paris_2026",
     "title": "Schneider Electric Marathon de Paris 2026",
     "date_start": "2026-04-12",
-    "location": { "city": "Paris", "country": "France", "full_address": "Champs-Elysees, Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Champs-Elysees, Paris"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.schneiderelectricparismarathon.com/en/",
     "federation": "ASO",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "semi_paris_2026",
     "title": "HOKA Semi de Paris 2026",
     "date_start": "2026-03-08",
-    "location": { "city": "Paris", "country": "France", "full_address": "Boulevard Saint-Germain, Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Boulevard Saint-Germain, Paris"
+    },
     "category": "endurance",
     "sport_tag": "running",
     "registration_link": "https://www.hokasemideparis.com/en/",
     "federation": "ASO",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
   },
   {
     "id": "20km_paris_2026",
     "title": "Harmonie Mutuelle 20km de Paris 2026",
     "date_start": "2026-10-11",
-    "location": { "city": "Paris", "country": "France", "full_address": "Tour Eiffel - Auteuil" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Tour Eiffel - Auteuil"
+    },
     "category": "endurance",
     "sport_tag": "running",
     "registration_link": "https://www.20kmparis.com/en/",
     "federation": "ASO",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
   },
   {
     "id": "hyrox_paris_2026",
     "title": "HYROX Paris Grand Palais 2026",
     "date_start": "2026-04-23",
-    "location": { "city": "Paris", "country": "France", "full_address": "Grand Palais, Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Grand Palais, Paris"
+    },
     "category": "force",
     "sport_tag": "hyrox",
     "registration_link": "https://hyrox.com/find-your-race/",
     "federation": "HYROX",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
   },
   {
     "id": "hyrox_nice_2026",
     "title": "HYROX Nice 2026",
     "date_start": "2026-02-12",
-    "location": { "city": "Nice", "country": "France", "full_address": "Parc des Expositions, Nice" },
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Parc des Expositions, Nice"
+    },
     "category": "force",
     "sport_tag": "hyrox",
     "registration_link": "https://hyrox.com/find-your-race/",
     "federation": "HYROX",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
   },
   {
     "id": "hyrox_lyon_2026",
     "title": "HYROX Lyon 2026",
     "date_start": "2026-05-20",
-    "location": { "city": "Lyon", "country": "France", "full_address": "Eurexpo, Lyon" },
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Eurexpo, Lyon"
+    },
     "category": "force",
     "sport_tag": "hyrox",
     "registration_link": "https://hyrox.com/find-your-race/",
     "federation": "HYROX",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
   },
   {
     "id": "hyrox_marseille_2026",
     "title": "HYROX Marseille 2026",
     "date_start": "2026-11-14",
-    "location": { "city": "Marseille", "country": "France", "full_address": "Parc Chanot, Marseille" },
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Parc Chanot, Marseille"
+    },
     "category": "force",
     "sport_tag": "hyrox",
     "registration_link": "https://hyrox.com/find-your-race/",
     "federation": "HYROX",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
   },
   {
     "id": "hyrox_bordeaux_2026",
     "title": "HYROX Bordeaux 2026",
     "date_start": "2026-09-19",
-    "location": { "city": "Bordeaux", "country": "France", "full_address": "Parc des Expositions, Bordeaux" },
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Parc des Expositions, Bordeaux"
+    },
     "category": "force",
     "sport_tag": "hyrox",
     "registration_link": "https://hyrox.com/find-your-race/",
     "federation": "HYROX",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
   },
   {
     "id": "hyrox_toulouse_2026",
     "title": "HYROX Toulouse 2026",
     "date_start": "2026-10-17",
-    "location": { "city": "Toulouse", "country": "France", "full_address": "MEETT, Toulouse" },
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "MEETT, Toulouse"
+    },
     "category": "force",
     "sport_tag": "hyrox",
     "registration_link": "https://hyrox.com/find-your-race/",
     "federation": "HYROX",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
   },
   {
     "id": "utmb_2026",
     "title": "UTMB - Ultra Trail du Mont-Blanc 2026",
     "date_start": "2026-08-28",
-    "location": { "city": "Chamonix", "country": "France", "full_address": "Chamonix Mont-Blanc" },
+    "location": {
+      "city": "Chamonix",
+      "country": "France",
+      "full_address": "Chamonix Mont-Blanc"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://montblanc.utmb.world/races/utmb",
     "federation": "UTMB",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
   },
   {
     "id": "ccc_utmb_2026",
     "title": "CCC - Courmayeur Champex Chamonix 2026",
     "date_start": "2026-08-27",
-    "location": { "city": "Courmayeur", "country": "France", "full_address": "Courmayeur - Chamonix" },
+    "location": {
+      "city": "Courmayeur",
+      "country": "France",
+      "full_address": "Courmayeur - Chamonix"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://montblanc.utmb.world/races/ccc",
     "federation": "UTMB",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
   },
   {
     "id": "occ_utmb_2026",
     "title": "OCC - Orsieres Champex Chamonix 2026",
     "date_start": "2026-08-26",
-    "location": { "city": "Chamonix", "country": "France", "full_address": "Orsieres - Chamonix" },
+    "location": {
+      "city": "Chamonix",
+      "country": "France",
+      "full_address": "Orsieres - Chamonix"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://montblanc.utmb.world/races/occ",
     "federation": "UTMB",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
   },
   {
     "id": "tds_utmb_2026",
     "title": "TDS - Sur les Traces des Ducs de Savoie 2026",
     "date_start": "2026-08-25",
-    "location": { "city": "Chamonix", "country": "France", "full_address": "Courmayeur - Chamonix" },
+    "location": {
+      "city": "Chamonix",
+      "country": "France",
+      "full_address": "Courmayeur - Chamonix"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://montblanc.utmb.world/races/tds",
     "federation": "UTMB",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
   },
   {
     "id": "crossfit_open_france_2026",
     "title": "CrossFit Open 2026 - France",
     "date_start": "2026-02-26",
-    "location": { "city": "France", "country": "France", "full_address": "Toutes les box CrossFit" },
+    "location": {
+      "city": "France",
+      "country": "France",
+      "full_address": "Toutes les box CrossFit"
+    },
     "category": "force",
     "sport_tag": "crossfit",
     "registration_link": "https://games.crossfit.com/open/overview",
     "federation": "CrossFit",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/crossfit-games-logo-png_seeklogo-480606.png"
   },
   {
     "id": "marathon_lyon_2026",
     "title": "Run In Lyon Marathon 2026",
     "date_start": "2026-10-04",
-    "location": { "city": "Lyon", "country": "France", "full_address": "Place Bellecour, Lyon" },
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Place Bellecour, Lyon"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.runinlyon.com/en/",
     "federation": "LPA",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "marathon_bordeaux_2026",
     "title": "Marathon de Bordeaux 2026",
     "date_start": "2026-04-26",
-    "location": { "city": "Bordeaux", "country": "France", "full_address": "Place des Quinconces, Bordeaux" },
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Place des Quinconces, Bordeaux"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.marathondebordeaux.com/",
     "federation": "Bordeaux Metropole",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "marathon_toulouse_2026",
     "title": "Marathon de Toulouse 2026",
     "date_start": "2026-10-18",
-    "location": { "city": "Toulouse", "country": "France", "full_address": "Place du Capitole, Toulouse" },
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Place du Capitole, Toulouse"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.marathondetoulouse.fr/",
     "federation": "Toulouse Metropole",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "marathon_nice_cannes_2026",
     "title": "Marathon Nice-Cannes 2026",
     "date_start": "2026-11-08",
-    "location": { "city": "Nice", "country": "France", "full_address": "Promenade des Anglais, Nice - Cannes" },
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Promenade des Anglais, Nice - Cannes"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.marathon06.com/",
     "federation": "Azur Sport Organisation",
-    "image_logo_url": null
+    "image_logo_url": "https://www.marathon06.com/2026/img/logo_marathon_footer.png"
   },
   {
     "id": "marathon_marseille_2026",
     "title": "Marathon de Marseille 2026",
     "date_start": "2026-03-29",
-    "location": { "city": "Marseille", "country": "France", "full_address": "Vieux Port, Marseille" },
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Vieux Port, Marseille"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.marathondemarseille.com/",
     "federation": "SCO Sainte-Marguerite",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "marathon_nantes_2026",
     "title": "Marathon de Nantes 2026",
     "date_start": "2026-04-19",
-    "location": { "city": "Nantes", "country": "France", "full_address": "Chateau des Ducs, Nantes" },
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Chateau des Ducs, Nantes"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.marathondenantes.com/",
     "federation": "Nantes Metropole",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "marathon_lille_2026",
     "title": "Marathon de Lille 2026",
     "date_start": "2026-09-06",
-    "location": { "city": "Lille", "country": "France", "full_address": "Grand Place, Lille" },
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Grand Place, Lille"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.marathondelille.fr/",
     "federation": "Lille Metropole",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "marathon_strasbourg_2026",
     "title": "Marathon de Strasbourg 2026",
     "date_start": "2026-05-17",
-    "location": { "city": "Strasbourg", "country": "France", "full_address": "Place Kleber, Strasbourg" },
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Place Kleber, Strasbourg"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.marathon.strasbourg.eu/",
     "federation": "Strasbourg Eurometropole",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "trail_templiers_2026",
     "title": "Festival des Templiers 2026",
     "date_start": "2026-10-24",
-    "location": { "city": "Millau", "country": "France", "full_address": "Millau, Aveyron" },
+    "location": {
+      "city": "Millau",
+      "country": "France",
+      "full_address": "Millau, Aveyron"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.festivaldestempliers.fr/",
     "federation": "Templiers Organisation",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_100/c_scale,w_100/if_end/v1/worldseries/logo_UTMB_WS_e023c5f3f6"
   },
   {
     "id": "trail_ecotrail_paris_2026",
     "title": "EcoTrail Paris 2026",
     "date_start": "2026-03-14",
-    "location": { "city": "Paris", "country": "France", "full_address": "Paris - Meudon - Versailles" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris - Meudon - Versailles"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.ecotrailparis.com/en/",
     "federation": "EcoTrail",
-    "image_logo_url": null
+    "image_logo_url": "https://cdn.prod.website-files.com/6821f7311f74abc3d9ca09c1/692f00b988de84cc07edd09f_SALOMON_ECOTRAIL_PARIS_LOGO_VERT_RVB.png"
   },
   {
     "id": "trail_grand_raid_reunion_2026",
     "title": "Grand Raid de la Reunion - Diagonale des Fous 2026",
     "date_start": "2026-10-22",
-    "location": { "city": "Saint-Denis", "country": "France", "full_address": "La Reunion" },
+    "location": {
+      "city": "Saint-Denis",
+      "country": "France",
+      "full_address": "La Reunion"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.grandraid-reunion.com/",
     "federation": "Grand Raid Organisation",
-    "image_logo_url": null
+    "image_logo_url": "https://www.grandraid-reunion.com/squelettes/assets/images/logo.png"
   },
   {
     "id": "trail_saintelyon_2026",
     "title": "SainteLyon 2026",
     "date_start": "2026-12-05",
-    "location": { "city": "Saint-Etienne", "country": "France", "full_address": "Saint-Etienne - Lyon" },
+    "location": {
+      "city": "Saint-Etienne",
+      "country": "France",
+      "full_address": "Saint-Etienne - Lyon"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.saintelyon.com/",
     "federation": "ASM Saint-Etienne",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
   },
   {
     "id": "trail_maxi_race_2026",
     "title": "Maxi-Race Annecy 2026",
     "date_start": "2026-05-29",
-    "location": { "city": "Annecy", "country": "France", "full_address": "Lac d'Annecy, Haute-Savoie" },
+    "location": {
+      "city": "Annecy",
+      "country": "France",
+      "full_address": "Lac d'Annecy, Haute-Savoie"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.maxi-race.org/",
     "federation": "Maxi-Race Organisation",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_100/c_scale,w_100/if_end/v1/worldseries/logo_UTMB_WS_e023c5f3f6"
   },
   {
     "id": "trail_ultra_marin_2026",
     "title": "Ultra Marin Raid du Golfe du Morbihan 2026",
     "date_start": "2026-06-27",
-    "location": { "city": "Vannes", "country": "France", "full_address": "Golfe du Morbihan, Bretagne" },
+    "location": {
+      "city": "Vannes",
+      "country": "France",
+      "full_address": "Golfe du Morbihan, Bretagne"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.raid-golfe-morbihan.com/",
     "federation": "Ultra Marin",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_100/c_scale,w_100/if_end/v1/worldseries/logo_UTMB_WS_e023c5f3f6"
   },
   {
     "id": "trail_ut4m_2026",
     "title": "UT4M Ultra Tour des 4 Massifs 2026",
     "date_start": "2026-08-20",
-    "location": { "city": "Grenoble", "country": "France", "full_address": "Grenoble, Isere" },
+    "location": {
+      "city": "Grenoble",
+      "country": "France",
+      "full_address": "Grenoble, Isere"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.ut4m.fr/",
     "federation": "UT4M Organisation",
-    "image_logo_url": null
+    "image_logo_url": "https://ut4m.fr/sites/all/themes/ut4m/images/home/Logo-Ut4M-2023.png"
   },
   {
     "id": "trail_grand_trail_saint_jacques_2026",
     "title": "Grand Trail de Saint-Jacques 2026",
     "date_start": "2026-06-06",
-    "location": { "city": "Conques", "country": "France", "full_address": "Conques, Aveyron" },
+    "location": {
+      "city": "Conques",
+      "country": "France",
+      "full_address": "Conques, Aveyron"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.grandtrailsaintjacques.com/",
     "federation": "GTSJ",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_100/c_scale,w_100/if_end/v1/worldseries/logo_UTMB_WS_e023c5f3f6"
   },
   {
     "id": "ibjjf_paris_open_2026",
     "title": "IBJJF Paris International Open 2026",
     "date_start": "2026-09-12",
-    "location": { "city": "Paris", "country": "France", "full_address": "Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://ibjjf.com/events/paris-international-open-2026",
     "federation": "IBJJF",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "cfjjb_france_2026",
     "title": "Championnat de France de JJB CFJJB 2026",
     "date_start": "2026-06-20",
-    "location": { "city": "Paris", "country": "France", "full_address": "Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://www.cfjjb.org/",
     "federation": "CFJJB",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "ffjda_france_grappling_2026",
     "title": "Championnats de France Grappling 2026",
     "date_start": "2026-05-16",
-    "location": { "city": "Paris", "country": "France", "full_address": "INSEP, Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "INSEP, Paris"
+    },
     "category": "combat",
     "sport_tag": "grappling",
     "registration_link": "https://www.ffjudo.com/grappling",
     "federation": "FFJDA",
-    "image_logo_url": null
+    "image_logo_url": "https://www.ffjudo.com/assets/dist/images/logo-bleu.png"
   },
   {
     "id": "adcc_france_trials_2026",
     "title": "ADCC France Trials 2026",
     "date_start": "2026-04-11",
-    "location": { "city": "Paris", "country": "France", "full_address": "Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris"
+    },
     "category": "combat",
     "sport_tag": "grappling",
     "registration_link": "https://adcombat.com/",
     "federation": "ADCC",
-    "image_logo_url": null
+    "image_logo_url": "https://adcc-official.com/cdn/shop/files/adcc-retina-logo.png?v=1735842835&width=600"
   },
   {
     "id": "ffjda_france_judo_2026",
     "title": "Championnats de France de Judo 2026",
     "date_start": "2026-02-08",
-    "location": { "city": "Paris", "country": "France", "full_address": "AccorHotels Arena, Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "AccorHotels Arena, Paris"
+    },
     "category": "combat",
     "sport_tag": "judo",
     "registration_link": "https://www.ffjudo.com/championnats-de-france",
     "federation": "FFJDA",
-    "image_logo_url": null
+    "image_logo_url": "https://www.ffjudo.com/assets/dist/images/logo-bleu.png"
   },
   {
     "id": "crossfit_quarterfinals_france_2026",
     "title": "CrossFit Quarterfinals 2026 - France",
     "date_start": "2026-04-02",
-    "location": { "city": "France", "country": "France", "full_address": "Online" },
+    "location": {
+      "city": "France",
+      "country": "France",
+      "full_address": "Online"
+    },
     "category": "force",
     "sport_tag": "crossfit",
     "registration_link": "https://games.crossfit.com/",
     "federation": "CrossFit",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/crossfit-games-logo-png_seeklogo-480606.png"
   },
   {
     "id": "crossfit_french_throwdown_2026",
     "title": "French Throwdown 2026",
     "date_start": "2026-09-26",
-    "location": { "city": "Paris", "country": "France", "full_address": "Zenith Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Zenith Paris"
+    },
     "category": "force",
     "sport_tag": "crossfit",
     "registration_link": "https://www.frenchthrowdown.com/",
     "federation": "French Throwdown",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/crossfit-games-logo-png_seeklogo-480606.png"
   },
   {
     "id": "10km_paris_2026",
     "title": "10 km de Paris Centre 2026",
     "date_start": "2026-06-14",
-    "location": { "city": "Paris", "country": "France", "full_address": "Paris Centre" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris Centre"
+    },
     "category": "endurance",
     "sport_tag": "running",
     "registration_link": "https://www.10kmpariscentre.com/",
     "federation": "Mairie de Paris",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
   },
   {
     "id": "10km_cannes_2026",
     "title": "10 km de Cannes 2026",
     "date_start": "2026-09-27",
-    "location": { "city": "Cannes", "country": "France", "full_address": "Croisette, Cannes" },
+    "location": {
+      "city": "Cannes",
+      "country": "France",
+      "full_address": "Croisette, Cannes"
+    },
     "category": "endurance",
     "sport_tag": "running",
     "registration_link": "https://www.cannes-destination.fr/",
     "federation": "Cannes Sport",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
   },
   {
     "id": "corrida_houilles_2026",
     "title": "Corrida de Houilles 2026",
     "date_start": "2026-12-13",
-    "location": { "city": "Houilles", "country": "France", "full_address": "Houilles" },
+    "location": {
+      "city": "Houilles",
+      "country": "France",
+      "full_address": "Houilles"
+    },
     "category": "endurance",
     "sport_tag": "running",
     "registration_link": "https://www.corridadehouilles.com/",
     "federation": "Ville de Houilles",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
   },
   {
     "id": "semi_boulogne_2026",
     "title": "Semi-Marathon de Boulogne-Billancourt 2026",
     "date_start": "2026-11-22",
-    "location": { "city": "Boulogne-Billancourt", "country": "France", "full_address": "Boulogne-Billancourt" },
+    "location": {
+      "city": "Boulogne-Billancourt",
+      "country": "France",
+      "full_address": "Boulogne-Billancourt"
+    },
     "category": "endurance",
     "sport_tag": "running",
     "registration_link": "https://www.semi-marathon-boulogne.com/",
     "federation": "Mairie BB",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
   },
   {
     "id": "10km_vincennes_2026",
     "title": "10 km du Bois de Vincennes 2026",
     "date_start": "2026-03-22",
-    "location": { "city": "Vincennes", "country": "France", "full_address": "Bois de Vincennes, Paris" },
+    "location": {
+      "city": "Vincennes",
+      "country": "France",
+      "full_address": "Bois de Vincennes, Paris"
+    },
     "category": "endurance",
     "sport_tag": "running",
     "registration_link": "https://www.10kmvincennes.com/",
     "federation": "Val-de-Marne",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
   },
   {
     "id": "france_powerlifting_2026",
     "title": "Championnats de France Powerlifting 2026",
     "date_start": "2026-03-28",
-    "location": { "city": "Paris", "country": "France", "full_address": "Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris"
+    },
     "category": "force",
     "sport_tag": "powerlifting",
     "registration_link": "https://www.ffforce.fr/competitions/",
     "federation": "FFForce",
-    "image_logo_url": null
+    "image_logo_url": "https://www.ffforce.fr/medias/_site/logoffforcev2.png"
   },
   {
     "id": "france_bench_press_2026",
     "title": "Championnats de France Developpe Couche 2026",
     "date_start": "2026-06-07",
-    "location": { "city": "Lyon", "country": "France", "full_address": "Lyon" },
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon"
+    },
     "category": "force",
     "sport_tag": "powerlifting",
     "registration_link": "https://www.ffforce.fr/competitions/",
     "federation": "FFForce",
-    "image_logo_url": null
+    "image_logo_url": "https://www.ffforce.fr/medias/_site/logoffforcev2.png"
   },
   {
     "id": "ironman_nice_2026",
     "title": "IRONMAN France Nice 2026",
     "date_start": "2026-06-28",
-    "location": { "city": "Nice", "country": "France", "full_address": "Promenade des Anglais, Nice" },
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Promenade des Anglais, Nice"
+    },
     "category": "endurance",
     "sport_tag": "triathlon",
     "registration_link": "https://www.ironman.com/im-france-nice",
     "federation": "IRONMAN",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
   },
   {
     "id": "ironman_703_les_sables_2026",
     "title": "IRONMAN 70.3 Les Sables d'Olonne 2026",
     "date_start": "2026-06-14",
-    "location": { "city": "Les Sables d'Olonne", "country": "France", "full_address": "Les Sables d'Olonne, Vendee" },
+    "location": {
+      "city": "Les Sables d'Olonne",
+      "country": "France",
+      "full_address": "Les Sables d'Olonne, Vendee"
+    },
     "category": "endurance",
     "sport_tag": "triathlon",
     "registration_link": "https://www.ironman.com/im703-les-sables-dolonne",
     "federation": "IRONMAN",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
   },
   {
     "id": "ironman_703_aix_2026",
     "title": "IRONMAN 70.3 Aix-en-Provence 2026",
     "date_start": "2026-05-10",
-    "location": { "city": "Aix-en-Provence", "country": "France", "full_address": "Aix-en-Provence, Provence" },
+    "location": {
+      "city": "Aix-en-Provence",
+      "country": "France",
+      "full_address": "Aix-en-Provence, Provence"
+    },
     "category": "endurance",
     "sport_tag": "triathlon",
     "registration_link": "https://www.ironman.com/im703-aix-en-provence",
     "federation": "IRONMAN",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
   },
   {
     "id": "triathlon_paris_2026",
     "title": "Triathlon de Paris 2026",
     "date_start": "2026-07-05",
-    "location": { "city": "Paris", "country": "France", "full_address": "Tour Eiffel, Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Tour Eiffel, Paris"
+    },
     "category": "endurance",
     "sport_tag": "triathlon",
     "registration_link": "https://www.paris.triathlon.fr/",
     "federation": "FFTRI",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
   },
   {
     "id": "triathlon_deauville_2026",
     "title": "Triathlon de Deauville 2026",
     "date_start": "2026-06-21",
-    "location": { "city": "Deauville", "country": "France", "full_address": "Deauville, Normandie" },
+    "location": {
+      "city": "Deauville",
+      "country": "France",
+      "full_address": "Deauville, Normandie"
+    },
     "category": "endurance",
     "sport_tag": "triathlon",
     "registration_link": "https://www.triathlondeauville.com/",
     "federation": "FFTRI",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
   },
   {
     "id": "spartan_paris_2026",
     "title": "Spartan Race Paris 2026",
     "date_start": "2026-05-09",
-    "location": { "city": "Paris", "country": "France", "full_address": "Hippodrome de Longchamp, Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Hippodrome de Longchamp, Paris"
+    },
     "category": "endurance",
     "sport_tag": "obstacle",
     "registration_link": "https://www.spartan.com/en/race/france",
     "federation": "Spartan",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/spartan-race-logo-png_seeklogo-483730.png"
   },
   {
     "id": "spartan_morzine_2026",
     "title": "Spartan Trifecta Weekend Morzine 2026",
     "date_start": "2026-07-11",
-    "location": { "city": "Morzine", "country": "France", "full_address": "Morzine, Haute-Savoie" },
+    "location": {
+      "city": "Morzine",
+      "country": "France",
+      "full_address": "Morzine, Haute-Savoie"
+    },
     "category": "endurance",
     "sport_tag": "obstacle",
     "registration_link": "https://www.spartan.com/en/race/france",
     "federation": "Spartan",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/spartan-race-logo-png_seeklogo-483730.png"
   },
   {
     "id": "spartan_carcassonne_2026",
     "title": "Spartan Race Carcassonne 2026",
     "date_start": "2026-09-12",
-    "location": { "city": "Carcassonne", "country": "France", "full_address": "Carcassonne, Aude" },
+    "location": {
+      "city": "Carcassonne",
+      "country": "France",
+      "full_address": "Carcassonne, Aude"
+    },
     "category": "endurance",
     "sport_tag": "obstacle",
     "registration_link": "https://www.spartan.com/en/race/france",
     "federation": "Spartan",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/spartan-race-logo-png_seeklogo-483730.png"
   },
   {
     "id": "tough_mudder_paris_2026",
     "title": "Tough Mudder Paris 2026",
     "date_start": "2026-06-13",
-    "location": { "city": "Paris", "country": "France", "full_address": "Region parisienne" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Region parisienne"
+    },
     "category": "endurance",
     "sport_tag": "obstacle",
     "registration_link": "https://www.toughmudder.com/",
     "federation": "Tough Mudder",
-    "image_logo_url": null
+    "image_logo_url": "https://toughmudder.com/wp-content/uploads/2020/03/tm-logo-large.jpg"
   },
   {
     "id": "fise_montpellier_2026",
     "title": "FISE Montpellier 2026",
     "date_start": "2026-05-14",
-    "location": { "city": "Montpellier", "country": "France", "full_address": "Montpellier" },
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier"
+    },
     "category": "nature",
     "sport_tag": "climbing",
     "registration_link": "https://www.fise.fr/",
     "federation": "FISE",
-    "image_logo_url": null
+    "image_logo_url": "https://www.ffme.fr/wp-content/themes/twentythirteen-child/images/logo.png"
   },
   {
     "id": "etape_tour_2026",
     "title": "L'Etape du Tour de France 2026",
     "date_start": "2026-07-12",
-    "location": { "city": "Alpes", "country": "France", "full_address": "Parcours Tour de France" },
+    "location": {
+      "city": "Alpes",
+      "country": "France",
+      "full_address": "Parcours Tour de France"
+    },
     "category": "endurance",
     "sport_tag": "cycling",
     "registration_link": "https://www.letapedutour.com/en/",
     "federation": "ASO",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/30/1/union-cycliste-international-uci-logo-png_seeklogo-301698.png"
   },
   {
     "id": "paris_brest_paris_2027",
     "title": "Paris-Brest-Paris Randonneur 2027",
     "date_start": "2027-08-15",
-    "location": { "city": "Paris", "country": "France", "full_address": "Paris - Brest - Paris (1200km)" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris - Brest - Paris (1200km)"
+    },
     "category": "endurance",
     "sport_tag": "cycling",
     "registration_link": "https://www.paris-brest-paris.org/",
     "federation": "ACP",
-    "image_logo_url": null
+    "image_logo_url": "https://www.paris-brest-paris.org/wp-content/uploads/2025/06/202411_LOGO_PBP_couleurs_RVB_bassedef_1.png"
   },
   {
     "id": "marmotte_alpes_2026",
     "title": "La Marmotte Granfondo Alps 2026",
     "date_start": "2026-07-04",
-    "location": { "city": "Bourg d'Oisans", "country": "France", "full_address": "Alpe d'Huez, Isere" },
+    "location": {
+      "city": "Bourg d'Oisans",
+      "country": "France",
+      "full_address": "Alpe d'Huez, Isere"
+    },
     "category": "endurance",
     "sport_tag": "cycling",
     "registration_link": "https://www.marmottegranfondoalps.com/",
     "federation": "LCL",
-    "image_logo_url": null
+    "image_logo_url": "https://ffc.fr/app/themes/prehome/static/images/logo-ffc.png"
   },
   {
     "id": "ariege_bike_2026",
     "title": "Ariege Bike 2026 - Raid VTT",
     "date_start": "2026-06-20",
-    "location": { "city": "Foix", "country": "France", "full_address": "Ariege, Pyrenees" },
+    "location": {
+      "city": "Foix",
+      "country": "France",
+      "full_address": "Ariege, Pyrenees"
+    },
     "category": "endurance",
     "sport_tag": "cycling",
     "registration_link": "https://www.ariegebike.com/",
     "federation": "FFC",
-    "image_logo_url": null
+    "image_logo_url": "https://ffc.fr/app/themes/prehome/static/images/logo-ffc.png"
   },
   {
     "id": "mb_race_megeve_2026",
     "title": "MB Race Megeve 2026",
     "date_start": "2026-07-11",
-    "location": { "city": "Megeve", "country": "France", "full_address": "Megeve, Haute-Savoie" },
+    "location": {
+      "city": "Megeve",
+      "country": "France",
+      "full_address": "Megeve, Haute-Savoie"
+    },
     "category": "endurance",
     "sport_tag": "cycling",
     "registration_link": "https://www.mbrace.fr/",
     "federation": "FFC",
-    "image_logo_url": null
+    "image_logo_url": "https://ffc.fr/app/themes/prehome/static/images/logo-ffc.png"
   },
   {
     "id": "france_escalade_2026",
     "title": "Championnats de France d'Escalade 2026",
     "date_start": "2026-11-14",
-    "location": { "city": "Paris", "country": "France", "full_address": "Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris"
+    },
     "category": "nature",
     "sport_tag": "climbing",
     "registration_link": "https://www.ffme.fr/",
     "federation": "FFME",
-    "image_logo_url": null
+    "image_logo_url": "https://www.ffme.fr/wp-content/themes/twentythirteen-child/images/logo.png"
   },
   {
     "id": "trail_des_passerelles_2026",
     "title": "Trail des Passerelles du Monteynard 2026",
     "date_start": "2026-06-14",
-    "location": { "city": "Grenoble", "country": "France", "full_address": "Lac du Monteynard, Isere" },
+    "location": {
+      "city": "Grenoble",
+      "country": "France",
+      "full_address": "Lac du Monteynard, Isere"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.trail-des-passerelles.fr/",
     "federation": "Trail Organisation",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_100/c_scale,w_100/if_end/v1/worldseries/logo_UTMB_WS_e023c5f3f6"
   },
   {
     "id": "trail_verbier_stbernard_2026",
     "title": "Trail Verbier Saint-Bernard 2026",
     "date_start": "2026-07-11",
-    "location": { "city": "Chamonix", "country": "France", "full_address": "Verbier - Grand Saint-Bernard" },
+    "location": {
+      "city": "Chamonix",
+      "country": "France",
+      "full_address": "Verbier - Grand Saint-Bernard"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.trailvsb.ch/",
     "federation": "UTMB",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_100/c_scale,w_100/if_end/v1/worldseries/logo_UTMB_WS_e023c5f3f6"
   },
   {
     "id": "trails_endurance_mag_2026",
     "title": "Trails Endurance Mag 2026",
     "date_start": "2026-05-16",
-    "location": { "city": "Millau", "country": "France", "full_address": "Millau, Aveyron" },
+    "location": {
+      "city": "Millau",
+      "country": "France",
+      "full_address": "Millau, Aveyron"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.endurance-mag.fr/",
     "federation": "Endurance Mag",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_100/c_scale,w_100/if_end/v1/worldseries/logo_UTMB_WS_e023c5f3f6"
   },
   {
     "id": "semi_marseille_2026",
     "title": "Semi-Marathon Marseille-Cassis 2026",
     "date_start": "2026-10-25",
-    "location": { "city": "Marseille", "country": "France", "full_address": "Marseille - Cassis" },
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille - Cassis"
+    },
     "category": "endurance",
     "sport_tag": "running",
     "registration_link": "https://www.marseille-cassis.com/",
     "federation": "SCO",
-    "image_logo_url": null
+    "image_logo_url": "https://www.marseille-cassis.com/_030/images/logo.png"
   },
   {
     "id": "ekiden_paris_2026",
     "title": "Ekiden de Paris 2026",
     "date_start": "2026-11-08",
-    "location": { "city": "Paris", "country": "France", "full_address": "Paris, Bois de Vincennes" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, Bois de Vincennes"
+    },
     "category": "endurance",
     "sport_tag": "running",
     "registration_link": "https://www.ekidendeparis.com/",
     "federation": "ASO",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
   },
   {
     "id": "france_judo_juniors_2026",
     "title": "Championnats de France Judo Juniors 2026",
     "date_start": "2026-03-14",
-    "location": { "city": "Orleans", "country": "France", "full_address": "Orleans, Loiret" },
+    "location": {
+      "city": "Orleans",
+      "country": "France",
+      "full_address": "Orleans, Loiret"
+    },
     "category": "combat",
     "sport_tag": "judo",
     "registration_link": "https://www.ffjudo.com/",
     "federation": "FFJDA",
-    "image_logo_url": null
+    "image_logo_url": "https://www.ffjudo.com/assets/dist/images/logo-bleu.png"
   },
   {
     "id": "open_jjb_lyon_2026",
     "title": "Open de JJB Lyon 2026",
     "date_start": "2026-04-18",
-    "location": { "city": "Lyon", "country": "France", "full_address": "Lyon, Rhone" },
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, Rhone"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://www.smoothcomp.com/",
     "federation": "CFJJB",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "open_jjb_marseille_2026",
     "title": "Open de JJB Marseille 2026",
     "date_start": "2026-05-23",
-    "location": { "city": "Marseille", "country": "France", "full_address": "Marseille" },
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://www.smoothcomp.com/",
     "federation": "CFJJB",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "open_jjb_bordeaux_2026",
     "title": "Open de JJB Bordeaux 2026",
     "date_start": "2026-06-13",
-    "location": { "city": "Bordeaux", "country": "France", "full_address": "Bordeaux, Gironde" },
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, Gironde"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://www.smoothcomp.com/",
     "federation": "CFJJB",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "open_jjb_toulouse_2026",
     "title": "Open de JJB Toulouse 2026",
     "date_start": "2026-07-04",
-    "location": { "city": "Toulouse", "country": "France", "full_address": "Toulouse, Haute-Garonne" },
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, Haute-Garonne"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://www.smoothcomp.com/",
     "federation": "CFJJB",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "open_jjb_nice_2026",
     "title": "Open de JJB Nice 2026",
     "date_start": "2026-09-05",
-    "location": { "city": "Nice", "country": "France", "full_address": "Nice, Alpes-Maritimes" },
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, Alpes-Maritimes"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://www.smoothcomp.com/",
     "federation": "CFJJB",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "open_jjb_nantes_2026",
     "title": "Open de JJB Nantes 2026",
     "date_start": "2026-10-10",
-    "location": { "city": "Nantes", "country": "France", "full_address": "Nantes, Loire-Atlantique" },
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, Loire-Atlantique"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://www.smoothcomp.com/",
     "federation": "CFJJB",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "open_jjb_strasbourg_2026",
     "title": "Open de JJB Strasbourg 2026",
     "date_start": "2026-11-07",
-    "location": { "city": "Strasbourg", "country": "France", "full_address": "Strasbourg, Alsace" },
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, Alsace"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://www.smoothcomp.com/",
     "federation": "CFJJB",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "no_gi_france_championship_2026",
     "title": "Championnat de France No-Gi 2026",
     "date_start": "2026-12-05",
-    "location": { "city": "Paris", "country": "France", "full_address": "Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris"
+    },
     "category": "combat",
     "sport_tag": "grappling",
     "registration_link": "https://www.cfjjb.org/",
     "federation": "CFJJB",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "crossfit_regionals_france_2026",
     "title": "CrossFit Semifinals Europe - France 2026",
     "date_start": "2026-05-30",
-    "location": { "city": "Paris", "country": "France", "full_address": "Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris"
+    },
     "category": "force",
     "sport_tag": "crossfit",
     "registration_link": "https://games.crossfit.com/",
     "federation": "CrossFit",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/crossfit-games-logo-png_seeklogo-480606.png"
   },
   {
     "id": "wodapalooza_france_2026",
     "title": "Wodapalooza France 2026",
     "date_start": "2026-09-19",
-    "location": { "city": "Lyon", "country": "France", "full_address": "Lyon, Rhone" },
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, Rhone"
+    },
     "category": "force",
     "sport_tag": "crossfit",
     "registration_link": "https://www.wodapalooza.com/",
     "federation": "WZA",
-    "image_logo_url": null
+    "image_logo_url": "https://wodapalooza.com/wp-content/uploads/2025/11/gr-wza-logo-color-blk.png"
   },
   {
     "id": "lifting_league_france_2026",
     "title": "Lifting League France 2026",
     "date_start": "2026-08-22",
-    "location": { "city": "Paris", "country": "France", "full_address": "Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris"
+    },
     "category": "force",
     "sport_tag": "powerlifting",
     "registration_link": "https://www.liftingleague.com/",
     "federation": "Lifting League",
-    "image_logo_url": null
+    "image_logo_url": "https://www.ffforce.fr/medias/_site/logoffforcev2.png"
   },
   {
     "id": "semi_lyon_2026",
     "title": "Semi-Marathon de Lyon 2026",
     "date_start": "2026-03-15",
-    "location": { "city": "Lyon", "country": "France", "full_address": "Lyon, Rhone" },
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, Rhone"
+    },
     "category": "endurance",
     "sport_tag": "running",
     "registration_link": "https://www.runinlyon.com/",
     "federation": "LPA",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
   },
   {
     "id": "10km_lyon_2026",
     "title": "10 km de Lyon 2026",
     "date_start": "2026-10-04",
-    "location": { "city": "Lyon", "country": "France", "full_address": "Lyon, Rhone" },
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, Rhone"
+    },
     "category": "endurance",
     "sport_tag": "running",
     "registration_link": "https://www.runinlyon.com/",
     "federation": "LPA",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
   },
   {
     "id": "color_run_paris_2026",
     "title": "Color Run Paris 2026",
     "date_start": "2026-04-05",
-    "location": { "city": "Paris", "country": "France", "full_address": "Paris" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris"
+    },
     "category": "endurance",
     "sport_tag": "running",
     "registration_link": "https://www.thecolorrun.com/",
     "federation": "Color Run",
-    "image_logo_url": null
+    "image_logo_url": "https://thecolorrun.com/wp-content/uploads/2025/08/Primary-Logo.png"
   },
   {
     "id": "mud_day_paris_2026",
     "title": "Mud Day Paris 2026",
     "date_start": "2026-05-03",
-    "location": { "city": "Paris", "country": "France", "full_address": "Region parisienne" },
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Region parisienne"
+    },
     "category": "endurance",
     "sport_tag": "obstacle",
     "registration_link": "https://www.themudday.com/",
     "federation": "Mud Day",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/spartan-race-logo-png_seeklogo-483730.png"
   },
   {
     "id": "frappadingue_2026",
     "title": "La Frappadingue 2026",
     "date_start": "2026-06-07",
-    "location": { "city": "Versailles", "country": "France", "full_address": "Chateau de Versailles" },
+    "location": {
+      "city": "Versailles",
+      "country": "France",
+      "full_address": "Chateau de Versailles"
+    },
     "category": "endurance",
     "sport_tag": "obstacle",
     "registration_link": "https://www.frappadingue.net/",
     "federation": "Frappadingue",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/spartan-race-logo-png_seeklogo-483730.png"
+  },
+  {
+    "id": "judo_paris_gc_2026",
+    "title": "Grand Chelem de Paris 2026",
+    "date_start": "2026-10-04",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "AccorHotels Arena, Paris"
+    },
+    "category": "combat",
+    "sport_tag": "judo",
+    "registration_link": "https://www.ffjudo.com",
+    "federation": "FFJDA",
+    "image_logo_url": "https://www.ffjudo.com/assets/dist/images/logo-bleu.png"
+  },
+  {
+    "id": "judo_toulouse_2026",
+    "title": "Tournoi International de Toulouse 2026",
+    "date_start": "2026-06-14",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Palais des Sports, Toulouse"
+    },
+    "category": "combat",
+    "sport_tag": "judo",
+    "registration_link": "https://www.ffjudo.com",
+    "federation": "FFJDA",
+    "image_logo_url": "https://www.ffjudo.com/assets/dist/images/logo-bleu.png"
+  },
+  {
+    "id": "judo_lyon_2026",
+    "title": "Open International de Lyon Judo 2026",
+    "date_start": "2026-09-20",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Palais des Sports, Lyon"
+    },
+    "category": "combat",
+    "sport_tag": "judo",
+    "registration_link": "https://www.ffjudo.com",
+    "federation": "FFJDA",
+    "image_logo_url": "https://www.ffjudo.com/assets/dist/images/logo-bleu.png"
+  },
+  {
+    "id": "ifsc_toulouse_2026",
+    "title": "IFSC Coupe du Monde Bloc Toulouse 2026",
+    "date_start": "2026-04-18",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Zenith, Toulouse"
+    },
+    "category": "nature",
+    "sport_tag": "climbing",
+    "registration_link": "https://www.ifsc-climbing.org",
+    "federation": "IFSC",
+    "image_logo_url": "https://www.ffme.fr/wp-content/themes/twentythirteen-child/images/logo.png"
+  },
+  {
+    "id": "ifsc_chamonix_2026",
+    "title": "IFSC Coupe du Monde Difficulte Chamonix 2026",
+    "date_start": "2026-07-11",
+    "location": {
+      "city": "Chamonix",
+      "country": "France",
+      "full_address": "Centre Sportif, Chamonix"
+    },
+    "category": "nature",
+    "sport_tag": "climbing",
+    "registration_link": "https://www.ifsc-climbing.org",
+    "federation": "IFSC",
+    "image_logo_url": "https://www.ffme.fr/wp-content/themes/twentythirteen-child/images/logo.png"
+  },
+  {
+    "id": "climbing_briançon_2026",
+    "title": "Championnat de France Escalade 2026",
+    "date_start": "2026-05-30",
+    "location": {
+      "city": "Briançon",
+      "country": "France",
+      "full_address": "Mur National, Briançon"
+    },
+    "category": "nature",
+    "sport_tag": "climbing",
+    "registration_link": "https://www.ffme.fr",
+    "federation": "FFME",
+    "image_logo_url": "https://www.ffme.fr/wp-content/themes/twentythirteen-child/images/logo.png"
+  },
+  {
+    "id": "grappling_ind_paris_2026",
+    "title": "Grappling Industries Paris 2026",
+    "date_start": "2026-05-10",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Gymnase Japy, Paris"
+    },
+    "category": "combat",
+    "sport_tag": "grappling",
+    "registration_link": "https://grapplingindustries.com",
+    "federation": "Grappling Industries",
+    "image_logo_url": "https://adcc-official.com/cdn/shop/files/adcc-retina-logo.png?v=1735842835&width=600"
+  },
+  {
+    "id": "grappling_ind_lyon_2026",
+    "title": "Grappling Industries Lyon 2026",
+    "date_start": "2026-09-06",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Halle Tony Garnier, Lyon"
+    },
+    "category": "combat",
+    "sport_tag": "grappling",
+    "registration_link": "https://grapplingindustries.com",
+    "federation": "Grappling Industries",
+    "image_logo_url": "https://adcc-official.com/cdn/shop/files/adcc-retina-logo.png?v=1735842835&width=600"
+  },
+  {
+    "id": "crossfit_semifinal_fr_2026",
+    "title": "CrossFit Semifinal France 2026",
+    "date_start": "2026-06-07",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris Expo, Porte de Versailles"
+    },
+    "category": "force",
+    "sport_tag": "crossfit",
+    "registration_link": "https://games.crossfit.com",
+    "federation": "CrossFit",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/crossfit-games-logo-png_seeklogo-480606.png"
+  },
+  {
+    "id": "crossfit_throwdown_lyon_2026",
+    "title": "Lyon CrossFit Throwdown 2026",
+    "date_start": "2026-10-18",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Eurexpo, Lyon"
+    },
+    "category": "force",
+    "sport_tag": "crossfit",
+    "registration_link": "https://games.crossfit.com",
+    "federation": "CrossFit",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/crossfit-games-logo-png_seeklogo-480606.png"
+  },
+  {
+    "id": "powerlifting_france_champ_2026",
+    "title": "Championnats de France Powerlifting 2026",
+    "date_start": "2026-05-16",
+    "location": {
+      "city": "Rodez",
+      "country": "France",
+      "full_address": "Salle Polyvalente, Rodez"
+    },
+    "category": "force",
+    "sport_tag": "powerlifting",
+    "registration_link": "https://www.ffforce.fr",
+    "federation": "FFForce",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/17/1/ipf-logo-png_seeklogo-170568.png"
+  },
+  {
+    "id": "bench_press_france_2026",
+    "title": "Championnats de France Developpe Couche 2026",
+    "date_start": "2026-11-07",
+    "location": {
+      "city": "Metz",
+      "country": "France",
+      "full_address": "Les Arenes, Metz"
+    },
+    "category": "force",
+    "sport_tag": "powerlifting",
+    "registration_link": "https://www.ffforce.fr",
+    "federation": "FFForce",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/17/1/ipf-logo-png_seeklogo-170568.png"
+  },
+  {
+    "id": "10km_paris_centre_2026",
+    "title": "10km de Paris Centre 2026",
+    "date_start": "2026-06-07",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Place de la Bastille, Paris"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.paris.fr",
+    "federation": "FFA",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
+  },
+  {
+    "id": "trail_mont_ventoux_2026",
+    "title": "Trail du Mont Ventoux 2026",
+    "date_start": "2026-06-28",
+    "location": {
+      "city": "Bedoin",
+      "country": "France",
+      "full_address": "Bedoin, Vaucluse"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.trail-ventoux.com",
+    "federation": "ITRA",
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
+  },
+  {
+    "id": "trail_alsace_2026",
+    "title": "Trail dAlsace 2026",
+    "date_start": "2026-05-17",
+    "location": {
+      "city": "Colmar",
+      "country": "France",
+      "full_address": "Colmar, Alsace"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.trailalsace.fr",
+    "federation": "ITRA",
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
+  },
+  {
+    "id": "ironman703_aix_2026",
+    "title": "IRONMAN 70.3 Aix-en-Provence 2026",
+    "date_start": "2026-05-17",
+    "location": {
+      "city": "Aix-en-Provence",
+      "country": "France",
+      "full_address": "Lac de Peyrolles"
+    },
+    "category": "endurance",
+    "sport_tag": "triathlon",
+    "registration_link": "https://www.ironman.com",
+    "federation": "IRONMAN",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
+  },
+  {
+    "id": "ironman703_pays_aix_2026",
+    "title": "IRONMAN 70.3 Les Sables dOlonne 2026",
+    "date_start": "2026-06-28",
+    "location": {
+      "city": "Les Sables-dOlonne",
+      "country": "France",
+      "full_address": "Les Sables-dOlonne, Vendee"
+    },
+    "category": "endurance",
+    "sport_tag": "triathlon",
+    "registration_link": "https://www.ironman.com",
+    "federation": "IRONMAN",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
+  },
+  {
+    "id": "hyrox_lille_2026",
+    "title": "HYROX Lille 2026",
+    "date_start": "2026-09-26",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Grand Palais, Lille"
+    },
+    "category": "force",
+    "sport_tag": "hyrox",
+    "registration_link": "https://hyrox.com",
+    "federation": "HYROX",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
+  },
+  {
+    "id": "hyrox_strasbourg_2026",
+    "title": "HYROX Strasbourg 2026",
+    "date_start": "2026-10-10",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Parc des Expositions, Strasbourg"
+    },
+    "category": "force",
+    "sport_tag": "hyrox",
+    "registration_link": "https://hyrox.com",
+    "federation": "HYROX",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
+  },
+  {
+    "id": "toughmudder_avignon_2026",
+    "title": "Tough Mudder Avignon 2026",
+    "date_start": "2026-10-03",
+    "location": {
+      "city": "Avignon",
+      "country": "France",
+      "full_address": "Avignon, Vaucluse"
+    },
+    "category": "endurance",
+    "sport_tag": "obstacle",
+    "registration_link": "https://toughmudder.com",
+    "federation": "Tough Mudder",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/spartan-race-logo-png_seeklogo-483730.png"
+  },
+  {
+    "id": "granfondo_mont_ventoux_2026",
+    "title": "Gran Fondo Mont Ventoux 2026",
+    "date_start": "2026-06-14",
+    "location": {
+      "city": "Bedoin",
+      "country": "France",
+      "full_address": "Bedoin - Mont Ventoux"
+    },
+    "category": "endurance",
+    "sport_tag": "cycling",
+    "registration_link": "https://www.granfondo-ventoux.com",
+    "federation": "FFC",
+    "image_logo_url": "https://ffc.fr/app/themes/prehome/static/images/logo-ffc.png"
+  },
+  {
+    "id": "cfjjb_open_paris_automne_2026",
+    "title": "Open de Paris JJB Automne 2026",
+    "date_start": "2026-11-15",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Stade Pierre de Coubertin, Paris"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://cfjjb.com",
+    "federation": "CFJJB",
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
+  },
+  {
+    "id": "cfjjb_bordeaux_2026",
+    "title": "Open de Bordeaux JJB 2026",
+    "date_start": "2026-04-12",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Gymnase Municipal, Bordeaux"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://cfjjb.com",
+    "federation": "CFJJB",
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
+  },
+  {
+    "id": "cfjjb_nantes_2026",
+    "title": "Open de Nantes JJB 2026",
+    "date_start": "2026-05-24",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Palais des Sports, Nantes"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://cfjjb.com",
+    "federation": "CFJJB",
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
+  },
+  {
+    "id": "ibjjf_open_paris_2026_b",
+    "title": "IBJJF Paris International Open GI 2026",
+    "date_start": "2026-09-13",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Palais des Sports, Paris"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://ibjjf.com",
+    "federation": "IBJJF",
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   }
 ]

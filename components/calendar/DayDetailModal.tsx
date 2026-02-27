@@ -15,7 +15,8 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '@/lib/ThemeContext';
 import { Training, Club } from '@/lib/database';
-import { getClubLogoSource } from '@/lib/sports';
+import { getClubLogoSource, getSportIcon, getSportColor, getSportName } from '@/lib/sports';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface DayDetailModalProps {
   visible: boolean;
@@ -72,7 +73,7 @@ export function DayDetailModal({
     const club = getClub(session.club_id);
     showPopup(
       'Supprimer la seance',
-      `Supprimer ${club?.name || session.sport}${session.start_time ? ` a ${session.start_time}` : ''} ?`,
+      `Supprimer ${club?.name || session.sport}${session.start_time ? ` a ${session.start_time}` : ''} ?\n\nLa seance sera deplacee dans la corbeille.`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -162,10 +163,16 @@ export function DayDetailModal({
                       style={[styles.sessionCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                     >
                       <View style={styles.sessionMain}>
-                        {/* Logo/Couleur du club */}
-                        <View style={[styles.sessionLogo, { backgroundColor: `${display.type === 'color' ? display.color : colors.backgroundElevated}20` }]}>
+                        {/* Logo/Couleur du club ou icone sport */}
+                        <View style={[styles.sessionLogo, { backgroundColor: `${!club ? getSportColor(session.sport) : display.type === 'color' ? display.color : colors.backgroundElevated}20` }]}>
                           {display.type === 'image' ? (
                             <Image source={display.source} style={styles.sessionLogoImage} resizeMode="cover" />
+                          ) : !club ? (
+                            <MaterialCommunityIcons
+                              name={getSportIcon(session.sport) as any}
+                              size={24}
+                              color={getSportColor(session.sport)}
+                            />
                           ) : (
                             <View style={[styles.sessionColorDot, { backgroundColor: display.color }]} />
                           )}
@@ -174,7 +181,7 @@ export function DayDetailModal({
                         {/* Info */}
                         <View style={styles.sessionInfo}>
                           <Text style={[styles.sessionClubName, { color: colors.textPrimary }]}>
-                            {club?.name || session.sport}
+                            {club?.name || getSportName(session.sport)}
                           </Text>
                           <View style={styles.sessionMeta}>
                             <Clock size={12} color={colors.textMuted} />

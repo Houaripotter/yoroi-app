@@ -40,4 +40,16 @@ export default HealthKit || MockHealthKit;
 // Export pour savoir si HealthKit est disponible
 export const isHealthKitAvailable = HealthKit !== null;
 export const isRunningInExpoGo = isExpoGo;
-export const isMockMode = HealthKit === null; // ✅ NOUVEAU : Détecter mode mock
+export const isMockMode = HealthKit === null;
+
+// Diagnostic object for troubleshooting
+export const healthKitDiagnostic = {
+  isAvailable: HealthKit !== null,
+  isExpoGo,
+  isMock: HealthKit === null,
+  platform: Platform.OS,
+  moduleLoaded: HealthKit !== null,
+  moduleError: HealthKit === null && !isExpoGo && Platform.OS === 'ios'
+    ? 'HealthKit module failed to load on iOS native build'
+    : null,
+};

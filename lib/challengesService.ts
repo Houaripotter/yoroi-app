@@ -6,6 +6,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import { getDailyHydration } from '@/lib/quests';
+import { calculateAndStoreUnifiedPoints } from './gamification';
+import { getWeights, calculateStreak, getTrainings } from './database';
 
 // ============================================
 // TYPES
@@ -288,7 +290,13 @@ export const claimChallengeReward = async (challengeId: string): Promise<number>
     const totalXpData = await AsyncStorage.getItem(STORAGE_KEYS.TOTAL_XP_FROM_CHALLENGES);
     const totalXp = totalXpData ? parseInt(totalXpData, 10) : 0;
     await AsyncStorage.setItem(STORAGE_KEYS.TOTAL_XP_FROM_CHALLENGES, (totalXp + challenge.reward.xp).toString());
-    
+
+    // Recalculer les points unifies
+    try {
+      const [weights, streak, trainings] = await Promise.all([getWeights(), calculateStreak(), getTrainings()]);
+      await calculateAndStoreUnifiedPoints(weights.length, trainings.length, streak);
+    } catch { /* non-bloquant */ }
+
     return challenge.reward.xp;
   } catch (error) {
     logger.error('Erreur réclamation récompense:', error);

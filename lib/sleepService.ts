@@ -20,6 +20,16 @@ export interface SleepEntry {
   duration: number; // minutes
   quality: number; // 1-5 étoiles
   notes?: string;
+  phases?: {
+    deep: number;   // minutes
+    rem: number;    // minutes
+    core: number;   // minutes
+    awake: number;  // minutes
+    inBed?: number; // minutes
+  };
+  source?: string;
+  efficiency?: number; // 0-100%
+  interruptions?: number;
 }
 
 export interface SleepStats {
@@ -47,7 +57,7 @@ const STORAGE_KEYS = {
   LONGEST_STREAK: '@yoroi_sleep_longest_streak',
 };
 
-const DEFAULT_SLEEP_GOAL = 0; // Pas d'objectif par défaut - l'utilisateur doit le définir
+const DEFAULT_SLEEP_GOAL = 480; // 8h par defaut
 
 // ============================================
 // FONCTIONS
@@ -490,9 +500,15 @@ export const addSleepEntryFromHealthKit = async (entry: {
       wakeTime: entry.wakeTime,
       duration: entry.duration,
       quality: entry.quality,
-      notes: entry.phases
-        ? `HealthKit | Profond: ${entry.phases.deep || 0}min, REM: ${entry.phases.rem || 0}min, Leger: ${entry.phases.core || 0}min`
-        : 'HealthKit',
+      phases: entry.phases ? {
+        deep: entry.phases.deep || 0,
+        rem: entry.phases.rem || 0,
+        core: entry.phases.core || 0,
+        awake: entry.phases.awake || 0,
+        inBed: entry.phases.inBed,
+      } : undefined,
+      source: 'healthkit',
+      notes: 'HealthKit',
     };
 
     // Remplacer une ancienne entree HealthKit ou ajouter

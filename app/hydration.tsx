@@ -9,6 +9,7 @@ import {
   Animated,
   TextInput,
   Switch,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { StatusBar } from 'expo-status-bar';
@@ -137,8 +138,13 @@ export default function HydrationScreen() {
       }
 
       if (goalStr) {
-        setGoal(parseFloat(goalStr));
-        setGoalInput(goalStr);
+        let parsedGoal = parseFloat(goalStr);
+        // Si la valeur est >= 20, c'est en ml (ex: 3500) → convertir en litres
+        if (parsedGoal >= 20) {
+          parsedGoal = parsedGoal / 1000;
+        }
+        setGoal(parsedGoal);
+        setGoalInput(parsedGoal.toString());
       }
 
       if (historyStr) {
@@ -208,6 +214,9 @@ export default function HydrationScreen() {
         await syncHydration(waterIntakeMl);
         logger.info(`✅ Hydratation synchronisée avec Watch: ${waterIntakeMl}ml`);
       }
+
+      // Notifier le home screen instantanement (event leger)
+      DeviceEventEmitter.emit('HYDRATION_AMOUNT_CHANGED', { amountMl: Math.round(amount * 1000) });
     } catch (error) {
       logger.error('Erreur sauvegarde hydratation:', error);
     }
@@ -219,6 +228,8 @@ export default function HydrationScreen() {
       setGoal(newGoal);
       setEditingGoal(false);
       notificationAsync(NotificationFeedbackType.Success);
+      // Notifier le home screen instantanement (event leger, pas de reload complet)
+      DeviceEventEmitter.emit('HYDRATION_GOAL_CHANGED', { goalLiters: newGoal });
     } catch (error) {
       logger.error('Erreur sauvegarde objectif:', error);
     }
@@ -354,10 +365,10 @@ export default function HydrationScreen() {
           {/* Valeur centrale */}
           <View style={styles.valueOverlay}>
             <Text style={[styles.bigValue, { color: percentage >= 100 ? '#10B981' : colors.textPrimary }]}>
-              {currentAmount.toFixed(2)}
+              {parseFloat(currentAmount.toFixed(2))}
             </Text>
             <TouchableOpacity onPress={() => setEditingGoal(true)} activeOpacity={0.7}>
-              <Text style={[styles.bigUnit, { color: colors.textMuted }]}>/ {goal}L</Text>
+              <Text style={[styles.bigUnit, { color: colors.textMuted }]}>/ {parseFloat(goal.toFixed(2))}L</Text>
             </TouchableOpacity>
           </View>
 
@@ -478,7 +489,7 @@ export default function HydrationScreen() {
                 style={[styles.goalAdjust, { backgroundColor: colors.background }]}
                 onPress={() => {
                   const newGoal = Math.max(0.5, parseFloat(goalInput) - 0.25);
-                  setGoalInput(newGoal.toFixed(2));
+                  setGoalInput(String(parseFloat(newGoal.toFixed(2))));
                 }}
               >
                 <Minus size={20} color={colors.textPrimary} />
@@ -499,7 +510,7 @@ export default function HydrationScreen() {
                 style={[styles.goalAdjust, { backgroundColor: colors.background }]}
                 onPress={() => {
                   const newGoal = Math.min(5, parseFloat(goalInput) + 0.25);
-                  setGoalInput(newGoal.toFixed(2));
+                  setGoalInput(String(parseFloat(newGoal.toFixed(2))));
                 }}
               >
                 <Plus size={20} color={colors.textPrimary} />
@@ -702,7 +713,7 @@ export default function HydrationScreen() {
 
             <View style={styles.statItem}>
               <Droplets size={18} color="#0EA5E9" />
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{avgAmount.toFixed(2)}L</Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{avgAmount.toFixed(1)}L</Text>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('hydration.averagePerDay')}</Text>
             </View>
 

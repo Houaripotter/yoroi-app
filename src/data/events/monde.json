@@ -3,682 +3,1545 @@
     "id": "tokyo_marathon_2026",
     "title": "Tokyo Marathon 2026",
     "date_start": "2026-03-01",
-    "location": { "city": "Tokyo", "country": "Japan", "full_address": "Tokyo Metropolitan Government Building" },
+    "location": {
+      "city": "Tokyo",
+      "country": "Japan",
+      "full_address": "Tokyo Metropolitan Government Building"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.marathon.tokyo/en/",
     "federation": "Tokyo Marathon Foundation",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "boston_marathon_2026",
     "title": "Boston Marathon 2026",
     "date_start": "2026-04-20",
-    "location": { "city": "Boston", "country": "USA", "full_address": "Hopkinton to Boylston Street, Boston" },
+    "location": {
+      "city": "Boston",
+      "country": "USA",
+      "full_address": "Hopkinton to Boylston Street, Boston"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.baa.org/races/boston-marathon",
     "federation": "Boston Athletic Association",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "new_york_marathon_2026",
     "title": "TCS New York City Marathon 2026",
     "date_start": "2026-11-01",
-    "location": { "city": "New York", "country": "USA", "full_address": "Staten Island - Central Park, New York" },
+    "location": {
+      "city": "New York",
+      "country": "USA",
+      "full_address": "Staten Island - Central Park, New York"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.nyrr.org/races/tcsnewYorkcitymarathon",
     "federation": "NYRR",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "chicago_marathon_2026",
     "title": "Bank of America Chicago Marathon 2026",
     "date_start": "2026-10-11",
-    "location": { "city": "Chicago", "country": "USA", "full_address": "Grant Park, Chicago" },
+    "location": {
+      "city": "Chicago",
+      "country": "USA",
+      "full_address": "Grant Park, Chicago"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.chicagomarathon.com/",
     "federation": "Chicago Event Management",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "la_marathon_2026",
     "title": "LA Marathon 2026",
     "date_start": "2026-03-08",
-    "location": { "city": "Los Angeles", "country": "USA", "full_address": "Dodger Stadium to Santa Monica" },
+    "location": {
+      "city": "Los Angeles",
+      "country": "USA",
+      "full_address": "Dodger Stadium to Santa Monica"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.lamarathon.com/",
     "federation": "LA Marathon LLC",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "miami_marathon_2026",
     "title": "Miami Marathon 2026",
     "date_start": "2026-02-01",
-    "location": { "city": "Miami", "country": "USA", "full_address": "Miami Beach" },
+    "location": {
+      "city": "Miami",
+      "country": "USA",
+      "full_address": "Miami Beach"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.themiamimarathon.com/",
     "federation": "Miami Marathon",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "san_francisco_marathon_2026",
     "title": "San Francisco Marathon 2026",
     "date_start": "2026-07-26",
-    "location": { "city": "San Francisco", "country": "USA", "full_address": "Golden Gate Bridge, San Francisco" },
+    "location": {
+      "city": "San Francisco",
+      "country": "USA",
+      "full_address": "Golden Gate Bridge, San Francisco"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.thesfmarathon.com/",
     "federation": "SF Marathon",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "hong_kong_marathon_2026",
     "title": "Standard Chartered Hong Kong Marathon 2026",
     "date_start": "2026-02-15",
-    "location": { "city": "Hong Kong", "country": "China", "full_address": "Nathan Road, Hong Kong" },
+    "location": {
+      "city": "Hong Kong",
+      "country": "China",
+      "full_address": "Nathan Road, Hong Kong"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.hkmarathon.com/",
     "federation": "HKAAA",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "dubai_marathon_2026",
     "title": "Dubai Marathon 2026",
     "date_start": "2026-01-09",
-    "location": { "city": "Dubai", "country": "UAE", "full_address": "Dubai, UAE" },
+    "location": {
+      "city": "Dubai",
+      "country": "UAE",
+      "full_address": "Dubai, UAE"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.dubaimarathon.org/",
     "federation": "Dubai Sports Council",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "sydney_marathon_2026",
     "title": "Sydney Marathon 2026",
     "date_start": "2026-09-20",
-    "location": { "city": "Sydney", "country": "Australia", "full_address": "Sydney Harbour Bridge" },
+    "location": {
+      "city": "Sydney",
+      "country": "Australia",
+      "full_address": "Sydney Harbour Bridge"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.sydneyrunningfestival.com.au/",
     "federation": "Athletics Australia",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "crossfit_games_2026",
     "title": "CrossFit Games 2026",
     "date_start": "2026-07-24",
-    "location": { "city": "Madison", "country": "USA", "full_address": "Alliant Energy Center, Madison, Wisconsin" },
+    "location": {
+      "city": "Madison",
+      "country": "USA",
+      "full_address": "Alliant Energy Center, Madison, Wisconsin"
+    },
     "category": "force",
     "sport_tag": "crossfit",
     "registration_link": "https://games.crossfit.com/",
     "federation": "CrossFit",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/crossfit-games-logo-png_seeklogo-480606.png"
   },
   {
     "id": "crossfit_open_2026",
     "title": "CrossFit Open 2026",
     "date_start": "2026-02-26",
-    "location": { "city": "Worldwide", "country": "World", "full_address": "Toutes les box CrossFit du monde" },
+    "location": {
+      "city": "Worldwide",
+      "country": "World",
+      "full_address": "Toutes les box CrossFit du monde"
+    },
     "category": "force",
     "sport_tag": "crossfit",
     "registration_link": "https://games.crossfit.com/open/overview",
     "federation": "CrossFit",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/crossfit-games-logo-png_seeklogo-480606.png"
   },
   {
     "id": "crossfit_semifinal_north_america_2026",
     "title": "CrossFit Semifinal North America 2026",
     "date_start": "2026-05-08",
-    "location": { "city": "USA", "country": "USA", "full_address": "TBA" },
+    "location": {
+      "city": "USA",
+      "country": "USA",
+      "full_address": "TBA"
+    },
     "category": "force",
     "sport_tag": "crossfit",
     "registration_link": "https://games.crossfit.com/",
     "federation": "CrossFit",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/crossfit-games-logo-png_seeklogo-480606.png"
   },
   {
     "id": "ibjjf_world_2026",
     "title": "IBJJF World Championship 2026",
     "date_start": "2026-06-04",
-    "location": { "city": "Anaheim", "country": "USA", "full_address": "Anaheim Convention Center, California" },
+    "location": {
+      "city": "Anaheim",
+      "country": "USA",
+      "full_address": "Anaheim Convention Center, California"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://ibjjf.com/events/world-ibjjf-jiu-jitsu-championship-2026",
     "federation": "IBJJF",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "ibjjf_pan_2026",
     "title": "IBJJF Pan Championship 2026",
     "date_start": "2026-03-18",
-    "location": { "city": "Irvine", "country": "USA", "full_address": "Bren Events Center, Irvine, California" },
+    "location": {
+      "city": "Irvine",
+      "country": "USA",
+      "full_address": "Bren Events Center, Irvine, California"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://ibjjf.com/events/pan-ibjjf-jiu-jitsu-championship-2026",
     "federation": "IBJJF",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "ibjjf_nogi_world_2026",
     "title": "IBJJF No-Gi World Championship 2026",
     "date_start": "2026-12-03",
-    "location": { "city": "Anaheim", "country": "USA", "full_address": "Anaheim Convention Center, California" },
+    "location": {
+      "city": "Anaheim",
+      "country": "USA",
+      "full_address": "Anaheim Convention Center, California"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://ibjjf.com/events/no-gi-world-championship-2026",
     "federation": "IBJJF",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "ibjjf_masters_world_2026",
     "title": "IBJJF Masters World Championship 2026",
     "date_start": "2026-08-27",
-    "location": { "city": "Las Vegas", "country": "USA", "full_address": "Las Vegas Convention Center" },
+    "location": {
+      "city": "Las Vegas",
+      "country": "USA",
+      "full_address": "Las Vegas Convention Center"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://ibjjf.com/events/masters-world-championship-2026",
     "federation": "IBJJF",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "adcc_worlds_2026",
     "title": "ADCC World Championship 2026",
     "date_start": "2026-09-19",
-    "location": { "city": "Las Vegas", "country": "USA", "full_address": "T-Mobile Arena, Las Vegas" },
+    "location": {
+      "city": "Las Vegas",
+      "country": "USA",
+      "full_address": "T-Mobile Arena, Las Vegas"
+    },
     "category": "combat",
     "sport_tag": "grappling",
     "registration_link": "https://adcombat.com/",
     "federation": "ADCC",
-    "image_logo_url": null
+    "image_logo_url": "https://adcc-official.com/cdn/shop/files/adcc-retina-logo.png?v=1735842835&width=600"
   },
   {
     "id": "adcc_north_america_trials_2026",
     "title": "ADCC North America Trials 2026",
     "date_start": "2026-04-04",
-    "location": { "city": "Las Vegas", "country": "USA", "full_address": "Las Vegas, Nevada" },
+    "location": {
+      "city": "Las Vegas",
+      "country": "USA",
+      "full_address": "Las Vegas, Nevada"
+    },
     "category": "combat",
     "sport_tag": "grappling",
     "registration_link": "https://adcombat.com/",
     "federation": "ADCC",
-    "image_logo_url": null
+    "image_logo_url": "https://adcc-official.com/cdn/shop/files/adcc-retina-logo.png?v=1735842835&width=600"
   },
   {
     "id": "adcc_south_america_trials_2026",
     "title": "ADCC South America Trials 2026",
     "date_start": "2026-05-16",
-    "location": { "city": "Sao Paulo", "country": "Brazil", "full_address": "Sao Paulo, Brazil" },
+    "location": {
+      "city": "Sao Paulo",
+      "country": "Brazil",
+      "full_address": "Sao Paulo, Brazil"
+    },
     "category": "combat",
     "sport_tag": "grappling",
     "registration_link": "https://adcombat.com/",
     "federation": "ADCC",
-    "image_logo_url": null
+    "image_logo_url": "https://adcc-official.com/cdn/shop/files/adcc-retina-logo.png?v=1735842835&width=600"
   },
   {
     "id": "hyrox_world_championship_2026",
     "title": "HYROX World Championship 2026",
     "date_start": "2026-06-13",
-    "location": { "city": "Nice", "country": "France", "full_address": "Nice, France" },
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
     "category": "force",
     "sport_tag": "hyrox",
     "registration_link": "https://hyrox.com/world-championship/",
     "federation": "HYROX",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
   },
   {
     "id": "hyrox_las_vegas_2026",
     "title": "HYROX Las Vegas 2026",
     "date_start": "2026-01-10",
-    "location": { "city": "Las Vegas", "country": "USA", "full_address": "Las Vegas Convention Center" },
+    "location": {
+      "city": "Las Vegas",
+      "country": "USA",
+      "full_address": "Las Vegas Convention Center"
+    },
     "category": "force",
     "sport_tag": "hyrox",
     "registration_link": "https://hyrox.com/find-your-race/",
     "federation": "HYROX",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
   },
   {
     "id": "hyrox_chicago_2026",
     "title": "HYROX Chicago 2026",
     "date_start": "2026-02-07",
-    "location": { "city": "Chicago", "country": "USA", "full_address": "McCormick Place, Chicago" },
+    "location": {
+      "city": "Chicago",
+      "country": "USA",
+      "full_address": "McCormick Place, Chicago"
+    },
     "category": "force",
     "sport_tag": "hyrox",
     "registration_link": "https://hyrox.com/find-your-race/",
     "federation": "HYROX",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
   },
   {
     "id": "hyrox_dallas_2026",
     "title": "HYROX Dallas 2026",
     "date_start": "2026-03-14",
-    "location": { "city": "Dallas", "country": "USA", "full_address": "Kay Bailey Hutchison Convention Center" },
+    "location": {
+      "city": "Dallas",
+      "country": "USA",
+      "full_address": "Kay Bailey Hutchison Convention Center"
+    },
     "category": "force",
     "sport_tag": "hyrox",
     "registration_link": "https://hyrox.com/find-your-race/",
     "federation": "HYROX",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
   },
   {
     "id": "hyrox_miami_2026",
     "title": "HYROX Miami 2026",
     "date_start": "2026-04-11",
-    "location": { "city": "Miami", "country": "USA", "full_address": "Miami Beach Convention Center" },
+    "location": {
+      "city": "Miami",
+      "country": "USA",
+      "full_address": "Miami Beach Convention Center"
+    },
     "category": "force",
     "sport_tag": "hyrox",
     "registration_link": "https://hyrox.com/find-your-race/",
     "federation": "HYROX",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
   },
   {
     "id": "hyrox_sydney_2026",
     "title": "HYROX Sydney 2026",
     "date_start": "2026-08-22",
-    "location": { "city": "Sydney", "country": "Australia", "full_address": "Sydney Olympic Park" },
+    "location": {
+      "city": "Sydney",
+      "country": "Australia",
+      "full_address": "Sydney Olympic Park"
+    },
     "category": "force",
     "sport_tag": "hyrox",
     "registration_link": "https://hyrox.com/find-your-race/",
     "federation": "HYROX",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
   },
   {
     "id": "hyrox_tokyo_2026",
     "title": "HYROX Tokyo 2026",
     "date_start": "2026-11-21",
-    "location": { "city": "Tokyo", "country": "Japan", "full_address": "Tokyo Big Sight" },
+    "location": {
+      "city": "Tokyo",
+      "country": "Japan",
+      "full_address": "Tokyo Big Sight"
+    },
     "category": "force",
     "sport_tag": "hyrox",
     "registration_link": "https://hyrox.com/find-your-race/",
     "federation": "HYROX",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
   },
   {
     "id": "western_states_2026",
     "title": "Western States 100 2026",
     "date_start": "2026-06-27",
-    "location": { "city": "Olympic Valley", "country": "USA", "full_address": "Olympic Valley to Auburn, California" },
+    "location": {
+      "city": "Olympic Valley",
+      "country": "USA",
+      "full_address": "Olympic Valley to Auburn, California"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.wser.org/",
     "federation": "WSER",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
   },
   {
     "id": "hardrock_100_2026",
     "title": "Hardrock 100 2026",
     "date_start": "2026-07-17",
-    "location": { "city": "Silverton", "country": "USA", "full_address": "Silverton, Colorado" },
+    "location": {
+      "city": "Silverton",
+      "country": "USA",
+      "full_address": "Silverton, Colorado"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://hardrock100.com/",
     "federation": "Hardrock Hundred",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
   },
   {
     "id": "leadville_100_2026",
     "title": "Leadville Trail 100 Run 2026",
     "date_start": "2026-08-15",
-    "location": { "city": "Leadville", "country": "USA", "full_address": "Leadville, Colorado" },
+    "location": {
+      "city": "Leadville",
+      "country": "USA",
+      "full_address": "Leadville, Colorado"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.leadvilleraceseries.com/",
     "federation": "Leadville Race Series",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
   },
   {
     "id": "big_sur_marathon_2026",
     "title": "Big Sur International Marathon 2026",
     "date_start": "2026-04-26",
-    "location": { "city": "Big Sur", "country": "USA", "full_address": "Highway 1, Big Sur, California" },
+    "location": {
+      "city": "Big Sur",
+      "country": "USA",
+      "full_address": "Highway 1, Big Sur, California"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.bigsurmarathon.org/",
     "federation": "Big Sur Marathon Foundation",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "comrades_marathon_2026",
     "title": "Comrades Marathon 2026",
     "date_start": "2026-06-14",
-    "location": { "city": "Durban", "country": "South Africa", "full_address": "Durban - Pietermaritzburg" },
+    "location": {
+      "city": "Durban",
+      "country": "South Africa",
+      "full_address": "Durban - Pietermaritzburg"
+    },
     "category": "endurance",
     "sport_tag": "marathon",
     "registration_link": "https://www.comrades.com/",
     "federation": "Comrades Marathon Association",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
   },
   {
     "id": "abu_dhabi_world_pro_2026",
     "title": "Abu Dhabi World Professional Championship 2026",
     "date_start": "2026-11-12",
-    "location": { "city": "Abu Dhabi", "country": "UAE", "full_address": "Jiu-Jitsu Arena, Abu Dhabi" },
+    "location": {
+      "city": "Abu Dhabi",
+      "country": "UAE",
+      "full_address": "Jiu-Jitsu Arena, Abu Dhabi"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://www.ajptour.com/",
     "federation": "AJP",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "ajp_grand_slam_tokyo_2026",
     "title": "AJP Grand Slam Tokyo 2026",
     "date_start": "2026-08-08",
-    "location": { "city": "Tokyo", "country": "Japan", "full_address": "Tokyo, Japan" },
+    "location": {
+      "city": "Tokyo",
+      "country": "Japan",
+      "full_address": "Tokyo, Japan"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://www.ajptour.com/",
     "federation": "AJP",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "ajp_grand_slam_rio_2026",
     "title": "AJP Grand Slam Rio 2026",
     "date_start": "2026-07-04",
-    "location": { "city": "Rio de Janeiro", "country": "Brazil", "full_address": "Rio de Janeiro, Brazil" },
+    "location": {
+      "city": "Rio de Janeiro",
+      "country": "Brazil",
+      "full_address": "Rio de Janeiro, Brazil"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://www.ajptour.com/",
     "federation": "AJP",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "world_powerlifting_2026",
     "title": "IPF World Powerlifting Championship 2026",
     "date_start": "2026-10-05",
-    "location": { "city": "TBA", "country": "World", "full_address": "TBA" },
+    "location": {
+      "city": "TBA",
+      "country": "World",
+      "full_address": "TBA"
+    },
     "category": "force",
     "sport_tag": "powerlifting",
     "registration_link": "https://www.powerlifting.sport/championships/calendar",
     "federation": "IPF",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/17/1/ipf-logo-png_seeklogo-170568.png"
   },
   {
     "id": "world_bench_press_2026",
     "title": "IPF World Bench Press Championship 2026",
     "date_start": "2026-05-23",
-    "location": { "city": "TBA", "country": "World", "full_address": "TBA" },
+    "location": {
+      "city": "TBA",
+      "country": "World",
+      "full_address": "TBA"
+    },
     "category": "force",
     "sport_tag": "powerlifting",
     "registration_link": "https://www.powerlifting.sport/championships/calendar",
     "federation": "IPF",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/17/1/ipf-logo-png_seeklogo-170568.png"
   },
   {
     "id": "arnold_classic_2026",
     "title": "Arnold Sports Festival 2026",
     "date_start": "2026-03-05",
-    "location": { "city": "Columbus", "country": "USA", "full_address": "Columbus Convention Center, Ohio" },
+    "location": {
+      "city": "Columbus",
+      "country": "USA",
+      "full_address": "Columbus Convention Center, Ohio"
+    },
     "category": "force",
     "sport_tag": "powerlifting",
     "registration_link": "https://www.arnoldsportsfestival.com/",
     "federation": "Arnold Sports",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/17/1/ipf-logo-png_seeklogo-170568.png"
   },
   {
     "id": "spartan_world_championship_2026",
     "title": "Spartan World Championship 2026",
     "date_start": "2026-10-17",
-    "location": { "city": "Sparta", "country": "Greece", "full_address": "Sparta, Greece" },
+    "location": {
+      "city": "Sparta",
+      "country": "Greece",
+      "full_address": "Sparta, Greece"
+    },
     "category": "endurance",
     "sport_tag": "obstacle",
     "registration_link": "https://www.spartan.com/en/race/world-championship",
     "federation": "Spartan",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/spartan-race-logo-png_seeklogo-483730.png"
   },
   {
     "id": "spartan_us_championship_2026",
     "title": "Spartan US National Championship 2026",
     "date_start": "2026-09-05",
-    "location": { "city": "Lake Tahoe", "country": "USA", "full_address": "Lake Tahoe, California" },
+    "location": {
+      "city": "Lake Tahoe",
+      "country": "USA",
+      "full_address": "Lake Tahoe, California"
+    },
     "category": "endurance",
     "sport_tag": "obstacle",
     "registration_link": "https://www.spartan.com/en/race/usa",
     "federation": "Spartan",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/spartan-race-logo-png_seeklogo-483730.png"
   },
   {
     "id": "spartan_beast_hawaii_2026",
     "title": "Spartan Beast Hawaii 2026",
     "date_start": "2026-12-05",
-    "location": { "city": "Oahu", "country": "USA", "full_address": "Oahu, Hawaii" },
+    "location": {
+      "city": "Oahu",
+      "country": "USA",
+      "full_address": "Oahu, Hawaii"
+    },
     "category": "endurance",
     "sport_tag": "obstacle",
     "registration_link": "https://www.spartan.com/en/race/usa",
     "federation": "Spartan",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/spartan-race-logo-png_seeklogo-483730.png"
   },
   {
     "id": "ironman_world_championship_2026",
     "title": "IRONMAN World Championship 2026",
     "date_start": "2026-10-10",
-    "location": { "city": "Kona", "country": "USA", "full_address": "Kailua-Kona, Hawaii" },
+    "location": {
+      "city": "Kona",
+      "country": "USA",
+      "full_address": "Kailua-Kona, Hawaii"
+    },
     "category": "endurance",
     "sport_tag": "triathlon",
     "registration_link": "https://www.ironman.com/im-world-championship",
     "federation": "IRONMAN",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
   },
   {
     "id": "ironman_703_world_championship_2026",
     "title": "IRONMAN 70.3 World Championship 2026",
     "date_start": "2026-09-12",
-    "location": { "city": "Taupo", "country": "New Zealand", "full_address": "Taupo, New Zealand" },
+    "location": {
+      "city": "Taupo",
+      "country": "New Zealand",
+      "full_address": "Taupo, New Zealand"
+    },
     "category": "endurance",
     "sport_tag": "triathlon",
     "registration_link": "https://www.ironman.com/im703-world-championship",
     "federation": "IRONMAN",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
   },
   {
     "id": "ironman_australia_2026",
     "title": "IRONMAN Australia 2026",
     "date_start": "2026-05-03",
-    "location": { "city": "Port Macquarie", "country": "Australia", "full_address": "Port Macquarie, New South Wales" },
+    "location": {
+      "city": "Port Macquarie",
+      "country": "Australia",
+      "full_address": "Port Macquarie, New South Wales"
+    },
     "category": "endurance",
     "sport_tag": "triathlon",
     "registration_link": "https://www.ironman.com/im-australia",
     "federation": "IRONMAN",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
   },
   {
     "id": "ironman_south_africa_2026",
     "title": "IRONMAN South Africa 2026",
     "date_start": "2026-04-05",
-    "location": { "city": "Nelson Mandela Bay", "country": "South Africa", "full_address": "Port Elizabeth" },
+    "location": {
+      "city": "Nelson Mandela Bay",
+      "country": "South Africa",
+      "full_address": "Port Elizabeth"
+    },
     "category": "endurance",
     "sport_tag": "triathlon",
     "registration_link": "https://www.ironman.com/im-south-africa",
     "federation": "IRONMAN",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
   },
   {
     "id": "challenge_dubai_2026",
     "title": "Challenge Dubai 2026",
     "date_start": "2026-02-20",
-    "location": { "city": "Dubai", "country": "UAE", "full_address": "Dubai Festival City" },
+    "location": {
+      "city": "Dubai",
+      "country": "UAE",
+      "full_address": "Dubai Festival City"
+    },
     "category": "endurance",
     "sport_tag": "triathlon",
     "registration_link": "https://www.challenge-dubai.com/",
     "federation": "Challenge Family",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
   },
   {
     "id": "ultra_trail_australia_2026",
     "title": "Ultra-Trail Australia 2026",
     "date_start": "2026-05-15",
-    "location": { "city": "Blue Mountains", "country": "Australia", "full_address": "Blue Mountains, NSW" },
+    "location": {
+      "city": "Blue Mountains",
+      "country": "Australia",
+      "full_address": "Blue Mountains, NSW"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.ultratrailaustralia.com.au/",
     "federation": "UTMB",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
   },
   {
     "id": "ultra_trail_cape_town_2026",
     "title": "Ultra-Trail Cape Town 2026",
     "date_start": "2026-11-28",
-    "location": { "city": "Cape Town", "country": "South Africa", "full_address": "Table Mountain, Cape Town" },
+    "location": {
+      "city": "Cape Town",
+      "country": "South Africa",
+      "full_address": "Table Mountain, Cape Town"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.ultratrailcapetown.com/",
     "federation": "UTMB",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
   },
   {
     "id": "tarawera_ultra_2026",
     "title": "Tarawera Ultramarathon 2026",
     "date_start": "2026-02-14",
-    "location": { "city": "Rotorua", "country": "New Zealand", "full_address": "Rotorua, New Zealand" },
+    "location": {
+      "city": "Rotorua",
+      "country": "New Zealand",
+      "full_address": "Rotorua, New Zealand"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.taraweraultras.co.nz/",
     "federation": "UTMB",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
   },
   {
     "id": "badwater_135_2026",
     "title": "Badwater 135 2026",
     "date_start": "2026-07-13",
-    "location": { "city": "Death Valley", "country": "USA", "full_address": "Death Valley to Mt. Whitney, California" },
+    "location": {
+      "city": "Death Valley",
+      "country": "USA",
+      "full_address": "Death Valley to Mt. Whitney, California"
+    },
     "category": "endurance",
     "sport_tag": "trail",
     "registration_link": "https://www.badwater.com/",
     "federation": "AdventureCORPS",
-    "image_logo_url": null
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
   },
   {
     "id": "ijf_world_championships_2026",
     "title": "IJF World Judo Championships 2026",
     "date_start": "2026-10-10",
-    "location": { "city": "TBA", "country": "World", "full_address": "TBA" },
+    "location": {
+      "city": "TBA",
+      "country": "World",
+      "full_address": "TBA"
+    },
     "category": "combat",
     "sport_tag": "judo",
     "registration_link": "https://www.ijf.org/",
     "federation": "IJF",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/29/1/international-judo-federation-ijf-logo-png_seeklogo-299546.png"
   },
   {
     "id": "ijf_grand_slam_tokyo_2026",
     "title": "IJF Grand Slam Tokyo 2026",
     "date_start": "2026-12-05",
-    "location": { "city": "Tokyo", "country": "Japan", "full_address": "Tokyo Metropolitan Gymnasium" },
+    "location": {
+      "city": "Tokyo",
+      "country": "Japan",
+      "full_address": "Tokyo Metropolitan Gymnasium"
+    },
     "category": "combat",
     "sport_tag": "judo",
     "registration_link": "https://www.ijf.org/",
     "federation": "IJF",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/29/1/international-judo-federation-ijf-logo-png_seeklogo-299546.png"
   },
   {
     "id": "uww_world_championships_2026",
     "title": "UWW World Grappling Championships 2026",
     "date_start": "2026-09-26",
-    "location": { "city": "TBA", "country": "World", "full_address": "TBA" },
+    "location": {
+      "city": "TBA",
+      "country": "World",
+      "full_address": "TBA"
+    },
     "category": "combat",
     "sport_tag": "grappling",
     "registration_link": "https://www.uww.org/",
     "federation": "UWW",
-    "image_logo_url": null
+    "image_logo_url": "https://adcc-official.com/cdn/shop/files/adcc-retina-logo.png?v=1735842835&width=600"
   },
   {
     "id": "worlds_strongest_man_2026",
     "title": "World's Strongest Man 2026",
     "date_start": "2026-06-20",
-    "location": { "city": "Sacramento", "country": "USA", "full_address": "Sacramento, California" },
+    "location": {
+      "city": "Sacramento",
+      "country": "USA",
+      "full_address": "Sacramento, California"
+    },
     "category": "force",
     "sport_tag": "powerlifting",
     "registration_link": "https://www.theworldsstrongestman.com/",
     "federation": "WSM",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/17/1/ipf-logo-png_seeklogo-170568.png"
   },
   {
     "id": "rogue_invitational_2026",
     "title": "Rogue Invitational 2026",
     "date_start": "2026-10-24",
-    "location": { "city": "Austin", "country": "USA", "full_address": "Dell Diamond, Austin, Texas" },
+    "location": {
+      "city": "Austin",
+      "country": "USA",
+      "full_address": "Dell Diamond, Austin, Texas"
+    },
     "category": "force",
     "sport_tag": "crossfit",
     "registration_link": "https://www.roguefitness.com/invitational",
     "federation": "Rogue Fitness",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/crossfit-games-logo-png_seeklogo-480606.png"
   },
   {
     "id": "wodapalooza_miami_2026",
     "title": "Wodapalooza Miami 2026",
     "date_start": "2026-01-15",
-    "location": { "city": "Miami", "country": "USA", "full_address": "Bayfront Park, Miami" },
+    "location": {
+      "city": "Miami",
+      "country": "USA",
+      "full_address": "Bayfront Park, Miami"
+    },
     "category": "force",
     "sport_tag": "crossfit",
     "registration_link": "https://www.wodapalooza.com/",
     "federation": "WZA",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/crossfit-games-logo-png_seeklogo-480606.png"
   },
   {
     "id": "cape_epic_2026",
     "title": "Absa Cape Epic 2026",
     "date_start": "2026-03-15",
-    "location": { "city": "Cape Town", "country": "South Africa", "full_address": "Western Cape, South Africa" },
+    "location": {
+      "city": "Cape Town",
+      "country": "South Africa",
+      "full_address": "Western Cape, South Africa"
+    },
     "category": "endurance",
     "sport_tag": "cycling",
     "registration_link": "https://www.cape-epic.com/",
     "federation": "Cape Epic",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/30/1/union-cycliste-international-uci-logo-png_seeklogo-301698.png"
   },
   {
     "id": "leadville_100_mtb_2026",
     "title": "Leadville Trail 100 MTB 2026",
     "date_start": "2026-08-08",
-    "location": { "city": "Leadville", "country": "USA", "full_address": "Leadville, Colorado" },
+    "location": {
+      "city": "Leadville",
+      "country": "USA",
+      "full_address": "Leadville, Colorado"
+    },
     "category": "endurance",
     "sport_tag": "cycling",
     "registration_link": "https://www.leadvilleraceseries.com/",
     "federation": "Leadville Race Series",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/30/1/union-cycliste-international-uci-logo-png_seeklogo-301698.png"
   },
   {
     "id": "la_ruta_2026",
     "title": "La Ruta de los Conquistadores 2026",
     "date_start": "2026-11-05",
-    "location": { "city": "San Jose", "country": "Costa Rica", "full_address": "Costa Rica" },
+    "location": {
+      "city": "San Jose",
+      "country": "Costa Rica",
+      "full_address": "Costa Rica"
+    },
     "category": "endurance",
     "sport_tag": "cycling",
     "registration_link": "https://www.larutadelosconquistadores.com/",
     "federation": "La Ruta",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/30/1/union-cycliste-international-uci-logo-png_seeklogo-301698.png"
   },
   {
     "id": "tough_mudder_usa_2026",
     "title": "Tough Mudder World Championship 2026",
     "date_start": "2026-11-14",
-    "location": { "city": "Las Vegas", "country": "USA", "full_address": "Las Vegas, Nevada" },
+    "location": {
+      "city": "Las Vegas",
+      "country": "USA",
+      "full_address": "Las Vegas, Nevada"
+    },
     "category": "endurance",
     "sport_tag": "obstacle",
     "registration_link": "https://www.toughmudder.com/",
     "federation": "Tough Mudder",
-    "image_logo_url": null
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/spartan-race-logo-png_seeklogo-483730.png"
   },
   {
     "id": "nogi_pans_2026",
     "title": "IBJJF No-Gi Pan Championship 2026",
     "date_start": "2026-09-04",
-    "location": { "city": "New York", "country": "USA", "full_address": "New York City" },
+    "location": {
+      "city": "New York",
+      "country": "USA",
+      "full_address": "New York City"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://ibjjf.com/",
     "federation": "IBJJF",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
   },
   {
     "id": "brazil_nationals_jjb_2026",
     "title": "IBJJF Brazilian Nationals 2026",
     "date_start": "2026-05-02",
-    "location": { "city": "Rio de Janeiro", "country": "Brazil", "full_address": "Rio de Janeiro" },
+    "location": {
+      "city": "Rio de Janeiro",
+      "country": "Brazil",
+      "full_address": "Rio de Janeiro"
+    },
     "category": "combat",
     "sport_tag": "jjb",
     "registration_link": "https://ibjjf.com/",
     "federation": "IBJJF",
-    "image_logo_url": null
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
+  },
+  {
+    "id": "sydney_marathon_2026",
+    "title": "Sydney Marathon 2026",
+    "date_start": "2026-09-20",
+    "location": {
+      "city": "Sydney",
+      "country": "Australia",
+      "full_address": "Sydney Harbour Bridge to Opera House"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.sydneymarathon.com/",
+    "federation": "Athletics Australia",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
+  },
+  {
+    "id": "cape_town_marathon_2026",
+    "title": "Cape Town Marathon 2026",
+    "date_start": "2026-10-18",
+    "location": {
+      "city": "Cape Town",
+      "country": "South Africa",
+      "full_address": "Green Point, Cape Town"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.capetownmarathon.com/",
+    "federation": "ASA",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
+  },
+  {
+    "id": "buenos_aires_marathon_2026",
+    "title": "Buenos Aires Marathon 2026",
+    "date_start": "2026-10-04",
+    "location": {
+      "city": "Buenos Aires",
+      "country": "Argentina",
+      "full_address": "Avenida 9 de Julio, Buenos Aires"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.maratondebuenosaires.com/",
+    "federation": "CADA",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
+  },
+  {
+    "id": "dubai_run_10k_2026",
+    "title": "Dubai Run 10K 2026",
+    "date_start": "2026-11-27",
+    "location": {
+      "city": "Dubai",
+      "country": "UAE",
+      "full_address": "Sheikh Zayed Road, Dubai"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.dubairun.com/",
+    "federation": "Dubai Sports Council",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
+  },
+  {
+    "id": "bay_to_breakers_2026",
+    "title": "Bay to Breakers 2026",
+    "date_start": "2026-05-17",
+    "location": {
+      "city": "San Francisco",
+      "country": "USA",
+      "full_address": "Howard & Beale to Great Highway"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.baytobreakers.com/",
+    "federation": "Bay to Breakers",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
+  },
+  {
+    "id": "gold_coast_run_2026",
+    "title": "Gold Coast Marathon & Running Festival 2026",
+    "date_start": "2026-07-04",
+    "location": {
+      "city": "Gold Coast",
+      "country": "Australia",
+      "full_address": "Broadwater Parklands, Gold Coast"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://goldcoastmarathon.com.au/",
+    "federation": "Athletics Australia",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
+  },
+  {
+    "id": "bolder_boulder_10k_2026",
+    "title": "BOLDERBoulder 10K 2026",
+    "date_start": "2026-05-25",
+    "location": {
+      "city": "Boulder",
+      "country": "USA",
+      "full_address": "Folsom Field, Boulder CO"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.bolderboulder.com/",
+    "federation": "BOLDERBoulder",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
+  },
+  {
+    "id": "peachtree_road_race_2026",
+    "title": "AJC Peachtree Road Race 10K 2026",
+    "date_start": "2026-07-04",
+    "location": {
+      "city": "Atlanta",
+      "country": "USA",
+      "full_address": "Lenox Square to Piedmont Park"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.atlantatrackclub.org/peachtree",
+    "federation": "Atlanta Track Club",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
+  },
+  {
+    "id": "standard_chartered_singapore_marathon_2026",
+    "title": "Standard Chartered Singapore Marathon 2026",
+    "date_start": "2026-12-06",
+    "location": {
+      "city": "Singapore",
+      "country": "Singapore",
+      "full_address": "Marina Bay, Singapore"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.singaporemarathon.com/",
+    "federation": "SAA",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/43/1/2022-london-marathon-logo-png_seeklogo-430990.png"
+  },
+  {
+    "id": "utmb_patagonia_2026",
+    "title": "Ultra-Trail Patagonia 2026",
+    "date_start": "2026-04-10",
+    "location": {
+      "city": "Torres del Paine",
+      "country": "Chile",
+      "full_address": "Torres del Paine National Park"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://ultratrail.com/",
+    "federation": "UTMB World Series",
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
+  },
+  {
+    "id": "ultra_trail_australia_2026",
+    "title": "Ultra-Trail Australia 2026",
+    "date_start": "2026-05-15",
+    "location": {
+      "city": "Blue Mountains",
+      "country": "Australia",
+      "full_address": "Katoomba, Blue Mountains NSW"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://ultratrailaustralia.com.au/",
+    "federation": "UTMB World Series",
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
+  },
+  {
+    "id": "western_states_100_2026",
+    "title": "Western States Endurance Run 100 2026",
+    "date_start": "2026-06-27",
+    "location": {
+      "city": "Olympic Valley",
+      "country": "USA",
+      "full_address": "Squaw Valley to Auburn, California"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.wser.org/",
+    "federation": "WSER Foundation",
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
+  },
+  {
+    "id": "hardrock_100_2026",
+    "title": "Hardrock 100 Endurance Run 2026",
+    "date_start": "2026-07-17",
+    "location": {
+      "city": "Silverton",
+      "country": "USA",
+      "full_address": "Silverton, Colorado"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://hardrock100.com/",
+    "federation": "Hardrock Hundred",
+    "image_logo_url": "https://res.cloudinary.com/utmb-world/image/upload/q_auto/f_auto/c_fill,g_auto/if_w_gt_240/c_scale,w_240/if_end/v1/montblanc/Logo_UTMB_Mont_Blanc_HOKA_2024_59c48439c7"
+  },
+  {
+    "id": "hyrox_dallas_2026",
+    "title": "HYROX Dallas 2026",
+    "date_start": "2026-02-22",
+    "location": {
+      "city": "Dallas",
+      "country": "USA",
+      "full_address": "Kay Bailey Hutchison Convention Center"
+    },
+    "category": "endurance",
+    "sport_tag": "hyrox",
+    "registration_link": "https://hyrox.com/",
+    "federation": "HYROX",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
+  },
+  {
+    "id": "hyrox_sydney_2026",
+    "title": "HYROX Sydney 2026",
+    "date_start": "2026-08-15",
+    "location": {
+      "city": "Sydney",
+      "country": "Australia",
+      "full_address": "ICC Sydney, Darling Harbour"
+    },
+    "category": "endurance",
+    "sport_tag": "hyrox",
+    "registration_link": "https://hyrox.com/",
+    "federation": "HYROX",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
+  },
+  {
+    "id": "hyrox_dubai_2026",
+    "title": "HYROX Dubai 2026",
+    "date_start": "2026-11-14",
+    "location": {
+      "city": "Dubai",
+      "country": "UAE",
+      "full_address": "Dubai World Trade Centre"
+    },
+    "category": "endurance",
+    "sport_tag": "hyrox",
+    "registration_link": "https://hyrox.com/",
+    "federation": "HYROX",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/62/1/hyrox-logo-png_seeklogo-622954.png"
+  },
+  {
+    "id": "judo_grand_slam_tokyo_2026",
+    "title": "IJF Judo Grand Slam Tokyo 2026",
+    "date_start": "2026-12-05",
+    "location": {
+      "city": "Tokyo",
+      "country": "Japan",
+      "full_address": "Tokyo Metropolitan Gymnasium"
+    },
+    "category": "combat",
+    "sport_tag": "judo",
+    "registration_link": "https://www.ijf.org/",
+    "federation": "IJF",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/29/1/international-judo-federation-ijf-logo-png_seeklogo-299546.png"
+  },
+  {
+    "id": "judo_grand_slam_baku_2026",
+    "title": "IJF Judo Grand Slam Baku 2026",
+    "date_start": "2026-11-07",
+    "location": {
+      "city": "Baku",
+      "country": "Azerbaijan",
+      "full_address": "Heydar Aliyev Arena, Baku"
+    },
+    "category": "combat",
+    "sport_tag": "judo",
+    "registration_link": "https://www.ijf.org/",
+    "federation": "IJF",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/29/1/international-judo-federation-ijf-logo-png_seeklogo-299546.png"
+  },
+  {
+    "id": "judo_world_championships_2026",
+    "title": "IJF World Judo Championships 2026",
+    "date_start": "2026-10-17",
+    "location": {
+      "city": "Budapest",
+      "country": "Hungary",
+      "full_address": "Papp Laszlo Budapest Sportarena"
+    },
+    "category": "combat",
+    "sport_tag": "judo",
+    "registration_link": "https://www.ijf.org/",
+    "federation": "IJF",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/29/1/international-judo-federation-ijf-logo-png_seeklogo-299546.png"
+  },
+  {
+    "id": "judo_grand_slam_ulaanbaatar_2026",
+    "title": "IJF Judo Grand Slam Ulaanbaatar 2026",
+    "date_start": "2026-06-27",
+    "location": {
+      "city": "Ulaanbaatar",
+      "country": "Mongolia",
+      "full_address": "Buyant Ukhaa Sport Palace"
+    },
+    "category": "combat",
+    "sport_tag": "judo",
+    "registration_link": "https://www.ijf.org/",
+    "federation": "IJF",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/29/1/international-judo-federation-ijf-logo-png_seeklogo-299546.png"
+  },
+  {
+    "id": "adcc_worlds_2026",
+    "title": "ADCC World Championship 2026",
+    "date_start": "2026-09-19",
+    "location": {
+      "city": "Las Vegas",
+      "country": "USA",
+      "full_address": "Thomas & Mack Center, Las Vegas"
+    },
+    "category": "combat",
+    "sport_tag": "grappling",
+    "registration_link": "https://www.adcombat.com/",
+    "federation": "ADCC",
+    "image_logo_url": "https://adcc-official.com/cdn/shop/files/adcc-retina-logo.png?v=1735842835&width=600"
+  },
+  {
+    "id": "naga_worlds_2026",
+    "title": "NAGA World Championship 2026",
+    "date_start": "2026-04-25",
+    "location": {
+      "city": "Atlantic City",
+      "country": "USA",
+      "full_address": "Atlantic City Convention Center"
+    },
+    "category": "combat",
+    "sport_tag": "grappling",
+    "registration_link": "https://www.nagafighter.com/",
+    "federation": "NAGA",
+    "image_logo_url": "https://adcc-official.com/cdn/shop/files/adcc-retina-logo.png?v=1735842835&width=600"
+  },
+  {
+    "id": "who_number_one_2026",
+    "title": "Who's Number One Invitational 2026",
+    "date_start": "2026-06-14",
+    "location": {
+      "city": "Austin",
+      "country": "USA",
+      "full_address": "Austin, Texas"
+    },
+    "category": "combat",
+    "sport_tag": "grappling",
+    "registration_link": "https://www.flograppling.com/",
+    "federation": "FloGrappling",
+    "image_logo_url": "https://adcc-official.com/cdn/shop/files/adcc-retina-logo.png?v=1735842835&width=600"
+  },
+  {
+    "id": "abu_dhabi_world_pro_jjb_2026",
+    "title": "Abu Dhabi World Professional JJB 2026",
+    "date_start": "2026-04-15",
+    "location": {
+      "city": "Abu Dhabi",
+      "country": "UAE",
+      "full_address": "Jiu-Jitsu Arena, Abu Dhabi"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://www.ajptour.com/",
+    "federation": "AJP Tour",
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
+  },
+  {
+    "id": "ibjjf_asian_open_2026",
+    "title": "IBJJF Asian Open 2026",
+    "date_start": "2026-07-18",
+    "location": {
+      "city": "Tokyo",
+      "country": "Japan",
+      "full_address": "Ota-City General Gymnasium, Tokyo"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://ibjjf.com/",
+    "federation": "IBJJF",
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
+  },
+  {
+    "id": "ibjjf_no_gi_worlds_2026",
+    "title": "IBJJF No-Gi World Championship 2026",
+    "date_start": "2026-12-11",
+    "location": {
+      "city": "Anaheim",
+      "country": "USA",
+      "full_address": "Anaheim Convention Center, California"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://ibjjf.com/",
+    "federation": "IBJJF",
+    "image_logo_url": "https://cfjjb.com/img/logo-cfjjb-full-trnsp.png"
+  },
+  {
+    "id": "crossfit_games_2026",
+    "title": "CrossFit Games 2026",
+    "date_start": "2026-08-05",
+    "location": {
+      "city": "Madison",
+      "country": "USA",
+      "full_address": "Alliant Energy Center, Madison WI"
+    },
+    "category": "endurance",
+    "sport_tag": "crossfit",
+    "registration_link": "https://games.crossfit.com/",
+    "federation": "CrossFit LLC",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/crossfit-games-logo-png_seeklogo-480606.png"
+  },
+  {
+    "id": "crossfit_semifinals_oceania_2026",
+    "title": "CrossFit Semifinal Oceania 2026",
+    "date_start": "2026-06-06",
+    "location": {
+      "city": "Sydney",
+      "country": "Australia",
+      "full_address": "Sydney Olympic Park"
+    },
+    "category": "endurance",
+    "sport_tag": "crossfit",
+    "registration_link": "https://games.crossfit.com/",
+    "federation": "CrossFit LLC",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/crossfit-games-logo-png_seeklogo-480606.png"
+  },
+  {
+    "id": "crossfit_semifinals_asia_2026",
+    "title": "CrossFit Semifinal Asia 2026",
+    "date_start": "2026-06-13",
+    "location": {
+      "city": "Shanghai",
+      "country": "China",
+      "full_address": "Shanghai Expo Centre"
+    },
+    "category": "endurance",
+    "sport_tag": "crossfit",
+    "registration_link": "https://games.crossfit.com/",
+    "federation": "CrossFit LLC",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/crossfit-games-logo-png_seeklogo-480606.png"
+  },
+  {
+    "id": "ipf_worlds_powerlifting_2026",
+    "title": "IPF World Classic Powerlifting Championship 2026",
+    "date_start": "2026-06-15",
+    "location": {
+      "city": "Sun City",
+      "country": "South Africa",
+      "full_address": "Sun City Resort, North West"
+    },
+    "category": "endurance",
+    "sport_tag": "powerlifting",
+    "registration_link": "https://www.powerlifting.sport/",
+    "federation": "IPF",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/17/1/ipf-logo-png_seeklogo-170568.png"
+  },
+  {
+    "id": "usapl_nationals_2026",
+    "title": "USAPL National Championship 2026",
+    "date_start": "2026-10-08",
+    "location": {
+      "city": "Orlando",
+      "country": "USA",
+      "full_address": "Orange County Convention Center, Orlando"
+    },
+    "category": "endurance",
+    "sport_tag": "powerlifting",
+    "registration_link": "https://www.usapowerlifting.com/",
+    "federation": "USAPL",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/17/1/ipf-logo-png_seeklogo-170568.png"
+  },
+  {
+    "id": "ironman_kona_2026",
+    "title": "IRONMAN World Championship Kona 2026",
+    "date_start": "2026-10-10",
+    "location": {
+      "city": "Kailua-Kona",
+      "country": "USA",
+      "full_address": "Kailua-Kona, Hawaii"
+    },
+    "category": "endurance",
+    "sport_tag": "triathlon",
+    "registration_link": "https://www.ironman.com/im-world-championship",
+    "federation": "IRONMAN",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
+  },
+  {
+    "id": "ironman_703_cairns_2026",
+    "title": "IRONMAN 70.3 Cairns 2026",
+    "date_start": "2026-06-14",
+    "location": {
+      "city": "Cairns",
+      "country": "Australia",
+      "full_address": "Cairns Esplanade, Queensland"
+    },
+    "category": "endurance",
+    "sport_tag": "triathlon",
+    "registration_link": "https://www.ironman.com/",
+    "federation": "IRONMAN",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
+  },
+  {
+    "id": "challenge_roth_2026_monde",
+    "title": "Challenge Roth 2026",
+    "date_start": "2026-07-05",
+    "location": {
+      "city": "Roth",
+      "country": "Germany",
+      "full_address": "Roth, Bavaria"
+    },
+    "category": "endurance",
+    "sport_tag": "triathlon",
+    "registration_link": "https://www.challenge-roth.com/",
+    "federation": "Challenge Family",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/7/1/ironman-logo-png_seeklogo-73580.png"
+  },
+  {
+    "id": "spartan_race_abu_dhabi_2026",
+    "title": "Spartan Race Abu Dhabi 2026",
+    "date_start": "2026-03-14",
+    "location": {
+      "city": "Abu Dhabi",
+      "country": "UAE",
+      "full_address": "Al Wathba, Abu Dhabi"
+    },
+    "category": "endurance",
+    "sport_tag": "obstacle",
+    "registration_link": "https://www.spartan.com/",
+    "federation": "Spartan",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/spartan-race-logo-png_seeklogo-483730.png"
+  },
+  {
+    "id": "spartan_race_japan_2026",
+    "title": "Spartan Race Japan 2026",
+    "date_start": "2026-05-23",
+    "location": {
+      "city": "Yokohama",
+      "country": "Japan",
+      "full_address": "Yokohama, Kanagawa"
+    },
+    "category": "endurance",
+    "sport_tag": "obstacle",
+    "registration_link": "https://www.spartan.com/",
+    "federation": "Spartan",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/spartan-race-logo-png_seeklogo-483730.png"
+  },
+  {
+    "id": "tough_mudder_australia_2026",
+    "title": "Tough Mudder Australia 2026",
+    "date_start": "2026-09-12",
+    "location": {
+      "city": "Melbourne",
+      "country": "Australia",
+      "full_address": "Phillip Island, Melbourne"
+    },
+    "category": "endurance",
+    "sport_tag": "obstacle",
+    "registration_link": "https://toughmudder.com/",
+    "federation": "Tough Mudder",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/48/1/spartan-race-logo-png_seeklogo-483730.png"
+  },
+  {
+    "id": "tour_of_california_cycling_2026",
+    "title": "Amgen Tour of California 2026",
+    "date_start": "2026-05-10",
+    "location": {
+      "city": "Sacramento",
+      "country": "USA",
+      "full_address": "Sacramento to Los Angeles"
+    },
+    "category": "endurance",
+    "sport_tag": "cycling",
+    "registration_link": "https://www.amgentourofcalifornia.com/",
+    "federation": "AEG",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/30/1/union-cycliste-international-uci-logo-png_seeklogo-301698.png"
+  },
+  {
+    "id": "cape_epic_mtb_2026",
+    "title": "Absa Cape Epic MTB 2026",
+    "date_start": "2026-03-15",
+    "location": {
+      "city": "Cape Town",
+      "country": "South Africa",
+      "full_address": "Western Cape, South Africa"
+    },
+    "category": "endurance",
+    "sport_tag": "cycling",
+    "registration_link": "https://www.cape-epic.com/",
+    "federation": "Cape Epic",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/30/1/union-cycliste-international-uci-logo-png_seeklogo-301698.png"
+  },
+  {
+    "id": "tour_down_under_2026",
+    "title": "Santos Tour Down Under 2026",
+    "date_start": "2026-01-20",
+    "location": {
+      "city": "Adelaide",
+      "country": "Australia",
+      "full_address": "Adelaide, South Australia"
+    },
+    "category": "endurance",
+    "sport_tag": "cycling",
+    "registration_link": "https://www.tourdownunder.com.au/",
+    "federation": "UCI",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/30/1/union-cycliste-international-uci-logo-png_seeklogo-301698.png"
+  },
+  {
+    "id": "comrades_marathon_sa_2026",
+    "title": "Comrades Marathon 2026",
+    "date_start": "2026-06-08",
+    "location": {
+      "city": "Durban",
+      "country": "South Africa",
+      "full_address": "Durban to Pietermaritzburg"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.comrades.com/",
+    "federation": "CMA",
+    "image_logo_url": "https://images.seeklogo.com/logo-png/39/1/rock-n-roll-marathon-series-logo-png_seeklogo-393402.png"
   }
 ]

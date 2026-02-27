@@ -35,7 +35,7 @@ import { useMonthStats } from '@/lib/social-cards/useMonthStats';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { getProfile, calculateStreak } from '@/lib/database';
-import { getAvatarConfig, getAvatarImage } from '@/lib/avatarSystem';
+import { useAvatar } from '@/lib/AvatarContext';
 import { getCurrentRank } from '@/lib/ranks';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -46,6 +46,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function MonthlyRecapV2Screen() {
   const { colors } = useTheme();
+  const { avatarImage: contextAvatar } = useAvatar();
   const cardRef = useRef<View>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -73,9 +74,8 @@ export default function MonthlyRecapV2Screen() {
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const [profile, avatarConfig, streak] = await Promise.all([
+        const [profile, streak] = await Promise.all([
           getProfile(),
-          getAvatarConfig(),
           calculateStreak(),
         ]);
 
@@ -86,14 +86,8 @@ export default function MonthlyRecapV2Screen() {
           }
         }
 
-        if (avatarConfig) {
-          const image = getAvatarImage(
-            avatarConfig.pack,
-            avatarConfig.state,
-            avatarConfig.collectionCharacter,
-            avatarConfig.gender
-          );
-          setUserAvatar(image);
+        if (contextAvatar) {
+          setUserAvatar(contextAvatar);
         }
 
         const rank = getCurrentRank(streak);

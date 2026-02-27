@@ -78,6 +78,9 @@ interface HomeTabViewProps {
   // Page 5 - Reports
   weeklyReport?: WeeklyReport;
 
+  // Body
+  heightCm?: number;
+
   // Callbacks
   onAddWeight?: () => void;
   onAddWater?: (ml: number) => void;
@@ -119,6 +122,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
   muscleMass,
   waterPercentage,
   weeklyReport,
+  heightCm,
   onAddWeight,
   onAddWater,
   onShareReport,
@@ -296,6 +300,8 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
             bodyFat={bodyFat}
             muscleMass={muscleMass}
             waterPercentage={waterPercentage}
+            heightCm={heightCm}
+            weeklyReport={weeklyReport}
           />
         );
       default:

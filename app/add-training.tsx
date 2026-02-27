@@ -13,6 +13,7 @@ import {
   Keyboard,
   Dimensions,
   KeyboardAvoidingView,
+  DeviceEventEmitter,
 } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { impactAsync, notificationAsync, selectionAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
@@ -43,10 +44,10 @@ import {
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { useBadges } from '@/lib/BadgeContext';
-import { addTraining, getClubs, Club, Exercise, getProfile, getTrainings, getWeights, calculateStreak } from '@/lib/database';
+import { addTraining, updateTraining, getTrainingById, getClubs, Club, Exercise, getProfile, getTrainings, getWeights, calculateStreak } from '@/lib/database';
 import { SPORTS, getSportIcon, getSportName, getClubLogoSource } from '@/lib/sports';
 import { getCurrentRank } from '@/lib/ranks';
-import { getAvatarConfig, getAvatarImage } from '@/lib/avatarSystem';
+import { useAvatar } from '@/lib/AvatarContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserSettings } from '@/lib/storage';
@@ -82,11 +83,13 @@ const LAST_DURATION_KEY = 'yoroi_last_duration';
 export default function AddTrainingScreen() {
   const insets = useSafeAreaInsets();
   const { colors, gradients, isDark } = useTheme();
+  const { avatarImage: contextAvatar } = useAvatar();
   const router = useRouter();
   const { checkBadges } = useBadges();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { showReviewModal, ReviewModalComponent } = useReviewModal();
-  const params = useLocalSearchParams<{ date?: string }>();
+  const params = useLocalSearchParams<{ date?: string; editId?: string }>();
+  const isEditMode = !!params?.editId;
   const [clubs, setClubs] = useState<Club[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const scrollViewRef = useRef<any>(null);
@@ -196,11 +199,10 @@ export default function AddTrainingScreen() {
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const [profile, allTrainings, weights, avatarConfig, streak] = await Promise.all([
+        const [profile, allTrainings, weights, streak] = await Promise.all([
           getProfile(),
           getTrainings(),
           getWeights(),
-          getAvatarConfig(),
           calculateStreak(),
         ]);
 
@@ -219,15 +221,9 @@ export default function AddTrainingScreen() {
           setUserWeight(weights?.[0]?.weight || 75);
         }
 
-        // Charger l'avatar
-        if (avatarConfig) {
-          const image = getAvatarImage(
-            avatarConfig.pack,
-            avatarConfig.state,
-            avatarConfig.collectionCharacter,
-            avatarConfig.gender
-          );
-          setUserAvatar(image);
+        // Avatar charge via useAvatar() context
+        if (contextAvatar) {
+          setUserAvatar(contextAvatar);
         }
 
         // Charger le rang et le niveau
@@ -386,6 +382,58 @@ export default function AddTrainingScreen() {
       }
     }
   }, [params?.date]);
+
+  // Charger la seance existante en mode edition
+  useEffect(() => {
+    if (!params?.editId) return;
+    const loadEditData = async () => {
+      try {
+        const id = parseInt(params.editId!, 10);
+        if (isNaN(id)) return;
+        const training = await getTrainingById(id);
+        if (!training) return;
+        if (training.sport) {
+          const sports = training.sport.split(',');
+          setSelectedSports(sports);
+        }
+        if (training.date) {
+          const parsed = new Date(training.date + 'T12:00:00');
+          if (!isNaN(parsed.getTime())) setDate(parsed);
+        }
+        if (training.duration_minutes) setDuration(training.duration_minutes);
+        if (training.start_time) {
+          const [h, m] = training.start_time.split(':').map(Number);
+          const t = new Date();
+          t.setHours(h, m, 0, 0);
+          setStartTime(t);
+        }
+        if (training.notes) setNotes(training.notes);
+        if (training.distance) setDistance(String(training.distance));
+        if (training.speed) setSpeed(String(training.speed));
+        if (training.calories) setCalories(String(training.calories));
+        if (training.intensity) setIntensity(training.intensity);
+        if (training.pente) setPente(String(training.pente));
+        if (training.resistance) setResistance(String(training.resistance));
+        if (training.watts) setWatts(String(training.watts));
+        if (training.cadence) setCadence(String(training.cadence));
+        if (training.rounds) setRounds(String(training.rounds));
+        if (training.round_duration) setRoundDuration(String(training.round_duration));
+        if (training.heart_rate) setHeartRate(String(training.heart_rate));
+        if (training.technique_rating) setTechniqueRating(training.technique_rating);
+        if (training.is_outdoor) setIsOutdoor(true);
+        if (training.muscles) setSelectedMuscles(training.muscles.split(','));
+        if (training.exercises) setExercises(training.exercises);
+        if (training.club_id) {
+          const allClubs = await getClubs();
+          const club = allClubs.find(c => c.id === training.club_id);
+          if (club) setSelectedClub(club);
+        }
+      } catch (error) {
+        logger.error('Erreur chargement seance edit:', error);
+      }
+    };
+    loadEditData();
+  }, [params?.editId]);
 
   // Charger le dernier sport utilisé (pour Quick Add seulement, PAS de pré-sélection)
   useEffect(() => {
@@ -1107,9 +1155,9 @@ export default function AddTrainingScreen() {
       });
       const sportsString = finalSports.join(',');
 
-      const newId = await addTraining({
+      const trainingData = {
         club_id: selectedClub?.id,
-        sport: sportsString, // Sports combinés
+        sport: sportsString,
         date: format(date, 'yyyy-MM-dd'),
         duration_minutes: duration || undefined,
         start_time: startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
@@ -1128,7 +1176,16 @@ export default function AddTrainingScreen() {
         resistance: resistance ? (isNaN(parseInt(resistance)) ? undefined : parseInt(resistance)) : undefined,
         watts: watts ? (isNaN(parseInt(watts)) ? undefined : parseInt(watts)) : undefined,
         cadence: cadence ? (isNaN(parseInt(cadence)) ? undefined : parseInt(cadence)) : undefined,
-      });
+      };
+
+      let newId: number | null = null;
+      if (isEditMode && params.editId) {
+        const editIdNum = parseInt(params.editId, 10);
+        await updateTraining(editIdNum, trainingData);
+        newId = editIdNum;
+      } else {
+        newId = await addTraining(trainingData);
+      }
 
       if (newId) {
         setLastSavedTrainingId(Number(newId));
@@ -1138,6 +1195,13 @@ export default function AddTrainingScreen() {
       await saveLastSportAndDuration(selectedSports[0], duration);
 
       successHaptic();
+
+      if (isEditMode) {
+        router.back();
+        setIsSubmitting(false);
+        return;
+      }
+
       playWorkoutCompleteSound();
 
       // 🔄 SYNC VERS APPLE HEALTH
@@ -1161,6 +1225,9 @@ export default function AddTrainingScreen() {
         // Ne pas bloquer la sauvegarde si l'export échoue
         logger.warn('Export Apple Health échoué (non bloquant):', healthError);
       }
+
+      // Notifier la home pour refresh instantane des points/quetes
+      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
 
       // AFFICHER LE MODAL DE VALIDATION (Étape 2) - avant les checks non-critiques
       setCardBackgroundImage(null);
@@ -1295,7 +1362,7 @@ export default function AddTrainingScreen() {
         zIndex: 999
       }}>
         <View style={{ paddingBottom: 10, paddingTop: 5, alignItems: 'center' }}>
-          <Text style={{ fontSize: 13, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 1 SUR 4</Text>
+          <Text style={{ fontSize: 13, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, letterSpacing: 3, marginBottom: 8 }}>{isEditMode ? 'MODIFICATION' : 'ÉTAPE 1 SUR 4'}</Text>
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.6, shadowRadius: 8, elevation: 8 }} />
             <View style={{ width: 30, height: 2, backgroundColor: colors.border }} />
@@ -2602,7 +2669,7 @@ export default function AddTrainingScreen() {
                 <Dumbbell size={22} color={colors.textOnAccent || '#FFFFFF'} />
               )}
               <Text style={[styles.saveButtonText, { color: colors.textOnAccent || '#FFFFFF' }]}>
-                {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
+                {isSubmitting ? 'Enregistrement...' : isEditMode ? 'Modifier' : 'Enregistrer'}
               </Text>
             </View>
           </TouchableOpacity>

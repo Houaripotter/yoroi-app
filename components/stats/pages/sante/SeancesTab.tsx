@@ -1,0 +1,266 @@
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useTheme } from '@/lib/ThemeContext';
+import { Training } from '@/lib/database';
+import { getSportIcon, getSportName, getSportColor } from '@/lib/sports';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Dumbbell } from 'lucide-react-native';
+import { format, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { router } from 'expo-router';
+
+interface SeancesTabProps {
+  trainings: Training[];
+}
+
+const formatDuration = (minutes: number): string => {
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  if (h === 0) return `${m}min`;
+  return `${h}h ${m.toString().padStart(2, '0')}min`;
+};
+
+export const SeancesTab: React.FC<SeancesTabProps> = ({ trainings }) => {
+  const { colors, isDark } = useTheme();
+
+  const totalSessions = trainings.length;
+  const totalMinutes = trainings.reduce((sum, t) => sum + (t.duration_minutes || t.duration || 0), 0);
+  const totalCalories = trainings.reduce((sum, t) => sum + (t.calories || 0), 0);
+
+  const summaryItems = [
+    { value: totalSessions.toString(), label: 'seances' },
+    { value: formatDuration(totalMinutes), label: 'total' },
+    { value: totalCalories > 0 ? totalCalories.toLocaleString('fr-FR') : '--', label: 'kcal' },
+  ];
+
+  if (trainings.length === 0) {
+    return (
+      <View style={[styles.emptyCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+        <Dumbbell size={40} color={colors.textMuted} strokeWidth={1.5} />
+        <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+          Aucune seance sur cette periode
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View>
+      {/* Resume en haut */}
+      <View style={styles.summaryRow}>
+        {summaryItems.map((item, i) => (
+          <View
+            key={i}
+            style={[styles.summaryCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}
+          >
+            <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{item.value}</Text>
+            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{item.label}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Liste des seances */}
+      {trainings.map((training, index) => {
+        const sportIcon = getSportIcon(training.sport);
+        const sportName = getSportName(training.sport);
+        const sportColor = getSportColor(training.sport);
+        const duration = training.duration_minutes || training.duration || 0;
+
+        let dateStr = '';
+        let timeStr = '';
+        try {
+          const d = parseISO(training.date);
+          dateStr = format(d, 'EEE d MMM', { locale: fr });
+          if (training.start_time) {
+            const [sh, sm] = training.start_time.split(':').map(Number);
+            const endMin = sh * 60 + sm + duration;
+            const eh = Math.floor(endMin / 60) % 24;
+            const em = endMin % 60;
+            timeStr = `${sh.toString().padStart(2, '0')}:${sm.toString().padStart(2, '0')}-${eh.toString().padStart(2, '0')}:${em.toString().padStart(2, '0')}`;
+          }
+        } catch {
+          dateStr = training.date;
+        }
+
+        return (
+          <TouchableOpacity
+            key={training.id || index}
+            style={[styles.sessionCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}
+            activeOpacity={0.7}
+            onPress={() => {
+              if (training.id) {
+                router.push(`/workout-detail?id=${training.id}` as any);
+              }
+            }}
+          >
+            <View style={styles.sessionRow}>
+              {/* Icone sport */}
+              <View style={[styles.sportIconContainer, { backgroundColor: sportColor + '18' }]}>
+                <MaterialCommunityIcons name={sportIcon as any} size={22} color={sportColor} />
+              </View>
+
+              {/* Info principale */}
+              <View style={styles.sessionInfo}>
+                <Text style={[styles.sessionSport, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {sportName}
+                </Text>
+                <Text style={[styles.sessionDate, { color: colors.textMuted }]}>
+                  {dateStr}{timeStr ? ` \u00B7 ${timeStr}` : ''}
+                </Text>
+              </View>
+
+              {/* Metriques a droite */}
+              <View style={styles.sessionMetrics}>
+                {duration > 0 && (
+                  <Text style={[styles.sessionMetricValue, { color: colors.textPrimary }]}>
+                    {formatDuration(duration)}
+                  </Text>
+                )}
+                {(training.calories || 0) > 0 && (
+                  <Text style={[styles.sessionMetricSub, { color: colors.textMuted }]}>
+                    {training.calories} kcal
+                  </Text>
+                )}
+              </View>
+            </View>
+
+            {/* Ligne secondaire : distance, FC, source */}
+            {((training.distance || 0) > 0 || (training.heart_rate || 0) > 0) && (
+              <View style={[styles.sessionSecondary, { borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
+                {(training.distance || 0) > 0 && (
+                  <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
+                    {(training.distance || 0).toFixed(1)} km
+                  </Text>
+                )}
+                {(training.heart_rate || 0) > 0 && (
+                  <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
+                    FC moy. {training.heart_rate} bpm
+                  </Text>
+                )}
+                {training.source && training.source !== 'manual' && (
+                  <Text style={[styles.sessionSourceBadge, { color: colors.textMuted, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+                    {training.source}
+                  </Text>
+                )}
+              </View>
+            )}
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  summaryRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  summaryCard: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 1,
+  },
+  summaryValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+  },
+  summaryLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  sessionCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 1,
+  },
+  sessionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  sportIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sessionInfo: {
+    flex: 1,
+  },
+  sessionSport: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.3,
+  },
+  sessionDate: {
+    fontSize: 13,
+    fontWeight: '400',
+    marginTop: 2,
+  },
+  sessionMetrics: {
+    alignItems: 'flex-end',
+  },
+  sessionMetricValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  sessionMetricSub: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  sessionSecondary: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexWrap: 'wrap',
+  },
+  sessionSecondaryText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  sessionSourceBadge: {
+    fontSize: 11,
+    fontWeight: '600',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  emptyCard: {
+    borderRadius: 16,
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 1,
+  },
+  emptyText: {
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+});

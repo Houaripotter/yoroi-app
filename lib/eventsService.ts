@@ -95,29 +95,52 @@ function clearCache(): void {
 // ============================================
 
 let isInitialized = false;
+// Version des donnees events - incrementer pour forcer un reimport
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const EVENTS_DATA_VERSION = 5;
 
 /**
- * Importe les événements depuis le fichier JSON vers SQLite
- * (À n'appeler qu'une seule fois au premier lancement)
+ * Importe les evenements depuis le fichier JSON vers SQLite
+ * Utilise un systeme de versioning pour forcer le reimport quand les donnees changent
  */
 export async function importEventsFromJSON(): Promise<void> {
   try {
     const db = await openDatabase();
 
-    // Vérifier si les données sont déjà importées
-    const count = await db.getFirstAsync<{ count: number }>(
-      'SELECT COUNT(*) as count FROM events_catalog'
-    );
+    // Table de metadata pour le versioning
+    await db.runAsync('CREATE TABLE IF NOT EXISTS app_metadata (key TEXT PRIMARY KEY, value TEXT)');
 
-    if (count && count.count > 0) {
-      logger.info(`Events déjà importés: ${count.count} événements`);
-      isInitialized = true;
-      return;
+    // Verifier la version des donnees
+    let needsImport = false;
+    try {
+      const versionRow = await db.getFirstAsync<{ value: string }>(
+        'SELECT value FROM app_metadata WHERE key = \'events_data_version\''
+      );
+      const currentVersion = versionRow ? parseInt(versionRow.value, 10) : 0;
+      if (currentVersion < EVENTS_DATA_VERSION) {
+        needsImport = true;
+        logger.info('Events version ' + currentVersion + ' < ' + EVENTS_DATA_VERSION + ', reimport needed');
+      }
+    } catch {
+      needsImport = true;
     }
 
-    // Importer les données depuis les chunks JSON (optimisation mémoire)
-    logger.info('📥 Import des événements depuis JSON...');
-    logger.info('Import des événements depuis chunks JSON...');
+    if (!needsImport) {
+      const count = await db.getFirstAsync<{ count: number }>(
+        'SELECT COUNT(*) as count FROM events_catalog'
+      );
+      if (count && count.count > 0) {
+        logger.info('Events deja importes: ' + count.count + ' evenements (v' + EVENTS_DATA_VERSION + ')');
+        isInitialized = true;
+        return;
+      }
+      needsImport = true;
+    }
+
+    // Supprimer les anciennes donnees avant reimport
+    await db.runAsync('DELETE FROM events_catalog');
+
+    logger.info('Import des evenements depuis JSON...');
     const europeData = require('@/src/data/events/europe.json');
     const franceData = require('@/src/data/events/france.json');
     const mondeData = require('@/src/data/events/monde.json');
@@ -158,8 +181,13 @@ export async function importEventsFromJSON(): Promise<void> {
       logger.info(`Importé ${imported}/${eventsData.length} événements`);
     }
 
-    logger.info(`✅ Import terminé: ${imported} événements dans SQLite`);
-    logger.info(`✅ Import terminé: ${imported} événements`);
+    // Sauvegarder la version apres import reussi
+    await db.runAsync(
+      'INSERT OR REPLACE INTO app_metadata (key, value) VALUES (\'events_data_version\', ?)',
+      [String(EVENTS_DATA_VERSION)]
+    );
+
+    logger.info('Import termine: ' + imported + ' evenements dans SQLite (v' + EVENTS_DATA_VERSION + ')');
     isInitialized = true;
     clearCache();
   } catch (error) {

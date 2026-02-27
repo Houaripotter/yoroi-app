@@ -14,6 +14,8 @@ import {
   Modal,
   ActivityIndicator,
   DeviceEventEmitter,
+  AppState,
+  AppStateStatus,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,7 +46,6 @@ import {
   Activity,
   FileText,
   Target,
-  Gift,
   AlertTriangle,
   Crown,
   Waves,
@@ -81,7 +82,7 @@ import { getProfile, getLatestWeight, getWeights, calculateStreak, getTrainings,
 import { getLatestBodyComposition } from '@/lib/bodyComposition';
 import { getSessionQuote, Citation } from '@/lib/citations';
 import { getCurrentRank } from '@/lib/ranks';
-import { getLevel } from '@/lib/gamification';
+import { getLevel, calculateAndStoreUnifiedPoints } from '@/lib/gamification';
 import AvatarDisplay from '@/components/AvatarDisplay';
 import { RanksModal } from '@/components/RanksModal';
 import { LogoViewer } from '@/components/LogoViewer';
@@ -104,6 +105,7 @@ import { AnimatedCompositionCircle } from '@/components/AnimatedCompositionCircl
 import { StreakCalendar } from '@/components/StreakCalendar';
 import { AvatarViewerModal } from '@/components/AvatarViewerModal';
 import HealthConnect, { healthConnect as healthConnectService } from '@/lib/healthConnect';
+import { calculateDailyHealthBonus } from '@/lib/healthBonusService';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 import { RatingPopup } from '@/components/RatingPopup';
@@ -120,6 +122,7 @@ import { EssentielWeightCard } from '@/components/home/essentiel/EssentielWeight
 import { EssentielActivityCard } from '@/components/home/essentiel/EssentielActivityCard';
 import { EssentielWeekSummary } from '@/components/home/essentiel/EssentielWeekSummary';
 import { HomeTabView } from '@/components/home/HomeTabView';
+import HomeChallengesSection from '@/components/home/HomeChallengesSection';
 
 // Composants animés premium
 import AnimatedAvatar from '@/components/AnimatedAvatar';
@@ -128,7 +131,6 @@ import AnimatedProgressBar from '@/components/AnimatedProgressBar';
 import { AnimatedCard } from '@/components/AnimatedCard';
 import AnimatedRing from '@/components/AnimatedRing';
 import { AnimatedBattery } from '@/components/AnimatedBattery';
-import PulsingBadge from '@/components/PulsingBadge';
 import AnimatedWaterBottle from '@/components/AnimatedWaterBottle';
 import AnimatedSleepWave from '@/components/AnimatedSleepWave';
 import AnimatedRank from '@/components/AnimatedRank';
@@ -194,9 +196,6 @@ export default function HomeScreen() {
   // Mode Screenshot pour les données de démo
   const [isScreenshotMode, setIsScreenshotMode] = useState<boolean>(false);
   const batteryIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Trigger pour rafraîchir l'avatar après changement
-  const [avatarRefreshTrigger, setAvatarRefreshTrigger] = useState(0);
 
   // Tutoriel de découverte
   const [showTutorial, setShowTutorial] = useState(false);
@@ -765,7 +764,20 @@ export default function HomeScreen() {
         logger.info('Données activité non disponibles depuis Apple Health');
       }
 
-      setTotalPoints(history.length * 10 + allTrainings.length * 25 + (streakDays >= 7 ? 50 : 0));
+      // Bonus sante du jour (doit etre calcule AVANT les points unifies)
+      try {
+        await calculateDailyHealthBonus();
+      } catch {
+        // Non-bloquant si HealthKit indisponible
+      }
+
+      // Points unifies : agrege activite + quetes + challenges + sante
+      const unifiedTotal = await calculateAndStoreUnifiedPoints(
+        history.length,
+        allTrainings.length,
+        streakDays,
+      );
+      setTotalPoints(unifiedTotal);
       loadHydration();
 
       // Calculer le score de readiness basé sur : sommeil, charge, hydratation, streak
@@ -783,7 +795,7 @@ export default function HomeScreen() {
           userName: profileData?.name,
           weight: weight?.weight,
           streak: streakDays,
-          level: getLevel(history.length * 10 + allTrainings.length * 25 + (streakDays >= 7 ? 50 : 0)).level,
+          level: getLevel(unifiedTotal).level,
           rank: getCurrentRank(streakDays)?.name,
         }).catch(() => {
           // Silencieux si Watch non disponible
@@ -813,42 +825,110 @@ export default function HomeScreen() {
     return () => sub.remove();
   }, [loadData]);
 
-  // Auto-sync: synchroniser les donnees de sante si derniere sync > 15 min
+  // Listener léger pour le changement d'objectif hydratation (instantané, pas de reload complet)
   useEffect(() => {
-    const autoSync = async () => {
+    const sub = DeviceEventEmitter.addListener('HYDRATION_GOAL_CHANGED', async (data?: { goalLiters?: number }) => {
       try {
-        await healthConnectService.initialize();
-        const status = healthConnectService.getSyncStatus();
-
-        // Permettre le sync meme si pas encore formellement "connecte"
-        // (le module HealthKit est charge et les permissions peuvent etre accordees via Reglages iOS)
-        if (!status.isConnected) {
-          // Tenter quand meme un syncAll si le module est disponible
-          const available = await healthConnectService.isAvailable();
-          if (!available) return;
-        }
-
-        const lastSyncTime = status.lastSync ? new Date(status.lastSync).getTime() : 0;
-        const fifteenMinutes = 15 * 60 * 1000;
-        if (Date.now() - lastSyncTime > fifteenMinutes) {
-          logger.info('[AutoSync] Syncing health data...');
-          const data = await healthConnectService.syncAll();
-          // Mettre a jour les valeurs affichees apres sync
-          if (data?.steps?.count) {
-            setSteps(data.steps.count);
+        if (data?.goalLiters) {
+          // Mise à jour directe depuis l'event (le plus rapide)
+          const goalMl = Math.round(data.goalLiters * 1000);
+          setHydrationGoal(goalMl);
+          animateWater(hydration, goalMl);
+        } else {
+          // Fallback: relire depuis AsyncStorage
+          const goalStored = await AsyncStorage.getItem(HYDRATION_GOAL_KEY);
+          if (goalStored) {
+            const parsed = parseFloat(goalStored);
+            const goalMl = parsed < 20 ? Math.round(parsed * 1000) : parsed;
+            setHydrationGoal(goalMl);
+            animateWater(hydration, goalMl);
           }
-          if (data?.calories?.active) {
-            setCalories(Math.round(data.calories.active));
-          }
-          logger.info('[AutoSync] Auto-sync complete');
         }
-      } catch (e) {
-        // Auto-sync is best-effort, don't crash
-        logger.warn('[AutoSync] Error:', e);
+      } catch {}
+    });
+    return () => sub.remove();
+  }, [hydration, animateWater]);
+
+  // Listener léger pour la quantité d'eau changée depuis l'écran hydratation
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('HYDRATION_AMOUNT_CHANGED', (data?: { amountMl?: number }) => {
+      if (data?.amountMl != null) {
+        setHydration(data.amountMl);
+        animateWater(data.amountMl, hydrationGoal);
+      }
+    });
+    return () => sub.remove();
+  }, [hydrationGoal, animateWater]);
+
+  // Auto-sync: synchroniser les donnees de sante, recalculer bonus + points
+  const performHealthSync = useCallback(async () => {
+    try {
+      await healthConnectService.initialize();
+      const status = healthConnectService.getSyncStatus();
+
+      if (!status.isConnected) {
+        const available = await healthConnectService.isAvailable();
+        if (!available) return;
+      }
+
+      const lastSyncTime = status.lastSync ? new Date(status.lastSync).getTime() : 0;
+      const fifteenMinutes = 15 * 60 * 1000;
+      if (Date.now() - lastSyncTime > fifteenMinutes) {
+        logger.info('[AutoSync] Syncing health data...');
+        const data = await healthConnectService.syncAll();
+        // Mettre a jour les valeurs affichees apres sync
+        if (data?.steps?.count) {
+          setSteps(data.steps.count);
+        }
+        if (data?.calories?.active) {
+          setCalories(Math.round(data.calories.active));
+        }
+        // Re-fetch trainings, sleep et weight depuis la DB apres sync
+        try {
+          const [freshTrainings, freshSleep, freshWeight, freshHistory, freshStreak] = await Promise.all([
+            getTrainings(30),
+            getSleepStats(),
+            healthConnectService.getLatestWeight(),
+            getWeights(30),
+            calculateStreak(),
+          ]);
+          if (freshTrainings) setTrainings(freshTrainings);
+          if (freshSleep) setSleepStats(freshSleep);
+          if (freshWeight) setLatestWeight({ weight: freshWeight.value, date: freshWeight.date, source: freshWeight.source } as any);
+
+          // Recalculer bonus sante + points unifies apres sync
+          await calculateDailyHealthBonus();
+          const newTotal = await calculateAndStoreUnifiedPoints(
+            freshHistory.length,
+            (freshTrainings || []).length,
+            freshStreak,
+          );
+          setTotalPoints(newTotal);
+        } catch (refreshErr) {
+          logger.warn('[AutoSync] Re-fetch after sync failed:', refreshErr);
+        }
+        logger.info('[AutoSync] Auto-sync complete');
+      }
+    } catch (e) {
+      logger.warn('[AutoSync] Error:', e);
+    }
+  }, []);
+
+  // Auto-sync au montage
+  useEffect(() => {
+    performHealthSync();
+  }, []);
+
+  // Re-sync quand l'app revient au premier plan (foreground)
+  useEffect(() => {
+    const handleAppState = (nextState: AppStateStatus) => {
+      if (nextState === 'active') {
+        performHealthSync();
       }
     };
-    autoSync();
-  }, []);
+    const sub = AppState.addEventListener('change', handleAppState);
+    return () => sub.remove();
+  }, [performHealthSync]);
 
   // Helper pour vérifier la visibilité d'une section
   const isSectionVisible = useCallback((sectionId: string): boolean => {
@@ -1175,7 +1255,7 @@ export default function HomeScreen() {
                   backgroundColor: colors.backgroundCard,
                   borderColor: `${colors.accent}40`,
                 }]}>
-                  <AvatarDisplay size="small" refreshTrigger={avatarRefreshTrigger} />
+                  <AvatarDisplay size="small" />
                 </View>
                 {/* Badge niveau discret */}
                 <View style={[styles.levelBadgeSmall, { backgroundColor: colors.accent }]}>
@@ -1324,41 +1404,7 @@ export default function HomeScreen() {
       case 'challenges':
         return (
           <AnimatedCard index={1} key={sectionId}>
-            <TouchableOpacity style={[styles.challengesCard, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateChallenges} activeOpacity={0.8}>
-              <View style={styles.challengesHeader}>
-                <Target size={16} color={colors.accentText} />
-                <Text style={styles.sectionTitle}>DÉFIS DU JOUR</Text>
-                <ChevronRight size={14} color={colors.textMuted} />
-              </View>
-              <View style={styles.challengesList}>
-                {dailyChallenges.slice(0, 3).map((challenge) => (
-                  <View key={challenge.id} style={styles.challengeItem}>
-                    <View style={styles.challengeIconWrap}>
-                      {renderChallengeIcon(challenge.icon)}
-                    </View>
-                    <View style={styles.challengeInfo}>
-                      <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>{challenge.title}</Text>
-                      <View style={[styles.challengeProgress, { backgroundColor: colors.border }]}>
-                        <View style={[styles.challengeFill, {
-                          width: `${Math.min(100, (challenge.progress.current / challenge.progress.target) * 100)}%`,
-                          backgroundColor: challenge.progress.completed ? colors.success : colors.accent
-                        }]} />
-                      </View>
-                    </View>
-                    <PulsingBadge
-                      color={challenge.progress.completed ? colors.success : colors.accent}
-                      enabled={challenge.progress.completed}
-                      style={[styles.rewardBadge, { backgroundColor: challenge.progress.completed ? colors.successLight : colors.accentMuted }]}
-                    >
-                      <Gift size={10} color={challenge.progress.completed ? colors.success : colors.accent} />
-                      <Text style={[styles.rewardText, { color: challenge.progress.completed ? colors.success : (isDark ? colors.accent : colors.textPrimary) }]}>
-                        +{challenge.reward.xp}
-                      </Text>
-                    </PulsingBadge>
-                  </View>
-                ))}
-              </View>
-            </TouchableOpacity>
+            <HomeChallengesSection />
           </AnimatedCard>
         );
 
@@ -1749,7 +1795,6 @@ export default function HomeScreen() {
     handleNavigateBodyComposition,
     addWater,
     shareReport,
-    avatarRefreshTrigger,
     getGreeting,
     toggleMode,
     isDark,
@@ -1849,7 +1894,7 @@ export default function HomeScreen() {
         onAddWeight={() => handleNavigate('/(tabs)/add')}
         onAddWater={addWater}
         onShareReport={shareReport}
-        refreshTrigger={avatarRefreshTrigger}
+        refreshTrigger={0}
       />
 
       <RanksModal visible={ranksModalVisible} onClose={handleCloseRanksModal} currentStreak={streak} />

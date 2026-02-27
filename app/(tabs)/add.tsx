@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Modal,
   ActivityIndicator,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -409,6 +410,9 @@ export default function AddScreen() {
 
       // Effacer le brouillon car sauvegarde réussie
       await draftService.clearWeightDraft();
+
+      // Notifier la home pour refresh instantane des points/quetes
+      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
 
       // Afficher la belle modal de succès
       setSavedWeight(weight ?? null);

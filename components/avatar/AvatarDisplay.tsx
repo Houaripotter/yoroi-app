@@ -5,12 +5,11 @@
  * Affiche l'avatar en grand format complet (pas de cercle)
  */
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Image, StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 
-import { getAvatarConfig, getAvatarImage, onAvatarChange } from '@/lib/avatarSystem';
+import { useAvatar } from '@/lib/AvatarContext';
 import { useTheme } from '@/lib/ThemeContext';
-import logger from '@/lib/security/logger';
 
 // ============================================================================
 // TYPES
@@ -54,48 +53,10 @@ export default function AvatarDisplay({
   disableAnimation = false,
 }: AvatarDisplayProps) {
   const { isDark, colors } = useTheme();
-  const [isLoading, setIsLoading] = useState(true);
-  const [imagePath, setImagePath] = useState<any>(null);
+  const { avatarImage, isLoading } = useAvatar();
 
   const dimensions = SIZE_MAP[size];
-
-  // Charger l'avatar
-  useEffect(() => {
-    loadAvatar();
-  }, [refreshTrigger]);
-
-  // Écouter les changements d'avatar (quand l'utilisateur sélectionne un nouvel avatar)
-  useEffect(() => {
-    const unsubscribe = onAvatarChange(() => {
-      loadAvatar();
-    });
-    return unsubscribe;
-  }, []);
-
-  const loadAvatar = async () => {
-    try {
-      setIsLoading(true);
-
-      // Récupérer la config avec état dynamique
-      const config = await getAvatarConfig();
-
-      // Obtenir l'image (avec état pour character packs, personnage pour collection packs)
-      const image = getAvatarImage(
-        config.pack,
-        config.packType === 'character' ? config.state : undefined,
-        config.collectionCharacter,
-        config.gender
-      );
-
-      setImagePath(image);
-      setIsLoading(false);
-    } catch (error) {
-      logger.error('[AvatarDisplay] Erreur chargement avatar:', error);
-      // ✅ FIX: Utiliser l'image par défaut en cas d'erreur
-      setImagePath(require('@/assets/avatars/samurai/samurai_neutral.png'));
-      setIsLoading(false);
-    }
-  };
+  const imagePath = avatarImage;
 
   // Rendu
   const renderContent = () => {

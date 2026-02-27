@@ -20,9 +20,16 @@ interface DayData {
 interface HealthspanChartProps {
   days?: number;
   screenshotMode?: boolean;
+  sleepHistory?: Array<{ date: string; value: number }>;
+  hrvHistory?: Array<{ date: string; value: number }>;
 }
 
-export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, screenshotMode = false }) => {
+export const HealthspanChart: React.FC<HealthspanChartProps> = ({
+  days = 7,
+  screenshotMode = false,
+  sleepHistory = [],
+  hrvHistory = [],
+}) => {
   const { colors, isDark } = useTheme();
   const { t, language } = useI18n();
   const [data, setData] = useState<DayData[]>([]);
@@ -41,42 +48,67 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, scre
 
   useEffect(() => {
     loadHealthData();
-  }, [screenshotMode]);
+  }, [screenshotMode, sleepHistory.length, hrvHistory.length]);
 
   const loadHealthData = async () => {
     try {
-      // IMPORTANT: Ne générer des données de démo que si screenshotMode est activé
-      // Sinon, ne rien afficher (app vierge)
-      if (!screenshotMode) {
+      // Mode screenshot: donnees de demo
+      if (screenshotMode) {
+        const generatedData: DayData[] = [];
+        for (let i = days - 1; i >= 0; i--) {
+          const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
+          const dayOfWeek = new Date(date).getDay();
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+          const baseSleep = isWeekend ? 80 : 65;
+          const sleep = Math.min(100, Math.max(30, baseSleep + (Math.random() - 0.5) * 30));
+          const baseStress = isWeekend ? 75 : 55;
+          const stress = Math.min(100, Math.max(20, baseStress + (Math.random() - 0.5) * 40));
+          generatedData.push({ date, sleep, stress });
+        }
+        setData(generatedData);
+        return;
+      }
+
+      // Mode reel: utiliser les donnees de sleep et HRV passees en props
+      if (sleepHistory.length === 0 && hrvHistory.length === 0) {
         setData([]);
         return;
       }
 
-      // Générer des données de démo pour les screenshots App Store
-      const generatedData: DayData[] = [];
-
+      // Creer un map date -> donnees pour les 7 derniers jours
+      const last7Days: string[] = [];
       for (let i = days - 1; i >= 0; i--) {
-        const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
-
-        // Simuler des patterns réalistes
-        const dayOfWeek = new Date(date).getDay();
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-
-        // Sommeil: meilleur le weekend, aléatoire en semaine
-        const baseSleep = isWeekend ? 80 : 65;
-        const sleep = Math.min(100, Math.max(30, baseSleep + (Math.random() - 0.5) * 30));
-
-        // Stress inversé: calme = haut, stressé = bas
-        // Plus calme le weekend
-        const baseStress = isWeekend ? 75 : 55;
-        const stress = Math.min(100, Math.max(20, baseStress + (Math.random() - 0.5) * 40));
-
-        generatedData.push({ date, sleep, stress });
+        last7Days.push(format(subDays(new Date(), i), 'yyyy-MM-dd'));
       }
 
-      setData(generatedData);
+      // Indexer les donnees par date
+      const sleepByDate: Record<string, number> = {};
+      sleepHistory.forEach(s => { sleepByDate[s.date] = s.value; });
+
+      const hrvByDate: Record<string, number> = {};
+      hrvHistory.forEach(h => { hrvByDate[h.date] = h.value; });
+
+      // Convertir en score 0-100
+      // Sommeil: 8h = 100%, proportionnel (cap a 10h)
+      // HRV/Calme: normalise sur la plage 20-100ms => 0-100%
+      const chartData: DayData[] = last7Days
+        .map(date => {
+          const sleepHours = sleepByDate[date] ?? 0;
+          const hrvValue = hrvByDate[date] ?? 0;
+
+          // Score sommeil: 8h = 100%, lineaire
+          const sleepScore = sleepHours > 0 ? Math.min(100, Math.round((sleepHours / 8) * 100)) : 0;
+
+          // Score calme (HRV): 20ms = 0%, 100ms = 100%
+          const calmScore = hrvValue > 0 ? Math.min(100, Math.max(0, Math.round(((hrvValue - 20) / 80) * 100))) : 0;
+
+          return { date, sleep: sleepScore, stress: calmScore };
+        })
+        .filter(d => d.sleep > 0 || d.stress > 0);
+
+      setData(chartData);
     } catch (error) {
-      logger.error('Erreur chargement données santé:', error);
+      logger.error('Erreur chargement donnees sante:', error);
     }
   };
 
