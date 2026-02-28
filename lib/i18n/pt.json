@@ -1006,7 +1006,8 @@
       "neck": "Pescoço",
       "neckAndOther": "Pescoço e outras medidas",
       "bicepsLeftRight": "Bíceps esquerdo e direito",
-      "thighsAndCalves": "Coxas e panturrilhas"
+      "thighsAndCalves": "Coxas e panturrilhas",
+      "calves": "Panturrilhas"
     },
     "discipline": {
       "title": "Disciplina",

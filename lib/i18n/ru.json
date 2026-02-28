@@ -1006,7 +1006,8 @@
       "neck": "Шея",
       "neckAndOther": "Шея и другие измерения",
       "bicepsLeftRight": "Левый и правый бицепс",
-      "thighsAndCalves": "Бёдра и икры"
+      "thighsAndCalves": "Бёдра и икры",
+      "calves": "Икры"
     },
     "discipline": {
       "title": "Дисциплина",

@@ -96,7 +96,7 @@ export default function ModeSelectionScreen() {
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <Image
-              source={require('../assets/images/logo2010.png')}
+              source={require('../assets/logo d\'app/yoroi-logo2.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />

@@ -5,7 +5,7 @@
 // Remplace les fonctions d'export/import vulnérables par
 // des versions chiffrées, validées et sauvegardées.
 
-import * as FS from 'expo-file-system';
+import * as FS from 'expo-file-system/legacy';
 import Constants from 'expo-constants';
 import { shareAsync } from 'expo-sharing';
 import { getDocumentAsync } from 'expo-document-picker';

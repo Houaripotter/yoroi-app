@@ -139,7 +139,7 @@ import AnimatedRank from '@/components/AnimatedRank';
 import { getSleepStats, getSleepAdvice, formatSleepDuration, SleepStats, getSleepGoal } from '@/lib/sleepService';
 import { getWeeklyLoadStats, formatLoad, getRiskColor, WeeklyLoadStats } from '@/lib/trainingLoadService';
 import { getDailyChallenges, ActiveChallenge } from '@/lib/challengesService';
-import { generateWeeklyReport, formatReportForSharing, WeeklyReport } from '@/lib/weeklyReportService';
+import { generateWeeklyReport } from '@/lib/weeklyReportService';
 import { getHomeCustomization, isSectionVisible as checkSectionVisible, HomeSection } from '@/lib/homeCustomizationService';
 import logger from '@/lib/security/logger';
 
@@ -400,7 +400,6 @@ export default function HomeScreen() {
   const [sleepStats, setSleepStats] = useState<SleepStats | null>(null);
   const [loadStats, setLoadStats] = useState<WeeklyLoadStats | null>(null);
   const [dailyChallenges, setDailyChallenges] = useState<ActiveChallenge[]>([]);
-  const [weeklyReport, setWeeklyReport] = useState<WeeklyReport | null>(null);
   const [bodyComposition, setBodyComposition] = useState<any>(null);
   const [sleepGoal, setSleepGoal] = useState(480); // 8h par défaut
 
@@ -707,7 +706,7 @@ export default function HomeScreen() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [profileData, weight, history, streakDays, quote, allTrainings, mode, sleep, load, challenges, report, event, sections] = await Promise.all([
+      const [profileData, weight, history, streakDays, quote, allTrainings, mode, sleep, load, challenges, _report, event, sections] = await Promise.all([
         getProfile(),
         getLatestWeight(),
         getWeights(30),
@@ -734,7 +733,6 @@ export default function HomeScreen() {
       setSleepStats(sleep);
       setLoadStats(load);
       setDailyChallenges(challenges);
-      setWeeklyReport(report);
       setNextEvent(event);
       setHomeSections(sections);
 
@@ -1015,16 +1013,6 @@ export default function HomeScreen() {
     return uniqueDays.size;
   }, [trainings]);
 
-  // Partager le rapport
-  const shareReport = useCallback(async () => {
-    if (!weeklyReport) return;
-    try {
-      const text = formatReportForSharing(weeklyReport);
-      await Share.share({ message: text });
-    } catch (error) {
-      logger.error('Erreur partage:', error);
-    }
-  }, [weeklyReport]);
 
   // Batterie status - avec icônes au lieu d'emojis
   const getBatteryStatus = useCallback(() => {
@@ -1427,49 +1415,7 @@ export default function HomeScreen() {
         );
 
       case 'weekly_report':
-        if (!weeklyReport) return null;
-        return (
-          <AnimatedCard index={4} key={sectionId}>
-            <TouchableOpacity style={[styles.reportCard, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={shareReport}>
-              <View style={styles.reportHeader}>
-                <FileText size={16} color={colors.accentText} />
-                <Text style={styles.sectionTitle}>RAPPORT DE MISSION</Text>
-              </View>
-              <View style={styles.reportContent}>
-                <View style={[styles.gradeBadge, {
-                  backgroundColor: colors.accent,
-                  shadowColor: colors.accent,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 8,
-                  elevation: 6,
-                }]}>
-                  <Text style={[styles.gradeText, { color: colors.textOnAccent }]}>{weeklyReport?.verdict?.grade ?? '-'}</Text>
-                </View>
-                <View style={styles.reportInfo}>
-                  <Text style={[styles.reportTitle, { color: colors.textPrimary }]}>{weeklyReport?.verdict?.title ?? 'Rapport'}</Text>
-                  <View style={styles.scoreContainer}>
-                    <Text style={[styles.reportScore, { color: colors.textPrimary }]}>
-                      Score: <Text style={{ fontWeight: '900', fontSize: 16 }}>{weeklyReport.overallScore}</Text>/100
-                    </Text>
-                    <View style={[styles.progressBarBg, { backgroundColor: colors.border }]}>
-                      <View
-                        style={[
-                          styles.progressBarFill,
-                          {
-                            width: `${weeklyReport.overallScore}%`,
-                            backgroundColor: weeklyReport.overallScore > 70 ? '#10B981' : weeklyReport.overallScore > 50 ? '#F59E0B' : '#EF4444'
-                          }
-                        ]}
-                      />
-                    </View>
-                  </View>
-                </View>
-                <ChevronRight size={16} color={colors.textMuted} />
-              </View>
-            </TouchableOpacity>
-          </AnimatedCard>
-        );
+        return null; // Supprime du home
 
       // Grand graphique de poids (supprimé - géré en haut de l'écran)
       case 'weight_graph_large':
@@ -1794,7 +1740,6 @@ export default function HomeScreen() {
     handleNavigateHydration,
     handleNavigateBodyComposition,
     addWater,
-    shareReport,
     getGreeting,
     toggleMode,
     isDark,
@@ -1817,7 +1762,6 @@ export default function HomeScreen() {
     trainings,
     dailyChallenges,
     renderChallengeIcon,
-    weeklyReport,
     isScreenshotMode,
     isCompetitorMode,
     nextEvent,
@@ -1884,16 +1828,8 @@ export default function HomeScreen() {
         bodyFat={isScreenshotMode ? 16.2 : latestWeight?.fat_percent}
         muscleMass={isScreenshotMode ? 43.5 : latestWeight?.muscle_percent ? (latestWeight.muscle_percent / 100) * (latestWeight?.weight || 0) : undefined}
         waterPercentage={isScreenshotMode ? 58.4 : latestWeight?.water_percent}
-        weeklyReport={weeklyReport ? {
-          weightChange: weeklyReport.weightChange,
-          trainingsCount: weeklyReport.totalTrainings,
-          avgSleepHours: weeklyReport.avgSleepHours,
-          hydrationRate: 0, // Not available in WeeklyReport
-          totalSteps: 0, // Not available in WeeklyReport
-        } : undefined}
         onAddWeight={() => handleNavigate('/(tabs)/add')}
         onAddWater={addWater}
-        onShareReport={shareReport}
         refreshTrigger={0}
       />
 

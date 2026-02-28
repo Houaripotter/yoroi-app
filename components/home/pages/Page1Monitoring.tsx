@@ -9,7 +9,7 @@ import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { router } from 'expo-router';
-import { TrendingUp, TrendingDown, Minus, Plus, Dumbbell, Droplet, Share2, FileText, Moon, Zap, Bell, BellOff, Check, Target, Calendar, Activity, AlertTriangle, CheckCircle, Clock, Settings, Footprints, Flame } from 'lucide-react-native';
+import { TrendingUp, TrendingDown, Minus, Plus, Dumbbell, Droplet, Moon, Zap, Bell, BellOff, Check, Target, Calendar, Activity, AlertTriangle, CheckCircle, Clock, Settings, Footprints, Flame } from 'lucide-react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useAvatar } from '@/lib/AvatarContext';
@@ -381,14 +381,6 @@ const rankBadgeStyles = StyleSheet.create({
   },
 });
 
-interface WeeklyReport {
-  weightChange?: number;
-  trainingsCount?: number;
-  avgSleepHours?: number;
-  hydrationRate?: number;
-  totalSteps?: number;
-}
-
 interface Page1MonitoringProps {
   userName?: string;
   profilePhoto?: string | null;
@@ -415,10 +407,8 @@ interface Page1MonitoringProps {
   waterPercentage?: number;
   heightCm?: number;
   userGoal?: 'lose' | 'maintain' | 'gain';
-  weeklyReport?: WeeklyReport;
   onAddWeight?: () => void;
   onAddWater?: (ml: number) => void;
-  onShareReport?: () => void;
   refreshTrigger?: number;
 }
 
@@ -452,12 +442,42 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
   const cardBg = isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF';
   const TOTAL_PAGES = 3;
 
-  // Goal local : se met à jour instantanément à la sauvegarde + sync depuis la prop parent
+  // Goal local : lit directement AsyncStorage au montage + ecoute les events
   const [localGoalMl, setLocalGoalMl] = useState(hydrationGoal >= 500 ? hydrationGoal : 2500);
+
+  // Sync depuis la prop parent
   useEffect(() => {
     const fromProp = hydrationGoal >= 500 ? hydrationGoal : 2500;
-    setLocalGoalMl(fromProp);
+    if (fromProp !== localGoalMl) setLocalGoalMl(fromProp);
   }, [hydrationGoal]);
+
+  // Lire le goal depuis AsyncStorage au montage (source de verite)
+  useEffect(() => {
+    const readGoal = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(HYDRATION_GOAL_KEY);
+        if (stored) {
+          let parsed = parseFloat(stored);
+          if (parsed < 20) parsed = parsed * 1000; // litres -> ml
+          if (parsed >= 500 && parsed !== localGoalMl) {
+            setLocalGoalMl(parsed);
+          }
+        }
+      } catch {}
+    };
+    readGoal();
+  }, []);
+
+  // Ecouter directement les changements de goal (pas besoin du parent)
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('HYDRATION_GOAL_CHANGED', (data?: { goalLiters?: number }) => {
+      if (data?.goalLiters && data.goalLiters > 0) {
+        const ml = Math.round(data.goalLiters * 1000);
+        setLocalGoalMl(ml);
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   const safeGoal = localGoalMl;
   const pct = Math.min(100, Math.round((hydration / safeGoal) * 100));
@@ -991,10 +1011,8 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   waterPercentage,
   heightCm,
   userGoal: propUserGoal,
-  weeklyReport,
   onAddWeight,
   onAddWater,
-  onShareReport,
   refreshTrigger = 0,
 }) => {
   const { colors, isDark, themeColor } = useTheme();
@@ -1529,10 +1547,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                         </View>
                       </View>
 
-                      {/* 3 stats en bas : Perdu | Objectif | Reste - espacement egal */}
+                      {/* 3 stats en bas : Perdu | Objectif | Reste - quadrillé */}
                       <View style={{ flexDirection: 'row', marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', width: '100%' }}>
-                        {/* Perdu */}
-                        <View style={{ alignItems: 'center', flex: 1 }}>
+                        {/* Perdu - aligné à gauche */}
+                        <View style={{ flex: 1, alignItems: 'flex-start' }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 4 }}>
                             <TrendingDown size={9} color="#10B981" strokeWidth={2.5} />
                             <Text style={{ fontSize: 9, fontWeight: '700', color: '#10B981', textTransform: 'uppercase', letterSpacing: 0.5 }}>Perdu</Text>
@@ -1541,11 +1559,13 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                             {hasGoal ? lost.toFixed(1) : '0.0'}<Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted }}> kg</Text>
                           </Text>
                         </View>
-                        {/* Objectif - cliquable pour definir */}
+                        {/* Barre séparatrice */}
+                        <View style={{ width: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', marginHorizontal: 2 }} />
+                        {/* Objectif - centré */}
                         <TouchableOpacity
                           onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/goals'); }}
                           activeOpacity={0.6}
-                          style={{ alignItems: 'center', flex: 1 }}
+                          style={{ flex: 1, alignItems: 'center' }}
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 4 }}>
                             <Target size={9} color={colors.accent} strokeWidth={2.5} />
@@ -1555,8 +1575,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                             {hasGoal ? targetWeight.toFixed(1) : '--'}<Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted }}> kg</Text>
                           </Text>
                         </TouchableOpacity>
-                        {/* Reste */}
-                        <View style={{ alignItems: 'center', flex: 1 }}>
+                        {/* Barre séparatrice */}
+                        <View style={{ width: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', marginHorizontal: 2 }} />
+                        {/* Reste - aligné à droite */}
+                        <View style={{ flex: 1, alignItems: 'flex-end' }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 4 }}>
                             <TrendingUp size={9} color="#EF4444" strokeWidth={2.5} />
                             <Text style={{ fontSize: 9, fontWeight: '700', color: '#EF4444', textTransform: 'uppercase', letterSpacing: 0.5 }}>Reste</Text>
@@ -1571,7 +1593,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                 })()}
               </TouchableOpacity>
 
-              {/* ═══ PAGE 3: Composition + Mini graphique scrollable ═══ */}
+              {/* ═══ PAGE 2: Composition + Mini graphique scrollable ═══ */}
               <View style={{ width: H_CARD_PAGE_W, paddingHorizontal: 8, paddingBottom: 4 }}>
                 {/* Composition compacte */}
                 <TouchableOpacity
@@ -1669,6 +1691,117 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                 })()}
               </View>
 
+              {/* ═══ PAGE 3: IMC (BMI) - Compteur balance ═══ */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/body-composition'); }}
+                style={{ width: H_CARD_PAGE_W, paddingHorizontal: 6, paddingBottom: 4, justifyContent: 'center' }}
+              >
+                {(() => {
+                  const bmi = heightCm && heightCm > 0 && currentWeight > 0 ? currentWeight / ((heightCm / 100) ** 2) : 0;
+
+                  if (bmi === 0) {
+                    return (
+                      <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 20 }}>
+                        <Ionicons name="body-outline" size={24} color={colors.textMuted} />
+                        <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted, textAlign: 'center', marginTop: 6, lineHeight: 16 }}>
+                          Renseigne ta taille{'\n'}dans ton profil
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/profile'); }}
+                          style={{ marginTop: 6, backgroundColor: colors.accent + '20', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 }}
+                        >
+                          <Text style={{ fontSize: 10, fontWeight: '700', color: colors.accent }}>Mon profil</Text>
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  }
+
+                  let bmiLabel = '';
+                  let bmiColor = '#22C55E';
+                  if (bmi < 16) { bmiLabel = 'Dénutrition'; bmiColor = '#DC2626'; }
+                  else if (bmi < 18.5) { bmiLabel = 'Maigreur'; bmiColor = '#F97316'; }
+                  else if (bmi < 25) { bmiLabel = 'Normal'; bmiColor = '#22C55E'; }
+                  else if (bmi < 30) { bmiLabel = 'Surpoids'; bmiColor = '#F97316'; }
+                  else if (bmi < 35) { bmiLabel = 'Obésité I'; bmiColor = '#EF4444'; }
+                  else if (bmi < 40) { bmiLabel = 'Obésité II'; bmiColor = '#DC2626'; }
+                  else { bmiLabel = 'Obésité III'; bmiColor = '#991B1B'; }
+
+                  const GW = 160;
+                  const GH = 100;
+                  const gcx = GW / 2;
+                  const gcy = GH - 2;
+                  const gr = 50;
+                  const gsw = 14;
+                  const BMI_MIN = 15;
+                  const BMI_MAX = 40;
+                  const clampedBmi = Math.max(BMI_MIN, Math.min(BMI_MAX, bmi));
+                  const bmiProgress = (clampedBmi - BMI_MIN) / (BMI_MAX - BMI_MIN);
+
+                  const toArc = (v: number) => Math.max(0, Math.min(1, (v - BMI_MIN) / (BMI_MAX - BMI_MIN)));
+                  const bmiSegs = [
+                    { from: toArc(BMI_MIN), to: toArc(18.5), color: '#F97316' },
+                    { from: toArc(18.5), to: toArc(25), color: '#22C55E' },
+                    { from: toArc(25), to: toArc(30), color: '#F97316' },
+                    { from: toArc(30), to: toArc(BMI_MAX), color: '#EF4444' },
+                  ];
+                  const makeBmiArc = (p1: number, p2: number) => {
+                    const a1 = Math.PI * (1 - p1), a2 = Math.PI * (1 - p2);
+                    return `M ${gcx + gr * Math.cos(a1)} ${gcy - gr * Math.sin(a1)} A ${gr} ${gr} 0 0 1 ${gcx + gr * Math.cos(a2)} ${gcy - gr * Math.sin(a2)}`;
+                  };
+
+                  const labelR = gr + gsw / 2 + 14;
+                  const bmiLabelsArr = [15, 18, 25, 30, 35, 40];
+                  const labelPositions = bmiLabelsArr.map(v => {
+                    const p = (v - BMI_MIN) / (BMI_MAX - BMI_MIN);
+                    const a = Math.PI * (1 - p);
+                    return { v, x: gcx + labelR * Math.cos(a), y: gcy - labelR * Math.sin(a) };
+                  });
+
+                  const needleAngle = Math.PI * (1 - bmiProgress);
+                  const nLen = gr + gsw / 2;
+                  const nx = gcx + nLen * Math.cos(needleAngle);
+                  const ny = gcy - nLen * Math.sin(needleAngle);
+
+                  const cats = [
+                    { label: 'Maigreur', color: '#F97316' },
+                    { label: 'Normal', color: '#22C55E' },
+                    { label: 'Surpoids', color: '#F97316' },
+                    { label: 'Obésité', color: '#EF4444' },
+                  ];
+
+                  return (
+                    <View style={{ alignItems: 'center' }}>
+                      <View style={{ width: GW, height: GH, overflow: 'visible', marginTop: 2 }}>
+                        <Svg width={GW} height={GH} viewBox={`0 0 ${GW} ${GH}`} style={{ overflow: 'visible' }}>
+                          <Path d={makeBmiArc(0, 1)} stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'} strokeWidth={gsw + 4} fill="none" strokeLinecap="butt" />
+                          {bmiSegs.map((s, i) => (
+                            <Path key={i} d={makeBmiArc(s.from, s.to)} stroke={s.color} strokeWidth={gsw} fill="none" strokeLinecap="butt" />
+                          ))}
+                          {labelPositions.map((lp) => (
+                            <SvgText key={lp.v} x={lp.x} y={lp.y + 3} fontSize={9} fontWeight="800" fill={isDark ? '#FFFFFF' : '#6B7280'} textAnchor="middle">{lp.v}</SvgText>
+                          ))}
+                          <Line x1={gcx} y1={gcy} x2={nx} y2={ny} stroke={isDark ? '#FFFFFF' : '#1A1A2E'} strokeWidth={3} strokeLinecap="round" />
+                          <SvgCircle cx={gcx} cy={gcy} r={5} fill={isDark ? '#1A1A2E' : '#FFFFFF'} stroke={isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'} strokeWidth={2} />
+                        </Svg>
+                      </View>
+                      <Text style={{ fontSize: 26, fontWeight: '900', color: colors.textPrimary, textAlign: 'center', letterSpacing: -0.5, marginTop: 2 }}>
+                        {bmi.toFixed(1)}
+                      </Text>
+                      <Text style={{ fontSize: 12, fontWeight: '800', color: bmiColor, textAlign: 'center', marginTop: 0 }}>{bmiLabel}</Text>
+                      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                        {cats.map((c) => (
+                          <View key={c.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <View style={{ width: 16, height: 5, borderRadius: 2.5, backgroundColor: c.color }} />
+                            <Text style={{ fontSize: 8, fontWeight: '700', color: colors.textMuted }}>{c.label}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  );
+                })()}
+              </TouchableOpacity>
+
               {/* ═══ PAGE 4: Prédictions ═══ */}
               <TouchableOpacity
                 activeOpacity={0.8}
@@ -1696,132 +1829,6 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                 </View>
               </TouchableOpacity>
 
-              {/* ═══ PAGE 5: IMC (BMI) - Compteur balance ═══ */}
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/body-composition'); }}
-                style={{ width: H_CARD_PAGE_W, paddingHorizontal: 6, paddingBottom: 4, justifyContent: 'center' }}
-              >
-                {(() => {
-                  const bmi = heightCm && heightCm > 0 && currentWeight > 0 ? currentWeight / ((heightCm / 100) ** 2) : 0;
-
-                  if (bmi === 0) {
-                    return (
-                      <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 20 }}>
-                        <Ionicons name="body-outline" size={24} color={colors.textMuted} />
-                        <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted, textAlign: 'center', marginTop: 6, lineHeight: 16 }}>
-                          Renseigne ta taille{'\n'}dans ton profil
-                        </Text>
-                        <TouchableOpacity
-                          onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/profile'); }}
-                          style={{ marginTop: 6, backgroundColor: colors.accent + '20', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 }}
-                        >
-                          <Text style={{ fontSize: 10, fontWeight: '700', color: colors.accent }}>Mon profil</Text>
-                        </TouchableOpacity>
-                      </View>
-                    );
-                  }
-
-                  // Category
-                  let bmiLabel = '';
-                  let bmiColor = '#22C55E';
-                  if (bmi < 16) { bmiLabel = 'Dénutrition'; bmiColor = '#DC2626'; }
-                  else if (bmi < 18.5) { bmiLabel = 'Maigreur'; bmiColor = '#F97316'; }
-                  else if (bmi < 25) { bmiLabel = 'Normal'; bmiColor = '#22C55E'; }
-                  else if (bmi < 30) { bmiLabel = 'Surpoids'; bmiColor = '#F97316'; }
-                  else if (bmi < 35) { bmiLabel = 'Obésité I'; bmiColor = '#EF4444'; }
-                  else if (bmi < 40) { bmiLabel = 'Obésité II'; bmiColor = '#DC2626'; }
-                  else { bmiLabel = 'Obésité III'; bmiColor = '#991B1B'; }
-
-                  // Gauge constants - BIGGER
-                  const GW = 160;
-                  const GH = 100;
-                  const gcx = GW / 2;
-                  const gcy = GH - 2;
-                  const gr = 50;
-                  const gsw = 14;
-                  const BMI_MIN = 15;
-                  const BMI_MAX = 40;
-                  const clampedBmi = Math.max(BMI_MIN, Math.min(BMI_MAX, bmi));
-                  const bmiProgress = (clampedBmi - BMI_MIN) / (BMI_MAX - BMI_MIN);
-
-                  // Colored segments
-                  const toArc = (v: number) => Math.max(0, Math.min(1, (v - BMI_MIN) / (BMI_MAX - BMI_MIN)));
-                  const bmiSegs = [
-                    { from: toArc(BMI_MIN), to: toArc(18.5), color: '#F97316' },
-                    { from: toArc(18.5), to: toArc(25), color: '#22C55E' },
-                    { from: toArc(25), to: toArc(30), color: '#F97316' },
-                    { from: toArc(30), to: toArc(BMI_MAX), color: '#EF4444' },
-                  ];
-                  const makeBmiArc = (p1: number, p2: number) => {
-                    const a1 = Math.PI * (1 - p1), a2 = Math.PI * (1 - p2);
-                    return `M ${gcx + gr * Math.cos(a1)} ${gcy - gr * Math.sin(a1)} A ${gr} ${gr} 0 0 1 ${gcx + gr * Math.cos(a2)} ${gcy - gr * Math.sin(a2)}`;
-                  };
-
-                  // Label positions around the arc
-                  const labelR = gr + gsw / 2 + 14;
-                  const bmiLabelsArr = [15, 18, 25, 30, 35, 40];
-                  const labelPositions = bmiLabelsArr.map(v => {
-                    const p = (v - BMI_MIN) / (BMI_MAX - BMI_MIN);
-                    const a = Math.PI * (1 - p);
-                    return { v, x: gcx + labelR * Math.cos(a), y: gcy - labelR * Math.sin(a) };
-                  });
-
-                  // Needle
-                  const needleAngle = Math.PI * (1 - bmiProgress);
-                  const nLen = gr + gsw / 2;
-                  const nx = gcx + nLen * Math.cos(needleAngle);
-                  const ny = gcy - nLen * Math.sin(needleAngle);
-
-                  // Legend categories
-                  const cats = [
-                    { label: 'Maigreur', color: '#F97316' },
-                    { label: 'Normal', color: '#22C55E' },
-                    { label: 'Surpoids', color: '#F97316' },
-                    { label: 'Obésité', color: '#EF4444' },
-                  ];
-
-                  return (
-                    <View style={{ alignItems: 'center' }}>
-                      {/* Gauge SVG */}
-                      <View style={{ width: GW, height: GH, overflow: 'visible', marginTop: 2 }}>
-                        <Svg width={GW} height={GH} viewBox={`0 0 ${GW} ${GH}`} style={{ overflow: 'visible' }}>
-                          {/* Background */}
-                          <Path d={makeBmiArc(0, 1)} stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'} strokeWidth={gsw + 4} fill="none" strokeLinecap="butt" />
-                          {/* Colored segments */}
-                          {bmiSegs.map((s, i) => (
-                            <Path key={i} d={makeBmiArc(s.from, s.to)} stroke={s.color} strokeWidth={gsw} fill="none" strokeLinecap="butt" />
-                          ))}
-                          {/* Numbers around arc */}
-                          {labelPositions.map((lp) => (
-                            <SvgText key={lp.v} x={lp.x} y={lp.y + 3} fontSize={9} fontWeight="800" fill={isDark ? '#FFFFFF' : '#6B7280'} textAnchor="middle">{lp.v}</SvgText>
-                          ))}
-                          {/* Needle */}
-                          <Line x1={gcx} y1={gcy} x2={nx} y2={ny} stroke={isDark ? '#FFFFFF' : '#1A1A2E'} strokeWidth={3} strokeLinecap="round" />
-                          {/* Center pivot */}
-                          <SvgCircle cx={gcx} cy={gcy} r={5} fill={isDark ? '#1A1A2E' : '#FFFFFF'} stroke={isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'} strokeWidth={2} />
-                        </Svg>
-                      </View>
-
-                      {/* Value + label */}
-                      <Text style={{ fontSize: 26, fontWeight: '900', color: colors.textPrimary, textAlign: 'center', letterSpacing: -0.5, marginTop: 2 }}>
-                        {bmi.toFixed(1)}
-                      </Text>
-                      <Text style={{ fontSize: 12, fontWeight: '800', color: bmiColor, textAlign: 'center', marginTop: 0 }}>{bmiLabel}</Text>
-
-                      {/* Legend: thick bars + labels */}
-                      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                        {cats.map((c) => (
-                          <View key={c.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                            <View style={{ width: 16, height: 5, borderRadius: 2.5, backgroundColor: c.color }} />
-                            <Text style={{ fontSize: 8, fontWeight: '700', color: colors.textMuted }}>{c.label}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  );
-                })()}
-              </TouchableOpacity>
             </ScrollView>
 
             {/* Dots indicator */}
@@ -2075,27 +2082,31 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               </TouchableOpacity>
             </ScrollView>
             {/* Séparateur horizontal */}
-            <View style={{ width: '80%', height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', alignSelf: 'center', marginTop: 4 }} />
-            {/* Pas + Calories empilés (cliquable → page charge) */}
-            <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/charge'); }} style={{ paddingHorizontal: 14, paddingTop: 5, paddingBottom: 2, gap: 2 }}>
-              {/* Pas */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Footprints size={16} color={steps > 0 ? '#3B82F6' : colors.textMuted} />
-                <Text style={{ fontSize: 16, fontWeight: '800', color: steps > 0 ? '#3B82F6' : colors.textMuted }}>{steps > 0 ? steps.toLocaleString('fr-FR') : '--'}</Text>
-                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted }}>pas</Text>
-              </View>
-              {/* Calories: HealthKit actives si dispo, sinon trainings DB */}
-              {(() => {
-                const displayCal = calories > 0 ? calories : trainingCalories;
-                return (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Flame size={16} color={displayCal > 0 ? '#F97316' : colors.textMuted} />
-                    <Text style={{ fontSize: 16, fontWeight: '800', color: displayCal > 0 ? '#F97316' : colors.textMuted }}>{displayCal > 0 ? displayCal.toLocaleString('fr-FR') : '--'}</Text>
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted }}>kcal</Text>
-                  </View>
-                );
-              })()}
-            </TouchableOpacity>
+            <View style={{ width: '80%', height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', alignSelf: 'center', marginTop: 2 }} />
+            {/* Pas + Calories séparés */}
+            <View style={{ paddingHorizontal: 14, paddingTop: 8, paddingBottom: 2, gap: 10 }}>
+              {/* Pas - cliquable vers Stats > Santé > Pas */}
+              <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante', section: 'pas' } }); }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Footprints size={16} color={steps > 0 ? '#3B82F6' : colors.textMuted} />
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: steps > 0 ? '#3B82F6' : colors.textMuted }}>{steps > 0 ? steps.toLocaleString('fr-FR') : '--'}</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted }}>pas</Text>
+                </View>
+              </TouchableOpacity>
+              {/* Calories - cliquable vers Stats > Santé */}
+              <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante', section: 'calories' } }); }}>
+                {(() => {
+                  const displayCal = calories > 0 ? calories : trainingCalories;
+                  return (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Flame size={16} color={displayCal > 0 ? '#F97316' : colors.textMuted} />
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: displayCal > 0 ? '#F97316' : colors.textMuted }}>{displayCal > 0 ? displayCal.toLocaleString('fr-FR') : '--'}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted }}>kcal</Text>
+                    </View>
+                  );
+                })()}
+              </TouchableOpacity>
+            </View>
             {/* Dots */}
             <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 5, paddingBottom: 6, paddingTop: 2 }}>
               {[0, 1, 2].map(i => (<View key={i} style={{ width: chargePage === i ? 8 : 6, height: chargePage === i ? 8 : 6, borderRadius: chargePage === i ? 4 : 3, backgroundColor: chargePage === i ? (isDark ? '#FFFFFF' : '#1A1A2E') : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)') }} />))}
@@ -2108,116 +2119,6 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
       {/* Défis déplacés en page 2 du HomeTabView */}
 
-
-      {/* RAPPORT HEBDOMADAIRE (Transféré de Analyse) */}
-      {weeklyReport && (
-        <View style={[styles.reportCard, { backgroundColor: cardBg, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-          <View style={styles.reportHeader}>
-            <View style={styles.reportTitleRow}>
-              <FileText size={24} color={colors.accentText} strokeWidth={2} />
-              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-                {t('analysis.weeklyReport')}
-              </Text>
-            </View>
-            {onShareReport && (
-              <TouchableOpacity
-                style={[styles.shareButton, { backgroundColor: `${colors.accent}15` }]}
-                onPress={() => {
-                  impactAsync(ImpactFeedbackStyle.Light);
-                  onShareReport();
-                }}
-                activeOpacity={0.7}
-              >
-                <Share2 size={18} color={isDark ? colors.accentText : colors.textPrimary} strokeWidth={2} />
-                <Text style={[styles.shareButtonText, { color: isDark ? colors.accent : colors.textPrimary, fontWeight: '700' }]}>
-                  {t('analysis.share')}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <View style={styles.reportStats}>
-            {/* Poids */}
-            {weeklyReport.weightChange !== undefined && (
-              <View style={styles.reportStat}>
-                <View style={styles.reportStatHeader}>
-                  <Text style={[styles.reportStatLabel, { color: colors.textMuted }]}>
-                    {t('analysis.weightEvolution')}
-                  </Text>
-                  {(() => {
-                    const getTrendIconForReport = (value: number) => {
-                      if (value > 0) return TrendingUp;
-                      if (value < 0) return TrendingDown;
-                      return Minus;
-                    };
-                    const getTrendColorForReport = (value: number) => {
-                      if (value > 0) return '#10B981';
-                      if (value < 0) return '#EF4444';
-                      return '#94A3B8';
-                    };
-                    const TrendIcon = getTrendIconForReport(weeklyReport.weightChange);
-                    const trendColor = getTrendColorForReport(weeklyReport.weightChange);
-                    return (
-                      <TrendIcon size={16} color={trendColor} strokeWidth={2.5} />
-                    );
-                  })()}
-                </View>
-                <Text style={[styles.reportStatValue, { color: colors.textPrimary }]}>
-                  {weeklyReport.weightChange > 0 ? '+' : ''}{weeklyReport.weightChange.toFixed(1)} kg
-                </Text>
-              </View>
-            )}
-
-            {/* Entraînements */}
-            {weeklyReport.trainingsCount !== undefined && (
-              <View style={styles.reportStat}>
-                <Text style={[styles.reportStatLabel, { color: colors.textMuted }]}>
-                  {t('analysis.trainings')}
-                </Text>
-                <Text style={[styles.reportStatValue, { color: colors.textPrimary }]}>
-                  {weeklyReport.trainingsCount} {t('analysis.sessions')}
-                </Text>
-              </View>
-            )}
-
-            {/* Sommeil */}
-            {weeklyReport.avgSleepHours !== undefined && (
-              <View style={styles.reportStat}>
-                <Text style={[styles.reportStatLabel, { color: colors.textMuted }]}>
-                  {t('analysis.averageSleep')}
-                </Text>
-                <Text style={[styles.reportStatValue, { color: colors.textPrimary }]}>
-                  {weeklyReport.avgSleepHours.toFixed(1)}h {t('analysis.perNight')}
-                </Text>
-              </View>
-            )}
-
-            {/* Hydratation */}
-            {weeklyReport.hydrationRate !== undefined && (
-              <View style={styles.reportStat}>
-                <Text style={[styles.reportStatLabel, { color: colors.textMuted }]}>
-                  {t('analysis.hydrationRate')}
-                </Text>
-                <Text style={[styles.reportStatValue, { color: colors.textPrimary }]}>
-                  {Math.round(weeklyReport.hydrationRate)}%
-                </Text>
-              </View>
-            )}
-
-            {/* Pas Total */}
-            {weeklyReport.totalSteps !== undefined && (
-              <View style={styles.reportStat}>
-                <Text style={[styles.reportStatLabel, { color: colors.textMuted }]}>
-                  {t('analysis.totalSteps')}
-                </Text>
-                <Text style={[styles.reportStatValue, { color: colors.textPrimary }]}>
-                  {weeklyReport.totalSteps.toLocaleString()}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-      )}
 
       {/* PAS / KCAL / SÉRIE et OUTILS supprimés - déplacés dans onglet Menu */}
 
@@ -3474,53 +3375,4 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
 
-  // ═══════════════════════════════════════════════
-  // RAPPORT HEBDOMADAIRE
-  // ═══════════════════════════════════════════════
-  reportCard: {
-    borderRadius: 20,
-    padding: 20,
-    marginTop: 16,
-  },
-  reportHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  reportTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  shareButtonText: {
-    fontSize: 13,
-    fontWeight: '700',
-    marginLeft: 6,
-  },
-  reportStats: {
-    gap: 12,
-  },
-  reportStat: {
-    gap: 4,
-  },
-  reportStatHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  reportStatLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  reportStatValue: {
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
 });

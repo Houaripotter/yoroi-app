@@ -114,7 +114,7 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     name: 'Rapport de Mission',
     description: 'Bilan hebdomadaire',
     icon: 'file-text',
-    visible: true,
+    visible: false,
     order: 11,
   },
   {

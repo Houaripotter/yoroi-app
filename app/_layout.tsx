@@ -181,6 +181,9 @@ function RootLayoutContent() {
         <Stack.Screen name="quick-log-running" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="quick-nutrition" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="import-workouts" options={{ presentation: 'card' }} />
+        <Stack.Screen name="import-csv" options={{ presentation: 'card' }} />
+        <Stack.Screen name="customize-tabs" options={{ presentation: 'card' }} />
+        <Stack.Screen name="frame-selection" options={{ presentation: 'card' }} />
         {/* Écrans paramètres & données */}
         <Stack.Screen name="privacy-data" options={{ presentation: 'card' }} />
         <Stack.Screen name="notifications" options={{ presentation: 'card' }} />
@@ -192,6 +195,12 @@ function RootLayoutContent() {
         <Stack.Screen name="legal" options={{ presentation: 'card' }} />
         <Stack.Screen name="ideas" options={{ presentation: 'card' }} />
         <Stack.Screen name="citations" options={{ presentation: 'card' }} />
+        <Stack.Screen name="heart-zones" options={{ presentation: 'card' }} />
+        <Stack.Screen name="mat-time" options={{ presentation: 'card' }} />
+        <Stack.Screen name="sleep-history" options={{ presentation: 'card' }} />
+        <Stack.Screen name="nutritionists" options={{ presentation: 'card' }} />
+        <Stack.Screen name="injury-evaluation" options={{ presentation: 'card' }} />
+        <Stack.Screen name="scientific-sources" options={{ presentation: 'card' }} />
         {/* Écrans compétition & social */}
         <Stack.Screen name="competitor-space" options={{ presentation: 'card' }} />
         <Stack.Screen name="cut-mode" options={{ presentation: 'card' }} />

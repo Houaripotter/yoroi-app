@@ -20,14 +20,39 @@ import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedba
 import { useTheme } from '@/lib/ThemeContext';
 import { useDevMode } from '@/lib/DevModeContext';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
-import { 
-  getSelectedLogo, 
-  saveSelectedLogo, 
-  LOGO_OPTIONS, 
-  LogoVariant 
+import {
+  getSelectedLogo,
+  saveSelectedLogo,
+  LOGO_OPTIONS,
+  LogoVariant
 } from '@/lib/storage';
 import { YoroiLogo } from '@/components/YoroiLogo';
 import logger from '@/lib/security/logger';
+
+// Import conditionnel - expo-alternate-app-icons necessite un build natif
+let setAlternateAppIcon: ((name: string) => Promise<void>) | null = null;
+let resetAppIcon: (() => Promise<void>) | null = null;
+let supportsAlternateIcons = false;
+try {
+  const mod = require('expo-alternate-app-icons');
+  setAlternateAppIcon = mod.setAlternateAppIcon;
+  resetAppIcon = mod.resetAppIcon;
+  supportsAlternateIcons = mod.supportsAlternateIcons ?? false;
+} catch {
+  // Module natif indisponible (Expo Go)
+}
+
+// Mapping entre les IDs internes et les noms d'icones iOS
+const ICON_NAME_MAP: Record<string, string | null> = {
+  'default': null,
+  'logo_new': 'Logo1',
+  'logo1': 'Yoroi1',
+  'logo2': 'Yoroi2',
+  'logo3': 'Yoroi3',
+  'logo4': 'Yoroi4',
+  'logo5': 'Yoroi5',
+  'logo6': 'Yoroi6',
+};
 
 export default function LogoSelectionScreen() {
   const insets = useSafeAreaInsets();
@@ -78,15 +103,29 @@ export default function LogoSelectionScreen() {
 
     try {
       await saveSelectedLogo(selectedLogo);
+
+      // Changer l'icone native de l'app sur l'ecran d'accueil (build natif uniquement)
+      if (supportsAlternateIcons && setAlternateAppIcon && resetAppIcon) {
+        const iconName = ICON_NAME_MAP[selectedLogo];
+        if (iconName === null) {
+          await resetAppIcon();
+        } else if (iconName) {
+          await setAlternateAppIcon(iconName);
+        }
+      }
+
       notificationAsync(NotificationFeedbackType.Success);
+      setCurrentLogo(selectedLogo);
       showPopup(
         'Logo mis a jour !',
-        'Ton nouveau logo est maintenant actif.',
+        supportsAlternateIcons
+          ? 'Ton nouveau logo est maintenant actif sur ton ecran d\'accueil.'
+          : 'Logo sauvegarde. Le changement d\'icone necessite un build natif.',
         [{ text: 'Super !', style: 'primary', onPress: () => router.back() }]
       );
     } catch (error) {
       logger.error('Erreur sauvegarde logo:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder le logo', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Erreur', 'Impossible de changer le logo. Relance l\'app et reessaie.', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsSaving(false);
     }

@@ -2056,6 +2056,13 @@ export const getDetectedWeightSources = async (days: number = 30): Promise<Detec
   );
 };
 
+export const deleteAllTrainings = async (): Promise<number> => {
+  const database = await openDatabase();
+  const countResult = await database.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM trainings');
+  await database.runAsync('DELETE FROM trainings');
+  return countResult?.count || 0;
+};
+
 export default {
   initDatabase,
   openDatabase,

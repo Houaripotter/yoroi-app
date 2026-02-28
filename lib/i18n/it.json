@@ -1005,7 +1005,8 @@
       "neck": "Collo",
       "neckAndOther": "Collo e altre misure",
       "bicepsLeftRight": "Bicipiti sinistro e destro",
-      "thighsAndCalves": "Cosce e polpacci"
+      "thighsAndCalves": "Cosce e polpacci",
+      "calves": "Polpacci"
     },
     "discipline": {
       "title": "Disciplina",

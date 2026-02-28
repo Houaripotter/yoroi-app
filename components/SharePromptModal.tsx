@@ -67,7 +67,7 @@ export const SharePromptModal: React.FC<SharePromptModalProps> = ({
               {/* Logo */}
               <View style={styles.logoContainer}>
                 <Image
-                  source={require('@/assets/images/logo2010.png')}
+                  source={require('@/assets/logo d\'app/yoroi-logo2.png')}
                   style={styles.logo}
                   resizeMode="contain"
                 />

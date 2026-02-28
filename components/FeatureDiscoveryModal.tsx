@@ -90,7 +90,7 @@ export const FeatureDiscoveryModal: React.FC<FeatureDiscoveryModalProps> = ({
           {/* Logo Header */}
           <View style={styles.logoHeader}>
             <Image
-              source={require('../assets/images/logo2010.png')}
+              source={require('../assets/logo d\'app/yoroi-logo2.png')}
               style={styles.logo}
               resizeMode="contain"
             />

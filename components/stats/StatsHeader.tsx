@@ -8,7 +8,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { PeriodSelector } from './PeriodSelector';
 
-export type Period = '30j' | '90j' | '6m' | '1a';
+export type Period = '30j' | '90j' | '6m' | '1a' | '2a';
 
 interface StatsHeaderProps {
   title: string;

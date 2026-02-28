@@ -25,7 +25,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { parseWorkoutFile, activityToTraining, ParsedActivity } from '@/lib/workoutImporter';
 import { addTraining } from '@/lib/database';
 import { SPORTS, getSportById, getSportName } from '@/lib/sports';

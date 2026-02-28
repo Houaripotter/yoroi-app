@@ -1005,7 +1005,8 @@
       "neck": "Hals",
       "neckAndOther": "Hals und andere Maße",
       "bicepsLeftRight": "Linker und rechter Bizeps",
-      "thighsAndCalves": "Oberschenkel und Waden"
+      "thighsAndCalves": "Oberschenkel und Waden",
+      "calves": "Waden"
     },
     "discipline": {
       "title": "Disziplin",

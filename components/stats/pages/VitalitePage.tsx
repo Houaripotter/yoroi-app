@@ -12,7 +12,8 @@ import { StatsHeader, Period } from '../StatsHeader';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { HealthKitConnectCard } from '../HealthKitConnectCard';
 import { healthConnect } from '@/lib/healthConnect';
-import { getTrainings, Training } from '@/lib/database';
+import { getTrainings, Training, deleteAllTrainings } from '@/lib/database';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Moon, Flame, Heart, Footprints } from 'lucide-react-native';
 import { SLEEP_DURATION_RANGES, HRV_RANGES, RESTING_HEART_RATE_RANGES } from '@/lib/healthRanges';
 import { format } from 'date-fns';
@@ -75,6 +76,9 @@ export const VitalitePage: React.FC = React.memo(() => {
   }>({});
 
   const [trainings, setTrainings] = useState<Training[]>([]);
+  const [rawSleepHistory, setRawSleepHistory] = useState<any[]>([]);
+  const [todaySteps, setTodaySteps] = useState(0);
+  const [todayCalories, setTodayCalories] = useState(0);
 
   useEffect(() => {
     checkHealthKitConnection();
@@ -91,7 +95,25 @@ export const VitalitePage: React.FC = React.memo(() => {
       const status = healthConnect.getSyncStatus();
       setIsHealthKitConnected(status.isConnected);
       if (status.isConnected) {
-        await loadHealthData();
+        // One-time cleanup: supprimer les seances demo et reimporter depuis HealthKit
+        try {
+          const cleaned = await AsyncStorage.getItem('@yoroi_trainings_cleaned_v1');
+          if (!cleaned) {
+            const deleted = await deleteAllTrainings();
+            logger.info(`[Sante] Cleanup: ${deleted} trainings demo supprimes`);
+            await AsyncStorage.removeItem('@yoroi_imported_workouts');
+            try {
+              await healthConnect.syncAll();
+              logger.info('[Sante] Reimport HealthKit termine');
+            } catch (syncErr) {
+              logger.warn('[Sante] syncAll apres cleanup echoue:', syncErr);
+            }
+            await AsyncStorage.setItem('@yoroi_trainings_cleaned_v1', 'true');
+          }
+        } catch (cleanupErr) {
+          logger.warn('[Sante] Cleanup error:', cleanupErr);
+        }
+        // loadHealthData will be triggered by the useEffect watching isHealthKitConnected
       }
     } catch (error) {
       logger.error('Error checking HealthKit:', error);
@@ -135,8 +157,16 @@ export const VitalitePage: React.FC = React.memo(() => {
 
       setHealthData({ sleep, heartRate, hrv: enrichedHrv, oxygenSaturation, respiratoryRate });
 
+      // Charger pas et calories d'aujourd'hui
+      const [todayStepsResult, todayCaloriesResult] = await Promise.allSettled([
+        healthConnect.getTodaySteps(),
+        healthConnect.getTodayCalories(),
+      ]);
+      setTodaySteps(todayStepsResult.status === 'fulfilled' ? (todayStepsResult.value as any)?.count || 0 : 0);
+      setTodayCalories(todayCaloriesResult.status === 'fulfilled' ? (todayCaloriesResult.value as any)?.active || 0 : 0);
+
       // Historique selon la periode
-      const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, '1a': 365, 'tout': 365 };
+      const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, '1a': 365, '2a': 730, 'tout': 365 };
       const days = daysMap[selectedPeriod] || 30;
 
       try {
@@ -157,6 +187,8 @@ export const VitalitePage: React.FC = React.memo(() => {
           const hours = (s.duration || s.total || 0) / 60;
           return hours >= 3 && hours <= 16;
         }) : [];
+
+        setRawSleepHistory(validSleepHistory);
 
         // Moyennes phases sommeil
         if (validSleepHistory.length > 0) {
@@ -264,8 +296,8 @@ export const VitalitePage: React.FC = React.memo(() => {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <StatsHeader
-          title={t('statsPages.vitality.title')}
-          description={t('statsPages.vitality.description')}
+          title="Sante"
+          description="Synchronise avec ton app Sante"
           selectedPeriod={selectedPeriod}
           onPeriodChange={setSelectedPeriod}
         />
@@ -286,8 +318,8 @@ export const VitalitePage: React.FC = React.memo(() => {
         scrollEventThrottle={100}
       >
         <StatsHeader
-          title={t('statsPages.vitality.title')}
-          description={t('statsPages.vitality.description')}
+          title="Sante"
+          description="Synchronise avec ton app Sante"
           selectedPeriod={selectedPeriod}
           onPeriodChange={setSelectedPeriod}
           showPeriodSelector={false}
@@ -300,13 +332,9 @@ export const VitalitePage: React.FC = React.memo(() => {
     );
   }
 
-  // Current steps/calories for PasTab
-  const currentSteps = vitalHistory.steps.length > 0
-    ? vitalHistory.steps[vitalHistory.steps.length - 1]?.value || 0
-    : 0;
-  const currentCalories = vitalHistory.calories.length > 0
-    ? Math.round(vitalHistory.calories[vitalHistory.calories.length - 1]?.value || 0)
-    : 0;
+  // Current steps/calories for PasTab - utilise todaySteps/todayCalories (meme API que l'accueil)
+  const currentSteps = todaySteps;
+  const currentCalories = Math.round(todayCalories);
 
   return (
     <ScrollView
@@ -317,8 +345,8 @@ export const VitalitePage: React.FC = React.memo(() => {
       scrollEventThrottle={100}
     >
       <StatsHeader
-        title={t('statsPages.vitality.title')}
-        description={t('statsPages.vitality.description')}
+        title="Sante"
+        description="Synchronise avec ton app Sante"
         selectedPeriod={selectedPeriod}
         onPeriodChange={setSelectedPeriod}
       />
@@ -363,6 +391,7 @@ export const VitalitePage: React.FC = React.memo(() => {
             sleepPhasesData={sleepPhasesData}
             sleepComparisonData={sleepComparisonData}
             sleepHistory={vitalHistory.sleep}
+            rawSleepHistory={rawSleepHistory}
             onMetricPress={setSelectedMetric}
           />
         )}

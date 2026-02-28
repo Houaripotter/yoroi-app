@@ -1080,7 +1080,8 @@
       "neck": "Neck",
       "neckAndOther": "Neck and other measurements",
       "bicepsLeftRight": "Left and right biceps",
-      "thighsAndCalves": "Thighs and calves"
+      "thighsAndCalves": "Thighs and calves",
+      "calves": "Calves"
     },
     "discipline": {
       "title": "Discipline",

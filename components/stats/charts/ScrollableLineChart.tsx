@@ -20,6 +20,7 @@ interface ScrollableLineChartProps {
   height?: number;
   compact?: boolean;
   unit?: string;
+  title?: string;
   onPress?: () => void;
 }
 
@@ -33,6 +34,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
   height = 220,
   compact = false,
   unit = '',
+  title,
   onPress,
 }) => {
   const { colors, isDark } = useTheme();
@@ -367,7 +369,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
           </TouchableOpacity>
 
           <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-            {t('stats.weight') || 'Poids'} {unit}
+            {title || t('stats.weight') || 'Poids'} {unit}
           </Text>
 
           <ScrollView

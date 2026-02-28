@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { SleepPhasesBar } from '../../advanced/SleepPhasesBar';
 import { ScrollableLineChart } from '../../charts/ScrollableLineChart';
-import { Moon, Plus } from 'lucide-react-native';
+import { Moon, Plus, ChevronRight } from 'lucide-react-native';
 import { router } from 'expo-router';
+import { format, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface SommeilTabProps {
   sleep: any;
@@ -22,6 +23,7 @@ interface SommeilTabProps {
     wristTemperature?: { value: number };
   };
   sleepHistory: { date: string; value: number }[];
+  rawSleepHistory?: any[];
   onMetricPress?: (metric: { key: string; label: string; color: string; unit: string; icon: React.ReactNode }) => void;
 }
 
@@ -31,39 +33,24 @@ const formatSleepDuration = (hours: number): string => {
   return `${h}h ${min.toString().padStart(2, '0')}min`;
 };
 
-type SleepSubTab = 'phases' | 'valeurs' | 'comparaisons';
+const formatMinutes = (minutes: number): string => {
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  if (h === 0) return `${m}min`;
+  return `${h}h ${m.toString().padStart(2, '0')}`;
+};
 
 export const SommeilTab: React.FC<SommeilTabProps> = ({
   sleep,
   sleepPhasesData,
   sleepComparisonData,
   sleepHistory,
+  rawSleepHistory = [],
   onMetricPress,
 }) => {
   const { colors, isDark } = useTheme();
-  const [activeSubTab, setActiveSubTab] = useState<SleepSubTab>('phases');
 
   const avgHours = sleepPhasesData.totalSleepMin > 0 ? sleepPhasesData.totalSleepMin / 60 : 0;
-
-  const { avgAwake, avgRem, avgCore, avgDeep } = sleepPhasesData;
-  const totalPhases = avgAwake + avgRem + avgCore + avgDeep;
-  const pctAwake = totalPhases > 0 ? Math.round((avgAwake / totalPhases) * 100) : 0;
-  const pctRem = totalPhases > 0 ? Math.round((avgRem / totalPhases) * 100) : 0;
-  const pctCore = totalPhases > 0 ? Math.round((avgCore / totalPhases) * 100) : 0;
-  const pctDeep = totalPhases > 0 ? Math.round((avgDeep / totalPhases) * 100) : 0;
-
-  const phases = [
-    { name: 'Eveil', color: '#FF6B6B', min: avgAwake, pct: pctAwake },
-    { name: 'Paradoxal', color: '#67E8F9', min: avgRem, pct: pctRem },
-    { name: 'Leger', color: '#93C5FD', min: avgCore, pct: pctCore },
-    { name: 'Profond', color: '#1D4ED8', min: avgDeep, pct: pctDeep },
-  ];
-
-  const subTabs: { key: SleepSubTab; label: string }[] = [
-    { key: 'phases', label: 'Phases' },
-    { key: 'valeurs', label: 'Valeurs' },
-    { key: 'comparaisons', label: 'Comparaisons' },
-  ];
 
   return (
     <View>
@@ -88,120 +75,6 @@ export const SommeilTab: React.FC<SommeilTabProps> = ({
         </View>
       </View>
 
-      {/* SleepPhasesBar */}
-      {sleep?.phases && (sleep.phases.deep > 0 || sleep.phases.rem > 0 || sleep.phases.core > 0 || sleep.phases.awake > 0) && (
-        <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
-          <SleepPhasesBar
-            phases={[
-              ...(sleep.phases.awake > 0 ? [{ type: 'awake' as const, duration: sleep.phases.awake }] : []),
-              ...(sleep.phases.rem > 0 ? [{ type: 'rem' as const, duration: sleep.phases.rem }] : []),
-              ...(sleep.phases.core > 0 ? [{ type: 'light' as const, duration: sleep.phases.core }] : []),
-              ...(sleep.phases.deep > 0 ? [{ type: 'deep' as const, duration: sleep.phases.deep }] : []),
-            ]}
-            height={60}
-          />
-        </View>
-      )}
-
-      {/* Sous-onglets */}
-      <View style={[styles.subTabBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
-        {subTabs.map((tab) => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[
-              styles.subTab,
-              activeSubTab === tab.key && { backgroundColor: colors.accent },
-            ]}
-            onPress={() => setActiveSubTab(tab.key)}
-            activeOpacity={0.7}
-          >
-            <Text style={[
-              styles.subTabText,
-              { color: activeSubTab === tab.key ? colors.textOnAccent : colors.textMuted },
-            ]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Contenu sous-onglet Phases */}
-      {activeSubTab === 'phases' && (
-        <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
-          {phases.map((phase) => (
-            <View
-              key={phase.name}
-              style={[styles.metricLine, { borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}
-            >
-              <View style={styles.metricLineLeft}>
-                <View style={[styles.phaseDot, { backgroundColor: phase.color }]} />
-                <Text style={[styles.metricLineLabel, { color: colors.textPrimary }]}>{phase.name}</Text>
-              </View>
-              <View style={styles.metricLineRight}>
-                <Text style={[styles.metricLineValue, { color: colors.textPrimary }]}>
-                  {formatSleepDuration(phase.min / 60)}
-                </Text>
-                <Text style={[styles.metricLineSub, { color: colors.textMuted }]}>
-                  {phase.pct}%
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Contenu sous-onglet Valeurs */}
-      {activeSubTab === 'valeurs' && (
-        <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
-          <View style={[styles.metricLine, { borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-            <Text style={[styles.metricLineLabel, { color: colors.textPrimary }]}>Objectif</Text>
-            <Text style={[styles.metricLineValue, { color: colors.textPrimary }]}>8h 00min</Text>
-          </View>
-          <View style={[styles.metricLine, { borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-            <Text style={[styles.metricLineLabel, { color: colors.textPrimary }]}>Duree moyenne</Text>
-            <Text style={[styles.metricLineValue, { color: colors.textPrimary }]}>
-              {sleepPhasesData.totalSleepMin > 0 ? formatSleepDuration(sleepPhasesData.totalSleepMin / 60) : '--'}
-            </Text>
-          </View>
-          <View style={[styles.metricLine, { borderBottomColor: 'transparent' }]}>
-            <Text style={[styles.metricLineLabel, { color: colors.textPrimary }]}>Nuits mesurees</Text>
-            <Text style={[styles.metricLineValue, { color: colors.textPrimary }]}>
-              {sleepPhasesData.nightsCount}
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* Contenu sous-onglet Comparaisons */}
-      {activeSubTab === 'comparaisons' && (
-        <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
-          <View style={[styles.metricLine, { borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-            <Text style={[styles.metricLineLabel, { color: colors.textPrimary }]}>FC pendant le sommeil</Text>
-            <Text style={[styles.metricLineValue, { color: colors.textPrimary }]}>
-              {sleepComparisonData.heartRate
-                ? `${sleepComparisonData.heartRate.min}-${sleepComparisonData.heartRate.max} bpm`
-                : '-- bpm'}
-            </Text>
-          </View>
-          <View style={[styles.metricLine, { borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-            <Text style={[styles.metricLineLabel, { color: colors.textPrimary }]}>Freq. respiratoire</Text>
-            <Text style={[styles.metricLineValue, { color: colors.textPrimary }]}>
-              {sleepComparisonData.respiratoryRate
-                ? `${sleepComparisonData.respiratoryRate.min}-${sleepComparisonData.respiratoryRate.max} resp/min`
-                : '-- resp/min'}
-            </Text>
-          </View>
-          <View style={[styles.metricLine, { borderBottomColor: 'transparent' }]}>
-            <Text style={[styles.metricLineLabel, { color: colors.textPrimary }]}>Temp. poignet</Text>
-            <Text style={[styles.metricLineValue, { color: colors.textPrimary }]}>
-              {sleepComparisonData.wristTemperature
-                ? `${sleepComparisonData.wristTemperature.value > 0 ? '+' : ''}${sleepComparisonData.wristTemperature.value} °C`
-                : '-- °C'}
-            </Text>
-          </View>
-        </View>
-      )}
-
       {/* Graphique historique */}
       {sleepHistory.length > 0 && (
         <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
@@ -219,6 +92,73 @@ export const SommeilTab: React.FC<SommeilTabProps> = ({
               icon: <Moon size={18} color="#6366F1" strokeWidth={2.5} />,
             })}
           />
+        </View>
+      )}
+
+      {/* Liste des nuits */}
+      {rawSleepHistory.length > 0 && (
+        <View>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Nuits ({rawSleepHistory.length})
+          </Text>
+          {rawSleepHistory.map((night: any, index: number) => {
+            const total = night.total || night.duration || 0;
+            const hours = total / 60;
+            const dateStr = night.date || '';
+
+            let formattedDate = dateStr;
+            try {
+              const d = parseISO(dateStr);
+              formattedDate = format(d, 'EEE d MMM', { locale: fr });
+            } catch {}
+
+            // Phases summary
+            const phaseParts: string[] = [];
+            if (night.deep > 0) phaseParts.push(`Prof. ${formatMinutes(night.deep)}`);
+            if (night.rem > 0) phaseParts.push(`REM ${formatMinutes(night.rem)}`);
+            if (night.core > 0) phaseParts.push(`Leg. ${formatMinutes(night.core)}`);
+            const phaseSummary = phaseParts.join(' / ');
+
+            const isLast = index === rawSleepHistory.length - 1;
+
+            return (
+              <TouchableOpacity
+                key={dateStr + index}
+                style={[
+                  styles.nightRow,
+                  {
+                    backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+                    borderBottomColor: isLast ? 'transparent' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'),
+                  },
+                  index === 0 && styles.nightRowFirst,
+                  isLast && styles.nightRowLast,
+                ]}
+                activeOpacity={0.7}
+                onPress={() => {
+                  if (dateStr) {
+                    router.push(`/sleep-detail?date=${dateStr.split('T')[0]}` as any);
+                  }
+                }}
+              >
+                <View style={styles.nightInfo}>
+                  <Text style={[styles.nightDate, { color: colors.textPrimary }]}>
+                    {formattedDate}
+                  </Text>
+                  {phaseSummary ? (
+                    <Text style={[styles.nightPhases, { color: colors.textMuted }]} numberOfLines={1}>
+                      {phaseSummary}
+                    </Text>
+                  ) : null}
+                </View>
+                <View style={styles.nightRight}>
+                  <Text style={[styles.nightDuration, { color: '#6366F1' }]}>
+                    {hours > 0 ? formatSleepDuration(hours) : '--'}
+                  </Text>
+                  <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       )}
     </View>
@@ -274,55 +214,53 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     marginBottom: 16,
   },
-  subTabBar: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    padding: 3,
-    marginBottom: 12,
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+    marginBottom: 8,
+    marginTop: 4,
   },
-  subTab: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 10,
+  nightRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  subTabText: {
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  metricLine: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     paddingVertical: 14,
+    paddingHorizontal: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  metricLineLeft: {
+  nightRowFirst: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  nightRowLast: {
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    marginBottom: 12,
+  },
+  nightInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  nightDate: {
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+    textTransform: 'capitalize',
+  },
+  nightPhases: {
+    fontSize: 13,
+    fontWeight: '400',
+    marginTop: 3,
+  },
+  nightRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
-  metricLineRight: {
-    alignItems: 'flex-end',
-  },
-  metricLineLabel: {
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  metricLineValue: {
+  nightDuration: {
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: -0.3,
-  },
-  metricLineSub: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  phaseDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
   },
 });

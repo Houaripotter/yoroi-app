@@ -81,8 +81,8 @@ export const TrainingTabPage: React.FC = React.memo(() => {
 
       if (allTrainings?.length > 0) {
         const now = new Date();
-        const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, 'tout': 365 };
-        const days = daysMap[selectedPeriod] || 7;
+        const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, '1a': 365, '2a': 730, 'tout': 3650 };
+        const days = daysMap[selectedPeriod] || 30;
         const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
         const filtered = allTrainings.filter((t: any) => new Date(t.date) >= cutoffDate).reverse();

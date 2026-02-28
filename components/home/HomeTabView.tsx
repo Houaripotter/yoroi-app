@@ -25,14 +25,6 @@ interface PageItem {
   description?: string;
 }
 
-interface WeeklyReport {
-  weightChange?: number;
-  trainingsCount?: number;
-  avgSleepHours?: number;
-  hydrationRate?: number;
-  totalSteps?: number;
-}
-
 interface HomeTabViewProps {
   // Page 1 - Monitoring
   userName?: string;
@@ -75,16 +67,12 @@ interface HomeTabViewProps {
   muscleMass?: number;
   waterPercentage?: number;
 
-  // Page 5 - Reports
-  weeklyReport?: WeeklyReport;
-
   // Body
   heightCm?: number;
 
   // Callbacks
   onAddWeight?: () => void;
   onAddWater?: (ml: number) => void;
-  onShareReport?: () => void;
 
   // Avatar refresh
   refreshTrigger?: number;
@@ -121,11 +109,9 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
   bodyFat,
   muscleMass,
   waterPercentage,
-  weeklyReport,
   heightCm,
   onAddWeight,
   onAddWater,
-  onShareReport,
   refreshTrigger = 0,
 }) => {
   const { colors, isDark } = useTheme();
@@ -301,7 +287,6 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
             muscleMass={muscleMass}
             waterPercentage={waterPercentage}
             heightCm={heightCm}
-            weeklyReport={weeklyReport}
           />
         );
       default:

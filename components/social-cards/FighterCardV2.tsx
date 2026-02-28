@@ -108,7 +108,7 @@ export const FighterCardV2 = React.memo(forwardRef<View, FighterCardV2Props>(
                 ) : (
                   <View style={styles.avatarInner}>
                     <Image
-                      source={require('@/assets/images/logo2010.png')}
+                      source={require('@/assets/logo d\'app/yoroi-logo2.png')}
                       style={styles.avatarLogo}
                       resizeMode="contain"
                     />

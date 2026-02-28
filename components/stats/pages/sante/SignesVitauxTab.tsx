@@ -149,7 +149,10 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = ({
         <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
           {spO2Value > 0 && (
             <View style={[styles.metricLine, { borderBottomColor: respRate > 0 ? (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)') : 'transparent' }]}>
-              <Text style={[styles.metricLineLabel, { color: colors.textPrimary }]}>SpO2</Text>
+              <View>
+                <Text style={[styles.metricLineLabel, { color: colors.textPrimary }]}>SpO2</Text>
+                <Text style={[styles.metricLineSub, { color: colors.textMuted }]}>Derniere mesure</Text>
+              </View>
               <Text style={[styles.metricLineValue, { color: colors.textPrimary }]}>
                 {Math.round(spO2Value)}%
               </Text>
@@ -252,6 +255,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: -0.3,
+  },
+  metricLineSub: {
+    fontSize: 12,
+    fontWeight: '400',
+    marginTop: 2,
   },
   emptyCard: {
     borderRadius: 16,

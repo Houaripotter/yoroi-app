@@ -8,7 +8,7 @@ import { getWeights, getTrainings, getMeasurements } from './database';
 import { getWeeklyLoadStats } from './trainingLoadService';
 import logger from './security/logger';
 
-export type Period = '7j' | '30j' | '90j' | '6m' | '1a' | 'tout';
+export type Period = '7j' | '30j' | '90j' | '6m' | '1a' | '2a' | 'tout';
 
 export interface AggregatedStats {
   period: Period;
@@ -32,6 +32,7 @@ const getPeriodDays = (period: Period): number => {
     case '90j': return 90;
     case '6m': return 180;
     case '1a': return 365;
+    case '2a': return 730;
     case 'tout': return 3650; // ~10 ans = toutes les données
     default: return 30;
   }

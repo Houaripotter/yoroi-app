@@ -570,7 +570,7 @@ export default function VictoryShareModal({
                   {/* Watermark Logo for Dark/Light modes (no user photo) */}
                   {(selectedTemplate === 'dark' || selectedTemplate === 'light' || (selectedTemplate === 'photo' && !userPhoto)) && (
                     <Image
-                      source={require('@/assets/images/logo2010.png')}
+                      source={require('@/assets/logo d\'app/yoroi-logo2.png')}
                       style={styles.watermarkLogo}
                       resizeMode="contain"
                     />
@@ -584,7 +584,7 @@ export default function VictoryShareModal({
                     ]} />
                     <View style={styles.topBannerContent}>
                       <Image
-                        source={require('@/assets/images/logo2010.png')}
+                        source={require('@/assets/logo d\'app/yoroi-logo2.png')}
                         style={styles.topBannerLogo}
                         resizeMode="contain"
                       />
@@ -663,7 +663,7 @@ export default function VictoryShareModal({
                         {/* LEFT: Logo (Large) */}
                         <View style={styles.footerLeft}>
                           <Image
-                            source={require('@/assets/images/logo2010.png')}
+                            source={require('@/assets/logo d\'app/yoroi-logo2.png')}
                             style={styles.footerLogoBig}
                             resizeMode="contain"
                           />

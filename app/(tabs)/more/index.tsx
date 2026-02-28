@@ -49,6 +49,8 @@ import { CheckCircle, AlertCircle,
   BarChart2,
   Layers,
   Trash2,
+  Castle,
+  Search,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
@@ -94,18 +96,18 @@ const TOOL_SECTIONS: ToolSection[] = [
       { id: 'records', label: 'Records personnels', sublabel: 'Tes meilleures performances', Icon: Trophy, route: '/records', iconColor: '#EF4444' },
       { id: 'sport', label: 'Mes sports', sublabel: 'Gerer tes disciplines', Icon: Swords, route: '/sport', iconColor: '#EC4899' },
       { id: 'timer', label: 'Timer', sublabel: 'Chrono, rounds, HIIT, Tabata', Icon: Timer, route: '/timer', iconColor: '#4ECDC4' },
-      { id: 'schedule', label: 'Emploi du temps', sublabel: 'Programme de la semaine', Icon: Clock, route: '/schedule', iconColor: '#3B82F6' },
+      { id: 'schedule', label: 'Emploi du temps', sublabel: 'Programme de la semaine', Icon: Clock, route: '/(tabs)/planning', iconColor: '#3B82F6' },
     ],
   },
   {
     title: 'CORPS & SANTE',
     items: [
-      { id: 'weight', label: 'Poids', sublabel: "Suivi de l'evolution du poids", Icon: Scale, route: '/', iconColor: '#3B82F6' },
+      { id: 'weight', label: 'Poids', sublabel: "Suivi de l'evolution du poids", Icon: Scale, route: '/body-composition', iconColor: '#3B82F6' },
       { id: 'measurements', label: 'Mensurations', sublabel: 'Tour de bras, taille, cuisses...', Icon: Ruler, route: '/measurements', iconColor: '#8B5CF6' },
       { id: 'body-composition', label: 'Composition corporelle', sublabel: 'Masse grasse, muscle, eau', Icon: Activity, route: '/body-composition', iconColor: '#10B981' },
       { id: 'body-status', label: 'Etat du corps', sublabel: 'Carte des zones a surveiller', Icon: Shield, route: '/body-status', iconColor: '#F97316' },
       { id: 'infirmary', label: 'Infirmerie', sublabel: 'Suivi des blessures et recup', Icon: Heart, route: '/infirmary', iconColor: '#EF4444' },
-      { id: 'injury-assessment', label: 'Evaluation blessure', sublabel: 'Severite et temps de recup', Icon: AlertCircle, route: '/injury-assessment', iconColor: '#EF4444' },
+      { id: 'injury-assessment', label: 'Evaluation blessure', sublabel: 'Severite et temps de recup', Icon: AlertCircle, route: '/injury-evaluation', iconColor: '#EF4444' },
       { id: 'heart-zones', label: 'Zones cardio', sublabel: 'Calcul par methode Karvonen', Icon: Heart, route: '/heart-zones', iconColor: '#EC4899' },
       { id: 'photos', label: 'Photos avant / apres', sublabel: 'Comparer ta transformation', Icon: Camera, route: '/photos', iconColor: '#8B5CF6' },
     ],
@@ -144,6 +146,7 @@ const TOOL_SECTIONS: ToolSection[] = [
   {
     title: 'PROGRESSION & GAMIFICATION',
     items: [
+      { id: 'dojo', label: 'Mon Dojo', sublabel: 'XP, badges, avatars, rang', Icon: Castle, route: '/gamification', iconColor: '#8B5CF6' },
       { id: 'gamification', label: 'Progression', sublabel: 'XP, niveaux, rang', Icon: Sparkles, route: '/gamification', iconColor: '#F59E0B' },
       { id: 'badges', label: 'Badges', sublabel: 'Succes debloques', Icon: Award, route: '/badges', iconColor: '#EC4899' },
       { id: 'challenges', label: 'Defis', sublabel: 'Quotidiens et hebdomadaires', Icon: Target, route: '/challenges', iconColor: '#10B981' },
@@ -173,7 +176,7 @@ const TOOL_SECTIONS: ToolSection[] = [
       { id: 'clubs', label: 'Clubs & Salles', sublabel: "Tes partenaires d'entrainement", Icon: Building2, route: '/clubs', iconColor: '#818CF8' },
       { id: 'nutritionists', label: 'Pros de sante', sublabel: 'Kines, nutritionnistes, medecins', Icon: Heart, route: '/nutritionists', iconColor: '#F87171' },
       { id: 'savoir', label: 'Savoir', sublabel: 'Articles sur la science du sport', Icon: FlaskConical, route: '/savoir', iconColor: '#8B5CF6' },
-      { id: 'sources', label: 'Sources scientifiques', sublabel: 'References academiques', Icon: BookOpen, route: '/sources', iconColor: '#10B981' },
+      { id: 'sources', label: 'Sources scientifiques', sublabel: 'References academiques', Icon: BookOpen, route: '/scientific-sources', iconColor: '#10B981' },
     ],
   },
 ];
@@ -197,6 +200,9 @@ export default function MoreScreen() {
   const { showPopup, PopupComponent } = useCustomPopup();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
+
+  // Search
+  const [searchText, setSearchText] = useState('');
 
   // Favorites
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -289,6 +295,20 @@ export default function MoreScreen() {
     }
     return items;
   }, [favorites]);
+
+  // Filtered sections based on search
+  const filteredSections = useMemo(() => {
+    if (!searchText.trim()) return TOOL_SECTIONS;
+    const query = searchText.toLowerCase().trim();
+    return TOOL_SECTIONS.map(section => ({
+      ...section,
+      items: section.items.filter(item =>
+        item.label.toLowerCase().includes(query) ||
+        item.sublabel.toLowerCase().includes(query) ||
+        item.id.toLowerCase().includes(query)
+      ),
+    })).filter(section => section.items.length > 0);
+  }, [searchText]);
 
   // ============================================
   // HANDLERS (kept from original)
@@ -498,6 +518,25 @@ export default function MoreScreen() {
           </View>
         </View>
 
+        {/* SEARCH BAR */}
+        <View style={[styles.searchBar, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+          <Search size={18} color={colors.textMuted} />
+          <TextInput
+            style={[styles.searchInput, { color: colors.textPrimary }]}
+            placeholder="Rechercher un outil..."
+            placeholderTextColor={colors.textMuted}
+            value={searchText}
+            onChangeText={setSearchText}
+            autoCorrect={false}
+            returnKeyType="search"
+          />
+          {searchText.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchText('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <X size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* INFO CARD */}
         {showInfoCard && (
           <TouchableOpacity
@@ -514,7 +553,7 @@ export default function MoreScreen() {
         )}
 
         {/* FAVORITES SECTION */}
-        {favoriteItems.length > 0 && (
+        {!searchText && favoriteItems.length > 0 && (
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Star size={14} color="#FBBF24" fill="#FBBF24" />
@@ -524,8 +563,8 @@ export default function MoreScreen() {
           </View>
         )}
 
-        {/* 9 SECTIONS */}
-        {TOOL_SECTIONS.map((section) => (
+        {/* SECTIONS */}
+        {filteredSections.map((section) => (
           <View key={section.title} style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{section.title}</Text>
@@ -726,6 +765,24 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.5,
+  },
+
+  // SEARCH BAR
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 16,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+    paddingVertical: 0,
   },
 
   // INFO CARD

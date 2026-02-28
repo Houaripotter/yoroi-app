@@ -89,7 +89,7 @@ export interface LogoOption {
 }
 
 export const LOGO_OPTIONS: LogoOption[] = [
-  { id: 'default', name: 'Classique', description: 'Kanji original', isPremium: false, image: require('@/assets/images/logo2010.png') },
+  { id: 'default', name: 'Classique', description: 'Logo officiel', isPremium: false, image: require('@/assets/logo d\'app/yoroi-logo2.png') },
   { id: 'logo_new', name: 'Logo 1', description: 'Design principal', isPremium: false, image: require('@/assets/logo d\'app/logo1.png') },
   { id: 'logo1', name: 'Yoroi 1', description: 'Variante 1', isPremium: false, image: require('@/assets/logo d\'app/yoroi-logo1.png') },
   { id: 'logo2', name: 'Yoroi 2', description: 'Variante 2', isPremium: false, image: require('@/assets/logo d\'app/yoroi-logo2.png') },

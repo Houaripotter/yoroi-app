@@ -238,7 +238,7 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
 
   const handleMonDojo = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Medium);
-    router.push('/challenges' as any);
+    router.push('/gamification?tab=defis' as any);
   }, []);
 
   // ============================================

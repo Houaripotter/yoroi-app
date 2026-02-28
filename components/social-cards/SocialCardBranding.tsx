@@ -21,7 +21,7 @@ export const SocialCardTopBanner = React.memo<{ variant?: 'dark' | 'light' }>(({
       <View style={[styles.topBannerLine, { backgroundColor: lineColor }]} />
       <View style={styles.topBannerContent}>
         <Image
-          source={require('@/assets/images/logo2010.png')}
+          source={require('@/assets/logo d\'app/yoroi-logo2.png')}
           style={styles.topBannerLogo}
           resizeMode="contain"
         />
@@ -52,7 +52,7 @@ export const SocialCardFooter = React.memo<{ variant?: 'dark' | 'light' }>(({
       <View style={styles.footerRow}>
         {/* Logo grand à gauche */}
         <Image
-          source={require('@/assets/images/logo2010.png')}
+          source={require('@/assets/logo d\'app/yoroi-logo2.png')}
           style={styles.footerLogoBig}
           resizeMode="contain"
         />
@@ -115,7 +115,7 @@ export const SocialCardFooterCompact = React.memo<{ variant?: 'dark' | 'light' }
 
 // ============================================
 // WATERMARK LOGO - Grand logo derrière quand pas de photo
-// Utilise logo2010.png
+// Utilise yoroi-logo2.png
 // ============================================
 export const SocialCardWatermark = React.memo<{ show?: boolean; variant?: 'dark' | 'light' }>(({
   show = true,
@@ -128,7 +128,7 @@ export const SocialCardWatermark = React.memo<{ show?: boolean; variant?: 'dark'
   return (
     <View style={styles.watermarkContainer}>
       <Image
-        source={require('@/assets/images/logo2010.png')}
+        source={require('@/assets/logo d\'app/yoroi-logo2.png')}
         style={[
           styles.watermarkLogo,
           { opacity: isLight ? 0.15 : 0.2 }

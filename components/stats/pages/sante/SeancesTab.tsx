@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Training } from '@/lib/database';
 import { getSportIcon, getSportName, getSportColor } from '@/lib/sports';
@@ -22,10 +22,21 @@ const formatDuration = (minutes: number): string => {
 
 export const SeancesTab: React.FC<SeancesTabProps> = ({ trainings }) => {
   const { colors, isDark } = useTheme();
+  const [selectedSport, setSelectedSport] = useState<string>('all');
 
-  const totalSessions = trainings.length;
-  const totalMinutes = trainings.reduce((sum, t) => sum + (t.duration_minutes || t.duration || 0), 0);
-  const totalCalories = trainings.reduce((sum, t) => sum + (t.calories || 0), 0);
+  const uniqueSports = useMemo(
+    () => [...new Set(trainings.map(t => t.sport).filter(Boolean))],
+    [trainings]
+  );
+
+  const filteredTrainings = useMemo(
+    () => selectedSport === 'all' ? trainings : trainings.filter(t => t.sport === selectedSport),
+    [trainings, selectedSport]
+  );
+
+  const totalSessions = filteredTrainings.length;
+  const totalMinutes = filteredTrainings.reduce((sum, t) => sum + (t.duration_minutes || t.duration || 0), 0);
+  const totalCalories = filteredTrainings.reduce((sum, t) => sum + (t.calories || 0), 0);
 
   const summaryItems = [
     { value: totalSessions.toString(), label: 'seances' },
@@ -44,8 +55,82 @@ export const SeancesTab: React.FC<SeancesTabProps> = ({ trainings }) => {
     );
   }
 
+  const sportCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    trainings.forEach(t => {
+      if (t.sport) counts[t.sport] = (counts[t.sport] || 0) + 1;
+    });
+    return counts;
+  }, [trainings]);
+
   return (
     <View>
+      {/* Pills de filtre par sport */}
+      {uniqueSports.length > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterScroll}
+          contentContainerStyle={styles.filterContent}
+        >
+          <TouchableOpacity
+            style={[
+              styles.filterPill,
+              {
+                backgroundColor: selectedSport === 'all'
+                  ? colors.accent
+                  : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+              },
+            ]}
+            onPress={() => setSelectedSport('all')}
+            activeOpacity={0.7}
+          >
+            <Text style={[
+              styles.filterPillText,
+              { color: selectedSport === 'all' ? colors.textOnAccent : colors.textSecondary },
+            ]}>
+              Tous ({trainings.length})
+            </Text>
+          </TouchableOpacity>
+
+          {uniqueSports.map((sport) => {
+            const isActive = selectedSport === sport;
+            const sportColor = getSportColor(sport);
+            const sportIcon = getSportIcon(sport);
+            const sportName = getSportName(sport);
+            const count = sportCounts[sport] || 0;
+
+            return (
+              <TouchableOpacity
+                key={sport}
+                style={[
+                  styles.filterPill,
+                  {
+                    backgroundColor: isActive
+                      ? sportColor
+                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+                  },
+                ]}
+                onPress={() => setSelectedSport(sport)}
+                activeOpacity={0.7}
+              >
+                <MaterialCommunityIcons
+                  name={sportIcon as any}
+                  size={14}
+                  color={isActive ? '#FFFFFF' : sportColor}
+                />
+                <Text style={[
+                  styles.filterPillText,
+                  { color: isActive ? '#FFFFFF' : colors.textSecondary },
+                ]}>
+                  {sportName} ({count})
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
+
       {/* Resume en haut */}
       <View style={styles.summaryRow}>
         {summaryItems.map((item, i) => (
@@ -59,8 +144,8 @@ export const SeancesTab: React.FC<SeancesTabProps> = ({ trainings }) => {
         ))}
       </View>
 
-      {/* Liste des seances */}
-      {trainings.map((training, index) => {
+      {/* Liste des seances filtrees */}
+      {filteredTrainings.map((training, index) => {
         const sportIcon = getSportIcon(training.sport);
         const sportName = getSportName(training.sport);
         const sportColor = getSportColor(training.sport);
@@ -152,6 +237,26 @@ export const SeancesTab: React.FC<SeancesTabProps> = ({ trainings }) => {
 };
 
 const styles = StyleSheet.create({
+  filterScroll: {
+    marginBottom: 12,
+  },
+  filterContent: {
+    gap: 8,
+    paddingRight: 4,
+  },
+  filterPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+  },
+  filterPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
   summaryRow: {
     flexDirection: 'row',
     gap: 8,

@@ -57,15 +57,6 @@ const MOCK_DATA = {
   // Performance / Stats Page
   calories: 2450,     // Daily calorie intake
 
-  // Weekly Report (impressive stats)
-  weeklyReport: {
-    weightChange: -1.4,        // Strong weekly loss
-    trainingsCount: 6,         // Very consistent
-    avgSleepHours: 8.1,        // Excellent recovery
-    hydrationRate: 97,         // Nearly perfect
-    totalSteps: 108450,        // Very active
-  },
-
   // Daily Challenges (all completed)
   dailyChallenges: [
     { id: '1', title: '8000 pas', completed: true },
@@ -124,14 +115,12 @@ export default function ScreenshotModeApp() {
         workloadStatus={MOCK_DATA.workloadStatus}
         calories={MOCK_DATA.calories}
         
-        // Reports & Challenges
-        weeklyReport={MOCK_DATA.weeklyReport}
+        // Challenges
         dailyChallenges={MOCK_DATA.dailyChallenges}
         
         // Callbacks (No-op or Alert)
         onAddWeight={() => {}}
         onAddWater={() => {}}
-        onShareReport={() => {}}
         refreshTrigger={0}
       />
     </View>

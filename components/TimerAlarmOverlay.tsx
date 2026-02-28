@@ -192,7 +192,7 @@ export const TimerAlarmOverlay: React.FC<TimerAlarmOverlayProps> = ({
           >
             <View style={styles.logoGlow} />
             <Image
-              source={require('@/assets/images/logo2010.png')}
+              source={require('@/assets/logo d\'app/yoroi-logo2.png')}
               style={styles.logo}
               resizeMode="contain"
             />

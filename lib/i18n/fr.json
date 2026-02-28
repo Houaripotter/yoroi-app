@@ -1104,7 +1104,8 @@
       "neck": "Tour de cou",
       "neckAndOther": "Cou et autres mesures",
       "bicepsLeftRight": "Biceps gauche et droit",
-      "thighsAndCalves": "Cuisses et mollets"
+      "thighsAndCalves": "Cuisses et mollets",
+      "calves": "Mollets"
     },
     "discipline": {
       "title": "Discipline",

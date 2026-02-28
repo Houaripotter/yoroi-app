@@ -15,16 +15,17 @@ export interface TabItem {
   icon: string;
   order: number;
   side: 'left' | 'right';
+  enabled: boolean;
 }
 
 export const DEFAULT_TAB_ORDER: TabItem[] = [
-  { id: 'index', label: 'Accueil', icon: 'Home', order: 0, side: 'left' },
-  { id: 'stats', label: 'Stats', icon: 'BarChart2', order: 1, side: 'left' },
-  { id: 'carnet', label: 'Carnet', icon: 'BookOpen', order: 2, side: 'left' },
-  { id: 'planning', label: 'Planning', icon: 'Calendar', order: 0, side: 'right' },
-  { id: 'more', label: 'Outils', icon: 'Wrench', order: 1, side: 'right' },
-  { id: 'profile', label: 'Profil', icon: 'User', order: 2, side: 'right' },
-  { id: 'settings', label: 'Reglages', icon: 'Settings', order: 3, side: 'right' },
+  { id: 'index', label: 'Accueil', icon: 'Home', order: 0, side: 'left', enabled: true },
+  { id: 'stats', label: 'Stats', icon: 'BarChart2', order: 1, side: 'left', enabled: true },
+  { id: 'carnet', label: 'Carnet', icon: 'BookOpen', order: 2, side: 'left', enabled: true },
+  { id: 'planning', label: 'Planning', icon: 'Calendar', order: 0, side: 'right', enabled: true },
+  { id: 'more', label: 'Outils', icon: 'Wrench', order: 1, side: 'right', enabled: true },
+  { id: 'profile', label: 'Profil', icon: 'User', order: 2, side: 'right', enabled: true },
+  { id: 'settings', label: 'Reglages', icon: 'Settings', order: 3, side: 'right', enabled: true },
 ];
 
 export const getTabOrder = async (): Promise<TabItem[]> => {
@@ -48,7 +49,7 @@ const mergeWithDefaults = (saved: TabItem[]): TabItem[] => {
   for (const def of DEFAULT_TAB_ORDER) {
     const savedItem = saved.find(s => s.id === def.id);
     if (savedItem) {
-      merged.push({ ...def, order: savedItem.order, side: savedItem.side });
+      merged.push({ ...def, order: savedItem.order, side: savedItem.side, enabled: savedItem.enabled ?? true });
     } else {
       merged.push(def);
     }
@@ -77,16 +78,20 @@ export const resetTabOrder = async (): Promise<void> => {
   }
 };
 
+export const getEnabledTabs = (tabs: TabItem[]): TabItem[] =>
+  tabs.filter(t => t.enabled).sort((a, b) => a.order - b.order);
+
 export const getLeftTabs = (tabs: TabItem[]): TabItem[] =>
-  tabs.filter(t => t.side === 'left').sort((a, b) => a.order - b.order);
+  tabs.filter(t => t.side === 'left' && t.enabled).sort((a, b) => a.order - b.order);
 
 export const getRightTabs = (tabs: TabItem[]): TabItem[] =>
-  tabs.filter(t => t.side === 'right').sort((a, b) => a.order - b.order);
+  tabs.filter(t => t.side === 'right' && t.enabled).sort((a, b) => a.order - b.order);
 
 export default {
   getTabOrder,
   saveTabOrder,
   resetTabOrder,
+  getEnabledTabs,
   getLeftTabs,
   getRightTabs,
   DEFAULT_TAB_ORDER,

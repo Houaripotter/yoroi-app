@@ -14,6 +14,7 @@ import {
   Dimensions,
   Modal,
   Pressable,
+  Image,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -70,6 +71,7 @@ import { AnimatedCard } from '@/components/AnimatedCard';
 import { AchievementCelebration } from '@/components/AchievementCelebration';
 import { getAchievementsHistory, getTodayAchievements, AchievementUnlock } from '@/lib/achievementsService';
 import AvatarDisplay from '@/components/AvatarDisplay';
+import { useAvatar } from '@/lib/AvatarContext';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
@@ -84,6 +86,28 @@ import {
 } from '@/lib/quests';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Rotation pour n'afficher que 5 defis (identique a HomeChallengesSection)
+const getWeekNumber = (): number => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1);
+  return Math.floor((now.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
+};
+
+const getMonthNumber = (): number => {
+  const now = new Date();
+  return now.getFullYear() * 12 + now.getMonth();
+};
+
+const selectRotating5 = <T,>(quests: T[], seed: number): T[] => {
+  if (quests.length <= 5) return quests;
+  const offset = (seed * 5) % quests.length;
+  const selected: T[] = [];
+  for (let i = 0; i < 5; i++) {
+    selected.push(quests[(offset + i) % quests.length]);
+  }
+  return selected;
+};
 
 // Map des icônes pour les rangs
 const RankIconMap: Record<string, any> = {
@@ -287,6 +311,7 @@ export default function DojoScreen() {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const { tab } = useLocalSearchParams<{ tab?: string }>();
+  const { avatarImage } = useAvatar();
 
   const [streak, setStreak] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
@@ -378,9 +403,11 @@ export default function DojoScreen() {
       setHydrationDays(0);
       setAchievementsHistory(history);
       setTodayAchievements(today);
-      setDailyQuests(daily.quests);
-      setWeeklyQuests(weekly.quests);
-      setMonthlyQuests(monthly.quests);
+      const weekNum = getWeekNumber();
+      const monthNum = getMonthNumber();
+      setDailyQuests(selectRotating5(daily.quests, weekNum));
+      setWeeklyQuests(selectRotating5(weekly.quests, weekNum));
+      setMonthlyQuests(selectRotating5(monthly.quests, monthNum));
 
       // Calculer si entraînement fait aujourd'hui
       const todayDate = new Date().toISOString().split('T')[0];
@@ -503,7 +530,7 @@ export default function DojoScreen() {
       >
       {/* Header avec gradient */}
       <LinearGradient
-        colors={isDark ? ['#1F1F3D', '#0F0F1F'] : ['#667EEA', '#764BA2']}
+        colors={isDark ? [colors.backgroundCard, colors.background] : [colors.accent, colors.accentDark || colors.accent]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.headerGradient, { paddingTop: insets.top }]}
@@ -548,13 +575,17 @@ export default function DojoScreen() {
             >
               <ProgressRing
                 progress={rankProgress}
-                size={100}
+                size={210}
                 strokeWidth={6}
                 color={currentRank.color}
                 bgColor="rgba(255,255,255,0.15)"
               />
-              <View style={[styles.rankIconHero, { backgroundColor: 'transparent' }]}>
-                <AvatarDisplay size="small" />
+              <View style={styles.rankIconHero}>
+                <Image
+                  source={avatarImage || require('@/assets/avatars/samurai/samurai_neutral.png')}
+                  style={styles.rankAvatarImage}
+                  resizeMode="contain"
+                />
               </View>
             </TouchableOpacity>
             {/* Niveau en grand */}
@@ -855,7 +886,7 @@ export default function DojoScreen() {
             {/* Stats des badges */}
             <View style={[styles.badgesStatsCard, { backgroundColor: isDark ? '#1F1F3D' : '#FFFFFF' }]}>
               <LinearGradient
-                colors={['#8B5CF620', 'transparent']}
+                colors={[colors.accent + '20', 'transparent']}
                 style={styles.badgesStatsGradient}
               />
               <View style={styles.badgesStatsContent}>
@@ -886,8 +917,8 @@ export default function DojoScreen() {
                 </View>
 
                 <View style={styles.badgesStatItem}>
-                  <View style={[styles.badgesStatCircle, { borderColor: '#8B5CF6' }]}>
-                    <Text style={[styles.badgesStatValue, { color: '#8B5CF6' }]}>
+                  <View style={[styles.badgesStatCircle, { borderColor: colors.accent }]}>
+                    <Text style={[styles.badgesStatValue, { color: colors.accent }]}>
                       {BADGES.length}
                     </Text>
                   </View>
@@ -899,7 +930,7 @@ export default function DojoScreen() {
               <View style={styles.badgesProgressGlobal}>
                 <View style={[styles.badgesProgressBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB' }]}>
                   <LinearGradient
-                    colors={['#8B5CF6', '#06B6D4']}
+                    colors={[colors.accent, colors.accentDark]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={[styles.badgesProgressFill, { width: `${(unlockedBadges.length / BADGES.length) * 100}%` }]}
@@ -1278,7 +1309,7 @@ export default function DojoScreen() {
                   }}
                 >
                   <LinearGradient
-                    colors={['#8B5CF6', '#6366F1']}
+                    colors={[colors.accent, colors.accentDark]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.emptyStateButtonGradient}
@@ -1452,16 +1483,17 @@ const styles = StyleSheet.create({
   },
   rankIconHero: {
     position: 'absolute',
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    backgroundColor: 'transparent',
+  },
+  rankAvatarImage: {
+    width: 190,
+    height: 190,
   },
   rankNameHero: {
     fontSize: 20,

@@ -155,7 +155,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
 
       // Period filter
       const now = new Date();
-      const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, '1a': 365, 'tout': 3650 };
+      const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, '1a': 365, '2a': 730, 'tout': 3650 };
       const days = daysMap[selectedPeriod] || 30;
       const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 

@@ -71,8 +71,8 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
     setCardWidth(e.nativeEvent.layout.width);
   };
 
-  const hasLeftData = leftHistory.length >= 2;
-  const hasRightData = rightHistory.length >= 2;
+  const hasLeftData = leftHistory.length >= 1;
+  const hasRightData = rightHistory.length >= 1;
   const hasData = hasLeftData || hasRightData;
   const maxValue = Math.max(leftValue, rightValue, 1);
   const delta = Math.abs(leftValue - rightValue);

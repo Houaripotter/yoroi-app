@@ -86,7 +86,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
               {/* Logo de l'app */}
               <View style={styles.logoContainer}>
                 <Image
-                  source={require('@/assets/images/logo2010.png')}
+                  source={require('@/assets/logo d\'app/yoroi-logo2.png')}
                   style={styles.logo}
                   resizeMode="contain"
                 />

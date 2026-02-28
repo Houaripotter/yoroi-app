@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native
 import { useTheme } from '@/lib/ThemeContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
-export type Period = '30j' | '90j' | '6m' | '1a';
+export type Period = '30j' | '90j' | '6m' | '1a' | '2a';
 
 interface PeriodSelectorProps {
   selected: Period;
@@ -20,6 +20,7 @@ const PERIODS: Array<{ value: Period; label: string }> = [
   { value: '90j', label: '90 jours' },
   { value: '6m', label: '6 mois' },
   { value: '1a', label: '1 an' },
+  { value: '2a', label: '2 ans' },
 ];
 
 export const PeriodSelector: React.FC<PeriodSelectorProps> = ({

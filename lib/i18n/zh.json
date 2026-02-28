@@ -1005,7 +1005,8 @@
       "neck": "颈围",
       "neckAndOther": "颈围和其他测量",
       "bicepsLeftRight": "左右肱二头肌",
-      "thighsAndCalves": "大腿和小腿"
+      "thighsAndCalves": "大腿和小腿",
+      "calves": "小腿"
     },
     "discipline": {
       "title": "自律",

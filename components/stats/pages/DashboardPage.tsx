@@ -83,11 +83,12 @@ export const DashboardPage: React.FC = () => {
       // Helper pour préparer les données de graphique
       const prepareLineData = (data: any[], valueKey: string, color: string) => {
         if (!data || data.length === 0) return [];
-        const filtered = data.filter(item => item[valueKey] != null);
+        const filtered = data.filter(item => item[valueKey] != null && item[valueKey] > 0);
         return filtered.slice().reverse().map(item => {
           const val = item[valueKey] || 0;
           return {
             value: val,
+            date: item.date,
             dataPointText: val.toFixed(1),
             label: format(parseISO(item.date), 'd MMM', { locale: fr }).toUpperCase(),
             labelTextStyle: { color: colors.textMuted, fontSize: 8, fontWeight: '900' },
