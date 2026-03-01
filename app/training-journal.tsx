@@ -69,7 +69,7 @@ import {
 import VictoryShareModal, { VictorySessionData, createVictoryFromEntry } from '@/components/VictoryShareModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPendingVictory } from '@/lib/victoryTrigger';
-import TrainingJournalOnboarding from '@/components/TrainingJournalOnboarding';
+import { ContextualTip } from '@/components/ContextualTip';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { renderIcon } from './training-journal/utils/iconMap';
 import { getRelativeDate } from './training-journal/utils/dateHelpers';
@@ -198,9 +198,6 @@ export default function TrainingJournalScreen() {
   const [showVictoryModal, setShowVictoryModal] = useState(false);
   const [victorySessionData, setVictorySessionData] = useState<VictorySessionData | null>(null);
 
-  // Onboarding
-  const [showOnboarding, setShowOnboarding] = useState(false);
-
   // Computed stats from local data
   const stats = {
     totalBenchmarks: benchmarks.length,
@@ -258,31 +255,6 @@ export default function TrainingJournalScreen() {
     setNewEntryResistance('');
     setNewEntryLevel('');
   }, []);
-
-  // Check if first time visiting training journal
-  useEffect(() => {
-    const checkFirstVisit = async () => {
-      try {
-        const hasSeenOnboarding = await AsyncStorage.getItem('yoroi_training_journal_onboarding_seen');
-        if (!hasSeenOnboarding) {
-          setShowOnboarding(true);
-        }
-      } catch (error) {
-        logger.error('Error checking onboarding status:', error);
-      }
-    };
-    checkFirstVisit();
-  }, []);
-
-  const handleCloseOnboarding = async () => {
-    try {
-      await AsyncStorage.setItem('yoroi_training_journal_onboarding_seen', 'true');
-      setShowOnboarding(false);
-    } catch (error) {
-      logger.error('Error saving onboarding status:', error);
-      setShowOnboarding(false);
-    }
-  };
 
   // TASK 3: Toast notification
   const [toastVisible, setToastVisible] = useState(false);
@@ -1848,11 +1820,8 @@ export default function TrainingJournalScreen() {
         />
       )}
 
-      {/* Onboarding Modal */}
-      <TrainingJournalOnboarding
-        visible={showOnboarding}
-        onClose={handleCloseOnboarding}
-      />
+      {/* Tip contextuel */}
+      <ContextualTip tipId="carnet" bottomOffset={110} />
 
       {/* Toast Notification - NO EMOJI, use Lucide Check icon */}
       {toastVisible && (

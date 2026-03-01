@@ -295,6 +295,28 @@
     "deleteAllDescription": "Efface définitivement toutes les données de l'app",
     "privacyPolicy": "Politique de confidentialité"
   },
+  "workoutDetail": {
+    "title": "Detail Seance",
+    "duration": "Duree",
+    "activeCal": "Cal actives",
+    "totalCal": "Cal totales",
+    "pace": "Allure",
+    "avgHR": "FC moy",
+    "heartRate": "Frequence cardiaque",
+    "heartRateZones": "Zones cardiaques",
+    "recovery": "Recuperation FC",
+    "splits": "Intermediaires",
+    "route": "Parcours",
+    "weather": "Meteo",
+    "airQuality": "Qualite de l'air",
+    "conditions": "Conditions"
+  },
+  "sleepDetail": {
+    "title": "Detail Nuit",
+    "phases": "Phases de sommeil",
+    "efficiency": "Efficacite",
+    "vitals": "Signes vitaux"
+  },
   "sleepInput": {
     "title": "Saisir mon sommeil",
     "subtitle": "Synchronisation l'app Santé",

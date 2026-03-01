@@ -1,11 +1,27 @@
 // ============================================
 // YOROI TIMER NOTIFICATIONS
-// Notifications pour le timer en arrière-plan
+// Notifications pour le timer en arriere-plan
 // ============================================
 
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
+import { saveNotification } from '@/lib/notificationHistoryService';
+
+const TIMER_NOTIF_SETTINGS_KEY = '@yoroi_timer_notification_settings';
+
+export interface TimerNotifSettings {
+  restFinished: boolean;    // "Repos terminé ! Go go go !"
+  roundFinished: boolean;   // "Round terminé"
+  workoutFinished: boolean; // "Entrainement terminé"
+}
+
+const DEFAULT_SETTINGS: TimerNotifSettings = {
+  restFinished: true,
+  roundFinished: true,
+  workoutFinished: true,
+};
 
 // Configuration des notifications
 Notifications.setNotificationHandler({
@@ -18,6 +34,44 @@ Notifications.setNotificationHandler({
 
 class TimerNotificationsService {
   private notificationId: string | null = null;
+  private settings: TimerNotifSettings = { ...DEFAULT_SETTINGS };
+  private settingsLoaded = false;
+
+  /**
+   * Charger les settings depuis AsyncStorage
+   */
+  async loadSettings(): Promise<TimerNotifSettings> {
+    try {
+      const data = await AsyncStorage.getItem(TIMER_NOTIF_SETTINGS_KEY);
+      if (data) {
+        this.settings = { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
+      }
+      this.settingsLoaded = true;
+    } catch {
+      this.settings = { ...DEFAULT_SETTINGS };
+    }
+    return this.settings;
+  }
+
+  /**
+   * Sauvegarder les settings
+   */
+  async saveSettings(settings: TimerNotifSettings): Promise<void> {
+    this.settings = settings;
+    this.settingsLoaded = true;
+    try {
+      await AsyncStorage.setItem(TIMER_NOTIF_SETTINGS_KEY, JSON.stringify(settings));
+    } catch (error) {
+      logger.error('[TimerNotifications] Erreur sauvegarde settings:', error);
+    }
+  }
+
+  /**
+   * Obtenir les settings actuels
+   */
+  getSettings(): TimerNotifSettings {
+    return { ...this.settings };
+  }
 
   /**
    * Demander la permission pour les notifications
@@ -66,11 +120,14 @@ class TimerNotificationsService {
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: delaySeconds,
+          seconds: Math.max(1, delaySeconds),
         } as Notifications.TimeIntervalTriggerInput,
       });
 
       logger.info(`[TimerNotifications] Notification planifiée pour ${delaySeconds}s`);
+
+      // Sauvegarder dans l'historique
+      saveNotification(title, body, 'timer', { type: 'timer_finished' }).catch(() => {});
     } catch (error) {
       logger.error('[TimerNotifications] Erreur planification:', error);
     }
@@ -92,7 +149,7 @@ class TimerNotificationsService {
   }
 
   /**
-   * Mettre à jour une notification existante
+   * Mettre a jour une notification existante
    */
   async updateTimerNotification(
     title: string,
@@ -105,9 +162,28 @@ class TimerNotificationsService {
   }
 
   /**
+   * Planifier notification de fin de timer (appele depuis timer.tsx)
+   * Respecte les settings utilisateur
+   */
+  async scheduleTimerEndNotification(mode: string, delaySeconds: number): Promise<void> {
+    if (!this.settingsLoaded) await this.loadSettings();
+
+    if (mode === 'musculation') {
+      if (!this.settings.restFinished) return;
+      await this.scheduleTimerFinishedNotification('Repos terminé !', 'Go go go ! Prochaine série !', delaySeconds);
+    } else {
+      if (!this.settings.roundFinished) return;
+      await this.scheduleTimerFinishedNotification('Timer terminé !', 'Excellent travail !', delaySeconds);
+    }
+  }
+
+  /**
    * Notification pour repos muscu terminé
    */
   async notifyRestFinished(): Promise<void> {
+    if (!this.settingsLoaded) await this.loadSettings();
+    if (!this.settings.restFinished) return;
+
     await this.scheduleTimerFinishedNotification(
       'Repos terminé !',
       'Go go go ! Prochaine série !',
@@ -119,6 +195,9 @@ class TimerNotificationsService {
    * Notification pour round combat terminé
    */
   async notifyRoundFinished(roundNumber: number, totalRounds: number): Promise<void> {
+    if (!this.settingsLoaded) await this.loadSettings();
+    if (!this.settings.roundFinished) return;
+
     const message = roundNumber < totalRounds
       ? `Round ${roundNumber}/${totalRounds} terminé ! Repos.`
       : 'Dernier round terminé ! Bravo !';
@@ -134,17 +213,20 @@ class TimerNotificationsService {
    * Notification pour entraînement complètement terminé
    */
   async notifyWorkoutFinished(mode: string): Promise<void> {
+    if (!this.settingsLoaded) await this.loadSettings();
+    if (!this.settings.workoutFinished) return;
+
     const titles: Record<string, string> = {
-      musculation: 'Entraînement terminé !',
+      musculation: 'Entrainement terminé !',
       combat: 'Combat terminé !',
       tabata: 'Tabata terminé !',
-      emom: '🔄 EMOM terminé !',
+      emom: 'EMOM terminé !',
       amrap: 'AMRAP terminé !',
-      fortime: '⏱️ For Time terminé !',
+      fortime: 'For Time terminé !',
     };
 
     await this.scheduleTimerFinishedNotification(
-      titles[mode] || 'Entraînement terminé !',
+      titles[mode] || 'Entrainement terminé !',
       'Excellent travail !',
       0
     );

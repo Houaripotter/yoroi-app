@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { ScrollableLineChart } from '../../charts/ScrollableLineChart';
-import { Heart, Zap } from 'lucide-react-native';
+import { Heart, Zap, Activity, Wind } from 'lucide-react-native';
 
 interface SignesVitauxTabProps {
   heartRate: any;
@@ -11,6 +11,8 @@ interface SignesVitauxTabProps {
   respiratoryRate: any;
   heartRateHistory: { date: string; value: number }[];
   hrvHistory: { date: string; value: number }[];
+  spo2History?: { date: string; value: number }[];
+  respiratoryRateHistory?: { date: string; value: number }[];
   onMetricPress?: (metric: { key: string; label: string; color: string; unit: string; icon: React.ReactNode }) => void;
 }
 
@@ -21,6 +23,8 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = ({
   respiratoryRate,
   heartRateHistory,
   hrvHistory,
+  spo2History = [],
+  respiratoryRateHistory = [],
   onMetricPress,
 }) => {
   const { colors, isDark } = useTheme();
@@ -144,29 +148,81 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = ({
         </TouchableOpacity>
       )}
 
-      {/* Lignes simples SpO2 et Freq resp */}
-      {(spO2Value > 0 || respRate > 0) && (
-        <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
-          {spO2Value > 0 && (
-            <View style={[styles.metricLine, { borderBottomColor: respRate > 0 ? (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)') : 'transparent' }]}>
-              <View>
-                <Text style={[styles.metricLineLabel, { color: colors.textPrimary }]}>SpO2</Text>
-                <Text style={[styles.metricLineSub, { color: colors.textMuted }]}>Derniere mesure</Text>
-              </View>
-              <Text style={[styles.metricLineValue, { color: colors.textPrimary }]}>
-                {Math.round(spO2Value)}%
-              </Text>
+      {/* Carte SpO2 */}
+      {spO2Value > 0 && (
+        <TouchableOpacity
+          style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}
+          activeOpacity={0.7}
+          onPress={() => onMetricPress?.({
+            key: 'spo2',
+            label: 'Saturation en oxygene',
+            color: '#3B82F6',
+            unit: '%',
+            icon: <Activity size={18} color="#3B82F6" strokeWidth={2.5} />,
+          })}
+        >
+          <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Saturation en oxygene (SpO2)</Text>
+          <Text style={[styles.heroValue, { color: '#3B82F6' }]}>
+            {Math.round(spO2Value)}
+            <Text style={styles.heroUnit}> %</Text>
+          </Text>
+          <Text style={[styles.heroSub, { color: colors.textMuted }]}>Derniere mesure</Text>
+          {spO2Value >= 95 && (
+            <Text style={[styles.statusText, { color: colors.success }]}>Normal</Text>
+          )}
+          {spO2Value > 0 && spO2Value < 95 && (
+            <Text style={[styles.statusText, { color: colors.warning }]}>En dessous de la normale</Text>
+          )}
+
+          {spo2History.length > 0 && (
+            <View style={{ marginTop: 16 }}>
+              <ScrollableLineChart
+                data={spo2History}
+                color="#3B82F6"
+                unit="%"
+                height={160}
+                compact
+              />
             </View>
           )}
-          {respRate > 0 && (
-            <View style={[styles.metricLine, { borderBottomColor: 'transparent' }]}>
-              <Text style={[styles.metricLineLabel, { color: colors.textPrimary }]}>Freq. respiratoire</Text>
-              <Text style={[styles.metricLineValue, { color: colors.textPrimary }]}>
-                {Math.round(respRate)} resp/min
-              </Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Carte Freq respiratoire */}
+      {respRate > 0 && (
+        <TouchableOpacity
+          style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}
+          activeOpacity={0.7}
+          onPress={() => onMetricPress?.({
+            key: 'respiratory_rate',
+            label: 'Frequence respiratoire',
+            color: '#8B5CF6',
+            unit: 'resp/min',
+            icon: <Wind size={18} color="#8B5CF6" strokeWidth={2.5} />,
+          })}
+        >
+          <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Frequence respiratoire</Text>
+          <Text style={[styles.heroValue, { color: '#8B5CF6' }]}>
+            {Math.round(respRate)}
+            <Text style={styles.heroUnit}> resp/min</Text>
+          </Text>
+          <Text style={[styles.heroSub, { color: colors.textMuted }]}>Derniere mesure</Text>
+          {respRate >= 12 && respRate <= 20 && (
+            <Text style={[styles.statusText, { color: colors.success }]}>Normal (12-20 resp/min)</Text>
+          )}
+
+          {respiratoryRateHistory.length > 0 && (
+            <View style={{ marginTop: 16 }}>
+              <ScrollableLineChart
+                data={respiratoryRateHistory}
+                color="#8B5CF6"
+                unit="resp/min"
+                height={160}
+                compact
+              />
             </View>
           )}
-        </View>
+        </TouchableOpacity>
       )}
 
       {/* Etat vide */}

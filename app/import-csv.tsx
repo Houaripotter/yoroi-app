@@ -1,6 +1,7 @@
 // ============================================
-// ECRAN IMPORT CSV UNIVERSEL
-// 3 etapes: Selection > Preview > Termine
+// ECRAN IMPORT CSV UNIFIE
+// Flow: Instructions > Fichier > Preview > Done
+// + lien vers import avance (ancien systeme multi-types)
 // ============================================
 
 import React, { useState } from 'react';
@@ -25,14 +26,10 @@ import {
   AlertCircle,
   FileSpreadsheet,
   Scale,
-  Dumbbell,
   Ruler,
-  Moon,
-  Droplet,
-  Heart,
-  Laptop,
-  Send,
-  Smartphone,
+  Activity,
+  Settings2,
+  ChevronRight,
 } from 'lucide-react-native';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import * as DocumentPicker from 'expo-document-picker';
@@ -43,59 +40,51 @@ import {
   shareCSVTemplate,
   CSV_ROW_TYPES,
   type CSVRowType,
-  type ParsedCSVRow,
   type CSVParseResult,
 } from '@/lib/csvImportExportService';
+import {
+  type SimpleParseResult,
+  shareTemplate,
+  parseUnifiedCSV,
+  importUnifiedRows,
+} from '@/lib/csvTemplates';
 import logger from '@/lib/security/logger';
-
-// ============================================
-// TYPE CONFIG (icon + color per type)
-// ============================================
-
-const TYPE_CONFIG: Record<CSVRowType, { label: string; Icon: any; color: string }> = {
-  POIDS: { label: 'Pesees', Icon: Scale, color: '#14B8A6' },
-  ENTRAINEMENT: { label: 'Entrainements', Icon: Dumbbell, color: '#EF4444' },
-  MENSURATION: { label: 'Mensurations', Icon: Ruler, color: '#8B5CF6' },
-  SOMMEIL: { label: 'Sommeil', Icon: Moon, color: '#6366F1' },
-  HYDRATATION: { label: 'Hydratation', Icon: Droplet, color: '#3B82F6' },
-  HUMEUR: { label: 'Humeur', Icon: Heart, color: '#EC4899' },
-};
 
 // ============================================
 // MAIN COMPONENT
 // ============================================
 
+type Step = 'select' | 'preview' | 'done' | 'advanced-select' | 'advanced-preview' | 'advanced-done';
+
 export default function ImportCSVScreen() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { showPopup, PopupComponent } = useCustomPopup();
 
-  const [step, setStep] = useState<'select' | 'preview' | 'done'>('select');
-  const [parseResult, setParseResult] = useState<CSVParseResult | null>(null);
+  // Unified flow state
+  const [step, setStep] = useState<Step>('select');
+  const [parseResult, setParseResult] = useState<SimpleParseResult | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importedCount, setImportedCount] = useState(0);
-  const [importErrors, setImportErrors] = useState<Array<{ line: number; type: string; error: string }>>([]);
+  const [importDetails, setImportDetails] = useState({ weights: 0, measurements: 0, compositions: 0 });
+  const [importErrors, setImportErrors] = useState<Array<{ line: number; error: string }>>([]);
+
+  // Advanced flow state
+  const [advParseResult, setAdvParseResult] = useState<CSVParseResult | null>(null);
+  const [advImportErrors, setAdvImportErrors] = useState<Array<{ line: number; type: string; error: string }>>([]);
 
   // ============================================
-  // TEMPLATE DOWNLOAD
+  // UNIFIED FLOW
   // ============================================
 
   const handleDownloadTemplate = async () => {
     impactAsync(ImpactFeedbackStyle.Medium);
-    const success = await shareCSVTemplate();
+    const success = await shareTemplate();
     if (!success) {
-      showPopup({
-        type: 'error',
-        title: 'Erreur',
-        message: 'Impossible de partager le modele',
-      });
+      showPopup({ type: 'error', title: 'Erreur', message: 'Impossible de partager le modele' });
     }
   };
-
-  // ============================================
-  // FILE SELECTION
-  // ============================================
 
   const pickFile = async () => {
     try {
@@ -108,29 +97,18 @@ export default function ImportCSVScreen() {
 
       const file = result.assets[0];
       const fileName = file.name || 'unknown.csv';
-
-      // Validate extension
       const ext = fileName.toLowerCase().split('.').pop();
       if (ext !== 'csv' && ext !== 'txt') {
-        showPopup({
-          type: 'error',
-          title: 'Format invalide',
-          message: 'Selectionnez un fichier .csv',
-        });
+        showPopup({ type: 'error', title: 'Format invalide', message: 'Selectionnez un fichier .csv' });
         return;
       }
 
       setIsParsing(true);
-
       const content = await FileSystem.readAsStringAsync(file.uri);
-      const parsed = parseCSVContent(content);
+      const parsed = parseUnifiedCSV(content);
 
       if (parsed.rows.length === 0) {
-        showPopup({
-          type: 'error',
-          title: 'Fichier vide',
-          message: 'Aucune donnee trouvee dans le fichier. Verifiez le format.',
-        });
+        showPopup({ type: 'error', title: 'Fichier vide', message: 'Aucune donnee trouvee. Verifiez le format.' });
         setIsParsing(false);
         return;
       }
@@ -140,19 +118,11 @@ export default function ImportCSVScreen() {
       await impactAsync(ImpactFeedbackStyle.Medium);
     } catch (error: any) {
       logger.error('CSV file read error:', error);
-      showPopup({
-        type: 'error',
-        title: 'Erreur',
-        message: error.message || 'Impossible de lire le fichier',
-      });
+      showPopup({ type: 'error', title: 'Erreur', message: error.message || 'Impossible de lire le fichier' });
     } finally {
       setIsParsing(false);
     }
   };
-
-  // ============================================
-  // IMPORT
-  // ============================================
 
   const handleImport = async () => {
     if (!parseResult) return;
@@ -160,34 +130,124 @@ export default function ImportCSVScreen() {
     if (validRows.length === 0) return;
 
     setIsImporting(true);
-
     try {
-      const result = await importParsedRows(validRows);
+      const result = await importUnifiedRows(validRows);
       setImportedCount(result.success);
+      setImportDetails(result.details);
       setImportErrors(result.errors);
       setStep('done');
       await notificationAsync(NotificationFeedbackType.Success);
     } catch (error: any) {
       logger.error('CSV import error:', error);
-      showPopup({
-        type: 'error',
-        title: 'Erreur',
-        message: 'Erreur lors de l\'import',
-      });
+      showPopup({ type: 'error', title: 'Erreur', message: 'Erreur lors de l\'import' });
     } finally {
       setIsImporting(false);
     }
   };
 
   // ============================================
-  // RESET
+  // ADVANCED FLOW
+  // ============================================
+
+  const handleAdvDownloadTemplate = async () => {
+    impactAsync(ImpactFeedbackStyle.Medium);
+    const success = await shareCSVTemplate();
+    if (!success) {
+      showPopup({ type: 'error', title: 'Erreur', message: 'Impossible de partager le modele' });
+    }
+  };
+
+  const pickAdvancedFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['text/csv', 'text/comma-separated-values', 'application/csv', '*/*'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets?.length) return;
+
+      const file = result.assets[0];
+      const ext = (file.name || '').toLowerCase().split('.').pop();
+      if (ext !== 'csv' && ext !== 'txt') {
+        showPopup({ type: 'error', title: 'Format invalide', message: 'Selectionnez un fichier .csv' });
+        return;
+      }
+
+      setIsParsing(true);
+      const content = await FileSystem.readAsStringAsync(file.uri);
+      const parsed = parseCSVContent(content);
+
+      if (parsed.rows.length === 0) {
+        showPopup({ type: 'error', title: 'Fichier vide', message: 'Aucune donnee trouvee.' });
+        setIsParsing(false);
+        return;
+      }
+
+      setAdvParseResult(parsed);
+      setStep('advanced-preview');
+      await impactAsync(ImpactFeedbackStyle.Medium);
+    } catch (error: any) {
+      logger.error('CSV file read error:', error);
+      showPopup({ type: 'error', title: 'Erreur', message: error.message || 'Impossible de lire le fichier' });
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
+  const handleAdvancedImport = async () => {
+    if (!advParseResult) return;
+    const validRows = advParseResult.rows.filter(r => r.valid);
+    if (validRows.length === 0) return;
+
+    setIsImporting(true);
+    try {
+      const result = await importParsedRows(validRows);
+      setImportedCount(result.success);
+      setAdvImportErrors(result.errors);
+      setStep('advanced-done');
+      await notificationAsync(NotificationFeedbackType.Success);
+    } catch (error: any) {
+      logger.error('CSV import error:', error);
+      showPopup({ type: 'error', title: 'Erreur', message: 'Erreur lors de l\'import' });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // ============================================
+  // RESET / NAVIGATION
   // ============================================
 
   const resetAll = () => {
     setStep('select');
     setParseResult(null);
+    setAdvParseResult(null);
     setImportedCount(0);
+    setImportDetails({ weights: 0, measurements: 0, compositions: 0 });
     setImportErrors([]);
+    setAdvImportErrors([]);
+  };
+
+  const handleBack = () => {
+    switch (step) {
+      case 'select': router.back(); break;
+      case 'preview': setParseResult(null); setStep('select'); break;
+      case 'advanced-select': setStep('select'); break;
+      case 'advanced-preview': setAdvParseResult(null); setStep('advanced-select'); break;
+      default: resetAll();
+    }
+  };
+
+  const getHeaderTitle = () => {
+    switch (step) {
+      case 'select': return 'Import CSV';
+      case 'preview': return 'Verification';
+      case 'done':
+      case 'advanced-done': return 'Import termine';
+      case 'advanced-select': return 'Import avance';
+      case 'advanced-preview': return 'Verification';
+      default: return 'Import CSV';
+    }
   };
 
   // ============================================
@@ -198,15 +258,12 @@ export default function ImportCSVScreen() {
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       {/* HEADER */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            Import CSV
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
-            Poids, entrainements, sommeil...
+            {getHeaderTitle()}
           </Text>
         </View>
         <View style={{ width: 40 }} />
@@ -218,49 +275,45 @@ export default function ImportCSVScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ═══════════════════════════════════════ */}
-        {/* STEP 1: FILE SELECTION */}
+        {/* STEP: SELECT */}
         {/* ═══════════════════════════════════════ */}
         {step === 'select' && (
           <View>
-            {/* ── A quoi ca sert ── */}
+            {/* Purpose card */}
             <View style={[styles.purposeCard, { backgroundColor: `${colors.accent}10`, borderColor: `${colors.accent}40` }]}>
               <FileSpreadsheet size={22} color={colors.accent} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.purposeTitle, { color: colors.textPrimary }]}>
-                  Note tes donnees sur ordinateur
+                  Importe tes donnees depuis Excel
                 </Text>
                 <Text style={[styles.purposeText, { color: colors.textSecondary }]}>
-                  Tu n'as pas ton telephone sous la main ? Remplis un fichier CSV sur ton PC ou Mac, puis importe tout d'un coup dans Yoroi.
+                  Un seul fichier CSV avec toutes tes donnees : poids, composition corporelle et mensurations. Remplis-le sur ton PC/Mac, puis importe-le ici.
                 </Text>
               </View>
             </View>
 
-            {/* ── Donnees importables ── */}
+            {/* Donnees incluses */}
             <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-              DONNEES IMPORTABLES
+              DONNEES INCLUSES DANS LE MODELE
             </Text>
-            <View style={styles.formatBadges}>
-              {CSV_ROW_TYPES.map(type => {
-                const config = TYPE_CONFIG[type];
-                const Icon = config.Icon;
-                return (
-                  <View
-                    key={type}
-                    style={[styles.typeBadge, { backgroundColor: config.color + '15', borderColor: config.color + '40' }]}
-                  >
-                    <Icon size={14} color={config.color} />
-                    <Text style={[styles.typeBadgeText, { color: config.color }]}>{config.label}</Text>
-                  </View>
-                );
-              })}
+            <View style={styles.dataBadges}>
+              {[
+                { label: 'Poids', Icon: Scale, color: '#14B8A6' },
+                { label: 'Composition', Icon: Activity, color: '#3B82F6' },
+                { label: 'Mensurations', Icon: Ruler, color: '#8B5CF6' },
+              ].map(({ label, Icon, color }) => (
+                <View key={label} style={[styles.dataBadge, { backgroundColor: color + '15', borderColor: color + '40' }]}>
+                  <Icon size={14} color={color} />
+                  <Text style={[styles.dataBadgeText, { color }]}>{label}</Text>
+                </View>
+              ))}
             </View>
 
-            {/* ── Comment faire ── */}
+            {/* Steps */}
             <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
               COMMENT FAIRE
             </Text>
 
-            {/* Etape 1 */}
             <View style={[styles.stepCard, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}>
               <View style={[styles.stepNumber, { backgroundColor: colors.accent }]}>
                 <Text style={styles.stepNumberText}>1</Text>
@@ -270,63 +323,40 @@ export default function ImportCSVScreen() {
                   Telecharge le modele
                 </Text>
                 <Text style={[styles.stepDesc, { color: colors.textMuted }]}>
-                  Appuie sur le bouton ci-dessous pour recuperer le fichier CSV vierge. Envoie-le toi par mail, AirDrop, ou cloud.
+                  Un fichier avec 24 colonnes : date, poids, composition et mensurations. Ouvre-le dans Excel, Google Sheets ou Numbers.
                 </Text>
               </View>
-              <Download size={20} color={colors.textMuted} />
             </View>
 
-            {/* Etape 2 */}
             <View style={[styles.stepCard, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}>
               <View style={[styles.stepNumber, { backgroundColor: colors.accent }]}>
                 <Text style={styles.stepNumberText}>2</Text>
               </View>
               <View style={styles.stepContent}>
                 <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-                  Remplis sur ton ordinateur
+                  Remplis tes donnees
                 </Text>
                 <Text style={[styles.stepDesc, { color: colors.textMuted }]}>
-                  Ouvre le fichier avec Excel, Google Sheets ou Numbers. Ajoute tes donnees ligne par ligne. Chaque ligne a un TYPE (POIDS, ENTRAINEMENT, SOMMEIL...).
+                  Une ligne par date. Laisse vides les colonnes que tu n'as pas. Tu peux mettre juste le poids, juste les mensurations, ou tout.
                 </Text>
               </View>
-              <Laptop size={20} color={colors.textMuted} />
             </View>
 
-            {/* Etape 3 */}
             <View style={[styles.stepCard, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}>
               <View style={[styles.stepNumber, { backgroundColor: colors.accent }]}>
                 <Text style={styles.stepNumberText}>3</Text>
               </View>
               <View style={styles.stepContent}>
                 <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-                  Renvoie le fichier sur ton telephone
-                </Text>
-                <Text style={[styles.stepDesc, { color: colors.textMuted }]}>
-                  {Platform.OS === 'ios'
-                    ? 'Par AirDrop, iCloud Drive, Mail, ou Google Drive. Le fichier apparaitra dans l\'app Fichiers.'
-                    : 'Par Google Drive, Mail, ou cable USB. Le fichier sera dans tes Telechargements.'}
-                </Text>
-              </View>
-              <Send size={20} color={colors.textMuted} />
-            </View>
-
-            {/* Etape 4 */}
-            <View style={[styles.stepCard, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}>
-              <View style={[styles.stepNumber, { backgroundColor: colors.accent }]}>
-                <Text style={styles.stepNumberText}>4</Text>
-              </View>
-              <View style={styles.stepContent}>
-                <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
                   Importe dans Yoroi
                 </Text>
                 <Text style={[styles.stepDesc, { color: colors.textMuted }]}>
-                  Appuie sur "Selectionner un fichier CSV" ci-dessous, choisis ton fichier, verifie le resume, et valide.
+                  Renvoie le fichier sur ton telephone puis selectionne-le ci-dessous.
                 </Text>
               </View>
-              <Smartphone size={20} color={colors.textMuted} />
             </View>
 
-            {/* ── Boutons d'action ── */}
+            {/* Action buttons */}
             <View style={styles.actionButtons}>
               <TouchableOpacity
                 style={[styles.templateButton, { backgroundColor: colors.backgroundElevated, borderColor: colors.accent + '60' }]}
@@ -349,7 +379,7 @@ export default function ImportCSVScreen() {
                 ) : (
                   <>
                     <FileUp size={24} color="#FFF" />
-                    <Text style={styles.pickButtonText}>Selectionner un fichier CSV</Text>
+                    <Text style={styles.pickButtonText}>Selectionner mon fichier CSV</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -361,102 +391,115 @@ export default function ImportCSVScreen() {
               )}
             </View>
 
-            {/* ── Astuce transfert ── */}
+            {/* Advanced import link */}
+            <TouchableOpacity
+              style={[styles.advancedLink, { borderColor: colors.border }]}
+              onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setStep('advanced-select'); }}
+              activeOpacity={0.7}
+            >
+              <Settings2 size={18} color={colors.textMuted} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.advancedLinkTitle, { color: colors.textPrimary }]}>
+                  Import avance
+                </Text>
+                <Text style={[styles.advancedLinkDesc, { color: colors.textMuted }]}>
+                  Entrainements, sommeil, hydratation, humeur...
+                </Text>
+              </View>
+              <ChevronRight size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            {/* Tip */}
             <View style={[styles.tipCard, { backgroundColor: '#F59E0B10', borderColor: '#F59E0B40' }]}>
               <Text style={[styles.tipTitle, { color: '#F59E0B' }]}>
-                Astuce transfert
+                Astuce
               </Text>
               <Text style={[styles.tipText, { color: colors.textSecondary }]}>
                 {Platform.OS === 'ios'
-                  ? 'Le plus simple : enregistre le fichier dans iCloud Drive sur ton Mac, il apparait automatiquement dans l\'app Fichiers sur ton iPhone.'
-                  : 'Le plus simple : enregistre le fichier dans Google Drive sur ton PC, puis ouvre-le depuis l\'app Fichiers sur ton Android.'}
+                  ? 'Enregistre le modele dans iCloud Drive sur ton Mac, il apparait dans l\'app Fichiers sur ton iPhone.'
+                  : 'Enregistre le modele dans Google Drive sur ton PC, puis ouvre-le depuis l\'app Fichiers.'}
               </Text>
             </View>
           </View>
         )}
 
         {/* ═══════════════════════════════════════ */}
-        {/* STEP 2: PREVIEW */}
+        {/* STEP: PREVIEW */}
         {/* ═══════════════════════════════════════ */}
         {step === 'preview' && parseResult && (
           <View>
-            {/* Summary card */}
+            {/* Summary */}
             <View style={[styles.summaryCard, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}>
               <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>
-                {parseResult.rows.length} entree{parseResult.rows.length > 1 ? 's' : ''} detectee{parseResult.rows.length > 1 ? 's' : ''}
+                {parseResult.rows.length} ligne{parseResult.rows.length > 1 ? 's' : ''} detectee{parseResult.rows.length > 1 ? 's' : ''}
               </Text>
               <Text style={[styles.summarySubtitle, { color: colors.textMuted }]}>
                 {parseResult.validCount} valide{parseResult.validCount > 1 ? 's' : ''}
-                {parseResult.invalidCount > 0 && ` · ${parseResult.invalidCount} erreur${parseResult.invalidCount > 1 ? 's' : ''}`}
+                {parseResult.invalidCount > 0 && ` - ${parseResult.invalidCount} erreur${parseResult.invalidCount > 1 ? 's' : ''}`}
               </Text>
             </View>
 
-            {/* Type breakdown */}
-            <View style={styles.typeBreakdown}>
-              {CSV_ROW_TYPES.map(type => {
-                const typeRows = parseResult.byType[type];
-                if (typeRows.length === 0) return null;
-                const config = TYPE_CONFIG[type];
-                const Icon = config.Icon;
-                const validInType = typeRows.filter(r => r.valid).length;
-                const invalidInType = typeRows.filter(r => !r.valid).length;
-
-                return (
-                  <View
-                    key={type}
-                    style={[styles.typeRow, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
-                  >
-                    <View style={[styles.typeIconBox, { backgroundColor: config.color + '15' }]}>
-                      <Icon size={18} color={config.color} />
-                    </View>
-                    <View style={styles.typeInfo}>
-                      <Text style={[styles.typeLabel, { color: colors.textPrimary }]}>
-                        {validInType} {config.label.toLowerCase()}
-                      </Text>
-                      {invalidInType > 0 && (
-                        <Text style={[styles.typeError, { color: '#FF4D4F' }]}>
-                          {invalidInType} invalide{invalidInType > 1 ? 's' : ''}
-                        </Text>
-                      )}
-                    </View>
-                    <CheckCircle size={18} color={invalidInType === 0 ? '#10B981' : '#FF4D4F'} />
-                  </View>
-                );
-              })}
+            {/* Detail breakdown */}
+            <View style={styles.breakdownRow}>
+              {parseResult.summary.weights > 0 && (
+                <View style={[styles.breakdownBadge, { backgroundColor: '#14B8A615', borderColor: '#14B8A640' }]}>
+                  <Scale size={14} color="#14B8A6" />
+                  <Text style={[styles.breakdownText, { color: '#14B8A6' }]}>
+                    {parseResult.summary.weights} poids
+                  </Text>
+                </View>
+              )}
+              {parseResult.summary.measurements > 0 && (
+                <View style={[styles.breakdownBadge, { backgroundColor: '#8B5CF615', borderColor: '#8B5CF640' }]}>
+                  <Ruler size={14} color="#8B5CF6" />
+                  <Text style={[styles.breakdownText, { color: '#8B5CF6' }]}>
+                    {parseResult.summary.measurements} mensurations
+                  </Text>
+                </View>
+              )}
+              {parseResult.summary.compositions > 0 && (
+                <View style={[styles.breakdownBadge, { backgroundColor: '#3B82F615', borderColor: '#3B82F640' }]}>
+                  <Activity size={14} color="#3B82F6" />
+                  <Text style={[styles.breakdownText, { color: '#3B82F6' }]}>
+                    {parseResult.summary.compositions} compositions
+                  </Text>
+                </View>
+              )}
             </View>
 
-            {/* Invalid rows detail */}
-            {parseResult.invalidCount > 0 && (
-              <View style={styles.errorsSection}>
-                <Text style={[styles.errorsSectionTitle, { color: '#FF4D4F' }]}>
-                  Erreurs detectees
+            {/* Preview rows */}
+            <View style={styles.previewRows}>
+              {parseResult.rows.slice(0, 20).map((row, idx) => (
+                <View
+                  key={idx}
+                  style={[styles.previewRow, {
+                    backgroundColor: row.valid ? colors.backgroundElevated : '#FF4D4F10',
+                    borderColor: row.valid ? colors.border : '#FF4D4F30',
+                  }]}
+                >
+                  {row.valid ? (
+                    <CheckCircle size={16} color="#10B981" />
+                  ) : (
+                    <AlertCircle size={16} color="#FF4D4F" />
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.previewRowText, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {row.preview || `Ligne ${row.lineNumber}`}
+                    </Text>
+                    {row.error && (
+                      <Text style={[styles.previewRowError, { color: '#FF4D4F' }]} numberOfLines={1}>
+                        {row.error}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              ))}
+              {parseResult.rows.length > 20 && (
+                <Text style={[styles.moreRows, { color: colors.textMuted }]}>
+                  + {parseResult.rows.length - 20} autre{parseResult.rows.length - 20 > 1 ? 's' : ''}
                 </Text>
-                {parseResult.rows
-                  .filter(r => !r.valid)
-                  .slice(0, 10)
-                  .map((row, idx) => (
-                    <View
-                      key={idx}
-                      style={[styles.errorRow, { backgroundColor: '#FF4D4F10', borderColor: '#FF4D4F30' }]}
-                    >
-                      <AlertCircle size={14} color="#FF4D4F" />
-                      <View style={styles.errorInfo}>
-                        <Text style={[styles.errorLine, { color: colors.textPrimary }]}>
-                          Ligne {row.lineNumber} ({row.type})
-                        </Text>
-                        <Text style={[styles.errorText, { color: '#FF4D4F' }]} numberOfLines={2}>
-                          {row.error}
-                        </Text>
-                      </View>
-                    </View>
-                  ))}
-                {parseResult.invalidCount > 10 && (
-                  <Text style={[styles.moreErrors, { color: colors.textMuted }]}>
-                    + {parseResult.invalidCount - 10} autre{parseResult.invalidCount - 10 > 1 ? 's' : ''} erreur{parseResult.invalidCount - 10 > 1 ? 's' : ''}
-                  </Text>
-                )}
-              </View>
-            )}
+              )}
+            </View>
 
             {/* Import button */}
             <TouchableOpacity
@@ -472,17 +515,13 @@ export default function ImportCSVScreen() {
                 <>
                   <CheckCircle size={20} color="#FFF" />
                   <Text style={styles.importButtonText}>
-                    Importer {parseResult.validCount} entree{parseResult.validCount > 1 ? 's' : ''}
+                    Importer {parseResult.validCount} ligne{parseResult.validCount > 1 ? 's' : ''}
                   </Text>
                 </>
               )}
             </TouchableOpacity>
 
-            {/* Back to file picker */}
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={resetAll}
-            >
+            <TouchableOpacity style={styles.secondaryButton} onPress={() => { setParseResult(null); setStep('select'); }}>
               <Text style={[styles.secondaryButtonText, { color: colors.textMuted }]}>
                 Changer de fichier
               </Text>
@@ -491,9 +530,9 @@ export default function ImportCSVScreen() {
         )}
 
         {/* ═══════════════════════════════════════ */}
-        {/* STEP 3: DONE */}
+        {/* STEP: DONE */}
         {/* ═══════════════════════════════════════ */}
-        {step === 'done' && (
+        {(step === 'done' || step === 'advanced-done') && (
           <View style={styles.doneContainer}>
             <View style={[styles.doneIcon, { backgroundColor: colors.accent + '20' }]}>
               <CheckCircle size={48} color={colors.accent} />
@@ -502,15 +541,44 @@ export default function ImportCSVScreen() {
               Import termine
             </Text>
             <Text style={[styles.doneSubtitle, { color: colors.textMuted }]}>
-              {importedCount} entree{importedCount > 1 ? 's' : ''} importee{importedCount > 1 ? 's' : ''} avec succes
+              {importedCount} ligne{importedCount > 1 ? 's' : ''} importee{importedCount > 1 ? 's' : ''} avec succes
             </Text>
 
-            {/* Import errors */}
-            {importErrors.length > 0 && (
+            {/* Details for unified import */}
+            {step === 'done' && (importDetails.weights > 0 || importDetails.measurements > 0 || importDetails.compositions > 0) && (
+              <View style={styles.doneDetails}>
+                {importDetails.weights > 0 && (
+                  <View style={[styles.doneDetailBadge, { backgroundColor: '#14B8A615' }]}>
+                    <Scale size={14} color="#14B8A6" />
+                    <Text style={{ color: '#14B8A6', fontSize: 13, fontWeight: '600' }}>
+                      {importDetails.weights} pesee{importDetails.weights > 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                )}
+                {importDetails.measurements > 0 && (
+                  <View style={[styles.doneDetailBadge, { backgroundColor: '#8B5CF615' }]}>
+                    <Ruler size={14} color="#8B5CF6" />
+                    <Text style={{ color: '#8B5CF6', fontSize: 13, fontWeight: '600' }}>
+                      {importDetails.measurements} mensuration{importDetails.measurements > 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                )}
+                {importDetails.compositions > 0 && (
+                  <View style={[styles.doneDetailBadge, { backgroundColor: '#3B82F615' }]}>
+                    <Activity size={14} color="#3B82F6" />
+                    <Text style={{ color: '#3B82F6', fontSize: 13, fontWeight: '600' }}>
+                      {importDetails.compositions} composition{importDetails.compositions > 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {(importErrors.length > 0 || advImportErrors.length > 0) && (
               <View style={[styles.doneErrorCard, { backgroundColor: '#FF4D4F10', borderColor: '#FF4D4F30' }]}>
                 <AlertCircle size={16} color="#FF4D4F" />
                 <Text style={{ color: '#FF4D4F', fontSize: 13, flex: 1, marginLeft: 8 }}>
-                  {importErrors.length} erreur{importErrors.length > 1 ? 's' : ''} lors de l'import
+                  {(importErrors.length || advImportErrors.length)} erreur{(importErrors.length || advImportErrors.length) > 1 ? 's' : ''} lors de l'import
                 </Text>
               </View>
             )}
@@ -522,12 +590,162 @@ export default function ImportCSVScreen() {
               <Text style={styles.importButtonText}>Termine</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={resetAll}
-            >
+            <TouchableOpacity style={styles.secondaryButton} onPress={resetAll}>
               <Text style={[styles.secondaryButtonText, { color: colors.textMuted }]}>
                 Importer un autre fichier
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* ═══════════════════════════════════════ */}
+        {/* STEP: ADVANCED SELECT */}
+        {/* ═══════════════════════════════════════ */}
+        {step === 'advanced-select' && (
+          <View>
+            <View style={[styles.purposeCard, { backgroundColor: '#F59E0B10', borderColor: '#F59E0B40' }]}>
+              <Settings2 size={22} color="#F59E0B" />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.purposeTitle, { color: colors.textPrimary }]}>
+                  Import multi-types
+                </Text>
+                <Text style={[styles.purposeText, { color: colors.textSecondary }]}>
+                  Un fichier CSV avec colonne TYPE pour importer entrainements, sommeil, hydratation, humeur en plus du poids et mensurations.
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={[styles.templateButton, { backgroundColor: colors.backgroundElevated, borderColor: '#F59E0B60' }]}
+                onPress={handleAdvDownloadTemplate}
+                activeOpacity={0.7}
+              >
+                <Download size={20} color="#F59E0B" />
+                <Text style={[styles.templateButtonText, { color: '#F59E0B' }]}>
+                  Telecharger le modele avance
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.pickButton, { backgroundColor: '#F59E0B' }]}
+                onPress={pickAdvancedFile}
+                disabled={isParsing}
+              >
+                {isParsing ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <>
+                    <FileUp size={24} color="#FFF" />
+                    <Text style={styles.pickButtonText}>Selectionner un fichier CSV</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              {isParsing && (
+                <Text style={[styles.parsingText, { color: colors.textMuted }]}>
+                  Analyse du fichier...
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* ═══════════════════════════════════════ */}
+        {/* STEP: ADVANCED PREVIEW */}
+        {/* ═══════════════════════════════════════ */}
+        {step === 'advanced-preview' && advParseResult && (
+          <View>
+            <View style={[styles.summaryCard, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}>
+              <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>
+                {advParseResult.rows.length} entree{advParseResult.rows.length > 1 ? 's' : ''}
+              </Text>
+              <Text style={[styles.summarySubtitle, { color: colors.textMuted }]}>
+                {advParseResult.validCount} valide{advParseResult.validCount > 1 ? 's' : ''}
+                {advParseResult.invalidCount > 0 && ` - ${advParseResult.invalidCount} erreur${advParseResult.invalidCount > 1 ? 's' : ''}`}
+              </Text>
+            </View>
+
+            {/* Type breakdown */}
+            <View style={styles.typeBreakdown}>
+              {CSV_ROW_TYPES.map(type => {
+                const typeRows = advParseResult.byType[type];
+                if (typeRows.length === 0) return null;
+                const validInType = typeRows.filter(r => r.valid).length;
+                const invalidInType = typeRows.filter(r => !r.valid).length;
+                const ADV_COLORS: Record<CSVRowType, string> = {
+                  POIDS: '#14B8A6', ENTRAINEMENT: '#EF4444', MENSURATION: '#8B5CF6',
+                  SOMMEIL: '#6366F1', HYDRATATION: '#3B82F6', HUMEUR: '#EC4899',
+                };
+                const ADV_LABELS: Record<CSVRowType, string> = {
+                  POIDS: 'pesees', ENTRAINEMENT: 'entrainements', MENSURATION: 'mensurations',
+                  SOMMEIL: 'sommeil', HYDRATATION: 'hydratation', HUMEUR: 'humeur',
+                };
+
+                return (
+                  <View key={type} style={[styles.advTypeRow, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}>
+                    <View style={[styles.advTypeColor, { backgroundColor: ADV_COLORS[type] }]} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.typeLabel, { color: colors.textPrimary }]}>
+                        {validInType} {ADV_LABELS[type]}
+                      </Text>
+                      {invalidInType > 0 && (
+                        <Text style={{ color: '#FF4D4F', fontSize: 11, marginTop: 2 }}>
+                          {invalidInType} invalide{invalidInType > 1 ? 's' : ''}
+                        </Text>
+                      )}
+                    </View>
+                    <CheckCircle size={18} color={invalidInType === 0 ? '#10B981' : '#FF4D4F'} />
+                  </View>
+                );
+              })}
+            </View>
+
+            {/* Errors */}
+            {advParseResult.invalidCount > 0 && (
+              <View style={styles.errorsSection}>
+                <Text style={[styles.errorsSectionTitle, { color: '#FF4D4F' }]}>
+                  Erreurs detectees
+                </Text>
+                {advParseResult.rows
+                  .filter(r => !r.valid)
+                  .slice(0, 10)
+                  .map((row, idx) => (
+                    <View key={idx} style={[styles.errorRow, { backgroundColor: '#FF4D4F10', borderColor: '#FF4D4F30' }]}>
+                      <AlertCircle size={14} color="#FF4D4F" />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.errorLine, { color: colors.textPrimary }]}>
+                          Ligne {row.lineNumber} ({row.type})
+                        </Text>
+                        <Text style={{ color: '#FF4D4F', fontSize: 11, marginTop: 2 }} numberOfLines={2}>
+                          {row.error}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[styles.importButton, { backgroundColor: advParseResult.validCount > 0 ? '#F59E0B' : colors.border }]}
+              onPress={handleAdvancedImport}
+              disabled={advParseResult.validCount === 0 || isImporting}
+            >
+              {isImporting ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <>
+                  <CheckCircle size={20} color="#FFF" />
+                  <Text style={styles.importButtonText}>
+                    Importer {advParseResult.validCount} entree{advParseResult.validCount > 1 ? 's' : ''}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.secondaryButton} onPress={() => { setAdvParseResult(null); setStep('advanced-select'); }}>
+              <Text style={[styles.secondaryButtonText, { color: colors.textMuted }]}>
+                Changer de fichier
               </Text>
             </TouchableOpacity>
           </View>
@@ -544,312 +762,79 @@ export default function ImportCSVScreen() {
 // ============================================
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 100,
-  },
+  container: { flex: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1 },
+  backButton: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  headerCenter: { flex: 1, alignItems: 'center' },
+  headerTitle: { fontSize: 17, fontWeight: '700' },
+  scrollView: { flex: 1 },
+  content: { padding: 16, paddingBottom: 100 },
 
-  // ── Step 1: Select ──
-  purposeCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    marginBottom: 20,
-    gap: 12,
-  },
-  purposeTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  purposeText: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1,
-    marginBottom: 10,
-    paddingHorizontal: 4,
-  },
-  stepCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    marginBottom: 8,
-    gap: 12,
-  },
-  stepNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  stepNumberText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  stepContent: {
-    flex: 1,
-  },
-  stepTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 3,
-  },
-  stepDesc: {
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  actionButtons: {
-    marginTop: 16,
-    gap: 10,
-    alignItems: 'center',
-  },
-  tipCard: {
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginTop: 16,
-  },
-  tipTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  tipText: {
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  formatBadges: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 24,
-  },
-  typeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  typeBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  templateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 14,
-    borderWidth: 1,
-    width: '100%',
-    marginBottom: 12,
-  },
-  templateButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  pickButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 16,
-    width: '100%',
-  },
-  pickButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  parsingText: {
-    marginTop: 12,
-    fontSize: 13,
-  },
+  purposeCard: { flexDirection: 'row', alignItems: 'flex-start', padding: 16, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed', marginBottom: 20, gap: 12 },
+  purposeTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
+  purposeText: { fontSize: 13, lineHeight: 18 },
 
-  // ── Step 2: Preview ──
-  summaryCard: {
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  summaryTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  summarySubtitle: {
-    fontSize: 13,
-    marginTop: 4,
-  },
-  typeBreakdown: {
-    gap: 8,
-    marginBottom: 16,
-  },
-  typeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    gap: 12,
-  },
-  typeIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  typeInfo: {
-    flex: 1,
-  },
-  typeLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  typeError: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  errorsSection: {
-    marginBottom: 16,
-  },
-  errorsSectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 10,
-  },
-  errorRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    marginBottom: 6,
-    gap: 8,
-  },
-  errorInfo: {
-    flex: 1,
-  },
-  errorLine: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  errorText: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  moreErrors: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  importButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 16,
-    marginTop: 8,
-  },
-  importButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    paddingVertical: 14,
-  },
-  secondaryButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
+  sectionLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 1, marginBottom: 10, paddingHorizontal: 4 },
 
-  // ── Step 3: Done ──
-  doneContainer: {
-    alignItems: 'center',
-    paddingTop: 60,
-  },
-  doneIcon: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  doneTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 8,
-  },
-  doneSubtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 20,
-  },
-  doneErrorCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    marginBottom: 16,
-    width: '100%',
-  },
+  dataBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 },
+  dataBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1 },
+  dataBadgeText: { fontSize: 12, fontWeight: '600' },
+
+  stepCard: { flexDirection: 'row', alignItems: 'flex-start', padding: 14, borderRadius: 14, borderWidth: 1, marginBottom: 8, gap: 12 },
+  stepNumber: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  stepNumberText: { color: '#FFF', fontSize: 14, fontWeight: '800' },
+  stepContent: { flex: 1 },
+  stepTitle: { fontSize: 14, fontWeight: '700', marginBottom: 3 },
+  stepDesc: { fontSize: 12, lineHeight: 17 },
+
+  actionButtons: { marginTop: 16, gap: 10, alignItems: 'center' },
+  templateButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 20, borderRadius: 14, borderWidth: 1, width: '100%', marginBottom: 12 },
+  templateButtonText: { fontSize: 15, fontWeight: '600' },
+  pickButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, paddingHorizontal: 32, borderRadius: 16, width: '100%' },
+  pickButtonText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  parsingText: { marginTop: 12, fontSize: 13 },
+
+  advancedLink: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', marginTop: 20, gap: 12 },
+  advancedLinkTitle: { fontSize: 14, fontWeight: '600' },
+  advancedLinkDesc: { fontSize: 11, marginTop: 2 },
+
+  tipCard: { padding: 14, borderRadius: 12, borderWidth: 1, marginTop: 16 },
+  tipTitle: { fontSize: 13, fontWeight: '700', marginBottom: 4 },
+  tipText: { fontSize: 12, lineHeight: 17 },
+
+  summaryCard: { padding: 16, borderRadius: 14, borderWidth: 1, marginBottom: 12, alignItems: 'center' },
+  summaryTitle: { fontSize: 17, fontWeight: '700' },
+  summarySubtitle: { fontSize: 13, marginTop: 4 },
+
+  breakdownRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+  breakdownBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1 },
+  breakdownText: { fontSize: 12, fontWeight: '600' },
+
+  previewRows: { gap: 6, marginBottom: 16 },
+  previewRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 10, borderWidth: 1, gap: 10 },
+  previewRowText: { fontSize: 13, fontWeight: '500' },
+  previewRowError: { fontSize: 11, marginTop: 2 },
+  moreRows: { fontSize: 12, textAlign: 'center', marginTop: 4 },
+
+  typeBreakdown: { gap: 8, marginBottom: 16 },
+  advTypeRow: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 14, borderWidth: 1, gap: 12 },
+  advTypeColor: { width: 6, height: 32, borderRadius: 3 },
+  typeLabel: { fontSize: 14, fontWeight: '600' },
+  errorsSection: { marginBottom: 16 },
+  errorsSectionTitle: { fontSize: 14, fontWeight: '700', marginBottom: 10 },
+  errorRow: { flexDirection: 'row', alignItems: 'flex-start', padding: 10, borderRadius: 10, borderWidth: 1, marginBottom: 6, gap: 8 },
+  errorLine: { fontSize: 12, fontWeight: '600' },
+
+  importButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: 16, marginTop: 8 },
+  importButtonText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  secondaryButton: { alignItems: 'center', paddingVertical: 14 },
+  secondaryButtonText: { fontSize: 14, fontWeight: '500' },
+
+  doneContainer: { alignItems: 'center', paddingTop: 60 },
+  doneIcon: { width: 96, height: 96, borderRadius: 48, justifyContent: 'center', alignItems: 'center', marginBottom: 24 },
+  doneTitle: { fontSize: 22, fontWeight: '800', marginBottom: 8 },
+  doneSubtitle: { fontSize: 14, textAlign: 'center', marginBottom: 16, lineHeight: 20 },
+  doneDetails: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 24 },
+  doneDetailBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10 },
+  doneErrorCard: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 10, borderWidth: 1, marginBottom: 16, width: '100%' },
 });

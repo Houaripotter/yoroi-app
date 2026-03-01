@@ -16,8 +16,26 @@ interface SeancesTabProps {
 const formatDuration = (minutes: number): string => {
   const h = Math.floor(minutes / 60);
   const m = Math.round(minutes % 60);
-  if (h === 0) return `${m}min`;
-  return `${h}h ${m.toString().padStart(2, '0')}min`;
+  if (h === 0) return `${m} min`;
+  return `${h}h${m > 0 ? ` ${m.toString().padStart(2, '0')}` : ''}`;
+};
+
+const formatDurationCompact = (minutes: number): string => {
+  if (minutes < 60) return `${Math.round(minutes)} min`;
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m.toString().padStart(2, '0')}`;
+};
+
+// Estimation calories quand pas de donnees: ~6-8 kcal/min selon le sport
+const estimateCalories = (sport: string, durationMin: number): number => {
+  const rates: Record<string, number> = {
+    running: 10, cycling: 8, swimming: 9, hiking: 7,
+    jjb: 9, musculation: 6, yoga: 3, boxing: 10,
+  };
+  const rate = rates[sport?.toLowerCase()] || 7;
+  return Math.round(durationMin * rate);
 };
 
 export const SeancesTab: React.FC<SeancesTabProps> = ({ trainings }) => {
@@ -36,12 +54,24 @@ export const SeancesTab: React.FC<SeancesTabProps> = ({ trainings }) => {
 
   const totalSessions = filteredTrainings.length;
   const totalMinutes = filteredTrainings.reduce((sum, t) => sum + (t.duration_minutes || t.duration || 0), 0);
-  const totalCalories = filteredTrainings.reduce((sum, t) => sum + (t.calories || 0), 0);
+  // Utiliser les calories reelles si dispo, sinon estimer
+  const totalCalories = filteredTrainings.reduce((sum, t) => {
+    const cal = t.calories || 0;
+    if (cal > 0) return sum + cal;
+    // Estimer si pas de calories
+    const dur = t.duration_minutes || t.duration || 0;
+    return sum + (dur > 0 ? estimateCalories(t.sport, dur) : 0);
+  }, 0);
+
+  const formatCalories = (cal: number): string => {
+    if (cal >= 1000) return `${(cal / 1000).toFixed(1).replace('.', ',')}k`;
+    return cal.toLocaleString('fr-FR');
+  };
 
   const summaryItems = [
-    { value: totalSessions.toString(), label: 'seances' },
-    { value: formatDuration(totalMinutes), label: 'total' },
-    { value: totalCalories > 0 ? totalCalories.toLocaleString('fr-FR') : '--', label: 'kcal' },
+    { value: totalSessions.toString(), label: 'seances', color: colors.accent },
+    { value: formatDurationCompact(totalMinutes), label: 'total', color: '#F97316' },
+    { value: totalCalories > 0 ? formatCalories(totalCalories) : '--', label: 'kcal', color: '#EF4444' },
   ];
 
   if (trainings.length === 0) {
@@ -136,9 +166,13 @@ export const SeancesTab: React.FC<SeancesTabProps> = ({ trainings }) => {
         {summaryItems.map((item, i) => (
           <View
             key={i}
-            style={[styles.summaryCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}
+            style={[styles.summaryCard, {
+              backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+              borderLeftWidth: 3,
+              borderLeftColor: item.color,
+            }]}
           >
-            <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{item.value}</Text>
+            <Text style={[styles.summaryValue, { color: item.color }]}>{item.value}</Text>
             <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{item.label}</Text>
           </View>
         ))}
@@ -201,11 +235,14 @@ export const SeancesTab: React.FC<SeancesTabProps> = ({ trainings }) => {
                     {formatDuration(duration)}
                   </Text>
                 )}
-                {(training.calories || 0) > 0 && (
-                  <Text style={[styles.sessionMetricSub, { color: colors.textMuted }]}>
-                    {training.calories} kcal
-                  </Text>
-                )}
+                {(() => {
+                  const cal = training.calories || estimateCalories(training.sport, duration);
+                  return cal > 0 ? (
+                    <Text style={[styles.sessionMetricSub, { color: '#F97316' }]}>
+                      {cal} kcal
+                    </Text>
+                  ) : null;
+                })()}
               </View>
             </View>
 

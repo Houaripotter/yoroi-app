@@ -95,13 +95,19 @@ export const SommeilTab: React.FC<SommeilTabProps> = ({
         </View>
       )}
 
-      {/* Liste des nuits */}
-      {rawSleepHistory.length > 0 && (
+      {/* Liste des nuits (triees du plus recent au plus ancien) */}
+      {rawSleepHistory.length > 0 && (() => {
+        const sortedNights = [...rawSleepHistory].sort((a, b) => {
+          const da = a.date || '';
+          const db = b.date || '';
+          return db.localeCompare(da);
+        });
+        return (
         <View>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Nuits ({rawSleepHistory.length})
+            Nuits ({sortedNights.length})
           </Text>
-          {rawSleepHistory.map((night: any, index: number) => {
+          {sortedNights.map((night: any, index: number) => {
             const total = night.total || night.duration || 0;
             const hours = total / 60;
             const dateStr = night.date || '';
@@ -112,6 +118,18 @@ export const SommeilTab: React.FC<SommeilTabProps> = ({
               formattedDate = format(d, 'EEE d MMM', { locale: fr });
             } catch {}
 
+            // Heure coucher / reveil
+            let timeRange = '';
+            if (night.startTime && night.endTime) {
+              try {
+                const bedDate = new Date(night.startTime);
+                const wakeDate = new Date(night.endTime);
+                const bedStr = `${bedDate.getHours().toString().padStart(2, '0')}:${bedDate.getMinutes().toString().padStart(2, '0')}`;
+                const wakeStr = `${wakeDate.getHours().toString().padStart(2, '0')}:${wakeDate.getMinutes().toString().padStart(2, '0')}`;
+                timeRange = `${bedStr} - ${wakeStr}`;
+              } catch {}
+            }
+
             // Phases summary
             const phaseParts: string[] = [];
             if (night.deep > 0) phaseParts.push(`Prof. ${formatMinutes(night.deep)}`);
@@ -119,7 +137,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = ({
             if (night.core > 0) phaseParts.push(`Leg. ${formatMinutes(night.core)}`);
             const phaseSummary = phaseParts.join(' / ');
 
-            const isLast = index === rawSleepHistory.length - 1;
+            const isLast = index === sortedNights.length - 1;
 
             return (
               <TouchableOpacity
@@ -144,6 +162,11 @@ export const SommeilTab: React.FC<SommeilTabProps> = ({
                   <Text style={[styles.nightDate, { color: colors.textPrimary }]}>
                     {formattedDate}
                   </Text>
+                  {timeRange ? (
+                    <Text style={[styles.nightPhases, { color: colors.textMuted }]}>
+                      {timeRange}
+                    </Text>
+                  ) : null}
                   {phaseSummary ? (
                     <Text style={[styles.nightPhases, { color: colors.textMuted }]} numberOfLines={1}>
                       {phaseSummary}
@@ -160,7 +183,8 @@ export const SommeilTab: React.FC<SommeilTabProps> = ({
             );
           })}
         </View>
-      )}
+        );
+      })()}
     </View>
   );
 };

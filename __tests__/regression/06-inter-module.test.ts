@@ -81,10 +81,6 @@ import {
   calculateNutritionPlan,
 } from '@/lib/nutrition';
 
-import {
-  validate,
-  validateObject,
-} from '@/lib/validation';
 
 import {
   normalizeSourceName,
@@ -151,55 +147,6 @@ describe('REGRESSION: Inter-Module Interactions', () => {
     });
   });
 
-  // ============================================
-  // Measurement -> Validation -> Storage
-  // ============================================
-  describe('measurement -> validation -> storage flow', () => {
-    it('validates weight before storage', async () => {
-      const weightInput = 75.5;
-      const validation = validate('weight', weightInput);
-      expect(validation.valid).toBe(true);
-
-      // If valid, store it
-      if (validation.valid) {
-        (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
-        const measurement = await addMeasurement({ date: '2026-02-10', weight: validation.value });
-        expect(measurement.weight).toBe(75.5);
-      }
-    });
-
-    it('rejects invalid weight before storage', () => {
-      const validation = validate('weight', 500);
-      expect(validation.valid).toBe(false);
-      // Should NOT proceed to storage
-    });
-
-    it('validates and sanitizes notes before workout', async () => {
-      const notesInput = '<script>alert("xss")</script> Great session';
-      const validation = validate('notes', notesInput);
-      expect(validation.valid).toBe(true);
-      expect(validation.value).not.toContain('<script>');
-
-      // Store with sanitized notes
-      const workout = await addWorkout({
-        date: '2026-02-10',
-        type: 'jjb',
-        notes: validation.value,
-      });
-      expect(workout.notes).not.toContain('<script>');
-    });
-
-    it('validates multiple fields at once', () => {
-      const result = validateObject({
-        weight: 75.5,
-        bodyFat: 18,
-        age: 30,
-        notes: 'Good session',
-      });
-      expect(result.valid).toBe(true);
-      expect(Object.keys(result.errors)).toHaveLength(0);
-    });
-  });
 
   // ============================================
   // Measurement -> Nutrition Plan

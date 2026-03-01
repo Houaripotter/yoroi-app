@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import { calculateStreak, getLatestWeight, getWeeklyPlan, getProfile, getTrainings } from '@/lib/database';
 import { getCurrentRank } from '@/lib/ranks';
+import { saveNotification } from '@/lib/notificationHistoryService';
 
 // ============================================
 // TYPES
@@ -95,7 +96,7 @@ const STORAGE_KEY = '@yoroi_notification_settings';
 // Seul le service citationNotificationService gère les citations
 // ═══════════════════════════════════════════════════════════
 const DEFAULT_SETTINGS: NotificationSettings = {
-  enabled: false, // MASTER SWITCH OFF - ne jamais activer automatiquement
+  enabled: true, // ON par defaut (cartes sociales actives)
   training: {
     enabled: false, // OFF
     time: '18:00',
@@ -128,8 +129,8 @@ const DEFAULT_SETTINGS: NotificationSettings = {
     days: [],
   },
   socialCards: {
-    enabled: false, // OFF
-    weeklyTime: '10:00',
+    enabled: true, // ON - carte hebdo le vendredi a 19h
+    weeklyTime: '19:00',
     monthlyTime: '10:00',
   },
   briefing: {
@@ -262,61 +263,21 @@ class NotificationService {
 
   async initialize(): Promise<boolean> {
     try {
-      // ═══════════════════════════════════════════════════════════
-      // MIGRATION FORCÉE: Désactiver TOUTES les notifications spam
-      // Seules les citations sont autorisées par défaut
-      // ═══════════════════════════════════════════════════════════
+      // Charger les settings sauvegardés ou utiliser les défauts (tout OFF)
+      const saved = await AsyncStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        this.settings = { ...DEFAULT_SETTINGS, ...parsed };
+      } else {
+        this.settings = { ...DEFAULT_SETTINGS };
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings));
+      }
 
-      // Toujours forcer les paramètres à OFF, peu importe ce qui est sauvegardé
-      this.settings = {
-        ...DEFAULT_SETTINGS, // Tout est déjà OFF dans DEFAULT_SETTINGS
-        enabled: false,
-        training: { ...DEFAULT_SETTINGS.training, enabled: false },
-        hydration: { ...DEFAULT_SETTINGS.hydration, enabled: false },
-        weighing: { ...DEFAULT_SETTINGS.weighing, enabled: false },
-        streak: { ...DEFAULT_SETTINGS.streak, enabled: false },
-        sleep: { ...DEFAULT_SETTINGS.sleep, enabled: false },
-        socialCards: { ...DEFAULT_SETTINGS.socialCards, enabled: false },
-        briefing: { ...DEFAULT_SETTINGS.briefing, enabled: false },
-        smartReminders: { ...DEFAULT_SETTINGS.smartReminders, enabled: false },
-      };
-
-      // Sauvegarder les paramètres forcés à OFF
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings));
-
-      // Reset des paramètres des autres services de notifications pour éviter le spam
-      await AsyncStorage.setItem('@yoroi_briefing_settings', JSON.stringify({ enabled: false, time: '07:00' }));
-      await AsyncStorage.setItem('@yoroi_smart_reminders_settings', JSON.stringify({
-        weightReminder: false,
-        trainingReminder: false,
-        hydrationReminder: false,
-        measurementsReminder: false,
-        streakProtection: false,
-        hydrationIntervalHours: 2,
-      }));
-
-      // ═══ FORCE DISABLE: Health Tips (Dormir Moins Bête) ═══
-      await AsyncStorage.setItem('@yoroi_evening_health_tips_settings', JSON.stringify({
-        enabled: false,
-        time: '22:00',
-        days: [],
-      }));
-
-      // ═══ FORCE DISABLE: Hydration reminders ═══
-      await AsyncStorage.setItem('@yoroi_hydration_settings', JSON.stringify({
-        reminderEnabled: false,
-        reminderInterval: 120,
-      }));
-
-      // Annuler TOUTES les notifications existantes pour partir propre
-      await Notifications.cancelAllScheduledNotificationsAsync();
-      logger.info('[NotificationService] RESET: Toutes les notifications annulées et paramètres forcés à OFF');
-
-      // Ne PAS programmer de nouvelles notifications
-      // Seules les citations (1x matin) sont gérées par citationNotificationService
+      // Reprogrammer les notifications selon les settings sauvegardés
+      await this.scheduleAllNotifications();
 
       this.isInitialized = true;
-      logger.info('NotificationService initialisé (mode minimal - tout désactivé)');
+      logger.info('[NotificationService] Initialisé avec settings sauvegardés');
       return true;
     } catch (error) {
       logger.error('Erreur init notifications:', error);
@@ -555,7 +516,7 @@ class NotificationService {
   private async scheduleSocialCardsNotifications(): Promise<void> {
     const { weeklyTime, monthlyTime } = this.settings.socialCards || { weeklyTime: '10:00', monthlyTime: '10:00' };
 
-    // Notification hebdomadaire (chaque dimanche)
+    // Notification hebdomadaire (chaque vendredi)
     const [weeklyHours, weeklyMinutes] = weeklyTime.split(':').map(Number);
     const weeklyMessage = WEEKLY_CARD_MESSAGES[Math.floor(Math.random() * WEEKLY_CARD_MESSAGES.length)];
 
@@ -568,7 +529,7 @@ class NotificationService {
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-        weekday: 1, // Dimanche = 1 dans Expo
+        weekday: 6, // Vendredi = 6 dans Expo (1=dim, 2=lun, ..., 6=ven)
         hour: weeklyHours,
         minute: weeklyMinutes,
       },
@@ -920,6 +881,10 @@ class NotificationService {
       },
       trigger: null, // Immédiat
     });
+
+    // Logger dans l'historique
+    const notifType = data?.type || 'general';
+    saveNotification(title, body, notifType, data).catch(() => {});
   }
 
   // Ces fonctions sont UNIQUEMENT pour les boutons "Tester" dans les paramètres
@@ -959,6 +924,25 @@ class NotificationService {
   async sendBriefing(): Promise<void> {
     const content = await this.generateBriefingContent();
     await this.sendInstantNotification(content.title, content.body, { type: 'briefing', screen: 'home' }, true);
+  }
+
+  /**
+   * Notification apres fin de seance - propose de partager sur les reseaux
+   */
+  async sendWorkoutCompletedNotification(sport: string, durationMin: number, calories?: number): Promise<void> {
+    const messages = [
+      { title: 'Seance terminee !', body: `${sport} - ${durationMin} min${calories ? ` - ${calories} kcal` : ''}. Partage ta perf !` },
+      { title: 'Bravo, guerrier !', body: `${sport} dans la poche. Montre ca a tes followers !` },
+      { title: `${sport} termine !`, body: `${durationMin} min d'effort. Cree ta carte de partage !` },
+      { title: 'Warrior mode', body: `Tu viens de finir ${durationMin} min de ${sport}. Partage le sur tes reseaux !` },
+    ];
+    const msg = messages[Math.floor(Math.random() * messages.length)];
+    await this.sendInstantNotification(
+      msg.title,
+      msg.body,
+      { type: 'workout_completed', screen: 'social-share/last-session' },
+      true,
+    );
   }
 
   async sendSmartReminderTest(): Promise<{ type: string; message: string }> {

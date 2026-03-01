@@ -150,7 +150,7 @@ const categorizeError = (error: any): { category: ErrorCategory; message: string
     return {
       category: 'data',
       message: errorStr,
-      userMessage: 'Données invalides. Vérifiez vos informations.'
+      userMessage: '' // Silencieux - pas de banner pour les erreurs de validation
     };
   }
 
@@ -208,6 +208,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
 
   // UX FEEDBACK: Bannière améliorée avec icônes et couleurs
   const showSyncBanner = useCallback((message: string, type: 'info' | 'success' | 'error' | 'loading' = 'info') => {
+    if (!message || message.trim() === '') return; // Ne pas afficher de banner vide
     setSyncMessage(message);
 
     // Icônes et couleurs selon le type
@@ -556,10 +557,10 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       const contextData: any = {
         v: DATA_FORMAT_VERSION, // ← NOUVEAU: Version du format
         appVersion: APP_VERSION, // ← NOUVEAU: Version de l'app
-        ac: avatarConfig ? JSON.parse(avatarConfig) : { name: 'samurai' },
-        un: profile?.name || 'Guerrier',
+        ac: avatarConfig ? JSON.parse(avatarConfig) : undefined,
+        un: profile?.name || undefined,
         lv: level ? parseInt(level) : 1,
-        rk: rank || 'Novice',
+        rk: rank || undefined,
         wi: parseFloat(waterIntake || '0'),
         ts: Date.now()
       };
@@ -850,10 +851,10 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         w: parseFloat(weight || '0'),
         wi: parseFloat(waterIntake || '0'),
         s: parseInt(streak || '0'),
-        un: profile?.name || 'Guerrier',
+        un: profile?.name || undefined,
         ac: parsedAvatar,
         lv: level ? parseInt(level) : 1,
-        rk: rank || 'Novice',
+        rk: rank || undefined,
         ts: Date.now(),
         fr: true,
         deviceName: Device.modelName || 'iPhone'
@@ -961,7 +962,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         error: e
       });
 
-      showSyncBanner(`❌ ${userMessage}`, 'error');
+      if (userMessage) showSyncBanner(userMessage, 'error');
     } finally {
       setIsSyncing(false);
     }

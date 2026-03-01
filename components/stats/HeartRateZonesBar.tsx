@@ -1,6 +1,7 @@
 // ============================================
-// HEART RATE ZONES BAR - Style Yoroi
-// 5 barres horizontales avec temps par zone FC
+// HEART RATE ZONES BAR - Style Apple Sante
+// Zone 1 bleu, Zone 2 vert, Zone 3 jaune,
+// Zone 4 orange, Zone 5 rouge/rose
 // ============================================
 
 import React from 'react';
@@ -21,149 +22,135 @@ interface HeartRateZonesBarProps {
   totalDurationSeconds?: number;
 }
 
+// Couleurs Apple Health exactes
+const APPLE_ZONE_COLORS: Record<number, string> = {
+  1: '#3B82F6', // Bleu
+  2: '#22C55E', // Vert
+  3: '#EAB308', // Jaune
+  4: '#F97316', // Orange
+  5: '#EF4444', // Rouge
+};
+
 const formatDuration = (seconds: number): string => {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.round(seconds % 60);
-  if (h > 0) return `${h}h${m > 0 ? ` ${m}m` : ''}`;
-  if (m > 0) return `${m}m${s > 0 ? ` ${s}s` : ''}`;
-  return `${s}s`;
+  if (h > 0) return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+};
+
+const formatBpmRange = (zone: HRZone): string => {
+  if (zone.zone === 1) return `<${zone.maxBpm}`;
+  if (zone.zone === 5 || zone.maxBpm > 240) return `>${zone.minBpm}`;
+  return `${zone.minBpm}-${zone.maxBpm}`;
 };
 
 export const HeartRateZonesBar: React.FC<HeartRateZonesBarProps> = ({
   zones,
   totalDurationSeconds,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const total = totalDurationSeconds
     || zones.reduce((sum, z) => sum + z.durationSeconds, 0);
 
   if (total === 0) return null;
 
-  // Trier par zone (1 -> 5)
   const sortedZones = [...zones].sort((a, b) => a.zone - b.zone);
+  const maxDuration = Math.max(...sortedZones.map(z => z.durationSeconds));
 
   return (
     <View style={styles.container}>
-      {/* Barre empilee horizontale */}
-      <View style={styles.stackedBar}>
-        {sortedZones.map((zone) => {
-          const pct = (zone.durationSeconds / total) * 100;
-          if (pct < 1) return null;
-          return (
-            <View
-              key={zone.zone}
-              style={[
-                styles.barSegment,
-                { width: `${pct}%`, backgroundColor: zone.color },
-              ]}
-            />
-          );
-        })}
-      </View>
+      {sortedZones.map((zone) => {
+        const zoneColor = APPLE_ZONE_COLORS[zone.zone] || zone.color;
+        const barWidth = maxDuration > 0 ? (zone.durationSeconds / maxDuration) * 100 : 0;
 
-      {/* Detail par zone */}
-      <View style={styles.zonesDetail}>
-        {sortedZones.map((zone) => {
-          const pct = Math.round((zone.durationSeconds / total) * 100);
-          return (
-            <View key={zone.zone} style={styles.zoneRow}>
-              <View style={[styles.zoneDot, { backgroundColor: zone.color }]} />
-              <Text style={[styles.zoneNumber, { color: colors.textMuted }]}>
-                Z{zone.zone}
-              </Text>
-              <Text style={[styles.zoneName, { color: colors.text }]} numberOfLines={1}>
-                {zone.name}
-              </Text>
-              <Text style={[styles.zoneBpm, { color: colors.textMuted }]}>
-                {zone.minBpm}-{zone.maxBpm > 240 ? '...' : zone.maxBpm}
-              </Text>
-              <View style={styles.zoneBarContainer}>
-                <View
-                  style={[
-                    styles.zoneBarFill,
-                    { width: `${pct}%`, backgroundColor: zone.color },
-                  ]}
-                />
-              </View>
-              <Text style={[styles.zoneTime, { color: colors.text }]}>
-                {formatDuration(zone.durationSeconds)}
-              </Text>
-              <Text style={[styles.zonePct, { color: colors.textMuted }]}>
-                {pct}%
-              </Text>
+        return (
+          <View key={zone.zone} style={styles.zoneRow}>
+            {/* Zone label + color bar */}
+            <Text style={[styles.zoneLabel, { color: zoneColor }]}>
+              Zone {zone.zone}
+            </Text>
+
+            {/* Bar coloree proportionnelle */}
+            <View style={styles.barContainer}>
+              <View
+                style={[
+                  styles.barFill,
+                  {
+                    width: `${Math.max(barWidth, 2)}%`,
+                    backgroundColor: zoneColor,
+                  },
+                ]}
+              />
             </View>
-          );
-        })}
-      </View>
+
+            {/* Duree */}
+            <Text style={[styles.zoneDuration, { color: colors.text }]}>
+              {formatDuration(zone.durationSeconds)}
+            </Text>
+
+            {/* BPM range */}
+            <Text style={[styles.zoneBpm, { color: colors.textMuted }]}>
+              {formatBpmRange(zone)} <Text style={styles.bpmUnit}>BPM</Text>
+            </Text>
+          </View>
+        );
+      })}
+
+      {/* Texte explicatif comme Apple */}
+      <Text style={[styles.disclaimer, { color: colors.textMuted }]}>
+        Estimation du temps passe dans chaque zone de frequence cardiaque.
+      </Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 8,
-  },
-  stackedBar: {
-    flexDirection: 'row',
-    height: 12,
-    borderRadius: 6,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    marginBottom: 16,
-  },
-  barSegment: {
-    height: '100%',
-  },
-  zonesDetail: {
-    gap: 10,
+    gap: 14,
   },
   zoneRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
-  zoneDot: {
-    width: 8,
+  zoneLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    width: 62,
+  },
+  barContainer: {
+    flex: 1,
     height: 8,
     borderRadius: 4,
-  },
-  zoneNumber: {
-    fontSize: 12,
-    fontWeight: '700',
-    width: 22,
-  },
-  zoneName: {
-    fontSize: 13,
-    fontWeight: '500',
-    width: 90,
-  },
-  zoneBpm: {
-    fontSize: 11,
-    width: 55,
-  },
-  zoneBarContainer: {
-    flex: 1,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     overflow: 'hidden',
   },
-  zoneBarFill: {
+  barFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 4,
   },
-  zoneTime: {
-    fontSize: 13,
-    fontWeight: '700',
-    width: 50,
+  zoneDuration: {
+    fontSize: 15,
+    fontWeight: '600',
+    width: 48,
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
+  },
+  zoneBpm: {
+    fontSize: 12,
+    width: 80,
     textAlign: 'right',
   },
-  zonePct: {
+  bpmUnit: {
     fontSize: 11,
-    width: 30,
-    textAlign: 'right',
+    fontWeight: '600',
+  },
+  disclaimer: {
+    fontSize: 12,
+    marginTop: 4,
+    lineHeight: 16,
   },
 });
 

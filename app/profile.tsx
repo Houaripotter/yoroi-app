@@ -47,7 +47,7 @@ import {
   Profile,
  getWeights, getTrainings } from '@/lib/database';
 import { getCurrentRank } from '@/lib/ranks';
-import { getLevel } from '@/lib/gamification';
+import { getLevel, calculateAndStoreUnifiedPoints } from '@/lib/gamification';
 import { getUnlockedBadges } from '@/lib/badges';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -268,8 +268,8 @@ export default function ProfileScreen() {
         getUnlockedBadges(),
       ]);
 
-      // Calculer les points totaux (même formule que dans index.tsx)
-      const points = (weightsHistory?.length || 0) * 10 + (allTrainings?.length || 0) * 25 + (streakDays >= 7 ? 50 : 0);
+      // Points unifies (inclut quetes, challenges, bonus sante)
+      const points = await calculateAndStoreUnifiedPoints(weightsHistory?.length || 0, allTrainings?.length || 0, streakDays);
       setTotalPoints(points);
       setUnlockedBadgesCount(badges?.length || 0);
     } catch (error) {

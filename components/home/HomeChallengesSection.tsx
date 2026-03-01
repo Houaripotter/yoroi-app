@@ -331,7 +331,7 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
                   />
                 </View>
                 <Text style={[styles.progressText, { color: colors.textMuted }]}>
-                  {quest.current}/{quest.target}
+                  {quest.current.toLocaleString('fr-FR')}/{quest.target.toLocaleString('fr-FR')}{quest.unit ? ` ${quest.unit}` : ''}
                 </Text>
               </View>
             )}

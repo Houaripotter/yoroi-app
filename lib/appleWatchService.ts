@@ -241,16 +241,16 @@ class AppleWatchService {
 
     const hydrationCurrent = parseInt(values[`hydration_${today}`] || '0');
     const hydrationGoal = parseInt(values['@yoroi_hydration_goal'] || '3000');
-    const currentWeight = parseFloat(values['@yoroi_current_weight'] || '78.2');
-    const targetWeight = parseFloat(values['@yoroi_target_weight'] || '77.0');
+    const currentWeight = parseFloat(values['@yoroi_current_weight'] || '0');
+    const targetWeight = parseFloat(values['@yoroi_target_weight'] || '0');
 
-    // Sommeil (dernière nuit)
+    // Sommeil (dernière nuit) - uniquement depuis les vraies données
     const sleepEntriesStr = values['@yoroi_sleep_entries'];
     let sleepData = {
-      duration: 450, // 7h30 par défaut
-      quality: 5,
-      bedTime: '23:15',
-      wakeTime: '06:45',
+      duration: 0,
+      quality: 0,
+      bedTime: '',
+      wakeTime: '',
     };
 
     if (sleepEntriesStr) {
@@ -259,10 +259,10 @@ class AppleWatchService {
         if (sleepEntries.length > 0) {
           const lastSleep = sleepEntries[0];
           sleepData = {
-            duration: lastSleep.duration || 450,
-            quality: lastSleep.quality || 5,
-            bedTime: lastSleep.bedTime || '23:15',
-            wakeTime: lastSleep.wakeTime || '06:45',
+            duration: lastSleep.duration || 0,
+            quality: lastSleep.quality || 0,
+            bedTime: lastSleep.bedTime || '',
+            wakeTime: lastSleep.wakeTime || '',
           };
         }
       } catch (e) {
@@ -276,7 +276,7 @@ class AppleWatchService {
     const avatarConfig = avatarConfigStr ? JSON.parse(avatarConfigStr) : undefined;
     const profilePhotoBase64 = values['@yoroi_profile_photo_base64'] || undefined;
     const level = parseInt(values['@yoroi_user_level'] || '1');
-    const rank = values['@yoroi_user_rank'] || 'Débutant';
+    const rank = values['@yoroi_user_rank'] || undefined;
 
     return {
       // Santé

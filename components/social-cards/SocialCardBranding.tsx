@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
 
   // Footer Pro - Layout horizontal
   footer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     paddingVertical: 6,
   },
   footerSeparator: {
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
   },
   footerBrandName: {
     fontSize: 16,

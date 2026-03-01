@@ -8,8 +8,9 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
-import { addTraining } from './database';
+import { addTraining, updateTrainingDetails } from './database';
 import type { Training } from './database';
+import { saveNotification } from './notificationHistoryService';
 
 // ============================================
 // HEALTH CONNECT SDK (Android)
@@ -33,6 +34,68 @@ const getHealthConnect = () => {
 // ============================================
 // TYPES
 // ============================================
+
+export interface HeartRateSample {
+  timestamp: string;
+  bpm: number;
+}
+
+export interface WorkoutDetails {
+  // Route GPS
+  routePoints?: Array<{
+    latitude: number;
+    longitude: number;
+    altitude?: number;
+    speed?: number;
+    timestamp?: string;
+  }>;
+  routeBoundingBox?: {
+    minLat: number;
+    maxLat: number;
+    minLon: number;
+    maxLon: number;
+  };
+  // FC
+  heartRateSamples?: HeartRateSample[];
+  avgHeartRate?: number;
+  minHeartRate?: number;
+  maxHeartRate?: number;
+  heartRateZones?: Array<{
+    zone: number;     // 1-5
+    name: string;
+    minBpm: number;
+    maxBpm: number;
+    durationSeconds: number;
+    color: string;
+  }>;
+  // Splits (par km)
+  splits?: Array<{
+    index: number;
+    distanceKm: number;
+    paceSecondsPerKm: number;
+    durationSeconds: number;
+    elevationGain: number;
+    avgHeartRate?: number;
+  }>;
+  // Meteo
+  weatherTemp?: number;
+  weatherHumidity?: number;
+  weatherCondition?: string;
+  airQualityIndex?: number;
+  airQualityCategory?: string;
+  // Elevation
+  elevationAscended?: number;
+  elevationDescended?: number;
+  // Performances
+  distanceKm?: number;
+  activeCalories?: number;
+  totalCalories?: number;
+  avgPaceSecondsPerKm?: number;
+  durationMinutes?: number;
+  isIndoor?: boolean;
+  // FC recuperation (post workout)
+  recoveryHR?: { atEnd: number; after1Min?: number; after2Min?: number };
+}
 
 export interface HealthData {
   weight?: {
@@ -175,16 +238,38 @@ export const SOURCE_NAME_MAP: Record<string, string> = {
   // Fitbit
   'Fitbit': 'fitbit', 'com.fitbit.FitbitMobile': 'fitbit',
   // Xiaomi
-  'Mi Fitness': 'xiaomi', 'Zepp Life': 'xiaomi', 'Mi Fit': 'xiaomi',
+  'Mi Fitness': 'xiaomi', 'Mi Fit': 'xiaomi',
   'com.xiaomi.wearable': 'xiaomi', 'com.xiaomi.hm.health': 'xiaomi',
   // Renpho / Eufy / Omron
   'Renpho': 'renpho', 'RENPHO': 'renpho', 'com.qingniu.renpho': 'renpho',
   'EufyLife': 'eufy', 'eufy Life': 'eufy',
   'OMRON connect': 'omron', 'Omron': 'omron',
   // Suunto
-  'Suunto': 'suunto',
+  'Suunto': 'suunto', 'com.suunto.app': 'suunto', 'Suunto App': 'suunto',
   // Oura
-  'Oura': 'oura',
+  'Oura': 'oura', 'com.ouraring.oura': 'oura',
+  // COROS
+  'COROS': 'coros', 'com.coros.coros': 'coros', 'COROS PACE': 'coros',
+  'COROS VERTIX': 'coros', 'COROS APEX': 'coros',
+  // Amazfit / Zepp
+  'Amazfit': 'amazfit', 'Zepp': 'amazfit', 'Zepp Life': 'amazfit',
+  'com.huami.watch.hmwatchmanager': 'amazfit', 'Zepp App': 'amazfit',
+  // Huawei
+  'Huawei Health': 'huawei', 'com.huawei.health': 'huawei', 'HUAWEI Health': 'huawei',
+  'Huawei': 'huawei',
+  // Wahoo
+  'Wahoo': 'wahoo', 'Wahoo Fitness': 'wahoo', 'ELEMNT': 'wahoo',
+  'com.wahoofitness.fitness': 'wahoo',
+  // Strava
+  'Strava': 'strava', 'com.strava': 'strava',
+  // Peloton
+  'Peloton': 'peloton', 'com.onepeloton.callisto': 'peloton',
+  // MyFitnessPal
+  'MyFitnessPal': 'myfitnesspal', 'com.myfitnesspal.mfp': 'myfitnesspal',
+  // Samsung Galaxy Watch (noms de montres specifiques)
+  'Galaxy Watch': 'samsung', 'Galaxy Watch4': 'samsung', 'Galaxy Watch5': 'samsung',
+  'Galaxy Watch6': 'samsung', 'Galaxy Watch Ultra': 'samsung',
+  'Samsung Galaxy Watch': 'samsung',
   // Yoroi manual
   'Yoroi': 'manual', 'YOROI': 'manual',
 };
@@ -196,15 +281,33 @@ export const normalizeSourceName = (rawSource: string): string => {
   for (const [key, value] of Object.entries(SOURCE_NAME_MAP)) {
     if (lower.includes(key.toLowerCase())) return value;
   }
+  // Fallback patterns pour marques connues
+  if (lower.includes('garmin')) return 'garmin';
+  if (lower.includes('coros')) return 'coros';
+  if (lower.includes('suunto')) return 'suunto';
+  if (lower.includes('polar')) return 'polar';
+  if (lower.includes('amazfit') || lower.includes('zepp') || lower.includes('huami')) return 'amazfit';
+  if (lower.includes('huawei')) return 'huawei';
+  if (lower.includes('samsung') || lower.includes('galaxy')) return 'samsung';
+  if (lower.includes('fitbit')) return 'fitbit';
+  if (lower.includes('wahoo') || lower.includes('elemnt')) return 'wahoo';
+  if (lower.includes('whoop')) return 'whoop';
+  if (lower.includes('strava')) return 'strava';
   if (lower.includes('watch')) return 'android_watch';
   return rawSource;
 };
 
 export const SOURCE_PRIORITY: Record<string, number> = {
-  withings: 10, garmin: 9, polar: 9, whoop: 9,
+  withings: 10,
+  garmin: 9, polar: 9, whoop: 9,
   renpho: 9, eufy: 9, omron: 9, suunto: 9, oura: 9,
+  coros: 9, wahoo: 9,
+  huawei: 8, amazfit: 8,
   apple_watch: 8, samsung: 8, fitbit: 8,
-  xiaomi: 7, iphone: 5, manual: 3,
+  xiaomi: 7,
+  strava: 6, peloton: 6,
+  myfitnesspal: 5, iphone: 5,
+  manual: 3,
   apple_health: 1, health_connect: 1, unknown: 0,
 };
 
@@ -221,92 +324,187 @@ const STORAGE_KEYS = {
   PERMISSION_DENIAL_COUNT: '@yoroi_health_denial_count',
 };
 
-// Mapping des types d'exercices Yoroi -> Health Connect (pour l'ecriture)
+// ════════════════════════════════════════════════════════════════
+// Mapping Yoroi -> Health Connect (ecriture)
+// Source: Android Health Connect ExerciseSessionRecord.EXERCISE_TYPE_*
+// ════════════════════════════════════════════════════════════════
 const EXERCISE_TYPE_MAP: { [key: string]: number } = {
-  'Running': 56, 'Course': 56, 'Trail': 56,
-  'Cycling': 8, 'Velo': 8,
-  'Swimming': 74, 'Natation': 74,
-  'Musculation': 80, 'WeightLifting': 80,
-  'CrossFit': 23,
-  'Yoga': 83,
-  'Boxing': 5, 'Boxe': 5,
-  'MMA': 45, 'JJB': 45, 'Judo': 45, 'Karate': 45,
-  'Muay Thai': 5,
-  'HIIT': 35,
+  // Course & marche
+  'Running': 56, 'Course': 56, 'Trail': 37, 'Randonnee': 37, 'Hiking': 37,
   'Marche': 79, 'Walking': 79,
-  'Randonnee': 37, 'Hiking': 37,
-  'Football': 29, 'Soccer': 29,
-  'Basketball': 4,
-  'Tennis': 76,
-  'Badminton': 2,
-  'Rugby': 57,
-  'Handball': 33,
-  'Volleyball': 78,
-  'Golf': 32,
-  'Pilates': 51,
-  'Danse': 24, 'Dance': 24,
-  'Aviron': 55, 'Rowing': 55,
-  'Escalade': 53, 'Climbing': 53,
-  'Surf': 73, 'Surfing': 73,
-  'Ski': 61, 'Skiing': 61,
-  'Ski de fond': 22, 'CrossCountrySkiing': 22,
-  'Snowboard': 65,
-  'Patin': 40, 'Skating': 40,
+  // Velo
+  'Cycling': 8, 'Velo': 8, 'VeloStationnaire': 9,
+  // Natation
+  'Swimming': 74, 'Natation': 74, 'NatationPiscine': 74, 'NatationEauLibre': 73,
+  // Musculation & fitness
+  'Musculation': 70, 'WeightLifting': 81, 'Renforcement': 70,
+  'CrossFit': 10, 'Calisthenics': 13,
+  'HIIT': 36, 'Yoga': 83, 'Pilates': 48, 'Stretching': 71,
+  // Combat
+  'Boxing': 11, 'Boxe': 11,
+  'MMA': 44, 'JJB': 44, 'Judo': 44, 'Karate': 44, 'Taekwondo': 44,
+  'Muay Thai': 11, 'Kickboxing': 11,
+  // Equipe
+  'Football': 64, 'Soccer': 64, 'FootballUS': 28, 'FootballAustralien': 29,
+  'Basketball': 5, 'Tennis': 76, 'Badminton': 2,
+  'Rugby': 55, 'Handball': 35, 'Volleyball': 78,
+  // Raquette
+  'Squash': 66, 'Racquetball': 50, 'TableTennis': 75, 'Pickleball': 50,
+  'Paddle': 0, 'Padel': 76,
+  // Golf & individuel
+  'Golf': 32, 'Gymnastique': 34, 'Equitation': 0, 'Escrime': 27,
+  'Baseball': 4, 'Cricket': 14, 'Hockey': 38, 'Lacrosse': 44,
+  // Danse
+  'Danse': 16, 'Dance': 16,
+  // Nautique
+  'Aviron': 53, 'Rowing': 53, 'Voile': 58, 'Surf': 72, 'Surfing': 72,
+  'Paddle_nautique': 46, 'Plongee': 59, 'WaterPolo': 80,
+  // Montagne & glisse
+  'Escalade': 51, 'Climbing': 51,
+  'Ski': 61, 'Skiing': 61, 'Snowboard': 62,
+  'Skateboard': 60, 'Patin': 39, 'Skating': 39, 'Roller': 52,
+  // Cardio machines
   'Elliptique': 25, 'Elliptical': 25,
-  'Stepper': 71, 'StairClimbing': 71,
-  'Stretching': 72,
-  'Gymnastique': 31, 'Gymnastics': 31,
-  'Equitation': 38, 'HorseRiding': 38,
-  'Escrime': 28, 'Fencing': 28,
-  'Baseball': 3,
-  'Cricket': 14,
-  'Hockey': 36,
-  'Squash': 70,
-  'Paddle': 76, 'Padel': 76,
-  'TableTennis': 75,
+  'Stepper': 69, 'StairClimbing': 68,
+  'CordeSauter': 41, 'JumpRope': 41,
+  // Autre
   'Cardio': 0, 'Other': 0,
 };
 
-// Mapping inverse: Health Connect exercise type number -> Yoroi sport key
+// ════════════════════════════════════════════════════════════════
+// Mapping inverse: Health Connect exercise type -> Yoroi sport key
+// Source: Android Health Connect ExerciseSessionRecord.EXERCISE_TYPE_*
+// ════════════════════════════════════════════════════════════════
 const ANDROID_EXERCISE_TYPE_NAMES: Record<number, string> = {
-  0: 'other', 1: 'badminton', 2: 'badminton', 3: 'baseball', 4: 'basketball',
-  5: 'boxe', 6: 'cricket', 7: 'curling', 8: 'velo', 9: 'velo',
-  10: 'velo_stationnaire', 11: 'elliptique', 12: 'escrime', 13: 'football_us',
-  14: 'cricket', 15: 'frisbee', 16: 'golf', 17: 'guidedBreathing', 18: 'gymnastique',
-  19: 'handball', 20: 'hiit', 21: 'randonnee', 22: 'ski_fond', 23: 'crossfit',
-  24: 'danse', 25: 'elliptique', 26: 'exerciseMachine', 27: 'escalade', 28: 'escrime',
-  29: 'football', 30: 'fonctionnel', 31: 'gymnastique', 32: 'golf', 33: 'handball',
-  34: 'hiit', 35: 'hiit', 36: 'hockey', 37: 'randonnee', 38: 'equitation',
-  39: 'hockey', 40: 'patin', 41: 'patin', 42: 'saut_corde', 43: 'kayak',
-  44: 'lacrosse', 45: 'mma', 46: 'muscu', 47: 'ski', 48: 'paddleboard',
-  49: 'paragliding', 50: 'pilates', 51: 'pilates', 52: 'racquetball',
-  53: 'escalade', 54: 'roller', 55: 'aviron', 56: 'running', 57: 'rugby',
-  58: 'voile', 59: 'plongee', 60: 'skateboard', 61: 'ski', 62: 'snowboard',
-  63: 'softball', 64: 'squash', 65: 'snowboard', 66: 'escalier', 67: 'renforcement',
-  68: 'stretching', 69: 'surf', 70: 'squash', 71: 'stepper', 72: 'stretching',
-  73: 'surf', 74: 'natation', 75: 'tennis_table', 76: 'tennis', 77: 'volleyball',
-  78: 'volleyball', 79: 'marche', 80: 'muscu', 81: 'water_polo', 82: 'wheelchair',
-  83: 'yoga',
+  0: 'autre',               // OTHER_WORKOUT
+  1: 'musculation',         // BACK_EXTENSION
+  2: 'badminton',           // BADMINTON
+  3: 'musculation',         // BARBELL_SHOULDER_PRESS
+  4: 'baseball',            // BASEBALL
+  5: 'basketball',          // BASKETBALL
+  6: 'musculation',         // BENCH_PRESS
+  7: 'musculation',         // BENCH_SIT_UP
+  8: 'velo',                // BIKING
+  9: 'velo_stationnaire',   // BIKING_STATIONARY
+  10: 'crossfit',           // BOOT_CAMP
+  11: 'boxe',               // BOXING
+  12: 'hiit',               // BURPEE
+  13: 'calisthenics',       // CALISTHENICS
+  14: 'cricket',            // CRICKET
+  15: 'musculation',        // CRUNCH
+  16: 'danse',              // DANCING
+  17: 'musculation',        // DEADLIFT
+  18: 'musculation',        // DUMBBELL_CURL_LEFT_ARM
+  19: 'musculation',        // DUMBBELL_CURL_RIGHT_ARM
+  20: 'musculation',        // DUMBBELL_FRONT_RAISE
+  21: 'musculation',        // DUMBBELL_LATERAL_RAISE
+  22: 'musculation',        // DUMBBELL_TRICEPS_EXTENSION_LEFT_ARM
+  23: 'musculation',        // DUMBBELL_TRICEPS_EXTENSION_RIGHT_ARM
+  24: 'musculation',        // DUMBBELL_TRICEPS_EXTENSION_TWO_ARM
+  25: 'elliptique',         // ELLIPTICAL
+  26: 'cardio',             // EXERCISE_CLASS
+  27: 'escrime',            // FENCING
+  28: 'football_us',        // FOOTBALL_AMERICAN
+  29: 'football',           // FOOTBALL_AUSTRALIAN
+  30: 'musculation',        // FORWARD_TWIST
+  31: 'disc_golf',          // FRISBEE_DISC
+  32: 'golf',               // GOLF
+  33: 'respiration',        // GUIDED_BREATHING
+  34: 'gymnastique',        // GYMNASTICS
+  35: 'handball',           // HANDBALL
+  36: 'hiit',               // HIGH_INTENSITY_INTERVAL_TRAINING
+  37: 'randonnee',          // HIKING
+  38: 'hockey',             // ICE_HOCKEY
+  39: 'patinage',           // ICE_SKATING
+  40: 'cardio',             // JUMPING_JACK
+  41: 'corde_a_sauter',     // JUMP_ROPE
+  42: 'musculation',        // LAT_PULL_DOWN
+  43: 'musculation',        // LUNGE
+  44: 'mma',                // MARTIAL_ARTS
+  // 45: non defini
+  46: 'paddle',             // PADDLING
+  47: 'parapente',          // PARAGLIDING
+  48: 'pilates',            // PILATES
+  49: 'musculation',        // PLANK
+  50: 'racquetball',        // RACQUETBALL
+  51: 'escalade',           // ROCK_CLIMBING
+  52: 'roller',             // ROLLER_HOCKEY
+  53: 'rameur',             // ROWING
+  54: 'rameur',             // ROWING_MACHINE
+  55: 'rugby',              // RUGBY
+  56: 'running',            // RUNNING
+  57: 'running',            // RUNNING_TREADMILL
+  58: 'voile',              // SAILING
+  59: 'plongee',            // SCUBA_DIVING
+  60: 'skateboard',         // SKATING
+  61: 'ski',                // SKIING
+  62: 'snowboard',          // SNOWBOARDING
+  63: 'raquettes_neige',    // SNOWSHOEING
+  64: 'football',           // SOCCER
+  65: 'softball',           // SOFTBALL
+  66: 'squash',             // SQUASH
+  67: 'musculation',        // SQUAT
+  68: 'escalier',           // STAIR_CLIMBING
+  69: 'escalier',           // STAIR_CLIMBING_MACHINE
+  70: 'musculation',        // STRENGTH_TRAINING
+  71: 'stretching',         // STRETCHING
+  72: 'surf',               // SURFING
+  73: 'natation',           // SWIMMING_OPEN_WATER
+  74: 'natation',           // SWIMMING_POOL
+  75: 'tennis_de_table',    // TABLE_TENNIS
+  76: 'tennis',             // TENNIS
+  77: 'musculation',        // UPPER_TWIST
+  78: 'volleyball',         // VOLLEYBALL
+  79: 'marche',             // WALKING
+  80: 'water_polo',         // WATER_POLO
+  81: 'musculation',        // WEIGHTLIFTING
+  82: 'marche',             // WHEELCHAIR
+  83: 'yoga',               // YOGA
 };
 
 // Label francais pour les sports Android
 const ANDROID_SPORT_LABELS: Record<string, string> = {
-  'running': 'Course', 'velo': 'Velo', 'natation': 'Natation', 'muscu': 'Musculation',
-  'crossfit': 'CrossFit', 'yoga': 'Yoga', 'boxe': 'Boxe', 'mma': 'MMA',
-  'football': 'Football', 'basketball': 'Basketball', 'tennis': 'Tennis',
-  'badminton': 'Badminton', 'rugby': 'Rugby', 'handball': 'Handball',
-  'volleyball': 'Volleyball', 'golf': 'Golf', 'pilates': 'Pilates',
-  'danse': 'Danse', 'aviron': 'Aviron', 'escalade': 'Escalade',
-  'surf': 'Surf', 'ski': 'Ski', 'ski_fond': 'Ski de fond', 'snowboard': 'Snowboard',
-  'randonnee': 'Randonnee', 'marche': 'Marche', 'hiit': 'HIIT',
-  'patin': 'Patinage', 'equitation': 'Equitation', 'escrime': 'Escrime',
-  'elliptique': 'Elliptique', 'stepper': 'Stepper', 'stretching': 'Stretching',
-  'gymnastique': 'Gymnastique', 'hockey': 'Hockey', 'squash': 'Squash',
-  'baseball': 'Baseball', 'cricket': 'Cricket', 'voile': 'Voile',
-  'kayak': 'Kayak', 'plongee': 'Plongee', 'saut_corde': 'Corde a sauter',
-  'tennis_table': 'Tennis de table', 'water_polo': 'Water Polo',
-  'fonctionnel': 'Fonctionnel', 'renforcement': 'Renforcement',
-  'velo_stationnaire': 'Velo stationnaire', 'other': 'Autre',
+  // Course & marche
+  'running': 'Course', 'marche': 'Marche', 'randonnee': 'Randonnee', 'trail': 'Trail',
+  // Velo
+  'velo': 'Velo', 'velo_stationnaire': 'Velo stationnaire',
+  // Natation
+  'natation': 'Natation', 'aquagym': 'Aquagym',
+  // Musculation & fitness
+  'musculation': 'Musculation', 'crossfit': 'CrossFit', 'hiit': 'HIIT',
+  'calisthenics': 'Calisthenics', 'cardio': 'Cardio',
+  // Yoga & bien-etre
+  'yoga': 'Yoga', 'pilates': 'Pilates', 'stretching': 'Stretching',
+  'respiration': 'Respiration',
+  // Combat
+  'boxe': 'Boxe', 'mma': 'MMA', 'kickboxing': 'Kickboxing',
+  // Equipe
+  'football': 'Football', 'football_us': 'Football US',
+  'basketball': 'Basketball', 'tennis': 'Tennis', 'badminton': 'Badminton',
+  'rugby': 'Rugby', 'handball': 'Handball', 'volleyball': 'Volleyball',
+  // Raquette
+  'squash': 'Squash', 'racquetball': 'Racquetball',
+  'tennis_de_table': 'Tennis de table', 'pickleball': 'Pickleball',
+  // Golf & individuel
+  'golf': 'Golf', 'gymnastique': 'Gymnastique', 'equitation': 'Equitation',
+  'escrime': 'Escrime', 'baseball': 'Baseball', 'softball': 'Softball',
+  'cricket': 'Cricket', 'hockey': 'Hockey', 'lacrosse': 'Lacrosse',
+  // Danse
+  'danse': 'Danse',
+  // Nautique
+  'rameur': 'Rameur', 'voile': 'Voile', 'surf': 'Surf',
+  'paddle': 'Paddle', 'plongee': 'Plongee', 'water_polo': 'Water-polo',
+  // Montagne & glisse
+  'escalade': 'Escalade', 'ski': 'Ski', 'ski_fond': 'Ski de fond',
+  'snowboard': 'Snowboard', 'skateboard': 'Skateboard',
+  'patinage': 'Patinage', 'roller': 'Roller', 'raquettes_neige': 'Raquettes a neige',
+  // Cardio machines
+  'elliptique': 'Elliptique', 'escalier': 'Escalier',
+  'corde_a_sauter': 'Corde a sauter', 'step': 'Step',
+  // Divers
+  'disc_golf': 'Disc Golf', 'parapente': 'Parapente',
+  'fitness_gaming': 'Fitness Gaming',
+  'autre': 'Autre',
 };
 
 /**
@@ -1133,6 +1331,32 @@ class HealthConnectService {
   }
 
   // ============================================
+  // EXERCICE & ACTIVITE (stubs - iOS only)
+  // ============================================
+
+  async getTodayExerciseMinutes(): Promise<number | null> {
+    return null;
+  }
+
+  async getTodayStandHours(): Promise<number | null> {
+    return null;
+  }
+
+  async getTodayActivitySummary(): Promise<{
+    activeCalories: number | null;
+    exerciseMinutes: number | null;
+    standHours: number | null;
+    goals: { move: number; exercise: number; stand: number };
+  }> {
+    return {
+      activeCalories: null,
+      exerciseMinutes: null,
+      standHours: null,
+      goals: { move: 500, exercise: 30, stand: 12 },
+    };
+  }
+
+  // ============================================
   // LECTURE: COMPOSITION CORPORELLE
   // ============================================
 
@@ -1187,7 +1411,7 @@ class HealthConnectService {
   private async getAndroidWorkouts(): Promise<HealthData['workouts'] | null> {
     return this.queryHealthConnect(async () => {
       const HC = getHealthConnect()!;
-      const fromDate = new Date(Date.now() - 730 * 24 * 60 * 60 * 1000);
+      const fromDate = new Date(Date.now() - 1825 * 24 * 60 * 60 * 1000);
 
       const records = await HC.readRecords('ExerciseSession', {
         timeRangeFilter: this.createTimeRangeFilter(fromDate, new Date()),
@@ -1903,6 +2127,376 @@ class HealthConnectService {
   }
 
   // ============================================
+  // WORKOUT DETAILS ENRICHIS (parite iOS)
+  // ============================================
+
+  /**
+   * Recuperer les details enrichis d'un workout via son ID Health Connect.
+   * Inclut: route GPS, FC detaillee, splits, elevation.
+   * Note: Health Connect ne stocke pas de meteo ni qualite de l'air.
+   */
+  async getWorkoutDetailsByUUID(workoutId: string): Promise<WorkoutDetails | null> {
+    const HC = getHealthConnect();
+    if (!HC || !workoutId) return null;
+
+    try {
+      // Trouver le workout par son ID dans les ExerciseSessions recentes
+      const fromDate = new Date(Date.now() - 1825 * 24 * 60 * 60 * 1000);
+      const records = await HC.readRecords('ExerciseSession', {
+        timeRangeFilter: this.createTimeRangeFilter(fromDate, new Date()),
+      });
+
+      if (!records?.records || records.records.length === 0) return null;
+
+      const session = (records.records as any[]).find((s: any) => {
+        const sessionId = s.metadata?.id || `workout_${this.simpleHash(`${s.startTime}_${s.endTime}_${s.exerciseType || 'unknown'}`)}`;
+        return sessionId === workoutId;
+      });
+
+      if (!session) {
+        logger.warn('[HealthConnect Android] Workout non trouve pour ID:', workoutId);
+        return null;
+      }
+
+      const details: WorkoutDetails = {};
+      const startTime = new Date(session.startTime);
+      const endTime = new Date(session.endTime);
+
+      // Duration
+      details.durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
+
+      // Distance
+      try {
+        const distRecords = await HC.readRecords('Distance', {
+          timeRangeFilter: this.createTimeRangeFilter(startTime, endTime),
+        });
+        if (distRecords?.records && distRecords.records.length > 0) {
+          let totalDist = 0;
+          for (const dr of distRecords.records as any[]) {
+            totalDist += dr.distance?.inMeters || 0;
+          }
+          if (totalDist > 0) {
+            details.distanceKm = Math.round(totalDist / 10) / 100;
+          }
+        }
+      } catch (e) {
+        logger.warn('[HealthConnect Android] Erreur lecture distance:', e);
+      }
+
+      // Calories
+      try {
+        // Active calories
+        const activeCalRecords = await HC.readRecords('ActiveCaloriesBurned', {
+          timeRangeFilter: this.createTimeRangeFilter(startTime, endTime),
+        });
+        if (activeCalRecords?.records && activeCalRecords.records.length > 0) {
+          let totalActive = 0;
+          for (const cr of activeCalRecords.records as any[]) {
+            totalActive += cr.energy?.inKilocalories || 0;
+          }
+          if (totalActive > 0) details.activeCalories = Math.round(totalActive);
+        }
+
+        // Total calories
+        const totalCalRecords = await HC.readRecords('TotalCaloriesBurned', {
+          timeRangeFilter: this.createTimeRangeFilter(startTime, endTime),
+        });
+        if (totalCalRecords?.records && totalCalRecords.records.length > 0) {
+          let totalCal = 0;
+          for (const cr of totalCalRecords.records as any[]) {
+            totalCal += cr.energy?.inKilocalories || 0;
+          }
+          if (totalCal > 0) details.totalCalories = Math.round(totalCal);
+        }
+
+        // Fallback total = active si pas de TotalCaloriesBurned
+        if (!details.totalCalories && details.activeCalories) {
+          details.totalCalories = details.activeCalories;
+        }
+      } catch (e) {
+        logger.warn('[HealthConnect Android] Erreur lecture calories:', e);
+      }
+
+      // Heart Rate samples
+      const hrSamples: HeartRateSample[] = [];
+      try {
+        const hrRecords = await HC.readRecords('HeartRate', {
+          timeRangeFilter: this.createTimeRangeFilter(startTime, endTime),
+        });
+        if (hrRecords?.records && hrRecords.records.length > 0) {
+          const allBpm: number[] = [];
+          for (const hr of hrRecords.records as any[]) {
+            if (hr.samples) {
+              for (const sample of hr.samples) {
+                if (sample.beatsPerMinute > 0) {
+                  allBpm.push(sample.beatsPerMinute);
+                  hrSamples.push({
+                    timestamp: sample.time || hr.startTime,
+                    bpm: Math.round(sample.beatsPerMinute),
+                  });
+                }
+              }
+            }
+          }
+          if (allBpm.length > 0) {
+            details.avgHeartRate = Math.round(allBpm.reduce((a, b) => a + b, 0) / allBpm.length);
+            details.minHeartRate = Math.min(...allBpm);
+            details.maxHeartRate = Math.max(...allBpm);
+          }
+        }
+      } catch (e) {
+        logger.warn('[HealthConnect Android] Erreur lecture HR:', e);
+      }
+
+      // Stocker les HR samples
+      if (hrSamples.length > 0) {
+        // Trier par timestamp
+        hrSamples.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        details.heartRateSamples = hrSamples;
+      }
+
+      // Heart Rate Zones (calculees depuis les samples)
+      if (hrSamples.length > 0) {
+        details.heartRateZones = this.computeHRZones(hrSamples, startTime, endTime);
+      }
+
+      // Average pace
+      if (details.distanceKm && details.distanceKm > 0 && details.durationMinutes) {
+        details.avgPaceSecondsPerKm = Math.round((details.durationMinutes * 60) / details.distanceKm);
+      }
+
+      // Elevation (via ExerciseRoute si dispo)
+      try {
+        const sessionAny = session as any;
+        if (sessionAny.exerciseRoute?.route && sessionAny.exerciseRoute.route.length > 1) {
+          const route = sessionAny.exerciseRoute.route;
+          let ascended = 0;
+          let descended = 0;
+          for (let i = 1; i < route.length; i++) {
+            const diff = (route[i].altitude || 0) - (route[i - 1].altitude || 0);
+            if (diff > 0) ascended += diff;
+            else descended += Math.abs(diff);
+          }
+          if (ascended > 0) details.elevationAscended = Math.round(ascended);
+          if (descended > 0) details.elevationDescended = Math.round(descended);
+
+          // GPS route points
+          details.routePoints = route.map((pt: any) => ({
+            latitude: pt.latitude,
+            longitude: pt.longitude,
+            altitude: pt.altitude,
+            speed: pt.speed,
+            timestamp: pt.time,
+          }));
+
+          // Bounding box
+          if (details.routePoints && details.routePoints.length > 0) {
+            const lats = details.routePoints.map(p => p.latitude);
+            const lons = details.routePoints.map(p => p.longitude);
+            details.routeBoundingBox = {
+              minLat: Math.min(...lats),
+              maxLat: Math.max(...lats),
+              minLon: Math.min(...lons),
+              maxLon: Math.max(...lons),
+            };
+          }
+
+          // Splits per km
+          details.splits = this.computeSplits(route, hrSamples);
+        }
+      } catch (e) {
+        logger.warn('[HealthConnect Android] Erreur lecture route/elevation:', e);
+      }
+
+      // Recovery HR (3 minutes apres la fin du workout)
+      try {
+        const recoveryEnd = new Date(endTime.getTime() + 3 * 60 * 1000);
+        const recoveryRecords = await HC.readRecords('HeartRate', {
+          timeRangeFilter: this.createTimeRangeFilter(endTime, recoveryEnd),
+        });
+        if (recoveryRecords?.records && recoveryRecords.records.length > 0) {
+          const recoverySamples: { time: number; bpm: number }[] = [];
+          for (const hr of recoveryRecords.records as any[]) {
+            if (hr.samples) {
+              for (const sample of hr.samples) {
+                if (sample.beatsPerMinute > 0) {
+                  recoverySamples.push({
+                    time: new Date(sample.time || hr.startTime).getTime(),
+                    bpm: Math.round(sample.beatsPerMinute),
+                  });
+                }
+              }
+            }
+          }
+
+          if (recoverySamples.length > 0) {
+            recoverySamples.sort((a, b) => a.time - b.time);
+            const endBpm = hrSamples.length > 0 ? hrSamples[hrSamples.length - 1].bpm : recoverySamples[0].bpm;
+            const after1Min = recoverySamples.find(s => s.time >= endTime.getTime() + 55000);
+            const after2Min = recoverySamples.find(s => s.time >= endTime.getTime() + 115000);
+
+            details.recoveryHR = {
+              atEnd: endBpm,
+              after1Min: after1Min?.bpm,
+              after2Min: after2Min?.bpm,
+            };
+          }
+        }
+      } catch (e) {
+        logger.warn('[HealthConnect Android] Erreur lecture recovery HR:', e);
+      }
+
+      return details;
+    } catch (error) {
+      logger.error('[HealthConnect Android] Erreur getWorkoutDetailsByUUID:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Calcule les zones de FC (5 zones classiques)
+   */
+  private computeHRZones(
+    samples: HeartRateSample[],
+    startTime: Date,
+    endTime: Date
+  ): WorkoutDetails['heartRateZones'] {
+    const zones = [
+      { zone: 1, name: 'Recovery', minBpm: 0, maxBpm: 120, color: '#3B82F6', seconds: 0 },
+      { zone: 2, name: 'Endurance', minBpm: 120, maxBpm: 140, color: '#22C55E', seconds: 0 },
+      { zone: 3, name: 'Tempo', minBpm: 140, maxBpm: 160, color: '#EAB308', seconds: 0 },
+      { zone: 4, name: 'Threshold', minBpm: 160, maxBpm: 180, color: '#F97316', seconds: 0 },
+      { zone: 5, name: 'Maximum', minBpm: 180, maxBpm: 999, color: '#EF4444', seconds: 0 },
+    ];
+
+    if (samples.length < 2) return zones.map(z => ({
+      zone: z.zone, name: z.name, minBpm: z.minBpm, maxBpm: z.maxBpm,
+      durationSeconds: 0, color: z.color,
+    }));
+
+    for (let i = 0; i < samples.length - 1; i++) {
+      const t1 = new Date(samples[i].timestamp).getTime();
+      const t2 = new Date(samples[i + 1].timestamp).getTime();
+      const dt = Math.min((t2 - t1) / 1000, 30); // Cap a 30s entre 2 samples
+      const bpm = samples[i].bpm;
+
+      for (const z of zones) {
+        if (bpm >= z.minBpm && bpm < z.maxBpm) {
+          z.seconds += dt;
+          break;
+        }
+      }
+    }
+
+    return zones.map(z => ({
+      zone: z.zone,
+      name: z.name,
+      minBpm: z.minBpm,
+      maxBpm: z.maxBpm,
+      durationSeconds: Math.round(z.seconds),
+      color: z.color,
+    }));
+  }
+
+  /**
+   * Calcule les splits par km depuis les points GPS
+   */
+  private computeSplits(locations: any[], hrSamples?: HeartRateSample[]): WorkoutDetails['splits'] {
+    if (!locations || locations.length < 2) return [];
+
+    const splits: NonNullable<WorkoutDetails['splits']> = [];
+    let kmCounter = 1;
+    let distAccum = 0;
+    let splitStartIdx = 0;
+
+    for (let i = 1; i < locations.length; i++) {
+      const prev = locations[i - 1];
+      const curr = locations[i];
+
+      // Distance Haversine
+      const R = 6371000;
+      const dLat = (curr.latitude - prev.latitude) * Math.PI / 180;
+      const dLon = (curr.longitude - prev.longitude) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(prev.latitude * Math.PI / 180) * Math.cos(curr.latitude * Math.PI / 180) *
+        Math.sin(dLon / 2) ** 2;
+      const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      distAccum += d;
+
+      if (distAccum >= 1000) {
+        const startTimeMs = new Date(locations[splitStartIdx].time || locations[splitStartIdx].timestamp).getTime();
+        const endTimeMs = new Date(curr.time || curr.timestamp).getTime();
+        const splitSec = (endTimeMs - startTimeMs) / 1000;
+        const elevGain = Math.max(0, (curr.altitude || 0) - (locations[splitStartIdx].altitude || 0));
+
+        // avgHeartRate pour ce split
+        let avgHeartRate: number | undefined;
+        if (hrSamples && hrSamples.length > 0) {
+          const splitHR = hrSamples.filter(s => {
+            const t = new Date(s.timestamp).getTime();
+            return t >= startTimeMs && t <= endTimeMs;
+          });
+          if (splitHR.length > 0) {
+            avgHeartRate = Math.round(splitHR.reduce((sum, s) => sum + s.bpm, 0) / splitHR.length);
+          }
+        }
+
+        splits.push({
+          index: kmCounter,
+          distanceKm: 1,
+          paceSecondsPerKm: Math.round(splitSec),
+          durationSeconds: Math.round(splitSec),
+          elevationGain: Math.round(elevGain),
+          avgHeartRate,
+        });
+
+        kmCounter++;
+        distAccum -= 1000;
+        splitStartIdx = i;
+      }
+    }
+
+    return splits;
+  }
+
+  /**
+   * Charge les details enrichis d'un workout et les stocke en DB.
+   */
+  private async fetchAndStoreWorkoutDetails(workoutId: string, trainingId: number, retries: number = 2): Promise<void> {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const details = await this.getWorkoutDetailsByUUID(workoutId);
+        if (details) {
+          const toStore = { ...details };
+          // Downsample GPS et HR
+          if (toStore.routePoints && toStore.routePoints.length > 500) {
+            const step = Math.ceil(toStore.routePoints.length / 500);
+            toStore.routePoints = toStore.routePoints.filter((_, i) => i % step === 0);
+          }
+          if (toStore.heartRateSamples && toStore.heartRateSamples.length > 500) {
+            const step = Math.ceil(toStore.heartRateSamples.length / 500);
+            toStore.heartRateSamples = toStore.heartRateSamples.filter((_, i) => i % step === 0);
+          }
+
+          const json = JSON.stringify(toStore);
+          await updateTrainingDetails(trainingId, json);
+          logger.info(`[HealthConnect Android] Details enrichis sauvegardes pour training #${trainingId}`);
+          return;
+        }
+
+        if (attempt < retries) {
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      } catch (e) {
+        logger.warn(`[HealthConnect Android] Erreur fetchAndStoreWorkoutDetails (attempt ${attempt + 1}):`, e);
+        if (attempt < retries) {
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      }
+    }
+  }
+
+  // ============================================
   // SYNCHRONISATION
   // ============================================
 
@@ -2066,6 +2660,7 @@ class HealthConnectService {
       }
 
       // Import workouts dans SQLite (table trainings)
+      const detailsQueue: { workoutId: string; trainingId: number }[] = [];
       if (data.workouts && data.workouts.length > 0) {
         let importedFingerprints: Set<string> = new Set();
         try {
@@ -2103,11 +2698,15 @@ class HealthConnectService {
               max_heart_rate: workout.maxHeartRate,
               source: workout.source || 'health_connect',
               notes: noteText,
+              healthkit_uuid: workout.id, // Health Connect record ID pour lazy-load details
             };
 
-            await addTraining(training);
+            const trainingId = await addTraining(training);
             importedFingerprints.add(fingerprint);
             workoutsSaved++;
+
+            // Queue pour fetch details en arriere-plan
+            detailsQueue.push({ workoutId: workout.id, trainingId });
 
             // Notification Strava-like pour les workouts recents (< 30 min)
             const workoutAge = Date.now() - new Date(workout.endDate).getTime();
@@ -2120,10 +2719,27 @@ class HealthConnectService {
         }
 
         if (workoutsSaved > 0) {
-          const fingerprintsArray = Array.from(importedFingerprints).slice(-500);
+          const fingerprintsArray = Array.from(importedFingerprints).slice(-5000);
           await AsyncStorage.setItem('@yoroi_imported_workouts', JSON.stringify(fingerprintsArray));
           logger.info(`[HealthConnect Android] ${workoutsSaved} workouts sauvegardes dans SQLite`);
         }
+      }
+
+      // Fetch enriched details in batches (3 concurrent)
+      if (detailsQueue.length > 0) {
+        logger.info(`[HealthConnect Android] Fetching details for ${detailsQueue.length} workouts...`);
+        const BATCH_SIZE = 3;
+        for (let i = 0; i < detailsQueue.length; i += BATCH_SIZE) {
+          const batch = detailsQueue.slice(i, i + BATCH_SIZE);
+          await Promise.allSettled(
+            batch.map(({ workoutId, trainingId }) =>
+              this.fetchAndStoreWorkoutDetails(workoutId, trainingId, 1).catch(e =>
+                logger.warn(`[HealthConnect Android] Detail fetch failed for #${trainingId}:`, e)
+              )
+            )
+          );
+        }
+        logger.info(`[HealthConnect Android] Details enrichis traites pour ${detailsQueue.length} workouts`);
       }
 
       this.syncStatus.lastSync = new Date().toISOString();
@@ -2185,6 +2801,9 @@ class HealthConnectService {
         trigger: null,
       });
 
+      // Sauvegarder dans l'historique
+      saveNotification(title, lines.join('\n'), 'workout_complete', { type: 'workout_complete' }).catch(() => {});
+
       logger.info(`[HealthConnect Android] Notification envoyee: ${title}`);
     } catch (e) {
       logger.warn('[HealthConnect Android] Erreur notification:', e);
@@ -2220,11 +2839,138 @@ class HealthConnectService {
     return 'excellent';
   }
 
+  // Polling interval pour detection automatique des workouts
+  private workoutPollingInterval: ReturnType<typeof setInterval> | null = null;
+
   /**
-   * Stub pour parite API avec iOS - sur Android les workouts sont detectes dans syncAll
+   * Observer les nouveaux workouts via polling
+   * Health Connect (Android) ne supporte pas de push observer natif,
+   * on poll donc toutes les 2 minutes pour detecter les seances
+   * en provenance de Garmin, Fitbit, Samsung, Polar, Suunto, COROS, Withings, etc.
    */
   async setupWorkoutObserver(): Promise<void> {
-    logger.info('[HealthConnect Android] Workout observer: les workouts sont importes via syncAll');
+    if (this.workoutPollingInterval) return; // Deja en cours
+
+    logger.info('[HealthConnect Android] Demarrage workout observer (polling 2 min)');
+
+    // Poll toutes les 2 minutes
+    this.workoutPollingInterval = setInterval(async () => {
+      try {
+        await this.checkRecentWorkouts();
+      } catch (e) {
+        logger.warn('[HealthConnect Android/Polling] Erreur:', e);
+      }
+    }, 2 * 60 * 1000);
+
+    // Premier check immediat
+    this.checkRecentWorkouts().catch(() => {});
+  }
+
+  /**
+   * Forcer un check immediat des nouveaux workouts
+   * Appele quand l'app revient au premier plan
+   */
+  async checkNewWorkoutsNow(): Promise<void> {
+    try {
+      logger.info('[HealthConnect Android] Check immediat (retour foreground)');
+      await this.checkRecentWorkouts();
+    } catch (e) {
+      logger.warn('[HealthConnect Android] Check foreground echoue:', e);
+    }
+  }
+
+  /**
+   * Verifier les workouts recents (derniere heure) et importer les nouveaux
+   */
+  private async checkRecentWorkouts(): Promise<void> {
+    if (!this.isInitialized || !this.syncStatus.permissions.workouts) return;
+
+    const HC = getHealthConnect();
+    if (!HC) return;
+
+    try {
+      // Lire les workouts de la derniere heure seulement (rapide)
+      const fromDate = new Date(Date.now() - 60 * 60 * 1000);
+      const records = await HC.readRecords('ExerciseSession', {
+        timeRangeFilter: this.createTimeRangeFilter(fromDate, new Date()),
+      });
+
+      if (!records?.records || records.records.length === 0) return;
+
+      // Charger les fingerprints
+      let importedFingerprints: Set<string> = new Set();
+      try {
+        const saved = await AsyncStorage.getItem('@yoroi_imported_workouts');
+        if (saved) importedFingerprints = new Set(JSON.parse(saved));
+      } catch {}
+
+      let newWorkouts = 0;
+      for (const session of records.records) {
+        const s = session as any;
+        const startTime = new Date(s.startTime);
+        const endTime = new Date(s.endTime);
+        const durationMin = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
+        const fingerprint = `${s.startTime}_${s.endTime}_${s.exerciseType || 'unknown'}`;
+
+        if (importedFingerprints.has(fingerprint)) continue;
+
+        const sportKey = ANDROID_EXERCISE_TYPE_NAMES[s.exerciseType] || 'autre';
+        const sportLabel = ANDROID_SPORT_LABELS[sportKey] || sportKey;
+        const trainingDate = startTime.toISOString().split('T')[0];
+        const startTimeStr = startTime.toTimeString().slice(0, 5);
+        const source = normalizeSourceName(extractAndroidSourceName(s));
+
+        const noteParts: string[] = [];
+        if (durationMin > 0) noteParts.push(`${durationMin} min`);
+        const noteText = noteParts.length > 0 ? `${sportLabel} (${noteParts.join(', ')})` : sportLabel;
+
+        const training: Training = {
+          sport: sportKey,
+          session_type: sportLabel,
+          date: trainingDate,
+          start_time: startTimeStr,
+          duration_minutes: durationMin,
+          source,
+          notes: noteText,
+        };
+
+        const trainingId = await addTraining(training);
+        importedFingerprints.add(fingerprint);
+        newWorkouts++;
+
+        // Notification pour workout recent
+        const workoutAge = Date.now() - endTime.getTime();
+        if (workoutAge < 30 * 60 * 1000) {
+          try {
+            const Notif = await import('expo-notifications');
+            await Notif.scheduleNotificationAsync({
+              content: {
+                title: `Seance terminee !`,
+                body: `${sportLabel} - ${durationMin} min. Partage ta perf !`,
+                data: { type: 'workout_completed' },
+                sound: 'default',
+              },
+              trigger: null,
+            });
+            // Sauvegarder dans l'historique
+            saveNotification('Seance terminee !', `${sportLabel} - ${durationMin} min. Partage ta perf !`, 'workout_complete', { type: 'workout_completed' }).catch(() => {});
+          } catch {}
+        }
+
+        // Enrichir les details en arriere-plan
+        if (trainingId && s.metadata?.id) {
+          this.fetchAndStoreWorkoutDetails(s.metadata.id, trainingId, 1).catch(() => {});
+        }
+      }
+
+      if (newWorkouts > 0) {
+        const fingerprintsArray = Array.from(importedFingerprints).slice(-5000);
+        await AsyncStorage.setItem('@yoroi_imported_workouts', JSON.stringify(fingerprintsArray));
+        logger.info(`[HealthConnect Android/Polling] ${newWorkouts} nouveaux workouts detectes`);
+      }
+    } catch (e) {
+      logger.warn('[HealthConnect Android] checkRecentWorkouts erreur:', e);
+    }
   }
 
   /**

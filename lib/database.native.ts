@@ -164,6 +164,70 @@ const _performInit = async () => {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN technical_theme TEXT;`);
   } catch (e) { /* colonne existe déjà */ }
 
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN distance REAL;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN calories INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN intensity INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN rounds INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN round_duration INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN is_outdoor INTEGER DEFAULT 0;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN pente REAL;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN speed REAL;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN resistance INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN watts INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN cadence INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN healthkit_uuid TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN workout_details_json TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN heart_rate INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN max_heart_rate INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN source TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
   // Table Planning Semaine Type
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS weekly_plan (
@@ -540,9 +604,24 @@ export interface Training {
   category?: string; // Alias for session_type (compatibility)
   notes?: string;
   muscles?: string; // JSON array of muscle groups
-  technical_theme?: string; // Technical theme for combat sports (e.g., "Passage de garde", "Triangle")
-  exercises?: Exercise[]; // For musculation workouts
-  technique_rating?: number | null; // 1-5 stars rating
+  technical_theme?: string;
+  distance?: number;
+  calories?: number;
+  heart_rate?: number;
+  max_heart_rate?: number;
+  source?: string;
+  rounds?: number;
+  round_duration?: number;
+  pente?: number;
+  speed?: number;
+  resistance?: number;
+  watts?: number;
+  cadence?: number;
+  exercises?: Exercise[];
+  technique_rating?: number | null;
+  is_outdoor?: boolean;
+  healthkit_uuid?: string;
+  workout_details_json?: string;
   created_at?: string;
   // Joined fields
   club_name?: string;
@@ -774,6 +853,31 @@ export const addTraining = async (data: Training): Promise<number> => {
      data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null]
   );
   return result.lastInsertRowId;
+};
+
+export const getTrainingById = async (id: number): Promise<Training | null> => {
+  const database = await openDatabase();
+  const result = await database.getFirstAsync<Training & { exercises?: string }>(
+    `SELECT t.*, t.duration_minutes as duration, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
+     FROM trainings t
+     LEFT JOIN clubs c ON t.club_id = c.id
+     WHERE t.id = ?`,
+    [id]
+  );
+  if (!result) return null;
+  let exercises;
+  if (result.exercises) {
+    try { exercises = JSON.parse(result.exercises as string); } catch { exercises = undefined; }
+  }
+  return { ...result, exercises };
+};
+
+export const updateTrainingDetails = async (id: number, detailsJson: string): Promise<void> => {
+  const database = await openDatabase();
+  await database.runAsync(
+    `UPDATE trainings SET workout_details_json = ? WHERE id = ?`,
+    [detailsJson, id]
+  );
 };
 
 export const getTrainings = async (days?: number): Promise<Training[]> => {
@@ -1759,6 +1863,13 @@ export const getDetectedWeightSources = async (days: number = 30): Promise<Detec
      ORDER BY MAX(date) DESC`,
     [safeDays]
   );
+};
+
+export const deleteAllTrainings = async (): Promise<number> => {
+  const database = await openDatabase();
+  const countResult = await database.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM trainings');
+  await database.runAsync('DELETE FROM trainings');
+  return countResult?.count || 0;
 };
 
 export default {

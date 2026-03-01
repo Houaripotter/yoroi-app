@@ -76,6 +76,9 @@ interface HomeTabViewProps {
 
   // Avatar refresh
   refreshTrigger?: number;
+
+  // Notifications
+  unreadNotifCount?: number;
 }
 
 // Default page IDs - titles are loaded dynamically via i18n
@@ -113,6 +116,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
   onAddWeight,
   onAddWater,
   refreshTrigger = 0,
+  unreadNotifCount = 0,
 }) => {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
@@ -287,6 +291,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
             muscleMass={muscleMass}
             waterPercentage={waterPercentage}
             heightCm={heightCm}
+            unreadNotifCount={unreadNotifCount}
           />
         );
       default:

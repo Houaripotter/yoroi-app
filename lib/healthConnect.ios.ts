@@ -11,6 +11,7 @@ import logger from '@/lib/security/logger';
 import { saveHealthDataBatch, saveHealthData, addWeight, addTraining, updateTrainingDetails } from './database';
 import type { HealthDataRecord, Training } from './database';
 import { addSleepEntryFromHealthKit } from './sleepService';
+import { saveNotification } from './notificationHistoryService';
 
 // ============================================
 // MODE DÉMO - Active les fausses données
@@ -84,6 +85,9 @@ export interface WorkoutDetails {
   weatherTemp?: number;       // Celsius
   weatherHumidity?: number;   // 0-100%
   weatherCondition?: string;
+  // Qualite de l'air (index 1-6 si dispo via HealthKit metadata)
+  airQualityIndex?: number;      // 1=Bon, 2=Modere, 3=Mauvais pour groupes sensibles, 4=Mauvais, 5=Tres mauvais, 6=Dangereux
+  airQualityCategory?: string;   // Texte descriptif
   // Elevation
   elevationAscended?: number;  // metres
   elevationDescended?: number; // metres
@@ -244,15 +248,38 @@ export const SOURCE_NAME_MAP: Record<string, string> = {
   // Fitbit
   'Fitbit': 'fitbit', 'com.fitbit.FitbitMobile': 'fitbit',
   // Xiaomi
-  'Mi Fitness': 'xiaomi', 'Zepp Life': 'xiaomi', 'Mi Fit': 'xiaomi',
+  'Mi Fitness': 'xiaomi', 'Mi Fit': 'xiaomi',
+  'com.xiaomi.wearable': 'xiaomi', 'com.xiaomi.hm.health': 'xiaomi',
   // Renpho / Eufy / Omron
   'Renpho': 'renpho', 'RENPHO': 'renpho',
   'EufyLife': 'eufy', 'eufy Life': 'eufy',
   'OMRON connect': 'omron', 'Omron': 'omron',
   // Suunto
-  'Suunto': 'suunto',
+  'Suunto': 'suunto', 'com.suunto.app': 'suunto', 'Suunto App': 'suunto',
   // Oura
-  'Oura': 'oura',
+  'Oura': 'oura', 'com.ouraring.oura': 'oura',
+  // COROS
+  'COROS': 'coros', 'com.coros.coros': 'coros', 'COROS PACE': 'coros',
+  'COROS VERTIX': 'coros', 'COROS APEX': 'coros',
+  // Amazfit / Zepp
+  'Amazfit': 'amazfit', 'Zepp': 'amazfit', 'Zepp Life': 'amazfit',
+  'com.huami.watch.hmwatchmanager': 'amazfit', 'Zepp App': 'amazfit',
+  // Huawei
+  'Huawei Health': 'huawei', 'com.huawei.health': 'huawei', 'HUAWEI Health': 'huawei',
+  'Huawei': 'huawei',
+  // Wahoo
+  'Wahoo': 'wahoo', 'Wahoo Fitness': 'wahoo', 'ELEMNT': 'wahoo',
+  'com.wahoofitness.fitness': 'wahoo',
+  // Strava
+  'Strava': 'strava', 'com.strava': 'strava',
+  // Peloton
+  'Peloton': 'peloton', 'com.onepeloton.callisto': 'peloton',
+  // MyFitnessPal
+  'MyFitnessPal': 'myfitnesspal', 'com.myfitnesspal.mfp': 'myfitnesspal',
+  // Samsung Galaxy Watch (noms de montres specifiques)
+  'Galaxy Watch': 'samsung', 'Galaxy Watch4': 'samsung', 'Galaxy Watch5': 'samsung',
+  'Galaxy Watch6': 'samsung', 'Galaxy Watch Ultra': 'samsung',
+  'Samsung Galaxy Watch': 'samsung',
   // Yoroi manual
   'Yoroi': 'manual', 'YOROI': 'manual',
 };
@@ -270,6 +297,18 @@ export const normalizeSourceName = (rawSource: string): string => {
   for (const [key, value] of Object.entries(SOURCE_NAME_MAP)) {
     if (lower.includes(key.toLowerCase())) return value;
   }
+  // Fallback patterns pour marques connues (avant le catch-all 'watch')
+  if (lower.includes('garmin')) return 'garmin';
+  if (lower.includes('coros')) return 'coros';
+  if (lower.includes('suunto')) return 'suunto';
+  if (lower.includes('polar')) return 'polar';
+  if (lower.includes('amazfit') || lower.includes('zepp') || lower.includes('huami')) return 'amazfit';
+  if (lower.includes('huawei')) return 'huawei';
+  if (lower.includes('samsung') || lower.includes('galaxy')) return 'samsung';
+  if (lower.includes('fitbit')) return 'fitbit';
+  if (lower.includes('wahoo') || lower.includes('elemnt')) return 'wahoo';
+  if (lower.includes('whoop')) return 'whoop';
+  if (lower.includes('strava')) return 'strava';
   // Apple Watch variants (nom personnalisé)
   if (lower.includes('apple watch') || lower.includes('watch')) return 'apple_watch';
   if (lower.includes('iphone')) return 'iphone';
@@ -299,10 +338,17 @@ export const SOURCE_PRIORITY: Record<string, number> = {
   omron: 9,
   suunto: 9,
   oura: 9,
+  coros: 9,
+  wahoo: 9,
+  huawei: 8,
+  amazfit: 8,
   apple_watch: 8,
   samsung: 8,
   fitbit: 8,
   xiaomi: 7,
+  strava: 6,
+  peloton: 6,
+  myfitnesspal: 5,
   iphone: 5,
   manual: 3,
   apple_health: 1,
@@ -350,8 +396,8 @@ const STORAGE_KEYS = {
 const WORKOUT_TYPE_MAP: Record<string, string> = {
   // ═══ COURSE ═══
   'HKWorkoutActivityTypeRunning': 'running', 'running': 'running',
-  // ═══ TRAIL / RANDONNEE ═══
-  'HKWorkoutActivityTypeHiking': 'trail', 'hiking': 'trail',
+  // ═══ RANDONNEE ═══
+  'HKWorkoutActivityTypeHiking': 'randonnee', 'hiking': 'randonnee',
   // ═══ MARCHE ═══
   'HKWorkoutActivityTypeWalking': 'marche', 'walking': 'marche',
   // ═══ MUSCULATION ═══
@@ -360,17 +406,19 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
   'HKWorkoutActivityTypeCoreTraining': 'musculation',
   'traditionalStrengthTraining': 'musculation', 'functionalStrengthTraining': 'musculation',
   'coreTraining': 'musculation',
-  // ═══ HYROX / CROSSTRAINING / HIIT ═══
-  'HKWorkoutActivityTypeCrossTraining': 'hyrox',
-  'HKWorkoutActivityTypeHighIntensityIntervalTraining': 'hyrox',
-  'crossTraining': 'hyrox', 'highIntensityIntervalTraining': 'hyrox',
+  // ═══ CROSSTRAINING / HIIT ═══
+  'HKWorkoutActivityTypeCrossTraining': 'crossfit',
+  'HKWorkoutActivityTypeHighIntensityIntervalTraining': 'hiit',
+  'crossTraining': 'crossfit', 'highIntensityIntervalTraining': 'hiit',
   // ═══ SPORTS DE COMBAT ═══
   'HKWorkoutActivityTypeMartialArts': 'jjb', 'martialArts': 'jjb',
   'HKWorkoutActivityTypeBoxing': 'boxe', 'boxing': 'boxe',
-  'HKWorkoutActivityTypeKickboxing': 'boxe', 'kickboxing': 'boxe',
-  'HKWorkoutActivityTypeWrestling': 'jjb', 'wrestling': 'jjb',
+  'HKWorkoutActivityTypeKickboxing': 'kickboxing', 'kickboxing': 'kickboxing',
+  'HKWorkoutActivityTypeWrestling': 'lutte', 'wrestling': 'lutte',
+  'HKWorkoutActivityTypeTaiChi': 'tai_chi', 'taiChi': 'tai_chi',
+  // ═══ CARDIO MIXTE ═══
   'HKWorkoutActivityTypeMixedCardio': 'cardio', 'mixedCardio': 'cardio',
-  'HKWorkoutActivityTypeTaiChi': 'yoga', 'taiChi': 'yoga',
+  'HKWorkoutActivityTypeMixedMetabolicCardioTraining': 'cardio', 'mixedMetabolicCardioTraining': 'cardio',
   // ═══ VELO ═══
   'HKWorkoutActivityTypeCycling': 'velo', 'cycling': 'velo',
   'HKWorkoutActivityTypeHandCycling': 'velo', 'handCycling': 'velo',
@@ -379,9 +427,9 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
   // ═══ YOGA / FLEXIBILITE / PILATES ═══
   'HKWorkoutActivityTypeYoga': 'yoga', 'yoga': 'yoga',
   'HKWorkoutActivityTypePilates': 'pilates', 'pilates': 'pilates',
-  'HKWorkoutActivityTypeFlexibility': 'yoga', 'flexibility': 'yoga',
+  'HKWorkoutActivityTypeFlexibility': 'stretching', 'flexibility': 'stretching',
   'HKWorkoutActivityTypeMindAndBody': 'yoga', 'mindAndBody': 'yoga',
-  'HKWorkoutActivityTypeCooldown': 'yoga', 'cooldown': 'yoga',
+  'HKWorkoutActivityTypeCooldown': 'recuperation', 'cooldown': 'recuperation',
   // ═══ FOOTBALL ═══
   'HKWorkoutActivityTypeSoccer': 'football', 'soccer': 'football',
   'HKWorkoutActivityTypeAmericanFootball': 'football_us', 'americanFootball': 'football_us',
@@ -392,21 +440,23 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
   'HKWorkoutActivityTypeTennis': 'tennis', 'tennis': 'tennis',
   'HKWorkoutActivityTypeBadminton': 'badminton', 'badminton': 'badminton',
   'HKWorkoutActivityTypeTableTennis': 'tennis_de_table', 'tableTennis': 'tennis_de_table',
-  'HKWorkoutActivityTypeRacquetball': 'tennis', 'racquetball': 'tennis',
+  'HKWorkoutActivityTypeRacquetball': 'racquetball', 'racquetball': 'racquetball',
   'HKWorkoutActivityTypeSquash': 'squash', 'squash': 'squash',
-  'HKWorkoutActivityTypePickleball': 'tennis', 'pickleball': 'tennis',
+  'HKWorkoutActivityTypePickleball': 'pickleball', 'pickleball': 'pickleball',
   // ═══ CARDIO / ELLIPTIQUE / STEPPER ═══
-  'HKWorkoutActivityTypeElliptical': 'cardio', 'elliptical': 'cardio',
-  'HKWorkoutActivityTypeStairClimbing': 'cardio', 'stairClimbing': 'cardio',
-  'HKWorkoutActivityTypeStepTraining': 'cardio', 'stepTraining': 'cardio',
-  'HKWorkoutActivityTypeFitnessGaming': 'cardio', 'fitnessGaming': 'cardio',
-  'HKWorkoutActivityTypeJumpRope': 'cardio', 'jumpRope': 'cardio',
+  'HKWorkoutActivityTypeElliptical': 'elliptique', 'elliptical': 'elliptique',
+  'HKWorkoutActivityTypeStairClimbing': 'escalier', 'stairClimbing': 'escalier',
+  'HKWorkoutActivityTypeStepTraining': 'step', 'stepTraining': 'step',
+  'HKWorkoutActivityTypeFitnessGaming': 'fitness_gaming', 'fitnessGaming': 'fitness_gaming',
+  'HKWorkoutActivityTypeJumpRope': 'corde_a_sauter', 'jumpRope': 'corde_a_sauter',
+  'HKWorkoutActivityTypeStairs': 'escalier', 'stairs': 'escalier',
   // ═══ RAMEUR ═══
   'HKWorkoutActivityTypeRowing': 'rameur', 'rowing': 'rameur',
   // ═══ DANSE ═══
   'HKWorkoutActivityTypeDance': 'danse', 'dance': 'danse',
   'HKWorkoutActivityTypeSocialDance': 'danse', 'socialDance': 'danse',
   'HKWorkoutActivityTypeCardioDance': 'danse', 'cardioDance': 'danse',
+  'HKWorkoutActivityTypeDanceInspiredTraining': 'danse', 'danceInspiredTraining': 'danse',
   // ═══ SKI / SPORTS D'HIVER ═══
   'HKWorkoutActivityTypeDownhillSkiing': 'ski', 'downhillSkiing': 'ski',
   'HKWorkoutActivityTypeCrossCountrySkiing': 'ski_fond', 'crossCountrySkiing': 'ski_fond',
@@ -418,9 +468,10 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
   'HKWorkoutActivityTypeSurfingSports': 'surf', 'surfingSports': 'surf',
   'HKWorkoutActivityTypePaddleSports': 'paddle', 'paddleSports': 'paddle',
   'HKWorkoutActivityTypeSailing': 'voile', 'sailing': 'voile',
-  'HKWorkoutActivityTypeWaterFitness': 'natation', 'waterFitness': 'natation',
+  'HKWorkoutActivityTypeWaterFitness': 'aquagym', 'waterFitness': 'aquagym',
   'HKWorkoutActivityTypeWaterPolo': 'water_polo', 'waterPolo': 'water_polo',
-  'HKWorkoutActivityTypeWaterSports': 'natation', 'waterSports': 'natation',
+  'HKWorkoutActivityTypeWaterSports': 'sports_nautiques', 'waterSports': 'sports_nautiques',
+  'HKWorkoutActivityTypeUnderwaterDiving': 'plongee', 'underwaterDiving': 'plongee',
   // ═══ SPORTS D'EQUIPE ═══
   'HKWorkoutActivityTypeVolleyball': 'volleyball', 'volleyball': 'volleyball',
   'HKWorkoutActivityTypeHandball': 'handball', 'handball': 'handball',
@@ -429,7 +480,7 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
   'HKWorkoutActivityTypeHockey': 'hockey', 'hockey': 'hockey',
   'HKWorkoutActivityTypeCricket': 'cricket', 'cricket': 'cricket',
   'HKWorkoutActivityTypeBaseball': 'baseball', 'baseball': 'baseball',
-  'HKWorkoutActivityTypeSoftball': 'baseball', 'softball': 'baseball',
+  'HKWorkoutActivityTypeSoftball': 'softball', 'softball': 'softball',
   // ═══ GOLF ═══
   'HKWorkoutActivityTypeGolf': 'golf', 'golf': 'golf',
   // ═══ ESCALADE ═══
@@ -446,47 +497,119 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
   'HKWorkoutActivityTypeArchery': 'tir_arc', 'archery': 'tir_arc',
   // ═══ BOWLING ═══
   'HKWorkoutActivityTypeBowling': 'bowling', 'bowling': 'bowling',
+  // ═══ DISC SPORTS ═══
+  'HKWorkoutActivityTypeDiscSports': 'disc_golf', 'discSports': 'disc_golf',
   // ═══ PREPARATION / RECOVERY ═══
   'HKWorkoutActivityTypePreparationAndRecovery': 'recuperation',
   'preparationAndRecovery': 'recuperation',
+  // ═══ BARRE ═══
+  'HKWorkoutActivityTypeBarre': 'barre', 'barre': 'barre',
   // ═══ MULTI-SPORT / TRIATHLON ═══
   'HKWorkoutActivityTypeSwimBikeRun': 'triathlon', 'swimBikeRun': 'triathlon',
-  'HKWorkoutActivityTypeTransition': 'triathlon', 'transition': 'triathlon',
+  'HKWorkoutActivityTypeTransition': 'transition', 'transition': 'transition',
   // ═══ WHEELCHAIR ═══
-  'HKWorkoutActivityTypeWheelchairWalkPace': 'marche',
-  'HKWorkoutActivityTypeWheelchairRunPace': 'running',
+  'HKWorkoutActivityTypeWheelchairWalkPace': 'marche', 'wheelchairWalkPace': 'marche',
+  'HKWorkoutActivityTypeWheelchairRunPace': 'running', 'wheelchairRunPace': 'running',
   // ═══ OTHER / CATCH-ALL ═══
   'HKWorkoutActivityTypeOther': 'autre', 'other': 'autre',
-  'HKWorkoutActivityTypePlay': 'autre', 'play': 'autre',
-  'HKWorkoutActivityTypeHunting': 'autre', 'hunting': 'autre',
-  'HKWorkoutActivityTypeFishing': 'autre', 'fishing': 'autre',
-  'HKWorkoutActivityTypeBarre': 'cardio', 'barre': 'cardio',
+  'HKWorkoutActivityTypePlay': 'jeu', 'play': 'jeu',
+  'HKWorkoutActivityTypeHunting': 'chasse', 'hunting': 'chasse',
+  'HKWorkoutActivityTypeFishing': 'peche', 'fishing': 'peche',
 };
 
-// Mapping NUMERIQUE: HKWorkoutActivityType enum values (pour les cas ou Apple renvoie un nombre)
+// ════════════════════════════════════════════════════════════════
+// Mapping NUMERIQUE: HKWorkoutActivityType enum values OFFICIELS
+// Source: Apple Developer Documentation - HKWorkoutActivityType
+// https://developer.apple.com/documentation/healthkit/hkworkoutactivitytype
+// ════════════════════════════════════════════════════════════════
 const WORKOUT_TYPE_NUMERIC_MAP: Record<number, string> = {
-  1: 'football_us', 2: 'tir_arc', 3: 'football', 4: 'badminton',
-  5: 'baseball', 6: 'basketball', 7: 'bowling', 8: 'boxe',
-  9: 'escalade', 10: 'cricket', 11: 'running', 12: 'velo',
-  13: 'danse', 16: 'escrime', 17: 'autre', 18: 'musculation',
-  19: 'golf', 20: 'gymnastique', 21: 'handball', 22: 'trail',
-  23: 'hockey', 24: 'equitation', 25: 'hyrox',
-  26: 'lacrosse', 27: 'jjb', 28: 'paddle', 29: 'autre',
-  30: 'pilates', 31: 'recuperation', 32: 'tennis',
-  33: 'rameur', 34: 'rugby', 35: 'running', 36: 'voile',
-  37: 'patinage', 38: 'ski_fond', 39: 'ski',
-  40: 'snowboard', 41: 'football', 42: 'baseball',
-  43: 'squash', 44: 'cardio', 45: 'natation',
-  46: 'tennis_de_table', 47: 'tennis', 48: 'athletisme',
-  49: 'musculation', 50: 'volleyball', 51: 'marche',
-  52: 'ski_fond', // crossCountrySkiing - CEST CA QUI CAUSAIT "Apple Health - 52"
-  53: 'natation', 56: 'cardio', 57: 'yoga',
-  58: 'cardio', 59: 'autre', 62: 'cardio',
-  63: 'hyrox', 70: 'escalade', 73: 'triathlon',
-  74: 'triathlon', 75: 'jjb', 76: 'boxe',
-  77: 'danse', 78: 'danse', 79: 'yoga', 80: 'cardio',
-  82: 'tennis', 83: 'cardio', 84: 'yoga',
-  3000: 'autre', // Other
+  // Valeurs officielles Apple HKWorkoutActivityType
+  1: 'football_us',        // AmericanFootball
+  2: 'tir_arc',            // Archery
+  3: 'football',           // AustralianFootball
+  4: 'badminton',          // Badminton
+  5: 'baseball',           // Baseball
+  6: 'basketball',         // Basketball
+  7: 'bowling',            // Bowling
+  8: 'boxe',               // Boxing
+  9: 'escalade',           // Climbing
+  10: 'cricket',           // Cricket
+  11: 'crossfit',          // CrossTraining
+  12: 'curling',           // Curling
+  13: 'velo',              // Cycling
+  14: 'danse',             // Dance
+  15: 'danse',             // DanceInspiredTraining (deprecated)
+  16: 'elliptique',        // Elliptical
+  17: 'equitation',        // EquestrianSports
+  18: 'escrime',           // Fencing
+  19: 'peche',             // Fishing
+  20: 'musculation',       // FunctionalStrengthTraining
+  21: 'golf',              // Golf
+  22: 'gymnastique',       // Gymnastics
+  23: 'handball',          // Handball
+  24: 'randonnee',         // Hiking *** C'ETAIT LE BUG ***
+  25: 'hockey',            // Hockey
+  26: 'chasse',            // Hunting
+  27: 'lacrosse',          // Lacrosse
+  28: 'jjb',               // MartialArts
+  29: 'yoga',              // MindAndBody
+  30: 'cardio',            // MixedMetabolicCardioTraining
+  31: 'paddle',            // PaddleSports
+  32: 'jeu',               // Play
+  33: 'recuperation',      // PreparationAndRecovery
+  34: 'racquetball',       // Racquetball
+  35: 'rameur',            // Rowing
+  36: 'rugby',             // Rugby
+  37: 'running',           // Running
+  38: 'voile',             // Sailing
+  39: 'patinage',          // SkatingSports
+  40: 'ski',               // SnowSports
+  41: 'football',          // Soccer
+  42: 'softball',          // Softball
+  43: 'squash',            // Squash
+  44: 'escalier',          // StairClimbing
+  45: 'surf',              // SurfingSports
+  46: 'natation',          // Swimming
+  47: 'tennis_de_table',   // TableTennis
+  48: 'tennis',            // Tennis
+  49: 'athletisme',        // TrackAndField
+  50: 'musculation',       // TraditionalStrengthTraining
+  51: 'volleyball',        // Volleyball
+  52: 'marche',            // Walking
+  53: 'aquagym',           // WaterFitness
+  54: 'water_polo',        // WaterPolo
+  55: 'sports_nautiques',  // WaterSports
+  56: 'lutte',             // Wrestling
+  57: 'yoga',              // Yoga
+  // iOS 10+
+  58: 'barre',             // Barre
+  59: 'musculation',       // CoreTraining
+  60: 'ski_fond',          // CrossCountrySkiing
+  61: 'ski',               // DownhillSkiing
+  62: 'stretching',        // Flexibility
+  63: 'hiit',              // HighIntensityIntervalTraining
+  64: 'corde_a_sauter',    // JumpRope
+  65: 'kickboxing',        // Kickboxing
+  66: 'pilates',           // Pilates
+  67: 'snowboard',         // Snowboarding
+  68: 'escalier',          // Stairs
+  69: 'step',              // StepTraining
+  70: 'marche',            // WheelchairWalkPace
+  71: 'running',           // WheelchairRunPace
+  72: 'tai_chi',           // TaiChi
+  73: 'cardio',            // MixedCardio
+  74: 'velo',              // HandCycling
+  75: 'disc_golf',         // DiscSports
+  76: 'fitness_gaming',    // FitnessGaming
+  77: 'danse',             // CardioDance
+  78: 'danse',             // SocialDance
+  79: 'pickleball',        // Pickleball
+  80: 'recuperation',      // Cooldown
+  // 81: non defini par Apple
+  82: 'triathlon',         // SwimBikeRun
+  83: 'transition',        // Transition
+  84: 'plongee',           // UnderwaterDiving
+  3000: 'autre',           // Other
 };
 
 /**
@@ -514,25 +637,54 @@ const mapWorkoutType = (activityType: string): string => {
 const getWorkoutLabel = (activityType: string): string => {
   const mapped = mapWorkoutType(activityType);
   const labels: Record<string, string> = {
-    running: 'Course', trail: 'Trail', marche: 'Marche',
-    musculation: 'Musculation', hyrox: 'HYROX', jjb: 'JJB',
-    boxe: 'Boxe', velo: 'Velo', natation: 'Natation',
-    yoga: 'Yoga', pilates: 'Pilates', football: 'Football',
-    football_us: 'Football US', basketball: 'Basketball',
+    // Course & marche
+    running: 'Course', randonnee: 'Randonnee', marche: 'Marche', trail: 'Trail',
+    // Musculation & fitness
+    musculation: 'Musculation', crossfit: 'CrossFit', hiit: 'HIIT', hyrox: 'HYROX',
+    barre: 'Barre', stretching: 'Stretching', step: 'Step',
+    // Combat
+    jjb: 'JJB', boxe: 'Boxe', kickboxing: 'Kickboxing', lutte: 'Lutte',
+    tai_chi: 'Tai Chi',
+    // Velo & natation
+    velo: 'Velo', natation: 'Natation', aquagym: 'Aquagym',
+    // Yoga / bien-etre
+    yoga: 'Yoga', pilates: 'Pilates',
+    // Football
+    football: 'Football', football_us: 'Football US',
+    // Basketball
+    basketball: 'Basketball',
+    // Raquettes
     tennis: 'Tennis', tennis_de_table: 'Tennis de table',
     badminton: 'Badminton', squash: 'Squash',
-    cardio: 'Cardio', danse: 'Danse', rameur: 'Rameur',
+    racquetball: 'Racquetball', pickleball: 'Pickleball',
+    // Cardio
+    cardio: 'Cardio', elliptique: 'Elliptique', escalier: 'Escalier',
+    corde_a_sauter: 'Corde a sauter', fitness_gaming: 'Fitness Gaming',
+    // Rameur
+    rameur: 'Rameur',
+    // Danse
+    danse: 'Danse',
+    // Hiver
     ski: 'Ski', ski_fond: 'Ski de fond', snowboard: 'Snowboard',
-    patinage: 'Patinage', surf: 'Surf', paddle: 'Paddle',
-    voile: 'Voile', water_polo: 'Water-polo',
+    patinage: 'Patinage', curling: 'Curling',
+    // Nautique
+    surf: 'Surf', paddle: 'Paddle', voile: 'Voile',
+    water_polo: 'Water-polo', sports_nautiques: 'Sports nautiques',
+    plongee: 'Plongee',
+    // Equipe
     volleyball: 'Volleyball', handball: 'Handball', rugby: 'Rugby',
     lacrosse: 'Lacrosse', hockey: 'Hockey', cricket: 'Cricket',
-    baseball: 'Baseball', golf: 'Golf', escalade: 'Escalade',
-    equitation: 'Equitation', escrime: 'Escrime',
-    gymnastique: 'Gymnastique', athletisme: 'Athletisme',
-    tir_arc: 'Tir a l\'arc', bowling: 'Bowling',
+    baseball: 'Baseball', softball: 'Softball',
+    // Individuel
+    golf: 'Golf', escalade: 'Escalade', equitation: 'Equitation',
+    escrime: 'Escrime', gymnastique: 'Gymnastique',
+    athletisme: 'Athletisme', tir_arc: 'Tir a l\'arc',
+    bowling: 'Bowling', disc_golf: 'Disc Golf',
+    // Divers
     recuperation: 'Recuperation', triathlon: 'Triathlon',
-    curling: 'Curling', autre: 'Seance',
+    transition: 'Transition',
+    jeu: 'Jeu', chasse: 'Chasse', peche: 'Peche',
+    autre: 'Seance',
   };
   return labels[mapped] || 'Seance';
 };
@@ -711,6 +863,9 @@ class HealthConnectService {
         // Activité
         'HKQuantityTypeIdentifierStepCount',
         'HKQuantityTypeIdentifierDistanceWalkingRunning',
+        'HKQuantityTypeIdentifierAppleExerciseTime',
+        'HKQuantityTypeIdentifierAppleStandTime',
+        'HKCategoryTypeIdentifierAppleStandHour',
         // Sommeil
         'HKCategoryTypeIdentifierSleepAnalysis',
         // Hydratation
@@ -1206,26 +1361,38 @@ class HealthConnectService {
         const startTime = finalSamples[0].startDate;
         const endTime = finalSamples[finalSamples.length - 1].endDate;
 
+        // Detecter si on a des phases detaillees (value=3,4,5) pour eviter le double comptage
+        // Apple Health envoie soit value=1 (Asleep = total), soit value=3+4+5 (phases detaillees)
+        // Si les deux existent, value=1 est un duplicat qu'il faut ignorer
+        const hasDetailedPhases = finalSamples.some((s: any) => s.value === 3 || s.value === 4 || s.value === 5);
+
         finalSamples.forEach((s: any) => {
           const duration = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000;
           if (duration <= 0) return;
 
           // HKCategoryValueSleepAnalysis: 0=InBed, 1=Asleep, 2=Awake, 3=Core, 4=Deep, 5=REM
-          // IMPORTANT: On ne compte que le sommeil REEL (pas InBed)
           switch (s.value) {
             case 0:
               inBedMinutes += duration;
               break;
-            case 1: // Asleep
-            case 3: // Core
-            case 4: // Deep
-            case 5: // REM
-              totalMinutes += duration;
-              if (s.value === 3) coreMinutes += duration;
-              if (s.value === 4) deepMinutes += duration;
-              if (s.value === 5) remMinutes += duration;
+            case 1: // Asleep (total global - ignorer si on a les phases detaillees)
+              if (!hasDetailedPhases) {
+                totalMinutes += duration;
+              }
               break;
-            case 2:
+            case 3: // Core
+              coreMinutes += duration;
+              totalMinutes += duration;
+              break;
+            case 4: // Deep
+              deepMinutes += duration;
+              totalMinutes += duration;
+              break;
+            case 5: // REM
+              remMinutes += duration;
+              totalMinutes += duration;
+              break;
+            case 2: // Awake
               awakeMinutes += duration;
               break;
           }
@@ -1469,6 +1636,62 @@ class HealthConnectService {
   }
 
   // ============================================
+  // EXERCICE & ACTIVITE (Anneaux Apple)
+  // ============================================
+
+  async getTodayExerciseMinutes(): Promise<number | null> {
+    return this.queryHealthKit(async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const queryOptions = this.createQueryOptions(today, new Date());
+      if (!queryOptions) return null;
+
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierAppleExerciseTime', queryOptions);
+      if (samples && samples.length > 0) {
+        const total = samples.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0);
+        return Math.round(total);
+      }
+      return null;
+    }, 'exerciseMinutes');
+  }
+
+  async getTodayStandHours(): Promise<number | null> {
+    return this.queryHealthKit(async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const queryOptions = this.createQueryOptions(today, new Date());
+      if (!queryOptions) return null;
+
+      const samples = await HealthKit.queryQuantitySamples('HKCategoryTypeIdentifierAppleStandHour', queryOptions);
+      if (samples && samples.length > 0) {
+        // Each sample = 1 hour stood
+        return samples.length;
+      }
+      return null;
+    }, 'standHours');
+  }
+
+  async getTodayActivitySummary(): Promise<{
+    activeCalories: number | null;
+    exerciseMinutes: number | null;
+    standHours: number | null;
+    goals: { move: number; exercise: number; stand: number };
+  }> {
+    const [calories, exerciseMinutes, standHours] = await Promise.allSettled([
+      this.getTodayCalories(),
+      this.getTodayExerciseMinutes(),
+      this.getTodayStandHours(),
+    ]);
+
+    return {
+      activeCalories: calories.status === 'fulfilled' ? (calories.value?.active ?? null) : null,
+      exerciseMinutes: exerciseMinutes.status === 'fulfilled' ? exerciseMinutes.value : null,
+      standHours: standHours.status === 'fulfilled' ? standHours.value : null,
+      goals: { move: 500, exercise: 30, stand: 12 },
+    };
+  }
+
+  // ============================================
   // MÉTRIQUES AVANCÉES
   // ============================================
 
@@ -1659,7 +1882,7 @@ class HealthConnectService {
     return Math.abs(hash).toString(36).substring(0, 16);
   }
 
-  private async getIOSWorkouts(days: number = 730): Promise<HealthData['workouts'] | null> {
+  private async getIOSWorkouts(days: number = 1825): Promise<HealthData['workouts'] | null> {
     return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
       const samples = await HealthKit.queryWorkoutSamples({
@@ -1677,6 +1900,7 @@ class HealthConnectService {
 
           return {
             id: deterministicId,
+            hkUUID: workout.uuid || undefined, // UUID brut HealthKit (pour getWorkoutDetailsByUUID)
             activityType: workout.workoutActivityType || 'Unknown',
             startDate: workout.startDate,
             endDate: workout.endDate,
@@ -1685,6 +1909,7 @@ class HealthConnectService {
             calories: workout.totalEnergyBurned ? Math.round(workout.totalEnergyBurned) : undefined,
             averageHeartRate: workout.averageHeartRate ? Math.round(workout.averageHeartRate) : undefined,
             maxHeartRate: workout.maxHeartRate ? Math.round(workout.maxHeartRate) : undefined,
+            source: workout.sourceRevision?.source?.name || undefined,
           };
         });
       }
@@ -1697,25 +1922,139 @@ class HealthConnectService {
   }
 
   /**
-   * Recuperer les details enrichis d'un workout via son UUID HealthKit.
+   * Recuperer les details enrichis d'un workout depuis HealthKit.
+   * Strategie: requeter le JOUR EXACT du workout (rapide), puis matcher par heure/duree.
    * Inclut: route GPS, FC detaillee, splits, meteo, elevation.
    */
-  async getWorkoutDetailsByUUID(uuid: string): Promise<WorkoutDetails | null> {
-    if (!HealthKit || isRunningInExpoGo || !uuid) return null;
+  async getWorkoutDetailsByUUID(
+    uuid: string,
+    fallbackStartDate?: string,
+    fallbackDurationMin?: number,
+  ): Promise<WorkoutDetails | null> {
+    if (!HealthKit || isRunningInExpoGo) return null;
 
     try {
-      // Requeter le workout par UUID
-      const samples = await HealthKit.queryWorkoutSamples({
-        filter: { date: { startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000), endDate: new Date() } },
-        limit: 50,
-        ascending: false,
-      });
+      // === STRATEGIE 1: Requeter le jour exact du workout (rapide, ~1-10 resultats) ===
+      let samples: any[] = [];
 
-      if (!samples || samples.length === 0) return null;
+      if (fallbackStartDate) {
+        const targetDate = new Date(fallbackStartDate);
+        if (!isNaN(targetDate.getTime())) {
+          // Fenetre = jour entier (00:00 a 23:59)
+          const dayStart = new Date(targetDate);
+          dayStart.setHours(0, 0, 0, 0);
+          const dayEnd = new Date(targetDate);
+          dayEnd.setHours(23, 59, 59, 999);
 
-      const workout = samples.find((w: any) => w.uuid === uuid);
+          try {
+            samples = await HealthKit.queryWorkoutSamples({
+              filter: { date: { startDate: dayStart, endDate: dayEnd } },
+              limit: 50,
+              ascending: false,
+            }) || [];
+            logger.info(`[HealthKit] Query jour exact (${dayStart.toISOString().split('T')[0]}): ${samples.length} workouts`);
+          } catch (e) {
+            logger.warn('[HealthKit] Erreur query jour exact:', e);
+          }
+        }
+      }
+
+      // === STRATEGIE 2: Si pas de resultats, requeter 7 jours autour ===
+      if (samples.length === 0 && fallbackStartDate) {
+        const targetDate = new Date(fallbackStartDate);
+        if (!isNaN(targetDate.getTime())) {
+          const weekStart = new Date(targetDate.getTime() - 3 * 24 * 60 * 60 * 1000);
+          const weekEnd = new Date(targetDate.getTime() + 3 * 24 * 60 * 60 * 1000);
+          try {
+            samples = await HealthKit.queryWorkoutSamples({
+              filter: { date: { startDate: weekStart, endDate: weekEnd } },
+              limit: 100,
+              ascending: false,
+            }) || [];
+            logger.info(`[HealthKit] Query semaine: ${samples.length} workouts`);
+          } catch (e) {
+            logger.warn('[HealthKit] Erreur query semaine:', e);
+          }
+        }
+      }
+
+      // === STRATEGIE 3: Dernier recours - 90 derniers jours ===
+      if (samples.length === 0) {
+        try {
+          samples = await HealthKit.queryWorkoutSamples({
+            filter: { date: { startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), endDate: new Date() } },
+            limit: 500,
+            ascending: false,
+          }) || [];
+          logger.info(`[HealthKit] Query 90j fallback: ${samples.length} workouts`);
+        } catch (e) {
+          logger.warn('[HealthKit] Erreur query 90j:', e);
+        }
+      }
+
+      if (!samples || samples.length === 0) {
+        logger.warn('[HealthKit] Aucun workout trouve dans HealthKit');
+        return null;
+      }
+
+      // === MATCHING: trouver le bon workout ===
+      let workout: any = null;
+
+      // 1. UUID exact
+      if (uuid && uuid !== 'fallback') {
+        workout = samples.find((w: any) => w.uuid === uuid || w.id === uuid);
+        if (workout) logger.info('[HealthKit] Workout trouve par UUID exact');
+      }
+
+      // 2. Par heure de debut (tolerance 5 min) - LE PLUS FIABLE
+      if (!workout && fallbackStartDate) {
+        const targetMs = new Date(fallbackStartDate).getTime();
+        if (!isNaN(targetMs)) {
+          // Si on a la duree, on peut affiner le match
+          const candidates = samples.filter((w: any) => {
+            const wStart = new Date(w.startDate).getTime();
+            return Math.abs(wStart - targetMs) < 300000; // 5 min tolerance
+          });
+
+          if (candidates.length === 1) {
+            workout = candidates[0];
+          } else if (candidates.length > 1 && fallbackDurationMin) {
+            // Plusieurs candidats -> matcher aussi par duree
+            workout = candidates.find((w: any) => {
+              const wDur = (new Date(w.endDate).getTime() - new Date(w.startDate).getTime()) / 60000;
+              return Math.abs(wDur - fallbackDurationMin) < 5; // 5 min tolerance duree
+            }) || candidates[0]; // Sinon prendre le premier
+          } else if (candidates.length > 1) {
+            workout = candidates[0];
+          }
+
+          if (workout) logger.info(`[HealthKit] Workout trouve par date/heure (parmi ${candidates.length} candidats)`);
+        }
+      }
+
+      // 3. Dernier recours: le workout le plus proche en temps
+      if (!workout && fallbackStartDate) {
+        const targetMs = new Date(fallbackStartDate).getTime();
+        if (!isNaN(targetMs)) {
+          let bestDiff = Infinity;
+          for (const w of samples) {
+            const diff = Math.abs(new Date(w.startDate).getTime() - targetMs);
+            if (diff < bestDiff && diff < 3600000) { // Max 1h d'ecart
+              bestDiff = diff;
+              workout = w;
+            }
+          }
+          if (workout) logger.info(`[HealthKit] Workout trouve par proximite temporelle (${Math.round(bestDiff/1000)}s d'ecart)`);
+        }
+      }
+
       if (!workout) {
-        logger.warn('[HealthKit] Workout non trouve pour UUID:', uuid);
+        logger.warn('[HealthKit] Workout non trouve. UUID:', uuid, 'date:', fallbackStartDate, 'samples:', samples.length);
+        if (samples.length > 0) {
+          // Log les dates des samples pour debug
+          const sampleDates = samples.slice(0, 5).map((w: any) => w.startDate);
+          logger.warn('[HealthKit] Premiers samples dates:', JSON.stringify(sampleDates));
+        }
         return null;
       }
 
@@ -1745,6 +2084,22 @@ class HealthConnectService {
       }
       if (workout.metadataWeatherCondition) {
         details.weatherCondition = String(workout.metadataWeatherCondition);
+      }
+
+      // Qualite de l'air (metadata custom Apple, pas toujours present)
+      // Apple stocke l'AQI dans les metadata du workout si l'app Weather l'a enregistre
+      const workoutMeta = workout.metadata || {};
+      if (workoutMeta.HKWeatherAirQualityIndex) {
+        const aqi = Number(workoutMeta.HKWeatherAirQualityIndex);
+        if (!isNaN(aqi) && aqi > 0) {
+          details.airQualityIndex = aqi;
+          if (aqi <= 50) details.airQualityCategory = 'Bon';
+          else if (aqi <= 100) details.airQualityCategory = 'Modere';
+          else if (aqi <= 150) details.airQualityCategory = 'Mauvais pour groupes sensibles';
+          else if (aqi <= 200) details.airQualityCategory = 'Mauvais';
+          else if (aqi <= 300) details.airQualityCategory = 'Tres mauvais';
+          else details.airQualityCategory = 'Dangereux';
+        }
       }
 
       // Stats (distance, calories) via getAllStatistics()
@@ -1998,10 +2353,10 @@ class HealthConnectService {
    * Charge les details enrichis d'un workout HealthKit et les stocke en DB.
    * Appele en arriere-plan apres l'import d'un workout.
    */
-  private async fetchAndStoreWorkoutDetails(healthkitUUID: string, trainingId: number, retries: number = 2): Promise<void> {
+  private async fetchAndStoreWorkoutDetails(healthkitUUID: string, trainingId: number, retries: number = 2, startDate?: string, durationMin?: number): Promise<void> {
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        const details = await this.getWorkoutDetailsByUUID(healthkitUUID);
+        const details = await this.getWorkoutDetailsByUUID(healthkitUUID, startDate, durationMin);
         if (details) {
           // Limiter la taille du JSON (pas stocker des milliers de points GPS)
           const toStore = { ...details };
@@ -2336,26 +2691,25 @@ class HealthConnectService {
       logger.info('[HealthKit] getSleepHistory: Échantillons bruts reçus:', samples?.length || 0);
 
       if (samples && samples.length > 0) {
-        // FIX: Meme logique de filtrage que getIOSSleep - verifier source ET device pour "watch"
+        // Filtrer uniquement les apps tierces connues pour donner des mauvaises donnees
+        // Garder tout le reste (Apple Watch, iPhone auto-estimates, apps tierces valides)
         const filteredSamples = samples.filter((s: any) => {
-          const sourceName = (s.sourceRevision?.source?.name || '').toLowerCase();
-          const deviceName = (s.device?.name || '').toLowerCase();
           const bundleId = s.sourceRevision?.source?.bundleIdentifier || '';
-
           if (bundleId.includes('sleep-analysis-time')) return false;
-          if (!bundleId.includes('com.apple.health')) return true;
-
-          const isFromWatch = sourceName.includes('watch') || deviceName.includes('watch');
-          return isFromWatch;
+          return true;
         });
 
         logger.info('[HealthKit] getSleepHistory: bruts=', samples.length, ', filtres=', filteredSamples.length);
 
-        // Utiliser les données filtrées si disponibles, sinon toutes les données
-        const samplesToUse = filteredSamples.length > 0 ? filteredSamples : samples;
+        const samplesToUse = filteredSamples;
 
         // Grouper par date - prendre les données brutes d'Apple Santé
-        const sleepByDate: { [key: string]: { deep: number; rem: number; core: number; awake: number; total: number; sources: Set<string> } } = {};
+        const sleepByDate: { [key: string]: {
+          deep: number; rem: number; core: number; awake: number; total: number;
+          hasDetailedPhases: boolean; asleepMinutes: number;
+          startTime: string; endTime: string;
+          sources: Set<string>;
+        } } = {};
 
         samplesToUse.forEach((s: any) => {
           const date = new Date(s.endDate).toISOString().split('T')[0];
@@ -2363,7 +2717,20 @@ class HealthConnectService {
           if (duration <= 0) return;
 
           if (!sleepByDate[date]) {
-            sleepByDate[date] = { deep: 0, rem: 0, core: 0, awake: 0, total: 0, sources: new Set() };
+            sleepByDate[date] = {
+              deep: 0, rem: 0, core: 0, awake: 0, total: 0,
+              hasDetailedPhases: false, asleepMinutes: 0,
+              startTime: s.startDate, endTime: s.endDate,
+              sources: new Set(),
+            };
+          }
+
+          // Tracker min startTime et max endTime pour heure coucher/reveil
+          if (new Date(s.startDate) < new Date(sleepByDate[date].startTime)) {
+            sleepByDate[date].startTime = s.startDate;
+          }
+          if (new Date(s.endDate) > new Date(sleepByDate[date].endTime)) {
+            sleepByDate[date].endTime = s.endDate;
           }
 
           // Tracker la source
@@ -2371,11 +2738,35 @@ class HealthConnectService {
           sleepByDate[date].sources.add(source);
 
           switch (s.value) {
-            case 1: sleepByDate[date].total += duration; break;
-            case 2: sleepByDate[date].awake += duration; break;
-            case 3: sleepByDate[date].core += duration; sleepByDate[date].total += duration; break;
-            case 4: sleepByDate[date].deep += duration; sleepByDate[date].total += duration; break;
-            case 5: sleepByDate[date].rem += duration; sleepByDate[date].total += duration; break;
+            case 1: // Asleep (total global - sera ignore si phases detaillees existent)
+              sleepByDate[date].asleepMinutes += duration;
+              break;
+            case 2:
+              sleepByDate[date].awake += duration;
+              break;
+            case 3: // Core
+              sleepByDate[date].core += duration;
+              sleepByDate[date].hasDetailedPhases = true;
+              break;
+            case 4: // Deep
+              sleepByDate[date].deep += duration;
+              sleepByDate[date].hasDetailedPhases = true;
+              break;
+            case 5: // REM
+              sleepByDate[date].rem += duration;
+              sleepByDate[date].hasDetailedPhases = true;
+              break;
+          }
+        });
+
+        // Calculer le total en evitant le double comptage
+        Object.values(sleepByDate).forEach(day => {
+          if (day.hasDetailedPhases) {
+            // Si on a les phases detaillees, le total = somme des phases
+            day.total = day.core + day.deep + day.rem;
+          } else {
+            // Sinon utiliser value=1 (Asleep)
+            day.total = day.asleepMinutes;
           }
         });
 
@@ -2389,6 +2780,8 @@ class HealthConnectService {
             awake: Math.round(sleepByDate[date].awake),
             total: Math.round(sleepByDate[date].total),
             duration: Math.round(sleepByDate[date].total),
+            startTime: new Date(sleepByDate[date].startTime).toISOString(),
+            endTime: new Date(sleepByDate[date].endTime).toISOString(),
             source: Array.from(sleepByDate[date].sources).join(', '),
           }))
           .sort((a, b) => a.date.localeCompare(b.date));
@@ -3180,6 +3573,7 @@ class HealthConnectService {
         } catch {}
 
         let workoutsSaved = 0;
+        const detailsQueue: { uuid: string; trainingId: number; startDate?: string; durationMin?: number }[] = [];
         for (const workout of data.workouts) {
           const fingerprint = `${workout.startDate}_${workout.activityType}_${workout.duration}`;
           if (importedFingerprints.has(fingerprint)) continue;
@@ -3210,30 +3604,51 @@ class HealthConnectService {
               max_heart_rate: workout.maxHeartRate,
               source: workout.source ? normalizeSourceName(workout.source) : undefined,
               notes: noteText,
-              healthkit_uuid: workout.id || undefined,
+              healthkit_uuid: (workout as any).hkUUID || workout.id || undefined,
             };
 
             const trainingId = await addTraining(training);
             importedFingerprints.add(fingerprint);
             workoutsSaved++;
 
-            // Charger les details enrichis en arriere-plan (route GPS, FC, splits, meteo)
-            if (workout.id && trainingId) {
-              this.fetchAndStoreWorkoutDetails(workout.id, trainingId).catch(e =>
-                logger.warn('[syncAll] Enrichissement workout echoue:', e)
-              );
+            // Collecter les details a charger en batch (pas fire-and-forget)
+            const detailUUID = (workout as any).hkUUID || workout.id;
+            if (detailUUID && trainingId) {
+              detailsQueue.push({
+                uuid: detailUUID,
+                trainingId,
+                startDate: workout.startDate, // Date ISO complete pour matching fiable
+                durationMin: workout.duration,
+              });
             }
           } catch (e) {
             logger.warn('[syncAll] Erreur sauvegarde workout:', e);
           }
         }
 
-        // Sauvegarder les fingerprints (garder les 500 derniers pour eviter une croissance infinie)
-        const fingerprintsArray = Array.from(importedFingerprints).slice(-500);
+        // Sauvegarder les fingerprints (garder les 5000 derniers pour couvrir 5 ans d'historique)
+        const fingerprintsArray = Array.from(importedFingerprints).slice(-5000);
         await AsyncStorage.setItem('@yoroi_imported_workouts', JSON.stringify(fingerprintsArray));
         if (workoutsSaved > 0) {
           savedCount += workoutsSaved;
           logger.info(`[syncAll] ${workoutsSaved} workouts importes depuis Apple Health`);
+        }
+
+        // Charger les details enrichis par batch de 3 pour eviter de surcharger le device
+        if (detailsQueue.length > 0) {
+          logger.info(`[syncAll] Enrichissement de ${detailsQueue.length} workouts (batch de 3)...`);
+          const BATCH_SIZE = 3;
+          for (let i = 0; i < detailsQueue.length; i += BATCH_SIZE) {
+            const batch = detailsQueue.slice(i, i + BATCH_SIZE);
+            await Promise.allSettled(
+              batch.map(({ uuid, trainingId: tid, startDate: sd, durationMin: dm }) =>
+                this.fetchAndStoreWorkoutDetails(uuid, tid, 1, sd, dm).catch(e =>
+                  logger.warn(`[syncAll] Enrichissement workout #${tid} echoue:`, e)
+                )
+              )
+            );
+          }
+          logger.info(`[syncAll] Enrichissement termine`);
         }
       }
 
@@ -3396,24 +3811,39 @@ class HealthConnectService {
       max_heart_rate: workout.maxHeartRate,
       source: workout.source ? normalizeSourceName(workout.source) : undefined,
       notes: noteText,
-      healthkit_uuid: workout.id || undefined,
+      healthkit_uuid: (workout as any).hkUUID || workout.id || undefined,
     };
 
     const trainingId = await addTraining(training);
     importedFingerprints.add(fingerprint);
 
-    // Sauvegarder les fingerprints (garder les 500 derniers)
-    const fingerprintsArray = Array.from(importedFingerprints).slice(-500);
+    // Sauvegarder les fingerprints (garder les 5000 derniers)
+    const fingerprintsArray = Array.from(importedFingerprints).slice(-5000);
     await AsyncStorage.setItem('@yoroi_imported_workouts', JSON.stringify(fingerprintsArray));
 
-    // Charger les details enrichis en arriere-plan (avec retry)
-    if (workout.id && trainingId) {
-      this.fetchAndStoreWorkoutDetails(workout.id, trainingId).catch(e =>
+    // Charger les details enrichis en arriere-plan (avec retry + date pour matching fiable)
+    const detailUUID = (workout as any).hkUUID || workout.id;
+    if (detailUUID && trainingId) {
+      this.fetchAndStoreWorkoutDetails(detailUUID, trainingId, 2, workout.startDate, workout.duration).catch(e =>
         logger.warn('[WorkoutObserver] Enrichissement workout echoue:', e)
       );
     }
 
     logger.info(`[WorkoutObserver] Workout sauvegarde: ${sport} ${workout.duration}min`);
+
+    // Notification post-workout pour partage sur les reseaux
+    try {
+      const { notificationService } = require('./notificationService');
+      const sportLabel = getWorkoutLabel(workout.activityType);
+      await notificationService.sendWorkoutCompletedNotification(
+        sportLabel,
+        workout.duration,
+        workout.calories ? Math.round(workout.calories) : undefined,
+      );
+    } catch (notifErr) {
+      logger.warn('[WorkoutObserver] Erreur notification post-workout:', notifErr);
+    }
+
     return { trainingId, fingerprint };
   }
 
@@ -3458,22 +3888,38 @@ class HealthConnectService {
 
   /**
    * Demarrer le polling fallback pour detecter les nouveaux workouts
+   * Toutes les 2 min pour une detection rapide (Garmin, Fitbit, Polar, etc.)
    */
   private startWorkoutPolling(): void {
     if (this.pollingInterval) return; // Deja en cours
 
-    // Poll toutes les 5 minutes
+    // Poll toutes les 2 minutes pour detection rapide
     this.pollingInterval = setInterval(async () => {
       try {
         await this.checkAndProcessNewWorkouts();
       } catch (e) {
         logger.warn('[WorkoutObserver/Polling] Erreur:', e);
       }
-    }, 5 * 60 * 1000);
+    }, 2 * 60 * 1000);
 
     // Premier check immediat
     this.checkAndProcessNewWorkouts().catch(() => {});
-    logger.info('[WorkoutObserver] Polling fallback actif (toutes les 5 min)');
+    logger.info('[WorkoutObserver] Polling fallback actif (toutes les 2 min)');
+  }
+
+  /**
+   * Forcer un check immediat des nouveaux workouts
+   * Appele quand l'app revient au premier plan (foreground)
+   * pour detecter les seances terminees pendant que l'app etait fermee
+   * (Garmin, Fitbit, Polar, Suunto, COROS, Withings, Apple Watch)
+   */
+  async checkNewWorkoutsNow(): Promise<void> {
+    try {
+      logger.info('[WorkoutObserver] Check immediat (retour foreground)');
+      await this.checkAndProcessNewWorkouts();
+    } catch (e) {
+      logger.warn('[WorkoutObserver] Check foreground echoue:', e);
+    }
   }
 
   /**
@@ -3639,6 +4085,12 @@ class HealthConnectService {
         },
         trigger: null, // Immediate
       });
+
+      // Sauvegarder dans l'historique
+      saveNotification(title, body, 'workout_complete', {
+        workoutId: trainingId?.toString() || workout.id,
+        sport: mapWorkoutType(workout.activityType),
+      }).catch(() => {});
 
       logger.info(`[WorkoutObserver] Notification Strava-like envoyee: ${title}`);
     } catch (e) {

@@ -93,7 +93,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
     for (let i = 0; i < numYLabels; i++) {
       const value = yMin + (yRange * i) / (numYLabels - 1);
       const y = paddingTop + graphHeight - (i / (numYLabels - 1)) * graphHeight;
-      yLabels.push({ value: value.toFixed(1), y });
+      yLabels.push({ value: value >= 100 ? Math.round(value).toString() : value.toFixed(1), y });
     }
 
     const labels = data.map((d, index) => {
@@ -155,7 +155,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
     for (let i = 0; i < 6; i++) {
       const value = yMin + (yRange * i) / 5;
       const y = paddingTop + graphHeight - (i / 5) * graphHeight;
-      yLabels.push({ value: value.toFixed(1), y });
+      yLabels.push({ value: value >= 100 ? Math.round(value).toString() : value.toFixed(1), y });
     }
 
     const labels = data.map((d, index) => {
@@ -301,7 +301,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
               textAnchor={valueAnchor}
               opacity={0.9}
             >
-              {point.value.toFixed(1)}{unit}
+              {point.value >= 100 ? Math.round(point.value) : point.value.toFixed(1)}{unit ? ` ${unit}` : ''}
             </SvgText>
 
             {/* Date */}

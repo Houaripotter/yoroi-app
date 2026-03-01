@@ -34,6 +34,7 @@ import {
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { BlurView } from 'expo-blur';
 import logger from '@/lib/security/logger';
+import { shareExportCSV } from '@/lib/csvTemplates';
 
 type ExportFormat = 'json' | 'csv' | 'txt';
 
@@ -79,6 +80,8 @@ export default function ExportDataScreen() {
 
   const [exporting, setExporting] = useState(false);
   const [exportedFormat, setExportedFormat] = useState<ExportFormat | null>(null);
+  const [csvExporting, setCsvExporting] = useState(false);
+  const [csvExported, setCsvExported] = useState(false);
 
   // Ref pour le timeout (cleanup)
   const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -121,6 +124,27 @@ export default function ExportDataScreen() {
       ]);
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleCSVExport = async () => {
+    setCsvExporting(true);
+    impactAsync(ImpactFeedbackStyle.Medium);
+
+    try {
+      const success = await shareExportCSV();
+      if (success) {
+        setCsvExported(true);
+        notificationAsync(NotificationFeedbackType.Success);
+        resetTimeoutRef.current = setTimeout(() => setCsvExported(false), 3000);
+      }
+    } catch (error) {
+      logger.error('Erreur export CSV:', error);
+      showPopup('Erreur', 'Impossible d\'exporter les donnees', [
+        { text: 'OK', style: 'primary' }
+      ]);
+    } finally {
+      setCsvExporting(false);
     }
   };
 
@@ -232,6 +256,49 @@ export default function ExportDataScreen() {
               </TouchableOpacity>
             );
           })}
+        </View>
+
+        {/* Export CSV complet (poids + mensurations + composition) */}
+        <View style={styles.csvSection}>
+          <Text style={[styles.csvSectionTitle, { color: colors.textPrimary }]}>
+            Export CSV complet
+          </Text>
+          <Text style={[styles.csvSectionDesc, { color: colors.textMuted }]}>
+            Poids, composition corporelle et mensurations dans un seul fichier
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.csvButton,
+              {
+                backgroundColor: colors.backgroundCard,
+                borderColor: csvExported ? '#10B981' : colors.border,
+                borderWidth: csvExported ? 2 : 1,
+              },
+            ]}
+            onPress={() => !csvExporting && handleCSVExport()}
+            activeOpacity={0.7}
+            disabled={csvExporting}
+          >
+            <View style={[styles.csvButtonIcon, { backgroundColor: '#10B98115' }]}>
+              {csvExported ? (
+                <CheckCircle size={20} color="#10B981" />
+              ) : (
+                <Table size={20} color="#10B981" />
+              )}
+            </View>
+            <Text style={[styles.csvButtonLabel, { color: colors.textPrimary }]}>
+              Exporter tout en CSV
+            </Text>
+            {csvExporting && (
+              <ActivityIndicator size="small" color="#10B981" style={{ marginLeft: 'auto' }} />
+            )}
+            {csvExported && !csvExporting && (
+              <View style={[styles.csvExportedBadge, { backgroundColor: '#10B98120' }]}>
+                <Text style={[styles.csvExportedText, { color: '#10B981' }]}>OK</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Info additionnelle */}
@@ -390,6 +457,51 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,
+  },
+
+  // ── CSV par type ──
+  csvSection: {
+    marginTop: 32,
+    gap: 8,
+  },
+  csvSectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  csvSectionDesc: {
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  csvButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 14,
+    gap: 12,
+  },
+  csvButtonIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  csvButtonLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    flex: 1,
+  },
+  csvExportedBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginLeft: 'auto',
+  },
+  csvExportedText: {
+    fontSize: 11,
+    fontWeight: '800',
   },
 
   // 🔒 SÉCURITÉ: Styles pour l'avertissement screenshot

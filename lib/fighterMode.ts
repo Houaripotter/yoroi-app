@@ -123,6 +123,38 @@ export const MUAY_THAI_WEIGHT_CATEGORIES: WeightCategory[] = [
   { id: 'super_lourd', name: 'Super-lourd', maxWeight: 999, minWeight: 95 },
 ];
 
+// JUDO (IJF)
+export const JUDO_WEIGHT_CATEGORIES: WeightCategory[] = [
+  { id: 'extra_leger', name: '-60 kg', maxWeight: 60 },
+  { id: 'mi_leger', name: '-66 kg', maxWeight: 66 },
+  { id: 'leger', name: '-73 kg', maxWeight: 73 },
+  { id: 'mi_moyen', name: '-81 kg', maxWeight: 81 },
+  { id: 'moyen', name: '-90 kg', maxWeight: 90 },
+  { id: 'mi_lourd', name: '-100 kg', maxWeight: 100 },
+  { id: 'lourd', name: '+100 kg', maxWeight: 999, minWeight: 100 },
+];
+
+// TAEKWONDO (World Taekwondo - WT)
+export const TAEKWONDO_WEIGHT_CATEGORIES: WeightCategory[] = [
+  { id: 'finweight', name: '-54 kg', maxWeight: 54 },
+  { id: 'flyweight', name: '-58 kg', maxWeight: 58 },
+  { id: 'bantamweight', name: '-63 kg', maxWeight: 63 },
+  { id: 'featherweight', name: '-68 kg', maxWeight: 68 },
+  { id: 'lightweight', name: '-74 kg', maxWeight: 74 },
+  { id: 'welterweight', name: '-80 kg', maxWeight: 80 },
+  { id: 'middleweight', name: '-87 kg', maxWeight: 87 },
+  { id: 'heavyweight', name: '+87 kg', maxWeight: 999, minWeight: 87 },
+];
+
+// KARATE (WKF Kumite)
+export const KARATE_WEIGHT_CATEGORIES: WeightCategory[] = [
+  { id: 'leger', name: '-60 kg', maxWeight: 60 },
+  { id: 'mi_leger', name: '-67 kg', maxWeight: 67 },
+  { id: 'moyen', name: '-75 kg', maxWeight: 75 },
+  { id: 'mi_lourd', name: '-84 kg', maxWeight: 84 },
+  { id: 'lourd', name: '+84 kg', maxWeight: 999, minWeight: 84 },
+];
+
 export function getWeightCategories(sport: Sport): WeightCategory[] {
   switch (sport) {
     case 'jjb':
@@ -133,8 +165,14 @@ export function getWeightCategories(sport: Sport): WeightCategory[] {
       return BOXE_WEIGHT_CATEGORIES;
     case 'muay_thai':
       return MUAY_THAI_WEIGHT_CATEGORIES;
+    case 'judo':
+      return JUDO_WEIGHT_CATEGORIES;
+    case 'taekwondo':
+      return TAEKWONDO_WEIGHT_CATEGORIES;
+    case 'karate':
+      return KARATE_WEIGHT_CATEGORIES;
     default:
-      return JJB_WEIGHT_CATEGORIES;
+      return [];
   }
 }
 

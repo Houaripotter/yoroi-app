@@ -23,7 +23,6 @@ import { getWeights, getTrainings, getMeasurements } from '@/lib/database';
 import { getSleepStats } from '@/lib/sleepService';
 import { calculateReadinessScore } from '@/lib/readinessService';
 import { getWeeklyLoadStats } from '@/lib/trainingLoadService';
-import { getMockWeights, getMockMeasurements, getMockTrainings } from '@/lib/mockDataService';
 import { getUserSettings } from '@/lib/storage';
 import { format, parseISO, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -51,32 +50,15 @@ export const DashboardPage: React.FC = () => {
     try {
       setLoading(true);
       const settings = await getUserSettings();
-      const isScreenshotMode = settings.username === 'Germain Del Jarret';
 
-      let weights, trainings, measurements, sleep, readiness, loadStats;
-
-      if (isScreenshotMode) {
-        weights = getMockWeights(30);
-        trainings = getMockTrainings(30);
-        measurements = getMockMeasurements(60);
-        readiness = { score: 88 };
-        loadStats = { totalLoad: 1850 };
-        sleep = { 
-          weeklyData: Array.from({ length: 7 }, (_, i) => ({
-            date: subDays(new Date(), i).toISOString(),
-            duration: 460 + (Math.sin(i) * 40)
-          }))
-        };
-      } else {
-        [weights, trainings, measurements, sleep, readiness, loadStats] = await Promise.all([
-          getWeights(60),
-          getTrainings(60),
-          getMeasurements(90),
-          getSleepStats(),
-          calculateReadinessScore(7),
-          getWeeklyLoadStats()
-        ]);
-      }
+      const [weights, trainings, measurements, sleep, readiness, loadStats] = await Promise.all([
+        getWeights(60),
+        getTrainings(60),
+        getMeasurements(90),
+        getSleepStats(),
+        calculateReadinessScore(7),
+        getWeeklyLoadStats()
+      ]);
 
       const metricsList: any[] = [];
 

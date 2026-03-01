@@ -65,7 +65,7 @@ import {
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { RANKS, getCurrentRank, getNextRank, getRankProgress, getDaysToNextRank } from '@/lib/ranks';
-import { getLevel, getNextLevel, getLevelProgress } from '@/lib/gamification';
+import { getLevel, getNextLevel, getLevelProgress, calculateAndStoreUnifiedPoints, getUnifiedPoints } from '@/lib/gamification';
 import { getProfile, getWeights, getTrainings, calculateStreak } from '@/lib/database';
 import { AnimatedCard } from '@/components/AnimatedCard';
 import { AchievementCelebration } from '@/components/AchievementCelebration';
@@ -422,7 +422,8 @@ export default function DojoScreen() {
         }
       }
 
-      const points = weights.length * 5 + trainings.length * 20 + (streakDays >= 100 ? 500 : streakDays >= 30 ? 200 : streakDays >= 7 ? 50 : 0);
+      // Calculer et stocker les points unifies (inclut quetes, challenges, bonus sante)
+      const points = await calculateAndStoreUnifiedPoints(weights.length, trainings.length, streakDays);
       setTotalPoints(points);
     } catch (error) {
       logger.error('Erreur chargement Dojo:', error);
@@ -582,7 +583,7 @@ export default function DojoScreen() {
               />
               <View style={styles.rankIconHero}>
                 <Image
-                  source={avatarImage || require('@/assets/avatars/samurai/samurai_neutral.png')}
+                  source={avatarImage ?? require('@/assets/avatars/samurai/samurai_neutral.png')}
                   style={styles.rankAvatarImage}
                   resizeMode="contain"
                 />
@@ -1489,11 +1490,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: '#FFFFFF',
   },
   rankAvatarImage: {
-    width: 190,
-    height: 190,
+    width: 160,
+    height: 160,
   },
   rankNameHero: {
     fontSize: 20,

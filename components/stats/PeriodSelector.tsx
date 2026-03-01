@@ -1,14 +1,14 @@
 // ============================================
-// PERIOD SELECTOR - Pills arrondis 7J/30J/90J
-// Style moderne avec animations smooth
+// PERIOD SELECTOR - Horizontal scrollable pills
+// Style moderne avec scroll horizontal
 // ============================================
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { Text, StyleSheet, TouchableOpacity, Platform, ScrollView } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
-export type Period = '30j' | '90j' | '6m' | '1a' | '2a';
+export type Period = '7j' | '30j' | '90j' | '6m' | 'tout';
 
 interface PeriodSelectorProps {
   selected: Period;
@@ -16,11 +16,11 @@ interface PeriodSelectorProps {
 }
 
 const PERIODS: Array<{ value: Period; label: string }> = [
+  { value: 'tout', label: 'Tout' },
+  { value: '7j', label: '7 jours' },
   { value: '30j', label: '30 jours' },
   { value: '90j', label: '90 jours' },
   { value: '6m', label: '6 mois' },
-  { value: '1a', label: '1 an' },
-  { value: '2a', label: '2 ans' },
 ];
 
 export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
@@ -37,7 +37,12 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.container}
+      style={styles.scrollView}
+    >
       {PERIODS.map((period) => {
         const isSelected = selected === period.value;
         return (
@@ -51,7 +56,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
                 backgroundColor: isSelected
                   ? colors.accent
                   : colors.backgroundCard,
-                borderColor: colors.border,
+                borderColor: isSelected ? colors.accent : colors.border,
               },
             ]}
           >
@@ -69,35 +74,30 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
           </TouchableOpacity>
         );
       })}
-      </View>
-    );
-  };
+    </ScrollView>
+  );
+};
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flexGrow: 0,
+  },
   container: {
     flexDirection: 'row',
-    gap: 6,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
   },
   pill: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    minWidth: 48,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
   },
-  pillSelected: {
-    // Fond avec couleur accent
-  },
-  pillUnselected: {
-    // Fond transparent
-    backgroundColor: 'transparent',
-  },
   pillText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.3,
   },

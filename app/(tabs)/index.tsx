@@ -106,11 +106,11 @@ import { StreakCalendar } from '@/components/StreakCalendar';
 import { AvatarViewerModal } from '@/components/AvatarViewerModal';
 import HealthConnect, { healthConnect as healthConnectService } from '@/lib/healthConnect';
 import { calculateDailyHealthBonus } from '@/lib/healthBonusService';
-import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
-import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
+import { ContextualTip } from '@/components/ContextualTip';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
 import { addHydration as addHydrationToQuests } from '@/lib/quests';
+import { getUnreadCount } from '@/lib/notificationHistoryService';
 
 // Mode Essentiel
 import { useViewMode } from '@/hooks/useViewMode';
@@ -197,9 +197,6 @@ export default function HomeScreen() {
   const [isScreenshotMode, setIsScreenshotMode] = useState<boolean>(false);
   const batteryIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Tutoriel de découverte
-  const [showTutorial, setShowTutorial] = useState(false);
-
   // Protection anti-spam navigation
   const [isNavigating, setIsNavigating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -207,28 +204,8 @@ export default function HomeScreen() {
   // Pop-up de notation
   const [showRatingPopup, setShowRatingPopup] = useState(false);
 
-  // Vérifier si c'est la première visite ou une mise à jour
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    const checkFirstVisit = async () => {
-      try {
-        // Gérer le tutoriel home
-        const visited = await hasVisitedPage('home');
-        if (!visited) {
-          timer = setTimeout(() => setShowTutorial(true), 1000);
-        }
-      } catch (error) {
-        logger.error('Erreur vérification première visite:', error);
-        // Ne pas bloquer l'app si le storage échoue
-      }
-    };
-    checkFirstVisit();
-
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, []);
+  // Badge notifications non lues
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
 
   // Afficher la popup de notation après navigation depuis l'étape 4
   useEffect(() => {
@@ -245,14 +222,9 @@ export default function HomeScreen() {
     };
   }, [params.showRating]);
 
-  const handleCloseTutorial = useCallback(async () => {
-    await markPageAsVisited('home');
-    setShowTutorial(false);
-  }, []);
-
-  // Fermer sans marquer comme vu (bouton "Plus tard")
-  const handleLaterTutorial = useCallback(() => {
-    setShowTutorial(false);
+  // Charger le compteur de notifications non lues au montage
+  useEffect(() => {
+    getUnreadCount().then(setUnreadNotifCount).catch(() => {});
   }, []);
 
   // ✅ FIX PERF: Avatar chargé une seule fois au montage (pas à chaque focus)
@@ -1233,6 +1205,22 @@ export default function HomeScreen() {
                 </View>
               </View>
 
+              {/* Cloche notifications */}
+              <TouchableOpacity
+                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/notification-center' as any); }}
+                activeOpacity={0.7}
+                style={styles.bellBtn}
+              >
+                <Bell size={22} color={colors.textMuted} />
+                {unreadNotifCount > 0 && (
+                  <View style={styles.bellBadge}>
+                    <Text style={styles.bellBadgeText}>
+                      {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
               {/* Avatar (Droite) - Design élégant */}
               <TouchableOpacity
                 style={styles.avatarWrapper}
@@ -1825,12 +1813,13 @@ export default function HomeScreen() {
         dailyChallenges={formattedChallenges}
         stepsGoal={stepsGoal}
         calories={calories}
-        bodyFat={isScreenshotMode ? 16.2 : latestWeight?.fat_percent}
-        muscleMass={isScreenshotMode ? 43.5 : latestWeight?.muscle_percent ? (latestWeight.muscle_percent / 100) * (latestWeight?.weight || 0) : undefined}
-        waterPercentage={isScreenshotMode ? 58.4 : latestWeight?.water_percent}
+        bodyFat={latestWeight?.fat_percent}
+        muscleMass={latestWeight?.muscle_percent ? (latestWeight.muscle_percent / 100) * (latestWeight?.weight || 0) : undefined}
+        waterPercentage={latestWeight?.water_percent}
         onAddWeight={() => handleNavigate('/(tabs)/add')}
         onAddWater={addWater}
         refreshTrigger={0}
+        unreadNotifCount={unreadNotifCount}
       />
 
       <RanksModal visible={ranksModalVisible} onClose={handleCloseRanksModal} currentStreak={streak} />
@@ -1839,15 +1828,8 @@ export default function HomeScreen() {
       <AvatarViewerModal visible={avatarViewerVisible} onClose={handleCloseAvatarViewer} />
 
 
-      {/* Tutoriel de découverte */}
-      {showTutorial && (
-        <FeatureDiscoveryModal
-          visible={true}
-          tutorial={PAGE_TUTORIALS.home}
-          onClose={handleCloseTutorial}
-          onSkip={handleLaterTutorial}
-        />
-      )}
+      {/* Tip contextuel */}
+      <ContextualTip tipId="home" />
 
       {/* Pop-up de notation */}
       <RatingPopup
@@ -1953,6 +1935,37 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '800',
+  },
+
+  // Cloche notifications
+  bellBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 4,
+    position: 'relative',
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#FF3B30',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#0D0D0F',
+  },
+  bellBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+    lineHeight: 12,
   },
 
   avatarContainerRight: {

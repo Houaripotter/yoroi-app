@@ -1319,11 +1319,12 @@ export default function FrameSelectionScreen() {
         pendingPos.current = { x: newX, y: newY };
         if (!rafId.current) {
           rafId.current = requestAnimationFrame(() => {
-            if (pendingPos.current) {
-              setTransform(prev => ({ ...prev, translateX: pendingPos.current!.x, translateY: pendingPos.current!.y }));
-              pendingPos.current = null;
-            }
+            const pos = pendingPos.current;
+            pendingPos.current = null;
             rafId.current = null;
+            if (pos) {
+              setTransform(prev => ({ ...prev, translateX: pos.x, translateY: pos.y }));
+            }
           });
         }
       },

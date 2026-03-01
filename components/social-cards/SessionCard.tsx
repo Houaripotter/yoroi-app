@@ -53,6 +53,7 @@ interface SessionCardProps {
   weeklyCount?: number;
   yearlyObjective?: number;
   sessionsPerWeek?: number;
+  disableInternalScroll?: boolean;
   options?: {
     label: string,
     icon?: string,
@@ -79,7 +80,8 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
     userAvatar, profilePhoto, userName, rank, userLevel, options,
     showYearlyCount = true,
     yearlyCount = 0, yearlyObjective = 365,
-    showGoalProgress = true
+    showGoalProgress = true,
+    disableInternalScroll = false
   }, ref) => {
     
     const CARD_HEIGHT = width * (16 / 9);
@@ -350,6 +352,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
               style={scrollMaxHeightStyle}
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled={true}
+              scrollEnabled={!disableInternalScroll}
             >
               <View style={styles.exercisesList}>
                 {options && options.length > 0 ? (
@@ -424,7 +427,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   photoHeader: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 6,
     paddingTop: 32,
     paddingBottom: 16,
     flexDirection: 'row',

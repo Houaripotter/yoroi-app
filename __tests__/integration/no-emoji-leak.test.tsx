@@ -25,7 +25,7 @@ const MIGRATED_FILES = [
   'app/(tabs)/planning.tsx',
   'app/(tabs)/more/index.tsx',
   'app/sleep.tsx',
-  'app/weekly-report.tsx',
+
   'app/sleep-input.tsx',
   'app/savoir.tsx',
   'app/add-club.tsx',

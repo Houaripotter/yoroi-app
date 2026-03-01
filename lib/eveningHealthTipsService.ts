@@ -8,6 +8,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from './security/logger';
+import { saveNotification } from './notificationHistoryService';
 
 // ============================================
 // TYPES
@@ -405,6 +406,9 @@ export const scheduleHealthTipNotifications = async (): Promise<boolean> => {
       });
 
       scheduledIds.push(notifId);
+
+      // Sauvegarder dans l'historique
+      saveNotification(tip.title, tip.content, 'health_tip', { category: tip.category }).catch(() => {});
     }
 
     await AsyncStorage.setItem(SCHEDULED_KEY, JSON.stringify(scheduledIds));

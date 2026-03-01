@@ -44,6 +44,7 @@ import {
   Edit3,
   Clock,
   Star,
+  Activity,
 } from 'lucide-react-native';
 
 // Import events catalog service (SQLite optimized)
@@ -60,11 +61,11 @@ import { getClubLogoSource, getSportById, getSportIcon as getSportIconLib, getSp
 import { PartnerDetailModal, Partner } from '@/components/PartnerDetailModal';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { TimetableView, EnhancedCalendarView, AddClubModal } from '@/components/planning';
+import { PlanningSeancesContent } from '@/components/planning/PlanningSeancesContent';
 import { EmptyState } from '@/components/planning/EmptyState';
 import { getAllGoalsProgress, GoalProgress } from '@/lib/trainingGoalsService';
 import { triggerVictoryModal, createCalendarVictoryData } from '@/lib/victoryTrigger';
-import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
-import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
+import { ContextualTip } from '@/components/ContextualTip';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
 
@@ -76,7 +77,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IS_SMALL_SCREEN = SCREEN_WIDTH < 375; // iPhone SE, petits téléphones
 const DAYS_FR = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
 
-type ViewMode = 'calendar' | 'clubs' | 'competitions';
+type ViewMode = 'calendar' | 'seances' | 'clubs' | 'competitions';
 
 // Types for external events catalog
 interface SportEvent {
@@ -145,38 +146,8 @@ export default function PlanningScreen() {
   const [showSessionsModal, setShowSessionsModal] = useState(false);
   const [sessionsFilter, setSessionsFilter] = useState<{ id: string | number; name: string; logoUri?: string; color?: string; icon?: string; isSportOnly?: boolean } | null>(null);
 
-  // Tutoriel de découverte
-  const [showTutorial, setShowTutorial] = useState(false);
-
   // Rating popup state
   const [showRatingPopup, setShowRatingPopup] = useState(false);
-
-  // Vérifier si c'est la première visite
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-
-    const checkFirstVisit = async () => {
-      const visited = await hasVisitedPage('planning');
-      if (!visited) {
-        timer = setTimeout(() => setShowTutorial(true), 1000) as unknown as NodeJS.Timeout;
-      }
-    };
-    checkFirstVisit();
-
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, []);
-
-  const handleCloseTutorial = async () => {
-    await markPageAsVisited('planning');
-    setShowTutorial(false);
-  };
-
-  // Fermer sans marquer comme vu (bouton "Plus tard")
-  const handleLaterTutorial = () => {
-    setShowTutorial(false);
-  };
 
   // ============================================
   // CATALOG STATE (for "Trouver" feature)
@@ -972,6 +943,7 @@ export default function PlanningScreen() {
   // Gérer le clic sur un onglet
   const tabs: { key: ViewMode; label: string; sublabel?: string; icon: any; color: string; description: string }[] = [
     { key: 'calendar', label: t('planning.calendar'), icon: Calendar, color: colors.accent, description: t('planning.calendarDescription') },
+    { key: 'seances', label: t('planning.seances'), icon: Activity, color: '#F97316', description: t('planning.seancesDescription') },
     { key: 'clubs', label: t('planning.clubs'), icon: Dumbbell, color: '#10B981', description: t('planning.clubsDescription') },
     { key: 'competitions', label: t('planning.events'), icon: Trophy, color: '#F59E0B', description: t('planning.eventsDescription') },
   ];
@@ -1216,6 +1188,18 @@ export default function PlanningScreen() {
               />
             </View>
 
+            <View style={{ height: 120 }} />
+          </ScrollView>
+        </View>
+
+        {/* Page Seances */}
+        <View style={styles.page}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            <PlanningSeancesContent workouts={workouts} />
             <View style={{ height: 120 }} />
           </ScrollView>
         </View>
@@ -2527,15 +2511,8 @@ export default function PlanningScreen() {
         }}
       />
 
-      {/* Tutoriel de découverte */}
-      {showTutorial && (
-        <FeatureDiscoveryModal
-          visible={true}
-          tutorial={PAGE_TUTORIALS.planning}
-          onClose={handleCloseTutorial}
-          onSkip={handleLaterTutorial}
-        />
-      )}
+      {/* Tip contextuel */}
+      <ContextualTip tipId="planning" />
 
       {/* Rating Popup */}
       <RatingPopup

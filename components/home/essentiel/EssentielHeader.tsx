@@ -10,7 +10,7 @@ import { ViewMode } from '@/hooks/useViewMode';
 import AvatarDisplay from '@/components/AvatarDisplay';
 import { Profile, calculateStreak, getWeights, getTrainings } from '@/lib/database';
 import { getCurrentRank } from '@/lib/ranks';
-import { getLevel } from '@/lib/gamification';
+import { getLevel, calculateAndStoreUnifiedPoints } from '@/lib/gamification';
 import { LinearGradient } from 'expo-linear-gradient';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { logger } from '@/lib/security/logger';
@@ -62,8 +62,7 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
         getTrainings(),
       ]);
       setStreak(streakDays);
-      const points = weights.length * 5 + trainings.length * 20 +
-        (streakDays >= 100 ? 500 : streakDays >= 30 ? 200 : streakDays >= 7 ? 50 : 0);
+      const points = await calculateAndStoreUnifiedPoints(weights.length, trainings.length, streakDays);
       setTotalPoints(points);
     } catch (error) {
       logger.error('Erreur chargement gamification:', error);

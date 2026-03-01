@@ -30,6 +30,9 @@ export interface SleepEntry {
   source?: string;
   efficiency?: number; // 0-100%
   interruptions?: number;
+  sleepHeartRate?: { min: number; max: number; avg: number };
+  respiratoryRate?: { min: number; max: number; avg?: number };
+  wristTemperature?: number; // deviation vs baseline en °C
 }
 
 export interface SleepStats {

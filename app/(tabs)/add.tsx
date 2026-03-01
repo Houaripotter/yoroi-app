@@ -55,8 +55,7 @@ import { exportDataToJSON, exportDataToCSV } from '@/lib/exportService';
 import { draftService, WeightDraft } from '@/lib/draftService';
 import logger from '@/lib/security/logger';
 import HealthConnect from '@/lib/healthConnect';
-import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
-import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
+import { ContextualTip } from '@/components/ContextualTip';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
 
@@ -128,38 +127,8 @@ export default function AddScreen() {
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showAutoSaveIndicator, setShowAutoSaveIndicator] = useState(false);
 
-  // Tutoriel de découverte
-  const [showTutorial, setShowTutorial] = useState(false);
-
   // Rating popup state
   const [showRatingPopup, setShowRatingPopup] = useState(false);
-
-  // Vérifier si c'est la première visite
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-
-    const checkFirstVisit = async () => {
-      const visited = await hasVisitedPage('add');
-      if (!visited) {
-        timer = setTimeout(() => setShowTutorial(true), 1000);
-      }
-    };
-    checkFirstVisit();
-
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, []);
-
-  const handleCloseTutorial = async () => {
-    await markPageAsVisited('add');
-    setShowTutorial(false);
-  };
-
-  // Fermer sans marquer comme vu (bouton "Plus tard")
-  const handleLaterTutorial = () => {
-    setShowTutorial(false);
-  };
 
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
@@ -1111,15 +1080,8 @@ export default function AddScreen() {
         </View>
       </Modal>
 
-      {/* Tutoriel de découverte */}
-      {showTutorial && (
-        <FeatureDiscoveryModal
-          visible={true}
-          tutorial={PAGE_TUTORIALS.add}
-          onClose={handleCloseTutorial}
-          onSkip={handleLaterTutorial}
-        />
-      )}
+      {/* Tip contextuel */}
+      <ContextualTip tipId="add" />
 
       {/* Rating Popup */}
       <RatingPopup

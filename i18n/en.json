@@ -294,6 +294,28 @@
     "deleteAllDescription": "Permanently erase all app data",
     "privacyPolicy": "Privacy policy"
   },
+  "workoutDetail": {
+    "title": "Workout Detail",
+    "duration": "Duration",
+    "activeCal": "Active Cal",
+    "totalCal": "Total Cal",
+    "pace": "Pace",
+    "avgHR": "Avg HR",
+    "heartRate": "Heart Rate",
+    "heartRateZones": "Heart Rate Zones",
+    "recovery": "HR Recovery",
+    "splits": "Splits",
+    "route": "Route",
+    "weather": "Weather",
+    "airQuality": "Air Quality",
+    "conditions": "Conditions"
+  },
+  "sleepDetail": {
+    "title": "Sleep Detail",
+    "phases": "Sleep Phases",
+    "efficiency": "Efficiency",
+    "vitals": "Vitals"
+  },
   "sleepInput": {
     "title": "Log my sleep",
     "subtitle": "Health app sync",

@@ -37,7 +37,7 @@ describe('Navigation Stress Tests', () => {
     '/sleep',
     '/energy',
     '/challenges',
-    '/weekly-report',
+
     '/profile',
     '/training-journal',
     '/photos',

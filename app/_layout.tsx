@@ -77,6 +77,7 @@ function RootLayoutContent() {
       }
     });
 
+    let previousAppState = AppState.currentState;
     const appStateSubscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
         try {
@@ -85,6 +86,17 @@ function RootLayoutContent() {
           logger.error('Auto-save failed', error);
         }
       }
+
+      // Retour au foreground: checker les nouveaux workouts immediatement
+      // Detecte les seances terminees sur Garmin, Fitbit, Polar, Suunto, COROS, Withings, Apple Watch, Samsung, etc.
+      if (nextAppState === 'active' && previousAppState !== 'active') {
+        try {
+          if (typeof healthConnect.checkNewWorkoutsNow === 'function') {
+            healthConnect.checkNewWorkoutsNow().catch(() => {});
+          }
+        } catch {}
+      }
+      previousAppState = nextAppState;
     });
 
     return () => {
@@ -106,7 +118,7 @@ function RootLayoutContent() {
       >
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
-        <Stack.Screen name="mode-selection" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
+
         <Stack.Screen name="sport-selection" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="weight-category-selection" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="setup" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
@@ -130,7 +142,7 @@ function RootLayoutContent() {
         <Stack.Screen name="history" options={{ presentation: 'card' }} />
         <Stack.Screen name="body-status" options={{ presentation: 'card' }} />
         <Stack.Screen name="body-composition" options={{ presentation: 'card' }} />
-        <Stack.Screen name="chrono" options={{ presentation: 'card' }} />
+
         <Stack.Screen name="calculator" options={{ presentation: 'card' }} />
         <Stack.Screen name="badges" options={{ presentation: 'card' }} />
         <Stack.Screen name="records" options={{ presentation: 'card' }} />
@@ -144,15 +156,15 @@ function RootLayoutContent() {
         <Stack.Screen name="combat-detail" options={{ presentation: 'card' }} />
         <Stack.Screen name="palmares" options={{ presentation: 'card' }} />
         <Stack.Screen name="radar-performance" options={{ presentation: 'card' }} />
-        <Stack.Screen name="customize-home" options={{ presentation: 'card' }} />
-        <Stack.Screen name="competition-sports-selection" options={{ presentation: 'card' }} />
+
+
         <Stack.Screen name="competitor-profile" options={{ presentation: 'card' }} />
         <Stack.Screen name="gamification" options={{ presentation: 'card' }} />
         <Stack.Screen name="sleep" options={{ presentation: 'card' }} />
         <Stack.Screen name="hydration" options={{ presentation: 'card' }} />
         <Stack.Screen name="charge" options={{ presentation: 'card' }} />
         <Stack.Screen name="avatar-selection" options={{ presentation: 'card' }} />
-        <Stack.Screen name="avatar-customization" options={{ presentation: 'card' }} />
+
         <Stack.Screen name="screenshot-mode" options={{ presentation: 'card' }} />
         {/* Écrans détails & suivi */}
         <Stack.Screen name="activity-detail" options={{ presentation: 'card' }} />
@@ -161,24 +173,21 @@ function RootLayoutContent() {
         <Stack.Screen name="measurements" options={{ presentation: 'card' }} />
         <Stack.Screen name="measurements-detail" options={{ presentation: 'card' }} />
         <Stack.Screen name="performance-detail" options={{ presentation: 'card' }} />
-        <Stack.Screen name="vitality-detail" options={{ presentation: 'card' }} />
+
         <Stack.Screen name="health-metrics" options={{ presentation: 'card' }} />
         <Stack.Screen name="health-connect" options={{ presentation: 'card' }} />
         <Stack.Screen name="health-professionals" options={{ presentation: 'card' }} />
         <Stack.Screen name="sleep-input" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="training-goals" options={{ presentation: 'card' }} />
         <Stack.Screen name="transformation" options={{ presentation: 'card' }} />
-        <Stack.Screen name="weekly-report" options={{ presentation: 'card' }} />
+
         <Stack.Screen name="energy" options={{ presentation: 'card' }} />
         <Stack.Screen name="challenges" options={{ presentation: 'card' }} />
         {/* Écrans outils */}
         <Stack.Screen name="add-training" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="add-club" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="quick-log" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="quick-log-combat" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="quick-log-muscu" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="quick-log-other" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="quick-log-running" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+
+
         <Stack.Screen name="quick-nutrition" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="import-workouts" options={{ presentation: 'card' }} />
         <Stack.Screen name="import-csv" options={{ presentation: 'card' }} />
@@ -187,8 +196,9 @@ function RootLayoutContent() {
         {/* Écrans paramètres & données */}
         <Stack.Screen name="privacy-data" options={{ presentation: 'card' }} />
         <Stack.Screen name="notifications" options={{ presentation: 'card' }} />
+        <Stack.Screen name="notification-center" options={{ presentation: 'card' }} />
         <Stack.Screen name="connected-devices" options={{ presentation: 'card' }} />
-        <Stack.Screen name="preferences" options={{ presentation: 'card' }} />
+
         <Stack.Screen name="themes" options={{ presentation: 'card' }} />
         <Stack.Screen name="logo-selection" options={{ presentation: 'card' }} />
         <Stack.Screen name="export-data" options={{ presentation: 'card' }} />
@@ -294,6 +304,20 @@ export default function RootLayout() {
             }
           } catch (err) {
             logger.error('Erreur init HealthKit:', err);
+          }
+        }
+
+        // Android: Health Connect - demarrer l'observer workout
+        if (Platform.OS === 'android') {
+          try {
+            await healthConnect.initialize();
+            const connected = await healthConnect.connect();
+            if (connected) {
+              await healthConnect.setupWorkoutObserver();
+              logger.info('[HealthConnect] Observer workout Android actif');
+            }
+          } catch (err) {
+            logger.error('Erreur init Health Connect:', err);
           }
         }
 

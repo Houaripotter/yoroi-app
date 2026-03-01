@@ -26,7 +26,7 @@ import {
 } from 'lucide-react-native';
 import { getWeeklyLoad, getRiskLevel, formatLoad } from '@/lib/trainingLoadService';
 import logger from '@/lib/security/logger';
-import { FeatureTutorial } from '@/components/FeatureTutorial';
+import { ContextualTip } from '@/components/ContextualTip';
 
 const { width: screenWidth } = Dimensions.get('window');
 const IS_SMALL_SCREEN = screenWidth < 375; // iPhone SE, petits téléphones
@@ -118,19 +118,8 @@ export default function ChargeScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
-      {/* Tutoriel de fonctionnalité */}
-      <FeatureTutorial
-        featureId="charge"
-        title={t('screens.charge.title')}
-        description={t('screens.charge.tutorialDescription')}
-        keyPoints={[
-          t('screens.charge.keyPoint1'),
-          t('screens.charge.keyPoint2'),
-          t('screens.charge.keyPoint3'),
-          t('screens.charge.keyPoint4'),
-        ]}
-        icon="flash"
-      />
+      {/* Tip contextuel */}
+      <ContextualTip tipId="charge" bottomOffset={20} />
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>

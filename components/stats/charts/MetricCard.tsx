@@ -7,9 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { MetricRange } from '@/lib/healthRanges';
 import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 
 interface MetricCardProps {
@@ -23,7 +21,6 @@ interface MetricCardProps {
   onPress?: () => void;
   statusColor?: string;
   statusLabel?: string;
-  healthRange?: MetricRange;
   sparklineData?: { value: number; date?: string }[];
 }
 
@@ -41,18 +38,9 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   onPress,
   statusColor,
   statusLabel,
-  healthRange,
   sparklineData,
 }) => {
   const { colors, isDark } = useTheme();
-
-  // Calculer la position du curseur sur la barre
-  const numericValue = typeof value === 'number' ? value : parseFloat(value as string);
-  const getBarPosition = () => {
-    if (!healthRange || isNaN(numericValue)) return 50;
-    const range = healthRange.max - healthRange.min;
-    return ((numericValue - healthRange.min) / range) * 100;
-  };
 
   const handlePress = () => {
     if (Platform.OS !== 'web') {
@@ -187,60 +175,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         </View>
       )}
 
-      {/* Barre de progression avec zones si healthRange fourni */}
-      {healthRange && (
-        <View style={styles.rangeSection}>
-          {/* Barre gradient */}
-          <View style={styles.barContainer}>
-            <LinearGradient
-              colors={healthRange.zones.map((z: { color: string }) => z.color) as [string, string, ...string[]]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.gradientBar}
-            />
-            {/* Curseur */}
-            <View
-              style={[
-                styles.cursor,
-                {
-                  left: `${Math.max(0, Math.min(100, getBarPosition()))}%`,
-                  backgroundColor: statusColor || colors.textPrimary,
-                  borderColor: colors.backgroundCard,
-                },
-              ]}
-            />
-          </View>
-
-          {/* Labels des zones */}
-          <View style={styles.labelsRow}>
-            <Text style={[styles.zoneLabel, { color: colors.textMuted }]}>
-              {healthRange.min}
-            </Text>
-            {healthRange.zones.map((zone: { label: string; color: string }, idx: number) => (
-              <Text
-                key={idx}
-                style={[
-                  styles.zoneLabel,
-                  { color: colors.textMuted },
-                ]}
-                numberOfLines={1}
-              >
-                {zone.label.toUpperCase()}
-              </Text>
-            ))}
-            <Text style={[styles.zoneLabel, { color: colors.textMuted }]}>
-              {healthRange.max}
-            </Text>
-          </View>
-
-          {/* Source */}
-          {healthRange.source && (
-            <Text style={[styles.source, { color: colors.textMuted }]}>
-              Source: {healthRange.source}
-            </Text>
-          )}
-        </View>
-      )}
     </Wrapper>
   );
 };
@@ -314,52 +248,5 @@ const styles = StyleSheet.create({
   sparklineContainer: {
     marginTop: 12,
     alignItems: 'flex-start',
-  },
-  rangeSection: {
-    marginTop: 16,
-    gap: 8,
-  },
-  barContainer: {
-    height: 8,
-    position: 'relative',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  gradientBar: {
-    flex: 1,
-    height: '100%',
-  },
-  cursor: {
-    position: 'absolute',
-    top: -4,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 3,
-    marginLeft: -8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  labelsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  zoneLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-  source: {
-    fontSize: 9,
-    fontWeight: '500',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: 4,
   },
 });

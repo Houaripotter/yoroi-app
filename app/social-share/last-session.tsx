@@ -470,6 +470,7 @@ export default function LastSessionScreen() {
               showExercises={showExercises}
               showStats={showStats}
               width={CARD_WIDTH}
+              disableInternalScroll
             />
           </View>
 

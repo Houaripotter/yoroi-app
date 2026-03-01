@@ -162,7 +162,28 @@
       "intensityLow": "Low",
       "intensityMedium": "Medium",
       "intensityHigh": "High"
-    }
+    },
+    "healthData": "Health Data",
+    "healthDataDesc": "Summary of your Apple Health data",
+    "connectHealth": "Connect Health App",
+    "connectHealthDesc": "Sync your health data",
+    "activity": "Activity",
+    "moveRing": "Move",
+    "exerciseRing": "Exercise",
+    "standRing": "Stand",
+    "exerciseMinutes": "Exercise Minutes",
+    "standHours": "Stand Hours",
+    "stepsCard": "Steps",
+    "distanceCard": "Distance",
+    "heartRateCard": "Heart Rate",
+    "restingHR": "Resting HR",
+    "oxygenCard": "Blood Oxygen",
+    "respiratoryCard": "Respiratory Rate",
+    "restingEnergy": "Resting Energy",
+    "sleepCard2": "Sleep",
+    "ofGoal": "of {{goal}}",
+    "noHealthData": "No data",
+    "updatedAt": "Updated at {{time}}"
   },
   "tools": {
     "title": "Tools",
@@ -403,6 +424,8 @@
     "journalSubtitle": "Your training journal",
     "clubs": "Clubs",
     "clubsDescription": "Save your clubs and gyms",
+    "seances": "Sessions",
+    "seancesDescription": "History of all your sessions",
     "events": "Upcoming events",
     "eventsDescription": "Competitions and upcoming events",
     "programs": "Programs",
@@ -1727,5 +1750,27 @@
     "importAnother": "Import another file",
     "successMessage": "{{count}} workout(s) successfully imported!",
     "importError": "Import error. Please try again."
+  },
+  "workoutDetail": {
+    "title": "Workout Detail",
+    "duration": "Duration",
+    "activeCal": "Active Cal",
+    "totalCal": "Total Cal",
+    "pace": "Pace",
+    "avgHR": "Avg HR",
+    "heartRate": "Heart Rate",
+    "heartRateZones": "Heart Rate Zones",
+    "recovery": "HR Recovery",
+    "splits": "Splits",
+    "route": "Route",
+    "weather": "Weather",
+    "airQuality": "Air Quality",
+    "conditions": "Conditions"
+  },
+  "sleepDetail": {
+    "title": "Sleep Detail",
+    "phases": "Sleep Phases",
+    "efficiency": "Efficiency",
+    "vitals": "Vitals"
   }
 }

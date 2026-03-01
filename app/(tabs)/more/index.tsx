@@ -61,8 +61,8 @@ import { scale, scaleModerate } from '@/constants/responsive';
 import { resetAllData } from '@/lib/storage';
 import logger from '@/lib/security/logger';
 import { useI18n } from '@/lib/I18nContext';
-import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
-import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited, resetAllTutorials } from '@/lib/featureDiscoveryService';
+import { ContextualTip } from '@/components/ContextualTip';
+import { resetAllTips } from '@/lib/contextualTipsService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // ============================================
@@ -177,6 +177,7 @@ const TOOL_SECTIONS: ToolSection[] = [
       { id: 'nutritionists', label: 'Pros de sante', sublabel: 'Kines, nutritionnistes, medecins', Icon: Heart, route: '/nutritionists', iconColor: '#F87171' },
       { id: 'savoir', label: 'Savoir', sublabel: 'Articles sur la science du sport', Icon: FlaskConical, route: '/savoir', iconColor: '#8B5CF6' },
       { id: 'sources', label: 'Sources scientifiques', sublabel: 'References academiques', Icon: BookOpen, route: '/scientific-sources', iconColor: '#10B981' },
+      { id: 'guide', label: 'Guide de l\'app', sublabel: 'Astuces et conseils pour chaque ecran', Icon: Info, route: '/guide', iconColor: '#8B5CF6' },
     ],
   },
 ];
@@ -219,9 +220,6 @@ export default function MoreScreen() {
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState('');
 
-  // Tutorial
-  const [showTutorial, setShowTutorial] = useState(false);
-
   // Show info card
   const [showInfoCard, setShowInfoCard] = useState(true);
 
@@ -254,19 +252,6 @@ export default function MoreScreen() {
       setScreenshotMenuUnlocked(screenshotMenu === 'true');
     };
     loadCreatorMode();
-  }, []);
-
-  // Tutorial check
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    const checkFirstVisit = async () => {
-      const visited = await hasVisitedPage('menu');
-      if (!visited) {
-        timer = setTimeout(() => setShowTutorial(true), 1000);
-      }
-    };
-    checkFirstVisit();
-    return () => { if (timer) clearTimeout(timer); };
   }, []);
 
   // ============================================
@@ -422,7 +407,7 @@ export default function MoreScreen() {
   const handleShowTutorial = async () => {
     showPopup(
       t('menu.tutorial'),
-      "Tu vas etre redirige vers l'accueil pour revoir tous les tutoriels depuis le debut. Continue ?",
+      "Tu vas etre redirige vers l'accueil pour revoir toutes les astuces. Continue ?",
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -430,25 +415,16 @@ export default function MoreScreen() {
           style: 'primary',
           onPress: async () => {
             try {
-              await resetAllTutorials();
+              await resetAllTips();
               router.push('/(tabs)');
               notificationAsync(NotificationFeedbackType.Success);
             } catch (error) {
-              logger.error('Error resetting tutorials:', error);
+              logger.error('Error resetting tips:', error);
             }
           },
         },
       ]
     );
-  };
-
-  const handleCloseTutorial = async () => {
-    await markPageAsVisited('menu');
-    setShowTutorial(false);
-  };
-
-  const handleLaterTutorial = () => {
-    setShowTutorial(false);
   };
 
   const dismissInfoCard = async () => {
@@ -719,15 +695,8 @@ export default function MoreScreen() {
         </View>
       </Modal>
 
-      {/* Tutorial */}
-      {showTutorial && (
-        <FeatureDiscoveryModal
-          visible={true}
-          tutorial={PAGE_TUTORIALS.menu}
-          onClose={handleCloseTutorial}
-          onSkip={handleLaterTutorial}
-        />
-      )}
+      {/* Tip contextuel */}
+      <ContextualTip tipId="more" />
 
       <PopupComponent />
     </View>

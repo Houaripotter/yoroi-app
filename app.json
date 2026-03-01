@@ -177,6 +177,11 @@
     },
     "android": {
       "package": "com.houari.yoroi",
+      "icon": "./assets/images/android.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/android.png",
+        "backgroundColor": "#000000"
+      },
       "permissions": [
         "android.permission.health.READ_STEPS",
         "android.permission.health.READ_WEIGHT",

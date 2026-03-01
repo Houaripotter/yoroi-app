@@ -11,19 +11,18 @@ import type { TabItem } from '@/lib/tabOrderService';
 
 // ============================================
 // TAB LAYOUT - FLOATING PILL TAB BAR
-// 3 gauche | + | 4 droite - equilibre et propre
+// 3 gauche | + integre | 3 droite
 // ============================================
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
-const ICON_SIZE = 20;
-const ICON_SIZE_ACTIVE = 22;
-const PILL_H = 62;
-const PILL_BOTTOM = 20;
-const PILL_R = 20;
-const PILL_MARGIN = 10;
-const PLUS_SIZE = 48;
-const PLUS_SPACER = 54;
+const ICON_SIZE = 22;
+const ICON_SIZE_ACTIVE = 24;
+const PILL_H = 68;
+const PILL_BOTTOM = 22;
+const PILL_R = 22;
+const PILL_MARGIN = 12;
+const PLUS_SIZE = 50;
 
 const isColorDark = (hex: string): boolean => {
   const h = hex.replace('#', '');
@@ -62,6 +61,7 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
   const { colors, isDark } = useTheme();
   const router = useRouter();
   const plusScale = useRef(new Animated.Value(1)).current;
+  const plusRotate = useRef(new Animated.Value(0)).current;
   const [tabOrder, setTabOrder] = useState<TabItem[] | null>(null);
 
   useEffect(() => {
@@ -79,26 +79,36 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
   const activeColor = isDark
     ? (isColorDark(colors.accent) ? '#FFFFFF' : colors.accent)
     : '#FFFFFF';
-  const inactiveColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.5)';
-  const dotColor = activeColor;
+  const inactiveColor = isDark ? 'rgba(255,255,255,0.40)' : 'rgba(255,255,255,0.55)';
 
   // Bouton +
   const light = !isDark;
   const plusBg = light ? '#FFFFFF' : colors.accent;
-  const plusBgDark = light ? '#F0F0F0' : colors.accentDark;
+  const plusBgDark = light ? '#F5F5F5' : colors.accentDark;
   const plusIcon = light ? colors.accent : colors.textOnAccent;
 
   // Contour pilule
-  const pillBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.35)';
+  const pillBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.25)';
 
   const handlePlusPress = () => {
     impactAsync(ImpactFeedbackStyle.Heavy);
-    Animated.sequence([
-      Animated.spring(plusScale, { toValue: 0.85, useNativeDriver: true, speed: 50 }),
-      Animated.spring(plusScale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 10 }),
+    Animated.parallel([
+      Animated.sequence([
+        Animated.spring(plusScale, { toValue: 0.82, useNativeDriver: true, speed: 50 }),
+        Animated.spring(plusScale, { toValue: 1, useNativeDriver: true, speed: 18, bounciness: 12 }),
+      ]),
+      Animated.sequence([
+        Animated.timing(plusRotate, { toValue: 1, duration: 150, useNativeDriver: true }),
+        Animated.timing(plusRotate, { toValue: 0, duration: 150, useNativeDriver: true }),
+      ]),
     ]).start();
     router.push('/add');
   };
+
+  const plusRotateInterpolate = plusRotate.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '90deg'],
+  });
 
   // Ordre: 3 gauche | + | 3 droite (equilibre)
   const leftNames = tabOrder ? getLeftTabs(tabOrder).map(t => t.id).filter(id => id !== 'profile') : ['index', 'stats', 'carnet'];
@@ -132,10 +142,17 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
         activeOpacity={0.7}
         style={styles.tabBtn}
       >
+        {/* Fond pour l'onglet actif */}
+        {isFocused && (
+          <View style={[
+            styles.activeBackground,
+            { backgroundColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.18)' },
+          ]} />
+        )}
         <IconComp
           size={isFocused ? ICON_SIZE_ACTIVE : ICON_SIZE}
           color={isFocused ? activeColor : inactiveColor}
-          strokeWidth={isFocused ? 2.5 : 1.8}
+          strokeWidth={isFocused ? 2.4 : 1.7}
         />
         <Text
           style={[
@@ -147,9 +164,8 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
         >
           {label}
         </Text>
-        {/* Point indicateur actif */}
         {isFocused && (
-          <View style={[styles.activeDot, { backgroundColor: dotColor }]} />
+          <View style={[styles.activeDot, { backgroundColor: activeColor }]} />
         )}
       </TouchableOpacity>
     );
@@ -157,47 +173,46 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
 
   return (
     <View style={styles.pillOuter} pointerEvents="box-none">
-      {/* Bouton + flottant - integre dans la pilule */}
-      <Animated.View style={[styles.plusBtn, { transform: [{ scale: plusScale }] }]}>
-        <TouchableOpacity activeOpacity={0.85} onPress={handlePlusPress} style={styles.plusTouch}>
-          <LinearGradient
-            colors={[plusBg, plusBgDark]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[
-              styles.plusGrad,
-              {
-                borderWidth: 2.5,
-                borderColor: light ? colors.accent + '25' : 'rgba(255,255,255,0.15)',
-              },
-            ]}
-          >
-            <Plus size={22} color={plusIcon} strokeWidth={2.8} />
-          </LinearGradient>
-        </TouchableOpacity>
-      </Animated.View>
-
-      {/* Pilule - 3 | + | 4 */}
       <View style={[
         styles.pill,
         {
           backgroundColor: pillBg,
           borderColor: pillBorder,
           shadowColor: isDark ? '#000' : colors.accentDark,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: isDark ? 0.4 : 0.25,
-          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: isDark ? 0.5 : 0.3,
+          shadowRadius: 20,
         },
       ]}>
-        {/* 3 onglets a gauche */}
+        {/* Onglets a gauche */}
         <View style={styles.tabGroup}>
           {leftRoutes.map(renderTab)}
         </View>
 
-        {/* Espace pour le bouton + */}
-        <View style={styles.plusSpacer} />
+        {/* Bouton + integre au centre */}
+        <Animated.View style={[
+          styles.plusContainer,
+          { transform: [{ scale: plusScale }, { rotate: plusRotateInterpolate }] },
+        ]}>
+          <TouchableOpacity activeOpacity={0.85} onPress={handlePlusPress} style={styles.plusTouch}>
+            <LinearGradient
+              colors={[plusBg, plusBgDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[
+                styles.plusGrad,
+                {
+                  borderColor: light ? colors.accent + '30' : 'rgba(255,255,255,0.15)',
+                  shadowColor: light ? colors.accent : '#000',
+                },
+              ]}
+            >
+              <Plus size={24} color={plusIcon} strokeWidth={2.8} />
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
 
-        {/* 4 onglets a droite */}
+        {/* Onglets a droite */}
         <View style={styles.tabGroup}>
           {rightRoutes.map(renderTab)}
         </View>
@@ -237,11 +252,11 @@ const styles = StyleSheet.create({
     width: SCREEN_W - (PILL_MARGIN * 2),
     height: PILL_H,
     borderRadius: PILL_R,
-    borderWidth: 1.5,
+    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    elevation: 12,
-    paddingHorizontal: 4,
+    elevation: 16,
+    paddingHorizontal: 6,
   },
 
   // Groupe de tabs (gauche ou droite)
@@ -256,45 +271,44 @@ const styles = StyleSheet.create({
   tabBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 2,
-    minWidth: 40,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    minWidth: 46,
+    position: 'relative',
+  },
+
+  // Fond arrondi derriere l'onglet actif
+  activeBackground: {
+    position: 'absolute',
+    top: 4,
+    bottom: 4,
+    left: 0,
+    right: 0,
+    borderRadius: 14,
   },
 
   // Label sous l'icone
   tabLabel: {
-    fontSize: 9,
-    fontWeight: '500',
-    marginTop: 3,
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 4,
+    letterSpacing: 0.1,
   },
   tabLabelActive: {
     fontWeight: '800',
   },
-
-  // Point sous l'onglet actif
   activeDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     marginTop: 3,
   },
 
-  plusSpacer: {
-    width: PLUS_SPACER,
-  },
-
-  plusBtn: {
-    position: 'absolute',
-    top: -20,
-    zIndex: 10,
+  // Bouton + integre dans la barre
+  plusContainer: {
     width: PLUS_SIZE,
     height: PLUS_SIZE,
-    borderRadius: PLUS_SIZE / 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 15,
+    marginHorizontal: 4,
   },
   plusTouch: {
     width: '100%',
@@ -308,7 +322,11 @@ const styles = StyleSheet.create({
     borderRadius: PLUS_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.25)',
+    borderWidth: 2,
+    // Shadow pour donner du relief au +
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });

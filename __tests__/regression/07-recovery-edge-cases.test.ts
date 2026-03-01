@@ -73,7 +73,7 @@ import {
   getUserGear,
 } from '@/lib/storage';
 
-import { validate, validateObject } from '@/lib/validation';
+
 import { normalizeSourceName, SOURCE_PRIORITY } from '@/lib/healthConnect.ios';
 
 describe('REGRESSION: Recovery & Edge Cases', () => {
@@ -233,42 +233,6 @@ describe('REGRESSION: Recovery & Edge Cases', () => {
     });
   });
 
-  // ============================================
-  // BOUNDARY VALUES
-  // ============================================
-  describe('boundary values', () => {
-    it('handles minimum valid weight', () => {
-      expect(validate('weight', 20).valid).toBe(true);
-      expect(validate('weight', 19.99).valid).toBe(false);
-    });
-
-    it('handles maximum valid weight', () => {
-      expect(validate('weight', 350).valid).toBe(true);
-      expect(validate('weight', 350.01).valid).toBe(false);
-    });
-
-    it('handles zero values', () => {
-      expect(validate('weight', 0).valid).toBe(false);
-      expect(validate('sleepHours', 0).valid).toBe(true);
-      expect(validate('rpe', 0).valid).toBe(false);
-    });
-
-    it('handles float precision', () => {
-      const result = validate('weight', 75.123456789);
-      expect(result.valid).toBe(true);
-    });
-
-    it('handles empty strings', () => {
-      expect(validate('weight', '').valid).toBe(false);
-      expect(validate('notes', '').valid).toBe(true); // optional
-      expect(validate('name', '').valid).toBe(true); // optional
-    });
-
-    it('handles very long strings', () => {
-      expect(validate('notes', 'a'.repeat(1000)).valid).toBe(true);
-      expect(validate('notes', 'a'.repeat(1001)).valid).toBe(false);
-    });
-  });
 
   // ============================================
   // CONCURRENT OPERATIONS

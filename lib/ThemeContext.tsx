@@ -47,6 +47,9 @@ interface ThemeContextType {
   // Couleurs de fond raccourcies
   screenBackground: string;
   containerBackground: string;
+  // Texte adapté au screenBackground (blanc sur fond accent en light)
+  screenText: string;
+  screenTextMuted: string;
   // Glow shadow style
   glowShadow: {
     shadowColor: string;
@@ -79,6 +82,8 @@ const ThemeContext = createContext<ThemeContextType>({
   themeColors,
   screenBackground: defaultTheme.colors.background,
   containerBackground: defaultTheme.colors.backgroundCard,
+  screenText: '#FFFFFF',
+  screenTextMuted: 'rgba(255,255,255,0.7)',
   glowShadow: {
     shadowColor: defaultTheme.colors.accent,
     shadowOffset: { width: 0, height: 0 },
@@ -109,6 +114,8 @@ export const useTheme = () => {
       themeColors,
       screenBackground: defaultTheme.colors.background,
       containerBackground: defaultTheme.colors.backgroundCard,
+      screenText: '#FFFFFF',
+      screenTextMuted: 'rgba(255,255,255,0.7)',
       glowShadow: {
         shadowColor: defaultTheme.colors.accent,
         shadowOffset: { width: 0, height: 0 },
@@ -213,8 +220,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setThemeColor,
     setThemeMode,
     themeColors,
-    screenBackground: colors.background,
+    screenBackground: actualMode === 'dark' ? colors.background : colors.accent,
     containerBackground: colors.backgroundCard,
+    screenText: actualMode === 'dark' ? colors.textPrimary : '#FFFFFF',
+    screenTextMuted: actualMode === 'dark' ? colors.textMuted : 'rgba(255,255,255,0.7)',
     glowShadow,
     gradients: GRADIENTS,
     themeName: `${themeColor}_${actualMode}`,

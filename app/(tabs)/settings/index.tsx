@@ -3,7 +3,7 @@
 // Design: scrollable list with grouped sections
 // ============================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   Modal,
   TextInput,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,6 +45,8 @@ import {
   Heart,
   ChevronRight,
   X,
+  Search,
+  MessageSquareQuote,
   LucideIcon,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
@@ -53,11 +56,15 @@ import { CheckCircle, AlertCircle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { safeOpenURL } from '@/lib/security/validators';
+// Demo data removed - all data comes from Apple Health / Health Connect
+import { Smartphone, BookOpen, Syringe, BarChart3, Database } from 'lucide-react-native';
 import { exportDataToJSON, importDataFromJSON, exportEditableCSV, importEditableCSV, exportEmptyTemplate } from '@/lib/exportService';
 import { generateProgressPDF } from '@/lib/pdfExport';
 import { resetAllData } from '@/lib/storage';
 import logger from '@/lib/security/logger';
-import { resetAllTutorials } from '@/lib/featureDiscoveryService';
+import { resetAllTips } from '@/lib/contextualTipsService';
+import { generateHeryDemoData } from '@/lib/demoDataService';
+import { notificationService } from '@/lib/notificationService';
 
 // ============================================
 // SECTION DATA
@@ -101,13 +108,14 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
     title: 'PERSONNALISATION',
     items: [
       { id: 'navbar', label: 'Barre de navigation', sublabel: 'Ordre et visibilite des onglets', Icon: Grip, iconColor: '#8B5CF6', route: '/customize-tabs' },
+      { id: 'citations', label: 'Citations', sublabel: 'Style et notifications', Icon: MessageSquareQuote, iconColor: '#F59E0B', route: '/citations' },
     ],
   },
   {
     title: 'NOTIFICATIONS & CONNECTIVITE',
     items: [
       { id: 'notifications', label: 'Notifications', sublabel: 'Rappels, briefing, alertes intelligentes', Icon: Bell, iconColor: '#F59E0B', route: '/notifications' },
-      { id: 'health-data', label: 'Donnees Sante', sublabel: 'Synchronise tes donnees sante', Icon: Stethoscope, iconColor: '#EC4899', route: '/connected-devices' },
+{ id: 'health-data', label: 'Donnees Sante', sublabel: 'Synchronise tes donnees sante', Icon: Stethoscope, iconColor: '#EC4899', route: '/connected-devices' },
     ],
   },
   {
@@ -125,8 +133,8 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
   {
     title: 'SUPPORT & A PROPOS',
     items: [
-      { id: 'help', label: 'Aide & Tutoriels', sublabel: 'Decouvre comment utiliser chaque fonctionnalite', Icon: Info, iconColor: '#8B5CF6', route: '/help-tutorials' },
-      { id: 'tutorial', label: 'Revoir le Tutoriel', sublabel: 'Decouvre toutes les fonctionnalites', Icon: BookMarked, iconColor: '#8B5CF6', handler: 'tutorial' },
+      { id: 'help', label: 'Guide & Astuces', sublabel: 'Decouvre comment utiliser chaque fonctionnalite', Icon: Info, iconColor: '#8B5CF6', route: '/guide' },
+      { id: 'tutorial', label: 'Revoir les Astuces', sublabel: 'Reafficher les tips sur chaque ecran', Icon: BookMarked, iconColor: '#8B5CF6', handler: 'tutorial' },
       { id: 'contact', label: 'Contact', sublabel: 'Disponible par mail', Icon: MessageCircle, iconColor: '#14B8A6', handler: 'contact' },
       { id: 'ideas', label: 'Boite a idees', sublabel: 'Proposer des idees et signaler des bugs', Icon: Lightbulb, iconColor: '#14B8A6', handler: 'ideas' },
       { id: 'instagram', label: 'Instagram : Yoroiapp', sublabel: "Suis l'avancee", Icon: Camera, iconColor: '#EC4899', handler: 'instagram' },
@@ -134,6 +142,16 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
       { id: 'store', label: 'YOROI sur le Store', sublabel: '', Icon: Heart, iconColor: '#3B82F6', handler: 'store' },
     ],
   },
+];
+
+// Creator mode items as standard rows
+const CREATOR_ITEMS: SettingsItem[] = [
+  { id: 'creator-screenshot', label: 'Mode Screenshot', sublabel: 'Desactive', Icon: Smartphone, iconColor: '#3B82F6', handler: 'toggle-screenshot' },
+  { id: 'creator-journal', label: 'Mode Carnet', sublabel: 'Desactive', Icon: BookOpen, iconColor: '#F97316', handler: 'toggle-journal' },
+  { id: 'creator-surgeon', label: 'Mode Chirurgien', sublabel: 'Desactive', Icon: Syringe, iconColor: '#EF4444', handler: 'toggle-surgeon' },
+  { id: 'creator-mock', label: 'Stats Mock', sublabel: 'Desactive', Icon: BarChart3, iconColor: '#8B5CF6', handler: 'toggle-mock' },
+  { id: 'creator-hery', label: 'Profil Demo Hery', sublabel: 'Injecter donnees realistes', Icon: Database, iconColor: '#10B981', handler: 'demo-hery' },
+  { id: 'creator-reset', label: 'Tout Desactiver', sublabel: 'Nettoyer les donnees de demo', Icon: Trash2, iconColor: '#EF4444', handler: 'reset-creator', labelColor: '#EF4444' },
 ];
 
 // ============================================
@@ -147,6 +165,9 @@ export default function SettingsScreen() {
   const { t, language, setLanguage, supportedLanguages } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
 
+  // Search
+  const [searchText, setSearchText] = useState('');
+
   // Reset modal
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState('');
@@ -159,15 +180,82 @@ export default function SettingsScreen() {
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
   const [measurementUnit, setMeasurementUnit] = useState<'cm' | 'in'>('cm');
 
-  // Version tap
+  // Version tap & creator mode
   const [versionTapCount, setVersionTapCount] = useState(0);
   const [lastTapTime, setLastTapTime] = useState(0);
   const [showSecretCodeModal, setShowSecretCodeModal] = useState(false);
   const [secretCode, setSecretCode] = useState('');
+  const [screenshotMenuUnlocked, setScreenshotMenuUnlocked] = useState(false);
+
+  // Creator mode states
+  const [isGlobalScreenshotMode, setIsGlobalScreenshotMode] = useState(false);
+  const [isJournalScreenshotMode, setIsJournalScreenshotMode] = useState(false);
+  const [isSurgeonMode, setIsSurgeonMode] = useState(false);
+  const [isMockStatsMode, setIsMockStatsMode] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     loadUnits();
+    // Check if creator mode is unlocked
+    AsyncStorage.getItem('@yoroi_screenshot_menu_unlocked').then(val => {
+      if (val === 'true') {
+        setScreenshotMenuUnlocked(true);
+        loadCreatorSettings();
+      }
+    });
   }, []);
+
+  const loadCreatorSettings = async () => {
+    try {
+      const [globalMode, journalMode, surgeonMode, mockStats] = await Promise.all([
+        AsyncStorage.getItem('@yoroi_screenshot_mode'),
+        AsyncStorage.getItem('@yoroi_journal_screenshot_mode'),
+        AsyncStorage.getItem('@yoroi_surgeon_mode'),
+        AsyncStorage.getItem('@yoroi_mock_stats_mode'),
+      ]);
+      setIsGlobalScreenshotMode(globalMode === 'true');
+      setIsJournalScreenshotMode(journalMode === 'true');
+      setIsSurgeonMode(surgeonMode === 'true');
+      setIsMockStatsMode(mockStats === 'true');
+    } catch (e) {
+      logger.error('Error loading creator settings', e);
+    }
+  };
+
+  const toggleGlobalScreenshotMode = async (value: boolean) => {
+    setIsGlobalScreenshotMode(value);
+    await AsyncStorage.setItem('@yoroi_screenshot_mode', String(value));
+    showPopup(value ? 'Mode Screenshot Active' : 'Mode Screenshot Desactive', value ? 'Activé.' : 'Desactivé.', [{ text: 'OK', style: 'primary' }]);
+  };
+
+  const toggleJournalScreenshotMode = async (value: boolean) => {
+    setIsJournalScreenshotMode(value);
+    await AsyncStorage.setItem('@yoroi_journal_screenshot_mode', String(value));
+  };
+
+  const toggleSurgeonMode = async (value: boolean) => {
+    setIsSurgeonMode(value);
+    await AsyncStorage.setItem('@yoroi_surgeon_mode', String(value));
+  };
+
+  const toggleMockStatsMode = async (value: boolean) => {
+    setIsMockStatsMode(value);
+    await AsyncStorage.setItem('@yoroi_mock_stats_mode', String(value));
+  };
+
+  const resetAllCreatorModes = async () => {
+    await AsyncStorage.multiRemove([
+      '@yoroi_screenshot_mode',
+      '@yoroi_journal_screenshot_mode',
+      '@yoroi_surgeon_mode',
+      '@yoroi_mock_stats_mode',
+    ]);
+    setIsGlobalScreenshotMode(false);
+    setIsJournalScreenshotMode(false);
+    setIsSurgeonMode(false);
+    setIsMockStatsMode(false);
+    showPopup('Reset', 'Tous les modes sont desactives.', [{ text: 'OK', style: 'primary' }]);
+  };
 
   const loadUnits = async () => {
     try {
@@ -195,6 +283,49 @@ export default function SettingsScreen() {
 
   // Update language sublabel dynamically
   const currentLangCode = language?.toUpperCase() || 'FR';
+
+  // Creator items with dynamic sublabels
+  const creatorItems = useMemo((): SettingsItem[] => {
+    return CREATOR_ITEMS.map(item => {
+      switch (item.id) {
+        case 'creator-screenshot':
+          return { ...item, sublabel: isGlobalScreenshotMode ? 'Active' : 'Desactive' };
+        case 'creator-journal':
+          return { ...item, sublabel: isJournalScreenshotMode ? 'Active' : 'Desactive' };
+        case 'creator-surgeon':
+          return { ...item, sublabel: isSurgeonMode ? 'Active' : 'Desactive' };
+        case 'creator-mock':
+          return { ...item, sublabel: isMockStatsMode ? 'Active' : 'Desactive' };
+        default:
+          return item;
+      }
+    });
+  }, [isGlobalScreenshotMode, isJournalScreenshotMode, isSurgeonMode, isMockStatsMode]);
+
+  // Filtered sections based on search
+  const filteredSections = useMemo((): SettingsSection[] => {
+    const query = searchText.trim().toLowerCase();
+    if (!query) return SETTINGS_SECTIONS;
+    return SETTINGS_SECTIONS.map(section => ({
+      ...section,
+      items: section.items.filter(
+        item =>
+          item.label.toLowerCase().includes(query) ||
+          item.sublabel.toLowerCase().includes(query)
+      ),
+    })).filter(section => section.items.length > 0);
+  }, [searchText]);
+
+  // Filtered creator items based on search
+  const filteredCreatorItems = useMemo((): SettingsItem[] => {
+    const query = searchText.trim().toLowerCase();
+    if (!query) return creatorItems;
+    return creatorItems.filter(
+      item =>
+        item.label.toLowerCase().includes(query) ||
+        item.sublabel.toLowerCase().includes(query)
+    );
+  }, [searchText, creatorItems]);
 
   // ============================================
   // HANDLERS
@@ -323,8 +454,8 @@ export default function SettingsScreen() {
 
   const handleShowTutorial = () => {
     showPopup(
-      'Revoir le Tutoriel',
-      "Tu vas etre redirige vers l'accueil pour revoir tous les tutoriels. Continuer ?",
+      'Revoir les Astuces',
+      "Tu vas etre redirige vers l'accueil pour revoir toutes les astuces. Continuer ?",
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -332,11 +463,11 @@ export default function SettingsScreen() {
           style: 'primary',
           onPress: async () => {
             try {
-              await resetAllTutorials();
+              await resetAllTips();
               router.push('/(tabs)');
               notificationAsync(NotificationFeedbackType.Success);
             } catch (error) {
-              logger.error('Error resetting tutorials:', error);
+              logger.error('Error resetting tips:', error);
             }
           },
         },
@@ -378,15 +509,46 @@ export default function SettingsScreen() {
     if (secretCode === '2022') {
       notificationAsync(NotificationFeedbackType.Success);
       await AsyncStorage.setItem('@yoroi_screenshot_menu_unlocked', 'true');
-      await AsyncStorage.setItem('@yoroi_screenshot_mode', 'true');
+      setScreenshotMenuUnlocked(true);
       setShowSecretCodeModal(false);
       setSecretCode('');
-      showPopup('Mode Createur Debloque', "L'onglet Createur est maintenant accessible.", [{ text: 'Parfait', style: 'primary' }]);
+      await loadCreatorSettings();
     } else {
       notificationAsync(NotificationFeedbackType.Error);
       showPopup('Code Incorrect', "Le code saisi n'est pas valide.", [{ text: 'Reessayer', style: 'primary' }]);
       setSecretCode('');
     }
+  };
+
+  const handleDemoHery = () => {
+    showPopup(
+      'Profil Demo Hery',
+      'Injecter les donnees de demo realistes (profil, seances, pesees, benchmarks, techniques) ? Les donnees existantes seront ecrasees.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Generer',
+          style: 'primary',
+          onPress: async () => {
+            setIsGenerating(true);
+            try {
+              const result = await generateHeryDemoData();
+              setIsGenerating(false);
+              notificationAsync(NotificationFeedbackType.Success);
+              showPopup(
+                'Profil Hery cree',
+                `${result.workouts} seances, ${result.measurements} pesees, ${result.benchmarks} benchmarks, ${result.skills} techniques injectees.`,
+                [{ text: 'OK', style: 'primary' }]
+              );
+            } catch (error) {
+              setIsGenerating(false);
+              logger.error('[DemoData] Error:', error);
+              showPopup('Erreur', 'Impossible de generer les donnees demo.', [{ text: 'OK', style: 'primary' }]);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleItemPress = useCallback((item: SettingsItem) => {
@@ -398,7 +560,7 @@ export default function SettingsScreen() {
       case 'import': handleImport(); return;
       case 'pdf': handleExportPDF(); return;
       case 'reset': handleResetAll(); return;
-      case 'tutorial': handleShowTutorial(); return;
+case 'tutorial': handleShowTutorial(); return;
       case 'language': setLanguageModalVisible(true); return;
       case 'units': setUnitsModalVisible(true); return;
       case 'contact': router.push({ pathname: '/ideas', params: { category: 'other' } } as any); return;
@@ -407,13 +569,20 @@ export default function SettingsScreen() {
       case 'rate':
       case 'store': safeOpenURL('https://apps.apple.com/fr/app/yoroi-suivi-poids-sport/id6757306612'); return;
       case 'privacy-policy': safeOpenURL('https://easy-woodwind-a70.notion.site/Yoroi-App-2d950188283880dbbd44d7e5abefecbb'); return;
+      // Creator mode toggles
+      case 'toggle-screenshot': toggleGlobalScreenshotMode(!isGlobalScreenshotMode); return;
+      case 'toggle-journal': toggleJournalScreenshotMode(!isJournalScreenshotMode); return;
+      case 'toggle-surgeon': toggleSurgeonMode(!isSurgeonMode); return;
+      case 'toggle-mock': toggleMockStatsMode(!isMockStatsMode); return;
+      case 'demo-hery': handleDemoHery(); return;
+      case 'reset-creator': resetAllCreatorModes(); return;
     }
 
     // Route-based items
     if (item.route) {
       router.push(item.route as any);
     }
-  }, []);
+  }, [isGlobalScreenshotMode, isJournalScreenshotMode, isSurgeonMode, isMockStatsMode]);
 
   // ============================================
   // RENDER
@@ -453,6 +622,16 @@ export default function SettingsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBackground }]}>
+      {/* Loading overlay for demo generation */}
+      {isGenerating && (
+        <View style={styles.loadingOverlay}>
+          <View style={[styles.loadingCard, { backgroundColor: colors.card }]}>
+            <ActivityIndicator size="large" color={colors.accent} />
+            <Text style={[styles.loadingText, { color: colors.textPrimary }]}>Generation du profil Hery...</Text>
+          </View>
+        </View>
+      )}
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 12 }]}
@@ -464,8 +643,22 @@ export default function SettingsScreen() {
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Reglages</Text>
         </View>
 
+        {/* Search Bar */}
+        <View style={[styles.searchBar, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
+          <Search size={18} color={colors.textMuted} strokeWidth={2} />
+          <TextInput
+            style={[styles.searchInput, { color: colors.textPrimary }]}
+            placeholder="Rechercher..."
+            placeholderTextColor={colors.textMuted}
+            value={searchText}
+            onChangeText={setSearchText}
+            autoCorrect={false}
+            clearButtonMode="while-editing"
+          />
+        </View>
+
         {/* Sections */}
-        {SETTINGS_SECTIONS.map((section) => (
+        {filteredSections.map((section) => (
           <View key={section.title} style={styles.sectionContainer}>
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{section.title}</Text>
             <View style={[styles.card, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
@@ -475,6 +668,18 @@ export default function SettingsScreen() {
             </View>
           </View>
         ))}
+
+        {/* Creator Mode - standard rows, visible only when unlocked */}
+        {screenshotMenuUnlocked && filteredCreatorItems.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>CREATEUR</Text>
+            <View style={[styles.card, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
+              {filteredCreatorItems.map((item, idx) =>
+                renderItem(item, idx === filteredCreatorItems.length - 1)
+              )}
+            </View>
+          </View>
+        )}
 
         {/* Version */}
         <TouchableOpacity onPress={handleVersionTap} activeOpacity={1} style={styles.versionContainer}>
@@ -675,6 +880,42 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
     letterSpacing: -0.5,
+  },
+
+  // Search Bar
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 14,
+    marginBottom: 16,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+    padding: 0,
+  },
+
+  // Loading Overlay
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 100,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingCard: {
+    padding: 28,
+    borderRadius: 20,
+    alignItems: 'center',
+    gap: 14,
+  },
+  loadingText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
 
   // Sections

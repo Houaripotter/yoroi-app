@@ -162,7 +162,28 @@
       "intensityLow": "Faible",
       "intensityMedium": "Moyenne",
       "intensityHigh": "Élevée"
-    }
+    },
+    "healthData": "Donnees Sante",
+    "healthDataDesc": "Resume de tes donnees Apple Sante",
+    "connectHealth": "Connecter App Sante",
+    "connectHealthDesc": "Synchronise tes donnees de sante",
+    "activity": "Activite",
+    "moveRing": "Bouger",
+    "exerciseRing": "Exercice",
+    "standRing": "Debout",
+    "exerciseMinutes": "Minutes d'exercice",
+    "standHours": "Heures debout",
+    "stepsCard": "Pas",
+    "distanceCard": "Distance",
+    "heartRateCard": "Frequence cardiaque",
+    "restingHR": "FC au repos",
+    "oxygenCard": "Oxygene sanguin",
+    "respiratoryCard": "Frequence respiratoire",
+    "restingEnergy": "Energie au repos",
+    "sleepCard2": "Sommeil",
+    "ofGoal": "sur {{goal}}",
+    "noHealthData": "Aucune donnee",
+    "updatedAt": "Mis a jour a {{time}}"
   },
   "tools": {
     "title": "Outils",
@@ -404,6 +425,8 @@
     "journalSubtitle": "Journal de tes entraînements",
     "clubs": "Clubs",
     "clubsDescription": "Enregistre tes clubs et salles de sport",
+    "seances": "Seances",
+    "seancesDescription": "Historique de toutes tes seances",
     "events": "Prochains RDV",
     "eventsDescription": "Compétitions et événements à venir",
     "programs": "Programmes",
@@ -1751,5 +1774,27 @@
     "importAnother": "Importer un autre fichier",
     "successMessage": "{{count}} séance(s) importée(s) avec succès !",
     "importError": "Erreur lors de l'import. Veuillez réessayer."
+  },
+  "workoutDetail": {
+    "title": "Detail Seance",
+    "duration": "Duree",
+    "activeCal": "Cal actives",
+    "totalCal": "Cal totales",
+    "pace": "Allure",
+    "avgHR": "FC moy",
+    "heartRate": "Frequence cardiaque",
+    "heartRateZones": "Zones cardiaques",
+    "recovery": "Recuperation FC",
+    "splits": "Intermediaires",
+    "route": "Parcours",
+    "weather": "Meteo",
+    "airQuality": "Qualite de l'air",
+    "conditions": "Conditions"
+  },
+  "sleepDetail": {
+    "title": "Detail Nuit",
+    "phases": "Phases de sommeil",
+    "efficiency": "Efficacite",
+    "vitals": "Signes vitaux"
   }
 }

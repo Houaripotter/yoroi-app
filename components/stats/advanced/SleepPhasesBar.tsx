@@ -17,12 +17,12 @@ interface SleepPhasesBarProps {
   height?: number;
 }
 
-// Couleurs Yoroi pour les phases de sommeil
+// Couleurs Apple Health pour les phases de sommeil
 const PHASE_COLORS = {
-  awake: '#FF0026',   // Rouge vif
-  rem: '#00F19F',     // Teal/vert
-  light: '#7BA1BB',   // Bleu-gris clair
-  deep: '#0093E7',    // Bleu profond
+  awake: '#F97316',   // Orange (Apple Health)
+  rem: '#34D399',     // Teal/cyan (Apple Health)
+  light: '#60A5FA',   // Bleu clair (Apple Health)
+  deep: '#5856D6',    // Indigo profond (Apple Health)
 };
 
 const PHASE_LABELS = {

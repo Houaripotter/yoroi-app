@@ -35,7 +35,7 @@ export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
   return (
     <View style={[styles.layer1, { backgroundColor: screenBackground }]}>
       <StatusBar
-        barStyle={isDark ? 'light-content' : 'dark-content'}
+        barStyle="light-content"
         backgroundColor="transparent"
         translucent
       />

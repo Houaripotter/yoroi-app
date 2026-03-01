@@ -52,13 +52,14 @@ import {
   getTrainings,
 } from '@/lib/database';
 import { getCurrentRank } from '@/lib/ranks';
-import { getLevel } from '@/lib/gamification';
+import { getLevel, calculateAndStoreUnifiedPoints } from '@/lib/gamification';
 import { getUnlockedBadges } from '@/lib/badges';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import logger from '@/lib/security/logger';
+import { ContextualTip } from '@/components/ContextualTip';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -143,7 +144,7 @@ export default function ProfileTabScreen() {
         getUnlockedBadges(),
       ]);
 
-      const points = (weightsHistory?.length || 0) * 10 + (allTrainings?.length || 0) * 25 + (streakDays >= 7 ? 50 : 0);
+      const points = await calculateAndStoreUnifiedPoints(weightsHistory?.length || 0, allTrainings?.length || 0, streakDays);
       setTotalPoints(points);
       setUnlockedBadgesCount(badges?.length || 0);
     } catch (error) {
@@ -539,6 +540,9 @@ export default function ProfileTabScreen() {
       </ScrollView>
 
       <PopupComponent />
+
+      {/* Tip contextuel */}
+      <ContextualTip tipId="profile" />
     </View>
   );
 }

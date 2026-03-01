@@ -384,13 +384,10 @@ export default function TimerScreen() {
         startActivity(mode.toUpperCase()).catch(e => logger.error('LiveActivity Error:', e));
       }
 
-      // PLANIFIER NOTIFICATION QUAND TIMER TERMINE (pour arrière-plan)
+      // PLANIFIER NOTIFICATION QUAND TIMER TERMINE (pour arriere-plan)
       if (mode !== 'fortime' && initialTime > 0) {
-        timerNotifications.scheduleTimerFinishedNotification(
-          mode === 'musculation' ? 'Repos terminé !' : 'Timer terminé !',
-          mode === 'musculation' ? 'Go go go ! Prochaine série !' : 'Excellent travail !',
-          initialTime
-        ).catch(e => logger.error('Notification error:', e));
+        timerNotifications.scheduleTimerEndNotification(mode, initialTime)
+          .catch(e => logger.error('Notification error:', e));
       }
     }
 
@@ -416,11 +413,8 @@ export default function TimerScreen() {
     activateKeepAwakeAsync().catch(e => logger.error('KeepAwake error:', e));
     // Replanifier la notification avec le temps restant
     if (mode !== 'fortime' && timeRemaining > 0) {
-      timerNotifications.scheduleTimerFinishedNotification(
-        mode === 'musculation' ? 'Repos terminé !' : 'Timer terminé !',
-        mode === 'musculation' ? 'Go go go ! Prochaine série !' : 'Excellent travail !',
-        timeRemaining
-      ).catch(e => logger.error('Notification error:', e));
+      timerNotifications.scheduleTimerEndNotification(mode, timeRemaining)
+        .catch(e => logger.error('Notification error:', e));
     }
     setTimerState('running');
   };

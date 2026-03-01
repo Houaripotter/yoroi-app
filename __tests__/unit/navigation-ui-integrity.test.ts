@@ -79,7 +79,7 @@ describe('1. Navigation - Structure des routes', () => {
       'index.tsx',
       'legal.tsx',
       'onboarding.tsx',
-      'mode-selection.tsx',
+
       'sport-selection.tsx',
       'setup.tsx',
       // Tabs

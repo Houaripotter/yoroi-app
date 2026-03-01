@@ -2776,9 +2776,10 @@ export default function AddTrainingScreen() {
                                   showMonthlyCount={true}
                                   showWeeklyCount={true}
                                   showExercises={true}
+                                  disableInternalScroll
                                 />
                               </View>
-            
+
                               {/* ACTIONS - ÉTAPE 2 */}
                               <View style={{ width: '100%', maxWidth: 360, gap: 12 }}>
                                 <TouchableOpacity
@@ -2874,6 +2875,7 @@ export default function AddTrainingScreen() {
                                   showMonthlyCount={true}
                                   showWeeklyCount={true}
                                   showExercises={true}
+                                  disableInternalScroll
                                 />
                               </View>
 

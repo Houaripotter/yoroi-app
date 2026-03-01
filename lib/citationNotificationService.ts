@@ -15,6 +15,7 @@ import {
   SupportedLanguage,
 } from './citations';
 import logger from './security/logger';
+import { saveNotification } from './notificationHistoryService';
 
 const LANGUAGE_KEY = '@yoroi_language';
 
@@ -184,6 +185,9 @@ export const scheduleCitationNotifications = async (): Promise<boolean> => {
         });
 
         scheduledIds.push(notifId);
+
+        // Sauvegarder dans l'historique
+        saveNotification(getNotificationTitle(), citation.text, 'citation', { category: citation.category }).catch(() => {});
       }
     }
 
@@ -255,6 +259,9 @@ export const sendImmediateCitationNotification = async (): Promise<boolean> => {
       },
       trigger: null, // Envoi immédiat
     });
+
+    // Sauvegarder dans l'historique
+    saveNotification(getNotificationTitle(), citation.text, 'citation', { category: citation.category }).catch(() => {});
 
     logger.info('[CitationNotif] Notification envoyée immédiatement');
     return true;
