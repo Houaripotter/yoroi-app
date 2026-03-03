@@ -617,7 +617,18 @@ export interface Exercise {
   distance?: number;
   duration?: number;
   calories?: number;
+  pace?: string;
   stairs?: number;
+}
+
+export interface CombatRound {
+  number: number;
+  partner?: string;
+  result?: 'win' | 'loss' | 'draw';
+  method?: string;
+  submissionsGiven?: number;
+  submissionsTaken?: number;
+  notes?: string;
 }
 
 export interface Training {
@@ -651,6 +662,7 @@ export interface Training {
   technique_rating?: number | null; // 1-5 stars rating
   is_outdoor?: boolean; // true si entraînement en plein air
   created_at?: string;
+  combat_rounds?: CombatRound[];
   // Apple Health enriched data
   healthkit_uuid?: string;           // UUID HealthKit pour lazy-load des details
   workout_details_json?: string;     // JSON complet (route GPS, FC, splits, meteo)
@@ -920,8 +932,9 @@ export const updateTrainingDetails = async (id: number, detailsJson: string): Pr
 export const updateTraining = async (id: number, data: Partial<Training>): Promise<void> => {
   const database = await openDatabase();
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
+  const combatRoundsJson = data.combat_rounds ? JSON.stringify(data.combat_rounds) : null;
   await database.runAsync(
-    `UPDATE trainings SET club_id = ?, sport = ?, session_type = ?, date = ?, start_time = ?, duration_minutes = ?, notes = ?, muscles = ?, exercises = ?, technique_rating = ?, is_outdoor = ?, distance = ?, calories = ?, intensity = ?, rounds = ?, round_duration = ?, pente = ?, speed = ?, resistance = ?, watts = ?, cadence = ?, heart_rate = ?, max_heart_rate = ?, source = ?
+    `UPDATE trainings SET club_id = ?, sport = ?, session_type = ?, date = ?, start_time = ?, duration_minutes = ?, notes = ?, muscles = ?, exercises = ?, technique_rating = ?, is_outdoor = ?, distance = ?, calories = ?, intensity = ?, rounds = ?, round_duration = ?, pente = ?, speed = ?, resistance = ?, watts = ?, cadence = ?, heart_rate = ?, max_heart_rate = ?, source = ?, combat_rounds = ?
      WHERE id = ?`,
     [data.club_id || null, data.sport || null, data.session_type || null, data.date || null,
      data.start_time || null, data.duration_minutes || null,
@@ -929,16 +942,17 @@ export const updateTraining = async (id: number, data: Partial<Training>): Promi
      data.is_outdoor ? 1 : 0, data.distance || null, data.calories || null,
      data.intensity || null, data.rounds || null, data.round_duration || null,
      data.pente || null, data.speed || null, data.resistance || null, data.watts || null, data.cadence || null,
-     data.heart_rate || null, data.max_heart_rate || null, data.source || null, id]
+     data.heart_rate || null, data.max_heart_rate || null, data.source || null, combatRoundsJson, id]
   );
 };
 
 export const addTraining = async (data: Training): Promise<number> => {
   const database = await openDatabase();
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
+  const combatRoundsJson = data.combat_rounds ? JSON.stringify(data.combat_rounds) : null;
   const result = await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, healthkit_uuid, workout_details_json, heart_rate, max_heart_rate, source)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, healthkit_uuid, workout_details_json, heart_rate, max_heart_rate, source, combat_rounds)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.club_id || null, data.sport, data.session_type || null, data.date,
      data.start_time || null, data.duration_minutes || null,
      data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null,
@@ -946,7 +960,7 @@ export const addTraining = async (data: Training): Promise<number> => {
      data.intensity || null, data.rounds || null, data.round_duration || null,
      data.pente || null, data.speed || null, data.resistance || null, data.watts || null, data.cadence || null,
      data.healthkit_uuid || null, data.workout_details_json || null, data.heart_rate || null,
-     data.max_heart_rate || null, data.source || null]
+     data.max_heart_rate || null, data.source || null, combatRoundsJson]
   );
   if (!result?.lastInsertRowId) {
     throw new Error('Failed to insert training record');

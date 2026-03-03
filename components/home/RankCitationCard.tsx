@@ -35,18 +35,19 @@ const SCREEN_W = Dimensions.get('window').width;
 
 interface RankCitationCardProps {
   streak: number;
+  totalPoints: number;
   dailyQuote?: string | null;
   avatarUri?: string | null;
 }
 
-const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, dailyQuote, avatarUri }) => {
+const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, totalPoints, dailyQuote, avatarUri }) => {
   const { t } = useI18n();
   const { colors, isDark } = useTheme();
 
-  const rank = useMemo(() => getCurrentRank(streak), [streak]);
-  const nextRank = useMemo(() => getNextRank(streak), [streak]);
-  const progress = useMemo(() => getRankProgress(streak), [streak]);
-  const daysToNext = useMemo(() => getDaysToNextRank(streak), [streak]);
+  const rank = useMemo(() => getCurrentRank(totalPoints), [totalPoints]);
+  const nextRank = useMemo(() => getNextRank(totalPoints), [totalPoints]);
+  const progress = useMemo(() => getRankProgress(totalPoints), [totalPoints]);
+  const pointsToNext = useMemo(() => getDaysToNextRank(totalPoints), [totalPoints]);
   const level = LEVEL_MAP[rank.id] || 1;
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -134,7 +135,7 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, dailyQ
                   </View>
                 )}
                 <View style={[styles.levelBadge, { backgroundColor: rank.color }]}>
-                  <Text style={styles.levelText}>Niveau {level}</Text>
+                  <Text style={styles.levelText}>{rank.name}</Text>
                 </View>
               </TouchableOpacity>
 
@@ -170,7 +171,7 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, dailyQ
                     <View style={[styles.nextDot, { backgroundColor: nextRank.color }]} />
                     <Text style={[styles.nextText, { color: colors.textMuted }]}>
                       <Text style={{ fontWeight: '800', color: nextRank.color }}>{nextRank.name}</Text>
-                      {' '}dans {daysToNext} jours
+                      {' '}{pointsToNext} XP restants
                     </Text>
                   </View>
                 ) : (
@@ -196,8 +197,8 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, dailyQ
 
               <View style={styles.statsGrid}>
                 <View style={[styles.statBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
-                  <Text style={[styles.statValue, { color: '#F97316' }]}>{streak}</Text>
-                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>Jours</Text>
+                  <Text style={[styles.statValue, { color: '#F97316' }]}>{totalPoints}</Text>
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>XP</Text>
                 </View>
                 <View style={[styles.statBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
                   <Text style={[styles.statValue, { color: rank.color }]}>{Math.round(progress)}%</Text>
@@ -205,7 +206,7 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, dailyQ
                 </View>
                 <View style={[styles.statBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
                   <Text style={[styles.statValue, { color: colors.textPrimary }]}>{level}/5</Text>
-                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>Niveau</Text>
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>Rang</Text>
                 </View>
               </View>
 
@@ -247,7 +248,7 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, dailyQ
                   <Text style={[styles.rankJpSmall, { color: colors.textMuted }]}>{nextRank.nameJp}</Text>
                   <View style={[styles.daysChip, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
                     <Text style={[styles.daysChipText, { color: colors.textSecondary }]}>
-                      Encore <Text style={{ fontWeight: '800', color: nextRank.color }}>{daysToNext} jours</Text>
+                      Encore <Text style={{ fontWeight: '800', color: nextRank.color }}>{pointsToNext} XP</Text>
                     </Text>
                   </View>
                 </View>
@@ -279,14 +280,14 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, dailyQ
                 <View style={styles.allRanksList}>
                   {RANKS.map((r) => {
                     const isCurrent = r.id === rank.id;
-                    const isUnlocked = streak >= r.minDays;
+                    const isUnlocked = totalPoints >= r.minPoints;
                     return (
                       <View key={r.id} style={[styles.allRanksRow, isCurrent && { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)', borderRadius: 10, padding: 8, margin: -4 }]}>
                         <View style={[styles.allRanksDot, { backgroundColor: isUnlocked ? r.color : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)') }]} />
                         <Text style={[styles.allRanksName, { color: isCurrent ? r.color : (isUnlocked ? colors.textPrimary : colors.textMuted), fontWeight: isCurrent ? '900' : '600' }]}>
                           {r.name}
                         </Text>
-                        <Text style={[styles.allRanksDays, { color: colors.textMuted }]}>{r.minDays}j</Text>
+                        <Text style={[styles.allRanksDays, { color: colors.textMuted }]}>{r.minPoints} XP</Text>
                         {isCurrent && (
                           <View style={[styles.currentTag, { backgroundColor: `${r.color}20` }]}>
                             <Text style={[styles.currentTagText, { color: r.color }]}>Actuel</Text>

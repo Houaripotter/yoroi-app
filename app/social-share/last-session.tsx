@@ -36,6 +36,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { getTrainings, Training, getClubs, getProfile, calculateStreak } from '@/lib/database';
 import { useAvatar } from '@/lib/AvatarContext';
 import { getCurrentRank } from '@/lib/ranks';
+import { getUnifiedPoints } from '@/lib/gamification';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SessionCard } from '@/components/social-cards/SessionCard';
@@ -113,8 +114,9 @@ export default function LastSessionScreen() {
           setUserAvatar(contextAvatar);
         }
 
-        // Charger le rang
-        const rank = getCurrentRank(streak);
+        // Charger le rang (base sur les XP totaux)
+        const totalPoints = await getUnifiedPoints();
+        const rank = getCurrentRank(totalPoints);
         setUserRank(rank.name);
 
         let currentTraining: Training | null = null;

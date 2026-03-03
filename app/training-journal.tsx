@@ -90,7 +90,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function TrainingJournalScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, screenBackground } = useTheme();
   const { t, locale } = useI18n();
   const { isWatchAvailable, syncRecords } = useWatch();
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -1293,13 +1293,13 @@ export default function TrainingJournalScreen() {
   // ============================================
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: screenBackground, paddingTop: insets.top }]}>
       {/* Header */}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { borderBottomColor: isDark ? colors.border : 'rgba(255,255,255,0.2)' }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ChevronLeft size={28} color={colors.textPrimary} />
+          <ChevronLeft size={28} color={isDark ? colors.textPrimary : '#FFFFFF'} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Carnet d'Entrainement</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>Carnet d'Entrainement</Text>
         <TouchableOpacity
           onPress={() => {
             if (isModalProcessing) return;
@@ -1308,7 +1308,7 @@ export default function TrainingJournalScreen() {
           style={styles.trashButton}
           disabled={isModalProcessing}
         >
-          <Trash2 size={22} color={colors.textPrimary} />
+          <Trash2 size={22} color={isDark ? colors.textPrimary : '#FFFFFF'} />
           {trashCount > 0 && (
             <View style={{
               position: 'absolute',
@@ -1330,11 +1330,11 @@ export default function TrainingJournalScreen() {
       </View>
 
       {/* Tab Selector - Records / Techniques */}
-      <View style={[styles.tabContainer, { borderBottomColor: colors.border }]}>
+      <View style={[styles.tabContainer, { borderBottomColor: isDark ? colors.border : 'rgba(255,255,255,0.2)' }]}>
         <TouchableOpacity
           style={[
             styles.tabButton,
-            activeTab === 'records' && { borderBottomColor: '#EF4444', borderBottomWidth: 3 }
+            activeTab === 'records' && { borderBottomColor: isDark ? '#EF4444' : '#FFFFFF', borderBottomWidth: 3 }
           ]}
           onPress={() => {
             impactAsync(ImpactFeedbackStyle.Light);
@@ -1342,15 +1342,15 @@ export default function TrainingJournalScreen() {
           }}
           activeOpacity={0.7}
         >
-          <Dumbbell size={18} color={activeTab === 'records' ? '#EF4444' : colors.textMuted} strokeWidth={2.5} />
+          <Dumbbell size={18} color={activeTab === 'records' ? (isDark ? '#EF4444' : '#FFFFFF') : (isDark ? colors.textMuted : 'rgba(255,255,255,0.5)')} strokeWidth={2.5} />
           <Text style={[
             styles.tabText,
-            { color: activeTab === 'records' ? '#EF4444' : colors.textMuted }
+            { color: activeTab === 'records' ? (isDark ? '#EF4444' : '#FFFFFF') : (isDark ? colors.textMuted : 'rgba(255,255,255,0.5)') }
           ]}>
             Records
           </Text>
-          <View style={[styles.tabBadge, { backgroundColor: activeTab === 'records' ? '#EF4444' : colors.textMuted + '30' }]}>
-            <Text style={[styles.tabBadgeText, { color: activeTab === 'records' ? '#FFFFFF' : colors.textMuted }]}>
+          <View style={[styles.tabBadge, { backgroundColor: activeTab === 'records' ? (isDark ? '#EF4444' : 'rgba(255,255,255,0.25)') : (isDark ? colors.textMuted + '30' : 'rgba(255,255,255,0.12)') }]}>
+            <Text style={[styles.tabBadgeText, { color: activeTab === 'records' ? '#FFFFFF' : (isDark ? colors.textMuted : 'rgba(255,255,255,0.5)') }]}>
               {benchmarks.length}
             </Text>
           </View>
@@ -1359,7 +1359,7 @@ export default function TrainingJournalScreen() {
         <TouchableOpacity
           style={[
             styles.tabButton,
-            activeTab === 'techniques' && { borderBottomColor: '#8B5CF6', borderBottomWidth: 3 }
+            activeTab === 'techniques' && { borderBottomColor: isDark ? '#8B5CF6' : '#FFFFFF', borderBottomWidth: 3 }
           ]}
           onPress={() => {
             impactAsync(ImpactFeedbackStyle.Light);
@@ -1367,15 +1367,15 @@ export default function TrainingJournalScreen() {
           }}
           activeOpacity={0.7}
         >
-          <BookOpen size={18} color={activeTab === 'techniques' ? '#8B5CF6' : colors.textMuted} strokeWidth={2.5} />
+          <BookOpen size={18} color={activeTab === 'techniques' ? (isDark ? '#8B5CF6' : '#FFFFFF') : (isDark ? colors.textMuted : 'rgba(255,255,255,0.5)')} strokeWidth={2.5} />
           <Text style={[
             styles.tabText,
-            { color: activeTab === 'techniques' ? '#8B5CF6' : colors.textMuted }
+            { color: activeTab === 'techniques' ? (isDark ? '#8B5CF6' : '#FFFFFF') : (isDark ? colors.textMuted : 'rgba(255,255,255,0.5)') }
           ]}>
             Techniques
           </Text>
-          <View style={[styles.tabBadge, { backgroundColor: activeTab === 'techniques' ? '#8B5CF6' : colors.textMuted + '30' }]}>
-            <Text style={[styles.tabBadgeText, { color: activeTab === 'techniques' ? '#FFFFFF' : colors.textMuted }]}>
+          <View style={[styles.tabBadge, { backgroundColor: activeTab === 'techniques' ? (isDark ? '#8B5CF6' : 'rgba(255,255,255,0.25)') : (isDark ? colors.textMuted + '30' : 'rgba(255,255,255,0.12)') }]}>
+            <Text style={[styles.tabBadgeText, { color: activeTab === 'techniques' ? '#FFFFFF' : (isDark ? colors.textMuted : 'rgba(255,255,255,0.5)') }]}>
               {skills.length}
             </Text>
           </View>
@@ -1440,7 +1440,7 @@ export default function TrainingJournalScreen() {
               {renderIcon(filter.iconName, 16, isSelected ? filter.textOnColor : filter.color)}
               <Text style={[
                 styles.globalFilterText,
-                { color: isSelected ? filter.textOnColor : colors.textPrimary }
+                { color: isSelected ? filter.textOnColor : (isDark ? colors.textPrimary : '#FFFFFF') }
               ]}>
                 {filter.label}
               </Text>
@@ -1474,7 +1474,7 @@ export default function TrainingJournalScreen() {
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
                 <Dumbbell size={20} color="#EF4444" />
-                <Text style={[styles.sectionHeaderTitle, { color: colors.textPrimary }]}>Mes Records</Text>
+                <Text style={[styles.sectionHeaderTitle, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>Mes Records</Text>
               </View>
               <TouchableOpacity
                 style={[styles.addSectionBtn, { backgroundColor: '#EF444420' }]}
@@ -1544,7 +1544,7 @@ export default function TrainingJournalScreen() {
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
                 <BookOpen size={20} color="#8B5CF6" />
-                <Text style={[styles.sectionHeaderTitle, { color: colors.textPrimary }]}>Mes Techniques</Text>
+                <Text style={[styles.sectionHeaderTitle, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>Mes Techniques</Text>
               </View>
               <TouchableOpacity
                 style={[styles.addSectionBtn, { backgroundColor: '#8B5CF620' }]}

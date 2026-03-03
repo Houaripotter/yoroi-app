@@ -1005,7 +1005,7 @@ export default function PlanningScreen() {
   return (
     <ErrorBoundary>
       <View style={[styles.container, { backgroundColor: screenBackground }]}>
-        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={screenBackground} />
+        <StatusBar barStyle="light-content" backgroundColor={screenBackground} />
 
       {/* Header avec tabs circulaires - zIndex élevé pour rester visible */}
       <View style={[styles.tabsHeader, { backgroundColor: screenBackground, zIndex: 100, elevation: 10 }]}>
@@ -1046,19 +1046,19 @@ export default function PlanningScreen() {
                   styles.circleTab,
                   {
                     backgroundColor: isActive
-                      ? colors.accent
-                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)')
+                      ? (isDark ? colors.accent : '#FFFFFF')
+                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)')
                   },
                 ]}>
                   <Icon
                     size={18}
-                    color={isActive ? colors.textOnAccent : colors.textMuted}
+                    color={isActive ? (isDark ? colors.textOnAccent : colors.accent) : (isDark ? colors.textMuted : 'rgba(255,255,255,0.7)')}
                     strokeWidth={2.5}
                   />
                 </View>
                 <Text style={[
                   styles.tabTitle,
-                  { color: isActive ? (isDark ? colors.accent : colors.textPrimary) : colors.textMuted }
+                  { color: isActive ? (isDark ? colors.accent : '#FFFFFF') : (isDark ? colors.textMuted : 'rgba(255,255,255,0.7)') }
                 ]}>
                   {tab.label}
                 </Text>
@@ -1073,15 +1073,15 @@ export default function PlanningScreen() {
           >
             <View style={[
               styles.circleTab,
-              { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' },
+              { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)' },
             ]}>
               <Trash2
                 size={18}
-                color={colors.textMuted}
+                color={isDark ? colors.textMuted : 'rgba(255,255,255,0.7)'}
                 strokeWidth={2.5}
               />
             </View>
-            <Text style={[styles.tabTitle, { color: colors.textMuted }]}>
+            <Text style={[styles.tabTitle, { color: isDark ? colors.textMuted : 'rgba(255,255,255,0.7)' }]}>
               Corbeille
             </Text>
           </TouchableOpacity>
@@ -1090,7 +1090,7 @@ export default function PlanningScreen() {
         {/* Description de la page active (masquée pour events car header card) */}
         {viewMode !== 'competitions' && (
           <View style={styles.descriptionContainer}>
-            <Text style={[styles.pageDescription, { color: colors.textSecondary }]}>
+            <Text style={[styles.pageDescription, { color: isDark ? colors.textSecondary : 'rgba(255,255,255,0.8)' }]}>
               {tabs.find(t => t.key === viewMode)?.description || ''}
             </Text>
           </View>

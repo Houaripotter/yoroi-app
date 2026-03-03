@@ -16,6 +16,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateStreak } from './database';
 import { getCurrentRank, getNextRank, getDaysToNextRank, getRankProgress, RANKS, type Rank } from './ranks';
+import { getUnifiedPoints } from './gamification';
 import logger from '@/lib/security/logger';
 
 // ============================================================================
@@ -596,7 +597,8 @@ export async function calculateAvatarState(
       }
     }
 
-    const currentRank = getCurrentRank(streak);
+    const totalPoints = await getUnifiedPoints();
+    const currentRank = getCurrentRank(totalPoints);
     const rankLevel = rankToLevel(currentRank);
 
     // Pénalité : 3+ jours sans entraînement OU (charge très faible ET sommeil très faible)
@@ -604,32 +606,30 @@ export async function calculateAvatarState(
       return 'down';
     }
 
-    // NOUVEAU SYSTÈME : État basé sur le niveau de rang
-    // avec modulation selon la forme physique (charge + sommeil)
-    const fitnessScore = (charge + sleep) / 2;
-
-    // Niveau 5 (Shogun) → LEGENDARY
+    // État basé sur le niveau de rang uniquement
+    // Chaque rang = un état d'avatar fixe (pas de saut au niveau suivant)
+    // Niveau 5 (Shogun) -> LEGENDARY
     if (rankLevel >= 5) {
       return 'legendary';
     }
 
-    // Niveau 4 (Ronin) → STRONG ou LEGENDARY si bonne forme
+    // Niveau 4 (Ronin) -> STRONG
     if (rankLevel >= 4) {
-      return fitnessScore >= 60 ? 'legendary' : 'strong';
+      return 'strong';
     }
 
-    // Niveau 3 (Samurai) → NEUTRAL ou STRONG si bonne forme
+    // Niveau 3 (Samurai) -> NEUTRAL
     if (rankLevel >= 3) {
-      return fitnessScore >= 60 ? 'strong' : 'neutral';
+      return 'neutral';
     }
 
-    // Niveau 2 (Bushi) → TIRED ou NEUTRAL si bonne forme
+    // Niveau 2 (Bushi) -> TIRED
     if (rankLevel >= 2) {
-      return fitnessScore >= 60 ? 'neutral' : 'tired';
+      return 'tired';
     }
 
-    // Niveau 1 (Ashigaru) → DOWN ou TIRED si bonne forme
-    return fitnessScore >= 60 ? 'tired' : 'down';
+    // Niveau 1 (Ashigaru) -> DOWN
+    return 'down';
   } catch (error) {
     logger.error('[AvatarSystem] Erreur calcul état avatar:', error);
     return 'neutral';
@@ -773,9 +773,9 @@ export async function getUnlockedLevel(): Promise<AvatarLevel> {
       return 5;
     }
 
-    // Calcul normal basé sur le streak réel
-    const streak = await calculateStreak();
-    const currentRank = getCurrentRank(streak);
+    // Calcul normal basé sur les XP totaux
+    const totalPoints = await getUnifiedPoints();
+    const currentRank = getCurrentRank(totalPoints);
     return rankToLevel(currentRank);
   } catch (error) {
     logger.error('[AvatarSystem] Erreur getUnlockedLevel:', error);
@@ -958,21 +958,21 @@ export async function getAllAvatarUnlockInfo(): Promise<AvatarUnlockInfo[]> {
  * Obtient la progression vers le prochain niveau
  */
 export async function getLevelProgress(): Promise<LevelProgress> {
-  const streak = await calculateStreak();
-  const currentRank = getCurrentRank(streak);
-  const nextRank = getNextRank(streak);
+  const totalPoints = await getUnifiedPoints();
+  const currentRank = getCurrentRank(totalPoints);
+  const nextRank = getNextRank(totalPoints);
   const currentLevel = rankToLevel(currentRank);
   const nextLevel = nextRank ? rankToLevel(nextRank) : null;
 
   return {
     currentLevel,
     nextLevel: nextLevel as AvatarLevel | null,
-    currentDays: streak,
-    requiredDays: nextRank ? nextRank.minDays : currentRank.minDays,
-    percentage: getRankProgress(streak),
+    currentDays: totalPoints,
+    requiredDays: nextRank ? nextRank.minPoints : currentRank.minPoints,
+    percentage: getRankProgress(totalPoints),
     currentRank,
     nextRank,
-    daysToNext: getDaysToNextRank(streak),
+    daysToNext: getDaysToNextRank(totalPoints),
   };
 }
 

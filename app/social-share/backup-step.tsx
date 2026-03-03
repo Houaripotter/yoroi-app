@@ -187,7 +187,7 @@ export default function BackupStepScreen() {
             </View>
 
             <Text style={[styles.successTitle, { color: colors.textPrimary }]}>
-              Bravo ! 🎉
+              Bravo !
             </Text>
 
             <Text style={[styles.successMessage, { color: colors.textSecondary }]}>

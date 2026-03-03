@@ -8,6 +8,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAllMeasurements, getAllWorkouts, getUserSettings, Measurement } from './storage';
 import { getCurrentRank, RANKS } from './ranks';
+import { getUnifiedPoints } from './gamification';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -365,8 +366,12 @@ const checkCondition = async (
 
     case 'rank': {
       const requiredRankId = condition.value as string;
-      const streakDays = Math.max(streakInfo.current, streakInfo.max);
-      const currentRank = getCurrentRank(streakDays);
+      // Use totalPoints from gamification for rank check
+      let totalPoints = 0;
+      try {
+        totalPoints = await getUnifiedPoints();
+      } catch { totalPoints = 0; }
+      const currentRank = getCurrentRank(totalPoints);
 
       const requiredRankIndex = RANKS.findIndex(r => r.id === requiredRankId);
       const currentRankIndex = RANKS.findIndex(r => r.id === currentRank.id);
@@ -376,13 +381,13 @@ const checkCondition = async (
       let progress = 0;
       if (requiredRankIndex >= 0) {
         const requiredRank = RANKS[requiredRankIndex];
-        progress = Math.min(100, (streakDays / requiredRank.minDays) * 100);
+        progress = Math.min(100, (totalPoints / requiredRank.minPoints) * 100);
       }
 
       return {
         isUnlocked,
         progress,
-        currentValue: streakDays,
+        currentValue: totalPoints,
       };
     }
 

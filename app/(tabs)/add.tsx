@@ -45,7 +45,7 @@ import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedba
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { SPACING, RADIUS } from '@/constants/design';
-import { addWeight } from '@/lib/database';
+import { addWeight, addMeasurementRecord } from '@/lib/database';
 import { format, Locale } from 'date-fns';
 import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 import { NumericInput } from '@/components/NumericInput';
@@ -82,7 +82,7 @@ const DATE_LOCALES: { [key: string]: Locale } = {
 export default function AddScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, screenBackground } = useTheme();
   const { t, language } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const dateLocale = DATE_LOCALES[language] || fr;
@@ -103,15 +103,18 @@ export default function AddScreen() {
   const [metabolicAge, setMetabolicAge] = useState('');
   const [bmr, setBmr] = useState(''); // Métabolisme de base
 
-  // Measurements state - Complètes
+  // Measurements state - Complètes avec gauche/droite
   const [waist, setWaist] = useState('');
   const [navel, setNavel] = useState('');
   const [chest, setChest] = useState('');
-  const [arm, setArm] = useState('');
-  const [thigh, setThigh] = useState('');
+  const [leftArm, setLeftArm] = useState('');
+  const [rightArm, setRightArm] = useState('');
+  const [leftThigh, setLeftThigh] = useState('');
+  const [rightThigh, setRightThigh] = useState('');
   const [hips, setHips] = useState('');
   const [neck, setNeck] = useState('');
-  const [calf, setCalf] = useState('');
+  const [leftCalf, setLeftCalf] = useState('');
+  const [rightCalf, setRightCalf] = useState('');
 
   // Mood state
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
@@ -191,11 +194,14 @@ export default function AddScreen() {
                 if (draft.waist) setWaist(draft.waist);
                 if (draft.navel) setNavel(draft.navel);
                 if (draft.chest) setChest(draft.chest);
-                if (draft.arm) setArm(draft.arm);
-                if (draft.thigh) setThigh(draft.thigh);
+                if (draft.leftArm) setLeftArm(draft.leftArm);
+                if (draft.rightArm) setRightArm(draft.rightArm);
+                if (draft.leftThigh) setLeftThigh(draft.leftThigh);
+                if (draft.rightThigh) setRightThigh(draft.rightThigh);
                 if (draft.hips) setHips(draft.hips);
                 if (draft.neck) setNeck(draft.neck);
-                if (draft.calf) setCalf(draft.calf);
+                if (draft.leftCalf) setLeftCalf(draft.leftCalf);
+                if (draft.rightCalf) setRightCalf(draft.rightCalf);
                 if (draft.mood) setSelectedMood(draft.mood);
               },
             },
@@ -234,11 +240,14 @@ export default function AddScreen() {
           waist,
           navel,
           chest,
-          arm,
-          thigh,
+          leftArm,
+          rightArm,
+          leftThigh,
+          rightThigh,
           hips,
           neck,
-          calf,
+          leftCalf,
+          rightCalf,
           mood: selectedMood || undefined,
         };
 
@@ -278,11 +287,14 @@ export default function AddScreen() {
     waist,
     navel,
     chest,
-    arm,
-    thigh,
+    leftArm,
+    rightArm,
+    leftThigh,
+    rightThigh,
     hips,
     neck,
-    calf,
+    leftCalf,
+    rightCalf,
     selectedMood,
   ]);
 
@@ -300,7 +312,7 @@ export default function AddScreen() {
     const weight = weightInputRef.current?.getValue();
 
     // Vérifier si au moins une donnée est remplie (poids OU mensurations OU composition)
-    const hasMeasurements = waist || navel || chest || arm || thigh || hips || neck || calf;
+    const hasMeasurements = waist || navel || chest || leftArm || rightArm || leftThigh || rightThigh || hips || neck || leftCalf || rightCalf;
     const hasComposition = fatPercent || musclePercent || waterPercent || boneMass || visceralFat || metabolicAge || bmr;
 
     if (!weight && !hasMeasurements && !hasComposition) {
@@ -316,12 +328,6 @@ export default function AddScreen() {
     triggerHaptic();
 
     try {
-      if (!weight || weight <= 0 || weight > 500) {
-        showPopup(t('common.error'), 'Poids invalide', [{ text: t('add.ok'), style: 'primary' }]);
-        setIsSaving(false);
-        return;
-      }
-
       const safeFloat = (val: string | undefined) => {
         if (!val) return undefined;
         const n = parseFloat(val.replace(',', '.'));
@@ -333,34 +339,49 @@ export default function AddScreen() {
         return isNaN(n) ? undefined : n;
       };
 
-      await addWeight({
-        weight,
-        date: format(selectedDate, 'yyyy-MM-dd'),
-        fat_percent: safeFloat(fatPercent),
-        muscle_percent: safeFloat(musclePercent),
-        water_percent: safeFloat(waterPercent),
-        bone_mass: safeFloat(boneMass),
-        visceral_fat: safeInt(visceralFat),
-        metabolic_age: safeInt(metabolicAge),
-        bmr: safeInt(bmr),
-        waist: safeFloat(waist),
-        navel: safeFloat(navel),
-        chest: safeFloat(chest),
-        arm: safeFloat(arm),
-        thigh: safeFloat(thigh),
-        hips: safeFloat(hips),
-        neck: safeFloat(neck),
-        calf: safeFloat(calf),
-      });
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+
+      // Sauvegarder le poids si renseigné
+      if (weight && weight > 0 && weight <= 500) {
+        await addWeight({
+          weight,
+          date: dateStr,
+          fat_percent: safeFloat(fatPercent),
+          muscle_percent: safeFloat(musclePercent),
+          water_percent: safeFloat(waterPercent),
+          bone_mass: safeFloat(boneMass),
+          visceral_fat: safeInt(visceralFat),
+          metabolic_age: safeInt(metabolicAge),
+          bmr: safeInt(bmr),
+        });
+      }
+
+      // Sauvegarder les mensurations si renseignees
+      if (hasMeasurements) {
+        await addMeasurementRecord({
+          date: dateStr,
+          chest: safeFloat(chest),
+          waist: safeFloat(waist),
+          navel: safeFloat(navel),
+          hips: safeFloat(hips),
+          left_arm: safeFloat(leftArm),
+          right_arm: safeFloat(rightArm),
+          left_thigh: safeFloat(leftThigh),
+          right_thigh: safeFloat(rightThigh),
+          left_calf: safeFloat(leftCalf),
+          right_calf: safeFloat(rightCalf),
+          neck: safeFloat(neck),
+        });
+      }
 
       notificationAsync(NotificationFeedbackType.Success);
 
-      // 🔄 SYNC VERS APPLE HEALTH
+      // SYNC VERS APPLE HEALTH
       try {
         if (weight) {
           const exported = await HealthConnect.writeWeight(weight);
           if (exported) {
-            logger.info('Poids synchronisé vers Apple Health:', weight);
+            logger.info('Poids synchronise vers Apple Health:', weight);
           }
         }
         if (fatPercent) {
@@ -368,22 +389,21 @@ export default function AddScreen() {
           if (!isNaN(fatValue) && fatValue > 0 && fatValue < 100) {
             const exported = await HealthConnect.writeBodyFat(fatValue);
             if (exported) {
-              logger.info('Body fat synchronisé vers Apple Health:', fatValue);
+              logger.info('Body fat synchronise vers Apple Health:', fatValue);
             }
           }
         }
       } catch (healthError) {
-        // Ne pas bloquer la sauvegarde si l'export échoue
-        logger.warn('Export Apple Health échoué (non bloquant):', healthError);
+        logger.warn('Export Apple Health echoue (non bloquant):', healthError);
       }
 
-      // Effacer le brouillon car sauvegarde réussie
+      // Effacer le brouillon car sauvegarde reussie
       await draftService.clearWeightDraft();
 
       // Notifier la home pour refresh instantane des points/quetes
       DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
 
-      // Afficher la belle modal de succès
+      // Afficher la belle modal de succes
       setSavedWeight(weight ?? null);
       setShowSuccessModal(true);
     } catch (error) {
@@ -531,10 +551,10 @@ export default function AddScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[styles.container, { backgroundColor: screenBackground }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+      <StatusBar barStyle="light-content" />
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + SPACING.md }]}>
@@ -547,7 +567,7 @@ export default function AddScreen() {
         >
           <X size={24} color={colors.textSecondary} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('add.title')}</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>{t('add.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -570,7 +590,7 @@ export default function AddScreen() {
       >
         {/* QUICK ACTION - Ajouter une séance d'entraînement */}
         <TouchableOpacity
-          style={[styles.trainingQuickAction, { backgroundColor: '#8B5CF620', borderColor: '#8B5CF6' }]}
+          style={[styles.trainingQuickAction, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
           onPress={() => {
             triggerHaptic();
             router.push('/add-training');
@@ -588,7 +608,7 @@ export default function AddScreen() {
               {t('add.sessionSubtitle')}
             </Text>
           </View>
-          <ChevronRight size={24} color="#8B5CF6" />
+          <ChevronRight size={24} color={colors.textMuted} />
         </TouchableOpacity>
 
         {/* Date Selector */}
@@ -820,30 +840,123 @@ export default function AddScreen() {
             suffix="cm"
             color="#8B5CF6"
           />
-          <InputRow
-            label={t('add.arm')}
-            value={arm}
-            onChangeText={setArm}
-            placeholder="00"
-            suffix="cm"
-            color="#8B5CF6"
-          />
-          <InputRow
-            label={t('add.thigh')}
-            value={thigh}
-            onChangeText={setThigh}
-            placeholder="00"
-            suffix="cm"
-            color="#8B5CF6"
-          />
-          <InputRow
-            label={t('add.calf')}
-            value={calf}
-            onChangeText={setCalf}
-            placeholder="00"
-            suffix="cm"
-            color="#8B5CF6"
-          />
+
+          {/* Tour de bras - Gauche / Droite */}
+          <View style={styles.dualMeasurementSection}>
+            <Text style={[styles.dualMeasurementTitle, { color: colors.textPrimary }]}>
+              {t('add.arm')}
+            </Text>
+            <View style={styles.dualMeasurementRow}>
+              <View style={styles.dualMeasurementItem}>
+                <Text style={[styles.dualMeasurementSide, { color: colors.textMuted }]}>G</Text>
+                <NumericInput
+                  value={leftArm}
+                  onValueChange={setLeftArm}
+                  placeholder="00"
+                  unit="cm"
+                  allowDecimal={true}
+                  maxDecimals={1}
+                  maxLength={4}
+                  color="#8B5CF6"
+                  backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+                  inputStyle={styles.dualInput}
+                />
+              </View>
+              <View style={styles.dualMeasurementItem}>
+                <Text style={[styles.dualMeasurementSide, { color: colors.textMuted }]}>D</Text>
+                <NumericInput
+                  value={rightArm}
+                  onValueChange={setRightArm}
+                  placeholder="00"
+                  unit="cm"
+                  allowDecimal={true}
+                  maxDecimals={1}
+                  maxLength={4}
+                  color="#8B5CF6"
+                  backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+                  inputStyle={styles.dualInput}
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* Tour de cuisse - Gauche / Droite */}
+          <View style={styles.dualMeasurementSection}>
+            <Text style={[styles.dualMeasurementTitle, { color: colors.textPrimary }]}>
+              {t('add.thigh')}
+            </Text>
+            <View style={styles.dualMeasurementRow}>
+              <View style={styles.dualMeasurementItem}>
+                <Text style={[styles.dualMeasurementSide, { color: colors.textMuted }]}>G</Text>
+                <NumericInput
+                  value={leftThigh}
+                  onValueChange={setLeftThigh}
+                  placeholder="00"
+                  unit="cm"
+                  allowDecimal={true}
+                  maxDecimals={1}
+                  maxLength={4}
+                  color="#8B5CF6"
+                  backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+                  inputStyle={styles.dualInput}
+                />
+              </View>
+              <View style={styles.dualMeasurementItem}>
+                <Text style={[styles.dualMeasurementSide, { color: colors.textMuted }]}>D</Text>
+                <NumericInput
+                  value={rightThigh}
+                  onValueChange={setRightThigh}
+                  placeholder="00"
+                  unit="cm"
+                  allowDecimal={true}
+                  maxDecimals={1}
+                  maxLength={4}
+                  color="#8B5CF6"
+                  backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+                  inputStyle={styles.dualInput}
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* Tour de mollet - Gauche / Droite */}
+          <View style={[styles.dualMeasurementSection, { borderBottomWidth: 0 }]}>
+            <Text style={[styles.dualMeasurementTitle, { color: colors.textPrimary }]}>
+              {t('add.calf')}
+            </Text>
+            <View style={styles.dualMeasurementRow}>
+              <View style={styles.dualMeasurementItem}>
+                <Text style={[styles.dualMeasurementSide, { color: colors.textMuted }]}>G</Text>
+                <NumericInput
+                  value={leftCalf}
+                  onValueChange={setLeftCalf}
+                  placeholder="00"
+                  unit="cm"
+                  allowDecimal={true}
+                  maxDecimals={1}
+                  maxLength={4}
+                  color="#8B5CF6"
+                  backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+                  inputStyle={styles.dualInput}
+                />
+              </View>
+              <View style={styles.dualMeasurementItem}>
+                <Text style={[styles.dualMeasurementSide, { color: colors.textMuted }]}>D</Text>
+                <NumericInput
+                  value={rightCalf}
+                  onValueChange={setRightCalf}
+                  placeholder="00"
+                  unit="cm"
+                  allowDecimal={true}
+                  maxDecimals={1}
+                  maxLength={4}
+                  color="#8B5CF6"
+                  backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+                  inputStyle={styles.dualInput}
+                />
+              </View>
+            </View>
+          </View>
         </Card>
 
         {/* ═══════════════════════════════════════════ */}
@@ -950,19 +1063,19 @@ export default function AddScreen() {
         <TouchableOpacity
           style={[
             styles.saveButton,
-            { backgroundColor: colors.accent }
+            { backgroundColor: colors.backgroundCard }
           ]}
           onPress={handleSave}
           disabled={isSaving}
         >
           {isSaving ? (
-            <ActivityIndicator size="small" color={colors.textOnGold} />
+            <ActivityIndicator size="small" color={colors.accent} />
           ) : (
-            <Check size={24} color={colors.textOnGold} />
+            <Check size={24} color={colors.accent} />
           )}
           <Text style={[
             styles.saveButtonText,
-            { color: colors.textOnGold }
+            { color: colors.accent }
           ]}>
             {isSaving ? t('add.saving') : t('add.save')}
           </Text>
@@ -1153,7 +1266,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.lg,
     borderRadius: RADIUS.xl,
     marginBottom: SPACING.lg,
-    borderWidth: 2,
+    borderWidth: 1,
     gap: SPACING.md,
   },
   trainingQuickIcon: {
@@ -1361,6 +1474,43 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  // Dual Measurement (Gauche/Droite)
+  dualMeasurementSection: {
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  dualMeasurementTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: SPACING.sm,
+  },
+  dualMeasurementRow: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+  },
+  dualMeasurementItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  dualMeasurementSide: {
+    fontSize: 13,
+    fontWeight: '700',
+    width: 18,
+    textAlign: 'center',
+  },
+  dualInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: RADIUS.md,
+  },
+
   // Input Row
   inputRow: {
     flexDirection: 'row',
@@ -1514,6 +1664,11 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xl,
     gap: SPACING.sm,
     marginTop: SPACING.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   saveButtonText: {
     fontSize: 18,

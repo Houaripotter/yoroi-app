@@ -37,6 +37,7 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { getProfile, calculateStreak } from '@/lib/database';
 import { useAvatar } from '@/lib/AvatarContext';
 import { getCurrentRank } from '@/lib/ranks';
+import { getUnifiedPoints } from '@/lib/gamification';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -86,9 +87,10 @@ export default function YearCounterV2Screen() {
           setUserAvatar(contextAvatar);
         }
 
-        const rank = getCurrentRank(streak);
+        const totalPoints = await getUnifiedPoints();
+        const rank = getCurrentRank(totalPoints);
         setUserRank(rank.name);
-        setUserLevel(streak);
+        setUserLevel(totalPoints);
       } catch (error) {
         logger.error('Error loading user data:', error);
       }

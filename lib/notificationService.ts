@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import { calculateStreak, getLatestWeight, getWeeklyPlan, getProfile, getTrainings } from '@/lib/database';
 import { getCurrentRank } from '@/lib/ranks';
+import { getUnifiedPoints } from '@/lib/gamification';
 import { saveNotification } from '@/lib/notificationHistoryService';
 
 // ============================================
@@ -598,7 +599,8 @@ class NotificationService {
       const latestWeight = await getLatestWeight();
       const profile = await getProfile();
       const weeklyPlan = await getWeeklyPlan();
-      const rank = getCurrentRank(streak);
+      const totalPoints = await getUnifiedPoints();
+      const rank = getCurrentRank(totalPoints);
 
       // Jour actuel (0 = dimanche, 1 = lundi, etc.)
       const today = new Date().getDay();

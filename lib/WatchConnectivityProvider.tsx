@@ -829,7 +829,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       logSync('performSync - Début');
 
       // 1. Récupérer données
-      const [profile, weight, waterIntake, streak, avatarConfig, level, rank] = await Promise.all([
+      const [profile, weight, waterIntake, streak, avatarConfig, level, rank, benchmarksList] = await Promise.all([
         getProfile(),
         AsyncStorage.getItem('currentWeight'),
         AsyncStorage.getItem('waterIntake'),
@@ -837,6 +837,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         AsyncStorage.getItem('@yoroi_avatar_config'),
         AsyncStorage.getItem('@yoroi_level'),
         AsyncStorage.getItem('@yoroi_rank'),
+        getBenchmarks().catch(() => []),
       ]);
 
       // 2. Construire megaPack OPTIMISÉ avec VERSIONING
@@ -844,6 +845,19 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       if (parsedAvatar && !parsedAvatar.pack && parsedAvatar.id) {
         parsedAvatar.pack = parsedAvatar.id;
       }
+
+      // Benchmarks compacts pour la montre
+      const watchBenchmarks = (benchmarksList || []).slice(0, 50).map((b: any) => ({
+        id: b.id || b.exerciseId,
+        name: b.name || b.exerciseName,
+        category: b.category || 'Force',
+        unit: b.unit || 'kg',
+        pr: b.pr || b.personalRecord || 0,
+        prReps: b.prReps || 0,
+        prDate: b.prDate || '',
+        lastValue: b.lastValue || 0,
+        entryCount: b.entryCount || 0,
+      }));
 
       const megaPack: any = {
         v: DATA_FORMAT_VERSION,
@@ -857,7 +871,12 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         rk: rank || undefined,
         ts: Date.now(),
         fr: true,
-        deviceName: Device.modelName || 'iPhone'
+        deviceName: Device.modelName || 'iPhone',
+        // Benchmarks pour le carnet de la montre
+        benchmarks: watchBenchmarks.length > 0 ? watchBenchmarks : undefined,
+        // Objectifs
+        stepsGoal: 10000,
+        hydrationGoal: 2500,
       };
 
       // VALIDATION complète

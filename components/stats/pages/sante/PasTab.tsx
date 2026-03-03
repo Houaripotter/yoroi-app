@@ -2,15 +2,21 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { ScrollableLineChart } from '../../charts/ScrollableLineChart';
-import { Footprints } from 'lucide-react-native';
+import { Footprints, Route, Timer, PersonStanding, Flame } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 interface PasTabProps {
   steps: number;
   calories: number;
+  distance: number;
+  exerciseMinutes: number;
+  standHours: number;
   stepsHistory: { date: string; value: number }[];
   caloriesHistory: { date: string; value: number }[];
+  distanceHistory: { date: string; value: number }[];
+  exerciseMinutesHistory: { date: string; value: number }[];
+  standHoursHistory: { date: string; value: number }[];
 }
 
 const getStepsColor = (value: number): string => {
@@ -23,12 +29,18 @@ const getStepsColor = (value: number): string => {
 export const PasTab: React.FC<PasTabProps> = ({
   steps,
   calories,
+  distance,
+  exerciseMinutes,
+  standHours,
   stepsHistory,
   caloriesHistory,
+  distanceHistory,
+  exerciseMinutesHistory,
+  standHoursHistory,
 }) => {
   const { colors, isDark } = useTheme();
 
-  const hasData = steps > 0 || stepsHistory.length > 0;
+  const hasData = steps > 0 || calories > 0 || distance > 0 || exerciseMinutes > 0 || standHours > 0 || stepsHistory.length > 0;
 
   if (!hasData) {
     return (
@@ -55,15 +67,45 @@ export const PasTab: React.FC<PasTabProps> = ({
           pas aujourd'hui
         </Text>
 
-        {/* Calories */}
-        {calories > 0 && (
-          <View style={[styles.caloriesRow, { borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-            <Text style={[styles.caloriesLabel, { color: colors.textMuted }]}>Calories actives</Text>
-            <Text style={[styles.caloriesValue, { color: '#F97316' }]}>
-              {Math.round(calories).toLocaleString('fr-FR')} kcal
-            </Text>
-          </View>
-        )}
+        {/* Metriques du jour */}
+        <View style={[styles.metricsGrid, { borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
+          {calories > 0 && (
+            <View style={styles.metricItem}>
+              <Flame size={18} color="#F97316" strokeWidth={2} />
+              <Text style={[styles.metricValue, { color: '#F97316' }]}>
+                {Math.round(calories).toLocaleString('fr-FR')}
+              </Text>
+              <Text style={[styles.metricUnit, { color: colors.textMuted }]}>kcal</Text>
+            </View>
+          )}
+          {distance > 0 && (
+            <View style={styles.metricItem}>
+              <Route size={18} color="#3B82F6" strokeWidth={2} />
+              <Text style={[styles.metricValue, { color: '#3B82F6' }]}>
+                {distance.toFixed(2)}
+              </Text>
+              <Text style={[styles.metricUnit, { color: colors.textMuted }]}>km</Text>
+            </View>
+          )}
+          {exerciseMinutes > 0 && (
+            <View style={styles.metricItem}>
+              <Timer size={18} color="#22C55E" strokeWidth={2} />
+              <Text style={[styles.metricValue, { color: '#22C55E' }]}>
+                {Math.round(exerciseMinutes)}
+              </Text>
+              <Text style={[styles.metricUnit, { color: colors.textMuted }]}>min</Text>
+            </View>
+          )}
+          {standHours > 0 && (
+            <View style={styles.metricItem}>
+              <PersonStanding size={18} color="#06B6D4" strokeWidth={2} />
+              <Text style={[styles.metricValue, { color: '#06B6D4' }]}>
+                {Math.round(standHours)}
+              </Text>
+              <Text style={[styles.metricUnit, { color: colors.textMuted }]}>h debout</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Graphique pas */}
@@ -87,6 +129,45 @@ export const PasTab: React.FC<PasTabProps> = ({
             data={caloriesHistory}
             color="#F97316"
             unit="kcal"
+            height={160}
+          />
+        </View>
+      )}
+
+      {/* Graphique distance */}
+      {distanceHistory.length > 0 && (
+        <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Historique de la distance</Text>
+          <ScrollableLineChart
+            data={distanceHistory}
+            color="#3B82F6"
+            unit="km"
+            height={160}
+          />
+        </View>
+      )}
+
+      {/* Graphique minutes d'exercice */}
+      {exerciseMinutesHistory.length > 0 && (
+        <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Historique des minutes d'exercice</Text>
+          <ScrollableLineChart
+            data={exerciseMinutesHistory}
+            color="#22C55E"
+            unit="min"
+            height={160}
+          />
+        </View>
+      )}
+
+      {/* Graphique heures debout */}
+      {standHoursHistory.length > 0 && (
+        <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Historique des heures debout</Text>
+          <ScrollableLineChart
+            data={standHoursHistory}
+            color="#06B6D4"
+            unit="h"
             height={160}
           />
         </View>
@@ -165,23 +246,30 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 4,
   },
-  caloriesRow: {
+  metricsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexWrap: 'wrap',
+    justifyContent: 'space-evenly',
     width: '100%',
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
+    gap: 12,
   },
-  caloriesLabel: {
-    fontSize: 15,
-    fontWeight: '500',
+  metricItem: {
+    alignItems: 'center',
+    minWidth: 60,
   },
-  caloriesValue: {
-    fontSize: 17,
+  metricValue: {
+    fontSize: 18,
     fontWeight: '700',
     letterSpacing: -0.3,
+    marginTop: 4,
+  },
+  metricUnit: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 1,
   },
   card: {
     borderRadius: 16,

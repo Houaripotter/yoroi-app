@@ -287,7 +287,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
                 ]}>
                   {weightDiff <= 0 ? '' : '+'}{weightDiff.toFixed(1)} kg
                 </Text>
-                {weightDiff < 0 && <Text style={styles.statDiffEmoji}>🎉</Text>}
+                {weightDiff < 0 && <Text style={styles.statDiffEmoji}> !</Text>}
               </View>
             )}
 
@@ -387,7 +387,7 @@ export const BeforeAfterPreview: React.FC<{
             { color: weightDiff <= 0 ? colors.success : colors.danger }
           ]}>
             {weightDiff <= 0 ? '' : '+'}{weightDiff.toFixed(1)} kg
-            {weightDiff < 0 && ' 🎉'}
+            {weightDiff < 0 && ' !'}
           </Text>
           <Text style={[styles.previewHint, { color: colors.textMuted }]}>
             Tape pour comparer →

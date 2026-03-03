@@ -11,6 +11,7 @@ import {
   Image,
   Pressable,
   Keyboard,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter } from 'expo-router';
@@ -280,7 +281,7 @@ export default function ProfileScreen() {
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadData(); }, []);
 
-  const rank = getCurrentRank(streak);
+  const rank = getCurrentRank(totalPoints);
   const level = getLevel(totalPoints);
 
   const handleSave = async () => {
@@ -355,6 +356,7 @@ export default function ProfileScreen() {
         });
 
         await loadData();
+        DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
         showPopup('Photo mise à jour', 'Ta photo de profil a été changée avec succès.');
       }
     } catch (error) {
@@ -411,6 +413,7 @@ export default function ProfileScreen() {
         });
 
         await loadData();
+        DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
         showPopup('Photo mise à jour', 'Ta photo de profil a été changée avec succès.');
       }
     } catch (error) {

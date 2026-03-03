@@ -22,6 +22,10 @@ struct ContentView: View {
       // Page 4: Sommeil (tout en scroll vertical)
       SleepPage()
         .tag(3)
+
+      // Page 5: Reglages
+      SettingsPage()
+        .tag(4)
     }
     .tabViewStyle(.page)
     .onAppear {

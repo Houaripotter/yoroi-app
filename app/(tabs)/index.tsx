@@ -82,7 +82,7 @@ import { getProfile, getLatestWeight, getWeights, calculateStreak, getTrainings,
 import { getLatestBodyComposition } from '@/lib/bodyComposition';
 import { getSessionQuote, Citation } from '@/lib/citations';
 import { getCurrentRank } from '@/lib/ranks';
-import { getLevel, calculateAndStoreUnifiedPoints } from '@/lib/gamification';
+import { calculateAndStoreUnifiedPoints } from '@/lib/gamification';
 import AvatarDisplay from '@/components/AvatarDisplay';
 import { RanksModal } from '@/components/RanksModal';
 import { LogoViewer } from '@/components/LogoViewer';
@@ -111,6 +111,7 @@ import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
 import { addHydration as addHydrationToQuests } from '@/lib/quests';
 import { getUnreadCount } from '@/lib/notificationHistoryService';
+import { NotificationBellPopup } from '@/components/NotificationBellPopup';
 
 // Mode Essentiel
 import { useViewMode } from '@/hooks/useViewMode';
@@ -222,9 +223,19 @@ export default function HomeScreen() {
     };
   }, [params.showRating]);
 
-  // Charger le compteur de notifications non lues au montage
+  // Charger le compteur de notifications non lues au montage + ecouter les changements
   useEffect(() => {
     getUnreadCount().then(setUnreadNotifCount).catch(() => {});
+    const sub = DeviceEventEmitter.addListener('YOROI_NOTIF_READ', () => {
+      getUnreadCount().then(setUnreadNotifCount).catch(() => {});
+    });
+    // Rafraichir au retour au premier plan (ex: retour du notification-center)
+    const appSub = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state === 'active') {
+        getUnreadCount().then(setUnreadNotifCount).catch(() => {});
+      }
+    });
+    return () => { sub.remove(); appSub.remove(); };
   }, []);
 
   // ✅ FIX PERF: Avatar chargé une seule fois au montage (pas à chaque focus)
@@ -765,8 +776,8 @@ export default function HomeScreen() {
           userName: profileData?.name,
           weight: weight?.weight,
           streak: streakDays,
-          level: getLevel(unifiedTotal).level,
-          rank: getCurrentRank(streakDays)?.name,
+          level: getCurrentRank(unifiedTotal)?.name,
+          rank: getCurrentRank(unifiedTotal)?.name,
         }).catch(() => {
           // Silencieux si Watch non disponible
         });
@@ -916,10 +927,11 @@ export default function HomeScreen() {
   }, [language]);
 
   // Calculs
-  const rank = getCurrentRank(streak);
-  // Niveau unifié basé sur le rang (streak), pas sur les XP
+  const rank = getCurrentRank(totalPoints);
+  // Rang unifie base sur les XP totaux
   const rankLevel = { ashigaru: 1, bushi: 2, samurai: 3, ronin: 4, shogun: 5 }[rank?.id || 'ashigaru'] || 1;
-  const level = getLevel(totalPoints); // Gardé pour compatibilité
+  const displayRankName = rank?.name;
+  const displayRankColor = rank?.color;
   const currentWeight = latestWeight?.weight || null;
   const startWeight = profile?.start_weight || (weightHistory.length > 0 ? weightHistory[weightHistory.length - 1]?.weight : null);
   const targetWeight = profile?.target_weight || null;
@@ -1205,21 +1217,12 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              {/* Cloche notifications */}
-              <TouchableOpacity
-                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/notification-center' as any); }}
-                activeOpacity={0.7}
-                style={styles.bellBtn}
-              >
-                <Bell size={22} color={colors.textMuted} />
-                {unreadNotifCount > 0 && (
-                  <View style={styles.bellBadge}>
-                    <Text style={styles.bellBadgeText}>
-                      {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+              {/* Cloche notifications (popup) */}
+              <NotificationBellPopup
+                unreadCount={unreadNotifCount}
+                onCountChange={setUnreadNotifCount}
+                variant="themed"
+              />
 
               {/* Avatar (Droite) - Design élégant */}
               <TouchableOpacity
@@ -1301,9 +1304,9 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateGamification}>
-              <Trophy size={14} color={rank?.color} />
+              <Trophy size={14} color={displayRankColor} />
               <View style={styles.statTextColumn}>
-                <AnimatedRank rank={rank?.name?.split(' ')[0] ?? ''} color={rank?.color} style={styles.statValueCompactHorizontal} delay={300} />
+                <AnimatedRank rank={displayRankName?.split(' ')[0] ?? ''} color={displayRankColor} style={styles.statValueCompactHorizontal} delay={300} />
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>rang</Text>
               </View>
             </TouchableOpacity>
@@ -1795,9 +1798,10 @@ export default function HomeScreen() {
         dailyQuote={dailyQuote?.text}
         steps={steps}
         streak={streak}
+        totalPoints={totalPoints}
         level={rankLevel}
-        rankName={rank?.name}
-        rankColor={rank?.color}
+        rankName={displayRankName}
+        rankColor={displayRankColor}
         currentWeight={currentWeight ?? undefined}
         heightCm={profile?.height_cm ?? undefined}
         targetWeight={targetWeight ?? undefined}
@@ -1820,9 +1824,10 @@ export default function HomeScreen() {
         onAddWater={addWater}
         refreshTrigger={0}
         unreadNotifCount={unreadNotifCount}
+        onNotifCountChange={setUnreadNotifCount}
       />
 
-      <RanksModal visible={ranksModalVisible} onClose={handleCloseRanksModal} currentStreak={streak} />
+      <RanksModal visible={ranksModalVisible} onClose={handleCloseRanksModal} currentStreak={totalPoints} />
       <LogoViewer visible={logoViewerVisible} onClose={handleCloseLogoViewer} />
       <BatteryReadyPopup batteryPercent={batteryPercent} />
       <AvatarViewerModal visible={avatarViewerVisible} onClose={handleCloseAvatarViewer} />

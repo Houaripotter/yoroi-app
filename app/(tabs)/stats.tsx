@@ -13,7 +13,7 @@ import { ContextualTip } from '@/components/ContextualTip';
 type StatsTab = 'discipline' | 'poids' | 'composition' | 'mesures' | 'vitalite' | 'performance' | 'sante';
 
 export default function StatsScreen() {
-  const { colors } = useTheme();
+  const { colors, screenBackground } = useTheme();
   const params = useLocalSearchParams<{ tab?: string }>();
 
   // Validation du param tab avec liste blanche
@@ -27,7 +27,7 @@ export default function StatsScreen() {
   }, [params?.tab]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: screenBackground }]}>
       <StatsTabViewNew initialTab={validatedTab} />
 
       {/* Tip contextuel */}

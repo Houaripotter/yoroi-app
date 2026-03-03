@@ -27,20 +27,20 @@ export const StatsHeader: React.FC<StatsHeaderProps> = ({
   onPeriodChange,
   showPeriodSelector = true,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <View style={styles.container}>
       {/* Titre + Icône */}
       <View style={styles.titleRow}>
         {icon && <View style={styles.iconContainer}>{icon}</View>}
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
+        <Text style={[styles.title, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>
           {title}
         </Text>
       </View>
 
       {/* Description */}
-      <Text style={[styles.description, { color: colors.textSecondary }]}>
+      <Text style={[styles.description, { color: isDark ? colors.textSecondary : 'rgba(255,255,255,0.7)' }]}>
         {description}
       </Text>
 

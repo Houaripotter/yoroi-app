@@ -40,6 +40,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { getUserSettings, getLatestMeasurement } from '@/lib/storage';
 import { getCurrentRank, RANKS } from '@/lib/ranks';
+import { getUnifiedPoints } from '@/lib/gamification';
 import { getTrainingStats, calculateStreak, getProfile } from '@/lib/database';
 import { getGreeting, YOROI_VOCAB } from '@/lib/teamYoroi';
 import { getAllGoalsProgress, getGlobalGoalStats, GoalProgress, GlobalGoalStats } from '@/lib/trainingGoalsService';
@@ -102,7 +103,8 @@ export default function FighterCardScreen() {
       const latestMeasurement = await getLatestMeasurement();
       const trainingStats = await getTrainingStats();
       const streakData = await calculateStreak();
-      const rank = getCurrentRank(streakData || 0);
+      const totalPoints = await getUnifiedPoints();
+      const rank = getCurrentRank(totalPoints);
 
       // Charger les objectifs
       const [goalsData, globalStats] = await Promise.all([

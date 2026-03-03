@@ -393,7 +393,65 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
                     );
                   })
                 ) : (
-                  <Text style={[styles.emptyNotesText, emptyNotesStyle]}>{training.notes || 'SÉANCE VALIDÉE'}</Text>
+                  <View>
+                    {/* Metriques globales de la seance style Strava */}
+                    {((training.duration_minutes || 0) > 0 || (training.distance || 0) > 0 || (training.heart_rate || 0) > 0 || (training.calories || 0) > 0) ? (
+                      <View style={styles.globalMetricsGrid}>
+                        {(training.duration_minutes || 0) > 0 && (
+                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>DUREE</Text>
+                            <View style={styles.exerciseStats}>
+                              {renderStyledStat(
+                                Math.floor((training.duration_minutes || 0) / 60) > 0
+                                  ? `${Math.floor((training.duration_minutes || 0) / 60)}h${((training.duration_minutes || 0) % 60).toString().padStart(2, '0')}`
+                                  : `${training.duration_minutes || 0}`,
+                                Math.floor((training.duration_minutes || 0) / 60) > 0 ? '' : 'MIN'
+                              )}
+                            </View>
+                          </View>
+                        )}
+                        {(training.distance || 0) > 0 && (
+                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>DISTANCE</Text>
+                            <View style={styles.exerciseStats}>
+                              {renderStyledStat((training.distance || 0).toFixed(2), 'KM')}
+                            </View>
+                          </View>
+                        )}
+                        {(training.distance || 0) > 0 && (training.duration_minutes || 0) > 0 && (() => {
+                          const paceTotal = Math.round(((training.duration_minutes || 0) * 60) / (training.distance || 1));
+                          const pm = Math.floor(paceTotal / 60);
+                          const ps = paceTotal % 60;
+                          return (
+                            <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                              <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>ALLURE MOY.</Text>
+                              <View style={styles.exerciseStats}>
+                                {renderStyledStat(`${pm}'${ps.toString().padStart(2, '0')}"`, '/KM')}
+                              </View>
+                            </View>
+                          );
+                        })()}
+                        {(training.heart_rate || 0) > 0 && (
+                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>FC MOY.</Text>
+                            <View style={styles.exerciseStats}>
+                              {renderStyledStat(training.heart_rate || 0, 'BPM')}
+                            </View>
+                          </View>
+                        )}
+                        {(training.calories || 0) > 0 && (
+                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>CALORIES</Text>
+                            <View style={styles.exerciseStats}>
+                              {renderStyledStat(Math.round(training.calories || 0), 'KCAL')}
+                            </View>
+                          </View>
+                        )}
+                      </View>
+                    ) : (
+                      <Text style={[styles.emptyNotesText, emptyNotesStyle]}>{training.notes || 'SEANCE VALIDEE'}</Text>
+                    )}
+                  </View>
                 )}
               </View>
             </ScrollView>
@@ -664,6 +722,9 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontStyle: 'italic',
     textAlign: 'center',
+  },
+  globalMetricsGrid: {
+    gap: 0,
   },
   footerSection: {
     height: FOOTER_SECTION_HEIGHT,

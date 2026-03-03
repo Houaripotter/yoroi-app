@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   Alert,
   RefreshControl,
+  DeviceEventEmitter,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -190,6 +191,7 @@ export default function NotificationCenterScreen() {
     if (!item.read) {
       await markAsRead(item.id);
       setNotifications(prev => prev.map(n => n.id === item.id ? { ...n, read: true } : n));
+      DeviceEventEmitter.emit('YOROI_NOTIF_READ');
     }
     // Naviguer si l'item a un ecran cible
     if (item.data?.screen) {
@@ -201,6 +203,7 @@ export default function NotificationCenterScreen() {
     impactAsync(ImpactFeedbackStyle.Light);
     await markAllAsRead();
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    DeviceEventEmitter.emit('YOROI_NOTIF_READ');
   }, []);
 
   const handleDelete = useCallback(async (id: string) => {

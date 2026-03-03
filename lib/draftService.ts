@@ -31,10 +31,16 @@ export interface WeightDraft {
   navel?: string;
   chest?: string;
   arm?: string;
+  leftArm?: string;
+  rightArm?: string;
   thigh?: string;
+  leftThigh?: string;
+  rightThigh?: string;
   hips?: string;
   neck?: string;
   calf?: string;
+  leftCalf?: string;
+  rightCalf?: string;
   mood?: string;
 }
 

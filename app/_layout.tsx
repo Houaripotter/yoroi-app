@@ -197,6 +197,7 @@ function RootLayoutContent() {
         <Stack.Screen name="privacy-data" options={{ presentation: 'card' }} />
         <Stack.Screen name="notifications" options={{ presentation: 'card' }} />
         <Stack.Screen name="notification-center" options={{ presentation: 'card' }} />
+        <Stack.Screen name="watch-preview" options={{ presentation: 'card' }} />
         <Stack.Screen name="connected-devices" options={{ presentation: 'card' }} />
 
         <Stack.Screen name="themes" options={{ presentation: 'card' }} />

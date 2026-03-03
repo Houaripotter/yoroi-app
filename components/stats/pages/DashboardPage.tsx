@@ -34,7 +34,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COLUMN_WIDTH = (SCREEN_WIDTH - 44) / 2;
 
 export const DashboardPage: React.FC = () => {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, screenBackground } = useTheme();
   const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
@@ -229,13 +229,13 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[styles.container, { backgroundColor: screenBackground }]}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
-        <Text style={[styles.mainTitle, { color: colors.textPrimary }]}>Résumé</Text>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Vision globale de ton évolution physique et performance</Text>
+        <Text style={[styles.mainTitle, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>Résumé</Text>
+        <Text style={[styles.subtitle, { color: isDark ? colors.textMuted : 'rgba(255,255,255,0.7)' }]}>Vision globale de ton évolution physique et performance</Text>
       </View>
 
       <StatsExplanation 
@@ -250,7 +250,7 @@ export const DashboardPage: React.FC = () => {
 
         return (
           <View key={theme} style={styles.themeSection}>
-            <Text style={[styles.themeTitle, { color: colors.textSecondary }]}>{theme}</Text>
+            <Text style={[styles.themeTitle, { color: isDark ? colors.textSecondary : '#FFFFFF' }]}>{theme}</Text>
             <View style={styles.grid}>
               {themeMetrics.map(renderMiniCard)}
             </View>

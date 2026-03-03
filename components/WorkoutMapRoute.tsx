@@ -4,10 +4,13 @@
 // Utilise react-native-maps (MapKit natif iOS)
 // Fond de carte Apple Maps + Polyline du parcours
 // Style Strava / Apple Forme
+// Toggle satellite/standard + fullscreen + distance markers
 
 import React, { useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import MapView, { Polyline, Marker, PROVIDER_DEFAULT } from 'react-native-maps';
+import { Maximize2, X, Map, Satellite, Navigation } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/lib/ThemeContext';
 
 interface RoutePoint {
@@ -41,13 +44,16 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
   strokeWidth = 4,
 }) => {
   const { isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
+  const fullscreenMapRef = useRef<MapView>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [mapType, setMapType] = useState<'hybrid' | 'standard'>('hybrid');
 
   // Calculer la region initiale depuis les points ou la bounding box
-  const { region, coordinates, startPoint, endPoint } = useMemo(() => {
+  const { region, coordinates, startPoint, endPoint, distanceKm } = useMemo(() => {
     if (!routePoints || routePoints.length < 2) {
-      return { region: null, coordinates: [], startPoint: null, endPoint: null };
+      return { region: null, coordinates: [], startPoint: null, endPoint: null, distanceKm: 0 };
     }
 
     const coords = routePoints.map(p => ({
@@ -65,6 +71,18 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
       { minLat: 90, maxLat: -90, minLon: 180, maxLon: -180 }
     );
 
+    // Calculer distance totale
+    let totalDist = 0;
+    for (let i = 1; i < coords.length; i++) {
+      const dLat = (coords[i].latitude - coords[i - 1].latitude) * Math.PI / 180;
+      const dLon = (coords[i].longitude - coords[i - 1].longitude) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(coords[i - 1].latitude * Math.PI / 180) *
+        Math.cos(coords[i].latitude * Math.PI / 180) *
+        Math.sin(dLon / 2) ** 2;
+      totalDist += 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
     // Centre + delta avec padding
     const latDelta = (bbox.maxLat - bbox.minLat) * 1.3 || 0.01;
     const lonDelta = (bbox.maxLon - bbox.minLon) * 1.3 || 0.01;
@@ -79,19 +97,25 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
       coordinates: coords,
       startPoint: coords[0],
       endPoint: coords[coords.length - 1],
+      distanceKm: totalDist,
     };
   }, [routePoints, boundingBox]);
 
   if (!region || coordinates.length < 2) return null;
 
+  const handleRecenter = () => {
+    const ref = isFullscreen ? fullscreenMapRef : mapRef;
+    ref.current?.animateToRegion(region, 300);
+  };
+
   const renderMap = (fullscreen: boolean) => (
     <MapView
-      ref={fullscreen ? undefined : mapRef}
+      ref={fullscreen ? fullscreenMapRef : mapRef}
       style={styles.map}
       provider={PROVIDER_DEFAULT}
-      mapType="hybrid"
+      mapType={mapType}
       initialRegion={region}
-      userInterfaceStyle="dark"
+      userInterfaceStyle={isDark ? 'dark' : 'light'}
       scrollEnabled={true}
       zoomEnabled={true}
       rotateEnabled={fullscreen}
@@ -110,7 +134,7 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
       <Polyline
         coordinates={coordinates}
         strokeColor={strokeColor}
-        strokeWidth={strokeWidth}
+        strokeWidth={fullscreen ? strokeWidth + 1 : strokeWidth}
         lineCap="round"
         lineJoin="round"
       />
@@ -131,29 +155,90 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
     </MapView>
   );
 
+  const isHybrid = mapType === 'hybrid';
+  const btnBg = 'rgba(0,0,0,0.6)';
+
   return (
     <>
+      {/* Vue inline */}
       <View style={[styles.container, { height }]}>
         {renderMap(false)}
-        <TouchableOpacity
-          style={styles.fullscreenButton}
-          onPress={() => setIsFullscreen(true)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.fullscreenButtonText}>&#x26F6;</Text>
-        </TouchableOpacity>
+
+        {/* Boutons en haut a droite */}
+        <View style={styles.inlineButtonsCol}>
+          <TouchableOpacity
+            style={[styles.mapBtn, { backgroundColor: btnBg }]}
+            onPress={() => setIsFullscreen(true)}
+            activeOpacity={0.7}
+          >
+            <Maximize2 size={16} color="#FFF" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.mapBtn, { backgroundColor: btnBg }]}
+            onPress={() => setMapType(isHybrid ? 'standard' : 'hybrid')}
+            activeOpacity={0.7}
+          >
+            {isHybrid ? <Map size={16} color="#FFF" /> : <Satellite size={16} color="#FFF" />}
+          </TouchableOpacity>
+        </View>
+
+        {/* Badge distance en bas a gauche */}
+        {distanceKm > 0 && (
+          <View style={styles.distanceBadge}>
+            <Text style={styles.distanceBadgeText}>
+              {distanceKm.toFixed(2)} km
+            </Text>
+          </View>
+        )}
       </View>
 
+      {/* Modal plein ecran */}
       <Modal visible={isFullscreen} animationType="slide" presentationStyle="fullScreen">
         <View style={{ flex: 1 }}>
           {renderMap(true)}
-          <TouchableOpacity
-            style={styles.closeFullscreenButton}
-            onPress={() => setIsFullscreen(false)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.closeFullscreenText}>Fermer</Text>
-          </TouchableOpacity>
+
+          {/* Toolbar plein ecran */}
+          <View style={[styles.fullscreenToolbar, { top: insets.top + 10 }]}>
+            <TouchableOpacity
+              style={[styles.mapBtn, { backgroundColor: btnBg }]}
+              onPress={() => setIsFullscreen(false)}
+              activeOpacity={0.7}
+            >
+              <X size={18} color="#FFF" />
+            </TouchableOpacity>
+
+            <View style={styles.fullscreenToolbarRight}>
+              <TouchableOpacity
+                style={[styles.mapBtn, { backgroundColor: btnBg }]}
+                onPress={() => setMapType(isHybrid ? 'standard' : 'hybrid')}
+                activeOpacity={0.7}
+              >
+                {isHybrid ? <Map size={16} color="#FFF" /> : <Satellite size={16} color="#FFF" />}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.mapBtn, { backgroundColor: btnBg }]}
+                onPress={handleRecenter}
+                activeOpacity={0.7}
+              >
+                <Navigation size={16} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Legende en bas */}
+          <View style={[styles.fullscreenLegend, { bottom: insets.bottom + 16 }]}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#22C55E' }]} />
+              <Text style={styles.legendText}>Depart</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#EF4444' }]} />
+              <Text style={styles.legendText}>Arrivee</Text>
+            </View>
+            {distanceKm > 0 && (
+              <Text style={styles.legendDistance}>{distanceKm.toFixed(2)} km</Text>
+            )}
+          </View>
         </View>
       </Modal>
     </>
@@ -168,68 +253,119 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
   },
+  // Boutons inline
+  inlineButtonsCol: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    gap: 8,
+  },
+  mapBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Badge distance
+  distanceBadge: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  distanceBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
   // Marqueur depart - cercle vert
   markerStart: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: 'rgba(34, 197, 94, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   markerStartInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: '#22C55E',
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: '#FFFFFF',
-  },
-  fullscreenButton: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fullscreenButtonText: {
-    color: '#FFF',
-    fontSize: 18,
-  },
-  closeFullscreenButton: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  closeFullscreenText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
   // Marqueur fin - cercle rouge
   markerEnd: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: 'rgba(239, 68, 68, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   markerEndInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: '#EF4444',
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: '#FFFFFF',
+  },
+  // Fullscreen toolbar
+  fullscreenToolbar: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  fullscreenToolbarRight: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  // Fullscreen legende
+  fullscreenLegend: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  legendText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  legendDistance: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
 });
 

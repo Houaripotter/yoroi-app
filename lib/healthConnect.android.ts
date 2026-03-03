@@ -385,7 +385,7 @@ const ANDROID_EXERCISE_TYPE_NAMES: Record<number, string> = {
   6: 'musculation',         // BENCH_PRESS
   7: 'musculation',         // BENCH_SIT_UP
   8: 'velo',                // BIKING
-  9: 'velo_stationnaire',   // BIKING_STATIONARY
+  9: 'spinning',            // BIKING_STATIONARY
   10: 'crossfit',           // BOOT_CAMP
   11: 'boxe',               // BOXING
   12: 'hiit',               // BURPEE
@@ -402,9 +402,9 @@ const ANDROID_EXERCISE_TYPE_NAMES: Record<number, string> = {
   23: 'musculation',        // DUMBBELL_TRICEPS_EXTENSION_RIGHT_ARM
   24: 'musculation',        // DUMBBELL_TRICEPS_EXTENSION_TWO_ARM
   25: 'elliptique',         // ELLIPTICAL
-  26: 'cardio',             // EXERCISE_CLASS
+  26: 'cardio_mixte',       // EXERCISE_CLASS
   27: 'escrime',            // FENCING
-  28: 'football_us',        // FOOTBALL_AMERICAN
+  28: 'football_americain',  // FOOTBALL_AMERICAN
   29: 'football',           // FOOTBALL_AUSTRALIAN
   30: 'musculation',        // FORWARD_TWIST
   31: 'disc_golf',          // FRISBEE_DISC
@@ -414,9 +414,9 @@ const ANDROID_EXERCISE_TYPE_NAMES: Record<number, string> = {
   35: 'handball',           // HANDBALL
   36: 'hiit',               // HIGH_INTENSITY_INTERVAL_TRAINING
   37: 'randonnee',          // HIKING
-  38: 'hockey',             // ICE_HOCKEY
+  38: 'hockey_glace',       // ICE_HOCKEY
   39: 'patinage',           // ICE_SKATING
-  40: 'cardio',             // JUMPING_JACK
+  40: 'cardio_mixte',       // JUMPING_JACK
   41: 'corde_a_sauter',     // JUMP_ROPE
   42: 'musculation',        // LAT_PULL_DOWN
   43: 'musculation',        // LUNGE
@@ -441,11 +441,11 @@ const ANDROID_EXERCISE_TYPE_NAMES: Record<number, string> = {
   62: 'snowboard',          // SNOWBOARDING
   63: 'raquettes_neige',    // SNOWSHOEING
   64: 'football',           // SOCCER
-  65: 'softball',           // SOFTBALL
+  65: 'baseball',           // SOFTBALL
   66: 'squash',             // SQUASH
   67: 'musculation',        // SQUAT
-  68: 'escalier',           // STAIR_CLIMBING
-  69: 'escalier',           // STAIR_CLIMBING_MACHINE
+  68: 'stairmaster',        // STAIR_CLIMBING
+  69: 'stairmaster',        // STAIR_CLIMBING_MACHINE
   70: 'musculation',        // STRENGTH_TRAINING
   71: 'stretching',         // STRETCHING
   72: 'surf',               // SURFING
@@ -467,19 +467,19 @@ const ANDROID_SPORT_LABELS: Record<string, string> = {
   // Course & marche
   'running': 'Course', 'marche': 'Marche', 'randonnee': 'Randonnee', 'trail': 'Trail',
   // Velo
-  'velo': 'Velo', 'velo_stationnaire': 'Velo stationnaire',
+  'velo': 'Velo', 'spinning': 'Spinning',
   // Natation
   'natation': 'Natation', 'aquagym': 'Aquagym',
   // Musculation & fitness
   'musculation': 'Musculation', 'crossfit': 'CrossFit', 'hiit': 'HIIT',
-  'calisthenics': 'Calisthenics', 'cardio': 'Cardio',
+  'calisthenics': 'Calisthenics', 'cardio_mixte': 'Cardio',
   // Yoga & bien-etre
   'yoga': 'Yoga', 'pilates': 'Pilates', 'stretching': 'Stretching',
   'respiration': 'Respiration',
   // Combat
   'boxe': 'Boxe', 'mma': 'MMA', 'kickboxing': 'Kickboxing',
   // Equipe
-  'football': 'Football', 'football_us': 'Football US',
+  'football': 'Football', 'football_americain': 'Football US',
   'basketball': 'Basketball', 'tennis': 'Tennis', 'badminton': 'Badminton',
   'rugby': 'Rugby', 'handball': 'Handball', 'volleyball': 'Volleyball',
   // Raquette
@@ -487,20 +487,20 @@ const ANDROID_SPORT_LABELS: Record<string, string> = {
   'tennis_de_table': 'Tennis de table', 'pickleball': 'Pickleball',
   // Golf & individuel
   'golf': 'Golf', 'gymnastique': 'Gymnastique', 'equitation': 'Equitation',
-  'escrime': 'Escrime', 'baseball': 'Baseball', 'softball': 'Softball',
-  'cricket': 'Cricket', 'hockey': 'Hockey', 'lacrosse': 'Lacrosse',
+  'escrime': 'Escrime', 'baseball': 'Baseball',
+  'cricket': 'Cricket', 'hockey_glace': 'Hockey', 'lacrosse': 'Lacrosse',
   // Danse
   'danse': 'Danse',
   // Nautique
   'rameur': 'Rameur', 'voile': 'Voile', 'surf': 'Surf',
   'paddle': 'Paddle', 'plongee': 'Plongee', 'water_polo': 'Water-polo',
   // Montagne & glisse
-  'escalade': 'Escalade', 'ski': 'Ski', 'ski_fond': 'Ski de fond',
-  'snowboard': 'Snowboard', 'skateboard': 'Skateboard',
+  'escalade': 'Escalade', 'ski': 'Ski', 'ski_de_fond': 'Ski de fond',
+  'snowboard': 'Snowboard', 'skateboard': 'Skateboard', 'stairmaster': 'Stairmaster',
   'patinage': 'Patinage', 'roller': 'Roller', 'raquettes_neige': 'Raquettes a neige',
   // Cardio machines
-  'elliptique': 'Elliptique', 'escalier': 'Escalier',
-  'corde_a_sauter': 'Corde a sauter', 'step': 'Step',
+  'elliptique': 'Elliptique',
+  'corde_a_sauter': 'Corde a sauter',
   // Divers
   'disc_golf': 'Disc Golf', 'parapente': 'Parapente',
   'fitness_gaming': 'Fitness Gaming',
@@ -1874,6 +1874,62 @@ class HealthConnectService {
     return [];
   }
 
+  async getDistanceHistory(days: number = 7): Promise<{ date: string; value: number }[]> {
+    const HC = getHealthConnect();
+    if (!HC) return [];
+    try {
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - days);
+      fromDate.setHours(0, 0, 0, 0);
+      const records = await HC.readRecords('Distance', {
+        timeRangeFilter: this.createTimeRangeFilter(fromDate, new Date()),
+      });
+      if (records?.records && records.records.length > 0) {
+        const byDate: { [key: string]: number } = {};
+        for (const r of records.records as any[]) {
+          const date = new Date(r.startTime).toISOString().split('T')[0];
+          if (!byDate[date]) byDate[date] = 0;
+          byDate[date] += r.distance?.inMeters || 0;
+        }
+        return Object.keys(byDate).filter(d => byDate[d] > 0)
+          .map(d => ({ date: d, value: Math.round(byDate[d]) / 1000 }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+      }
+    } catch (error) { logger.error('[HealthConnect Android] Erreur lecture historique distance:', error); }
+    return [];
+  }
+
+  async getExerciseMinutesHistory(days: number = 7): Promise<{ date: string; value: number }[]> {
+    const HC = getHealthConnect();
+    if (!HC) return [];
+    try {
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - days);
+      fromDate.setHours(0, 0, 0, 0);
+      const records = await HC.readRecords('ExerciseSession', {
+        timeRangeFilter: this.createTimeRangeFilter(fromDate, new Date()),
+      });
+      if (records?.records && records.records.length > 0) {
+        const byDate: { [key: string]: number } = {};
+        for (const r of records.records as any[]) {
+          const date = new Date(r.startTime).toISOString().split('T')[0];
+          if (!byDate[date]) byDate[date] = 0;
+          const durationMs = new Date(r.endTime).getTime() - new Date(r.startTime).getTime();
+          byDate[date] += durationMs / 60000;
+        }
+        return Object.keys(byDate).filter(d => byDate[d] > 0)
+          .map(d => ({ date: d, value: Math.round(byDate[d]) }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+      }
+    } catch (error) { logger.error('[HealthConnect Android] Erreur lecture historique exercise:', error); }
+    return [];
+  }
+
+  async getStandHoursHistory(_days: number = 7): Promise<{ date: string; value: number }[]> {
+    // Google Health Connect n'a pas d'equivalent aux Apple Stand Hours
+    return [];
+  }
+
   // ============================================
   // ÉCRITURE: POIDS
   // ============================================
@@ -2692,7 +2748,7 @@ class HealthConnectService {
               date: trainingDate,
               start_time: startTime,
               duration_minutes: workout.duration,
-              distance: workout.distance,
+              distance: workout.distance ? parseFloat((workout.distance / 1000).toFixed(2)) : undefined,
               calories: workout.calories,
               heart_rate: workout.averageHeartRate,
               max_heart_rate: workout.maxHeartRate,

@@ -154,7 +154,7 @@ export default function ProfileTabScreen() {
 
   useEffect(() => { loadData(); }, []);
 
-  const rank = getCurrentRank(streak);
+  const rank = getCurrentRank(totalPoints);
   const level = getLevel(totalPoints);
 
   const handleSave = async () => {
@@ -302,7 +302,7 @@ export default function ProfileTabScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBackground }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      <StatusBar barStyle="light-content" />
 
       <ScrollView
         style={styles.scrollView}

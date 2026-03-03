@@ -38,9 +38,12 @@ const estimateCalories = (sport: string, durationMin: number): number => {
   return Math.round(durationMin * rate);
 };
 
-export const SeancesTab: React.FC<SeancesTabProps> = ({ trainings }) => {
+export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: rawTrainings }) => {
   const { colors, isDark } = useTheme();
   const [selectedSport, setSelectedSport] = useState<string>('all');
+
+  // Defensive: garantir que trainings est toujours un array
+  const trainings = Array.isArray(rawTrainings) ? rawTrainings : [];
 
   const uniqueSports = useMemo(
     () => [...new Set(trainings.map(t => t.sport).filter(Boolean))],
@@ -54,11 +57,9 @@ export const SeancesTab: React.FC<SeancesTabProps> = ({ trainings }) => {
 
   const totalSessions = filteredTrainings.length;
   const totalMinutes = filteredTrainings.reduce((sum, t) => sum + (t.duration_minutes || t.duration || 0), 0);
-  // Utiliser les calories reelles si dispo, sinon estimer
   const totalCalories = filteredTrainings.reduce((sum, t) => {
     const cal = t.calories || 0;
     if (cal > 0) return sum + cal;
-    // Estimer si pas de calories
     const dur = t.duration_minutes || t.duration || 0;
     return sum + (dur > 0 ? estimateCalories(t.sport, dur) : 0);
   }, 0);
@@ -246,32 +247,45 @@ export const SeancesTab: React.FC<SeancesTabProps> = ({ trainings }) => {
               </View>
             </View>
 
-            {/* Ligne secondaire : distance, FC, source */}
-            {((training.distance || 0) > 0 || (training.heart_rate || 0) > 0) && (
-              <View style={[styles.sessionSecondary, { borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-                {(training.distance || 0) > 0 && (
-                  <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
-                    {(training.distance || 0).toFixed(1)} km
-                  </Text>
-                )}
-                {(training.heart_rate || 0) > 0 && (
-                  <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
-                    FC moy. {training.heart_rate} bpm
-                  </Text>
-                )}
-                {training.source && training.source !== 'manual' && (
-                  <Text style={[styles.sessionSourceBadge, { color: colors.textMuted, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
-                    {training.source}
-                  </Text>
-                )}
-              </View>
-            )}
+            {/* Ligne secondaire : distance, allure, FC, source */}
+            {((training.distance || 0) > 0 || (training.heart_rate || 0) > 0) && (() => {
+              const dist = training.distance || 0;
+              const pace = dist > 0 && duration > 0
+                ? Math.round((duration * 60) / dist)
+                : 0;
+              const paceMin = pace > 0 ? Math.floor(pace / 60) : 0;
+              const paceSec = pace > 0 ? Math.round(pace % 60) : 0;
+              return (
+                <View style={[styles.sessionSecondary, { borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
+                  {dist > 0 && (
+                    <Text style={[styles.sessionSecondaryText, { color: '#3B82F6' }]}>
+                      {dist.toFixed(1)} km
+                    </Text>
+                  )}
+                  {pace > 0 && (
+                    <Text style={[styles.sessionSecondaryText, { color: '#22C55E' }]}>
+                      {paceMin}'{paceSec.toString().padStart(2, '0')}"/km
+                    </Text>
+                  )}
+                  {(training.heart_rate || 0) > 0 && (
+                    <Text style={[styles.sessionSecondaryText, { color: '#EF4444' }]}>
+                      {training.heart_rate} bpm
+                    </Text>
+                  )}
+                  {training.source && training.source !== 'manual' && (
+                    <Text style={[styles.sessionSourceBadge, { color: colors.textMuted, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+                      {training.source}
+                    </Text>
+                  )}
+                </View>
+              );
+            })()}
           </TouchableOpacity>
         );
       })}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   filterScroll: {

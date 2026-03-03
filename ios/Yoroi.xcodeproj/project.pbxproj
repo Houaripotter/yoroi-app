@@ -29,6 +29,7 @@
 		E11C770F9EC353BDED32219F /* WatchConnectivityBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 38DF121D8F7FCBF2DDD2D5B3 /* WatchConnectivityBridge.m */; };
 		E12B3E704553F83455514DC7 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000A32CBCA9E77D5A32EDFCD /* WatchConnectivity.framework */; };
 		E96EBC2B8285DFB53554E9F5 /* SleepPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 354ADA1C37DEB571464D64E1 /* SleepPage.swift */; };
+		F1A2B3C4D5E6F70800SETTINGS /* SettingsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F70900SETTINGS /* SettingsPage.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		F744193774A505F6D079732E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F56E12FDA5FBF6C2FE9088F /* ContentView.swift */; };
 		FD7C9F57DFFF6CF797EF939D /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49841AC244D54BFE9CC6D2C4 /* HealthKit.framework */; };
@@ -70,6 +71,7 @@
 		14F08D3C04354160B9E8F92A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = PrivacyInfo.xcprivacy; path = Yoroi/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		2271CA4C6402AF138B83E3A4 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Yoroi/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		354ADA1C37DEB571464D64E1 /* SleepPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SleepPage.swift; sourceTree = "<group>"; };
+		F1A2B3C4D5E6F70900SETTINGS /* SettingsPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsPage.swift; sourceTree = "<group>"; };
 		38DF121D8F7FCBF2DDD2D5B3 /* WatchConnectivityBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = WatchConnectivityBridge.m; sourceTree = "<group>"; };
 		4212EFECB655ED54B895DA96 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		49841AC244D54BFE9CC6D2C4 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/HealthKit.framework; sourceTree = DEVELOPER_DIR; };
@@ -193,6 +195,7 @@
 				D767F6BF1B2714353253616C /* WeightPage.swift */,
 				031A522046805E96B3836C90 /* HydrationPage.swift */,
 				354ADA1C37DEB571464D64E1 /* SleepPage.swift */,
+				F1A2B3C4D5E6F70900SETTINGS /* SettingsPage.swift */,
 			);
 			name = Views;
 			path = Views;
@@ -540,6 +543,7 @@
 				083FE764C17EB8ADF82DB7E3 /* WeightPage.swift in Sources */,
 				95B176C8EA047BC42D7A75A0 /* HydrationPage.swift in Sources */,
 				E96EBC2B8285DFB53554E9F5 /* SleepPage.swift in Sources */,
+				F1A2B3C4D5E6F70800SETTINGS /* SettingsPage.swift in Sources */,
 				5BA41E06B49FCA34D60842E5 /* WatchSessionManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

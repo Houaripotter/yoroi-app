@@ -16,6 +16,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateStreak } from './database';
 import { getCurrentRank } from './ranks';
+import { getUnifiedPoints } from './gamification';
 import { rankToLevel, setAvatarConfig, type AvatarPack } from './avatarSystem';
 import logger from '@/lib/security/logger';
 
@@ -63,13 +64,13 @@ export async function migrateAvatarSystem(): Promise<void> {
 
     logger.info(`[AvatarMigration] Nouveau pack: ${newPack} ${newGender}`);
 
-    // Étape 4 : Calculer le niveau actuel basé sur le rang
-    const streak = await calculateStreak();
-    const currentRank = getCurrentRank(streak);
+    // Étape 4 : Calculer le niveau actuel basé sur les XP
+    const totalPoints = await getUnifiedPoints();
+    const currentRank = getCurrentRank(totalPoints);
     const currentLevel = rankToLevel(currentRank);
 
     logger.info(
-      `[AvatarMigration] Streak: ${streak} jours → Rang: ${currentRank.name} → Niveau: ${currentLevel}`
+      `[AvatarMigration] XP: ${totalPoints} → Rang: ${currentRank.name} → Niveau: ${currentLevel}`
     );
 
     // Étape 5 : Sauvegarder la nouvelle configuration

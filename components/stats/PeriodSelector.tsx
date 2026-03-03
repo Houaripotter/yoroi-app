@@ -27,7 +27,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   selected,
   onChange,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const handleSelect = (period: Period) => {
     if (Platform.OS !== 'web') {
@@ -54,9 +54,11 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
               styles.pill,
               {
                 backgroundColor: isSelected
-                  ? colors.accent
-                  : colors.backgroundCard,
-                borderColor: isSelected ? colors.accent : colors.border,
+                  ? (isDark ? colors.accent : '#FFFFFF')
+                  : (isDark ? colors.backgroundCard : 'rgba(255,255,255,0.15)'),
+                borderColor: isSelected
+                  ? (isDark ? colors.accent : '#FFFFFF')
+                  : (isDark ? colors.border : 'rgba(255,255,255,0.3)'),
               },
             ]}
           >
@@ -64,7 +66,9 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
               style={[
                 styles.pillText,
                 {
-                  color: isSelected ? colors.textOnAccent : colors.textSecondary,
+                  color: isSelected
+                    ? (isDark ? colors.textOnAccent : colors.accent)
+                    : (isDark ? colors.textSecondary : 'rgba(255,255,255,0.8)'),
                   fontWeight: isSelected ? '700' : '600',
                 },
               ]}

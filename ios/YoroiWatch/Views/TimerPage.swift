@@ -3,116 +3,57 @@ import HealthKit
 import WatchKit
 
 // ============================================================
-// PAGE 1: DASHBOARD - Cards that open detail pages
+// COLORS
+// ============================================================
+
+private let goldColor = Color(red: 0.831, green: 0.686, blue: 0.216) // #D4AF37
+private let cyanColor = Color(red: 0.024, green: 0.714, blue: 0.831) // #06B6D4
+private let pinkColor = Color(red: 0.925, green: 0.306, blue: 0.604) // #EC4E9A
+private let greenColor = Color(red: 0.063, green: 0.725, blue: 0.506) // #10B981
+private let redColor = Color(red: 0.937, green: 0.267, blue: 0.267) // #EF4444
+private let orangeColor = Color(red: 0.976, green: 0.451, blue: 0.086) // #F97316
+private let blueColor = Color(red: 0.231, green: 0.510, blue: 0.965) // #3B82F6
+private let purpleColor = Color(red: 0.545, green: 0.361, blue: 0.965) // #8B5CF6
+private let indigoColor = Color(red: 0.388, green: 0.400, blue: 0.945) // #6366F1
+
+// ============================================================
+// PAGE 1: DASHBOARD - Premium redesign
 // ============================================================
 
 struct DashboardPage: View {
 
   @EnvironmentObject var session: WatchSessionManager
   @State private var steps: Int = 0
+  @State private var localHeartRate: Int = 0
   @State private var showTimer = false
   @State private var showCarnet = false
   @State private var showSteps = false
+  @State private var showHealth = false
 
   private let healthStore = HKHealthStore()
 
   var body: some View {
     NavigationView {
       ScrollView {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
 
-          // Profile header
-          HStack(spacing: 6) {
-            Image(systemName: "shield.fill")
-              .font(.system(size: 14))
-              .foregroundColor(Color("Gold"))
-            VStack(alignment: .leading, spacing: 0) {
-              Text(session.userName)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(.white)
-              Text("Niv. \(session.level) - \(session.rank)")
-                .font(.system(size: 8))
-                .foregroundColor(.gray)
-            }
-            Spacer()
-            // Sync indicator
-            Circle()
-              .fill(session.isConnected ? Color.green : Color.red)
-              .frame(width: 6, height: 6)
+          // ── PROFILE HEADER ──
+          profileHeader
+
+          // ── QUICK ACTIONS ROW: Timer + Carnet ──
+          quickActionsRow
+
+          // ── HEALTH METRICS GRID ──
+          healthMetricsGrid
+
+          // ── STREAK ──
+          if session.streak > 0 {
+            streakBanner
           }
-          .padding(.horizontal, 4)
 
-          // ── MINUTEUR Card ──
-          Button(action: { showTimer = true }) {
-            DashCard(
-              icon: "timer",
-              iconColor: Color("Gold"),
-              title: "Minuteur",
-              value: session.timerIsRunning
-                ? session.formattedTime(session.timerRemainingSeconds)
-                : session.formattedTime(session.timerTotalSeconds),
-              subtitle: session.timerIsRunning ? "En cours..." : session.timerMode,
-              accentColor: Color("Gold"),
-              isActive: session.timerIsRunning
-            )
-          }
-          .buttonStyle(.plain)
-
-          // ── PAS Card ──
-          Button(action: { showSteps = true }) {
-            let goal = max(1, session.stepsGoal)
-            let pct = Int(min(100, Double(steps) / Double(goal) * 100))
-            DashCard(
-              icon: "figure.walk",
-              iconColor: .green,
-              title: "Pas",
-              value: "\(steps)",
-              subtitle: "\(pct)% - Obj: \(session.stepsGoal)",
-              accentColor: .green,
-              isActive: false
-            )
-          }
-          .buttonStyle(.plain)
-
-          // ── CARNET Card ──
-          Button(action: { showCarnet = true }) {
-            DashCard(
-              icon: "book.fill",
-              iconColor: Color("Gold"),
-              title: "Carnet",
-              value: "\(session.benchmarks.count) records",
-              subtitle: session.recentWorkouts.isEmpty ? "Ajouter un record" : "Derniere: \(session.recentWorkouts.first?.type.capitalized ?? "")",
-              accentColor: Color("Gold"),
-              isActive: false
-            )
-          }
-          .buttonStyle(.plain)
-
-          // ── SEANCES RECENTES ──
+          // ── RECENT SESSIONS ──
           if !session.recentWorkouts.isEmpty {
-            VStack(alignment: .leading, spacing: 4) {
-              Text("RECENTS")
-                .font(.system(size: 7, weight: .heavy))
-                .foregroundColor(.gray)
-                .tracking(1)
-
-              ForEach(session.recentWorkouts.prefix(2)) { workout in
-                HStack(spacing: 6) {
-                  Image(systemName: workout.icon)
-                    .font(.system(size: 10))
-                    .foregroundColor(Color("Gold"))
-                    .frame(width: 16)
-                  Text(workout.type.capitalized)
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(.white)
-                  Spacer()
-                  Text(workout.formattedDuration)
-                    .font(.system(size: 8))
-                    .foregroundColor(.gray)
-                }
-              }
-            }
-            .padding(.horizontal, 4)
+            recentSessions
           }
         }
         .padding(.horizontal, 2)
@@ -127,8 +68,302 @@ struct DashboardPage: View {
     .sheet(isPresented: $showSteps) {
       StepsDetailPage(steps: steps)
     }
-    .onAppear { fetchSteps() }
+    .onAppear {
+      fetchSteps()
+      fetchHeartRate()
+    }
   }
+
+  // MARK: - Profile Header
+  private var profileHeader: some View {
+    HStack(spacing: 8) {
+      // Profile photo circle
+      ZStack {
+        Circle()
+          .fill(
+            LinearGradient(
+              colors: [goldColor, goldColor.opacity(0.6)],
+              startPoint: .topLeading,
+              endPoint: .bottomTrailing
+            )
+          )
+          .frame(width: 36, height: 36)
+
+        if let imgData = session.profileImageData,
+           let uiImage = UIImage(data: imgData) {
+          Image(uiImage: uiImage)
+            .resizable()
+            .scaledToFill()
+            .frame(width: 32, height: 32)
+            .clipShape(Circle())
+        } else {
+          // Initials fallback
+          Text(initials)
+            .font(.system(size: 13, weight: .bold))
+            .foregroundColor(.black)
+        }
+      }
+
+      VStack(alignment: .leading, spacing: 1) {
+        Text(session.userName.isEmpty ? "Yoroi" : session.userName)
+          .font(.system(size: 13, weight: .bold))
+          .foregroundColor(.white)
+          .lineLimit(1)
+        HStack(spacing: 3) {
+          Text("Niv.\(session.level)")
+            .font(.system(size: 8, weight: .semibold))
+            .foregroundColor(goldColor)
+          if !session.rank.isEmpty {
+            Text(session.rank)
+              .font(.system(size: 7, weight: .medium))
+              .foregroundColor(.gray)
+              .lineLimit(1)
+          }
+        }
+      }
+
+      Spacer()
+
+      // Connection dot
+      Circle()
+        .fill(session.isConnected ? greenColor : redColor)
+        .frame(width: 6, height: 6)
+    }
+    .padding(.horizontal, 4)
+    .padding(.top, 2)
+  }
+
+  private var initials: String {
+    let parts = session.userName.split(separator: " ")
+    if parts.count >= 2 {
+      return "\(parts[0].prefix(1))\(parts[1].prefix(1))".uppercased()
+    }
+    return String(session.userName.prefix(2)).uppercased()
+  }
+
+  // MARK: - Quick Actions (Timer + Carnet as compact circles)
+  private var quickActionsRow: some View {
+    HStack(spacing: 10) {
+      // Timer circle
+      Button(action: { showTimer = true }) {
+        VStack(spacing: 3) {
+          ZStack {
+            Circle()
+              .fill(goldColor.opacity(0.15))
+              .frame(width: 44, height: 44)
+
+            if session.timerIsRunning {
+              // Progress ring when running
+              Circle()
+                .trim(from: 0, to: timerProgress)
+                .stroke(goldColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .frame(width: 44, height: 44)
+            }
+
+            Image(systemName: session.timerIsRunning ? "pause.fill" : "timer")
+              .font(.system(size: 16))
+              .foregroundColor(goldColor)
+          }
+          Text(session.timerIsRunning
+            ? session.formattedTime(session.timerRemainingSeconds)
+            : "Timer")
+            .font(.system(size: 8, weight: .semibold))
+            .foregroundColor(session.timerIsRunning ? goldColor : .gray)
+        }
+      }
+      .buttonStyle(.plain)
+
+      // Steps circle
+      Button(action: { showSteps = true }) {
+        VStack(spacing: 3) {
+          ZStack {
+            Circle()
+              .fill(greenColor.opacity(0.15))
+              .frame(width: 44, height: 44)
+
+            Circle()
+              .trim(from: 0, to: stepsProgress)
+              .stroke(greenColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+              .rotationEffect(.degrees(-90))
+              .frame(width: 44, height: 44)
+
+            Image(systemName: "figure.walk")
+              .font(.system(size: 16))
+              .foregroundColor(greenColor)
+          }
+          Text("\(steps > 0 ? formattedSteps : "--")")
+            .font(.system(size: 8, weight: .semibold))
+            .foregroundColor(.gray)
+        }
+      }
+      .buttonStyle(.plain)
+
+      // Carnet circle
+      Button(action: { showCarnet = true }) {
+        VStack(spacing: 3) {
+          ZStack {
+            Circle()
+              .fill(cyanColor.opacity(0.15))
+              .frame(width: 44, height: 44)
+
+            Image(systemName: "book.fill")
+              .font(.system(size: 16))
+              .foregroundColor(cyanColor)
+          }
+          Text("\(session.benchmarks.count) PR")
+            .font(.system(size: 8, weight: .semibold))
+            .foregroundColor(.gray)
+        }
+      }
+      .buttonStyle(.plain)
+    }
+    .padding(.vertical, 4)
+  }
+
+  private var timerProgress: Double {
+    guard session.timerTotalSeconds > 0 else { return 0 }
+    return Double(session.timerRemainingSeconds) / Double(session.timerTotalSeconds)
+  }
+
+  private var stepsProgress: Double {
+    let goal = max(1, session.stepsGoal)
+    return min(1.0, Double(steps) / Double(goal))
+  }
+
+  private var formattedSteps: String {
+    if steps >= 1000 {
+      return String(format: "%.1fk", Double(steps) / 1000.0)
+    }
+    return "\(steps)"
+  }
+
+  // MARK: - Health Metrics Grid (2x2 cards like iPhone)
+  private var healthMetricsGrid: some View {
+    VStack(spacing: 4) {
+      // Section label
+      HStack {
+        Image(systemName: "heart.fill")
+          .font(.system(size: 8))
+          .foregroundColor(pinkColor)
+        Text("SANTE")
+          .font(.system(size: 7, weight: .heavy))
+          .foregroundColor(.gray)
+          .tracking(1)
+        Spacer()
+      }
+      .padding(.horizontal, 4)
+
+      // Grid 2x2
+      VStack(spacing: 4) {
+        HStack(spacing: 4) {
+          HealthMiniCard(
+            icon: "heart.fill",
+            color: pinkColor,
+            value: displayHeartRate > 0 ? "\(displayHeartRate)" : "--",
+            unit: "BPM",
+            label: "FC"
+          )
+          HealthMiniCard(
+            icon: "drop.fill",
+            color: cyanColor,
+            value: session.spo2 > 0 ? "\(session.spo2)" : "--",
+            unit: "%",
+            label: "SpO2"
+          )
+        }
+        HStack(spacing: 4) {
+          HealthMiniCard(
+            icon: "flame.fill",
+            color: orangeColor,
+            value: session.activeCalories > 0 ? "\(session.activeCalories)" : "--",
+            unit: "kcal",
+            label: "Actives"
+          )
+          HealthMiniCard(
+            icon: "figure.walk",
+            color: blueColor,
+            value: session.distance > 0 ? String(format: "%.1f", session.distance) : "--",
+            unit: "km",
+            label: "Distance"
+          )
+        }
+      }
+    }
+  }
+
+  private var displayHeartRate: Int {
+    // Prefer local HealthKit reading, fallback to synced
+    localHeartRate > 0 ? localHeartRate : session.heartRate
+  }
+
+  // MARK: - Streak Banner
+  private var streakBanner: some View {
+    HStack(spacing: 6) {
+      Image(systemName: "flame.fill")
+        .font(.system(size: 12))
+        .foregroundColor(orangeColor)
+      Text("\(session.streak)")
+        .font(.system(size: 16, weight: .black))
+        .foregroundColor(.white)
+      Text("jours")
+        .font(.system(size: 9, weight: .semibold))
+        .foregroundColor(.gray)
+      Spacer()
+      // Mini progress dots for the week
+      HStack(spacing: 2) {
+        ForEach(0..<7, id: \.self) { i in
+          Circle()
+            .fill(i < min(session.streak, 7) ? orangeColor : Color.white.opacity(0.1))
+            .frame(width: 4, height: 4)
+        }
+      }
+    }
+    .padding(.horizontal, 8)
+    .padding(.vertical, 6)
+    .background(orangeColor.opacity(0.1))
+    .cornerRadius(10)
+    .padding(.horizontal, 2)
+  }
+
+  // MARK: - Recent Sessions
+  private var recentSessions: some View {
+    VStack(alignment: .leading, spacing: 4) {
+      HStack {
+        Image(systemName: "clock.fill")
+          .font(.system(size: 8))
+          .foregroundColor(goldColor)
+        Text("RECENTS")
+          .font(.system(size: 7, weight: .heavy))
+          .foregroundColor(.gray)
+          .tracking(1)
+        Spacer()
+      }
+      .padding(.horizontal, 4)
+
+      ForEach(session.recentWorkouts.prefix(2)) { workout in
+        HStack(spacing: 6) {
+          Image(systemName: workout.icon)
+            .font(.system(size: 10))
+            .foregroundColor(goldColor)
+            .frame(width: 20, height: 20)
+            .background(goldColor.opacity(0.12))
+            .cornerRadius(5)
+          Text(workout.type.capitalized)
+            .font(.system(size: 9, weight: .semibold))
+            .foregroundColor(.white)
+            .lineLimit(1)
+          Spacer()
+          Text(workout.formattedDuration)
+            .font(.system(size: 8))
+            .foregroundColor(.gray)
+        }
+        .padding(.horizontal, 4)
+      }
+    }
+  }
+
+  // MARK: - HealthKit Fetching
 
   private func fetchSteps() {
     guard HKHealthStore.isHealthDataAvailable() else { return }
@@ -146,58 +381,63 @@ struct DashboardPage: View {
       }
     }
   }
-}
 
-// MARK: - Dashboard Card
-
-struct DashCard: View {
-  let icon: String
-  let iconColor: Color
-  let title: String
-  let value: String
-  let subtitle: String
-  let accentColor: Color
-  let isActive: Bool
-
-  var body: some View {
-    HStack(spacing: 8) {
-      // Icon
-      Image(systemName: icon)
-        .font(.system(size: 16))
-        .foregroundColor(iconColor)
-        .frame(width: 32, height: 32)
-        .background(iconColor.opacity(0.15))
-        .cornerRadius(8)
-
-      // Content
-      VStack(alignment: .leading, spacing: 1) {
-        Text(title)
-          .font(.system(size: 9, weight: .semibold))
-          .foregroundColor(.gray)
-        Text(value)
-          .font(.system(size: 14, weight: .bold))
-          .foregroundColor(.white)
-        Text(subtitle)
-          .font(.system(size: 8))
-          .foregroundColor(.gray)
-      }
-
-      Spacer()
-
-      // Arrow or active indicator
-      if isActive {
-        Circle()
-          .fill(accentColor)
-          .frame(width: 8, height: 8)
-      } else {
-        Image(systemName: "chevron.right")
-          .font(.system(size: 9))
-          .foregroundColor(.gray.opacity(0.5))
+  private func fetchHeartRate() {
+    guard HKHealthStore.isHealthDataAvailable() else { return }
+    let hrType = HKQuantityType.quantityType(forIdentifier: .heartRate)!
+    healthStore.requestAuthorization(toShare: [], read: [hrType]) { ok, _ in
+      if ok {
+        let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        let q = HKSampleQuery(sampleType: hrType, predicate: nil, limit: 1, sortDescriptors: [sort]) { _, samples, _ in
+          if let sample = samples?.first as? HKQuantitySample {
+            DispatchQueue.main.async {
+              localHeartRate = Int(sample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute())))
+            }
+          }
+        }
+        healthStore.execute(q)
       }
     }
-    .padding(8)
-    .background(Color.white.opacity(0.06))
-    .cornerRadius(10)
+  }
+}
+
+// MARK: - Health Mini Card
+
+struct HealthMiniCard: View {
+  let icon: String
+  let color: Color
+  let value: String
+  let unit: String
+  let label: String
+
+  var body: some View {
+    HStack(spacing: 6) {
+      Image(systemName: icon)
+        .font(.system(size: 11))
+        .foregroundColor(color)
+        .frame(width: 22, height: 22)
+        .background(color.opacity(0.15))
+        .clipShape(Circle())
+
+      VStack(alignment: .leading, spacing: 0) {
+        HStack(spacing: 2) {
+          Text(value)
+            .font(.system(size: 13, weight: .bold))
+            .foregroundColor(.white)
+          Text(unit)
+            .font(.system(size: 7, weight: .medium))
+            .foregroundColor(.gray)
+        }
+        Text(label)
+          .font(.system(size: 7))
+          .foregroundColor(.gray)
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.horizontal, 6)
+    .padding(.vertical, 6)
+    .background(Color.white.opacity(0.05))
+    .cornerRadius(8)
   }
 }
 
@@ -208,88 +448,71 @@ struct DashCard: View {
 struct TimerDetailPage: View {
   @EnvironmentObject var session: WatchSessionManager
   @State private var selectedPreset: Int = 90
+  @State private var showCustom = false
+  @State private var customMinutes: Int = 1
+  @State private var customSeconds: Int = 30
 
-  private let presets = [30, 60, 90, 120, 180]
-  private let presetLabels = ["30s", "1min", "1:30", "2min", "3min"]
+  // Standard presets
+  private let presets: [(Int, String)] = [
+    (30, "30s"),
+    (45, "45s"),
+    (60, "1:00"),
+    (90, "1:30"),
+    (120, "2:00"),
+  ]
 
   var body: some View {
     ScrollView {
       VStack(spacing: 8) {
-        Text("MINUTEUR")
-          .font(.system(size: 9, weight: .heavy))
-          .foregroundColor(Color("Gold"))
-          .tracking(2)
 
-        // Circular countdown
+        // ── Circular countdown (main display) ──
         ZStack {
+          // Background ring
           Circle()
-            .stroke(Color.gray.opacity(0.2), lineWidth: 6)
+            .stroke(Color.white.opacity(0.08), lineWidth: 8)
 
+          // Progress ring
           Circle()
             .trim(from: 0, to: timerProgress)
             .stroke(
               session.timerRemainingSeconds <= 10 && session.timerIsRunning
-                ? Color.red : Color("Gold"),
-              style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                ? LinearGradient(colors: [redColor, orangeColor], startPoint: .leading, endPoint: .trailing)
+                : LinearGradient(colors: [goldColor, goldColor.opacity(0.7)], startPoint: .leading, endPoint: .trailing),
+              style: StrokeStyle(lineWidth: 8, lineCap: .round)
             )
             .rotationEffect(.degrees(-90))
             .animation(.linear(duration: 1), value: session.timerRemainingSeconds)
 
-          VStack(spacing: 0) {
+          VStack(spacing: 2) {
             Text(session.formattedTime(session.timerRemainingSeconds))
-              .font(.system(size: 32, weight: .bold, design: .monospaced))
+              .font(.system(size: 28, weight: .bold, design: .monospaced))
               .foregroundColor(.white)
-            if session.timerIsRunning {
-              Text(session.timerMode)
-                .font(.system(size: 9))
-                .foregroundColor(.gray)
-            }
+            Text(session.timerMode)
+              .font(.system(size: 8, weight: .medium))
+              .foregroundColor(.gray)
           }
         }
         .frame(width: 110, height: 110)
 
-        // Presets
-        if !session.timerIsRunning {
-          ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
-              ForEach(0..<presets.count, id: \.self) { i in
-                Button(action: {
-                  selectedPreset = presets[i]
-                  session.setTimer(seconds: presets[i])
-                }) {
-                  Text(presetLabels[i])
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(selectedPreset == presets[i] ? .black : Color("Gold"))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(selectedPreset == presets[i] ? Color("Gold") : Color("Gold").opacity(0.15))
-                    .cornerRadius(8)
-                }
-                .buttonStyle(.plain)
-              }
-            }
-          }
-        }
-
-        // Controls
-        HStack(spacing: 16) {
+        // ── Play/Pause/Reset Controls ──
+        HStack(spacing: 14) {
           if session.timerIsRunning {
             Button(action: { session.pauseTimer() }) {
               Image(systemName: "pause.fill")
-                .font(.system(size: 20))
+                .font(.system(size: 18))
                 .foregroundColor(.black)
-                .frame(width: 44, height: 44)
-                .background(Color("Gold"))
+                .frame(width: 42, height: 42)
+                .background(goldColor)
                 .clipShape(Circle())
             }
             .buttonStyle(.plain)
           } else {
             Button(action: { session.startTimer() }) {
               Image(systemName: "play.fill")
-                .font(.system(size: 20))
+                .font(.system(size: 18))
                 .foregroundColor(.black)
-                .frame(width: 44, height: 44)
-                .background(Color("Gold"))
+                .frame(width: 42, height: 42)
+                .background(goldColor)
                 .clipShape(Circle())
             }
             .buttonStyle(.plain)
@@ -298,18 +521,203 @@ struct TimerDetailPage: View {
           if session.timerRemainingSeconds != session.timerTotalSeconds {
             Button(action: { session.resetTimer() }) {
               Image(systemName: "arrow.counterclockwise")
-                .font(.system(size: 15))
+                .font(.system(size: 14))
                 .foregroundColor(.white)
-                .frame(width: 36, height: 36)
-                .background(Color.white.opacity(0.15))
+                .frame(width: 34, height: 34)
+                .background(Color.white.opacity(0.12))
                 .clipShape(Circle())
             }
             .buttonStyle(.plain)
           }
         }
+
+        // ── Preset Circles ──
+        if !session.timerIsRunning {
+          VStack(spacing: 6) {
+            Text("PRESETS")
+              .font(.system(size: 7, weight: .heavy))
+              .foregroundColor(.gray)
+              .tracking(1)
+
+            // Row of circles
+            HStack(spacing: 6) {
+              ForEach(presets, id: \.0) { (seconds, label) in
+                Button(action: {
+                  selectedPreset = seconds
+                  session.setTimer(seconds: seconds)
+                }) {
+                  Text(label)
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(selectedPreset == seconds ? .black : goldColor)
+                    .frame(width: 32, height: 32)
+                    .background(
+                      selectedPreset == seconds
+                        ? goldColor
+                        : goldColor.opacity(0.15)
+                    )
+                    .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+              }
+            }
+
+            // Custom + Favorites row
+            HStack(spacing: 6) {
+              // Custom button
+              Button(action: { showCustom = true }) {
+                HStack(spacing: 3) {
+                  Image(systemName: "slider.horizontal.3")
+                    .font(.system(size: 8))
+                  Text("Perso")
+                    .font(.system(size: 8, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(Color.white.opacity(0.1))
+                .cornerRadius(8)
+              }
+              .buttonStyle(.plain)
+
+              // Save to favorites
+              if !presets.map({ $0.0 }).contains(session.timerTotalSeconds) {
+                Button(action: { session.addTimerFavorite(session.timerTotalSeconds) }) {
+                  Image(systemName: "star.fill")
+                    .font(.system(size: 10))
+                    .foregroundColor(goldColor)
+                    .frame(width: 24, height: 24)
+                    .background(goldColor.opacity(0.15))
+                    .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+              }
+            }
+
+            // Favorites
+            if !session.timerFavorites.isEmpty {
+              VStack(spacing: 4) {
+                Text("FAVORIS")
+                  .font(.system(size: 7, weight: .heavy))
+                  .foregroundColor(goldColor.opacity(0.6))
+                  .tracking(1)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                  HStack(spacing: 4) {
+                    ForEach(session.timerFavorites, id: \.self) { fav in
+                      Button(action: {
+                        selectedPreset = fav
+                        session.setTimer(seconds: fav)
+                      }) {
+                        HStack(spacing: 2) {
+                          Image(systemName: "star.fill")
+                            .font(.system(size: 5))
+                          Text(formatPresetLabel(fav))
+                            .font(.system(size: 8, weight: .bold))
+                        }
+                        .foregroundColor(selectedPreset == fav ? .black : goldColor)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 4)
+                        .background(selectedPreset == fav ? goldColor : goldColor.opacity(0.1))
+                        .cornerRadius(6)
+                      }
+                      .buttonStyle(.plain)
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
       .padding(.horizontal, 4)
     }
+    .sheet(isPresented: $showCustom) {
+      customTimerSheet
+    }
+  }
+
+  // MARK: - Custom Timer Sheet
+  private var customTimerSheet: some View {
+    ScrollView {
+      VStack(spacing: 10) {
+        Text("PERSONNALISE")
+          .font(.system(size: 9, weight: .heavy))
+          .foregroundColor(goldColor)
+          .tracking(1.5)
+
+        HStack(spacing: 4) {
+          // Minutes
+          VStack(spacing: 2) {
+            Button(action: { customMinutes = min(59, customMinutes + 1) }) {
+              Image(systemName: "chevron.up")
+                .font(.system(size: 10))
+                .foregroundColor(goldColor)
+            }.buttonStyle(.plain)
+
+            Text(String(format: "%02d", customMinutes))
+              .font(.system(size: 24, weight: .bold, design: .monospaced))
+              .foregroundColor(.white)
+
+            Button(action: { customMinutes = max(0, customMinutes - 1) }) {
+              Image(systemName: "chevron.down")
+                .font(.system(size: 10))
+                .foregroundColor(goldColor)
+            }.buttonStyle(.plain)
+          }
+
+          Text(":")
+            .font(.system(size: 24, weight: .bold))
+            .foregroundColor(.gray)
+
+          // Seconds
+          VStack(spacing: 2) {
+            Button(action: { customSeconds = min(55, customSeconds + 5) }) {
+              Image(systemName: "chevron.up")
+                .font(.system(size: 10))
+                .foregroundColor(goldColor)
+            }.buttonStyle(.plain)
+
+            Text(String(format: "%02d", customSeconds))
+              .font(.system(size: 24, weight: .bold, design: .monospaced))
+              .foregroundColor(.white)
+
+            Button(action: { customSeconds = max(0, customSeconds - 5) }) {
+              Image(systemName: "chevron.down")
+                .font(.system(size: 10))
+                .foregroundColor(goldColor)
+            }.buttonStyle(.plain)
+          }
+        }
+
+        Button(action: {
+          let total = customMinutes * 60 + customSeconds
+          guard total > 0 else { return }
+          selectedPreset = total
+          session.setTimer(seconds: total, mode: "Perso")
+          showCustom = false
+        }) {
+          Text("Valider")
+            .font(.system(size: 12, weight: .bold))
+            .foregroundColor(.black)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(goldColor)
+            .cornerRadius(10)
+        }
+        .buttonStyle(.plain)
+      }
+      .padding(.horizontal, 8)
+    }
+  }
+
+  // MARK: - Helpers
+
+  private func formatPresetLabel(_ seconds: Int) -> String {
+    let m = seconds / 60
+    let s = seconds % 60
+    if m == 0 { return "\(s)s" }
+    if s == 0 { return "\(m)min" }
+    return "\(m):\(String(format: "%02d", s))"
   }
 
   private var timerProgress: Double {
@@ -394,6 +802,10 @@ struct CarnetFullPage: View {
     "trail": Color(red: 0.063, green: 0.725, blue: 0.506),
     "cardio": Color(red: 0.063, green: 0.725, blue: 0.506),
     "hyrox": Color(red: 0.961, green: 0.620, blue: 0.043),
+    "halterophilie": Color(red: 0.831, green: 0.686, blue: 0.216),
+    "crossfit": Color(red: 0.961, green: 0.620, blue: 0.043),
+    "combat": Color(red: 0.937, green: 0.267, blue: 0.267),
+    "strongman": Color(red: 0.545, green: 0.361, blue: 0.965),
     "bodyweight": Color(red: 0.545, green: 0.361, blue: 0.965),
     "custom": Color(red: 0.420, green: 0.451, blue: 0.498),
   ]
@@ -632,22 +1044,32 @@ struct ExerciseLibraryPage: View {
     case "Bras": return "figure.strengthtraining.traditional"
     case "Jambes": return "scalemass.fill"
     case "Abdos": return "figure.core.training"
+    case "Olympique": return "scalemass.fill"
+    case "CrossFit": return "flame.fill"
     case "Hyrox": return "flame.fill"
     case "Running": return "figure.run"
     case "Cardio": return "heart.fill"
+    case "Combat": return "figure.martial.arts"
+    case "Strongman": return "scalemass.fill"
     default: return "trophy.fill"
     }
   }
 
   private func colorFor(_ group: String) -> Color {
     switch group {
-    case "Pectoraux", "Dos": return Color(red: 0.937, green: 0.267, blue: 0.267)
-    case "Epaules", "Bras": return Color(red: 0.937, green: 0.267, blue: 0.267)
-    case "Jambes": return Color(red: 0.937, green: 0.267, blue: 0.267)
-    case "Abdos": return Color(red: 0.937, green: 0.267, blue: 0.267)
-    case "Hyrox": return Color(red: 0.961, green: 0.620, blue: 0.043)
-    case "Running": return Color(red: 0.231, green: 0.510, blue: 0.965)
-    case "Cardio": return Color(red: 0.063, green: 0.725, blue: 0.506)
+    case "Pectoraux": return Color(red: 0.937, green: 0.267, blue: 0.267) // Rouge
+    case "Dos": return Color(red: 0.231, green: 0.510, blue: 0.965) // Bleu
+    case "Epaules": return Color(red: 0.976, green: 0.451, blue: 0.086) // Orange
+    case "Bras": return Color(red: 0.545, green: 0.361, blue: 0.965) // Violet
+    case "Jambes": return Color(red: 0.063, green: 0.725, blue: 0.506) // Vert
+    case "Abdos": return Color(red: 0.925, green: 0.306, blue: 0.604) // Rose
+    case "Olympique": return Color(red: 0.831, green: 0.686, blue: 0.216) // Gold
+    case "CrossFit": return Color(red: 0.961, green: 0.620, blue: 0.043) // Jaune
+    case "Hyrox": return Color(red: 0.976, green: 0.451, blue: 0.086) // Orange
+    case "Running": return Color(red: 0.231, green: 0.510, blue: 0.965) // Bleu
+    case "Cardio": return Color(red: 0.063, green: 0.725, blue: 0.506) // Vert
+    case "Combat": return Color(red: 0.937, green: 0.267, blue: 0.267) // Rouge
+    case "Strongman": return Color(red: 0.545, green: 0.361, blue: 0.965) // Violet
     default: return Color("Gold")
     }
   }

@@ -76,7 +76,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({
     }
   }, [visible, progress]);
 
-  const isRankUnlocked = (rank: Rank) => currentStreak >= rank.minDays;
+  const isRankUnlocked = (rank: Rank) => currentStreak >= rank.minPoints;
   const isCurrentRank = (rank: Rank) => rank.id === currentRank.id;
   
   const getRankName = (rank: Rank) => gender === 'female' ? rank.nameFemale : rank.name;
@@ -245,10 +245,10 @@ export const RanksModal: React.FC<RanksModalProps> = ({
                     ) : (
                       <>
                         <Text style={[styles.daysValue, { color: colors.textMuted }]}>
-                          {rank.minDays}
+                          {rank.minPoints}
                         </Text>
                         <Text style={[styles.daysLabel, { color: colors.textMuted }]}>
-                          jours
+                          XP
                         </Text>
                       </>
                     )}

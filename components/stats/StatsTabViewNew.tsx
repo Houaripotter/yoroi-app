@@ -157,8 +157,8 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
                   styles.tab,
                   {
                     backgroundColor: isActive
-                      ? colors.accent
-                      : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)')
+                      ? (isDark ? colors.accent : '#FFFFFF')
+                      : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.15)')
                   },
                 ]}
                 onPress={() => scrollToPage(index)}
@@ -166,12 +166,12 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
               >
                 <Icon
                   size={14}
-                  color={isActive ? colors.textOnAccent : screenTextMuted}
+                  color={isActive ? (isDark ? colors.textOnAccent : colors.accent) : (screenTextMuted || (isDark ? colors.textMuted : 'rgba(255,255,255,0.7)'))}
                   strokeWidth={2.5}
                 />
                 <Text style={[
                   styles.tabLabel,
-                  { color: isActive ? colors.textOnAccent : screenTextMuted },
+                  { color: isActive ? (isDark ? colors.textOnAccent : colors.accent) : (screenTextMuted || (isDark ? colors.textMuted : 'rgba(255,255,255,0.7)')) },
                 ]}>
                   {page.title}
                 </Text>

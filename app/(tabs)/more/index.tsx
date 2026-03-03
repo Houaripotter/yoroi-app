@@ -197,7 +197,7 @@ const FAVORITES_KEY = '@yoroi_tool_favorites';
 // ============================================
 
 export default function MoreScreen() {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, screenBackground } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
@@ -480,7 +480,7 @@ export default function MoreScreen() {
   // ============================================
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+    <View style={[styles.screen, { backgroundColor: screenBackground }]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
@@ -489,8 +489,8 @@ export default function MoreScreen() {
         {/* HEADER */}
         <View style={styles.header}>
           <View style={styles.headerRow}>
-            <Wrench size={28} color={colors.accent} strokeWidth={2} />
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Outils</Text>
+            <Wrench size={28} color={isDark ? colors.accent : '#FFFFFF'} strokeWidth={2} />
+            <Text style={[styles.title, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>Outils</Text>
           </View>
         </View>
 
@@ -543,7 +543,7 @@ export default function MoreScreen() {
         {filteredSections.map((section) => (
           <View key={section.title} style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{section.title}</Text>
+              <Text style={[styles.sectionTitle, { color: isDark ? colors.textMuted : 'rgba(255,255,255,0.7)' }]}>{section.title}</Text>
             </View>
             {section.items.map(renderToolItem)}
           </View>
@@ -559,20 +559,20 @@ export default function MoreScreen() {
               <Text style={[styles.privacyTitle, { color: isDark ? '#4ADE80' : '#16A34A' }]}>
                 {t('menu.private100')}
               </Text>
-              <Text style={[styles.privacyText, { color: colors.textSecondary }]}>
+              <Text style={[styles.privacyText, { color: isDark ? colors.textSecondary : '#374151' }]}>
                 {t('menu.privateDescription')}
               </Text>
             </View>
           </View>
 
           <View style={styles.madeWith}>
-            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>{t('menu.madeWithLove')}</Text>
+            <Text style={{ color: isDark ? colors.textMuted : 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '500' }}>{t('menu.madeWithLove')}</Text>
             <Heart size={14} color="#EF4444" fill="#EF4444" />
-            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>{t('menu.inFrance')}</Text>
+            <Text style={{ color: isDark ? colors.textMuted : 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '500' }}>{t('menu.inFrance')}</Text>
           </View>
 
           <TouchableOpacity onPress={handleVersionTap} activeOpacity={1}>
-            <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 12, textAlign: 'center' }}>
+            <Text style={{ color: isDark ? colors.textMuted : 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 12, textAlign: 'center' }}>
               YOROI Version 2.0
             </Text>
           </TouchableOpacity>

@@ -218,7 +218,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
           {/* Message humble */}
           <Text style={[styles.humbleMessage, { color: colors.textSecondary }]}>
             {t('rating.humbleMessage') ||
-              "Excuse-moi de t'interrompre... Je sais que ton temps est précieux.\n\nMais si Yoroi t'aide dans ta progression, une petite note sur le Store m'aiderait énormément à faire grandir notre famille de warriors et à rendre l'app visible pour d'autres sportifs comme toi.\n\nSi je mérite les 5 étoiles, je t'en serais infiniment reconnaissant. ⭐⭐⭐⭐⭐"}
+              "Excuse-moi de t'interrompre... Je sais que ton temps est precieux.\n\nMais si Yoroi t'aide dans ta progression, une petite note sur le Store m'aiderait enormement a faire grandir notre famille de warriors et a rendre l'app visible pour d'autres sportifs comme toi.\n\nSi je merite les 5 etoiles, je t'en serais infiniment reconnaissant."}
           </Text>
 
           {/* Statistique encourageante */}
@@ -276,7 +276,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
 
           {/* Message de remerciement */}
           <Text style={[styles.thankYou, { color: colors.textMuted }]}>
-            {t('rating.thankYou') || 'Merci du fond du cœur ! ❤️'}
+            {t('rating.thankYou') || 'Merci du fond du coeur !'}
           </Text>
         </Animated.View>
       </BlurView>

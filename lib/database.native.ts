@@ -228,6 +228,10 @@ const _performInit = async () => {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN source TEXT;`);
   } catch (e) { /* colonne existe déjà */ }
 
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN combat_rounds TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
   // Table Planning Semaine Type
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS weekly_plan (
@@ -248,6 +252,11 @@ const _performInit = async () => {
   // Migration: Ajouter session_type si la table existe déjà
   try {
     await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN session_type TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  // Migration: Ajouter navel à la table measurements
+  try {
+    await database.execAsync(`ALTER TABLE measurements ADD COLUMN navel REAL;`);
   } catch (e) { /* colonne existe déjà */ }
 
   // Table Photos
@@ -554,6 +563,7 @@ export interface Measurement {
   id?: number;
   chest?: number;
   waist?: number;
+  navel?: number;
   hips?: number;
   left_arm?: number;
   right_arm?: number;
@@ -588,6 +598,21 @@ export interface Exercise {
   reps: number;
   weight: number; // en kg
   muscle_group?: string;
+  distance?: number; // km (for cardio exercises)
+  duration?: number; // minutes
+  calories?: number;
+  pace?: string; // min/km or /500m
+  stairs?: number; // floors (stairmaster)
+}
+
+export interface CombatRound {
+  number: number;
+  partner?: string;
+  result?: 'win' | 'loss' | 'draw';
+  method?: string; // e.g. 'RNC', 'Triangle', 'Points', 'KO'
+  submissionsGiven?: number;
+  submissionsTaken?: number;
+  notes?: string;
 }
 
 export interface Training {
@@ -620,6 +645,7 @@ export interface Training {
   exercises?: Exercise[];
   technique_rating?: number | null;
   is_outdoor?: boolean;
+  combat_rounds?: CombatRound[];
   healthkit_uuid?: string;
   workout_details_json?: string;
   created_at?: string;
@@ -845,13 +871,22 @@ export const deleteWeight = async (id: number): Promise<void> => {
 export const addTraining = async (data: Training): Promise<number> => {
   const database = await openDatabase();
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
+  const combatRoundsJson = data.combat_rounds ? JSON.stringify(data.combat_rounds) : null;
   const result = await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, healthkit_uuid, workout_details_json, heart_rate, max_heart_rate, source, combat_rounds)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.club_id || null, data.sport, data.session_type || null, data.date,
      data.start_time || null, data.duration_minutes || null,
-     data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null]
+     data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null,
+     data.is_outdoor ? 1 : 0, data.distance || null, data.calories || null,
+     data.intensity || null, data.rounds || null, data.round_duration || null,
+     data.pente || null, data.speed || null, data.resistance || null, data.watts || null, data.cadence || null,
+     data.healthkit_uuid || null, data.workout_details_json || null, data.heart_rate || null,
+     data.max_heart_rate || null, data.source || null, combatRoundsJson]
   );
+  if (!result?.lastInsertRowId) {
+    throw new Error('Failed to insert training record');
+  }
   return result.lastInsertRowId;
 };
 
@@ -869,7 +904,28 @@ export const getTrainingById = async (id: number): Promise<Training | null> => {
   if (result.exercises) {
     try { exercises = JSON.parse(result.exercises as string); } catch { exercises = undefined; }
   }
-  return { ...result, exercises };
+  let combat_rounds;
+  if ((result as any).combat_rounds) {
+    try { combat_rounds = JSON.parse((result as any).combat_rounds as string); } catch { combat_rounds = undefined; }
+  }
+  return { ...result, exercises, combat_rounds };
+};
+
+export const updateTraining = async (id: number, data: Partial<Training>): Promise<void> => {
+  const database = await openDatabase();
+  const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
+  const combatRoundsJson = data.combat_rounds ? JSON.stringify(data.combat_rounds) : null;
+  await database.runAsync(
+    `UPDATE trainings SET club_id = ?, sport = ?, session_type = ?, date = ?, start_time = ?, duration_minutes = ?, notes = ?, muscles = ?, exercises = ?, technique_rating = ?, is_outdoor = ?, distance = ?, calories = ?, intensity = ?, rounds = ?, round_duration = ?, pente = ?, speed = ?, resistance = ?, watts = ?, cadence = ?, heart_rate = ?, max_heart_rate = ?, source = ?, combat_rounds = ?
+     WHERE id = ?`,
+    [data.club_id || null, data.sport || null, data.session_type || null, data.date || null,
+     data.start_time || null, data.duration_minutes || null,
+     data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null,
+     data.is_outdoor ? 1 : 0, data.distance || null, data.calories || null,
+     data.intensity || null, data.rounds || null, data.round_duration || null,
+     data.pente || null, data.speed || null, data.resistance || null, data.watts || null, data.cadence || null,
+     data.heart_rate || null, data.max_heart_rate || null, data.source || null, combatRoundsJson, id]
+  );
 };
 
 export const updateTrainingDetails = async (id: number, detailsJson: string): Promise<void> => {
@@ -905,13 +961,13 @@ export const getTrainings = async (days?: number): Promise<Training[]> => {
   return results.map(r => {
     let exercises;
     if (r.exercises) {
-      try {
-        exercises = JSON.parse(r.exercises as string);
-      } catch {
-        exercises = undefined;
-      }
+      try { exercises = JSON.parse(r.exercises as string); } catch { exercises = undefined; }
     }
-    return { ...r, exercises };
+    let combat_rounds;
+    if ((r as any).combat_rounds) {
+      try { combat_rounds = JSON.parse((r as any).combat_rounds as string); } catch { combat_rounds = undefined; }
+    }
+    return { ...r, exercises, combat_rounds };
   });
 };
 
@@ -1015,13 +1071,13 @@ export const deleteClub = async (id: number): Promise<void> => {
 export const addMeasurementRecord = async (data: Measurement): Promise<number> => {
   const database = await openDatabase();
   const result = await database.runAsync(
-    `INSERT INTO measurements (chest, waist, hips, left_arm, right_arm, left_thigh,
+    `INSERT INTO measurements (chest, waist, navel, hips, left_arm, right_arm, left_thigh,
      right_thigh, left_calf, right_calf, shoulders, neck, date)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [data.chest || null, data.waist || null, data.hips || null, data.left_arm || null,
-     data.right_arm || null, data.left_thigh || null, data.right_thigh || null,
-     data.left_calf || null, data.right_calf || null, data.shoulders || null,
-     data.neck || null, data.date]
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [data.chest || null, data.waist || null, data.navel || null, data.hips || null,
+     data.left_arm || null, data.right_arm || null, data.left_thigh || null,
+     data.right_thigh || null, data.left_calf || null, data.right_calf || null,
+     data.shoulders || null, data.neck || null, data.date]
   );
   return result.lastInsertRowId;
 };

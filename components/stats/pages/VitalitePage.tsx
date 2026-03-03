@@ -3,7 +3,7 @@
 // Navigation par sous-onglets, style Apple Sante
 // ============================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -35,7 +35,7 @@ const TAB_CONFIG: { key: SanteTab; label: string; Icon: React.FC<any>; iconColor
 ];
 
 export const VitalitePage: React.FC = React.memo(() => {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, screenBackground } = useTheme();
   const { t, language } = useI18n();
   const { handleScroll: onScrollContext } = useScrollContext();
   const dateLocale = language === 'fr' ? fr : enUS;
@@ -62,9 +62,12 @@ export const VitalitePage: React.FC = React.memo(() => {
     hrv: any[];
     steps: any[];
     calories: any[];
+    distance: any[];
+    exerciseMinutes: any[];
+    standHours: any[];
     spo2: any[];
     respiratoryRate: any[];
-  }>({ sleep: [], heartRate: [], hrv: [], steps: [], calories: [], spo2: [], respiratoryRate: [] });
+  }>({ sleep: [], heartRate: [], hrv: [], steps: [], calories: [], distance: [], exerciseMinutes: [], standHours: [], spo2: [], respiratoryRate: [] });
 
   const [sleepPhasesData, setSleepPhasesData] = useState<{
     avgAwake: number; avgRem: number; avgCore: number; avgDeep: number;
@@ -81,6 +84,9 @@ export const VitalitePage: React.FC = React.memo(() => {
   const [rawSleepHistory, setRawSleepHistory] = useState<any[]>([]);
   const [todaySteps, setTodaySteps] = useState(0);
   const [todayCalories, setTodayCalories] = useState(0);
+  const [todayDistance, setTodayDistance] = useState(0);
+  const [todayExerciseMinutes, setTodayExerciseMinutes] = useState(0);
+  const [todayStandHours, setTodayStandHours] = useState(0);
 
   const [tabLoading, setTabLoading] = useState(false);
   const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set());
@@ -89,6 +95,9 @@ export const VitalitePage: React.FC = React.memo(() => {
     checkHealthKitConnection();
   }, []);
 
+  // Compteur pour annuler les chargements perimés
+  const loadIdRef = useRef(0);
+
   // Quand on change d'onglet ou de periode, charger les donnees de cet onglet
   useEffect(() => {
     if (isHealthKitConnected && !loading) {
@@ -96,9 +105,13 @@ export const VitalitePage: React.FC = React.memo(() => {
     }
   }, [activeTab, selectedPeriod]);
 
-  // Invalider les tabs chargees quand la periode change
+  // Invalider les tabs chargees ET vider les donnees quand la periode change
   useEffect(() => {
     setLoadedTabs(new Set());
+    setVitalHistory({ sleep: [], heartRate: [], hrv: [], steps: [], calories: [], distance: [], exerciseMinutes: [], standHours: [], spo2: [], respiratoryRate: [] });
+    setRawSleepHistory([]);
+    setTrainings([]);
+    setSleepPhasesData({ avgAwake: 0, avgRem: 0, avgCore: 0, avgDeep: 0, totalSleepMin: 0, nightsCount: 0 });
   }, [selectedPeriod]);
 
   const checkHealthKitConnection = async () => {
@@ -106,7 +119,6 @@ export const VitalitePage: React.FC = React.memo(() => {
       const status = healthConnect.getSyncStatus();
       if (status.isConnected) {
         // One-time cleanup: supprimer les seances demo et reimporter depuis HealthKit
-        // IMPORTANT: ceci DOIT se terminer AVANT de trigger loadHealthData
         try {
           const cleaned = await AsyncStorage.getItem('@yoroi_trainings_cleaned_v4');
           if (!cleaned) {
@@ -126,11 +138,14 @@ export const VitalitePage: React.FC = React.memo(() => {
         }
         // APRES le cleanup, marquer comme connecte et charger les donnees
         setIsHealthKitConnected(true);
+        // loadHealthData gere son propre setLoading(true/false)
         await loadHealthData();
+      } else {
+        // Pas connecte, on arrete le loading
+        setLoading(false);
       }
     } catch (error) {
       logger.error('Error checking HealthKit:', error);
-    } finally {
       setLoading(false);
     }
   };
@@ -139,14 +154,28 @@ export const VitalitePage: React.FC = React.memo(() => {
   const loadHealthData = async () => {
     setLoading(true);
     try {
-      const results = await Promise.allSettled([
-        healthConnect.getLastSleep(),
-        healthConnect.getTodayHeartRate(),
-        healthConnect.getTodayHRV(),
-        healthConnect.getOxygenSaturation?.(),
-        healthConnect.getRespiratoryRate?.(),
-        healthConnect.getTodaySteps(),
-        healthConnect.getTodayCalories(),
+      // Timeout de 8s pour les donnees de base (doivent etre rapides)
+      const timeoutPromise = new Promise<PromiseSettledResult<any>[]>((resolve) =>
+        setTimeout(() => {
+          logger.warn('[Sante] Timeout sur loadHealthData (8s)');
+          resolve(Array(10).fill({ status: 'rejected', reason: 'timeout' }));
+        }, 8000)
+      );
+
+      const results = await Promise.race([
+        Promise.allSettled([
+          healthConnect.getLastSleep(),
+          healthConnect.getTodayHeartRate(),
+          healthConnect.getTodayHRV(),
+          healthConnect.getOxygenSaturation?.(),
+          healthConnect.getRespiratoryRate?.(),
+          healthConnect.getTodaySteps(),
+          healthConnect.getTodayCalories(),
+          healthConnect.getTodayDistance?.(),
+          healthConnect.getTodayExerciseMinutes?.(),
+          healthConnect.getTodayStandHours?.(),
+        ]),
+        timeoutPromise,
       ]);
 
       const sleep = results[0].status === 'fulfilled' ? results[0].value : { duration: 0, quality: 0, phases: {} };
@@ -158,6 +187,11 @@ export const VitalitePage: React.FC = React.memo(() => {
       setHealthData({ sleep, heartRate, hrv, oxygenSaturation, respiratoryRate });
       setTodaySteps((results[5] as any).status === 'fulfilled' ? (results[5] as any).value?.count || 0 : 0);
       setTodayCalories((results[6] as any).status === 'fulfilled' ? (results[6] as any).value?.active || 0 : 0);
+      // Distance en km
+      const distData = results[7]?.status === 'fulfilled' ? (results[7] as any).value : null;
+      setTodayDistance(distData?.walking ? (distData.walking + (distData.running || 0)) : (distData || 0));
+      setTodayExerciseMinutes(results[8]?.status === 'fulfilled' ? ((results[8] as any).value || 0) : 0);
+      setTodayStandHours(results[9]?.status === 'fulfilled' ? ((results[9] as any).value || 0) : 0);
     } catch (error) {
       logger.error('Error loading base health data:', error);
     } finally {
@@ -167,19 +201,37 @@ export const VitalitePage: React.FC = React.memo(() => {
     }
   };
 
+  // Timeout helper pour eviter les blocages sur grosses requetes
+  const withTimeout = <T,>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
+    return Promise.race([
+      promise,
+      new Promise<T>((resolve) => setTimeout(() => {
+        logger.warn(`[Sante] Timeout apres ${ms}ms`);
+        resolve(fallback);
+      }, ms)),
+    ]);
+  };
+
   // Phase 2: Charger les donnees de l'onglet actif seulement (lazy)
   const loadTabData = async (tab: SanteTab) => {
     const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, 'tout': 1825 };
     const days = daysMap[selectedPeriod] || 30;
+    // Timeout plus long pour les grandes periodes
+    const timeoutMs = days > 180 ? 15000 : 10000;
+    const currentLoadId = ++loadIdRef.current;
 
     setTabLoading(true);
     try {
       switch (tab) {
         case 'sommeil': {
-          const [sleepHistory, sleepComparison] = await Promise.all([
-            healthConnect.getSleepHistory?.(days) || [],
-            healthConnect.getSleepComparisonData?.(days) || {},
-          ]);
+          const [sleepHistory, sleepComparison] = await withTimeout(
+            Promise.all([
+              healthConnect.getSleepHistory?.(days) || [],
+              healthConnect.getSleepComparisonData?.(days) || {},
+            ]),
+            timeoutMs,
+            [[], {}]
+          );
 
           const validSleepHistory = Array.isArray(sleepHistory) ? sleepHistory.filter((s: any) => {
             const hours = (s.duration || s.total || 0) / 60;
@@ -220,11 +272,15 @@ export const VitalitePage: React.FC = React.memo(() => {
         }
 
         case 'signes': {
-          const [heartRateHistory, hrvHistory, spo2History] = await Promise.all([
-            healthConnect.getRestingHRHistory?.(days) || [],
-            healthConnect.getHRVHistory?.(days) || [],
-            healthConnect.getOxygenSaturationHistory?.(days).catch(() => []) || [],
-          ]);
+          const [heartRateHistory, hrvHistory, spo2History] = await withTimeout(
+            Promise.all([
+              healthConnect.getRestingHRHistory?.(days) || [],
+              healthConnect.getHRVHistory?.(days) || [],
+              healthConnect.getOxygenSaturationHistory?.(days).catch(() => []) || [],
+            ]),
+            timeoutMs,
+            [[], [], []]
+          );
 
           // HRV baseline
           if (Array.isArray(hrvHistory) && hrvHistory.length > 1) {
@@ -248,10 +304,17 @@ export const VitalitePage: React.FC = React.memo(() => {
         }
 
         case 'pas': {
-          const [stepsHistory, caloriesHistory] = await Promise.all([
-            healthConnect.getStepsHistory?.(days) || [],
-            healthConnect.getCaloriesHistory?.(days) || [],
-          ]);
+          const [stepsHistory, caloriesHistory, distanceHistory, exerciseHistory, standHistory] = await withTimeout(
+            Promise.all([
+              healthConnect.getStepsHistory?.(days) || [],
+              healthConnect.getCaloriesHistory?.(days) || [],
+              healthConnect.getDistanceHistory?.(days) || [],
+              healthConnect.getExerciseMinutesHistory?.(days) || [],
+              healthConnect.getStandHoursHistory?.(days) || [],
+            ]),
+            timeoutMs,
+            [[], [], [], [], []]
+          );
 
           setVitalHistory(prev => ({
             ...prev,
@@ -261,15 +324,28 @@ export const VitalitePage: React.FC = React.memo(() => {
             calories: Array.isArray(caloriesHistory) ? caloriesHistory.map((c: any) => ({
               date: c.date, value: c.total || c.active || 0,
             })).reverse() : [],
+            distance: Array.isArray(distanceHistory) ? distanceHistory.map((d: any) => ({
+              date: d.date, value: d.value || 0,
+            })).reverse() : [],
+            exerciseMinutes: Array.isArray(exerciseHistory) ? exerciseHistory.map((e: any) => ({
+              date: e.date, value: e.value || 0,
+            })).reverse() : [],
+            standHours: Array.isArray(standHistory) ? standHistory.map((s: any) => ({
+              date: s.date, value: s.value || 0,
+            })).reverse() : [],
           }));
           break;
         }
       }
-      setLoadedTabs(prev => new Set(prev).add(tab));
+      if (currentLoadId === loadIdRef.current) {
+        setLoadedTabs(prev => new Set(prev).add(tab));
+      }
     } catch (error) {
-      logger.info(`[Sante] Error loading ${tab} data:`, error);
+      logger.warn(`[Sante] Error loading ${tab} data:`, error);
     } finally {
-      setTabLoading(false);
+      if (currentLoadId === loadIdRef.current) {
+        setTabLoading(false);
+      }
     }
   };
 
@@ -332,7 +408,7 @@ export const VitalitePage: React.FC = React.memo(() => {
   // Loading state
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: screenBackground }]}>
         <StatsHeader
           title="Sante"
           description="Synchronise avec ton app Sante"
@@ -350,7 +426,7 @@ export const VitalitePage: React.FC = React.memo(() => {
   if (!isHealthKitConnected) {
     return (
       <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
+        style={[styles.container, { backgroundColor: screenBackground }]}
         showsVerticalScrollIndicator={false}
         onScroll={onScrollContext}
         scrollEventThrottle={100}
@@ -376,7 +452,7 @@ export const VitalitePage: React.FC = React.memo(() => {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[styles.container, { backgroundColor: screenBackground }]}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.content}
       onScroll={onScrollContext}
@@ -391,7 +467,7 @@ export const VitalitePage: React.FC = React.memo(() => {
 
       {/* Barre de sous-onglets - style colore */}
       <View style={styles.tabBarContainer}>
-        <View style={[styles.tabBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)' }]}>
+        <View style={[styles.tabBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.12)' }]}>
           {TAB_CONFIG.map(({ key, label, Icon, iconColor, activeColor }) => {
             const isActive = activeTab === key;
             return (
@@ -413,12 +489,12 @@ export const VitalitePage: React.FC = React.memo(() => {
               >
                 <Icon
                   size={15}
-                  color={isActive ? '#FFFFFF' : colors.textMuted}
+                  color={isActive ? '#FFFFFF' : (isDark ? colors.textMuted : 'rgba(255,255,255,0.7)')}
                   strokeWidth={2.5}
                 />
                 <Text style={[
                   styles.tabPillText,
-                  { color: isActive ? '#FFFFFF' : colors.textMuted },
+                  { color: isActive ? '#FFFFFF' : (isDark ? colors.textMuted : 'rgba(255,255,255,0.7)') },
                   isActive && { fontWeight: '700' },
                 ]}>
                   {label}
@@ -470,8 +546,14 @@ export const VitalitePage: React.FC = React.memo(() => {
           <PasTab
             steps={currentSteps}
             calories={currentCalories}
+            distance={todayDistance}
+            exerciseMinutes={todayExerciseMinutes}
+            standHours={todayStandHours}
             stepsHistory={vitalHistory.steps}
             caloriesHistory={vitalHistory.calories}
+            distanceHistory={vitalHistory.distance}
+            exerciseMinutesHistory={vitalHistory.exerciseMinutes}
+            standHoursHistory={vitalHistory.standHours}
           />
         )}
       </View>

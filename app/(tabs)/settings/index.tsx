@@ -63,7 +63,7 @@ import { generateProgressPDF } from '@/lib/pdfExport';
 import { resetAllData } from '@/lib/storage';
 import logger from '@/lib/security/logger';
 import { resetAllTips } from '@/lib/contextualTipsService';
-import { generateHeryDemoData } from '@/lib/demoDataService';
+import { generateHeryDemoData, restoreRealData, isDemoDataActive } from '@/lib/demoDataService';
 import { notificationService } from '@/lib/notificationService';
 
 // ============================================
@@ -193,6 +193,7 @@ export default function SettingsScreen() {
   const [isSurgeonMode, setIsSurgeonMode] = useState(false);
   const [isMockStatsMode, setIsMockStatsMode] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDemoActive, setIsDemoActive] = useState(false);
 
   useEffect(() => {
     loadUnits();
@@ -203,6 +204,8 @@ export default function SettingsScreen() {
         loadCreatorSettings();
       }
     });
+    // Check if demo data is active
+    isDemoDataActive().then(setIsDemoActive);
   }, []);
 
   const loadCreatorSettings = async () => {
@@ -244,17 +247,30 @@ export default function SettingsScreen() {
   };
 
   const resetAllCreatorModes = async () => {
-    await AsyncStorage.multiRemove([
-      '@yoroi_screenshot_mode',
-      '@yoroi_journal_screenshot_mode',
-      '@yoroi_surgeon_mode',
-      '@yoroi_mock_stats_mode',
-    ]);
-    setIsGlobalScreenshotMode(false);
-    setIsJournalScreenshotMode(false);
-    setIsSurgeonMode(false);
-    setIsMockStatsMode(false);
-    showPopup('Reset', 'Tous les modes sont desactives.', [{ text: 'OK', style: 'primary' }]);
+    setIsGenerating(true);
+    try {
+      // Restore real user data if demo was active
+      if (isDemoActive) {
+        await restoreRealData();
+        setIsDemoActive(false);
+      }
+      await AsyncStorage.multiRemove([
+        '@yoroi_screenshot_mode',
+        '@yoroi_journal_screenshot_mode',
+        '@yoroi_surgeon_mode',
+        '@yoroi_mock_stats_mode',
+      ]);
+      setIsGlobalScreenshotMode(false);
+      setIsJournalScreenshotMode(false);
+      setIsSurgeonMode(false);
+      setIsMockStatsMode(false);
+      setIsGenerating(false);
+      showPopup('Reset', isDemoActive ? 'Modes desactives. Tes vraies donnees ont ete restaurees.' : 'Tous les modes sont desactives.', [{ text: 'OK', style: 'primary' }]);
+    } catch (error) {
+      setIsGenerating(false);
+      logger.error('[Creator] Reset error:', error);
+      showPopup('Erreur', 'Impossible de restaurer les donnees.', [{ text: 'OK', style: 'primary' }]);
+    }
   };
 
   const loadUnits = async () => {
@@ -296,11 +312,15 @@ export default function SettingsScreen() {
           return { ...item, sublabel: isSurgeonMode ? 'Active' : 'Desactive' };
         case 'creator-mock':
           return { ...item, sublabel: isMockStatsMode ? 'Active' : 'Desactive' };
+        case 'creator-hery':
+          return { ...item, sublabel: isDemoActive ? 'Active - donnees demo injectees' : 'Injecter donnees realistes' };
+        case 'creator-reset':
+          return { ...item, sublabel: isDemoActive ? 'Restaurer tes vraies donnees' : 'Nettoyer les donnees de demo' };
         default:
           return item;
       }
     });
-  }, [isGlobalScreenshotMode, isJournalScreenshotMode, isSurgeonMode, isMockStatsMode]);
+  }, [isGlobalScreenshotMode, isJournalScreenshotMode, isSurgeonMode, isMockStatsMode, isDemoActive]);
 
   // Filtered sections based on search
   const filteredSections = useMemo((): SettingsSection[] => {
@@ -523,7 +543,9 @@ export default function SettingsScreen() {
   const handleDemoHery = () => {
     showPopup(
       'Profil Demo Hery',
-      'Injecter les donnees de demo realistes (profil, seances, pesees, benchmarks, techniques) ? Les donnees existantes seront ecrasees.',
+      isDemoActive
+        ? 'Le mode demo est deja actif. Regenerer les donnees ?'
+        : 'Tes vraies donnees seront sauvegardees automatiquement et restaurees quand tu desactiveras le mode demo.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -533,11 +555,12 @@ export default function SettingsScreen() {
             setIsGenerating(true);
             try {
               const result = await generateHeryDemoData();
+              setIsDemoActive(true);
               setIsGenerating(false);
               notificationAsync(NotificationFeedbackType.Success);
               showPopup(
                 'Profil Hery cree',
-                `${result.workouts} seances, ${result.measurements} pesees, ${result.benchmarks} benchmarks, ${result.skills} techniques injectees.`,
+                `${result.workouts} seances, ${result.weights} pesees, ${result.measurements} mensurations, ${result.sleepEntries} nuits, ${result.benchmarks} benchmarks, ${result.skills} techniques.\n\nTes vraies donnees sont sauvegardees. Utilise "Tout Desactiver" pour les restaurer.`,
                 [{ text: 'OK', style: 'primary' }]
               );
             } catch (error) {
@@ -627,7 +650,7 @@ case 'tutorial': handleShowTutorial(); return;
         <View style={styles.loadingOverlay}>
           <View style={[styles.loadingCard, { backgroundColor: colors.card }]}>
             <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={[styles.loadingText, { color: colors.textPrimary }]}>Generation du profil Hery...</Text>
+            <Text style={[styles.loadingText, { color: colors.textPrimary }]}>Chargement en cours...</Text>
           </View>
         </View>
       )}
@@ -639,8 +662,8 @@ case 'tutorial': handleShowTutorial(); return;
       >
         {/* Header */}
         <View style={styles.header}>
-          <Settings size={26} color={colors.textPrimary} strokeWidth={2} />
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Reglages</Text>
+          <Settings size={26} color={isDark ? colors.textPrimary : '#FFFFFF'} strokeWidth={2} />
+          <Text style={[styles.headerTitle, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>Reglages</Text>
         </View>
 
         {/* Search Bar */}
@@ -660,7 +683,7 @@ case 'tutorial': handleShowTutorial(); return;
         {/* Sections */}
         {filteredSections.map((section) => (
           <View key={section.title} style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{section.title}</Text>
+            <Text style={[styles.sectionTitle, { color: isDark ? colors.textMuted : 'rgba(255,255,255,0.7)' }]}>{section.title}</Text>
             <View style={[styles.card, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
               {section.items.map((item, idx) =>
                 renderItem(item, idx === section.items.length - 1)
@@ -672,7 +695,7 @@ case 'tutorial': handleShowTutorial(); return;
         {/* Creator Mode - standard rows, visible only when unlocked */}
         {screenshotMenuUnlocked && filteredCreatorItems.length > 0 && (
           <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>CREATEUR</Text>
+            <Text style={[styles.sectionTitle, { color: isDark ? colors.textMuted : 'rgba(255,255,255,0.7)' }]}>CREATEUR</Text>
             <View style={[styles.card, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
               {filteredCreatorItems.map((item, idx) =>
                 renderItem(item, idx === filteredCreatorItems.length - 1)
@@ -683,7 +706,7 @@ case 'tutorial': handleShowTutorial(); return;
 
         {/* Version */}
         <TouchableOpacity onPress={handleVersionTap} activeOpacity={1} style={styles.versionContainer}>
-          <Text style={[styles.versionText, { color: colors.textMuted }]}>YOROI v2.0</Text>
+          <Text style={[styles.versionText, { color: isDark ? colors.textMuted : 'rgba(255,255,255,0.6)' }]}>YOROI v2.0</Text>
         </TouchableOpacity>
 
         <View style={{ height: 120 }} />

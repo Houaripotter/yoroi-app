@@ -25,6 +25,7 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   Activity,
   Dumbbell,
   Share2,
@@ -40,13 +41,18 @@ import {
   Clock,
   Camera,
   FileUp,
+  Trophy,
+  UserPlus,
+  Minus,
+  Swords,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { useBadges } from '@/lib/BadgeContext';
-import { addTraining, updateTraining, getTrainingById, getClubs, Club, Exercise, getProfile, getTrainings, getWeights, calculateStreak } from '@/lib/database';
+import { addTraining, updateTraining, getTrainingById, getClubs, Club, Exercise, CombatRound, getProfile, getTrainings, getWeights, calculateStreak } from '@/lib/database';
 import { SPORTS, getSportIcon, getSportName, getClubLogoSource } from '@/lib/sports';
 import { getCurrentRank } from '@/lib/ranks';
+import { getUnifiedPoints } from '@/lib/gamification';
 import { useAvatar } from '@/lib/AvatarContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -117,7 +123,8 @@ export default function AddTrainingScreen() {
     duration?: string,
     notes?: string,
     stairs?: string,
-    pace?: string
+    pace?: string,
+    cadence?: string
   }>>({});
   const [sportEntries, setSportEntries] = useState<Record<string, string[]>>({}); // { jjb: ['Round 1: 5min', 'Guard work'], running: ['5K en 25min'] }
   const [newEntryText, setNewEntryText] = useState<Record<string, string>>({}); // Texte en cours de saisie pour chaque sport
@@ -148,7 +155,17 @@ export default function AddTrainingScreen() {
   const [cadence, setCadence] = useState<string>(''); // RPM
   const [rounds, setRounds] = useState<string>(''); // Nombre de rounds
   const [roundDuration, setRoundDuration] = useState<string>('5'); // Minutes par round
+  const [combatRounds, setCombatRounds] = useState<CombatRound[]>([]); // Detailed round tracking
+  const [showCombatRounds, setShowCombatRounds] = useState(false); // Toggle detailed view
   const [notes, setNotes] = useState('');
+
+  // Combat submission options
+  const COMBAT_METHODS = [
+    'RNC', 'Triangle', 'Armbar', 'Kimura', 'Guillotine', 'Darce', 'Anaconda',
+    'Omoplata', 'Heel Hook', 'Ankle Lock', 'Kneebar', 'Toe Hold',
+    'Bow & Arrow', 'Ezekiel', 'Cross Choke', 'Loop Choke',
+    'Points', 'Avantage', 'KO/TKO', 'Decision',
+  ];
 
   // Calculer l'allure (pace) en direct (uniquement si pas de saisie manuelle)
   const getLivePace = () => {
@@ -226,10 +243,11 @@ export default function AddTrainingScreen() {
           setUserAvatar(contextAvatar);
         }
 
-        // Charger le rang et le niveau
-        const rank = getCurrentRank(streak);
+        // Charger le rang et le niveau (base sur les XP totaux)
+        const totalPoints = await getUnifiedPoints();
+        const rank = getCurrentRank(totalPoints);
         setUserRank(rank.name);
-        setUserLevel(streak);
+        setUserLevel(totalPoints);
 
         const now = new Date();
         const currentYear = now.getFullYear();
@@ -692,14 +710,39 @@ export default function AddTrainingScreen() {
   const renderPerformanceFields = (exerciseId: string, label: string, sportId: string) => {
     const stats = optionStats[exerciseId] || {};
 
-    // Calcul automatique de l'allure (pace) basé sur la vitesse
+    // Detect exercise type for sport-specific metrics
+    const isRower = exerciseId.includes('row') || exerciseId.includes('rameur') || label.toLowerCase().includes('rameur');
+    const isSwimming = sportId === 'natation' || exerciseId.includes('swim') || exerciseId.includes('sw_');
+    const isBikeExercise = exerciseId.includes('bik') || exerciseId.includes('ve_') || exerciseId.includes('spinning') || exerciseId.includes('zwift') || label.toLowerCase().includes('velo');
+    const isSkiErg = exerciseId.includes('ski') || label.toLowerCase().includes('skierg');
+    const isStairmaster = exerciseId.includes('stai') || label.toLowerCase().includes('stairmaster');
+
+    // Pace unit depends on exercise type
+    const paceUnit = isRower || isSkiErg ? '/500M' : isSwimming ? '/100M' : 'MIN/KM';
+    const speedUnit = isSwimming ? 'M/MIN' : 'KM/H';
+
+    // Calcul automatique de l'allure (pace) base sur la vitesse
     const calculatePace = (speedValue: string) => {
       const speedVal = parseFloat(speedValue.replace(',', '.'));
       if (speedVal > 0) {
-        const paceDecimal = 60 / speedVal;
-        const mins = Math.floor(paceDecimal);
-        const secs = Math.round((paceDecimal - mins) * 60);
-        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        if (isRower || isSkiErg) {
+          // Rower: pace per 500m. Speed in km/h -> time for 500m
+          const timeFor500m = (0.5 / speedVal) * 3600; // seconds for 500m
+          const mins = Math.floor(timeFor500m / 60);
+          const secs = Math.round(timeFor500m % 60);
+          return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        } else if (isSwimming) {
+          // Swimming: pace per 100m. Speed in km/h -> time for 100m
+          const timeFor100m = (0.1 / speedVal) * 3600; // seconds for 100m
+          const mins = Math.floor(timeFor100m / 60);
+          const secs = Math.round(timeFor100m % 60);
+          return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        } else {
+          const paceDecimal = 60 / speedVal;
+          const mins = Math.floor(paceDecimal);
+          const secs = Math.round((paceDecimal - mins) * 60);
+          return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
       }
       return '';
     };
@@ -844,7 +887,7 @@ export default function AddTrainingScreen() {
             </View>
           </View>
 
-          {/* Ligne 1: Vitesse & Pente */}
+          {/* Ligne 1: Vitesse & Pente/Resistance */}
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
               <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>VITESSE</Text>
@@ -859,48 +902,86 @@ export default function AddTrainingScreen() {
                   onFocus={scrollToFocusedInput}
                   maxLength={4}
                 />
-                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>KM/H</Text>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>{speedUnit}</Text>
               </View>
             </View>
             <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
-              <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>PENTE</Text>
+              <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>{isStairmaster ? 'NIVEAU' : isBikeExercise ? 'RESISTANCE' : 'PENTE'}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
                 <TextInput
                   style={{ fontSize: 18, fontWeight: '900', color: colors.textPrimary, minWidth: 40, padding: 0 }}
                   placeholder="0"
                   placeholderTextColor={colors.textMuted + '40'}
                   keyboardType="decimal-pad"
-                  value={stats.pente}
-                  onChangeText={(v) => updateStat('pente', v.replace(',', '.'))}
+                  value={isBikeExercise ? stats.resistance : stats.pente}
+                  onChangeText={(v) => updateStat(isBikeExercise ? 'resistance' : 'pente', v.replace(',', '.'))}
                   onFocus={scrollToFocusedInput}
                   maxLength={3}
                 />
-                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>%</Text>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>{isStairmaster ? 'LVL' : isBikeExercise ? 'LVL' : '%'}</Text>
               </View>
             </View>
           </View>
 
+          {/* Ligne 1b: Watts & Cadence (velo, rameur, skierg) */}
+          {(isBikeExercise || isRower || isSkiErg) && (
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
+                <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>PUISSANCE</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                  <TextInput
+                    style={{ fontSize: 18, fontWeight: '900', color: '#F59E0B', minWidth: 40, padding: 0 }}
+                    placeholder="0"
+                    placeholderTextColor={colors.textMuted + '40'}
+                    keyboardType="number-pad"
+                    value={stats.watts}
+                    onChangeText={(v) => updateStat('watts', v)}
+                    onFocus={scrollToFocusedInput}
+                    maxLength={4}
+                  />
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>WATTS</Text>
+                </View>
+              </View>
+              <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
+                <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>{isRower ? 'COUPS/MIN' : 'CADENCE'}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                  <TextInput
+                    style={{ fontSize: 18, fontWeight: '900', color: '#3B82F6', minWidth: 40, padding: 0 }}
+                    placeholder="0"
+                    placeholderTextColor={colors.textMuted + '40'}
+                    keyboardType="number-pad"
+                    value={stats.cadence}
+                    onChangeText={(v) => updateStat('cadence', v)}
+                    onFocus={scrollToFocusedInput}
+                    maxLength={3}
+                  />
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>{isRower ? 'SPM' : 'RPM'}</Text>
+                </View>
+              </View>
+            </View>
+          )}
+
           {/* Ligne 2: Distance & Calories */}
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
-              <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>DISTANCE</Text>
+              <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>{isSwimming ? 'DISTANCE' : isStairmaster ? 'ETAGES' : 'DISTANCE'}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
                 <TextInput
                   style={{ fontSize: 18, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, minWidth: 40, padding: 0 }}
-                  placeholder="0.0"
+                  placeholder={isStairmaster ? '0' : '0.0'}
                   placeholderTextColor={colors.textMuted + '40'}
-                  keyboardType="decimal-pad"
-                  value={stats.distance}
-                  onChangeText={(v) => updateStat('distance', v.replace(',', '.'))}
+                  keyboardType={isStairmaster ? 'number-pad' : 'decimal-pad'}
+                  value={isStairmaster ? stats.stairs : stats.distance}
+                  onChangeText={(v) => updateStat(isStairmaster ? 'stairs' : 'distance', v.replace(',', '.'))}
                   onFocus={scrollToFocusedInput}
                   maxLength={5}
                 />
-                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>KM</Text>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>{isSwimming ? 'M' : isStairmaster ? 'FLOORS' : 'KM'}</Text>
               </View>
             </View>
             <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>CALORIES (ESTIMATION)</Text>
+                <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>CALORIES</Text>
                 <TouchableOpacity onPress={calculateLocalCalories} hitSlop={10}>
                   <MaterialCommunityIcons name="lightning-bolt" size={12} color={colors.gold} />
                 </TouchableOpacity>
@@ -921,42 +1002,26 @@ export default function AddTrainingScreen() {
             </View>
           </View>
 
-          {/* Ligne 3: Marches & Allure */}
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
-              <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>MARCHES / ÉTAGES</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-                <TextInput
-                  style={{ fontSize: 18, fontWeight: '900', color: colors.textPrimary, minWidth: 40, padding: 0 }}
-                  placeholder="0"
-                  placeholderTextColor={colors.textMuted + '40'}
-                  keyboardType="number-pad"
-                  value={stats.stairs}
-                  onChangeText={(v) => updateStat('stairs', v)}
-                  onFocus={scrollToFocusedInput}
-                  maxLength={4}
-                />
-                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>FLOORS</Text>
+          {/* Ligne 3: Allure */}
+          {!isStairmaster && (
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
+                <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>ALLURE</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                  <TextInput
+                    style={{ fontSize: 18, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, minWidth: 40, padding: 0 }}
+                    placeholder="0:00"
+                    placeholderTextColor={colors.textMuted + '40'}
+                    value={stats.pace}
+                    onChangeText={(v) => updateStat('pace', v)}
+                    onFocus={scrollToFocusedInput}
+                    maxLength={6}
+                  />
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>{paceUnit}</Text>
+                </View>
               </View>
             </View>
-            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>ALLURE (ESTIMATION)</Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-                <TextInput
-                  style={{ fontSize: 18, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, minWidth: 40, padding: 0 }}
-                  placeholder="0:00"
-                  placeholderTextColor={colors.textMuted + '40'}
-                  value={stats.pace}
-                  onChangeText={(v) => updateStat('pace', v)}
-                  onFocus={scrollToFocusedInput}
-                  maxLength={6}
-                />
-                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>MIN/KM</Text>
-              </View>
-            </View>
-          </View>
+          )}
         </View>
       </View>
     );
@@ -1111,12 +1176,18 @@ export default function AddTrainingScreen() {
             if (stats) {
               const details = [];
               if (stats.weight || stats.reps) details.push(`${stats.weight || '0'}kg x ${stats.reps || '0'}`);
+              if (stats.sets) details.push(`${stats.sets} series`);
+              if (stats.duration) details.push(`${stats.duration}min`);
               if (stats.distance) details.push(`${stats.distance}km`);
               if (stats.speed) details.push(`${stats.speed}km/h`);
+              if (stats.pace) details.push(`${stats.pace}`);
               if (stats.pente) details.push(`${stats.pente}%`);
-              if (stats.stairs) details.push(`${stats.stairs} étages`);
+              if (stats.watts) details.push(`${stats.watts}W`);
+              if (stats.cadence) details.push(`${stats.cadence}rpm`);
+              if (stats.resistance) details.push(`R${stats.resistance}`);
+              if (stats.stairs) details.push(`${stats.stairs} etages`);
               if (stats.calories) details.push(`${stats.calories}kcal`);
-              
+
               if (details.length > 0) label += ` (${details.join(', ')})`;
             }
             return label;
@@ -1155,6 +1226,21 @@ export default function AddTrainingScreen() {
       });
       const sportsString = finalSports.join(',');
 
+      // Ajouter les details des rounds de combat aux notes
+      if (combatRounds.length > 0 && combatRounds.some(r => r.partner || r.result || r.notes)) {
+        fullNotes += '\nRounds:\n';
+        combatRounds.forEach((r) => {
+          let roundLine = `  R${r.number}`;
+          if (r.partner) roundLine += ` vs ${r.partner}`;
+          if (r.result) roundLine += ` - ${r.result === 'win' ? 'V' : r.result === 'loss' ? 'D' : 'Nul'}`;
+          if (r.method) roundLine += ` (${r.method})`;
+          if (r.submissionsGiven) roundLine += ` | ${r.submissionsGiven} sub. donnee${r.submissionsGiven > 1 ? 's' : ''}`;
+          if (r.submissionsTaken) roundLine += ` | ${r.submissionsTaken} sub. subie${r.submissionsTaken > 1 ? 's' : ''}`;
+          fullNotes += roundLine + '\n';
+          if (r.notes) fullNotes += `    ${r.notes}\n`;
+        });
+      }
+
       const trainingData = {
         club_id: selectedClub?.id,
         sport: sportsString,
@@ -1176,6 +1262,7 @@ export default function AddTrainingScreen() {
         resistance: resistance ? (isNaN(parseInt(resistance)) ? undefined : parseInt(resistance)) : undefined,
         watts: watts ? (isNaN(parseInt(watts)) ? undefined : parseInt(watts)) : undefined,
         cadence: cadence ? (isNaN(parseInt(cadence)) ? undefined : parseInt(cadence)) : undefined,
+        combat_rounds: combatRounds.length > 0 ? combatRounds : undefined,
       };
 
       let newId: number | null = null;
@@ -1487,6 +1574,8 @@ export default function AddTrainingScreen() {
             raquettes: 'Raquettes',
             glisse: 'Sports de Glisse',
             nature: 'Sports Nature',
+            aquatique: 'Sports Aquatiques',
+            precision: 'Precision & Adresse',
             autre: 'Autres',
           };
 
@@ -1500,6 +1589,8 @@ export default function AddTrainingScreen() {
             raquettes: 'tennis',
             glisse: 'snowboard',
             nature: 'hiking',
+            aquatique: 'swim',
+            precision: 'bow-arrow',
             autre: 'dots-horizontal',
           };
 
@@ -1513,11 +1604,13 @@ export default function AddTrainingScreen() {
             raquettes: '#06B6D4',
             glisse: '#0EA5E9',
             nature: '#22C55E',
+            aquatique: '#0284C7',
+            precision: '#B45309',
             autre: '#6B7280',
           };
 
           // NOUVEL ORDRE : Cardio > Musculation > Combat > Danse > reste
-          const categories = ['cardio', 'fitness', 'combat_grappling', 'combat_striking', 'danse', 'collectif', 'raquettes', 'glisse', 'nature', 'autre'];
+          const categories = ['cardio', 'fitness', 'combat_grappling', 'combat_striking', 'danse', 'collectif', 'raquettes', 'aquatique', 'glisse', 'nature', 'precision', 'autre'];
 
           // Filtrer les catégories vides après recherche
           const filteredCategories = categories.filter(category => {
@@ -2467,35 +2560,285 @@ export default function AddTrainingScreen() {
 
         {/* FIN DES STATS PERFORMANCE */}
 
-        {/* CHAMPS COMBAT (Rounds) - Si sport de combat sélectionné */}
-        {selectedSports.some(s => ['jjb', 'mma', 'boxe', 'muay_thai', 'lutte', 'karate', 'sambo'].includes(s)) && (
-          <View style={{ marginTop: 20 }}>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={[styles.proStatItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Text style={[styles.proStatLabel, { color: colors.textSecondary }]}>Rounds</Text>
+        {/* CHAMPS COMBAT (Rounds detailles) - Si sport de combat selectionne */}
+        {selectedSports.some(s => ['jjb', 'mma', 'boxe', 'muay_thai', 'lutte', 'karate', 'sambo', 'judo', 'grappling', 'kickboxing', 'krav_maga', 'catch', 'boxe_francaise', 'taekwondo'].includes(s)) && (
+          <View style={{ marginTop: 20, backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+            {/* Header Rounds */}
+            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <Swords size={20} color="#EF4444" />
+                <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textPrimary }}>Rounds / Combat</Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 4, fontWeight: '700' }}>NB ROUNDS</Text>
+                  <TextInput
+                    style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 10, borderRadius: 10, color: colors.textPrimary, fontWeight: '800', fontSize: 18, textAlign: 'center', borderWidth: 1, borderColor: colors.border }}
+                    value={rounds}
+                    onChangeText={(val) => {
+                      setRounds(val);
+                      const num = parseInt(val) || 0;
+                      if (num > 0 && num <= 20) {
+                        setCombatRounds(prev => {
+                          const newRounds: CombatRound[] = [];
+                          for (let i = 0; i < num; i++) {
+                            newRounds.push(prev[i] || { number: i + 1 });
+                          }
+                          return newRounds;
+                        });
+                      }
+                    }}
+                    placeholder="0"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="number-pad"
+                    onFocus={scrollToFocusedInput}
+                    maxLength={2}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 4, fontWeight: '700' }}>DUREE/ROUND (MIN)</Text>
+                  <TextInput
+                    style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 10, borderRadius: 10, color: colors.textPrimary, fontWeight: '800', fontSize: 18, textAlign: 'center', borderWidth: 1, borderColor: colors.border }}
+                    value={roundDuration}
+                    onChangeText={setRoundDuration}
+                    placeholder="5"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="number-pad"
+                    onFocus={scrollToFocusedInput}
+                    maxLength={2}
+                  />
+                </View>
+              </View>
+              {/* Toggle detail rounds */}
+              {combatRounds.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => { setShowCombatRounds(!showCombatRounds); impactAsync(ImpactFeedbackStyle.Light); }}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12, paddingVertical: 8, backgroundColor: isDark ? 'rgba(239,68,68,0.1)' : 'rgba(239,68,68,0.06)', borderRadius: 10 }}
+                >
+                  <UserPlus size={14} color="#EF4444" />
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#EF4444' }}>
+                    {showCombatRounds ? 'Masquer le detail' : 'Detailler chaque round (partenaire, resultat...)'}
+                  </Text>
+                  {showCombatRounds ? <ChevronUp size={14} color="#EF4444" /> : <ChevronDown size={14} color="#EF4444" />}
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Detail par round */}
+            {showCombatRounds && combatRounds.length > 0 && (
+              <View style={{ padding: 16, gap: 12 }}>
+                {combatRounds.map((round, idx) => (
+                  <View key={idx} style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: round.result === 'win' ? '#10B981' : round.result === 'loss' ? '#EF4444' : colors.border }}>
+                    {/* Round header */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: colors.textPrimary }}>Round {idx + 1}</Text>
+                      {/* Result pills */}
+                      <View style={{ flexDirection: 'row', gap: 6 }}>
+                        {(['win', 'loss', 'draw'] as const).map(result => (
+                          <TouchableOpacity
+                            key={result}
+                            onPress={() => {
+                              setCombatRounds(prev => prev.map((r, i) => i === idx ? { ...r, result: r.result === result ? undefined : result } : r));
+                              impactAsync(ImpactFeedbackStyle.Light);
+                            }}
+                            style={{
+                              paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
+                              backgroundColor: round.result === result
+                                ? (result === 'win' ? '#10B981' : result === 'loss' ? '#EF4444' : '#F59E0B')
+                                : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                            }}
+                          >
+                            <Text style={{
+                              fontSize: 11, fontWeight: '700',
+                              color: round.result === result ? '#FFF' : colors.textMuted,
+                            }}>
+                              {result === 'win' ? 'V' : result === 'loss' ? 'D' : 'Nul'}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+
+                    {/* Partner name */}
+                    <View style={{ marginBottom: 8 }}>
+                      <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 3, fontWeight: '600' }}>PARTENAIRE</Text>
+                      <TextInput
+                        style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 8, borderRadius: 8, color: colors.textPrimary, fontWeight: '600', borderWidth: 1, borderColor: colors.border, fontSize: 13 }}
+                        placeholder="Nom du partenaire..."
+                        placeholderTextColor={colors.textMuted}
+                        value={round.partner || ''}
+                        onChangeText={(val) => setCombatRounds(prev => prev.map((r, i) => i === idx ? { ...r, partner: val } : r))}
+                        onFocus={scrollToFocusedInput}
+                      />
+                    </View>
+
+                    {/* Method (submission/how it ended) */}
+                    {round.result && round.result !== 'draw' && (
+                      <View style={{ marginBottom: 8 }}>
+                        <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 3, fontWeight: '600' }}>
+                          {round.result === 'win' ? 'PAR QUOI ?' : 'COMMENT ?'}
+                        </Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
+                          <View style={{ flexDirection: 'row', gap: 6 }}>
+                            {COMBAT_METHODS.map(method => (
+                              <TouchableOpacity
+                                key={method}
+                                onPress={() => {
+                                  setCombatRounds(prev => prev.map((r, i) => i === idx ? { ...r, method: r.method === method ? undefined : method } : r));
+                                  impactAsync(ImpactFeedbackStyle.Light);
+                                }}
+                                style={{
+                                  paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8,
+                                  backgroundColor: round.method === method ? '#EF4444' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                                  borderWidth: 1,
+                                  borderColor: round.method === method ? '#EF4444' : 'transparent',
+                                }}
+                              >
+                                <Text style={{ fontSize: 11, fontWeight: '600', color: round.method === method ? '#FFF' : colors.textMuted }}>{method}</Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                        </ScrollView>
+                      </View>
+                    )}
+
+                    {/* Submissions given/taken counters */}
+                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 10, color: '#10B981', marginBottom: 3, fontWeight: '600' }}>SOUMISSIONS DONNEES</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                          <TouchableOpacity onPress={() => setCombatRounds(prev => prev.map((r, i) => i === idx ? { ...r, submissionsGiven: Math.max(0, (r.submissionsGiven || 0) - 1) } : r))} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', justifyContent: 'center', alignItems: 'center' }}>
+                            <Minus size={14} color={colors.textMuted} />
+                          </TouchableOpacity>
+                          <Text style={{ fontSize: 18, fontWeight: '900', color: '#10B981', minWidth: 24, textAlign: 'center' }}>{round.submissionsGiven || 0}</Text>
+                          <TouchableOpacity onPress={() => { setCombatRounds(prev => prev.map((r, i) => i === idx ? { ...r, submissionsGiven: (r.submissionsGiven || 0) + 1 } : r)); impactAsync(ImpactFeedbackStyle.Light); }} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}>
+                            <Plus size={14} color="#FFF" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 10, color: '#EF4444', marginBottom: 3, fontWeight: '600' }}>SOUMISSIONS SUBIES</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                          <TouchableOpacity onPress={() => setCombatRounds(prev => prev.map((r, i) => i === idx ? { ...r, submissionsTaken: Math.max(0, (r.submissionsTaken || 0) - 1) } : r))} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', justifyContent: 'center', alignItems: 'center' }}>
+                            <Minus size={14} color={colors.textMuted} />
+                          </TouchableOpacity>
+                          <Text style={{ fontSize: 18, fontWeight: '900', color: '#EF4444', minWidth: 24, textAlign: 'center' }}>{round.submissionsTaken || 0}</Text>
+                          <TouchableOpacity onPress={() => { setCombatRounds(prev => prev.map((r, i) => i === idx ? { ...r, submissionsTaken: (r.submissionsTaken || 0) + 1 } : r)); impactAsync(ImpactFeedbackStyle.Light); }} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#EF4444', justifyContent: 'center', alignItems: 'center' }}>
+                            <Plus size={14} color="#FFF" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Round notes */}
+                    <TextInput
+                      style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.02)', padding: 8, borderRadius: 8, color: colors.textPrimary, fontSize: 12, marginTop: 8, borderWidth: 1, borderColor: colors.border }}
+                      placeholder="Notes du round..."
+                      placeholderTextColor={colors.textMuted}
+                      value={round.notes || ''}
+                      onChangeText={(val) => setCombatRounds(prev => prev.map((r, i) => i === idx ? { ...r, notes: val } : r))}
+                      onFocus={scrollToFocusedInput}
+                    />
+                  </View>
+                ))}
+
+                {/* Resume combat */}
+                {combatRounds.some(r => r.result) && (
+                  <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, paddingTop: 8, paddingBottom: 4 }}>
+                    <View style={{ alignItems: 'center' }}>
+                      <Text style={{ fontSize: 20, fontWeight: '900', color: '#10B981' }}>{combatRounds.filter(r => r.result === 'win').length}</Text>
+                      <Text style={{ fontSize: 10, fontWeight: '600', color: '#10B981' }}>Victoires</Text>
+                    </View>
+                    <View style={{ alignItems: 'center' }}>
+                      <Text style={{ fontSize: 20, fontWeight: '900', color: '#EF4444' }}>{combatRounds.filter(r => r.result === 'loss').length}</Text>
+                      <Text style={{ fontSize: 10, fontWeight: '600', color: '#EF4444' }}>Defaites</Text>
+                    </View>
+                    <View style={{ alignItems: 'center' }}>
+                      <Text style={{ fontSize: 20, fontWeight: '900', color: '#F59E0B' }}>{combatRounds.filter(r => r.result === 'draw').length}</Text>
+                      <Text style={{ fontSize: 10, fontWeight: '600', color: '#F59E0B' }}>Nuls</Text>
+                    </View>
+                    <View style={{ alignItems: 'center' }}>
+                      <Text style={{ fontSize: 20, fontWeight: '900', color: colors.textPrimary }}>{combatRounds.reduce((acc, r) => acc + (r.submissionsGiven || 0), 0)}</Text>
+                      <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted }}>Sub. donnees</Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* SCORE / MATCH - Sports raquettes & collectifs */}
+        {selectedSports.some(s => ['tennis', 'padel', 'badminton', 'football', 'futsal', 'basketball', 'rugby', 'handball', 'volleyball'].includes(s)) && (
+          <View style={{ marginTop: 20, backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+            <View style={{ padding: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <Trophy size={20} color="#F59E0B" />
+                <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textPrimary }}>Score du match</Text>
+              </View>
+
+              {/* Adversaire */}
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 4, fontWeight: '700' }}>ADVERSAIRE / EQUIPE ADVERSE</Text>
                 <TextInput
-                  style={[styles.proStatInput, { color: colors.textPrimary }]}
-                  value={rounds}
-                  onChangeText={setRounds}
-                  placeholder="0"
+                  style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 10, borderRadius: 10, color: colors.textPrimary, fontWeight: '600', fontSize: 14, borderWidth: 1, borderColor: colors.border }}
+                  placeholder="Nom de l'adversaire..."
                   placeholderTextColor={colors.textMuted}
-                  keyboardType="number-pad"
+                  value={customDescription.startsWith('vs ') ? customDescription.slice(3) : ''}
+                  onChangeText={(val) => setCustomDescription(val ? `vs ${val}` : '')}
                   onFocus={scrollToFocusedInput}
-                  maxLength={2}
                 />
               </View>
-              <View style={[styles.proStatItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Text style={[styles.proStatLabel, { color: colors.textSecondary }]}>Durée Round (min)</Text>
-                <TextInput
-                  style={[styles.proStatInput, { color: colors.textPrimary }]}
-                  value={roundDuration}
-                  onChangeText={setRoundDuration}
-                  placeholder="5"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="number-pad"
-                  onFocus={scrollToFocusedInput}
-                  maxLength={2}
-                />
+
+              {/* Score */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center', marginBottom: 12 }}>
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 4, fontWeight: '700' }}>MOI/NOUS</Text>
+                  <TextInput
+                    style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', width: 60, padding: 10, borderRadius: 10, color: '#10B981', fontWeight: '900', fontSize: 24, textAlign: 'center', borderWidth: 1, borderColor: colors.border }}
+                    placeholder="0"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="number-pad"
+                    maxLength={3}
+                    onFocus={scrollToFocusedInput}
+                  />
+                </View>
+                <Text style={{ fontSize: 24, fontWeight: '900', color: colors.textMuted, marginTop: 16 }}>-</Text>
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 4, fontWeight: '700' }}>ADVERSAIRE</Text>
+                  <TextInput
+                    style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', width: 60, padding: 10, borderRadius: 10, color: '#EF4444', fontWeight: '900', fontSize: 24, textAlign: 'center', borderWidth: 1, borderColor: colors.border }}
+                    placeholder="0"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="number-pad"
+                    maxLength={3}
+                    onFocus={scrollToFocusedInput}
+                  />
+                </View>
+              </View>
+
+              {/* Result pills */}
+              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
+                {[{ key: 'V', label: 'Victoire', color: '#10B981' }, { key: 'D', label: 'Defaite', color: '#EF4444' }, { key: 'N', label: 'Nul', color: '#F59E0B' }].map(r => (
+                  <TouchableOpacity
+                    key={r.key}
+                    onPress={() => {
+                      const tag = `[${r.key}]`;
+                      if (notes.includes(tag)) {
+                        setNotes(notes.replace(tag, '').trim());
+                      } else {
+                        setNotes(prev => `${tag} ${prev.replace(/\[(V|D|N)\]\s?/, '').trim()}`.trim());
+                      }
+                      impactAsync(ImpactFeedbackStyle.Light);
+                    }}
+                    style={{
+                      paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
+                      backgroundColor: notes.includes(`[${r.key}]`) ? r.color : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                    }}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: notes.includes(`[${r.key}]`) ? '#FFF' : colors.textMuted }}>{r.label}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
           </View>
@@ -2611,7 +2954,7 @@ export default function AddTrainingScreen() {
                 borderColor: colors.error
               }}>
                 <Text style={{ fontSize: 13, fontWeight: '700', color: colors.error, textAlign: 'center' }}>
-                  ⚠️ Vous avez oublié le champ "Sport principal". Veuillez le remplir pour continuer.
+                  Vous avez oublie le champ "Sport principal". Veuillez le remplir pour continuer.
                 </Text>
               </View>
             )}
@@ -3113,7 +3456,7 @@ export default function AddTrainingScreen() {
             </TouchableOpacity>
 
             <Text style={{ fontSize: 14, fontStyle: 'italic', color: colors.textMuted, textAlign: 'center' }}>
-              Merci de faire partie de la famille Yoroi ❤️
+              Merci de faire partie de la famille Yoroi
             </Text>
 
             {/* Bouton Fermer */}

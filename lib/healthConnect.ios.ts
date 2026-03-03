@@ -411,17 +411,17 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
   'HKWorkoutActivityTypeHighIntensityIntervalTraining': 'hiit',
   'crossTraining': 'crossfit', 'highIntensityIntervalTraining': 'hiit',
   // ═══ SPORTS DE COMBAT ═══
-  'HKWorkoutActivityTypeMartialArts': 'jjb', 'martialArts': 'jjb',
+  'HKWorkoutActivityTypeMartialArts': 'mma', 'martialArts': 'mma',
   'HKWorkoutActivityTypeBoxing': 'boxe', 'boxing': 'boxe',
   'HKWorkoutActivityTypeKickboxing': 'kickboxing', 'kickboxing': 'kickboxing',
   'HKWorkoutActivityTypeWrestling': 'lutte', 'wrestling': 'lutte',
   'HKWorkoutActivityTypeTaiChi': 'tai_chi', 'taiChi': 'tai_chi',
   // ═══ CARDIO MIXTE ═══
-  'HKWorkoutActivityTypeMixedCardio': 'cardio', 'mixedCardio': 'cardio',
-  'HKWorkoutActivityTypeMixedMetabolicCardioTraining': 'cardio', 'mixedMetabolicCardioTraining': 'cardio',
+  'HKWorkoutActivityTypeMixedCardio': 'cardio_mixte', 'mixedCardio': 'cardio_mixte',
+  'HKWorkoutActivityTypeMixedMetabolicCardioTraining': 'cardio_mixte', 'mixedMetabolicCardioTraining': 'cardio_mixte',
   // ═══ VELO ═══
   'HKWorkoutActivityTypeCycling': 'velo', 'cycling': 'velo',
-  'HKWorkoutActivityTypeHandCycling': 'velo', 'handCycling': 'velo',
+  'HKWorkoutActivityTypeHandCycling': 'hand_cycling', 'handCycling': 'hand_cycling',
   // ═══ NATATION ═══
   'HKWorkoutActivityTypeSwimming': 'natation', 'swimming': 'natation',
   // ═══ YOGA / FLEXIBILITE / PILATES ═══
@@ -432,7 +432,7 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
   'HKWorkoutActivityTypeCooldown': 'recuperation', 'cooldown': 'recuperation',
   // ═══ FOOTBALL ═══
   'HKWorkoutActivityTypeSoccer': 'football', 'soccer': 'football',
-  'HKWorkoutActivityTypeAmericanFootball': 'football_us', 'americanFootball': 'football_us',
+  'HKWorkoutActivityTypeAmericanFootball': 'football_americain', 'americanFootball': 'football_americain',
   'HKWorkoutActivityTypeAustralianFootball': 'football', 'australianFootball': 'football',
   // ═══ BASKETBALL ═══
   'HKWorkoutActivityTypeBasketball': 'basketball', 'basketball': 'basketball',
@@ -445,11 +445,11 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
   'HKWorkoutActivityTypePickleball': 'pickleball', 'pickleball': 'pickleball',
   // ═══ CARDIO / ELLIPTIQUE / STEPPER ═══
   'HKWorkoutActivityTypeElliptical': 'elliptique', 'elliptical': 'elliptique',
-  'HKWorkoutActivityTypeStairClimbing': 'escalier', 'stairClimbing': 'escalier',
-  'HKWorkoutActivityTypeStepTraining': 'step', 'stepTraining': 'step',
+  'HKWorkoutActivityTypeStairClimbing': 'stairmaster', 'stairClimbing': 'stairmaster',
+  'HKWorkoutActivityTypeStepTraining': 'step_aerobic', 'stepTraining': 'step_aerobic',
   'HKWorkoutActivityTypeFitnessGaming': 'fitness_gaming', 'fitnessGaming': 'fitness_gaming',
   'HKWorkoutActivityTypeJumpRope': 'corde_a_sauter', 'jumpRope': 'corde_a_sauter',
-  'HKWorkoutActivityTypeStairs': 'escalier', 'stairs': 'escalier',
+  'HKWorkoutActivityTypeStairs': 'stairmaster', 'stairs': 'stairmaster',
   // ═══ RAMEUR ═══
   'HKWorkoutActivityTypeRowing': 'rameur', 'rowing': 'rameur',
   // ═══ DANSE ═══
@@ -459,7 +459,7 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
   'HKWorkoutActivityTypeDanceInspiredTraining': 'danse', 'danceInspiredTraining': 'danse',
   // ═══ SKI / SPORTS D'HIVER ═══
   'HKWorkoutActivityTypeDownhillSkiing': 'ski', 'downhillSkiing': 'ski',
-  'HKWorkoutActivityTypeCrossCountrySkiing': 'ski_fond', 'crossCountrySkiing': 'ski_fond',
+  'HKWorkoutActivityTypeCrossCountrySkiing': 'ski_de_fond', 'crossCountrySkiing': 'ski_de_fond',
   'HKWorkoutActivityTypeSnowboarding': 'snowboard', 'snowboarding': 'snowboard',
   'HKWorkoutActivityTypeSnowSports': 'ski', 'snowSports': 'ski',
   'HKWorkoutActivityTypeSkatingSports': 'patinage', 'skatingSports': 'patinage',
@@ -477,10 +477,10 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
   'HKWorkoutActivityTypeHandball': 'handball', 'handball': 'handball',
   'HKWorkoutActivityTypeRugby': 'rugby', 'rugby': 'rugby',
   'HKWorkoutActivityTypeLacrosse': 'lacrosse', 'lacrosse': 'lacrosse',
-  'HKWorkoutActivityTypeHockey': 'hockey', 'hockey': 'hockey',
+  'HKWorkoutActivityTypeHockey': 'hockey_glace', 'hockey': 'hockey_glace',
   'HKWorkoutActivityTypeCricket': 'cricket', 'cricket': 'cricket',
   'HKWorkoutActivityTypeBaseball': 'baseball', 'baseball': 'baseball',
-  'HKWorkoutActivityTypeSoftball': 'softball', 'softball': 'softball',
+  'HKWorkoutActivityTypeSoftball': 'baseball', 'softball': 'baseball',
   // ═══ GOLF ═══
   'HKWorkoutActivityTypeGolf': 'golf', 'golf': 'golf',
   // ═══ ESCALADE ═══
@@ -494,7 +494,7 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
   // ═══ ATHLETISME ═══
   'HKWorkoutActivityTypeTrackAndField': 'athletisme', 'trackAndField': 'athletisme',
   // ═══ TIR A L'ARC ═══
-  'HKWorkoutActivityTypeArchery': 'tir_arc', 'archery': 'tir_arc',
+  'HKWorkoutActivityTypeArchery': 'tir_a_larc', 'archery': 'tir_a_larc',
   // ═══ BOWLING ═══
   'HKWorkoutActivityTypeBowling': 'bowling', 'bowling': 'bowling',
   // ═══ DISC SPORTS ═══
@@ -503,7 +503,7 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
   'HKWorkoutActivityTypePreparationAndRecovery': 'recuperation',
   'preparationAndRecovery': 'recuperation',
   // ═══ BARRE ═══
-  'HKWorkoutActivityTypeBarre': 'barre', 'barre': 'barre',
+  'HKWorkoutActivityTypeBarre': 'barre_au_sol', 'barre': 'barre_au_sol',
   // ═══ MULTI-SPORT / TRIATHLON ═══
   'HKWorkoutActivityTypeSwimBikeRun': 'triathlon', 'swimBikeRun': 'triathlon',
   'HKWorkoutActivityTypeTransition': 'transition', 'transition': 'transition',
@@ -524,8 +524,8 @@ const WORKOUT_TYPE_MAP: Record<string, string> = {
 // ════════════════════════════════════════════════════════════════
 const WORKOUT_TYPE_NUMERIC_MAP: Record<number, string> = {
   // Valeurs officielles Apple HKWorkoutActivityType
-  1: 'football_us',        // AmericanFootball
-  2: 'tir_arc',            // Archery
+  1: 'football_americain',  // AmericanFootball
+  2: 'tir_a_larc',          // Archery
   3: 'football',           // AustralianFootball
   4: 'badminton',          // Badminton
   5: 'baseball',           // Baseball
@@ -548,12 +548,12 @@ const WORKOUT_TYPE_NUMERIC_MAP: Record<number, string> = {
   22: 'gymnastique',       // Gymnastics
   23: 'handball',          // Handball
   24: 'randonnee',         // Hiking *** C'ETAIT LE BUG ***
-  25: 'hockey',            // Hockey
+  25: 'hockey_glace',       // Hockey
   26: 'chasse',            // Hunting
   27: 'lacrosse',          // Lacrosse
-  28: 'jjb',               // MartialArts
+  28: 'mma',                // MartialArts
   29: 'yoga',              // MindAndBody
-  30: 'cardio',            // MixedMetabolicCardioTraining
+  30: 'cardio_mixte',       // MixedMetabolicCardioTraining
   31: 'paddle',            // PaddleSports
   32: 'jeu',               // Play
   33: 'recuperation',      // PreparationAndRecovery
@@ -565,9 +565,9 @@ const WORKOUT_TYPE_NUMERIC_MAP: Record<number, string> = {
   39: 'patinage',          // SkatingSports
   40: 'ski',               // SnowSports
   41: 'football',          // Soccer
-  42: 'softball',          // Softball
+  42: 'baseball',           // Softball
   43: 'squash',            // Squash
-  44: 'escalier',          // StairClimbing
+  44: 'stairmaster',        // StairClimbing
   45: 'surf',              // SurfingSports
   46: 'natation',          // Swimming
   47: 'tennis_de_table',   // TableTennis
@@ -582,9 +582,9 @@ const WORKOUT_TYPE_NUMERIC_MAP: Record<number, string> = {
   56: 'lutte',             // Wrestling
   57: 'yoga',              // Yoga
   // iOS 10+
-  58: 'barre',             // Barre
+  58: 'barre_au_sol',       // Barre
   59: 'musculation',       // CoreTraining
-  60: 'ski_fond',          // CrossCountrySkiing
+  60: 'ski_de_fond',        // CrossCountrySkiing
   61: 'ski',               // DownhillSkiing
   62: 'stretching',        // Flexibility
   63: 'hiit',              // HighIntensityIntervalTraining
@@ -592,13 +592,13 @@ const WORKOUT_TYPE_NUMERIC_MAP: Record<number, string> = {
   65: 'kickboxing',        // Kickboxing
   66: 'pilates',           // Pilates
   67: 'snowboard',         // Snowboarding
-  68: 'escalier',          // Stairs
-  69: 'step',              // StepTraining
+  68: 'stairmaster',        // Stairs
+  69: 'step_aerobic',       // StepTraining
   70: 'marche',            // WheelchairWalkPace
   71: 'running',           // WheelchairRunPace
   72: 'tai_chi',           // TaiChi
-  73: 'cardio',            // MixedCardio
-  74: 'velo',              // HandCycling
+  73: 'cardio_mixte',       // MixedCardio
+  74: 'hand_cycling',       // HandCycling
   75: 'disc_golf',         // DiscSports
   76: 'fitness_gaming',    // FitnessGaming
   77: 'danse',             // CardioDance
@@ -641,16 +641,16 @@ const getWorkoutLabel = (activityType: string): string => {
     running: 'Course', randonnee: 'Randonnee', marche: 'Marche', trail: 'Trail',
     // Musculation & fitness
     musculation: 'Musculation', crossfit: 'CrossFit', hiit: 'HIIT', hyrox: 'HYROX',
-    barre: 'Barre', stretching: 'Stretching', step: 'Step',
+    barre_au_sol: 'Barre au sol', stretching: 'Stretching', step_aerobic: 'Step',
     // Combat
-    jjb: 'JJB', boxe: 'Boxe', kickboxing: 'Kickboxing', lutte: 'Lutte',
+    mma: 'MMA', jjb: 'JJB', boxe: 'Boxe', kickboxing: 'Kickboxing', lutte: 'Lutte',
     tai_chi: 'Tai Chi',
     // Velo & natation
-    velo: 'Velo', natation: 'Natation', aquagym: 'Aquagym',
+    velo: 'Velo', hand_cycling: 'Hand Cycling', natation: 'Natation', aquagym: 'Aquagym',
     // Yoga / bien-etre
     yoga: 'Yoga', pilates: 'Pilates',
     // Football
-    football: 'Football', football_us: 'Football US',
+    football: 'Football', football_americain: 'Football US',
     // Basketball
     basketball: 'Basketball',
     // Raquettes
@@ -658,14 +658,14 @@ const getWorkoutLabel = (activityType: string): string => {
     badminton: 'Badminton', squash: 'Squash',
     racquetball: 'Racquetball', pickleball: 'Pickleball',
     // Cardio
-    cardio: 'Cardio', elliptique: 'Elliptique', escalier: 'Escalier',
+    cardio_mixte: 'Cardio', elliptique: 'Elliptique', stairmaster: 'Stairmaster',
     corde_a_sauter: 'Corde a sauter', fitness_gaming: 'Fitness Gaming',
     // Rameur
     rameur: 'Rameur',
     // Danse
     danse: 'Danse',
     // Hiver
-    ski: 'Ski', ski_fond: 'Ski de fond', snowboard: 'Snowboard',
+    ski: 'Ski', ski_de_fond: 'Ski de fond', snowboard: 'Snowboard',
     patinage: 'Patinage', curling: 'Curling',
     // Nautique
     surf: 'Surf', paddle: 'Paddle', voile: 'Voile',
@@ -673,12 +673,12 @@ const getWorkoutLabel = (activityType: string): string => {
     plongee: 'Plongee',
     // Equipe
     volleyball: 'Volleyball', handball: 'Handball', rugby: 'Rugby',
-    lacrosse: 'Lacrosse', hockey: 'Hockey', cricket: 'Cricket',
-    baseball: 'Baseball', softball: 'Softball',
+    lacrosse: 'Lacrosse', hockey_glace: 'Hockey', cricket: 'Cricket',
+    baseball: 'Baseball',
     // Individuel
     golf: 'Golf', escalade: 'Escalade', equitation: 'Equitation',
     escrime: 'Escrime', gymnastique: 'Gymnastique',
-    athletisme: 'Athletisme', tir_arc: 'Tir a l\'arc',
+    athletisme: 'Athletisme', tir_a_larc: 'Tir a l\'arc',
     bowling: 'Bowling', disc_golf: 'Disc Golf',
     // Divers
     recuperation: 'Recuperation', triathlon: 'Triathlon',
@@ -2975,13 +2975,49 @@ class HealthConnectService {
   async getStepsHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
     // Demo mode disabled
 
-    // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
+    // VERIFIER QUE HealthKit EST CHARGE
     if (!HealthKit) {
       logger.warn('[HealthKit] Module not loaded, cannot fetch steps history');
       return [];
     }
 
     try {
+      // Methode 1: queryStatisticsForQuantity par jour (dedoublonne par Apple)
+      if (!isRunningInExpoGo) {
+        try {
+          const HK = require('@kingstinct/react-native-healthkit');
+          if (typeof HK.queryStatisticsForQuantity === 'function') {
+            const results: Array<{ date: string; value: number }> = [];
+            for (let i = 0; i < days; i++) {
+              const dayStart = new Date();
+              dayStart.setDate(dayStart.getDate() - i);
+              dayStart.setHours(0, 0, 0, 0);
+              const dayEnd = new Date(dayStart);
+              dayEnd.setHours(23, 59, 59, 999);
+
+              const stats = await HK.queryStatisticsForQuantity(
+                'HKQuantityTypeIdentifierStepCount',
+                ['cumulativeSum'],
+                { filter: { date: { startDate: dayStart, endDate: dayEnd } } }
+              );
+              const total = stats?.sumQuantity?.quantity ?? 0;
+              if (total > 0) {
+                results.push({
+                  date: dayStart.toISOString().split('T')[0],
+                  value: Math.round(total),
+                });
+              }
+            }
+            if (results.length > 0) {
+              return results.sort((a, b) => a.date.localeCompare(b.date));
+            }
+          }
+        } catch (statsError) {
+          logger.warn('[HealthKit] getStepsHistory: queryStatisticsForQuantity echoue, fallback');
+        }
+      }
+
+      // Fallback: queryQuantitySamples (peut double-compter iPhone + Watch)
       const fromDate = new Date();
       fromDate.setDate(fromDate.getDate() - days);
       fromDate.setHours(0, 0, 0, 0);
@@ -2991,7 +3027,6 @@ class HealthConnectService {
       const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierStepCount', queryOptions);
 
       if (samples && samples.length > 0) {
-        // Grouper par jour - prendre les données brutes d'Apple Santé
         const stepsByDate: { [key: string]: number } = {};
 
         samples.forEach((s: any) => {
@@ -3011,8 +3046,131 @@ class HealthConnectService {
     return [];
   }
 
+  async getDistanceHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+    if (!HealthKit) return [];
+    try {
+      if (!isRunningInExpoGo) {
+        try {
+          const HK = require('@kingstinct/react-native-healthkit');
+          if (typeof HK.queryStatisticsForQuantity === 'function') {
+            const results: Array<{ date: string; value: number }> = [];
+            for (let i = 0; i < days; i++) {
+              const dayStart = new Date();
+              dayStart.setDate(dayStart.getDate() - i);
+              dayStart.setHours(0, 0, 0, 0);
+              const dayEnd = new Date(dayStart);
+              dayEnd.setHours(23, 59, 59, 999);
+              const stats = await HK.queryStatisticsForQuantity(
+                'HKQuantityTypeIdentifierDistanceWalkingRunning',
+                ['cumulativeSum'],
+                { filter: { date: { startDate: dayStart, endDate: dayEnd } } }
+              );
+              const total = stats?.sumQuantity?.quantity ?? 0;
+              if (total > 0) {
+                results.push({ date: dayStart.toISOString().split('T')[0], value: Math.round(total * 100) / 100 });
+              }
+            }
+            if (results.length > 0) return results.sort((a, b) => a.date.localeCompare(b.date));
+          }
+        } catch (e) { logger.warn('[HealthKit] getDistanceHistory: queryStatistics echoue, fallback'); }
+      }
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - days);
+      fromDate.setHours(0, 0, 0, 0);
+      const queryOptions = this.createQueryOptions(fromDate, new Date());
+      if (!queryOptions) return [];
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierDistanceWalkingRunning', queryOptions);
+      if (samples && samples.length > 0) {
+        const byDate: { [key: string]: number } = {};
+        samples.forEach((s: any) => {
+          const date = new Date(s.startDate).toISOString().split('T')[0];
+          if (!byDate[date]) byDate[date] = 0;
+          byDate[date] += s.quantity || 0;
+        });
+        return Object.keys(byDate).filter(d => byDate[d] > 0)
+          .map(d => ({ date: d, value: Math.round(byDate[d] * 100) / 100 }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+      }
+    } catch (error) { logger.error('Erreur lecture historique distance:', error); }
+    return [];
+  }
+
+  async getExerciseMinutesHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+    if (!HealthKit) return [];
+    try {
+      if (!isRunningInExpoGo) {
+        try {
+          const HK = require('@kingstinct/react-native-healthkit');
+          if (typeof HK.queryStatisticsForQuantity === 'function') {
+            const results: Array<{ date: string; value: number }> = [];
+            for (let i = 0; i < days; i++) {
+              const dayStart = new Date();
+              dayStart.setDate(dayStart.getDate() - i);
+              dayStart.setHours(0, 0, 0, 0);
+              const dayEnd = new Date(dayStart);
+              dayEnd.setHours(23, 59, 59, 999);
+              const stats = await HK.queryStatisticsForQuantity(
+                'HKQuantityTypeIdentifierAppleExerciseTime',
+                ['cumulativeSum'],
+                { filter: { date: { startDate: dayStart, endDate: dayEnd } } }
+              );
+              const total = stats?.sumQuantity?.quantity ?? 0;
+              if (total > 0) {
+                results.push({ date: dayStart.toISOString().split('T')[0], value: Math.round(total) });
+              }
+            }
+            if (results.length > 0) return results.sort((a, b) => a.date.localeCompare(b.date));
+          }
+        } catch (e) { logger.warn('[HealthKit] getExerciseMinutesHistory: queryStatistics echoue, fallback'); }
+      }
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - days);
+      fromDate.setHours(0, 0, 0, 0);
+      const queryOptions = this.createQueryOptions(fromDate, new Date());
+      if (!queryOptions) return [];
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierAppleExerciseTime', queryOptions);
+      if (samples && samples.length > 0) {
+        const byDate: { [key: string]: number } = {};
+        samples.forEach((s: any) => {
+          const date = new Date(s.startDate).toISOString().split('T')[0];
+          if (!byDate[date]) byDate[date] = 0;
+          byDate[date] += s.quantity || 0;
+        });
+        return Object.keys(byDate).filter(d => byDate[d] > 0)
+          .map(d => ({ date: d, value: Math.round(byDate[d]) }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+      }
+    } catch (error) { logger.error('Erreur lecture historique exercise minutes:', error); }
+    return [];
+  }
+
+  async getStandHoursHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
+    if (!HealthKit) return [];
+    try {
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - days);
+      fromDate.setHours(0, 0, 0, 0);
+      const queryOptions = this.createQueryOptions(fromDate, new Date());
+      if (!queryOptions) return [];
+      const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierAppleStandHour', queryOptions);
+      if (samples && samples.length > 0) {
+        const byDate: { [key: string]: number } = {};
+        samples.forEach((s: any) => {
+          const date = new Date(s.startDate).toISOString().split('T')[0];
+          if (!byDate[date]) byDate[date] = 0;
+          // value 0 = stood, value 1 = idle
+          if (s.value === 0) byDate[date] += 1;
+        });
+        return Object.keys(byDate).filter(d => byDate[d] > 0)
+          .map(d => ({ date: d, value: byDate[d] }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+      }
+    } catch (error) { logger.error('Erreur lecture historique stand hours:', error); }
+    return [];
+  }
+
   /**
-   * ✅ Wrapper pour ajouter un timeout aux promesses
+   * Wrapper pour ajouter un timeout aux promesses
    */
   private withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     return Promise.race([
@@ -3598,7 +3756,7 @@ class HealthConnectService {
               date: trainingDate,
               start_time: startTime,
               duration_minutes: workout.duration,
-              distance: workout.distance,
+              distance: workout.distance ? parseFloat((workout.distance / 1000).toFixed(2)) : undefined,
               calories: workout.calories,
               heart_rate: workout.averageHeartRate,
               max_heart_rate: workout.maxHeartRate,
@@ -3805,7 +3963,7 @@ class HealthConnectService {
       date: trainingDate,
       start_time: startTime,
       duration_minutes: workout.duration,
-      distance: workout.distance,
+      distance: workout.distance ? parseFloat((workout.distance / 1000).toFixed(2)) : undefined,
       calories: workout.calories,
       heart_rate: workout.averageHeartRate,
       max_heart_rate: workout.maxHeartRate,

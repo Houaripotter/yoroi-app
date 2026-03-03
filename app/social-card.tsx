@@ -20,6 +20,7 @@ import { SocialStatsCard } from '@/components/SocialStatsCard';
 import { getUserSettings } from '@/lib/storage';
 import { getProfile, getTrainings, getLatestWeight, getWeights, calculateStreak } from '@/lib/database';
 import { getCurrentRank } from '@/lib/ranks';
+import { getUnifiedPoints } from '@/lib/gamification';
 import logger from '@/lib/security/logger';
 
 export default function SocialCardScreen() {
@@ -61,8 +62,9 @@ export default function SocialCardScreen() {
         weightLost = Math.max(0, startWeight - currentWeight);
       }
 
-      // Get current rank
-      const currentRank = getCurrentRank(streak);
+      // Get current rank (based on XP points)
+      const totalPoints = await getUnifiedPoints();
+      const currentRank = getCurrentRank(totalPoints);
 
       // Get clubs (from settings)
       const clubs: string[] = [];

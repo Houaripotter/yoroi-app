@@ -20,18 +20,18 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
   children,
   containerStyle,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <View style={[styles.container, containerStyle]}>
       {/* Titre de section (optionnel) */}
       {title && (
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
+          <Text style={[styles.title, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>
             {title}
           </Text>
           {description && (
-            <Text style={[styles.description, { color: colors.textSecondary }]}>
+            <Text style={[styles.description, { color: isDark ? colors.textSecondary : 'rgba(255,255,255,0.7)' }]}>
               {description}
             </Text>
           )}

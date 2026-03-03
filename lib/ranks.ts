@@ -1,18 +1,20 @@
 // ============================================
-// YOROI - SYSTÈME DE RANGS SAMOURAÏ
+// YOROI - SYSTEME DE RANGS SAMURAI UNIFIE
 // ============================================
+// Un seul systeme : 5 rangs bases sur les XP totaux
+// Le streak donne des XP bonus (via gamification.ts)
 
 export interface Rank {
   id: string;
   name: string;
-  nameFemale: string; // Version féminine
+  nameFemale: string;
   nameJp: string;
   icon: 'target' | 'swords' | 'sword' | 'moon' | 'graduation-cap' | 'crown' | 'castle' | 'shield' | 'star';
-  minDays: number;
+  minPoints: number;
   color: string;
   description: string;
   descriptionFemale: string;
-  reward?: string; // Récompense associée au rang
+  reward?: string;
 }
 
 export const RANKS: Rank[] = [
@@ -22,11 +24,11 @@ export const RANKS: Rank[] = [
     nameFemale: 'Ashigaru',
     nameJp: '足軽 (Ashigaru)',
     icon: 'target',
-    minDays: 0,
+    minPoints: 0,
     color: '#60A5FA',
     description: "Fantassin loyal. Le voyage commence.",
     descriptionFemale: "Fantassine loyale. Le voyage commence.",
-    reward: 'Démarrage du parcours',
+    reward: 'Demarrage du parcours',
   },
   {
     id: 'bushi',
@@ -34,93 +36,98 @@ export const RANKS: Rank[] = [
     nameFemale: 'Onna-Bugeisha',
     nameJp: '武士 (Bushi)',
     icon: 'shield',
-    minDays: 15,
+    minPoints: 500,
     color: '#34D399',
-    description: "Athlète discipliné. L'honneur guide tes pas.",
-    descriptionFemale: "Guerrière disciplinée. L'honneur guide tes pas.",
-    reward: 'Nouveaux avatars débloqués',
+    description: "Athlete discipline. L'honneur guide tes pas.",
+    descriptionFemale: "Guerriere disciplinee. L'honneur guide tes pas.",
+    reward: 'Nouveaux avatars debloques',
   },
   {
     id: 'samurai',
-    name: 'Samouraï',
+    name: 'Samourai',
     nameFemale: 'Onna-Musha',
     nameJp: '侍 (Samurai)',
     icon: 'sword',
-    minDays: 30,
+    minPoints: 2000,
     color: '#D4AF37',
-    description: "Athlète d'élite. La voie du bushido est la tienne.",
-    descriptionFemale: "Guerrière d'élite. La voie du bushido est la tienne.",
-    reward: 'Packs d\'avatars élites',
+    description: "Athlete d'elite. La voie du bushido est la tienne.",
+    descriptionFemale: "Guerriere d'elite. La voie du bushido est la tienne.",
+    reward: "Packs d'avatars elites",
   },
   {
     id: 'ronin',
-    name: 'Rōnin',
-    nameFemale: 'Rōnin',
-    nameJp: '浪人 (Rōnin)',
+    name: 'Ronin',
+    nameFemale: 'Ronin',
+    nameJp: '浪人 (Ronin)',
     icon: 'moon',
-    minDays: 90,
+    minPoints: 5000,
     color: '#A855F7',
-    description: 'Maître vagabond. Tu forges ta propre voie.',
-    descriptionFemale: 'Maître vagabonde. Tu forges ta propre voie.',
+    description: 'Maitre vagabond. Tu forges ta propre voie.',
+    descriptionFemale: 'Maitre vagabonde. Tu forges ta propre voie.',
     reward: 'Packs de collection exclusifs',
   },
   {
     id: 'shogun',
-    name: 'Shōgun',
-    nameFemale: 'Onna-Shōgun',
-    nameJp: '将軍 (Shōgun)',
+    name: 'Shogun',
+    nameFemale: 'Onna-Shogun',
+    nameJp: '将軍 (Shogun)',
     icon: 'crown',
-    minDays: 250,
+    minPoints: 10000,
     color: '#FFD700',
-    description: 'Commandant suprême. Légende vivante.',
-    descriptionFemale: 'Commandante suprême. Légende vivante.',
-    reward: 'Avatars légendaires',
+    description: 'Commandant supreme. Legende vivante.',
+    descriptionFemale: 'Commandante supreme. Legende vivante.',
+    reward: 'Avatars legendaires',
   },
 ];
 
-// Obtenir le rang actuel en fonction du nombre de jours de streak
-export const getCurrentRank = (streakDays: number): Rank => {
+// Obtenir le rang actuel en fonction des XP
+export const getCurrentRank = (points: number): Rank => {
   return RANKS.reduce((current, rank) => {
-    return streakDays >= rank.minDays ? rank : current;
+    return points >= rank.minPoints ? rank : current;
   }, RANKS[0]);
 };
 
 // Obtenir le prochain rang
-export const getNextRank = (streakDays: number): Rank | null => {
-  const nextRank = RANKS.find(r => r.minDays > streakDays);
+export const getNextRank = (points: number): Rank | null => {
+  const nextRank = RANKS.find(r => r.minPoints > points);
   return nextRank || null;
 };
 
-// Jours restants pour le prochain rang
-export const getDaysToNextRank = (streakDays: number): number => {
-  const nextRank = getNextRank(streakDays);
+// Points restants pour le prochain rang
+export const getDaysToNextRank = (points: number): number => {
+  const nextRank = getNextRank(points);
   if (!nextRank) return 0;
-  return nextRank.minDays - streakDays;
+  return nextRank.minPoints - points;
 };
 
 // Obtenir l'avatar correspondant au rang
-// TEMPORAIREMENT DESACTIVE - EN COURS DE CREATION DE NOUVEAUX AVATARS
 export const getAvatarForRank = (rankId: string) => {
   return null;
 };
 
 // Progression vers le prochain rang (en %)
-export const getRankProgress = (streakDays: number): number => {
-  const currentRank = getCurrentRank(streakDays);
-  const nextRank = getNextRank(streakDays);
+export const getRankProgress = (points: number): number => {
+  const currentRank = getCurrentRank(points);
+  const nextRank = getNextRank(points);
 
   if (!nextRank) return 100;
 
-  const totalDays = nextRank.minDays - currentRank.minDays;
-  const progressDays = streakDays - currentRank.minDays;
+  const totalPoints = nextRank.minPoints - currentRank.minPoints;
+  const progressPoints = points - currentRank.minPoints;
 
-  return Math.min(100, Math.max(0, (progressDays / totalDays) * 100));
+  return Math.min(100, Math.max(0, (progressPoints / totalPoints) * 100));
 };
 
 // Couleur du rang
 export const getRankColor = (rankId: string): string => {
   const rank = RANKS.find(r => r.id === rankId);
   return rank?.color || '#6B7280';
+};
+
+// Niveau numerique (1-5) depuis un rang
+export const rankToLevel = (rank: Rank): number => {
+  const idx = RANKS.findIndex(r => r.id === rank.id);
+  return idx >= 0 ? idx + 1 : 1;
 };
 
 export default RANKS;

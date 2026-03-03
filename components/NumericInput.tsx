@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { TextInput, View, Text, StyleSheet } from 'react-native';
+import { TextInput, View, Text, StyleSheet, InputAccessoryView, Platform } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 // 🔒 SÉCURITÉ: Validation des inputs
 import {
@@ -170,6 +170,8 @@ export const NumericInput: React.FC<NumericInputProps> = ({
   const textColor = error ? '#FF3B30' : (color || colors.textPrimary);
   const borderColor = error ? 'rgba(255, 59, 48, 0.3)' : 'transparent';
 
+  const accessoryId = 'numericInputEmptyAccessory';
+
   if (label) {
     return (
       <View style={[styles.container, style]}>
@@ -199,6 +201,7 @@ export const NumericInput: React.FC<NumericInputProps> = ({
             textContentType="none"
             importantForAutofill="no"
             autoComplete="off"
+            {...(Platform.OS === 'ios' ? { inputAccessoryViewID: accessoryId } : {})}
           />
           {unit && (
             <Text style={[styles.unit, { color: error ? '#FF3B30' : colors.textPrimary }]}>
@@ -206,10 +209,10 @@ export const NumericInput: React.FC<NumericInputProps> = ({
             </Text>
           )}
         </View>
-        {/* 🔒 SÉCURITÉ: Affichage de l'erreur */}
         {error && (
           <Text style={styles.errorText}>{error}</Text>
         )}
+        {Platform.OS === 'ios' && <InputAccessoryView nativeID={accessoryId}><View /></InputAccessoryView>}
       </View>
     );
   }
@@ -240,6 +243,7 @@ export const NumericInput: React.FC<NumericInputProps> = ({
           textContentType="none"
           importantForAutofill="no"
           autoComplete="off"
+          {...(Platform.OS === 'ios' ? { inputAccessoryViewID: accessoryId } : {})}
         />
         {unit && (
           <Text style={[styles.compactUnit, { color: error ? '#FF3B30' : colors.textPrimary }]}>
@@ -247,10 +251,10 @@ export const NumericInput: React.FC<NumericInputProps> = ({
           </Text>
         )}
       </View>
-      {/* 🔒 SÉCURITÉ: Affichage de l'erreur (compact) */}
       {error && (
         <Text style={styles.compactErrorText}>{error}</Text>
       )}
+      {Platform.OS === 'ios' && <InputAccessoryView nativeID={accessoryId}><View /></InputAccessoryView>}
     </View>
   );
 };

@@ -32,6 +32,7 @@ interface HomeTabViewProps {
   dailyQuote?: string | null;
   steps?: number;
   streak?: number;
+  totalPoints?: number;
   level?: number;
   rankName?: string;
   rankColor?: string;
@@ -79,6 +80,7 @@ interface HomeTabViewProps {
 
   // Notifications
   unreadNotifCount?: number;
+  onNotifCountChange?: (count: number) => void;
 }
 
 // Default page IDs - titles are loaded dynamically via i18n
@@ -92,6 +94,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
   dailyQuote,
   steps = 0,
   streak = 0,
+  totalPoints = 0,
   level = 1,
   rankName = 'Novice',
   rankColor = '#94A3B8',
@@ -117,6 +120,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
   onAddWater,
   refreshTrigger = 0,
   unreadNotifCount = 0,
+  onNotifCountChange,
 }) => {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
@@ -270,6 +274,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
             steps={steps}
             calories={calories}
             streak={streak}
+            totalPoints={totalPoints}
             level={level}
             rankName={rankName}
             rankColor={rankColor}
@@ -292,6 +297,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
             waterPercentage={waterPercentage}
             heightCm={heightCm}
             unreadNotifCount={unreadNotifCount}
+            onNotifCountChange={onNotifCountChange}
           />
         );
       default:

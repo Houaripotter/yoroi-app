@@ -649,6 +649,41 @@ export default function WorkoutDetailScreen() {
                 </View>
               </>
             )}
+            {/* Row 5: Cadence + Vitesse (si dispo) */}
+            {((training.cadence ?? 0) > 0 || (training.speed ?? 0) > 0 || (training.watts ?? 0) > 0) && (
+              <>
+                <View style={[styles.appleDetailsSep, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
+                <View style={styles.appleDetailsRow}>
+                  {(training.cadence ?? 0) > 0 ? (
+                    <View style={[styles.appleDetailCell, { borderRightWidth: (training.speed ?? 0) > 0 || (training.watts ?? 0) > 0 ? 1 : 0, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]}>
+                      <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Cadence</Text>
+                      <Text style={[styles.appleDetailValue, { color: '#8B5CF6' }]}>
+                        {training.cadence}
+                        <Text style={styles.appleDetailUnit}> SPM</Text>
+                      </Text>
+                    </View>
+                  ) : null}
+                  {(training.watts ?? 0) > 0 ? (
+                    <View style={[styles.appleDetailCell, { borderRightWidth: (training.speed ?? 0) > 0 ? 1 : 0, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]}>
+                      <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Puissance</Text>
+                      <Text style={[styles.appleDetailValue, { color: '#F59E0B' }]}>
+                        {training.watts}
+                        <Text style={styles.appleDetailUnit}> W</Text>
+                      </Text>
+                    </View>
+                  ) : null}
+                  {(training.speed ?? 0) > 0 ? (
+                    <View style={styles.appleDetailCell}>
+                      <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Vitesse moy.</Text>
+                      <Text style={[styles.appleDetailValue, { color: '#3B82F6' }]}>
+                        {typeof training.speed === 'number' ? training.speed.toFixed(1).replace('.', ',') : training.speed}
+                        <Text style={styles.appleDetailUnit}> KM/H</Text>
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              </>
+            )}
           </View>
         </AnimatedCard>
 
@@ -908,6 +943,56 @@ export default function WorkoutDetailScreen() {
                     </Text>
                   )}
                 </View>
+              </View>
+            )}
+          </AnimatedCard>
+        )}
+
+        {/* === EFFORT PERCU (RPE) + NOTES === */}
+        {((training.intensity ?? 0) > 0 || (training.notes && training.notes.trim())) && (
+          <AnimatedCard delay={640} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+            {(training.intensity ?? 0) > 0 && (
+              <>
+                <View style={styles.sectionHeader}>
+                  <View style={[styles.sectionIconBg, { backgroundColor: '#F9731615' }]}>
+                    <Activity size={16} color="#F97316" />
+                  </View>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                    Effort percu (RPE)
+                  </Text>
+                </View>
+                <View style={styles.rpeContainer}>
+                  <View style={[styles.rpeBarBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+                    <View style={[styles.rpeBarFill, {
+                      width: `${(training.intensity || 0) * 10}%`,
+                      backgroundColor: (training.intensity || 0) <= 3 ? '#22C55E'
+                        : (training.intensity || 0) <= 6 ? '#F59E0B'
+                        : (training.intensity || 0) <= 8 ? '#F97316' : '#EF4444',
+                    }]} />
+                  </View>
+                  <Text style={[styles.rpeValue, {
+                    color: (training.intensity || 0) <= 3 ? '#22C55E'
+                      : (training.intensity || 0) <= 6 ? '#F59E0B'
+                      : (training.intensity || 0) <= 8 ? '#F97316' : '#EF4444',
+                  }]}>
+                    {training.intensity}/10
+                  </Text>
+                </View>
+              </>
+            )}
+            {training.notes && training.notes.trim() && (
+              <View style={(training.intensity ?? 0) > 0 ? { marginTop: 16, paddingTop: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' } : undefined}>
+                <View style={styles.sectionHeader}>
+                  <View style={[styles.sectionIconBg, { backgroundColor: '#6366f115' }]}>
+                    <MaterialCommunityIcons name="note-text-outline" size={16} color="#6366f1" />
+                  </View>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                    Notes
+                  </Text>
+                </View>
+                <Text style={[styles.notesText, { color: colors.textSecondary }]}>
+                  {training.notes}
+                </Text>
               </View>
             )}
           </AnimatedCard>
@@ -1251,4 +1336,23 @@ const styles = StyleSheet.create({
   weatherLabel: { fontSize: 12, fontWeight: '500' },
   airQualityRow: { flexDirection: 'row', justifyContent: 'center', gap: 12 },
   airQualityBadge: { fontSize: 12, fontWeight: '700', marginTop: 2 },
+
+  // RPE / Effort
+  rpeContainer: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4,
+  },
+  rpeBarBg: {
+    flex: 1, height: 10, borderRadius: 5, overflow: 'hidden',
+  },
+  rpeBarFill: {
+    height: '100%', borderRadius: 5,
+  },
+  rpeValue: {
+    fontSize: 18, fontWeight: '800', letterSpacing: -0.5, minWidth: 45, textAlign: 'right',
+  },
+
+  // Notes
+  notesText: {
+    fontSize: 15, fontWeight: '400', lineHeight: 22, marginTop: 4,
+  },
 });

@@ -27,6 +27,7 @@ import { RankCitationCard } from '@/components/home/RankCitationCard';
 import { FramedProfilePhoto } from '@/components/FramedProfilePhoto';
 import { logger } from '@/lib/security/logger';
 import HomeChallengesSection from '@/components/home/HomeChallengesSection';
+import { NotificationBellPopup } from '@/components/NotificationBellPopup';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const IS_SMALL_SCREEN = SCREEN_WIDTH < 375; // iPhone SE, petits téléphones
@@ -389,6 +390,7 @@ interface Page1MonitoringProps {
   steps?: number;
   calories?: number; // ✅ FIX: Calories depuis Apple Health
   streak?: number;
+  totalPoints?: number;
   level?: number;
   rankName?: string;
   rankColor?: string;
@@ -412,6 +414,7 @@ interface Page1MonitoringProps {
   onAddWater?: (ml: number) => void;
   refreshTrigger?: number;
   unreadNotifCount?: number;
+  onNotifCountChange?: (count: number) => void;
 }
 
 // ToolsGrid supprimé - déplacé dans onglet Menu
@@ -994,6 +997,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   steps = 0,
   calories = 0, // ✅ FIX: Calories depuis Apple Health
   streak = 0,
+  totalPoints = 0,
   level = 1,
   rankName = 'Novice',
   rankColor = '#94A3B8',
@@ -1017,6 +1021,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   onAddWater,
   refreshTrigger = 0,
   unreadNotifCount = 0,
+  onNotifCountChange,
 }) => {
   const { colors, isDark, themeColor } = useTheme();
   const { t, locale } = useI18n();
@@ -1407,26 +1412,16 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
           {/* DROITE - Cloche + Reglages */}
           <View style={styles.rightButtons}>
-            <TouchableOpacity
-              style={[styles.settingsBtn, {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.25)',
-                borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)',
-              }]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                router.push('/notification-center' as any);
-              }}
-              activeOpacity={0.7}
-            >
-              <Bell size={20} color="#FFFFFF" strokeWidth={2} />
-              {unreadNotifCount > 0 && (
-                <View style={styles.bellBadge}>
-                  <Text style={styles.bellBadgeText}>
-                    {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
+            <View style={[styles.settingsBtn, {
+              backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.25)',
+              borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)',
+            }]}>
+              <NotificationBellPopup
+                unreadCount={unreadNotifCount}
+                onCountChange={onNotifCountChange}
+                variant="light"
+              />
+            </View>
             <TouchableOpacity
               style={[styles.settingsBtn, {
                 backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.25)',
@@ -1445,7 +1440,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         </View>
 
         {/* CARTE RANG & CITATION - Premium Design */}
-        <RankCitationCard streak={streak} dailyQuote={dailyQuote} avatarUri={avatarImageUri} />
+        <RankCitationCard streak={streak} totalPoints={totalPoints} dailyQuote={dailyQuote} avatarUri={avatarImageUri} />
       </View>
 
       {/* REPORT 2x2 - Poids, Hydratation, Sommeil, Charge */}
@@ -2391,27 +2386,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative' as const,
-  },
-  bellBadge: {
-    position: 'absolute' as const,
-    top: -2,
-    right: -2,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#FF3B30',
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
-    paddingHorizontal: 4,
-    borderWidth: 2,
-    borderColor: '#000000',
-  },
-  bellBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '800' as const,
-    lineHeight: 12,
   },
 
   // CENTRE - Texte

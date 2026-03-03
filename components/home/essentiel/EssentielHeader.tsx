@@ -75,8 +75,7 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
     loadGamificationData();
   }, [loadGamificationData]);
 
-  const currentRank = getCurrentRank(streak);
-  const currentLevel = getLevel(totalPoints);
+  const currentRank = getCurrentRank(totalPoints);
 
   const handleGamificationPress = () => {
     impactAsync(ImpactFeedbackStyle.Light);
@@ -150,7 +149,7 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
             </View>
           </View>
 
-          {/* Séparateur */}
+          {/* Separateur */}
           <View style={[styles.gamificationDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]} />
 
           {/* Streak */}
@@ -164,17 +163,17 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
             </View>
           </View>
 
-          {/* Séparateur */}
+          {/* Separateur */}
           <View style={[styles.gamificationDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]} />
 
-          {/* Niveau XP - Affiche le nom du niveau (ex: Athlète) et les XP */}
+          {/* XP */}
           <View style={styles.gamificationItem}>
-            <View style={[styles.levelBadge, { backgroundColor: currentLevel.color }]}>
+            <View style={[styles.levelBadge, { backgroundColor: currentRank.color }]}>
               <Zap size={14} color="#FFFFFF" fill="#FFFFFF" />
             </View>
             <View style={styles.gamificationInfo}>
               <Text style={[styles.gamificationLabel, { color: colors.textMuted }]}>XP</Text>
-              <Text style={[styles.gamificationValue, { color: currentLevel.color }]}>{currentLevel.name}</Text>
+              <Text style={[styles.gamificationValue, { color: currentRank.color }]}>{totalPoints}</Text>
             </View>
           </View>
 

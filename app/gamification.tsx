@@ -65,7 +65,7 @@ import {
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { RANKS, getCurrentRank, getNextRank, getRankProgress, getDaysToNextRank } from '@/lib/ranks';
-import { getLevel, getNextLevel, getLevelProgress, calculateAndStoreUnifiedPoints, getUnifiedPoints } from '@/lib/gamification';
+import { calculateAndStoreUnifiedPoints, getUnifiedPoints } from '@/lib/gamification';
 import { getProfile, getWeights, getTrainings, calculateStreak } from '@/lib/database';
 import { AnimatedCard } from '@/components/AnimatedCard';
 import { AchievementCelebration } from '@/components/AchievementCelebration';
@@ -122,14 +122,6 @@ const RankIconMap: Record<string, any> = {
   'star': Star,
 };
 
-// Map des icônes pour les niveaux
-const LevelIconMap: Record<string, any> = {
-  'Sprout': TrendingUp,
-  'Shield': Shield,
-  'Swords': Swords,
-  'Trophy': Trophy,
-  'Crown': Crown,
-};
 
 // Définition des badges
 interface Badge {
@@ -435,14 +427,10 @@ export default function DojoScreen() {
   }, [loadData]);
 
   // Calculs
-  const currentRank = getCurrentRank(streak);
-  const nextRank = getNextRank(streak);
-  const rankProgress = getRankProgress(streak);
-  const daysToNextRank = getDaysToNextRank(streak);
-
-  const currentLevel = getLevel(totalPoints);
-  const nextLevel = getNextLevel(totalPoints);
-  const levelProgressData = getLevelProgress(totalPoints);
+  const currentRank = getCurrentRank(totalPoints);
+  const nextRank = getNextRank(totalPoints);
+  const rankProgress = getRankProgress(totalPoints);
+  const daysToNextRank = getDaysToNextRank(totalPoints);
 
   // Fonctions pour les icônes et couleurs des quêtes
   const getQuestIcon = (questId: string | undefined) => {
@@ -589,10 +577,10 @@ export default function DojoScreen() {
                 />
               </View>
             </TouchableOpacity>
-            {/* Niveau en grand */}
+            {/* XP en grand */}
             <View style={styles.levelBigBadge}>
               <Zap size={16} color="#FFD700" fill="#FFD700" />
-              <Text style={styles.levelBigNumber}>{currentLevel.level}</Text>
+              <Text style={styles.levelBigNumber}>{totalPoints}</Text>
             </View>
             <Text style={styles.rankNameHero}>{currentRank.name}</Text>
             <Text style={styles.rankNameJpHero}>{currentRank.nameJp}</Text>
@@ -717,19 +705,19 @@ export default function DojoScreen() {
         {/* ═══════════════════════════════════════ */}
         {selectedTab === 'rangs' && (
           <View>
-            {/* Niveau XP Section */}
+            {/* XP Section */}
             <View style={[styles.levelCard, { backgroundColor: isDark ? '#1F1F3D' : '#FFFFFF' }]}>
               <LinearGradient
-                colors={[`${currentLevel.color}20`, 'transparent']}
+                colors={[`${currentRank.color}20`, 'transparent']}
                 style={styles.levelCardGradient}
               />
               <View style={styles.levelCardHeader}>
-                <View style={[styles.levelBadge, { backgroundColor: currentLevel.color }]}>
-                  <Text style={styles.levelBadgeText}>{t('gamification.lvl')} {currentLevel.level}</Text>
+                <View style={[styles.levelBadge, { backgroundColor: currentRank.color }]}>
+                  <Text style={styles.levelBadgeText}>{currentRank.name}</Text>
                 </View>
                 <View style={styles.levelInfo}>
-                  <Text style={[styles.levelName, { color: colors.textPrimary }]}>{currentLevel.name}</Text>
-                  <Text style={[styles.levelNameJp, { color: colors.textMuted }]}>{currentLevel.nameJp}</Text>
+                  <Text style={[styles.levelName, { color: colors.textPrimary }]}>{currentRank.name}</Text>
+                  <Text style={[styles.levelNameJp, { color: colors.textMuted }]}>{currentRank.nameJp}</Text>
                 </View>
                 <View style={styles.xpContainer}>
                   <Zap size={18} color="#FFD700" fill="#FFD700" />
@@ -737,22 +725,22 @@ export default function DojoScreen() {
                 </View>
               </View>
 
-              {nextLevel && (
+              {nextRank && (
                 <View style={styles.levelProgressSection}>
                   <View style={styles.levelProgressHeader}>
                     <Text style={[styles.levelProgressLabel, { color: colors.textMuted }]}>
-                      {t('gamification.next')}: <Text style={{ color: nextLevel.color, fontWeight: '700' }}>{nextLevel.name}</Text>
+                      {t('gamification.next')}: <Text style={{ color: nextRank.color, fontWeight: '700' }}>{nextRank.name}</Text>
                     </Text>
                     <Text style={[styles.levelProgressXp, { color: colors.textPrimary }]}>
-                      {levelProgressData.pointsToNext} XP
+                      {daysToNextRank} XP
                     </Text>
                   </View>
                   <View style={[styles.levelProgressBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB' }]}>
                     <LinearGradient
-                      colors={[currentLevel.color, nextLevel.color]}
+                      colors={[currentRank.color, nextRank.color]}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
-                      style={[styles.levelProgressFill, { width: `${levelProgressData.progress}%` }]}
+                      style={[styles.levelProgressFill, { width: `${rankProgress}%` }]}
                     />
                   </View>
                 </View>
@@ -765,10 +753,10 @@ export default function DojoScreen() {
             </Text>
 
             {RANKS.map((rank, index) => {
-              const unlocked = streak >= rank.minDays;
+              const unlocked = totalPoints >= rank.minPoints;
               const isCurrent = rank.id === currentRank.id;
               const RankIcon = RankIconMap[rank.icon] || Target;
-              const progressToRank = unlocked ? 100 : Math.min((streak / rank.minDays) * 100, 100);
+              const progressToRank = unlocked ? 100 : Math.min((totalPoints / rank.minPoints) * 100, 100);
 
               return (
                 <AnimatedCard key={rank.id} index={index}>
@@ -864,7 +852,7 @@ export default function DojoScreen() {
                       ) : (
                         <View style={styles.daysNeeded}>
                           <Text style={[styles.daysNeededValue, { color: colors.textPrimary }]}>
-                            {rank.minDays - streak}
+                            {rank.minPoints - totalPoints}
                           </Text>
                           <Text style={[styles.daysNeededLabel, { color: colors.textMuted }]}>
                             {t('common.days').toLowerCase()}
