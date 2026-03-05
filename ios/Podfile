@@ -59,5 +59,14 @@ target 'Yoroi' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    # Fix: expo-dev-launcher référence RCTPackagerConnection supprimé en RN 0.81+
+    installer.pods_project.targets.each do |target|
+      next unless target.name == "expo-dev-launcher"
+      files_to_remove = target.source_build_phase.files.select do |f|
+        f.file_ref&.path&.include?("RCTPackagerConnection")
+      end
+      files_to_remove.each(&:remove_from_project)
+    end
   end
 end

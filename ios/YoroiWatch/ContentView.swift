@@ -7,34 +7,51 @@ struct ContentView: View {
 
   var body: some View {
     TabView(selection: $selectedTab) {
-      // Page 1: Dashboard (Timer, Pas, Carnet, Profil)
+
+      // Tab 0 : Dashboard (Timer, Pas, Profil)
       DashboardPage()
         .tag(0)
         .containerBackground(session.bgColor, for: .tabView)
 
-      // Page 2: Poids (tout en scroll vertical)
+      // Tab 1 : Poids
       WeightPage()
         .tag(1)
         .containerBackground(session.bgColor, for: .tabView)
 
-      // Page 3: Hydratation (tout en scroll vertical)
+      // Tab 2 : Hydratation
       HydrationPage()
         .tag(2)
         .containerBackground(session.bgColor, for: .tabView)
 
-      // Page 4: Sommeil (tout en scroll vertical)
+      // Tab 3 : Sommeil
       SleepPage()
         .tag(3)
         .containerBackground(session.bgColor, for: .tabView)
 
-      // Page 5: Reglages
+      // Tab 4 : Réglages
       SettingsPage()
         .tag(4)
         .containerBackground(session.bgColor, for: .tabView)
+
+      // Tab 5 : Carnet d'entraînement & Records
+      NavigationStack {
+        CarnetPage()
+      }
+      .tag(5)
+      .containerBackground(session.bgColor, for: .tabView)
     }
     .tabViewStyle(.page)
     .onAppear {
       session.requestSync()
+    }
+    // Deep link depuis une complication : navigation automatique vers le bon onglet
+    .onChange(of: session.requestedTab) { newTab in
+      guard newTab > 0 else { return }
+      withAnimation { selectedTab = newTab }
+      // Remettre à zéro pour ne pas re-naviguer au prochain onAppear
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        session.requestedTab = 0
+      }
     }
   }
 }

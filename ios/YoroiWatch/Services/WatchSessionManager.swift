@@ -4,6 +4,7 @@ import WatchKit
 import AVFoundation
 import SwiftUI
 import HealthKit
+import ClockKit
 
 class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
@@ -53,9 +54,15 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   var textOnAccent: Color { Color(hex: themeTextOnAccentHex) ?? .white }
 
   // MARK: - Weight
-  @Published var currentWeight: Double = 0.0
-  @Published var targetWeight: Double = 0.0
-  @Published var startWeight: Double = 0.0
+  @Published var currentWeight: Double = 0.0 {
+    didSet { UserDefaults.standard.set(currentWeight, forKey: "yoroi_weight"); reloadComplications() }
+  }
+  @Published var targetWeight: Double = 0.0 {
+    didSet { UserDefaults.standard.set(targetWeight, forKey: "yoroi_targetWeight") }
+  }
+  @Published var startWeight: Double = 0.0 {
+    didSet { UserDefaults.standard.set(startWeight, forKey: "yoroi_startWeight") }
+  }
   @Published var weightHistory: [WeightEntry] = []
   @Published var bmi: Double = 0.0
   @Published var bodyFat: Double = 0.0
@@ -64,42 +71,76 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   @Published var userHeight: Double = 0.0 // cm - from Apple Health
 
   // MARK: - Hydration
-  @Published var hydrationCurrent: Int = 0
-  @Published var hydrationGoal: Int = 3000
+  @Published var hydrationCurrent: Int = 0 {
+    didSet { UserDefaults.standard.set(hydrationCurrent, forKey: "yoroi_hydration"); reloadComplications() }
+  }
+  @Published var hydrationGoal: Int = 3000 {
+    didSet { UserDefaults.standard.set(hydrationGoal, forKey: "yoroi_hydrationGoal") }
+  }
   @Published var hydrationWeekly: [DayHydration] = []
 
   // MARK: - Sleep
-  @Published var sleepDuration: Int = 0
-  @Published var sleepQuality: Int = 0
+  @Published var sleepDuration: Int = 0 {
+    didSet { UserDefaults.standard.set(sleepDuration, forKey: "yoroi_sleepMinutes"); reloadComplications() }
+  }
+  @Published var sleepQuality: Int = 0 {
+    didSet { UserDefaults.standard.set(sleepQuality, forKey: "yoroi_sleepQuality") }
+  }
   @Published var sleepBedTime: String = "--:--"
   @Published var sleepWakeTime: String = "--:--"
-  @Published var sleepGoalMinutes: Int = 480
+  @Published var sleepGoalMinutes: Int = 480 {
+    didSet { UserDefaults.standard.set(sleepGoalMinutes, forKey: "yoroi_sleepGoal") }
+  }
   @Published var sleepDebt: Double = 0.0
 
   // MARK: - Steps & Health
-  @Published var stepsGoal: Int = 8000
-  @Published var heartRate: Int = 0
+  @Published var stepsGoal: Int = 8000 {
+    didSet { UserDefaults.standard.set(stepsGoal, forKey: "yoroi_stepsGoal"); reloadComplications() }
+  }
+  @Published var heartRate: Int = 0 {
+    didSet { UserDefaults.standard.set(heartRate, forKey: "yoroi_heartRate"); reloadComplications() }
+  }
   @Published var heartRateMin: Int = 0
   @Published var heartRateMax: Int = 0
-  @Published var restingHeartRate: Int = 0
-  @Published var spo2: Int = 0
+  @Published var restingHeartRate: Int = 0 {
+    didSet { UserDefaults.standard.set(restingHeartRate, forKey: "yoroi_restingHR"); reloadComplications() }
+  }
+  @Published var spo2: Int = 0 {
+    didSet { UserDefaults.standard.set(spo2, forKey: "yoroi_spo2"); reloadComplications() }
+  }
   @Published var respiratoryRate: Int = 0
-  @Published var activeCalories: Int = 0
+  @Published var activeCalories: Int = 0 {
+    didSet { UserDefaults.standard.set(activeCalories, forKey: "yoroi_calories"); reloadComplications() }
+  }
   @Published var exerciseMinutes: Int = 0
   @Published var standHours: Int = 0
-  @Published var distance: Double = 0.0 // km
+  @Published var distance: Double = 0.0 {
+    didSet { UserDefaults.standard.set(distance, forKey: "yoroi_distance"); reloadComplications() }
+  }
 
   // MARK: - Profile
   @Published var userName: String = ""
-  @Published var level: Int = 1
-  @Published var rank: String = ""
-  @Published var streak: Int = 0
+  @Published var level: Int = 1 {
+    didSet { UserDefaults.standard.set(level, forKey: "yoroi_level"); reloadComplications() }
+  }
+  @Published var rank: String = "" {
+    didSet { UserDefaults.standard.set(rank, forKey: "yoroi_rank"); reloadComplications() }
+  }
+  @Published var streak: Int = 0 {
+    didSet { UserDefaults.standard.set(streak, forKey: "yoroi_streak"); reloadComplications() }
+  }
   @Published var profileImageData: Data? = nil
 
   // MARK: - Timer (countdown minuteur)
-  @Published var timerTotalSeconds: Int = 90 // preset
-  @Published var timerRemainingSeconds: Int = 90
-  @Published var timerIsRunning: Bool = false
+  @Published var timerTotalSeconds: Int = 90 {
+    didSet { UserDefaults.standard.set(timerTotalSeconds, forKey: "yoroi_timerTotal") }
+  }
+  @Published var timerRemainingSeconds: Int = 90 {
+    didSet { UserDefaults.standard.set(timerRemainingSeconds, forKey: "yoroi_timerRemaining"); reloadComplications() }
+  }
+  @Published var timerIsRunning: Bool = false {
+    didSet { UserDefaults.standard.set(timerIsRunning, forKey: "yoroi_timerRunning"); reloadComplications() }
+  }
   @Published var timerAlarmRinging: Bool = false
   @Published var timerMode: String = "Repos" // Repos, Combat, Tabata
   @Published var timerFavorites: [Int] = [] // user saved presets in seconds
@@ -108,25 +149,44 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   @Published var benchmarks: [BenchmarkRecord] = []
   @Published var recentWorkouts: [WorkoutEntry] = []
 
+  // MARK: - Navigation (deep link depuis complications)
+  @Published var requestedTab: Int = 0
+
   // MARK: - Connection
   @Published var isConnected: Bool = false
   @Published var lastSyncDate: Date? = nil
 
   // MARK: - HealthKit (direct Watch readings)
   private let healthStore = HKHealthStore()
-  @Published var localSteps: Int = 0
-  @Published var localHeartRate: Int = 0
+  @Published var localSteps: Int = 0 {
+    didSet { UserDefaults.standard.set(localSteps, forKey: "yoroi_steps"); reloadComplications() }
+  }
+  @Published var localHeartRate: Int = 0 {
+    didSet { UserDefaults.standard.set(localHeartRate, forKey: "yoroi_heartRate"); reloadComplications() }
+  }
   @Published var localActiveCalories: Int = 0
   @Published var localDistance: Double = 0.0
   @Published var localExerciseMinutes: Int = 0
   @Published var localStandHours: Int = 0
-  @Published var localSpo2: Int = 0
+  @Published var localSpo2: Int = 0 {
+    didSet { UserDefaults.standard.set(localSpo2, forKey: "yoroi_spo2"); reloadComplications() }
+  }
 
   private var session: WCSession?
   private var timer: Timer?
   private var extendedSession: WKExtendedRuntimeSession?
   private var audioPlayer: AVAudioPlayer?
   private var hapticTimer: Timer?
+
+  // MARK: - Complications
+
+  func reloadComplications() {
+    let server = CLKComplicationServer.sharedInstance()
+    guard let active = server.activeComplications, !active.isEmpty else { return }
+    for complication in active {
+      server.reloadTimeline(for: complication)
+    }
+  }
 
   override init() {
     super.init()

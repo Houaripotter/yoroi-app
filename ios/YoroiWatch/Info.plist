@@ -35,5 +35,15 @@
 	<true/>
 	<key>WKCompanionAppBundleIdentifier</key>
 	<string>com.houari.yoroi</string>
+	<key>CLKComplicationPrincipalClass</key>
+	<string>$(PRODUCT_MODULE_NAME).ComplicationController</string>
+	<key>CLKComplicationFamilies</key>
+	<array>
+		<string>CLKComplicationFamilyGraphicCircular</string>
+		<string>CLKComplicationFamilyGraphicCorner</string>
+		<string>CLKComplicationFamilyGraphicRectangular</string>
+		<string>CLKComplicationFamilyUtilitarianSmall</string>
+		<string>CLKComplicationFamilyModularSmall</string>
+	</array>
 </dict>
 </plist>
