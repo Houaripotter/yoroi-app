@@ -3,10 +3,13 @@
 // ============================================
 
 import React, { useState, useEffect, useRef, useMemo, memo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, Animated, FlatList, Easing, Switch, DeviceEventEmitter } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, Animated, FlatList, Easing, Switch, DeviceEventEmitter, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
+import { formatHoursHM } from '@/lib/formatDuration';
+import { format, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { useI18n } from '@/lib/I18nContext';
 import { router } from 'expo-router';
 import { TrendingUp, TrendingDown, Minus, Plus, Dumbbell, Droplet, Moon, Zap, Bell, BellOff, Check, Target, Calendar, Activity, AlertTriangle, CheckCircle, Clock, Settings, Footprints, Flame, Heart, Wind } from 'lucide-react-native';
@@ -19,8 +22,7 @@ import { useAvatar } from '@/lib/AvatarContext';
 import { LinearGradient } from 'expo-linear-gradient';
 // actionGridCustomizationService removed - tools moved to Menu tab
 import { getUserSettings } from '@/lib/storage';
-import { getLatestBodyComposition, BodyComposition } from '@/lib/bodyComposition';
-import { getTrainings } from '@/lib/database';
+// getTrainings import supprime - calories et donnees sante viennent d'Apple Health
 import Svg, { Path, Circle as SvgCircle, Rect as SvgRect, Defs, ClipPath, G, Image as SvgImage, LinearGradient as SvgLinearGradient, Stop, Ellipse, Line, Text as SvgText } from 'react-native-svg';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { RankCitationCard } from '@/components/home/RankCitationCard';
@@ -404,6 +406,8 @@ interface Page1MonitoringProps {
   sleepHours?: number;
   sleepDebt?: number;
   sleepGoal?: number;
+  sleepDate?: string;
+  sleepWeeklyAvg?: number;
   workloadStatus?: 'none' | 'light' | 'moderate' | 'intense';
   bodyFat?: number;
   muscleMass?: number;
@@ -413,6 +417,7 @@ interface Page1MonitoringProps {
   onAddWeight?: () => void;
   onAddWater?: (ml: number) => void;
   refreshTrigger?: number;
+  onRefresh?: () => Promise<void>;
   unreadNotifCount?: number;
   onNotifCountChange?: (count: number) => void;
 }
@@ -545,7 +550,14 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
       Animated.timing(waveAnim, { toValue: 1, duration: 2500, easing: Easing.linear, useNativeDriver: false })
     );
     animation.start();
-    const listener = waveAnim.addListener(({ value }) => setWaveOffset(value * Math.PI * 2));
+    let lastUpdate = 0;
+    const listener = waveAnim.addListener(({ value }) => {
+      const now = Date.now();
+      if (now - lastUpdate >= 50) { // throttle à 20fps max
+        lastUpdate = now;
+        setWaveOffset(value * Math.PI * 2);
+      }
+    });
     return () => { animation.stop(); waveAnim.removeListener(listener); };
   }, []);
 
@@ -598,7 +610,7 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
       return { v, posY, label: `${v}L` };
     }).filter(Boolean) as Array<{v: number; posY: number; label: string}>;
 
-  const handleAdd = (amount: number) => {
+  const handleAdd = useCallback((amount: number) => {
     impactAsync(ImpactFeedbackStyle.Light);
     setLastAmount(amount);
     setShowToast(true);
@@ -609,9 +621,9 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
       Animated.timing(toastAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
     ]).start(() => setShowToast(false));
     onAddWater?.(amount);
-  };
+  }, [toastAnim, onAddWater]);
 
-  const handleSaveGoal = async () => {
+  const handleSaveGoal = useCallback(async () => {
     try {
       // Sauvegarder en litres (format utilisé par hydration.tsx)
       await AsyncStorage.setItem(HYDRATION_GOAL_KEY, editGoal.toString());
@@ -623,9 +635,9 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
       // Notifier le home screen pour sync globale
       DeviceEventEmitter.emit('HYDRATION_GOAL_CHANGED', { goalLiters: editGoal });
     } catch {}
-  };
+  }, [editGoal]);
 
-  const handleToggleNotif = async (val: boolean) => {
+  const handleToggleNotif = useCallback(async (val: boolean) => {
     setNotifEnabled(val);
     impactAsync(ImpactFeedbackStyle.Light);
     try {
@@ -634,7 +646,7 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
       settings.hydration = { ...settings.hydration, enabled: val, useSlots: true };
       await AsyncStorage.setItem('@yoroi_notification_settings', JSON.stringify(settings));
     } catch {}
-  };
+  }, []);
 
   // Stats page 2
   const last7 = history.slice(0, 7);
@@ -644,7 +656,7 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
   const dayLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
   return (
-    <View style={[hStyles.card, { backgroundColor: cardBg, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+    <View style={[hStyles.card, { backgroundColor: cardBg, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
       {/* Toast */}
       {showToast && (
         <Animated.View style={[hStyles.toast, {
@@ -1011,6 +1023,8 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   sleepHours = 0,
   sleepDebt = 0,
   sleepGoal = 8,
+  sleepDate,
+  sleepWeeklyAvg = 0,
   workloadStatus = 'none',
   bodyFat,
   muscleMass,
@@ -1020,6 +1034,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   onAddWeight,
   onAddWater,
   refreshTrigger = 0,
+  onRefresh,
   unreadNotifCount = 0,
   onNotifCountChange,
 }) => {
@@ -1027,12 +1042,12 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   const { t, locale } = useI18n();
   const { avatarImage: contextAvatarImage } = useAvatar();
   const [userGoal, setUserGoal] = useState<'lose' | 'maintain' | 'gain'>(propUserGoal || 'lose');
-  const [bodyComposition, setBodyComposition] = useState<BodyComposition | null>(null);
-  const [trainingCalories, setTrainingCalories] = useState(0);
+  // trainingCalories supprimé - calories viennent d'Apple Health via prop
   const [avatarImageUri, setAvatarImageUri] = useState<string | null>(null);
   const [poidsPage, setPoidsPage] = useState(0);
   const [sommeilPage, setSommeilPage] = useState(0);
   const [chargePage, setChargePage] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   // ── Donnees Apple Sante pour la carte Forme ──
@@ -1064,35 +1079,12 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   const chargeZapScale = useRef(new Animated.Value(1)).current;
   const chargeZapOpacity = useRef(new Animated.Value(1)).current;
 
-  // Calculer les calories des entraînements du jour (uniquement calories réelles)
-  useEffect(() => {
-    const loadTodayTrainings = async () => {
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const trainings = await getTrainings(1);
-        const todayTrainings = trainings.filter(t => t.date === today);
+  // Calories viennent directement d'Apple Health via la prop `calories`
 
-        let totalCals = 0;
-        todayTrainings.forEach(training => {
-          if (training.calories && training.calories > 0) {
-            totalCals += training.calories;
-          }
-        });
-        setTrainingCalories(totalCals);
-      } catch (error) {
-        logger.error('Erreur chargement calories:', error);
-      }
-    };
-    loadTodayTrainings();
-  }, [refreshTrigger]);
-
-  // Charger les donnees Apple Sante pour la carte Forme
+  // Charger les donnees Apple Sante pour la carte Forme (directement depuis HealthKit)
   useEffect(() => {
     const loadHealthData = async () => {
       try {
-        const status = healthConnect.getSyncStatus();
-        if (!status.isConnected) return;
-
         const [hrResult, o2Result, rrResult, exResult, stResult, distResult] = await Promise.allSettled([
           healthConnect.getTodayHeartRate(),
           healthConnect.getOxygenSaturation(),
@@ -1102,15 +1094,22 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           healthConnect.getTodayDistance(),
         ]);
 
+        const hr = hrResult.status === 'fulfilled' && hrResult.value
+          ? { min: hrResult.value.min, max: hrResult.value.max, resting: hrResult.value.resting ?? null }
+          : null;
+        const o2 = o2Result.status === 'fulfilled' && o2Result.value ? o2Result.value.value : null;
+        const rr = rrResult.status === 'fulfilled' && rrResult.value ? rrResult.value.value : null;
+        const exMin = exResult.status === 'fulfilled' ? exResult.value : null;
+        const stand = stResult.status === 'fulfilled' ? stResult.value : null;
+        const dist = distResult.status === 'fulfilled' && distResult.value ? distResult.value.total : null;
+
         setHealthData({
-          heartRate: hrResult.status === 'fulfilled' && hrResult.value
-            ? { min: hrResult.value.min, max: hrResult.value.max, resting: hrResult.value.resting ?? null }
-            : null,
-          oxygen: o2Result.status === 'fulfilled' && o2Result.value ? o2Result.value.value : null,
-          respiratory: rrResult.status === 'fulfilled' && rrResult.value ? rrResult.value.value : null,
-          exerciseMinutes: exResult.status === 'fulfilled' ? exResult.value : null,
-          standHours: stResult.status === 'fulfilled' ? stResult.value : null,
-          distance: distResult.status === 'fulfilled' && distResult.value ? distResult.value.total : null,
+          heartRate: hr,
+          oxygen: o2,
+          respiratory: rr,
+          exerciseMinutes: exMin,
+          standHours: stand,
+          distance: dist,
         });
       } catch (error) {
         logger.error('[Forme] Erreur chargement donnees sante:', error);
@@ -1212,18 +1211,6 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
     loadGoal();
   }, []);
 
-  // Load body composition data
-  useEffect(() => {
-    const loadBodyComposition = async () => {
-      try {
-        const data = await getLatestBodyComposition();
-        setBodyComposition(data);
-      } catch (error) {
-        logger.error('Error loading body composition:', error);
-      }
-    };
-    loadBodyComposition();
-  }, [refreshTrigger]);
 
   // Avatar from context - resolve to URI for SVG rendering
   useEffect(() => {
@@ -1370,13 +1357,40 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
     ? 'rgba(255,255,255,0.06)'
     : '#FFFFFF';
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      if (onRefresh) await onRefresh();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [onRefresh]);
+
+  const navToProfile = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/profile'); }, []);
+  const navToSettings = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/settings'); }, []);
+  const navToStatsWeight = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/stats?tab=poids' as any); }, []);
+  const navToStatsBody = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/stats?tab=corps' as any); }, []);
+  const navToStatsSante = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante' } } as any); }, []);
+  const navToBodyComposition = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/body-composition'); }, []);
+  const navToSleepInput = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/sleep-input'); }, []);
+  const navToGoals = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/goals'); }, []);
+  const navToWeightPredictions = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/weight-predictions'); }, []);
+
   return (
     <ScrollView
       ref={scrollViewRef}
-      style={[styles.container, { backgroundColor: isDark ? '#1A1A1E' : colors.accent, overflow: 'visible' }]}
+      style={[styles.container, { backgroundColor: isDark ? colors.accentDark : colors.accent, overflow: 'visible' }]}
       contentContainerStyle={[styles.scrollContent, { overflow: 'visible' }]}
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled={true}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={colors.accent}
+          colors={[colors.accent]}
+        />
+      }
     >
       {/* ═══════════════════════════════════════════════════════════════ */}
       {/* HEADER PROPRE - Cercles identiques bien alignés */}
@@ -1387,22 +1401,22 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
           {/* GAUCHE - Photo de profil (forme selectionnee) */}
           <TouchableOpacity
-            onPress={() => router.push('/profile')}
+            onPress={navToProfile}
             activeOpacity={0.8}
             style={styles.leftSection}
           >
             <FramedProfilePhoto
               uri={profilePhoto}
               size={70}
-              borderColor="#FFFFFF"
-              borderWidth={2.5}
+              borderColor="transparent"
+              borderWidth={0}
               placeholderIconSize={34}
             />
           </TouchableOpacity>
 
           {/* CENTRE - Texte */}
           <View style={styles.centerSection}>
-            <Text style={[styles.greetingClean, { color: isDark ? 'rgba(255,255,255,0.6)' : '#FFFFFF' }]}>
+            <Text style={[styles.greetingClean, { color: '#FFFFFF' }]}>
               {getGreeting()}
             </Text>
             <Text style={[styles.nameClean, { color: '#FFFFFF' }]}>
@@ -1427,10 +1441,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                 backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.25)',
                 borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)',
               }]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                router.push('/(tabs)/settings');
-              }}
+              onPress={navToSettings}
               activeOpacity={0.7}
             >
               <Settings size={20} color="#FFFFFF" strokeWidth={2} />
@@ -1504,7 +1515,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           };
 
           return (
-          <View style={[styles.reportGridCard, { backgroundColor: cardBg, flex: 1, padding: 0, overflow: 'hidden', borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+          <View style={[styles.reportGridCard, { backgroundColor: cardBg, flex: 1, padding: 0, overflow: 'hidden', borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
             {/* Header fixe avec icone */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingTop: 10, paddingBottom: 2 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
@@ -1540,7 +1551,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               {/* ═══ PAGE 1: Arc progression perte de poids ═══ */}
               <TouchableOpacity
                 activeOpacity={0.8}
-                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/stats?tab=poids'); }}
+                onPress={navToStatsWeight}
                 style={{ width: H_CARD_PAGE_W, paddingHorizontal: 14, paddingVertical: 6, justifyContent: 'center' }}
               >
                 {(() => {
@@ -1626,7 +1637,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                         <View style={{ width: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', marginHorizontal: 2 }} />
                         {/* Objectif - centré */}
                         <TouchableOpacity
-                          onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/goals'); }}
+                          onPress={navToGoals}
                           activeOpacity={0.6}
                           style={{ flex: 1, alignItems: 'center' }}
                         >
@@ -1661,7 +1672,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                 {/* Composition compacte */}
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/stats?tab=corps'); }}
+                  onPress={navToStatsBody}
                 >
                   <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, textAlign: 'center', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>Composition</Text>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
@@ -1757,7 +1768,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               {/* ═══ PAGE 3: IMC (BMI) - Compteur balance ═══ */}
               <TouchableOpacity
                 activeOpacity={0.8}
-                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/body-composition'); }}
+                onPress={navToBodyComposition}
                 style={{ width: H_CARD_PAGE_W, paddingHorizontal: 6, paddingBottom: 4, justifyContent: 'center' }}
               >
                 {(() => {
@@ -1771,7 +1782,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                           Renseigne ta taille{'\n'}dans ton profil
                         </Text>
                         <TouchableOpacity
-                          onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/profile'); }}
+                          onPress={navToProfile}
                           style={{ marginTop: 6, backgroundColor: colors.accent + '20', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 }}
                         >
                           <Text style={{ fontSize: 10, fontWeight: '700', color: colors.accent }}>Mon profil</Text>
@@ -1868,7 +1879,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               {/* ═══ PAGE 4: Prédictions ═══ */}
               <TouchableOpacity
                 activeOpacity={0.8}
-                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/weight-predictions'); }}
+                onPress={navToWeightPredictions}
                 style={{ width: H_CARD_PAGE_W, paddingHorizontal: 14, paddingBottom: 8, justifyContent: 'center' }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 10 }}>
@@ -1926,38 +1937,41 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         {/* ═══ SOMMEIL - 3 pages swipeable ═══ */}
         {(() => {
           const CARD_W = H_CARD_PAGE_W;
-          const sleepStatus = sleepHours === 0 ? { text: 'Aucune donnée', color: '#9CA3AF' } : sleepHours >= 7 ? { text: 'Excellent', color: '#10B981' } : sleepHours >= 5 ? { text: 'Correct', color: '#F59E0B' } : { text: 'Insuffisant', color: '#EF4444' };
+          const sleepStatus = sleepHours === 0 ? { text: 'Aucune donnee', color: '#9CA3AF' } : sleepHours >= 7 ? { text: 'Excellent', color: '#10B981' } : sleepHours >= 5 ? { text: 'Correct', color: '#F59E0B' } : { text: 'Insuffisant', color: '#EF4444' };
           const sleepQuality = sleepGoal > 0 ? Math.min(Math.round((sleepHours / sleepGoal) * 100), 100) : 0;
           const sleepMinutes = Math.round((sleepHours % 1) * 60);
           const sleepH = Math.floor(sleepHours);
-          // Couleurs bleu nuit
-          const NIGHT = '#1E3A5F';
+          const NIGHT = '#0F172A';
+          const NIGHT_DEEP = '#060D1F';
           const NIGHT_MID = '#2563EB';
           const NIGHT_LIGHT = '#60A5FA';
           const NIGHT_SOFT = '#93C5FD';
           const STAR_COLOR = '#FDE68A';
           const MOON_COLOR = '#FBBF24';
+          const avgH = Math.floor(sleepWeeklyAvg);
+          const avgM = Math.round((sleepWeeklyAvg % 1) * 60);
+          const avgQuality = sleepGoal > 0 ? Math.min(Math.round((sleepWeeklyAvg / sleepGoal) * 100), 100) : 0;
+          const dateLabel = sleepDate ? format(parseISO(sleepDate), 'EEE d MMM', { locale: fr }) : '';
           return (
-          <View style={[styles.reportGridCard, { backgroundColor: cardBg, flex: 1, padding: 0, overflow: 'hidden', borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-            {/* Header avec bouton + */}
+          <View style={[styles.reportGridCard, { backgroundColor: cardBg, flex: 1, padding: 0, overflow: 'hidden', borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
+            {/* Header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 10, paddingBottom: 2 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                 <Moon size={14} color={NIGHT_MID} />
                 <Text style={[styles.reportGridCardTitle, { color: colors.textMuted }]}>Sommeil</Text>
               </View>
-              <TouchableOpacity onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/sleep-input'); }} activeOpacity={0.7}
+              <TouchableOpacity onPress={navToSleepInput} activeOpacity={0.7}
                 style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: NIGHT_MID, justifyContent: 'center', alignItems: 'center' }}>
                 <Plus size={14} color="#FFFFFF" strokeWidth={3} />
               </TouchableOpacity>
             </View>
             <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={(e) => { setSommeilPage(Math.round(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width)); }} scrollEventThrottle={16}>
-              {/* ── Page 1: Ciel étoilé pleine largeur + Valeur ── */}
-              <TouchableOpacity activeOpacity={0.8} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/sleep'); }} style={{ width: CARD_W, paddingBottom: 6 }}>
+
+              {/* ── Page 1: Ciel nuit bleu marine + Valeur ── */}
+              <TouchableOpacity activeOpacity={0.8} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante' } } as any); }} style={{ width: CARD_W, paddingBottom: 6 }}>
                 <View style={{ height: 100, justifyContent: 'center', alignItems: 'center', position: 'relative', marginTop: 2 }}>
-                  {/* Fond ciel nuit - pleine largeur */}
-                  <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 10, borderRadius: 0, backgroundColor: isDark ? '#0F172A' : '#1E293B', overflow: 'hidden' }}>
-                    <LinearGradient colors={isDark ? ['#0F172A', '#1E3A5F'] : ['#1E293B', '#1E3A5F']} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-                  </View>
+                  {/* Fond ciel bleu marine - pleine largeur */}
+                  <LinearGradient colors={[NIGHT_DEEP, NIGHT, '#1E3A5F']} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 10, borderRadius: 0 }} />
                   {/* Etoiles dorees */}
                   <Animated.View style={{ position: 'absolute', top: 8, left: 14, opacity: sleepStar1 }}><Text style={{ fontSize: 6, color: STAR_COLOR }}>✦</Text></Animated.View>
                   <Animated.View style={{ position: 'absolute', top: 20, left: 32, opacity: sleepStar2 }}><Text style={{ fontSize: 4, color: STAR_COLOR }}>✦</Text></Animated.View>
@@ -1993,45 +2007,82 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                     <Animated.Text style={{ fontSize: 14, fontWeight: '900', fontStyle: 'italic', color: NIGHT_MID, position: 'absolute', left: 13, top: -12, opacity: sleepZzz3Op, transform: [{ translateY: sleepZzz3Y }] }}>Z</Animated.Text>
                   </View>
                 </View>
-                {/* Valeur + badge */}
-                <View style={{ alignItems: 'center', marginTop: 2, paddingHorizontal: 10 }}>
-                  <Text style={{ fontSize: 22, fontWeight: '900', color: colors.textPrimary, letterSpacing: -1 }}>{sleepHours > 0 ? `${sleepH}h${sleepMinutes.toString().padStart(2, '0')}` : '--'}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                    <View style={{ backgroundColor: sleepStatus.color + '18', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                      <Text style={{ fontSize: 9, fontWeight: '700', color: sleepStatus.color }}>{sleepStatus.text}</Text>
+                {/* Derniere nuit (gauche) | Score (droite) */}
+                <View style={{ flexDirection: 'row', marginTop: 4, paddingHorizontal: 10, gap: 8 }}>
+                  {/* Gauche - Derniere nuit */}
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 8, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 1 }}>Derniere nuit</Text>
+                    <Text style={{ fontSize: 20, fontWeight: '900', color: colors.textPrimary, letterSpacing: -1 }}>
+                      {sleepHours > 0 ? `${sleepH}h${sleepMinutes.toString().padStart(2, '0')}` : '--'}
+                    </Text>
+                    {dateLabel ? <Text style={{ fontSize: 9, color: colors.textMuted, marginTop: 1 }}>{dateLabel}</Text> : null}
+                    <View style={{ backgroundColor: sleepStatus.color + '22', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5, alignSelf: 'flex-start', marginTop: 3 }}>
+                      <Text style={{ fontSize: 8, fontWeight: '700', color: sleepStatus.color }}>{sleepStatus.text}</Text>
                     </View>
-                    {sleepGoal > 0 && (
-                      <Text style={{ fontSize: 9, fontWeight: '500', color: colors.textMuted }}>Objectif {sleepGoal}h</Text>
-                    )}
+                  </View>
+                  {/* Separateur */}
+                  <View style={{ width: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)', marginVertical: 2 }} />
+                  {/* Droite - Score de sommeil */}
+                  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 8, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 2 }}>Score</Text>
+                    <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                      <Svg width={44} height={44} viewBox="0 0 44 44">
+                        <SvgCircle cx="22" cy="22" r="18" stroke="rgba(37,99,235,0.18)" strokeWidth="4" fill="none" />
+                        <SvgCircle cx="22" cy="22" r="18" stroke={NIGHT_MID} strokeWidth="4" fill="none" strokeLinecap="round"
+                          strokeDasharray={`${(sleepQuality / 100) * 113} 113`} transform="rotate(-90 22 22)" />
+                      </Svg>
+                      <View style={{ position: 'absolute', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 12, fontWeight: '900', color: NIGHT_MID, letterSpacing: -0.5 }}>{sleepQuality}</Text>
+                      </View>
+                    </View>
+                    <Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 1 }}>/ 100</Text>
                   </View>
                 </View>
               </TouchableOpacity>
 
-              {/* ── Page 2: Métriques ── */}
-              <View style={{ width: CARD_W, paddingHorizontal: 12, paddingBottom: 6, justifyContent: 'center' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                  {sleepDebt > 0 ? <AlertTriangle size={12} color="#EF4444" /> : <CheckCircle size={12} color="#10B981" />}
-                  <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>Dette</Text>
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: sleepDebt > 0 ? '#EF4444' : '#10B981', marginLeft: 'auto' }}>{sleepDebt > 0 ? `${sleepDebt.toFixed(1)}h` : '0h'}</Text>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                  <Moon size={12} color={NIGHT_MID} />
-                  <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>Qualité</Text>
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: sleepQuality >= 80 ? '#10B981' : sleepQuality >= 60 ? '#F59E0B' : '#EF4444', marginLeft: 'auto' }}>{sleepQuality}%</Text>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                  <Target size={12} color={NIGHT_MID} />
-                  <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>Objectif</Text>
-                  <View style={{ marginLeft: 'auto', backgroundColor: sleepHours >= sleepGoal ? '#10B98120' : '#F59E0B20', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                    <Text style={{ fontSize: 10, fontWeight: '700', color: sleepHours >= sleepGoal ? '#10B981' : '#F59E0B' }}>{sleepGoal}h</Text>
+              {/* ── Page 2: Derniere nuit vs Moy. 7 jours ── */}
+              <View style={{ width: CARD_W, paddingHorizontal: 12, paddingVertical: 6, justifyContent: 'center' }}>
+                <View style={{ flexDirection: 'row', gap: 8, flex: 1 }}>
+                  {/* Gauche - Derniere nuit */}
+                  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>Derniere nuit</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: colors.textPrimary, letterSpacing: -1 }}>
+                      {sleepHours > 0 ? `${sleepH}h${sleepMinutes.toString().padStart(2, '0')}` : '--'}
+                    </Text>
+                    {dateLabel ? <Text style={{ fontSize: 10, fontWeight: '500', color: colors.textMuted, marginTop: 2 }}>{dateLabel}</Text> : null}
+                    <View style={{ backgroundColor: sleepStatus.color + '18', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4 }}>
+                      <Text style={{ fontSize: 9, fontWeight: '700', color: sleepStatus.color }}>{sleepStatus.text}</Text>
+                    </View>
+                    <View style={{ height: 4, borderRadius: 2, backgroundColor: isDark ? 'rgba(37,99,235,0.15)' : 'rgba(37,99,235,0.1)', overflow: 'hidden', marginTop: 6, width: '90%' }}>
+                      <View style={{ height: '100%', width: `${Math.min(sleepQuality, 100)}%`, borderRadius: 2, backgroundColor: NIGHT_MID }} />
+                    </View>
                   </View>
-                </View>
-                <View style={{ height: 6, borderRadius: 3, backgroundColor: isDark ? 'rgba(37,99,235,0.15)' : 'rgba(37,99,235,0.1)', overflow: 'hidden' }}>
-                  <LinearGradient colors={[NIGHT_MID, NIGHT]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: '100%', width: `${Math.min(sleepQuality, 100)}%`, borderRadius: 3 }} />
+                  <View style={{ width: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', marginVertical: 8 }} />
+                  {/* Droite - Moyenne semaine */}
+                  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>Moy. 7 jours</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: NIGHT_MID, letterSpacing: -1 }}>
+                      {sleepWeeklyAvg > 0 ? `${avgH}h${avgM.toString().padStart(2, '0')}` : '--'}
+                    </Text>
+                    {sleepDebt > 0 ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 6 }}>
+                        <AlertTriangle size={10} color="#EF4444" />
+                        <Text style={{ fontSize: 9, fontWeight: '700', color: '#EF4444' }}>Dette {formatHoursHM(sleepDebt)}</Text>
+                      </View>
+                    ) : (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 6 }}>
+                        <CheckCircle size={10} color="#10B981" />
+                        <Text style={{ fontSize: 9, fontWeight: '700', color: '#10B981' }}>Pas de dette</Text>
+                      </View>
+                    )}
+                    <View style={{ height: 4, borderRadius: 2, backgroundColor: isDark ? 'rgba(37,99,235,0.15)' : 'rgba(37,99,235,0.1)', overflow: 'hidden', marginTop: 6, width: '90%' }}>
+                      <View style={{ height: '100%', width: `${Math.min(avgQuality, 100)}%`, borderRadius: 2, backgroundColor: NIGHT_MID, opacity: 0.6 }} />
+                    </View>
+                  </View>
                 </View>
               </View>
 
-              {/* ── Page 3: Tendance + Actions ── */}
+              {/* ── Page 3: Anneau de progression + Actions ── */}
               <View style={{ width: CARD_W, paddingHorizontal: 12, paddingBottom: 6, justifyContent: 'center', alignItems: 'center' }}>
                 <View style={{ width: 56, height: 56, alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
                   <Svg width={56} height={56} viewBox="0 0 60 60">
@@ -2041,16 +2092,16 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                   <View style={{ position: 'absolute', alignItems: 'center' }}><Text style={{ fontSize: 13, fontWeight: '900', color: NIGHT_MID }}>{sleepQuality}%</Text></View>
                 </View>
                 <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted, textAlign: 'center', marginBottom: 6 }}>{sleepHours >= sleepGoal ? 'Objectif atteint !' : `Encore ${(sleepGoal - sleepHours).toFixed(1)}h`}</Text>
-                {/* Boutons */}
-                <TouchableOpacity onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/sleep-input'); }} activeOpacity={0.7}
+                <TouchableOpacity onPress={navToSleepInput} activeOpacity={0.7}
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: NIGHT_MID + '18', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, marginBottom: 4 }}>
                   <Plus size={12} color={NIGHT_MID} strokeWidth={2.5} />
                   <Text style={{ fontSize: 10, fontWeight: '700', color: NIGHT_MID }}>Ajouter</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/sleep'); }} activeOpacity={0.7}>
-                  <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted }}>Voir détails</Text>
+                <TouchableOpacity onPress={navToStatsSante} activeOpacity={0.7}>
+                  <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted }}>Voir details</Text>
                 </TouchableOpacity>
               </View>
+
             </ScrollView>
             {/* Dots */}
             <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 5, paddingBottom: 6, paddingTop: 2 }}>
@@ -2065,7 +2116,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           const CARD_W = H_CARD_PAGE_W;
           const cc = chargeConfig;
           return (
-          <View style={[styles.reportGridCard, { backgroundColor: cardBg, flex: 1, padding: 0, overflow: 'hidden', borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+          <View style={[styles.reportGridCard, { backgroundColor: cardBg, flex: 1, padding: 0, overflow: 'hidden', borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
             {/* Header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 10, paddingBottom: 2 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
@@ -2111,7 +2162,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                   <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante', section: 'calories' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Flame size={16} color="#F97316" />
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#F97316' }}>{(() => { const dc = calories > 0 ? calories : trainingCalories; return dc > 0 ? dc.toLocaleString('fr-FR') : '--'; })()}</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#F97316' }}>{calories > 0 ? calories.toLocaleString('fr-FR') : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>kcal</Text>
                     </View>
                   </TouchableOpacity>
@@ -2160,8 +2211,8 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               </View>
 
               {/* ── Page 3: Message charge principal ── */}
-              <TouchableOpacity activeOpacity={0.8} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/charge'); }} style={{ width: CARD_W, paddingHorizontal: 12, paddingBottom: 4 }}>
-                <View style={{ height: 46, justifyContent: 'center', alignItems: 'center' }}>
+              <TouchableOpacity activeOpacity={0.8} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/charge'); }} style={{ width: CARD_W, paddingHorizontal: 12, paddingVertical: 4, flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ height: 52, justifyContent: 'center', alignItems: 'center' }}>
                   <Animated.View style={{ transform: [{ scale: chargePulse }] }}>
                     <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: cc.color + '15', justifyContent: 'center', alignItems: 'center' }}>
                       {cc.icon === 'moon' ? <Moon size={20} color={cc.color} /> : cc.icon === 'shield' ? <CheckCircle size={20} color={cc.color} /> : cc.icon === 'zap' ? <Zap size={20} color={cc.color} /> : <AlertTriangle size={20} color={cc.color} />}
@@ -2230,8 +2281,8 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
       {/* PAS / KCAL / SÉRIE et OUTILS supprimés - déplacés dans onglet Menu */}
 
-      {/* DÉFIS DU JOUR - Quêtes avec XP */}
-      <View style={{ marginBottom: 16, marginTop: 8 }}>
+      {/* DEFIS DU JOUR - Quetes avec XP */}
+      <View style={{ marginBottom: 16, marginTop: 0 }}>
         <HomeChallengesSection />
       </View>
 

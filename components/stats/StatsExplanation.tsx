@@ -13,7 +13,7 @@ interface StatsExplanationProps {
   color?: string;
 }
 
-export const StatsExplanation: React.FC<StatsExplanationProps> = ({
+export const StatsExplanation: React.FC<StatsExplanationProps> = React.memo(({
   title,
   text,
   color,
@@ -36,7 +36,7 @@ export const StatsExplanation: React.FC<StatsExplanationProps> = ({
       </Text>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

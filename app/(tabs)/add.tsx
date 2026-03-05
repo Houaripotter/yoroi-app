@@ -47,7 +47,7 @@ import { useI18n } from '@/lib/I18nContext';
 import { SPACING, RADIUS } from '@/constants/design';
 import { addWeight, addMeasurementRecord } from '@/lib/database';
 import { format, Locale } from 'date-fns';
-import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
+import { fr, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 import { NumericInput } from '@/components/NumericInput';
 import { WeightInput, WeightInputHandle } from '@/components/WeightInput';
 import { backupReminderService } from '@/lib/backupReminderService';
@@ -55,7 +55,6 @@ import { exportDataToJSON, exportDataToCSV } from '@/lib/exportService';
 import { draftService, WeightDraft } from '@/lib/draftService';
 import logger from '@/lib/security/logger';
 import HealthConnect from '@/lib/healthConnect';
-import { ContextualTip } from '@/components/ContextualTip';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
 
@@ -75,17 +74,15 @@ const MOODS: { id: string; icon: LucideIcon; labelKey: string; color: string }[]
 ];
 
 // Date locales map
-const DATE_LOCALES: { [key: string]: Locale } = {
-  fr, en: enUS, es, pt, de, it, ru, ar, zh: zhCN
-};
+
 
 export default function AddScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark, screenBackground } = useTheme();
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const dateLocale = DATE_LOCALES[language] || fr;
+  const dateLocale = fr;
 
   // Weight input ref - Isolé pour éviter les re-renders
   const weightInputRef = useRef<WeightInputHandle>(null);
@@ -132,6 +129,9 @@ export default function AddScreen() {
 
   // Rating popup state
   const [showRatingPopup, setShowRatingPopup] = useState(false);
+
+  // Apple Health pre-fill tracking
+  const [healthPreFilled, setHealthPreFilled] = useState<{ fatPercent?: boolean; musclePercent?: boolean }>({});
 
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
@@ -212,6 +212,43 @@ export default function AddScreen() {
 
     loadDraft();
   }, [t]);
+
+  // Pre-fill body composition from Apple Health
+  useEffect(() => {
+    const loadHealthComposition = async () => {
+      try {
+        const data = await HealthConnect.getBodyComposition();
+        if (!data) return;
+
+        const filled: { fatPercent?: boolean; musclePercent?: boolean } = {};
+
+        if (data.bodyFatPercentage && data.bodyFatPercentage > 0 && !fatPercent) {
+          setFatPercent(String(Math.round(data.bodyFatPercentage * 10) / 10));
+          filled.fatPercent = true;
+        }
+
+        if (data.leanBodyMass && data.leanBodyMass > 0 && !musclePercent) {
+          // leanBodyMass is in kg, convert to percentage if weight is available
+          const weight = weightInputRef.current?.getValue();
+          if (weight && weight > 0) {
+            const musclePercentValue = Math.round((data.leanBodyMass / weight) * 1000) / 10;
+            if (musclePercentValue > 0 && musclePercentValue <= 100) {
+              setMusclePercent(String(musclePercentValue));
+              filled.musclePercent = true;
+            }
+          }
+        }
+
+        if (filled.fatPercent || filled.musclePercent) {
+          setHealthPreFilled(filled);
+        }
+      } catch (e) {
+        // Silent fail - Apple Health may not be available
+      }
+    };
+
+    loadHealthComposition();
+  }, []);
 
   // Auto-sauvegarder quand les valeurs changent
   const autoSaveDraft = () => {
@@ -597,7 +634,7 @@ export default function AddScreen() {
           }}
           activeOpacity={0.7}
         >
-          <View style={[styles.trainingQuickIcon, { backgroundColor: '#8B5CF6' }]}>
+          <View style={[styles.trainingQuickIcon, { backgroundColor: colors.accent }]}>
             <Dumbbell size={24} color="#FFFFFF" />
           </View>
           <View style={styles.trainingQuickContent}>
@@ -656,7 +693,10 @@ export default function AddScreen() {
               <View style={[styles.compIcon, { backgroundColor: 'rgba(239,68,68,0.15)' }]}>
                 <Flame size={18} color="#EF4444" />
               </View>
-              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>{t('add.fat')}</Text>
+              <View style={styles.compLabelRow}>
+                <Text style={[styles.compLabel, { color: colors.textPrimary }]}>{t('add.fat')}</Text>
+                {healthPreFilled.fatPercent && <Cloud size={10} color={colors.textMuted} />}
+              </View>
               <NumericInput
                 value={fatPercent}
                 onValueChange={setFatPercent}
@@ -676,7 +716,10 @@ export default function AddScreen() {
               <View style={[styles.compIcon, { backgroundColor: 'rgba(34,197,94,0.15)' }]}>
                 <Dumbbell size={18} color="#22C55E" />
               </View>
-              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>{t('add.muscle')}</Text>
+              <View style={styles.compLabelRow}>
+                <Text style={[styles.compLabel, { color: colors.textPrimary }]}>{t('add.muscle')}</Text>
+                {healthPreFilled.musclePercent && <Cloud size={10} color={colors.textMuted} />}
+              </View>
               <NumericInput
                 value={musclePercent}
                 onValueChange={setMusclePercent}
@@ -798,7 +841,7 @@ export default function AddScreen() {
         {/* MENSURATIONS */}
         {/* ═══════════════════════════════════════════ */}
         <Card>
-          <SectionHeader icon={Ruler} color="#8B5CF6" title={t('add.measurements')} />
+          <SectionHeader icon={Ruler} color={colors.accentText} title={t('add.measurements')} />
 
           <InputRow
             label={t('add.waist')}
@@ -806,7 +849,7 @@ export default function AddScreen() {
             onChangeText={setWaist}
             placeholder="00"
             suffix="cm"
-            color="#8B5CF6"
+            color={colors.accentText}
           />
           <InputRow
             label={t('add.navel')}
@@ -814,7 +857,7 @@ export default function AddScreen() {
             onChangeText={setNavel}
             placeholder="00"
             suffix="cm"
-            color="#8B5CF6"
+            color={colors.accentText}
           />
           <InputRow
             label={t('add.hips')}
@@ -822,7 +865,7 @@ export default function AddScreen() {
             onChangeText={setHips}
             placeholder="00"
             suffix="cm"
-            color="#8B5CF6"
+            color={colors.accentText}
           />
           <InputRow
             label={t('add.chest')}
@@ -830,7 +873,7 @@ export default function AddScreen() {
             onChangeText={setChest}
             placeholder="00"
             suffix="cm"
-            color="#8B5CF6"
+            color={colors.accentText}
           />
           <InputRow
             label={t('add.neck')}
@@ -838,7 +881,7 @@ export default function AddScreen() {
             onChangeText={setNeck}
             placeholder="00"
             suffix="cm"
-            color="#8B5CF6"
+            color={colors.accentText}
           />
 
           {/* Tour de bras - Gauche / Droite */}
@@ -857,7 +900,7 @@ export default function AddScreen() {
                   allowDecimal={true}
                   maxDecimals={1}
                   maxLength={4}
-                  color="#8B5CF6"
+                  color={colors.accentText}
                   backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
                   inputStyle={styles.dualInput}
                 />
@@ -872,7 +915,7 @@ export default function AddScreen() {
                   allowDecimal={true}
                   maxDecimals={1}
                   maxLength={4}
-                  color="#8B5CF6"
+                  color={colors.accentText}
                   backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
                   inputStyle={styles.dualInput}
                 />
@@ -896,7 +939,7 @@ export default function AddScreen() {
                   allowDecimal={true}
                   maxDecimals={1}
                   maxLength={4}
-                  color="#8B5CF6"
+                  color={colors.accentText}
                   backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
                   inputStyle={styles.dualInput}
                 />
@@ -911,7 +954,7 @@ export default function AddScreen() {
                   allowDecimal={true}
                   maxDecimals={1}
                   maxLength={4}
-                  color="#8B5CF6"
+                  color={colors.accentText}
                   backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
                   inputStyle={styles.dualInput}
                 />
@@ -935,7 +978,7 @@ export default function AddScreen() {
                   allowDecimal={true}
                   maxDecimals={1}
                   maxLength={4}
-                  color="#8B5CF6"
+                  color={colors.accentText}
                   backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
                   inputStyle={styles.dualInput}
                 />
@@ -950,7 +993,7 @@ export default function AddScreen() {
                   allowDecimal={true}
                   maxDecimals={1}
                   maxLength={4}
-                  color="#8B5CF6"
+                  color={colors.accentText}
                   backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
                   inputStyle={styles.dualInput}
                 />
@@ -1193,9 +1236,6 @@ export default function AddScreen() {
         </View>
       </Modal>
 
-      {/* Tip contextuel */}
-      <ContextualTip tipId="add" />
-
       {/* Rating Popup */}
       <RatingPopup
         visible={showRatingPopup}
@@ -1426,6 +1466,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginBottom: SPACING.sm,
+  },
+  compLabelRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 4,
   },
   compInputWrapper: {
     flexDirection: 'row',

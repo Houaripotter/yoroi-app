@@ -31,7 +31,7 @@ import {
 } from 'lucide-react-native';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { format, Locale } from 'date-fns';
-import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
+import { fr, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -49,9 +49,7 @@ import { notificationService } from '@/lib/notificationService';
 import logger from '@/lib/security/logger';
 
 // Map des locales date-fns par langue
-const DATE_LOCALES: Record<string, Locale> = {
-  fr, en: enUS, es, pt, de, it, ru, ar, zh: zhCN
-};
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -76,8 +74,8 @@ export default function SleepScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const { t, language } = useI18n();
-  const dateLocale = DATE_LOCALES[language] || fr;
+  const { t } = useI18n();
+  const dateLocale = fr;
 
   const [entries, setEntries] = useState<SleepEntry[]>([]);
   const [stats, setStats] = useState<SleepStats | null>(null);
@@ -176,10 +174,14 @@ export default function SleepScreen() {
 
   const advice = stats ? getSleepAdvice(stats.sleepDebtHours) : null;
 
+  // Fond bleu marine nuit
+  const nightBg = '#0B1120';
+  const nightCard = '#131D36';
+
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+    <View style={[styles.screen, { backgroundColor: nightBg }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: colors.backgroundCard }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: nightCard }]}>
         <TouchableOpacity
           disabled={isNavigating}
           onPress={() => {
@@ -191,20 +193,20 @@ export default function SleepScreen() {
           }}
           style={styles.backBtn}
         >
-          <ArrowLeft size={24} color={colors.textPrimary} />
+          <ArrowLeft size={24} color="#E8ECF4" />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('sleep.title')}</Text>
+        <Text style={[styles.title, { color: '#E8ECF4' }]}>{t('sleep.title')}</Text>
         <Moon size={24} color="#8B5CF6" />
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Carte principale */}
-        <View style={[styles.mainCard, { backgroundColor: colors.backgroundCard }]}>
+        <View style={[styles.mainCard, { backgroundColor: nightCard }]}>
           <View style={styles.mainHeader}>
             <View style={[styles.mainIconContainer, { backgroundColor: '#8B5CF615' }]}>
               <Battery size={24} color="#8B5CF6" strokeWidth={2.5} />
             </View>
-            <Text style={[styles.mainTitle, { color: colors.textMuted }]}>{t('sleep.sleepDebt')}</Text>
+            <Text style={[styles.mainTitle, { color: '#7B8DB5' }]}>{t('sleep.sleepDebt')}</Text>
           </View>
           <Text style={[styles.debtValue, { color: advice?.severity === 'good' ? '#10B981' : advice?.severity === 'danger' ? '#EF4444' : '#F59E0B' }]}>
             {stats?.sleepDebtHours || 0}<Text style={styles.debtUnit}>h</Text>
@@ -222,29 +224,29 @@ export default function SleepScreen() {
 
         {/* Stats */}
         <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
+          <View style={[styles.statCard, { backgroundColor: nightCard }]}>
             <View style={[styles.statIconContainer, { backgroundColor: '#8B5CF615' }]}>
               <Clock size={18} color="#8B5CF6" strokeWidth={2.5} />
             </View>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+            <Text style={[styles.statValue, { color: '#E8ECF4' }]}>
               {stats ? formatSleepDuration(stats.averageDuration) : '--'}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('sleep.average')}</Text>
+            <Text style={[styles.statLabel, { color: '#7B8DB5' }]}>{t('sleep.average')}</Text>
           </View>
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
+          <View style={[styles.statCard, { backgroundColor: nightCard }]}>
             <View style={[styles.statIconContainer, { backgroundColor: '#F59E0B15' }]}>
               <Star size={18} color="#F59E0B" strokeWidth={2.5} />
             </View>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+            <Text style={[styles.statValue, { color: '#E8ECF4' }]}>
               {stats ? (stats.averageQuality % 1 === 0 ? `${stats.averageQuality}` : `${stats.averageQuality.toFixed(1)}`) : '--'}/5
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('sleep.quality')}</Text>
+            <Text style={[styles.statLabel, { color: '#7B8DB5' }]}>{t('sleep.quality')}</Text>
           </View>
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-            <View style={[styles.statIconContainer, { backgroundColor: stats?.trend === 'improving' ? '#10B98115' : stats?.trend === 'declining' ? '#EF444415' : colors.border }]}>
+          <View style={[styles.statCard, { backgroundColor: nightCard }]}>
+            <View style={[styles.statIconContainer, { backgroundColor: stats?.trend === 'improving' ? '#10B98115' : stats?.trend === 'declining' ? '#EF444415' : '#1E2D4D' }]}>
               {stats?.trend === 'improving' && <TrendingUp size={18} color="#10B981" strokeWidth={2.5} />}
               {stats?.trend === 'declining' && <TrendingDown size={18} color="#EF4444" strokeWidth={2.5} />}
-              {stats?.trend === 'stable' && <Target size={18} color={colors.textMuted} strokeWidth={2.5} />}
+              {stats?.trend === 'stable' && <Target size={18} color="#7B8DB5" strokeWidth={2.5} />}
             </View>
             <View style={{ alignItems: 'center', marginVertical: 4 }}>
               {stats?.trend === 'improving' ? (
@@ -252,73 +254,73 @@ export default function SleepScreen() {
               ) : stats?.trend === 'declining' ? (
                 <TrendingDown size={20} color="#EF4444" strokeWidth={2.5} />
               ) : (
-                <Minus size={20} color={colors.textPrimary} strokeWidth={2.5} />
+                <Minus size={20} color="#E8ECF4" strokeWidth={2.5} />
               )}
             </View>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('sleep.trend')}</Text>
+            <Text style={[styles.statLabel, { color: '#7B8DB5' }]}>{t('sleep.trend')}</Text>
           </View>
         </View>
 
         {/* Objectif */}
-        <View style={[styles.goalCard, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.goalTitle, { color: colors.textMuted }]}>{t('sleep.sleepGoal')}</Text>
+        <View style={[styles.goalCard, { backgroundColor: nightCard }]}>
+          <Text style={[styles.goalTitle, { color: '#7B8DB5' }]}>{t('sleep.sleepGoal')}</Text>
           <View style={styles.goalRow}>
-            <TouchableOpacity onPress={() => handleGoalChange(-30)} style={[styles.goalBtn, { backgroundColor: colors.border }]}>
-              <Text style={[styles.goalBtnText, { color: colors.textPrimary }]}>-30min</Text>
+            <TouchableOpacity onPress={() => handleGoalChange(-30)} style={[styles.goalBtn, { backgroundColor: '#1E2D4D' }]}>
+              <Text style={[styles.goalBtnText, { color: '#E8ECF4' }]}>-30min</Text>
             </TouchableOpacity>
-            <Text style={[styles.goalValue, { color: colors.textPrimary }]}>{formatSleepDuration(goal)}</Text>
-            <TouchableOpacity onPress={() => handleGoalChange(30)} style={[styles.goalBtn, { backgroundColor: colors.accent }]}>
-              <Text style={[styles.goalBtnTextLight, { color: colors.textOnGold }]}>+30min</Text>
+            <Text style={[styles.goalValue, { color: '#E8ECF4' }]}>{formatSleepDuration(goal)}</Text>
+            <TouchableOpacity onPress={() => handleGoalChange(30)} style={[styles.goalBtn, { backgroundColor: '#8B5CF6' }]}>
+              <Text style={[styles.goalBtnTextLight, { color: '#FFFFFF' }]}>+30min</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Notifications */}
-        <View style={[styles.notificationCard, { backgroundColor: colors.backgroundCard }]}>
+        <View style={[styles.notificationCard, { backgroundColor: nightCard }]}>
           <View style={styles.notificationHeader}>
-            {notificationsEnabled ? <Bell size={18} color="#8B5CF6" /> : <BellOff size={18} color={colors.textMuted} />}
-            <Text style={[styles.notificationTitle, { color: colors.textPrimary }]}>{t('sleep.bedtimeReminder')}</Text>
+            {notificationsEnabled ? <Bell size={18} color="#8B5CF6" /> : <BellOff size={18} color="#7B8DB5" />}
+            <Text style={[styles.notificationTitle, { color: '#E8ECF4' }]}>{t('sleep.bedtimeReminder')}</Text>
             <Switch
               value={notificationsEnabled}
               onValueChange={handleToggleNotifications}
-              trackColor={{ false: colors.border, true: '#8B5CF680' }}
-              thumbColor={notificationsEnabled ? '#8B5CF6' : colors.textMuted}
+              trackColor={{ false: '#1E2D4D', true: '#8B5CF680' }}
+              thumbColor={notificationsEnabled ? '#8B5CF6' : '#7B8DB5'}
             />
           </View>
 
           {notificationsEnabled && (
             <>
-              <Text style={[styles.notificationSubtext, { color: colors.textMuted }]}>
+              <Text style={[styles.notificationSubtext, { color: '#7B8DB5' }]}>
                 {t('sleep.reminderDescription')}
               </Text>
 
               {!showNotificationSettings ? (
                 <TouchableOpacity
-                  style={[styles.notificationTimeButton, { backgroundColor: colors.background }]}
+                  style={[styles.notificationTimeButton, { backgroundColor: nightBg }]}
                   onPress={() => setShowNotificationSettings(true)}
                 >
                   <Clock size={16} color="#8B5CF6" />
-                  <Text style={[styles.notificationTimeText, { color: colors.textPrimary }]}>
+                  <Text style={[styles.notificationTimeText, { color: '#E8ECF4' }]}>
                     {t('sleep.reminderAt', { time: bedtimeReminder })}
                   </Text>
                 </TouchableOpacity>
               ) : (
                 <View style={styles.notificationTimeEditor}>
-                  <Text style={[styles.notificationLabel, { color: colors.textMuted }]}>{t('sleep.reminderTime')}</Text>
+                  <Text style={[styles.notificationLabel, { color: '#7B8DB5' }]}>{t('sleep.reminderTime')}</Text>
                   <TextInput
-                    style={[styles.notificationTimeInput, { color: colors.textPrimary, borderColor: colors.border }]}
+                    style={[styles.notificationTimeInput, { color: '#E8ECF4', borderColor: '#1E2D4D' }]}
                     value={bedtimeReminder}
                     onChangeText={setBedtimeReminder}
                     placeholder="22:30"
-                    placeholderTextColor={colors.textMuted}
+                    placeholderTextColor="#7B8DB5"
                     keyboardType="numbers-and-punctuation"
                   />
                   <View style={styles.notificationActions}>
                     <TouchableOpacity
                       onPress={() => setShowNotificationSettings(false)}
-                      style={[styles.notificationCancelBtn, { borderColor: colors.border }]}
+                      style={[styles.notificationCancelBtn, { borderColor: '#1E2D4D' }]}
                     >
-                      <Text style={[styles.notificationCancelText, { color: colors.textMuted }]}>{t('common.cancel')}</Text>
+                      <Text style={[styles.notificationCancelText, { color: '#7B8DB5' }]}>{t('common.cancel')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       disabled={isSaving}
@@ -335,18 +337,18 @@ export default function SleepScreen() {
         </View>
 
         {/* Protocole Sommeil */}
-        <View style={[styles.protocolCard, { backgroundColor: colors.backgroundCard, borderColor: '#8B5CF620', borderWidth: 1 }]}>
+        <View style={[styles.protocolCard, { backgroundColor: nightCard, borderColor: '#8B5CF620', borderWidth: 1 }]}>
           <View style={styles.protocolHeader}>
             <CheckCircle2 size={18} color="#8B5CF6" />
-            <Text style={[styles.protocolTitle, { color: colors.textPrimary }]}>{t('sleep.sleepProtocol')}</Text>
+            <Text style={[styles.protocolTitle, { color: '#E8ECF4' }]}>{t('sleep.sleepProtocol')}</Text>
           </View>
-          <Text style={[styles.protocolText, { color: colors.textSecondary }]}>
+          <Text style={[styles.protocolText, { color: '#9AA8C7' }]}>
             {t('sleep.protocolDescription')}
           </Text>
           <View style={styles.protocolList}>
-            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>{t('sleep.protocolItem1')}</Text>
-            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>{t('sleep.protocolItem2')}</Text>
-            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>{t('sleep.protocolItem3')}</Text>
+            <Text style={[styles.protocolItem, { color: '#7B8DB5' }]}>{t('sleep.protocolItem1')}</Text>
+            <Text style={[styles.protocolItem, { color: '#7B8DB5' }]}>{t('sleep.protocolItem2')}</Text>
+            <Text style={[styles.protocolItem, { color: '#7B8DB5' }]}>{t('sleep.protocolItem3')}</Text>
           </View>
         </View>
 
@@ -364,7 +366,7 @@ export default function SleepScreen() {
 
         {/* Aperçu historique + lien vers écran dédié */}
         <TouchableOpacity
-          style={[styles.historyCard, { backgroundColor: colors.backgroundCard }]}
+          style={[styles.historyCard, { backgroundColor: nightCard }]}
           onPress={() => router.push('/sleep-history')}
           activeOpacity={0.7}
         >
@@ -373,8 +375,8 @@ export default function SleepScreen() {
               <Calendar size={18} color="#8B5CF6" strokeWidth={2.5} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>{t('sleep.history')}</Text>
-              <Text style={[styles.historySubtitle, { color: colors.textMuted }]}>
+              <Text style={[styles.historyTitle, { color: '#E8ECF4' }]}>{t('sleep.history')}</Text>
+              <Text style={[styles.historySubtitle, { color: '#7B8DB5' }]}>
                 {entries.length > 0
                   ? `${entries.length} nuit${entries.length > 1 ? 's' : ''} enregistrée${entries.length > 1 ? 's' : ''}`
                   : 'Aucune nuit enregistrée'}
@@ -385,14 +387,14 @@ export default function SleepScreen() {
             </View>
           </View>
 
-          {/* Aperçu des 3 dernières nuits */}
+          {/* Aperçu des 3 dernières nuits (du plus récent au plus ancien) */}
           {entries.length > 0 && (
             <View style={styles.historyPreview}>
-              {entries.slice(0, 3).map((entry) => {
+              {[...entries].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3).map((entry) => {
                 const dColor = getDurationColor(entry.duration);
                 return (
                   <View key={entry.id} style={[styles.previewEntry, { borderLeftColor: dColor }]}>
-                    <Text style={[styles.previewDate, { color: colors.textMuted }]}>
+                    <Text style={[styles.previewDate, { color: '#7B8DB5' }]}>
                       {format(new Date(entry.date), 'EEE d', { locale: dateLocale })}
                     </Text>
                     <Text style={[styles.previewDuration, { color: dColor }]}>
@@ -400,7 +402,7 @@ export default function SleepScreen() {
                     </Text>
                     <View style={{ flexDirection: 'row', gap: 1 }}>
                       {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} size={8} color={i <= entry.quality ? '#F59E0B' : colors.border} fill={i <= entry.quality ? '#F59E0B' : 'transparent'} />
+                        <Star key={i} size={8} color={i <= entry.quality ? '#F59E0B' : '#1E2D4D'} fill={i <= entry.quality ? '#F59E0B' : 'transparent'} />
                       ))}
                     </View>
                   </View>

@@ -161,6 +161,38 @@ export const WARRIOR_THEMES: WarriorTheme[] = [
     unlockXP: 0,
     icon: '',
   },
+  {
+    id: 'ambersmoke',
+    name: 'Amber Smoke',
+    themeColor: 'ambersmoke',
+    description: 'Amber Smoke + Blue Mirage',
+    unlockXP: 0,
+    icon: '',
+  },
+  {
+    id: 'dreamy',
+    name: 'Dreamy',
+    themeColor: 'dreamy',
+    description: 'Ocean Deep + Dreamy Cream',
+    unlockXP: 0,
+    icon: '',
+  },
+  {
+    id: 'lavendar',
+    name: 'Lavendar',
+    themeColor: 'lavendar',
+    description: 'Pink Orchid + Magic Purple',
+    unlockXP: 0,
+    icon: '',
+  },
+  {
+    id: 'chartreuse',
+    name: 'Chartreuse',
+    themeColor: 'chartreuse',
+    description: 'Chartreuse Neon + Gun Metal',
+    unlockXP: 0,
+    icon: '',
+  },
 ];
 
 // ============================================

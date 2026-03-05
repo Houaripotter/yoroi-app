@@ -28,20 +28,20 @@ const sanitize = (data: any): any => {
 };
 
 export const logger = {
-  info: (message: string, data?: any) => {
+  info: (message: string, ...args: any[]) => {
     if (IS_DEV) {
-      console.log(`[INFO] ${message}`, data ? sanitize(data) : '');
+      console.log(`[INFO] ${message}`, ...args.map(sanitize));
     }
   },
-  warn: (message: string, data?: any) => {
+  warn: (message: string, ...args: any[]) => {
     if (IS_DEV) {
-      console.warn(`[WARN] ${message}`, data ? sanitize(data) : '');
+      console.warn(`[WARN] ${message}`, ...args.map(sanitize));
     }
   },
-  error: (message: string, error?: any) => {
+  error: (message: string, ...args: any[]) => {
     // En prod, on log uniquement le message, jamais l'objet d'erreur complet (qui peut contenir des chemins serveurs ou données)
     if (IS_DEV) {
-      console.error(`[ERROR] ${message}`, error);
+      console.error(`[ERROR] ${message}`, ...args);
     } else {
       // Ici, on pourrait envoyer l'erreur anonymisée à un service type Sentry
     }

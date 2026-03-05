@@ -3,7 +3,7 @@
 // Style moderne avec scroll horizontal
 // ============================================
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Text, StyleSheet, TouchableOpacity, Platform, ScrollView } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -23,18 +23,18 @@ const PERIODS: Array<{ value: Period; label: string }> = [
   { value: '6m', label: '6 mois' },
 ];
 
-export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
+export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
   selected,
   onChange,
 }) => {
   const { colors, isDark } = useTheme();
 
-  const handleSelect = (period: Period) => {
+  const handleSelect = useCallback((period: Period) => {
     if (Platform.OS !== 'web') {
       impactAsync(ImpactFeedbackStyle.Light);
     }
     onChange(period);
-  };
+  }, [onChange]);
 
   return (
     <ScrollView
@@ -54,11 +54,11 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
               styles.pill,
               {
                 backgroundColor: isSelected
-                  ? (isDark ? colors.accent : '#FFFFFF')
-                  : (isDark ? colors.backgroundCard : 'rgba(255,255,255,0.15)'),
+                  ? colors.accent
+                  : (isDark ? (colors.companion + '08') : 'rgba(0,0,0,0.07)'),
                 borderColor: isSelected
-                  ? (isDark ? colors.accent : '#FFFFFF')
-                  : (isDark ? colors.border : 'rgba(255,255,255,0.3)'),
+                  ? colors.accent
+                  : (isDark ? (colors.companion + '30') : 'rgba(0,0,0,0.1)'),
               },
             ]}
           >
@@ -66,9 +66,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
               style={[
                 styles.pillText,
                 {
-                  color: isSelected
-                    ? (isDark ? colors.textOnAccent : colors.accent)
-                    : (isDark ? colors.textSecondary : 'rgba(255,255,255,0.8)'),
+                  color: isSelected ? '#FFFFFF' : colors.textSecondary,
                   fontWeight: isSelected ? '700' : '600',
                 },
               ]}
@@ -80,7 +78,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
       })}
     </ScrollView>
   );
-};
+});
 
 const styles = StyleSheet.create({
   scrollView: {

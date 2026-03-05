@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet, ViewStyle, StatusBar } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/lib/ThemeContext';
@@ -14,16 +14,16 @@ import { useTheme } from '@/lib/ThemeContext';
 interface ScreenWrapperProps {
   children: React.ReactNode;
   style?: ViewStyle;
-  edges?: ('top' | 'right' | 'bottom' | 'left')[];
+  edges?: readonly ('top' | 'right' | 'bottom' | 'left')[];
   noPadding?: boolean;
   noContainer?: boolean;
   containerStyle?: ViewStyle;
 }
 
-export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
+export const ScreenWrapper: React.FC<ScreenWrapperProps> = memo(({
   children,
   style,
-  edges = ['top', 'left', 'right'],
+  edges = ['top', 'left', 'right'] as const,
   noPadding = false,
   noContainer = false,
   containerStyle,
@@ -66,7 +66,7 @@ export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   layer1: {

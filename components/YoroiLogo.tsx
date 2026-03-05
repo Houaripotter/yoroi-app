@@ -3,7 +3,7 @@
 // Support des logos PNG custom (Premium)
 // ============================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { SHADOWS } from '@/constants/appTheme';
@@ -22,7 +22,7 @@ const SIZES = {
   large: { container: 56, kanji: 32, text: 28, logo: 48 },
 };
 
-export const YoroiLogo: React.FC<YoroiLogoProps> = ({
+export const YoroiLogo: React.FC<YoroiLogoProps> = memo(({
   size = 'medium',
   showKanji = true,
   showText = true,
@@ -120,7 +120,7 @@ export const YoroiLogo: React.FC<YoroiLogoProps> = ({
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

@@ -231,6 +231,18 @@ const _performInit = async () => {
   } catch (e) { /* colonne existe déjà */ }
 
   try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN location_lat REAL;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN location_lon REAL;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN location_name TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
     await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN session_type TEXT;`);
   } catch (e) { /* colonne existe déjà */ }
 
@@ -525,6 +537,39 @@ const _performInit = async () => {
   await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_health_date ON health_data(date);`);
   await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_health_type ON health_data(type);`);
 
+  // Migration: Ajouter label sur weekly_plan
+  try {
+    await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN label TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  // Migration: Ajouter session_type sur weekly_plan (web)
+  try {
+    await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN session_type TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  // Migration: Ajouter weekly_plan_id sur trainings
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN weekly_plan_id INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  // Table Slot Occurrences - suivi hebdomadaire des créneaux
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS slot_occurrences (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      weekly_plan_id INTEGER NOT NULL,
+      week_start TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      training_id INTEGER,
+      cancel_reason TEXT,
+      injury_id INTEGER,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (weekly_plan_id) REFERENCES weekly_plan(id) ON DELETE CASCADE,
+      FOREIGN KEY (training_id) REFERENCES trainings(id) ON DELETE SET NULL,
+      FOREIGN KEY (injury_id) REFERENCES injuries(id) ON DELETE SET NULL,
+      UNIQUE(weekly_plan_id, week_start)
+    );
+  `);
+
   // Initialiser le carnet d'entraînement
   await initTrainingJournalDB();
 
@@ -666,6 +711,11 @@ export interface Training {
   // Apple Health enriched data
   healthkit_uuid?: string;           // UUID HealthKit pour lazy-load des details
   workout_details_json?: string;     // JSON complet (route GPS, FC, splits, meteo)
+  weekly_plan_id?: number;
+  // Lieu d'entrainement (GPS capture manuelle)
+  location_lat?: number;
+  location_lon?: number;
+  location_name?: string;
   // Joined fields
   club_name?: string;
   club_logo?: string;
@@ -681,11 +731,24 @@ export interface WeeklyPlan {
   duration_minutes?: number;
   muscles?: string;
   is_rest_day?: boolean;
+  session_type?: string;
+  label?: string;
   created_at?: string;
   // Joined fields
   club_name?: string;
   club_logo?: string;
   club_color?: string;
+}
+
+export interface SlotOccurrence {
+  id?: number;
+  weekly_plan_id: number;
+  week_start: string;
+  status: 'pending' | 'validated' | 'cancelled' | 'skipped';
+  training_id?: number;
+  cancel_reason?: string;
+  injury_id?: number;
+  created_at?: string;
 }
 
 export interface Photo {
@@ -934,7 +997,7 @@ export const updateTraining = async (id: number, data: Partial<Training>): Promi
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const combatRoundsJson = data.combat_rounds ? JSON.stringify(data.combat_rounds) : null;
   await database.runAsync(
-    `UPDATE trainings SET club_id = ?, sport = ?, session_type = ?, date = ?, start_time = ?, duration_minutes = ?, notes = ?, muscles = ?, exercises = ?, technique_rating = ?, is_outdoor = ?, distance = ?, calories = ?, intensity = ?, rounds = ?, round_duration = ?, pente = ?, speed = ?, resistance = ?, watts = ?, cadence = ?, heart_rate = ?, max_heart_rate = ?, source = ?, combat_rounds = ?
+    `UPDATE trainings SET club_id = ?, sport = ?, session_type = ?, date = ?, start_time = ?, duration_minutes = ?, notes = ?, muscles = ?, exercises = ?, technique_rating = ?, is_outdoor = ?, distance = ?, calories = ?, intensity = ?, rounds = ?, round_duration = ?, pente = ?, speed = ?, resistance = ?, watts = ?, cadence = ?, heart_rate = ?, max_heart_rate = ?, source = ?, combat_rounds = ?, location_lat = ?, location_lon = ?, location_name = ?
      WHERE id = ?`,
     [data.club_id || null, data.sport || null, data.session_type || null, data.date || null,
      data.start_time || null, data.duration_minutes || null,
@@ -942,7 +1005,8 @@ export const updateTraining = async (id: number, data: Partial<Training>): Promi
      data.is_outdoor ? 1 : 0, data.distance || null, data.calories || null,
      data.intensity || null, data.rounds || null, data.round_duration || null,
      data.pente || null, data.speed || null, data.resistance || null, data.watts || null, data.cadence || null,
-     data.heart_rate || null, data.max_heart_rate || null, data.source || null, combatRoundsJson, id]
+     data.heart_rate || null, data.max_heart_rate || null, data.source || null, combatRoundsJson,
+     data.location_lat || null, data.location_lon || null, data.location_name || null, id]
   );
 };
 
@@ -951,8 +1015,8 @@ export const addTraining = async (data: Training): Promise<number> => {
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const combatRoundsJson = data.combat_rounds ? JSON.stringify(data.combat_rounds) : null;
   const result = await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, healthkit_uuid, workout_details_json, heart_rate, max_heart_rate, source, combat_rounds)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, healthkit_uuid, workout_details_json, heart_rate, max_heart_rate, source, combat_rounds, weekly_plan_id, location_lat, location_lon, location_name)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.club_id || null, data.sport, data.session_type || null, data.date,
      data.start_time || null, data.duration_minutes || null,
      data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null,
@@ -960,7 +1024,8 @@ export const addTraining = async (data: Training): Promise<number> => {
      data.intensity || null, data.rounds || null, data.round_duration || null,
      data.pente || null, data.speed || null, data.resistance || null, data.watts || null, data.cadence || null,
      data.healthkit_uuid || null, data.workout_details_json || null, data.heart_rate || null,
-     data.max_heart_rate || null, data.source || null, combatRoundsJson]
+     data.max_heart_rate || null, data.source || null, combatRoundsJson, data.weekly_plan_id || null,
+     data.location_lat || null, data.location_lon || null, data.location_name || null]
   );
   if (!result?.lastInsertRowId) {
     throw new Error('Failed to insert training record');
@@ -1280,10 +1345,11 @@ export const getWeeklyPlan = async (): Promise<WeeklyPlan[]> => {
 export const addWeeklyPlanItem = async (data: WeeklyPlan): Promise<number> => {
   const database = await openDatabase();
   const result = await database.runAsync(
-    `INSERT INTO weekly_plan (day_of_week, club_id, sport, time, duration_minutes, muscles, is_rest_day)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO weekly_plan (day_of_week, club_id, sport, time, duration_minutes, muscles, is_rest_day, session_type, label)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.day_of_week, data.club_id || null, data.sport, data.time || null,
-     data.duration_minutes || null, data.muscles || null, data.is_rest_day ? 1 : 0]
+     data.duration_minutes || null, data.muscles || null, data.is_rest_day ? 1 : 0,
+     data.session_type || null, data.label || null]
   );
   if (!result?.lastInsertRowId) {
     throw new Error('Failed to insert weekly plan item');
@@ -1303,6 +1369,8 @@ export const updateWeeklyPlanItem = async (id: number, data: Partial<WeeklyPlan>
   if (data.duration_minutes !== undefined) { updates.push('duration_minutes = ?'); values.push(data.duration_minutes); }
   if (data.muscles !== undefined) { updates.push('muscles = ?'); values.push(data.muscles); }
   if (data.is_rest_day !== undefined) { updates.push('is_rest_day = ?'); values.push(data.is_rest_day ? 1 : 0); }
+  if (data.session_type !== undefined) { updates.push('session_type = ?'); values.push(data.session_type); }
+  if (data.label !== undefined) { updates.push('label = ?'); values.push(data.label); }
 
   if (updates.length > 0) {
     values.push(id);
@@ -1313,6 +1381,102 @@ export const updateWeeklyPlanItem = async (id: number, data: Partial<WeeklyPlan>
 export const deleteWeeklyPlanItem = async (id: number): Promise<void> => {
   const database = await openDatabase();
   await database.runAsync('DELETE FROM weekly_plan WHERE id = ?', [id]);
+};
+
+export const getWeeklyPlanById = async (id: number): Promise<WeeklyPlan | null> => {
+  const database = await openDatabase();
+  return await database.getFirstAsync<WeeklyPlan>(
+    `SELECT wp.*, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
+     FROM weekly_plan wp
+     LEFT JOIN clubs c ON wp.club_id = c.id
+     WHERE wp.id = ?`,
+    [id]
+  );
+};
+
+// ============================================
+// FONCTIONS CRUD - SLOT OCCURRENCES
+// ============================================
+
+export const getSlotOccurrences = async (weekStart: string): Promise<SlotOccurrence[]> => {
+  const database = await openDatabase();
+  return await database.getAllAsync<SlotOccurrence>(
+    `SELECT * FROM slot_occurrences WHERE week_start = ? ORDER BY weekly_plan_id ASC`,
+    [weekStart]
+  );
+};
+
+export const upsertSlotOccurrence = async (data: SlotOccurrence): Promise<number> => {
+  const database = await openDatabase();
+  const result = await database.runAsync(
+    `INSERT INTO slot_occurrences (weekly_plan_id, week_start, status, training_id, cancel_reason, injury_id)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(weekly_plan_id, week_start) DO UPDATE SET
+       status = excluded.status,
+       training_id = excluded.training_id,
+       cancel_reason = excluded.cancel_reason,
+       injury_id = excluded.injury_id`,
+    [data.weekly_plan_id, data.week_start, data.status,
+     data.training_id || null, data.cancel_reason || null, data.injury_id || null]
+  );
+  return result.lastInsertRowId;
+};
+
+export const validateSlot = async (weeklyPlanId: number, weekStart: string, trainingId: number): Promise<void> => {
+  await upsertSlotOccurrence({
+    weekly_plan_id: weeklyPlanId,
+    week_start: weekStart,
+    status: 'validated',
+    training_id: trainingId,
+  });
+};
+
+export const cancelSlot = async (weeklyPlanId: number, weekStart: string, reason?: string, injuryId?: number): Promise<void> => {
+  await upsertSlotOccurrence({
+    weekly_plan_id: weeklyPlanId,
+    week_start: weekStart,
+    status: 'cancelled',
+    cancel_reason: reason,
+    injury_id: injuryId,
+  });
+};
+
+export const getSlotAttendanceRate = async (weeklyPlanId: number, weeks: number = 4): Promise<{ rate: number; validated: number; total: number }> => {
+  const database = await openDatabase();
+  const result = await database.getFirstAsync<{ validated: number; total: number }>(
+    `SELECT
+       COUNT(CASE WHEN status = 'validated' THEN 1 END) as validated,
+       COUNT(*) as total
+     FROM slot_occurrences
+     WHERE weekly_plan_id = ?
+       AND week_start >= date('now', '-' || ? || ' days', 'weekday 1', '-7 days')`,
+    [weeklyPlanId, weeks * 7]
+  );
+  const validated = result?.validated || 0;
+  const total = result?.total || 0;
+  return { rate: total > 0 ? validated / total : 0, validated, total };
+};
+
+export const ensureCurrentWeekOccurrences = async (): Promise<void> => {
+  const database = await openDatabase();
+  const now = new Date();
+  const day = now.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diff);
+  const weekStart = monday.toISOString().split('T')[0];
+
+  const slots = await database.getAllAsync<WeeklyPlan>(
+    `SELECT * FROM weekly_plan WHERE is_rest_day = 0`
+  );
+
+  for (const slot of slots) {
+    await database.runAsync(
+      `INSERT OR IGNORE INTO slot_occurrences (weekly_plan_id, week_start, status)
+       VALUES (?, ?, 'pending')`,
+      [slot.id!, weekStart]
+    );
+  }
 };
 
 // ============================================
@@ -1938,6 +2102,41 @@ export const resetDatabase = async (): Promise<void> => {
   }
 };
 
+// Reset toutes les tables SAUF photos
+export const resetDatabaseKeepPhotos = async (): Promise<void> => {
+  try {
+    const database = await openDatabase();
+
+    // Tables principales (sans photos)
+    try { await database.execAsync('DELETE FROM weights;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM trainings;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM measurements;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM achievements;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM weekly_plan;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM clubs;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM profile;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM competitions;'); } catch (e) { /* table peut ne pas exister */ }
+
+    // Tables YOROI MEDIC
+    try { await database.execAsync('DELETE FROM treatment_reminders;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM injury_treatments;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM injury_eva_history;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM injuries;'); } catch (e) { /* table peut ne pas exister */ }
+
+    // Tables Carnet d'Entraînement
+    try { await database.execAsync('DELETE FROM benchmark_entries;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM benchmarks;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM skills;'); } catch (e) { /* table peut ne pas exister */ }
+
+    // Table Données de santé
+    try { await database.execAsync('DELETE FROM health_data;'); } catch (e) { /* table peut ne pas exister */ }
+
+  } catch (error) {
+    logger.error('Erreur reset database (keep photos):', error);
+    throw error;
+  }
+};
+
 // ============================================
 // FONCTIONS CRUD - DONNÉES DE SANTÉ
 // ============================================
@@ -2081,4 +2280,5 @@ export default {
   initDatabase,
   openDatabase,
   resetDatabase,
+  resetDatabaseKeepPhotos,
 };

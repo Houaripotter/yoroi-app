@@ -25,50 +25,33 @@ import {
   Scale,
   Droplets,
   Camera,
-  Sparkles,
   Flame,
   Zap,
   Dumbbell,
   Trophy,
   ChevronRight,
   Timer,
-  Ruler,
-  Heart,
-  HeartPulse,
   TrendingDown,
-  TrendingUp,
-  Minus,
-  BarChart3,
   Medal,
-  Palette,
   Battery,
   Moon,
   Activity,
-  FileText,
   Target,
-  AlertTriangle,
   Crown,
   Waves,
   Bed,
-  Bell,
-  Brain,
   Stethoscope,
-  Scissors,
   Settings,
   FlaskConical,
   Calculator,
   Apple,
   Clock,
   BookOpen,
-  Plus,
   Award,
   Calendar,
-  Share2,
   List,
-  Building2,
   Cloud,
   Watch,
-  Shield,
   Swords,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
@@ -87,8 +70,7 @@ import AvatarDisplay from '@/components/AvatarDisplay';
 import { RanksModal } from '@/components/RanksModal';
 import { LogoViewer } from '@/components/LogoViewer';
 import { MotivationPopup } from '@/components/MotivationPopup';
-import { getUserMode, getNextEvent } from '@/lib/fighterModeService';
-import { UserMode } from '@/lib/fighterMode';
+import { getNextEvent } from '@/lib/fighterModeService';
 import { calculateReadinessScore, ReadinessScore } from '@/lib/readinessService';
 import { getJournalStats } from '@/lib/trainingJournalService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -106,7 +88,6 @@ import { StreakCalendar } from '@/components/StreakCalendar';
 import { AvatarViewerModal } from '@/components/AvatarViewerModal';
 import HealthConnect, { healthConnect as healthConnectService } from '@/lib/healthConnect';
 import { calculateDailyHealthBonus } from '@/lib/healthBonusService';
-import { ContextualTip } from '@/components/ContextualTip';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
 import { addHydration as addHydrationToQuests } from '@/lib/quests';
@@ -140,7 +121,6 @@ import AnimatedRank from '@/components/AnimatedRank';
 import { getSleepStats, getSleepAdvice, formatSleepDuration, SleepStats, getSleepGoal } from '@/lib/sleepService';
 import { getWeeklyLoadStats, formatLoad, getRiskColor, WeeklyLoadStats } from '@/lib/trainingLoadService';
 import { getDailyChallenges, ActiveChallenge } from '@/lib/challengesService';
-import { generateWeeklyReport } from '@/lib/weeklyReportService';
 import { getHomeCustomization, isSectionVisible as checkSectionVisible, HomeSection } from '@/lib/homeCustomizationService';
 import logger from '@/lib/security/logger';
 
@@ -156,14 +136,13 @@ const DEFAULT_HYDRATION_GOAL = 2500;
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark, screenBackground } = useTheme();
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const params = useLocalSearchParams();
 
   // Mode d'affichage (Complet / Essentiel)
   const { mode, toggleMode, isLoading: isLoadingMode } = useViewMode();
 
   // État "Voir plus" pour mode Complet
-  const [showMoreSections, setShowMoreSections] = useState(false);
 
   // États de base
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -192,11 +171,8 @@ export default function HomeScreen() {
 
   // État readiness pour l'énergie (calculé depuis sommeil, hydratation, charge, streak)
   const [readinessScore, setReadinessScore] = useState<number>(0);
-  const [batteryFillPercent, setBatteryFillPercent] = useState<number>(0);
-
   // Mode Screenshot pour les données de démo
   const [isScreenshotMode, setIsScreenshotMode] = useState<boolean>(false);
-  const batteryIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Protection anti-spam navigation
   const [isNavigating, setIsNavigating] = useState(false);
@@ -241,54 +217,20 @@ export default function HomeScreen() {
   // ✅ FIX PERF: Avatar chargé une seule fois au montage (pas à chaque focus)
   // Supprimé useFocusEffect qui causait des re-renders inutiles
 
-  // Animation de remplissage de la batterie - UNIQUEMENT au changement de score
+  // Animation de remplissage de la batterie - Animated.timing (pas de setState par frame)
   const hasAnimatedBattery = useRef(false);
+  const batteryFillAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    // Ne pas re-animer si déjà fait et score identique
-    if (hasAnimatedBattery.current && batteryFillPercent === readinessScore) {
-      return;
-    }
-
-    // Clear any existing interval
-    if (batteryIntervalRef.current) {
-      clearInterval(batteryIntervalRef.current);
-    }
-
-    // Première animation: partir de 0
-    // Retour sur écran: garder la valeur actuelle
-    const startValue = hasAnimatedBattery.current ? batteryFillPercent : 0;
-    if (!hasAnimatedBattery.current) {
-      setBatteryFillPercent(0);
-    }
-
-    let currentValue = startValue;
-    const targetValue = readinessScore;
-
-    // Démarrer l'animation après un délai
-    const startTimeout = setTimeout(() => {
-      batteryIntervalRef.current = setInterval(() => {
-        currentValue += 3;
-        if (currentValue >= targetValue) {
-          currentValue = targetValue;
-          setBatteryFillPercent(targetValue);
-          hasAnimatedBattery.current = true;
-          if (batteryIntervalRef.current) {
-            clearInterval(batteryIntervalRef.current);
-            batteryIntervalRef.current = null;
-          }
-        } else {
-          setBatteryFillPercent(currentValue);
-        }
-      }, 40);
-    }, hasAnimatedBattery.current ? 0 : 500);
-
-    return () => {
-      clearTimeout(startTimeout);
-      if (batteryIntervalRef.current) {
-        clearInterval(batteryIntervalRef.current);
-        batteryIntervalRef.current = null;
-      }
-    };
+    if (hasAnimatedBattery.current && readinessScore === 0) return;
+    const delay = hasAnimatedBattery.current ? 0 : 500;
+    const timer = setTimeout(() => {
+      Animated.timing(batteryFillAnim, {
+        toValue: readinessScore,
+        duration: 800,
+        useNativeDriver: false,
+      }).start(() => { hasAnimatedBattery.current = true; });
+    }, delay);
+    return () => clearTimeout(timer);
   }, [readinessScore]);
 
   // Animation toggle compétiteur
@@ -372,7 +314,6 @@ export default function HomeScreen() {
     return () => pulse.stop();
   }, []);
 
-  const [userMode, setUserMode] = useState<UserMode>('loisir');
 
   // Hydratation
   const [hydration, setHydration] = useState(0);
@@ -393,6 +334,14 @@ export default function HomeScreen() {
   const [steps, setSteps] = useState(0);
   const [stepsGoal, setStepsGoal] = useState(10000);
   const [calories, setCalories] = useState(0);
+
+  // Métriques Apple Health supplémentaires
+  const [distance, setDistance] = useState(0);
+  const [heartRate, setHeartRate] = useState<{ resting: number; average: number; min: number; max: number } | null>(null);
+  const [spo2, setSpo2] = useState(0);
+  const [respiratoryRate, setRespiratoryRate] = useState(0);
+  const [vo2Max, setVo2Max] = useState(0);
+  const [lastSleepPhases, setLastSleepPhases] = useState<{ deep: number; rem: number; core: number; awake: number } | null>(null);
 
   // Hydratation functions
   // ✅ FIX: Charger depuis Apple Health EN PRIORITÉ, puis AsyncStorage en fallback
@@ -428,9 +377,9 @@ export default function HomeScreen() {
       // 3. Fallback: AsyncStorage si HealthKit n'a pas de données
       if (hydrationValue === 0) {
         // Read from both key formats and take the higher value
-        const [storedDateKey, storedJsonKey] = await Promise.all([
-          AsyncStorage.getItem(`${HYDRATION_KEY}_${today}`),
-          AsyncStorage.getItem(HYDRATION_KEY),
+        const [[, storedDateKey], [, storedJsonKey]] = await AsyncStorage.multiGet([
+          `${HYDRATION_KEY}_${today}`,
+          HYDRATION_KEY,
         ]);
 
         let fromDateKey = 0;
@@ -535,7 +484,8 @@ export default function HomeScreen() {
     if (isNavigating) return;
     setIsNavigating(true);
     router.push(route as any);
-    setTimeout(() => setIsNavigating(false), 1000);
+    const t = setTimeout(() => setIsNavigating(false), 1000);
+    return () => clearTimeout(t);
   }, [isNavigating]);
 
   // Handlers de navigation mémorisés pour éviter les callbacks inline
@@ -689,18 +639,16 @@ export default function HomeScreen() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [profileData, weight, history, streakDays, quote, allTrainings, mode, sleep, load, challenges, _report, event, sections] = await Promise.all([
+      const [profileData, weight, history, streakDays, quote, allTrainings, sleep, load, challenges, event, sections] = await Promise.all([
         getProfile(),
         getLatestWeight(),
         getWeights(30),
         calculateStreak(),
-        getSessionQuote(language as any),
-        getTrainings(),
-        getUserMode(),
+        getSessionQuote(),
+        getTrainings(30),
         getSleepStats(),
         getWeeklyLoadStats(),
         getDailyChallenges(),
-        generateWeeklyReport(),
         getNextEvent(),
         getHomeCustomization(),
       ]);
@@ -712,7 +660,6 @@ export default function HomeScreen() {
       setStreak(streakDays);
       setDailyQuote(quote);
       setTrainings(allTrainings);
-      setUserMode(mode);
       setSleepStats(sleep);
       setLoadStats(load);
       setDailyChallenges(challenges);
@@ -731,18 +678,42 @@ export default function HomeScreen() {
       const goal = await getSleepGoal();
       setSleepGoal(goal);
 
-      // Charger les pas et calories depuis Apple Health
+      // Charger les pas, calories et autres metriques depuis Apple Health
       try {
-        const stepsData = await HealthConnect.getTodaySteps();
-        if (stepsData?.count) {
-          setSteps(stepsData.count);
-        }
-        const caloriesData = await HealthConnect.getTodayCalories();
-        if (caloriesData?.active) {
-          setCalories(Math.round(caloriesData.active));
+        const results = await Promise.allSettled([
+          HealthConnect.getTodaySteps(),
+          HealthConnect.getTodayCalories(),
+          HealthConnect.getTodayDistance(),
+          HealthConnect.getTodayHeartRate(),
+          HealthConnect.getOxygenSaturation(),
+          HealthConnect.getRespiratoryRate(),
+          HealthConnect.getVO2Max(),
+          HealthConnect.getSleepHistory(1),
+        ]);
+        const stepsData = results[0].status === 'fulfilled' ? results[0].value : null;
+        const caloriesData = results[1].status === 'fulfilled' ? results[1].value : null;
+        const distData = results[2].status === 'fulfilled' ? results[2].value : null;
+        const hrData = results[3].status === 'fulfilled' ? results[3].value : null;
+        const spo2Data = results[4].status === 'fulfilled' ? results[4].value : null;
+        const respData = results[5].status === 'fulfilled' ? results[5].value : null;
+        const vo2Data = results[6].status === 'fulfilled' ? results[6].value : null;
+        const sleepHistory = results[7].status === 'fulfilled' ? results[7].value : null;
+
+        if (stepsData?.count != null && stepsData.count > 0) setSteps(stepsData.count);
+        if (caloriesData?.active != null && caloriesData.active > 0) setCalories(Math.round(caloriesData.active));
+        if (distData?.total != null && distData.total > 0) setDistance(distData.total);
+        if (hrData) setHeartRate(hrData);
+        if (spo2Data?.value != null && spo2Data.value > 0) setSpo2(spo2Data.value);
+        if (respData?.value != null && respData.value > 0) setRespiratoryRate(respData.value);
+        if (vo2Data?.value != null && vo2Data.value > 0) setVo2Max(vo2Data.value);
+        if (sleepHistory && sleepHistory.length > 0) {
+          const last = sleepHistory[0];
+          if (last.deep || last.rem || last.core || last.awake) {
+            setLastSleepPhases({ deep: last.deep, rem: last.rem, core: last.core, awake: last.awake });
+          }
         }
       } catch (error) {
-        logger.info('Données activité non disponibles depuis Apple Health');
+        logger.info('Donnees activite non disponibles depuis Apple Health');
       }
 
       // Bonus sante du jour (doit etre calcule AVANT les points unifies)
@@ -776,7 +747,7 @@ export default function HomeScreen() {
           userName: profileData?.name,
           weight: weight?.weight,
           streak: streakDays,
-          level: getCurrentRank(unifiedTotal)?.name,
+          level: ({ ashigaru: 1, bushi: 2, samurai: 3, ronin: 4, shogun: 5 }[getCurrentRank(unifiedTotal)?.id || 'ashigaru'] || 1),
           rank: getCurrentRank(unifiedTotal)?.name,
         }).catch(() => {
           // Silencieux si Watch non disponible
@@ -801,6 +772,7 @@ export default function HomeScreen() {
   // Écouter l'événement global de refresh (plus fiable que les params pour les tabs)
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
+      cancelledRef.current = false;
       loadData();
     });
     return () => sub.remove();
@@ -858,12 +830,23 @@ export default function HomeScreen() {
         logger.info('[AutoSync] Syncing health data...');
         const data = await healthConnectService.syncAll();
         // Mettre a jour les valeurs affichees apres sync
-        if (data?.steps?.count) {
-          setSteps(data.steps.count);
+        if (data?.steps?.count != null && data.steps.count > 0) setSteps(data.steps.count);
+        if (data?.calories?.active != null && data.calories.active > 0) setCalories(Math.round(data.calories.active));
+        if (data?.distance?.total != null && data.distance.total > 0) setDistance(data.distance.total);
+        if (data?.heartRate) setHeartRate(data.heartRate);
+        if (data?.oxygenSaturation?.value != null && data.oxygenSaturation.value > 0) setSpo2(data.oxygenSaturation.value);
+        if (data?.respiratoryRate?.value != null && data.respiratoryRate.value > 0) setRespiratoryRate(data.respiratoryRate.value);
+        if (data?.vo2Max?.value != null && data.vo2Max.value > 0) setVo2Max(data.vo2Max.value);
+        if (data?.sleep?.phases) {
+          const p = data.sleep.phases;
+          if (p.deep || p.rem || p.core || p.awake) {
+            setLastSleepPhases({ deep: p.deep, rem: p.rem, core: p.core, awake: p.awake });
+          }
         }
-        if (data?.calories?.active) {
-          setCalories(Math.round(data.calories.active));
-        }
+
+        // Rafraichir hydratation au retour de l'app
+        loadHydration();
+
         // Re-fetch trainings, sleep et weight depuis la DB apres sync
         try {
           const [freshTrainings, freshSleep, freshWeight, freshHistory, freshStreak] = await Promise.all([
@@ -919,12 +902,12 @@ export default function HomeScreen() {
   // Rotation automatique des citations toutes les 5 minutes
   useEffect(() => {
     const interval = setInterval(async () => {
-      const newQuote = await getSessionQuote(language as any);
+      const newQuote = await getSessionQuote();
       setDailyQuote(newQuote);
     }, 5 * 60 * 1000); // 5 minutes
 
     return () => clearInterval(interval);
-  }, [language]);
+  }, []);
 
   // Calculs
   const rank = getCurrentRank(totalPoints);
@@ -1183,6 +1166,15 @@ export default function HomeScreen() {
             {/* HEADER SIMPLE & ÉLÉGANT */}
             {/* ═══════════════════════════════════════════════════════════════ */}
             <View style={styles.header}>
+              {/* Bouton Reglages (Gauche) */}
+              <TouchableOpacity
+                onPress={() => router.push('/settings')}
+                activeOpacity={0.8}
+                style={styles.headerIconBtn}
+              >
+                <Settings size={20} color="#1A1A1E" strokeWidth={2} />
+              </TouchableOpacity>
+
               {/* Photo de profil (Gauche) - Design élégant */}
               <TouchableOpacity
                 onPress={handleNavigateProfile}
@@ -1192,6 +1184,7 @@ export default function HomeScreen() {
                   <View style={[styles.profilePhotoContainer, { backgroundColor: colors.backgroundCard }]}>
                     {profile?.profile_photo ? (
                       <Image
+                        key={`profile-photo-${profile.profile_photo}`}
                         source={{ uri: profile.profile_photo }}
                         style={styles.profilePhotoImage}
                         resizeMode="cover"
@@ -1218,11 +1211,13 @@ export default function HomeScreen() {
               </View>
 
               {/* Cloche notifications (popup) */}
-              <NotificationBellPopup
-                unreadCount={unreadNotifCount}
-                onCountChange={setUnreadNotifCount}
-                variant="themed"
-              />
+              <View style={styles.headerIconBtn}>
+                <NotificationBellPopup
+                  unreadCount={unreadNotifCount}
+                  onCountChange={setUnreadNotifCount}
+                  variant="dark"
+                />
+              </View>
 
               {/* Avatar (Droite) - Design élégant */}
               <TouchableOpacity
@@ -1238,7 +1233,7 @@ export default function HomeScreen() {
                 </View>
                 {/* Badge niveau discret */}
                 <View style={[styles.levelBadgeSmall, { backgroundColor: colors.accent }]}>
-                  <Text style={styles.levelBadgeText}>{level.level}</Text>
+                  <Text style={styles.levelBadgeText}>{rankLevel}</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -1299,7 +1294,7 @@ export default function HomeScreen() {
             <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateGamification}>
               <Zap size={14} color={isDark ? colors.accent : '#000000'} />
               <View style={styles.statTextColumn}>
-                <AnimatedCounter value={level.level} style={[styles.statValueCompactHorizontal, { color: isDark ? colors.accent : '#000000' }]} duration={800} />
+                <AnimatedCounter value={rankLevel} style={[styles.statValueCompactHorizontal, { color: isDark ? colors.accent : '#000000' }]} duration={800} />
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>niveau</Text>
               </View>
             </TouchableOpacity>
@@ -1331,6 +1326,7 @@ export default function HomeScreen() {
                   quality={sleepStats?.lastNightQuality ? (sleepStats.lastNightQuality / 5) * 100 : 0}
                   debt={sleepStats?.sleepDebtHours || 0}
                   goal={sleepGoal / 60}
+                  phases={lastSleepPhases}
                 />
               </TouchableOpacity>
               <TouchableOpacity onPress={handleNavigateCharge} activeOpacity={0.9} style={styles.compactCard}>
@@ -1419,6 +1415,12 @@ export default function HomeScreen() {
             <EssentielActivityCard
               steps={steps}
               stepsGoal={stepsGoal}
+              calories={calories}
+              distance={distance}
+              heartRate={heartRate}
+              spo2={spo2}
+              respiratoryRate={respiratoryRate}
+              vo2Max={vo2Max}
             />
           </View>
         );
@@ -1702,7 +1704,6 @@ export default function HomeScreen() {
     hydrationGoal,
     sleepStats,
     bodyComposition,
-    batteryFillPercent,
     isSectionVisible,
     handleNavigateProfile,
     handleNavigateAvatarSelection,
@@ -1741,7 +1742,7 @@ export default function HomeScreen() {
     streakFlameAnim,
     steps,
     streak,
-    level,
+    rankLevel,
     rank,
     currentWeight,
     targetWeight,
@@ -1812,6 +1813,8 @@ export default function HomeScreen() {
         hydrationGoal={hydrationGoal}
         sleepHours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
         sleepDebt={sleepStats?.sleepDebtHours || 0}
+        sleepDate={sleepStats?.weeklyData?.length ? sleepStats.weeklyData[sleepStats.weeklyData.length - 1]?.date : undefined}
+        sleepWeeklyAvg={sleepStats?.averageDuration ? sleepStats.averageDuration / 60 : 0}
         sleepGoal={sleepGoal / 60}
         workloadStatus={workloadStatus === 'none' ? undefined : workloadStatus}
         dailyChallenges={formattedChallenges}
@@ -1822,6 +1825,7 @@ export default function HomeScreen() {
         waterPercentage={latestWeight?.water_percent}
         onAddWeight={() => handleNavigate('/(tabs)/add')}
         onAddWater={addWater}
+        onRefresh={loadData}
         refreshTrigger={0}
         unreadNotifCount={unreadNotifCount}
         onNotifCountChange={setUnreadNotifCount}
@@ -1833,8 +1837,6 @@ export default function HomeScreen() {
       <AvatarViewerModal visible={avatarViewerVisible} onClose={handleCloseAvatarViewer} />
 
 
-      {/* Tip contextuel */}
-      <ContextualTip tipId="home" />
 
       {/* Pop-up de notation */}
       <RatingPopup
@@ -1868,6 +1870,20 @@ const styles = StyleSheet.create({
 
   // Header - Design Simple & Élégant
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  headerIconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
+    elevation: 3,
+    marginRight: 6,
+  },
   logo: { width: 70, height: 70, borderRadius: 14 },
 
   // Photo de profil - Cercle élégant avec bordure subtile

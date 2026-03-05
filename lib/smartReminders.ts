@@ -518,7 +518,7 @@ export const scheduleSmartNotification = async (
 
     const identifier = await Notifications.scheduleNotificationAsync({
       content: {
-        title: `${message.emoji} ${message.title}`,
+        title: message.title,
         body: message.body,
         sound: true,
       },

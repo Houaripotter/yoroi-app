@@ -16,9 +16,6 @@ import {
   TrendingUp,
   Minus,
   ChevronRight,
-  Shield,
-  Swords,
-  Star,
 } from 'lucide-react-native';
 import { saveUserSettings, getUserSettings } from '@/lib/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -51,8 +48,6 @@ export default function SetupScreen() {
   // L'écran ne demande plus que l'objectif (prénom et genre déjà collectés dans onboarding)
   const [goal, setGoal] = useState<Goal | null>(null);
   const [existingProfile, setExistingProfile] = useState<{ username?: string; gender?: 'male' | 'female' }>({});
-  const [showWelcome, setShowWelcome] = useState(false);
-
   // Charger le profil existant depuis onboarding
   useEffect(() => {
     const loadProfile = async () => {
@@ -69,12 +64,8 @@ export default function SetupScreen() {
     loadProfile();
   }, []);
 
-  const handleGoalSelected = () => {
-    if (!goal) return;
-    setShowWelcome(true);
-  };
-
   const handleComplete = async () => {
+    if (!goal) return;
     await executeOnce(async () => {
       try {
         // Sauvegarder uniquement l'objectif (le reste est déjà sauvegardé)
@@ -98,65 +89,6 @@ export default function SetupScreen() {
   const canContinue = () => {
     return goal !== null;
   };
-
-  // Page de bienvenue Team Yoroi
-  if (showWelcome) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <StatusBar barStyle="dark-content" />
-        <View style={styles.welcomeContent}>
-          {/* Logo et animation */}
-          <View style={[styles.welcomeIconContainer, { backgroundColor: colors.accent + '20' }]}>
-            <Shield size={80} color={colors.accent} />
-          </View>
-
-          {/* Titre principal */}
-          <Text style={[styles.welcomeTitle, { color: colors.accent }]}>
-            BIENVENUE
-          </Text>
-          <Text style={[styles.welcomeSubtitle, { color: colors.textPrimary }]}>
-            dans la Team Yoroi
-          </Text>
-
-          {/* Message personnalisé */}
-          <Text style={[styles.welcomeMessage, { color: colors.textSecondary }]}>
-            {existingProfile.username ? `${existingProfile.username}, tu` : 'Tu'} fais maintenant partie de la famille des guerriers.
-            {'\n'}Ensemble, on va atteindre tes objectifs !
-          </Text>
-
-          {/* Badges de bienvenue */}
-          <View style={styles.welcomeBadges}>
-            <View style={[styles.welcomeBadge, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}>
-              <Swords size={20} color={colors.accent} />
-              <Text style={[styles.welcomeBadgeText, { color: colors.textPrimary }]}>
-                Esprit guerrier
-              </Text>
-            </View>
-            <View style={[styles.welcomeBadge, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}>
-              <Star size={20} color="#FFD700" />
-              <Text style={[styles.welcomeBadgeText, { color: colors.textPrimary }]}>
-                Premier badge
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Bouton pour commencer */}
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={[styles.continueButton, { backgroundColor: colors.accent }]}
-            onPress={handleComplete}
-            disabled={isSaving}
-          >
-            <Text style={[styles.continueText, { color: colors.textOnGold }]}>
-              {isSaving ? 'Chargement...' : "C'est parti !"}
-            </Text>
-            <ChevronRight size={22} color={colors.textOnGold} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
 
   return (
     <KeyboardAvoidingView
@@ -288,7 +220,7 @@ export default function SetupScreen() {
               borderColor: colors.border,
             },
           ]}
-          onPress={handleGoalSelected}
+          onPress={handleComplete}
           disabled={!canContinue() || isSaving}
         >
           <Text style={[
@@ -318,55 +250,6 @@ const styles = StyleSheet.create({
   },
   stepContainer: {
     alignItems: 'center',
-  },
-
-  // Welcome screen
-  welcomeContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  welcomeIconContainer: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 32,
-  },
-  welcomeTitle: {
-    fontSize: 36,
-    fontWeight: '900',
-    letterSpacing: 4,
-    marginBottom: 8,
-  },
-  welcomeSubtitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 24,
-  },
-  welcomeMessage: {
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 32,
-  },
-  welcomeBadges: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  welcomeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  welcomeBadgeText: {
-    fontSize: 14,
-    fontWeight: '600',
   },
 
   // Icon

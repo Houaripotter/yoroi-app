@@ -655,13 +655,17 @@ export const loadQuestsState = async (): Promise<QuestsState> => {
       return getDefaultState();
     }
 
-    const state: QuestsState = JSON.parse(stored);
+    const parsed = JSON.parse(stored);
+    if (!parsed || typeof parsed !== 'object' || !parsed.daily || !parsed.weekly || !parsed.monthly) {
+      return getDefaultState();
+    }
+    const state: QuestsState = parsed;
     const today = getToday();
     const weekStart = getWeekStart();
     const month = getMonth();
 
     // Reset daily quests si nouveau jour
-    if (state.daily.date !== today) {
+    if (!state.daily.quests || state.daily.date !== today) {
       state.daily = {
         date: today,
         quests: DAILY_QUESTS.map(initQuestProgress),
@@ -670,7 +674,7 @@ export const loadQuestsState = async (): Promise<QuestsState> => {
     }
 
     // Reset weekly quests si nouvelle semaine
-    if (state.weekly.weekStart !== weekStart) {
+    if (!state.weekly.quests || state.weekly.weekStart !== weekStart) {
       state.weekly = {
         weekStart,
         quests: WEEKLY_QUESTS.map(initQuestProgress),
@@ -679,7 +683,7 @@ export const loadQuestsState = async (): Promise<QuestsState> => {
     }
 
     // Reset monthly quests si nouveau mois
-    if (state.monthly.month !== month) {
+    if (!state.monthly.quests || state.monthly.month !== month) {
       state.monthly = {
         month,
         quests: MONTHLY_QUESTS.map(initQuestProgress),
@@ -834,11 +838,11 @@ export const checkAndUpdateQuests = async (): Promise<QuestId[]> => {
   const appResult = await updateQuestProgress('daily_open_app', 1);
   if (appResult.completed && appResult.xpEarned > 0) completedQuests.push('daily_open_app');
 
-  // Pas du jour (synchro HealthKit/Google Fit)
+  // Pas du jour (synchro HealthKit)
   try {
-    const HealthService = require('./healthService').default;
-    const stepsData = await HealthService.getSteps();
-    const steps = stepsData?.value ?? stepsData ?? 0;
+    const { healthConnect: hc } = require('./healthConnect');
+    const stepsData = await hc.getTodaySteps();
+    const steps = stepsData?.count ?? 0;
     if (typeof steps === 'number' && steps > 0) {
       const stepsResult = await updateQuestProgress('daily_steps', steps);
       if (stepsResult.completed && stepsResult.xpEarned > 0) completedQuests.push('daily_steps');
@@ -847,13 +851,12 @@ export const checkAndUpdateQuests = async (): Promise<QuestId[]> => {
     // HealthKit non disponible, on ignore
   }
 
-  // Sommeil (synchro HealthKit/Google Fit)
+  // Sommeil (synchro HealthKit)
   try {
-    const HealthService = require('./healthService').default;
-    const sleepData = await HealthService.getSleep(1);
-    if (sleepData && sleepData.length > 0) {
-      const lastSleep = sleepData[0];
-      const sleepHours = typeof lastSleep === 'number' ? lastSleep : (lastSleep?.duration ?? lastSleep?.value ?? 0);
+    const { healthConnect: hc } = require('./healthConnect');
+    const sleepData = await hc.getLastSleep();
+    if (sleepData?.duration) {
+      const sleepHours = sleepData.duration / 60; // minutes -> heures
       if (sleepHours > 0) {
         const sleepResult = await updateQuestProgress('daily_sleep', sleepHours);
         if (sleepResult.completed && sleepResult.xpEarned > 0) completedQuests.push('daily_sleep');

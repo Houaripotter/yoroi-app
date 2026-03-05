@@ -46,6 +46,8 @@ interface HomeTabViewProps {
   sleepHours?: number;
   sleepDebt?: number;
   sleepGoal?: number;
+  sleepDate?: string;
+  sleepWeeklyAvg?: number;
   workloadStatus?: 'none' | 'light' | 'moderate' | 'intense';
 
   // Navigation
@@ -74,6 +76,7 @@ interface HomeTabViewProps {
   // Callbacks
   onAddWeight?: () => void;
   onAddWater?: (ml: number) => void;
+  onRefresh?: () => Promise<void>;
 
   // Avatar refresh
   refreshTrigger?: number;
@@ -84,7 +87,6 @@ interface HomeTabViewProps {
 }
 
 // Default page IDs - titles are loaded dynamically via i18n
-// Only 'home' now - tools are directly embedded in home page
 const DEFAULT_PAGE_IDS = ['home'] as const;
 
 // Composant HomeTabView optimisé avec React.memo
@@ -108,6 +110,8 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
   sleepHours = 0,
   sleepDebt = 0,
   sleepGoal = 8,
+  sleepDate,
+  sleepWeeklyAvg = 0,
   workloadStatus = 'none',
   dailyChallenges = [],
   stepsGoal = 10000,
@@ -118,6 +122,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
   heightCm,
   onAddWeight,
   onAddWater,
+  onRefresh,
   refreshTrigger = 0,
   unreadNotifCount = 0,
   onNotifCountChange,
@@ -129,7 +134,6 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
   const [currentPage, setCurrentPage] = useState(0);
 
   // Create default pages with translations
-  // Only home page now - tools are embedded directly in home
   const getDefaultPages = (): PageItem[] => [
     { id: 'home', title: t('home.title'), icon: '', description: t('home.dashboard') },
   ];
@@ -184,12 +188,11 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
       const saved = await AsyncStorage.getItem(PAGE_ORDER_KEY);
       if (saved) {
         const savedOrder: PageItem[] = JSON.parse(saved);
-        // Filtrer pour ne garder que la page home (tools est maintenant intégré dans home)
-        const validPages = savedOrder.filter(page =>
-          page.id === 'home'
-        );
-        // Si des pages ont été filtrées, utiliser les nouvelles pages par défaut
-        if (validPages.length < savedOrder.length) {
+        // Filtrer pour ne garder que les pages valides
+        const validIds = new Set(DEFAULT_PAGE_IDS);
+        const validPages = savedOrder.filter(page => validIds.has(page.id as any));
+        // Si des pages manquent ou ont ete filtrees, reset aux valeurs par defaut
+        if (validPages.length !== defaultPages.length) {
           setPageOrder(defaultPages);
           await AsyncStorage.setItem(PAGE_ORDER_KEY, JSON.stringify(defaultPages));
         } else {
@@ -288,9 +291,12 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
             sleepHours={sleepHours}
             sleepDebt={sleepDebt}
             sleepGoal={sleepGoal}
+            sleepDate={sleepDate}
+            sleepWeeklyAvg={sleepWeeklyAvg}
             workloadStatus={workloadStatus}
             onAddWeight={onAddWeight}
             refreshTrigger={refreshTrigger}
+            onRefresh={onRefresh}
             onAddWater={onAddWater}
             bodyFat={bodyFat}
             muscleMass={muscleMass}
@@ -313,13 +319,49 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Plus d'onglet en haut - une seule page */}
+      {/* Dots indicateurs */}
+      {pageOrder.length > 1 && (
+        <View style={styles.dotsContainer}>
+          {pageOrder.map((page, index) => (
+            <TouchableOpacity
+              key={page.id}
+              onPress={() => scrollToPage(index)}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <View
+                style={[
+                  styles.dot,
+                  {
+                    backgroundColor: currentPage === index
+                      ? colors.accent
+                      : isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+                    width: currentPage === index ? 20 : 7,
+                  },
+                ]}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
-      {/* Contenu direct */}
-      <View style={styles.page}>
-        {renderPage('home')}
-      </View>
-
+      {/* Pages horizontales */}
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        scrollEventThrottle={16}
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {pageOrder.map((page) => (
+          <View key={page.id} style={styles.page}>
+            {renderPage(page.id)}
+          </View>
+        ))}
+      </ScrollView>
 
       {/* Modal de réorganisation */}
       <Modal
@@ -393,6 +435,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     overflow: 'visible',
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    zIndex: 50,
+  },
+  dot: {
+    height: 7,
+    borderRadius: 4,
   },
   scrollContent: {
     flexDirection: 'row',

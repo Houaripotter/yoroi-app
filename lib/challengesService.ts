@@ -8,6 +8,7 @@ import logger from '@/lib/security/logger';
 import { getDailyHydration } from '@/lib/quests';
 import { calculateAndStoreUnifiedPoints } from './gamification';
 import { getWeights, calculateStreak, getTrainings } from './database';
+import { format, startOfWeek, startOfMonth } from 'date-fns';
 
 // ============================================
 // TYPES
@@ -193,6 +194,9 @@ const STORAGE_KEYS = {
   CHALLENGE_PROGRESS: '@yoroi_challenge_progress',
   COMPLETED_CHALLENGES: '@yoroi_completed_challenges',
   TOTAL_XP_FROM_CHALLENGES: '@yoroi_challenge_xp',
+  LAST_DAILY_RESET: '@yoroi_challenge_last_daily_reset',
+  LAST_WEEKLY_RESET: '@yoroi_challenge_last_weekly_reset',
+  LAST_MONTHLY_RESET: '@yoroi_challenge_last_monthly_reset',
 };
 
 // ============================================
@@ -327,47 +331,261 @@ export const getActiveChallenges = async (): Promise<ActiveChallenge[]> => {
   }
 };
 
-/**
- * Synchronise l'hydratation avec le défi correspondant
- */
-export const syncHydrationChallenge = async (): Promise<void> => {
-  try {
-    // Récupérer l'hydratation du jour (en litres)
-    const hydrationLiters = await getDailyHydration();
-    // Convertir en ml (le défi utilise des ml)
-    const hydrationMl = Math.round(hydrationLiters * 1000);
+// ============================================
+// RESET AUTOMATIQUE (quotidien/hebdo/mensuel)
+// ============================================
 
-    // Mettre à jour la progression du défi d'hydratation
-    const hydrationChallenge = DAILY_CHALLENGES.find(c => c.id === 'daily_hydration');
-    if (hydrationChallenge) {
-      await updateChallengeProgress('daily_hydration', hydrationMl, hydrationChallenge.target);
+// Utilise la date LOCALE (pas UTC) pour que le reset se fasse a minuit local
+const getToday = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+const getWeekStartStr = () => format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+const getMonthStartStr = () => format(startOfMonth(new Date()), 'yyyy-MM-dd');
+
+// Verrou pour empecher les syncs concurrentes
+let syncInProgress = false;
+
+/**
+ * Reset automatique des defis selon la periode.
+ * - Quotidiens : reset chaque nouveau jour
+ * - Hebdo : reset chaque nouvelle semaine (lundi)
+ * - Mensuels : reset chaque nouveau mois
+ * Ne reset PAS les defis deja reclames (claimed) pour eviter de perdre des XP
+ */
+const autoResetIfNeeded = async (): Promise<void> => {
+  try {
+    const progress = await getChallengeProgress();
+    const today = getToday();
+    const weekStart = getWeekStartStr();
+    const monthStart = getMonthStartStr();
+
+    const [lastDaily, lastWeekly, lastMonthly] = await Promise.all([
+      AsyncStorage.getItem(STORAGE_KEYS.LAST_DAILY_RESET),
+      AsyncStorage.getItem(STORAGE_KEYS.LAST_WEEKLY_RESET),
+      AsyncStorage.getItem(STORAGE_KEYS.LAST_MONTHLY_RESET),
+    ]);
+
+    let changed = false;
+
+    // Reset quotidien - nouveau jour = on repart a zero
+    if (lastDaily !== today) {
+      DAILY_CHALLENGES.forEach(c => {
+        progress[c.id] = { challengeId: c.id, current: 0, target: c.target, completed: false, claimed: false };
+        changed = true;
+      });
+      await AsyncStorage.setItem(STORAGE_KEYS.LAST_DAILY_RESET, today);
+    }
+
+    // Reset hebdomadaire
+    if (lastWeekly !== weekStart) {
+      WEEKLY_CHALLENGES.forEach(c => {
+        progress[c.id] = { challengeId: c.id, current: 0, target: c.target, completed: false, claimed: false };
+        changed = true;
+      });
+      await AsyncStorage.setItem(STORAGE_KEYS.LAST_WEEKLY_RESET, weekStart);
+    }
+
+    // Reset mensuel
+    if (lastMonthly !== monthStart) {
+      MONTHLY_CHALLENGES.forEach(c => {
+        progress[c.id] = { challengeId: c.id, current: 0, target: c.target, completed: false, claimed: false };
+        changed = true;
+      });
+      await AsyncStorage.setItem(STORAGE_KEYS.LAST_MONTHLY_RESET, monthStart);
+    }
+
+    if (changed) {
+      await AsyncStorage.setItem(STORAGE_KEYS.CHALLENGE_PROGRESS, JSON.stringify(progress));
     }
   } catch (error) {
-    logger.error('Erreur sync hydratation défi:', error);
+    logger.error('Erreur auto-reset défis:', error);
+  }
+};
+
+// ============================================
+// SYNCHRONISATION AUTOMATIQUE AVEC LES DONNEES REELLES
+// ============================================
+
+/**
+ * Synchronise TOUS les defis avec les donnees reelles de l'app.
+ * Lit les trainings, poids, hydratation, sommeil, streak depuis la BDD
+ * et met a jour la progression de chaque defi automatiquement.
+ */
+export const syncAllChallenges = async (): Promise<string[]> => {
+  // Verrou: si une sync est deja en cours, on attend pas (evite les doublons)
+  if (syncInProgress) return [];
+  syncInProgress = true;
+
+  try {
+    // Reset si nouveau jour/semaine/mois
+    await autoResetIfNeeded();
+
+    const today = getToday();
+    const weekStart = getWeekStartStr();
+    const monthStart = getMonthStartStr();
+    const newlyCompleted: string[] = [];
+
+    // Charger toutes les donnees en parallele
+    const [trainings, weights, streak, hydrationLiters] = await Promise.all([
+      getTrainings().catch(() => []),
+      getWeights().catch(() => []),
+      calculateStreak().catch(() => 0),
+      getDailyHydration().catch(() => 0),
+    ]);
+
+    // Sommeil via HealthKit (optionnel, ne bloque pas)
+    let sleepHours = 0;
+    let weeklySleepHours: number[] = [];
+    try {
+      const { healthConnect } = require('./healthConnect');
+      const sleepData = await healthConnect.getLastSleep?.();
+      if (sleepData?.duration) {
+        sleepHours = sleepData.duration / 60; // minutes -> heures
+      }
+      // Historique sommeil de la semaine
+      const sleepHistory = await healthConnect.getSleepHistory?.(7);
+      if (Array.isArray(sleepHistory)) {
+        weeklySleepHours = sleepHistory.map((s: any) => (s.duration || 0) / 60);
+      }
+    } catch { /* HealthKit non dispo */ }
+
+    // Lire la progression actuelle (pour ne pas ecraser les defis deja claimed)
+    const progress = await getChallengeProgress();
+
+    // Helper: met a jour un defi seulement si pas deja claimed
+    const syncChallenge = (id: string, current: number, target: number) => {
+      const existing = progress[id];
+      // Ne pas toucher aux defis deja reclames
+      if (existing?.claimed) return;
+      const completed = current >= target;
+      const wasCompleted = existing?.completed || false;
+      progress[id] = {
+        challengeId: id,
+        current: Math.min(current, target), // cap au target pour l'affichage
+        target,
+        completed,
+        completedAt: completed && !wasCompleted ? new Date().toISOString() : existing?.completedAt,
+        claimed: false,
+      };
+      if (completed && !wasCompleted) {
+        newlyCompleted.push(id);
+      }
+    };
+
+    // === DEFIS QUOTIDIENS ===
+
+    // Entrainement du jour
+    const todayTrainings = trainings.filter(t => t.date === today);
+    syncChallenge('daily_training', todayTrainings.length, 1);
+
+    // Hydratation (en ml)
+    const hydrationMl = Math.round(hydrationLiters * 1000);
+    syncChallenge('daily_hydration', hydrationMl, 2500);
+
+    // Sommeil
+    syncChallenge('daily_sleep', Math.round(sleepHours * 10) / 10, 7);
+
+    // Pesee du jour
+    const todayWeighs = weights.filter(w => w.date === today);
+    syncChallenge('daily_weigh', todayWeighs.length > 0 ? 1 : 0, 1);
+
+    // === DEFIS HEBDOMADAIRES ===
+
+    // 5 entrainements cette semaine
+    const weekTrainings = trainings.filter(t => t.date >= weekStart);
+    syncChallenge('weekly_5_trainings', weekTrainings.length, 5);
+
+    // Streak de 7 jours
+    syncChallenge('weekly_streak_7', streak, 7);
+
+    // Hydratation 7 jours : on track les jours OK via une cle separee
+    try {
+      const hydrationDaysKey = '@yoroi_challenge_hydration_days';
+      const storedDays = await AsyncStorage.getItem(hydrationDaysKey);
+      const parsedDays = storedDays ? JSON.parse(storedDays) : [];
+      let hydrationDays: string[] = Array.isArray(parsedDays) ? parsedDays : [];
+      // Filtrer pour ne garder que les jours de cette semaine
+      hydrationDays = hydrationDays.filter(d => d >= weekStart);
+      // Ajouter aujourd'hui si on a atteint 2.5L
+      if (hydrationMl >= 2500 && !hydrationDays.includes(today)) {
+        hydrationDays.push(today);
+      }
+      await AsyncStorage.setItem(hydrationDaysKey, JSON.stringify(hydrationDays));
+      syncChallenge('weekly_hydration', hydrationDays.length, 7);
+    } catch {
+      syncChallenge('weekly_hydration', hydrationMl >= 2500 ? 1 : 0, 7);
+    }
+
+    // Sommeil moyen 7h+
+    if (weeklySleepHours.length > 0) {
+      const avgSleep = weeklySleepHours.reduce((a, b) => a + b, 0) / weeklySleepHours.length;
+      syncChallenge('weekly_sleep_quality', Math.round(avgSleep * 10) / 10, 7);
+    }
+
+    // === DEFIS MENSUELS ===
+
+    // 20 entrainements ce mois
+    const monthTrainings = trainings.filter(t => t.date >= monthStart);
+    syncChallenge('monthly_20_trainings', monthTrainings.length, 20);
+
+    // Objectif de poids (on check si un objectif existe et est atteint)
+    try {
+      const goalStr = await AsyncStorage.getItem('@yoroi_weight_goal');
+      if (goalStr) {
+        const goal = parseFloat(goalStr);
+        if (weights.length > 0 && goal > 0) {
+          const latestWeight = weights[0]?.weight || 0;
+          const reached = latestWeight <= goal ? 1 : 0;
+          syncChallenge('monthly_weight_goal', reached, 1);
+        }
+      }
+    } catch { /* ignore */ }
+
+    // Streak 30 jours
+    syncChallenge('monthly_streak_30', streak, 30);
+
+    // Sauvegarder toute la progression
+    await AsyncStorage.setItem(STORAGE_KEYS.CHALLENGE_PROGRESS, JSON.stringify(progress));
+
+    return newlyCompleted;
+  } catch (error) {
+    logger.error('Erreur syncAllChallenges:', error);
+    return [];
+  } finally {
+    syncInProgress = false;
   }
 };
 
 /**
- * Récupère les défis quotidiens (synchronise l'hydratation automatiquement)
+ * Recupere les defis quotidiens (synchronise automatiquement)
  */
 export const getDailyChallenges = async (): Promise<ActiveChallenge[]> => {
-  // Synchroniser l'hydratation avant de récupérer les défis
-  await syncHydrationChallenge();
-
+  await syncAllChallenges();
   const all = await getActiveChallenges();
   return all.filter(c => c.type === 'daily');
 };
 
 /**
- * Récupère les défis hebdomadaires
+ * Recupere les defis hebdomadaires (synchronise automatiquement)
  */
 export const getWeeklyChallenges = async (): Promise<ActiveChallenge[]> => {
+  await syncAllChallenges();
   const all = await getActiveChallenges();
   return all.filter(c => c.type === 'weekly');
 };
 
 /**
- * Récupère le total XP gagné via les défis
+ * Recupere les defis mensuels (synchronise automatiquement)
+ */
+export const getMonthlyChallenges = async (): Promise<ActiveChallenge[]> => {
+  await syncAllChallenges();
+  const all = await getActiveChallenges();
+  return all.filter(c => c.type === 'monthly');
+};
+
+/**
+ * Recupere le total XP gagne via les defis
  */
 export const getTotalChallengeXP = async (): Promise<number> => {
   try {
@@ -379,24 +597,22 @@ export const getTotalChallengeXP = async (): Promise<number> => {
 };
 
 /**
- * Réinitialise les défis quotidiens (appelé chaque jour)
+ * Reinitialise les defis quotidiens (appele chaque jour)
  */
 export const resetDailyChallenges = async (): Promise<void> => {
   try {
     const progress = await getChallengeProgress();
-    
+
     DAILY_CHALLENGES.forEach(challenge => {
-      if (progress[challenge.id]) {
-        progress[challenge.id] = {
-          challengeId: challenge.id,
-          current: 0,
-          target: challenge.target,
-          completed: false,
-          claimed: false,
-        };
-      }
+      progress[challenge.id] = {
+        challengeId: challenge.id,
+        current: 0,
+        target: challenge.target,
+        completed: false,
+        claimed: false,
+      };
     });
-    
+
     await AsyncStorage.setItem(STORAGE_KEYS.CHALLENGE_PROGRESS, JSON.stringify(progress));
   } catch (error) {
     logger.error('Erreur reset défis quotidiens:', error);
@@ -415,8 +631,9 @@ export default {
   getActiveChallenges,
   getDailyChallenges,
   getWeeklyChallenges,
+  getMonthlyChallenges,
   getTotalChallengeXP,
   resetDailyChallenges,
-  syncHydrationChallenge,
+  syncAllChallenges,
 };
 

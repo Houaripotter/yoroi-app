@@ -160,9 +160,15 @@ export default function MatTimeScreen() {
     return `${mins}min`;
   };
 
-  // Formatter en heures decimales
+  // Formatter en heures propres (1h, 1h30, etc.)
   const formatHours = (minutes: number) => {
-    return (minutes / 60).toFixed(1);
+    if (!minutes || minutes <= 0) return '0h';
+    const totalMin = Math.round(minutes);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    if (h === 0) return `${m}min`;
+    if (m === 0) return `${h}h`;
+    return `${h}h${m.toString().padStart(2, '0')}`;
   };
 
   // Progress ring pour l'objectif
@@ -200,10 +206,10 @@ export default function MatTimeScreen() {
         </Svg>
         <View style={styles.goalRingContent}>
           <Text style={[styles.goalValue, { color: colors.textPrimary }]}>
-            {formatHours(current)}h
+            {formatHours(current)}
           </Text>
           <Text style={[styles.goalLabel, { color: colors.textMuted }]}>
-            / {formatHours(goal)}h
+            / {formatHours(goal)}
           </Text>
           <Text style={[styles.goalSubLabel, { color: colors.textSecondary }]}>
             cette semaine
@@ -264,7 +270,6 @@ export default function MatTimeScreen() {
           <Text style={[styles.heroValue, { color: colors.gold }]}>
             {formatHours(stats.totalMinutes)}
           </Text>
-          <Text style={[styles.heroUnit, { color: colors.gold }]}>heures</Text>
           <Text style={[styles.heroSubtext, { color: colors.textMuted }]}>
             {stats.sessions} sessions
           </Text>

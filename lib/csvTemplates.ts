@@ -385,8 +385,8 @@ export async function importUnifiedRows(rows: SimpleParsedRow[]): Promise<Simple
       }
 
       success++;
-    } catch (err: any) {
-      importErrors.push({ line: row.lineNumber, error: err.message || 'Erreur inconnue' });
+    } catch (err: unknown) {
+      importErrors.push({ line: row.lineNumber, error: err instanceof Error ? err.message : 'Erreur inconnue' });
     }
   }
 

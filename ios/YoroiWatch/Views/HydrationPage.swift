@@ -29,7 +29,7 @@ struct HydrationPage: View {
               .foregroundColor(accentColor)
             Text("Hydratation")
               .font(.system(size: 11, weight: .semibold))
-              .foregroundColor(.white.opacity(0.7))
+              .foregroundColor(session.textPrimary.opacity(0.7))
             Spacer()
           }
           .padding(.horizontal, 2)
@@ -47,10 +47,10 @@ struct HydrationPage: View {
             VStack(spacing: 0) {
               Text("\(session.hydrationCurrent)")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(session.textPrimary)
               Text("ml")
                 .font(.system(size: 7))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(session.textPrimary.opacity(0.7))
             }
           }
           .frame(height: 88)
@@ -59,10 +59,10 @@ struct HydrationPage: View {
           HStack(spacing: 2) {
             Text(hydrationDisplay)
               .font(.system(size: 12, weight: .heavy))
-              .foregroundColor(goalReached ? GREEN : .white)
+              .foregroundColor(goalReached ? GREEN : session.textPrimary)
             Text("/ \(String(format: "%.1f", goalLiters))L")
               .font(.system(size: 9, weight: .semibold))
-              .foregroundColor(.gray)
+              .foregroundColor(session.textSecondary)
           }
 
           // Progress bar
@@ -110,7 +110,7 @@ struct HydrationPage: View {
           }, alignment: .top
         )
 
-        Divider().background(Color.gray.opacity(0.15))
+        Divider().background(session.dividerColor)
 
         // ── SECTION 2: Weekly Stats ──
         VStack(spacing: 8) {
@@ -120,18 +120,21 @@ struct HydrationPage: View {
               .foregroundColor(Color(red: 0.545, green: 0.361, blue: 0.965))
             Text("Cette semaine")
               .font(.system(size: 10, weight: .semibold))
-              .foregroundColor(.gray)
+              .foregroundColor(session.textSecondary)
           }
 
           HStack(spacing: 0) {
             WeekStatItem(icon: "chart.line.uptrend.xyaxis", iconColor: GREEN,
-                         value: "\(weeklySuccessRate)%", label: "Reussite")
-            Rectangle().fill(Color.gray.opacity(0.3)).frame(width: 1, height: 32)
+                         value: "\(weeklySuccessRate)%", label: "Reussite",
+                         textPrimary: session.textPrimary, textSecondary: session.textSecondary)
+            Rectangle().fill(session.dividerColor).frame(width: 1, height: 32)
             WeekStatItem(icon: "drop.fill", iconColor: CYAN,
-                         value: String(format: "%.1fL", weeklyAvg / 1000), label: "Moy/jour")
-            Rectangle().fill(Color.gray.opacity(0.3)).frame(width: 1, height: 32)
+                         value: String(format: "%.1fL", weeklyAvg / 1000), label: "Moy/jour",
+                         textPrimary: session.textPrimary, textSecondary: session.textSecondary)
+            Rectangle().fill(session.dividerColor).frame(width: 1, height: 32)
             WeekStatItem(icon: "checkmark", iconColor: Color(red: 0.545, green: 0.361, blue: 0.965),
-                         value: "\(weeklyCompletedDays)/7", label: "Reussis")
+                         value: "\(weeklyCompletedDays)/7", label: "Reussis",
+                         textPrimary: session.textPrimary, textSecondary: session.textSecondary)
           }
 
           // Bar chart
@@ -147,7 +150,7 @@ struct HydrationPage: View {
                       .fill(day.progress >= 1.0 ? GREEN : CYAN)
                       .frame(width: 14, height: max(4, CGFloat(40.0 * day.progress)))
                   }
-                  Text(day.day).font(.system(size: 7)).foregroundColor(.gray)
+                  Text(day.day).font(.system(size: 7)).foregroundColor(session.textSecondary)
                 }
               }
             }
@@ -155,7 +158,7 @@ struct HydrationPage: View {
           }
         }
 
-        Divider().background(Color.gray.opacity(0.15))
+        Divider().background(session.dividerColor)
 
         // ── SECTION 3: Goal Settings ──
         VStack(spacing: 8) {
@@ -165,40 +168,41 @@ struct HydrationPage: View {
               .foregroundColor(Color(red: 0.961, green: 0.620, blue: 0.043))
             Text("Objectif quotidien")
               .font(.system(size: 10, weight: .semibold))
-              .foregroundColor(.gray)
+              .foregroundColor(session.textSecondary)
           }
 
           Text(String(format: "%.1f L", Double(session.hydrationGoal) / 1000))
             .font(.system(size: 24, weight: .bold))
-            .foregroundColor(.white)
+            .foregroundColor(session.textPrimary)
 
           HStack(spacing: 20) {
             Button(action: { session.hydrationGoal = max(500, session.hydrationGoal - 250) }) {
               Image(systemName: "minus")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(session.textPrimary)
                 .frame(width: 32, height: 32)
-                .background(Color.white.opacity(0.1))
+                .background(session.cardBg)
                 .cornerRadius(8)
             }.buttonStyle(.plain)
 
             Button(action: { session.hydrationGoal = min(6000, session.hydrationGoal + 250) }) {
               Image(systemName: "plus")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(session.textPrimary)
                 .frame(width: 32, height: 32)
-                .background(Color.white.opacity(0.1))
+                .background(session.cardBg)
                 .cornerRadius(8)
             }.buttonStyle(.plain)
           }
 
           Text("Ajuste par pas de 250ml")
             .font(.system(size: 8))
-            .foregroundColor(.gray)
+            .foregroundColor(session.textSecondary)
         }
       }
       .padding(.horizontal, 4)
     }
+    .refreshable { session.requestSync() }
     .onAppear {
       withAnimation(.linear(duration: 2.5).repeatForever(autoreverses: false)) {
         waveOffset = Double.pi * 2
@@ -273,11 +277,13 @@ struct WeekStatItem: View {
   let iconColor: Color
   let value: String
   let label: String
+  var textPrimary: Color = .white
+  var textSecondary: Color = .gray
   var body: some View {
     VStack(spacing: 2) {
       Image(systemName: icon).font(.system(size: 11)).foregroundColor(iconColor)
-      Text(value).font(.system(size: 12, weight: .bold)).foregroundColor(.white)
-      Text(label).font(.system(size: 7)).foregroundColor(.gray)
+      Text(value).font(.system(size: 12, weight: .bold)).foregroundColor(textPrimary)
+      Text(label).font(.system(size: 7)).foregroundColor(textSecondary)
     }.frame(maxWidth: .infinity)
   }
 }

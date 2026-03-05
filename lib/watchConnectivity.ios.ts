@@ -26,30 +26,21 @@ import { logger } from '@/lib/security/logger';
 // Pour les imports named
 import React from 'react';
 
-// ✅ DIAGNOSTIC: Logger l'état du module au chargement
 const isModuleAvailable = !!NativeModules.WatchConnectivityBridge;
-logger.info('========================================');
-logger.info('[WatchConnectivity] Module natif disponible:', isModuleAvailable);
-logger.info('[WatchConnectivity] Platform:', Platform.OS);
-if (!isModuleAvailable && Platform.OS === 'ios') {
-  logger.warn('[WatchConnectivity] ⚠️ ATTENTION: Module WatchConnectivityBridge NON CHARGÉ sur iOS!');
-  logger.warn('[WatchConnectivity] La communication iPhone ↔ Watch ne fonctionnera PAS.');
-  logger.warn('[WatchConnectivity] Vérifiez que le module natif est correctement linké.');
+if (__DEV__) {
+  logger.info('[WatchConnectivity] Module natif disponible:', isModuleAvailable);
+  if (!isModuleAvailable && Platform.OS === 'ios') {
+    logger.warn('[WatchConnectivity] ATTENTION: Module WatchConnectivityBridge NON CHARGÉ sur iOS!');
+    logger.warn('[WatchConnectivity] Vérifiez que le module natif est correctement linké.');
+  }
 }
-logger.info('========================================');
 
 const WatchConnectivityModule = isModuleAvailable
   ? NativeModules.WatchConnectivityBridge
   : {
       // Module stub qui retourne des valeurs par défaut au lieu de crasher
-      isWatchAvailable: () => {
-        logger.warn('[WatchConnectivity] Stub: isWatchAvailable() appelé - module non disponible');
-        return Promise.resolve(false);
-      },
-      isWatchReachable: () => {
-        logger.warn('[WatchConnectivity] Stub: isWatchReachable() appelé - module non disponible');
-        return Promise.resolve(false);
-      },
+      isWatchAvailable: () => Promise.resolve(false),
+      isWatchReachable: () => Promise.resolve(false),
       sendMessageToWatch: () => {
         return Promise.resolve(false);
       },
@@ -60,7 +51,7 @@ const WatchConnectivityModule = isModuleAvailable
       getReceivedApplicationContext: () => Promise.resolve({}),
       activateSession: () => Promise.resolve(true),
       transferFile: () => Promise.reject(new Error('Module not available')),
-      // ✅ NOUVEAU: Fonction ping pour diagnostic
+      // NOUVEAU: Fonction ping pour diagnostic
       ping: () => Promise.resolve({
         supported: false,
         paired: false,
@@ -269,9 +260,9 @@ export const WatchConnectivity = {
           timestamp: Date.now(),
         },
       });
-      logger.info('✅ Weight update sent to Watch:', weight);
+      if (__DEV__) logger.info('Weight update sent to Watch:', weight);
     } catch (error) {
-      logger.error('❌ Error sending weight to Watch:', error);
+      logger.error('Error sending weight to Watch:', error);
       throw error;
     }
   },
@@ -288,9 +279,9 @@ export const WatchConnectivity = {
           timestamp: Date.now(),
         },
       });
-      logger.info('✅ Hydration update sent to Watch:', waterIntake);
+      if (__DEV__) logger.info('Hydration update sent to Watch:', waterIntake);
     } catch (error) {
-      logger.error('❌ Error sending hydration to Watch:', error);
+      logger.error('Error sending hydration to Watch:', error);
       throw error;
     }
   },
@@ -312,9 +303,9 @@ export const WatchConnectivity = {
           timestamp: Date.now(),
         },
       });
-      logger.info('✅ Workout session sent to Watch');
+      if (__DEV__) logger.info('Workout session sent to Watch');
     } catch (error) {
-      logger.error('❌ Error sending workout to Watch:', error);
+      logger.error('Error sending workout to Watch:', error);
       throw error;
     }
   },
@@ -335,15 +326,15 @@ export const WatchConnectivity = {
           timestamp: Date.now(),
         },
       });
-      logger.info('✅ Records sent to Watch:', records.length);
+      if (__DEV__) logger.info('Records sent to Watch:', records.length);
     } catch (error) {
-      logger.error('❌ Error sending records to Watch:', error);
+      logger.error('Error sending records to Watch:', error);
       throw error;
     }
   },
 
   // ============================================
-  // ✅ NOUVEAU: FONCTION DE DIAGNOSTIC WATCH
+  // NOUVEAU: FONCTION DE DIAGNOSTIC WATCH
   // ============================================
   runDiagnostic: async (): Promise<{
     moduleAvailable: boolean;
@@ -354,33 +345,25 @@ export const WatchConnectivity = {
     errors: string[];
     recommendations: string[];
   }> => {
-    logger.info('========================================');
-    logger.info('[WatchConnectivity] DÉMARRAGE DIAGNOSTIC');
-    logger.info('========================================');
-
     const errors: string[] = [];
     const recommendations: string[] = [];
 
-    // 1. Vérifier le module natif
-    logger.info('[Diagnostic] Module natif disponible:', isModuleAvailable);
+    // 1. Module natif
     if (!isModuleAvailable) {
       errors.push('Module natif WatchConnectivityBridge non chargé');
       recommendations.push('Vérifiez que le module natif est correctement compilé dans Xcode');
       recommendations.push('Faites un clean build: cd ios && pod install && cd .. && npx expo run:ios');
     }
 
-    // 2. Vérifier la plateforme
-    logger.info('[Diagnostic] Plateforme:', Platform.OS);
+    // 2. Plateforme
     if (Platform.OS !== 'ios') {
       errors.push('WatchConnectivity n\'est disponible que sur iOS');
     }
 
-    // 3. Tester isWatchAvailable
+    // 3. isWatchAvailable
     let isAvailable = false;
     try {
       isAvailable = await WatchConnectivity.isWatchAvailable();
-      logger.info('[Diagnostic] Watch disponible:', isAvailable);
-
       if (!isAvailable) {
         errors.push('Apple Watch non disponible');
         recommendations.push('Vérifiez que votre Apple Watch est jumelée avec cet iPhone');
@@ -390,12 +373,10 @@ export const WatchConnectivity = {
       errors.push('Erreur isWatchAvailable: ' + (e as Error).message);
     }
 
-    // 4. Tester isWatchReachable
+    // 4. isWatchReachable
     let isReachable = false;
     try {
       isReachable = await WatchConnectivity.isWatchReachable();
-      logger.info('[Diagnostic] Watch reachable:', isReachable);
-
       if (!isReachable && isAvailable) {
         recommendations.push('Votre Watch est jumelée mais pas à portée');
         recommendations.push('Activez le Bluetooth et rapprochez les appareils');
@@ -404,22 +385,19 @@ export const WatchConnectivity = {
       errors.push('Erreur isWatchReachable: ' + (e as Error).message);
     }
 
-    // 5. Ping (si disponible)
+    // 5. Ping
     let pingResult = null;
     try {
       if (WatchConnectivityModule.ping) {
         pingResult = await WatchConnectivityModule.ping();
-        logger.info('[Diagnostic] Ping result:', pingResult);
       }
-    } catch (e) {
-      logger.info('[Diagnostic] Ping non disponible ou échoué');
+    } catch {
+      // ping non disponible
     }
 
-    logger.info('========================================');
-    logger.info('[WatchConnectivity] FIN DIAGNOSTIC');
-    logger.info('Erreurs:', errors.length);
-    logger.info('Recommandations:', recommendations.length);
-    logger.info('========================================');
+    if (__DEV__) {
+      logger.info('[WatchConnectivity] Diagnostic — erreurs:', errors.length, '| recommandations:', recommendations.length);
+    }
 
     return {
       moduleAvailable: isModuleAvailable,
@@ -493,7 +471,7 @@ export function useWatchConnectivity() {
   };
 }
 
-// ✅ NOUVEAU: Exports pour diagnostic
+// NOUVEAU: Exports pour diagnostic
 export const isWatchModuleAvailable = isModuleAvailable;
 export const getWatchModuleStatus = () => ({
   available: isModuleAvailable,

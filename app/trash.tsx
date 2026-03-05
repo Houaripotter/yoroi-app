@@ -116,9 +116,9 @@ export default function TrashScreen() {
   const formatDuration = (min?: number): string => {
     if (!min) return '1h';
     if (min < 60) return `${min}min`;
-    const h = Math.floor(min / 60);
-    const m = min % 60;
-    return m > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${h}h`;
+    const hours = Math.floor(min / 60);
+    const mins = min % 60;
+    return mins > 0 ? `${hours}h${mins.toString().padStart(2, '0')}` : `${hours}h`;
   };
 
   const formatDeletedAt = (dateStr: string): string => {

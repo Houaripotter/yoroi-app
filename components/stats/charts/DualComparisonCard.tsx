@@ -1,16 +1,17 @@
 // ============================================
-// DUAL COMPARISON CARD - Grand graphique dual-line
+// DUAL COMPARISON CARD - Grand graphique dual-line scrollable
 // 2 courbes colorees + gradient fills + legende
 // + barres de progression modernes en dessous
+// Scroll horizontal + auto-scroll vers les donnees recentes
 // ============================================
 
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent, Dimensions } from 'react-native';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent, ScrollView, Dimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import Svg, { Path, Circle as SvgCircle, Line, Text as SvgText, Defs, LinearGradient, Stop, G, Rect } from 'react-native-svg';
 import { ArrowLeftRight, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
 import { format } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { fr } from 'date-fns/locale';
 import { useI18n } from '@/lib/I18nContext';
 
 interface DualComparisonCardProps {
@@ -33,8 +34,14 @@ const PAD_TOP = 30;
 const PAD_BOTTOM = 35;
 const PAD_LEFT = 45;
 const PAD_RIGHT = 16;
+const POINT_WIDTH = 70;
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Smooth bezier curve
+const smartFormat = (v: number): string => {
+  if (Number.isInteger(v)) return String(v);
+  return v.toFixed(1).replace(/\.0$/, '');
+};
+
 const buildSmooth = (pts: { x: number; y: number }[]) => {
   if (pts.length === 0) return '';
   if (pts.length === 1) return `M ${pts[0].x} ${pts[0].y}`;
@@ -64,8 +71,9 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { language } = useI18n();
-  const dateLocale = language === 'fr' ? fr : enUS;
+  const dateLocale = fr;
   const [cardWidth, setCardWidth] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
 
   const handleLayout = (e: LayoutChangeEvent) => {
     setCardWidth(e.nativeEvent.layout.width);
@@ -76,16 +84,18 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
   const hasData = hasLeftData || hasRightData;
   const maxValue = Math.max(leftValue, rightValue, 1);
   const delta = Math.abs(leftValue - rightValue);
+  const maxLen = Math.max(leftHistory.length, rightHistory.length);
+  const isScrollable = maxLen > 5;
 
-  // Chart computation
   const chartData = useMemo(() => {
     if (!hasData || cardWidth === 0) return null;
 
-    const svgWidth = cardWidth - 32;
+    const minWidth = cardWidth - 32;
+    const scrollableWidth = isScrollable ? Math.max(minWidth, maxLen * POINT_WIDTH) : minWidth;
+    const svgWidth = scrollableWidth;
     const plotW = svgWidth - PAD_LEFT - PAD_RIGHT;
     const plotH = CHART_HEIGHT - PAD_TOP - PAD_BOTTOM;
 
-    // Combine all values for global min/max
     const allValues = [
       ...(hasLeftData ? leftHistory.map(h => h.value) : []),
       ...(hasRightData ? rightHistory.map(h => h.value) : []),
@@ -96,8 +106,6 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
     const yMin = dataMin - range * 0.15;
     const yMax = dataMax + range * 0.15;
     const yRange = yMax - yMin;
-
-    const maxLen = Math.max(leftHistory.length, rightHistory.length);
     const plotBottom = PAD_TOP + plotH;
 
     const toPoints = (data: { date: string; value: number }[]) =>
@@ -109,10 +117,8 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
 
     const leftPts = hasLeftData ? toPoints(leftHistory) : [];
     const rightPts = hasRightData ? toPoints(rightHistory) : [];
-
     const leftLine = buildSmooth(leftPts);
     const rightLine = buildSmooth(rightPts);
-
     const leftArea = leftPts.length > 0
       ? leftLine + ` L ${leftPts[leftPts.length - 1].x.toFixed(1)} ${plotBottom} L ${leftPts[0].x.toFixed(1)} ${plotBottom} Z`
       : '';
@@ -120,68 +126,49 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
       ? rightLine + ` L ${rightPts[rightPts.length - 1].x.toFixed(1)} ${plotBottom} L ${rightPts[0].x.toFixed(1)} ${plotBottom} Z`
       : '';
 
-    // Y axis labels
     const ySteps = 4;
     const yLabels = Array.from({ length: ySteps + 1 }, (_, i) => {
       const val = yMin + (yRange / ySteps) * i;
       return { val: Math.round(val * 10) / 10, y: PAD_TOP + plotH - (plotH / ySteps) * i };
     });
 
-    // X axis labels
     const longestHistory = leftHistory.length >= rightHistory.length ? leftHistory : rightHistory;
     const maxXLabels = Math.floor(svgWidth / 60);
     const xLabels = longestHistory.map((h, i) => {
       const x = PAD_LEFT + (i / Math.max(longestHistory.length - 1, 1)) * plotW;
       let label = '';
-      try {
-        label = format(new Date(h.date), 'd/MM', { locale: dateLocale });
-      } catch { label = ''; }
+      try { label = format(new Date(h.date), 'd/MM', { locale: dateLocale }); } catch { label = ''; }
       return { x, label };
     });
 
-    return {
-      svgWidth,
-      leftPts, rightPts,
-      leftLine, rightLine,
-      leftArea, rightArea,
-      yLabels, xLabels, maxXLabels,
-      plotBottom,
-    };
-  }, [hasData, cardWidth, leftHistory, rightHistory, dateLocale]);
+    return { svgWidth, leftPts, rightPts, leftLine, rightLine, leftArea, rightArea, yLabels, xLabels, maxXLabels, plotBottom };
+  }, [hasData, cardWidth, leftHistory, rightHistory, dateLocale, isScrollable, maxLen]);
 
-  // Trend helpers
-  const getLeftTrend = () => {
-    if (leftHistory.length < 2) return 'stable';
-    const last = leftHistory[leftHistory.length - 1].value;
-    const prev = leftHistory[leftHistory.length - 2].value;
-    return last > prev ? 'up' : last < prev ? 'down' : 'stable';
-  };
+  // Auto-scroll to latest data (right end)
+  const handleContentSizeChange = useCallback((contentWidth: number) => {
+    if (isScrollable && scrollRef.current && contentWidth > cardWidth - 32) {
+      scrollRef.current.scrollToEnd({ animated: false });
+    }
+  }, [isScrollable, cardWidth]);
 
-  const getRightTrend = () => {
-    if (rightHistory.length < 2) return 'stable';
-    const last = rightHistory[rightHistory.length - 1].value;
-    const prev = rightHistory[rightHistory.length - 2].value;
-    return last > prev ? 'up' : last < prev ? 'down' : 'stable';
-  };
-
-  const leftTrend = getLeftTrend();
-  const rightTrend = getRightTrend();
+  const leftTrend = leftHistory.length >= 2
+    ? (leftHistory[leftHistory.length - 1].value > leftHistory[leftHistory.length - 2].value ? 'up' : leftHistory[leftHistory.length - 1].value < leftHistory[leftHistory.length - 2].value ? 'down' : 'stable')
+    : 'stable';
+  const rightTrend = rightHistory.length >= 2
+    ? (rightHistory[rightHistory.length - 1].value > rightHistory[rightHistory.length - 2].value ? 'up' : rightHistory[rightHistory.length - 1].value < rightHistory[rightHistory.length - 2].value ? 'down' : 'stable')
+    : 'stable';
 
   const leftBarWidth = maxValue > 0 ? (leftValue / maxValue) * 100 : 0;
   const rightBarWidth = maxValue > 0 ? (rightValue / maxValue) * 100 : 0;
-
   const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
   const textMuted = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)';
 
   return (
     <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
-          borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-        },
-      ]}
+      style={[styles.container, {
+        backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+      }]}
       onLayout={handleLayout}
     >
       {/* Header */}
@@ -193,178 +180,95 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
           <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
         </View>
         {(leftValue > 0 && rightValue > 0) && (
-          <View style={[styles.deltaBadge, {
-            backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-          }]}>
+          <View style={[styles.deltaBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
             <Text style={[styles.deltaText, { color: colors.textSecondary }]}>
-              {`\u0394 ${delta.toFixed(1)} ${unit}`}
+              {`\u0394 ${smartFormat(delta)} ${unit}`}
             </Text>
           </View>
         )}
       </View>
 
-      {/* Grand graphique SVG */}
+      {/* Graphique SVG scrollable */}
       {hasData && cardWidth > 0 && chartData && (
         <View style={styles.chartContainer}>
-          <Svg width={chartData.svgWidth} height={CHART_HEIGHT}>
-            <Defs>
-              {/* Left gradient */}
-              <LinearGradient id="dualGrad-left" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor={leftColor} stopOpacity={isDark ? '0.40' : '0.30'} />
-                <Stop offset="0.5" stopColor={leftColor} stopOpacity={isDark ? '0.15' : '0.10'} />
-                <Stop offset="1" stopColor={leftColor} stopOpacity="0.02" />
-              </LinearGradient>
-              {/* Right gradient */}
-              <LinearGradient id="dualGrad-right" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor={rightColor} stopOpacity={isDark ? '0.40' : '0.30'} />
-                <Stop offset="0.5" stopColor={rightColor} stopOpacity={isDark ? '0.15' : '0.10'} />
-                <Stop offset="1" stopColor={rightColor} stopOpacity="0.02" />
-              </LinearGradient>
-            </Defs>
+          <ScrollView
+            ref={scrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            onContentSizeChange={handleContentSizeChange}
+            scrollEnabled={isScrollable}
+          >
+            <Svg width={chartData.svgWidth} height={CHART_HEIGHT}>
+              <Defs>
+                <LinearGradient id="dualGrad-left" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0" stopColor={leftColor} stopOpacity={isDark ? '0.40' : '0.30'} />
+                  <Stop offset="0.5" stopColor={leftColor} stopOpacity={isDark ? '0.15' : '0.10'} />
+                  <Stop offset="1" stopColor={leftColor} stopOpacity="0.02" />
+                </LinearGradient>
+                <LinearGradient id="dualGrad-right" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0" stopColor={rightColor} stopOpacity={isDark ? '0.40' : '0.30'} />
+                  <Stop offset="0.5" stopColor={rightColor} stopOpacity={isDark ? '0.15' : '0.10'} />
+                  <Stop offset="1" stopColor={rightColor} stopOpacity="0.02" />
+                </LinearGradient>
+              </Defs>
 
-            {/* Horizontal grid lines */}
-            {chartData.yLabels.map((yl, i) => (
-              <Line
-                key={`hg-${i}`}
-                x1={PAD_LEFT} y1={yl.y}
-                x2={chartData.svgWidth - PAD_RIGHT} y2={yl.y}
-                stroke={gridColor} strokeWidth={1}
-                strokeDasharray="4,6"
-              />
-            ))}
+              {chartData.yLabels.map((yl, i) => (
+                <Line key={`hg-${i}`} x1={PAD_LEFT} y1={yl.y} x2={chartData.svgWidth - PAD_RIGHT} y2={yl.y} stroke={gridColor} strokeWidth={1} strokeDasharray="4,6" />
+              ))}
+              {chartData.yLabels.map((yl, i) => (
+                <SvgText key={`yl-${i}`} x={PAD_LEFT - 8} y={yl.y + 4} fontSize={9} fontWeight="700" fill={textMuted} textAnchor="end">{yl.val.toFixed(1)}</SvgText>
+              ))}
+              {chartData.xLabels.map((xl, i) => {
+                if (chartData.xLabels.length > chartData.maxXLabels) {
+                  const step = Math.ceil(chartData.xLabels.length / chartData.maxXLabels);
+                  if (i % step !== 0 && i !== chartData.xLabels.length - 1) return null;
+                }
+                return <SvgText key={`xl-${i}`} x={xl.x} y={CHART_HEIGHT - 6} textAnchor="middle" fontSize={9} fontWeight="600" fill={textMuted}>{xl.label}</SvgText>;
+              })}
 
-            {/* Y axis labels */}
-            {chartData.yLabels.map((yl, i) => (
-              <SvgText
-                key={`yl-${i}`}
-                x={PAD_LEFT - 8}
-                y={yl.y + 4}
-                fontSize={9}
-                fontWeight="700"
-                fill={textMuted}
-                textAnchor="end"
-              >
-                {yl.val.toFixed(1)}
-              </SvgText>
-            ))}
-
-            {/* X axis labels */}
-            {chartData.xLabels.map((xl, i) => {
-              if (chartData.xLabels.length > chartData.maxXLabels) {
-                const step = Math.ceil(chartData.xLabels.length / chartData.maxXLabels);
-                if (i % step !== 0 && i !== chartData.xLabels.length - 1) return null;
-              }
-              return (
-                <SvgText
-                  key={`xl-${i}`}
-                  x={xl.x}
-                  y={CHART_HEIGHT - 6}
-                  textAnchor="middle"
-                  fontSize={9}
-                  fontWeight="600"
-                  fill={textMuted}
-                >
-                  {xl.label}
-                </SvgText>
-              );
-            })}
-
-            {/* LEFT: Area + Line + Points */}
-            {chartData.leftArea && (
-              <Path d={chartData.leftArea} fill="url(#dualGrad-left)" />
-            )}
-            {chartData.leftLine && (
-              <Path
-                d={chartData.leftLine}
-                fill="none"
-                stroke={leftColor}
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            )}
-            {chartData.leftPts.map((pt, idx) => (
-              <G key={`lp-${idx}`}>
-                <SvgCircle cx={pt.x} cy={pt.y} r={5} fill={leftColor} opacity={0.12} />
-                <SvgCircle
-                  cx={pt.x} cy={pt.y} r={3.5}
-                  fill={isDark ? colors.backgroundCard : '#FFFFFF'}
-                  stroke={leftColor} strokeWidth={2}
-                />
-              </G>
-            ))}
-
-            {/* RIGHT: Area + Line + Points */}
-            {chartData.rightArea && (
-              <Path d={chartData.rightArea} fill="url(#dualGrad-right)" />
-            )}
-            {chartData.rightLine && (
-              <Path
-                d={chartData.rightLine}
-                fill="none"
-                stroke={rightColor}
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            )}
-            {chartData.rightPts.map((pt, idx) => (
-              <G key={`rp-${idx}`}>
-                <SvgCircle cx={pt.x} cy={pt.y} r={5} fill={rightColor} opacity={0.12} />
-                <SvgCircle
-                  cx={pt.x} cy={pt.y} r={3.5}
-                  fill={isDark ? colors.backgroundCard : '#FFFFFF'}
-                  stroke={rightColor} strokeWidth={2}
-                />
-              </G>
-            ))}
-
-            {/* Value labels on last points */}
-            {chartData.leftPts.length > 0 && (() => {
-              const lp = chartData.leftPts[chartData.leftPts.length - 1];
-              return (
-                <G>
-                  <Rect
-                    x={lp.x - 20} y={lp.y - 24}
-                    width={40} height={16}
-                    rx={6} ry={6}
-                    fill={leftColor}
-                    opacity={0.9}
-                  />
-                  <SvgText
-                    x={lp.x} y={lp.y - 13}
-                    textAnchor="middle" fontSize={9} fontWeight="800"
-                    fill="#FFFFFF"
-                  >
-                    {lp.value.toFixed(1)}
-                  </SvgText>
+              {/* LEFT */}
+              {chartData.leftArea && <Path d={chartData.leftArea} fill="url(#dualGrad-left)" />}
+              {chartData.leftLine && <Path d={chartData.leftLine} fill="none" stroke={leftColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />}
+              {chartData.leftPts.map((pt, idx) => (
+                <G key={`lp-${idx}`}>
+                  <SvgCircle cx={pt.x} cy={pt.y} r={5} fill={leftColor} opacity={0.12} />
+                  <SvgCircle cx={pt.x} cy={pt.y} r={3.5} fill={isDark ? colors.backgroundCard : '#FFFFFF'} stroke={leftColor} strokeWidth={2} />
                 </G>
-              );
-            })()}
-            {chartData.rightPts.length > 0 && (() => {
-              const rp = chartData.rightPts[chartData.rightPts.length - 1];
-              return (
-                <G>
-                  <Rect
-                    x={rp.x - 20} y={rp.y - 24}
-                    width={40} height={16}
-                    rx={6} ry={6}
-                    fill={rightColor}
-                    opacity={0.9}
-                  />
-                  <SvgText
-                    x={rp.x} y={rp.y - 13}
-                    textAnchor="middle" fontSize={9} fontWeight="800"
-                    fill="#FFFFFF"
-                  >
-                    {rp.value.toFixed(1)}
-                  </SvgText>
-                </G>
-              );
-            })()}
-          </Svg>
+              ))}
 
-          {/* Legende sous le graphique */}
+              {/* RIGHT */}
+              {chartData.rightArea && <Path d={chartData.rightArea} fill="url(#dualGrad-right)" />}
+              {chartData.rightLine && <Path d={chartData.rightLine} fill="none" stroke={rightColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />}
+              {chartData.rightPts.map((pt, idx) => (
+                <G key={`rp-${idx}`}>
+                  <SvgCircle cx={pt.x} cy={pt.y} r={5} fill={rightColor} opacity={0.12} />
+                  <SvgCircle cx={pt.x} cy={pt.y} r={3.5} fill={isDark ? colors.backgroundCard : '#FFFFFF'} stroke={rightColor} strokeWidth={2} />
+                </G>
+              ))}
+
+              {/* Value labels */}
+              {chartData.leftPts.length > 0 && (() => {
+                const lp = chartData.leftPts[chartData.leftPts.length - 1];
+                return (
+                  <G>
+                    <Rect x={lp.x - 20} y={lp.y - 24} width={40} height={16} rx={6} ry={6} fill={leftColor} opacity={0.9} />
+                    <SvgText x={lp.x} y={lp.y - 13} textAnchor="middle" fontSize={9} fontWeight="800" fill="#FFFFFF">{smartFormat(lp.value)}</SvgText>
+                  </G>
+                );
+              })()}
+              {chartData.rightPts.length > 0 && (() => {
+                const rp = chartData.rightPts[chartData.rightPts.length - 1];
+                return (
+                  <G>
+                    <Rect x={rp.x - 20} y={rp.y - 24} width={40} height={16} rx={6} ry={6} fill={rightColor} opacity={0.9} />
+                    <SvgText x={rp.x} y={rp.y - 13} textAnchor="middle" fontSize={9} fontWeight="800" fill="#FFFFFF">{smartFormat(rp.value)}</SvgText>
+                  </G>
+                );
+              })()}
+            </Svg>
+          </ScrollView>
+
+          {/* Legende */}
           <View style={styles.legendRow}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: leftColor }]} />
@@ -375,85 +279,65 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
               <Text style={[styles.legendLabel, { color: colors.textSecondary }]}>{rightLabel}</Text>
             </View>
           </View>
+          {isScrollable && (
+            <View style={styles.hintBar}>
+              <Text style={[styles.hintText, { color: colors.textMuted }]}>Defiler pour voir plus</Text>
+            </View>
+          )}
         </View>
       )}
 
       {!hasData && (
         <View style={styles.emptyChart}>
           <ArrowLeftRight size={28} color={colors.textMuted} strokeWidth={1.5} />
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            Min. 2 mesures pour voir le graphique
-          </Text>
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>Min. 2 mesures pour voir le graphique</Text>
         </View>
       )}
 
-      {/* Separator */}
       <View style={[styles.separator, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]} />
 
-      {/* Modern metric cards below */}
+      {/* Metric cards */}
       <View style={styles.metricsRow}>
-        {/* Left metric */}
         <TouchableOpacity
-          style={[styles.metricCard, {
-            backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : `${leftColor}08`,
-            borderColor: `${leftColor}20`,
-          }]}
-          activeOpacity={onPressLeft ? 0.7 : 1}
-          onPress={onPressLeft}
-          disabled={!onPressLeft}
+          style={[styles.metricCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : `${leftColor}08`, borderColor: `${leftColor}20` }]}
+          activeOpacity={onPressLeft ? 0.7 : 1} onPress={onPressLeft} disabled={!onPressLeft}
         >
           <View style={styles.metricHeader}>
             <View style={[styles.metricDot, { backgroundColor: leftColor }]} />
-            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} numberOfLines={1}>
-              {leftLabel}
-            </Text>
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} numberOfLines={1}>{leftLabel}</Text>
             {leftTrend === 'up' && <TrendingUp size={12} color="#10B981" strokeWidth={2.5} />}
             {leftTrend === 'down' && <TrendingDown size={12} color="#EF4444" strokeWidth={2.5} />}
             {leftTrend === 'stable' && <Minus size={12} color={colors.textMuted} strokeWidth={2.5} />}
           </View>
           <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
-            {leftValue > 0 ? leftValue.toFixed(1) : '\u2014'}
+            {leftValue > 0 ? smartFormat(leftValue) : '\u2014'}
             <Text style={[styles.metricUnit, { color: colors.textSecondary }]}> {unit}</Text>
           </Text>
-          {/* Progress bar */}
           <View style={[styles.progressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
             <View style={[styles.progressFill, { width: `${leftBarWidth}%`, backgroundColor: leftColor }]} />
           </View>
-          <Text style={[styles.progressPercent, { color: leftColor }]}>
-            {leftBarWidth.toFixed(0)}%
-          </Text>
+          <Text style={[styles.progressPercent, { color: leftColor }]}>{leftBarWidth.toFixed(0)}%</Text>
         </TouchableOpacity>
 
-        {/* Right metric */}
         <TouchableOpacity
-          style={[styles.metricCard, {
-            backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : `${rightColor}08`,
-            borderColor: `${rightColor}20`,
-          }]}
-          activeOpacity={onPressRight ? 0.7 : 1}
-          onPress={onPressRight}
-          disabled={!onPressRight}
+          style={[styles.metricCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : `${rightColor}08`, borderColor: `${rightColor}20` }]}
+          activeOpacity={onPressRight ? 0.7 : 1} onPress={onPressRight} disabled={!onPressRight}
         >
           <View style={styles.metricHeader}>
             <View style={[styles.metricDot, { backgroundColor: rightColor }]} />
-            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} numberOfLines={1}>
-              {rightLabel}
-            </Text>
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} numberOfLines={1}>{rightLabel}</Text>
             {rightTrend === 'up' && <TrendingUp size={12} color="#10B981" strokeWidth={2.5} />}
             {rightTrend === 'down' && <TrendingDown size={12} color="#EF4444" strokeWidth={2.5} />}
             {rightTrend === 'stable' && <Minus size={12} color={colors.textMuted} strokeWidth={2.5} />}
           </View>
           <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
-            {rightValue > 0 ? rightValue.toFixed(1) : '\u2014'}
+            {rightValue > 0 ? smartFormat(rightValue) : '\u2014'}
             <Text style={[styles.metricUnit, { color: colors.textSecondary }]}> {unit}</Text>
           </Text>
-          {/* Progress bar */}
           <View style={[styles.progressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
             <View style={[styles.progressFill, { width: `${rightBarWidth}%`, backgroundColor: rightColor }]} />
           </View>
-          <Text style={[styles.progressPercent, { color: rightColor }]}>
-            {rightBarWidth.toFixed(0)}%
-          </Text>
+          <Text style={[styles.progressPercent, { color: rightColor }]}>{rightBarWidth.toFixed(0)}%</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -504,7 +388,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   chartContainer: {
-    alignItems: 'center',
     marginBottom: 4,
   },
   legendRow: {
@@ -526,6 +409,14 @@ const styles = StyleSheet.create({
   legendLabel: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  hintBar: {
+    marginTop: 6,
+    alignItems: 'center',
+  },
+  hintText: {
+    fontSize: 10,
+    fontWeight: '500',
   },
   emptyChart: {
     height: 120,

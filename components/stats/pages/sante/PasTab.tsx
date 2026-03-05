@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { ScrollableLineChart } from '../../charts/ScrollableLineChart';
 import { Footprints, Route, Timer, PersonStanding, Flame } from 'lucide-react-native';
@@ -26,7 +26,7 @@ const getStepsColor = (value: number): string => {
   return '#EF4444';
 };
 
-export const PasTab: React.FC<PasTabProps> = ({
+export const PasTab: React.FC<PasTabProps> = React.memo(({
   steps,
   calories,
   distance,
@@ -40,7 +40,63 @@ export const PasTab: React.FC<PasTabProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
 
-  const hasData = steps > 0 || calories > 0 || distance > 0 || exerciseMinutes > 0 || standHours > 0 || stepsHistory.length > 0;
+  // Defensive: garantir que les historiques sont des arrays
+  const safeStepsHistory = Array.isArray(stepsHistory) ? stepsHistory : [];
+  const safeCaloriesHistory = Array.isArray(caloriesHistory) ? caloriesHistory : [];
+  const safeDistanceHistory = Array.isArray(distanceHistory) ? distanceHistory : [];
+  const safeExerciseHistory = Array.isArray(exerciseMinutesHistory) ? exerciseMinutesHistory : [];
+  const safeStandHistory = Array.isArray(standHoursHistory) ? standHoursHistory : [];
+
+  const hasData = steps > 0 || calories > 0 || distance > 0 || exerciseMinutes > 0 || standHours > 0 || safeStepsHistory.length > 0;
+
+  // Memoize sorted + limited history (max 50 entries for display)
+  const sortedHistory = useMemo(
+    () => [...safeStepsHistory]
+      .filter(item => item?.date)
+      .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+      .slice(0, 50),
+    [safeStepsHistory]
+  );
+
+  const renderDayRow = useCallback(({ item: day, index }: { item: { date: string; value: number }; index: number }) => {
+    let formattedDate = day.date;
+    try {
+      const d = parseISO(day.date);
+      formattedDate = format(d, 'EEE d MMM', { locale: fr });
+    } catch {}
+
+    const stepsColor = getStepsColor(day.value);
+    const isLast = index === sortedHistory.length - 1;
+    const barWidth = Math.min(100, Math.max(5, (day.value / 12000) * 100));
+
+    return (
+      <View
+        style={[
+          styles.dayRow,
+          {
+            backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+            borderBottomColor: isLast ? 'transparent' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'),
+          },
+          index === 0 && styles.dayRowFirst,
+          isLast && styles.dayRowLast,
+        ]}
+      >
+        <View style={styles.dayInfo}>
+          <Text style={[styles.dayDate, { color: colors.textPrimary }]}>
+            {formattedDate}
+          </Text>
+          <View style={[styles.miniBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+            <View style={[styles.miniBarFill, { width: `${barWidth}%`, backgroundColor: stepsColor }]} />
+          </View>
+        </View>
+        <Text style={[styles.daySteps, { color: stepsColor }]}>
+          {day.value.toLocaleString('fr-FR')} pas
+        </Text>
+      </View>
+    );
+  }, [sortedHistory.length, isDark, colors]);
+
+  const keyExtractor = useCallback((item: { date: string }, index: number) => item.date + index, []);
 
   if (!hasData) {
     return (
@@ -52,9 +108,6 @@ export const PasTab: React.FC<PasTabProps> = ({
       </View>
     );
   }
-
-  // Trier par date plus recente
-  const sortedHistory = [...stepsHistory].sort((a, b) => b.date.localeCompare(a.date));
 
   return (
     <View>
@@ -109,11 +162,11 @@ export const PasTab: React.FC<PasTabProps> = ({
       </View>
 
       {/* Graphique pas */}
-      {stepsHistory.length > 0 && (
+      {safeStepsHistory.length > 0 && (
         <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Historique des pas</Text>
           <ScrollableLineChart
-            data={stepsHistory}
+            data={safeStepsHistory}
             color="#6366F1"
             unit="pas"
             height={160}
@@ -122,11 +175,11 @@ export const PasTab: React.FC<PasTabProps> = ({
       )}
 
       {/* Graphique calories */}
-      {caloriesHistory.length > 0 && (
+      {safeCaloriesHistory.length > 0 && (
         <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Historique des calories</Text>
           <ScrollableLineChart
-            data={caloriesHistory}
+            data={safeCaloriesHistory}
             color="#F97316"
             unit="kcal"
             height={160}
@@ -135,11 +188,11 @@ export const PasTab: React.FC<PasTabProps> = ({
       )}
 
       {/* Graphique distance */}
-      {distanceHistory.length > 0 && (
+      {safeDistanceHistory.length > 0 && (
         <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Historique de la distance</Text>
           <ScrollableLineChart
-            data={distanceHistory}
+            data={safeDistanceHistory}
             color="#3B82F6"
             unit="km"
             height={160}
@@ -148,11 +201,11 @@ export const PasTab: React.FC<PasTabProps> = ({
       )}
 
       {/* Graphique minutes d'exercice */}
-      {exerciseMinutesHistory.length > 0 && (
+      {safeExerciseHistory.length > 0 && (
         <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Historique des minutes d'exercice</Text>
           <ScrollableLineChart
-            data={exerciseMinutesHistory}
+            data={safeExerciseHistory}
             color="#22C55E"
             unit="min"
             height={160}
@@ -161,11 +214,11 @@ export const PasTab: React.FC<PasTabProps> = ({
       )}
 
       {/* Graphique heures debout */}
-      {standHoursHistory.length > 0 && (
+      {safeStandHistory.length > 0 && (
         <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Historique des heures debout</Text>
           <ScrollableLineChart
-            data={standHoursHistory}
+            data={safeStandHistory}
             color="#06B6D4"
             unit="h"
             height={160}
@@ -173,56 +226,27 @@ export const PasTab: React.FC<PasTabProps> = ({
         </View>
       )}
 
-      {/* Liste des jours de pas */}
+      {/* Liste des jours de pas - virtualized */}
       {sortedHistory.length > 0 && (
         <View>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
             Historique ({sortedHistory.length} jours)
           </Text>
-          {sortedHistory.map((day, index) => {
-            let formattedDate = day.date;
-            try {
-              const d = parseISO(day.date);
-              formattedDate = format(d, 'EEE d MMM', { locale: fr });
-            } catch {}
-
-            const stepsColor = getStepsColor(day.value);
-            const isLast = index === sortedHistory.length - 1;
-            const barWidth = Math.min(100, Math.max(5, (day.value / 12000) * 100));
-
-            return (
-              <View
-                key={day.date + index}
-                style={[
-                  styles.dayRow,
-                  {
-                    backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
-                    borderBottomColor: isLast ? 'transparent' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'),
-                  },
-                  index === 0 && styles.dayRowFirst,
-                  isLast && styles.dayRowLast,
-                ]}
-              >
-                <View style={styles.dayInfo}>
-                  <Text style={[styles.dayDate, { color: colors.textPrimary }]}>
-                    {formattedDate}
-                  </Text>
-                  {/* Mini barre de progression */}
-                  <View style={[styles.miniBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
-                    <View style={[styles.miniBarFill, { width: `${barWidth}%`, backgroundColor: stepsColor }]} />
-                  </View>
-                </View>
-                <Text style={[styles.daySteps, { color: stepsColor }]}>
-                  {day.value.toLocaleString('fr-FR')} pas
-                </Text>
-              </View>
-            );
-          })}
+          <FlatList
+            data={sortedHistory}
+            renderItem={renderDayRow}
+            keyExtractor={keyExtractor}
+            scrollEnabled={false}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            removeClippedSubviews={true}
+          />
         </View>
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   heroCard: {

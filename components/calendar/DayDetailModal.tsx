@@ -10,13 +10,14 @@ import {
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { X, Plus, Trash2, Clock, Edit3, Calendar } from 'lucide-react-native';
-import { format } from 'date-fns';
+import { X, Plus, Trash2, Clock, Edit3, Calendar, Check, RefreshCw } from 'lucide-react-native';
+import { format, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '@/lib/ThemeContext';
 import { Training, Club } from '@/lib/database';
 import { getClubLogoSource, getSportIcon, getSportColor, getSportName } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { WeeklySlotWithStatus } from '@/hooks/useWeeklySlots';
 
 interface DayDetailModalProps {
   visible: boolean;
@@ -27,6 +28,7 @@ interface DayDetailModalProps {
   onAddPress: () => void;
   onDeleteSession: (id: number) => void;
   onEditSession?: (session: Training) => void;
+  weeklySlots?: WeeklySlotWithStatus[];
 }
 
 export function DayDetailModal({
@@ -38,6 +40,7 @@ export function DayDetailModal({
   onAddPress,
   onDeleteSession,
   onEditSession,
+  weeklySlots,
 }: DayDetailModalProps) {
   const { colors } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -125,6 +128,67 @@ export function DayDetailModal({
             <Plus size={20} color="#FFFFFF" />
             <Text style={styles.addButtonText}>Ajouter une seance</Text>
           </TouchableOpacity>
+
+          {/* Creneaux prevus */}
+          {(() => {
+            if (!weeklySlots || !date) return null;
+            const jsDay = getDay(date);
+            const planDay = jsDay === 0 ? 6 : jsDay - 1;
+            const daySlots = weeklySlots.filter(s => s.day_of_week === planDay);
+            if (daySlots.length === 0) return null;
+            return (
+              <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+                <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 6 }}>
+                  CRENEAUX PREVUS
+                </Text>
+                {daySlots.map(slot => {
+                  const sportColor = getSportColor(slot.sport);
+                  return (
+                    <View key={slot.id} style={{
+                      flexDirection: 'row', alignItems: 'center', gap: 10,
+                      padding: 10, borderRadius: 10, marginBottom: 4,
+                      backgroundColor: colors.backgroundCard, borderWidth: 1,
+                      borderColor: slot.isValidated ? colors.success + '40' : slot.isCancelled ? colors.error + '40' : colors.border,
+                      borderStyle: slot.isPending ? 'dashed' : 'solid',
+                      opacity: slot.isCancelled ? 0.6 : 1,
+                    }}>
+                      <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: sportColor + '20', alignItems: 'center', justifyContent: 'center' }}>
+                        <MaterialCommunityIcons name={getSportIcon(slot.sport) as any} size={18} color={sportColor} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>
+                          {slot.label || getSportName(slot.sport)}
+                        </Text>
+                        {slot.time && (
+                          <Text style={{ color: colors.textMuted, fontSize: 11 }}>
+                            {slot.time}{slot.duration_minutes ? ` - ${slot.duration_minutes} min` : ''}
+                          </Text>
+                        )}
+                      </View>
+                      <View style={{
+                        paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
+                        backgroundColor: slot.isValidated ? colors.success + '20' : slot.isCancelled ? colors.error + '20' : colors.textMuted + '20',
+                      }}>
+                        {slot.isValidated ? (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <Check size={12} color={colors.success} />
+                            <Text style={{ color: colors.success, fontSize: 11, fontWeight: '600' }}>Fait</Text>
+                          </View>
+                        ) : slot.isCancelled ? (
+                          <Text style={{ color: colors.error, fontSize: 11, fontWeight: '600' }}>Annule</Text>
+                        ) : (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <RefreshCw size={10} color={colors.textMuted} />
+                            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600' }}>Prevu</Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            );
+          })()}
 
           {/* Liste des seances */}
           <ScrollView

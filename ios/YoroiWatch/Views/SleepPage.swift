@@ -1,7 +1,7 @@
 import SwiftUI
 
 // ============================================================
-// PAGE 4: SOMMEIL - Single vertical scroll with ALL sections
+// PAGE 4: SOMMEIL - Pull-to-refresh + theme-aware
 // ============================================================
 
 struct SleepPage: View {
@@ -21,7 +21,7 @@ struct SleepPage: View {
   @State private var zzz3Op: Double = 0
   @State private var breatheScale: CGFloat = 1.0
 
-  // Night colors (exact iPhone)
+  // Night colors (intentionally not theme-dependent)
   private let NIGHT = Color(red: 0.118, green: 0.227, blue: 0.373)
   private let NIGHT_MID = Color(red: 0.145, green: 0.388, blue: 0.933)
   private let NIGHT_LIGHT = Color(red: 0.376, green: 0.647, blue: 0.980)
@@ -42,7 +42,7 @@ struct SleepPage: View {
               .foregroundColor(NIGHT_MID)
             Text("Sommeil")
               .font(.system(size: 11, weight: .semibold))
-              .foregroundColor(.white.opacity(0.7))
+              .foregroundColor(session.textPrimary.opacity(0.7))
             Spacer()
           }
           .padding(.horizontal, 2)
@@ -52,7 +52,6 @@ struct SleepPage: View {
             LinearGradient(colors: [NIGHT_BG, NIGHT], startPoint: .top, endPoint: .bottom)
               .cornerRadius(10)
 
-            // Stars
             GeometryReader { geo in
               let w = geo.size.width
               let h = geo.size.height
@@ -64,14 +63,11 @@ struct SleepPage: View {
               Text("\u{2726}").font(.system(size: 3.5)).foregroundColor(STAR_COLOR).opacity(star3Op).position(x: w * 0.68, y: h * 0.08)
             }
 
-            // Moon
             MoonShape().fill(MOON_COLOR).frame(width: 16, height: 16).offset(x: 40, y: -20 + moonFloat)
 
-            // Bed scene
             BedSceneView(nightLight: NIGHT_LIGHT, nightMid: NIGHT_MID, nightSoft: NIGHT_SOFT)
               .scaleEffect(breatheScale).offset(y: 8)
 
-            // ZZZ
             ZStack {
               Text("z").font(.system(size: 6, weight: .heavy)).italic().foregroundColor(NIGHT_SOFT).opacity(zzz1Op).offset(y: zzz1Y)
               Text("Z").font(.system(size: 8, weight: .heavy)).italic().foregroundColor(NIGHT_LIGHT).opacity(zzz2Op).offset(x: 5, y: -4 + zzz2Y)
@@ -85,9 +81,9 @@ struct SleepPage: View {
           VStack(spacing: 2) {
             if session.sleepDuration > 0 {
               Text("\(sleepH)h\(String(format: "%02d", sleepM))")
-                .font(.system(size: 22, weight: .black)).foregroundColor(.white).tracking(-1)
+                .font(.system(size: 22, weight: .black)).foregroundColor(session.textPrimary).tracking(-1)
             } else {
-              Text("--").font(.system(size: 22, weight: .black)).foregroundColor(.white)
+              Text("--").font(.system(size: 22, weight: .black)).foregroundColor(session.textPrimary)
             }
             HStack(spacing: 6) {
               Text(statusText).font(.system(size: 9, weight: .bold)).foregroundColor(statusColor)
@@ -95,7 +91,7 @@ struct SleepPage: View {
                 .background(statusColor.opacity(0.09)).cornerRadius(6)
               if session.sleepGoalMinutes > 0 {
                 Text("Objectif \(session.sleepGoalMinutes / 60)h")
-                  .font(.system(size: 9, weight: .medium)).foregroundColor(.gray)
+                  .font(.system(size: 9, weight: .medium)).foregroundColor(session.textSecondary)
               }
             }
           }
@@ -104,46 +100,43 @@ struct SleepPage: View {
           HStack(spacing: 0) {
             VStack(spacing: 2) {
               Image(systemName: "bed.double.fill").font(.system(size: 10)).foregroundColor(NIGHT_MID)
-              Text(session.sleepBedTime).font(.system(size: 14, weight: .bold)).foregroundColor(.white)
+              Text(session.sleepBedTime).font(.system(size: 14, weight: .bold)).foregroundColor(session.textPrimary)
             }.frame(maxWidth: .infinity)
-            Rectangle().fill(Color.gray.opacity(0.3)).frame(width: 1, height: 28)
+            Rectangle().fill(session.dividerColor).frame(width: 1, height: 28)
             VStack(spacing: 2) {
               Image(systemName: "sun.max.fill").font(.system(size: 10)).foregroundColor(.yellow)
-              Text(session.sleepWakeTime).font(.system(size: 14, weight: .bold)).foregroundColor(.white)
+              Text(session.sleepWakeTime).font(.system(size: 14, weight: .bold)).foregroundColor(session.textPrimary)
             }.frame(maxWidth: .infinity)
           }
         }
 
-        Divider().background(Color.gray.opacity(0.15))
+        Divider().background(session.dividerColor)
 
         // ── SECTION 2: Detailed Metrics ──
         VStack(spacing: 8) {
-          // Debt
           HStack(spacing: 6) {
             Image(systemName: session.sleepDebt > 0 ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
               .font(.system(size: 12))
               .foregroundColor(session.sleepDebt > 0 ? .red : .green)
-            Text("Dette").font(.system(size: 11, weight: .semibold)).foregroundColor(.gray)
+            Text("Dette").font(.system(size: 11, weight: .semibold)).foregroundColor(session.textSecondary)
             Spacer()
             Text(session.sleepDebt > 0 ? String(format: "%.1fh", session.sleepDebt) : "0h")
               .font(.system(size: 13, weight: .heavy))
               .foregroundColor(session.sleepDebt > 0 ? .red : .green)
           }.padding(.horizontal, 6)
 
-          // Quality
           HStack(spacing: 6) {
             Image(systemName: "moon.fill").font(.system(size: 12)).foregroundColor(NIGHT_MID)
-            Text("Qualite").font(.system(size: 11, weight: .semibold)).foregroundColor(.gray)
+            Text("Qualite").font(.system(size: 11, weight: .semibold)).foregroundColor(session.textSecondary)
             Spacer()
             Text("\(Int(qualityPercent))%")
               .font(.system(size: 13, weight: .heavy))
               .foregroundColor(qualityPercent >= 80 ? .green : qualityPercent >= 60 ? .yellow : .red)
           }.padding(.horizontal, 6)
 
-          // Goal
           HStack(spacing: 6) {
             Image(systemName: "target").font(.system(size: 12)).foregroundColor(NIGHT_MID)
-            Text("Objectif").font(.system(size: 11, weight: .semibold)).foregroundColor(.gray)
+            Text("Objectif").font(.system(size: 11, weight: .semibold)).foregroundColor(session.textSecondary)
             Spacer()
             Text("\(session.sleepGoalMinutes / 60)h")
               .font(.system(size: 10, weight: .bold))
@@ -153,7 +146,6 @@ struct SleepPage: View {
               .cornerRadius(4)
           }.padding(.horizontal, 6)
 
-          // Quality bar
           GeometryReader { geo in
             ZStack(alignment: .leading) {
               RoundedRectangle(cornerRadius: 3).fill(NIGHT_MID.opacity(0.15))
@@ -164,17 +156,16 @@ struct SleepPage: View {
           }
           .frame(height: 6).padding(.horizontal, 6)
 
-          // Stars rating
           HStack(spacing: 4) {
             ForEach(1...5, id: \.self) { star in
               Image(systemName: star <= session.sleepQuality ? "star.fill" : "star")
                 .font(.system(size: 13))
-                .foregroundColor(star <= session.sleepQuality ? MOON_COLOR : .gray.opacity(0.3))
+                .foregroundColor(star <= session.sleepQuality ? MOON_COLOR : session.textSecondary.opacity(0.3))
             }
           }
         }
 
-        Divider().background(Color.gray.opacity(0.15))
+        Divider().background(session.dividerColor)
 
         // ── SECTION 3: Progress Ring ──
         VStack(spacing: 6) {
@@ -196,33 +187,39 @@ struct SleepPage: View {
           } else if session.sleepDuration > 0 {
             let remaining = max(0, session.sleepGoalMinutes - session.sleepDuration)
             Text("Encore \(remaining / 60)h\(String(format: "%02d", remaining % 60))")
-              .font(.system(size: 10, weight: .semibold)).foregroundColor(.gray)
+              .font(.system(size: 10, weight: .semibold)).foregroundColor(session.textSecondary)
           }
         }
 
-        Divider().background(Color.gray.opacity(0.15))
+        Divider().background(session.dividerColor)
 
         // ── SECTION 4: Tips ──
         VStack(alignment: .leading, spacing: 6) {
           Text("CONSEILS")
-            .font(.system(size: 8, weight: .heavy)).foregroundColor(.gray).tracking(1)
+            .font(.system(size: 8, weight: .heavy)).foregroundColor(session.textSecondary).tracking(1)
 
           if session.sleepDuration > 0 && session.sleepDuration < 420 {
-            TipRow2(icon: "exclamationmark.triangle.fill", color: .orange, text: "Sommeil insuffisant. Vise 7-9h pour une bonne recuperation.")
+            TipRow2(icon: "exclamationmark.triangle.fill", color: .orange, text: "Sommeil insuffisant. Vise 7-9h pour une bonne recuperation.", textColor: session.textPrimary)
           } else if session.sleepDuration >= 420 {
-            TipRow2(icon: "checkmark.circle.fill", color: .green, text: "Bonne duree de sommeil !")
+            TipRow2(icon: "checkmark.circle.fill", color: .green, text: "Bonne duree de sommeil !", textColor: session.textPrimary)
           }
           if session.sleepQuality > 0 && session.sleepQuality <= 2 {
-            TipRow2(icon: "moon.zzz.fill", color: .indigo, text: "Reduis les ecrans 1h avant le coucher.")
+            TipRow2(icon: "moon.zzz.fill", color: .indigo, text: "Reduis les ecrans 1h avant le coucher.", textColor: session.textPrimary)
           }
           if session.sleepDebt > 2 {
-            TipRow2(icon: "bed.double.fill", color: .red, text: "Rattrape ta dette en dormant 30min de plus.")
+            TipRow2(icon: "bed.double.fill", color: .red, text: "Rattrape ta dette en dormant 30min de plus.", textColor: session.textPrimary)
           }
         }
       }
       .padding(.horizontal, 4)
     }
+    .refreshable {
+      session.requestSync()
+      try? await Task.sleep(nanoseconds: 1_500_000_000)
+    }
     .onAppear { startAnimations() }
+    .onDisappear { resetAnimations() }
+    .background(NIGHT_BG.ignoresSafeArea())
   }
 
   // MARK: - Computed
@@ -258,6 +255,14 @@ struct SleepPage: View {
 
   // MARK: - Animations
 
+  private func resetAnimations() {
+    moonFloat = 0
+    star1Op = 0.3; star2Op = 0.8; star3Op = 0.5
+    zzz1Y = 0; zzz2Y = 0; zzz3Y = 0
+    zzz1Op = 0; zzz2Op = 0; zzz3Op = 0
+    breatheScale = 1.0
+  }
+
   private func startAnimations() {
     withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) { moonFloat = -4 }
     withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) { star1Op = 1.0 }
@@ -270,7 +275,7 @@ struct SleepPage: View {
   }
 }
 
-// MARK: - Moon + Bed Scene + TipRow (shared components)
+// MARK: - Moon + Bed Scene + TipRow
 
 struct MoonShape: Shape {
   func path(in rect: CGRect) -> Path {
@@ -296,24 +301,15 @@ struct BedSceneView: View {
       let ox = (size.width - 80 * sc) / 2
       let oy = (size.height - 50 * sc) / 2
 
-      // Posts
       var p1 = Path(); p1.move(to: pt(ox, oy, 5, 45, sc)); p1.addLine(to: pt(ox, oy, 5, 39, sc))
       context.stroke(p1, with: .color(nightSoft), style: StrokeStyle(lineWidth: 2 * sc, lineCap: .round))
       var p2 = Path(); p2.move(to: pt(ox, oy, 75, 45, sc)); p2.addLine(to: pt(ox, oy, 75, 39, sc))
       context.stroke(p2, with: .color(nightSoft), style: StrokeStyle(lineWidth: 2 * sc, lineCap: .round))
-
-      // Frame
       var fr = Path(); fr.move(to: pt(ox, oy, 3, 39, sc)); fr.addLine(to: pt(ox, oy, 77, 39, sc))
       context.stroke(fr, with: .color(nightLight), style: StrokeStyle(lineWidth: 2.5 * sc, lineCap: .round))
-
-      // Mattress
       context.fill(Path(ellipseIn: CGRect(x: ox + 5 * sc, y: oy + 29 * sc, width: 70 * sc, height: 10 * sc)), with: .color(nightMid.opacity(0.6)))
-
-      // Pillow
       context.fill(Path(ellipseIn: CGRect(x: ox + 5 * sc, y: oy + 25.5 * sc, width: 18 * sc, height: 9 * sc)), with: .color(nightSoft.opacity(0.7)))
       context.fill(Path(ellipseIn: CGRect(x: ox + 7 * sc, y: oy + 25.5 * sc, width: 14 * sc, height: 7 * sc)), with: .color(Color(red: 0.859, green: 0.914, blue: 0.996)))
-
-      // Blanket
       var bl = Path()
       bl.move(to: pt(ox, oy, 8, 31, sc))
       bl.addQuadCurve(to: pt(ox, oy, 45, 29, sc), control: pt(ox, oy, 25, 24, sc))
@@ -323,22 +319,14 @@ struct BedSceneView: View {
       bl.addQuadCurve(to: pt(ox, oy, 8, 36, sc), control: pt(ox, oy, 15, 35, sc))
       bl.closeSubpath()
       context.fill(bl, with: .color(nightLight.opacity(0.7)))
-
-      // Head
       context.fill(Path(ellipseIn: CGRect(x: ox + 11.5 * sc, y: oy + 17.5 * sc, width: 13 * sc, height: 13 * sc)),
                    with: .color(Color(red: 0.992, green: 0.910, blue: 0.545)))
-
-      // Eye
       var eye = Path(); eye.move(to: pt(ox, oy, 13, 21, sc))
       eye.addQuadCurve(to: pt(ox, oy, 23, 21, sc), control: pt(ox, oy, 18, 17, sc))
       context.stroke(eye, with: .color(Color(red: 0.573, green: 0.251, blue: 0.055)), style: StrokeStyle(lineWidth: 2 * sc, lineCap: .round))
-
-      // Smile
       var sm = Path(); sm.move(to: pt(ox, oy, 15, 24, sc))
       sm.addQuadCurve(to: pt(ox, oy, 19, 24, sc), control: pt(ox, oy, 17, 25, sc))
       context.stroke(sm, with: .color(Color(red: 0.471, green: 0.208, blue: 0.059)), style: StrokeStyle(lineWidth: 1 * sc, lineCap: .round))
-
-      // Teddy
       context.fill(Path(ellipseIn: CGRect(x: ox + 24.5 * sc, y: oy + 25 * sc, width: 7 * sc, height: 4 * sc)),
                    with: .color(Color(red: 0.992, green: 0.910, blue: 0.545)))
     }
@@ -354,10 +342,11 @@ struct TipRow2: View {
   let icon: String
   let color: Color
   let text: String
+  var textColor: Color = .white
   var body: some View {
     HStack(alignment: .top, spacing: 6) {
       Image(systemName: icon).font(.system(size: 9)).foregroundColor(color).frame(width: 14)
-      Text(text).font(.system(size: 9)).foregroundColor(.white.opacity(0.8)).fixedSize(horizontal: false, vertical: true)
+      Text(text).font(.system(size: 9)).foregroundColor(textColor.opacity(0.8)).fixedSize(horizontal: false, vertical: true)
     }
   }
 }

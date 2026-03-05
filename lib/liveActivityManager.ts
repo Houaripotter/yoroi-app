@@ -64,11 +64,11 @@ class LiveActivityService {
         success: true,
         activityId: result.activityId,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Erreur démarrage Live Activity:', error);
       return {
         success: false,
-        error: error.message || 'Erreur inconnue',
+        error: error instanceof Error ? error.message : 'Erreur inconnue',
       };
     }
   }
@@ -90,11 +90,11 @@ class LiveActivityService {
       return {
         success: true,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Erreur mise à jour Live Activity:', error);
       return {
         success: false,
-        error: error.message || 'Erreur inconnue',
+        error: error instanceof Error ? error.message : 'Erreur inconnue',
       };
     }
   }
@@ -116,11 +116,11 @@ class LiveActivityService {
       return {
         success: true,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Erreur arrêt Live Activity:', error);
       return {
         success: false,
-        error: error.message || 'Erreur inconnue',
+        error: error instanceof Error ? error.message : 'Erreur inconnue',
       };
     }
   }

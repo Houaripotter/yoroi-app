@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Flame, Zap, TrendingUp, Activity } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
+import { formatHoursHM } from '@/lib/formatDuration';
 import { useI18n } from '@/lib/I18nContext';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import { getTrainings, Training } from '@/lib/database';
@@ -160,7 +161,7 @@ export default function PerformanceDetailScreen() {
 
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
             <Zap size={20} color="#F59E0B" />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{totalHours.toFixed(1)}h</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatHoursHM(totalHours)}</Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>Volume</Text>
           </View>
 

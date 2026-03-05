@@ -13,11 +13,12 @@ import {
   Dimensions,
   Animated,
 } from 'react-native';
-import { 
-  X, 
-  Check, 
-  Lock, 
-  Flame, 
+import {
+  X,
+  Check,
+  Lock,
+  Flame,
+  Zap,
   Target,
   Swords,
   Sword,
@@ -129,11 +130,11 @@ export const RanksModal: React.FC<RanksModalProps> = ({
               </View>
             </View>
             <View style={styles.streakRight}>
-              <Flame size={18} color="#F97316" />
+              <Zap size={18} color="#FFD700" />
               <Text style={[styles.streakValue, { color: colors.textPrimary }]}>
                 {currentStreak}
               </Text>
-              <Text style={[styles.streakLabel, { color: colors.textMuted }]}>jours</Text>
+              <Text style={[styles.streakLabel, { color: colors.textMuted }]}>XP</Text>
             </View>
           </View>
 
@@ -157,7 +158,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({
                     {daysToNext}
                   </Text>
                   <Text style={[styles.progressDaysLabel, { color: colors.textMuted }]}>
-                    jours restants
+                    XP restants
                   </Text>
                 </View>
               </View>

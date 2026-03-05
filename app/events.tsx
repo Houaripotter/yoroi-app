@@ -161,9 +161,10 @@ export default function EventsScreen() {
     try {
       const saved = await AsyncStorage.getItem(PLANNING_STORAGE_KEY);
       if (saved) {
-        const events = JSON.parse(saved) as SportEvent[];
-        setSavedEvents(events);
-        setSavedEventIds(new Set(events.map(e => e.id)));
+        const events = JSON.parse(saved);
+        if (!Array.isArray(events)) return;
+        setSavedEvents(events as SportEvent[]);
+        setSavedEventIds(new Set(events.map((e: SportEvent) => e.id)));
       }
     } catch (error) {
       logger.error('Error loading saved events:', error);

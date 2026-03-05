@@ -5,7 +5,7 @@
 // Remplace Math.random() par une génération cryptographiquement
 // sûre pour éviter les collisions et la prévisibilité.
 
-import { randomUUID, digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
+import { randomUUID, digestStringAsync, CryptoDigestAlgorithm, getRandomBytesAsync } from 'expo-crypto';
 import { Platform } from 'react-native';
 import logger from '@/lib/security/logger';
 
@@ -22,9 +22,9 @@ export async function generateSecureId(): Promise<string> {
     const timestamp = Date.now();
 
     // Partie 2: Random bytes cryptographiquement sûrs
-    const randomBytes = await Crypto.getRandomBytesAsync(6);
+    const randomBytes = await getRandomBytesAsync(6);
     const randomHex = Array.from(randomBytes)
-      .map(byte => byte.toString(16).padStart(2, '0'))
+      .map((byte: number) => byte.toString(16).padStart(2, '0'))
       .join('');
 
     return `${timestamp}-${randomHex}`;
@@ -70,14 +70,14 @@ export function generateSecureIdSync(): string {
  */
 export async function generateUUID(): Promise<string> {
   try {
-    const randomBytes = await Crypto.getRandomBytesAsync(16);
+    const randomBytes = await getRandomBytesAsync(16);
 
     // Set version (4) and variant bits
     randomBytes[6] = (randomBytes[6] & 0x0f) | 0x40;
     randomBytes[8] = (randomBytes[8] & 0x3f) | 0x80;
 
     const hex = Array.from(randomBytes)
-      .map(byte => byte.toString(16).padStart(2, '0'))
+      .map((byte: number) => byte.toString(16).padStart(2, '0'))
       .join('');
 
     return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20, 32)}`;
@@ -106,7 +106,7 @@ function generateFallbackUUID(): string {
  */
 export async function generateShortCode(length: number = 8): Promise<string> {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Pas de caractères ambigus (0, O, 1, I)
-  const randomBytes = await Crypto.getRandomBytesAsync(length);
+  const randomBytes = await getRandomBytesAsync(length);
 
   return Array.from(randomBytes)
     .map(byte => chars[byte % chars.length])
@@ -120,10 +120,10 @@ export async function generateShortCode(length: number = 8): Promise<string> {
  * @returns Token hex de 64 caractères
  */
 export async function generateSecureToken(length: number = 32): Promise<string> {
-  const randomBytes = await Crypto.getRandomBytesAsync(length);
+  const randomBytes = await getRandomBytesAsync(length);
 
   return Array.from(randomBytes)
-    .map(byte => byte.toString(16).padStart(2, '0'))
+    .map((byte: number) => byte.toString(16).padStart(2, '0'))
     .join('');
 }
 
@@ -165,9 +165,9 @@ export function getTimestampFromId(id: string): number | null {
  * Génère un nonce pour les opérations cryptographiques
  */
 export async function generateNonce(length: number = 16): Promise<string> {
-  const randomBytes = await Crypto.getRandomBytesAsync(length);
+  const randomBytes = await getRandomBytesAsync(length);
   return Array.from(randomBytes)
-    .map(byte => byte.toString(16).padStart(2, '0'))
+    .map((byte: number) => byte.toString(16).padStart(2, '0'))
     .join('');
 }
 

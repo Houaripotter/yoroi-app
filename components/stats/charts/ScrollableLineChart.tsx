@@ -3,13 +3,13 @@
 // Fond card arrondi, gradient elegant, design pro
 // ============================================
 
-import React, { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, Modal, TouchableOpacity, Pressable } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle, Line, Text as SvgText, G } from 'react-native-svg';
 import { format, parseISO, Locale } from 'date-fns';
-import { fr, enUS, es, de, it, pt, ru, ar, zhCN } from 'date-fns/locale';
+import { fr, es, de, it, pt, ru, ar, zhCN } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -24,11 +24,9 @@ interface ScrollableLineChartProps {
   onPress?: () => void;
 }
 
-const DATE_LOCALES: Record<string, Locale> = {
-  fr: fr, en: enUS, es: es, de: de, it: it, pt: pt, ru: ru, ar: ar, zh: zhCN,
-};
 
-export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
+
+export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.memo(({
   data,
   color,
   height = 220,
@@ -38,12 +36,12 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
   onPress,
 }) => {
   const { colors, isDark } = useTheme();
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const scrollViewRef = useRef<ScrollView>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const lineColor = color || colors.accent;
-  const dateLocale = DATE_LOCALES[language] || fr;
+  const dateLocale = fr;
 
   // Calculer les donnees du graphique
   const chartData = useMemo(() => {
@@ -93,7 +91,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
     for (let i = 0; i < numYLabels; i++) {
       const value = yMin + (yRange * i) / (numYLabels - 1);
       const y = paddingTop + graphHeight - (i / (numYLabels - 1)) * graphHeight;
-      yLabels.push({ value: value >= 100 ? Math.round(value).toString() : value.toFixed(1), y });
+      yLabels.push({ value: Number.isInteger(value) ? String(Math.round(value)) : value.toFixed(1).replace(/\.0$/, ''), y });
     }
 
     const labels = data.map((d, index) => {
@@ -109,9 +107,9 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
     return { points, linePath, areaPath, yLabels, labels, chartWidth, chartHeight, paddingTop, paddingBottom, paddingLeft, graphHeight, yMin, yMax };
   }, [data, compact, height, dateLocale]);
 
-  // Version plein ecran
+  // Version plein ecran - only computed when fullscreen is open
   const fullscreenChartData = useMemo(() => {
-    if (!data || data.length === 0) return null;
+    if (!isFullscreen || !data || data.length === 0) return null;
 
     const values = data.map(d => d.value);
     const minValue = Math.min(...values);
@@ -155,7 +153,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
     for (let i = 0; i < 6; i++) {
       const value = yMin + (yRange * i) / 5;
       const y = paddingTop + graphHeight - (i / 5) * graphHeight;
-      yLabels.push({ value: value >= 100 ? Math.round(value).toString() : value.toFixed(1), y });
+      yLabels.push({ value: Number.isInteger(value) ? String(Math.round(value)) : value.toFixed(1).replace(/\.0$/, ''), y });
     }
 
     const labels = data.map((d, index) => {
@@ -169,7 +167,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
     });
 
     return { points, linePath, areaPath, yLabels, labels, chartWidth, chartHeight, paddingTop, paddingBottom, paddingLeft, graphHeight, yMin, yMax };
-  }, [data, dateLocale]);
+  }, [data, dateLocale, isFullscreen]);
 
   if (!chartData) {
     return (
@@ -301,7 +299,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
               textAnchor={valueAnchor}
               opacity={0.9}
             >
-              {point.value >= 100 ? Math.round(point.value) : point.value.toFixed(1)}{unit ? ` ${unit}` : ''}
+              {Number.isInteger(point.value) ? Math.round(point.value) : point.value.toFixed(1).replace(/\.0$/, '')}{unit ? ` ${unit}` : ''}
             </SvgText>
 
             {/* Date */}
@@ -337,6 +335,11 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
         bounces={false}
         decelerationRate="fast"
         style={styles.scrollView}
+        onContentSizeChange={(contentWidth) => {
+          if (scrollViewRef.current && contentWidth > SCREEN_WIDTH - 40) {
+            scrollViewRef.current.scrollToEnd({ animated: false });
+          }
+        }}
       >
         <Pressable onPress={() => { onPress ? onPress() : setIsFullscreen(true); }}>
           {renderChart(chartData, false)}
@@ -386,7 +389,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
       </Modal>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

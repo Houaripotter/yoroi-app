@@ -27,11 +27,9 @@ import { healthConnect } from '@/lib/healthConnect';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { logger } from '@/lib/security/logger';
 import { format, Locale } from 'date-fns';
-import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
+import { fr, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 
-const DATE_LOCALES: Record<string, Locale> = {
-  fr, en: enUS, es, pt, de, it, ru, ar, zh: zhCN
-};
+
 
 // Défauts intelligents : hier 23:00 → aujourd'hui 07:00
 function getDefaultBedtime(): Date {
@@ -61,7 +59,7 @@ export default function SleepInputScreen() {
   const { t, language } = useI18n();
   const insets = useSafeAreaInsets();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const dateLocale = DATE_LOCALES[language] || fr;
+  const dateLocale = fr;
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [bedtime, setBedtime] = useState(getDefaultBedtime);
@@ -188,10 +186,10 @@ export default function SleepInputScreen() {
   const qualityInfo = QUALITY_LABELS[quality];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: '#0B1120' }]}>
       {/* Header */}
       <LinearGradient
-        colors={['#6366F1', '#8B5CF6']}
+        colors={['#0F1A33', '#1A1145']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.header, { paddingTop: insets.top + 16 }]}
@@ -219,7 +217,7 @@ export default function SleepInputScreen() {
       >
         {/* Sélecteur de date */}
         <TouchableOpacity
-          style={[styles.dateSection, { backgroundColor: colors.backgroundCard }]}
+          style={[styles.dateSection, { backgroundColor: '#131D36' }]}
           onPress={() => setActivePicker(activePicker === 'date' ? null : 'date')}
           activeOpacity={0.7}
         >
@@ -228,10 +226,10 @@ export default function SleepInputScreen() {
               <Calendar size={20} color="#8B5CF6" strokeWidth={2.5} />
             </View>
             <View style={styles.timeSectionText}>
-              <Text style={[styles.timeSectionTitle, { color: colors.textMuted }]}>
+              <Text style={[styles.timeSectionTitle, { color: '#7B8DB5' }]}>
                 {t('sleepInput.nightOf')}
               </Text>
-              <Text style={[styles.timeValue, { color: colors.textPrimary }]}>
+              <Text style={[styles.timeValue, { color: '#E8ECF4' }]}>
                 {format(selectedDate, 'EEEE d MMMM yyyy', { locale: dateLocale })}
               </Text>
             </View>
@@ -240,7 +238,7 @@ export default function SleepInputScreen() {
 
         {/* Picker date inline (iOS) */}
         {activePicker === 'date' && Platform.OS === 'ios' && (
-          <View style={[styles.pickerContainer, { backgroundColor: colors.backgroundCard }]}>
+          <View style={[styles.pickerContainer, { backgroundColor: '#131D36' }]}>
             <DateTimePicker
               value={selectedDate}
               mode="date"
@@ -259,8 +257,8 @@ export default function SleepInputScreen() {
         )}
 
         {/* Carte Durée */}
-        <View style={[styles.durationCard, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.durationLabel, { color: colors.textMuted }]}>
+        <View style={[styles.durationCard, { backgroundColor: '#131D36' }]}>
+          <Text style={[styles.durationLabel, { color: '#7B8DB5' }]}>
             {t('sleepInput.sleepDuration')}
           </Text>
           <Text style={[styles.durationValue, { color: getStatusColor() }]}>
@@ -277,7 +275,7 @@ export default function SleepInputScreen() {
 
         {/* Heure de coucher */}
         <TouchableOpacity
-          style={[styles.timeSection, { backgroundColor: colors.backgroundCard }]}
+          style={[styles.timeSection, { backgroundColor: '#131D36' }]}
           onPress={() => setActivePicker(activePicker === 'bedtime' ? null : 'bedtime')}
           activeOpacity={0.7}
         >
@@ -286,20 +284,20 @@ export default function SleepInputScreen() {
               <Moon size={20} color="#6366F1" strokeWidth={2.5} />
             </View>
             <View style={styles.timeSectionText}>
-              <Text style={[styles.timeSectionTitle, { color: colors.textMuted }]}>
+              <Text style={[styles.timeSectionTitle, { color: '#7B8DB5' }]}>
                 {t('sleepInput.bedtime')}
               </Text>
-              <Text style={[styles.timeValue, { color: colors.textPrimary }]}>
+              <Text style={[styles.timeValue, { color: '#E8ECF4' }]}>
                 {format(bedtime, 'HH:mm')} - {format(bedtime, 'dd MMM', { locale: dateLocale })}
               </Text>
             </View>
-            <Clock size={20} color={colors.textMuted} strokeWidth={2} />
+            <Clock size={20} color="#7B8DB5" strokeWidth={2} />
           </View>
         </TouchableOpacity>
 
         {/* Picker coucher inline (iOS) */}
         {activePicker === 'bedtime' && Platform.OS === 'ios' && (
-          <View style={[styles.pickerContainer, { backgroundColor: colors.backgroundCard }]}>
+          <View style={[styles.pickerContainer, { backgroundColor: '#131D36' }]}>
             <DateTimePicker
               value={bedtime}
               mode="datetime"
@@ -319,7 +317,7 @@ export default function SleepInputScreen() {
 
         {/* Heure de réveil */}
         <TouchableOpacity
-          style={[styles.timeSection, { backgroundColor: colors.backgroundCard }]}
+          style={[styles.timeSection, { backgroundColor: '#131D36' }]}
           onPress={() => setActivePicker(activePicker === 'wake' ? null : 'wake')}
           activeOpacity={0.7}
         >
@@ -328,20 +326,20 @@ export default function SleepInputScreen() {
               <Sun size={20} color="#F59E0B" strokeWidth={2.5} />
             </View>
             <View style={styles.timeSectionText}>
-              <Text style={[styles.timeSectionTitle, { color: colors.textMuted }]}>
+              <Text style={[styles.timeSectionTitle, { color: '#7B8DB5' }]}>
                 {t('sleepInput.wakeTime')}
               </Text>
-              <Text style={[styles.timeValue, { color: colors.textPrimary }]}>
+              <Text style={[styles.timeValue, { color: '#E8ECF4' }]}>
                 {format(wakeTime, 'HH:mm')} - {format(wakeTime, 'dd MMM', { locale: dateLocale })}
               </Text>
             </View>
-            <Clock size={20} color={colors.textMuted} strokeWidth={2} />
+            <Clock size={20} color="#7B8DB5" strokeWidth={2} />
           </View>
         </TouchableOpacity>
 
         {/* Picker réveil inline (iOS) */}
         {activePicker === 'wake' && Platform.OS === 'ios' && (
-          <View style={[styles.pickerContainer, { backgroundColor: colors.backgroundCard }]}>
+          <View style={[styles.pickerContainer, { backgroundColor: '#131D36' }]}>
             <DateTimePicker
               value={wakeTime}
               mode="datetime"
@@ -360,8 +358,8 @@ export default function SleepInputScreen() {
         )}
 
         {/* Qualité */}
-        <View style={[styles.qualitySection, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.qualityTitle, { color: colors.textMuted }]}>
+        <View style={[styles.qualitySection, { backgroundColor: '#131D36' }]}>
+          <Text style={[styles.qualityTitle, { color: '#7B8DB5' }]}>
             {t('sleep.sleepQuality')}
           </Text>
           <View style={styles.qualityRow}>
@@ -371,7 +369,7 @@ export default function SleepInputScreen() {
                 onPress={() => { setQuality(i); impactAsync(ImpactFeedbackStyle.Light); }}
                 style={[styles.qualityStar, {
                   backgroundColor: i <= quality ? qualityInfo.color + '20' : 'transparent',
-                  borderColor: i <= quality ? qualityInfo.color : colors.border,
+                  borderColor: i <= quality ? qualityInfo.color : '#1E2D4D',
                 }]}
               >
                 <Text style={{ fontSize: 24 }}>{i <= quality ? '\u2B50' : '\u2606'}</Text>
@@ -387,7 +385,7 @@ export default function SleepInputScreen() {
       </ScrollView>
 
       {/* Bouton Enregistrer */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16, backgroundColor: colors.background }]}>
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 16, backgroundColor: '#0B1120' }]}>
         <TouchableOpacity
           style={[
             styles.saveButton,

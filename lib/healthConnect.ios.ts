@@ -849,7 +849,7 @@ class HealthConnectService {
 
   private async requestIOSPermissions(): Promise<HealthPermissions> {
     try {
-      // ✅ VÉRIFIER QUE LE MODULE HEALTHKIT EST CHARGÉ
+      // VÉRIFIER QUE LE MODULE HEALTHKIT EST CHARGÉ
       if (!HealthKit) {
         logger.error('[HealthKit] Module not loaded - cannot request permissions');
         throw new Error('HealthKit module not available');
@@ -895,7 +895,7 @@ class HealthConnectService {
       // L'API HealthKit attend un objet { toRead, toShare }
       await HealthKit.requestAuthorization({ toRead, toShare });
 
-      // ✅ TESTER VRAIMENT LES PERMISSIONS EN FAISANT DES LECTURES
+      // TESTER VRAIMENT LES PERMISSIONS EN FAISANT DES LECTURES
       logger.info('[HealthKit] Testing permissions by attempting reads...');
 
       const permissions: HealthPermissions = {
@@ -938,7 +938,7 @@ class HealthConnectService {
 
       await HealthKit.queryQuantitySamples(identifier, options);
       return true; // Si pas d'erreur = permission OK
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (this.isHealthKitAuthError(error)) {
         logger.info(`[HealthKit] Permission refusée pour: ${identifier}`);
         return false;
@@ -965,7 +965,7 @@ class HealthConnectService {
 
       await HealthKit.queryCategorySamples(identifier, options);
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (this.isHealthKitAuthError(error)) {
         logger.info(`[HealthKit] Permission catégorie refusée pour: ${identifier}`);
         return false;
@@ -991,7 +991,7 @@ class HealthConnectService {
       const available = await this.isAvailable();
       if (!available) {
         logger.warn('[HealthConnect] Apple Health non disponible sur cet appareil');
-        // ✅ DÉFINIR LA RAISON DE L'ÉCHEC
+        // DÉFINIR LA RAISON DE L'ÉCHEC
         this.syncStatus.isConnected = false;
         this.syncStatus.failureReason = 'DEVICE_NOT_SUPPORTED';
         await this.saveSyncStatus();
@@ -1027,17 +1027,18 @@ class HealthConnectService {
       logger.info('[HealthConnect] Connexion HealthKit réussie');
 
       // Lancer une première synchronisation avec retry automatique
-      logger.info('[HealthConnect] 🔄 Lancement de la synchronisation initiale...');
+      logger.info('[HealthConnect] Lancement de la synchronisation initiale...');
       await this.syncWithRetry();
 
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[HealthConnect] Erreur lors de la connexion:', error);
 
-      // ✅ DÉFINIR LA RAISON DE L'ÉCHEC EN FONCTION DE L'ERREUR
+      // DÉFINIR LA RAISON DE L'ÉCHEC EN FONCTION DE L'ERREUR
       this.syncStatus.isConnected = false;
 
-      if (error?.message?.includes('HealthKit module not available')) {
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (errorMessage.includes('HealthKit module not available')) {
         this.syncStatus.failureReason = 'MODULE_NOT_LOADED';
       } else {
         this.syncStatus.failureReason = 'UNKNOWN';
@@ -1078,7 +1079,7 @@ class HealthConnectService {
    * @kingstinct/react-native-healthkit attend des objets Date, pas des timestamps
    */
   private createQueryOptions(fromDate: Date, toDate: Date, options: any = {}): any | null {
-    // ✅ VALIDATION: S'assurer que les dates sont valides
+    // VALIDATION: S'assurer que les dates sont valides
     if (!fromDate || !toDate || !(fromDate instanceof Date) || !(toDate instanceof Date)) {
       logger.error('[HealthKit] Dates invalides pour la requête');
       return null;
@@ -1095,7 +1096,7 @@ class HealthConnectService {
       return null;
     }
 
-    // ✅ NETTOYAGE: Supprimer les propriétés undefined de options pour éviter les erreurs natives
+    // NETTOYAGE: Supprimer les propriétés undefined de options pour éviter les erreurs natives
     const cleanOptions: any = {};
     for (const key in options) {
       if (options[key] !== undefined && options[key] !== null) {
@@ -1103,7 +1104,7 @@ class HealthConnectService {
       }
     }
 
-    // ✅ @kingstinct/react-native-healthkit v13+ attend filter.date avec startDate/endDate
+    // @kingstinct/react-native-healthkit v13+ attend filter.date avec startDate/endDate
     const result: any = {
       filter: {
         date: {
@@ -1209,7 +1210,7 @@ class HealthConnectService {
           return null;
         }
 
-        // ✅ FIX: Utiliser queryStatisticsForQuantity pour obtenir le total DEDOUBLONNE par Apple
+        // FIX: Utiliser queryStatisticsForQuantity pour obtenir le total DEDOUBLONNE par Apple
         // Cela evite le double comptage iPhone + Apple Watch
         // IMPORTANT: Ne pas require() dans Expo Go (NitroModules non supportes)
         try {
@@ -1292,7 +1293,7 @@ class HealthConnectService {
   private async getIOSSleep(): Promise<HealthData['sleep'] | null> {
     return this.queryHealthKit(async () => {
       const now = new Date();
-      // ✅ FIX: Regarder 48h en arrière au lieu de 24h pour capturer le sommeil de la nuit précédente
+      // FIX: Regarder 48h en arrière au lieu de 24h pour capturer le sommeil de la nuit précédente
       const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
       logger.info('[HealthKit] Requête sommeil: de', twoDaysAgo.toISOString(), 'à', now.toISOString());
@@ -1307,7 +1308,7 @@ class HealthConnectService {
       logger.info('[HealthKit] Échantillons sommeil bruts:', samples?.length || 0);
 
       if (samples && samples.length > 0) {
-        // ✅ FIX: Filtrer les estimations automatiques iPhone, garder Apple Watch + apps tierces
+        // FIX: Filtrer les estimations automatiques iPhone, garder Apple Watch + apps tierces
         const filteredSamples = samples.filter((s: any) => {
           const sourceName = (s.sourceRevision?.source?.name || '').toLowerCase();
           const deviceName = (s.device?.name || '').toLowerCase();
@@ -1341,7 +1342,7 @@ class HealthConnectService {
           new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
         );
 
-        // ✅ FIX: Grouper par nuit (prendre la nuit la plus récente)
+        // FIX: Grouper par nuit (prendre la nuit la plus récente)
         const lastNightStart = new Date(now);
         lastNightStart.setHours(18, 0, 0, 0); // 18h hier = début de la "nuit"
         lastNightStart.setDate(lastNightStart.getDate() - 1);
@@ -1512,7 +1513,7 @@ class HealthConnectService {
 
         const resting = restingSamples && restingSamples.length > 0
           ? restingSamples[0].quantity
-          : Math.round(min); // Fallback sur le min
+          : 0; // Pas de fallback - 0 = pas de donnee resting HR
 
         return {
           current: Math.round(current),
@@ -1575,7 +1576,7 @@ class HealthConnectService {
         return null;
       }
 
-      // ✅ UTILISER Promise.allSettled POUR NE PAS BLOQUER SI 1 ÉCHOUE
+      // UTILISER Promise.allSettled POUR NE PAS BLOQUER SI 1 ÉCHOUE
       const results = await Promise.allSettled([
         HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierActiveEnergyBurned', queryOptions),
         HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBasalEnergyBurned', queryOptions),
@@ -1829,7 +1830,7 @@ class HealthConnectService {
         return null;
       }
 
-      // ✅ UTILISER Promise.allSettled POUR NE PAS BLOQUER SI 1 ÉCHOUE
+      // UTILISER Promise.allSettled POUR NE PAS BLOQUER SI 1 ÉCHOUE
       const results = await Promise.allSettled([
         HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyFatPercentage', queryOptions),
         HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierLeanBodyMass', queryOptions),
@@ -1870,7 +1871,7 @@ class HealthConnectService {
   // ============================================
 
   /**
-   * ✅ Hash simple compatible React Native (pas de Buffer)
+   * Hash simple compatible React Native (pas de Buffer)
    */
   private simpleHash(str: string): string {
     let hash = 0;
@@ -1882,9 +1883,12 @@ class HealthConnectService {
     return Math.abs(hash).toString(36).substring(0, 16);
   }
 
-  private async getIOSWorkouts(days: number = 1825): Promise<HealthData['workouts'] | null> {
+  private async getIOSWorkouts(days?: number): Promise<HealthData['workouts'] | null> {
     return this.queryHealthKit(async () => {
-      const fromDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      // Sans limite de jours = tout l'historique Apple Health
+      const fromDate = days
+        ? new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+        : new Date(2000, 0, 1); // Depuis l'an 2000 = tout l'historique
       const samples = await HealthKit.queryWorkoutSamples({
         filter: { date: { startDate: fromDate, endDate: new Date() } },
         limit: 0, // 0 = pas de limite, on prend tout
@@ -1895,7 +1899,7 @@ class HealthConnectService {
         return samples.map((workout: any) => {
           // Generer un ID deterministe base sur les donnees du workout pour eviter les doublons
           const workoutFingerprint = `${workout.startDate}_${workout.endDate}_${workout.workoutActivityType || 'unknown'}`;
-          // ✅ UTILISER simpleHash AU LIEU DE Buffer
+          // UTILISER simpleHash AU LIEU DE Buffer
           const deterministicId = workout.uuid || workout.id || `workout_${this.simpleHash(workoutFingerprint)}`;
 
           return {
@@ -2089,8 +2093,11 @@ class HealthConnectService {
       // Qualite de l'air (metadata custom Apple, pas toujours present)
       // Apple stocke l'AQI dans les metadata du workout si l'app Weather l'a enregistre
       const workoutMeta = workout.metadata || {};
-      if (workoutMeta.HKWeatherAirQualityIndex) {
-        const aqi = Number(workoutMeta.HKWeatherAirQualityIndex);
+      const rawAqi = workout.metadataWeatherAirQualityIndex
+        ?? workoutMeta.HKWeatherAirQualityIndex
+        ?? workoutMeta.HKMetadataKeyWeatherAirQualityIndex;
+      if (rawAqi != null) {
+        const aqi = Number(rawAqi);
         if (!isNaN(aqi) && aqi > 0) {
           details.airQualityIndex = aqi;
           if (aqi <= 50) details.airQualityCategory = 'Bon';
@@ -2196,13 +2203,33 @@ class HealthConnectService {
               bpm: Math.round(s.quantity),
             }));
 
-            // Zones FC (5 zones classiques)
+            // Zones FC personnalisees (basees sur maxHR comme Apple Health)
+            let maxHR = 190; // fallback
+            try {
+              const dob = HealthKit.getDateOfBirth ? HealthKit.getDateOfBirth() : undefined;
+              if (dob) {
+                const age = Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+                if (age > 10 && age < 100) maxHR = 220 - age;
+              }
+            } catch (e) {
+              logger.warn('[HealthKit] Impossible de lire DOB pour maxHR:', e);
+            }
+            // Fallback: utiliser la FC max observee dans le workout
+            if (maxHR === 190 && details.maxHeartRate && details.maxHeartRate > 100) {
+              maxHR = details.maxHeartRate;
+            }
+
+            const z1Max = Math.round(maxHR * 0.6);
+            const z2Max = Math.round(maxHR * 0.7);
+            const z3Max = Math.round(maxHR * 0.8);
+            const z4Max = Math.round(maxHR * 0.9);
+
             const zones = [
-              { zone: 1, name: 'Z1 Recup', minBpm: 0, maxBpm: 120, durationSeconds: 0, color: '#94A3B8' },
-              { zone: 2, name: 'Z2 Endurance', minBpm: 120, maxBpm: 140, durationSeconds: 0, color: '#22C55E' },
-              { zone: 3, name: 'Z3 Tempo', minBpm: 140, maxBpm: 160, durationSeconds: 0, color: '#EAB308' },
-              { zone: 4, name: 'Z4 Seuil', minBpm: 160, maxBpm: 180, durationSeconds: 0, color: '#F97316' },
-              { zone: 5, name: 'Z5 Max', minBpm: 180, maxBpm: 250, durationSeconds: 0, color: '#EF4444' },
+              { zone: 1, name: 'Z1 Recup', minBpm: 0, maxBpm: z1Max, durationSeconds: 0, color: '#94A3B8' },
+              { zone: 2, name: 'Z2 Endurance', minBpm: z1Max, maxBpm: z2Max, durationSeconds: 0, color: '#22C55E' },
+              { zone: 3, name: 'Z3 Tempo', minBpm: z2Max, maxBpm: z3Max, durationSeconds: 0, color: '#EAB308' },
+              { zone: 4, name: 'Z4 Seuil', minBpm: z3Max, maxBpm: z4Max, durationSeconds: 0, color: '#F97316' },
+              { zone: 5, name: 'Z5 Max', minBpm: z4Max, maxBpm: 250, durationSeconds: 0, color: '#EF4444' },
             ];
 
             // Duree dans chaque zone
@@ -2538,7 +2565,7 @@ class HealthConnectService {
   async getOxygenSaturationHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
     // Demo mode disabled
 
-    // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
+    // VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
       logger.warn('[HealthKit] Module not loaded, cannot fetch SpO2 history');
       return [];
@@ -2580,7 +2607,7 @@ class HealthConnectService {
   async getBodyTemperatureHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
     // Demo mode disabled
 
-    // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
+    // VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
       logger.warn('[HealthKit] Module not loaded, cannot fetch temperature history');
       return [];
@@ -2621,7 +2648,7 @@ class HealthConnectService {
   async getWeightHistory(days: number = 30): Promise<Array<{ date: string; value: number; source?: string }>> {
     // Demo mode disabled
 
-    // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
+    // VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
       logger.warn('[HealthKit] Module not loaded, cannot fetch weight history');
       return [];
@@ -2664,11 +2691,11 @@ class HealthConnectService {
     awake: number;
     total: number;
     duration?: number;
-    source?: string; // ✅ NOUVEAU: Ajouter la source pour debug
+    source?: string; // NOUVEAU: Ajouter la source pour debug
   }>> {
     // Demo mode disabled
 
-    // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
+    // VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
       logger.warn('[HealthKit] Module not loaded, cannot fetch sleep history');
       return [];
@@ -2889,7 +2916,7 @@ class HealthConnectService {
   }>> {
     // Demo mode disabled
 
-    // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
+    // VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
       logger.warn('[HealthKit] Module not loaded, cannot fetch calories history');
       return [];
@@ -2900,7 +2927,7 @@ class HealthConnectService {
       fromDate.setDate(fromDate.getDate() - days);
       fromDate.setHours(0, 0, 0, 0);
 
-      // ✅ UTILISER Promise.allSettled POUR NE PAS BLOQUER SI 1 ÉCHOUE
+      // UTILISER Promise.allSettled POUR NE PAS BLOQUER SI 1 ÉCHOUE
       const calQueryOptions = this.createQueryOptions(fromDate, new Date());
       if (!calQueryOptions) return [];
       const results = await Promise.allSettled([
@@ -2945,7 +2972,7 @@ class HealthConnectService {
   async getVO2MaxHistory(days: number = 30): Promise<Array<{ date: string; value: number }>> {
     // Demo mode disabled
 
-    // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
+    // VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
       logger.warn('[HealthKit] Module not loaded, cannot fetch VO2 Max history');
       return [];
@@ -3206,7 +3233,7 @@ class HealthConnectService {
         };
       }
 
-      // ✅ LANCER TOUTES LES REQUÊTES AVEC TIMEOUT DE 5S CHACUNE
+      // LANCER TOUTES LES REQUÊTES AVEC TIMEOUT DE 5S CHACUNE
       const TIMEOUT_MS = 5000;
       const results = await Promise.allSettled([
         this.withTimeout(this.getLatestWeight(), TIMEOUT_MS),
@@ -3222,7 +3249,7 @@ class HealthConnectService {
         this.withTimeout(this.getRespiratoryRate(), TIMEOUT_MS),
         this.withTimeout(this.getBodyTemperature(), TIMEOUT_MS),
         this.withTimeout(this.getBodyComposition(), TIMEOUT_MS),
-        this.withTimeout(this.getWorkouts(), TIMEOUT_MS),
+        this.withTimeout(this.getWorkouts(), 30000), // 30s pour tout l'historique workouts
       ]);
 
       // Extraire les valeurs avec typage explicite
@@ -3291,7 +3318,7 @@ class HealthConnectService {
   }
 
   async writeWeight(weight: number, unit: 'kg' | 'lbs' = 'kg'): Promise<boolean> {
-    // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
+    // VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
       logger.error('[HealthKit] Module not loaded - cannot write weight');
       throw new Error('HealthKit module not available');
@@ -3300,7 +3327,7 @@ class HealthConnectService {
     const weightInKg = unit === 'lbs' ? weight * 0.453592 : weight;
 
     try {
-      // ✅ CHECK FOR DUPLICATES: Prevent writing same weight twice on same day
+      // CHECK FOR DUPLICATES: Prevent writing same weight twice on same day
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
@@ -3327,12 +3354,12 @@ class HealthConnectService {
       return true;
     } catch (error) {
       logger.error('Erreur écriture poids:', error);
-      throw error; // ✅ THROW AU LIEU DE RETOURNER FALSE
+      throw error; // THROW AU LIEU DE RETOURNER FALSE
     }
   }
 
   async writeHydration(amountMl: number): Promise<boolean> {
-    // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
+    // VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
       logger.error('[HealthKit] Module not loaded - cannot write hydration');
       throw new Error('HealthKit module not available');
@@ -3346,12 +3373,12 @@ class HealthConnectService {
       return true;
     } catch (error) {
       logger.error('Erreur écriture hydratation:', error);
-      throw error; // ✅ THROW AU LIEU DE RETOURNER FALSE
+      throw error; // THROW AU LIEU DE RETOURNER FALSE
     }
   }
 
   async writeBodyFat(percentage: number): Promise<boolean> {
-    // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
+    // VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
       logger.error('[HealthKit] Module not loaded - cannot write body fat');
       throw new Error('HealthKit module not available');
@@ -3361,7 +3388,7 @@ class HealthConnectService {
       // Apple Health attend un ratio (0-1), on convertit depuis le pourcentage
       const ratio = percentage / 100;
 
-      // ✅ CHECK FOR DUPLICATES: Prevent writing same body fat twice on same day
+      // CHECK FOR DUPLICATES: Prevent writing same body fat twice on same day
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
@@ -3388,7 +3415,7 @@ class HealthConnectService {
       return true;
     } catch (error) {
       logger.error('Erreur écriture body fat:', error);
-      throw error; // ✅ THROW AU LIEU DE RETOURNER FALSE
+      throw error; // THROW AU LIEU DE RETOURNER FALSE
     }
   }
 
@@ -3399,7 +3426,7 @@ class HealthConnectService {
     distance?: number; // en km
     calories?: number; // en kcal
   }): Promise<boolean> {
-    // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
+    // VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
       logger.error('[HealthKit] Module not loaded - cannot write workout');
       throw new Error('HealthKit module not available');
@@ -3441,7 +3468,7 @@ class HealthConnectService {
         totals.energyBurned = workout.calories;
       }
 
-      // ✅ SIMPLIFIER : UN SEUL NIVEAU DE TRY-CATCH
+      // SIMPLIFIER : UN SEUL NIVEAU DE TRY-CATCH
       try {
         await HealthKit.saveWorkoutSample(
           hkActivityType,
@@ -3462,7 +3489,7 @@ class HealthConnectService {
           saveError?.message?.includes('Code=5') ||
           saveError?.message?.includes('not authorized')
         ) {
-          // ✅ THROW UNE ERREUR SPÉCIALE AU LIEU DE REDEMANDER SILENCIEUSEMENT
+          // THROW UNE ERREUR SPÉCIALE AU LIEU DE REDEMANDER SILENCIEUSEMENT
           const permissionError = new Error('HEALTHKIT_PERMISSION_REQUIRED');
           (permissionError as any).originalError = saveError;
           (permissionError as any).dataType = 'workout';
@@ -3472,17 +3499,17 @@ class HealthConnectService {
         // Autres erreurs : remonter telles quelles
         throw saveError;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Erreur écriture workout:', error);
 
-      // ✅ REMONTER L'ERREUR AU LIEU DE RETOURNER FALSE SILENCIEUSEMENT
+      // REMONTER L'ERREUR AU LIEU DE RETOURNER FALSE SILENCIEUSEMENT
       // Le caller pourra détecter le type d'erreur et afficher un message approprié
       throw error;
     }
   }
 
   /**
-   * ✅ Synchronisation avec retry automatique (exponential backoff)
+   * Synchronisation avec retry automatique (exponential backoff)
    */
   private async syncWithRetry(maxRetries = 3, delayMs = 1000): Promise<HealthData | null> {
     for (let i = 0; i < maxRetries; i++) {
@@ -3784,8 +3811,8 @@ class HealthConnectService {
           }
         }
 
-        // Sauvegarder les fingerprints (garder les 5000 derniers pour couvrir 5 ans d'historique)
-        const fingerprintsArray = Array.from(importedFingerprints).slice(-5000);
+        // Sauvegarder les fingerprints (garder les 20000 derniers pour couvrir tout l'historique)
+        const fingerprintsArray = Array.from(importedFingerprints).slice(-20000);
         await AsyncStorage.setItem('@yoroi_imported_workouts', JSON.stringify(fingerprintsArray));
         if (workoutsSaved > 0) {
           savedCount += workoutsSaved;
@@ -4316,7 +4343,7 @@ class HealthConnectService {
    * Réinitialiser complètement la connexion et le cache
    */
   /**
-   * ✏️ Écrire des données de sommeil dans Apple Santé
+   * Écrire des données de sommeil dans Apple Santé
    * Permet la saisie manuelle du sommeil
    */
   async writeSleepData(data: { startDate: Date; endDate: Date }): Promise<boolean> {
@@ -4362,10 +4389,10 @@ class HealthConnectService {
       const result = await HealthKit.saveCategorySample('HKCategoryTypeIdentifierSleepAnalysis', 1, startDate, endDate);
 
       if (result) {
-        logger.info('[HealthKit] ✅ Sleep data written successfully');
+        logger.info('[HealthKit] Sleep data written successfully');
         return true;
       } else {
-        logger.error('[HealthKit] ❌ Failed to write sleep data');
+        logger.error('[HealthKit] Failed to write sleep data');
         return false;
       }
     } catch (error) {
@@ -4375,7 +4402,7 @@ class HealthConnectService {
   }
 
   /**
-   * 🌙 Récupérer les détails complets du sommeil (phases, interruptions, qualité)
+   * Récupérer les détails complets du sommeil (phases, interruptions, qualité)
    * Retourne toutes les données disponibles dans Apple Santé
    */
   async getSleepDetails(fromDate: Date, toDate: Date): Promise<{
@@ -4540,7 +4567,7 @@ class HealthConnectService {
   }
 
   // ============================================
-  // ✅ NOUVEAU: FONCTION DE DIAGNOSTIC COMPLÈTE
+  // NOUVEAU: FONCTION DE DIAGNOSTIC COMPLÈTE
   // ============================================
   async runDiagnostic(): Promise<{
     healthKitAvailable: boolean;

@@ -2,7 +2,7 @@ import { Audio } from 'expo-av';
 import logger from '@/lib/security/logger';
 
 // ============================================
-// 🔊 SOUND DESIGN - SoundManager
+// SOUND DESIGN - SoundManager
 // ============================================
 
 let soundCache: { [key: string]: Audio.Sound } = {};
@@ -29,7 +29,7 @@ export const initSoundManager = async () => {
     });
     logger.info('SoundManager initialisé');
   } catch (error) {
-    logger.error('❌ Erreur initialisation SoundManager:', error);
+    logger.error('Erreur initialisation SoundManager:', error);
   }
 };
 
@@ -46,7 +46,7 @@ const loadSound = async (soundName: string): Promise<Audio.Sound | null> => {
     // Vérifier si le fichier son existe dans le mapping
     const soundModule = SOUND_FILES[soundName];
     if (!soundModule) {
-      logger.info(`ℹ️ Fichier son ${soundName}.mp3 non trouvé (sera ajouté plus tard)`);
+      logger.info(`Fichier son ${soundName}.mp3 non trouvé (sera ajouté plus tard)`);
       return null;
     }
 
@@ -58,7 +58,7 @@ const loadSound = async (soundName: string): Promise<Audio.Sound | null> => {
     soundCache[soundName] = sound;
     return sound;
   } catch (error) {
-    logger.error(`❌ Erreur chargement son ${soundName}:`, error);
+    logger.error(`Erreur chargement son ${soundName}:`, error);
     return null;
   }
 };
@@ -79,9 +79,9 @@ export const playSound = async (soundName: 'pokemon_badge' | 'pokemon_level_up' 
     await sound.setVolumeAsync(volume);
     await sound.playAsync();
 
-    logger.info(`🔊 Son ${soundName} joué`);
+    logger.info(`Son ${soundName} joué`);
   } catch (error) {
-    logger.error(`❌ Erreur lecture son ${soundName}:`, error);
+    logger.error(`Erreur lecture son ${soundName}:`, error);
   }
 };
 
@@ -131,7 +131,7 @@ export const cleanupSounds = async () => {
     }
     logger.info('Sons libérés');
   } catch (error) {
-    logger.error('❌ Erreur libération sons:', error);
+    logger.error('Erreur libération sons:', error);
   }
 };
 
@@ -148,6 +148,6 @@ export const prepareSounds = async () => {
     loadSound('gong').catch(() => {});
     loadSound('beep').catch(() => {});
   } catch (error) {
-    logger.error('❌ Erreur préparation sons:', error);
+    logger.error('Erreur préparation sons:', error);
   }
 };

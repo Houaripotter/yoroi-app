@@ -3,8 +3,8 @@
 // Navigation par sous-onglets, style Apple Sante
 // ============================================
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, RefreshControl, InteractionManager } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { useScrollContext } from '@/lib/ScrollContext';
@@ -12,12 +12,12 @@ import { StatsHeader, Period } from '../StatsHeader';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { HealthKitConnectCard } from '../HealthKitConnectCard';
 import { healthConnect } from '@/lib/healthConnect';
-import { getTrainings, Training, deleteAllTrainings } from '@/lib/database';
+import { getTrainings, Training } from '@/lib/database';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Moon, Flame, Heart, Footprints } from 'lucide-react-native';
 import { SLEEP_DURATION_RANGES, HRV_RANGES, RESTING_HEART_RATE_RANGES } from '@/lib/healthRanges';
 import { format } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { fr } from 'date-fns/locale';
 import { logger } from '@/lib/security/logger';
 
 import { SommeilTab } from './sante/SommeilTab';
@@ -36,15 +36,16 @@ const TAB_CONFIG: { key: SanteTab; label: string; Icon: React.FC<any>; iconColor
 
 export const VitalitePage: React.FC = React.memo(() => {
   const { colors, isDark, screenBackground } = useTheme();
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const { handleScroll: onScrollContext } = useScrollContext();
-  const dateLocale = language === 'fr' ? fr : enUS;
+  const dateLocale = fr;
 
   const [activeTab, setActiveTab] = useState<SanteTab>('sommeil');
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('tout');
   const [isHealthKitConnected, setIsHealthKitConnected] = useState(false);
   const [healthData, setHealthData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [connecting, setConnecting] = useState(false);
 
   // Modal state
@@ -92,16 +93,24 @@ export const VitalitePage: React.FC = React.memo(() => {
   const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    checkHealthKitConnection();
+    const handle = InteractionManager.runAfterInteractions(() => {
+      checkHealthKitConnection();
+    });
+    return () => handle.cancel();
   }, []);
 
   // Compteur pour annuler les chargements perimés
   const loadIdRef = useRef(0);
 
   // Quand on change d'onglet ou de periode, charger les donnees de cet onglet
+  // Ne pas recharger si deja charge (performance)
   useEffect(() => {
-    if (isHealthKitConnected && !loading) {
-      loadTabData(activeTab);
+    if (!loading && !loadedTabs.has(activeTab)) {
+      if (activeTab === 'seances') {
+        loadTabData(activeTab);
+      } else if (isHealthKitConnected) {
+        loadTabData(activeTab);
+      }
     }
   }, [activeTab, selectedPeriod]);
 
@@ -118,31 +127,32 @@ export const VitalitePage: React.FC = React.memo(() => {
     try {
       const status = healthConnect.getSyncStatus();
       if (status.isConnected) {
-        // One-time cleanup: supprimer les seances demo et reimporter depuis HealthKit
+        // Sync HealthKit trainings (non-destructif)
         try {
-          const cleaned = await AsyncStorage.getItem('@yoroi_trainings_cleaned_v4');
-          if (!cleaned) {
-            const deleted = await deleteAllTrainings();
-            logger.info(`[Sante] Cleanup v4: ${deleted} trainings supprimes, reimport 5 ans avec details`);
-            await AsyncStorage.removeItem('@yoroi_imported_workouts');
+          const synced = await AsyncStorage.getItem('@yoroi_trainings_cleaned_v4');
+          if (!synced) {
             try {
               await healthConnect.syncAll();
-              logger.info('[Sante] Reimport HealthKit termine (v4 - avec details enrichis)');
+              logger.info('[Sante] Sync HealthKit termine');
             } catch (syncErr) {
-              logger.warn('[Sante] syncAll apres cleanup echoue:', syncErr);
+              logger.warn('[Sante] syncAll echoue:', syncErr);
             }
             await AsyncStorage.setItem('@yoroi_trainings_cleaned_v4', 'true');
           }
         } catch (cleanupErr) {
-          logger.warn('[Sante] Cleanup error:', cleanupErr);
+          logger.warn('[Sante] Sync error:', cleanupErr);
         }
-        // APRES le cleanup, marquer comme connecte et charger les donnees
+        // Marquer comme connecte et charger les donnees
         setIsHealthKitConnected(true);
         // loadHealthData gere son propre setLoading(true/false)
         await loadHealthData();
       } else {
         // Pas connecte, on arrete le loading
         setLoading(false);
+        // Charger les seances locales meme sans HealthKit
+        if (activeTab === 'seances') {
+          loadTabData('seances');
+        }
       }
     } catch (error) {
       logger.error('Error checking HealthKit:', error);
@@ -189,7 +199,8 @@ export const VitalitePage: React.FC = React.memo(() => {
       setTodayCalories((results[6] as any).status === 'fulfilled' ? (results[6] as any).value?.active || 0 : 0);
       // Distance en km
       const distData = results[7]?.status === 'fulfilled' ? (results[7] as any).value : null;
-      setTodayDistance(distData?.walking ? (distData.walking + (distData.running || 0)) : (distData || 0));
+      const dist = distData?.walking ? (distData.walking + (distData.running || 0)) : (typeof distData === 'number' ? distData : 0);
+      setTodayDistance(dist);
       setTodayExerciseMinutes(results[8]?.status === 'fulfilled' ? ((results[8] as any).value || 0) : 0);
       setTodayStandHours(results[9]?.status === 'fulfilled' ? ((results[9] as any).value || 0) : 0);
     } catch (error) {
@@ -214,7 +225,7 @@ export const VitalitePage: React.FC = React.memo(() => {
 
   // Phase 2: Charger les donnees de l'onglet actif seulement (lazy)
   const loadTabData = async (tab: SanteTab) => {
-    const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, 'tout': 1825 };
+    const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, '1a': 365, '2a': 730, 'tout': 1825 };
     const days = daysMap[selectedPeriod] || 30;
     // Timeout plus long pour les grandes periodes
     const timeoutMs = days > 180 ? 15000 : 10000;
@@ -276,7 +287,7 @@ export const VitalitePage: React.FC = React.memo(() => {
             Promise.all([
               healthConnect.getRestingHRHistory?.(days) || [],
               healthConnect.getHRVHistory?.(days) || [],
-              healthConnect.getOxygenSaturationHistory?.(days).catch(() => []) || [],
+              (healthConnect.getOxygenSaturationHistory?.(days) ?? Promise.resolve([])).catch(() => []),
             ]),
             timeoutMs,
             [[], [], []]
@@ -348,6 +359,16 @@ export const VitalitePage: React.FC = React.memo(() => {
       }
     }
   };
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      setLoadedTabs(new Set());
+      await checkHealthKitConnection();
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
 
   const handleConnectHealthKit = async () => {
     setConnecting(true);
@@ -422,30 +443,6 @@ export const VitalitePage: React.FC = React.memo(() => {
     );
   }
 
-  // Not connected
-  if (!isHealthKitConnected) {
-    return (
-      <ScrollView
-        style={[styles.container, { backgroundColor: screenBackground }]}
-        showsVerticalScrollIndicator={false}
-        onScroll={onScrollContext}
-        scrollEventThrottle={100}
-      >
-        <StatsHeader
-          title="Sante"
-          description="Synchronise avec ton app Sante"
-          selectedPeriod={selectedPeriod}
-          onPeriodChange={setSelectedPeriod}
-          showPeriodSelector={false}
-        />
-        <HealthKitConnectCard
-          onConnect={handleConnectHealthKit}
-          isConnecting={connecting}
-        />
-      </ScrollView>
-    );
-  }
-
   // Current steps/calories for PasTab - utilise todaySteps/todayCalories (meme API que l'accueil)
   const currentSteps = todaySteps;
   const currentCalories = Math.round(todayCalories);
@@ -457,6 +454,14 @@ export const VitalitePage: React.FC = React.memo(() => {
       contentContainerStyle={styles.content}
       onScroll={onScrollContext}
       scrollEventThrottle={100}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={colors.accent}
+          colors={[colors.accent]}
+        />
+      }
     >
       <StatsHeader
         title="Sante"
@@ -467,7 +472,7 @@ export const VitalitePage: React.FC = React.memo(() => {
 
       {/* Barre de sous-onglets - style colore */}
       <View style={styles.tabBarContainer}>
-        <View style={[styles.tabBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.12)' }]}>
+        <View style={[styles.tabBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF' }]}>
           {TAB_CONFIG.map(({ key, label, Icon, iconColor, activeColor }) => {
             const isActive = activeTab === key;
             return (
@@ -475,26 +480,30 @@ export const VitalitePage: React.FC = React.memo(() => {
                 key={key}
                 style={[
                   styles.tabPill,
-                  isActive && {
-                    backgroundColor: activeColor,
-                    shadowColor: activeColor,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 8,
-                    elevation: 4,
-                  },
+                  isActive
+                    ? {
+                        backgroundColor: activeColor,
+                        shadowColor: activeColor,
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 8,
+                        elevation: 4,
+                      }
+                    : {
+                        backgroundColor: isDark ? 'transparent' : 'transparent',
+                      },
                 ]}
                 onPress={() => setActiveTab(key)}
                 activeOpacity={0.7}
               >
                 <Icon
                   size={15}
-                  color={isActive ? '#FFFFFF' : (isDark ? colors.textMuted : 'rgba(255,255,255,0.7)')}
+                  color={isActive ? '#FFFFFF' : (isDark ? colors.textMuted : iconColor)}
                   strokeWidth={2.5}
                 />
                 <Text style={[
                   styles.tabPillText,
-                  { color: isActive ? '#FFFFFF' : (isDark ? colors.textMuted : 'rgba(255,255,255,0.7)') },
+                  { color: isActive ? '#FFFFFF' : (isDark ? colors.textMuted : iconColor) },
                   isActive && { fontWeight: '700' },
                 ]}>
                   {label}
@@ -513,7 +522,10 @@ export const VitalitePage: React.FC = React.memo(() => {
           </View>
         )}
 
-        {activeTab === 'sommeil' && (
+        {activeTab === 'sommeil' && !isHealthKitConnected && (
+          <HealthKitConnectCard onConnect={handleConnectHealthKit} isConnecting={connecting} />
+        )}
+        {activeTab === 'sommeil' && isHealthKitConnected && (
           <SommeilTab
             sleep={healthData?.sleep}
             sleepPhasesData={sleepPhasesData}
@@ -528,7 +540,10 @@ export const VitalitePage: React.FC = React.memo(() => {
           <SeancesTab trainings={trainings} />
         )}
 
-        {activeTab === 'signes' && (
+        {activeTab === 'signes' && !isHealthKitConnected && (
+          <HealthKitConnectCard onConnect={handleConnectHealthKit} isConnecting={connecting} />
+        )}
+        {activeTab === 'signes' && isHealthKitConnected && (
           <SignesVitauxTab
             heartRate={healthData?.heartRate}
             hrv={healthData?.hrv}
@@ -542,7 +557,10 @@ export const VitalitePage: React.FC = React.memo(() => {
           />
         )}
 
-        {activeTab === 'pas' && (
+        {activeTab === 'pas' && !isHealthKitConnected && (
+          <HealthKitConnectCard onConnect={handleConnectHealthKit} isConnecting={connecting} />
+        )}
+        {activeTab === 'pas' && isHealthKitConnected && (
           <PasTab
             steps={currentSteps}
             calories={currentCalories}
@@ -606,6 +624,11 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 4,
     gap: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   tabPill: {
     flex: 1,

@@ -14,6 +14,7 @@ import {
   TextInput,
   Platform,
   ActivityIndicator,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,7 +25,6 @@ import {
   Hash,
   Image as ImageIcon,
   Palette,
-  Globe,
   Sliders,
   Grip,
   Bell,
@@ -37,7 +37,6 @@ import {
   Lock,
   Trash2,
   Info,
-  BookMarked,
   MessageCircle,
   Lightbulb,
   Camera,
@@ -47,6 +46,7 @@ import {
   X,
   Search,
   MessageSquareQuote,
+  Eye,
   LucideIcon,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
@@ -60,9 +60,8 @@ import { safeOpenURL } from '@/lib/security/validators';
 import { Smartphone, BookOpen, Syringe, BarChart3, Database } from 'lucide-react-native';
 import { exportDataToJSON, importDataFromJSON, exportEditableCSV, importEditableCSV, exportEmptyTemplate } from '@/lib/exportService';
 import { generateProgressPDF } from '@/lib/pdfExport';
-import { resetAllData } from '@/lib/storage';
+import { resetAllData, resetDataOnly } from '@/lib/storage';
 import logger from '@/lib/security/logger';
-import { resetAllTips } from '@/lib/contextualTipsService';
 import { generateHeryDemoData, restoreRealData, isDemoDataActive } from '@/lib/demoDataService';
 import { notificationService } from '@/lib/notificationService';
 
@@ -100,7 +99,6 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
     title: 'APPARENCE',
     items: [
       { id: 'themes', label: 'Themes', sublabel: 'Themes et personnalisation', Icon: Palette, iconColor: '#8B5CF6', route: '/themes' },
-      { id: 'language', label: 'Langue', sublabel: 'FR', Icon: Globe, iconColor: '#10B981', handler: 'language' },
       { id: 'units', label: 'Unites', sublabel: 'Kg/Lbs, Cm/Inches', Icon: Sliders, iconColor: '#8B5CF6', handler: 'units' },
     ],
   },
@@ -133,8 +131,6 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
   {
     title: 'SUPPORT & A PROPOS',
     items: [
-      { id: 'help', label: 'Guide & Astuces', sublabel: 'Decouvre comment utiliser chaque fonctionnalite', Icon: Info, iconColor: '#8B5CF6', route: '/guide' },
-      { id: 'tutorial', label: 'Revoir les Astuces', sublabel: 'Reafficher les tips sur chaque ecran', Icon: BookMarked, iconColor: '#8B5CF6', handler: 'tutorial' },
       { id: 'contact', label: 'Contact', sublabel: 'Disponible par mail', Icon: MessageCircle, iconColor: '#14B8A6', handler: 'contact' },
       { id: 'ideas', label: 'Boite a idees', sublabel: 'Proposer des idees et signaler des bugs', Icon: Lightbulb, iconColor: '#14B8A6', handler: 'ideas' },
       { id: 'instagram', label: 'Instagram : Yoroiapp', sublabel: "Suis l'avancee", Icon: Camera, iconColor: '#EC4899', handler: 'instagram' },
@@ -151,6 +147,7 @@ const CREATOR_ITEMS: SettingsItem[] = [
   { id: 'creator-surgeon', label: 'Mode Chirurgien', sublabel: 'Desactive', Icon: Syringe, iconColor: '#EF4444', handler: 'toggle-surgeon' },
   { id: 'creator-mock', label: 'Stats Mock', sublabel: 'Desactive', Icon: BarChart3, iconColor: '#8B5CF6', handler: 'toggle-mock' },
   { id: 'creator-hery', label: 'Profil Demo Hery', sublabel: 'Injecter donnees realistes', Icon: Database, iconColor: '#10B981', handler: 'demo-hery' },
+  { id: 'creator-onboarding', label: 'Voir Onboarding', sublabel: 'Previsualiser l\'ecran d\'accueil', Icon: Eye, iconColor: '#06B6D4', handler: 'preview-onboarding' },
   { id: 'creator-reset', label: 'Tout Desactiver', sublabel: 'Nettoyer les donnees de demo', Icon: Trash2, iconColor: '#EF4444', handler: 'reset-creator', labelColor: '#EF4444' },
 ];
 
@@ -162,7 +159,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark, screenBackground } = useTheme();
-  const { t, language, setLanguage, supportedLanguages } = useI18n();
+  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   // Search
@@ -173,7 +170,6 @@ export default function SettingsScreen() {
   const [resetConfirmText, setResetConfirmText] = useState('');
 
   // Language modal
-  const [languageModalVisible, setLanguageModalVisible] = useState(false);
 
   // Units modal
   const [unitsModalVisible, setUnitsModalVisible] = useState(false);
@@ -253,6 +249,7 @@ export default function SettingsScreen() {
       if (isDemoActive) {
         await restoreRealData();
         setIsDemoActive(false);
+        DeviceEventEmitter.emit('YOROI_DEMO_CHANGED');
       }
       await AsyncStorage.multiRemove([
         '@yoroi_screenshot_mode',
@@ -297,8 +294,6 @@ export default function SettingsScreen() {
     }
   };
 
-  // Update language sublabel dynamically
-  const currentLangCode = language?.toUpperCase() || 'FR';
 
   // Creator items with dynamic sublabels
   const creatorItems = useMemo((): SettingsItem[] => {
@@ -445,9 +440,24 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleResetAll = () => {
+  const openResetModal = () => {
     setResetConfirmText('');
     setResetModalVisible(true);
+  };
+
+  const handleResetAll = () => {
+    showPopup(
+      'Sauvegarde recommandee',
+      'Avant de reinitialiser, on te recommande de sauvegarder tes donnees.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Sauvegarder d\'abord', style: 'primary', onPress: async () => {
+          await exportDataToJSON();
+          openResetModal();
+        }},
+        { text: 'Continuer sans sauvegarder', style: 'default', onPress: () => openResetModal() },
+      ]
+    );
   };
 
   const normalizedText = resetConfirmText.trim().toUpperCase();
@@ -456,12 +466,12 @@ export default function SettingsScreen() {
   const confirmReset = async () => {
     if (isResetConfirmed) {
       try {
-        await resetAllData();
+        await resetDataOnly();
         setResetModalVisible(false);
         setResetConfirmText('');
         showPopup(
           'Donnees supprimees',
-          'Toutes les donnees ont ete effacees.',
+          'Tes donnees ont ete effacees. Tes photos ont ete conservees.',
           [{ text: 'OK', style: 'primary', onPress: () => router.replace('/onboarding') }],
           <CheckCircle size={32} color="#10B981" />
         );
@@ -472,40 +482,7 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleShowTutorial = () => {
-    showPopup(
-      'Revoir les Astuces',
-      "Tu vas etre redirige vers l'accueil pour revoir toutes les astuces. Continuer ?",
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Commencer',
-          style: 'primary',
-          onPress: async () => {
-            try {
-              await resetAllTips();
-              router.push('/(tabs)');
-              notificationAsync(NotificationFeedbackType.Success);
-            } catch (error) {
-              logger.error('Error resetting tips:', error);
-            }
-          },
-        },
-      ]
-    );
-  };
 
-  const handleChangeLanguage = async (langCode: string) => {
-    if (langCode === language) return;
-    try {
-      impactAsync(ImpactFeedbackStyle.Light);
-      await setLanguage(langCode);
-      setLanguageModalVisible(false);
-      notificationAsync(NotificationFeedbackType.Success);
-    } catch (error) {
-      logger.error('[Settings] Error changing language:', error);
-    }
-  };
 
   const handleVersionTap = () => {
     const now = Date.now();
@@ -557,11 +534,12 @@ export default function SettingsScreen() {
               const result = await generateHeryDemoData();
               setIsDemoActive(true);
               setIsGenerating(false);
+              DeviceEventEmitter.emit('YOROI_DEMO_CHANGED');
               notificationAsync(NotificationFeedbackType.Success);
               showPopup(
-                'Profil Hery cree',
+                'Profil Heny cree',
                 `${result.workouts} seances, ${result.weights} pesees, ${result.measurements} mensurations, ${result.sleepEntries} nuits, ${result.benchmarks} benchmarks, ${result.skills} techniques.\n\nTes vraies donnees sont sauvegardees. Utilise "Tout Desactiver" pour les restaurer.`,
-                [{ text: 'OK', style: 'primary' }]
+                [{ text: 'OK', style: 'primary', onPress: () => router.replace('/(tabs)') }]
               );
             } catch (error) {
               setIsGenerating(false);
@@ -583,8 +561,6 @@ export default function SettingsScreen() {
       case 'import': handleImport(); return;
       case 'pdf': handleExportPDF(); return;
       case 'reset': handleResetAll(); return;
-case 'tutorial': handleShowTutorial(); return;
-      case 'language': setLanguageModalVisible(true); return;
       case 'units': setUnitsModalVisible(true); return;
       case 'contact': router.push({ pathname: '/ideas', params: { category: 'other' } } as any); return;
       case 'ideas': router.push({ pathname: '/ideas', params: { category: 'feature' } } as any); return;
@@ -598,6 +574,7 @@ case 'tutorial': handleShowTutorial(); return;
       case 'toggle-surgeon': toggleSurgeonMode(!isSurgeonMode); return;
       case 'toggle-mock': toggleMockStatsMode(!isMockStatsMode); return;
       case 'demo-hery': handleDemoHery(); return;
+      case 'preview-onboarding': router.push('/onboarding' as any); return;
       case 'reset-creator': resetAllCreatorModes(); return;
     }
 
@@ -613,8 +590,7 @@ case 'tutorial': handleShowTutorial(); return;
 
   const renderItem = (item: SettingsItem, isLast: boolean) => {
     const IconComp = item.Icon;
-    // Dynamic sublabel for language
-    const sublabel = item.id === 'language' ? currentLangCode : item.sublabel;
+    const sublabel = item.sublabel;
 
     return (
       <View key={item.id}>
@@ -714,39 +690,6 @@ case 'tutorial': handleShowTutorial(); return;
 
       {/* ============ MODALS ============ */}
 
-      {/* Language Modal */}
-      <Modal visible={languageModalVisible} transparent animationType="fade" onRequestClose={() => setLanguageModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Langue</Text>
-              <TouchableOpacity onPress={() => setLanguageModalVisible(false)}>
-                <X size={24} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-              {supportedLanguages.map((lang) => {
-                const isSelected = language === lang.code;
-                return (
-                  <TouchableOpacity
-                    key={lang.code}
-                    style={[styles.langOption, { backgroundColor: isSelected ? colors.accent + '20' : isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: isSelected ? colors.accent : colors.border }]}
-                    onPress={() => handleChangeLanguage(lang.code)}
-                  >
-                    <Text style={styles.langFlag}>{lang.flag}</Text>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.langName, { color: colors.textPrimary }]}>{lang.nativeName}</Text>
-                      <Text style={{ fontSize: 12, color: colors.textMuted }}>{lang.name}</Text>
-                    </View>
-                    {isSelected && <View style={[styles.checkDot, { backgroundColor: colors.accent }]} />}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
       {/* Units Modal */}
       <Modal visible={unitsModalVisible} transparent animationType="fade" onRequestClose={() => setUnitsModalVisible(false)}>
         <View style={styles.modalOverlay}>
@@ -811,7 +754,7 @@ case 'tutorial': handleShowTutorial(); return;
                 <Trash2 size={32} color="#EF4444" />
                 <Text style={[styles.warningTitle, { color: '#EF4444' }]}>Action irreversible</Text>
                 <Text style={[styles.warningText, { color: colors.textSecondary }]}>
-                  Toutes tes donnees seront supprimees : poids, seances, photos, badges, reglages...
+                  Toutes tes donnees seront supprimees : poids, seances, badges, reglages... Tes photos seront conservees.
                 </Text>
               </View>
               <Text style={[styles.confirmLabel, { color: colors.textPrimary }]}>
@@ -1040,29 +983,6 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: '700',
-  },
-
-  // Language modal
-  langOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 8,
-    borderWidth: 2,
-    gap: 12,
-  },
-  langFlag: {
-    fontSize: 24,
-  },
-  langName: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  checkDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
   },
 
   // Units modal

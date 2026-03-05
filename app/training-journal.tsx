@@ -14,13 +14,14 @@ import {
   Modal,
   Dimensions,
   Animated,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  Trash2, Search, Plus, Target, ChevronRight, Share2, Dumbbell, BookOpen, Award, FileText, Play, X, Check, ChevronLeft, TrendingUp
+  Trash2, Search, Plus, Target, ChevronRight, Share2, Dumbbell, BookOpen, Award, FileText, Play, X, Check, ChevronLeft, TrendingUp, Flame, Timer, Swords
 } from 'lucide-react-native';
 import { useWatch } from '@/lib/WatchConnectivityProvider';
 import { useTheme } from '@/lib/ThemeContext';
@@ -65,11 +66,11 @@ import {
   emptyTrash,
   getTrashCount,
   TrashItem,
+  WATCH_EXERCISE_TEMPLATES,
 } from '@/lib/carnetService';
 import VictoryShareModal, { VictorySessionData, createVictoryFromEntry } from '@/components/VictoryShareModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPendingVictory } from '@/lib/victoryTrigger';
-import { ContextualTip } from '@/components/ContextualTip';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { renderIcon } from './training-journal/utils/iconMap';
 import { getRelativeDate } from './training-journal/utils/dateHelpers';
@@ -102,7 +103,6 @@ export default function TrainingJournalScreen() {
   // Data state
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isQuickAdding, setIsQuickAdding] = useState(false);
 
@@ -145,7 +145,6 @@ export default function TrainingJournalScreen() {
   const [drillIncrement, setDrillIncrement] = useState('10');
 
   // Filter state
-  const [selectedBenchmarkCategory, setSelectedBenchmarkCategory] = useState<BenchmarkCategory | 'all'>('all');
   const [selectedSkillFilter, setSelectedSkillFilter] = useState<SkillStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -311,7 +310,7 @@ export default function TrainingJournalScreen() {
 
       await loadData();
       
-      // 🔄 SYNC VERS LA MONTRE
+      // SYNC VERS LA MONTRE
       const currentBenchmarks = await getBenchmarks();
       const recordsToSync = currentBenchmarks.map(b => ({
         exercise: b.name,
@@ -418,6 +417,14 @@ export default function TrainingJournalScreen() {
 
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadData(); }, []);
+
+  // Rafraichir quand un exercice est synchronise depuis la montre
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('CARNET_UPDATED', () => {
+      loadData();
+    });
+    return () => sub.remove();
+  }, [loadData]);
 
   // TASK 2: Apply global filter to benchmarks and skills (Force -> Musculation)
   const matchesGlobalFilter = (benchmarkCategory: BenchmarkCategory | null, skillCategory: SkillCategory | null): boolean => {
@@ -1305,23 +1312,30 @@ export default function TrainingJournalScreen() {
             if (isModalProcessing) return;
             executeModalOnce(async () => setShowTrashModal(true));
           }}
-          style={styles.trashButton}
+          style={[styles.trashButton, {
+            backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.25)',
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)',
+          }]}
           disabled={isModalProcessing}
         >
-          <Trash2 size={22} color={isDark ? colors.textPrimary : '#FFFFFF'} />
+          <Trash2 size={18} color={isDark ? colors.textPrimary : '#FFFFFF'} />
           {trashCount > 0 && (
             <View style={{
               position: 'absolute',
-              top: -4,
-              right: -4,
-              backgroundColor: colors.error,
+              top: -5,
+              right: -5,
+              backgroundColor: '#EF4444',
               borderRadius: 10,
-              width: 20,
-              height: 20,
+              minWidth: 18,
+              height: 18,
+              paddingHorizontal: 4,
               justifyContent: 'center',
               alignItems: 'center',
+              borderWidth: 1.5,
+              borderColor: isDark ? colors.background : colors.accent,
             }}>
-              <Text style={{ color: '#FFF', fontSize: 10, fontWeight: '700' }}>
+              <Text style={{ color: '#FFF', fontSize: 10, fontWeight: '800' }}>
                 {trashCount}
               </Text>
             </View>
@@ -1330,11 +1344,14 @@ export default function TrainingJournalScreen() {
       </View>
 
       {/* Tab Selector - Records / Techniques */}
-      <View style={[styles.tabContainer, { borderBottomColor: isDark ? colors.border : 'rgba(255,255,255,0.2)' }]}>
+      <View style={[styles.tabContainer, {
+        backgroundColor: isDark ? colors.background : '#FFFFFF',
+        borderBottomColor: isDark ? colors.border : colors.border,
+      }]}>
         <TouchableOpacity
           style={[
             styles.tabButton,
-            activeTab === 'records' && { borderBottomColor: isDark ? '#EF4444' : '#FFFFFF', borderBottomWidth: 3 }
+            activeTab === 'records' && { borderBottomColor: isDark ? '#EF4444' : colors.accent, borderBottomWidth: 3 }
           ]}
           onPress={() => {
             impactAsync(ImpactFeedbackStyle.Light);
@@ -1342,15 +1359,15 @@ export default function TrainingJournalScreen() {
           }}
           activeOpacity={0.7}
         >
-          <Dumbbell size={18} color={activeTab === 'records' ? (isDark ? '#EF4444' : '#FFFFFF') : (isDark ? colors.textMuted : 'rgba(255,255,255,0.5)')} strokeWidth={2.5} />
+          <Dumbbell size={18} color={activeTab === 'records' ? (isDark ? '#EF4444' : colors.accent) : colors.textMuted} strokeWidth={2.5} />
           <Text style={[
             styles.tabText,
-            { color: activeTab === 'records' ? (isDark ? '#EF4444' : '#FFFFFF') : (isDark ? colors.textMuted : 'rgba(255,255,255,0.5)') }
+            { color: activeTab === 'records' ? (isDark ? '#EF4444' : colors.accent) : colors.textMuted }
           ]}>
             Records
           </Text>
-          <View style={[styles.tabBadge, { backgroundColor: activeTab === 'records' ? (isDark ? '#EF4444' : 'rgba(255,255,255,0.25)') : (isDark ? colors.textMuted + '30' : 'rgba(255,255,255,0.12)') }]}>
-            <Text style={[styles.tabBadgeText, { color: activeTab === 'records' ? '#FFFFFF' : (isDark ? colors.textMuted : 'rgba(255,255,255,0.5)') }]}>
+          <View style={[styles.tabBadge, { backgroundColor: activeTab === 'records' ? (isDark ? '#EF4444' : colors.accent) : (colors.textMuted + '25') }]}>
+            <Text style={[styles.tabBadgeText, { color: activeTab === 'records' ? '#FFFFFF' : colors.textMuted }]}>
               {benchmarks.length}
             </Text>
           </View>
@@ -1359,7 +1376,7 @@ export default function TrainingJournalScreen() {
         <TouchableOpacity
           style={[
             styles.tabButton,
-            activeTab === 'techniques' && { borderBottomColor: isDark ? '#8B5CF6' : '#FFFFFF', borderBottomWidth: 3 }
+            activeTab === 'techniques' && { borderBottomColor: isDark ? '#8B5CF6' : '#8B5CF6', borderBottomWidth: 3 }
           ]}
           onPress={() => {
             impactAsync(ImpactFeedbackStyle.Light);
@@ -1367,15 +1384,15 @@ export default function TrainingJournalScreen() {
           }}
           activeOpacity={0.7}
         >
-          <BookOpen size={18} color={activeTab === 'techniques' ? (isDark ? '#8B5CF6' : '#FFFFFF') : (isDark ? colors.textMuted : 'rgba(255,255,255,0.5)')} strokeWidth={2.5} />
+          <BookOpen size={18} color={activeTab === 'techniques' ? '#8B5CF6' : colors.textMuted} strokeWidth={2.5} />
           <Text style={[
             styles.tabText,
-            { color: activeTab === 'techniques' ? (isDark ? '#8B5CF6' : '#FFFFFF') : (isDark ? colors.textMuted : 'rgba(255,255,255,0.5)') }
+            { color: activeTab === 'techniques' ? '#8B5CF6' : colors.textMuted }
           ]}>
             Techniques
           </Text>
-          <View style={[styles.tabBadge, { backgroundColor: activeTab === 'techniques' ? (isDark ? '#8B5CF6' : 'rgba(255,255,255,0.25)') : (isDark ? colors.textMuted + '30' : 'rgba(255,255,255,0.12)') }]}>
-            <Text style={[styles.tabBadgeText, { color: activeTab === 'techniques' ? '#FFFFFF' : (isDark ? colors.textMuted : 'rgba(255,255,255,0.5)') }]}>
+          <View style={[styles.tabBadge, { backgroundColor: activeTab === 'techniques' ? '#8B5CF6' : (colors.textMuted + '25') }]}>
+            <Text style={[styles.tabBadgeText, { color: activeTab === 'techniques' ? '#FFFFFF' : colors.textMuted }]}>
               {skills.length}
             </Text>
           </View>
@@ -1385,7 +1402,7 @@ export default function TrainingJournalScreen() {
       {/* Info Banner supprimé - nettoyage disponible dans Menu */}
 
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
+      <View style={[styles.searchContainer, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}>
         <View style={[styles.searchBar, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
           <Search size={20} color={colors.textMuted} />
           <TextInput
@@ -1408,7 +1425,7 @@ export default function TrainingJournalScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={styles.globalFilterScroll}
+        style={[styles.globalFilterScroll, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}
         contentContainerStyle={styles.globalFilterContent}
       >
         {[
@@ -1440,7 +1457,7 @@ export default function TrainingJournalScreen() {
               {renderIcon(filter.iconName, 16, isSelected ? filter.textOnColor : filter.color)}
               <Text style={[
                 styles.globalFilterText,
-                { color: isSelected ? filter.textOnColor : (isDark ? colors.textPrimary : '#FFFFFF') }
+                { color: isSelected ? filter.textOnColor : filter.color }
               ]}>
                 {filter.label}
               </Text>
@@ -1449,7 +1466,7 @@ export default function TrainingJournalScreen() {
         })}
       </ScrollView>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={[styles.content, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]} showsVerticalScrollIndicator={false}>
         {/* Stats Summary */}
         <View style={[styles.statsRow, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
           <View style={styles.statItem}>
@@ -1471,10 +1488,10 @@ export default function TrainingJournalScreen() {
         {/* SECTION: MES RECORDS */}
         {activeTab === 'records' && (
           <View>
-            <View style={styles.sectionHeader}>
+            <View style={[styles.sectionHeader, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
               <View style={styles.sectionTitleRow}>
                 <Dumbbell size={20} color="#EF4444" />
-                <Text style={[styles.sectionHeaderTitle, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>Mes Records</Text>
+                <Text style={[styles.sectionHeaderTitle, { color: colors.textPrimary }]}>Mes Records</Text>
               </View>
               <TouchableOpacity
                 style={[styles.addSectionBtn, { backgroundColor: '#EF444420' }]}
@@ -1523,7 +1540,9 @@ export default function TrainingJournalScreen() {
                     <View key={muscleGroup} style={{ marginTop: 12 }}>
                       {/* SUB HEADER (e.g. PECTORAUX, DOS) - only if it's Musculation or has a muscle group */}
                       {muscleGroup !== 'GÉNÉRAL' && (
-                        <Text style={[styles.categoryHeader, { color: colors.textMuted, marginLeft: 4 }]}>{muscleGroup}</Text>
+                        <View style={{ backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10, alignSelf: 'flex-start', marginBottom: 8 }}>
+                          <Text style={[styles.categoryHeader, { color: colors.textMuted, marginLeft: 0, marginBottom: 0 }]}>{muscleGroup}</Text>
+                        </View>
                       )}
                       
                       <View style={styles.compactCardsList}>
@@ -1541,10 +1560,10 @@ export default function TrainingJournalScreen() {
         {/* SECTION: MES TECHNIQUES */}
         {activeTab === 'techniques' && (
           <>
-            <View style={styles.sectionHeader}>
+            <View style={[styles.sectionHeader, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
               <View style={styles.sectionTitleRow}>
                 <BookOpen size={20} color="#8B5CF6" />
-                <Text style={[styles.sectionHeaderTitle, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>Mes Techniques</Text>
+                <Text style={[styles.sectionHeaderTitle, { color: colors.textPrimary }]}>Mes Techniques</Text>
               </View>
               <TouchableOpacity
                 style={[styles.addSectionBtn, { backgroundColor: '#8B5CF620' }]}
@@ -1658,7 +1677,7 @@ export default function TrainingJournalScreen() {
 
       {/* FAB */}
       <TouchableOpacity
-        style={[styles.fab, { backgroundColor: colors.accent }]}
+        style={[styles.fab, { backgroundColor: isDark ? colors.accent : colors.backgroundCard }]}
         onPress={() => {
           if (isModalProcessing) return;
           executeModalOnce(async () => {
@@ -1669,7 +1688,7 @@ export default function TrainingJournalScreen() {
         activeOpacity={0.8}
         disabled={isModalProcessing}
       >
-        <Plus size={28} color={colors.textOnGold} strokeWidth={2.5} />
+        <Plus size={28} color={isDark ? colors.textOnGold : colors.accent} strokeWidth={2.5} />
       </TouchableOpacity>
 
       {/* Modals */}
@@ -1820,9 +1839,6 @@ export default function TrainingJournalScreen() {
         />
       )}
 
-      {/* Tip contextuel */}
-      <ContextualTip tipId="carnet" bottomOffset={110} />
-
       {/* Toast Notification - NO EMOJI, use Lucide Check icon */}
       {toastVisible && (
         <Animated.View
@@ -1857,31 +1873,40 @@ export default function TrainingJournalScreen() {
             
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
               {
-                [
-                  { name: 'PECTORAUX', icon: 'dumbbell', color: '#EF4444' },
-                  { name: 'DOS', icon: 'anchor', color: '#3B82F6' },
-                  { name: 'JAMBES', icon: 'footprints', color: '#10B981' },
-                  { name: 'ÉPAULES', icon: 'target', color: '#F59E0B' },
-                  { name: 'BRAS', icon: 'zap', color: '#EC4899' },
-                  { name: 'ABDOS', icon: 'shield', color: '#8B5CF6' },
-                  { name: 'CARDIO', icon: 'timer', color: '#06B6D4' },
-                ].map((muscle) => (
-                  <TouchableOpacity
-                    key={muscle.name}
-                    style={[styles.muscleItem, { backgroundColor: colors.backgroundCard }]}
-                    onPress={() => {
-                      setSelectedMuscleGroup(muscle.name);
-                      setIsMusclePickerVisible(false);
-                      setIsExercisePickerVisible(true);
-                    }}
-                  >
-                    <View style={[styles.muscleIcon, { backgroundColor: muscle.color + '20' }]}>
-                      <Dumbbell size={20} color={muscle.color} />
-                    </View>
-                    <Text style={[styles.muscleText, { color: colors.textPrimary }]}>{muscle.name}</Text>
-                    <ChevronRight size={20} color={colors.textMuted} />
-                  </TouchableOpacity>
-                ))
+                ([
+                  { name: 'PECTORAUX', icon: 'dumbbell', color: '#EF4444', group: 'Pectoraux' },
+                  { name: 'DOS', icon: 'dumbbell', color: '#3B82F6', group: 'Dos' },
+                  { name: 'EPAULES', icon: 'dumbbell', color: '#F59E0B', group: 'Epaules' },
+                  { name: 'BRAS', icon: 'dumbbell', color: '#EC4899', group: 'Bras' },
+                  { name: 'JAMBES', icon: 'dumbbell', color: '#10B981', group: 'Jambes' },
+                  { name: 'ABDOS', icon: 'dumbbell', color: '#8B5CF6', group: 'Abdos' },
+                  { name: 'OLYMPIQUE', icon: 'dumbbell', color: '#DC2626', group: 'Olympique' },
+                  { name: 'CROSSFIT', icon: 'flame', color: '#F59E0B', group: 'CrossFit' },
+                  { name: 'HYROX', icon: 'flame', color: '#D97706', group: 'Hyrox' },
+                  { name: 'RUNNING', icon: 'timer', color: '#3B82F6', group: 'Running' },
+                  { name: 'CARDIO', icon: 'timer', color: '#06B6D4', group: 'Cardio' },
+                  { name: 'COMBAT', icon: 'swords', color: '#8B5CF6', group: 'Combat' },
+                  { name: 'STRONGMAN', icon: 'dumbbell', color: '#B91C1C', group: 'Strongman' },
+                ] as const).map((muscle) => {
+                  const IconComponent = muscle.icon === 'flame' ? Flame : muscle.icon === 'timer' ? Timer : muscle.icon === 'swords' ? Swords : Dumbbell;
+                  return (
+                    <TouchableOpacity
+                      key={muscle.name}
+                      style={[styles.muscleItem, { backgroundColor: colors.backgroundCard }]}
+                      onPress={() => {
+                        setSelectedMuscleGroup(muscle.group);
+                        setIsMusclePickerVisible(false);
+                        setIsExercisePickerVisible(true);
+                      }}
+                    >
+                      <View style={[styles.muscleIcon, { backgroundColor: muscle.color + '20' }]}>
+                        <IconComponent size={20} color={muscle.color} />
+                      </View>
+                      <Text style={[styles.muscleText, { color: colors.textPrimary }]}>{muscle.name}</Text>
+                      <ChevronRight size={20} color={colors.textMuted} />
+                    </TouchableOpacity>
+                  );
+                })
               }
             </ScrollView>
           </View>
@@ -1897,7 +1922,7 @@ export default function TrainingJournalScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.background, height: '80%' }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{selectedMuscleGroup}</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{selectedMuscleGroup?.toUpperCase()}</Text>
               <TouchableOpacity onPress={() => setIsExercisePickerVisible(false)}>
                 <X size={24} color={colors.textPrimary} />
               </TouchableOpacity>
@@ -1905,27 +1930,19 @@ export default function TrainingJournalScreen() {
             
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
               {(() => {
-                const exercises: Record<string, string[]> = {
-                  'PECTORAUX': ['Développé couché', 'Haltères incliné', 'Écartés', 'Dips (Pecs)', 'Pompes'],
-                  'DOS': ['Tractions', 'Rowing barre', 'Tirage poitrine', 'Deadlift', 'Rowing haltère'],
-                  'JAMBES': ['Squat', 'Presse à cuisses', 'Fentes', 'Leg Extension', 'Leg Curl'],
-                  'ÉPAULES': ['Développé militaire', 'Élévations latérales', 'Oiseau', 'Arnold Press'],
-                  'BRAS': ['Curl barre', 'Curl haltères', 'Extensions poulie', 'Barre au front'],
-                  'ABDOS': ['Crunch', 'Gainage', 'Relevé de jambes', 'Roulette'],
-                  'CARDIO': ['5km Running', '10km Running', 'Fractionné', 'Vélo', 'Rameur'],
-                };
-                
-                const list = selectedMuscleGroup ? (exercises[selectedMuscleGroup] || []) : [];
-                const category = selectedMuscleGroup === 'CARDIO' ? 'running' : 'force';
-                const unit = selectedMuscleGroup === 'CARDIO' ? 'time' : 'kg';
-                
-                return list.map((ex) => (
+                const list = selectedMuscleGroup
+                  ? WATCH_EXERCISE_TEMPLATES.filter(t =>
+                      t.muscleGroup?.toLowerCase() === selectedMuscleGroup.toLowerCase()
+                    )
+                  : [];
+
+                return list.map((t) => (
                   <TouchableOpacity
-                    key={ex}
+                    key={t.id}
                     style={[styles.exerciseItem, { backgroundColor: colors.backgroundCard }]}
-                    onPress={() => handleQuickAddRecord(ex, category, unit)}
+                    onPress={() => handleQuickAddRecord(t.name, t.category, t.unit)}
                   >
-                    <Text style={[styles.exerciseText, { color: colors.textPrimary }]}>{ex}</Text>
+                    <Text style={[styles.exerciseText, { color: colors.textPrimary }]}>{t.name}</Text>
                     <Plus size={20} color={colors.accent} />
                   </TouchableOpacity>
                 ));
@@ -2101,6 +2118,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 24,
     marginBottom: 12,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
   sectionTitleRow: {
     flexDirection: 'row',
@@ -2474,7 +2494,11 @@ const styles = StyleSheet.create({
 
   // Trash Button (Header)
   trashButton: {
-    padding: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
   },
 

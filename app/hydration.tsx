@@ -96,6 +96,12 @@ export default function HydrationScreen() {
       damping: 12,
       useNativeDriver: true,
     }).start();
+
+    // Refresh when Watch updates hydration
+    const sub = DeviceEventEmitter.addListener('HYDRATION_AMOUNT_CHANGED', () => {
+      loadData();
+    });
+    return () => sub.remove();
   }, []);
 
   const loadData = async () => {

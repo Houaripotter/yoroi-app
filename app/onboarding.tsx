@@ -40,10 +40,11 @@ import {
   ImageIcon,
   ChevronRight,
   ChevronDown,
+  ChevronLeft,
   Check,
   Info,
 } from 'lucide-react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { saveProfile } from '@/lib/database';
 import { saveUserSettings } from '@/lib/storage';
 import { setUserMode, setUserSport, setUserWeightCategory } from '@/lib/fighterModeService';
@@ -59,7 +60,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
-// Theme BLANC premium - vrai dore (pas moutard)
+const LEGAL_ACCEPTED_KEY = '@yoroi_legal_accepted';
+
+// Theme BLANC premium - vrai dore
 const C = {
   bg: '#FFFFFF',
   bgCard: '#F5F5F7',
@@ -67,9 +70,9 @@ const C = {
   text: '#1A1A1A',
   textSub: '#555555',
   textMuted: '#999999',
-  gold: '#D4AF37',
-  goldLight: '#FBF5E6',
-  goldDark: '#B8962E',
+  gold: '#0EA5E9',
+  goldLight: '#E0F2FE',
+  goldDark: '#0284C7',
   border: '#E5E5EA',
   white: '#FFFFFF',
   danger: '#FF3B30',
@@ -163,7 +166,7 @@ const FEATURES: Feature[] = [
 ];
 
 // ============================================
-// SECTIONS DE SPORTS (comme sport-selection)
+// SECTIONS DE SPORTS (avec icones)
 // ============================================
 interface SportSection {
   title: string;
@@ -248,6 +251,9 @@ export default function OnboardingScreen() {
   // Navigation
   const [currentPage, setCurrentPage] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  // Page 1 - confirmation age
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
 
   // Page 2 - feature expanded
   const [expandedFeature, setExpandedFeature] = useState<number | null>(null);
@@ -362,6 +368,7 @@ export default function OnboardingScreen() {
       await setUserMode(mode!);
       if (mode === 'competiteur' && selectedSport) await setUserSport(selectedSport);
       if (selectedCategory) await setUserWeightCategory(selectedCategory);
+      await AsyncStorage.setItem(LEGAL_ACCEPTED_KEY, 'true');
       await AsyncStorage.setItem('yoroi_onboarding_done', 'true');
       logger.info('Onboarding completed', { step: 'all' });
       if (musicRef.current) {
@@ -377,10 +384,11 @@ export default function OnboardingScreen() {
   };
 
   // =============================================
-  // PAGE 1 - Presentation
+  // PAGE 1 - Bienvenue + Confirmation age
   // =============================================
   const renderPage1 = () => (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={s.p1Wrap} showsVerticalScrollIndicator={false}>
+      {/* Logo */}
       <View style={s.p1LogoCircle}>
         <Image
           source={require('../assets/logo d\'app/yoroi-logo2.png')}
@@ -390,31 +398,64 @@ export default function OnboardingScreen() {
       </View>
 
       <Text style={s.p1Brand}>YOROI</Text>
-
       <View style={s.p1GoldBar} />
+      <Text style={s.p1Tagline}>Forge ton armure. Écris ton histoire.</Text>
 
-      <Text style={s.p1Sub}>L'Armure du Guerrier Moderne</Text>
+      {/* Titre principal */}
+      <Text style={s.p1Title} numberOfLines={1} adjustsFontSizeToFit>Bienvenue dans la Famille Yoroi</Text>
 
+      {/* Histoire */}
       <View style={s.p1Card}>
-        <Text style={s.p1Quote}>
-          Pour le Samourai, l'armure n'etait pas un simple equipement.
+        <Text style={s.p1Story}>
+          J'ai créé YOROI seul, par passion.
         </Text>
-        <Text style={s.p1Quote}>
-          C'etait sa structure. Le rituel qui le tenait debout et pret.
+        <Text style={s.p1Story}>
+          Un jour, je ne me suis plus reconnu devant le miroir. J'avais énormément pris de poids. J'ai cherché une application complète pour me reprendre en main, rien ne me convenait. Alors je l'ai construite moi-même.
+        </Text>
+        <Text style={s.p1Story}>
+          Des amis, des inconnus sur des forums, des gens comme toi m'ont suggéré des fonctionnalités. Je les ai toutes intégrées. Aujourd'hui, cette application est autant la tienne que la mienne.
         </Text>
         <View style={s.p1Divider} />
-        <Text style={s.p1QuoteGold}>
-          YOROI est la structure qu'il vous manque.
+        <Text style={s.p1Highlight}>Une application entre toi et moi.</Text>
+        <Text style={s.p1Story}>
+          Pas de société derrière. Pas de publicité, pas de compte requis. Juste un passionné qui se bat pour aller mieux, un peu comme toi peut-être. Le samouraï n'abandonne jamais, quoi qu'il arrive.
         </Text>
-        <Text style={s.p1QuoteSmall}>
-          Athlete ou debutant, tout commence par l'organisation.
+        <Text style={s.p1Italic}>
+          <Text style={s.p1ItalicBold}>Ta confiance et tes retours comptent plus que tout.</Text>
+          {'\n'}<Text style={s.p1ItalicBold}>Merci d'être là.</Text>
+        </Text>
+        <View style={s.p1Divider} />
+        <Text style={s.p1FreeNote}>
+          YOROI est aujourd'hui entièrement gratuit. Je la construis seul, sans revenu. Si un jour elle te devient vraiment utile, un petit abonnement m'aidera à continuer à la faire grandir pour toi.
         </Text>
       </View>
 
-      <TouchableOpacity style={s.p1Btn} onPress={() => goToPage(1)} activeOpacity={0.8}>
-        <Text style={s.p1BtnText}>Decouvrir</Text>
-        <ChevronRight size={20} color={C.white} />
+      {/* Confirmation age */}
+      <TouchableOpacity
+        style={s.p1AgeRow}
+        onPress={() => setAgeConfirmed(!ageConfirmed)}
+        activeOpacity={0.7}
+      >
+        <View style={[s.p1Checkbox, ageConfirmed && s.p1CheckboxActive]}>
+          {ageConfirmed && <Ionicons name="checkmark" size={16} color={C.white} />}
+        </View>
+        <Text style={s.p1AgeText}>Je confirme avoir au moins 13 ans</Text>
       </TouchableOpacity>
+
+      {/* Bouton continuer */}
+      <TouchableOpacity
+        style={[s.p1Btn, !ageConfirmed && s.disabledBtn]}
+        onPress={() => goToPage(1)}
+        activeOpacity={0.8}
+        disabled={!ageConfirmed}
+      >
+        <Text style={[s.p1BtnText, !ageConfirmed && s.disabledBtnText]}>Rejoindre l'aventure</Text>
+        <ChevronRight size={20} color={ageConfirmed ? C.white : C.textMuted} />
+      </TouchableOpacity>
+
+      <Text style={s.p1Footer}>
+        En continuant, tu acceptes nos conditions d'utilisation
+      </Text>
 
       <View style={{ height: 40 }} />
     </ScrollView>
@@ -425,6 +466,12 @@ export default function OnboardingScreen() {
   // =============================================
   const renderPage2 = () => (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={s.p2Wrap} showsVerticalScrollIndicator={false}>
+      {/* Bouton retour */}
+      <TouchableOpacity style={s.backBtn} onPress={() => goToPage(0)} activeOpacity={0.7}>
+        <ChevronLeft size={22} color={C.text} />
+        <Text style={s.backBtnText}>Retour</Text>
+      </TouchableOpacity>
+
       <Text style={s.p2Title}>Tout ce dont tu as besoin</Text>
       <Text style={s.p2Sub}>Appuie sur un module pour en savoir plus</Text>
 
@@ -483,32 +530,38 @@ export default function OnboardingScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
     >
+      {/* Bouton retour */}
+      <TouchableOpacity style={s.backBtn} onPress={() => goToPage(1)} activeOpacity={0.7}>
+        <ChevronLeft size={22} color={C.text} />
+        <Text style={s.backBtnText}>Retour</Text>
+      </TouchableOpacity>
+
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={s.p3Wrap}
+        contentContainerStyle={s.formWrap}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
         {/* Photo profil */}
-        <View style={s.p3PhotoRow}>
-          <TouchableOpacity style={s.p3PhotoCircle} onPress={pickFromGallery} activeOpacity={0.8}>
+        <View style={s.photoRow}>
+          <TouchableOpacity style={s.photoCircle} onPress={pickFromGallery} activeOpacity={0.8}>
             {profilePhoto ? (
-              <Image source={{ uri: profilePhoto }} style={s.p3PhotoImg} />
+              <Image source={{ uri: profilePhoto }} style={s.photoImg} />
             ) : (
               <MaterialCommunityIcons name="camera-plus-outline" size={32} color={C.textMuted} />
             )}
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={s.p3PhotoLabel}>Photo de profil</Text>
-            <Text style={s.p3PhotoHint}>Optionnel - appuie sur le cercle</Text>
+            <Text style={s.photoLabel}>Photo de profil</Text>
+            <Text style={s.photoHint}>Optionnel - appuie sur le cercle</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-              <TouchableOpacity style={s.p3PhotoSmallBtn} onPress={pickFromGallery}>
+              <TouchableOpacity style={s.photoSmallBtn} onPress={pickFromGallery}>
                 <ImageIcon size={14} color={C.text} />
-                <Text style={s.p3PhotoSmallText}>Galerie</Text>
+                <Text style={s.photoSmallText}>Galerie</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={s.p3PhotoSmallBtn} onPress={takePhoto}>
+              <TouchableOpacity style={s.photoSmallBtn} onPress={takePhoto}>
                 <Camera size={14} color={C.text} />
-                <Text style={s.p3PhotoSmallText}>Camera</Text>
+                <Text style={s.photoSmallText}>Camera</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -717,7 +770,7 @@ export default function OnboardingScreen() {
               );
             })}
 
-            {/* Categories de poids - seulement si sport selectionne ET a des categories */}
+            {/* Categories de poids */}
             {selectedSport && sportHasCategories && (
               <>
                 <Text style={[s.label, { marginTop: 20 }]}>
@@ -801,36 +854,36 @@ export default function OnboardingScreen() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
 
-  // ========= PAGE 1 =========
+  // ========= PAGE 1 - Bienvenue =========
   p1Wrap: {
     alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: 14,
     paddingTop: 30,
   },
   p1LogoCircle: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     overflow: 'hidden',
     borderWidth: 3,
     borderColor: C.gold,
-    marginBottom: 20,
+    marginBottom: 16,
     shadowColor: C.gold,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
     elevation: 8,
     backgroundColor: '#000',
   },
   p1Logo: {
-    width: 150,
-    height: 150,
+    width: 140,
+    height: 140,
   },
   p1Brand: {
-    fontSize: 52,
+    fontSize: 48,
     fontWeight: '900',
     color: C.text,
-    letterSpacing: 12,
+    letterSpacing: 14,
     marginBottom: 6,
   },
   p1GoldBar: {
@@ -840,56 +893,144 @@ const s = StyleSheet.create({
     borderRadius: 2,
     marginBottom: 8,
   },
-  p1Sub: {
-    fontSize: 16,
+  p1Tagline: {
+    fontSize: 13,
     color: C.gold,
     fontWeight: '600',
-    marginBottom: 28,
+    letterSpacing: 0.5,
+    marginBottom: 24,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  p1Title: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: C.text,
+    textAlign: 'center',
+    marginBottom: 20,
+    letterSpacing: 0,
+    lineHeight: 28,
+    width: '100%',
   },
   p1Card: {
     backgroundColor: C.bgCard,
     borderRadius: 20,
-    padding: 24,
+    padding: 18,
     width: '100%',
-    marginBottom: 32,
+    marginBottom: 24,
   },
-  p1Quote: {
-    fontSize: 16,
+  p1Story: {
+    fontSize: 15,
     lineHeight: 26,
     color: C.text,
+    fontWeight: '400',
+    marginBottom: 14,
     textAlign: 'center',
-    marginBottom: 10,
   },
   p1Divider: {
-    width: 30,
+    width: 40,
     height: 2,
     backgroundColor: C.gold,
     alignSelf: 'center',
-    marginVertical: 14,
+    marginVertical: 16,
     borderRadius: 1,
   },
-  p1QuoteGold: {
-    fontSize: 17,
+  p1Highlight: {
+    fontSize: 18,
     lineHeight: 26,
     color: C.gold,
     textAlign: 'center',
-    fontWeight: '700',
-    marginBottom: 8,
+    fontWeight: '800',
+    marginBottom: 14,
+    letterSpacing: 0.3,
   },
-  p1QuoteSmall: {
-    fontSize: 14,
-    lineHeight: 22,
+  p1Italic: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: C.textSub,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  p1ItalicBold: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: C.textSub,
+    fontStyle: 'italic',
+    fontWeight: '700',
+  },
+  p1FreeNote: {
+    fontSize: 13,
+    lineHeight: 20,
     color: C.textSub,
     textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  p1Features: {
+    width: '100%',
+    backgroundColor: C.bgCard,
+    borderRadius: 16,
+    padding: 16,
+    gap: 14,
+    marginBottom: 20,
+  },
+  p1FeatureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  p1FeatureIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  p1FeatureText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.text,
+  },
+  p1AgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+    marginBottom: 20,
+    paddingHorizontal: 4,
+  },
+  p1Checkbox: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    borderWidth: 2.5,
+    borderColor: C.textMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  p1CheckboxActive: {
+    backgroundColor: C.gold,
+    borderColor: C.gold,
+  },
+  p1AgeText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: C.text,
+    flex: 1,
   },
   p1Btn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
     backgroundColor: C.gold,
     borderRadius: 14,
     paddingVertical: 16,
     paddingHorizontal: 40,
+    width: '100%',
     shadowColor: C.gold,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
@@ -899,13 +1040,34 @@ const s = StyleSheet.create({
   p1BtnText: {
     color: C.white,
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  p1Footer: {
+    fontSize: 12,
+    color: C.textMuted,
+    textAlign: 'center',
+    marginTop: 14,
   },
 
-  // ========= PAGE 2 =========
+  // ========= BACK BUTTON =========
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  backBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: C.text,
+  },
+
+  // ========= PAGE 2 - Features =========
   p2Wrap: {
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 4,
   },
   p2Title: {
     fontSize: 26,
@@ -982,14 +1144,14 @@ const s = StyleSheet.create({
     flex: 1,
   },
 
-  // ========= PAGE 3 =========
-  p3Wrap: {
+  // ========= PAGE 3 - Formulaire =========
+  formWrap: {
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: 4,
   },
 
   // Photo
-  p3PhotoRow: {
+  photoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
@@ -998,7 +1160,7 @@ const s = StyleSheet.create({
     backgroundColor: C.bgCard,
     borderRadius: 16,
   },
-  p3PhotoCircle: {
+  photoCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
@@ -1010,21 +1172,21 @@ const s = StyleSheet.create({
     alignItems: 'center',
     overflow: 'hidden',
   },
-  p3PhotoImg: {
+  photoImg: {
     width: 80,
     height: 80,
   },
-  p3PhotoLabel: {
+  photoLabel: {
     fontSize: 16,
     fontWeight: '700',
     color: C.text,
     marginBottom: 2,
   },
-  p3PhotoHint: {
+  photoHint: {
     fontSize: 13,
     color: C.textMuted,
   },
-  p3PhotoSmallBtn: {
+  photoSmallBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -1035,7 +1197,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  p3PhotoSmallText: {
+  photoSmallText: {
     fontSize: 12,
     fontWeight: '600',
     color: C.text,
@@ -1317,7 +1479,8 @@ const s = StyleSheet.create({
   goldBtnText: {
     color: C.white,
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   disabledBtn: {
     backgroundColor: C.border,

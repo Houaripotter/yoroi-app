@@ -7,7 +7,7 @@
 // Toggle satellite/standard + fullscreen + distance markers
 
 import React, { useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform } from 'react-native';
 import MapView, { Polyline, Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { Maximize2, X, Map, Satellite, Navigation } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -115,7 +115,7 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
       provider={PROVIDER_DEFAULT}
       mapType={mapType}
       initialRegion={region}
-      userInterfaceStyle={isDark ? 'dark' : 'light'}
+      {...(Platform.OS === 'ios' ? { userInterfaceStyle: isDark ? 'dark' : 'light' } : {})}
       scrollEnabled={true}
       zoomEnabled={true}
       rotateEnabled={fullscreen}

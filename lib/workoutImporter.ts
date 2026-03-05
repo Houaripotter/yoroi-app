@@ -224,8 +224,8 @@ function parseGPX(xmlContent: string): ParseResult {
         avgHeartRate: avgHR,
         selected: true,
       });
-    } catch (e: any) {
-      errors.push(`Track ${i + 1}: ${e.message}`);
+    } catch (e: unknown) {
+      errors.push(`Track ${i + 1}: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 
@@ -297,8 +297,8 @@ function parseTCX(xmlContent: string): ParseResult {
         avgHeartRate: avgHR,
         selected: true,
       });
-    } catch (e: any) {
-      errors.push(`Activity ${i + 1}: ${e.message}`);
+    } catch (e: unknown) {
+      errors.push(`Activity ${i + 1}: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 

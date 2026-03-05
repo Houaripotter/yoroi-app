@@ -491,12 +491,12 @@ export async function importParsedRows(rows: ParsedCSVRow[]): Promise<CSVImportR
           break;
       }
       success++;
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error(`CSV import error line ${row.lineNumber}:`, err);
       importErrors.push({
         line: row.lineNumber,
         type: row.type,
-        error: err.message || 'Erreur inconnue',
+        error: err instanceof Error ? err.message : 'Erreur inconnue',
       });
     }
   }

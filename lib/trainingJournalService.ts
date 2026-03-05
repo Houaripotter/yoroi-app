@@ -1,11 +1,11 @@
 // ============================================
-// 📖 YOROI - SERVICE CARNET D'ENTRAÎNEMENT
+// YOROI - SERVICE CARNET D'ENTRAÎNEMENT
 // ============================================
 
 import { Platform } from 'react-native';
 import { logger } from '@/lib/security/logger';
 
-// 🔒 Platform-specific: SQLite only available on native
+// Platform-specific: SQLite only available on native
 const isNativePlatform = Platform.OS === 'ios' || Platform.OS === 'android';
 let SQLite: any = null;
 let db: any = null;
@@ -114,10 +114,10 @@ export const initTrainingJournalDB = () => {
             column === 'competition_ready' ? 'INTEGER DEFAULT 0' :
             'INTEGER'
           }`);
-        } catch (e: any) {
+        } catch (e: unknown) {
           // La colonne existe déjà, ignorer l'erreur silencieusement
           // L'erreur peut être dans e.message ou dans la cause (format Expo SQLite)
-          const errorStr = String(e?.message || e || '').toLowerCase();
+          const errorStr = String(e instanceof Error ? e.message : e || '').toLowerCase();
           if (errorStr.includes('duplicate column') || errorStr.includes('duplicate')) {
             // Colonne existe déjà, c'est normal, on ignore silencieusement
           } else {

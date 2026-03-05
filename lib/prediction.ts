@@ -122,8 +122,8 @@ interface RegressionResult {
 }
 
 const linearRegression = (data: { x: number; y: number }[]): RegressionResult => {
-  const n = data.length;
-  if (n < 2) return { slope: 0, intercept: 0, r2: 0 };
+  const count = data.length;
+  if (count < 2) return { slope: 0, intercept: 0, r2: 0 };
 
   let sumX = 0;
   let sumY = 0;
@@ -139,11 +139,11 @@ const linearRegression = (data: { x: number; y: number }[]): RegressionResult =>
     sumY2 += point.y * point.y;
   }
 
-  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-  const intercept = (sumY - slope * sumX) / n;
+  const slope = (count * sumXY - sumX * sumY) / (count * sumX2 - sumX * sumX);
+  const intercept = (sumY - slope * sumX) / count;
 
   // Calculer R²
-  const yMean = sumY / n;
+  const yMean = sumY / count;
   let ssRes = 0;
   let ssTot = 0;
 

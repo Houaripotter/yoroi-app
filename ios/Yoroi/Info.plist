@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Yoroi utilise ta position pour enregistrer le lieu de tes seances d'entrainement.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Yoroi utilise ta position pour enregistrer le lieu de tes seances d'entrainement.</string>
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>
     <key>CFBundleDevelopmentRegion</key>
@@ -51,28 +55,22 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
-    <key>NSCalendarsFullAccessUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your calendars</string>
-    <key>NSCalendarsUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your calendars</string>
     <key>NSCameraUsageDescription</key>
     <string>YOROI a besoin d'accéder à la caméra pour prendre une photo de profil.</string>
-    <key>NSFaceIDUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your Face ID biometric data.</string>
     <key>NSHealthShareUsageDescription</key>
     <string>YOROI lit vos données de poids, composition corporelle, sommeil, pas, fréquence cardiaque et calories pour afficher vos statistiques de progression, calculer vos objectifs personnalisés et suivre votre évolution physique au fil du temps.</string>
     <key>NSHealthUpdateUsageDescription</key>
     <string>YOROI enregistre vos pesées quotidiennes, vos séances d'entraînement, vos données d'hydratation et de sommeil pour synchroniser automatiquement vos progrès entre tous vos appareils.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
+    <key>NSCalendarUsageDescription</key>
+    <string>YOROI a besoin d'accéder à votre calendrier pour programmer vos rappels d'entraînement.</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>YOROI utilise Face ID pour sécuriser l'accès à vos données personnelles.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to save photos</string>
+    <string>YOROI a besoin d'enregistrer des photos dans votre galerie.</string>
+    <key>NSRemindersFullAccessUsageDescription</key>
+    <string>YOROI a besoin d'accéder à vos rappels pour créer des alertes d'entraînement.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>YOROI a besoin d'accéder à vos photos pour définir votre photo de profil.</string>
-    <key>NSRemindersFullAccessUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your reminders</string>
-    <key>NSRemindersUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your reminders</string>
     <key>NSSupportsLiveActivities</key>
     <true/>
     <key>NSUserActivityTypes</key>

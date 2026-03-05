@@ -149,6 +149,7 @@ export default function SleepDetailScreen() {
         const sleepHistoryRaw = await AsyncStorage.getItem('@yoroi_sleep_history');
         if (sleepHistoryRaw) {
           const sleepHistory = JSON.parse(sleepHistoryRaw);
+          if (!Array.isArray(sleepHistory)) return;
           const match = sleepHistory.find((s: any) => normalizeDate(s.date) === target);
           if (match) {
             const duration = match.duration || 0;
@@ -274,12 +275,15 @@ export default function SleepDetailScreen() {
     }
   };
 
+  // Couleurs nuit (needed before early returns)
+  const nightMuted = '#7B8DB5';
+
   if (loading) {
     return (
       <ScreenWrapper>
         <Header title={t('sleepDetail.title') || 'Detail Nuit'} showBack />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={'#8B5CF6'} />
         </View>
       </ScreenWrapper>
     );
@@ -290,7 +294,7 @@ export default function SleepDetailScreen() {
       <ScreenWrapper>
         <Header title={t('sleepDetail.title') || 'Detail Nuit'} showBack />
         <View style={styles.loadingContainer}>
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+          <Text style={[styles.emptyText, { color: nightMuted }]}>
             Aucune donnee pour cette nuit
           </Text>
         </View>
@@ -317,8 +321,13 @@ export default function SleepDetailScreen() {
     (inBedMinutes > 0 ? Math.round((entry.duration / inBedMinutes) * 100) : null);
   const interruptions = entry.interruptions ?? extra?.interruptions;
 
+  // Couleurs nuit
+  const nightBg = '#0B1120';
+  const nightCard = '#131D36';
+  const nightText = '#E8ECF4';
+
   return (
-    <ScreenWrapper noPadding>
+    <ScreenWrapper noPadding containerStyle={{ backgroundColor: nightBg }}>
       <Header title={t('sleepDetail.title') || 'Detail Nuit'} showBack />
       <ScrollView
         style={styles.scroll}
@@ -326,13 +335,13 @@ export default function SleepDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* CARTE 1 - EN-TETE */}
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
+        <View style={[styles.card, { backgroundColor: nightCard }]}>
           <View style={styles.headerRow}>
             <View style={[styles.moonBadge, { backgroundColor: '#5856D620' }]}>
               <Moon size={28} color="#5856D6" />
             </View>
             <View style={styles.headerInfo}>
-              <Text style={[styles.dateText, { color: colors.text }]}>
+              <Text style={[styles.dateText, { color: nightText }]}>
                 {formatDateFull(entry.date)}
               </Text>
               <View style={styles.qualityRow}>
@@ -340,7 +349,7 @@ export default function SleepDetailScreen() {
                   <Star
                     key={i}
                     size={16}
-                    color={i <= entry.quality ? qualityColor : `${colors.textMuted}40`}
+                    color={i <= entry.quality ? qualityColor : `${nightMuted}40`}
                     fill={i <= entry.quality ? qualityColor : 'transparent'}
                   />
                 ))}
@@ -359,39 +368,39 @@ export default function SleepDetailScreen() {
         </View>
 
         {/* CARTE 2 - HORAIRES & DUREE */}
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
+        <View style={[styles.card, { backgroundColor: nightCard }]}>
           <View style={styles.timesRow}>
             <TimeBlock
               icon={<Bed size={20} color="#5856D6" />}
               label="Coucher"
               value={entry.bedTime}
-              textColor={colors.text}
-              mutedColor={colors.textMuted}
+              textColor={nightText}
+              mutedColor={nightMuted}
             />
             <View style={styles.timeDivider}>
-              <View style={[styles.timeLine, { backgroundColor: colors.textMuted + '30' }]} />
+              <View style={[styles.timeLine, { backgroundColor: nightMuted + '30' }]} />
               <View style={[styles.durationBubble, { backgroundColor: '#5856D615' }]}>
                 <Clock size={14} color="#5856D6" />
                 <Text style={[styles.durationText, { color: '#5856D6' }]}>
                   {formatDuration(entry.duration)}
                 </Text>
               </View>
-              <View style={[styles.timeLine, { backgroundColor: colors.textMuted + '30' }]} />
+              <View style={[styles.timeLine, { backgroundColor: nightMuted + '30' }]} />
             </View>
             <TimeBlock
               icon={<AlarmClock size={20} color="#F59E0B" />}
               label="Reveil"
               value={entry.wakeTime}
-              textColor={colors.text}
-              mutedColor={colors.textMuted}
+              textColor={nightText}
+              mutedColor={nightMuted}
             />
           </View>
         </View>
 
         {/* CARTE 3 - PHASES DE SOMMEIL (visual bar + timeline) */}
         {hasPhases && entry.phases && (
-          <View style={[styles.card, { backgroundColor: colors.card }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          <View style={[styles.card, { backgroundColor: nightCard }]}>
+            <Text style={[styles.sectionTitle, { color: nightText }]}>
               {t('sleepDetail.phases') || 'Phases de sommeil'}
             </Text>
 
@@ -401,7 +410,7 @@ export default function SleepDetailScreen() {
               bedTime={entry.bedTime}
               wakeTime={entry.wakeTime}
               isDark={isDark}
-              textColor={colors.textMuted}
+              textColor={nightMuted}
             />
 
             {/* Segmented phases bar */}
@@ -424,40 +433,40 @@ export default function SleepDetailScreen() {
                 minutes={entry.phases.deep}
                 total={entry.duration}
                 color={PHASE_COLORS.deep}
-                textColor={colors.text}
-                mutedColor={colors.textMuted}
+                textColor={nightText}
+                mutedColor={nightMuted}
               />
               <PhaseItem
                 label="Leger"
                 minutes={entry.phases.core}
                 total={entry.duration}
                 color={PHASE_COLORS.core}
-                textColor={colors.text}
-                mutedColor={colors.textMuted}
+                textColor={nightText}
+                mutedColor={nightMuted}
               />
               <PhaseItem
                 label="REM"
                 minutes={entry.phases.rem}
                 total={entry.duration}
                 color={PHASE_COLORS.rem}
-                textColor={colors.text}
-                mutedColor={colors.textMuted}
+                textColor={nightText}
+                mutedColor={nightMuted}
               />
               <PhaseItem
                 label="Eveils"
                 minutes={entry.phases.awake}
                 total={entry.duration}
                 color={PHASE_COLORS.awake}
-                textColor={colors.text}
-                mutedColor={colors.textMuted}
+                textColor={nightText}
+                mutedColor={nightMuted}
               />
             </View>
           </View>
         )}
 
         {/* CARTE 4 - VALEURS (Apple Health "Values" tab style) */}
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+        <View style={[styles.card, { backgroundColor: nightCard }]}>
+          <Text style={[styles.sectionTitle, { color: nightText }]}>
             Valeurs
           </Text>
           <View style={[styles.valuesGrid, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
@@ -491,7 +500,7 @@ export default function SleepDetailScreen() {
               <ValueCell
                 label="Efficacite"
                 value={efficiency != null ? `${efficiency}%` : '-'}
-                color={efficiency != null ? getEfficiencyColor(efficiency) : colors.textMuted}
+                color={efficiency != null ? getEfficiencyColor(efficiency) : nightMuted}
                 isDark={isDark}
                 hasBorder
               />
@@ -509,7 +518,7 @@ export default function SleepDetailScreen() {
                   <ValueCell
                     label="Source"
                     value={extra?.source || (entry.source === 'healthkit' ? 'Apple' : 'Manuel')}
-                    color={colors.textMuted}
+                    color={nightMuted}
                     isDark={isDark}
                     hasBorder
                   />
@@ -521,8 +530,8 @@ export default function SleepDetailScreen() {
 
         {/* CARTE 5 - COMPARAISONS / SIGNES VITAUX (Apple Health style) */}
         {hasVitals && (
-          <View style={[styles.card, { backgroundColor: colors.card }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          <View style={[styles.card, { backgroundColor: nightCard }]}>
+            <Text style={[styles.sectionTitle, { color: nightText }]}>
               Comparaisons
             </Text>
             <View style={styles.vitalsGrid}>
@@ -538,8 +547,8 @@ export default function SleepDetailScreen() {
                     { label: 'Max', value: `${entry.sleepHeartRate.max}`, color: '#EF4444' },
                   ]}
                   accentColor="#EF4444"
-                  textColor={colors.text}
-                  mutedColor={colors.textMuted}
+                  textColor={nightText}
+                  mutedColor={nightMuted}
                   isDark={isDark}
                 />
               )}
@@ -557,8 +566,8 @@ export default function SleepDetailScreen() {
                     { label: 'Max', value: `${entry.respiratoryRate.max}`, color: '#F97316' },
                   ]}
                   accentColor="#06B6D4"
-                  textColor={colors.text}
-                  mutedColor={colors.textMuted}
+                  textColor={nightText}
+                  mutedColor={nightMuted}
                   isDark={isDark}
                 />
               )}
@@ -572,8 +581,8 @@ export default function SleepDetailScreen() {
                   mainUnit="°C"
                   mainLabel="vs baseline"
                   accentColor="#F59E0B"
-                  textColor={colors.text}
-                  mutedColor={colors.textMuted}
+                  textColor={nightText}
+                  mutedColor={nightMuted}
                   isDark={isDark}
                 />
               )}
@@ -583,11 +592,11 @@ export default function SleepDetailScreen() {
 
         {/* CARTE 6 - NOTES */}
         {entry.notes && (
-          <View style={[styles.card, { backgroundColor: colors.card }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          <View style={[styles.card, { backgroundColor: nightCard }]}>
+            <Text style={[styles.sectionTitle, { color: nightText }]}>
               Notes
             </Text>
-            <Text style={[styles.notesText, { color: colors.textSecondary }]}>
+            <Text style={[styles.notesText, { color: nightMuted }]}>
               {entry.notes}
             </Text>
           </View>

@@ -3,7 +3,7 @@
 // 10 couleurs × 2 modes (Dark/Light)
 // ===================================================
 
-export type ThemeColor = 'charcoal' | 'mint' | 'royal' | 'ocean' | 'pumpkin' | 'vista' | 'lavender' | 'peach' | 'fizz' | 'cadet' | 'tiffany' | 'obsidian' | 'sakura' | 'emerald' | 'amber' | 'slate';
+export type ThemeColor = 'charcoal' | 'mint' | 'royal' | 'ocean' | 'pumpkin' | 'vista' | 'lavender' | 'peach' | 'fizz' | 'cadet' | 'tiffany' | 'obsidian' | 'sakura' | 'emerald' | 'amber' | 'slate' | 'ambersmoke' | 'dreamy' | 'lavendar' | 'chartreuse';
 export type ThemeMode = 'dark' | 'light' | 'auto';
 
 export interface ThemeColors {
@@ -136,6 +136,27 @@ export interface Theme {
   icon: string;
   kanji: string;
   colors: ThemeColors;
+}
+
+// ===================================================
+// HELPER: Mélanger deux couleurs hex (weight 0 = c1, weight 1 = c2)
+// ===================================================
+function mixHex(c1: string, c2: string, weight: number): string {
+  const h1 = c1.replace('#', '');
+  const h2 = c2.replace('#', '');
+  const r = Math.round(parseInt(h1.substring(0, 2), 16) * (1 - weight) + parseInt(h2.substring(0, 2), 16) * weight);
+  const g = Math.round(parseInt(h1.substring(2, 4), 16) * (1 - weight) + parseInt(h2.substring(2, 4), 16) * weight);
+  const b = Math.round(parseInt(h1.substring(4, 6), 16) * (1 - weight) + parseInt(h2.substring(4, 6), 16) * weight);
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
+// Helper: la couleur est-elle claire ?
+function isLightColor(hex: string): boolean {
+  const c = hex.replace('#', '');
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.45;
 }
 
 // ===================================================
@@ -1231,6 +1252,246 @@ export const themes: Record<string, Theme> = {
       glowStrong: 'rgba(124, 140, 255, 0.35)',
     }, false),
   },
+
+  // ─────────────────────────────────────────────
+  // 17. AMBER SMOKE - Beige Rose Chaud + Bleu Acier
+  // Accent: #F2E0D0 | Companion: #6E8B98
+  // ─────────────────────────────────────────────
+
+  ambersmoke_dark: {
+    id: 'ambersmoke_dark',
+    colorId: 'ambersmoke',
+    mode: 'dark',
+    name: 'Amber Smoke',
+    icon: '',
+    kanji: '煙',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#F2E0D0',
+      accentDark: '#D8C4B2',
+      accentLight: '#F8EDE4',
+      companion: '#6E8B98',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#000000',
+      border: '#2A241F',
+      borderLight: '#352F2A',
+      glow: 'rgba(242, 224, 208, 0.4)',
+      glowStrong: 'rgba(242, 224, 208, 0.6)',
+    }, true),
+  },
+
+  ambersmoke_light: {
+    id: 'ambersmoke_light',
+    colorId: 'ambersmoke',
+    mode: 'light',
+    name: 'Amber Smoke',
+    icon: '',
+    kanji: '煙',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#F2E0D0',
+      accentDark: '#D8C4B2',
+      accentLight: '#F8EDE4',
+      companion: '#6E8B98',
+      accentText: '#8A7060',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#000000',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(242, 224, 208, 0.2)',
+      glowStrong: 'rgba(242, 224, 208, 0.35)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
+  // 18. DREAMY - Ocean Profond + Vert Creme
+  // Accent: #006989 | Companion: #EAEBCD
+  // ─────────────────────────────────────────────
+
+  dreamy_dark: {
+    id: 'dreamy_dark',
+    colorId: 'dreamy',
+    mode: 'dark',
+    name: 'Dreamy',
+    icon: '',
+    kanji: '夢',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#006989',
+      accentDark: '#005070',
+      accentLight: '#2089A9',
+      companion: '#EAEBCD',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#FFFFFF',
+      border: '#0F1F2A',
+      borderLight: '#1A2A35',
+      glow: 'rgba(0, 105, 137, 0.4)',
+      glowStrong: 'rgba(0, 105, 137, 0.6)',
+    }, true),
+  },
+
+  dreamy_light: {
+    id: 'dreamy_light',
+    colorId: 'dreamy',
+    mode: 'light',
+    name: 'Dreamy',
+    icon: '',
+    kanji: '夢',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#006989',
+      accentDark: '#005070',
+      accentLight: '#2089A9',
+      companion: '#EAEBCD',
+      accentText: '#005070',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#FFFFFF',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(0, 105, 137, 0.2)',
+      glowStrong: 'rgba(0, 105, 137, 0.35)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
+  // 19. LAVENDAR - Rose Violet Vif + Violet Fonce
+  // Accent: #F492F0 | Companion: #8E429C
+  // ─────────────────────────────────────────────
+
+  lavendar_dark: {
+    id: 'lavendar_dark',
+    colorId: 'lavendar',
+    mode: 'dark',
+    name: 'Lavendar',
+    icon: '',
+    kanji: '紫',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#F492F0',
+      accentDark: '#D874D4',
+      accentLight: '#F8B0F6',
+      companion: '#8E429C',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#000000',
+      border: '#2A1F2A',
+      borderLight: '#352A35',
+      glow: 'rgba(244, 146, 240, 0.4)',
+      glowStrong: 'rgba(244, 146, 240, 0.6)',
+    }, true),
+  },
+
+  lavendar_light: {
+    id: 'lavendar_light',
+    colorId: 'lavendar',
+    mode: 'light',
+    name: 'Lavendar',
+    icon: '',
+    kanji: '紫',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#F492F0',
+      accentDark: '#D874D4',
+      accentLight: '#F8B0F6',
+      companion: '#8E429C',
+      accentText: '#9E3AAE',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#000000',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(244, 146, 240, 0.2)',
+      glowStrong: 'rgba(244, 146, 240, 0.35)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
+  // 20. CHARTREUSE - Jaune-Vert Neon + Bleu Nuit
+  // Accent: #E0FF4F | Companion: #00272B
+  // ─────────────────────────────────────────────
+
+  chartreuse_dark: {
+    id: 'chartreuse_dark',
+    colorId: 'chartreuse',
+    mode: 'dark',
+    name: 'Chartreuse',
+    icon: '',
+    kanji: '蛍',
+    colors: createThemeColors({
+      background: '#0A0A0A',
+      backgroundCard: '#151515',
+      backgroundElevated: '#1F1F1F',
+      backgroundLight: '#2A2A2A',
+      accent: '#E0FF4F',
+      accentDark: '#C0DD30',
+      accentLight: '#EAFF7A',
+      companion: '#00272B',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      textMuted: '#999999',
+      textOnAccent: '#000000',
+      border: '#1F2A1A',
+      borderLight: '#2A3525',
+      glow: 'rgba(224, 255, 79, 0.4)',
+      glowStrong: 'rgba(224, 255, 79, 0.6)',
+    }, true),
+  },
+
+  chartreuse_light: {
+    id: 'chartreuse_light',
+    colorId: 'chartreuse',
+    mode: 'light',
+    name: 'Chartreuse',
+    icon: '',
+    kanji: '蛍',
+    colors: createThemeColors({
+      background: '#FFFFFF',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#FFFFFF',
+      backgroundLight: '#F8F8F8',
+      accent: '#E0FF4F',
+      accentDark: '#C0DD30',
+      accentLight: '#EAFF7A',
+      companion: '#00272B',
+      accentText: '#5A6E00',
+      textPrimary: '#1A1A1A',
+      textSecondary: '#333333',
+      textMuted: '#666666',
+      textOnAccent: '#000000',
+      border: '#E5E5E5',
+      borderLight: '#F0F0F0',
+      glow: 'rgba(224, 255, 79, 0.2)',
+      glowStrong: 'rgba(224, 255, 79, 0.35)',
+    }, false),
+  },
 };
 
 // ===================================================
@@ -1254,6 +1515,10 @@ export const themeColors: { id: ThemeColor; name: string; icon: string; kanji: s
   { id: 'emerald', name: 'Emerald', icon: '', kanji: '翡', color: '#50C878', companion: '#1B3A2D' },
   { id: 'amber', name: 'Amber', icon: '', kanji: '琥', color: '#FFBF00', companion: '#2D1810' },
   { id: 'slate', name: 'Slate', icon: '', kanji: '夜', color: '#7C8CFF', companion: '#E8E4F0' },
+  { id: 'ambersmoke', name: 'Amber Smoke', icon: '', kanji: '煙', color: '#F2E0D0', companion: '#6E8B98' },
+  { id: 'dreamy', name: 'Dreamy', icon: '', kanji: '夢', color: '#006989', companion: '#EAEBCD' },
+  { id: 'lavendar', name: 'Lavendar', icon: '', kanji: '紫', color: '#F492F0', companion: '#8E429C' },
+  { id: 'chartreuse', name: 'Chartreuse', icon: '', kanji: '蛍', color: '#E0FF4F', companion: '#00272B' },
 ];
 
 // ===================================================
@@ -1275,7 +1540,7 @@ export const defaultThemeMode: ThemeMode = 'light';
 
 // Tous les thèmes sont gratuits
 export const premiumThemeColors: ThemeColor[] = [];
-export const freeThemeColors: ThemeColor[] = ['charcoal', 'mint', 'royal', 'ocean', 'pumpkin', 'vista', 'lavender', 'peach', 'fizz', 'cadet', 'tiffany', 'obsidian', 'sakura', 'emerald', 'amber', 'slate'];
+export const freeThemeColors: ThemeColor[] = ['charcoal', 'mint', 'royal', 'ocean', 'pumpkin', 'vista', 'lavender', 'peach', 'fizz', 'cadet', 'tiffany', 'obsidian', 'sakura', 'emerald', 'amber', 'slate', 'ambersmoke', 'dreamy', 'lavendar', 'chartreuse'];
 
 export const isPremiumTheme = (_colorId: ThemeColor): boolean => {
   return false;

@@ -16,6 +16,7 @@ export interface SessionDetail {
   details?: string; // Muscles ou thème technique
   note?: string;
   sport: string;
+  weeklyPlanId?: number;
 }
 
 export interface DaySchedule {
@@ -134,6 +135,7 @@ export const useWeekSchedule = () => {
             details,
             note: workout.notes,
             sport: workout.sport,
+            weeklyPlanId: workout.weekly_plan_id,
           };
 
           return session;

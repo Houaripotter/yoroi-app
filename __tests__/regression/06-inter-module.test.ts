@@ -48,6 +48,7 @@ jest.mock('expo-secure-store', () => ({
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
+import { validate } from '@/lib/validation';
 
 import {
   addWorkout,
@@ -282,7 +283,6 @@ describe('REGRESSION: Inter-Module Interactions', () => {
       const workout = await addWorkout({
         date: '2026-02-10',
         type: 'jjb',
-        duration: 90,
       });
       expect(workout).toBeDefined();
 

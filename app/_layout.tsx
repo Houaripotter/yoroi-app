@@ -13,7 +13,7 @@ import { WatchConnectivityProvider } from '@/lib/WatchConnectivityProvider';
 import { AvatarProvider } from '@/lib/AvatarContext';
 import DevCodeModal from '@/components/DevCodeModal';
 import { initDatabase } from '@/lib/database';
-import { applyDataRetention } from '@/lib/storage';
+import { applyDataRetention, getSelectedLogo } from '@/lib/storage';
 import { autoImportCompetitionsOnFirstLaunch } from '@/lib/importCompetitionsService';
 import { forceReimportEvents } from '@/lib/eventsService';
 import { notificationService } from '@/lib/notificationService';
@@ -25,6 +25,44 @@ import { logger } from '@/lib/security/logger';
 import { appleWatchService } from '@/lib/appleWatchService';
 import { healthConnect } from '@/lib/healthConnect';
 import * as Notifications from 'expo-notifications';
+
+// Restaurer l'icône native sélectionnée (expo-alternate-app-icons)
+let _setAlternateAppIcon: ((name: string) => Promise<void>) | null = null;
+let _resetAppIcon: (() => Promise<void>) | null = null;
+let _supportsAlternateIcons = false;
+const ICON_NAME_MAP: Record<string, string | null> = {
+  default: null,
+  logo_new: 'Logo1',
+  logo1: 'Yoroi1',
+  logo2: 'Yoroi2',
+  logo3: 'Yoroi3',
+  logo4: 'Yoroi4',
+  logo5: 'Yoroi5',
+  logo6: 'Yoroi6',
+};
+try {
+  const mod = require('expo-alternate-app-icons');
+  _setAlternateAppIcon = mod.setAlternateAppIcon;
+  _resetAppIcon = mod.resetAppIcon;
+  _supportsAlternateIcons = mod.supportsAlternateIcons ?? false;
+} catch {
+  // Module natif indisponible (Expo Go)
+}
+
+async function restoreAppIcon() {
+  if (!_supportsAlternateIcons || !_setAlternateAppIcon || !_resetAppIcon) return;
+  try {
+    const logoId = await getSelectedLogo();
+    const iconName = ICON_NAME_MAP[logoId];
+    if (iconName === null || iconName === undefined) {
+      await _resetAppIcon();
+    } else {
+      await _setAlternateAppIcon(iconName);
+    }
+  } catch (err) {
+    logger.error('[Layout] Erreur restauration icône:', err);
+  }
+}
 
 // ============================================
 // PRODUCTION: Désactiver tous les console.log
@@ -103,6 +141,7 @@ function RootLayoutContent() {
       notifSubscription.remove();
       workoutNotifSubscription.remove();
       appStateSubscription.remove();
+      appleWatchService.cleanup();
     };
   }, []);
 
@@ -134,7 +173,6 @@ function RootLayoutContent() {
         <Stack.Screen name="share-hub" options={{ presentation: 'card' }} />
         <Stack.Screen name="partners" options={{ presentation: 'card' }} />
         <Stack.Screen name="clubs" options={{ presentation: 'card' }} />
-        <Stack.Screen name="help-tutorials" options={{ presentation: 'card' }} />
         <Stack.Screen name="add-measurement" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="entry" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="savoir" options={{ presentation: 'card' }} />
@@ -231,7 +269,7 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   useFrameworkReady();
-  const [isReady, setIsReady] = useState(true); // 🚀 AFFICHAGE IMMÉDIAT - démarrer à true
+  const [isReady, setIsReady] = useState(true); // AFFICHAGE IMMÉDIAT - démarrer à true
 
   useEffect(() => {
     // ⏳ TOUTES les initialisations en arrière-plan (sans bloquer l'affichage)
@@ -239,7 +277,7 @@ export default function RootLayout() {
       try {
         logger.info('Yoroi - Initialisation en arrière-plan...');
 
-        // ✅ DB FIRST: Toutes les opérations DB-dépendantes APRÈS initDatabase
+        // DB FIRST: Toutes les opérations DB-dépendantes APRÈS initDatabase
         try {
           await initDatabase();
           logger.info('Base de donnees initialisee');
@@ -249,7 +287,10 @@ export default function RootLayout() {
           logger.error('Erreur init database ou import événements:', err);
         }
 
-        // ✅ Services indépendants en parallèle (DB déjà prête)
+        // Restaurer l'icône native (doit correspondre au logo sélectionné par l'utilisateur)
+        restoreAppIcon().catch(err => logger.error('Erreur restauration icone:', err));
+
+        // Services indépendants en parallèle (DB déjà prête)
         await Promise.allSettled([
           appleWatchService.init()
             .then(() => logger.info('Apple Watch Service initialisé'))

@@ -1,7 +1,7 @@
 import SwiftUI
 
 // ============================================================
-// PAGE 2: POIDS - Single vertical scroll with ALL sections
+// PAGE 2: POIDS - Pull-to-refresh + theme-aware colors
 // ============================================================
 
 struct WeightPage: View {
@@ -19,17 +19,17 @@ struct WeightPage: View {
           HStack(spacing: 4) {
             Image(systemName: "scalemass.fill")
               .font(.system(size: 9))
-              .foregroundColor(Color("Gold"))
+              .foregroundColor(session.accentColor)
             Text("Poids")
               .font(.system(size: 11, weight: .semibold))
-              .foregroundColor(.white.opacity(0.7))
+              .foregroundColor(session.textPrimary.opacity(0.7))
             Spacer()
             Text(userGoalLabel)
               .font(.system(size: 7, weight: .heavy))
-              .foregroundColor(Color("Gold"))
+              .foregroundColor(session.accentColor)
               .padding(.horizontal, 6)
               .padding(.vertical, 2)
-              .background(Color("Gold").opacity(0.15))
+              .background(session.accentColor.opacity(0.15))
               .cornerRadius(4)
           }
           .padding(.horizontal, 2)
@@ -38,8 +38,8 @@ struct WeightPage: View {
             PillArcView(
               progress: weightProgress,
               segments: 10,
-              accentColor: Color("Gold"),
-              emptyColor: Color.white.opacity(0.12)
+              accentColor: session.accentColor,
+              emptyColor: session.dividerColor
             )
             .frame(width: 140, height: 78)
 
@@ -47,14 +47,14 @@ struct WeightPage: View {
               HStack(alignment: .firstTextBaseline, spacing: 1) {
                 Text(session.currentWeight > 0 ? String(format: "%.1f", session.currentWeight) : "--")
                   .font(.system(size: 24, weight: .black))
-                  .foregroundColor(.white)
+                  .foregroundColor(session.textPrimary)
                 Text("kg")
                   .font(.system(size: 10, weight: .semibold))
-                  .foregroundColor(.gray)
+                  .foregroundColor(session.textSecondary)
               }
               Text(progressText)
                 .font(.system(size: 8, weight: .semibold))
-                .foregroundColor(.gray)
+                .foregroundColor(session.textSecondary)
             }
             .offset(y: 18)
           }
@@ -62,13 +62,13 @@ struct WeightPage: View {
           // 3 stats
           HStack(spacing: 0) {
             StatCol(label: "PERDU", value: String(format: "%.1f", lostKg), unit: "kg",
-                    labelColor: .green, valueColor: .green, icon: "arrow.down.right")
-            Rectangle().fill(Color.white.opacity(0.12)).frame(width: 1, height: 30)
+                    labelColor: .green, valueColor: .green, icon: "arrow.down.right", textPrimary: session.textPrimary, textSecondary: session.textSecondary)
+            Rectangle().fill(session.dividerColor).frame(width: 1, height: 30)
             StatCol(label: "OBJECTIF", value: session.targetWeight > 0 ? String(format: "%.1f", session.targetWeight) : "--", unit: "kg",
-                    labelColor: Color("Gold"), valueColor: .white, icon: "target")
-            Rectangle().fill(Color.white.opacity(0.12)).frame(width: 1, height: 30)
+                    labelColor: session.accentColor, valueColor: session.textPrimary, icon: "target", textPrimary: session.textPrimary, textSecondary: session.textSecondary)
+            Rectangle().fill(session.dividerColor).frame(width: 1, height: 30)
             StatCol(label: "RESTE", value: String(format: "%.1f", remainingKg), unit: "kg",
-                    labelColor: .red, valueColor: .red, icon: "arrow.up.right")
+                    labelColor: .red, valueColor: .red, icon: "arrow.up.right", textPrimary: session.textPrimary, textSecondary: session.textSecondary)
           }
 
           // Log button
@@ -80,28 +80,28 @@ struct WeightPage: View {
               Image(systemName: "plus.circle.fill").font(.system(size: 10))
               Text("Nouvelle pesee").font(.system(size: 10, weight: .semibold))
             }
-            .foregroundColor(.black)
+            .foregroundColor(session.textOnAccent)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 7)
-            .background(Color("Gold"))
+            .background(session.accentColor)
             .cornerRadius(8)
           }
           .buttonStyle(.plain)
         }
 
-        Divider().background(Color.gray.opacity(0.15))
+        Divider().background(session.dividerColor)
 
         // ── SECTION 2: Composition (Muscle/Fat/Water) ──
         VStack(spacing: 6) {
           Text("COMPOSITION")
             .font(.system(size: 8, weight: .heavy))
-            .foregroundColor(.gray)
+            .foregroundColor(session.textSecondary)
             .tracking(1)
 
           HStack(spacing: 8) {
-            CompoMetric(label: "Muscle", value: session.muscleMass, color: Color(red: 0.94, green: 0.27, blue: 0.27))
-            CompoMetric(label: "Graisse", value: session.bodyFat, color: Color(red: 0.96, green: 0.62, blue: 0.04))
-            CompoMetric(label: "Eau", value: session.waterPercent, color: Color(red: 0.23, green: 0.51, blue: 0.96))
+            CompoMetric(label: "Muscle", value: session.muscleMass, color: Color(red: 0.94, green: 0.27, blue: 0.27), textPrimary: session.textSecondary)
+            CompoMetric(label: "Graisse", value: session.bodyFat, color: Color(red: 0.96, green: 0.62, blue: 0.04), textPrimary: session.textSecondary)
+            CompoMetric(label: "Eau", value: session.waterPercent, color: Color(red: 0.23, green: 0.51, blue: 0.96), textPrimary: session.textSecondary)
           }
         }
 
@@ -110,29 +110,29 @@ struct WeightPage: View {
           VStack(alignment: .leading, spacing: 4) {
             Text("EVOLUTION")
               .font(.system(size: 7, weight: .heavy))
-              .foregroundColor(.gray)
+              .foregroundColor(session.textSecondary)
               .tracking(0.5)
 
-            MiniBarChart(entries: Array(session.weightHistory.prefix(10)))
+            MiniBarChart(entries: Array(session.weightHistory.prefix(10)), accentColor: session.accentColor, textColor: session.textPrimary)
               .frame(height: 50)
           }
         }
 
-        Divider().background(Color.gray.opacity(0.15))
+        Divider().background(session.dividerColor)
 
         // ── SECTION 4: BMI Gauge ──
         VStack(spacing: 4) {
           Text("IMC")
             .font(.system(size: 8, weight: .heavy))
-            .foregroundColor(.gray)
+            .foregroundColor(session.textSecondary)
             .tracking(1)
 
-          BMIGaugeView2(bmi: session.bmi)
+          BMIGaugeView2(bmi: session.bmi, needleColor: session.textPrimary, labelColor: session.textSecondary)
             .frame(width: 130, height: 78)
 
           Text(String(format: "%.1f", session.bmi))
             .font(.system(size: 22, weight: .black))
-            .foregroundColor(.white)
+            .foregroundColor(session.textPrimary)
 
           Text(bmiCategory)
             .font(.system(size: 10, weight: .bold))
@@ -142,40 +142,38 @@ struct WeightPage: View {
             .background(bmiColor.opacity(0.15))
             .cornerRadius(6)
 
-          // Height + Weight
           HStack(spacing: 0) {
             VStack(spacing: 1) {
               Text(String(format: "%.0f cm", session.userHeight))
                 .font(.system(size: 11, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(session.textPrimary)
               Text("Taille")
                 .font(.system(size: 7))
-                .foregroundColor(.gray)
+                .foregroundColor(session.textSecondary)
             }
             .frame(maxWidth: .infinity)
-            Rectangle().fill(Color.gray.opacity(0.3)).frame(width: 1, height: 24)
+            Rectangle().fill(session.dividerColor).frame(width: 1, height: 24)
             VStack(spacing: 1) {
               Text(String(format: "%.1f kg", session.currentWeight))
                 .font(.system(size: 11, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(session.textPrimary)
               Text("Poids")
                 .font(.system(size: 7))
-                .foregroundColor(.gray)
+                .foregroundColor(session.textSecondary)
             }
             .frame(maxWidth: .infinity)
           }
 
-          // BMI category legend
           HStack(spacing: 6) {
-            BMILegend(label: "Maigreur", color: .orange)
-            BMILegend(label: "Normal", color: .green)
-            BMILegend(label: "Surpoids", color: .orange)
-            BMILegend(label: "Obesite", color: .red)
+            BMILegend(label: "Maigreur", color: .orange, textColor: session.textSecondary)
+            BMILegend(label: "Normal", color: .green, textColor: session.textSecondary)
+            BMILegend(label: "Surpoids", color: .orange, textColor: session.textSecondary)
+            BMILegend(label: "Obesite", color: .red, textColor: session.textSecondary)
           }
           .padding(.top, 2)
         }
 
-        Divider().background(Color.gray.opacity(0.15))
+        Divider().background(session.dividerColor)
 
         // ── SECTION 5: Predictions ──
         VStack(spacing: 6) {
@@ -190,18 +188,18 @@ struct WeightPage: View {
           }
 
           if monthlyLoss > 0 {
-            PredRow(period: "30 jours", value: predict(1))
-            PredRow(period: "90 jours", value: predict(3))
-            PredRow(period: "6 mois", value: predict(6))
-            PredRow(period: "1 an", value: predict(12))
+            PredRow(period: "30 jours", value: predict(1), textPrimary: session.textPrimary, textSecondary: session.textSecondary, cardBg: session.cardBg)
+            PredRow(period: "90 jours", value: predict(3), textPrimary: session.textPrimary, textSecondary: session.textSecondary, cardBg: session.cardBg)
+            PredRow(period: "6 mois", value: predict(6), textPrimary: session.textPrimary, textSecondary: session.textSecondary, cardBg: session.cardBg)
+            PredRow(period: "1 an", value: predict(12), textPrimary: session.textPrimary, textSecondary: session.textSecondary, cardBg: session.cardBg)
           } else {
             VStack(spacing: 4) {
               Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 16))
-                .foregroundColor(.gray)
+                .foregroundColor(session.textSecondary)
               Text("Pas assez de donnees")
                 .font(.system(size: 9))
-                .foregroundColor(.gray)
+                .foregroundColor(session.textSecondary)
             }
             .padding(.vertical, 8)
           }
@@ -209,8 +207,12 @@ struct WeightPage: View {
       }
       .padding(.horizontal, 4)
     }
+    .refreshable {
+      session.requestSync()
+      try? await Task.sleep(nanoseconds: 1_500_000_000)
+    }
     .sheet(isPresented: $showInput) {
-      WeightInputSheet(weight: $inputWeight) { w in
+      WeightInputSheet(weight: $inputWeight, session: session) { w in
         session.logWeight(w)
         showInput = false
       }
@@ -274,6 +276,8 @@ struct StatCol: View {
   let labelColor: Color
   let valueColor: Color
   let icon: String
+  var textPrimary: Color = .white
+  var textSecondary: Color = .gray
 
   var body: some View {
     VStack(spacing: 2) {
@@ -283,7 +287,7 @@ struct StatCol: View {
       }
       HStack(alignment: .firstTextBaseline, spacing: 1) {
         Text(value).font(.system(size: 13, weight: .heavy)).foregroundColor(valueColor)
-        Text(unit).font(.system(size: 7, weight: .semibold)).foregroundColor(.gray)
+        Text(unit).font(.system(size: 7, weight: .semibold)).foregroundColor(textSecondary)
       }
     }
     .frame(maxWidth: .infinity)
@@ -295,15 +299,16 @@ struct StatCol: View {
 struct BMILegend: View {
   let label: String
   let color: Color
+  var textColor: Color = .gray
   var body: some View {
     HStack(spacing: 2) {
       RoundedRectangle(cornerRadius: 1.5).fill(color).frame(width: 10, height: 3)
-      Text(label).font(.system(size: 6, weight: .bold)).foregroundColor(.gray)
+      Text(label).font(.system(size: 6, weight: .bold)).foregroundColor(textColor)
     }
   }
 }
 
-// MARK: - Sub-Components (reused from before)
+// MARK: - Sub-Components
 
 struct PillArcView: View {
   let progress: Double
@@ -345,6 +350,7 @@ struct CompoMetric: View {
   let label: String
   let value: Double
   let color: Color
+  var textPrimary: Color = .gray
   var body: some View {
     VStack(spacing: 3) {
       ZStack {
@@ -356,13 +362,15 @@ struct CompoMetric: View {
       .frame(width: 32, height: 32)
       Text(value > 0 ? String(format: "%.0f%%", value) : "--%")
         .font(.system(size: 10, weight: .bold)).foregroundColor(color)
-      Text(label).font(.system(size: 7)).foregroundColor(.gray)
+      Text(label).font(.system(size: 7)).foregroundColor(textPrimary)
     }
   }
 }
 
 struct MiniBarChart: View {
   let entries: [WeightEntry]
+  var accentColor: Color = Color(red: 0.831, green: 0.686, blue: 0.216)
+  var textColor: Color = .white
   var body: some View {
     let vals = entries.map { $0.weight }
     let minW = (vals.min() ?? 0) - 0.5
@@ -373,9 +381,9 @@ struct MiniBarChart: View {
         let pct = (vals[i] - minW) / range
         VStack(spacing: 1) {
           Text(String(format: "%.0f", vals[i]))
-            .font(.system(size: 6, weight: .bold)).foregroundColor(.white)
+            .font(.system(size: 6, weight: .bold)).foregroundColor(textColor)
           RoundedRectangle(cornerRadius: 2)
-            .fill(LinearGradient(colors: [Color("Gold"), Color("Gold").opacity(0.6)], startPoint: .top, endPoint: .bottom))
+            .fill(LinearGradient(colors: [accentColor, accentColor.opacity(0.6)], startPoint: .top, endPoint: .bottom))
             .frame(width: 10, height: max(4, CGFloat(36.0 * pct)))
         }
       }
@@ -385,6 +393,8 @@ struct MiniBarChart: View {
 
 struct BMIGaugeView2: View {
   let bmi: Double
+  var needleColor: Color = .white
+  var labelColor: Color = .gray
   var body: some View {
     Canvas { context, size in
       let cx = size.width / 2
@@ -411,9 +421,9 @@ struct BMIGaugeView2: View {
       var needle = Path()
       needle.move(to: CGPoint(x: cx, y: cy))
       needle.addLine(to: CGPoint(x: nx, y: ny))
-      context.stroke(needle, with: .color(.white), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+      context.stroke(needle, with: .color(needleColor), style: StrokeStyle(lineWidth: 2, lineCap: .round))
       let dot = Path(ellipseIn: CGRect(x: cx - 3, y: cy - 3, width: 6, height: 6))
-      context.fill(dot, with: .color(.white))
+      context.fill(dot, with: .color(needleColor))
       let labels: [Int] = [15, 18, 25, 30, 35, 40]
       let labelR = Double(r + sw / 2) + 8
       for v in labels {
@@ -422,7 +432,7 @@ struct BMIGaugeView2: View {
         let lx = Double(cx) + labelR * Darwin.cos(a)
         let ly = Double(cy) - labelR * Darwin.sin(a)
         context.draw(
-          Text("\(v)").font(.system(size: 7, weight: .semibold)).foregroundColor(.gray),
+          Text("\(v)").font(.system(size: 7, weight: .semibold)).foregroundColor(labelColor),
           at: CGPoint(x: lx, y: ly)
         )
       }
@@ -433,24 +443,28 @@ struct BMIGaugeView2: View {
 struct PredRow: View {
   let period: String
   let value: Double
+  var textPrimary: Color = .white
+  var textSecondary: Color = .gray
+  var cardBg: Color = Color.white.opacity(0.06)
   var body: some View {
     HStack {
-      Text(period).font(.system(size: 10)).foregroundColor(.gray)
+      Text(period).font(.system(size: 10)).foregroundColor(textSecondary)
       Spacer()
-      Text(String(format: "%.1f kg", value)).font(.system(size: 12, weight: .bold)).foregroundColor(.white)
+      Text(String(format: "%.1f kg", value)).font(.system(size: 12, weight: .bold)).foregroundColor(textPrimary)
     }
     .padding(.vertical, 5).padding(.horizontal, 6)
-    .background(Color.white.opacity(0.06)).cornerRadius(6)
+    .background(cardBg).cornerRadius(6)
   }
 }
 
 struct WeightInputSheet: View {
   @Binding var weight: Double
+  var session: WatchSessionManager
   var onSave: (Double) -> Void
   var body: some View {
     VStack(spacing: 10) {
-      Text("PESEE").font(.system(size: 9, weight: .heavy)).foregroundColor(Color("Gold")).tracking(2)
-      Text(String(format: "%.1f kg", weight)).font(.system(size: 28, weight: .bold)).foregroundColor(.white)
+      Text("PESEE").font(.system(size: 9, weight: .heavy)).foregroundColor(session.accentColor).tracking(2)
+      Text(String(format: "%.1f kg", weight)).font(.system(size: 28, weight: .bold)).foregroundColor(session.textPrimary)
       HStack(spacing: 20) {
         Button(action: { weight = max(30, weight - 0.1) }) {
           Image(systemName: "minus.circle.fill").font(.system(size: 26)).foregroundColor(.red)
@@ -460,8 +474,8 @@ struct WeightInputSheet: View {
         }.buttonStyle(.plain)
       }
       Button(action: { onSave(weight) }) {
-        Text("Valider").font(.system(size: 12, weight: .bold)).foregroundColor(.black)
-          .frame(maxWidth: .infinity).padding(.vertical, 8).background(Color("Gold")).cornerRadius(8)
+        Text("Valider").font(.system(size: 12, weight: .bold)).foregroundColor(session.textOnAccent)
+          .frame(maxWidth: .infinity).padding(.vertical, 8).background(session.accentColor).cornerRadius(8)
       }.buttonStyle(.plain)
     }
     .padding()

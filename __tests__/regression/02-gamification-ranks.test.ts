@@ -184,14 +184,14 @@ describe('REGRESSION: Rank System', () => {
       expect(RANKS).toHaveLength(5);
     });
 
-    it('ranks are ordered by minDays', () => {
+    it('ranks are ordered by minPoints', () => {
       for (let i = 1; i < RANKS.length; i++) {
-        expect(RANKS[i].minDays).toBeGreaterThan(RANKS[i - 1].minDays);
+        expect(RANKS[i].minPoints).toBeGreaterThan(RANKS[i - 1].minPoints);
       }
     });
 
-    it('first rank starts at 0 days', () => {
-      expect(RANKS[0].minDays).toBe(0);
+    it('first rank starts at 0 points', () => {
+      expect(RANKS[0].minPoints).toBe(0);
       expect(RANKS[0].id).toBe('ashigaru');
     });
 
@@ -202,7 +202,7 @@ describe('REGRESSION: Rank System', () => {
         expect(rank).toHaveProperty('nameFemale');
         expect(rank).toHaveProperty('nameJp');
         expect(rank).toHaveProperty('icon');
-        expect(rank).toHaveProperty('minDays');
+        expect(rank).toHaveProperty('minPoints');
         expect(rank).toHaveProperty('color');
         expect(rank).toHaveProperty('description');
         expect(rank).toHaveProperty('descriptionFemale');
@@ -214,31 +214,31 @@ describe('REGRESSION: Rank System', () => {
   // getCurrentRank
   // ============================================
   describe('getCurrentRank', () => {
-    it('returns Ashigaru for 0 days', () => {
+    it('returns Ashigaru for 0 XP', () => {
       expect(getCurrentRank(0).id).toBe('ashigaru');
     });
 
-    it('returns Bushi for 15 days', () => {
-      expect(getCurrentRank(15).id).toBe('bushi');
+    it('returns Bushi for 500 XP', () => {
+      expect(getCurrentRank(500).id).toBe('bushi');
     });
 
-    it('returns Samouraï for 30 days', () => {
-      expect(getCurrentRank(30).id).toBe('samurai');
+    it('returns Samourai for 2000 XP', () => {
+      expect(getCurrentRank(2000).id).toBe('samurai');
     });
 
-    it('returns Rōnin for 90 days', () => {
-      expect(getCurrentRank(90).id).toBe('ronin');
+    it('returns Ronin for 5000 XP', () => {
+      expect(getCurrentRank(5000).id).toBe('ronin');
     });
 
-    it('returns Shōgun for 250 days', () => {
-      expect(getCurrentRank(250).id).toBe('shogun');
+    it('returns Shogun for 10000 XP', () => {
+      expect(getCurrentRank(10000).id).toBe('shogun');
     });
 
-    it('returns Shōgun for 999 days', () => {
-      expect(getCurrentRank(999).id).toBe('shogun');
+    it('returns Shogun for XP well above 10000', () => {
+      expect(getCurrentRank(99999).id).toBe('shogun');
     });
 
-    it('returns Ashigaru for negative days', () => {
+    it('returns Ashigaru for negative XP', () => {
       expect(getCurrentRank(-5).id).toBe('ashigaru');
     });
   });
@@ -247,17 +247,17 @@ describe('REGRESSION: Rank System', () => {
   // getNextRank
   // ============================================
   describe('getNextRank', () => {
-    it('returns Bushi as next for 0 days', () => {
+    it('returns Bushi as next for 0 XP', () => {
       expect(getNextRank(0)?.id).toBe('bushi');
     });
 
-    it('returns Samouraï as next for 15 days', () => {
-      expect(getNextRank(15)?.id).toBe('samurai');
+    it('returns Samourai as next for 500 XP', () => {
+      expect(getNextRank(500)?.id).toBe('samurai');
     });
 
     it('returns null at max rank', () => {
-      expect(getNextRank(250)).toBeNull();
-      expect(getNextRank(999)).toBeNull();
+      expect(getNextRank(10000)).toBeNull();
+      expect(getNextRank(99999)).toBeNull();
     });
   });
 
@@ -265,16 +265,16 @@ describe('REGRESSION: Rank System', () => {
   // getDaysToNextRank
   // ============================================
   describe('getDaysToNextRank', () => {
-    it('returns days to Bushi from 0', () => {
-      expect(getDaysToNextRank(0)).toBe(15);
+    it('returns XP to Bushi from 0', () => {
+      expect(getDaysToNextRank(0)).toBe(500);
     });
 
-    it('returns days to Samouraï from 20', () => {
-      expect(getDaysToNextRank(20)).toBe(10); // 30 - 20
+    it('returns XP to Samourai from 1000', () => {
+      expect(getDaysToNextRank(1000)).toBe(1000); // 2000 - 1000
     });
 
     it('returns 0 at max rank', () => {
-      expect(getDaysToNextRank(250)).toBe(0);
+      expect(getDaysToNextRank(10000)).toBe(0);
     });
   });
 
@@ -287,12 +287,12 @@ describe('REGRESSION: Rank System', () => {
     });
 
     it('returns 100 at max rank', () => {
-      expect(getRankProgress(250)).toBe(100);
+      expect(getRankProgress(10000)).toBe(100);
     });
 
     it('returns percentage between 0 and 100', () => {
-      for (const days of [0, 5, 15, 25, 60, 120, 250]) {
-        const progress = getRankProgress(days);
+      for (const xp of [0, 100, 500, 1500, 3000, 7000, 10000]) {
+        const progress = getRankProgress(xp);
         expect(progress).toBeGreaterThanOrEqual(0);
         expect(progress).toBeLessThanOrEqual(100);
       }

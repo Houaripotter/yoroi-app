@@ -45,11 +45,14 @@ import {
   UserPlus,
   Minus,
   Swords,
+  MapPin,
+  Navigation,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { useBadges } from '@/lib/BadgeContext';
-import { addTraining, updateTraining, getTrainingById, getClubs, Club, Exercise, CombatRound, getProfile, getTrainings, getWeights, calculateStreak } from '@/lib/database';
+import { addTraining, updateTraining, getTrainingById, getClubs, Club, Exercise, CombatRound, getProfile, getTrainings, getWeights, calculateStreak, getWeeklyPlanById, validateSlot, addWeeklyPlanItem } from '@/lib/database';
+import { detectSlotPatterns } from '@/lib/slotSuggestionService';
 import { SPORTS, getSportIcon, getSportName, getClubLogoSource } from '@/lib/sports';
 import { getCurrentRank } from '@/lib/ranks';
 import { getUnifiedPoints } from '@/lib/gamification';
@@ -69,6 +72,7 @@ import { fr } from 'date-fns/locale';
 import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import logger from '@/lib/security/logger';
 import HealthConnect from '@/lib/healthConnect';
+import * as Location from 'expo-location';
 import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
 import { SPORT_OPTIONS, DEFAULT_OPTIONS, SportOption } from '@/constants/sportOptions';
 
@@ -88,13 +92,13 @@ const LAST_DURATION_KEY = 'yoroi_last_duration';
 
 export default function AddTrainingScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, gradients, isDark } = useTheme();
+  const { colors, gradients, isDark, screenText, screenTextMuted } = useTheme();
   const { avatarImage: contextAvatar } = useAvatar();
   const router = useRouter();
   const { checkBadges } = useBadges();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { showReviewModal, ReviewModalComponent } = useReviewModal();
-  const params = useLocalSearchParams<{ date?: string; editId?: string }>();
+  const params = useLocalSearchParams<{ date?: string; editId?: string; slotId?: string; prefillSport?: string; prefillClubId?: string; prefillTime?: string; prefillDuration?: string }>();
   const isEditMode = !!params?.editId;
   const [clubs, setClubs] = useState<Club[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -132,6 +136,10 @@ export default function AddTrainingScreen() {
   const [customSportName, setCustomSportName] = useState(''); // Nom personnalisé pour "Autre" sport
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
   const [isOutdoor, setIsOutdoor] = useState(false);
+  const [locationLat, setLocationLat] = useState<number | null>(null);
+  const [locationLon, setLocationLon] = useState<number | null>(null);
+  const [locationName, setLocationName] = useState<string>('');
+  const [locationLoading, setLocationLoading] = useState(false);
 
   // Compatibilité avec l'ancien code
   const selectedSport = selectedSports[0] || 'jjb';
@@ -439,6 +447,9 @@ export default function AddTrainingScreen() {
         if (training.heart_rate) setHeartRate(String(training.heart_rate));
         if (training.technique_rating) setTechniqueRating(training.technique_rating);
         if (training.is_outdoor) setIsOutdoor(true);
+        if (training.location_lat != null) setLocationLat(training.location_lat);
+        if (training.location_lon != null) setLocationLon(training.location_lon);
+        if (training.location_name) setLocationName(training.location_name);
         if (training.muscles) setSelectedMuscles(training.muscles.split(','));
         if (training.exercises) setExercises(training.exercises);
         if (training.club_id) {
@@ -452,6 +463,54 @@ export default function AddTrainingScreen() {
     };
     loadEditData();
   }, [params?.editId]);
+
+  // Pre-remplissage depuis un creneau regulier
+  useEffect(() => {
+    if (!params?.slotId && !params?.prefillSport) return;
+    const prefillFromSlot = async () => {
+      try {
+        if (params.slotId) {
+          const slotIdNum = parseInt(params.slotId, 10);
+          if (!isNaN(slotIdNum)) {
+            const slot = await getWeeklyPlanById(slotIdNum);
+            if (slot) {
+              setSelectedSports([slot.sport]);
+              if (slot.duration_minutes) setDuration(slot.duration_minutes);
+              if (slot.time) {
+                const [h, m] = slot.time.split(':').map(Number);
+                const t = new Date();
+                t.setHours(h, m, 0, 0);
+                setStartTime(t);
+              }
+              if (slot.club_id) {
+                const allClubs = await getClubs();
+                const club = allClubs.find(c => c.id === slot.club_id);
+                if (club) setSelectedClub(club);
+              }
+            }
+          }
+        } else {
+          // Prefill from individual params
+          if (params.prefillSport) setSelectedSports([params.prefillSport]);
+          if (params.prefillDuration) setDuration(parseInt(params.prefillDuration, 10) || 60);
+          if (params.prefillTime) {
+            const [h, m] = params.prefillTime.split(':').map(Number);
+            const t = new Date();
+            t.setHours(h, m, 0, 0);
+            setStartTime(t);
+          }
+          if (params.prefillClubId) {
+            const allClubs = await getClubs();
+            const club = allClubs.find(c => c.id === parseInt(params.prefillClubId!, 10));
+            if (club) setSelectedClub(club);
+          }
+        }
+      } catch (error) {
+        console.error('Erreur prefill slot:', error);
+      }
+    };
+    prefillFromSlot();
+  }, [params?.slotId, params?.prefillSport]);
 
   // Charger le dernier sport utilisé (pour Quick Add seulement, PAS de pré-sélection)
   useEffect(() => {
@@ -1252,6 +1311,9 @@ export default function AddTrainingScreen() {
         exercises: exercises.length > 0 ? exercises : undefined,
         technique_rating: techniqueRating,
         is_outdoor: isOutdoor,
+        location_lat: locationLat ?? undefined,
+        location_lon: locationLon ?? undefined,
+        location_name: locationName || undefined,
         distance: distance ? (isNaN(parseFloat(distance.replace(',', '.'))) ? undefined : parseFloat(distance.replace(',', '.'))) : undefined,
         calories: calories ? (isNaN(parseInt(calories)) ? undefined : parseInt(calories)) : undefined,
         intensity: intensity,
@@ -1263,6 +1325,7 @@ export default function AddTrainingScreen() {
         watts: watts ? (isNaN(parseInt(watts)) ? undefined : parseInt(watts)) : undefined,
         cadence: cadence ? (isNaN(parseInt(cadence)) ? undefined : parseInt(cadence)) : undefined,
         combat_rounds: combatRounds.length > 0 ? combatRounds : undefined,
+        weekly_plan_id: params?.slotId ? parseInt(params.slotId, 10) : undefined,
       };
 
       let newId: number | null = null;
@@ -1272,6 +1335,22 @@ export default function AddTrainingScreen() {
         newId = editIdNum;
       } else {
         newId = await addTraining(trainingData);
+      }
+
+      // Valider le creneau regulier si on vient d'un slot
+      if (params?.slotId && newId) {
+        try {
+          const slotIdNum = parseInt(params.slotId, 10);
+          const now = new Date();
+          const day = now.getDay();
+          const diff = day === 0 ? -6 : 1 - day;
+          const monday = new Date(now);
+          monday.setDate(now.getDate() + diff);
+          const weekStart = monday.toISOString().split('T')[0];
+          await validateSlot(slotIdNum, weekStart, Number(newId));
+        } catch (e) {
+          console.error('Erreur validation slot:', e);
+        }
       }
 
       if (newId) {
@@ -1291,7 +1370,7 @@ export default function AddTrainingScreen() {
 
       playWorkoutCompleteSound();
 
-      // 🔄 SYNC VERS APPLE HEALTH
+      // SYNC VERS APPLE HEALTH
       try {
         const startDateTime = new Date(date);
         const [hours, minutes] = startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).split(':');
@@ -1323,6 +1402,40 @@ export default function AddTrainingScreen() {
       // Trigger review et badges en arrière-plan (non bloquant)
       incrementReviewTrigger().catch(() => {});
       checkBadges().catch(() => {});
+
+      // Detection de pattern : suggerer un creneau regulier si pattern detecte
+      if (!isEditMode && !params?.slotId) {
+        detectSlotPatterns().then(suggestions => {
+          if (suggestions.length > 0) {
+            const s = suggestions[0];
+            const dayNames = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+            const sportName = s.sport.charAt(0).toUpperCase() + s.sport.slice(1);
+            // Attendre un peu que le modal de validation se ferme
+            setTimeout(() => {
+              showPopup(
+                'Creneau regulier detecte',
+                `Vous vous entrainez en ${sportName} tous les ${dayNames[s.dayOfWeek]} (${s.count} fois ce mois). Creer un creneau regulier ?`,
+                [
+                  { text: 'Plus tard', style: 'cancel' },
+                  {
+                    text: 'Creer',
+                    style: 'primary',
+                    onPress: async () => {
+                      await addWeeklyPlanItem({
+                        day_of_week: s.dayOfWeek,
+                        sport: s.sport,
+                        time: s.avgTime,
+                        duration_minutes: s.avgDuration,
+                        club_id: s.clubId,
+                      });
+                    },
+                  },
+                ]
+              );
+            }, 3000);
+          }
+        }).catch(() => {});
+      }
 
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
@@ -1478,7 +1591,7 @@ export default function AddTrainingScreen() {
           overScrollMode="never"
         >
 
-        {/* 📥 IMPORT GPX/TCX */}
+        {/* IMPORT GPX/TCX */}
         {selectedSports.length === 0 && (
           <TouchableOpacity
             style={{
@@ -1504,7 +1617,7 @@ export default function AddTrainingScreen() {
           </TouchableOpacity>
         )}
 
-        {/* 🔍 BARRE DE RECHERCHE - UNIQUEMENT ÉTAPE 1 */}
+        {/* BARRE DE RECHERCHE - UNIQUEMENT ÉTAPE 1 */}
         {(selectedSports.length === 0 || showAddSportSection) && (
           <View style={{ marginBottom: 20 }}>
             <View style={[styles.customSportInputContainer, { backgroundColor: colors.backgroundElevated, borderColor: colors.border, height: 54, borderRadius: 18 }]}>
@@ -1532,7 +1645,7 @@ export default function AddTrainingScreen() {
 
         {/* Titre quand aucun sport sélectionné */}
         {selectedSports.length === 0 && (
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+          <Text style={[styles.sectionTitle, { color: screenText }]}>
             1. Choisis ton sport
           </Text>
         )}
@@ -1553,7 +1666,7 @@ export default function AddTrainingScreen() {
         {/* Titre section ajouter sport */}
         {selectedSports.length > 0 && showAddSportSection && (
           <View style={styles.addSportSectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: 0 }]}>
+            <Text style={[styles.sectionTitle, { color: screenText, marginBottom: 0 }]}>
               Ajouter un sport
             </Text>
             <TouchableOpacity onPress={() => setShowAddSportSection(false)}>
@@ -1735,9 +1848,9 @@ export default function AddTrainingScreen() {
         {/* SPORTS SÉLECTIONNÉS - Badge(s) avec X pour retirer */}
         {/* ═══════════════════════════════════════════ */}
         {selectedSports.length > 0 && (
-          <View style={styles.selectedSportsSection}>
+          <View style={[styles.selectedSportsSection, { backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border }]}>
             <View style={styles.selectedSportsHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: 0 }]}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
                 {selectedSports.length === 1 ? '1. Sport sélectionné' : `1. ${selectedSports.length} Sports sélectionnés`}
               </Text>
               <Text style={[styles.selectedSportsHint, { color: colors.textMuted }]}>
@@ -1766,7 +1879,7 @@ export default function AddTrainingScreen() {
 
             {/* Champ de saisie pour nom personnalisé quand "Autre" est sélectionné */}
             {selectedSports.includes('autre') && (
-              <View style={[styles.customSportInputContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.customSportInputContainer, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}>
                 <MaterialCommunityIcons name="pencil" size={20} color={colors.accent} />
                 <TextInput
                   style={[styles.customSportInput, { color: colors.textPrimary }]}
@@ -1787,18 +1900,19 @@ export default function AddTrainingScreen() {
         {/* ═══════════════════════════════════════════ */}
                   {selectedSports.length > 0 && (
                     <>
-                      <Text style={[styles.sectionTitle, { color: isDark ? colors.accent : colors.textPrimary, marginTop: SPACING.lg, fontWeight: '700' }]}>
+                      <Text style={[styles.sectionTitle, { color: screenText, marginTop: SPACING.lg, fontWeight: '700' }]}>
                         2. Où t'entraînes-tu ?
                       </Text>
-                      
-                                    <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+
+                      <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border }}>
+                                    <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
                                       {/* Option SALLE */}
-                                      <TouchableOpacity 
-                                        style={{ 
-                                          flex: 1, 
-                                          backgroundColor: !isOutdoor ? colors.accent + '20' : colors.card,
+                                      <TouchableOpacity
+                                        style={{
+                                          flex: 1,
+                                          backgroundColor: !isOutdoor ? colors.accent + '15' : colors.backgroundElevated,
                                           borderColor: !isOutdoor ? colors.accent : colors.border,
-                                          borderWidth: 1,
+                                          borderWidth: !isOutdoor ? 2 : 1,
                                           padding: 12,
                                           borderRadius: 12,
                                           alignItems: 'center',
@@ -1814,14 +1928,14 @@ export default function AddTrainingScreen() {
                                         <Building2 size={24} color={!isOutdoor ? colors.accent : colors.textMuted} />
                                         <Text style={{ fontWeight: '700', fontSize: 13, color: !isOutdoor ? colors.accent : colors.textMuted, textAlign: 'center' }}>En Salle</Text>
                                       </TouchableOpacity>
-                      
+
                                       {/* Option PLEIN AIR */}
-                                      <TouchableOpacity 
-                                        style={{ 
-                                          flex: 1, 
-                                          backgroundColor: isOutdoor ? colors.accent + '20' : colors.card,
+                                      <TouchableOpacity
+                                        style={{
+                                          flex: 1,
+                                          backgroundColor: isOutdoor ? colors.accent + '15' : colors.backgroundElevated,
                                           borderColor: isOutdoor ? colors.accent : colors.border,
-                                          borderWidth: 1,
+                                          borderWidth: isOutdoor ? 2 : 1,
                                           padding: 12,
                                           borderRadius: 12,
                                           alignItems: 'center',
@@ -1831,17 +1945,85 @@ export default function AddTrainingScreen() {
                                         }}
                                         onPress={() => {
                                           setIsOutdoor(true);
-                                          setSelectedClub(null); // Reset club if outdoor
                                           selectionAsync();
                                         }}
                                       >
                                         <Sun size={24} color={isOutdoor ? colors.accent : colors.textMuted} />
                                         <Text style={{ fontWeight: '700', fontSize: 13, color: isOutdoor ? colors.accent : colors.textMuted, textAlign: 'center' }}>Plein Air</Text>
                                       </TouchableOpacity>
-                                    </View>        
-                      {/* LISTE DES CLUBS - UNIQUEMENT SI EN SALLE */}
-                      {!isOutdoor && (
-                        <>
+                                    </View>
+
+                                    {/* CAPTURE GPS */}
+                                    <View style={{ marginBottom: 16 }}>
+                                      <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMuted, marginBottom: 8 }}>Lieu d'entrainement</Text>
+                                      {locationLat && locationLon ? (
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12, backgroundColor: colors.accent + '15', borderWidth: 1.5, borderColor: colors.accent }}>
+                                          <MapPin size={20} color={colors.accent} />
+                                          <View style={{ flex: 1 }}>
+                                            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.accent }}>
+                                              {locationName || 'Position capturee'}
+                                            </Text>
+                                            <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>
+                                              {locationLat.toFixed(5)}, {locationLon.toFixed(5)}
+                                            </Text>
+                                          </View>
+                                          <TouchableOpacity
+                                            onPress={() => { setLocationLat(null); setLocationLon(null); setLocationName(''); }}
+                                            style={{ padding: 4 }}
+                                          >
+                                            <X size={16} color={colors.textMuted} />
+                                          </TouchableOpacity>
+                                        </View>
+                                      ) : (
+                                        <TouchableOpacity
+                                          style={{
+                                            flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+                                            gap: 8, padding: 12, borderRadius: 12,
+                                            backgroundColor: colors.backgroundElevated,
+                                            borderWidth: 1, borderColor: colors.border,
+                                            opacity: locationLoading ? 0.6 : 1,
+                                          }}
+                                          disabled={locationLoading}
+                                          onPress={async () => {
+                                            try {
+                                              setLocationLoading(true);
+                                              const { status } = await Location.requestForegroundPermissionsAsync();
+                                              if (status !== 'granted') {
+                                                showPopup('GPS', 'Permission refusee. Active la localisation dans les reglages.');
+                                                return;
+                                              }
+                                              const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+                                              setLocationLat(loc.coords.latitude);
+                                              setLocationLon(loc.coords.longitude);
+                                              // Geocoding inverse pour le nom du lieu
+                                              try {
+                                                const [place] = await Location.reverseGeocodeAsync({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+                                                if (place) {
+                                                  const parts = [place.name, place.street, place.city].filter(Boolean);
+                                                  setLocationName(parts.slice(0, 2).join(', ') || '');
+                                                }
+                                              } catch { /* geocoding optionnel */ }
+                                              selectionAsync();
+                                            } catch (e) {
+                                              showPopup('GPS', 'Impossible de recuperer ta position GPS.');
+                                            } finally {
+                                              setLocationLoading(false);
+                                            }
+                                          }}
+                                        >
+                                          {locationLoading ? (
+                                            <ActivityIndicator size="small" color={colors.accent} />
+                                          ) : (
+                                            <Navigation size={18} color={colors.textMuted} />
+                                          )}
+                                          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMuted }}>
+                                            {locationLoading ? 'Localisation...' : 'Capturer ma position GPS'}
+                                          </Text>
+                                        </TouchableOpacity>
+                                      )}
+                                    </View>
+
+                      {/* LISTE DES CLUBS */}
                           <Text style={[styles.clubSectionTitle, { color: colors.textMuted }]}>Sélectionne ton club</Text>
                           <ScrollView
                             horizontal
@@ -1946,8 +2128,7 @@ export default function AddTrainingScreen() {
                               </Text>
                             </TouchableOpacity>
                           </ScrollView>
-                        </>
-                      )}
+                      </View>
                     </>
                   )}
         {/* ═══════════════════════════════════════════ */}
@@ -1955,7 +2136,7 @@ export default function AddTrainingScreen() {
         {/* ═══════════════════════════════════════════ */}
         {selectedSports.length > 0 && (
           <>
-            <Text style={[styles.sectionTitle, { color: isDark ? colors.accent : '#000000', marginTop: SPACING.lg, fontWeight: '700' }]}>
+            <Text style={[styles.sectionTitle, { color: screenText, marginTop: SPACING.lg, fontWeight: '700' }]}>
               3. Configure ta seance
             </Text>
             <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
@@ -2452,7 +2633,7 @@ export default function AddTrainingScreen() {
         {/* ═══════════════════════════════════════════ */}
         {selectedSports.length > 0 && (
           <>
-            <Text style={[styles.sectionTitle, { color: isDark ? colors.accent : '#000000', marginTop: SPACING.lg, fontWeight: '700' }]}>
+            <Text style={[styles.sectionTitle, { color: screenText, marginTop: SPACING.lg, fontWeight: '700' }]}>
               4. Date & Heure
             </Text>
 
@@ -2849,7 +3030,7 @@ export default function AddTrainingScreen() {
                                     {/* ═══════════════════════════════════════════ */}
                                     {selectedSports.length > 0 && (
                                       <>
-                                        <Text style={[styles.sectionTitle, { color: isDark ? colors.accent : colors.textPrimary, marginTop: SPACING.lg, fontWeight: '700' }]}>
+                                        <Text style={[styles.sectionTitle, { color: screenText, marginTop: SPACING.lg, fontWeight: '700' }]}>
                                           5. Analyse & Ressenti
                                         </Text>
                   
@@ -2999,7 +3180,7 @@ export default function AddTrainingScreen() {
           <TouchableOpacity
             style={[
               styles.saveButton,
-              { backgroundColor: colors.accent, marginTop: 20 },
+              { backgroundColor: colors.backgroundCard, marginTop: 20 },
               isSubmitting && styles.saveButtonDisabled
             ]}
             onPress={handleSave}
@@ -3007,11 +3188,11 @@ export default function AddTrainingScreen() {
           >
             <View style={styles.saveButtonContent}>
               {isSubmitting ? (
-                <ActivityIndicator size="small" color={colors.textOnAccent || '#FFFFFF'} />
+                <ActivityIndicator size="small" color={colors.accent} />
               ) : (
-                <Dumbbell size={22} color={colors.textOnAccent || '#FFFFFF'} />
+                <Dumbbell size={22} color={colors.accent} />
               )}
-              <Text style={[styles.saveButtonText, { color: colors.textOnAccent || '#FFFFFF' }]}>
+              <Text style={[styles.saveButtonText, { color: colors.accent }]}>
                 {isSubmitting ? 'Enregistrement...' : isEditMode ? 'Modifier' : 'Enregistrer'}
               </Text>
             </View>

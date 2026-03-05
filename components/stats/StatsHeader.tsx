@@ -19,7 +19,7 @@ interface StatsHeaderProps {
   showPeriodSelector?: boolean;
 }
 
-export const StatsHeader: React.FC<StatsHeaderProps> = ({
+export const StatsHeader: React.FC<StatsHeaderProps> = React.memo(({
   title,
   description,
   icon,
@@ -31,37 +31,48 @@ export const StatsHeader: React.FC<StatsHeaderProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Titre + Icône */}
-      <View style={styles.titleRow}>
-        {icon && <View style={styles.iconContainer}>{icon}</View>}
-        <Text style={[styles.title, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>
-          {title}
-        </Text>
-      </View>
-
-      {/* Description */}
-      <Text style={[styles.description, { color: isDark ? colors.textSecondary : 'rgba(255,255,255,0.7)' }]}>
-        {description}
-      </Text>
-
-      {/* Sélecteur de période */}
-      {showPeriodSelector && (
-        <View style={styles.periodContainer}>
-          <PeriodSelector
-            selected={selectedPeriod}
-            onChange={onPeriodChange}
-          />
+      <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+        {/* Titre + Icône */}
+        <View style={styles.titleRow}>
+          {icon && <View style={styles.iconContainer}>{icon}</View>}
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {title}
+          </Text>
         </View>
-      )}
+
+        {/* Description */}
+        <Text style={[styles.description, { color: colors.textSecondary }]}>
+          {description}
+        </Text>
+
+        {/* Sélecteur de période */}
+        {showPeriodSelector && (
+          <View style={styles.periodContainer}>
+            <PeriodSelector
+              selected={selectedPeriod}
+              onChange={onPeriodChange}
+            />
+          </View>
+        )}
+      </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 20,
+    paddingBottom: 12,
+  },
+  card: {
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   titleRow: {
     flexDirection: 'row',

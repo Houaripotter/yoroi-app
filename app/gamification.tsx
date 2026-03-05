@@ -41,7 +41,6 @@ import {
   Castle,
   Medal,
   Sparkles,
-  TrendingUp,
   Heart,
   Scale,
   Dumbbell,
@@ -86,6 +85,7 @@ import {
 } from '@/lib/quests';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const DEFAULT_AVATAR_IMAGE = require('@/assets/avatars/samurai/samurai_neutral.png');
 
 // Rotation pour n'afficher que 5 defis (identique a HomeChallengesSection)
 const getWeekNumber = (): number => {
@@ -374,6 +374,7 @@ export default function DojoScreen() {
   }, []);
 
   // Charger les données
+  const cancelledRef = useRef(false);
   const loadData = useCallback(async () => {
     try {
       const [profile, weights, trainings, streakDays, history, today, daily, weekly, monthly] = await Promise.all([
@@ -387,6 +388,8 @@ export default function DojoScreen() {
         getWeeklyQuestsProgress(),
         getMonthlyQuestsProgress(),
       ]);
+
+      if (cancelledRef.current) return;
 
       setStreak(streakDays);
       setWeightsCount(weights.length);
@@ -416,14 +419,16 @@ export default function DojoScreen() {
 
       // Calculer et stocker les points unifies (inclut quetes, challenges, bonus sante)
       const points = await calculateAndStoreUnifiedPoints(weights.length, trainings.length, streakDays);
-      setTotalPoints(points);
+      if (!cancelledRef.current) setTotalPoints(points);
     } catch (error) {
       logger.error('Erreur chargement Dojo:', error);
     }
   }, []);
 
   useEffect(() => {
+    cancelledRef.current = false;
     loadData();
+    return () => { cancelledRef.current = true; };
   }, [loadData]);
 
   // Calculs
@@ -571,7 +576,7 @@ export default function DojoScreen() {
               />
               <View style={styles.rankIconHero}>
                 <Image
-                  source={avatarImage ?? require('@/assets/avatars/samurai/samurai_neutral.png')}
+                  source={avatarImage ?? DEFAULT_AVATAR_IMAGE}
                   style={styles.rankAvatarImage}
                   resizeMode="contain"
                 />
@@ -855,7 +860,7 @@ export default function DojoScreen() {
                             {rank.minPoints - totalPoints}
                           </Text>
                           <Text style={[styles.daysNeededLabel, { color: colors.textMuted }]}>
-                            {t('common.days').toLowerCase()}
+                            XP
                           </Text>
                         </View>
                       )}

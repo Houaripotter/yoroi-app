@@ -159,10 +159,10 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
     }), [isWhite]);
     const progressBarGraduationsStyle = useMemo(() => ({ position: 'absolute' as const, top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' as const }), []);
     const progressBarGraduationLineStyle = (mark: number) => ({
-      position: 'absolute' as const, left: `${mark}%`, width: 1, height: '100%',
+      position: 'absolute' as const, left: `${mark}%` as `${number}%`, width: 1, height: '100%' as `${number}%`,
       backgroundColor: isWhite ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)'
     });
-    const progressBarFillStyle = useMemo(() => ({ height: '100%', width: `${progressPercent}%` }), [progressPercent]);
+    const progressBarFillStyle = useMemo(() => ({ height: '100%' as `${number}%`, width: `${progressPercent}%` as `${number}%` }), [progressPercent]);
     const progressPercentTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 12, fontWeight: '900' as const }), []);
     const durationBadgeStyle = useMemo(() => ({ backgroundColor: GOLD_COLOR, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 4, alignSelf: 'flex-end' as const }), []);
     const durationTextStyle = useMemo(() => ({ color: '#000', fontWeight: '900' as const, fontSize: 13 }), []);

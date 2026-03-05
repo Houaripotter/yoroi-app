@@ -31,7 +31,7 @@ interface MetricProgressGridProps {
   maxItems?: number;
 }
 
-export const MetricProgressGrid: React.FC<MetricProgressGridProps> = ({
+export const MetricProgressGrid: React.FC<MetricProgressGridProps> = React.memo(({
   data,
   unit,
   color,
@@ -95,7 +95,7 @@ export const MetricProgressGrid: React.FC<MetricProgressGridProps> = ({
       ))}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

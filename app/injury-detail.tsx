@@ -37,7 +37,13 @@ import {
   getInjuryById,
   getEvaHistory,
   deleteInjury,
+  getWeeklyPlan,
+  WeeklyPlan,
+  cancelSlot,
 } from '@/lib/database';
+import { isSportImpactedByInjury } from '@/lib/slotInjuryService';
+import { getSportName, getSportIcon, getSportColor } from '@/lib/sports';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   updateInjuryEva,
   markInjuryAsHealed,
@@ -67,6 +73,7 @@ export default function InjuryDetailScreen() {
   const [treatments, setTreatments] = useState<any[]>([]);
   const [newEva, setNewEva] = useState<number | null>(null);
   const [evaNote, setEvaNote] = useState('');
+  const [affectedSlots, setAffectedSlots] = useState<WeeklyPlan[]>([]);
   const [creatorModeActive, setCreatorModeActive] = useState(false);
   const [showSurgeonMode, setShowSurgeonMode] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -107,6 +114,15 @@ export default function InjuryDetailScreen() {
 
         const treatmentsData = await getTreatmentsWithLabels(injuryId);
         setTreatments(treatmentsData);
+
+        // Charger les creneaux impactes
+        if (injuryData && injuryData.fit_for_duty !== 'operational') {
+          const allSlots = await getWeeklyPlan();
+          const impacted = allSlots.filter(s => !s.is_rest_day && isSportImpactedByInjury(s.sport, injuryData));
+          setAffectedSlots(impacted);
+        } else {
+          setAffectedSlots([]);
+        }
       }
     } catch (error) {
       logger.error('[InjuryDetail] Erreur:', error);
@@ -597,6 +613,67 @@ export default function InjuryDetailScreen() {
           </View>
         )}
 
+        {/* Impact sur le planning */}
+        {affectedSlots.length > 0 && injury && (
+          <View style={[styles.section, { marginBottom: SPACING.lg }]}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              Impact sur le planning
+            </Text>
+            <View style={{ gap: 6 }}>
+              {affectedSlots.map(slot => {
+                const sportColor = getSportColor(slot.sport);
+                return (
+                  <View key={slot.id} style={{
+                    flexDirection: 'row', alignItems: 'center', gap: 10,
+                    padding: 10, borderRadius: RADIUS.md,
+                    backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.warning + '30',
+                  }}>
+                    <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: sportColor + '20', alignItems: 'center', justifyContent: 'center' }}>
+                      <MaterialCommunityIcons name={getSportIcon(slot.sport) as any} size={18} color={sportColor} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>
+                        {getSportName(slot.sport)}
+                      </Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 11 }}>
+                        {['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'][slot.day_of_week]}
+                        {slot.time ? ` ${slot.time}` : ''}
+                        {slot.club_name ? ` - ${slot.club_name}` : ''}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
+              <TouchableOpacity
+                style={{
+                  alignItems: 'center', paddingVertical: 12, borderRadius: RADIUS.md,
+                  backgroundColor: colors.warning + '15', marginTop: 4,
+                }}
+                onPress={async () => {
+                  const now = new Date();
+                  const day = now.getDay();
+                  const diff = day === 0 ? -6 : 1 - day;
+                  const monday = new Date(now);
+                  monday.setDate(now.getDate() + diff);
+                  const weekStart = monday.toISOString().split('T')[0];
+                  for (const slot of affectedSlots) {
+                    if (slot.id) {
+                      await cancelSlot(slot.id, weekStart, `Blessure: ${injury.zone_id}`, injury.id);
+                    }
+                  }
+                  showPopup('Creneaux annules', `${affectedSlots.length} creneau(x) annule(s) pour cette semaine.`, [
+                    { text: 'OK', style: 'primary' },
+                  ]);
+                }}
+              >
+                <Text style={{ color: colors.warning, fontSize: 13, fontWeight: '700' }}>
+                  Annuler les creneaux de la semaine
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         <View style={styles.actionsSection}>
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
@@ -604,7 +681,7 @@ export default function InjuryDetailScreen() {
             activeOpacity={0.7}
           >
             <Check size={20} color="#FFFFFF" />
-            <Text style={styles.actionButtonText}>Marquer comme guéri</Text>
+            <Text style={styles.actionButtonText}>Marquer comme gueri</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

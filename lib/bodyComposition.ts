@@ -169,7 +169,7 @@ export const getLatestBodyComposition = async (): Promise<BodyComposition | null
     // 2. ✅ NOUVEAU: Récupérer les données Apple Health
     let healthKitData: { bodyFatPercentage?: number; leanBodyMass?: number; date?: string; source?: string } | null = null;
     try {
-      healthKitData = await healthConnect.getBodyComposition();
+      healthKitData = await healthConnect.getBodyComposition() ?? null;
       if (healthKitData) {
         logger.info('[BodyComposition] Apple Health data:', healthKitData);
       }

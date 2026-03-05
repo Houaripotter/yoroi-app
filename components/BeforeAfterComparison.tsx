@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback, memo } from 'react';
 import {
   View,
   Text,
@@ -41,6 +41,64 @@ interface BeforeAfterComparisonProps {
 
 const { width: screenWidth } = Dimensions.get('window');
 const SLIDER_WIDTH = screenWidth - 40;
+
+const getImageSource = (photo: ProgressPhoto) => {
+  const uri = photo.file_uri || photo.photo_url || '';
+  if (uri.startsWith('file://') || uri.startsWith('http://') || uri.startsWith('https://') || uri.startsWith('data:')) {
+    return { uri };
+  }
+  if (uri && !uri.startsWith('/')) {
+    return { uri: `file://${uri}` };
+  }
+  return { uri };
+};
+
+interface PhotoCardProps {
+  photo: ProgressPhoto;
+  locale: string;
+  cardBgColor: string;
+  textSecondaryColor: string;
+  goldColor: string;
+  onPress: (photo: ProgressPhoto) => void;
+}
+
+const PhotoCard = memo(({ photo, locale, cardBgColor, textSecondaryColor, goldColor, onPress }: PhotoCardProps) => {
+  const formattedDate = new Date(photo.date).toLocaleDateString(locale, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  const handlePress = useCallback(() => onPress(photo), [onPress, photo]);
+
+  return (
+    <TouchableOpacity
+      style={[styles.selectionCard, { backgroundColor: cardBgColor }]}
+      onPress={handlePress}
+      activeOpacity={0.7}
+    >
+      <Image
+        source={getImageSource(photo)}
+        style={styles.selectionImage}
+        resizeMode="cover"
+      />
+      {photo.weight && (
+        <View style={styles.selectionWeightBadge}>
+          <TrendingDown size={12} color="#FFFFFF" strokeWidth={3} />
+        </View>
+      )}
+      <View style={[styles.selectionInfo, { backgroundColor: cardBgColor }]}>
+        <Text style={[styles.selectionDate, { color: textSecondaryColor }]}>
+          {formattedDate}
+        </Text>
+        {photo.weight && (
+          <Text style={[styles.selectionWeight, { color: goldColor }]}>
+            {photo.weight.toFixed(1)} kg
+          </Text>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+});
 
 export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterComparisonProps) {
   const { colors, isDark } = useTheme();
@@ -90,31 +148,38 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
     outputRange: [-30, SLIDER_WIDTH - 30],
   });
 
-  const handleBeforeSelect = (photo: ProgressPhoto) => {
+  const handleBeforeSelect = useCallback((photo: ProgressPhoto) => {
     setSelectedBefore(photo);
     setStep('after');
-  };
+  }, []);
 
-  const handleAfterSelect = (photo: ProgressPhoto) => {
+  const handleAfterSelect = useCallback((photo: ProgressPhoto) => {
     setSelectedAfter(photo);
     setStep('compare');
-    // Reset slider position
     sliderAnim.setValue(0.5);
     startPos.current = 0.5;
-  };
+  }, [sliderAnim]);
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setSelectedBefore(null);
     setSelectedAfter(null);
     setStep('before');
     sliderAnim.setValue(0.5);
     startPos.current = 0.5;
-  };
+  }, [sliderAnim]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     reset();
     onClose();
-  };
+  }, [reset, onClose]);
+
+  const handlePhotoPress = useCallback((photo: ProgressPhoto) => {
+    if (step === 'before') {
+      handleBeforeSelect(photo);
+    } else {
+      handleAfterSelect(photo);
+    }
+  }, [step, handleBeforeSelect, handleAfterSelect]);
 
   // Statistiques
   const weightDifference = selectedBefore && selectedAfter && selectedBefore.weight && selectedAfter.weight
@@ -143,17 +208,6 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
       month: 'short',
       year: 'numeric',
     });
-  };
-
-  const getImageSource = (photo: ProgressPhoto) => {
-    const uri = photo.file_uri || photo.photo_url || '';
-    if (uri.startsWith('file://') || uri.startsWith('http://') || uri.startsWith('https://') || uri.startsWith('data:')) {
-      return { uri };
-    }
-    if (uri && !uri.startsWith('/')) {
-      return { uri: `file://${uri}` };
-    }
-    return { uri };
   };
 
   // Capturer et partager
@@ -577,39 +631,15 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                     return true;
                   })
                   .map((photo) => (
-                    <TouchableOpacity
+                    <PhotoCard
                       key={photo.id}
-                      style={[styles.selectionCard, { backgroundColor: colors.card }]}
-                      onPress={() => {
-                        if (step === 'before') {
-                          handleBeforeSelect(photo);
-                        } else {
-                          handleAfterSelect(photo);
-                        }
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Image
-                        source={getImageSource(photo)}
-                        style={styles.selectionImage}
-                        resizeMode="cover"
-                      />
-                      {photo.weight && (
-                        <View style={styles.selectionWeightBadge}>
-                          <TrendingDown size={12} color="#FFFFFF" strokeWidth={3} />
-                        </View>
-                      )}
-                      <View style={[styles.selectionInfo, { backgroundColor: colors.card }]}>
-                        <Text style={[styles.selectionDate, { color: colors.textSecondary }]}>
-                          {formatDate(photo.date)}
-                        </Text>
-                        {photo.weight && (
-                          <Text style={[styles.selectionWeight, { color: colors.gold }]}>
-                            {photo.weight.toFixed(1)} kg
-                          </Text>
-                        )}
-                      </View>
-                    </TouchableOpacity>
+                      photo={photo}
+                      locale={locale}
+                      cardBgColor={colors.card}
+                      textSecondaryColor={colors.textSecondary}
+                      goldColor={colors.gold}
+                      onPress={handlePhotoPress}
+                    />
                   ))}
               </View>
             </View>

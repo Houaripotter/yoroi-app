@@ -30,7 +30,7 @@ const STRAIN_ZONES = [
   { min: 18, max: 21, label: 'All Out', color: '#FF0026' },
 ];
 
-export const StrainGauge: React.FC<StrainGaugeProps> = ({
+export const StrainGauge: React.FC<StrainGaugeProps> = React.memo(({
   strain,
   label = 'CHARGE',
   size = 160,
@@ -109,7 +109,7 @@ export const StrainGauge: React.FC<StrainGaugeProps> = ({
         {/* Contenu central */}
         <View style={styles.centerContent}>
           <Text style={[styles.value, { color: currentZone.color }]}>
-            {strain.toFixed(1)}
+            {Number.isInteger(strain) ? strain : strain.toFixed(1)}
           </Text>
           <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
           <Text style={[styles.zone, { color: currentZone.color }]}>
@@ -119,7 +119,7 @@ export const StrainGauge: React.FC<StrainGaugeProps> = ({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   wrapper: {

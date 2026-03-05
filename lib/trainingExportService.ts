@@ -5,7 +5,7 @@
 
 import { getProgressionItems, getPracticeLogsByItemId, PracticeLog, ProgressionItem } from './trainingJournalService';
 import * as FS from 'expo-file-system/legacy';
-import { shareAsync } from 'expo-sharing';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { Alert } from 'react-native';
 import logger from '@/lib/security/logger';
 

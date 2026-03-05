@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-nati
 import { BarChart } from 'react-native-gifted-charts';
 import { SPACING, RADIUS } from '@/constants/design';
 import { Maximize2 } from 'lucide-react-native';
+import { formatDurationHM } from '@/lib/formatDuration';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -88,7 +89,7 @@ export function SleepHistoryChart({ data, colors, onPress }: SleepHistoryChartPr
           <View style={styles.stat}>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>Moy</Text>
             <Text style={[styles.statValue, { color: colors.textSecondary }]}>
-              {(avgTotal / 60).toFixed(1)}h
+              {formatDurationHM(avgTotal)}
             </Text>
           </View>
         </View>
@@ -116,9 +117,9 @@ export function SleepHistoryChart({ data, colors, onPress }: SleepHistoryChartPr
 
       {/* Légende */}
       <View style={styles.legend}>
-        <LegendItem label="Profond" color="#8B5CF6" value={`${(avgDeep / 60).toFixed(1)}h`} colors={colors} />
-        <LegendItem label="REM" color="#EC4899" value={`${(avgRem / 60).toFixed(1)}h`} colors={colors} />
-        <LegendItem label="Léger" color="#06B6D4" value={`${((avgTotal - avgDeep - avgRem) / 60).toFixed(1)}h`} colors={colors} />
+        <LegendItem label="Profond" color="#8B5CF6" value={formatDurationHM(avgDeep)} colors={colors} />
+        <LegendItem label="REM" color="#EC4899" value={formatDurationHM(avgRem)} colors={colors} />
+        <LegendItem label="Léger" color="#06B6D4" value={formatDurationHM(avgTotal - avgDeep - avgRem)} colors={colors} />
       </View>
     </Wrapper>
   );

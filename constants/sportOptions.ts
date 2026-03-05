@@ -294,6 +294,8 @@ export const SPORT_OPTIONS: Record<string, SportOption[]> = {
     { id: 'm_c_pec', label: 'Pec Deck', icon: 'arm-flex', color: '#EF4444', group: 'PECTORAUX' },
     { id: 'm_c_dip', label: 'Dips Pecs', icon: 'arm-flex', color: '#EF4444', group: 'PECTORAUX' },
     { id: 'm_c_pump', label: 'Pompes', icon: 'arm-flex', color: '#EF4444', group: 'PECTORAUX' },
+    { id: 'm_c_cable', label: 'Cable Cross-over', icon: 'arm-flex', color: '#EF4444', group: 'PECTORAUX' },
+    { id: 'm_c_land', label: 'Landmine Press', icon: 'arm-flex', color: '#EF4444', group: 'PECTORAUX' },
     // DOS
     { id: 'm_b_pu', label: 'Tractions', icon: 'human', color: '#3B82F6', group: 'DOS' },
     { id: 'm_b_ro', label: 'Rowing', icon: 'human', color: '#3B82F6', group: 'DOS' },
@@ -301,6 +303,8 @@ export const SPORT_OPTIONS: Record<string, SportOption[]> = {
     { id: 'm_b_hr', label: 'Tirage Horizontal', icon: 'human', color: '#3B82F6', group: 'DOS' },
     { id: 'm_b_dl', label: 'Soulevé de Terre', icon: 'human', color: '#3B82F6', group: 'DOS' },
     { id: 'm_b_lom', label: 'Lombaires', icon: 'human', color: '#3B82F6', group: 'DOS' },
+    { id: 'm_b_tbar', label: 'T-Bar Row', icon: 'human', color: '#3B82F6', group: 'DOS' },
+    { id: 'm_b_meadows', label: 'Meadows Row', icon: 'human', color: '#3B82F6', group: 'DOS' },
     // ÉPAULES
     { id: 'm_s_pr', label: 'Militaire', icon: 'triangle', color: '#F59E0B', group: 'ÉPAULES' },
     { id: 'm_s_la', label: 'Latérales', icon: 'triangle', color: '#F59E0B', group: 'ÉPAULES' },
@@ -308,10 +312,15 @@ export const SPORT_OPTIONS: Record<string, SportOption[]> = {
     { id: 'm_s_oi', label: 'Oiseau', icon: 'triangle', color: '#F59E0B', group: 'ÉPAULES' },
     { id: 'm_s_sh', label: 'Shrugs', icon: 'triangle', color: '#F59E0B', group: 'ÉPAULES' },
     { id: 'm_s_fp', label: 'Face Pull', icon: 'triangle', color: '#F59E0B', group: 'ÉPAULES' },
+    { id: 'm_s_arnold', label: 'Arnold Press', icon: 'triangle', color: '#F59E0B', group: 'ÉPAULES' },
     // BRAS
     { id: 'm_a_bi', label: 'Biceps', icon: 'arm-flex', color: '#8B5CF6', group: 'BRAS' },
     { id: 'm_a_tr', label: 'Triceps', icon: 'arm-flex-outline', color: '#8B5CF6', group: 'BRAS' },
     { id: 'm_a_av', label: 'Avant-bras', icon: 'arm-flex', color: '#8B5CF6', group: 'BRAS' },
+    { id: 'm_a_preacher', label: 'Preacher Curl', icon: 'arm-flex', color: '#8B5CF6', group: 'BRAS' },
+    { id: 'm_a_hammer', label: 'Hammer Curl', icon: 'arm-flex', color: '#8B5CF6', group: 'BRAS' },
+    { id: 'm_a_pushdown', label: 'Pushdown Corde', icon: 'arm-flex-outline', color: '#8B5CF6', group: 'BRAS' },
+    { id: 'm_a_extnuque', label: 'Extension Nuque', icon: 'arm-flex-outline', color: '#8B5CF6', group: 'BRAS' },
     // JAMBES
     { id: 'm_l_sq', label: 'Squat', icon: 'human-male', color: '#06B6D4', group: 'JAMBES' },
     { id: 'm_l_pr', label: 'Presse', icon: 'human-male', color: '#06B6D4', group: 'JAMBES' },
@@ -320,12 +329,26 @@ export const SPORT_OPTIONS: Record<string, SportOption[]> = {
     { id: 'm_l_lu', label: 'Fentes', icon: 'human-male', color: '#06B6D4', group: 'JAMBES' },
     { id: 'm_l_ht', label: 'Hip Thrust', icon: 'human-male', color: '#06B6D4', group: 'JAMBES' },
     { id: 'm_l_mo', label: 'Mollets', icon: 'human-male', color: '#06B6D4', group: 'JAMBES' },
+    { id: 'm_l_hack', label: 'Hack Squat', icon: 'human-male', color: '#06B6D4', group: 'JAMBES' },
+    { id: 'm_l_rdl', label: 'Romanian Deadlift', icon: 'human-male', color: '#06B6D4', group: 'JAMBES' },
+    { id: 'm_l_add', label: 'Adducteurs', icon: 'human-male', color: '#06B6D4', group: 'JAMBES' },
+    { id: 'm_l_abd', label: 'Abducteurs', icon: 'human-male', color: '#06B6D4', group: 'JAMBES' },
+    { id: 'm_l_bulg', label: 'Bulgarian Split Squat', icon: 'human-male', color: '#06B6D4', group: 'JAMBES' },
+    { id: 'm_l_box', label: 'Box Jump', icon: 'arrow-up-bold', color: '#06B6D4', group: 'JAMBES' },
     // ABDOMINAUX
     { id: 'm_abs_c', label: 'Crunch', icon: 'view-grid', color: '#84CC16', group: 'ABDOMINAUX' },
     { id: 'm_abs_p', label: 'Planche', icon: 'view-grid', color: '#84CC16', group: 'ABDOMINAUX' },
     { id: 'm_abs_r', label: 'Relevé Jambes', icon: 'view-grid', color: '#84CC16', group: 'ABDOMINAUX' },
     { id: 'm_abs_t', label: 'Russian Twist', icon: 'view-grid', color: '#84CC16', group: 'ABDOMINAUX' },
     { id: 'm_abs_w', label: 'Ab Wheel', icon: 'view-grid', color: '#84CC16', group: 'ABDOMINAUX' },
+    { id: 'm_abs_cable', label: 'Cable Crunch', icon: 'view-grid', color: '#84CC16', group: 'ABDOMINAUX' },
+    { id: 'm_abs_pallof', label: 'Pallof Press', icon: 'view-grid', color: '#84CC16', group: 'ABDOMINAUX' },
+    { id: 'm_abs_dead', label: 'Dead Bug', icon: 'view-grid', color: '#84CC16', group: 'ABDOMINAUX' },
+    { id: 'm_abs_hollow', label: 'Hollow Hold', icon: 'view-grid', color: '#84CC16', group: 'ABDOMINAUX' },
+    // COMPOUND
+    { id: 'm_cp_sumo', label: 'Squat Sumo', icon: 'human-male', color: '#DC2626', group: 'COMPOUND' },
+    { id: 'm_cp_cleanpress', label: 'Clean & Press', icon: 'weight-lifter', color: '#DC2626', group: 'COMPOUND' },
+    { id: 'm_cp_thruster', label: 'Thruster', icon: 'weight-lifter', color: '#DC2626', group: 'COMPOUND' },
     // KETTLEBELL
     { id: 'm_ket_sw', label: 'Kettlebell Swing', icon: 'kettlebell', color: '#F59E0B', group: 'KETTLEBELL' },
     { id: 'm_ket_sn', label: 'KB Snatch', icon: 'kettlebell', color: '#F59E0B', group: 'KETTLEBELL' },
@@ -458,13 +481,18 @@ export const SPORT_OPTIONS: Record<string, SportOption[]> = {
     { id: 'hy_full', label: 'Simulation', icon: 'timer', color: '#EF4444', group: 'TYPE' },
     { id: 'hy_station', label: 'Stations', icon: 'dumbbell', color: '#3B82F6', group: 'TYPE' },
     { id: 'hy_run', label: 'Course', icon: 'run', color: '#10B981', group: 'TYPE' },
+    { id: 'hy_trans', label: 'Transition Training', icon: 'swap-horizontal', color: '#8B5CF6', group: 'TYPE' },
+    { id: 'hy_pacing', label: 'Pacing Strategy', icon: 'speedometer', color: '#F59E0B', group: 'TYPE' },
     { id: 'hy_ski', label: 'SkiErg', icon: 'ski', color: '#06B6D4', group: 'STATIONS' },
-    { id: 'hy_sled', label: 'Sled Push/Pull', icon: 'cart', color: '#8B5CF6', group: 'STATIONS' },
+    { id: 'hy_sled_push', label: 'Sled Push', icon: 'cart', color: '#8B5CF6', group: 'STATIONS' },
+    { id: 'hy_sled_pull', label: 'Sled Pull', icon: 'cart', color: '#8B5CF6', group: 'STATIONS' },
     { id: 'hy_burpee', label: 'Burpee Broad Jump', icon: 'human-handsup', color: '#F59E0B', group: 'STATIONS' },
     { id: 'hy_row', label: 'Rameur', icon: 'rowing', color: '#EC4899', group: 'STATIONS' },
     { id: 'hy_farmer', label: 'Farmers Carry', icon: 'weight', color: '#84CC16', group: 'STATIONS' },
     { id: 'hy_lunge', label: 'Sandbag Lunges', icon: 'bag-carry-on', color: '#F97316', group: 'STATIONS' },
     { id: 'hy_wall', label: 'Wall Balls', icon: 'basketball', color: '#DC2626', group: 'STATIONS' },
+    { id: 'hy_amrap', label: 'AMRAP Hyrox', icon: 'infinity', color: '#EF4444', group: 'CONDITIONING' },
+    { id: 'hy_emom', label: 'EMOM Hyrox', icon: 'timer', color: '#3B82F6', group: 'CONDITIONING' },
   ],
 
   street_workout: [
@@ -591,14 +619,157 @@ export const SPORT_OPTIONS: Record<string, SportOption[]> = {
     { id: 'es_pan', label: 'Pan', icon: 'wall', color: '#EC4899', group: 'ENTRAÎNEMENT' },
     { id: 'es_projet', label: 'Projets', icon: 'target', color: '#DC2626', group: 'TYPE' },
   ],
+
+  // ═══════════════════════════════════════════
+  // RAMEUR (ROWING)
+  // ═══════════════════════════════════════════
+  rameur: [
+    { id: 'row_endu', label: 'Endurance', icon: 'clock-outline', color: '#10B981', group: 'TYPE' },
+    { id: 'row_frac', label: 'Fractionné', icon: 'chart-line', color: '#EF4444', group: 'TYPE' },
+    { id: 'row_2k', label: 'Test 2000m', icon: 'speedometer', color: '#DC2626', group: 'TYPE' },
+    { id: 'row_500', label: 'Sprint 500m', icon: 'flash', color: '#F59E0B', group: 'TYPE' },
+    { id: 'row_tech', label: 'Technique', icon: 'school', color: '#8B5CF6', group: 'TYPE' },
+    { id: 'row_z1', label: 'Zone 1 (Récup)', icon: 'heart-outline', color: '#10B981', group: 'INTENSITÉ' },
+    { id: 'row_z2', label: 'Zone 2 (Endu)', icon: 'heart', color: '#3B82F6', group: 'INTENSITÉ' },
+    { id: 'row_z3', label: 'Zone 3 (Tempo)', icon: 'heart-pulse', color: '#F59E0B', group: 'INTENSITÉ' },
+    { id: 'row_z4', label: 'Zone 4 (Seuil)', icon: 'heart-flash', color: '#F97316', group: 'INTENSITÉ' },
+    { id: 'row_z5', label: 'Zone 5 (Max)', icon: 'heart-broken', color: '#DC2626', group: 'INTENSITÉ' },
+  ],
+
+  // ═══════════════════════════════════════════
+  // COURSE D'OBSTACLES (OCR / SPARTAN)
+  // ═══════════════════════════════════════════
+  obstacle: [
+    { id: 'ocr_simu', label: 'Simulation', icon: 'timer', color: '#EF4444', group: 'TYPE' },
+    { id: 'ocr_obst', label: 'Obstacles', icon: 'wall', color: '#8B5CF6', group: 'TYPE' },
+    { id: 'ocr_course', label: 'Course', icon: 'run', color: '#10B981', group: 'TYPE' },
+    { id: 'ocr_renfo', label: 'Renfo Spécifique', icon: 'arm-flex', color: '#3B82F6', group: 'TYPE' },
+    { id: 'ocr_comp', label: 'Compétition', icon: 'trophy', color: '#EAB308', group: 'TYPE' },
+    { id: 'ocr_corde', label: 'Corde', icon: 'rope', color: '#F97316', group: 'OBSTACLES' },
+    { id: 'ocr_monkey', label: 'Monkey Bars', icon: 'hand-back-right', color: '#F97316', group: 'OBSTACLES' },
+    { id: 'ocr_carry', label: 'Carry', icon: 'weight', color: '#F97316', group: 'OBSTACLES' },
+    { id: 'ocr_rampe', label: 'Rampe', icon: 'trending-up', color: '#F97316', group: 'OBSTACLES' },
+    { id: 'ocr_mur', label: 'Mur', icon: 'wall', color: '#F97316', group: 'OBSTACLES' },
+    { id: 'ocr_barbeles', label: 'Barbelés', icon: 'arrow-down', color: '#F97316', group: 'OBSTACLES' },
+  ],
+
+  // ═══════════════════════════════════════════
+  // TRIATHLON
+  // ═══════════════════════════════════════════
+  triathlon: [
+    { id: 'tri_natation', label: 'Natation', icon: 'swim', color: '#3B82F6', group: 'DISCIPLINE' },
+    { id: 'tri_velo', label: 'Vélo', icon: 'bike', color: '#10B981', group: 'DISCIPLINE' },
+    { id: 'tri_course', label: 'Course', icon: 'run', color: '#F59E0B', group: 'DISCIPLINE' },
+    { id: 'tri_trans', label: 'Transition', icon: 'swap-horizontal', color: '#8B5CF6', group: 'DISCIPLINE' },
+    { id: 'tri_brick', label: 'Brick (enchaîné)', icon: 'link', color: '#EC4899', group: 'DISCIPLINE' },
+    { id: 'tri_sprint', label: 'Sprint', icon: 'flash', color: '#06B6D4', group: 'FORMAT' },
+    { id: 'tri_m', label: 'M / Olympique', icon: 'medal', color: '#3B82F6', group: 'FORMAT' },
+    { id: 'tri_half', label: 'Half Ironman', icon: 'trophy', color: '#F97316', group: 'FORMAT' },
+    { id: 'tri_iron', label: 'Ironman', icon: 'infinity', color: '#DC2626', group: 'FORMAT' },
+  ],
+
+  // ═══════════════════════════════════════════
+  // DANSE
+  // ═══════════════════════════════════════════
+  danse: [
+    { id: 'da_classique', label: 'Classique', icon: 'human-female', color: '#EC4899', group: 'STYLE' },
+    { id: 'da_contemp', label: 'Contemporain', icon: 'human-handsup', color: '#8B5CF6', group: 'STYLE' },
+    { id: 'da_hiphop', label: 'Hip-Hop', icon: 'music', color: '#3B82F6', group: 'STYLE' },
+    { id: 'da_salsa', label: 'Salsa', icon: 'music-note', color: '#EF4444', group: 'STYLE' },
+    { id: 'da_rock', label: 'Rock', icon: 'music', color: '#F59E0B', group: 'STYLE' },
+    { id: 'da_afro', label: 'Afro', icon: 'music-note', color: '#10B981', group: 'STYLE' },
+    { id: 'da_training', label: 'Entraînement', icon: 'dumbbell', color: '#06B6D4', group: 'TYPE' },
+    { id: 'da_choreo', label: 'Chorégraphie', icon: 'clipboard-text', color: '#F97316', group: 'TYPE' },
+    { id: 'da_spectacle', label: 'Spectacle', icon: 'star', color: '#EAB308', group: 'TYPE' },
+  ],
+
+  // ═══════════════════════════════════════════
+  // GYMNASTIQUE
+  // ═══════════════════════════════════════════
+  gymnastique: [
+    { id: 'gy_sol', label: 'Sol', icon: 'yoga', color: '#10B981', group: 'APPAREIL' },
+    { id: 'gy_barres', label: 'Barres', icon: 'minus', color: '#3B82F6', group: 'APPAREIL' },
+    { id: 'gy_poutre', label: 'Poutre', icon: 'minus', color: '#8B5CF6', group: 'APPAREIL' },
+    { id: 'gy_anneaux', label: 'Anneaux', icon: 'circle-outline', color: '#F59E0B', group: 'APPAREIL' },
+    { id: 'gy_cheval', label: 'Cheval d\'arçons', icon: 'horse', color: '#EC4899', group: 'APPAREIL' },
+    { id: 'gy_saut', label: 'Saut', icon: 'arrow-up-bold', color: '#EF4444', group: 'APPAREIL' },
+    { id: 'gy_training', label: 'Entraînement', icon: 'dumbbell', color: '#06B6D4', group: 'TYPE' },
+    { id: 'gy_souplesse', label: 'Souplesse', icon: 'human-handsup', color: '#14B8A6', group: 'TYPE' },
+    { id: 'gy_comp', label: 'Compétition', icon: 'trophy', color: '#EAB308', group: 'TYPE' },
+  ],
+
+  // ═══════════════════════════════════════════
+  // TAEKWONDO
+  // ═══════════════════════════════════════════
+  taekwondo: [
+    { id: 'tk_poomsae', label: 'Poomsae', icon: 'account-group', color: '#10B981', group: 'TYPE' },
+    { id: 'tk_combat', label: 'Combat', icon: 'sword-cross', color: '#EF4444', group: 'TYPE' },
+    { id: 'tk_tech', label: 'Technique', icon: 'school', color: '#8B5CF6', group: 'TYPE' },
+    { id: 'tk_casse', label: 'Casse', icon: 'hand-back-left', color: '#F59E0B', group: 'TYPE' },
+    { id: 'tk_cond', label: 'Conditioning', icon: 'fire', color: '#DC2626', group: 'TYPE' },
+    { id: 'tk_dollyo', label: 'Dollyo-chagi', icon: 'shoe-sneaker', color: '#06B6D4', group: 'KICKS' },
+    { id: 'tk_ap', label: 'Ap-chagi', icon: 'shoe-sneaker', color: '#06B6D4', group: 'KICKS' },
+    { id: 'tk_yop', label: 'Yop-chagi', icon: 'shoe-sneaker', color: '#06B6D4', group: 'KICKS' },
+    { id: 'tk_naeryeo', label: 'Naeryeo-chagi', icon: 'shoe-sneaker', color: '#06B6D4', group: 'KICKS' },
+    { id: 'tk_dwi', label: 'Dwi-chagi', icon: 'shoe-sneaker', color: '#06B6D4', group: 'KICKS' },
+    { id: 'tk_spin', label: 'Spinning Kick', icon: 'rotate-3d', color: '#EC4899', group: 'KICKS' },
+  ],
+
+  // ═══════════════════════════════════════════
+  // SPORTS COLLECTIFS - ADDITIONNELS
+  // ═══════════════════════════════════════════
+  handball: [
+    { id: 'hb_match', label: 'Match', icon: 'handball', color: '#10B981', group: 'TYPE' },
+    { id: 'hb_train', label: 'Entraînement', icon: 'whistle', color: '#3B82F6', group: 'TYPE' },
+    { id: 'hb_tact', label: 'Tactique', icon: 'strategy', color: '#F59E0B', group: 'TYPE' },
+    { id: 'hb_physique', label: 'Physique', icon: 'run', color: '#EF4444', group: 'TYPE' },
+    { id: 'hb_tir', label: 'Tirs', icon: 'target', color: '#8B5CF6', group: 'TECHNIQUE' },
+    { id: 'hb_def', label: 'Défense', icon: 'shield', color: '#EC4899', group: 'TECHNIQUE' },
+  ],
+
+  volleyball: [
+    { id: 'vb_match', label: 'Match', icon: 'volleyball', color: '#10B981', group: 'TYPE' },
+    { id: 'vb_train', label: 'Entraînement', icon: 'whistle', color: '#3B82F6', group: 'TYPE' },
+    { id: 'vb_tact', label: 'Tactique', icon: 'strategy', color: '#F59E0B', group: 'TYPE' },
+    { id: 'vb_physique', label: 'Physique', icon: 'run', color: '#EF4444', group: 'TYPE' },
+    { id: 'vb_service', label: 'Service', icon: 'arrow-up-bold', color: '#8B5CF6', group: 'TECHNIQUE' },
+    { id: 'vb_smash', label: 'Smash', icon: 'arrow-down-bold', color: '#DC2626', group: 'TECHNIQUE' },
+    { id: 'vb_bloc', label: 'Bloc', icon: 'shield', color: '#EC4899', group: 'TECHNIQUE' },
+    { id: 'vb_recep', label: 'Réception', icon: 'hand-back-right', color: '#06B6D4', group: 'TECHNIQUE' },
+  ],
+
+  // ═══════════════════════════════════════════
+  // SPORTS DE RAQUETTE - ADDITIONNELS
+  // ═══════════════════════════════════════════
+  golf: [
+    { id: 'go_parcours', label: 'Parcours', icon: 'golf', color: '#10B981', group: 'TYPE' },
+    { id: 'go_practice', label: 'Practice', icon: 'golf-tee', color: '#3B82F6', group: 'TYPE' },
+    { id: 'go_putting', label: 'Putting', icon: 'golf', color: '#8B5CF6', group: 'TYPE' },
+    { id: 'go_chipping', label: 'Chipping', icon: 'golf', color: '#F59E0B', group: 'TYPE' },
+    { id: 'go_driving', label: 'Driving', icon: 'golf', color: '#EF4444', group: 'TYPE' },
+  ],
+
+  squash: [
+    { id: 'sq_match', label: 'Match', icon: 'tennis', color: '#10B981', group: 'TYPE' },
+    { id: 'sq_train', label: 'Entraînement', icon: 'whistle', color: '#3B82F6', group: 'TYPE' },
+    { id: 'sq_solo', label: 'Solo / Mur', icon: 'wall', color: '#8B5CF6', group: 'TYPE' },
+    { id: 'sq_physique', label: 'Physique', icon: 'run', color: '#EF4444', group: 'TYPE' },
+  ],
+
+  tennis_de_table: [
+    { id: 'pp_match', label: 'Match', icon: 'table-tennis', color: '#10B981', group: 'TYPE' },
+    { id: 'pp_train', label: 'Entraînement', icon: 'whistle', color: '#3B82F6', group: 'TYPE' },
+    { id: 'pp_service', label: 'Service', icon: 'arrow-up', color: '#8B5CF6', group: 'TECHNIQUE' },
+    { id: 'pp_top', label: 'Topspin', icon: 'rotate-right', color: '#F59E0B', group: 'TECHNIQUE' },
+    { id: 'pp_bloc', label: 'Bloc', icon: 'shield', color: '#EC4899', group: 'TECHNIQUE' },
+  ],
 };
 
 // Options par défaut pour les sports sans options spécifiques
 export const DEFAULT_OPTIONS: SportOption[] = [
   { id: 'training', label: 'Entraînement', icon: 'dumbbell', color: '#3B82F6' },
   { id: 'technique', label: 'Technique', icon: 'school', color: '#8B5CF6' },
-  { id: 'sparring', label: 'Sparring/Match', icon: 'sword-cross', color: '#EF4444' },
-  { id: 'competition', label: 'Compétition', icon: 'trophy', color: '#10B981' },
+  { id: 'match', label: 'Match/Compétition', icon: 'trophy', color: '#10B981' },
   { id: 'conditioning', label: 'Conditioning', icon: 'fire', color: '#F59E0B' },
   { id: 'recovery', label: 'Récupération', icon: 'sleep', color: '#06B6D4' },
 ];

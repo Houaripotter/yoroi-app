@@ -68,7 +68,7 @@ class AppleWatchService {
   private listeners: Map<string, any> = new Map();
   private processingHydration = false;
   private processingWeight = false;
-  private syncInterval: NodeJS.Timeout | null = null;
+  private syncInterval: ReturnType<typeof setInterval> | null = null;
 
   // ============================================
   // INITIALISATION
@@ -79,28 +79,28 @@ class AppleWatchService {
    */
   async init() {
     if (!WatchConnectivityBridge) {
-      logger.warn('⚠️ WatchConnectivityBridge non disponible (pas iOS ou module absent)');
+      logger.warn('WatchConnectivityBridge non disponible (pas iOS ou module absent)');
       return;
     }
 
-    logger.info('🎯 Initialisation AppleWatchService avec WatchConnectivityBridge');
+    logger.info('Initialisation AppleWatchService avec WatchConnectivityBridge');
 
     try {
       // Activer la session WatchConnectivity
       const activated = await WatchConnectivityBridge.activateSession();
       if (activated) {
-        logger.info('✅ WatchConnectivity session activée');
+        logger.info('WatchConnectivity session activée');
       }
 
       // Vérifier si Watch disponible
       const isAvailable = await WatchConnectivityBridge.isWatchAvailable();
-      logger.info(`📱 Watch disponible: ${isAvailable}`);
+      logger.info(`Watch disponible: ${isAvailable}`);
 
       // Écouter les changements de reachability
       this.listeners.set(
         'onWatchReachabilityChanged',
         watchEmitter?.addListener('onWatchReachabilityChanged', (status: WatchStatus) => {
-          logger.info('🔄 État watch changé:', status);
+          logger.info('État watch changé:', status);
           if (status.isReachable) {
             // Watch à portée, sync immédiate!
             this.syncToWatch();
@@ -112,7 +112,7 @@ class AppleWatchService {
       this.listeners.set(
         'onWatchMessageReceived',
         watchEmitter?.addListener('onWatchMessageReceived', async (message: any) => {
-          logger.info('📩 Message reçu de la watch:', message);
+          logger.info('Message reçu de la watch:', message);
 
           // Traiter les actions depuis la watch
           if (message.action === 'syncRequest') {
@@ -129,7 +129,7 @@ class AppleWatchService {
       this.listeners.set(
         'onWatchDataReceived',
         watchEmitter?.addListener('onWatchDataReceived', async (event: any) => {
-          logger.info('📦 Données reçues de la watch:', event);
+          logger.info('Données reçues de la watch:', event);
         })
       );
 
@@ -137,7 +137,7 @@ class AppleWatchService {
       this.listeners.set(
         'onWatchError',
         watchEmitter?.addListener('onWatchError', (error: any) => {
-          logger.error('❌ Erreur WatchConnectivity:', error);
+          logger.error('Erreur WatchConnectivity:', error);
         })
       );
 
@@ -147,9 +147,9 @@ class AppleWatchService {
       // Sync du carnet d'entraînement (records)
       try {
         await syncCarnetToWatch();
-        logger.info('📊 Carnet synchronisé vers Apple Watch');
+        logger.info('Carnet synchronisé vers Apple Watch');
       } catch (carnetError) {
-        logger.warn('⚠️ Échec sync carnet:', carnetError);
+        logger.warn('Échec sync carnet:', carnetError);
       }
 
       // Auto-sync toutes les 30 secondes si Watch reachable
@@ -166,9 +166,9 @@ class AppleWatchService {
         }
       }, 30000);
 
-      logger.info('✅ AppleWatchService initialisé avec succès');
+      logger.info('AppleWatchService initialisé avec succès');
     } catch (error) {
-      logger.error('❌ Erreur initialisation AppleWatchService:', error);
+      logger.error('Erreur initialisation AppleWatchService:', error);
     }
   }
 
@@ -206,13 +206,13 @@ class AppleWatchService {
       const success = await WatchConnectivityBridge.updateApplicationContext(watchData);
 
       if (success) {
-        logger.info('✅ Données synchronisées vers la watch via updateApplicationContext');
+        logger.info('Données synchronisées vers la watch via updateApplicationContext');
         logger.info(`   - Poids: ${watchData.currentWeight}kg`);
         logger.info(`   - Hydratation: ${watchData.hydrationCurrent}/${watchData.hydrationGoal}ml`);
         logger.info(`   - User: ${watchData.userName || 'N/A'}`);
       }
     } catch (error) {
-      logger.error('❌ Erreur sync vers watch:', error);
+      logger.error('Erreur sync vers watch:', error);
     }
   }
 
@@ -339,12 +339,12 @@ class AppleWatchService {
       await AsyncStorage.setItem(`hydration_${today}`, newTotal.toString());
       await AsyncStorage.setItem(LAST_HYDRATION_KEY, now.toString());
 
-      logger.info(`✅ Hydratation mise a jour: ${current}ml -> ${newTotal}ml`);
+      logger.info(`Hydratation mise a jour: ${current}ml -> ${newTotal}ml`);
 
       // Re-sync vers la watch avec les nouvelles donnees
       await this.syncToWatch();
     } catch (error) {
-      logger.error('❌ Erreur ajout hydratation:', error);
+      logger.error('Erreur ajout hydratation:', error);
     } finally {
       this.processingHydration = false;
     }
@@ -388,12 +388,12 @@ class AppleWatchService {
       await AsyncStorage.setItem('@yoroi_current_weight', weight.toString());
       await AsyncStorage.setItem(LAST_WEIGHT_KEY, now.toString());
 
-      logger.info(`✅ Poids sauvegarde dans la DB: ${weight}kg`);
+      logger.info(`Poids sauvegarde dans la DB: ${weight}kg`);
 
       // Re-sync vers la watch
       await this.syncToWatch();
     } catch (error) {
-      logger.error('❌ Erreur ajout poids:', error);
+      logger.error('Erreur ajout poids:', error);
     } finally {
       this.processingWeight = false;
     }
@@ -421,7 +421,7 @@ class AppleWatchService {
         isWatchAppInstalled: isAvailable,
       };
     } catch (error) {
-      logger.error('❌ Erreur vérification watch:', error);
+      logger.error('Erreur vérification watch:', error);
       return null;
     }
   }
@@ -430,7 +430,7 @@ class AppleWatchService {
    * Force la synchronisation immédiate (pour les settings de la Watch par exemple)
    */
   async forceSyncNow() {
-    logger.info('🔄 Force sync demandée');
+    logger.info('Force sync demandée');
     await this.syncToWatch();
   }
 
@@ -438,13 +438,13 @@ class AppleWatchService {
    * Force la synchronisation du carnet d'entraînement (records)
    */
   async forceSyncCarnet() {
-    logger.info('🔄 Force sync carnet demandée');
+    logger.info('Force sync carnet demandée');
     try {
       await syncCarnetToWatch();
-      logger.info('✅ Carnet synchronisé avec succès');
+      logger.info('Carnet synchronisé avec succès');
       return true;
     } catch (error) {
-      logger.error('❌ Échec sync carnet:', error);
+      logger.error('Échec sync carnet:', error);
       return false;
     }
   }
@@ -453,7 +453,7 @@ class AppleWatchService {
    * Force la synchronisation complète (santé + carnet)
    */
   async forceFullSync() {
-    logger.info('🔄 Force full sync demandée');
+    logger.info('Force full sync demandée');
     await this.syncToWatch();
     await this.forceSyncCarnet();
   }

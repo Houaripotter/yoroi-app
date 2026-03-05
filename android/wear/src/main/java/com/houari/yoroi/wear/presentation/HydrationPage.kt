@@ -21,10 +21,15 @@ import com.houari.yoroi.wear.theme.*
 
 /**
  * Page 3: Hydratation - Bouteille + boutons rapides
- * Identique a HydrationPage.swift de l'Apple Watch
  */
 @Composable
 fun HydrationPage(repo: YoroiDataRepository) {
+    val colors = rememberSyncedWatchColors(
+        bgHex = repo.themeBgHex, cardBgHex = repo.themeCardBgHex,
+        textPrimaryHex = repo.themeTextPrimaryHex, textSecondaryHex = repo.themeTextSecondaryHex,
+        dividerHex = repo.themeDividerHex, textOnAccentHex = repo.themeTextOnAccentHex,
+        isDarkMode = repo.isDarkMode
+    )
     val fillPct = if (repo.hydrationGoal > 0)
         (repo.hydrationCurrent.toFloat() / repo.hydrationGoal).coerceIn(0f, 1f) else 0f
     val goalReached = fillPct >= 1f
@@ -45,7 +50,31 @@ fun HydrationPage(repo: YoroiDataRepository) {
                     modifier = Modifier.size(10.dp)
                 )
                 Spacer(Modifier.width(4.dp))
-                Text("Hydratation", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary.copy(alpha = 0.7f))
+                Text("Hydratation", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary.copy(alpha = 0.7f))
+            }
+        }
+
+        // Sync button
+        item {
+            val themeAccent = remember(repo.themeAccentHex) { parseHexColor(repo.themeAccentHex) }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(themeAccent.copy(alpha = 0.08f))
+                    .clickable { repo.requestSync() }
+                    .padding(vertical = 5.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                androidx.compose.material3.Icon(
+                    Icons.Filled.Sync,
+                    contentDescription = null,
+                    tint = themeAccent,
+                    modifier = Modifier.size(10.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+                Text("Synchroniser", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = themeAccent)
             }
         }
 
@@ -80,9 +109,9 @@ fun HydrationPage(repo: YoroiDataRepository) {
                             "${repo.hydrationCurrent}",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = if (goalReached) Green else TextPrimary
+                            color = if (goalReached) Green else colors.textPrimary
                         )
-                        Text("ml", fontSize = 7.sp, color = TextPrimary.copy(alpha = 0.7f))
+                        Text("ml", fontSize = 7.sp, color = colors.textPrimary.copy(alpha = 0.7f))
                     }
                 }
             }
@@ -99,17 +128,17 @@ fun HydrationPage(repo: YoroiDataRepository) {
                     "%.1f".format(repo.hydrationCurrent / 1000f),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = if (goalReached) Green else TextPrimary
+                    color = if (goalReached) Green else colors.textPrimary
                 )
-                Text("L", fontSize = 9.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
-                Text(" / ", fontSize = 10.sp, color = TextSecondary)
+                Text("L", fontSize = 9.sp, fontWeight = FontWeight.SemiBold, color = colors.textSecondary)
+                Text(" / ", fontSize = 10.sp, color = colors.textSecondary)
                 Text(
                     "%.1f".format(repo.hydrationGoal / 1000f),
                     fontSize = 9.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextSecondary
+                    color = colors.textSecondary
                 )
-                Text("L", fontSize = 9.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
+                Text("L", fontSize = 9.sp, fontWeight = FontWeight.SemiBold, color = colors.textSecondary)
             }
         }
 

@@ -8,7 +8,7 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
-import { addTraining, updateTrainingDetails } from './database';
+import { addTraining, updateTrainingDetails, getProfile } from './database';
 import type { Training } from './database';
 import { saveNotification } from './notificationHistoryService';
 
@@ -830,9 +830,10 @@ class HealthConnectService {
 
     try {
       return await queryFn();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Gestion des erreurs de permission
-      if (error?.message?.includes('Permission') || error?.message?.includes('permission')) {
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (errorMessage.includes('Permission') || errorMessage.includes('permission')) {
         logger.info(`[HealthConnect Android] Permissions non accordées pour ${dataTypeName}`);
         return null;
       }
@@ -1072,18 +1073,18 @@ class HealthConnectService {
         const min = Math.min(...allBpm);
         const max = Math.max(...allBpm);
 
-        // Essayer de récupérer le resting HR
-        let resting = min;
+        // Essayer de récupérer le resting HR (donnee reelle uniquement)
+        let resting = 0;
         try {
           const restingRecords = await HC.readRecords('RestingHeartRate', {
             timeRangeFilter: this.createTimeRangeFilter(today, new Date()),
           });
           if (restingRecords?.records && restingRecords.records.length > 0) {
             const latestResting = restingRecords.records[restingRecords.records.length - 1] as any;
-            resting = latestResting.beatsPerMinute || min;
+            resting = latestResting.beatsPerMinute || 0;
           }
         } catch {
-          // Fallback sur le min
+          // Pas de donnee resting HR
         }
 
         return {
@@ -2313,7 +2314,7 @@ class HealthConnectService {
 
       // Heart Rate Zones (calculees depuis les samples)
       if (hrSamples.length > 0) {
-        details.heartRateZones = this.computeHRZones(hrSamples, startTime, endTime);
+        details.heartRateZones = await this.computeHRZones(hrSamples, startTime, endTime);
       }
 
       // Average pace
@@ -2412,17 +2413,41 @@ class HealthConnectService {
   /**
    * Calcule les zones de FC (5 zones classiques)
    */
-  private computeHRZones(
+  private async computeHRZones(
     samples: HeartRateSample[],
     startTime: Date,
     endTime: Date
-  ): WorkoutDetails['heartRateZones'] {
+  ): Promise<WorkoutDetails['heartRateZones']> {
+    // Calculer maxHR depuis le profil utilisateur (meme formule qu'Apple Health)
+    let maxHR = 190; // fallback
+    try {
+      const profile = await getProfile();
+      if (profile?.birth_date) {
+        const age = Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        if (age > 10 && age < 100) maxHR = 220 - age;
+      } else if (profile?.age && profile.age > 10 && profile.age < 100) {
+        maxHR = 220 - profile.age;
+      }
+    } catch (e) {
+      logger.warn('[HealthConnect Android] Impossible de lire profil pour maxHR:', e);
+    }
+    // Fallback: utiliser la FC max observee dans les samples
+    if (maxHR === 190 && samples.length > 0) {
+      const observedMax = Math.max(...samples.map(s => s.bpm));
+      if (observedMax > 100) maxHR = observedMax;
+    }
+
+    const z1Max = Math.round(maxHR * 0.6);
+    const z2Max = Math.round(maxHR * 0.7);
+    const z3Max = Math.round(maxHR * 0.8);
+    const z4Max = Math.round(maxHR * 0.9);
+
     const zones = [
-      { zone: 1, name: 'Recovery', minBpm: 0, maxBpm: 120, color: '#3B82F6', seconds: 0 },
-      { zone: 2, name: 'Endurance', minBpm: 120, maxBpm: 140, color: '#22C55E', seconds: 0 },
-      { zone: 3, name: 'Tempo', minBpm: 140, maxBpm: 160, color: '#EAB308', seconds: 0 },
-      { zone: 4, name: 'Threshold', minBpm: 160, maxBpm: 180, color: '#F97316', seconds: 0 },
-      { zone: 5, name: 'Maximum', minBpm: 180, maxBpm: 999, color: '#EF4444', seconds: 0 },
+      { zone: 1, name: 'Recovery', minBpm: 0, maxBpm: z1Max, color: '#3B82F6', seconds: 0 },
+      { zone: 2, name: 'Endurance', minBpm: z1Max, maxBpm: z2Max, color: '#22C55E', seconds: 0 },
+      { zone: 3, name: 'Tempo', minBpm: z2Max, maxBpm: z3Max, color: '#EAB308', seconds: 0 },
+      { zone: 4, name: 'Threshold', minBpm: z3Max, maxBpm: z4Max, color: '#F97316', seconds: 0 },
+      { zone: 5, name: 'Maximum', minBpm: z4Max, maxBpm: 999, color: '#EF4444', seconds: 0 },
     ];
 
     if (samples.length < 2) return zones.map(z => ({

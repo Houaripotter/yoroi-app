@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, Animated, Easing, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { formatHoursHM } from '@/lib/formatDuration';
 import { Moon, Clock, AlertTriangle, CheckCircle } from 'lucide-react-native';
 import Svg, { Path, Circle, Ellipse } from 'react-native-svg';
 import { router } from 'expo-router';
@@ -16,13 +17,15 @@ interface SleepLottieCardProps {
   quality?: number;
   debt?: number;
   goal?: number;
+  phases?: { deep: number; rem: number; core: number; awake: number } | null;
 }
 
 export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
   hours = 0,
   quality = 0,
   debt = 0,
-  goal
+  goal,
+  phases,
 }) => {
   const { colors, isDark } = useTheme();
   
@@ -46,7 +49,7 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
   useEffect(() => {
     // OPTIMISATION #70: Étaler les animations avec setTimeout pour éviter de blocker le thread
     const animations: any[] = [];
-    const timeouts: NodeJS.Timeout[] = [];
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
 
     // Lune flottante - démarrage immédiat (légère)
     const float = Animated.loop(
@@ -369,12 +372,34 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
         </Text>
       </View>
 
+      {/* Barre de phases de sommeil */}
+      {phases && (phases.deep > 0 || phases.rem > 0 || phases.core > 0 || phases.awake > 0) && (() => {
+        const total = phases.deep + phases.rem + phases.core + phases.awake;
+        if (total === 0) return null;
+        const pct = (v: number) => `${(v / total) * 100}%` as any;
+        return (
+          <View style={styles.phasesContainer}>
+            <View style={styles.phasesBar}>
+              {phases.deep > 0 && <View style={[styles.phaseSegment, { width: pct(phases.deep), backgroundColor: '#1E40AF' }]} />}
+              {phases.rem > 0 && <View style={[styles.phaseSegment, { width: pct(phases.rem), backgroundColor: '#7C3AED' }]} />}
+              {phases.core > 0 && <View style={[styles.phaseSegment, { width: pct(phases.core), backgroundColor: '#60A5FA' }]} />}
+              {phases.awake > 0 && <View style={[styles.phaseSegment, { width: pct(phases.awake), backgroundColor: '#FCA5A5' }]} />}
+            </View>
+            <View style={styles.phasesLegend}>
+              <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: '#1E40AF' }]} /><Text style={styles.legendText}>{Math.round(phases.deep)}m</Text></View>
+              <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: '#7C3AED' }]} /><Text style={styles.legendText}>{Math.round(phases.rem)}m</Text></View>
+              <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: '#60A5FA' }]} /><Text style={styles.legendText}>{Math.round(phases.core)}m</Text></View>
+            </View>
+          </View>
+        );
+      })()}
+
       {/* Footer - Dette si présente */}
       {debt > 0 && (
         <View style={[styles.footer, { backgroundColor: '#EF444415' }]}>
           <AlertTriangle size={10} color="#EF4444" />
           <Text style={styles.debtText}>
-            Dette: {debt.toFixed(1)}h
+            Dette: {formatHoursHM(debt)}
           </Text>
         </View>
       )}
@@ -534,6 +559,40 @@ const styles = StyleSheet.create({
   debtText: {
     fontSize: 10,
     color: '#EF4444',
+    fontWeight: '600',
+  },
+  phasesContainer: {
+    marginTop: 4,
+    gap: 3,
+    zIndex: 10,
+  },
+  phasesBar: {
+    flexDirection: 'row',
+    height: 5,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  phaseSegment: {
+    height: '100%',
+  },
+  phasesLegend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  legendDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  legendText: {
+    fontSize: 7,
+    color: '#9CA3AF',
     fontWeight: '600',
   },
 });

@@ -2,6 +2,7 @@
 // YOROI - PLANNING SEANCES CONTENT
 // ============================================
 // Liste des seances avec filtre sport, navigation mois, resume
+// Affiche UNIQUEMENT les donnees reelles Apple Health / sources externes
 
 import React, { useState, useMemo } from 'react';
 import {
@@ -27,6 +28,27 @@ interface PlanningSeancesContentProps {
   workouts: Training[];
 }
 
+interface ParsedDetails {
+  avgPaceSecondsPerKm?: number;
+  elevationAscended?: number;
+  elevationDescended?: number;
+  avgHeartRate?: number;
+  minHeartRate?: number;
+  maxHeartRate?: number;
+  activeCalories?: number;
+  totalCalories?: number;
+  distanceKm?: number;
+  weatherTemp?: number;
+  weatherHumidity?: number;
+  weatherCondition?: string;
+  airQualityIndex?: number;
+  airQualityCategory?: string;
+  hasRoute?: boolean;
+  splitsCount?: number;
+  recoveryHR?: { atEnd?: number; after1Min?: number; after2Min?: number };
+  heartRateZones?: { zone: number; name: string; durationSeconds: number; color: string }[];
+}
+
 const formatDuration = (minutes: number): string => {
   const h = Math.floor(minutes / 60);
   const m = Math.round(minutes % 60);
@@ -42,18 +64,44 @@ const formatDurationCompact = (minutes: number): string => {
   return `${h}h ${m.toString().padStart(2, '0')}`;
 };
 
-const estimateCalories = (sport: string, durationMin: number): number => {
-  const rates: Record<string, number> = {
-    running: 10, cycling: 8, swimming: 9, hiking: 7,
-    jjb: 9, musculation: 6, yoga: 3, boxing: 10,
-  };
-  const rate = rates[sport?.toLowerCase()] || 7;
-  return Math.round(durationMin * rate);
-};
-
 const formatCalories = (cal: number): string => {
   if (cal >= 1000) return `${(cal / 1000).toFixed(1).replace('.', ',')}k`;
   return cal.toLocaleString('fr-FR');
+};
+
+const formatPace = (secondsPerKm: number): string => {
+  const mins = Math.floor(secondsPerKm / 60);
+  const secs = Math.round(secondsPerKm % 60);
+  return `${mins}'${secs.toString().padStart(2, '0')}"/km`;
+};
+
+const parseWorkoutDetails = (json?: string): ParsedDetails => {
+  if (!json) return {};
+  try {
+    const d = JSON.parse(json);
+    return {
+      avgPaceSecondsPerKm: d.avgPaceSecondsPerKm || undefined,
+      elevationAscended: d.elevationAscended || undefined,
+      elevationDescended: d.elevationDescended || undefined,
+      avgHeartRate: d.avgHeartRate || undefined,
+      minHeartRate: d.minHeartRate || undefined,
+      maxHeartRate: d.maxHeartRate || undefined,
+      activeCalories: d.activeCalories || undefined,
+      totalCalories: d.totalCalories || undefined,
+      distanceKm: d.distanceKm || undefined,
+      weatherTemp: d.weatherTemp != null ? d.weatherTemp : undefined,
+      weatherHumidity: d.weatherHumidity != null ? d.weatherHumidity : undefined,
+      weatherCondition: d.weatherCondition || undefined,
+      airQualityIndex: d.airQualityIndex || undefined,
+      airQualityCategory: d.airQualityCategory || undefined,
+      hasRoute: d.routePoints && d.routePoints.length > 0,
+      splitsCount: d.splits ? d.splits.length : undefined,
+      recoveryHR: d.recoveryHR || undefined,
+      heartRateZones: d.heartRateZones || undefined,
+    };
+  } catch {
+    return {};
+  }
 };
 
 export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ workouts }) => {
@@ -61,28 +109,33 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
   const { t, locale } = useI18n();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedSport, setSelectedSport] = useState<string>('all');
+  const [showAllMonths, setShowAllMonths] = useState(true);
 
   const dateLocale = locale === 'fr' ? fr : enUS;
 
-  // Filter workouts by current month
-  const monthWorkouts = useMemo(
-    () => workouts.filter(w => {
-      try {
-        return isSameMonth(parseISO(w.date), currentMonth);
-      } catch {
-        return false;
-      }
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    [workouts, currentMonth]
+  const allWorkoutsSorted = useMemo(
+    () => [...workouts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [workouts]
   );
 
-  // Unique sports in this month
+  const monthWorkouts = useMemo(
+    () => showAllMonths
+      ? allWorkoutsSorted
+      : allWorkoutsSorted.filter(w => {
+          try {
+            return isSameMonth(parseISO(w.date), currentMonth);
+          } catch {
+            return false;
+          }
+        }),
+    [allWorkoutsSorted, currentMonth, showAllMonths]
+  );
+
   const uniqueSports = useMemo(
     () => [...new Set(monthWorkouts.map(w => w.sport).filter(Boolean))],
     [monthWorkouts]
   );
 
-  // Sport counts
   const sportCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     monthWorkouts.forEach(w => {
@@ -91,25 +144,25 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
     return counts;
   }, [monthWorkouts]);
 
-  // Filtered by sport
   const filteredWorkouts = useMemo(
     () => selectedSport === 'all' ? monthWorkouts : monthWorkouts.filter(w => w.sport === selectedSport),
     [monthWorkouts, selectedSport]
   );
 
-  // Summary stats
+  // Summary stats - only real data, no estimations
   const totalSessions = filteredWorkouts.length;
   const totalMinutes = filteredWorkouts.reduce((sum, w) => sum + (w.duration_minutes || w.duration || 0), 0);
-  const totalCalories = filteredWorkouts.reduce((sum, w) => {
-    const cal = w.calories || 0;
-    if (cal > 0) return sum + cal;
-    const dur = w.duration_minutes || w.duration || 0;
-    return sum + (dur > 0 ? estimateCalories(w.sport, dur) : 0);
-  }, 0);
+  const totalCalories = filteredWorkouts.reduce((sum, w) => sum + (w.calories || 0), 0);
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     impactAsync(ImpactFeedbackStyle.Light);
     setCurrentMonth(prev => direction === 'next' ? addMonths(prev, 1) : subMonths(prev, 1));
+    setSelectedSport('all');
+  };
+
+  const toggleMonthFilter = () => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    setShowAllMonths(prev => !prev);
     setSelectedSport('all');
   };
 
@@ -123,14 +176,38 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
     <View style={styles.container}>
       {/* Month navigation header */}
       <View style={styles.monthHeader}>
-        <TouchableOpacity onPress={() => navigateMonth('prev')} style={styles.monthArrow} activeOpacity={0.6}>
-          <ChevronLeft size={22} color={colors.textPrimary} />
+        {!showAllMonths && (
+          <TouchableOpacity onPress={() => navigateMonth('prev')} style={styles.monthArrow} activeOpacity={0.6}>
+            <ChevronLeft size={22} color={colors.textPrimary} />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity onPress={toggleMonthFilter} activeOpacity={0.7}>
+          <Text style={[styles.monthTitle, { color: colors.textPrimary }]}>
+            {showAllMonths
+              ? (locale === 'fr' ? 'Toutes les seances' : 'All sessions')
+              : format(currentMonth, 'MMMM yyyy', { locale: dateLocale }).replace(/^\w/, c => c.toUpperCase())
+            }
+          </Text>
         </TouchableOpacity>
-        <Text style={[styles.monthTitle, { color: colors.textPrimary }]}>
-          {format(currentMonth, 'MMMM yyyy', { locale: dateLocale }).replace(/^\w/, c => c.toUpperCase())}
-        </Text>
-        <TouchableOpacity onPress={() => navigateMonth('next')} style={styles.monthArrow} activeOpacity={0.6}>
-          <ChevronRight size={22} color={colors.textPrimary} />
+        {!showAllMonths && (
+          <TouchableOpacity onPress={() => navigateMonth('next')} style={styles.monthArrow} activeOpacity={0.6}>
+            <ChevronRight size={22} color={colors.textPrimary} />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          onPress={toggleMonthFilter}
+          style={[styles.filterToggle, {
+            backgroundColor: showAllMonths
+              ? (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)')
+              : colors.accent,
+          }]}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.filterToggleText, {
+            color: showAllMonths ? colors.textSecondary : colors.textOnAccent,
+          }]}>
+            {showAllMonths ? (locale === 'fr' ? 'Par mois' : 'By month') : (locale === 'fr' ? 'Tout' : 'All')}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -225,6 +302,35 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
         const sportName = getSportName(training.sport);
         const sportColor = getSportColor(training.sport);
         const duration = training.duration_minutes || training.duration || 0;
+        const det = parseWorkoutDetails(training.workout_details_json);
+
+        // Distance: from details or training field
+        const distance = det.distanceKm || training.distance || 0;
+        // Pace: only from Apple Health
+        const pace = det.avgPaceSecondsPerKm;
+        // Elevation
+        const elevUp = det.elevationAscended;
+        const elevDown = det.elevationDescended;
+        // HR: from details or training field
+        const avgHR = det.avgHeartRate || training.heart_rate || 0;
+        const maxHR = det.maxHeartRate || training.max_heart_rate || 0;
+        const minHR = det.minHeartRate || 0;
+        // Calories: only real (from Apple Health)
+        const cal = det.activeCalories || training.calories || 0;
+        // Weather
+        const weather = det.weatherTemp != null ? det.weatherTemp : undefined;
+        const humidity = det.weatherHumidity;
+        const weatherCond = det.weatherCondition;
+        // Air quality
+        const aqi = det.airQualityIndex;
+        const aqiCat = det.airQualityCategory;
+        // GPS & splits
+        const hasGPS = det.hasRoute;
+        const splits = det.splitsCount;
+        // Recovery HR
+        const recovery = det.recoveryHR;
+        // HR Zones
+        const hrZones = det.heartRateZones;
 
         let dateStr = '';
         let timeStr = '';
@@ -241,6 +347,8 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
         } catch {
           dateStr = training.date;
         }
+
+        const hasSecondaryData = distance > 0 || avgHR > 0 || pace || elevUp || weather != null || aqi;
 
         return (
           <TouchableOpacity
@@ -277,38 +385,146 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                     {formatDuration(duration)}
                   </Text>
                 )}
-                {(() => {
-                  const cal = training.calories || estimateCalories(training.sport, duration);
-                  return cal > 0 ? (
-                    <Text style={[styles.sessionMetricSub, { color: '#F97316' }]}>
-                      {cal} kcal
-                    </Text>
-                  ) : null;
-                })()}
+                {cal > 0 && (
+                  <Text style={[styles.sessionMetricSub, { color: '#F97316' }]}>
+                    {cal} kcal
+                  </Text>
+                )}
               </View>
             </View>
 
-            {/* Secondary line: distance, HR, source */}
-            {((training.distance || 0) > 0 || (training.heart_rate || 0) > 0) && (
+            {/* Secondary line: all Apple Health data */}
+            {hasSecondaryData && (
               <View style={[styles.sessionSecondary, { borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-                {(training.distance || 0) > 0 && (
+                {/* Distance */}
+                {distance > 0 && (
+                  <View style={styles.metricChip}>
+                    <MaterialCommunityIcons name="map-marker-distance" size={12} color={colors.textMuted} />
+                    <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
+                      {distance.toFixed(2)} km
+                    </Text>
+                  </View>
+                )}
+                {/* Pace */}
+                {pace && pace > 0 && pace < 1800 && (
+                  <View style={styles.metricChip}>
+                    <MaterialCommunityIcons name="speedometer" size={12} color={colors.textMuted} />
+                    <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
+                      {formatPace(pace)}
+                    </Text>
+                  </View>
+                )}
+                {/* Elevation */}
+                {elevUp != null && elevUp > 0 && (
+                  <View style={styles.metricChip}>
+                    <MaterialCommunityIcons name="elevation-rise" size={12} color={colors.textMuted} />
+                    <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
+                      +{Math.round(elevUp)}m
+                      {elevDown != null && elevDown > 0 ? ` / -${Math.round(elevDown)}m` : ''}
+                    </Text>
+                  </View>
+                )}
+                {/* Heart rate */}
+                {avgHR > 0 && (
+                  <View style={styles.metricChip}>
+                    <MaterialCommunityIcons name="heart-pulse" size={12} color="#EF4444" />
+                    <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
+                      {minHR > 0 ? `${minHR}/` : ''}{avgHR}{maxHR > 0 ? `/${maxHR}` : ''} bpm
+                    </Text>
+                  </View>
+                )}
+                {/* GPS */}
+                {hasGPS && (
+                  <View style={styles.metricChip}>
+                    <MaterialCommunityIcons name="crosshairs-gps" size={12} color="#3B82F6" />
+                    <Text style={[styles.sessionSecondaryText, { color: '#3B82F6' }]}>GPS</Text>
+                  </View>
+                )}
+                {/* Splits */}
+                {splits != null && splits > 0 && (
+                  <View style={styles.metricChip}>
+                    <MaterialCommunityIcons name="chart-timeline-variant" size={12} color={colors.textMuted} />
+                    <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
+                      {splits} splits
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* HR Zones compact bar */}
+            {hrZones && hrZones.some(z => z.durationSeconds > 0) && (
+              <View style={styles.zonesRow}>
+                <Text style={[styles.zonesLabel, { color: colors.textMuted }]}>Zones FC</Text>
+                <View style={styles.zonesBar}>
+                  {(() => {
+                    const totalZ = hrZones.reduce((s, z) => s + z.durationSeconds, 0);
+                    if (totalZ === 0) return null;
+                    return hrZones.map((z, i) => {
+                      const pct = (z.durationSeconds / totalZ) * 100;
+                      if (pct < 1) return null;
+                      return (
+                        <View
+                          key={i}
+                          style={[styles.zoneSegment, {
+                            backgroundColor: z.color,
+                            flex: pct,
+                          }]}
+                        />
+                      );
+                    });
+                  })()}
+                </View>
+              </View>
+            )}
+
+            {/* Weather & Air quality */}
+            {(weather != null || aqi) && (
+              <View style={[styles.weatherRow, { borderTopColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]}>
+                {weather != null && (
+                  <View style={styles.metricChip}>
+                    <MaterialCommunityIcons name="thermometer" size={12} color={colors.textMuted} />
+                    <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
+                      {Math.round(weather)}{'\u00B0'}C
+                      {humidity != null ? ` / ${Math.round(humidity)}%` : ''}
+                      {weatherCond ? ` ${weatherCond}` : ''}
+                    </Text>
+                  </View>
+                )}
+                {aqi != null && (
+                  <View style={styles.metricChip}>
+                    <MaterialCommunityIcons name="weather-windy" size={12} color={aqi <= 50 ? '#22C55E' : aqi <= 100 ? '#EAB308' : '#EF4444'} />
+                    <Text style={[styles.sessionSecondaryText, { color: aqi <= 50 ? '#22C55E' : aqi <= 100 ? '#EAB308' : '#EF4444' }]}>
+                      AQI {aqi}{aqiCat ? ` (${aqiCat})` : ''}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* Recovery HR */}
+            {recovery && recovery.atEnd && (
+              <View style={[styles.weatherRow, { borderTopColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]}>
+                <View style={styles.metricChip}>
+                  <MaterialCommunityIcons name="heart-minus" size={12} color="#8B5CF6" />
                   <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
-                    {(training.distance || 0).toFixed(1)} km
+                    Recup: {recovery.atEnd} bpm
+                    {recovery.after1Min ? ` \u2192 ${recovery.after1Min}` : ''}
+                    {recovery.after2Min ? ` \u2192 ${recovery.after2Min}` : ''}
                   </Text>
-                )}
-                {(training.heart_rate || 0) > 0 && (
-                  <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
-                    FC moy. {training.heart_rate} bpm
-                  </Text>
-                )}
-                {training.source && training.source !== 'manual' && (
-                  <Text style={[styles.sessionSourceBadge, {
-                    color: colors.textMuted,
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                  }]}>
-                    {training.source}
-                  </Text>
-                )}
+                </View>
+              </View>
+            )}
+
+            {/* Source badge */}
+            {training.source && training.source !== 'manual' && (
+              <View style={styles.sourceRow}>
+                <Text style={[styles.sessionSourceBadge, {
+                  color: colors.textMuted,
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                }]}>
+                  {training.source}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
@@ -322,7 +538,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  // Month header
   monthHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -337,10 +552,18 @@ const styles = StyleSheet.create({
   monthTitle: {
     fontSize: 18,
     fontWeight: '700',
-    minWidth: 160,
+    minWidth: 120,
     textAlign: 'center',
   },
-  // Filter pills
+  filterToggle: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  filterToggleText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   filterScroll: {
     marginBottom: 12,
   },
@@ -360,7 +583,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  // Summary
   summaryRow: {
     flexDirection: 'row',
     gap: 8,
@@ -381,7 +603,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 2,
   },
-  // Empty
   emptyCard: {
     borderRadius: 16,
     padding: 40,
@@ -393,7 +614,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
-  // Session cards
   sessionCard: {
     borderRadius: 14,
     padding: 14,
@@ -438,15 +658,52 @@ const styles = StyleSheet.create({
   sessionSecondary: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
     flexWrap: 'wrap',
   },
+  metricChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
   sessionSecondaryText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
+  },
+  zonesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+  zonesLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  zonesBar: {
+    flex: 1,
+    flexDirection: 'row',
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  zoneSegment: {
+    height: 6,
+  },
+  weatherRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    flexWrap: 'wrap',
+  },
+  sourceRow: {
+    marginTop: 6,
   },
   sessionSourceBadge: {
     fontSize: 10,
@@ -455,5 +712,6 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 6,
     overflow: 'hidden',
+    alignSelf: 'flex-start',
   },
 });

@@ -2,6 +2,7 @@ package com.houari.yoroi.wear.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -10,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,10 +22,16 @@ import com.houari.yoroi.wear.theme.*
 
 /**
  * Page 2: Poids - Arc de progression + stats + log
- * Identique a WeightPage.swift de l'Apple Watch
  */
 @Composable
 fun WeightPage(repo: YoroiDataRepository) {
+    val accent = remember(repo.themeAccentHex) { parseHexColor(repo.themeAccentHex) }
+    val colors = rememberSyncedWatchColors(
+        bgHex = repo.themeBgHex, cardBgHex = repo.themeCardBgHex,
+        textPrimaryHex = repo.themeTextPrimaryHex, textSecondaryHex = repo.themeTextSecondaryHex,
+        dividerHex = repo.themeDividerHex, textOnAccentHex = repo.themeTextOnAccentHex,
+        isDarkMode = repo.isDarkMode
+    )
     val diff = if (repo.targetWeight > 0) repo.currentWeight - repo.targetWeight else 0.0
     val remaining = kotlin.math.abs(diff)
     val goalLabel = if (diff > 0) "SECHE" else if (diff < 0) "PRISE" else "MAINTIEN"
@@ -39,22 +47,45 @@ fun WeightPage(repo: YoroiDataRepository) {
                 androidx.compose.material3.Icon(
                     Icons.Filled.FitnessCenter,
                     contentDescription = null,
-                    tint = Gold,
+                    tint = accent,
                     modifier = Modifier.size(10.dp)
                 )
                 Spacer(Modifier.width(4.dp))
-                Text("Poids", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary.copy(alpha = 0.7f))
+                Text("Poids", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary.copy(alpha = 0.7f))
                 Spacer(Modifier.weight(1f))
                 Text(
                     goalLabel,
                     fontSize = 7.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Gold,
+                    color = accent,
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
-                        .background(Gold.copy(alpha = 0.15f))
+                        .background(accent.copy(alpha = 0.15f))
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 )
+            }
+        }
+
+        // Sync button
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(accent.copy(alpha = 0.08f))
+                    .clickable { repo.requestSync() }
+                    .padding(vertical = 5.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                androidx.compose.material3.Icon(
+                    Icons.Filled.Sync,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(10.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+                Text("Synchroniser", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = accent)
             }
         }
 
@@ -69,14 +100,14 @@ fun WeightPage(repo: YoroiDataRepository) {
                         if (repo.currentWeight > 0) "%.1f".format(repo.currentWeight) else "--",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Black,
-                        color = TextPrimary
+                        color = colors.textPrimary
                     )
                     Spacer(Modifier.width(2.dp))
                     Text(
                         "kg",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = TextSecondary,
+                        color = colors.textSecondary,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
@@ -87,7 +118,7 @@ fun WeightPage(repo: YoroiDataRepository) {
                         else "Objectif atteint",
                         fontSize = 8.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = TextSecondary
+                        color = colors.textSecondary
                     )
                 }
             }
@@ -104,19 +135,21 @@ fun WeightPage(repo: YoroiDataRepository) {
                     label = "OBJECTIF",
                     value = if (repo.targetWeight > 0) "%.1f".format(repo.targetWeight) else "--",
                     unit = "kg",
-                    color = Gold
+                    color = accent,
+                    colors = colors
                 )
                 Box(
                     Modifier
                         .width(1.dp)
                         .height(28.dp)
-                        .background(Divider)
+                        .background(colors.divider)
                 )
                 StatCol(
                     label = "RESTE",
                     value = if (repo.targetWeight > 0) "%.1f".format(remaining) else "--",
                     unit = "kg",
-                    color = if (diff > 0) Red else Green
+                    color = if (diff > 0) Red else Green,
+                    colors = colors
                 )
             }
         }
@@ -127,8 +160,8 @@ fun WeightPage(repo: YoroiDataRepository) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Gold.copy(alpha = 0.1f))
-                    .border(1.dp, Gold.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                    .background(accent.copy(alpha = 0.1f))
+                    .border(1.dp, accent.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
                     .padding(vertical = 6.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
@@ -136,24 +169,30 @@ fun WeightPage(repo: YoroiDataRepository) {
                 androidx.compose.material3.Icon(
                     Icons.Filled.Add,
                     contentDescription = null,
-                    tint = Gold,
+                    tint = accent,
                     modifier = Modifier.size(10.dp)
                 )
                 Spacer(Modifier.width(4.dp))
-                Text("Logger poids", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Gold)
+                Text("Logger poids", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = accent)
             }
         }
     }
 }
 
 @Composable
-private fun StatCol(label: String, value: String, unit: String, color: androidx.compose.ui.graphics.Color) {
+private fun StatCol(
+    label: String,
+    value: String,
+    unit: String,
+    color: Color,
+    colors: YoroiWatchColors
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, fontSize = 7.sp, fontWeight = FontWeight.ExtraBold, color = color, letterSpacing = 0.5.sp)
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(value, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = TextPrimary)
+            Text(value, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = colors.textPrimary)
             Spacer(Modifier.width(1.dp))
-            Text(unit, fontSize = 7.sp, color = TextSecondary, modifier = Modifier.padding(bottom = 1.dp))
+            Text(unit, fontSize = 7.sp, color = colors.textSecondary, modifier = Modifier.padding(bottom = 1.dp))
         }
     }
 }

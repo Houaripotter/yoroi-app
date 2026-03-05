@@ -3,8 +3,8 @@
 // Fusion des 3 anciens onglets en un seul scroll
 // ============================================
 
-import React, { useState, useEffect } from 'react';
-import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, RefreshControl, InteractionManager } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { useScrollContext } from '@/lib/ScrollContext';
@@ -12,10 +12,9 @@ import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { ScrollableLineChart } from '../charts/ScrollableLineChart';
-import { MetricProgressGrid } from '../charts/MetricProgressGrid';
-import { SimpleMetricCard } from '../charts/SimpleMetricCard';
-import { SimpleCompositionCard } from '../charts/SimpleCompositionCard';
+import { WeightChartCard } from '../charts/WeightChartCard';
 import { DualComparisonCard } from '../charts/DualComparisonCard';
+import { MultiLineComparisonCard } from '../charts/MultiLineComparisonCard';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { StatsExplanation } from '../StatsExplanation';
 import { aggregateWeightData } from '@/lib/statsAggregation';
@@ -23,13 +22,8 @@ import { getProfile, getAllWeights, getLatestWeight, getLatestMeasurement, getMe
 import { getUserSettings } from '@/lib/storage';
 import {
   BMI_RANGES,
-  BODY_FAT_RANGES_MALE,
-  BODY_FAT_RANGES_FEMALE,
-  MUSCLE_MASS_RANGES_MALE,
-  MUSCLE_MASS_RANGES_FEMALE,
   WATER_PERCENTAGE_RANGES,
   VISCERAL_FAT_RANGES,
-  getBMRRange,
   getMetricStatus,
   getBodyFatRange,
   getMuscleMassRange,
@@ -37,25 +31,25 @@ import {
   getWaistCircumferenceRange,
 } from '@/lib/healthRanges';
 import { Scale, Target, TrendingUp, TrendingDown, BarChart3, Activity, Droplet, Bone, Zap, Flame, Ruler } from 'lucide-react-native';
+import Svg, { Path, Circle as SvgCircle, Line as SvgLine, Text as SvgText } from 'react-native-svg';
 import { format } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { fr } from 'date-fns/locale';
 import { logger } from '@/lib/security/logger';
 
 export const CorpsTabPage: React.FC = React.memo(() => {
   const { colors, screenBackground } = useTheme();
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const { handleScroll: onScrollContext } = useScrollContext();
-  const dateLocale = language === 'fr' ? fr : enUS;
+  const dateLocale = fr;
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // --- Poids state ---
   const [weightData, setWeightData] = useState<any>(null);
   const [bmi, setBmi] = useState<number | null>(null);
   const [weightHistory, setWeightHistory] = useState<any[]>([]);
-  const [bmiHistory, setBmiHistory] = useState<any[]>([]);
   const [heightCm, setHeightCm] = useState<number | null>(null);
-  const [userGoal, setUserGoal] = useState<'lose' | 'maintain' | 'gain'>('lose');
   const [allWeightsData, setAllWeightsData] = useState<any[]>([]);
   const [targetWeight, setTargetWeight] = useState<number | null>(null);
 
@@ -86,9 +80,6 @@ export const CorpsTabPage: React.FC = React.memo(() => {
 
   // --- User data ---
   const [userGender, setUserGender] = useState<'male' | 'female'>('male');
-  const [userWeight, setUserWeight] = useState(75);
-  const [userHeight, setUserHeight] = useState(175);
-  const [userAge, setUserAge] = useState(30);
 
   // --- Modal ---
   const [selectedMetric, setSelectedMetric] = useState<{
@@ -110,8 +101,20 @@ export const CorpsTabPage: React.FC = React.memo(() => {
   }));
   const translatedBMIRanges = { ...BMI_RANGES, zones: translatedBMIZones };
 
+  const isFirstLoad = useRef(true);
   useEffect(() => {
-    loadData();
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      const handle = InteractionManager.runAfterInteractions(() => { loadData(); });
+      return () => handle.cancel();
+    } else {
+      loadData();
+    }
+  }, [selectedPeriod]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await loadData(); } finally { setRefreshing(false); }
   }, [selectedPeriod]);
 
   const loadData = async () => {
@@ -130,24 +133,13 @@ export const CorpsTabPage: React.FC = React.memo(() => {
       if (settings?.gender) setUserGender(settings.gender as 'male' | 'female');
       if (settings?.weight_goal) {
         setTargetWeight(settings.weight_goal);
-        setUserWeight(settings.weight_goal);
-      }
-      if (profile?.height_cm) setUserHeight(profile.height_cm);
-      if (profile?.birth_date) {
-        const age = new Date().getFullYear() - new Date(profile.birth_date).getFullYear();
-        setUserAge(age);
-      }
-      if (settings?.goal) {
-        if (settings.goal === 'lose' || settings.goal === 'lose_weight') setUserGoal('lose');
-        else if (settings.goal === 'gain' || settings.goal === 'gain_muscle') setUserGoal('gain');
-        else setUserGoal('maintain');
       }
 
       // --- Poids ---
       setWeightData(data);
       if (allWeights?.length > 0) setAllWeightsData(allWeights);
-      if (data?.values?.length > 0 && profile?.height_cm) {
-        const latestW = data.values[data.values.length - 1].value;
+      if (data?.values != null && data.values.length > 0 && profile?.height_cm) {
+        const latestW = data!.values[data!.values.length - 1].value;
         const heightM = profile.height_cm / 100;
         setBmi(latestW / (heightM * heightM));
         setHeightCm(profile.height_cm);
@@ -164,7 +156,6 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         setWeightHistory(filtered.map((w: any) => ({ date: w.date, value: w.weight })));
         if (profile?.height_cm) {
           const heightM = profile.height_cm / 100;
-          setBmiHistory(filtered.map((w: any) => ({ date: w.date, value: w.weight / (heightM * heightM) })));
         }
       }
 
@@ -199,8 +190,30 @@ export const CorpsTabPage: React.FC = React.memo(() => {
     }
   };
 
-  // --- Modal data ---
-  const getModalData = () => {
+  // Memoized sparkline data for evolution/average cards
+  const evolutionSparkline = useMemo(() => {
+    if (weightHistory.length < 2) return [];
+    const first = weightHistory[0]?.value || 1;
+    return weightHistory.map(h => ({ value: ((h.value - first) / first) * 100 }));
+  }, [weightHistory]);
+
+  const averageSparkline = useMemo(() => {
+    if (weightHistory.length < 2) return [];
+    return weightHistory.map((h, i, arr) => {
+      const start = Math.max(0, i - 6);
+      const slice = arr.slice(start, i + 1);
+      return { value: slice.reduce((s, x) => s + x.value, 0) / slice.length };
+    });
+  }, [weightHistory]);
+
+  // Memoized composition sparklines
+  const boneSparkline = useMemo(() => allWeightsData.filter(w => w.bone_mass > 0).map(w => ({ value: w.bone_mass })), [allWeightsData]);
+  const visceralSparkline = useMemo(() => allWeightsData.filter(w => w.visceral_fat > 0).map(w => ({ value: w.visceral_fat })), [allWeightsData]);
+  const bmrSparkline = useMemo(() => allWeightsData.filter(w => w.bmr > 0).map(w => ({ value: w.bmr })), [allWeightsData]);
+  const metabolicAgeSparkline = useMemo(() => allWeightsData.filter(w => w.metabolic_age > 0).map(w => ({ value: w.metabolic_age })), [allWeightsData]);
+
+  // --- Modal data (memoized) ---
+  const getModalData = useCallback(() => {
     if (!selectedMetric) return [];
 
     if (selectedMetric.source === 'weight') {
@@ -226,7 +239,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
     }
 
     return [];
-  };
+  }, [selectedMetric, allWeightsData, allMeasurementsData, heightCm, dateLocale]);
 
   // --- Ranges ---
   const bodyFatRange = getBodyFatRange(userGender);
@@ -280,6 +293,14 @@ export const CorpsTabPage: React.FC = React.memo(() => {
       onScroll={onScrollContext}
       scrollEventThrottle={200}
       removeClippedSubviews={true}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={colors.accent}
+          colors={[colors.accent]}
+        />
+      }
     >
       {/* ========== SECTION POIDS ========== */}
       <StatsHeader
@@ -295,17 +316,12 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         color="#3B82F6"
       />
 
-      <StatsSection
+      <WeightChartCard
+        data={weightData?.values || []}
+        color="#3B82F6"
+        unit=" kg"
         title={t('statsPages.weight.weightEvolution')}
-        description={t('statsPages.weight.weightEvolutionDesc')}
-      >
-        <ScrollableLineChart
-          data={weightData?.values || []}
-          color="#3B82F6"
-          unit=" kg"
-          height={220}
-        />
-      </StatsSection>
+      />
 
       <StatsSection
         title={t('statsPages.weight.keyMetrics')}
@@ -317,7 +333,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
             activeOpacity={0.7}
             onPress={() => setSelectedMetric({ key: 'weight', label: t('statsPages.weight.currentWeight'), color: '#3B82F6', unit: 'kg', icon: <Scale size={18} color="#3B82F6" strokeWidth={2.5} />, source: 'weight' })}
           >
-            <MetricCard label={t('statsPages.weight.currentWeight')} value={currentWeight || 0} unit="kg" icon={<Scale size={24} color="#3B82F6" strokeWidth={2.5} />} color="#3B82F6" trend={weightData?.trend} change={weightData ? `${weightData.changePercent >= 0 ? '+' : ''}${weightData.changePercent.toFixed(1)}%` : undefined} sparklineData={weightHistory.map(h => ({ value: h.value }))} />
+            <MetricCard label={t('statsPages.weight.currentWeight')} value={currentWeight || 0} unit="kg" icon={<Scale size={24} color="#3B82F6" strokeWidth={2.5} />} color="#3B82F6" trend={weightData?.trend} change={weightData ? `${weightData.changePercent >= 0 ? '+' : ''}${Number.isInteger(weightData.changePercent) ? weightData.changePercent : weightData.changePercent.toFixed(1)}%` : undefined} sparklineData={weightHistory.map(h => ({ value: h.value }))} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.gridItem}
@@ -329,22 +345,101 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         </View>
       </StatsSection>
 
-      {bmi && (
+      {bmi != null && bmi > 0 && (
         <StatsSection
           title={t('statsPages.weight.bmiTitle')}
           description={t('statsPages.weight.bmiDesc')}
         >
-          <SimpleMetricCard
-            value={bmi}
-            min={translatedBMIRanges.min}
-            max={translatedBMIRanges.max}
-            zones={translatedBMIRanges.zones}
-            unit=""
-            title={t('stats.bmi')}
-            source={translatedBMIRanges.source}
-            sourceUrl={translatedBMIRanges.sourceUrl}
+          <TouchableOpacity
+            activeOpacity={0.8}
             onPress={() => setSelectedMetric({ key: 'bmi', label: t('stats.bmi'), color: bmiStatus?.color || '#6366F1', unit: '', icon: <Scale size={18} color={bmiStatus?.color || '#6366F1'} strokeWidth={2.5} />, source: 'weight' })}
-          />
+            style={[styles.bmiGaugeCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+          >
+            {(() => {
+              let bmiLabel = '';
+              let bmiColor = '#22C55E';
+              if (bmi < 16) { bmiLabel = 'Denutrition'; bmiColor = '#DC2626'; }
+              else if (bmi < 18.5) { bmiLabel = 'Maigreur'; bmiColor = '#F97316'; }
+              else if (bmi < 25) { bmiLabel = 'Normal'; bmiColor = '#22C55E'; }
+              else if (bmi < 30) { bmiLabel = 'Surpoids'; bmiColor = '#F97316'; }
+              else if (bmi < 35) { bmiLabel = 'Obesite I'; bmiColor = '#EF4444'; }
+              else if (bmi < 40) { bmiLabel = 'Obesite II'; bmiColor = '#DC2626'; }
+              else { bmiLabel = 'Obesite III'; bmiColor = '#991B1B'; }
+
+              const GW = 200;
+              const GH = 120;
+              const gcx = GW / 2;
+              const gcy = GH - 2;
+              const gr = 65;
+              const gsw = 16;
+              const BMI_MIN = 15;
+              const BMI_MAX = 40;
+              const clampedBmi = Math.max(BMI_MIN, Math.min(BMI_MAX, bmi));
+              const bmiProgress = (clampedBmi - BMI_MIN) / (BMI_MAX - BMI_MIN);
+
+              const toArc = (v: number) => Math.max(0, Math.min(1, (v - BMI_MIN) / (BMI_MAX - BMI_MIN)));
+              const bmiSegs = [
+                { from: toArc(BMI_MIN), to: toArc(18.5), color: '#F97316' },
+                { from: toArc(18.5), to: toArc(25), color: '#22C55E' },
+                { from: toArc(25), to: toArc(30), color: '#F97316' },
+                { from: toArc(30), to: toArc(BMI_MAX), color: '#EF4444' },
+              ];
+              const makeBmiArc = (p1: number, p2: number) => {
+                const a1 = Math.PI * (1 - p1), a2 = Math.PI * (1 - p2);
+                return `M ${gcx + gr * Math.cos(a1)} ${gcy - gr * Math.sin(a1)} A ${gr} ${gr} 0 0 1 ${gcx + gr * Math.cos(a2)} ${gcy - gr * Math.sin(a2)}`;
+              };
+
+              const labelR = gr + gsw / 2 + 16;
+              const bmiLabelsArr = [15, 18, 25, 30, 35, 40];
+              const labelPositions = bmiLabelsArr.map(v => {
+                const p = (v - BMI_MIN) / (BMI_MAX - BMI_MIN);
+                const a = Math.PI * (1 - p);
+                return { v, x: gcx + labelR * Math.cos(a), y: gcy - labelR * Math.sin(a) };
+              });
+
+              const needleAngle = Math.PI * (1 - bmiProgress);
+              const nLen = gr + gsw / 2;
+              const nx = gcx + nLen * Math.cos(needleAngle);
+              const ny = gcy - nLen * Math.sin(needleAngle);
+
+              const cats = [
+                { label: 'Maigreur', color: '#F97316' },
+                { label: 'Normal', color: '#22C55E' },
+                { label: 'Surpoids', color: '#F97316' },
+                { label: 'Obesite', color: '#EF4444' },
+              ];
+
+              return (
+                <View style={{ alignItems: 'center', paddingVertical: 12 }}>
+                  <View style={{ width: GW, height: GH, overflow: 'visible' }}>
+                    <Svg width={GW} height={GH} viewBox={`0 0 ${GW} ${GH}`} style={{ overflow: 'visible' }}>
+                      <Path d={makeBmiArc(0, 1)} stroke={colors.border || 'rgba(255,255,255,0.06)'} strokeWidth={gsw + 4} fill="none" strokeLinecap="butt" />
+                      {bmiSegs.map((s, i) => (
+                        <Path key={i} d={makeBmiArc(s.from, s.to)} stroke={s.color} strokeWidth={gsw} fill="none" strokeLinecap="butt" />
+                      ))}
+                      {labelPositions.map((lp) => (
+                        <SvgText key={lp.v} x={lp.x} y={lp.y + 3} fontSize={10} fontWeight="800" fill={colors.textMuted || '#6B7280'} textAnchor="middle">{lp.v}</SvgText>
+                      ))}
+                      <SvgLine x1={gcx} y1={gcy} x2={nx} y2={ny} stroke={colors.textPrimary || '#FFFFFF'} strokeWidth={3} strokeLinecap="round" />
+                      <SvgCircle cx={gcx} cy={gcy} r={5} fill={colors.background || '#1A1A2E'} stroke={colors.border || 'rgba(255,255,255,0.15)'} strokeWidth={2} />
+                    </Svg>
+                  </View>
+                  <Text style={{ fontSize: 32, fontWeight: '900', color: colors.textPrimary, textAlign: 'center', letterSpacing: -1, marginTop: 4 }}>
+                    {bmi.toFixed(1)}
+                  </Text>
+                  <Text style={{ fontSize: 14, fontWeight: '800', color: bmiColor, textAlign: 'center', marginTop: 2 }}>{bmiLabel}</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+                    {cats.map((c) => (
+                      <View key={c.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <View style={{ width: 18, height: 5, borderRadius: 2.5, backgroundColor: c.color }} />
+                        <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted }}>{c.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              );
+            })()}
+          </TouchableOpacity>
         </StatsSection>
       )}
 
@@ -358,14 +453,14 @@ export const CorpsTabPage: React.FC = React.memo(() => {
             activeOpacity={0.7}
             onPress={() => setSelectedMetric({ key: 'evolution', label: t('statsPages.weight.evolution'), color: weightData?.trend === 'up' ? '#F59E0B' : '#10B981', unit: '%', icon: weightData?.trend === 'up' ? <TrendingUp size={18} color="#F59E0B" strokeWidth={2.5} /> : <TrendingDown size={18} color="#10B981" strokeWidth={2.5} />, source: 'weight' })}
           >
-            <MetricCard label={t('statsPages.weight.evolution')} value={Math.abs(weightData?.changePercent || 0).toFixed(1)} unit="%" icon={weightData?.trend === 'up' ? <TrendingUp size={24} color="#F59E0B" strokeWidth={2.5} /> : <TrendingDown size={24} color="#10B981" strokeWidth={2.5} />} color={weightData?.trend === 'up' ? '#F59E0B' : '#10B981'} trend={weightData?.trend} sparklineData={weightHistory.length >= 2 ? (() => { const first = weightHistory[0]?.value || 1; return weightHistory.map(h => ({ value: ((h.value - first) / first) * 100 })); })() : []} />
+            <MetricCard label={t('statsPages.weight.evolution')} value={Math.abs(weightData?.changePercent || 0)} unit="%" icon={weightData?.trend === 'up' ? <TrendingUp size={24} color="#F59E0B" strokeWidth={2.5} /> : <TrendingDown size={24} color="#10B981" strokeWidth={2.5} />} color={weightData?.trend === 'up' ? '#F59E0B' : '#10B981'} trend={weightData?.trend} sparklineData={evolutionSparkline} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.gridItem}
             activeOpacity={0.7}
             onPress={() => setSelectedMetric({ key: 'average', label: t('statsPages.weight.movingAverage'), color: '#8B5CF6', unit: 'kg', icon: <BarChart3 size={18} color="#8B5CF6" strokeWidth={2.5} />, source: 'weight' })}
           >
-            <MetricCard label={t('statsPages.weight.average')} value={weightData?.average?.toFixed(1) || 0} unit="kg" icon={<BarChart3 size={24} color="#8B5CF6" strokeWidth={2.5} />} color="#8B5CF6" sparklineData={weightHistory.length >= 2 ? weightHistory.map((h, i, arr) => { const start = Math.max(0, i - 6); const slice = arr.slice(start, i + 1); return { value: slice.reduce((s, x) => s + x.value, 0) / slice.length }; }) : []} />
+            <MetricCard label={t('statsPages.weight.average')} value={weightData?.average || 0} unit="kg" icon={<BarChart3 size={24} color="#8B5CF6" strokeWidth={2.5} />} color="#8B5CF6" sparklineData={averageSparkline} />
           </TouchableOpacity>
         </View>
       </StatsSection>
@@ -379,61 +474,71 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         color="#F59E0B"
       />
 
-      {hasCompositionData && (
+      {/* Graisse vs Muscle - DualComparisonCard */}
+      {(fatPercent > 0 || musclePercent > 0) && (
         <StatsSection
           title={t('statsPages.composition.globalComposition')}
           description={t('statsPages.composition.globalCompositionDesc')}
         >
-          <SimpleCompositionCard
-            fatPercent={fatPercent}
-            musclePercent={musclePercent}
-            waterPercent={waterPercent}
-            fatLabel={t('statsPages.composition.bodyFat')}
-            muscleLabel={t('statsPages.composition.muscle')}
-            waterLabel={t('statsPages.composition.water')}
+          <DualComparisonCard
+            title="Graisse vs Muscle"
+            leftLabel={t('statsPages.composition.bodyFat')}
+            rightLabel={t('statsPages.composition.muscle')}
+            leftColor="#F59E0B"
+            rightColor="#10B981"
+            leftHistory={compositionHistory.bodyFat}
+            rightHistory={compositionHistory.muscle}
+            leftValue={fatPercent}
+            rightValue={musclePercent}
+            unit="%"
+            onPressLeft={() => setSelectedMetric({ key: 'fat_percent', label: t('statsPages.composition.bodyFat'), color: '#F59E0B', unit: '%', icon: <Activity size={18} color="#F59E0B" strokeWidth={2.5} />, source: 'composition' })}
+            onPressRight={() => setSelectedMetric({ key: 'muscle_percent', label: t('statsPages.composition.muscleMass'), color: '#10B981', unit: '%', icon: <Activity size={18} color="#10B981" strokeWidth={2.5} />, source: 'composition' })}
           />
         </StatsSection>
       )}
 
-      {fatPercent > 0 && (
-        <StatsSection title={t('statsPages.composition.bodyFat')} description={t('statsPages.composition.bodyFatDesc')}>
-          <TouchableOpacity activeOpacity={0.9} onPress={() => setSelectedMetric({ key: 'fat_percent', label: t('statsPages.composition.bodyFat'), color: fatStatus?.color || '#F59E0B', unit: '%', icon: <Activity size={18} color={fatStatus?.color || '#F59E0B'} strokeWidth={2.5} />, source: 'composition' })}>
-            <SimpleMetricCard value={fatPercent} unit={bodyFatRange.unit} title={t('statsPages.composition.bodyFat')} zones={bodyFatRange.zones} min={bodyFatRange.min} max={bodyFatRange.max} source={bodyFatRange.source} sourceUrl={bodyFatRange.sourceUrl} />
-          </TouchableOpacity>
-        </StatsSection>
-      )}
-
-      {musclePercent > 0 && (
-        <StatsSection title={t('statsPages.composition.muscleMass')} description={t('statsPages.composition.muscleMassDesc')}>
-          <TouchableOpacity activeOpacity={0.9} onPress={() => setSelectedMetric({ key: 'muscle_percent', label: t('statsPages.composition.muscleMass'), color: muscleStatus?.color || '#10B981', unit: '%', icon: <Activity size={18} color={muscleStatus?.color || '#10B981'} strokeWidth={2.5} />, source: 'composition' })}>
-            <SimpleMetricCard value={musclePercent} unit={muscleMassRange.unit} title={t('statsPages.composition.muscleMass')} zones={muscleMassRange.zones} min={muscleMassRange.min} max={muscleMassRange.max} source={muscleMassRange.source} sourceUrl={muscleMassRange.sourceUrl} />
-          </TouchableOpacity>
-        </StatsSection>
-      )}
-
-      {waterPercent > 0 && (
-        <StatsSection title={t('statsPages.composition.hydration')} description={t('statsPages.composition.hydrationDesc')}>
-          <TouchableOpacity activeOpacity={0.9} onPress={() => setSelectedMetric({ key: 'water_percent', label: t('statsPages.composition.hydration'), color: '#06B6D4', unit: '%', icon: <Droplet size={18} color="#06B6D4" strokeWidth={2.5} />, source: 'composition' })}>
-            <SimpleMetricCard value={waterPercent} unit={WATER_PERCENTAGE_RANGES.unit} title={t('statsPages.composition.hydration')} zones={WATER_PERCENTAGE_RANGES.zones} min={WATER_PERCENTAGE_RANGES.min} max={WATER_PERCENTAGE_RANGES.max} source={WATER_PERCENTAGE_RANGES.source} sourceUrl={WATER_PERCENTAGE_RANGES.sourceUrl} />
-          </TouchableOpacity>
-        </StatsSection>
+      {/* ========== SECTION EAU (Hydratation corporelle Tanita) ========== */}
+      {(waterPercent > 0 || compositionHistory.water.length > 0) && (
+        <>
+          <View style={styles.sectionDivider} />
+          <StatsExplanation
+            title="Eau Corporelle"
+            text="L'Eau Corporelle mesure le pourcentage d'eau total dans ton corps. Une bonne hydratation est essentielle pour la performance et la recuperation. Donnees issues de ta balance connectee Tanita."
+            color="#06B6D4"
+          />
+          <StatsSection title="Eau" description="Evolution de ton taux d'eau corporel">
+            <ScrollableLineChart
+              data={compositionHistory.water}
+              color="#06B6D4"
+              unit=" %"
+              height={220}
+            />
+          </StatsSection>
+          <StatsSection title="Hydratation actuelle" description="Clique pour voir l'historique complet">
+            <View style={styles.grid}>
+              <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'water_percent', label: 'Eau corporelle', color: '#06B6D4', unit: '%', icon: <Droplet size={18} color="#06B6D4" strokeWidth={2.5} />, source: 'composition' })}>
+                <MetricCard label="Eau corporelle" value={waterPercent} unit="%" icon={<Droplet size={24} color="#06B6D4" strokeWidth={2.5} />} color="#06B6D4" sparklineData={compositionHistory.water} />
+              </TouchableOpacity>
+            </View>
+          </StatsSection>
+        </>
       )}
 
       <StatsSection title={t('statsPages.composition.detailedMetrics')} description={t('statsPages.clickToSeeHistory')}>
         <View style={styles.grid}>
           <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'bone_mass', label: t('statsPages.composition.boneMass'), color: '#8B5CF6', unit: 'kg', icon: <Bone size={18} color="#8B5CF6" strokeWidth={2.5} />, source: 'composition' })}>
-            <MetricCard label={t('statsPages.composition.boneMass')} value={latestWeight?.bone_mass?.toFixed(1) || '0.0'} unit="kg" icon={<Bone size={24} color="#8B5CF6" strokeWidth={2.5} />} color="#8B5CF6" sparklineData={allWeightsData.filter(w => w.bone_mass > 0).map(w => ({ value: w.bone_mass }))} />
+            <MetricCard label={t('statsPages.composition.boneMass')} value={latestWeight?.bone_mass || 0} unit="kg" icon={<Bone size={24} color="#8B5CF6" strokeWidth={2.5} />} color="#8B5CF6" sparklineData={boneSparkline} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'visceral_fat', label: t('statsPages.composition.visceralFat'), color: '#EF4444', unit: '/20', icon: <Activity size={18} color="#EF4444" strokeWidth={2.5} />, source: 'composition' })}>
-            <MetricCard label={t('statsPages.composition.visceralFat')} value={latestWeight?.visceral_fat || 0} unit="/20" icon={<Activity size={24} color="#EF4444" strokeWidth={2.5} />} color="#EF4444" sparklineData={allWeightsData.filter(w => w.visceral_fat > 0).map(w => ({ value: w.visceral_fat }))} />
+            <MetricCard label={t('statsPages.composition.visceralFat')} value={latestWeight?.visceral_fat || 0} unit="/20" icon={<Activity size={24} color="#EF4444" strokeWidth={2.5} />} color="#EF4444" sparklineData={visceralSparkline} />
           </TouchableOpacity>
         </View>
         <View style={styles.grid}>
           <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'bmr', label: t('statsPages.composition.bmr'), color: '#F97316', unit: 'kcal', icon: <Flame size={18} color="#F97316" strokeWidth={2.5} />, source: 'composition' })}>
-            <MetricCard label={t('statsPages.composition.bmr')} value={latestWeight?.bmr || 0} unit="kcal" icon={<Flame size={24} color="#F97316" strokeWidth={2.5} />} color="#F97316" sparklineData={allWeightsData.filter(w => w.bmr > 0).map(w => ({ value: w.bmr }))} />
+            <MetricCard label={t('statsPages.composition.bmr')} value={latestWeight?.bmr || 0} unit="kcal" icon={<Flame size={24} color="#F97316" strokeWidth={2.5} />} color="#F97316" sparklineData={bmrSparkline} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'metabolic_age', label: t('statsPages.composition.metabolicAge'), color: '#6366F1', unit: t('statsPages.composition.years'), icon: <Zap size={18} color="#6366F1" strokeWidth={2.5} />, source: 'composition' })}>
-            <MetricCard label={t('statsPages.composition.metabolicAge')} value={latestWeight?.metabolic_age || 0} unit={t('statsPages.composition.years')} icon={<Zap size={24} color="#6366F1" strokeWidth={2.5} />} color="#6366F1" sparklineData={allWeightsData.filter(w => w.metabolic_age > 0).map(w => ({ value: w.metabolic_age }))} />
+            <MetricCard label={t('statsPages.composition.metabolicAge')} value={latestWeight?.metabolic_age || 0} unit={t('statsPages.composition.years')} icon={<Zap size={24} color="#6366F1" strokeWidth={2.5} />} color="#6366F1" sparklineData={metabolicAgeSparkline} />
           </TouchableOpacity>
         </View>
       </StatsSection>
@@ -441,26 +546,75 @@ export const CorpsTabPage: React.FC = React.memo(() => {
       {/* ========== SECTION MENSURATIONS ========== */}
       <View style={styles.sectionDivider} />
 
-      <StatsSection title={t('statsPages.measurements.torso')} description={t('statsPages.clickToSeeChart')}>
-        <View style={styles.grid}>
-          <TouchableOpacity style={styles.gridItem} onPress={() => setSelectedMetric({ key: 'chest', label: t('statsPages.measurements.chest'), color: '#3B82F6', unit: 'cm', icon: <Ruler size={18} color="#3B82F6" strokeWidth={2.5} />, source: 'measurement' })} activeOpacity={0.7}>
-            <MetricCard label={t('statsPages.measurements.chest')} value={latestMeasurement?.chest || 0} unit="cm" icon={<Ruler size={24} color="#3B82F6" strokeWidth={2.5} />} color="#3B82F6" sparklineData={measurementHistory.chest} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.gridItem} onPress={() => setSelectedMetric({ key: 'waist', label: t('statsPages.measurements.waist'), color: '#F59E0B', unit: 'cm', icon: <Ruler size={18} color="#F59E0B" strokeWidth={2.5} />, source: 'measurement' })} activeOpacity={0.7}>
-            <MetricCard label={t('statsPages.measurements.waist')} value={latestMeasurement?.waist || 0} unit="cm" icon={<Ruler size={24} color="#F59E0B" strokeWidth={2.5} />} color="#F59E0B" sparklineData={measurementHistory.waist} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.grid}>
-          <TouchableOpacity style={styles.gridItem} onPress={() => setSelectedMetric({ key: 'hips', label: t('statsPages.measurements.hips'), color: '#8B5CF6', unit: 'cm', icon: <Ruler size={18} color="#8B5CF6" strokeWidth={2.5} />, source: 'measurement' })} activeOpacity={0.7}>
-            <MetricCard label={t('statsPages.measurements.hips')} value={latestMeasurement?.hips || 0} unit="cm" icon={<Ruler size={24} color="#8B5CF6" strokeWidth={2.5} />} color="#8B5CF6" sparklineData={measurementHistory.hips} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.gridItem} onPress={() => setSelectedMetric({ key: 'shoulders', label: t('statsPages.measurements.shoulders'), color: '#10B981', unit: 'cm', icon: <Ruler size={18} color="#10B981" strokeWidth={2.5} />, source: 'measurement' })} activeOpacity={0.7}>
-            <MetricCard label={t('statsPages.measurements.shoulders')} value={latestMeasurement?.shoulders || 0} unit="cm" icon={<Ruler size={24} color="#10B981" strokeWidth={2.5} />} color="#10B981" sparklineData={measurementHistory.shoulders} />
-          </TouchableOpacity>
-        </View>
+      <StatsExplanation
+        title="Mensurations"
+        text="Suis l'evolution de tes mensurations. Les courbes sont regroupees par zone corporelle. Utilise les filtres pour isoler chaque mesure."
+        color="#8B5CF6"
+      />
+
+      {/* Groupe 1: Haut du corps - Cou + Epaules + Poitrine */}
+      <StatsSection title="Haut du corps" description="Cou, epaules et poitrine">
+        <MultiLineComparisonCard
+          title="Cou / Epaules / Poitrine"
+          unit="cm"
+          lines={[
+            {
+              label: t('statsPages.measurements.neck'),
+              color: '#F59E0B',
+              history: measurementHistory.neck,
+              currentValue: latestMeasurement?.neck || 0,
+              onPress: () => setSelectedMetric({ key: 'neck', label: t('statsPages.measurements.neck'), color: '#F59E0B', unit: 'cm', icon: <Ruler size={18} color="#F59E0B" strokeWidth={2.5} />, source: 'measurement' }),
+            },
+            {
+              label: t('statsPages.measurements.shoulders'),
+              color: '#10B981',
+              history: measurementHistory.shoulders,
+              currentValue: latestMeasurement?.shoulders || 0,
+              onPress: () => setSelectedMetric({ key: 'shoulders', label: t('statsPages.measurements.shoulders'), color: '#10B981', unit: 'cm', icon: <Ruler size={18} color="#10B981" strokeWidth={2.5} />, source: 'measurement' }),
+            },
+            {
+              label: t('statsPages.measurements.chest'),
+              color: '#3B82F6',
+              history: measurementHistory.chest,
+              currentValue: latestMeasurement?.chest || 0,
+              onPress: () => setSelectedMetric({ key: 'chest', label: t('statsPages.measurements.chest'), color: '#3B82F6', unit: 'cm', icon: <Ruler size={18} color="#3B82F6" strokeWidth={2.5} />, source: 'measurement' }),
+            },
+          ]}
+        />
       </StatsSection>
 
-      {/* Bras - Dual Comparison */}
+      {/* Groupe 2: Tronc - Nombril + Hanche + Taille */}
+      <StatsSection title="Tronc" description="Nombril, hanches et taille">
+        <MultiLineComparisonCard
+          title="Nombril / Hanches / Taille"
+          unit="cm"
+          lines={[
+            {
+              label: 'Nombril',
+              color: '#F97316',
+              history: measurementHistory.navel,
+              currentValue: latestMeasurement?.navel || 0,
+              onPress: () => setSelectedMetric({ key: 'navel', label: 'Nombril', color: '#F97316', unit: 'cm', icon: <Ruler size={18} color="#F97316" strokeWidth={2.5} />, source: 'measurement' }),
+            },
+            {
+              label: t('statsPages.measurements.hips'),
+              color: '#8B5CF6',
+              history: measurementHistory.hips,
+              currentValue: latestMeasurement?.hips || 0,
+              onPress: () => setSelectedMetric({ key: 'hips', label: t('statsPages.measurements.hips'), color: '#8B5CF6', unit: 'cm', icon: <Ruler size={18} color="#8B5CF6" strokeWidth={2.5} />, source: 'measurement' }),
+            },
+            {
+              label: t('statsPages.measurements.waist'),
+              color: '#EF4444',
+              history: measurementHistory.waist,
+              currentValue: latestMeasurement?.waist || 0,
+              onPress: () => setSelectedMetric({ key: 'waist', label: t('statsPages.measurements.waist'), color: '#EF4444', unit: 'cm', icon: <Ruler size={18} color="#EF4444" strokeWidth={2.5} />, source: 'measurement' }),
+            },
+          ]}
+        />
+      </StatsSection>
+
+      {/* Groupe 3: Bras - Gauche + Droit */}
       <StatsSection title={t('statsPages.measurements.arms')} description={t('statsPages.measurements.bicepsLeftRight')}>
         <DualComparisonCard
           title={t('statsPages.measurements.arms')}
@@ -478,10 +632,10 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         />
       </StatsSection>
 
-      {/* Cuisses - Dual Comparison */}
-      <StatsSection title={t('statsPages.measurements.legs')} description={t('statsPages.measurements.thighsAndCalves')}>
+      {/* Groupe 4: Cuisses - Gauche + Droite */}
+      <StatsSection title={t('statsPages.measurements.legs')} description="Cuisse gauche et droite">
         <DualComparisonCard
-          title={t('statsPages.measurements.legs')}
+          title="Cuisses"
           leftLabel={t('statsPages.measurements.leftThigh')}
           rightLabel={t('statsPages.measurements.rightThigh')}
           leftColor="#06B6D4"
@@ -496,10 +650,10 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         />
       </StatsSection>
 
-      {/* Mollets - Dual Comparison */}
-      <StatsSection title={t('statsPages.measurements.calves') || 'Mollets'} description={t('statsPages.measurements.thighsAndCalves')}>
+      {/* Groupe 5: Mollets - Gauche + Droit */}
+      <StatsSection title={t('statsPages.measurements.calves') || 'Mollets'} description="Mollet gauche et droit">
         <DualComparisonCard
-          title={t('statsPages.measurements.calves') || 'Mollets'}
+          title="Mollets"
           leftLabel={t('statsPages.measurements.leftCalf')}
           rightLabel={t('statsPages.measurements.rightCalf')}
           leftColor="#F59E0B"
@@ -512,15 +666,6 @@ export const CorpsTabPage: React.FC = React.memo(() => {
           onPressLeft={() => setSelectedMetric({ key: 'left_calf', label: t('statsPages.measurements.leftCalf'), color: '#F59E0B', unit: 'cm', icon: <Ruler size={18} color="#F59E0B" strokeWidth={2.5} />, source: 'measurement' })}
           onPressRight={() => setSelectedMetric({ key: 'right_calf', label: t('statsPages.measurements.rightCalf'), color: '#10B981', unit: 'cm', icon: <Ruler size={18} color="#10B981" strokeWidth={2.5} />, source: 'measurement' })}
         />
-      </StatsSection>
-
-      {/* Cou */}
-      <StatsSection title={t('statsPages.measurements.other')} description={t('statsPages.measurements.neckAndOther')}>
-        <View style={styles.grid}>
-          <TouchableOpacity style={styles.gridItem} onPress={() => setSelectedMetric({ key: 'neck', label: t('statsPages.measurements.neck'), color: '#F59E0B', unit: 'cm', icon: <Ruler size={18} color="#F59E0B" strokeWidth={2.5} />, source: 'measurement' })} activeOpacity={0.7}>
-            <MetricCard label={t('statsPages.measurements.neck')} value={latestMeasurement?.neck || 0} unit="cm" icon={<Ruler size={24} color="#F59E0B" strokeWidth={2.5} />} color="#F59E0B" sparklineData={measurementHistory.neck} />
-          </TouchableOpacity>
-        </View>
       </StatsSection>
 
       <View style={{ height: 40 }} />
@@ -570,5 +715,16 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     opacity: 0.15,
     backgroundColor: '#888',
+  },
+  bmiGaugeCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
 });

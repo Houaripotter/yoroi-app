@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Moon } from 'lucide-react-native';
@@ -11,7 +11,7 @@ interface SleepCardProps {
   onPress?: () => void;
 }
 
-export const SleepCard: React.FC<SleepCardProps> = ({
+export const SleepCard: React.FC<SleepCardProps> = memo(({
   duration,
   goal,
   debtHours,
@@ -187,7 +187,7 @@ export const SleepCard: React.FC<SleepCardProps> = ({
       </View>
     </Animated.View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

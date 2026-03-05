@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   Modal,
   View,
@@ -16,7 +16,7 @@ interface LogoViewerProps {
   onClose: () => void;
 }
 
-export const LogoViewer: React.FC<LogoViewerProps> = ({ visible, onClose }) => {
+export const LogoViewer: React.FC<LogoViewerProps> = memo(({ visible, onClose }) => {
   return (
     <Modal
       visible={visible}
@@ -37,7 +37,7 @@ export const LogoViewer: React.FC<LogoViewerProps> = ({ visible, onClose }) => {
       </View>
     </Modal>
   );
-};
+});
 
 const styles = StyleSheet.create({
   overlay: {

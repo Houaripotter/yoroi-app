@@ -193,7 +193,8 @@ export default function ChronoScreen() {
     try {
       const data = await AsyncStorage.getItem(CUSTOM_PRESETS_KEY);
       if (data) {
-        setCustomPresets(JSON.parse(data));
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) setCustomPresets(parsed);
       }
     } catch (error) {
       logger.info('Erreur chargement presets:', error);

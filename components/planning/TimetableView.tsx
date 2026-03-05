@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import {
   View,
   Text,
@@ -11,13 +11,15 @@ import {
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useTheme } from '@/lib/ThemeContext';
-import { Plus, Clock, Maximize2, X, Moon, ChevronRight, Calendar, ClipboardList } from 'lucide-react-native';
+import { Plus, Clock, Maximize2, X, Moon, ChevronRight, Calendar, ClipboardList, RefreshCw, Check as CheckIcon } from 'lucide-react-native';
 import { useWeekSchedule } from '@/hooks/useWeekSchedule';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
-import { getClubLogoSource } from '@/lib/sports';
+import { getClubLogoSource, getSportColor } from '@/lib/sports';
+import { WeeklySlotWithStatus } from '@/hooks/useWeeklySlots';
 import { format, addDays, startOfWeek, endOfWeek, getWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
+import { Training, Club } from '@/lib/database';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -27,12 +29,16 @@ interface TimetableViewProps {
   onAddSession: (dayId: string, timeSlot?: string) => void;
   onSessionPress: (dayId: string, sessionIndex: number) => void;
   refreshTrigger?: number;
+  workouts?: Training[];
+  clubs?: Club[];
+  weeklySlots?: WeeklySlotWithStatus[];
 }
 
-export const TimetableView: React.FC<TimetableViewProps> = ({
+export const TimetableView: React.FC<TimetableViewProps> = memo(({
   onAddSession,
   onSessionPress,
   refreshTrigger,
+  weeklySlots,
 }) => {
   const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -45,10 +51,10 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
 
   // Recharger les données quand refreshTrigger change
   React.useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
     if (refreshTrigger && refreshTrigger > 0) {
-      logger.info('🔄 TimetableView: Refresh déclenché par trigger', refreshTrigger);
+      logger.info('TimetableView: Refresh déclenché par trigger', refreshTrigger);
       // Petit délai pour s'assurer que la DB est à jour
       timer = setTimeout(() => {
         refresh();
@@ -68,40 +74,37 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
   const [manualRestSlots, setManualRestSlots] = useState<string[]>([]); // Créneaux individuels en repos (format: "dayId-slotId")
 
   // Vérifier si un jour COMPLET est en repos
-  const isDayRest = (dayId: string) => {
+  const isDayRest = useCallback((dayId: string) => {
     return manualRestDays.includes(dayId);
-  };
+  }, [manualRestDays]);
 
   // Vérifier si un créneau SPÉCIFIQUE est en repos
-  const isSlotRest = (dayId: string, slotId: string) => {
+  const isSlotRest = useCallback((dayId: string, slotId: string) => {
     return manualRestSlots.includes(`${dayId}-${slotId}`) || manualRestDays.includes(dayId);
-  };
+  }, [manualRestSlots, manualRestDays]);
 
   // Toggle repos pour un créneau individuel
-  const toggleSlotRest = (dayId: string, slotId: string, dayLabel: string, slotLabel: string) => {
+  const toggleSlotRest = useCallback((dayId: string, slotId: string, dayLabel: string, slotLabel: string) => {
     const slotKey = `${dayId}-${slotId}`;
     if (manualRestSlots.includes(slotKey)) {
-      // Retirer du repos
       setManualRestSlots(prev => prev.filter(s => s !== slotKey));
-      logger.info(`🔆 Retirer repos pour ${dayLabel} ${slotLabel}`);
+      logger.info(`Retirer repos pour ${dayLabel} ${slotLabel}`);
     } else {
-      // Ajouter au repos
       setManualRestSlots(prev => [...prev, slotKey]);
-      logger.info(`🌙 Marquer repos pour ${dayLabel} ${slotLabel}`);
+      logger.info(`Marquer repos pour ${dayLabel} ${slotLabel}`);
       showPopup(
         'Repos',
         `${dayLabel} ${slotLabel.toLowerCase()} marqué en repos`,
         [{ text: 'OK', style: 'primary' }]
       );
     }
-  };
+  }, [manualRestSlots, showPopup]);
 
   // NE PAS détecter automatiquement les jours de repos
   // Seulement utiliser les jours marqués manuellement par l'utilisateur
-  const getRestDays = () => {
-    // Retourner uniquement les jours marqués manuellement en repos
+  const getRestDays = useCallback(() => {
     return manualRestDays;
-  };
+  }, [manualRestDays]);
 
   const restDays = getRestDays();
 
@@ -161,6 +164,17 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
     return day.sessions.filter(session => {
       const slot = getTimeSlot(session.startTime);
       return slot === slotId;
+    });
+  };
+
+  // Recuperer les creneaux reguliers pour un jour et un creneau horaire
+  const getSlotsForDayAndTime = (dayIndex: number, slotId: string): WeeklySlotWithStatus[] => {
+    if (!weeklySlots) return [];
+    return weeklySlots.filter(ws => {
+      if (ws.day_of_week !== dayIndex) return false;
+      if (!ws.time) return slotId === 'evening'; // default to evening
+      const timeSlot = getTimeSlot(ws.time);
+      return timeSlot === slotId;
     });
   };
 
@@ -300,49 +314,93 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                       >
 
                         {/* Contenu de la cellule - JUSTE LES LOGOS */}
-                        {isSlotRestNow ? (
-                          <View style={styles.sessionCellEmpty}>
-                            <Moon size={24} color="#FFD700" fill="#FFD700" />
-                            <Text style={[styles.restCellText, { color: colors.textMuted }]}>Repos</Text>
-                          </View>
-                        ) : hasSession ? (
-                          <View style={styles.sessionLogosContainer}>
-                            {sessions.slice(0, 4).map((session, idx) => {
-                              const logoSource = session.clubLogo ? getClubLogoSource(session.clubLogo) : null;
-                              return logoSource ? (
-                                <Image
-                                  key={idx}
-                                  source={logoSource}
-                                  style={[
-                                    styles.sessionLogoOnly,
-                                    idx > 0 && { marginTop: -12 }
-                                  ]}
-                                  resizeMode="cover"
-                                />
-                              ) : (
-                                <View
-                                  key={idx}
-                                  style={[
-                                    styles.sessionDotOnly,
-                                    { backgroundColor: session.clubColor },
-                                    idx > 0 && { marginTop: -12 }
-                                  ]}
-                                />
-                              );
-                            })}
-                            {sessions.length > 4 && (
-                              <View style={[styles.sessionCountBadge, { backgroundColor: colors.accent }]}>
-                                <Text style={styles.sessionCountText}>
-                                  +{sessions.length - 4}
+                        {(() => {
+                          const recurringSlots = getSlotsForDayAndTime(dayIdx, slot.id);
+                          const hasRecurring = recurringSlots.length > 0;
+                          const pendingSlots = recurringSlots.filter(s => s.isPending);
+                          const validatedSlots = recurringSlots.filter(s => s.isValidated);
+
+                          if (isSlotRestNow) {
+                            return (
+                              <View style={styles.sessionCellEmpty}>
+                                <Moon size={24} color="#FFD700" fill="#FFD700" />
+                                <Text style={[styles.restCellText, { color: colors.textMuted }]}>Repos</Text>
+                              </View>
+                            );
+                          }
+
+                          if (hasSession) {
+                            return (
+                              <View style={styles.sessionLogosContainer}>
+                                {sessions.slice(0, 4).map((session, idx) => {
+                                  const logoSource = session.clubLogo ? getClubLogoSource(session.clubLogo) : null;
+                                  return logoSource ? (
+                                    <Image
+                                      key={idx}
+                                      source={logoSource}
+                                      style={[
+                                        styles.sessionLogoOnly,
+                                        idx > 0 && { marginTop: -12 }
+                                      ]}
+                                      resizeMode="cover"
+                                    />
+                                  ) : (
+                                    <View
+                                      key={idx}
+                                      style={[
+                                        styles.sessionDotOnly,
+                                        { backgroundColor: session.clubColor },
+                                        idx > 0 && { marginTop: -12 }
+                                      ]}
+                                    />
+                                  );
+                                })}
+                                {validatedSlots.length > 0 && (
+                                  <View style={{
+                                    position: 'absolute', top: 2, right: 2,
+                                    width: 14, height: 14, borderRadius: 7,
+                                    backgroundColor: colors.success,
+                                    alignItems: 'center', justifyContent: 'center',
+                                  }}>
+                                    <CheckIcon size={8} color="#FFFFFF" strokeWidth={3} />
+                                  </View>
+                                )}
+                                {sessions.length > 4 && (
+                                  <View style={[styles.sessionCountBadge, { backgroundColor: colors.accent }]}>
+                                    <Text style={styles.sessionCountText}>
+                                      +{sessions.length - 4}
+                                    </Text>
+                                  </View>
+                                )}
+                              </View>
+                            );
+                          }
+
+                          if (hasRecurring && pendingSlots.length > 0) {
+                            const firstSlot = pendingSlots[0];
+                            const color = getSportColor(firstSlot.sport);
+                            return (
+                              <View style={[styles.sessionCellEmpty, {
+                                borderWidth: 1,
+                                borderStyle: 'dashed',
+                                borderColor: color + '60',
+                                borderRadius: 8,
+                                opacity: 0.7,
+                              }]}>
+                                <RefreshCw size={14} color={color} />
+                                <Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 2 }}>
+                                  {pendingSlots.length > 1 ? `${pendingSlots.length}` : ''}
                                 </Text>
                               </View>
-                            )}
-                          </View>
-                        ) : (
-                          <View style={styles.sessionCellEmpty}>
-                            <Plus size={18} color={colors.textMuted} opacity={0.3} />
-                          </View>
-                        )}
+                            );
+                          }
+
+                          return (
+                            <View style={styles.sessionCellEmpty}>
+                              <Plus size={18} color={colors.textMuted} opacity={0.3} />
+                            </View>
+                          );
+                        })()}
                       </TouchableOpacity>
                     );
                   })}
@@ -864,7 +922,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
       <PopupComponent />
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

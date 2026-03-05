@@ -17,6 +17,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Activity, Calendar, Clock, Dumbbell, TrendingUp } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { formatHoursHM } from '@/lib/formatDuration';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import { getTrainings, Training } from '@/lib/database';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -194,7 +195,7 @@ export default function ActivityDetailScreen() {
 
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
             <Clock size={20} color="#10B981" />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{(totalHours || 0).toFixed(1)}h</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatHoursHM(totalHours || 0)}</Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>Volume total</Text>
           </View>
 

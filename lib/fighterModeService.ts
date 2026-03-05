@@ -20,7 +20,7 @@ const STORAGE_KEY_SPORT = '@yoroi_user_sport';
 const STORAGE_KEY_CATEGORY = '@yoroi_weight_category';
 const STORAGE_KEY_BELT = '@yoroi_belt';
 
-// 🔒 Platform-specific: SQLite only available on native
+// Platform-specific: SQLite only available on native
 const isNativePlatform = Platform.OS === 'ios' || Platform.OS === 'android';
 let SQLite: any = null;
 let db: any = null;

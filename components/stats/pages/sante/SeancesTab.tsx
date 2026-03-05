@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Training } from '@/lib/database';
 import { getSportIcon, getSportName, getSportColor } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Dumbbell } from 'lucide-react-native';
+import { Dumbbell, ArrowDown, ArrowUp } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { router } from 'expo-router';
@@ -28,7 +28,6 @@ const formatDurationCompact = (minutes: number): string => {
   return `${h}h ${m.toString().padStart(2, '0')}`;
 };
 
-// Estimation calories quand pas de donnees: ~6-8 kcal/min selon le sport
 const estimateCalories = (sport: string, durationMin: number): number => {
   const rates: Record<string, number> = {
     running: 10, cycling: 8, swimming: 9, hiking: 7,
@@ -38,11 +37,13 @@ const estimateCalories = (sport: string, durationMin: number): number => {
   return Math.round(durationMin * rate);
 };
 
+type SortOrder = 'recent' | 'oldest';
+
 export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: rawTrainings }) => {
   const { colors, isDark } = useTheme();
   const [selectedSport, setSelectedSport] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('recent');
 
-  // Defensive: garantir que trainings est toujours un array
   const trainings = Array.isArray(rawTrainings) ? rawTrainings : [];
 
   const uniqueSports = useMemo(
@@ -50,10 +51,14 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
     [trainings]
   );
 
-  const filteredTrainings = useMemo(
-    () => selectedSport === 'all' ? trainings : trainings.filter(t => t.sport === selectedSport),
-    [trainings, selectedSport]
-  );
+  const filteredTrainings = useMemo(() => {
+    const filtered = selectedSport === 'all' ? trainings : trainings.filter(t => t.sport === selectedSport);
+    return [...filtered].sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return sortOrder === 'recent' ? dateB - dateA : dateA - dateB;
+    });
+  }, [trainings, selectedSport, sortOrder]);
 
   const totalSessions = filteredTrainings.length;
   const totalMinutes = filteredTrainings.reduce((sum, t) => sum + (t.duration_minutes || t.duration || 0), 0);
@@ -75,6 +80,109 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
     { value: totalCalories > 0 ? formatCalories(totalCalories) : '--', label: 'kcal', color: '#EF4444' },
   ];
 
+  const sportCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    trainings.forEach(t => {
+      if (t.sport) counts[t.sport] = (counts[t.sport] || 0) + 1;
+    });
+    return counts;
+  }, [trainings]);
+
+  const renderSession = useCallback(({ item: training }: { item: Training }) => {
+    const sportIcon = getSportIcon(training.sport);
+    const sportName = getSportName(training.sport);
+    const sportColor = getSportColor(training.sport);
+    const duration = training.duration_minutes || training.duration || 0;
+
+    let dateStr = '';
+    let timeStr = '';
+    try {
+      const d = parseISO(training.date);
+      dateStr = format(d, 'EEE d MMM', { locale: fr });
+      if (training.start_time) {
+        const [sh, sm] = training.start_time.split(':').map(Number);
+        const endMin = sh * 60 + sm + duration;
+        const eh = Math.floor(endMin / 60) % 24;
+        const em = endMin % 60;
+        timeStr = `${sh.toString().padStart(2, '0')}:${sm.toString().padStart(2, '0')}-${eh.toString().padStart(2, '0')}:${em.toString().padStart(2, '0')}`;
+      }
+    } catch {
+      dateStr = training.date;
+    }
+
+    const dist = training.distance || 0;
+    const hasSecondary = dist > 0 || (training.heart_rate || 0) > 0;
+    const pace = dist > 0 && duration > 0 ? Math.round((duration * 60) / dist) : 0;
+    const paceMin = pace > 0 ? Math.floor(pace / 60) : 0;
+    const paceSec = pace > 0 ? Math.round(pace % 60) : 0;
+
+    return (
+      <TouchableOpacity
+        style={[styles.sessionCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}
+        activeOpacity={0.7}
+        onPress={() => {
+          if (training.id) {
+            router.push(`/workout-detail?id=${training.id}` as any);
+          }
+        }}
+      >
+        <View style={styles.sessionRow}>
+          <View style={[styles.sportIconContainer, { backgroundColor: sportColor + '18' }]}>
+            <MaterialCommunityIcons name={sportIcon as any} size={22} color={sportColor} />
+          </View>
+          <View style={styles.sessionInfo}>
+            <Text style={[styles.sessionSport, { color: colors.textPrimary }]} numberOfLines={1}>
+              {sportName}
+            </Text>
+            <Text style={[styles.sessionDate, { color: colors.textMuted }]}>
+              {dateStr}{timeStr ? ` \u00B7 ${timeStr}` : ''}
+            </Text>
+          </View>
+          <View style={styles.sessionMetrics}>
+            {duration > 0 && (
+              <Text style={[styles.sessionMetricValue, { color: colors.textPrimary }]}>
+                {formatDuration(duration)}
+              </Text>
+            )}
+            {(() => {
+              const cal = training.calories || estimateCalories(training.sport, duration);
+              return cal > 0 ? (
+                <Text style={[styles.sessionMetricSub, { color: '#F97316' }]}>
+                  {cal} kcal
+                </Text>
+              ) : null;
+            })()}
+          </View>
+        </View>
+
+        {hasSecondary && (
+          <View style={[styles.sessionSecondary, { borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
+            {dist > 0 && (
+              <Text style={[styles.sessionSecondaryText, { color: '#3B82F6' }]}>
+                {dist.toFixed(1)} km
+              </Text>
+            )}
+            {pace > 0 && (
+              <Text style={[styles.sessionSecondaryText, { color: '#22C55E' }]}>
+                {paceMin}'{paceSec.toString().padStart(2, '0')}"/km
+              </Text>
+            )}
+            {(training.heart_rate || 0) > 0 && (
+              <Text style={[styles.sessionSecondaryText, { color: '#EF4444' }]}>
+                {training.heart_rate} bpm
+              </Text>
+            )}
+            {training.source && training.source !== 'manual' && (
+              <Text style={[styles.sessionSourceBadge, { color: colors.textMuted, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+                {training.source}
+              </Text>
+            )}
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  }, [isDark, colors]);
+
   if (trainings.length === 0) {
     return (
       <View style={[styles.emptyCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
@@ -85,14 +193,6 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
       </View>
     );
   }
-
-  const sportCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    trainings.forEach(t => {
-      if (t.sport) counts[t.sport] = (counts[t.sport] || 0) + 1;
-    });
-    return counts;
-  }, [trainings]);
 
   return (
     <View>
@@ -110,7 +210,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
               {
                 backgroundColor: selectedSport === 'all'
                   ? colors.accent
-                  : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+                  : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.22)'),
               },
             ]}
             onPress={() => setSelectedSport('all')}
@@ -118,7 +218,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
           >
             <Text style={[
               styles.filterPillText,
-              { color: selectedSport === 'all' ? colors.textOnAccent : colors.textSecondary },
+              { color: selectedSport === 'all' ? colors.textOnAccent : (isDark ? colors.textSecondary : '#FFFFFF') },
             ]}>
               Tous ({trainings.length})
             </Text>
@@ -139,7 +239,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
                   {
                     backgroundColor: isActive
                       ? sportColor
-                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+                      : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.22)'),
                   },
                 ]}
                 onPress={() => setSelectedSport(sport)}
@@ -148,11 +248,11 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
                 <MaterialCommunityIcons
                   name={sportIcon as any}
                   size={14}
-                  color={isActive ? '#FFFFFF' : sportColor}
+                  color={isActive ? '#FFFFFF' : (isDark ? sportColor : '#FFFFFF')}
                 />
                 <Text style={[
                   styles.filterPillText,
-                  { color: isActive ? '#FFFFFF' : colors.textSecondary },
+                  { color: isActive ? '#FFFFFF' : (isDark ? colors.textSecondary : '#FFFFFF') },
                 ]}>
                   {sportName} ({count})
                 </Text>
@@ -161,6 +261,24 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
           })}
         </ScrollView>
       )}
+
+      {/* Tri + Resume */}
+      <View style={styles.sortAndSummary}>
+        <TouchableOpacity
+          style={[styles.sortButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.22)' }]}
+          onPress={() => setSortOrder(prev => prev === 'recent' ? 'oldest' : 'recent')}
+          activeOpacity={0.7}
+        >
+          {sortOrder === 'recent' ? (
+            <ArrowDown size={14} color={isDark ? colors.accent : '#FFFFFF'} strokeWidth={2.5} />
+          ) : (
+            <ArrowUp size={14} color={isDark ? colors.accent : '#FFFFFF'} strokeWidth={2.5} />
+          )}
+          <Text style={[styles.sortText, { color: isDark ? colors.accent : '#FFFFFF' }]}>
+            {sortOrder === 'recent' ? 'Recent' : 'Ancien'}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Resume en haut */}
       <View style={styles.summaryRow}>
@@ -179,110 +297,17 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
         ))}
       </View>
 
-      {/* Liste des seances filtrees */}
-      {filteredTrainings.map((training, index) => {
-        const sportIcon = getSportIcon(training.sport);
-        const sportName = getSportName(training.sport);
-        const sportColor = getSportColor(training.sport);
-        const duration = training.duration_minutes || training.duration || 0;
-
-        let dateStr = '';
-        let timeStr = '';
-        try {
-          const d = parseISO(training.date);
-          dateStr = format(d, 'EEE d MMM', { locale: fr });
-          if (training.start_time) {
-            const [sh, sm] = training.start_time.split(':').map(Number);
-            const endMin = sh * 60 + sm + duration;
-            const eh = Math.floor(endMin / 60) % 24;
-            const em = endMin % 60;
-            timeStr = `${sh.toString().padStart(2, '0')}:${sm.toString().padStart(2, '0')}-${eh.toString().padStart(2, '0')}:${em.toString().padStart(2, '0')}`;
-          }
-        } catch {
-          dateStr = training.date;
-        }
-
-        return (
-          <TouchableOpacity
-            key={training.id || index}
-            style={[styles.sessionCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}
-            activeOpacity={0.7}
-            onPress={() => {
-              if (training.id) {
-                router.push(`/workout-detail?id=${training.id}` as any);
-              }
-            }}
-          >
-            <View style={styles.sessionRow}>
-              {/* Icone sport */}
-              <View style={[styles.sportIconContainer, { backgroundColor: sportColor + '18' }]}>
-                <MaterialCommunityIcons name={sportIcon as any} size={22} color={sportColor} />
-              </View>
-
-              {/* Info principale */}
-              <View style={styles.sessionInfo}>
-                <Text style={[styles.sessionSport, { color: colors.textPrimary }]} numberOfLines={1}>
-                  {sportName}
-                </Text>
-                <Text style={[styles.sessionDate, { color: colors.textMuted }]}>
-                  {dateStr}{timeStr ? ` \u00B7 ${timeStr}` : ''}
-                </Text>
-              </View>
-
-              {/* Metriques a droite */}
-              <View style={styles.sessionMetrics}>
-                {duration > 0 && (
-                  <Text style={[styles.sessionMetricValue, { color: colors.textPrimary }]}>
-                    {formatDuration(duration)}
-                  </Text>
-                )}
-                {(() => {
-                  const cal = training.calories || estimateCalories(training.sport, duration);
-                  return cal > 0 ? (
-                    <Text style={[styles.sessionMetricSub, { color: '#F97316' }]}>
-                      {cal} kcal
-                    </Text>
-                  ) : null;
-                })()}
-              </View>
-            </View>
-
-            {/* Ligne secondaire : distance, allure, FC, source */}
-            {((training.distance || 0) > 0 || (training.heart_rate || 0) > 0) && (() => {
-              const dist = training.distance || 0;
-              const pace = dist > 0 && duration > 0
-                ? Math.round((duration * 60) / dist)
-                : 0;
-              const paceMin = pace > 0 ? Math.floor(pace / 60) : 0;
-              const paceSec = pace > 0 ? Math.round(pace % 60) : 0;
-              return (
-                <View style={[styles.sessionSecondary, { borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-                  {dist > 0 && (
-                    <Text style={[styles.sessionSecondaryText, { color: '#3B82F6' }]}>
-                      {dist.toFixed(1)} km
-                    </Text>
-                  )}
-                  {pace > 0 && (
-                    <Text style={[styles.sessionSecondaryText, { color: '#22C55E' }]}>
-                      {paceMin}'{paceSec.toString().padStart(2, '0')}"/km
-                    </Text>
-                  )}
-                  {(training.heart_rate || 0) > 0 && (
-                    <Text style={[styles.sessionSecondaryText, { color: '#EF4444' }]}>
-                      {training.heart_rate} bpm
-                    </Text>
-                  )}
-                  {training.source && training.source !== 'manual' && (
-                    <Text style={[styles.sessionSourceBadge, { color: colors.textMuted, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
-                      {training.source}
-                    </Text>
-                  )}
-                </View>
-              );
-            })()}
-          </TouchableOpacity>
-        );
-      })}
+      {/* Liste virtualisee des seances */}
+      <FlatList
+        data={filteredTrainings}
+        renderItem={renderSession}
+        keyExtractor={(item, index) => item.id?.toString() || `session-${index}`}
+        scrollEnabled={false}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews={true}
+      />
     </View>
   );
 });
@@ -307,6 +332,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: -0.2,
+  },
+  sortAndSummary: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 8,
+  },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+  },
+  sortText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   summaryRow: {
     flexDirection: 'row',

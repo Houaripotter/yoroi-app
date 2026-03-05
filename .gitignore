@@ -38,3 +38,13 @@ credentials.json
 *.tsbuildinfo
 .aider*
 src/data/events.json
+
+# dev notes & audit docs (ne pas commiter dans le repo)
+*.md
+!CLAUDE.md
+!README.md
+
+# outils de dev non necessaires en production
+supabase/
+scrapers/
+__tests__/

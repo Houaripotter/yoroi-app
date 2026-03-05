@@ -46,7 +46,8 @@ export default function GoalsScreen() {
     try {
       const stored = await AsyncStorage.getItem(GOALS_STORAGE_KEY);
       if (stored) {
-        setGoals(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) setGoals(parsed);
       }
     } catch (error) {
       logger.error('Erreur chargement objectifs:', error);

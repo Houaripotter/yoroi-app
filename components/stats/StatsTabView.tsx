@@ -7,10 +7,10 @@ import React, { useRef, useState } from 'react';
 import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { CorpsPage } from './pages/CorpsPage';
-import { EntrainementPage } from './pages/EntrainementPage';
-import { SantePage } from './pages/SantePage';
-import { AnalysePage } from './pages/AnalysePage';
+import { CorpsTabPage as CorpsPage } from './pages/CorpsTabPage';
+import { TrainingTabPage as EntrainementPage } from './pages/TrainingTabPage';
+import { VitalitePage as SantePage } from './pages/VitalitePage';
+import { DashboardPage as AnalysePage } from './pages/DashboardPage';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 

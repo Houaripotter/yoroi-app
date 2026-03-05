@@ -3,10 +3,11 @@
 // Fusion des 2 anciens onglets en un seul scroll
 // ============================================
 
-import React, { useState, useEffect } from 'react';
-import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, RefreshControl, InteractionManager } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
+import { formatDurationHM } from '@/lib/formatDuration';
 import { useScrollContext } from '@/lib/ScrollContext';
 import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
@@ -21,14 +22,14 @@ import { aggregateTrainingData } from '@/lib/statsAggregation';
 import { getTrainings } from '@/lib/database';
 import { Flame, Target, Calendar, Award, Timer, TrendingUp, Zap } from 'lucide-react-native';
 import { format } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { fr } from 'date-fns/locale';
 import { logger } from '@/lib/security/logger';
 
 export const TrainingTabPage: React.FC = React.memo(() => {
   const { colors, isDark, screenBackground } = useTheme();
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const { handleScroll: onScrollContext } = useScrollContext();
-  const dateLocale = language === 'fr' ? fr : enUS;
+  const dateLocale = fr;
 
   const INTENSITY_RANGES = {
     min: 0,
@@ -46,6 +47,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const [trainingData, setTrainingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [allTrainingsData, setAllTrainingsData] = useState<any[]>([]);
 
   const [selectedMetric, setSelectedMetric] = useState<{
@@ -62,8 +64,20 @@ export const TrainingTabPage: React.FC = React.memo(() => {
     load: any[];
   }>({ intensity: [], duration: [], load: [] });
 
+  const isFirstLoad = useRef(true);
   useEffect(() => {
-    loadData();
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      const handle = InteractionManager.runAfterInteractions(() => { loadData(); });
+      return () => handle.cancel();
+    } else {
+      loadData();
+    }
+  }, [selectedPeriod]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await loadData(); } finally { setRefreshing(false); }
   }, [selectedPeriod]);
 
   const loadData = async () => {
@@ -110,7 +124,18 @@ export const TrainingTabPage: React.FC = React.memo(() => {
     return periodMap[period] || t('statsPages.allPeriod');
   };
 
-  const getModalData = () => {
+  // Memoized sessions sparkline
+  const sessionsSparkline = useMemo(() => {
+    if (trainingHistory.duration.length < 2) return [];
+    const weekMap: Record<string, number> = {};
+    allTrainingsData.forEach(t => {
+      const week = format(new Date(t.date), 'w-yyyy');
+      weekMap[week] = (weekMap[week] || 0) + 1;
+    });
+    return Object.values(weekMap).map(v => ({ value: v }));
+  }, [allTrainingsData, trainingHistory.duration.length]);
+
+  const getModalData = useCallback(() => {
     if (!selectedMetric || !allTrainingsData.length) return [];
 
     const sortedTrainings = [...allTrainingsData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -133,7 +158,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
       default:
         return [];
     }
-  };
+  }, [selectedMetric, allTrainingsData, dateLocale]);
 
   if (loading) {
     return (
@@ -160,6 +185,14 @@ export const TrainingTabPage: React.FC = React.memo(() => {
       onScroll={onScrollContext}
       scrollEventThrottle={200}
       removeClippedSubviews={true}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={colors.accent}
+          colors={[colors.accent]}
+        />
+      }
     >
       {/* ========== SECTION DISCIPLINE ========== */}
       <StatsHeader
@@ -199,7 +232,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
             <MetricCard label={t('statsPages.discipline.weeklyLoad')} value={trainingData?.weeklyLoad || 0} unit="pts" icon={<Flame size={24} color="#8B5CF6" strokeWidth={2.5} />} color="#8B5CF6" sparklineData={trainingHistory.load.map(h => ({ value: h.value }))} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'intensity', label: t('statsPages.discipline.intensity'), color: '#EF4444', unit: '/10', icon: <Target size={18} color="#EF4444" strokeWidth={2.5} /> })}>
-            <MetricCard label={t('statsPages.discipline.averageIntensity')} value={trainingData?.averageIntensity?.toFixed(1) || 0} unit="/10" icon={<Target size={24} color="#EF4444" strokeWidth={2.5} />} color="#EF4444" sparklineData={trainingHistory.intensity.map(h => ({ value: h.value }))} />
+            <MetricCard label={t('statsPages.discipline.averageIntensity')} value={trainingData?.averageIntensity || 0} unit="/10" icon={<Target size={24} color="#EF4444" strokeWidth={2.5} />} color="#EF4444" sparklineData={trainingHistory.intensity.map(h => ({ value: h.value }))} />
           </TouchableOpacity>
         </View>
       </StatsSection>
@@ -207,10 +240,10 @@ export const TrainingTabPage: React.FC = React.memo(() => {
       <StatsSection title={t('statsPages.discipline.volume')} description={t('statsPages.discipline.volumeDesc')}>
         <View style={styles.grid}>
           <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'sessions', label: t('statsPages.discipline.sessions'), color: '#10B981', unit: '', icon: <Calendar size={18} color="#10B981" strokeWidth={2.5} /> })}>
-            <MetricCard label={t('statsPages.discipline.sessions')} value={trainingData?.count || 0} unit={t('statsPages.discipline.total')} icon={<Calendar size={24} color="#10B981" strokeWidth={2.5} />} color="#10B981" sparklineData={trainingHistory.duration.length >= 2 ? (() => { const weekMap: Record<string, number> = {}; allTrainingsData.forEach(t => { const week = format(new Date(t.date), 'w-yyyy'); weekMap[week] = (weekMap[week] || 0) + 1; }); return Object.values(weekMap).map(v => ({ value: v })); })() : []} />
+            <MetricCard label={t('statsPages.discipline.sessions')} value={trainingData?.count || 0} unit={t('statsPages.discipline.total')} icon={<Calendar size={24} color="#10B981" strokeWidth={2.5} />} color="#10B981" sparklineData={sessionsSparkline} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'total_duration', label: t('statsPages.discipline.totalDuration'), color: '#06B6D4', unit: 'h', icon: <Timer size={18} color="#06B6D4" strokeWidth={2.5} /> })}>
-            <MetricCard label={t('statsPages.discipline.totalDuration')} value={((trainingData?.totalDuration || 0) / 60).toFixed(1)} unit="h" icon={<Award size={24} color="#06B6D4" strokeWidth={2.5} />} color="#06B6D4" sparklineData={trainingHistory.duration.map(h => ({ value: h.value }))} />
+            <MetricCard label={t('statsPages.discipline.totalDuration')} value={formatDurationHM(trainingData?.totalDuration || 0)} unit="" icon={<Award size={24} color="#06B6D4" strokeWidth={2.5} />} color="#06B6D4" sparklineData={trainingHistory.duration.map(h => ({ value: h.value }))} />
           </TouchableOpacity>
         </View>
       </StatsSection>

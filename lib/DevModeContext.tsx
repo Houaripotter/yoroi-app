@@ -1,5 +1,5 @@
 // ============================================
-// 🔓 YOROI - MODE CRÉATEUR / DÉVELOPPEUR
+// YOROI - MODE CRÉATEUR / DÉVELOPPEUR
 // ============================================
 // Débloque TOUTES les fonctionnalités Premium
 
@@ -82,7 +82,7 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
       const saved = await AsyncStorage.getItem(STORAGE_KEY);
       if (saved === 'true') {
         setIsDevMode(true);
-        logger.info('🔓 Mode Créateur activé');
+        logger.info('Mode Créateur activé');
       }
     } catch (e) {
       logger.info('Error loading dev mode:', e);
@@ -123,10 +123,10 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
       setIsDevMode(true);
       setShowCodeInput(false);
       await AsyncStorage.setItem(STORAGE_KEY, 'true');
-      logger.info('🎉 Mode Créateur activé avec succès !');
+      logger.info('Mode Créateur activé avec succès !');
       return true;
     }
-    logger.info('❌ Code incorrect');
+    logger.info('Code incorrect');
     return false;
   }, []);
 
@@ -134,7 +134,7 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
   const disableDevMode = useCallback(async () => {
     setIsDevMode(false);
     await AsyncStorage.removeItem(STORAGE_KEY);
-    logger.info('🔒 Mode Créateur désactivé');
+    logger.info('Mode Créateur désactivé');
   }, []);
 
   // Mémoïser la value pour éviter les re-renders en cascade

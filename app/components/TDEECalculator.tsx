@@ -23,11 +23,11 @@ export const TDEECalculator = React.memo(function TDEECalculator({ visible, onCl
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>('moderate');
 
   const calculateBMR = () => {
-    const w = parseFloat(weight);
-    const h = parseFloat(height);
-    const a = parseFloat(age);
-    if (!w || !h || !a) return 0;
-    const base = (10 * w) + (6.25 * h) - (5 * a);
+    const weightVal = parseFloat(weight);
+    const heightVal = parseFloat(height);
+    const ageVal = parseFloat(age);
+    if (!weightVal || !heightVal || !ageVal) return 0;
+    const base = (10 * weightVal) + (6.25 * heightVal) - (5 * ageVal);
     return gender === 'male' ? base + 5 : base - 161;
   };
 

@@ -5,6 +5,7 @@
 // ============================================
 
 import { type Insight } from '@/components/health-charts/InsightCard';
+import { formatDurationHM } from '@/lib/formatDuration';
 
 interface HistoricalData {
   date: string;
@@ -43,7 +44,7 @@ export class HealthInsightsGenerator {
 
     const recentAvg = recent.reduce((sum, d) => sum + d.value, 0) / recent.length;
     const previousAvg = previous.reduce((sum, d) => sum + d.value, 0) / previous.length;
-    const change = ((recentAvg - previousAvg) / previousAvg) * 100;
+    const change = previousAvg !== 0 ? ((recentAvg - previousAvg) / previousAvg) * 100 : 0;
 
     // HRV en hausse = bonne récupération
     if (change > 10) {
@@ -99,7 +100,7 @@ export class HealthInsightsGenerator {
 
     const recentAvg = recent.reduce((sum, d) => sum + d.value, 0) / recent.length;
     const previousAvg = previous.reduce((sum, d) => sum + d.value, 0) / previous.length;
-    const change = ((recentAvg - previousAvg) / previousAvg) * 100;
+    const change = previousAvg !== 0 ? ((recentAvg - previousAvg) / previousAvg) * 100 : 0;
 
     // FC au repos qui baisse = bonne forme
     if (change < -5) {
@@ -146,14 +147,14 @@ export class HealthInsightsGenerator {
       insights.push({
         type: 'success',
         title: 'Sommeil Optimal',
-        message: `Tu dors en moyenne ${(avgTotal / 60).toFixed(1)}h par nuit. Excellent pour la récupération !`,
+        message: `Tu dors en moyenne ${formatDurationHM(avgTotal)} par nuit. Excellent pour la récupération !`,
       });
     } else if (avgTotal < 360) {
       // < 6h
       insights.push({
         type: 'danger',
         title: 'Manque de Sommeil',
-        message: `Tu ne dors que ${(avgTotal / 60).toFixed(1)}h en moyenne. Augmente ton temps de sommeil pour optimiser ta récupération.`,
+        message: `Tu ne dors que ${formatDurationHM(avgTotal)} en moyenne. Augmente ton temps de sommeil pour optimiser ta récupération.`,
       });
     }
 

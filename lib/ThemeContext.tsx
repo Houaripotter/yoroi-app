@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import {
@@ -176,6 +176,16 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     };
 
     loadTheme();
+  }, []);
+
+  // Ecouter les changements de theme depuis la Watch
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('WATCH_THEME_MODE_CHANGED', ({ mode }) => {
+      if (mode && ['dark', 'light'].includes(mode)) {
+        setThemeModeState(mode as ThemeMode);
+      }
+    });
+    return () => sub.remove();
   }, []);
 
   // Changer la couleur du thème

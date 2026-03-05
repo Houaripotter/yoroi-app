@@ -1,5 +1,5 @@
 // ============================================
-// 🔒 SYSTÈME DE VALIDATION DES ENTRÉES - YOROI
+// SYSTÈME DE VALIDATION DES ENTRÉES - YOROI
 // ============================================
 // Protège contre les données invalides et les injections
 
@@ -540,7 +540,7 @@ const validateString = (value: any, rules: ValidationRule): ValidationResult => 
     };
   }
 
-  // 🔒 SÉCURITÉ: Supprimer les balises HTML/script pour éviter les injections
+  // SÉCURITÉ: Supprimer les balises HTML/script pour éviter les injections
   const sanitized = str
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/<[^>]+>/g, '');

@@ -1,5 +1,5 @@
 // ============================================
-// YOROI - ÉCRAN THÈMES
+// YOROI - ECRAN THEMES
 // ============================================
 
 import React, { useState, useEffect } from 'react';
@@ -9,6 +9,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
@@ -29,7 +30,6 @@ import {
   Circle,
   Diamond,
   Star,
-  Flower2,
   CloudSun,
   Cherry,
   Leaf,
@@ -39,6 +39,10 @@ import {
   Trees,
   Compass,
   Zap,
+  Wind,
+  Cloud,
+  Wand,
+  Citrus,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
@@ -53,36 +57,35 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { useDevMode } from '@/lib/DevModeContext';
 import logger from '@/lib/security/logger';
 
-// Helper pour obtenir la couleur d'un thème
+// Helper pour obtenir la couleur d'un theme
 const getThemeColor = (themeColorId: string): string => {
   const theme = themeColors.find(t => t.id === themeColorId);
   return theme?.color || '#FFFFFF';
 };
 
-// Helper pour obtenir la couleur companion d'un thème
+// Helper pour obtenir la couleur companion d'un theme
 const getThemeCompanion = (themeColorId: string): string => {
   const theme = themeColors.find(t => t.id === themeColorId);
   return theme?.companion || '#FFFFFF';
 };
 
-// Helper pour déterminer si une couleur est claire (nécessite texte noir) ou foncée (nécessite texte blanc)
-const getTextColorForBackground = (hexColor: string): string => {
-  // Supprimer le # si présent
-  const hex = hexColor.replace('#', '');
+// Helper pour obtenir le kanji d'un theme
+const getThemeKanji = (themeColorId: string): string => {
+  const theme = themeColors.find(t => t.id === themeColorId);
+  return theme?.kanji || '';
+};
 
-  // Convertir en RGB
+// Helper pour determiner si une couleur est claire ou foncee
+const getTextColorForBackground = (hexColor: string): string => {
+  const hex = hexColor.replace('#', '');
   const r = parseInt(hex.substr(0, 2), 16);
   const g = parseInt(hex.substr(2, 2), 16);
   const b = parseInt(hex.substr(4, 2), 16);
-
-  // Calculer la luminance relative (formule W3C)
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-  // Si luminance > 0.6, couleur claire → texte noir, sinon texte blanc
   return luminance > 0.6 ? '#000000' : '#FFFFFF';
 };
 
-// Helper pour obtenir l'icône correspondant à chaque thème
+// Helper pour obtenir l'icone correspondant a chaque theme
 const getThemeIcon = (themeColorId: string, color: string, size: number = 28) => {
   const iconProps = { size, color, strokeWidth: 2 };
 
@@ -119,6 +122,14 @@ const getThemeIcon = (themeColorId: string, color: string, size: number = 28) =>
       return <Compass {...iconProps} fill={color} />;
     case 'slate':
       return <Zap {...iconProps} />;
+    case 'ambersmoke':
+      return <Wind {...iconProps} />;
+    case 'dreamy':
+      return <Cloud {...iconProps} fill={color} />;
+    case 'lavendar':
+      return <Wand {...iconProps} />;
+    case 'chartreuse':
+      return <Citrus {...iconProps} />;
     default:
       return <Circle {...iconProps} fill={color} />;
   }
@@ -139,14 +150,12 @@ export default function ThemesScreen() {
 
   const loadSettings = async () => {
     try {
-      // Calculer l'XP basé sur l'activité de l'utilisateur
       const [weights, trainings, photos] = await Promise.all([
         getWeights(),
         getTrainings(),
         getPhotos(),
       ]);
 
-      // XP unifie (inclut activite + quetes + challenges + sante)
       if (creatorModeActive) {
         setUserXP(999999);
       } else {
@@ -164,7 +173,6 @@ export default function ThemesScreen() {
     const warriorTheme = WARRIOR_THEMES.find((t) => t.id === warriorThemeId);
     if (!warriorTheme) return;
 
-    // Verifier si debloque
     if (!appearanceService.isWarriorThemeUnlocked(warriorThemeId, userXP)) {
       showPopup(
         t('screens.themes.themeLocked'),
@@ -206,13 +214,17 @@ export default function ThemesScreen() {
     );
   }
 
-  // Trouver le thème guerrier actuel
   const currentWarriorTheme = WARRIOR_THEMES.find(
     (theme) => theme.themeColor === themeColor
   );
 
   const unlockedThemes = appearanceService.getUnlockedWarriorThemes(userXP);
   const nextTheme = appearanceService.getNextThemeToUnlock(userXP);
+
+  // Couleurs du theme actif pour le header preview
+  const activeAccent = getThemeColor(themeColor);
+  const activeCompanion = getThemeCompanion(themeColor);
+  const activeKanji = getThemeKanji(themeColor);
 
   return (
     <ScreenWrapper>
@@ -221,32 +233,46 @@ export default function ThemesScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Bouton retour + En-tête */}
-        <View style={styles.topSection}>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => {
-              impactAsync(ImpactFeedbackStyle.Light);
-              router.back();
-            }}
-            activeOpacity={0.7}
-          >
-            <ArrowLeft size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
+        {/* Bouton retour */}
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
+          onPress={() => {
+            impactAsync(ImpactFeedbackStyle.Light);
+            router.back();
+          }}
+          activeOpacity={0.7}
+        >
+          <ArrowLeft size={24} color={colors.textPrimary} />
+        </TouchableOpacity>
 
-          <View style={styles.header}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.backgroundElevated }]}>
-              <Palette size={24} color={colors.accent} />
+        {/* Header : apercu du theme actif */}
+        <View style={[styles.headerPreview, { overflow: 'hidden' }]}>
+          <LinearGradient
+            colors={[activeAccent, activeCompanion]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.headerGradient}
+          >
+            {/* Kanji watermark */}
+            <Text style={[styles.headerKanji, { color: 'rgba(255,255,255,0.15)' }]}>
+              {activeKanji}
+            </Text>
+
+            {/* Contenu du header */}
+            <View style={styles.headerContentRow}>
+              <View style={styles.headerIconBubble}>
+                {getThemeIcon(themeColor, getTextColorForBackground(activeAccent), 28)}
+              </View>
+              <View style={styles.headerInfo}>
+                <Text style={[styles.headerTitle, { color: getTextColorForBackground(activeAccent) }]}>
+                  {currentWarriorTheme?.name || themeColor}
+                </Text>
+                <Text style={[styles.headerSubtitle, { color: getTextColorForBackground(activeAccent) + 'BB' }]}>
+                  {currentWarriorTheme?.description || ''}
+                </Text>
+              </View>
             </View>
-            <View style={styles.headerText}>
-              <Text style={[styles.title, { color: colors.textPrimary }]}>
-                {t('screens.themes.title')}
-              </Text>
-              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                {t('screens.themes.subtitle')}
-              </Text>
-            </View>
-          </View>
+          </LinearGradient>
         </View>
 
         {/* Mode d'affichage */}
@@ -290,14 +316,14 @@ export default function ThemesScreen() {
           </View>
         </View>
 
-        {/* Section: Thèmes Guerriers */}
+        {/* Section: Themes */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
             {t('screens.themes.warriorThemes')}
           </Text>
           <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
             {creatorModeActive
-              ? `⚙️ ${t('screens.themes.creatorModeActive')}`
+              ? t('screens.themes.creatorModeActive')
               : t('screens.themes.unlockedCount', { unlocked: unlockedThemes.length, total: WARRIOR_THEMES.length, xp: userXP })}
           </Text>
 
@@ -307,6 +333,8 @@ export default function ThemesScreen() {
               const isActive = currentWarriorTheme?.id === theme.id;
               const themeAccentColor = getThemeColor(theme.themeColor);
               const themeCompanionColor = getThemeCompanion(theme.themeColor);
+              const themeKanjiChar = getThemeKanji(theme.themeColor);
+              const iconColor = getTextColorForBackground(themeAccentColor);
 
               return (
                 <TouchableOpacity
@@ -317,6 +345,17 @@ export default function ThemesScreen() {
                     isActive && {
                       borderColor: themeAccentColor,
                       borderWidth: 2.5,
+                      ...Platform.select({
+                        ios: {
+                          shadowColor: themeAccentColor,
+                          shadowOffset: { width: 0, height: 0 },
+                          shadowOpacity: 0.5,
+                          shadowRadius: 10,
+                        },
+                        android: {
+                          elevation: 8,
+                        },
+                      }),
                     },
                     !isUnlocked && { opacity: 0.5 },
                   ]}
@@ -324,29 +363,29 @@ export default function ThemesScreen() {
                   disabled={!isUnlocked}
                   activeOpacity={0.7}
                 >
-                  {/* Bannière bicolore en haut */}
-                  <View style={styles.colorBanner}>
-                    <View style={[styles.colorHalf, { backgroundColor: themeAccentColor, borderTopLeftRadius: isActive ? 11 : 13 }]} />
-                    <View style={[styles.colorHalf, { backgroundColor: themeCompanionColor, borderTopRightRadius: isActive ? 11 : 13 }]} />
+                  {/* Banniere gradient accent -> companion */}
+                  <View style={styles.bannerContainer}>
+                    <LinearGradient
+                      colors={[themeAccentColor, themeCompanionColor]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={[
+                        styles.colorBanner,
+                        isActive && { borderTopLeftRadius: 11, borderTopRightRadius: 11 },
+                      ]}
+                    />
                   </View>
 
-                  {/* Contenu */}
+                  {/* Contenu sous la banniere */}
                   <View style={styles.themeContent}>
-                    <Text style={[styles.themeName, { color: colors.textPrimary }]}>
+                    <Text style={[styles.themeName, { color: colors.textPrimary }]} numberOfLines={1}>
                       {theme.name}
                     </Text>
-                    {/* Noms des deux couleurs */}
-                    {isUnlocked && theme.description ? (
-                      <View style={styles.colorNamesRow}>
-                        <View style={[styles.colorDot, { backgroundColor: themeAccentColor }]} />
-                        <Text style={[styles.colorNameText, { color: colors.textMuted }]}>
-                          {theme.description.split(' + ')[0]}
-                        </Text>
-                        <Text style={[styles.colorNamePlus, { color: colors.textMuted }]}> + </Text>
-                        <View style={[styles.colorDot, { backgroundColor: themeCompanionColor }]} />
-                        <Text style={[styles.colorNameText, { color: colors.textMuted }]}>
-                          {theme.description.split(' + ')[1]}
-                        </Text>
+                    {isUnlocked ? (
+                      /* Deux cercles : couleur principale + couleur companion */
+                      <View style={styles.colorCirclesRow}>
+                        <View style={[styles.colorCircle, { backgroundColor: themeAccentColor }]} />
+                        <View style={[styles.colorCircle, styles.colorCircleOverlap, { backgroundColor: themeCompanionColor }]} />
                       </View>
                     ) : (
                       <Text style={[styles.themeDescription, { color: colors.textMuted }]}>
@@ -355,14 +394,18 @@ export default function ThemesScreen() {
                     )}
                   </View>
 
+                  {/* Lock badge */}
                   {!isUnlocked && (
                     <View style={styles.lockBadge}>
                       <Lock size={14} color={colors.textMuted} />
                     </View>
                   )}
+
+                  {/* Badge Actif */}
                   {isActive && (
-                    <View style={[styles.activeIndicator, { backgroundColor: themeAccentColor }]}>
-                      <Check size={14} color={getTextColorForBackground(themeAccentColor)} />
+                    <View style={[styles.activeBadge, { backgroundColor: '#30D158' }]}>
+                      <Check size={12} color="#FFFFFF" strokeWidth={3} />
+                      <Text style={styles.activeBadgeText}>Actif</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -370,7 +413,7 @@ export default function ThemesScreen() {
             })}
           </View>
 
-          {/* Prochain déblocage */}
+          {/* Prochain deblocage */}
           {nextTheme && (
             <View style={[styles.nextUnlock, { backgroundColor: colors.backgroundElevated }]}>
               <Crown size={16} color={colors.accent} />
@@ -382,7 +425,6 @@ export default function ThemesScreen() {
         </View>
       </ScrollView>
 
-      {/* Custom Popup */}
       <PopupComponent />
     </ScreenWrapper>
   );
@@ -401,9 +443,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 50,
   },
-  topSection: {
-    marginBottom: SPACING.xl,
-  },
   backButton: {
     width: 44,
     height: 44,
@@ -412,29 +451,54 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: SPACING.md,
   },
-  header: {
+
+  // Header preview
+  headerPreview: {
+    borderRadius: RADIUS.xl,
+    marginBottom: SPACING.lg,
+  },
+  headerGradient: {
+    borderRadius: RADIUS.xl,
+    padding: SPACING.xl,
+    paddingVertical: SPACING.xxl,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  headerKanji: {
+    position: 'absolute',
+    right: -10,
+    top: -20,
+    fontSize: 120,
+    fontWeight: '900',
+    lineHeight: 140,
+  },
+  headerContentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
   },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: RADIUS.xl,
+  headerIconBubble: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerText: {
+  headerInfo: {
     flex: 1,
   },
-  title: {
-    fontSize: 28,
+  headerTitle: {
+    fontSize: 24,
     fontWeight: '800',
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  subtitle: {
-    fontSize: 15,
+  headerSubtitle: {
+    fontSize: 14,
+    fontWeight: '600',
   },
+
+  // Mode section
   modeSection: {
     padding: SPACING.lg,
     borderRadius: RADIUS.xl,
@@ -462,6 +526,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+
+  // Section
   section: {
     marginBottom: SPACING.xl,
   },
@@ -474,50 +540,87 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: SPACING.md,
   },
+
+  // Grid
   themesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SPACING.sm,
+    gap: SPACING.md,
     marginBottom: SPACING.sm,
   },
   themeCard: {
-    width: '48%',
+    width: '47.5%',
     borderRadius: RADIUS.lg,
     position: 'relative',
     overflow: 'hidden',
   },
+
+  // Banner
+  bannerContainer: {
+    overflow: 'hidden',
+    borderTopLeftRadius: RADIUS.lg,
+    borderTopRightRadius: RADIUS.lg,
+  },
   colorBanner: {
+    height: 80,
     flexDirection: 'row',
-    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+    borderTopLeftRadius: RADIUS.lg,
+    borderTopRightRadius: RADIUS.lg,
   },
-  colorHalf: {
-    flex: 1,
+  bannerKanji: {
+    position: 'absolute',
+    right: -5,
+    top: -10,
+    fontSize: 80,
+    fontWeight: '900',
+    lineHeight: 95,
   },
+  bannerIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2.5,
+    zIndex: 2,
+  },
+
+  // Content
   themeContent: {
     padding: SPACING.sm,
-    paddingTop: 10,
-    paddingBottom: 12,
+    paddingTop: 8,
+    paddingBottom: 10,
   },
-  colorNamesRow: {
+  themeName: {
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 3,
+  },
+  colorCirclesRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    marginTop: 2,
+    gap: 6,
+    marginTop: 5,
   },
-  colorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 3,
+  colorCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
-  colorNameText: {
-    fontSize: 10.5,
-    fontWeight: '600',
+  colorCircleOverlap: {},
+  themeDescription: {
+    fontSize: 12,
+    lineHeight: 16,
   },
-  colorNamePlus: {
-    fontSize: 10,
-    fontWeight: '500',
-  },
+
+  // Lock badge
   lockBadge: {
     position: 'absolute',
     top: 8,
@@ -529,25 +632,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  themeName: {
-    fontSize: 16,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  themeDescription: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  activeIndicator: {
+
+  // Active badge
+  activeBadge: {
     position: 'absolute',
     top: 8,
     right: 8,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    gap: 3,
   },
+  activeBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
+  // Next unlock
   nextUnlock: {
     flexDirection: 'row',
     alignItems: 'center',

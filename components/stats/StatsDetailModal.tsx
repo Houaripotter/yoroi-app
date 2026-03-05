@@ -17,21 +17,27 @@ import { getProfile } from '@/lib/database';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { logger } from '@/lib/security/logger';
 
-type Period = '30j' | '90j' | '6m' | '1a';
+const sf = (v: number): string => Number.isInteger(v) ? String(v) : v.toFixed(1).replace(/\.0$/, '');
+
+type Period = '7j' | '30j' | '90j' | '6m' | '1a' | 'tout';
 
 const PERIODS: Array<{ value: Period; label: string }> = [
+  { value: '7j', label: '7 jours' },
   { value: '30j', label: '30 jours' },
   { value: '90j', label: '90 jours' },
   { value: '6m', label: '6 mois' },
   { value: '1a', label: '1 an' },
+  { value: 'tout', label: 'Tout' },
 ];
 
 const getPeriodDays = (period: Period): number => {
   switch (period) {
+    case '7j': return 7;
     case '30j': return 30;
     case '90j': return 90;
     case '6m': return 180;
     case '1a': return 365;
+    case 'tout': return 3650;
     default: return 30;
   }
 };
@@ -301,14 +307,14 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                       {t('statsModal.currentValue')}
                     </Text>
                     <Text style={[styles.currentValue, { color: color }]}>
-                      {stats.latest.toFixed(1)}
+                      {sf(stats.latest)}
                       <Text style={[styles.currentValueUnit, { color: colors.textMuted }]}> {unit}</Text>
                     </Text>
                   </View>
                   <View style={[styles.trendBadge, { backgroundColor: stats.trend === 'up' ? '#2BCBBA20' : stats.trend === 'down' ? '#FC5C6520' : colors.border }]}>
                     {getTrendIcon()}
                     <Text style={[styles.trendText, { color: stats.trend === 'up' ? '#2BCBBA' : stats.trend === 'down' ? '#FC5C65' : colors.textMuted }]}>
-                      {stats.change >= 0 ? '+' : ''}{stats.change.toFixed(1)} {unit}
+                      {stats.change >= 0 ? '+' : ''}{sf(stats.change)} {unit}
                     </Text>
                   </View>
                 </View>
@@ -408,25 +414,25 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                   <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
                     <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('statsModal.min')}</Text>
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                      {stats.min.toFixed(1)} {unit}
+                      {sf(stats.min)} {unit}
                     </Text>
                   </View>
                   <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
                     <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('statsModal.max')}</Text>
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                      {stats.max.toFixed(1)} {unit}
+                      {sf(stats.max)} {unit}
                     </Text>
                   </View>
                   <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
                     <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('statsModal.avg')}</Text>
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                      {stats.avg.toFixed(1)} {unit}
+                      {sf(stats.avg)} {unit}
                     </Text>
                   </View>
                   <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
                     <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('statsModal.evolution')}</Text>
                     <Text style={[styles.statValue, { color: stats.changePercent >= 0 ? '#2BCBBA' : '#FC5C65' }]}>
-                      {stats.changePercent >= 0 ? '+' : ''}{stats.changePercent.toFixed(1)}%
+                      {stats.changePercent >= 0 ? '+' : ''}{sf(stats.changePercent)}%
                     </Text>
                   </View>
                 </View>

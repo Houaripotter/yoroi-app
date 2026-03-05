@@ -225,7 +225,7 @@ export const NumericInput: React.FC<NumericInputProps> = ({
         { backgroundColor: bgColor, borderColor, borderWidth: error ? 1 : 0 }
       ]}>
         <TextInput
-          style={[{ color: textColor }, inputStyle]}
+          style={[styles.compactInput, { color: textColor }, inputStyle]}
           value={localValue}
           onChangeText={handleChangeText}
           onEndEditing={handleEndEditing}
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 2,
-    minHeight: 40,
+    minHeight: 48,
   },
   compactInput: {
     flex: 1,

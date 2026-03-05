@@ -25,7 +25,7 @@ import com.houari.yoroi.wear.theme.WatchBg
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun YoroiWatchApp(repository: YoroiDataRepository) {
-    val pageCount = 5
+    val pageCount = 6
     val pagerState = rememberPagerState(pageCount = { pageCount })
 
     Box(
@@ -39,10 +39,11 @@ fun YoroiWatchApp(repository: YoroiDataRepository) {
         ) { page ->
             when (page) {
                 0 -> DashboardPage(repository)
-                1 -> WeightPage(repository)
-                2 -> HydrationPage(repository)
-                3 -> SleepPage(repository)
-                4 -> SettingsPage(repository)
+                1 -> CarnetPage(repository)
+                2 -> WeightPage(repository)
+                3 -> HydrationPage(repository)
+                4 -> SleepPage(repository)
+                5 -> SettingsPage(repository)
             }
         }
 

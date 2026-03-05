@@ -400,6 +400,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    paddingHorizontal: SPACING.md,
+    paddingBottom: SPACING.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerContent: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  sportTag: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   headerContainer: {
     height: 220,
     position: 'relative',

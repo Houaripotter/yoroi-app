@@ -12,8 +12,6 @@ struct SettingsPage: View {
   @AppStorage("unitSystem") private var unitSystem: String = "kg" // kg or lbs
 
   @State private var showTimerPicker = false
-  @State private var showStepsPicker = false
-  @State private var showHydrationPicker = false
 
   // Timer presets for picker
   private let timerOptions: [(Int, String)] = [
@@ -32,10 +30,31 @@ struct SettingsPage: View {
             .foregroundColor(goldColor)
           Text("Reglages")
             .font(.system(size: 14, weight: .bold))
-            .foregroundColor(.white)
+            .foregroundColor(session.textPrimary)
           Spacer()
         }
         .padding(.horizontal, 4)
+
+        // ── APPARENCE ──
+        VStack(spacing: 4) {
+          sectionLabel("APPARENCE", icon: "paintbrush.fill", color: goldColor)
+
+          HStack {
+            Image(systemName: session.isDarkMode ? "moon.fill" : "sun.max.fill")
+              .font(.system(size: 10))
+              .foregroundColor(session.isDarkMode ? .purple : .orange)
+            Text("Theme")
+              .font(.system(size: 10))
+              .foregroundColor(session.textSecondary)
+            Spacer()
+            HStack(spacing: 4) {
+              modeButton("Clair", icon: "sun.max.fill", isSelected: !session.isDarkMode, iconColor: .orange)
+              modeButton("Sombre", icon: "moon.fill", isSelected: session.isDarkMode, iconColor: .purple)
+            }
+          }
+          .padding(.horizontal, 6)
+          .padding(.vertical, 4)
+        }
 
         // ── CONNEXION ──
         VStack(spacing: 4) {
@@ -52,7 +71,7 @@ struct SettingsPage: View {
             if let lastSync = session.lastSyncDate {
               Text(timeAgo(lastSync))
                 .font(.system(size: 8))
-                .foregroundColor(.gray)
+                .foregroundColor(session.textSecondary)
             }
           }
           .padding(.horizontal, 6)
@@ -67,7 +86,7 @@ struct SettingsPage: View {
               Text("Synchroniser")
                 .font(.system(size: 10, weight: .bold))
             }
-            .foregroundColor(.black)
+            .foregroundColor(session.textOnAccent)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 7)
             .background(goldColor)
@@ -84,18 +103,18 @@ struct SettingsPage: View {
             HStack {
               Text("Duree par defaut")
                 .font(.system(size: 10))
-                .foregroundColor(.gray)
+                .foregroundColor(session.textSecondary)
               Spacer()
               Text(formatTime(defaultTimerSeconds))
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(goldColor)
               Image(systemName: "chevron.right")
                 .font(.system(size: 8))
-                .foregroundColor(.gray.opacity(0.5))
+                .foregroundColor(session.textSecondary.opacity(0.5))
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 6)
-            .background(Color.white.opacity(0.05))
+            .background(session.cardBg)
             .cornerRadius(8)
           }
           .buttonStyle(.plain)
@@ -112,10 +131,11 @@ struct SettingsPage: View {
               .foregroundColor(.green)
             Text("Pas / jour")
               .font(.system(size: 10))
-              .foregroundColor(.gray)
+              .foregroundColor(session.textSecondary)
             Spacer()
             Button(action: {
-              session.stepsGoal = max(1000, session.stepsGoal - 1000)
+              session.updateStepsGoal(max(1000, session.stepsGoal - 1000))
+              if hapticEnabled { WKInterfaceDevice.current().play(.click) }
             }) {
               Image(systemName: "minus.circle.fill")
                 .font(.system(size: 14))
@@ -123,10 +143,11 @@ struct SettingsPage: View {
             }.buttonStyle(.plain)
             Text("\(session.stepsGoal)")
               .font(.system(size: 12, weight: .bold))
-              .foregroundColor(.white)
+              .foregroundColor(session.textPrimary)
               .frame(width: 44)
             Button(action: {
-              session.stepsGoal = min(30000, session.stepsGoal + 1000)
+              session.updateStepsGoal(min(30000, session.stepsGoal + 1000))
+              if hapticEnabled { WKInterfaceDevice.current().play(.click) }
             }) {
               Image(systemName: "plus.circle.fill")
                 .font(.system(size: 14))
@@ -143,10 +164,11 @@ struct SettingsPage: View {
               .foregroundColor(.cyan)
             Text("Eau / jour")
               .font(.system(size: 10))
-              .foregroundColor(.gray)
+              .foregroundColor(session.textSecondary)
             Spacer()
             Button(action: {
-              session.hydrationGoal = max(500, session.hydrationGoal - 250)
+              session.updateHydrationGoal(max(500, session.hydrationGoal - 250))
+              if hapticEnabled { WKInterfaceDevice.current().play(.click) }
             }) {
               Image(systemName: "minus.circle.fill")
                 .font(.system(size: 14))
@@ -154,10 +176,11 @@ struct SettingsPage: View {
             }.buttonStyle(.plain)
             Text("\(session.hydrationGoal)ml")
               .font(.system(size: 11, weight: .bold))
-              .foregroundColor(.white)
+              .foregroundColor(session.textPrimary)
               .frame(width: 52)
             Button(action: {
-              session.hydrationGoal = min(6000, session.hydrationGoal + 250)
+              session.updateHydrationGoal(min(6000, session.hydrationGoal + 250))
+              if hapticEnabled { WKInterfaceDevice.current().play(.click) }
             }) {
               Image(systemName: "plus.circle.fill")
                 .font(.system(size: 14))
@@ -176,7 +199,7 @@ struct SettingsPage: View {
           HStack {
             Text("Unites")
               .font(.system(size: 10))
-              .foregroundColor(.gray)
+              .foregroundColor(session.textSecondary)
             Spacer()
             HStack(spacing: 4) {
               unitButton("kg", isSelected: unitSystem == "kg")
@@ -190,7 +213,7 @@ struct SettingsPage: View {
           HStack {
             Text("Vibrations")
               .font(.system(size: 10))
-              .foregroundColor(.gray)
+              .foregroundColor(session.textSecondary)
             Spacer()
             Button(action: {
               hapticEnabled.toggle()
@@ -198,9 +221,9 @@ struct SettingsPage: View {
             }) {
               Image(systemName: hapticEnabled ? "iphone.radiowaves.left.and.right" : "iphone.slash")
                 .font(.system(size: 12))
-                .foregroundColor(hapticEnabled ? .green : .gray)
+                .foregroundColor(hapticEnabled ? .green : session.textSecondary)
                 .frame(width: 28, height: 28)
-                .background(hapticEnabled ? Color.green.opacity(0.15) : Color.white.opacity(0.05))
+                .background(hapticEnabled ? Color.green.opacity(0.15) : session.cardBg)
                 .cornerRadius(7)
             }
             .buttonStyle(.plain)
@@ -220,7 +243,7 @@ struct SettingsPage: View {
           }
           .padding(.horizontal, 6)
           .padding(.vertical, 4)
-          .background(Color.white.opacity(0.03))
+          .background(session.cardBg)
           .cornerRadius(8)
         }
 
@@ -229,6 +252,7 @@ struct SettingsPage: View {
       }
       .padding(.horizontal, 2)
     }
+    .refreshable { session.requestSync() }
     .sheet(isPresented: $showTimerPicker) {
       timerPickerSheet
     }
@@ -247,23 +271,24 @@ struct SettingsPage: View {
           Button(action: {
             defaultTimerSeconds = seconds
             session.setTimer(seconds: seconds)
+            session.changeTimerPreset(seconds)
             showTimerPicker = false
             if hapticEnabled { WKInterfaceDevice.current().play(.click) }
           }) {
             HStack {
               Text(label)
                 .font(.system(size: 13, weight: .bold))
-                .foregroundColor(seconds == defaultTimerSeconds ? .black : .white)
+                .foregroundColor(seconds == defaultTimerSeconds ? session.textOnAccent : session.textPrimary)
               Spacer()
               if seconds == defaultTimerSeconds {
                 Image(systemName: "checkmark")
                   .font(.system(size: 10, weight: .bold))
-                  .foregroundColor(.black)
+                  .foregroundColor(session.textOnAccent)
               }
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
-            .background(seconds == defaultTimerSeconds ? goldColor : Color.white.opacity(0.06))
+            .background(seconds == defaultTimerSeconds ? goldColor : session.cardBg)
             .cornerRadius(8)
           }
           .buttonStyle(.plain)
@@ -282,21 +307,47 @@ struct SettingsPage: View {
         .foregroundColor(color)
       Text(text)
         .font(.system(size: 7, weight: .heavy))
-        .foregroundColor(.gray)
+        .foregroundColor(session.textSecondary)
         .tracking(1)
       Spacer()
     }
     .padding(.horizontal, 4)
   }
 
+  private func modeButton(_ label: String, icon: String, isSelected: Bool, iconColor: Color) -> some View {
+    Button(action: {
+      let mode = label == "Clair" ? "light" : "dark"
+      session.changeThemeMode(mode)
+      if hapticEnabled { WKInterfaceDevice.current().play(.click) }
+    }) {
+      HStack(spacing: 3) {
+        Image(systemName: icon)
+          .font(.system(size: 8))
+          .foregroundColor(isSelected ? iconColor : session.textSecondary)
+        Text(label)
+          .font(.system(size: 8, weight: .bold))
+          .foregroundColor(isSelected ? session.textOnAccent : session.textPrimary)
+      }
+      .padding(.horizontal, 8)
+      .padding(.vertical, 5)
+      .background(isSelected ? goldColor : session.cardBg)
+      .cornerRadius(6)
+    }
+    .buttonStyle(.plain)
+  }
+
   private func unitButton(_ unit: String, isSelected: Bool) -> some View {
-    Button(action: { unitSystem = unit }) {
+    Button(action: {
+      unitSystem = unit
+      session.changeUnitSystem(unit)
+      if hapticEnabled { WKInterfaceDevice.current().play(.click) }
+    }) {
       Text(unit.uppercased())
         .font(.system(size: 9, weight: .bold))
-        .foregroundColor(isSelected ? .black : .white)
+        .foregroundColor(isSelected ? session.textOnAccent : session.textPrimary)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(isSelected ? goldColor : Color.white.opacity(0.08))
+        .background(isSelected ? goldColor : session.cardBg)
         .cornerRadius(6)
     }
     .buttonStyle(.plain)
@@ -306,11 +357,11 @@ struct SettingsPage: View {
     HStack {
       Text(label)
         .font(.system(size: 9))
-        .foregroundColor(.gray)
+        .foregroundColor(session.textSecondary)
       Spacer()
       Text(value)
         .font(.system(size: 9, weight: .bold))
-        .foregroundColor(.white)
+        .foregroundColor(session.textPrimary)
     }
     .padding(.vertical, 1)
   }
@@ -330,6 +381,6 @@ struct SettingsPage: View {
   }
 
   private var goldColor: Color {
-    Color(red: 0.831, green: 0.686, blue: 0.216)
+    session.accentColor
   }
 }

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -13,13 +13,12 @@ import {
 import { LineChart, BarChart } from 'react-native-gifted-charts';
 import { Calendar, Dna , ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { getAllMeasurements, Measurement, getAllWorkouts, getUserSettings, addWorkout, deleteWorkout, getUserClubs , UserClub } from '@/lib/storage';
+import { getAllMeasurements, Measurement } from '@/lib/storage';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { Workout, WorkoutType } from '@/types/workout';
-import { ActivityModal } from '@/components/ActivityModal';
-import { checkAndUnlockBadges } from '@/lib/badges';
+import { getTrainings, Training } from '@/lib/database';
+import { getSportById } from '@/lib/sports';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import logger from '@/lib/security/logger';
@@ -91,46 +90,39 @@ export default function HistoryScreen() {
   const [selectedComposition, setSelectedComposition] = useState<CompositionMetric>('weight');
   const [selectedMeasurement, setSelectedMeasurement] = useState<MeasurementMetric>('waist');
   const [records, setRecords] = useState<Measurement[]>([]);
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [trainings, setTrainings] = useState<Training[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [customLogos, setCustomLogos] = useState<{ [key: string]: string }>({});
-  const [userClubs, setUserClubs] = useState<UserClub[]>([]);
   const [loading, setLoading] = useState(true);
   const [useMockData, setUseMockData] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<'7' | '30' | '90' | 'all'>('all');
   const { isProcessing, executeOnce } = usePreventDoubleClick({ delay: 500 });
+  const cancelledRef = useRef(false);
 
   const fetchHistoryRecords = useCallback(async () => {
     setLoading(true);
     try {
-      const [measurements, allWorkouts, settings, clubs] = await Promise.all([
+      const [measurements, allTrainings] = await Promise.all([
         getAllMeasurements(),
-        getAllWorkouts(),
-        getUserSettings(),
-        getUserClubs(),
+        getTrainings(), // SQLite: inclut Apple Health + seances manuelles
       ]);
-      
-      setWorkouts(allWorkouts as Workout[]);
-      setUserClubs(clubs);
-      
-      if ((settings as any).custom_club_logos) {
-        setCustomLogos((settings as any).custom_club_logos);
-      }
-      
-      // PRODUCTION: Toujours utiliser les vraies données (pas de mock)
+
+      if (cancelledRef.current) return;
+      setTrainings(allTrainings);
       setRecords(measurements);
       setUseMockData(false);
     } catch (error) {
-      logger.error('❌ Erreur chargement historique:', error);
-      setRecords([]);
+      logger.error('Erreur chargement historique:', error);
+      if (!cancelledRef.current) setRecords([]);
     }
-    setLoading(false);
+    if (!cancelledRef.current) setLoading(false);
   }, []);
 
   // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => { fetchHistoryRecords(); }, []);
+  useEffect(() => {
+    cancelledRef.current = false;
+    fetchHistoryRecords();
+    return () => { cancelledRef.current = true; };
+  }, []);
 
   // Calendrier mensuel
   const calendarData = useMemo(() => {
@@ -151,10 +143,10 @@ export default function HistoryScreen() {
     return days;
   }, [currentMonth]);
 
-  const getWorkoutsForDate = (date: Date | null): Workout[] => {
+  const getTrainingsForDate = (date: Date | null): Training[] => {
     if (!date || !(date instanceof Date) || isNaN(date.getTime())) return [];
     const dateString = date.toISOString().split('T')[0];
-    return workouts.filter(w => w.date === dateString);
+    return trainings.filter(t => t.date === dateString);
   };
 
   const handlePreviousMonth = () => {
@@ -170,50 +162,13 @@ export default function HistoryScreen() {
 
     executeOnce(async () => {
       const dateString = date.toISOString().split('T')[0];
-      setSelectedDate(dateString);
-      setModalVisible(true);
+      const dayTrainings = trainings.filter(t => t.date === dateString);
+      if (dayTrainings.length > 0 && dayTrainings[0].id) {
+        router.push({ pathname: '/workout-detail', params: { id: dayTrainings[0].id.toString() } });
+      } else {
+        router.push({ pathname: '/add-training', params: { date: dateString } });
+      }
     });
-  };
-
-  const getCurrentActivitiesForDate = (date: string): WorkoutType[] => {
-    return workouts
-      .filter(w => w.date === date)
-      .map(w => w.type);
-  };
-
-  const handleActivitySelect = async (types: WorkoutType[]): Promise<void> => {
-    if (!selectedDate) {
-      logger.error('❌ Pas de date sélectionnée');
-      return;
-    }
-
-    try {
-      // Supprimer les anciens entraînements pour cette date
-      const allWorkouts = await getAllWorkouts();
-      const workoutsToDelete = allWorkouts.filter(w => w.date === selectedDate);
-
-      for (const workout of workoutsToDelete) {
-        await deleteWorkout(workout.id);
-      }
-
-      // Ajouter les nouveaux entraînements seulement s'il y en a
-      if (types.length > 0) {
-        for (const type of types) {
-          await addWorkout({
-            date: selectedDate,
-            type,
-          });
-        }
-      }
-
-      // Rafraîchir les données
-      await fetchHistoryRecords();
-
-      // Vérifier et débloquer les badges
-      checkAndUnlockBadges().catch(() => {});
-    } catch (error) {
-      logger.error('❌ [ERREUR GLOBALE]:', error);
-    }
   };
 
   // Filtrer les données selon la période sélectionnée
@@ -376,74 +331,46 @@ export default function HistoryScreen() {
 
         {/* Summary Card - Always Visible */}
         <View style={[styles.summaryCard, { backgroundColor: themeColors.card }]}>
-          <Text style={[styles.summaryTitle, { color: themeColors.textPrimary }]}>Résumé du mois</Text>
+          <Text style={[styles.summaryTitle, { color: themeColors.textPrimary }]}>Resume du mois</Text>
           <View style={styles.summaryContent}>
             <View style={styles.summaryTotal}>
-              <Text style={[styles.summaryTotalLabel, { color: themeColors.textSecondary }]}>Total Entraînements</Text>
+              <Text style={[styles.summaryTotalLabel, { color: themeColors.textSecondary }]}>Total Entrainements</Text>
               <Text style={[styles.summaryTotalNumber, { color: themeColors.textPrimary }]}>
-                {workouts.filter(w => {
-                  const workoutDate = new Date(w.date);
-                  return workoutDate.getFullYear() === currentMonth.getFullYear() &&
-                         workoutDate.getMonth() === currentMonth.getMonth();
+                {trainings.filter(t => {
+                  const d = new Date(t.date);
+                  return d.getFullYear() === currentMonth.getFullYear() &&
+                         d.getMonth() === currentMonth.getMonth();
                 }).length}
               </Text>
             </View>
             <View style={styles.summaryDetails}>
               {(() => {
-                const monthWorkouts = workouts.filter(w => {
-                  const workoutDate = new Date(w.date);
-                  return workoutDate.getFullYear() === currentMonth.getFullYear() &&
-                         workoutDate.getMonth() === currentMonth.getMonth();
+                const monthTrainings = trainings.filter(t => {
+                  const d = new Date(t.date);
+                  return d.getFullYear() === currentMonth.getFullYear() &&
+                         d.getMonth() === currentMonth.getMonth();
                 });
 
-                // Grouper par type et afficher avec logos
-                const workoutTypes = ['gracie_barra', 'basic_fit', 'running'] as WorkoutType[];
-                const displayedTypes: WorkoutType[] = [];
-                
-                workoutTypes.forEach(type => {
-                  const count = monthWorkouts.filter(w => w.type === type).length;
-                  if (count > 0) {
-                    displayedTypes.push(type);
-                  }
+                // Grouper dynamiquement par sport
+                const sportCounts: { [sport: string]: number } = {};
+                monthTrainings.forEach(t => {
+                  sportCounts[t.sport] = (sportCounts[t.sport] || 0) + 1;
                 });
 
-                return displayedTypes.map((type, index) => {
-                  const count = monthWorkouts.filter(w => w.type === type).length;
-                  const club = userClubs.find(c => c.type === type);
-                  
+                const sortedSports = Object.entries(sportCounts)
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 4); // Top 4 sports
+
+                return sortedSports.map(([sport, count], index) => {
+                  const sportInfo = getSportById(sport);
+                  const iconName = sportInfo?.icon || 'trophy';
+                  const sportColor = sportInfo?.color || themeColors.textPrimary;
+
                   return (
-                    <View key={type} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View key={sport} style={{ flexDirection: 'row', alignItems: 'center' }}>
                       {index > 0 && <View style={[styles.summaryDivider, { backgroundColor: themeColors.border }]} />}
                       <View style={styles.summaryItem}>
-                        {type === 'running' ? (
-                          <MaterialCommunityIcons name="run" size={24} color="#10B981" />
-                        ) : club && club.logoUri ? (
-                          <Image
-                            source={{ uri: club.logoUri }}
-                            style={styles.summaryLogo}
-                            resizeMode="contain"
-                          />
-                        ) : type === 'gracie_barra' ? (
-                          customLogos.gracie_barra ? (
-                            <Image
-                              source={{ uri: customLogos.gracie_barra }}
-                              style={styles.summaryLogo}
-                              resizeMode="contain"
-                            />
-                          ) : (
-                            <View style={[styles.summaryLogo, styles.summaryLogoPlaceholder]} />
-                          )
-                        ) : (
-                          customLogos.basic_fit ? (
-                            <Image
-                              source={{ uri: customLogos.basic_fit }}
-                              style={styles.summaryLogo}
-                              resizeMode="contain"
-                            />
-                          ) : (
-                            <View style={[styles.summaryLogo, styles.summaryLogoPlaceholder]} />
-                          )
-                        )}
+                        <MaterialCommunityIcons name={iconName as any} size={24} color={sportColor} />
                         <Text style={[styles.summaryCount, { color: themeColors.textPrimary }]}>x{count}</Text>
                       </View>
                     </View>
@@ -525,8 +452,8 @@ export default function HistoryScreen() {
                   return <View key={`invalid-${index}`} style={styles.emptyDay} />;
                 }
 
-                const dayWorkouts = getWorkoutsForDate(item);
-                const hasWorkouts = dayWorkouts.length > 0;
+                const dayTrainings = getTrainingsForDate(item);
+                const hasTrainings = dayTrainings.length > 0;
                 const isToday = item.toDateString() === new Date().toDateString();
 
                 return (
@@ -535,7 +462,7 @@ export default function HistoryScreen() {
                     style={[
                       styles.dayCell,
                       { backgroundColor: themeColors.cardHover },
-                      hasWorkouts && { backgroundColor: themeColors.goldMuted },
+                      hasTrainings && { backgroundColor: themeColors.goldMuted },
                       isToday && { borderWidth: 2, borderColor: themeColors.gold },
                     ]}
                     onPress={() => handleDayPress(item)}
@@ -544,54 +471,33 @@ export default function HistoryScreen() {
                     <Text style={[styles.dayNumber, { color: themeColors.textPrimary }, isToday && { color: themeColors.gold, fontWeight: '800' }]}>
                       {item.getDate()}
                     </Text>
-                    {hasWorkouts && (
+                    {hasTrainings && (
                       <View style={styles.dayWorkoutsContainer}>
-                        {dayWorkouts.slice(0, 3).map((workout) => {
-                          // Chercher le club correspondant
-                          const club = userClubs.find(c => c.type === workout.type);
-                          
-                          if (workout.type === 'running') {
-                            return (
-                              <MaterialCommunityIcons
-                                key={workout.id}
-                                name="run"
-                                size={14}
-                                color="#10B981"
-                              />
-                            );
-                          } else if (club && club.logoUri) {
+                        {dayTrainings.slice(0, 3).map((training, tIdx) => {
+                          const sportInfo = getSportById(training.sport);
+                          const iconName = sportInfo?.icon || 'trophy';
+                          const sportColor = sportInfo?.color || themeColors.textPrimary;
+
+                          // Club logo if available
+                          if (training.club_logo) {
                             return (
                               <Image
-                                key={workout.id}
-                                source={{ uri: club.logoUri }}
+                                key={training.id || tIdx}
+                                source={{ uri: training.club_logo }}
                                 style={styles.dayWorkoutLogo}
                                 resizeMode="contain"
                               />
-                            );
-                          } else if (workout.type === 'basic_fit') {
-                            return customLogos.basic_fit ? (
-                              <Image
-                                key={workout.id}
-                                source={{ uri: customLogos.basic_fit }}
-                                style={styles.dayWorkoutLogo}
-                                resizeMode="contain"
-                              />
-                            ) : (
-                              <View key={workout.id} style={[styles.dayWorkoutLogo, styles.dayWorkoutLogoPlaceholder]} />
-                            );
-                          } else if (workout.type === 'gracie_barra') {
-                            return customLogos.gracie_barra ? (
-                              <Image
-                                key={workout.id}
-                                source={{ uri: customLogos.gracie_barra }}
-                                style={styles.dayWorkoutLogo}
-                                resizeMode="contain"
-                              />
-                            ) : (
-                              <View key={workout.id} style={[styles.dayWorkoutLogo, styles.dayWorkoutLogoPlaceholder]} />
                             );
                           }
-                          return null;
+
+                          return (
+                            <MaterialCommunityIcons
+                              key={training.id || tIdx}
+                              name={iconName as any}
+                              size={14}
+                              color={sportColor}
+                            />
+                          );
                         })}
                       </View>
                     )}
@@ -601,14 +507,6 @@ export default function HistoryScreen() {
             </View>
           </View>
         )}
-
-        <ActivityModal
-          visible={modalVisible}
-          selectedDate={selectedDate || ''}
-          onClose={() => setModalVisible(false)}
-          onSelectActivity={handleActivitySelect}
-          currentActivities={selectedDate ? getCurrentActivitiesForDate(selectedDate) : []}
-        />
 
         {/* View B: Évolution (Graphs) */}
         {viewMode === 'stats' && (
@@ -648,7 +546,9 @@ export default function HistoryScreen() {
 
             {/* SECTION 1: Composition Corporelle */}
             <View style={styles.sectionContainer}>
-              <Text style={[styles.sectionTitle, { color: themeColors.textPrimary }]}>Composition Corporelle</Text>
+              <View style={{ backgroundColor: themeColors.card, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginHorizontal: 16, marginBottom: 12, alignSelf: 'flex-start' }}>
+                <Text style={[styles.sectionTitle, { color: themeColors.textPrimary, marginBottom: 0, marginHorizontal: 0 }]}>Composition Corporelle</Text>
+              </View>
 
               <View style={[styles.chartCard, { backgroundColor: themeColors.card }]}>
                 <View style={styles.selectorContainer}>
@@ -719,7 +619,9 @@ export default function HistoryScreen() {
 
             {/* SECTION 2: Mensurations (Body Measurements) */}
             <View style={styles.sectionContainer}>
-              <Text style={[styles.sectionTitle, { color: themeColors.textPrimary }]}>Mensurations</Text>
+              <View style={{ backgroundColor: themeColors.card, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginHorizontal: 16, marginBottom: 12, alignSelf: 'flex-start' }}>
+                <Text style={[styles.sectionTitle, { color: themeColors.textPrimary, marginBottom: 0, marginHorizontal: 0 }]}>Mensurations</Text>
+              </View>
 
               {/* Card 1: Graphique individuel avec sélecteur */}
               <View style={[styles.chartCard, { backgroundColor: themeColors.card }]}>

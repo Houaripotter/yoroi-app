@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
   Modal,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -22,7 +23,7 @@ import { useI18n } from '@/lib/I18nContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '@/lib/security/logger';
-import { router, useNavigation } from 'expo-router';
+import { router, useNavigation, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
@@ -36,7 +37,6 @@ import {
   ExternalLink,
   Search,
   Check,
-  Globe,
   X,
   Trash2,
   Sun,
@@ -62,10 +62,11 @@ import { PartnerDetailModal, Partner } from '@/components/PartnerDetailModal';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { TimetableView, EnhancedCalendarView, AddClubModal } from '@/components/planning';
 import { PlanningSeancesContent } from '@/components/planning/PlanningSeancesContent';
+import { useWeeklySlots } from '@/hooks/useWeeklySlots';
 import { EmptyState } from '@/components/planning/EmptyState';
 import { getAllGoalsProgress, GoalProgress } from '@/lib/trainingGoalsService';
+import { healthConnect as healthConnectService } from '@/lib/healthConnect';
 import { triggerVictoryModal, createCalendarVictoryData } from '@/lib/victoryTrigger';
-import { ContextualTip } from '@/components/ContextualTip';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
 
@@ -117,9 +118,10 @@ const FAVORITE_SPORTS_KEY = '@yoroi_favorite_sports';
 
 export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, isDark, screenBackground } = useTheme();
+  const { colors, isDark, screenBackground, themeColor, themeColors } = useTheme();
   const { t, locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const params = useLocalSearchParams<{ openSlots?: string }>();
   const [viewMode, setViewMode] = useState<ViewMode>('calendar'); // Calendrier en premier
   const [workouts, setWorkouts] = useState<Training[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -134,13 +136,19 @@ export default function PlanningScreen() {
   // Modals state
   const [showDayModal, setShowDayModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [showProgrammeEditModal, setShowProgrammeEditModal] = useState(false);
   const [showPartnerModal, setShowPartnerModal] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSportInCategory, setSelectedSportInCategory] = useState<string>('all');
-  const [expandedOrganizers, setExpandedOrganizers] = useState<{ [key: string]: boolean }>({});
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { slotsWithStatus, todaySlots, refresh: refreshSlots } = useWeeklySlots();
+
+  // Auto-open slots screen when navigated with openSlots param
+  useEffect(() => {
+    if (params.openSlots === '1') {
+      router.push('/slots' as any);
+    }
+  }, [params.openSlots]);
 
   // Modal sessions par club/sport
   const [showSessionsModal, setShowSessionsModal] = useState(false);
@@ -343,6 +351,8 @@ export default function PlanningScreen() {
     return groups;
   }, [competitions, selectedCategory, selectedSportInCategory]);
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const loadData = useCallback(async () => {
     try {
       // Charger les donnees de base
@@ -367,6 +377,22 @@ export default function PlanningScreen() {
       logger.error('Erreur chargement planning:', error);
     }
   }, []);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      // Re-sync Apple Health / Health Connect
+      const available = await healthConnectService.isAvailable();
+      if (available) {
+        await healthConnectService.syncAll();
+      }
+    } catch (e) {
+      logger.warn('[Planning] Erreur sync Health:', e);
+    }
+    await loadData();
+    await loadSavedExternalEvents();
+    setRefreshing(false);
+  }, [loadData]);
 
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => {
@@ -832,34 +858,10 @@ export default function PlanningScreen() {
     return m > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${h}h`;
   };
 
-  // Handler: supprimer une seance (avec corbeille inline pour garantir le fonctionnement)
+  // Handler: supprimer une seance et la mettre en corbeille
   const handleDeleteSession = async (id: number) => {
     try {
-      // Importer directement la connexion pour bypasser le cache module
-      const SQLite = require('expo-sqlite');
-      const database = await SQLite.openDatabaseAsync('yoroi.db');
-
-      // Creer la table corbeille si elle n'existe pas
-      await database.execAsync(`CREATE TABLE IF NOT EXISTS trash_trainings (id INTEGER PRIMARY KEY AUTOINCREMENT, original_id INTEGER, club_id INTEGER, sport TEXT, session_type TEXT, date TEXT, start_time TEXT, duration_minutes INTEGER, notes TEXT, muscles TEXT, exercises TEXT, technique_rating INTEGER, is_outdoor INTEGER DEFAULT 0, pente REAL, speed REAL, resistance INTEGER, watts INTEGER, cadence INTEGER, distance REAL, calories INTEGER, intensity INTEGER, rounds INTEGER, round_duration INTEGER, created_at TEXT, deleted_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
-
-      // Lire la seance
-      const row = await database.getFirstAsync('SELECT * FROM trainings WHERE id = ?', [id]);
-
-      // Supprimer
-      await database.runAsync('DELETE FROM trainings WHERE id = ?', [id]);
-
-      // Mettre en corbeille
-      if (row) {
-        try {
-          await database.runAsync(
-            `INSERT INTO trash_trainings (original_id, club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [row.id, row.club_id || null, row.sport || null, row.session_type || null, row.date, row.start_time || null, row.duration_minutes || null, row.notes || null, row.muscles || null, row.exercises || null, row.technique_rating || null, row.is_outdoor || 0, row.distance || null, row.calories || null, row.intensity || null, row.rounds || null, row.round_duration || null, row.pente || null, row.speed || null, row.resistance || null, row.watts || null, row.cadence || null, row.created_at || null]
-          );
-        } catch (trashErr) {
-          logger.error('Erreur corbeille insert:', trashErr);
-        }
-      }
-
+      await deleteTraining(id);
       notificationAsync(NotificationFeedbackType.Success);
       await loadData();
     } catch (error) {
@@ -1047,7 +1049,9 @@ export default function PlanningScreen() {
                   {
                     backgroundColor: isActive
                       ? (isDark ? colors.accent : '#FFFFFF')
-                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)')
+                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)'),
+                    borderWidth: isActive ? 0 : 1,
+                    borderColor: isActive ? 'transparent' : (isDark ? (colors.companion + '40') : 'rgba(255,255,255,0.3)'),
                   },
                 ]}>
                   <Icon
@@ -1065,27 +1069,21 @@ export default function PlanningScreen() {
               </TouchableOpacity>
             );
           })}
-          {/* Bouton Corbeille */}
+        </ScrollView>
+
+          {/* Trash icon - small, white */}
           <TouchableOpacity
-            style={styles.tabWrapper}
+            style={[styles.trashIconButton, {
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              borderColor: 'rgba(255,255,255,0.4)',
+              borderWidth: 1,
+            }]}
             onPress={() => router.push('/trash' as any)}
             activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <View style={[
-              styles.circleTab,
-              { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)' },
-            ]}>
-              <Trash2
-                size={18}
-                color={isDark ? colors.textMuted : 'rgba(255,255,255,0.7)'}
-                strokeWidth={2.5}
-              />
-            </View>
-            <Text style={[styles.tabTitle, { color: isDark ? colors.textMuted : 'rgba(255,255,255,0.7)' }]}>
-              Corbeille
-            </Text>
+            <Trash2 size={16} color="#FFFFFF" strokeWidth={2.5} />
           </TouchableOpacity>
-        </ScrollView>
 
         {/* Description de la page active (masquée pour events car header card) */}
         {viewMode !== 'competitions' && (
@@ -1115,6 +1113,14 @@ export default function PlanningScreen() {
             style={styles.scrollView}
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={colors.accent}
+                colors={[colors.accent]}
+              />
+            }
           >
             {/* MONTHLY STATS BY CLUB - COMPACT */}
             {monthlyClubStats.length > 0 && (
@@ -1177,7 +1183,7 @@ export default function PlanningScreen() {
               selectedDate={selectedDate}
             />
 
-            {/* EMPLOI DU TEMPS DE LA SEMAINE (intégré) */}
+            {/* EMPLOI DU TEMPS DE LA SEMAINE (integre) */}
             <View style={{ marginTop: 8 }}>
               <TimetableView
                 onAddSession={handleAddSessionFromProgramme}
@@ -1185,6 +1191,7 @@ export default function PlanningScreen() {
                 refreshTrigger={refreshTrigger}
                 workouts={workouts}
                 clubs={clubs}
+                weeklySlots={slotsWithStatus}
               />
             </View>
 
@@ -1198,6 +1205,14 @@ export default function PlanningScreen() {
             style={styles.scrollView}
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={colors.accent}
+                colors={[colors.accent]}
+              />
+            }
           >
             <PlanningSeancesContent workouts={workouts} />
             <View style={{ height: 120 }} />
@@ -1210,8 +1225,18 @@ export default function PlanningScreen() {
             style={styles.scrollView}
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={colors.accent}
+                colors={[colors.accent]}
+              />
+            }
           >
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('planning.clubs')}</Text>
+            <View style={{ backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12, alignSelf: 'flex-start', marginBottom: 4 }}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('planning.clubs')}</Text>
+            </View>
 
             {/* Carte Plein Air - affichée si entraînements outdoor */}
             {outdoorStats.total > 0 && (
@@ -1399,6 +1424,14 @@ export default function PlanningScreen() {
             style={styles.scrollView}
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={colors.accent}
+                colors={[colors.accent]}
+              />
+            }
           >
             {/* Header Card - même couleur que la tabbar */}
             <View style={[styles.eventsHeaderCard, { backgroundColor: colors.accent }]}>
@@ -2448,32 +2481,6 @@ export default function PlanningScreen() {
         </View>
       </ScrollView>
 
-      {/* Pagination Dots - STYLE iOS */}
-      <View style={styles.paginationWrapper}>
-        <View style={[styles.paginationContainer, {
-          backgroundColor: isDark ? 'rgba(30, 30, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-        }]}>
-          {tabs.map((tab, index) => (
-            <TouchableOpacity
-              key={tab.key}
-              onPress={() => handleTabPress(tab.key, index)}
-              activeOpacity={0.7}
-              style={[
-                styles.dot,
-                {
-                  backgroundColor: viewMode === tab.key
-                    ? (isDark ? '#FFFFFF' : '#000000')
-                    : (isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'),
-                  width: 8,
-                  height: 8,
-                  opacity: viewMode === tab.key ? 1 : 0.5,
-                }
-              ]}
-            />
-          ))}
-        </View>
-      </View>
-
       {/* MODALS */}
       <DayDetailModal
         visible={showDayModal}
@@ -2484,6 +2491,7 @@ export default function PlanningScreen() {
         onAddPress={handleOpenAddModal}
         onDeleteSession={handleDeleteSession}
         onEditSession={handleEditSession}
+        weeklySlots={slotsWithStatus}
       />
 
       {/* Modal détail partenaire (Club/Coach) */}
@@ -2510,9 +2518,6 @@ export default function PlanningScreen() {
           loadData(); // Rafraîchir les données
         }}
       />
-
-      {/* Tip contextuel */}
-      <ContextualTip tipId="planning" />
 
       {/* Rating Popup */}
       <RatingPopup
@@ -2642,6 +2647,7 @@ export default function PlanningScreen() {
 
       <PopupComponent />
 
+
       </View>
     </ErrorBoundary>
   );
@@ -2749,6 +2755,17 @@ const styles = StyleSheet.create({
   tabsHeader: {
     paddingTop: 60,
     paddingBottom: 8,
+    position: 'relative',
+  },
+  trashIconButton: {
+    position: 'absolute',
+    top: 64,
+    right: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabsScroll: {
     flexGrow: 0,
@@ -4983,31 +5000,6 @@ const styles = StyleSheet.create({
   quickLogButtonText: {
     fontSize: 15,
     fontWeight: '600',
-  },
-  // Pagination Dots
-  paginationWrapper: {
-    position: 'absolute',
-    bottom: 80,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  dot: {
-    borderRadius: 4,
   },
   trashLink: {
     flexDirection: 'row',

@@ -2,9 +2,10 @@
 // YOROI - NOTIFICATION BELL POPUP
 // ============================================
 // Cloche avec badge + mini popup de notifications recentes
+// + suggestion pulsante si aucun creneau regulier
 // ============================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,6 +15,7 @@ import {
   ScrollView,
   Dimensions,
   Animated,
+  Easing,
   DeviceEventEmitter,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -34,6 +36,7 @@ import {
   Timer,
   Heart,
   X,
+  RefreshCw,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -45,8 +48,12 @@ import {
   getUnreadCount,
   NotificationHistoryItem,
 } from '@/lib/notificationHistoryService';
+import { getWeeklyPlan } from '@/lib/database';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const SLOTS_SUGGESTION_DISMISSED_KEY = '@yoroi_slots_suggestion_dismissed';
 
 // ============================================
 // HELPERS (identiques au notification-center)
@@ -142,13 +149,77 @@ function formatTimeAgo(timestamp: number, locale: string): string {
 }
 
 // ============================================
+// PULSING ICON COMPONENT
+// ============================================
+
+const PulsingIcon: React.FC<{ color: string }> = ({ color }) => {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 800,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0.7,
+            duration: 800,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0.3,
+            duration: 800,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ]),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, []);
+
+  return (
+    <View style={styles.pulsingContainer}>
+      <Animated.View
+        style={[
+          styles.pulsingGlow,
+          {
+            backgroundColor: color,
+            opacity: glowAnim,
+            transform: [{ scale: pulseAnim }],
+          },
+        ]}
+      />
+      <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+        <Dumbbell size={20} color={color} strokeWidth={2.5} />
+      </Animated.View>
+    </View>
+  );
+};
+
+// ============================================
 // PROPS
 // ============================================
 
 interface NotificationBellPopupProps {
   unreadCount: number;
   onCountChange?: (count: number) => void;
-  variant?: 'light' | 'themed';
+  variant?: 'light' | 'themed' | 'dark';
 }
 
 // ============================================
@@ -168,6 +239,27 @@ export const NotificationBellPopup: React.FC<NotificationBellPopupProps> = ({
   const [notifications, setNotifications] = useState<NotificationHistoryItem[]>([]);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(0.9));
+
+  // Slot suggestion state
+  const [showSlotSuggestion, setShowSlotSuggestion] = useState(false);
+  const [suggestionDismissed, setSuggestionDismissed] = useState(false);
+
+  // Check if user has slots on mount
+  useEffect(() => {
+    const checkSlots = async () => {
+      try {
+        const dismissed = await AsyncStorage.getItem(SLOTS_SUGGESTION_DISMISSED_KEY);
+        if (dismissed === 'true') {
+          setSuggestionDismissed(true);
+          return;
+        }
+        const slots = await getWeeklyPlan();
+        const hasSlots = slots.some(s => !s.is_rest_day);
+        setShowSlotSuggestion(!hasSlots);
+      } catch {}
+    };
+    checkSlots();
+  }, []);
 
   // Rafraichir le compteur depuis le storage (au cas ou il a change)
   const refreshCount = useCallback(async () => {
@@ -230,10 +322,27 @@ export const NotificationBellPopup: React.FC<NotificationBellPopupProps> = ({
     setTimeout(() => router.push('/notifications' as any), 200);
   }, [closePopup]);
 
-  const bellColor = variant === 'light' ? '#FFFFFF' : colors.textMuted;
-  const badgeBorderColor = variant === 'light' ? '#000000' : (isDark ? '#0D0D0F' : '#FFFFFF');
+  const handleSlotSuggestionPress = useCallback(() => {
+    closePopup();
+    setTimeout(() => {
+      router.push('/slots' as any);
+    }, 200);
+  }, [closePopup]);
+
+  const handleDismissSuggestion = useCallback(async () => {
+    setShowSlotSuggestion(false);
+    setSuggestionDismissed(true);
+    await AsyncStorage.setItem(SLOTS_SUGGESTION_DISMISSED_KEY, 'true');
+  }, []);
+
+  const bellColor = variant === 'light' ? '#FFFFFF' : variant === 'dark' ? '#1A1A1E' : colors.textMuted;
+  const badgeBorderColor = variant === 'light' ? '#000000' : variant === 'dark' ? '#FFFFFF' : (isDark ? '#0D0D0F' : '#FFFFFF');
 
   const unreadInPopup = notifications.filter(n => !n.read).length;
+  const hasSuggestion = showSlotSuggestion && !suggestionDismissed;
+
+  // Total badge count (notifs + suggestion)
+  const totalBadge = unreadCount + (hasSuggestion ? 1 : 0);
 
   return (
     <>
@@ -243,11 +352,11 @@ export const NotificationBellPopup: React.FC<NotificationBellPopupProps> = ({
         activeOpacity={0.7}
         style={styles.bellBtn}
       >
-        <Bell size={variant === 'light' ? 20 : 22} color={bellColor} strokeWidth={2} />
-        {unreadCount > 0 && (
+        <Bell size={variant === 'light' || variant === 'dark' ? 20 : 22} color={bellColor} strokeWidth={2} />
+        {totalBadge > 0 && (
           <View style={[styles.bellBadge, { borderColor: badgeBorderColor }]}>
             <Text style={styles.bellBadgeText}>
-              {unreadCount > 9 ? '9+' : unreadCount}
+              {totalBadge > 9 ? '9+' : totalBadge}
             </Text>
           </View>
         )}
@@ -325,7 +434,40 @@ export const NotificationBellPopup: React.FC<NotificationBellPopupProps> = ({
                 showsVerticalScrollIndicator={false}
                 bounces={false}
               >
-                {notifications.length === 0 ? (
+                {/* Suggestion creneaux reguliers */}
+                {hasSuggestion && (
+                  <View style={[styles.suggestionCard, { backgroundColor: isDark ? `${colors.accent}12` : `${colors.accent}08` }]}>
+                    <TouchableOpacity
+                      style={styles.suggestionDismiss}
+                      onPress={handleDismissSuggestion}
+                      hitSlop={8}
+                    >
+                      <X size={14} color={colors.textMuted} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.suggestionContent}
+                      onPress={handleSlotSuggestionPress}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.suggestionIconBg, { backgroundColor: `${colors.accent}20` }]}>
+                        <PulsingIcon color={colors.accent} />
+                      </View>
+                      <View style={styles.suggestionTextContainer}>
+                        <Text style={[styles.suggestionTitle, { color: colors.textPrimary }]}>
+                          Creneaux reguliers
+                        </Text>
+                        <Text style={[styles.suggestionBody, { color: colors.textSecondary || colors.textMuted }]}>
+                          {isFr
+                            ? 'Definissez vos entrainements recurrents et validez-les d\'un tap !'
+                            : 'Set up your recurring workouts and validate them with a tap!'}
+                        </Text>
+                      </View>
+                      <ChevronRight size={16} color={colors.accent} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {notifications.length === 0 && !hasSuggestion ? (
                   <View style={styles.emptyState}>
                     <View style={[styles.emptyIconBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F9FAFB' }]}>
                       <BellOff size={32} color={colors.textMuted} />
@@ -539,6 +681,65 @@ const styles = StyleSheet.create({
   },
   popupListContent: {
     paddingVertical: 6,
+  },
+
+  // Suggestion card
+  suggestionCard: {
+    marginHorizontal: 10,
+    marginVertical: 6,
+    borderRadius: 14,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  suggestionDismiss: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    zIndex: 2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  suggestionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    gap: 12,
+  },
+  suggestionIconBg: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  suggestionTextContainer: {
+    flex: 1,
+    gap: 3,
+  },
+  suggestionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  suggestionBody: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+
+  // Pulsing icon
+  pulsingContainer: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pulsingGlow: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
   },
 
   // Item

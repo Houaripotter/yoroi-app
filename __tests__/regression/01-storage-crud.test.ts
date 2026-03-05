@@ -113,7 +113,7 @@ describe('REGRESSION: Storage CRUD Operations', () => {
     });
 
     it('handles multiple workout types', async () => {
-      const types = ['jjb', 'musculation', 'course', 'boxe', 'yoga'];
+      const types: Array<'jjb' | 'musculation' | 'running' | 'autre'> = ['jjb', 'musculation', 'running', 'autre'];
       for (const type of types) {
         const w = await addWorkout({ date: '2026-02-10', type });
         expect(w.type).toBe(type);
@@ -364,7 +364,7 @@ describe('REGRESSION: Storage CRUD Operations', () => {
   describe('clubs lifecycle', () => {
     it('adds a club', async () => {
       (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
-      const club = await addUserClub({ name: 'Gracie Barra', sport: 'jjb' });
+      const club = await addUserClub({ name: 'Gracie Barra', type: 'gracie_barra' });
       expect(club).toHaveProperty('id');
       expect(club.name).toBe('Gracie Barra');
     });
@@ -386,7 +386,7 @@ describe('REGRESSION: Storage CRUD Operations', () => {
   describe('gear lifecycle', () => {
     it('adds gear item', async () => {
       (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
-      const gear = await addUserGear({ name: 'Kimono Shoyoroll', category: 'gi' });
+      const gear = await addUserGear({ name: 'Kimono Shoyoroll', brand: 'Shoyoroll', type: 'kimono' });
       expect(gear).toHaveProperty('id');
       expect(gear.name).toBe('Kimono Shoyoroll');
     });

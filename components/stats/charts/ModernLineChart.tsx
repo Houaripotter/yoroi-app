@@ -3,7 +3,7 @@
 // Affiche le graphique scrollable + stats MIN/MOY/MAX
 // ============================================
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { ScrollableLineChart } from './ScrollableLineChart';
@@ -19,7 +19,7 @@ interface ModernLineChartProps {
   maxDataPoints?: number;
 }
 
-export const ModernLineChart: React.FC<ModernLineChartProps> = ({
+export const ModernLineChart: React.FC<ModernLineChartProps> = React.memo(({
   data,
   color,
   height = 320,
@@ -54,11 +54,15 @@ export const ModernLineChart: React.FC<ModernLineChartProps> = ({
     );
   }
 
-  // Calculer min, max, moyenne
-  const values = data.map(d => d.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
+  // Memoize min, max, moyenne computation
+  const { min, max, avg } = useMemo(() => {
+    const values = data.map(d => d.value);
+    return {
+      min: Math.min(...values),
+      max: Math.max(...values),
+      avg: values.reduce((sum, v) => sum + v, 0) / values.length,
+    };
+  }, [data]);
 
   return (
     <View style={styles.container}>
@@ -82,21 +86,21 @@ export const ModernLineChart: React.FC<ModernLineChartProps> = ({
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>MIN</Text>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{min.toFixed(1)}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{Number.isInteger(min) ? min : min.toFixed(1)}</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>MOY</Text>
-            <Text style={[styles.statValue, { color: color, fontWeight: '800' }]}>{avg.toFixed(1)}</Text>
+            <Text style={[styles.statValue, { color: color, fontWeight: '800' }]}>{Number.isInteger(avg) ? avg : avg.toFixed(1)}</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>MAX</Text>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{max.toFixed(1)}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{Number.isInteger(max) ? max : max.toFixed(1)}</Text>
           </View>
         </View>
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

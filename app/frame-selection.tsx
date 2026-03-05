@@ -148,25 +148,25 @@ export function renderAccessorySvg(
   if (accessory === 'none') return null;
 
   // Taille de l'accessoire
-  const s = frameSize * 0.38;
+  const frameScale = frameSize * 0.38;
 
   // Position par defaut : bord droit en haut (pour fleur, noeud, etoile, coeur, eclair)
-  const cx = frameSize - s * 0.15;
+  const cx = frameSize - frameScale * 0.15;
   const cy = frameSize * 0.18;
 
   // Position CENTRE HAUT (pour couronne et aureole - au-dessus de la tete)
   const topCx = frameSize / 2;
-  const topCy = -s * 0.15;
+  const topCy = -frameScale * 0.15;
 
   switch (accessory) {
     case 'flower': {
       // Grosse fleur 5 petales sur le bord droit
-      const petalR = s * 0.24;
-      const petalDist = s * 0.28;
-      const centerR = s * 0.15;
+      const petalR = frameScale * 0.24;
+      const petalDist = frameScale * 0.28;
+      const centerR = frameScale * 0.15;
       return (
         <G>
-          <Circle cx={cx + 1} cy={cy + 1.5} r={s * 0.45} fill="rgba(0,0,0,0.12)" />
+          <Circle cx={cx + 1} cy={cy + 1.5} r={frameScale * 0.45} fill="rgba(0,0,0,0.12)" />
           {Array.from({ length: 5 }, (_, i) => {
             const a = (Math.PI * 2 / 5) * i - Math.PI / 2;
             return (
@@ -188,8 +188,8 @@ export function renderAccessorySvg(
 
     case 'bow': {
       // Gros noeud papillon cadeau - bord droit
-      const w = s * 0.48;
-      const h = s * 0.32;
+      const w = frameScale * 0.48;
+      const h = frameScale * 0.32;
       return (
         <G>
           <Path
@@ -213,17 +213,17 @@ export function renderAccessorySvg(
             strokeWidth={1.5}
           />
           <Path
-            d={`M ${cx - s * 0.08} ${cy + s * 0.05}
-                L ${cx - s * 0.18} ${cy + s * 0.35}
-                L ${cx - s * 0.06} ${cy + s * 0.25}
-                L ${cx + s * 0.06} ${cy + s * 0.25}
-                L ${cx + s * 0.18} ${cy + s * 0.35}
-                L ${cx + s * 0.08} ${cy + s * 0.05} Z`}
+            d={`M ${cx - frameScale * 0.08} ${cy + frameScale * 0.05}
+                L ${cx - frameScale * 0.18} ${cy + frameScale * 0.35}
+                L ${cx - frameScale * 0.06} ${cy + frameScale * 0.25}
+                L ${cx + frameScale * 0.06} ${cy + frameScale * 0.25}
+                L ${cx + frameScale * 0.18} ${cy + frameScale * 0.35}
+                L ${cx + frameScale * 0.08} ${cy + frameScale * 0.05} Z`}
             fill={accentColor}
             stroke="#FFFFFF"
             strokeWidth={1}
           />
-          <Circle cx={cx} cy={cy} r={s * 0.08} fill="#FFFFFF" />
+          <Circle cx={cx} cy={cy} r={frameScale * 0.08} fill="#FFFFFF" />
         </G>
       );
     }
@@ -332,7 +332,7 @@ export function renderAccessorySvg(
 
     case 'mini-star': {
       // Grosse etoile brillante - bord droit
-      const outerR = s * 0.4;
+      const outerR = frameScale * 0.4;
       const innerR = outerR * 0.42;
       const pts = Array.from({ length: 10 }, (_, i) => {
         const rad = i % 2 === 0 ? outerR : innerR;
@@ -356,14 +356,14 @@ export function renderAccessorySvg(
             strokeWidth={1.5}
             strokeLinejoin="round"
           />
-          <Circle cx={cx - outerR * 0.15} cy={cy - outerR * 0.2} r={s * 0.04} fill="rgba(255,255,255,0.6)" />
+          <Circle cx={cx - outerR * 0.15} cy={cy - outerR * 0.2} r={frameScale * 0.04} fill="rgba(255,255,255,0.6)" />
         </G>
       );
     }
 
     case 'mini-heart': {
       // Gros coeur - bord droit
-      const hs = s * 0.45;
+      const hs = frameScale * 0.45;
       return (
         <G>
           <Path
@@ -384,14 +384,14 @@ export function renderAccessorySvg(
             stroke="#FFFFFF"
             strokeWidth={1.5}
           />
-          <Circle cx={cx - hs * 0.3} cy={cy - hs * 0.45} r={s * 0.05} fill="rgba(255,255,255,0.4)" />
+          <Circle cx={cx - hs * 0.3} cy={cy - hs * 0.45} r={frameScale * 0.05} fill="rgba(255,255,255,0.4)" />
         </G>
       );
     }
 
     case 'lightning': {
       // Eclair dans un cercle - bord droit
-      const er = s * 0.32;
+      const er = frameScale * 0.32;
       return (
         <G>
           <Circle cx={cx + 1} cy={cy + 1.5} r={er + 2} fill="rgba(0,0,0,0.12)" />
@@ -595,17 +595,17 @@ const FrameShapePreview: React.FC<{
       }
 
       case 'heart': {
-        const s = size;
-        const p = 5;
+        const scale = size;
+        const padding = 5;
         return (
           <Path
-            d={`M ${s/2} ${s - p - 2}
-                C ${s * 0.15} ${s * 0.68}, ${p} ${s * 0.48}, ${p} ${s * 0.35}
-                C ${p} ${s * 0.2}, ${s * 0.2} ${p + 2}, ${s * 0.35} ${p + 2}
-                C ${s * 0.42} ${p + 2}, ${s * 0.48} ${s * 0.15}, ${s/2} ${s * 0.22}
-                C ${s * 0.52} ${s * 0.15}, ${s * 0.58} ${p + 2}, ${s * 0.65} ${p + 2}
-                C ${s * 0.8} ${p + 2}, ${s - p} ${s * 0.2}, ${s - p} ${s * 0.35}
-                C ${s - p} ${s * 0.48}, ${s * 0.85} ${s * 0.68}, ${s/2} ${s - p - 2}
+            d={`M ${scale/2} ${scale - padding - 2}
+                C ${scale * 0.15} ${scale * 0.68}, ${padding} ${scale * 0.48}, ${padding} ${scale * 0.35}
+                C ${padding} ${scale * 0.2}, ${scale * 0.2} ${padding + 2}, ${scale * 0.35} ${padding + 2}
+                C ${scale * 0.42} ${padding + 2}, ${scale * 0.48} ${scale * 0.15}, ${scale/2} ${scale * 0.22}
+                C ${scale * 0.52} ${scale * 0.15}, ${scale * 0.58} ${padding + 2}, ${scale * 0.65} ${padding + 2}
+                C ${scale * 0.8} ${padding + 2}, ${scale - padding} ${scale * 0.2}, ${scale - padding} ${scale * 0.35}
+                C ${scale - padding} ${scale * 0.48}, ${scale * 0.85} ${scale * 0.68}, ${scale/2} ${scale - padding - 2}
                 Z`}
             fill={fillColor}
             stroke={color}

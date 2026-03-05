@@ -35,7 +35,7 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { getTrainings, Training, getClubs, getProfile, calculateStreak } from '@/lib/database';
 import { useAvatar } from '@/lib/AvatarContext';
-import { getCurrentRank } from '@/lib/ranks';
+import { getCurrentRank, rankToLevel } from '@/lib/ranks';
 import { getUnifiedPoints } from '@/lib/gamification';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -101,7 +101,7 @@ export default function LastSessionScreen() {
 
         if (profile) {
           setUserName(profile.name || 'Champion');
-          setUserLevel(profile.level || 1);
+          // Level is derived from rank (XP-based)
           if (profile.profile_photo) {
             setUserPhoto(profile.profile_photo);
             setBackgroundImage(profile.profile_photo);
@@ -118,6 +118,7 @@ export default function LastSessionScreen() {
         const totalPoints = await getUnifiedPoints();
         const rank = getCurrentRank(totalPoints);
         setUserRank(rank.name);
+        setUserLevel(rankToLevel(rank));
 
         let currentTraining: Training | null = null;
         if (trainings.length > 0) {

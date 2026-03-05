@@ -9,6 +9,8 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { getTabOrder, getLeftTabs, getRightTabs, TAB_ORDER_CHANGED_EVENT } from '@/lib/tabOrderService';
 import type { TabItem } from '@/lib/tabOrderService';
 
+export const DEMO_CHANGED_EVENT = 'YOROI_DEMO_CHANGED';
+
 // ============================================
 // TAB LAYOUT - FLOATING PILL TAB BAR
 // 3 gauche | + integre | 3 droite
@@ -58,7 +60,7 @@ const ROUTE_LABELS: Record<string, string> = {
 // CUSTOM FLOATING PILL TAB BAR
 // ============================================
 function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const router = useRouter();
   const plusScale = useRef(new Animated.Value(1)).current;
   const plusRotate = useRef(new Animated.Value(0)).current;
@@ -75,20 +77,18 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
     return () => sub.remove();
   }, []);
 
-  const pillBg = isDark ? '#1A1A1E' : colors.accent;
-  const activeColor = isDark
-    ? (isColorDark(colors.accent) ? '#FFFFFF' : colors.accent)
-    : '#FFFFFF';
-  const inactiveColor = isDark ? 'rgba(255,255,255,0.40)' : 'rgba(255,255,255,0.55)';
+  // Fond = couleur du thème, texte noir
+  const pillBg = colors.accent;
+  const activeColor = '#000000';
+  const inactiveColor = 'rgba(0,0,0,0.40)';
 
-  // Bouton +
-  const light = !isDark;
-  const plusBg = light ? '#FFFFFF' : colors.accent;
-  const plusBgDark = light ? '#F5F5F5' : colors.accentDark;
-  const plusIcon = light ? colors.accent : colors.textOnAccent;
+  // Bouton + : blanc pour contraster avec la pilule colorée
+  const plusBg = '#FFFFFF';
+  const plusBgDark = '#F0F0F0';
+  const plusIcon = '#000000';
 
   // Contour pilule
-  const pillBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.25)';
+  const pillBorder = 'rgba(0,0,0,0.12)';
 
   const handlePlusPress = () => {
     impactAsync(ImpactFeedbackStyle.Heavy);
@@ -146,7 +146,7 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
         {isFocused && (
           <View style={[
             styles.activeBackground,
-            { backgroundColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.18)' },
+            { backgroundColor: 'rgba(0,0,0,0.12)' },
           ]} />
         )}
         <IconComp
@@ -178,10 +178,10 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
         {
           backgroundColor: pillBg,
           borderColor: pillBorder,
-          shadowColor: isDark ? '#000' : colors.accentDark,
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: isDark ? 0.5 : 0.3,
-          shadowRadius: 20,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.12,
+          shadowRadius: 16,
         },
       ]}>
         {/* Onglets a gauche */}
@@ -202,8 +202,8 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
               style={[
                 styles.plusGrad,
                 {
-                  borderColor: light ? colors.accent + '30' : 'rgba(255,255,255,0.15)',
-                  shadowColor: light ? colors.accent : '#000',
+                  borderColor: 'rgba(0,0,0,0.10)',
+                  shadowColor: '#000',
                 },
               ]}
             >
@@ -222,8 +222,18 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 export default function TabLayout() {
+  const [tabsKey, setTabsKey] = useState(0);
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(DEMO_CHANGED_EVENT, () => {
+      setTabsKey(k => k + 1);
+    });
+    return () => sub.remove();
+  }, []);
+
   return (
     <Tabs
+      key={tabsKey}
       tabBar={(props) => <FloatingPillTabBar {...props} />}
       screenOptions={{ headerShown: false }}
     >

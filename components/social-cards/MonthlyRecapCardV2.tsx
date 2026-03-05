@@ -96,7 +96,7 @@ export const MonthlyRecapCardV2 = React.memo(forwardRef<View, MonthlyRecapCardV2
     const sectionLabelGoldStyle = useMemo(() => ({ color: GOLD_COLOR }), []);
     const progressPercentStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const }), []);
     const progressBarBgStyle = useMemo(() => ({ backgroundColor: isWhite ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)' }), [isWhite]);
-    const progressBarFillStyle = useMemo(() => ({ width: `${progressPercent}%` }), [progressPercent]);
+    const progressBarFillStyle = useMemo(() => ({ width: `${progressPercent}%` as `${number}%` }), [progressPercent]);
     const clubsMarginStyle = useMemo(() => ({ marginBottom: 6 }), []);
     const detailsDividerGoldStyle = useMemo(() => ({ backgroundColor: GOLD_COLOR }), []);
     const scrollHorizontalMarginStyle = useMemo(() => ({ marginTop: 6 }), []);

@@ -6,7 +6,7 @@
  *
  * Sources: Smoothcomp, IBJJF, HYROX, Ahotu
  *
- * ⚡ Optimisations :
+ * Optimisations :
  * - Stockage SQLite (au lieu de 773KB de JSON en mémoire)
  * - Cache en mémoire pour les requêtes fréquentes
  * - Indexes SQL pour recherche rapide
@@ -145,7 +145,7 @@ export async function importEventsFromJSON(): Promise<void> {
     const franceData = require('@/src/data/events/france.json');
     const mondeData = require('@/src/data/events/monde.json');
     const eventsData = [...europeData, ...franceData, ...mondeData];
-    logger.info(`📊 Total événements à importer: ${eventsData.length} (Europe: ${europeData.length}, France: ${franceData.length}, Monde: ${mondeData.length})`);
+    logger.info(`Total événements à importer: ${eventsData.length} (Europe: ${europeData.length}, France: ${franceData.length}, Monde: ${mondeData.length})`);
 
     // Insertion par batch pour meilleures performances
     const BATCH_SIZE = 100;
@@ -191,7 +191,7 @@ export async function importEventsFromJSON(): Promise<void> {
     isInitialized = true;
     clearCache();
   } catch (error) {
-    logger.error('❌ Erreur import events:', error);
+    logger.error('Erreur import events:', error);
     logger.error('Erreur import events:', error);
     throw error;
   }
@@ -651,7 +651,7 @@ export async function getEventsByFederation(federation: string): Promise<SportEv
  */
 export async function forceReimportEvents(): Promise<void> {
   try {
-    logger.info('🔄 FORCE REIMPORT: Début de la réimportation des événements...');
+    logger.info('FORCE REIMPORT: Début de la réimportation des événements...');
     const db = await openDatabase();
 
     // Vérifier que la table existe avant de tenter le DELETE
@@ -662,7 +662,7 @@ export async function forceReimportEvents(): Promise<void> {
     if (tableExists && tableExists.count > 0) {
       // Supprimer toutes les anciennes données
       await db.runAsync('DELETE FROM events_catalog');
-      logger.info('🗑️ Anciennes données événements supprimées');
+      logger.info('Anciennes données événements supprimées');
       logger.info('Anciennes données événements supprimées');
     } else {
       logger.warn('Table events_catalog inexistante, skip DELETE');

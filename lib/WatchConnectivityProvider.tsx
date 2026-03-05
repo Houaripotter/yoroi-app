@@ -19,14 +19,16 @@
  */
 
 import React, { createContext, useContext, ReactNode, useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { Platform, Animated, View, Text, StyleSheet, AppState, AppStateStatus } from 'react-native';
+import { Platform, Animated, View, Text, StyleSheet, AppState, AppStateStatus, DeviceEventEmitter } from 'react-native';
 import { WatchConnectivity } from '@/lib/watchConnectivity.ios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '@/lib/security/logger';
 import { addWeight, getProfile } from '@/lib/database';
-import { getBenchmarks, addBenchmarkEntry } from '@/lib/carnetService';
+import { getBenchmarks, addBenchmarkEntry, getOrCreateBenchmarkFromWatch, importWatchExercisesToPhone, getBenchmarkPR, getBenchmarkLast } from '@/lib/carnetService';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Device from 'expo-device';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { themeColors, getTheme, ThemeColor } from '@/constants/themes';
 
 // VERSIONING
 const APP_VERSION = '2.0.0';
@@ -183,6 +185,16 @@ const compareVersions = (v1: string, v2: string): number => {
   return 0;
 };
 
+// Compress profile image to 100x100 JPEG (~5-10KB, always fits in megaPack)
+const compressProfileImage = async (uri: string): Promise<string> => {
+  const result = await manipulateAsync(uri, [{ resize: { width: 100 } }], {
+    compress: 0.7,
+    format: SaveFormat.JPEG,
+  });
+  const { readAsStringAsync, EncodingType } = require('expo-file-system/legacy');
+  return readAsStringAsync(result.uri, { encoding: EncodingType.Base64 });
+};
+
 export function WatchConnectivityProvider({ children }: { children: ReactNode }) {
   const [isAvailable, setIsAvailable] = useState(false);
   const [isReachable, setIsReachable] = useState(false);
@@ -203,7 +215,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
   const lastSyncTimestamps = useRef<Record<string, number>>({});
   const processedMessageIds = useRef<Set<string>>(new Set());
   const MAX_PROCESSED_IDS = 200;
-  const syncDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const syncDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const appState = useRef<AppStateStatus>(AppState.currentState);
 
   // UX FEEDBACK: Bannière améliorée avec icônes et couleurs
@@ -513,8 +525,143 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           }
         }
 
+        if (msg.action === 'updateStepsGoal' && msg.stepsGoal) {
+          const goal = parseInt(msg.stepsGoal);
+          if (goal >= 1000 && goal <= 30000) {
+            await AsyncStorage.setItem('@yoroi_steps_goal', String(goal));
+            logSync('handleWatchMessage - Steps goal updated from Watch', { goal });
+          }
+        }
+
+        if (msg.action === 'updateHydrationGoal' && msg.hydrationGoal) {
+          const goal = parseInt(msg.hydrationGoal);
+          if (goal >= 500 && goal <= 6000) {
+            await AsyncStorage.setItem('@yoroi_hydration_goal', String(goal));
+            logSync('handleWatchMessage - Hydration goal updated from Watch', { goal });
+          }
+        }
+
+        // Sync bidirectionnelle: hydratation Watch -> iPhone
+        if (msg.action === 'addHydration' && msg.amount !== undefined) {
+          const amount = typeof msg.amount === 'number' ? msg.amount : parseInt(msg.amount);
+          if (Math.abs(amount) > 0 && Math.abs(amount) <= 2000) {
+            try {
+              // 1. Update waterIntake (ml, used by megaPack)
+              const currentStr = await AsyncStorage.getItem('waterIntake');
+              const current = currentStr ? parseInt(currentStr) : 0;
+              const newTotalMl = Math.max(0, current + amount);
+              await AsyncStorage.setItem('waterIntake', String(newTotalMl));
+
+              // 2. Update hydration screen key (liters, JSON format)
+              const today = new Date().toDateString();
+              const newTotalL = newTotalMl / 1000;
+              await AsyncStorage.setItem('@yoroi_hydration_today', JSON.stringify({ date: today, amount: newTotalL }));
+
+              // 3. Update date-based key for home screen (ml)
+              const todayISO = new Date().toISOString().split('T')[0];
+              await AsyncStorage.setItem(`@yoroi_hydration_today_${todayISO}`, String(newTotalMl));
+
+              // 4. Update hydration log for badges
+              try {
+                const logData = await AsyncStorage.getItem('@yoroi_hydration_log');
+                const logEntries: { id: string; date: string; amount: number; timestamp: string }[] = logData ? JSON.parse(logData) : [];
+                const existingIdx = logEntries.findIndex((e: any) => e.date === todayISO);
+                const logEntry = { id: `watch_${todayISO}`, date: todayISO, amount: newTotalMl, timestamp: new Date().toISOString() };
+                if (existingIdx >= 0) {
+                  logEntries[existingIdx] = logEntry;
+                } else {
+                  logEntries.push(logEntry);
+                }
+                await AsyncStorage.setItem('@yoroi_hydration_log', JSON.stringify(logEntries));
+              } catch { /* non bloquant */ }
+
+              // 5. Notify home screen UI
+              DeviceEventEmitter.emit('HYDRATION_AMOUNT_CHANGED', { amountMl: newTotalMl });
+
+              // 6. Send updated total back to Watch
+              try {
+                await WatchConnectivity.sendHydrationUpdate(newTotalMl);
+              } catch { /* non bloquant */ }
+
+              showSyncBanner(`Hydratation ${amount > 0 ? '+' : ''}${amount}ml`, 'success');
+              logSync('handleWatchMessage - Hydratation depuis Watch', { amount, total: newTotalMl });
+            } catch (e) {
+              logSync('handleWatchMessage - Erreur hydratation Watch', e);
+            }
+          }
+        }
+
+        // Sync bidirectionnelle: benchmark/record Watch -> iPhone
+        if (msg.action === 'addBenchmarkEntry') {
+          try {
+            const watchId = msg.benchmarkId;
+            const exerciseName = msg.exerciseName;
+            const value = typeof msg.value === 'number' ? msg.value : parseFloat(msg.value || '0');
+            const reps = typeof msg.reps === 'number' ? msg.reps : (parseInt(msg.reps || '0') || undefined);
+            const rpe = typeof msg.rpe === 'number' ? msg.rpe : (parseInt(msg.rpe || '0') || undefined);
+            if (watchId && value > 0) {
+              const benchmark = await getOrCreateBenchmarkFromWatch(watchId, exerciseName);
+              if (benchmark) {
+                await addBenchmarkEntry(benchmark.id, value, rpe, 'Apple Watch', new Date(), reps);
+                DeviceEventEmitter.emit('CARNET_UPDATED');
+                DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+                showSyncBanner(`${benchmark.name} synchronise depuis la montre`, 'success');
+                logSync('handleWatchMessage - Benchmark entry added from Watch', { watchId, exerciseName, value, reps });
+              }
+            }
+          } catch (e) {
+            logSync('handleWatchMessage - Erreur addBenchmarkEntry', e);
+          }
+        }
+
+        // Sync bidirectionnelle: poids Watch -> iPhone
+        if (msg.action === 'addWeight' && msg.weight) {
+          const weight = typeof msg.weight === 'number' ? msg.weight : parseFloat(msg.weight);
+          if (weight > 0 && weight <= 300) {
+            await addWeight({
+              weight,
+              date: new Date().toISOString().split('T')[0],
+              source: 'apple',
+            });
+            await AsyncStorage.setItem('currentWeight', String(weight));
+            showSyncBanner('Poids synchronise', 'success');
+            logSync('handleWatchMessage - Poids ajoute depuis Watch', { weight });
+          }
+        }
+
+        // Sync bidirectionnelle: theme mode Watch -> iPhone
+        if (msg.action === 'changeThemeMode' && msg.themeMode) {
+          const mode = msg.themeMode === 'light' ? 'light' : 'dark';
+          await AsyncStorage.setItem('yoroi_theme_mode_v5', mode);
+          DeviceEventEmitter.emit('WATCH_THEME_MODE_CHANGED', { mode });
+          logSync('handleWatchMessage - Theme mode changed from Watch', { mode });
+        }
+
+        // Sync bidirectionnelle: unit system Watch -> iPhone
+        if (msg.action === 'changeUnitSystem' && msg.unitSystem) {
+          const unit = msg.unitSystem === 'lbs' ? 'lbs' : 'kg';
+          try {
+            const settingsStr = await AsyncStorage.getItem('@yoroi_settings');
+            const settings = settingsStr ? JSON.parse(settingsStr) : {};
+            settings.weight_unit = unit;
+            await AsyncStorage.setItem('@yoroi_settings', JSON.stringify(settings));
+            logSync('handleWatchMessage - Unit system changed from Watch', { unit });
+          } catch (e) {
+            logSync('handleWatchMessage - Error changing unit', e);
+          }
+        }
+
+        // Sync bidirectionnelle: timer preset Watch -> iPhone
+        if (msg.action === 'changeTimerPreset' && msg.timerSeconds) {
+          const seconds = typeof msg.timerSeconds === 'number' ? msg.timerSeconds : parseInt(msg.timerSeconds);
+          if (seconds >= 10 && seconds <= 600) {
+            await AsyncStorage.setItem('@yoroi_default_timer', String(seconds));
+            logSync('handleWatchMessage - Timer preset changed from Watch', { seconds });
+          }
+        }
+
         if (msg.testSignal) {
-          showSyncBanner('⌚ Apple Watch connectée', 'info');
+          showSyncBanner('Apple Watch connectee', 'info');
           logSync('handleWatchMessage - Test signal reçu');
         }
 
@@ -546,22 +693,37 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       logSync('syncProfileToWatch - Début');
 
       const profile = await getProfile();
-      const [avatarConfig, level, rank, waterIntake] = await Promise.all([
+      const [avatarConfig, level, rank, waterIntake, profileThemeColor, profileThemeMode] = await Promise.all([
         AsyncStorage.getItem('@yoroi_avatar_config'),
         AsyncStorage.getItem('@yoroi_level'),
         AsyncStorage.getItem('@yoroi_rank'),
         AsyncStorage.getItem('waterIntake'),
+        AsyncStorage.getItem('yoroi_theme_color_v5'),
+        AsyncStorage.getItem('yoroi_theme_mode_v5'),
       ]);
+
+      // Theme colors - send full theme to Watch
+      const profileThemeEntry = themeColors.find(t => t.id === (profileThemeColor || 'ocean'));
+      const profileMode = profileThemeMode === 'light' ? 'light' : 'dark';
+      const fullTheme = getTheme((profileThemeColor || 'ocean') as ThemeColor, profileMode);
 
       // OPTIMISATION: Format compact + VERSIONING
       const contextData: any = {
-        v: DATA_FORMAT_VERSION, // ← NOUVEAU: Version du format
-        appVersion: APP_VERSION, // ← NOUVEAU: Version de l'app
-        ac: avatarConfig ? JSON.parse(avatarConfig) : undefined,
+        v: DATA_FORMAT_VERSION,
+        appVersion: APP_VERSION,
         un: profile?.name || undefined,
         lv: level ? parseInt(level) : 1,
         rk: rank || undefined,
         wi: parseFloat(waterIntake || '0'),
+        themeAccent: profileThemeEntry?.color || '#3B82F6',
+        themeCompanion: profileThemeEntry?.companion || '#FFFFFF',
+        themeMode: profileMode,
+        themeBg: fullTheme.colors.background,
+        themeCardBg: fullTheme.colors.backgroundCard,
+        themeTextPrimary: fullTheme.colors.textPrimary,
+        themeTextSecondary: fullTheme.colors.textSecondary,
+        themeDivider: fullTheme.colors.divider,
+        themeTextOnAccent: fullTheme.colors.textOnAccent,
         ts: Date.now()
       };
 
@@ -572,20 +734,13 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         return;
       }
 
-      // Photo de profil (si petite)
+      // Photo de profil (compressee 100x100 JPEG ~5-10KB)
       if (profile?.profile_photo) {
         try {
-          const FileSystem = require('expo-file-system').default;
-          const base64Photo = await FileSystem.readAsStringAsync(profile.profile_photo, {
-            encoding: FileSystem.EncodingType.Base64
-          });
-
+          const base64Photo = await compressProfileImage(profile.profile_photo);
+          contextData.profileImage = base64Photo;
           const photoSize = (base64Photo.length * 3) / 4;
-
-          if (photoSize < 50000) { // 50KB max pour profil sync
-            contextData.pp = base64Photo;
-            logSync('syncProfileToWatch - Photo incluse', { size: `${Math.round(photoSize / 1024)}KB` });
-          }
+          logSync('syncProfileToWatch - Photo compressee incluse', { size: `${Math.round(photoSize / 1024)}KB` });
         } catch (photoError) {
           logSync('syncProfileToWatch - Erreur photo', photoError);
         }
@@ -639,6 +794,13 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           // NOUVEAU : Traiter syncs en attente
           await processPendingSyncs();
 
+          // Importer les exercices Watch manquants (une seule fois)
+          const exercisesImported = await AsyncStorage.getItem('@yoroi_watch_exercises_imported');
+          if (!exercisesImported) {
+            await importWatchExercisesToPhone();
+            await AsyncStorage.setItem('@yoroi_watch_exercises_imported', 'true');
+          }
+
           // Sync iPhone → Watch
           syncAllData();
           syncProfileToWatch();
@@ -676,6 +838,13 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           if (data.data) {
             setWatchData(data.data);
             logSync('Données reçues', { size: JSON.stringify(data.data).length });
+
+            // Process pending actions from Watch (sent via applicationContext when not reachable)
+            const ctx = data.data;
+            if (ctx.pendingAction && ctx.pendingData) {
+              const actionMsg = { ...ctx.pendingData, action: ctx.pendingAction };
+              handleWatchMessage(actionMsg);
+            }
           }
         });
 
@@ -829,7 +998,8 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       logSync('performSync - Début');
 
       // 1. Récupérer données
-      const [profile, weight, waterIntake, streak, avatarConfig, level, rank, benchmarksList] = await Promise.all([
+      const { getSleepStats, getSleepGoal, getTodaySleep } = require('@/lib/sleepService');
+      const [profile, weight, waterIntake, streak, avatarConfig, level, rank, benchmarksList, savedThemeColor, savedStepsGoal, savedHydrationGoal, sleepStatsData, sleepGoalData, todaySleep, savedThemeMode] = await Promise.all([
         getProfile(),
         AsyncStorage.getItem('currentWeight'),
         AsyncStorage.getItem('waterIntake'),
@@ -838,6 +1008,13 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         AsyncStorage.getItem('@yoroi_level'),
         AsyncStorage.getItem('@yoroi_rank'),
         getBenchmarks().catch(() => []),
+        AsyncStorage.getItem('yoroi_theme_color_v5'),
+        AsyncStorage.getItem('@yoroi_steps_goal'),
+        AsyncStorage.getItem('@yoroi_hydration_goal'),
+        getSleepStats().catch(() => null),
+        getSleepGoal().catch(() => 480),
+        getTodaySleep().catch(() => null),
+        AsyncStorage.getItem('yoroi_theme_mode_v5'),
       ]);
 
       // 2. Construire megaPack OPTIMISÉ avec VERSIONING
@@ -846,44 +1023,137 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         parsedAvatar.pack = parsedAvatar.id;
       }
 
-      // Benchmarks compacts pour la montre
-      const watchBenchmarks = (benchmarksList || []).slice(0, 50).map((b: any) => ({
-        id: b.id || b.exerciseId,
-        name: b.name || b.exerciseName,
-        category: b.category || 'Force',
-        unit: b.unit || 'kg',
-        pr: b.pr || b.personalRecord || 0,
-        prReps: b.prReps || 0,
-        prDate: b.prDate || '',
-        lastValue: b.lastValue || 0,
-        entryCount: b.entryCount || 0,
-      }));
+      // Benchmarks compacts pour la montre (calculer PR et dernière valeur depuis les entries)
+      const watchBenchmarks = (benchmarksList || []).slice(0, 50).map((b: any) => {
+        const pr = getBenchmarkPR(b);
+        const last = getBenchmarkLast(b);
+        return {
+          id: b.id,
+          name: b.name,
+          category: b.category || 'Force',
+          unit: b.unit || 'kg',
+          pr: pr?.value || 0,
+          prReps: pr?.reps || 0,
+          prDate: pr?.date || '',
+          lastValue: last?.value || 0,
+          entryCount: b.entries?.length || 0,
+        };
+      });
+
+      // Fetch health data from HealthKit
+      let healthData: any = {};
+      try {
+        const healthConnect = require('@/lib/healthConnect.ios').default;
+        const [heartRateData, caloriesData, distanceData, spo2Data, respiratoryData, exerciseMin, standHrs] = await Promise.all([
+          healthConnect.getTodayHeartRate().catch(() => null),
+          healthConnect.getTodayCalories().catch(() => null),
+          healthConnect.getTodayDistance().catch(() => null),
+          healthConnect.getOxygenSaturation().catch(() => null),
+          healthConnect.getRespiratoryRate().catch(() => null),
+          healthConnect.getTodayExerciseMinutes().catch(() => null),
+          healthConnect.getTodayStandHours().catch(() => null),
+        ]);
+        if (heartRateData) {
+          healthData.heartRate = heartRateData.current || heartRateData.average || 0;
+          healthData.heartRateMin = heartRateData.min || 0;
+          healthData.heartRateMax = heartRateData.max || 0;
+          healthData.restingHeartRate = heartRateData.resting || 0;
+        }
+        if (caloriesData) healthData.activeCalories = caloriesData.active || 0;
+        if (distanceData) healthData.distance = distanceData.total || 0;
+        if (spo2Data) healthData.spo2 = spo2Data.value || 0;
+        if (respiratoryData) healthData.respiratoryRate = respiratoryData.value || 0;
+        if (exerciseMin != null) healthData.exerciseMinutes = exerciseMin;
+        if (standHrs != null) healthData.standHours = standHrs;
+        logSync('performSync - Health data fetched', healthData);
+      } catch (healthError) {
+        logSync('performSync - Health data fetch failed', healthError);
+      }
+
+      // Get current theme colors for Watch - send full theme
+      const currentThemeEntry = themeColors.find(t => t.id === (savedThemeColor || 'ocean'));
+      const themeAccent = currentThemeEntry?.color || '#3B82F6';
+      const themeCompanion = currentThemeEntry?.companion || '#FFFFFF';
+      const themeMode = savedThemeMode === 'light' ? 'light' : 'dark';
+      const syncFullTheme = getTheme((savedThemeColor || 'ocean') as ThemeColor, themeMode as 'dark' | 'light');
+
+      // Sleep data from sleepService (source unique de verite)
+      let sleepInfo: any = {};
+      if (sleepStatsData) {
+        sleepInfo.sleepDuration = Math.round(sleepStatsData.lastNightDuration || 0); // minutes
+        sleepInfo.sleepQuality = Math.round(sleepStatsData.lastNightQuality || 0); // 1-5
+        sleepInfo.sleepDebt = sleepStatsData.sleepDebtHours || 0; // heures
+      }
+      if (todaySleep) {
+        sleepInfo.sleepBedTime = todaySleep.bedTime || '--:--';
+        sleepInfo.sleepWakeTime = todaySleep.wakeTime || '--:--';
+      }
+      sleepInfo.sleepGoal = sleepGoalData || 480;
+
+      // Build hydration weekly data for Watch (last 7 days) — batch fetch
+      let hydrationWeeklyData: { day: string; amount: number; goal: number }[] = [];
+      try {
+        const hydGoalMl = savedHydrationGoal ? parseInt(savedHydrationGoal) : 2500;
+        const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+        const days = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - (6 - i));
+          return { iso: d.toISOString().split('T')[0], dayName: dayNames[d.getDay()] };
+        });
+        const keys = days.map(({ iso }) => `@yoroi_hydration_today_${iso}`);
+        const results = await AsyncStorage.multiGet(keys);
+        hydrationWeeklyData = results.map(([, value], idx) => ({
+          day: days[idx].dayName,
+          amount: value ? parseInt(value) : 0,
+          goal: hydGoalMl,
+        }));
+      } catch { /* non bloquant */ }
 
       const megaPack: any = {
         v: DATA_FORMAT_VERSION,
         appVersion: APP_VERSION,
+        // Weight (compact + full keys for Watch compatibility)
         w: parseFloat(weight || '0'),
+        currentWeight: parseFloat(weight || '0'),
+        targetWeight: profile?.target_weight || undefined,
+        startWeight: profile?.start_weight || undefined,
+        height: profile?.height_cm || undefined,
+        // Hydration
         wi: parseFloat(waterIntake || '0'),
-        s: parseInt(streak || '0'),
+        hydrationCurrent: Math.round(parseFloat(waterIntake || '0')),
+        hydrationWeekly: hydrationWeeklyData.length > 0 ? hydrationWeeklyData : undefined,
+        // Profile
         un: profile?.name || undefined,
-        ac: parsedAvatar,
         lv: level ? parseInt(level) : 1,
         rk: rank || undefined,
-        ts: Date.now(),
-        fr: true,
-        deviceName: Device.modelName || 'iPhone',
+        streak: parseInt(streak || '0'),
         // Benchmarks pour le carnet de la montre
         benchmarks: watchBenchmarks.length > 0 ? watchBenchmarks : undefined,
-        // Objectifs
-        stepsGoal: 10000,
-        hydrationGoal: 2500,
+        // Objectifs (read from saved values)
+        stepsGoal: savedStepsGoal ? parseInt(savedStepsGoal) : 10000,
+        hydrationGoal: savedHydrationGoal ? parseInt(savedHydrationGoal) : 2500,
+        // Sleep data
+        ...sleepInfo,
+        // Health data
+        ...healthData,
+        // Theme colors + mode for Watch
+        themeAccent,
+        themeCompanion,
+        themeMode,
+        themeBg: syncFullTheme.colors.background,
+        themeCardBg: syncFullTheme.colors.backgroundCard,
+        themeTextPrimary: syncFullTheme.colors.textPrimary,
+        themeTextSecondary: syncFullTheme.colors.textSecondary,
+        themeDivider: syncFullTheme.colors.divider,
+        themeTextOnAccent: syncFullTheme.colors.textOnAccent,
+        ts: Date.now(),
       };
 
       // VALIDATION complète
       const validation = validateSyncData({
         weight: megaPack.w,
         waterIntake: megaPack.wi,
-        streak: megaPack.s,
+        streak: megaPack.streak,
         level: megaPack.lv
       });
 
@@ -891,35 +1161,15 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         throw new Error(`Validation échouée: ${validation.errors.join(', ')}`);
       }
 
-      // Photo (si petite)
+      // Photo (compressee 100x100 JPEG ~5-10KB, toujours dans le megaPack)
       if (profile?.profile_photo) {
         try {
-          const FileSystem = require('expo-file-system').default;
-          const base64Photo = await FileSystem.readAsStringAsync(profile.profile_photo, {
-            encoding: FileSystem.EncodingType.Base64
-          });
-
+          const base64Photo = await compressProfileImage(profile.profile_photo);
+          megaPack.profileImage = base64Photo;
           const estimatedSize = (base64Photo.length * 3) / 4;
-
-          if (estimatedSize < 75000) {
-            megaPack.pp = base64Photo;
-            logSync('performSync - Photo incluse', { size: `${Math.round(estimatedSize / 1024)}KB` });
-          } else {
-            logSync('performSync - Photo trop volumineuse', { size: `${Math.round(estimatedSize / 1024)}KB` });
-
-            // Envoi séparé via transferFile
-            try {
-              await WatchConnectivity.transferFile(profile.profile_photo, {
-                type: 'profilePhoto',
-                timestamp: Date.now()
-              });
-              logSync('performSync - Photo envoyée via transferFile');
-            } catch (transferError) {
-              logSync('performSync - Erreur transferFile', transferError);
-            }
-          }
+          logSync('performSync - Photo compressee incluse', { size: `${Math.round(estimatedSize / 1024)}KB` });
         } catch (photoError) {
-          logSync('performSync - Erreur lecture photo', photoError);
+          logSync('performSync - Erreur compression photo', photoError);
         }
       }
 
@@ -934,8 +1184,8 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       if (megaPackSize > 256000) {
         logSync('performSync - ATTENTION: MegaPack dépasse 256KB!', { size: megaPackSize });
         // Retirer la photo si présente
-        if (megaPack.pp) {
-          delete megaPack.pp;
+        if (megaPack.profileImage) {
+          delete megaPack.profileImage;
           logSync('performSync - Photo retirée pour respecter limite');
         }
       }
@@ -988,14 +1238,16 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
   }, [isAvailable, isReachable, showSyncBanner, logSync, retryWithBackoff]);
 
   // Sync complète avec debounce
-  const syncAllData = useCallback(() => {
+  const syncAllData = useCallback((): Promise<void> => {
     if (syncDebounceTimer.current) {
       clearTimeout(syncDebounceTimer.current);
     }
 
-    syncDebounceTimer.current = setTimeout(() => {
-      performSync();
-    }, 2000);
+    return new Promise<void>((resolve) => {
+      syncDebounceTimer.current = setTimeout(() => {
+        performSync().then(resolve).catch(resolve);
+      }, 2000);
+    });
   }, [performSync]);
 
   // Context value

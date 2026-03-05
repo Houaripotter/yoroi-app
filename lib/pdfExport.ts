@@ -1,4 +1,4 @@
-import { printToFileAsync } from 'expo-print';
+import { printToFileAsync, printAsync } from 'expo-print';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -367,7 +367,7 @@ export const generateProgressPDF = async (period: ExportPeriod = '30j'): Promise
 export const previewPDF = async (period: ExportPeriod = '30j'): Promise<void> => {
   try {
     const html = await generatePDFHTML(period);
-    await Print.printAsync({ html });
+    await printAsync({ html });
   } catch (error) {
     logger.error('Erreur preview PDF:', error);
     throw error;

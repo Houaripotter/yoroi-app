@@ -21,7 +21,7 @@ import { getUnlockedBadges, unlockBadge } from './badges';
 import logger from '@/lib/security/logger';
 
 // ============================================
-// 🖼️ UTILITAIRES IMAGES
+// UTILITAIRES IMAGES
 // ============================================
 
 /**
@@ -62,7 +62,7 @@ const base64ToImage = async (base64: string, fileName: string): Promise<string |
 };
 
 // ============================================
-// 📤 EXPORT & PARTAGE
+// EXPORT & PARTAGE
 // ============================================
 
 /**
@@ -191,7 +191,7 @@ export const exportDataToJSON = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    logger.error('❌ Erreur export JSON:', error);
+    logger.error('Erreur export JSON:', error);
     Alert.alert('Erreur', 'Impossible d\'exporter les données');
     return false;
   }
@@ -240,7 +240,7 @@ export const exportDataToCSV = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    logger.error('❌ Erreur export CSV:', error);
+    logger.error('Erreur export CSV:', error);
     Alert.alert('Erreur', 'Impossible d\'exporter les données');
     return false;
   }
@@ -518,7 +518,7 @@ export const importDataFromJSON = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    logger.error('❌ Erreur import JSON:', error);
+    logger.error('Erreur import JSON:', error);
     Alert.alert('Erreur', 'Impossible d\'importer les données');
     return false;
   }
@@ -549,7 +549,7 @@ export const shareImage = async (viewRef: any, fileName: string = 'yoroi_card'):
       return false;
     }
   } catch (error) {
-    logger.error('❌ Erreur partage image:', error);
+    logger.error('Erreur partage image:', error);
     Alert.alert('Erreur', 'Impossible de partager l\'image');
     return false;
   }
@@ -585,7 +585,7 @@ export const generateShareText = async (): Promise<string> => {
 
     return text;
   } catch (error) {
-    logger.error('❌ Erreur génération texte partage:', error);
+    logger.error('Erreur génération texte partage:', error);
     return 'Mon parcours Yoroi #Yoroi #Fitness';
   }
 };
@@ -613,7 +613,7 @@ export const shareProgress = async (): Promise<boolean> => {
       return false;
     }
   } catch (error) {
-    logger.error('❌ Erreur partage progression:', error);
+    logger.error('Erreur partage progression:', error);
     Alert.alert('Erreur', 'Impossible de partager la progression');
     return false;
   }
@@ -646,7 +646,7 @@ export const shareStoryCard = async (viewRef: any, platform: 'instagram' | 'snap
       return false;
     }
   } catch (error) {
-    logger.error('❌ Erreur partage story:', error);
+    logger.error('Erreur partage story:', error);
     Alert.alert('Erreur', 'Impossible de partager la story');
     return false;
   }
@@ -679,7 +679,7 @@ export const saveStoryToGallery = async (viewRef: any): Promise<boolean> => {
     Alert.alert('Succès', 'Image sauvegardée dans ton galerie');
     return true;
   } catch (error) {
-    logger.error('❌ Erreur sauvegarde galerie:', error);
+    logger.error('Erreur sauvegarde galerie:', error);
     Alert.alert('Erreur', 'Impossible de sauvegarder l\'image');
     return false;
   }
@@ -722,7 +722,7 @@ export const importAllData = async (
     Alert.alert('Importé', 'Tes données ont été restaurées avec succès !');
     return true;
   } catch (error) {
-    logger.error('❌ Erreur import:', error);
+    logger.error('Erreur import:', error);
     Alert.alert('Erreur', "Impossible d'importer les données. Vérifie le format du fichier.");
     return false;
   }
@@ -862,7 +862,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    logger.error('❌ Erreur export séances CSV:', error);
+    logger.error('Erreur export séances CSV:', error);
     Alert.alert(
       'Erreur',
       "Impossible d'exporter les séances en CSV. Essaie à nouveau."
@@ -975,7 +975,7 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    logger.error('❌ Erreur export Excel CSV:', error);
+    logger.error('Erreur export Excel CSV:', error);
     Alert.alert(
       'Erreur',
       "Impossible d'exporter les séances en Excel CSV. Essaie à nouveau."
@@ -985,7 +985,7 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
 };
 
 // ============================================
-// 📝 EXPORT/IMPORT ÉDITABLE (CSV & JSON)
+// EXPORT/IMPORT ÉDITABLE (CSV & JSON)
 // ============================================
 
 /**
@@ -1117,7 +1117,7 @@ export const exportEditableCSV = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    logger.error('❌ Erreur export éditable:', error);
+    logger.error('Erreur export éditable:', error);
     Alert.alert('Erreur', "Impossible d'exporter les données éditables");
     return false;
   }
@@ -1300,7 +1300,7 @@ export const importEditableCSV = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    logger.error('❌ Erreur import éditable:', error);
+    logger.error('Erreur import éditable:', error);
     Alert.alert('Erreur', "Impossible d'importer le fichier éditable");
     return false;
   }
@@ -1390,7 +1390,7 @@ nom;sport;couleur;adresse
 
     return true;
   } catch (error) {
-    logger.error('❌ Erreur création template:', error);
+    logger.error('Erreur création template:', error);
     Alert.alert('Erreur', "Impossible de créer le template");
     return false;
   }

@@ -347,7 +347,7 @@ const ensurePhotosDirectoryExists = async (): Promise<string | null> => {
     }
     return photosDirectory;
   } catch (error) {
-    logger.error('❌ Erreur création dossier photos:', error);
+    logger.error('Erreur création dossier photos:', error);
     return null;
   }
 };
@@ -367,13 +367,13 @@ const getData = async <T>(key: string): Promise<T[]> => {
     const parsed = JSON.parse(data);
     // Garantir qu'on retourne toujours un tableau
     if (!Array.isArray(parsed)) {
-      logger.warn(`⚠️ getData(${key}): valeur non-tableau détectée, reset à []`);
+      logger.warn(`getData(${key}): valeur non-tableau détectée, reset à []`);
       return [];
     }
     return parsed;
   } catch (error) {
     // Erreur critique - logging multiple pour visibilité
-    logger.warn(`⚠️ ERREUR CRITIQUE - Lecture stockage ${key}:`, error);
+    logger.warn(`ERREUR CRITIQUE - Lecture stockage ${key}:`, error);
     logger.error(`Erreur AsyncStorage.getItem (${key}):`, error);
 
     // L'app continue avec données vides, mais l'erreur est tracée
@@ -387,7 +387,7 @@ const saveData = async <T>(key: string, data: T[]): Promise<boolean> => {
     return true;
   } catch (error) {
     // Erreur critique - logging multiple pour visibilité
-    logger.warn(`⚠️ ERREUR CRITIQUE - Sauvegarde ${key}:`, error);
+    logger.warn(`ERREUR CRITIQUE - Sauvegarde ${key}:`, error);
     logger.error(`Erreur AsyncStorage.setItem (${key}):`, error);
 
     // Détection erreur de quota (stockage plein)
@@ -396,7 +396,7 @@ const saveData = async <T>(key: string, data: T[]): Promise<boolean> => {
       error.message.includes('quota') ||
       error.message.includes('storage')
     )) {
-      logger.warn('🔴 STOCKAGE PLEIN - Les données ne peuvent pas être sauvegardées');
+      logger.warn('STOCKAGE PLEIN - Les données ne peuvent pas être sauvegardées');
     }
 
     return false;
@@ -454,7 +454,7 @@ const getSecureMeasurements = async (): Promise<Measurement[]> => {
     const data = await secureStorage.getItem(STORAGE_KEYS.MEASUREMENTS);
     return Array.isArray(data) ? data : [];
   } catch (error) {
-    logger.warn(`⚠️ ERREUR CRITIQUE - Lecture stockage sécurisé mesures:`, error);
+    logger.warn(`ERREUR CRITIQUE - Lecture stockage sécurisé mesures:`, error);
     logger.error(`Erreur secureStorage.getItem (measurements):`, error);
     return [];
   }
@@ -467,7 +467,7 @@ const saveSecureMeasurements = async (data: Measurement[]): Promise<boolean> => 
   try {
     return await secureStorage.setItem(STORAGE_KEYS.MEASUREMENTS, data);
   } catch (error) {
-    logger.warn(`⚠️ ERREUR CRITIQUE - Sauvegarde stockage sécurisé mesures:`, error);
+    logger.warn(`ERREUR CRITIQUE - Sauvegarde stockage sécurisé mesures:`, error);
     logger.error(`Erreur secureStorage.setItem (measurements):`, error);
     return false;
   }
@@ -630,8 +630,8 @@ export const savePhotoToStorage = async (
     await saveData(STORAGE_KEYS.PHOTOS, photos);
 
     return newPhoto;
-  } catch (error: any) {
-    logger.error('❌ Erreur sauvegarde photo:', error?.message || error);
+  } catch (error: unknown) {
+    logger.error('Erreur sauvegarde photo:', error);
     Alert.alert('Erreur', 'Impossible de sauvegarder la photo. Réessaie.');
     return null;
   }
@@ -721,7 +721,7 @@ export const getUserSettings = async (): Promise<UserSettings> => {
       theme: 'classic',
     };
   } catch (error) {
-    logger.error('❌ Erreur lecture paramètres:', error);
+    logger.error('Erreur lecture paramètres:', error);
     return {
       weight_unit: 'kg',
       measurement_unit: 'cm',
@@ -736,7 +736,7 @@ export const saveUserSettings = async (settings: Partial<UserSettings>): Promise
     const newSettings = { ...currentSettings, ...settings };
     return await secureStorage.setItem(STORAGE_KEYS.USER_SETTINGS, newSettings);
   } catch (error) {
-    logger.error('❌ Erreur sauvegarde paramètres:', error);
+    logger.error('Erreur sauvegarde paramètres:', error);
     return false;
   }
 };
@@ -749,7 +749,8 @@ export const getUserClubs = async (): Promise<UserClub[]> => {
   try {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.USER_CLUBS);
     if (data) {
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed)) return parsed;
     }
     // Initialiser avec 3 clubs par défaut si vide
     const defaultClubs: UserClub[] = [
@@ -778,7 +779,7 @@ export const getUserClubs = async (): Promise<UserClub[]> => {
     await saveUserClubs(defaultClubs);
     return defaultClubs;
   } catch (error) {
-    logger.error('❌ Erreur lecture clubs:', error);
+    logger.error('Erreur lecture clubs:', error);
     return [];
   }
 };
@@ -788,7 +789,7 @@ export const saveUserClubs = async (clubs: UserClub[]): Promise<boolean> => {
     await AsyncStorage.setItem(STORAGE_KEYS.USER_CLUBS, JSON.stringify(clubs));
     return true;
   } catch (error) {
-    logger.error('❌ Erreur sauvegarde clubs:', error);
+    logger.error('Erreur sauvegarde clubs:', error);
     return false;
   }
 };
@@ -830,7 +831,8 @@ export const getUserGear = async (): Promise<UserGear[]> => {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.USER_GEAR);
     if (data) {
       try {
-        return JSON.parse(data);
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) return parsed;
       } catch (parseError) {
         logger.error('JSON parse error in getUserGear:', parseError);
         return [];
@@ -866,7 +868,7 @@ export const getUserGear = async (): Promise<UserGear[]> => {
     await saveUserGear(defaultGear);
     return defaultGear;
   } catch (error) {
-    logger.error('❌ Erreur lecture équipements:', error);
+    logger.error('Erreur lecture équipements:', error);
     return [];
   }
 };
@@ -876,7 +878,7 @@ export const saveUserGear = async (gear: UserGear[]): Promise<boolean> => {
     await AsyncStorage.setItem(STORAGE_KEYS.USER_GEAR, JSON.stringify(gear));
     return true;
   } catch (error) {
-    logger.error('❌ Erreur sauvegarde équipements:', error);
+    logger.error('Erreur sauvegarde équipements:', error);
     return false;
   }
 };
@@ -1075,9 +1077,9 @@ export const exportData = async (): Promise<boolean> => {
     }
     
     return true;
-  } catch (error: any) {
-    logger.error('❌ Erreur export:', error);
-    Alert.alert('Erreur', `Impossible d'exporter : ${error?.message || 'Erreur inconnue'}`);
+  } catch (error: unknown) {
+    logger.error('Erreur export:', error);
+    Alert.alert('Erreur', `Impossible d'exporter : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     return false;
   }
 };
@@ -1155,9 +1157,9 @@ export const importData = async (): Promise<boolean> => {
 
     Alert.alert('Succès', 'Données restaurées avec succès !');
     return true;
-  } catch (error: any) {
-    logger.error('❌ Erreur importation:', error);
-    Alert.alert('Erreur', `Impossible d'importer : ${error?.message || 'fichier invalide'}`);
+  } catch (error: unknown) {
+    logger.error('Erreur importation:', error);
+    Alert.alert('Erreur', `Impossible d'importer : ${error instanceof Error ? error.message : 'fichier invalide'}`);
     return false;
   }
 };
@@ -1217,7 +1219,69 @@ export const resetAllData = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    logger.error('❌ Erreur réinitialisation:', error);
+    logger.error('Erreur réinitialisation:', error);
+    return false;
+  }
+};
+
+// Reset des donnees uniquement (conserve les photos)
+export const resetDataOnly = async (): Promise<boolean> => {
+  try {
+    // Reset SQLite sans toucher a la table photos
+    try {
+      const { resetDatabaseKeepPhotos } = await import('./database');
+      await resetDatabaseKeepPhotos();
+    } catch (dbError) {
+      logger.warn('Erreur reset SQLite (peut être normal si non initialisé):', dbError);
+    }
+
+    // Récupérer TOUTES les clés AsyncStorage
+    const allKeys = await AsyncStorage.getAllKeys();
+
+    // Filtrer les clés YOROI SAUF celles liées aux photos
+    const yoroiKeys = allKeys.filter(key => {
+      // Exclure les clés photos
+      if (key === '@yoroi_photos' || key === '@yoroi_photo_history' || key === 'photos') {
+        return false;
+      }
+      return (
+        key.startsWith('@yoroi') ||
+        key.startsWith('yoroi_') ||
+        key.includes('weight') ||
+        key.includes('training') ||
+        key.includes('hydration') ||
+        key.includes('composition') ||
+        key.includes('measurements') ||
+        key.includes('streak') ||
+        key.includes('xp') ||
+        key.includes('rank') ||
+        key.includes('badges') ||
+        key.includes('quests') ||
+        key.includes('avatar') ||
+        key.includes('theme') ||
+        key.includes('settings') ||
+        key.includes('profile') ||
+        key.includes('clubs') ||
+        key.includes('gear') ||
+        key.includes('body') ||
+        key.includes('mood') ||
+        key.includes('home') ||
+        key.includes('onboarding') ||
+        key.includes('fasting') ||
+        key.includes('gamification') ||
+        key.includes('level') ||
+        key.includes('points')
+      );
+    });
+
+    // Supprimer toutes les clés trouvées
+    if (yoroiKeys.length > 0) {
+      await AsyncStorage.multiRemove(yoroiKeys);
+    }
+
+    return true;
+  } catch (error) {
+    logger.error('Erreur réinitialisation (données uniquement):', error);
     return false;
   }
 };
@@ -1293,7 +1357,7 @@ export const debugShowAllData = async (): Promise<void> => {
       const value = await AsyncStorage.getItem(key);
     }
   } catch (error) {
-    logger.error('❌ Erreur debug:', error);
+    logger.error('Erreur debug:', error);
   }
 };
 
@@ -1396,9 +1460,13 @@ export const saveHydrationSettings = async (settings: Partial<HydrationSettings>
 export const getAllHydrationEntries = async (): Promise<HydrationEntry[]> => {
   try {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.HYDRATION_LOG);
-    return data ? JSON.parse(data) : [];
+    if (data) {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    }
+    return [];
   } catch (error) {
-    logger.error('❌ Erreur lecture hydratation:', error);
+    logger.error('Erreur lecture hydratation:', error);
     return [];
   }
 };
@@ -1449,7 +1517,7 @@ export const deleteHydrationEntry = async (id: string): Promise<boolean> => {
     await AsyncStorage.setItem(STORAGE_KEYS.HYDRATION_LOG, JSON.stringify(filtered));
     return true;
   } catch (error) {
-    logger.error('❌ Erreur suppression hydratation:', error);
+    logger.error('Erreur suppression hydratation:', error);
     return false;
   }
 };
@@ -1572,7 +1640,7 @@ export const analyzeHydrationWeightCorrelation = async (): Promise<{
       recommendation,
     };
   } catch (error) {
-    logger.error('❌ Erreur analyse corrélation:', error);
+    logger.error('Erreur analyse corrélation:', error);
     return null;
   }
 };

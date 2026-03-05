@@ -248,7 +248,10 @@ export default function NotificationsScreen() {
     // Charger les frequences sauvegardees
     try {
       const savedFreqs = await AsyncStorage.getItem(FREQ_STORAGE_KEY);
-      if (savedFreqs) setFrequencies(JSON.parse(savedFreqs));
+      if (savedFreqs) {
+        const parsed = JSON.parse(savedFreqs);
+        if (parsed && typeof parsed === 'object') setFrequencies(parsed);
+      }
     } catch {}
 
     await notificationService.initialize();

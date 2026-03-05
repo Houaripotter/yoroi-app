@@ -16,7 +16,7 @@ interface SignesVitauxTabProps {
   onMetricPress?: (metric: { key: string; label: string; color: string; unit: string; icon: React.ReactNode }) => void;
 }
 
-export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = ({
+export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
   heartRate,
   hrv,
   oxygenSaturation,
@@ -40,6 +40,12 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = ({
 
   const spO2Value = oxygenSaturation?.value || 0;
   const respRate = respiratoryRate?.value || 0;
+
+  // Defensive: garantir que les historiques sont des arrays
+  const safeHRHistory = Array.isArray(heartRateHistory) ? heartRateHistory : [];
+  const safeHRVHistory = Array.isArray(hrvHistory) ? hrvHistory : [];
+  const safeSpo2History = Array.isArray(spo2History) ? spo2History : [];
+  const safeRespHistory = Array.isArray(respiratoryRateHistory) ? respiratoryRateHistory : [];
 
   return (
     <View>
@@ -90,10 +96,10 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = ({
           )}
 
           {/* Graphique inline */}
-          {heartRateHistory.length > 0 && (
+          {safeHRHistory.length > 0 && (
             <View style={{ marginTop: 16 }}>
               <ScrollableLineChart
-                data={heartRateHistory}
+                data={safeHRHistory}
                 color="#EC4899"
                 unit="bpm"
                 height={160}
@@ -134,10 +140,10 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = ({
           )}
 
           {/* Graphique inline */}
-          {hrvHistory.length > 0 && (
+          {safeHRVHistory.length > 0 && (
             <View style={{ marginTop: 16 }}>
               <ScrollableLineChart
-                data={hrvHistory}
+                data={safeHRVHistory}
                 color="#10B981"
                 unit="ms"
                 height={160}
@@ -174,10 +180,10 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = ({
             <Text style={[styles.statusText, { color: colors.warning }]}>En dessous de la normale</Text>
           )}
 
-          {spo2History.length > 0 && (
+          {safeSpo2History.length > 0 && (
             <View style={{ marginTop: 16 }}>
               <ScrollableLineChart
-                data={spo2History}
+                data={safeSpo2History}
                 color="#3B82F6"
                 unit="%"
                 height={160}
@@ -211,10 +217,10 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = ({
             <Text style={[styles.statusText, { color: colors.success }]}>Normal (12-20 resp/min)</Text>
           )}
 
-          {respiratoryRateHistory.length > 0 && (
+          {safeRespHistory.length > 0 && (
             <View style={{ marginTop: 16 }}>
               <ScrollableLineChart
-                data={respiratoryRateHistory}
+                data={safeRespHistory}
                 color="#8B5CF6"
                 unit="resp/min"
                 height={160}
@@ -236,7 +242,7 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = ({
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {

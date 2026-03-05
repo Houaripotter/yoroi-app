@@ -22,7 +22,7 @@ import {
   Trash2,
 } from 'lucide-react-native';
 import { format, Locale } from 'date-fns';
-import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
+import { fr, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 import { useTheme } from '@/lib/ThemeContext';
@@ -36,9 +36,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 
-const DATE_LOCALES: Record<string, Locale> = {
-  fr, en: enUS, es, pt, de, it, ru, ar, zh: zhCN
-};
+
 
 const getDurationColor = (minutes: number): string => {
   if (minutes < 300) return '#EF4444';
@@ -58,15 +56,18 @@ const getQualityColor = (quality: number): string => {
 export default function SleepHistoryScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const dateLocale = DATE_LOCALES[language] || fr;
+  const dateLocale = fr;
 
   const [entries, setEntries] = useState<SleepEntry[]>([]);
   const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
-    getSleepEntries().then(setEntries);
+    getSleepEntries().then(data => {
+      // Trier du plus récent au plus ancien
+      setEntries([...data].sort((a, b) => b.date.localeCompare(a.date)));
+    });
   }, []);
 
   const handleDeleteEntry = (entry: SleepEntry) => {
@@ -115,10 +116,14 @@ export default function SleepHistoryScreen() {
     ? entries.reduce((sum, e) => sum + e.quality, 0) / totalEntries
     : 0;
 
+  // Fond bleu marine nuit
+  const nightBg = '#0B1120';
+  const nightCard = '#131D36';
+
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+    <View style={[styles.screen, { backgroundColor: nightBg }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: colors.backgroundCard }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: nightCard }]}>
         <TouchableOpacity
           disabled={isNavigating}
           onPress={() => {
@@ -130,38 +135,38 @@ export default function SleepHistoryScreen() {
           }}
           style={styles.backBtn}
         >
-          <ArrowLeft size={24} color={colors.textPrimary} />
+          <ArrowLeft size={24} color="#E8ECF4" />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('sleep.history')}</Text>
+        <Text style={[styles.title, { color: '#E8ECF4' }]}>{t('sleep.history')}</Text>
         <Calendar size={24} color="#8B5CF6" />
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Résumé global */}
         <View style={styles.summaryRow}>
-          <View style={[styles.summaryCard, { backgroundColor: colors.backgroundCard }]}>
+          <View style={[styles.summaryCard, { backgroundColor: nightCard }]}>
             <Text style={[styles.summaryValue, { color: '#8B5CF6' }]}>{totalEntries}</Text>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Nuits</Text>
+            <Text style={[styles.summaryLabel, { color: '#7B8DB5' }]}>Nuits</Text>
           </View>
-          <View style={[styles.summaryCard, { backgroundColor: colors.backgroundCard }]}>
+          <View style={[styles.summaryCard, { backgroundColor: nightCard }]}>
             <Text style={[styles.summaryValue, { color: getDurationColor(avgDuration) }]}>
               {totalEntries > 0 ? formatSleepDuration(avgDuration) : '--'}
             </Text>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('sleep.average')}</Text>
+            <Text style={[styles.summaryLabel, { color: '#7B8DB5' }]}>{t('sleep.average')}</Text>
           </View>
-          <View style={[styles.summaryCard, { backgroundColor: colors.backgroundCard }]}>
+          <View style={[styles.summaryCard, { backgroundColor: nightCard }]}>
             <Text style={[styles.summaryValue, { color: getQualityColor(Math.round(avgQuality)) }]}>
               {totalEntries > 0 ? (avgQuality % 1 === 0 ? `${avgQuality}` : `${avgQuality.toFixed(1)}`) : '--'}/5
             </Text>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('sleep.quality')}</Text>
+            <Text style={[styles.summaryLabel, { color: '#7B8DB5' }]}>{t('sleep.quality')}</Text>
           </View>
         </View>
 
         {/* Entrées groupées par mois */}
         {entries.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: colors.backgroundCard }]}>
-            <Moon size={40} color={colors.textMuted} strokeWidth={1.5} />
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+          <View style={[styles.emptyCard, { backgroundColor: nightCard }]}>
+            <Moon size={40} color={'#7B8DB5'} strokeWidth={1.5} />
+            <Text style={[styles.emptyText, { color: '#7B8DB5' }]}>
               Aucune nuit enregistrée
             </Text>
             <TouchableOpacity
@@ -177,10 +182,10 @@ export default function SleepHistoryScreen() {
               {/* Header de mois */}
               <View style={styles.monthHeader}>
                 <View style={[styles.monthDot, { backgroundColor: '#8B5CF6' }]} />
-                <Text style={[styles.monthTitle, { color: colors.textPrimary }]}>
+                <Text style={[styles.monthTitle, { color: '#E8ECF4' }]}>
                   {group.month}
                 </Text>
-                <Text style={[styles.monthCount, { color: colors.textMuted }]}>
+                <Text style={[styles.monthCount, { color: '#7B8DB5' }]}>
                   {group.entries.length} nuit{group.entries.length > 1 ? 's' : ''}
                 </Text>
               </View>
@@ -192,13 +197,13 @@ export default function SleepHistoryScreen() {
                 const progressWidth = Math.min((durationHours / 10) * 100, 100);
 
                 return (
-                  <View key={entry.id} style={[styles.entryCard, { backgroundColor: colors.backgroundCard }]}>
+                  <View key={entry.id} style={[styles.entryCard, { backgroundColor: nightCard }]}>
                     <View style={[styles.entryColorBar, { backgroundColor: dColor }]} />
 
                     <View style={styles.entryContent}>
                       {/* Ligne du haut */}
                       <View style={styles.entryTopRow}>
-                        <Text style={[styles.entryDate, { color: colors.textPrimary }]}>
+                        <Text style={[styles.entryDate, { color: '#E8ECF4' }]}>
                           {format(new Date(entry.date), 'EEEE d', { locale: dateLocale })}
                         </Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -207,7 +212,7 @@ export default function SleepHistoryScreen() {
                               <Star
                                 key={i}
                                 size={12}
-                                color={i <= entry.quality ? getQualityColor(entry.quality) : colors.border}
+                                color={i <= entry.quality ? getQualityColor(entry.quality) : '#1E2D4D'}
                                 fill={i <= entry.quality ? getQualityColor(entry.quality) : 'transparent'}
                                 strokeWidth={2}
                               />
@@ -217,7 +222,7 @@ export default function SleepHistoryScreen() {
                             onPress={() => handleDeleteEntry(entry)}
                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                           >
-                            <Trash2 size={14} color={colors.textMuted} strokeWidth={2} />
+                            <Trash2 size={14} color={'#7B8DB5'} strokeWidth={2} />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -228,20 +233,20 @@ export default function SleepHistoryScreen() {
                           {formatSleepDuration(entry.duration)}
                         </Text>
                         <View style={styles.entryTimeRange}>
-                          <Moon size={10} color={colors.textMuted} strokeWidth={2} />
-                          <Text style={[styles.entryTimeText, { color: colors.textMuted }]}>
+                          <Moon size={10} color={'#7B8DB5'} strokeWidth={2} />
+                          <Text style={[styles.entryTimeText, { color: '#7B8DB5' }]}>
                             {entry.bedTime}
                           </Text>
-                          <Text style={[styles.entryTimeSep, { color: colors.textMuted }]}>{'\u2192'}</Text>
-                          <Sun size={10} color={colors.textMuted} strokeWidth={2} />
-                          <Text style={[styles.entryTimeText, { color: colors.textMuted }]}>
+                          <Text style={[styles.entryTimeSep, { color: '#7B8DB5' }]}>{'\u2192'}</Text>
+                          <Sun size={10} color={'#7B8DB5'} strokeWidth={2} />
+                          <Text style={[styles.entryTimeText, { color: '#7B8DB5' }]}>
                             {entry.wakeTime}
                           </Text>
                         </View>
                       </View>
 
                       {/* Barre de progression */}
-                      <View style={[styles.progressBg, { backgroundColor: colors.border }]}>
+                      <View style={[styles.progressBg, { backgroundColor: '#1E2D4D' }]}>
                         <View style={[styles.progressFill, { width: `${progressWidth}%`, backgroundColor: dColor + '60' }]} />
                       </View>
                     </View>

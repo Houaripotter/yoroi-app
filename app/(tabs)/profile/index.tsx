@@ -12,12 +12,14 @@ import {
   Pressable,
   Keyboard,
   DeviceEventEmitter,
+  RefreshControl,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
+import { documentDirectory, copyAsync, deleteAsync } from 'expo-file-system/legacy';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import {
   Target,
@@ -59,7 +61,6 @@ import { fr } from 'date-fns/locale';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import logger from '@/lib/security/logger';
-import { ContextualTip } from '@/components/ContextualTip';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -92,6 +93,7 @@ export default function ProfileTabScreen() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [isPickingPhoto, setIsPickingPhoto] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const calculateAge = (dateStr: string): number | null => {
     if (!dateStr) return null;
@@ -154,8 +156,14 @@ export default function ProfileTabScreen() {
 
   useEffect(() => { loadData(); }, []);
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
+
   const rank = getCurrentRank(totalPoints);
-  const level = getLevel(totalPoints);
+
 
   const handleSave = async () => {
     Keyboard.dismiss();
@@ -209,9 +217,16 @@ export default function ProfileTabScreen() {
         quality: 0.8,
       });
       if (!result.canceled && result.assets?.[0]) {
-        const photoUri = result.assets[0].uri;
-        setProfilePhoto(photoUri);
+        // Copy to permanent path with unique name to bust image cache
+        const tempUri = result.assets[0].uri;
+        const permanentUri = `${documentDirectory}profile_photo_${Date.now()}.jpg`;
+        await copyAsync({ from: tempUri, to: permanentUri });
+        setProfilePhoto(permanentUri);
         const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
+        // Delete old photo file if it exists
+        if (profile?.profile_photo && profile.profile_photo.startsWith(documentDirectory || '')) {
+          deleteAsync(profile.profile_photo, { idempotent: true }).catch(() => {});
+        }
         await saveProfile({
           name: safeName,
           height_cm: profile?.height_cm,
@@ -219,7 +234,7 @@ export default function ProfileTabScreen() {
           start_weight: profile?.start_weight,
           start_date: profile?.start_date,
           avatar_gender: profile?.avatar_gender || 'homme',
-          profile_photo: photoUri,
+          profile_photo: permanentUri,
         });
         await loadData();
         DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
@@ -249,9 +264,16 @@ export default function ProfileTabScreen() {
         selectionLimit: 1,
       });
       if (!result.canceled && result.assets?.[0]) {
-        const photoUri = result.assets[0].uri;
-        setProfilePhoto(photoUri);
+        // Copy to permanent path with unique name to bust image cache
+        const tempUri = result.assets[0].uri;
+        const permanentUri = `${documentDirectory}profile_photo_${Date.now()}.jpg`;
+        await copyAsync({ from: tempUri, to: permanentUri });
+        setProfilePhoto(permanentUri);
         const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
+        // Delete old photo file if it exists
+        if (profile?.profile_photo && profile.profile_photo.startsWith(documentDirectory || '')) {
+          deleteAsync(profile.profile_photo, { idempotent: true }).catch(() => {});
+        }
         await saveProfile({
           name: safeName,
           height_cm: profile?.height_cm,
@@ -259,7 +281,7 @@ export default function ProfileTabScreen() {
           start_weight: profile?.start_weight,
           start_date: profile?.start_date,
           avatar_gender: profile?.avatar_gender || 'homme',
-          profile_photo: photoUri,
+          profile_photo: permanentUri,
         });
         await loadData();
         DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
@@ -308,6 +330,14 @@ export default function ProfileTabScreen() {
         style={styles.scrollView}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 12 }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.accent}
+            colors={[colors.accent]}
+          />
+        }
       >
         {/* Header */}
         <View style={styles.header}>
@@ -389,8 +419,8 @@ export default function ProfileTabScreen() {
           </View>
           <View style={[styles.statItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Star size={16} color={colors.gold || colors.accent} strokeWidth={2.5} />
-            <Text style={[styles.statValue, { color: colors.gold || colors.accent }]}>{level.level}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('gamification.level')}</Text>
+            <Text style={[styles.statValue, { color: rank.color }]}>{rank.name}</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('home.rank')}</Text>
           </View>
           <View style={[styles.statItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Activity size={16} color="#F59E0B" strokeWidth={2.5} />
@@ -541,8 +571,6 @@ export default function ProfileTabScreen() {
 
       <PopupComponent />
 
-      {/* Tip contextuel */}
-      <ContextualTip tipId="profile" />
     </View>
   );
 }

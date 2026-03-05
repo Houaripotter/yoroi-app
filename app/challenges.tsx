@@ -35,11 +35,9 @@ import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedba
 
 import { useTheme } from '@/lib/ThemeContext';
 import {
-  getDailyChallenges,
-  getWeeklyChallenges,
-  MONTHLY_CHALLENGES,
+  syncAllChallenges,
+  getActiveChallenges,
   claimChallengeReward,
-  manualCompleteChallenge,
   getTotalChallengeXP,
   ActiveChallenge,
 } from '@/lib/challengesService';
@@ -55,10 +53,10 @@ export default function ChallengesScreen() {
 
   const [dailyChallenges, setDailyChallenges] = useState<ActiveChallenge[]>([]);
   const [weeklyChallenges, setWeeklyChallenges] = useState<ActiveChallenge[]>([]);
+  const [monthlyChallenges, setMonthlyChallenges] = useState<ActiveChallenge[]>([]);
   const [totalXP, setTotalXP] = useState(0);
   const [activeTab, setActiveTab] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [confettiVisible, setConfettiVisible] = useState(false);
-  const [completedChallengeId, setCompletedChallengeId] = useState<string | null>(null);
   const [expandedChallenges, setExpandedChallenges] = useState<Set<string>>(new Set());
 
   // Toggle expansion d'une carte
@@ -96,13 +94,15 @@ export default function ChallengesScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      const [daily, weekly, xp] = await Promise.all([
-        getDailyChallenges(),
-        getWeeklyChallenges(),
+      // Sync une seule fois, puis lire tous les defis
+      await syncAllChallenges();
+      const [all, xp] = await Promise.all([
+        getActiveChallenges(),
         getTotalChallengeXP(),
       ]);
-      setDailyChallenges(daily);
-      setWeeklyChallenges(weekly);
+      setDailyChallenges(all.filter(c => c.type === 'daily'));
+      setWeeklyChallenges(all.filter(c => c.type === 'weekly'));
+      setMonthlyChallenges(all.filter(c => c.type === 'monthly'));
       setTotalXP(xp);
     } catch (error) {
       logger.error('Erreur:', error);
@@ -119,7 +119,6 @@ export default function ChallengesScreen() {
     const xp = await claimChallengeReward(challenge.id);
 
     if (xp > 0) {
-      setCompletedChallengeId(challenge.id);
       setConfettiVisible(true);
 
       // Popup après l'animation
@@ -135,28 +134,11 @@ export default function ChallengesScreen() {
     }
   };
 
-  // Valider manuellement un défi
-  const handleValidate = async (challenge: ActiveChallenge) => {
-    if (challenge?.progress?.completed) return;
-
-    impactAsync(ImpactFeedbackStyle.Medium);
-    const success = await manualCompleteChallenge(challenge.id);
-
-    if (success) {
-      setCompletedChallengeId(challenge.id);
-      setConfettiVisible(true);
-      loadData();
-    }
-  };
-
   const getChallenges = () => {
     switch (activeTab) {
       case 'daily': return dailyChallenges;
       case 'weekly': return weeklyChallenges;
-      case 'monthly': return MONTHLY_CHALLENGES.map(c => ({
-        ...c,
-        progress: { challengeId: c.id, current: 0, target: c.target, completed: false, claimed: false },
-      }));
+      case 'monthly': return monthlyChallenges;
     }
   };
 
@@ -204,7 +186,6 @@ export default function ChallengesScreen() {
           visible={confettiVisible}
           onComplete={() => {
             setConfettiVisible(false);
-            setCompletedChallengeId(null);
           }}
         />
         
@@ -247,19 +228,12 @@ export default function ChallengesScreen() {
                   {!isExpanded ? (
                     <View style={styles.hintRow}>
                       <Text style={[styles.hintText, { color: colors.textMuted }]}>
-                        {isCompleted ? 'Complété ✓' : progress > 0 ? `En cours (${Math.round(progress)}%)` : 'Appuie pour voir les détails'}
+                        {isClaimed ? 'Reclame' : isCompleted ? 'Complete' : progress > 0 ? `En cours (${Math.round(progress)}%)` : 'Appuie pour voir les details'}
                       </Text>
                       <ChevronDown size={12} color={colors.textMuted} />
                     </View>
                   ) : (
-                    <>
-                      <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>{challenge.description}</Text>
-                      {!isCompleted && (
-                        <Text style={[styles.validateHint, { color: colors.accent }]}>
-                          💡 Reste appuyé sur "Valider" pour compléter
-                        </Text>
-                      )}
-                    </>
+                    <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>{challenge.description}</Text>
                   )}
                 </View>
               </View>
@@ -299,21 +273,18 @@ export default function ChallengesScreen() {
                         onPress={() => handleClaim(challenge)}
                       >
                         <Gift size={14} color="#FFFFFF" />
-                        <Text style={styles.claimBtnText}>Réclamer</Text>
+                        <Text style={styles.claimBtnText}>Reclamer</Text>
                       </TouchableOpacity>
                     ) : isCompleted && isClaimed ? (
                       <View style={[styles.completedBadge, { backgroundColor: colors.successLight }]}>
                         <CheckCircle2 size={14} color={colors.success} />
-                        <Text style={[styles.completedText, { color: colors.success }]}>Complété</Text>
+                        <Text style={[styles.completedText, { color: colors.success }]}>Complete</Text>
                       </View>
                     ) : (
-                      <TouchableOpacity
-                        style={[styles.validateBtn, { backgroundColor: colors.accent }]}
-                        onPress={(e) => { e.stopPropagation(); handleValidate(challenge); }}
-                      >
-                        <CheckCircle2 size={14} color={colors.textOnGold} />
-                        <Text style={[styles.validateBtnText, { color: colors.textOnGold }]}>Valider</Text>
-                      </TouchableOpacity>
+                      <View style={[styles.pendingBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+                        <Clock size={14} color={colors.textMuted} />
+                        <Text style={[styles.pendingText, { color: colors.textMuted }]}>En cours</Text>
+                      </View>
                     )}
                   </View>
 
@@ -377,12 +348,8 @@ const styles = StyleSheet.create({
   pendingBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
   pendingText: { fontSize: 11, fontWeight: '600' },
 
-  validateBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 },
-  validateBtnText: { fontSize: 12, fontWeight: '700' },
-
   hintRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   hintText: { fontSize: 11, fontStyle: 'italic' },
   collapseHint: { alignItems: 'center', marginTop: 8 },
-  validateHint: { fontSize: 10, fontStyle: 'italic', marginTop: 6 },
 });
 

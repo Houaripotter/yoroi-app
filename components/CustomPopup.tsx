@@ -37,7 +37,7 @@ export const CustomPopup: React.FC<CustomPopupProps> = memo(({
   visible,
   title,
   message,
-  buttons = [{ text: 'OK', style: 'primary' }],
+  buttons = [{ text: 'OK', style: 'primary' as const }],
   onClose,
   icon,
 }) => {

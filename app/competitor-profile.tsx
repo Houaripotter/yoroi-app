@@ -79,6 +79,7 @@ export default function CompetitorProfileScreen() {
       const stored = await AsyncStorage.getItem(COMPETITOR_PROFILE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
         setProfile(parsed);
         if (parsed.currentWeight) {
           setWeightInput(parsed.currentWeight.toString());

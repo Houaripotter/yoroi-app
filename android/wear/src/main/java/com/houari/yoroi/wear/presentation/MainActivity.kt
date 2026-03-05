@@ -12,6 +12,7 @@ class MainActivity : ComponentActivity() {
 
         val repository = YoroiDataRepository(applicationContext)
         repository.requestSync()
+        repository.startHealthListening()
 
         setContent {
             YoroiWatchApp(repository = repository)

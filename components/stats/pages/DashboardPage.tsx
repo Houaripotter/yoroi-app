@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Dimensions, ActivityIndicator, TouchableOpacity, InteractionManager, RefreshControl } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
+import { formatDurationHM } from '@/lib/formatDuration';
 import { LineChart } from 'react-native-gifted-charts';
 import {
   Scale,
@@ -25,158 +25,85 @@ import { calculateReadinessScore } from '@/lib/readinessService';
 import { getWeeklyLoadStats } from '@/lib/trainingLoadService';
 import { getUserSettings } from '@/lib/storage';
 import { format, parseISO, subDays } from 'date-fns';
+import { router } from 'expo-router';
 import { fr } from 'date-fns/locale';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { StatsExplanation } from '../StatsExplanation';
+import { StatsHeader, Period } from '../StatsHeader';
 import { logger } from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COLUMN_WIDTH = (SCREEN_WIDTH - 44) / 2;
 
-export const DashboardPage: React.FC = () => {
-  const { colors, isDark, screenBackground } = useTheme();
-  const { t } = useI18n();
-  const [loading, setLoading] = useState(true);
-  const [selectedMetric, setSelectedMetric] = useState<any>(null);
+const METRIC_ROUTES: Record<string, string> = {
+  sleep: '/sleep',
+};
 
-  // Data States
-  const [allMetrics, setAllMetrics] = useState<any[]>([]);
+// Number of charts to mount immediately (first visible batch)
+const INITIAL_CHARTS = 4;
+// Number of charts to add per batch after initial render
+const CHARTS_PER_BATCH = 4;
 
-  useEffect(() => {
-    loadAllData();
-  }, []);
+// Carte individuelle memo-isee avec lazy chart rendering
+const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady }: {
+  metric: any;
+  colors: any;
+  isDark: boolean;
+  onPress: (m: any) => void;
+  chartReady: boolean;
+}) => {
+  const hasData = metric.data && metric.data.length > 0;
 
-  const loadAllData = async () => {
-    try {
-      setLoading(true);
-      const settings = await getUserSettings();
-
-      const [weights, trainings, measurements, sleep, readiness, loadStats] = await Promise.all([
-        getWeights(60),
-        getTrainings(60),
-        getMeasurements(90),
-        getSleepStats(),
-        calculateReadinessScore(7),
-        getWeeklyLoadStats()
-      ]);
-
-      const metricsList: any[] = [];
-
-      // Helper pour préparer les données de graphique
-      const prepareLineData = (data: any[], valueKey: string, color: string) => {
-        if (!data || data.length === 0) return [];
-        const filtered = data.filter(item => item[valueKey] != null && item[valueKey] > 0);
-        return filtered.slice().reverse().map(item => {
-          const val = item[valueKey] || 0;
-          return {
-            value: val,
-            date: item.date,
-            dataPointText: val.toFixed(1),
-            label: format(parseISO(item.date), 'd MMM', { locale: fr }).toUpperCase(),
-            labelTextStyle: { color: colors.textMuted, fontSize: 8, fontWeight: '900' },
-            dataPointColor: color,
-          };
-        });
-      };
-
-      const getLatestValue = (data: any[], key: string, fallback: string = '--') => {
-        if (!data || data.length === 0) return fallback;
-        const val = data[0][key];
-        return val ? val.toFixed(1) : fallback;
-      };
-
-      // --- 1. CORPS (TOUJOURS AFFICHÉS) ---
-      metricsList.push({ id: 'weight', metricKey: 'weight', theme: 'Corps', title: 'Poids', icon: <Scale size={16} color="#3B82F6" />, color: '#3B82F6', unit: 'kg', value: getLatestValue(weights, 'weight'), data: prepareLineData(weights, 'weight', '#3B82F6') });
-      metricsList.push({ id: 'muscle_percent', metricKey: 'muscle_percent', theme: 'Corps', title: 'Muscle', icon: <TrendingUp size={16} color="#10B981" />, color: '#10B981', unit: '%', value: getLatestValue(weights, 'muscle_percent'), data: prepareLineData(weights, 'muscle_percent', '#10B981') });
-      metricsList.push({ id: 'fat_percent', metricKey: 'fat_percent', theme: 'Corps', title: 'Gras', icon: <Activity size={16} color="#EF4444" />, color: '#EF4444', unit: '%', value: getLatestValue(weights, 'fat_percent'), data: prepareLineData(weights, 'fat_percent', '#EF4444') });
-      metricsList.push({ id: 'water_percent', metricKey: 'water_percent', theme: 'Corps', title: 'Eau', icon: <Waves size={16} color="#06B6D4" />, color: '#06B6D4', unit: '%', value: getLatestValue(weights, 'water_percent'), data: prepareLineData(weights, 'water_percent', '#06B6D4') });
-
-      // --- 2. COMPOSITION (TOUJOURS AFFICHÉS) ---
-      metricsList.push({ id: 'visceral_fat', metricKey: 'visceral_fat', theme: 'Composition', title: 'Gras Visc.', icon: <Target size={16} color="#F97316" />, color: '#F97316', unit: '', value: weights?.[0]?.visceral_fat || '--', data: prepareLineData(weights, 'visceral_fat', '#F97316') });
-      metricsList.push({ id: 'bone_mass', metricKey: 'bone_mass', theme: 'Composition', title: 'Os', icon: <Bone size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: 'kg', value: getLatestValue(weights, 'bone_mass'), data: prepareLineData(weights, 'bone_mass', '#8B5CF6') });
-      metricsList.push({ id: 'bmr', metricKey: 'bmr', theme: 'Composition', title: 'BMR', icon: <Flame size={16} color="#F59E0B" />, color: '#F59E0B', unit: 'kcal', value: weights?.[0]?.bmr || '--', data: prepareLineData(weights, 'bmr', '#F59E0B') });
-      metricsList.push({ id: 'metabolic_age', metricKey: 'metabolic_age', theme: 'Composition', title: 'Âge Métab.', icon: <Calendar size={16} color="#EC4899" />, color: '#EC4899', unit: 'ans', value: weights?.[0]?.metabolic_age || '--', data: prepareLineData(weights, 'metabolic_age', '#EC4899') });
-
-      // --- 3. MENSURATIONS (PRINCIPALES AFFICHÉES) ---
-      const mKeys = [
-        { key: 'waist', title: 'Taille', icon: <Ruler size={16} color="#F59E0B" /> },
-        { key: 'chest', title: 'Pecs', icon: <Ruler size={16} color="#F59E0B" /> },
-        { key: 'left_arm', title: 'Bras', icon: <Ruler size={16} color="#F59E0B" /> },
-        { key: 'left_thigh', title: 'Cuisse', icon: <Ruler size={16} color="#F59E0B" /> },
-      ];
-      mKeys.forEach(m => {
-        metricsList.push({ id: m.key, metricKey: m.key, theme: 'Mensures', title: m.title, icon: m.icon, color: '#F59E0B', unit: 'cm', value: getLatestValue(measurements, m.key), data: prepareLineData(measurements, m.key, '#F59E0B') });
-      });
-
-      // --- 4. DISCIPLINE ---
-      // Filtrer pour n'avoir que les 30 derniers jours (car on charge 60 jours pour les graphes)
-      const trainings30d = trainings?.filter((t: any) => {
-        const date = new Date(t.date);
-        const cutoff = subDays(new Date(), 30);
-        return date >= cutoff;
-      }) || [];
-
-      metricsList.push({ id: 'trainings', metricKey: 'trainings', theme: 'Discipline', title: 'Entraînements', icon: <Trophy size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: '/30j', value: trainings30d.length, data: [] });
-      metricsList.push({ id: 'load', metricKey: 'load', theme: 'Discipline', title: 'Charge globale', icon: <Flame size={16} color="#F97316" />, color: '#F97316', unit: 'pts', value: loadStats?.totalLoad || 0, data: [] });
-
-      // --- 5. SANTÉ ---
-      metricsList.push({ id: 'vitality', metricKey: 'vitality', theme: 'Santé', title: 'Vitalité', icon: <Zap size={16} color="#F59E0B" />, color: '#F59E0B', unit: '/100', value: readiness?.score || '--', data: [] });
-      
-      const sleepDuration = sleep?.weeklyData?.[0]?.duration ? (sleep.weeklyData[0].duration / 60).toFixed(1) : '--';
-      metricsList.push({ id: 'sleep', metricKey: 'sleep', theme: 'Santé', title: 'Sommeil', icon: <Moon size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: 'h', value: sleepDuration, data: prepareLineData(sleep?.weeklyData || [], 'duration', '#8B5CF6').map(d => ({...d, value: d.value/60, dataPointText: (d.value/60).toFixed(1)})) });
-
-      setAllMetrics(metricsList);
-    } catch (e) {
-      logger.error("Error loading dashboard data", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const renderMiniCard = (metric: any) => {
-    const hasData = metric.data && metric.data.length > 0;
-    const values = hasData ? metric.data.map((d: any) => d.value) : [];
-    const minValue = hasData ? Math.min(...values) : 0;
-    const maxValue = hasData ? Math.max(...values) : 0;
+  const { yAxisOffset } = useMemo(() => {
+    if (!hasData) return { yAxisOffset: 0 };
+    const values = metric.data.map((d: any) => d.value);
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
     const range = maxValue - minValue;
-    const yAxisOffset = hasData ? Math.floor(minValue - (range > 0 ? range * 0.5 : 1)) : 0;
+    const offset = Math.floor(minValue - (range > 0 ? range * 0.5 : 1));
+    return { yAxisOffset: offset > 0 ? offset : 0 };
+  }, [metric.data, hasData]);
 
-    return (
-      <View
-        key={metric.id}
-        style={[styles.miniCard, { backgroundColor: colors.backgroundCard }]}
+  const handlePress = useCallback(() => {
+    onPress(metric);
+  }, [metric, onPress]);
+
+  return (
+    <View
+      style={[styles.miniCard, { backgroundColor: colors.backgroundCard }]}
+    >
+      <TouchableOpacity
+        style={styles.cardHeader}
+        onPress={handlePress}
+        activeOpacity={0.7}
       >
-        <TouchableOpacity 
-          style={styles.cardHeader} 
-          onPress={() => setSelectedMetric(metric)}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.iconBox, { backgroundColor: metric.color + '15' }]}>
-            {metric.icon}
-          </View>
-          <Text style={[styles.themeLabel, { color: colors.textMuted }]}>{metric.theme}</Text>
-          <View style={{ flex: 1 }} />
-          <Maximize2 size={12} color={colors.textMuted} />
-        </TouchableOpacity>
+        <View style={[styles.iconBox, { backgroundColor: metric.color + '15' }]}>
+          {metric.icon}
+        </View>
+        <Text style={[styles.themeLabel, { color: colors.textMuted }]}>{metric.theme}</Text>
+        <View style={{ flex: 1 }} />
+        <Maximize2 size={12} color={colors.textMuted} />
+      </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setSelectedMetric(metric)} activeOpacity={0.7}>
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>{metric.title}</Text>
-          <View style={styles.valueRow}>
-            <Text style={[styles.cardValue, { color: hasData ? colors.textPrimary : colors.textMuted }]}>
-              {metric.value}
-            </Text>
-            <Text style={[styles.cardUnit, { color: colors.textMuted }]}>{metric.unit}</Text>
-          </View>
-        </TouchableOpacity>
+      <TouchableOpacity onPress={handlePress} activeOpacity={0.7}>
+        <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>{metric.title}</Text>
+        <View style={styles.valueRow}>
+          <Text style={[styles.cardValue, { color: hasData ? colors.textPrimary : colors.textMuted }]}>
+            {metric.value}
+          </Text>
+          <Text style={[styles.cardUnit, { color: colors.textMuted }]}>{metric.unit}</Text>
+        </View>
+      </TouchableOpacity>
 
-        <View style={styles.miniChartWrapper}>
-          {hasData ? (
+      <View style={styles.miniChartWrapper}>
+        {hasData ? (
+          chartReady ? (
             <LineChart
               data={metric.data}
               height={85}
-              width={COLUMN_WIDTH} 
+              width={COLUMN_WIDTH}
               initialSpacing={15}
-              spacing={85} 
+              spacing={85}
               hideRules
               hideAxesAndRules
               hideYAxisText
@@ -190,7 +117,7 @@ export const DashboardPage: React.FC = () => {
               startOpacity={0.2}
               endOpacity={0.01}
               areaChart
-              yAxisOffset={yAxisOffset > 0 ? yAxisOffset : 0}
+              yAxisOffset={yAxisOffset}
               hideDataPoints={false}
               dataPointsHeight={8}
               dataPointsWidth={8}
@@ -200,22 +127,201 @@ export const DashboardPage: React.FC = () => {
               textColor={isDark ? '#FFFFFF' : '#000000'}
               textShiftY={-15}
               xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 8, fontWeight: '900' }}
-              onPress={() => setSelectedMetric(metric)}
+              onPress={handlePress}
             />
           ) : (
-            <TouchableOpacity 
-              style={styles.noDataContainer} 
-              onPress={() => setSelectedMetric(metric)}
-              activeOpacity={0.6}
-            >
-              <PlusCircle size={24} color={metric.color + '60'} strokeWidth={1.5} />
-              <Text style={[styles.noDataText, { color: colors.textMuted }]}>Saisir</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+            <View style={styles.chartPlaceholder}>
+              <ActivityIndicator size="small" color={metric.color + '40'} />
+            </View>
+          )
+        ) : (
+          <TouchableOpacity
+            style={styles.noDataContainer}
+            onPress={handlePress}
+            activeOpacity={0.6}
+          >
+            <PlusCircle size={24} color={metric.color + '60'} strokeWidth={1.5} />
+            <Text style={[styles.noDataText, { color: colors.textMuted }]}>Saisir</Text>
+          </TouchableOpacity>
+        )}
       </View>
-    );
-  };
+    </View>
+  );
+});
+
+export const DashboardPage: React.FC = React.memo(() => {
+  const { colors, isDark, screenBackground } = useTheme();
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedMetric, setSelectedMetric] = useState<any>(null);
+  const [allMetrics, setAllMetrics] = useState<any[]>([]);
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
+
+  // Staggered chart mounting: start with first batch, progressively add more
+  const [mountedChartCount, setMountedChartCount] = useState(INITIAL_CHARTS);
+
+  // After data loads, progressively mount charts in batches
+  useEffect(() => {
+    if (loading || allMetrics.length === 0) return;
+
+    const totalWithData = allMetrics.filter(m => m.data && m.data.length > 0).length;
+    if (mountedChartCount >= totalWithData) return;
+
+    const handle = InteractionManager.runAfterInteractions(() => {
+      // Use setTimeout to give the UI thread breathing room between batches
+      const timer = setTimeout(() => {
+        setMountedChartCount(prev => Math.min(prev + CHARTS_PER_BATCH, totalWithData));
+      }, 150);
+      return () => clearTimeout(timer);
+    });
+
+    return () => handle.cancel();
+  }, [loading, allMetrics, mountedChartCount]);
+
+  // Build a Set of metric IDs that should have their chart mounted
+  const mountedChartIds = useMemo(() => {
+    const ids = new Set<string>();
+    let count = 0;
+    for (const metric of allMetrics) {
+      if (metric.data && metric.data.length > 0) {
+        if (count < mountedChartCount) {
+          ids.add(metric.id);
+          count++;
+        }
+      }
+    }
+    return ids;
+  }, [allMetrics, mountedChartCount]);
+
+  const loadAllData = useCallback(async (period: Period = '30j') => {
+    const daysMap: Record<Period, number> = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, 'tout': 1095 };
+    const days = daysMap[period] || 30;
+
+    try {
+      setLoading(true);
+      const settings = await getUserSettings();
+
+      const [weights, trainings, measurements, sleep, readiness, loadStats] = await Promise.all([
+        getWeights(days),
+        getTrainings(days),
+        getMeasurements(days),
+        getSleepStats(),
+        calculateReadinessScore(7),
+        getWeeklyLoadStats()
+      ]);
+
+      const metricsList: any[] = [];
+
+      const prepareLineData = (data: any[], valueKey: string, color: string) => {
+        if (!data || data.length === 0) return [];
+        const filtered = data.filter(item => item[valueKey] != null && item[valueKey] > 0);
+        return filtered.slice().reverse().map(item => {
+          const val = item[valueKey] || 0;
+          return {
+            value: val,
+            date: item.date,
+            dataPointText: val.toFixed(1),
+            label: format(parseISO(item.date), 'd MMM', { locale: fr }).toUpperCase(),
+            labelTextStyle: { color: colors.textMuted, fontSize: 8, fontWeight: '900' as const },
+            dataPointColor: color,
+          };
+        });
+      };
+
+      const getLatestValue = (data: any[], key: string, fallback: string = '--') => {
+        if (!data || data.length === 0) return fallback;
+        const val = data[0][key];
+        return val ? val.toFixed(1) : fallback;
+      };
+
+      // --- 1. CORPS ---
+      metricsList.push({ id: 'weight', metricKey: 'weight', theme: 'Corps', title: 'Poids', icon: <Scale size={16} color="#3B82F6" />, color: '#3B82F6', unit: 'kg', value: getLatestValue(weights, 'weight'), data: prepareLineData(weights, 'weight', '#3B82F6') });
+      metricsList.push({ id: 'muscle_percent', metricKey: 'muscle_percent', theme: 'Corps', title: 'Muscle', icon: <TrendingUp size={16} color="#10B981" />, color: '#10B981', unit: '%', value: getLatestValue(weights, 'muscle_percent'), data: prepareLineData(weights, 'muscle_percent', '#10B981') });
+      metricsList.push({ id: 'fat_percent', metricKey: 'fat_percent', theme: 'Corps', title: 'Gras', icon: <Activity size={16} color="#EF4444" />, color: '#EF4444', unit: '%', value: getLatestValue(weights, 'fat_percent'), data: prepareLineData(weights, 'fat_percent', '#EF4444') });
+      metricsList.push({ id: 'water_percent', metricKey: 'water_percent', theme: 'Corps', title: 'Eau', icon: <Waves size={16} color="#06B6D4" />, color: '#06B6D4', unit: '%', value: getLatestValue(weights, 'water_percent'), data: prepareLineData(weights, 'water_percent', '#06B6D4') });
+
+      // --- 2. COMPOSITION ---
+      metricsList.push({ id: 'visceral_fat', metricKey: 'visceral_fat', theme: 'Composition', title: 'Gras Visc.', icon: <Target size={16} color="#F97316" />, color: '#F97316', unit: '', value: weights?.[0]?.visceral_fat || '--', data: prepareLineData(weights, 'visceral_fat', '#F97316') });
+      metricsList.push({ id: 'bone_mass', metricKey: 'bone_mass', theme: 'Composition', title: 'Os', icon: <Bone size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: 'kg', value: getLatestValue(weights, 'bone_mass'), data: prepareLineData(weights, 'bone_mass', '#8B5CF6') });
+      metricsList.push({ id: 'bmr', metricKey: 'bmr', theme: 'Composition', title: 'BMR', icon: <Flame size={16} color="#F59E0B" />, color: '#F59E0B', unit: 'kcal', value: weights?.[0]?.bmr || '--', data: prepareLineData(weights, 'bmr', '#F59E0B') });
+      metricsList.push({ id: 'metabolic_age', metricKey: 'metabolic_age', theme: 'Composition', title: 'Âge Métab.', icon: <Calendar size={16} color="#EC4899" />, color: '#EC4899', unit: 'ans', value: weights?.[0]?.metabolic_age || '--', data: prepareLineData(weights, 'metabolic_age', '#EC4899') });
+
+      // --- 3. MENSURATIONS ---
+      const mKeys = [
+        { key: 'waist', title: 'Taille', icon: <Ruler size={16} color="#F59E0B" /> },
+        { key: 'chest', title: 'Pecs', icon: <Ruler size={16} color="#F59E0B" /> },
+        { key: 'left_arm', title: 'Bras', icon: <Ruler size={16} color="#F59E0B" /> },
+        { key: 'left_thigh', title: 'Cuisse', icon: <Ruler size={16} color="#F59E0B" /> },
+      ];
+      mKeys.forEach(m => {
+        metricsList.push({ id: m.key, metricKey: m.key, theme: 'Mensures', title: m.title, icon: m.icon, color: '#F59E0B', unit: 'cm', value: getLatestValue(measurements, m.key), data: prepareLineData(measurements, m.key, '#F59E0B') });
+      });
+
+      // --- 4. DISCIPLINE ---
+      const trainingsFiltered = trainings?.filter((t: any) => {
+        const date = new Date(t.date);
+        const cutoff = subDays(new Date(), days);
+        return date >= cutoff;
+      }) || [];
+
+      metricsList.push({ id: 'trainings', metricKey: 'trainings', theme: 'Discipline', title: 'Entraînements', icon: <Trophy size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: `/${days}j`, value: trainingsFiltered.length, data: [] });
+      metricsList.push({ id: 'load', metricKey: 'load', theme: 'Discipline', title: 'Charge globale', icon: <Flame size={16} color="#F97316" />, color: '#F97316', unit: 'pts', value: loadStats?.totalLoad || 0, data: [] });
+
+      // --- 5. SANTÉ ---
+      metricsList.push({ id: 'vitality', metricKey: 'vitality', theme: 'Santé', title: 'Vitalité', icon: <Zap size={16} color="#F59E0B" />, color: '#F59E0B', unit: '/100', value: readiness?.score || '--', data: [] });
+
+      const sleepDuration = sleep?.weeklyData?.[0]?.duration ? formatDurationHM(sleep.weeklyData[0].duration) : '--';
+      metricsList.push({ id: 'sleep', metricKey: 'sleep', theme: 'Santé', title: 'Sommeil', icon: <Moon size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: '', value: sleepDuration, data: prepareLineData(sleep?.weeklyData || [], 'duration', '#8B5CF6').map(d => ({...d, value: d.value/60, dataPointText: formatDurationHM(d.value)})) });
+
+      setAllMetrics(metricsList);
+    } catch (e) {
+      logger.error("Error loading dashboard data", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handle = InteractionManager.runAfterInteractions(() => {
+      loadAllData(selectedPeriod);
+    });
+    return () => handle.cancel();
+  }, [selectedPeriod]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await loadAllData(selectedPeriod); } finally { setRefreshing(false); }
+  }, [selectedPeriod]);
+
+  const handleMetricPress = useCallback((metric: any) => {
+    const route = METRIC_ROUTES[metric.id];
+    if (route) {
+      router.push(route as any);
+    } else {
+      setSelectedMetric(metric);
+    }
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setSelectedMetric(null);
+  }, []);
+
+  const groupedThemes = useMemo(() => {
+    const themes = ['Corps', 'Composition', 'Mensures', 'Discipline', 'Santé'];
+    return themes.map(theme => ({
+      theme,
+      metrics: allMetrics.filter(m => m.theme === theme),
+    })).filter(g => g.metrics.length > 0);
+  }, [allMetrics]);
+
+  const modalData = useMemo(() => {
+    if (!selectedMetric?.data) return [];
+    return selectedMetric.data.map((d: any) => ({
+      value: d.value,
+      label: d.label,
+      date: d.date || undefined,
+    }));
+  }, [selectedMetric]);
 
   if (loading) {
     return (
@@ -225,52 +331,65 @@ export const DashboardPage: React.FC = () => {
     );
   }
 
-  const themes = ['Corps', 'Composition', 'Mensures', 'Discipline', 'Santé'];
-
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: screenBackground }]}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      removeClippedSubviews={true}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={colors.accent}
+          colors={[colors.accent]}
+        />
+      }
     >
-      <View style={styles.header}>
-        <Text style={[styles.mainTitle, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>Résumé</Text>
-        <Text style={[styles.subtitle, { color: isDark ? colors.textMuted : 'rgba(255,255,255,0.7)' }]}>Vision globale de ton évolution physique et performance</Text>
-      </View>
+      <StatsHeader
+        title="Résumé"
+        description="Vision globale de ton évolution physique et performance"
+        selectedPeriod={selectedPeriod}
+        onPeriodChange={setSelectedPeriod}
+      />
 
-      <StatsExplanation 
+      <StatsExplanation
         title="Comment lire tes stats ?"
         text="Cette page regroupe les indicateurs clés de tes 5 piliers : Corps (poids), Composition (gras/muscle), Mensures (cm), Discipline (fréquence) et Santé (récupération). Clique sur une carte pour voir l'historique complet."
         color={colors.accent}
       />
 
-      {themes.map(theme => {
-        const themeMetrics = allMetrics.filter(m => m.theme === theme);
-        if (themeMetrics.length === 0) return null;
-
-        return (
-          <View key={theme} style={styles.themeSection}>
-            <Text style={[styles.themeTitle, { color: isDark ? colors.textSecondary : '#FFFFFF' }]}>{theme}</Text>
-            <View style={styles.grid}>
-              {themeMetrics.map(renderMiniCard)}
-            </View>
+      <View style={styles.gridContainer}>
+      {groupedThemes.map(({ theme, metrics }) => (
+        <View key={theme} style={styles.themeSection}>
+          <View style={{ backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderRadius: 10, paddingVertical: 6, paddingHorizontal: 10, alignSelf: 'flex-start', marginBottom: 8, marginLeft: 4 }}>
+            <Text style={[styles.themeTitle, { color: colors.textSecondary, marginBottom: 0, marginLeft: 0 }]}>{theme}</Text>
           </View>
-        );
-      })}
+          <View style={styles.grid}>
+            {metrics.map(metric => (
+              <MiniCard
+                key={metric.id}
+                metric={metric}
+                colors={colors}
+                isDark={isDark}
+                onPress={handleMetricPress}
+                chartReady={mountedChartIds.has(metric.id)}
+              />
+            ))}
+          </View>
+        </View>
+      ))}
+      </View>
 
-      <View style={{ height: 120 }} />
+      <View style={{ height: 40 }} />
 
       {selectedMetric && (
         <StatsDetailModal
           visible={!!selectedMetric}
-          onClose={() => setSelectedMetric(null)}
+          onClose={handleCloseModal}
           title={selectedMetric.title}
           subtitle={`Vision complète - ${selectedMetric.theme}`}
-          data={selectedMetric.data.map((d: any) => ({
-            value: d.value,
-            label: d.label,
-            date: d.date || undefined
-          }))}
+          data={modalData}
           color={selectedMetric.color}
           unit={selectedMetric.unit}
           icon={selectedMetric.icon}
@@ -279,35 +398,22 @@ export const DashboardPage: React.FC = () => {
       )}
     </ScrollView>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   content: {
-    padding: 16,
-    paddingTop: 8,
+    paddingBottom: 120,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  header: {
-    marginBottom: 20,
-    marginTop: 0,
-  },
-  mainTitle: {
-    fontSize: 28,
-    fontWeight: '900',
-    letterSpacing: -1,
-  },
-  subtitle: {
-    fontSize: 13,
-    fontWeight: '500',
-    marginTop: 4,
-    lineHeight: 18,
+  gridContainer: {
+    paddingHorizontal: 16,
   },
   themeSection: {
     marginBottom: 24,
@@ -392,12 +498,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingBottom: 10,
-    marginLeft: 25, // Recentrer par rapport au décalage de la zone graphique
+    marginLeft: 25,
   },
   noDataText: {
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  chartPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

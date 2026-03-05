@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -24,24 +24,14 @@ import {
   startOfWeek,
   endOfWeek,
 } from 'date-fns';
-import { fr, enUS, es, de, it, pt, ru, ar, zhCN, type Locale } from 'date-fns/locale';
+import { fr, es, de, it, pt, ru, ar, zhCN, type Locale } from 'date-fns/locale';
 import { Training, Club } from '@/lib/database';
 import { getClubLogoSource, getSportIcon, getSportColor } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 
 // Mapping des langues vers les locales date-fns
-const DATE_LOCALES: Record<string, Locale> = {
-  fr: fr,
-  en: enUS,
-  es: es,
-  de: de,
-  it: it,
-  pt: pt,
-  ru: ru,
-  ar: ar,
-  zh: zhCN,
-};
+
 
 interface EnhancedCalendarViewProps {
   currentMonth: Date;
@@ -61,11 +51,11 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
   selectedDate,
 }) => {
   const { colors } = useTheme();
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const [restDays, setRestDays] = useState<Set<string>>(new Set());
 
   // Obtenir la locale date-fns basée sur la langue sélectionnée
-  const dateLocale = DATE_LOCALES[language] || fr;
+  const dateLocale = fr;
 
   // Jours de la semaine traduits
   const weekDays = [
@@ -117,12 +107,12 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
     return result;
   }, [calendarDays]);
 
-  const getWorkoutsForDate = (date: Date): Training[] => {
+  const getWorkoutsForDate = useCallback((date: Date): Training[] => {
     const dateStr = format(date, 'yyyy-MM-dd');
     return workouts.filter((w) => w.date === dateStr);
-  };
+  }, [workouts]);
 
-  const getClubDisplay = (club: Club) => {
+  const getClubDisplay = useCallback((club: Club) => {
     if (club.logo_uri) {
       const logoSource = getClubLogoSource(club.logo_uri);
       if (logoSource) {
@@ -130,7 +120,7 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
       }
     }
     return { type: 'color' as const, color: club.color || colors.accent };
-  };
+  }, [colors.accent]);
 
   return (
     <View style={styles.container}>

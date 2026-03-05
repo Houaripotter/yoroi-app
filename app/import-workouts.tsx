@@ -180,9 +180,9 @@ export default function ImportWorkoutsScreen() {
   const selectedCount = activities.filter(a => a.selected).length;
 
   const formatDuration = (mins: number) => {
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return h > 0 ? `${h}h${m > 0 ? `${m.toString().padStart(2, '0')}` : ''}` : `${m} min`;
+    const hours = Math.floor(mins / 60);
+    const remainingMins = mins % 60;
+    return hours > 0 ? `${hours}h${remainingMins > 0 ? `${remainingMins.toString().padStart(2, '0')}` : ''}` : `${remainingMins} min`;
   };
 
   // ============================================

@@ -8,6 +8,7 @@ import {
   Dimensions,
   Modal,
   TextInput,
+  RefreshControl,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { CheckCircle, AlertCircle,
@@ -51,6 +52,7 @@ import { CheckCircle, AlertCircle,
   Trash2,
   Castle,
   Search,
+  RefreshCw,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
@@ -61,8 +63,6 @@ import { scale, scaleModerate } from '@/constants/responsive';
 import { resetAllData } from '@/lib/storage';
 import logger from '@/lib/security/logger';
 import { useI18n } from '@/lib/I18nContext';
-import { ContextualTip } from '@/components/ContextualTip';
-import { resetAllTips } from '@/lib/contextualTipsService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // ============================================
@@ -95,6 +95,7 @@ const TOOL_SECTIONS: ToolSection[] = [
       { id: 'training-goals', label: 'Objectifs sportifs', sublabel: 'Definir et suivre tes objectifs', Icon: Target, route: '/training-goals', iconColor: '#10B981' },
       { id: 'records', label: 'Records personnels', sublabel: 'Tes meilleures performances', Icon: Trophy, route: '/records', iconColor: '#EF4444' },
       { id: 'sport', label: 'Mes sports', sublabel: 'Gerer tes disciplines', Icon: Swords, route: '/sport', iconColor: '#EC4899' },
+      { id: 'slots', label: 'Creneaux reguliers', sublabel: 'Gerer tes entrainements recurrents', Icon: RefreshCw, route: '/slots', iconColor: '#6366F1' },
       { id: 'timer', label: 'Timer', sublabel: 'Chrono, rounds, HIIT, Tabata', Icon: Timer, route: '/timer', iconColor: '#4ECDC4' },
       { id: 'schedule', label: 'Emploi du temps', sublabel: 'Programme de la semaine', Icon: Clock, route: '/(tabs)/planning', iconColor: '#3B82F6' },
     ],
@@ -177,7 +178,6 @@ const TOOL_SECTIONS: ToolSection[] = [
       { id: 'nutritionists', label: 'Pros de sante', sublabel: 'Kines, nutritionnistes, medecins', Icon: Heart, route: '/nutritionists', iconColor: '#F87171' },
       { id: 'savoir', label: 'Savoir', sublabel: 'Articles sur la science du sport', Icon: FlaskConical, route: '/savoir', iconColor: '#8B5CF6' },
       { id: 'sources', label: 'Sources scientifiques', sublabel: 'References academiques', Icon: BookOpen, route: '/scientific-sources', iconColor: '#10B981' },
-      { id: 'guide', label: 'Guide de l\'app', sublabel: 'Astuces et conseils pour chaque ecran', Icon: Info, route: '/guide', iconColor: '#8B5CF6' },
     ],
   },
 ];
@@ -222,6 +222,36 @@ export default function MoreScreen() {
 
   // Show info card
   const [showInfoCard, setShowInfoCard] = useState(true);
+
+  // Pull-to-refresh
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadData = useCallback(async () => {
+    try {
+      const saved = await AsyncStorage.getItem(FAVORITES_KEY);
+      if (saved) {
+        try {
+          setFavorites(new Set(JSON.parse(saved)));
+        } catch {
+          // ignore parse errors
+        }
+      }
+      const infoDismissed = await AsyncStorage.getItem('@yoroi_tool_info_dismissed');
+      if (infoDismissed === 'true') setShowInfoCard(false);
+      const mode = await AsyncStorage.getItem('@yoroi_screenshot_mode');
+      setCreatorModeActive(mode === 'true');
+      const screenshotMenu = await AsyncStorage.getItem('@yoroi_screenshot_menu_unlocked');
+      setScreenshotMenuUnlocked(screenshotMenu === 'true');
+    } catch {
+      // ignore errors
+    }
+  }, []);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
   // Load favorites on mount
   useEffect(() => {
@@ -404,28 +434,6 @@ export default function MoreScreen() {
     }
   };
 
-  const handleShowTutorial = async () => {
-    showPopup(
-      t('menu.tutorial'),
-      "Tu vas etre redirige vers l'accueil pour revoir toutes les astuces. Continue ?",
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: 'Commencer',
-          style: 'primary',
-          onPress: async () => {
-            try {
-              await resetAllTips();
-              router.push('/(tabs)');
-              notificationAsync(NotificationFeedbackType.Success);
-            } catch (error) {
-              logger.error('Error resetting tips:', error);
-            }
-          },
-        },
-      ]
-    );
-  };
 
   const dismissInfoCard = async () => {
     setShowInfoCard(false);
@@ -485,6 +493,14 @@ export default function MoreScreen() {
         style={styles.scrollView}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.accent}
+            colors={[colors.accent]}
+          />
+        }
       >
         {/* HEADER */}
         <View style={styles.header}>
@@ -694,9 +710,6 @@ export default function MoreScreen() {
           </View>
         </View>
       </Modal>
-
-      {/* Tip contextuel */}
-      <ContextualTip tipId="more" />
 
       <PopupComponent />
     </View>

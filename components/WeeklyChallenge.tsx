@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, memo } from 'react';
 import {
   View,
   Text,
@@ -28,7 +28,7 @@ interface WeeklyChallengeProps {
   onRefresh?: () => void;
 }
 
-export const WeeklyChallenge: React.FC<WeeklyChallengeProps> = ({
+export const WeeklyChallenge: React.FC<WeeklyChallengeProps> = memo(({
   onXPGained,
   onRefresh,
 }) => {
@@ -285,7 +285,7 @@ export const WeeklyChallenge: React.FC<WeeklyChallengeProps> = ({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

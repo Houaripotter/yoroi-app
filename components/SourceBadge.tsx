@@ -5,7 +5,7 @@
 // (Withings, Garmin, Polar, Apple Watch, etc.)
 // ============================================
 
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 // Display config for each normalized source
@@ -36,7 +36,7 @@ interface SourceBadgeProps {
   showLabel?: boolean;
 }
 
-export const SourceBadge: React.FC<SourceBadgeProps> = ({
+export const SourceBadge: React.FC<SourceBadgeProps> = memo(({
   source,
   size = 'small',
   showLabel = false,
@@ -79,7 +79,7 @@ export const SourceBadge: React.FC<SourceBadgeProps> = ({
       </Text>
     </View>
   );
-};
+});
 
 /**
  * Returns the display name for a given source key

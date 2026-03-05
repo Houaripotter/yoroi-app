@@ -101,6 +101,201 @@ export interface Skill {
 }
 
 // ============================================
+// WATCH EXERCISE TEMPLATES (164 exercises)
+// ============================================
+
+export const WATCH_EXERCISE_TEMPLATES: {
+  id: string;
+  name: string;
+  category: BenchmarkCategory;
+  unit: BenchmarkUnit;
+  muscleGroup?: string;
+  iconName: string;
+  color: string;
+}[] = [
+  // Pectoraux (7)
+  { id: 'bench-press', name: 'Développé Couché', category: 'musculation', unit: 'kg', muscleGroup: 'Pectoraux', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'incline-bench-press', name: 'Développé Incliné', category: 'musculation', unit: 'kg', muscleGroup: 'Pectoraux', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'decline-bench-press', name: 'Développé Décliné', category: 'musculation', unit: 'kg', muscleGroup: 'Pectoraux', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'dumbbell-bench-press', name: 'Développé Haltères', category: 'musculation', unit: 'kg', muscleGroup: 'Pectoraux', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'incline-dumbbell-press', name: 'Développé Haltères Incliné', category: 'musculation', unit: 'kg', muscleGroup: 'Pectoraux', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'chest-fly', name: 'Ecarté Pectoraux', category: 'musculation', unit: 'kg', muscleGroup: 'Pectoraux', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'cable-crossover', name: 'Croisé Câble', category: 'musculation', unit: 'kg', muscleGroup: 'Pectoraux', iconName: 'dumbbell', color: '#EF4444' },
+  // Dos (9)
+  { id: 'deadlift', name: 'Soulevé de Terre', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'pull-up', name: 'Tractions', category: 'musculation', unit: 'reps', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'lat-pulldown', name: 'Tirage Poulie Haute', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'barbell-row', name: 'Rowing Barre', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'dumbbell-row', name: 'Rowing Haltère', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'seated-cable-row', name: 'Rowing Câble Assis', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 't-bar-row', name: 'Rowing T-Bar', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'face-pull', name: 'Face Pull', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'good-morning', name: 'Good Morning', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#EF4444' },
+  // Epaules (8)
+  { id: 'military-press', name: 'Développé Militaire', category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'dumbbell-shoulder-press', name: 'Développé Haltères Assis', category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'lateral-raise', name: 'Elévations Latérales', category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'front-raise', name: 'Elévations Frontales', category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'rear-delt-fly', name: 'Oiseau', category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'upright-row', name: 'Rowing Menton', category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'arnold-press', name: 'Arnold Press', category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'cable-lateral-raise', name: 'Elévations Latérales Câble', category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#EF4444' },
+  // Bras (10)
+  { id: 'barbell-curl', name: 'Curl Barre', category: 'musculation', unit: 'kg', muscleGroup: 'Bras', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'dumbbell-curl', name: 'Curl Haltères', category: 'musculation', unit: 'kg', muscleGroup: 'Bras', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'hammer-curl', name: 'Curl Marteau', category: 'musculation', unit: 'kg', muscleGroup: 'Bras', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'preacher-curl', name: 'Curl Pupitre', category: 'musculation', unit: 'kg', muscleGroup: 'Bras', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'concentration-curl', name: 'Curl Concentré', category: 'musculation', unit: 'kg', muscleGroup: 'Bras', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'cable-curl', name: 'Curl Câble', category: 'musculation', unit: 'kg', muscleGroup: 'Bras', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'tricep-pushdown', name: 'Extension Triceps Poulie', category: 'musculation', unit: 'kg', muscleGroup: 'Bras', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'skull-crusher', name: 'Skull Crusher', category: 'musculation', unit: 'kg', muscleGroup: 'Bras', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'close-grip-bench-press', name: 'Développé Serré', category: 'musculation', unit: 'kg', muscleGroup: 'Bras', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'overhead-tricep-extension', name: 'Extension Triceps Nuque', category: 'musculation', unit: 'kg', muscleGroup: 'Bras', iconName: 'dumbbell', color: '#EF4444' },
+  // Jambes (12)
+  { id: 'squat', name: 'Squat', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'front-squat', name: 'Squat Avant', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'hack-squat', name: 'Hack Squat', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'goblet-squat', name: 'Goblet Squat', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'leg-press', name: 'Presse à Cuisses', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'lunges', name: 'Fentes', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'leg-extension', name: 'Leg Extension', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'leg-curl', name: 'Leg Curl', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'standing-calf-raise', name: 'Mollets Debout', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'seated-calf-raise', name: 'Mollets Assis', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'hip-thrust', name: 'Hip Thrust', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'sumo-deadlift', name: 'Soulevé de Terre Sumo', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#EF4444' },
+  // Abdos (8)
+  { id: 'crunch', name: 'Crunch', category: 'musculation', unit: 'reps', muscleGroup: 'Abdos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'sit-up', name: 'Sit-Up', category: 'musculation', unit: 'reps', muscleGroup: 'Abdos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'plank', name: 'Gainage', category: 'musculation', unit: 'time', muscleGroup: 'Abdos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'ab-wheel', name: 'Roue Abdominale', category: 'musculation', unit: 'reps', muscleGroup: 'Abdos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'hanging-leg-raise', name: 'Relevé de Jambes Suspendu', category: 'musculation', unit: 'reps', muscleGroup: 'Abdos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'russian-twist', name: 'Rotation Russe', category: 'musculation', unit: 'reps', muscleGroup: 'Abdos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'cable-crunch', name: 'Crunch Câble', category: 'musculation', unit: 'kg', muscleGroup: 'Abdos', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'bicycle-crunch', name: 'Crunch Vélo', category: 'musculation', unit: 'reps', muscleGroup: 'Abdos', iconName: 'dumbbell', color: '#EF4444' },
+  // Machines (8)
+  { id: 'chest-press-machine', name: 'Presse Pectoraux Machine', category: 'musculation', unit: 'kg', muscleGroup: 'Machines', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'shoulder-press-machine', name: 'Développé Epaules Machine', category: 'musculation', unit: 'kg', muscleGroup: 'Machines', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'lat-pulldown-machine', name: 'Tirage Dorsal Machine', category: 'musculation', unit: 'kg', muscleGroup: 'Machines', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'low-row-machine', name: 'Rowing Bas Machine', category: 'musculation', unit: 'kg', muscleGroup: 'Machines', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'leg-press-machine', name: 'Presse Jambes Machine', category: 'musculation', unit: 'kg', muscleGroup: 'Machines', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'hip-abductor', name: 'Abducteur', category: 'musculation', unit: 'kg', muscleGroup: 'Machines', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'hip-adductor', name: 'Adducteur', category: 'musculation', unit: 'kg', muscleGroup: 'Machines', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'back-extension-machine', name: 'Extension Lombaires', category: 'musculation', unit: 'kg', muscleGroup: 'Machines', iconName: 'dumbbell', color: '#EF4444' },
+  // Olympique (9)
+  { id: 'snatch', name: 'Arraché', category: 'musculation', unit: 'kg', muscleGroup: 'Olympique', iconName: 'dumbbell', color: '#DC2626' },
+  { id: 'clean-and-jerk', name: 'Epaulé-Jeté', category: 'musculation', unit: 'kg', muscleGroup: 'Olympique', iconName: 'dumbbell', color: '#DC2626' },
+  { id: 'power-clean', name: 'Power Clean', category: 'musculation', unit: 'kg', muscleGroup: 'Olympique', iconName: 'dumbbell', color: '#DC2626' },
+  { id: 'hang-clean', name: 'Hang Clean', category: 'musculation', unit: 'kg', muscleGroup: 'Olympique', iconName: 'dumbbell', color: '#DC2626' },
+  { id: 'hang-snatch', name: 'Hang Snatch', category: 'musculation', unit: 'kg', muscleGroup: 'Olympique', iconName: 'dumbbell', color: '#DC2626' },
+  { id: 'push-press', name: 'Push Press', category: 'musculation', unit: 'kg', muscleGroup: 'Olympique', iconName: 'dumbbell', color: '#DC2626' },
+  { id: 'push-jerk', name: 'Push Jerk', category: 'musculation', unit: 'kg', muscleGroup: 'Olympique', iconName: 'dumbbell', color: '#DC2626' },
+  { id: 'power-snatch', name: 'Power Snatch', category: 'musculation', unit: 'kg', muscleGroup: 'Olympique', iconName: 'dumbbell', color: '#DC2626' },
+  { id: 'clean-pull', name: 'Tirage Epaulé', category: 'musculation', unit: 'kg', muscleGroup: 'Olympique', iconName: 'dumbbell', color: '#DC2626' },
+  // Strongman (8)
+  { id: 'atlas-stone', name: 'Atlas Stone', category: 'musculation', unit: 'kg', muscleGroup: 'Strongman', iconName: 'dumbbell', color: '#B91C1C' },
+  { id: 'tire-flip', name: 'Retournement de Pneu', category: 'musculation', unit: 'reps', muscleGroup: 'Strongman', iconName: 'dumbbell', color: '#B91C1C' },
+  { id: 'farmers-walk', name: 'Farmers Walk', category: 'musculation', unit: 'kg', muscleGroup: 'Strongman', iconName: 'dumbbell', color: '#B91C1C' },
+  { id: 'log-press', name: 'Log Press', category: 'musculation', unit: 'kg', muscleGroup: 'Strongman', iconName: 'dumbbell', color: '#B91C1C' },
+  { id: 'yoke-walk', name: 'Yoke Walk', category: 'musculation', unit: 'kg', muscleGroup: 'Strongman', iconName: 'dumbbell', color: '#B91C1C' },
+  { id: 'keg-toss', name: 'Lancer de Tonneau', category: 'musculation', unit: 'kg', muscleGroup: 'Strongman', iconName: 'dumbbell', color: '#B91C1C' },
+  { id: 'axle-deadlift', name: 'Deadlift Axle', category: 'musculation', unit: 'kg', muscleGroup: 'Strongman', iconName: 'dumbbell', color: '#B91C1C' },
+  { id: 'conan-wheel', name: 'Roue de Conan', category: 'musculation', unit: 'kg', muscleGroup: 'Strongman', iconName: 'dumbbell', color: '#B91C1C' },
+  // CrossFit WODs (20)
+  { id: 'murph', name: 'Murph', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'fran', name: 'Fran', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'cindy', name: 'Cindy', category: 'custom', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'grace', name: 'Grace', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'helen', name: 'Helen', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'annie', name: 'Annie', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'karen', name: 'Karen', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'jackie', name: 'Jackie', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'diane', name: 'Diane', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'elizabeth', name: 'Elizabeth', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'amanda', name: 'Amanda', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'isabel', name: 'Isabel', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'mary', name: 'Mary', category: 'custom', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'linda', name: 'Linda', category: 'custom', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'chelsea', name: 'Chelsea', category: 'custom', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'barbara', name: 'Barbara', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'nancy', name: 'Nancy', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'kelly', name: 'Kelly', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'eva', name: 'Eva', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'filthy-fifty', name: 'Filthy Fifty', category: 'custom', unit: 'time', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  // CrossFit Movements (20)
+  { id: 'thruster', name: 'Thruster', category: 'hyrox', unit: 'kg', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'wall-ball', name: 'Wall Ball', category: 'hyrox', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'box-jump', name: 'Box Jump', category: 'hyrox', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'double-under', name: 'Double Under', category: 'hyrox', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'toes-to-bar', name: 'Toes to Bar', category: 'hyrox', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'kipping-pull-up', name: 'Kipping Pull-Up', category: 'hyrox', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'butterfly-pull-up', name: 'Butterfly Pull-Up', category: 'hyrox', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'muscle-up', name: 'Muscle Up', category: 'hyrox', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'ring-muscle-up', name: 'Muscle Up Anneaux', category: 'hyrox', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'handstand-push-up', name: 'Handstand Push-Up', category: 'hyrox', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'handstand-walk', name: 'Marche sur les Mains', category: 'hyrox', unit: 'meters', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'rope-climb', name: 'Corde Lisse', category: 'hyrox', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'burpee', name: 'Burpee', category: 'hyrox', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'kettlebell-swing', name: 'Kettlebell Swing', category: 'hyrox', unit: 'kg', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'american-kb-swing', name: 'American KB Swing', category: 'hyrox', unit: 'kg', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'goblet-squat-kb', name: 'Goblet Squat KB', category: 'hyrox', unit: 'kg', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'single-leg-deadlift', name: 'Deadlift Unijambiste', category: 'hyrox', unit: 'kg', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'devil-press', name: 'Devil Press', category: 'hyrox', unit: 'kg', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'dumbbell-snatch', name: 'Arraché Haltère', category: 'hyrox', unit: 'kg', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  { id: 'assault-bike-cal', name: 'Assault Bike Calories', category: 'hyrox', unit: 'reps', muscleGroup: 'CrossFit', iconName: 'flame', color: '#F59E0B' },
+  // Hyrox (8)
+  { id: 'hyrox-sled-push', name: 'Hyrox - Sled Push', category: 'hyrox', unit: 'time', muscleGroup: 'Hyrox', iconName: 'flame', color: '#D97706' },
+  { id: 'hyrox-sled-pull', name: 'Hyrox - Sled Pull', category: 'hyrox', unit: 'time', muscleGroup: 'Hyrox', iconName: 'flame', color: '#D97706' },
+  { id: 'hyrox-skierg', name: 'Hyrox - SkiErg', category: 'hyrox', unit: 'time', muscleGroup: 'Hyrox', iconName: 'flame', color: '#D97706' },
+  { id: 'hyrox-row', name: 'Hyrox - Rameur', category: 'hyrox', unit: 'time', muscleGroup: 'Hyrox', iconName: 'flame', color: '#D97706' },
+  { id: 'hyrox-farmers-carry', name: 'Hyrox - Farmers Carry', category: 'hyrox', unit: 'time', muscleGroup: 'Hyrox', iconName: 'flame', color: '#D97706' },
+  { id: 'hyrox-sandbag-lunges', name: 'Hyrox - Fentes Sac Sable', category: 'hyrox', unit: 'time', muscleGroup: 'Hyrox', iconName: 'flame', color: '#D97706' },
+  { id: 'hyrox-wall-balls', name: 'Hyrox - Wall Balls', category: 'hyrox', unit: 'time', muscleGroup: 'Hyrox', iconName: 'flame', color: '#D97706' },
+  { id: 'hyrox-burpees', name: 'Hyrox - Burpees', category: 'hyrox', unit: 'time', muscleGroup: 'Hyrox', iconName: 'flame', color: '#D97706' },
+  // Running (10)
+  { id: 'run-100m', name: '100m', category: 'running', unit: 'time', muscleGroup: 'Running', iconName: 'timer', color: '#3B82F6' },
+  { id: 'run-400m', name: '400m', category: 'running', unit: 'time', muscleGroup: 'Running', iconName: 'timer', color: '#3B82F6' },
+  { id: 'run-800m', name: '800m', category: 'running', unit: 'time', muscleGroup: 'Running', iconName: 'timer', color: '#3B82F6' },
+  { id: 'run-1500m', name: '1500m', category: 'running', unit: 'time', muscleGroup: 'Running', iconName: 'timer', color: '#3B82F6' },
+  { id: 'run-1mile', name: '1 Mile', category: 'running', unit: 'time', muscleGroup: 'Running', iconName: 'timer', color: '#3B82F6' },
+  { id: 'run-5k', name: '5km', category: 'running', unit: 'time', muscleGroup: 'Running', iconName: 'timer', color: '#3B82F6' },
+  { id: 'run-10k', name: '10km', category: 'running', unit: 'time', muscleGroup: 'Running', iconName: 'timer', color: '#3B82F6' },
+  { id: 'half-marathon', name: 'Semi-Marathon', category: 'running', unit: 'time', muscleGroup: 'Running', iconName: 'timer', color: '#3B82F6' },
+  { id: 'marathon', name: 'Marathon', category: 'running', unit: 'time', muscleGroup: 'Running', iconName: 'timer', color: '#3B82F6' },
+  { id: 'vma-interval', name: 'Fractionné VMA', category: 'running', unit: 'time', muscleGroup: 'Running', iconName: 'timer', color: '#3B82F6' },
+  // Cardio (9)
+  { id: 'bike-ergometer', name: 'Vélo Ergomètre', category: 'cardio', unit: 'time', muscleGroup: 'Cardio', iconName: 'activity', color: '#10B981' },
+  { id: 'assault-bike', name: 'Assault Bike', category: 'cardio', unit: 'time', muscleGroup: 'Cardio', iconName: 'activity', color: '#10B981' },
+  { id: 'ski-erg', name: 'SkiErg', category: 'cardio', unit: 'time', muscleGroup: 'Cardio', iconName: 'activity', color: '#10B981' },
+  { id: 'rowing-machine', name: 'Rameur', category: 'cardio', unit: 'time', muscleGroup: 'Cardio', iconName: 'activity', color: '#10B981' },
+  { id: 'treadmill', name: 'Tapis Roulant', category: 'cardio', unit: 'time', muscleGroup: 'Cardio', iconName: 'activity', color: '#10B981' },
+  { id: 'elliptical', name: 'Elliptique', category: 'cardio', unit: 'time', muscleGroup: 'Cardio', iconName: 'activity', color: '#10B981' },
+  { id: 'stairmaster', name: 'Stepper', category: 'cardio', unit: 'time', muscleGroup: 'Cardio', iconName: 'activity', color: '#10B981' },
+  { id: 'jump-rope', name: 'Corde a Sauter', category: 'cardio', unit: 'time', muscleGroup: 'Cardio', iconName: 'activity', color: '#10B981' },
+  { id: 'cycling', name: 'Cyclisme', category: 'cardio', unit: 'km', muscleGroup: 'Cardio', iconName: 'activity', color: '#10B981' },
+  // Combat (9)
+  { id: 'bjj-gi', name: 'BJJ Kimono', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
+  { id: 'bjj-nogi', name: 'BJJ No-Gi', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
+  { id: 'boxing', name: 'Boxe', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
+  { id: 'muay-thai', name: 'Muay Thai', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
+  { id: 'wrestling', name: 'Lutte', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
+  { id: 'judo', name: 'Judo', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
+  { id: 'mma', name: 'MMA', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
+  { id: 'sparring', name: 'Sparring', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
+  { id: 'padwork', name: 'Pattes d\'Ours', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
+  // Street Workout (9)
+  { id: 'street-pull-up', name: 'Traction Prise Large', category: 'street_workout', unit: 'reps', muscleGroup: 'Street Workout', iconName: 'dumbbell', color: '#F59E0B' },
+  { id: 'street-dips', name: 'Dips Barres Paralleles', category: 'street_workout', unit: 'reps', muscleGroup: 'Street Workout', iconName: 'dumbbell', color: '#F59E0B' },
+  { id: 'muscle-up-bar', name: 'Muscle Up Barre', category: 'street_workout', unit: 'reps', muscleGroup: 'Street Workout', iconName: 'dumbbell', color: '#F59E0B' },
+  { id: 'front-lever', name: 'Front Lever', category: 'street_workout', unit: 'time', muscleGroup: 'Street Workout', iconName: 'dumbbell', color: '#F59E0B' },
+  { id: 'back-lever', name: 'Back Lever', category: 'street_workout', unit: 'time', muscleGroup: 'Street Workout', iconName: 'dumbbell', color: '#F59E0B' },
+  { id: 'planche', name: 'Planche', category: 'street_workout', unit: 'time', muscleGroup: 'Street Workout', iconName: 'dumbbell', color: '#F59E0B' },
+  { id: 'human-flag', name: 'Drapeau', category: 'street_workout', unit: 'time', muscleGroup: 'Street Workout', iconName: 'dumbbell', color: '#F59E0B' },
+  { id: 'l-sit', name: 'L-Sit', category: 'street_workout', unit: 'time', muscleGroup: 'Street Workout', iconName: 'dumbbell', color: '#F59E0B' },
+  { id: 'pistol-squat', name: 'Squat Unijambiste', category: 'street_workout', unit: 'reps', muscleGroup: 'Street Workout', iconName: 'dumbbell', color: '#F59E0B' },
+];
+
+// ============================================
 // STORAGE KEYS
 // ============================================
 
@@ -416,12 +611,13 @@ export const createBenchmark = async (
   unit: BenchmarkUnit,
   iconName?: string,
   color?: string,
-  muscleGroup?: string
+  muscleGroup?: string,
+  forcedId?: string
 ): Promise<Benchmark | null> => {
   try {
     const benchmarks = await getBenchmarks();
     const newBenchmark: Benchmark = {
-      id: generateId(),
+      id: forcedId || generateId(),
       name,
       category,
       muscleGroup,
@@ -974,6 +1170,146 @@ export const cleanDemoData = async (): Promise<{ removed: number; message: strin
       removed: 0,
       message: 'Erreur lors du nettoyage',
     };
+  }
+};
+
+/**
+ * Importe tous les exercices watch manquants dans le carnet téléphone.
+ * Exécuter une seule fois au démarrage (contrôlé par flag AsyncStorage).
+ * Retourne le nombre de nouveaux benchmarks créés.
+ */
+export const importWatchExercisesToPhone = async (): Promise<number> => {
+  try {
+    const benchmarks = await getBenchmarks();
+    const existingIds = new Set(benchmarks.map(b => b.id));
+    const existingNames = new Set(benchmarks.map(b => b.name.toLowerCase()));
+
+    let created = 0;
+    for (const template of WATCH_EXERCISE_TEMPLATES) {
+      if (!existingIds.has(template.id) && !existingNames.has(template.name.toLowerCase())) {
+        const newBenchmark: Benchmark = {
+          id: template.id,
+          name: template.name,
+          category: template.category,
+          muscleGroup: template.muscleGroup,
+          unit: template.unit,
+          iconName: template.iconName,
+          color: template.color,
+          entries: [],
+          createdAt: new Date().toISOString(),
+        };
+        benchmarks.push(newBenchmark);
+        existingIds.add(template.id);
+        existingNames.add(template.name.toLowerCase());
+        created++;
+      }
+    }
+
+    if (created > 0) {
+      await AsyncStorage.setItem(BENCHMARKS_KEY, JSON.stringify(benchmarks));
+      setTimeout(() => syncCarnetToWatch(), 200);
+      logger.info(`Watch exercises imported: ${created} new benchmarks created`);
+    }
+
+    return created;
+  } catch (error) {
+    logger.error('Error importing watch exercises:', error);
+    return 0;
+  }
+};
+
+/**
+ * Normalise un nom en supprimant les accents et en passant en minuscules.
+ * Ex: "Développé Couché" → "developpe couche"
+ */
+const normalizeName = (name: string): string =>
+  name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+/**
+ * Trouve ou crée un benchmark à partir d'un exercice reçu de la montre.
+ * Recherche par ID, puis par nom (accent-insensitive), puis depuis les templates, puis crée.
+ */
+export const getOrCreateBenchmarkFromWatch = async (
+  watchId: string,
+  exerciseName?: string
+): Promise<Benchmark | null> => {
+  try {
+    const benchmarks = await getBenchmarks();
+
+    // 1. Recherche par ID exact (match direct ou benchmark créé depuis le même template)
+    const byId = benchmarks.find(b => b.id === watchId);
+    if (byId) return byId;
+
+    // 2. Recherche par nom exact (case-insensitive)
+    if (exerciseName) {
+      const byName = benchmarks.find(b => b.name.toLowerCase() === exerciseName.toLowerCase());
+      if (byName) return byName;
+    }
+
+    // 3. Recherche par nom normalisé (accents-insensitive) - crucial pour montre→téléphone
+    if (exerciseName) {
+      const normalized = normalizeName(exerciseName);
+      const byNormalized = benchmarks.find(b => normalizeName(b.name) === normalized);
+      if (byNormalized) return byNormalized;
+    }
+
+    // 4. Créer depuis le template watch correspondant par ID
+    const templateById = WATCH_EXERCISE_TEMPLATES.find(t => t.id === watchId);
+    if (templateById) {
+      // Vérifier si un benchmark existe déjà avec le nom du template (normalisé)
+      const templateNorm = normalizeName(templateById.name);
+      const existingByTemplateName = benchmarks.find(b => normalizeName(b.name) === templateNorm);
+      if (existingByTemplateName) return existingByTemplateName;
+
+      return await createBenchmark(
+        templateById.name,
+        templateById.category,
+        templateById.unit,
+        templateById.iconName,
+        templateById.color,
+        templateById.muscleGroup,
+        templateById.id
+      );
+    }
+
+    // 5. Trouver un template par nom normalisé (montre envoie un ID inconnu mais un nom connu)
+    if (exerciseName) {
+      const normalized = normalizeName(exerciseName);
+      const templateByName = WATCH_EXERCISE_TEMPLATES.find(t => normalizeName(t.name) === normalized);
+      if (templateByName) {
+        // Vérifier si un benchmark existe déjà avec ce template
+        const existingByTemplate = benchmarks.find(b => normalizeName(b.name) === normalizeName(templateByName.name));
+        if (existingByTemplate) return existingByTemplate;
+
+        return await createBenchmark(
+          templateByName.name,
+          templateByName.category,
+          templateByName.unit,
+          templateByName.iconName,
+          templateByName.color,
+          templateByName.muscleGroup,
+          templateByName.id
+        );
+      }
+    }
+
+    // 6. Créer depuis le nom fourni (exercice inconnu)
+    if (exerciseName) {
+      return await createBenchmark(
+        exerciseName,
+        'custom',
+        'kg',
+        'target',
+        '#6B7280',
+        undefined,
+        watchId
+      );
+    }
+
+    return null;
+  } catch (error) {
+    logger.error('Error in getOrCreateBenchmarkFromWatch:', error);
+    return null;
   }
 };
 

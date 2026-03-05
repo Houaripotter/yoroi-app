@@ -14,7 +14,7 @@ interface StatsSectionProps {
   containerStyle?: any;
 }
 
-export const StatsSection: React.FC<StatsSectionProps> = ({
+export const StatsSection: React.FC<StatsSectionProps> = React.memo(({
   title,
   description,
   children,
@@ -26,15 +26,13 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
     <View style={[styles.container, containerStyle]}>
       {/* Titre de section (optionnel) */}
       {title && (
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>
-            {title}
-          </Text>
-          {description && (
-            <Text style={[styles.description, { color: isDark ? colors.textSecondary : 'rgba(255,255,255,0.7)' }]}>
-              {description}
+        <View style={[styles.header, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12 }]}>
+          <View style={styles.titleRow}>
+            <View style={[styles.titleBar, { backgroundColor: colors.companion }]} />
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
+              {title}
             </Text>
-          )}
+          </View>
         </View>
       )}
 
@@ -44,7 +42,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -53,6 +51,16 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 16,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  titleBar: {
+    width: 4,
+    height: 22,
+    borderRadius: 2,
   },
   title: {
     fontSize: 20,

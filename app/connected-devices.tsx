@@ -61,6 +61,8 @@ interface BrandConfig {
   color: string;
   emoji: string;
   types: string[];
+  introIOS?: string;
+  introAndroid?: string;
   stepsIOS: string[];
   stepsAndroid: string[];
 }
@@ -90,18 +92,20 @@ const BRAND_CONFIGS: BrandConfig[] = [
     name: 'Garmin',
     color: '#007DC5',
     emoji: 'G',
-    types: ['FC', 'HRV', 'Sommeil', 'Pas', 'VO2 Max', 'SpO2'],
+    types: ['Pas', 'FC', 'Sommeil', 'Calories', 'Distance', 'VO2 Max', 'HRV', 'SpO2'],
+    introIOS: "Garmin se connecte a YOROI via Apple Sante. Aucune connexion directe n'est possible.",
+    introAndroid: 'Garmin se connecte a YOROI via Health Connect.',
     stepsIOS: [
       'Ouvre Garmin Connect sur ton iPhone',
-      'Va dans Reglages > Apple Sante',
+      'Va dans Profil > Sante > Apple Sante',
       'Active toutes les categories',
-      'Reviens ici et synchronise',
+      'Reviens dans YOROI et appuie sur Synchroniser',
     ],
     stepsAndroid: [
       'Ouvre Garmin Connect sur ton telephone',
-      'Va dans Reglages > Health Connect',
+      'Va dans Profil > Sante > Health Connect',
       'Active toutes les categories',
-      'Reviens ici et synchronise',
+      'Reviens dans YOROI et appuie sur Synchroniser',
     ],
   },
   {
@@ -224,7 +228,7 @@ const DATA_TYPE_LABELS: Record<string, string> = {
 
 const DATA_MATRIX: Record<string, string[]> = {
   withings:     ['weight', 'body_fat', 'lean_mass', 'heart_rate', 'sleep', 'spo2'],
-  garmin:       ['heart_rate', 'hrv', 'sleep', 'steps', 'calories_active', 'vo2max', 'spo2', 'distance'],
+  garmin:       ['steps', 'heart_rate', 'sleep', 'calories_active', 'distance', 'vo2max', 'hrv', 'spo2'],
   polar:        ['heart_rate', 'hrv', 'sleep', 'calories_active', 'distance'],
   whoop:        ['heart_rate', 'hrv', 'sleep', 'calories_active'],
   apple_watch:  ['heart_rate', 'hrv', 'sleep', 'steps', 'calories_active', 'vo2max', 'spo2', 'distance'],
@@ -597,6 +601,7 @@ export default function ConnectedDevicesScreen() {
         {BRAND_CONFIGS.map((brand) => {
           const isExpanded = expandedBrand === brand.key;
           const steps = Platform.OS === 'ios' ? brand.stepsIOS : brand.stepsAndroid;
+          const intro = Platform.OS === 'ios' ? brand.introIOS : brand.introAndroid;
           const isDetected = detectedSources.some(s => s.source === brand.key);
 
           return (
@@ -635,6 +640,11 @@ export default function ConnectedDevicesScreen() {
 
               {isExpanded && (
                 <View style={[styles.brandSteps, { borderTopColor: colors.border }]}>
+                  {intro && (
+                    <View style={[styles.brandIntro, { backgroundColor: `${brand.color}15`, borderColor: `${brand.color}30` }]}>
+                      <Text style={[styles.brandIntroText, { color: colors.textSecondary }]}>{intro}</Text>
+                    </View>
+                  )}
                   {steps.map((step, stepIndex) => (
                     <View key={stepIndex} style={styles.stepRow}>
                       <View style={[styles.stepNumber, { backgroundColor: brand.color }]}>
@@ -1072,6 +1082,17 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 14,
     borderTopWidth: 1,
+  },
+  brandIntro: {
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  brandIntroText: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '500',
   },
   stepRow: {
     flexDirection: 'row',

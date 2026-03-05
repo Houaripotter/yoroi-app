@@ -1,5 +1,5 @@
 // ============================================
-// 🔒 SYSTÈME DE LOGGING SÉCURISÉ - YOROI
+// SYSTÈME DE LOGGING SÉCURISÉ - YOROI
 // ============================================
 // Remplace tous les console.log pour éviter les fuites de données en production
 
@@ -8,6 +8,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const ERROR_LOG_KEY = '@yoroi_error_logs';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+const SENSITIVE_KEYS = [
+  'weight', 'fat_percent', 'muscle_percent', 'uri', 'email', 'name',
+  'token', 'password', 'injury', 'pain', 'medication', 'treatment',
+  'notes', 'note', 'date_of_birth', 'body_fat', 'muscle_mass', 'water',
+  'bone_mass', 'visceral_fat', 'metabolic_age', 'bmr', 'bmi',
+  'heartRate', 'heart_rate', 'steps', 'calories', 'sleep',
+];
+
+function sanitizeForStorage(obj: any, depth = 0): any {
+  if (depth > 4 || obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(item => sanitizeForStorage(item, depth + 1));
+  const result: Record<string, any> = {};
+  for (const key of Object.keys(obj)) {
+    if (SENSITIVE_KEYS.some(sk => key.toLowerCase().includes(sk))) {
+      result[key] = '[REDACTED]';
+    } else {
+      result[key] = sanitizeForStorage(obj[key], depth + 1);
+    }
+  }
+  return result;
+}
 
 interface LogEntry {
   timestamp: string;
@@ -45,7 +68,7 @@ class Logger {
     this.addLog(entry);
 
     if (this.isDev) {
-      console.log(`🔍 [DEBUG] ${message}`, data ?? '');
+      console.log(`[DEBUG] ${message}`, data ?? '');
     }
   }
 
@@ -57,7 +80,7 @@ class Logger {
     this.addLog(entry);
 
     if (this.isDev) {
-      console.log(`ℹ️ [INFO] ${message}`, data ?? '');
+      console.log(`[INFO] ${message}`, data ?? '');
     }
   }
 
@@ -81,7 +104,7 @@ class Logger {
     this.addLog(entry);
 
     if (this.isDev) {
-      console.error(`❌ [ERROR] ${message}`, error ?? '');
+      console.error(`[ERROR] ${message}`, error ?? '');
     } else {
       // En production, sauvegarder les erreurs critiques pour diagnostic
       this.saveErrorToStorage(entry);
@@ -93,7 +116,12 @@ class Logger {
       const existingLogsStr = await AsyncStorage.getItem(ERROR_LOG_KEY);
       const existingLogs = existingLogsStr ? JSON.parse(existingLogsStr) : [];
 
-      existingLogs.unshift(entry);
+      const sanitizedEntry: LogEntry = {
+        ...entry,
+        data: sanitizeForStorage(entry.data),
+      };
+
+      existingLogs.unshift(sanitizedEntry);
       // Garder les 50 dernières erreurs
       const logsToSave = existingLogs.slice(0, 50);
 

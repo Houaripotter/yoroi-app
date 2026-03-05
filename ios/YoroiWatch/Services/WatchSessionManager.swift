@@ -1,10 +1,56 @@
 import Foundation
 import WatchConnectivity
 import WatchKit
+import AVFoundation
+import SwiftUI
+import HealthKit
 
 class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
   static let shared = WatchSessionManager()
+
+  // MARK: - Theme Colors (synced from iPhone)
+  @Published var themeAccentHex: String = "#D4AF37" {
+    didSet { UserDefaults.standard.set(themeAccentHex, forKey: "themeAccentHex") }
+  }
+  @Published var themeCompanionHex: String = "#FFFFFF" {
+    didSet { UserDefaults.standard.set(themeCompanionHex, forKey: "themeCompanionHex") }
+  }
+  @Published var themeMode: String = "dark" {
+    didSet { UserDefaults.standard.set(themeMode, forKey: "themeMode") }
+  }
+  @Published var themeBgHex: String = "#000000" {
+    didSet { UserDefaults.standard.set(themeBgHex, forKey: "themeBgHex") }
+  }
+  @Published var themeCardBgHex: String = "#151515" {
+    didSet { UserDefaults.standard.set(themeCardBgHex, forKey: "themeCardBgHex") }
+  }
+  @Published var themeTextPrimaryHex: String = "#FFFFFF" {
+    didSet { UserDefaults.standard.set(themeTextPrimaryHex, forKey: "themeTextPrimaryHex") }
+  }
+  @Published var themeTextSecondaryHex: String = "#E0E0E0" {
+    didSet { UserDefaults.standard.set(themeTextSecondaryHex, forKey: "themeTextSecondaryHex") }
+  }
+  @Published var themeDividerHex: String = "#2A2A2A" {
+    didSet { UserDefaults.standard.set(themeDividerHex, forKey: "themeDividerHex") }
+  }
+  @Published var themeTextOnAccentHex: String = "#FFFFFF" {
+    didSet { UserDefaults.standard.set(themeTextOnAccentHex, forKey: "themeTextOnAccentHex") }
+  }
+
+  var accentColor: Color {
+    Color(hex: themeAccentHex) ?? Color(red: 0.831, green: 0.686, blue: 0.216)
+  }
+  var companionColor: Color {
+    Color(hex: themeCompanionHex) ?? .white
+  }
+  var isDarkMode: Bool { themeMode != "light" }
+  var bgColor: Color { Color(hex: themeBgHex) ?? (isDarkMode ? Color.black : Color.white) }
+  var cardBg: Color { Color(hex: themeCardBgHex) ?? (isDarkMode ? Color.white.opacity(0.05) : Color.black.opacity(0.04)) }
+  var textPrimary: Color { Color(hex: themeTextPrimaryHex) ?? (isDarkMode ? .white : Color(red: 0.1, green: 0.1, blue: 0.1)) }
+  var textSecondary: Color { Color(hex: themeTextSecondaryHex) ?? (isDarkMode ? .gray : Color(red: 0.45, green: 0.45, blue: 0.45)) }
+  var dividerColor: Color { Color(hex: themeDividerHex) ?? (isDarkMode ? Color.white.opacity(0.12) : Color.black.opacity(0.08)) }
+  var textOnAccent: Color { Color(hex: themeTextOnAccentHex) ?? .white }
 
   // MARK: - Weight
   @Published var currentWeight: Double = 0.0
@@ -54,6 +100,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   @Published var timerTotalSeconds: Int = 90 // preset
   @Published var timerRemainingSeconds: Int = 90
   @Published var timerIsRunning: Bool = false
+  @Published var timerAlarmRinging: Bool = false
   @Published var timerMode: String = "Repos" // Repos, Combat, Tabata
   @Published var timerFavorites: [Int] = [] // user saved presets in seconds
 
@@ -65,17 +112,146 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   @Published var isConnected: Bool = false
   @Published var lastSyncDate: Date? = nil
 
+  // MARK: - HealthKit (direct Watch readings)
+  private let healthStore = HKHealthStore()
+  @Published var localSteps: Int = 0
+  @Published var localHeartRate: Int = 0
+  @Published var localActiveCalories: Int = 0
+  @Published var localDistance: Double = 0.0
+  @Published var localExerciseMinutes: Int = 0
+  @Published var localStandHours: Int = 0
+  @Published var localSpo2: Int = 0
+
   private var session: WCSession?
   private var timer: Timer?
+  private var extendedSession: WKExtendedRuntimeSession?
+  private var audioPlayer: AVAudioPlayer?
+  private var hapticTimer: Timer?
 
   override init() {
     super.init()
     loadTimerFavorites()
+    // Load saved theme colors
+    themeAccentHex = UserDefaults.standard.string(forKey: "themeAccentHex") ?? "#D4AF37"
+    themeCompanionHex = UserDefaults.standard.string(forKey: "themeCompanionHex") ?? "#FFFFFF"
+    themeMode = UserDefaults.standard.string(forKey: "themeMode") ?? "dark"
+    themeBgHex = UserDefaults.standard.string(forKey: "themeBgHex") ?? "#000000"
+    themeCardBgHex = UserDefaults.standard.string(forKey: "themeCardBgHex") ?? "#151515"
+    themeTextPrimaryHex = UserDefaults.standard.string(forKey: "themeTextPrimaryHex") ?? "#FFFFFF"
+    themeTextSecondaryHex = UserDefaults.standard.string(forKey: "themeTextSecondaryHex") ?? "#E0E0E0"
+    themeDividerHex = UserDefaults.standard.string(forKey: "themeDividerHex") ?? "#2A2A2A"
+    themeTextOnAccentHex = UserDefaults.standard.string(forKey: "themeTextOnAccentHex") ?? "#FFFFFF"
     if WCSession.isSupported() {
       session = WCSession.default
       session?.delegate = self
       session?.activate()
     }
+    // Request HealthKit authorization and fetch data
+    authorizeAndFetchHealth()
+  }
+
+  // MARK: - HealthKit Authorization & Fetching
+
+  func authorizeAndFetchHealth() {
+    guard HKHealthStore.isHealthDataAvailable() else { return }
+
+    let readTypes: Set<HKObjectType> = [
+      HKQuantityType.quantityType(forIdentifier: .stepCount)!,
+      HKQuantityType.quantityType(forIdentifier: .heartRate)!,
+      HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!,
+      HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning)!,
+      HKQuantityType.quantityType(forIdentifier: .appleExerciseTime)!,
+      HKQuantityType.quantityType(forIdentifier: .oxygenSaturation)!,
+      HKCategoryType.categoryType(forIdentifier: .appleStandHour)!,
+    ]
+
+    healthStore.requestAuthorization(toShare: [], read: readTypes) { [weak self] ok, _ in
+      if ok { self?.fetchAllHealthData() }
+    }
+  }
+
+  func fetchAllHealthData() {
+    fetchSteps()
+    fetchHeartRate()
+    fetchActiveCalories()
+    fetchDistance()
+    fetchExerciseMinutes()
+    fetchStandHours()
+    fetchSpO2()
+  }
+
+  private func fetchSteps() {
+    let type = HKQuantityType.quantityType(forIdentifier: .stepCount)!
+    fetchTodayCumulativeStat(type: type, unit: .count()) { [weak self] val in
+      self?.localSteps = Int(val)
+    }
+  }
+
+  private func fetchHeartRate() {
+    let type = HKQuantityType.quantityType(forIdentifier: .heartRate)!
+    let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+    let q = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sort]) { [weak self] _, samples, _ in
+      if let sample = samples?.first as? HKQuantitySample {
+        let bpm = Int(sample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute())))
+        DispatchQueue.main.async { self?.localHeartRate = bpm }
+      }
+    }
+    healthStore.execute(q)
+  }
+
+  private func fetchActiveCalories() {
+    let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
+    fetchTodayCumulativeStat(type: type, unit: .kilocalorie()) { [weak self] val in
+      self?.localActiveCalories = Int(val)
+    }
+  }
+
+  private func fetchDistance() {
+    let type = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning)!
+    fetchTodayCumulativeStat(type: type, unit: .meterUnit(with: .kilo)) { [weak self] val in
+      self?.localDistance = val
+    }
+  }
+
+  private func fetchExerciseMinutes() {
+    let type = HKQuantityType.quantityType(forIdentifier: .appleExerciseTime)!
+    fetchTodayCumulativeStat(type: type, unit: .minute()) { [weak self] val in
+      self?.localExerciseMinutes = Int(val)
+    }
+  }
+
+  private func fetchStandHours() {
+    let type = HKCategoryType.categoryType(forIdentifier: .appleStandHour)!
+    let start = Calendar.current.startOfDay(for: Date())
+    let pred = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
+    let q = HKSampleQuery(sampleType: type, predicate: pred, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { [weak self] _, samples, _ in
+      let stood = (samples ?? []).filter { ($0 as? HKCategorySample)?.value == HKCategoryValueAppleStandHour.stood.rawValue }.count
+      DispatchQueue.main.async { self?.localStandHours = stood }
+    }
+    healthStore.execute(q)
+  }
+
+  private func fetchSpO2() {
+    let type = HKQuantityType.quantityType(forIdentifier: .oxygenSaturation)!
+    let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+    let q = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sort]) { [weak self] _, samples, _ in
+      if let sample = samples?.first as? HKQuantitySample {
+        let pct = Int(sample.quantity.doubleValue(for: .percent()) * 100)
+        DispatchQueue.main.async { self?.localSpo2 = pct }
+      }
+    }
+    healthStore.execute(q)
+  }
+
+  /// Helper: fetch today's cumulative stat for a quantity type
+  private func fetchTodayCumulativeStat(type: HKQuantityType, unit: HKUnit, completion: @escaping (Double) -> Void) {
+    let start = Calendar.current.startOfDay(for: Date())
+    let pred = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
+    let q = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: pred, options: .cumulativeSum) { _, result, _ in
+      let val = result?.sumQuantity()?.doubleValue(for: unit) ?? 0
+      DispatchQueue.main.async { completion(val) }
+    }
+    healthStore.execute(q)
   }
 
   // MARK: - Timer (Countdown)
@@ -108,7 +284,10 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   }
 
   func startTimer() {
+    timerAlarmRinging = false
     timerIsRunning = true
+    // Start extended runtime session to keep timer running in background
+    startExtendedSession()
     timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
       DispatchQueue.main.async {
         guard let self = self else { return }
@@ -118,8 +297,8 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
           self.timerIsRunning = false
           self.timer?.invalidate()
           self.timer = nil
-          // Haptic when done
-          WKInterfaceDevice.current().play(.success)
+          // DO NOT stop extended session - keep it alive for the alarm
+          self.startAlarm()
         }
       }
     }
@@ -130,13 +309,86 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     timerIsRunning = false
     timer?.invalidate()
     timer = nil
+    stopExtendedSession()
   }
 
   func resetTimer() {
+    stopAlarm()
     timerIsRunning = false
     timer?.invalidate()
     timer = nil
+    stopExtendedSession()
     timerRemainingSeconds = timerTotalSeconds
+  }
+
+  // MARK: - Alarm (looping sound + vibration until stopped)
+
+  private func startAlarm() {
+    timerAlarmRinging = true
+    // Start looping sound
+    playWizzSoundLooping()
+    // Start repeating haptic every 1.5s
+    WKInterfaceDevice.current().play(.notification)
+    hapticTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
+      DispatchQueue.main.async {
+        guard let self = self, self.timerAlarmRinging else { return }
+        WKInterfaceDevice.current().play(.notification)
+      }
+    }
+  }
+
+  func stopAlarm() {
+    timerAlarmRinging = false
+    // Stop looping sound
+    audioPlayer?.stop()
+    audioPlayer = nil
+    // Stop haptic loop
+    hapticTimer?.invalidate()
+    hapticTimer = nil
+    // Now stop extended session
+    stopExtendedSession()
+  }
+
+  // MARK: - Extended Runtime Session (keeps timer alive in background)
+
+  private func startExtendedSession() {
+    stopExtendedSession()
+    let session = WKExtendedRuntimeSession()
+    session.delegate = self
+    session.start()
+    extendedSession = session
+  }
+
+  private func stopExtendedSession() {
+    if extendedSession?.state == .running {
+      extendedSession?.invalidate()
+    }
+    extendedSession = nil
+  }
+
+  // MARK: - Wizz Sound (looping)
+
+  private func playWizzSoundLooping() {
+    // Configure audio session for playback (keeps audio alive in background)
+    do {
+      let audioSession = AVAudioSession.sharedInstance()
+      try audioSession.setCategory(.playback, mode: .default, options: [])
+      try audioSession.setActive(true)
+    } catch {
+      print("[YoroiWatch] Audio session error: \(error)")
+    }
+
+    // Try to play the bundled wizz sound in loop
+    if let url = Bundle.main.url(forResource: "wizz-made-with-Voicemod", withExtension: "mp3") {
+      do {
+        audioPlayer = try AVAudioPlayer(contentsOf: url)
+        audioPlayer?.numberOfLoops = -1  // Loop forever until stopped
+        audioPlayer?.volume = 1.0
+        audioPlayer?.play()
+      } catch {
+        print("[YoroiWatch] Sound error: \(error)")
+      }
+    }
   }
 
   func formattedTime(_ totalSeconds: Int) -> String {
@@ -145,10 +397,22 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     return String(format: "%d:%02d", m, s)
   }
 
+  // MARK: - Goals (synced back to phone)
+
+  func updateStepsGoal(_ goal: Int) {
+    stepsGoal = goal
+    sendAction("updateStepsGoal", data: ["stepsGoal": goal])
+  }
+
+  func updateHydrationGoal(_ goal: Int) {
+    hydrationGoal = goal
+    sendAction("updateHydrationGoal", data: ["hydrationGoal": goal])
+  }
+
   // MARK: - Hydration
 
   func addHydration(_ amount: Int) {
-    hydrationCurrent += amount
+    hydrationCurrent = max(0, hydrationCurrent + amount)
     sendAction("addHydration", data: [
       "amount": amount,
       "timestamp": Date().timeIntervalSince1970 * 1000
@@ -167,14 +431,38 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
   // MARK: - Carnet / Benchmarks
 
-  func logBenchmarkEntry(benchmarkId: String, value: Double, reps: Int, rpe: Int) {
+  func logBenchmarkEntry(benchmarkId: String, exerciseName: String, value: Double, reps: Int, rpe: Int) {
     sendAction("addBenchmarkEntry", data: [
       "benchmarkId": benchmarkId,
+      "exerciseName": exerciseName,
       "value": value,
       "reps": reps,
       "rpe": rpe,
       "timestamp": Date().timeIntervalSince1970 * 1000
     ])
+  }
+
+  // MARK: - Theme (synced back to phone)
+
+  func changeThemeMode(_ mode: String) {
+    themeMode = mode
+    sendAction("changeThemeMode", data: ["themeMode": mode])
+    // Request full sync to get updated theme colors from iPhone
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+      self.requestSync()
+    }
+  }
+
+  // MARK: - Units (synced back to phone)
+
+  func changeUnitSystem(_ unit: String) {
+    sendAction("changeUnitSystem", data: ["unitSystem": unit])
+  }
+
+  // MARK: - Timer preset (synced back to phone)
+
+  func changeTimerPreset(_ seconds: Int) {
+    sendAction("changeTimerPreset", data: ["timerSeconds": seconds])
   }
 
   // MARK: - Send to iPhone
@@ -234,33 +522,60 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     if session.isReachable { requestSync() }
   }
 
+  // MARK: - File Transfer (large profile photos)
+
+  func session(_ session: WCSession, didReceive file: WCSessionFile) {
+    let metadata = file.metadata ?? [:]
+    let fileType = metadata["type"] as? String ?? ""
+
+    if fileType == "profilePhoto" {
+      do {
+        let data = try Data(contentsOf: file.fileURL)
+        DispatchQueue.main.async {
+          self.profileImageData = data
+        }
+        print("[YoroiWatch] Profile photo received via file transfer (\(data.count) bytes)")
+      } catch {
+        print("[YoroiWatch] File transfer error: \(error)")
+      }
+    }
+  }
+
   // MARK: - Process Incoming Data
 
   private func processData(_ data: [String: Any]) {
     lastSyncDate = Date()
     isConnected = true
 
+    // Helper: JS numbers arrive as NSNumber which can be Double or Int
+    func intVal(_ key: String) -> Int? {
+      if let v = data[key] as? Int { return v }
+      if let v = data[key] as? Double { return Int(v) }
+      return nil
+    }
+
     // -- MegaPack compact keys --
     if let w = data["w"] as? Double { currentWeight = w }
     if let wi = data["wi"] as? Double { hydrationCurrent = Int(wi) }
     if let un = data["un"] as? String { userName = un }
-    if let lv = data["lv"] as? Int { level = lv }
+    if let lv = intVal("lv") { level = lv }
     if let rk = data["rk"] as? String { rank = rk }
+    if let s = intVal("s") { streak = s }
 
     // -- Full format keys --
     if let w = data["currentWeight"] as? Double { currentWeight = w }
     if let tw = data["targetWeight"] as? Double { targetWeight = tw }
     if let sw = data["startWeight"] as? Double { startWeight = sw }
     if let h = data["height"] as? Double { userHeight = h }
-    if let hc = data["hydrationCurrent"] as? Int { hydrationCurrent = hc }
-    if let hg = data["hydrationGoal"] as? Int { hydrationGoal = hg }
-    if let sd = data["sleepDuration"] as? Int { sleepDuration = sd }
-    if let sq = data["sleepQuality"] as? Int { sleepQuality = sq }
+    if let hc = intVal("hydrationCurrent") { hydrationCurrent = hc }
+    if let hg = intVal("hydrationGoal") { hydrationGoal = hg }
+    if let sd = intVal("sleepDuration") { sleepDuration = sd }
+    if let sq = intVal("sleepQuality") { sleepQuality = sq }
     if let sbt = data["sleepBedTime"] as? String { sleepBedTime = sbt }
     if let swt = data["sleepWakeTime"] as? String { sleepWakeTime = swt }
-    if let sg = data["sleepGoal"] as? Int { sleepGoalMinutes = sg }
+    if let sg = intVal("sleepGoal") { sleepGoalMinutes = sg }
     if let sdb = data["sleepDebt"] as? Double { sleepDebt = sdb }
-    if let sg = data["stepsGoal"] as? Int { stepsGoal = sg }
+    if let sg = intVal("stepsGoal") { stepsGoal = sg }
 
     // Body composition
     if let bf = data["bodyFat"] as? Double { bodyFat = bf }
@@ -268,23 +583,34 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     if let wp = data["waterPercent"] as? Double { waterPercent = wp }
 
     // Health metrics
-    if let hr = data["heartRate"] as? Int { heartRate = hr }
-    if let hrMin = data["heartRateMin"] as? Int { heartRateMin = hrMin }
-    if let hrMax = data["heartRateMax"] as? Int { heartRateMax = hrMax }
-    if let rhr = data["restingHeartRate"] as? Int { restingHeartRate = rhr }
-    if let sp = data["spo2"] as? Int { spo2 = sp }
-    if let rr = data["respiratoryRate"] as? Int { respiratoryRate = rr }
-    if let ac = data["activeCalories"] as? Int { activeCalories = ac }
-    if let em = data["exerciseMinutes"] as? Int { exerciseMinutes = em }
-    if let sh = data["standHours"] as? Int { standHours = sh }
+    if let hr = intVal("heartRate") { heartRate = hr }
+    if let hrMin = intVal("heartRateMin") { heartRateMin = hrMin }
+    if let hrMax = intVal("heartRateMax") { heartRateMax = hrMax }
+    if let rhr = intVal("restingHeartRate") { restingHeartRate = rhr }
+    if let sp = intVal("spo2") { spo2 = sp }
+    if let rr = intVal("respiratoryRate") { respiratoryRate = rr }
+    if let ac = intVal("activeCalories") { activeCalories = ac }
+    if let em = intVal("exerciseMinutes") { exerciseMinutes = em }
+    if let sh = intVal("standHours") { standHours = sh }
     if let dist = data["distance"] as? Double { distance = dist }
 
     // Profile extras
-    if let st = data["streak"] as? Int { streak = st }
+    if let st = intVal("streak") { streak = st }
     if let imgBase64 = data["profileImage"] as? String,
        let imgData = Data(base64Encoded: imgBase64) {
       profileImageData = imgData
     }
+
+    // Theme colors + mode
+    if let ta = data["themeAccent"] as? String { themeAccentHex = ta }
+    if let tc = data["themeCompanion"] as? String { themeCompanionHex = tc }
+    if let tm = data["themeMode"] as? String { themeMode = tm }
+    if let tb = data["themeBg"] as? String { themeBgHex = tb }
+    if let tcb = data["themeCardBg"] as? String { themeCardBgHex = tcb }
+    if let ttp = data["themeTextPrimary"] as? String { themeTextPrimaryHex = ttp }
+    if let tts = data["themeTextSecondary"] as? String { themeTextSecondaryHex = tts }
+    if let td = data["themeDivider"] as? String { themeDividerHex = td }
+    if let ttoa = data["themeTextOnAccent"] as? String { themeTextOnAccentHex = ttoa }
 
     // BMI calculation
     if currentWeight > 0 && userHeight > 0 {
@@ -356,6 +682,52 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     }
 
     if data["pong"] != nil { isConnected = true }
+  }
+}
+
+// MARK: - Extended Runtime Session Delegate
+
+extension WatchSessionManager: WKExtendedRuntimeSessionDelegate {
+  func extendedRuntimeSessionDidStart(_ extendedRuntimeSession: WKExtendedRuntimeSession) {
+    print("[YoroiWatch] Extended session started")
+  }
+
+  func extendedRuntimeSessionWillExpire(_ extendedRuntimeSession: WKExtendedRuntimeSession) {
+    print("[YoroiWatch] Extended session expiring")
+    // If timer or alarm still active, fire a last burst of haptics
+    if timerIsRunning || timerAlarmRinging {
+      WKInterfaceDevice.current().play(.notification)
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        WKInterfaceDevice.current().play(.notification)
+      }
+    }
+  }
+
+  func extendedRuntimeSession(_ extendedRuntimeSession: WKExtendedRuntimeSession, didInvalidateWith reason: WKExtendedRuntimeSessionInvalidationReason, error: Error?) {
+    print("[YoroiWatch] Extended session ended: \(reason.rawValue)")
+    // If timer or alarm is still active, try to restart extended session
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else { return }
+      if self.timerIsRunning || self.timerAlarmRinging {
+        print("[YoroiWatch] Restarting extended session for active timer/alarm")
+        self.startExtendedSession()
+      }
+    }
+  }
+}
+
+// MARK: - Color Hex Extension
+
+extension Color {
+  init?(hex: String) {
+    var h = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+    if h.hasPrefix("#") { h.removeFirst() }
+    guard h.count == 6, let val = UInt64(h, radix: 16) else { return nil }
+    self.init(
+      red: Double((val >> 16) & 0xFF) / 255.0,
+      green: Double((val >> 8) & 0xFF) / 255.0,
+      blue: Double(val & 0xFF) / 255.0
+    )
   }
 }
 

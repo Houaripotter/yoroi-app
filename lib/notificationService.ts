@@ -9,9 +9,10 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
-import { calculateStreak, getLatestWeight, getWeeklyPlan, getProfile, getTrainings } from '@/lib/database';
+import { calculateStreak, getLatestWeight, getWeeklyPlan, getProfile, getTrainings, getSlotOccurrences } from '@/lib/database';
 import { getCurrentRank } from '@/lib/ranks';
 import { getUnifiedPoints } from '@/lib/gamification';
+import { getSportName } from '@/lib/sports';
 import { saveNotification } from '@/lib/notificationHistoryService';
 
 // ============================================
@@ -158,27 +159,27 @@ const TRAINING_MESSAGES = [
 ];
 
 const HYDRATION_MESSAGES = [
-  { title: '💧 Hydratation', body: 'N\'oublie pas de boire de l\'eau !' },
-  { title: '🚰 Pause eau', body: 'Ton corps a besoin d\'eau. Bois un verre !' },
-  { title: '💦 Rappel hydratation', body: 'Reste hydraté pour performer !' },
+  { title: 'Hydratation', body: 'N\'oublie pas de boire de l\'eau !' },
+  { title: 'Pause eau', body: 'Ton corps a besoin d\'eau. Bois un verre !' },
+  { title: 'Rappel hydratation', body: 'Reste hydraté pour performer !' },
 ];
 
 const WEIGHING_MESSAGES = [
-  { title: '⚖️ Pesée du jour', body: 'Monte sur la balance pour suivre ta progression !' },
+  { title: 'Pesée du jour', body: 'Monte sur la balance pour suivre ta progression !' },
   { title: 'Suivi poids', body: 'Une pesée régulière = meilleur suivi !' },
 ];
 
 const STREAK_MESSAGES = [
   { title: 'Attention !', body: 'Tu n\'as pas encore entraîné aujourd\'hui. Ton streak est en danger !' },
   { title: 'Streak en péril', body: 'N\'oublie pas de t\'entraîner pour garder ton streak !' },
-  { title: '💔 Ne casse pas ta série !', body: 'Même une séance légère compte. Go !' },
+  { title: 'Ne casse pas ta série !', body: 'Même une séance légère compte. Go !' },
 ];
 
 const SLEEP_MESSAGES = [
   { title: 'Il est temps de dormir', body: 'Ton corps a besoin de repos. Direction le lit !' },
-  { title: '😴 Bonne nuit !', body: 'Un bon sommeil = meilleures performances demain !' },
-  { title: '💤 Heure du coucher', body: 'Éteins les écrans, ton objectif sommeil t\'attend !' },
-  { title: '🛌 Repos bien mérité', body: 'La récupération est essentielle. Dors bien !' },
+  { title: 'Bonne nuit !', body: 'Un bon sommeil = meilleures performances demain !' },
+  { title: 'Heure du coucher', body: 'Éteins les écrans, ton objectif sommeil t\'attend !' },
+  { title: 'Repos bien mérité', body: 'La récupération est essentielle. Dors bien !' },
 ];
 
 const WEEKLY_CARD_MESSAGES = [
@@ -217,14 +218,14 @@ const BRIEFING_MOTIVATIONS = [
 
 // Messages pour rappels intelligents (UNIVERSELS)
 const SMART_MISSED_TRAINING_MESSAGES = [
-  { title: '🤔 Jour d\'entraînement habituel', body: 'Tu t\'entraînes souvent le {day}. Pas de session aujourd\'hui ?' },
+  { title: 'Jour d\'entraînement habituel', body: 'Tu t\'entraînes souvent le {day}. Pas de session aujourd\'hui ?' },
   { title: 'C\'est {day} !', body: 'D\'habitude tu t\'entraînes ce jour-là. On y va ?' },
   { title: '{day} = Entraînement ?', body: 'Ton corps s\'attend à bouger. Ne le déçois pas !' },
 ];
 
 const SMART_REST_SUGGESTION_MESSAGES = [
-  { title: '😴 Repos mérité ?', body: 'Tu t\'es entraîné {days} jours d\'affilée. Le repos fait partie du progrès !' },
-  { title: '🛌 Récupération', body: '{days} jours consécutifs d\'entraînement ! Pense à récupérer.' },
+  { title: 'Repos mérité ?', body: 'Tu t\'es entraîné {days} jours d\'affilée. Le repos fait partie du progrès !' },
+  { title: 'Récupération', body: '{days} jours consécutifs d\'entraînement ! Pense à récupérer.' },
   { title: 'Recharge tes batteries', body: 'Après {days} jours, une pause peut booster tes performances.' },
 ];
 
@@ -268,7 +269,11 @@ class NotificationService {
       const saved = await AsyncStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        this.settings = { ...DEFAULT_SETTINGS, ...parsed };
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          this.settings = { ...DEFAULT_SETTINGS, ...parsed };
+        } else {
+          this.settings = { ...DEFAULT_SETTINGS };
+        }
       } else {
         this.settings = { ...DEFAULT_SETTINGS };
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings));
@@ -602,9 +607,10 @@ class NotificationService {
       const totalPoints = await getUnifiedPoints();
       const rank = getCurrentRank(totalPoints);
 
-      // Jour actuel (0 = dimanche, 1 = lundi, etc.)
-      const today = new Date().getDay();
-      const todayPlan = weeklyPlan?.filter(p => p.day_of_week === today) || [];
+      // Jour actuel: JS getDay() retourne 0=dimanche, weekly_plan utilise 0=lundi
+      const jsDay = new Date().getDay();
+      const planDay = jsDay === 0 ? 6 : jsDay - 1;
+      const todayPlan = weeklyPlan?.filter(p => p.day_of_week === planDay) || [];
 
       // Salutation aléatoire
       const greeting = BRIEFING_GREETINGS[Math.floor(Math.random() * BRIEFING_GREETINGS.length)];
@@ -638,10 +644,35 @@ class NotificationService {
         parts.push(`⚖️ ${currentWeight.toFixed(1)}kg`);
       }
 
-      // Entraînements prévus aujourd'hui
-      if (todayPlan.length > 0) {
-        const sports = todayPlan.map(p => p.sport).join(', ');
-        parts.push(`${sports}`);
+      // Creneaux prevus aujourd'hui (avec details)
+      const activeSlots = todayPlan.filter(p => !p.is_rest_day);
+      if (activeSlots.length > 0) {
+        // Verifier combien sont deja valides cette semaine
+        const now = new Date();
+        const day = now.getDay();
+        const diff = day === 0 ? -6 : 1 - day;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() + diff);
+        const weekStart = monday.toISOString().split('T')[0];
+
+        let pendingCount = activeSlots.length;
+        try {
+          const occurrences = await getSlotOccurrences(weekStart);
+          const todayOccs = occurrences.filter(o =>
+            activeSlots.some(s => s.id === o.weekly_plan_id)
+          );
+          pendingCount = activeSlots.length - todayOccs.filter(o => o.status === 'validated').length;
+        } catch {}
+
+        const slotsDesc = activeSlots
+          .map(p => `${getSportName(p.sport)}${p.time ? ` ${p.time}` : ''}`)
+          .join(', ');
+
+        if (pendingCount > 0) {
+          parts.push(`${pendingCount} creneau(x) : ${slotsDesc}`);
+        } else {
+          parts.push(`Creneaux valides !`);
+        }
       }
 
       // Message motivant

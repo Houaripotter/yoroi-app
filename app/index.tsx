@@ -6,28 +6,17 @@ import { getUserSettings, saveUserSettings } from "@/lib/storage";
 import { getProfile } from "@/lib/database";
 import logger from '@/lib/security/logger';
 
-const LEGAL_ACCEPTED_KEY = '@yoroi_legal_accepted';
-
 export default function Index() {
   const [isLoading, setIsLoading] = useState(true);
-  const [needsLegalAcceptance, setNeedsLegalAcceptance] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
     const checkAppState = async () => {
       try {
-        // 1. Vérifier si le disclaimer légal a été accepté
-        const legalAccepted = await AsyncStorage.getItem(LEGAL_ACCEPTED_KEY);
-        if (!legalAccepted) {
-          setNeedsLegalAcceptance(true);
-          setIsLoading(false);
-          return;
-        }
-
-        // 2. Vérifier si l'utilisateur a complété l'onboarding
+        // Verifier si l'utilisateur a complete l'onboarding
         const settings = await getUserSettings();
 
-        // Si les données AsyncStorage sont manquantes, vérifier SQLite et synchroniser
+        // Si les donnees AsyncStorage sont manquantes, verifier SQLite et synchroniser
         if (!settings.username || !settings.gender) {
           try {
             const profile = await getProfile();
@@ -40,19 +29,19 @@ export default function Index() {
                 targetWeight: profile.target_weight,
                 onboardingCompleted: true,
               });
-              // Ne pas rediriger vers onboarding, les données sont maintenant synchronisées
+              // Ne pas rediriger vers onboarding, les donnees sont maintenant synchronisees
               setIsLoading(false);
               return;
             }
           } catch (dbError) {
             logger.warn("Erreur lecture profil SQLite:", dbError);
           }
-          // Aucun profil trouvé, onboarding nécessaire
+          // Aucun profil trouve, onboarding necessaire
           setNeedsOnboarding(true);
         }
       } catch (error) {
-        logger.error("Erreur vérification état app:", error);
-        setNeedsLegalAcceptance(true);
+        logger.error("Erreur verification etat app:", error);
+        setNeedsOnboarding(true);
       } finally {
         setIsLoading(false);
       }
@@ -67,10 +56,6 @@ export default function Index() {
         <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
-  }
-
-  if (needsLegalAcceptance) {
-    return <Redirect href="/legal" />;
   }
 
   if (needsOnboarding) {

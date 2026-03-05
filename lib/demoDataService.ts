@@ -16,6 +16,7 @@ import {
   addMeasurementRecord,
   addTraining,
   addWeeklyPlanItem,
+  upsertSlotOccurrence,
   addCompetition,
   saveHealthData,
   initDatabase,
@@ -88,16 +89,16 @@ const randInt = (min: number, max: number): number =>
 const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
 const fmtDate = (d: Date): string => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  return `${year}-${month}-${day}`;
 };
 
 const addDays = (d: Date, n: number): Date => {
-  const r = new Date(d);
-  r.setDate(r.getDate() + n);
-  return r;
+  const result = new Date(d);
+  result.setDate(result.getDate() + n);
+  return result;
 };
 
 const dow = (d: Date): number => d.getDay();
@@ -244,7 +245,7 @@ export const generateHeryDemoData = async (): Promise<{
 
   // ========== 1. PROFILE ==========
   await saveProfile({
-    name: 'Hery',
+    name: 'Heny',
     height_cm: 178,
     target_weight: 80,
     start_weight: 87,
@@ -256,7 +257,7 @@ export const generateHeryDemoData = async (): Promise<{
   });
 
   await AsyncStorage.setItem('@yoroi_user_settings', JSON.stringify({
-    username: 'Hery',
+    username: 'Heny',
     height: 178,
     weight_unit: 'kg',
     measurement_unit: 'cm',
@@ -267,7 +268,7 @@ export const generateHeryDemoData = async (): Promise<{
     onboardingCompleted: true,
     citationStyle: 'warrior',
   }));
-  await AsyncStorage.setItem('@yoroi_user_name', 'Hery');
+  await AsyncStorage.setItem('@yoroi_user_name', 'Heny');
   await AsyncStorage.setItem('@yoroi_user_height', '178');
   await AsyncStorage.setItem('@yoroi_user_sport', 'jjb');
   await AsyncStorage.setItem('@yoroi_user_mode', 'fighter');
@@ -279,24 +280,67 @@ export const generateHeryDemoData = async (): Promise<{
   await AsyncStorage.setItem('@yoroi_first_use_date', startDate.toISOString());
 
   // ========== 2. CLUBS ==========
-  const gbClubId = await addClub({ name: 'Gracie Barra Les Olives', sport: 'jjb', color: '#EF4444', sessions_per_week: 4 });
-  const bfClubId = await addClub({ name: 'Basic-Fit Prado', sport: 'musculation', color: '#3B82F6', sessions_per_week: 3 });
+  const gbClubId = await addClub({ name: 'Gracie Barra Les Olives', sport: 'jjb', color: '#EF4444', sessions_per_week: 4, logo_uri: 'graciebarra' });
+  const bfClubId = await addClub({ name: 'Basic-Fit Prado', sport: 'musculation', color: '#3B82F6', sessions_per_week: 3, logo_uri: 'basic-fit' });
 
   await AsyncStorage.setItem('@yoroi_user_clubs', JSON.stringify([
-    { id: gbClubId, name: 'Gracie Barra Les Olives', sport: 'jjb', color: '#EF4444', sessions_per_week: 4 },
-    { id: bfClubId, name: 'Basic-Fit Prado', sport: 'musculation', color: '#3B82F6', sessions_per_week: 3 },
+    { id: gbClubId, name: 'Gracie Barra Les Olives', sport: 'jjb', color: '#EF4444', sessions_per_week: 4, logo_uri: 'graciebarra' },
+    { id: bfClubId, name: 'Basic-Fit Prado', sport: 'musculation', color: '#3B82F6', sessions_per_week: 3, logo_uri: 'basic-fit' },
   ]));
   await AsyncStorage.setItem('@yoroi_favorite_sports', JSON.stringify(['jjb', 'musculation']));
 
   // ========== 3. EMPLOI DU TEMPS ==========
-  await addWeeklyPlanItem({ day_of_week: 0, club_id: gbClubId, sport: 'jjb', time: '19:00', duration_minutes: 90 });
-  await addWeeklyPlanItem({ day_of_week: 1, club_id: bfClubId, sport: 'musculation', time: '12:00', duration_minutes: 70 });
-  await addWeeklyPlanItem({ day_of_week: 2, club_id: gbClubId, sport: 'jjb', time: '19:00', duration_minutes: 90 });
-  await addWeeklyPlanItem({ day_of_week: 3, club_id: bfClubId, sport: 'musculation', time: '12:00', duration_minutes: 70 });
-  await addWeeklyPlanItem({ day_of_week: 4, club_id: gbClubId, sport: 'jjb', time: '19:00', duration_minutes: 90 });
-  await addWeeklyPlanItem({ day_of_week: 5, club_id: gbClubId, sport: 'jjb', time: '10:00', duration_minutes: 120 });
-  await addWeeklyPlanItem({ day_of_week: 5, club_id: bfClubId, sport: 'musculation', time: '15:00', duration_minutes: 60 });
+  const slotId1 = await addWeeklyPlanItem({ day_of_week: 0, club_id: gbClubId, sport: 'jjb', time: '19:00', duration_minutes: 90, session_type: 'Cours', label: 'JJB lundi soir' });
+  const slotId2 = await addWeeklyPlanItem({ day_of_week: 1, club_id: bfClubId, sport: 'musculation', time: '12:00', duration_minutes: 70, session_type: 'Push', label: 'Muscu mardi midi' });
+  const slotId3 = await addWeeklyPlanItem({ day_of_week: 2, club_id: gbClubId, sport: 'jjb', time: '19:00', duration_minutes: 90, session_type: 'Sparring' });
+  const slotId4 = await addWeeklyPlanItem({ day_of_week: 3, club_id: bfClubId, sport: 'musculation', time: '12:00', duration_minutes: 70, session_type: 'Pull' });
+  const slotId5 = await addWeeklyPlanItem({ day_of_week: 4, club_id: gbClubId, sport: 'jjb', time: '19:00', duration_minutes: 90, session_type: 'Drilling' });
+  const slotId6 = await addWeeklyPlanItem({ day_of_week: 5, club_id: gbClubId, sport: 'jjb', time: '10:00', duration_minutes: 120, session_type: 'Open Mat' });
+  const slotId7 = await addWeeklyPlanItem({ day_of_week: 5, club_id: bfClubId, sport: 'musculation', time: '15:00', duration_minutes: 60, session_type: 'Legs' });
   await addWeeklyPlanItem({ day_of_week: 6, sport: 'repos', is_rest_day: true });
+
+  // ========== 3b. SLOT OCCURRENCES DEMO ==========
+  // Calculer les 4 derniers lundis pour creer des occurrences variees
+  const now = new Date();
+  const jsDay = now.getDay();
+  const diffToMonday = jsDay === 0 ? -6 : 1 - jsDay;
+  const thisMonday = new Date(now);
+  thisMonday.setDate(now.getDate() + diffToMonday);
+
+  const weekStarts = [];
+  for (let i = 0; i < 4; i++) {
+    const ws = new Date(thisMonday);
+    ws.setDate(thisMonday.getDate() - i * 7);
+    weekStarts.push(ws.toISOString().split('T')[0]);
+  }
+
+  // Semaine courante: quelques valides, quelques en attente
+  await upsertSlotOccurrence({ weekly_plan_id: slotId1, week_start: weekStarts[0], status: 'validated' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId2, week_start: weekStarts[0], status: 'validated' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId3, week_start: weekStarts[0], status: 'pending' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId4, week_start: weekStarts[0], status: 'pending' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId5, week_start: weekStarts[0], status: 'pending' });
+
+  // Semaine -1: tout valide sauf 1 annule
+  await upsertSlotOccurrence({ weekly_plan_id: slotId1, week_start: weekStarts[1], status: 'validated' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId2, week_start: weekStarts[1], status: 'validated' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId3, week_start: weekStarts[1], status: 'validated' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId4, week_start: weekStarts[1], status: 'cancelled', cancel_reason: 'Fatigue' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId5, week_start: weekStarts[1], status: 'validated' });
+
+  // Semaine -2: valide
+  await upsertSlotOccurrence({ weekly_plan_id: slotId1, week_start: weekStarts[2], status: 'validated' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId2, week_start: weekStarts[2], status: 'validated' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId3, week_start: weekStarts[2], status: 'validated' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId4, week_start: weekStarts[2], status: 'validated' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId5, week_start: weekStarts[2], status: 'validated' });
+
+  // Semaine -3: quelques annules (blessure)
+  await upsertSlotOccurrence({ weekly_plan_id: slotId1, week_start: weekStarts[3], status: 'cancelled', cancel_reason: 'Blessure genou' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId2, week_start: weekStarts[3], status: 'validated' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId3, week_start: weekStarts[3], status: 'cancelled', cancel_reason: 'Blessure genou' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId4, week_start: weekStarts[3], status: 'validated' });
+  await upsertSlotOccurrence({ weekly_plan_id: slotId5, week_start: weekStarts[3], status: 'skipped' });
 
   // ========== 4. TRAININGS ==========
   let current = new Date(startDate);
@@ -561,9 +605,9 @@ export const generateHeryDemoData = async (): Promise<{
 
   // ========== 12. TECHNIQUES BJJ ==========
   const skills: any[] = [];
-  const now = new Date().toISOString();
+  const nowIso = new Date().toISOString();
   const makeSkill = (name: string, cat: string, status: 'mastered' | 'in_progress' | 'to_learn', drills: number) => ({
-    id: generateId(), name, category: cat, status, drillCount: drills, notes: [], createdAt: startDate.toISOString(), updatedAt: now,
+    id: generateId(), name, category: cat, status, drillCount: drills, notes: [], createdAt: startDate.toISOString(), updatedAt: nowIso,
   });
   skills.push(makeSkill('Garde Fermee', 'jjb_garde', 'mastered', randInt(40, 60)));
   skills.push(makeSkill('Demi-Garde', 'jjb_garde', 'mastered', randInt(35, 55)));

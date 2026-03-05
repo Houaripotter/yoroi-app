@@ -26,7 +26,6 @@ import {
   ChevronLeft,
   Share2,
   Download,
-  Trophy,
   Flame,
   Target,
   Swords,

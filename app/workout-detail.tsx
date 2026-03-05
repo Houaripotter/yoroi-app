@@ -14,8 +14,12 @@ import {
   Dimensions,
   ActivityIndicator,
   Animated,
+  Platform,
+  TouchableOpacity,
+  Linking,
 } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
+import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -365,6 +369,14 @@ export default function WorkoutDetailScreen() {
             || cached.heartRateZones?.length > 0 || cached.weatherTemp != null;
           if (hasRichData) {
             setDetails(cached);
+            // Cache incomplet: GPS ou qualite d'air manquants -> re-fetch en background
+            const missingGPS = !cached.routePoints?.length;
+            const missingAQI = cached.airQualityIndex == null;
+            if (tr.healthkit_uuid && (missingGPS || missingAQI)) {
+              loadDetailsFromHealthKit(
+                tr.healthkit_uuid, id, fallbackStart, tr.duration_minutes, tr,
+              );
+            }
           } else {
             // Cache pauvre, re-fetcher depuis HealthKit
             await loadDetailsFromHealthKit(
@@ -877,6 +889,92 @@ export default function WorkoutDetailScreen() {
                 </View>
               )}
             </View>
+          </AnimatedCard>
+        )}
+
+        {/* ═══ LIEU D'ENTRAINEMENT (pin GPS manuel) ═══ */}
+        {!route?.length && training.location_lat != null && training.location_lon != null && (
+          <AnimatedCard delay={480} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.sectionIconBg, { backgroundColor: '#22C55E15' }]}>
+                <MapPin size={16} color="#22C55E" />
+              </View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Lieu d'entrainement
+              </Text>
+            </View>
+
+            {Platform.OS === 'ios' ? (
+              /* iOS : Apple Maps natif, aucune cle API requise */
+              <View style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 4 }}>
+                <MapView
+                  provider={PROVIDER_DEFAULT}
+                  style={{ height: 220 }}
+                  initialRegion={{
+                    latitude: training.location_lat,
+                    longitude: training.location_lon,
+                    latitudeDelta: 0.005,
+                    longitudeDelta: 0.005,
+                  }}
+                  scrollEnabled={false}
+                  zoomEnabled={false}
+                  mapType="hybrid"
+                  userInterfaceStyle={isDark ? 'dark' : 'light'}
+                >
+                  <Marker
+                    coordinate={{ latitude: training.location_lat, longitude: training.location_lon }}
+                    pinColor={sportColor}
+                  />
+                </MapView>
+              </View>
+            ) : (
+              /* Android : carte de coordonnees + bouton ouvrir dans Maps */
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {
+                  const lat = training.location_lat!;
+                  const lon = training.location_lon!;
+                  const label = encodeURIComponent(training.location_name || 'Lieu d\'entrainement');
+                  Linking.openURL(`geo:${lat},${lon}?q=${lat},${lon}(${label})`);
+                }}
+                style={{
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  backgroundColor: isDark ? 'rgba(34,197,94,0.08)' : 'rgba(34,197,94,0.06)',
+                  borderWidth: 1,
+                  borderColor: '#22C55E40',
+                  padding: 16,
+                  alignItems: 'center',
+                  gap: 8,
+                  marginBottom: 4,
+                }}
+              >
+                <MapPin size={32} color="#22C55E" />
+                <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text, textAlign: 'center' }}>
+                  {training.location_name || 'Lieu capturé'}
+                </Text>
+                <Text style={{ fontSize: 12, color: colors.textMuted }}>
+                  {training.location_lat!.toFixed(5)}, {training.location_lon!.toFixed(5)}
+                </Text>
+                <View style={{
+                  marginTop: 4, paddingHorizontal: 16, paddingVertical: 8,
+                  borderRadius: 20, backgroundColor: '#22C55E',
+                }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#FFFFFF' }}>
+                    Ouvrir dans Maps
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+
+            {training.location_name && Platform.OS === 'ios' ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+                <MapPin size={13} color={sportColor} />
+                <Text style={{ fontSize: 13, color: colors.text, fontWeight: '600' }}>
+                  {training.location_name}
+                </Text>
+              </View>
+            ) : null}
           </AnimatedCard>
         )}
 

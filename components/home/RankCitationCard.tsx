@@ -44,8 +44,18 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, totalP
   const { t } = useI18n();
   const { colors, isDark } = useTheme();
 
-  const rank = useMemo(() => getCurrentRank(totalPoints), [totalPoints]);
-  const nextRank = useMemo(() => getNextRank(totalPoints), [totalPoints]);
+  const rawRank = useMemo(() => getCurrentRank(totalPoints), [totalPoints]);
+  // Utiliser la couleur du theme au lieu de la couleur hardcodee du rang
+  const rank = useMemo(() => ({ ...rawRank, color: colors.accent }), [rawRank, colors.accent]);
+  const rawNextRank = useMemo(() => getNextRank(totalPoints), [totalPoints]);
+  // Si le prochain rang a une couleur trop claire pour le mode light, utiliser textSecondary
+  const nextRank = useMemo(() => {
+    if (!rawNextRank) return null;
+    // Jaune (#FFD700) illisible sur fond blanc => utiliser accent du theme
+    const lightColors = ['#FFD700', '#FBBF24', '#FCD34D'];
+    const needsOverride = !isDark && lightColors.some(c => rawNextRank.color.toUpperCase().startsWith(c.toUpperCase()));
+    return { ...rawNextRank, color: needsOverride ? colors.accent : rawNextRank.color };
+  }, [rawNextRank, isDark, colors.accent]);
   const progress = useMemo(() => getRankProgress(totalPoints), [totalPoints]);
   const pointsToNext = useMemo(() => getDaysToNextRank(totalPoints), [totalPoints]);
   const level = LEVEL_MAP[rank.id] || 1;
@@ -134,9 +144,6 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, totalP
                     <Ionicons name="person" size={40} color="#CCC" />
                   </View>
                 )}
-                <View style={[styles.levelBadge, { backgroundColor: rank.color }]}>
-                  <Text style={styles.levelText}>{rank.name}</Text>
-                </View>
               </TouchableOpacity>
 
               {/* Infos droite */}
@@ -281,16 +288,17 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, totalP
                   {RANKS.map((r) => {
                     const isCurrent = r.id === rank.id;
                     const isUnlocked = totalPoints >= r.minPoints;
+                    const displayColor = isCurrent ? colors.accent : r.color;
                     return (
                       <View key={r.id} style={[styles.allRanksRow, isCurrent && { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)', borderRadius: 10, padding: 8, margin: -4 }]}>
-                        <View style={[styles.allRanksDot, { backgroundColor: isUnlocked ? r.color : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)') }]} />
-                        <Text style={[styles.allRanksName, { color: isCurrent ? r.color : (isUnlocked ? colors.textPrimary : colors.textMuted), fontWeight: isCurrent ? '900' : '600' }]}>
+                        <View style={[styles.allRanksDot, { backgroundColor: isUnlocked ? displayColor : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)') }]} />
+                        <Text style={[styles.allRanksName, { color: isCurrent ? colors.accent : (isUnlocked ? colors.textPrimary : colors.textMuted), fontWeight: isCurrent ? '900' : '600' }]}>
                           {r.name}
                         </Text>
                         <Text style={[styles.allRanksDays, { color: colors.textMuted }]}>{r.minPoints} XP</Text>
                         {isCurrent && (
-                          <View style={[styles.currentTag, { backgroundColor: `${r.color}20` }]}>
-                            <Text style={[styles.currentTagText, { color: r.color }]}>Actuel</Text>
+                          <View style={[styles.currentTag, { backgroundColor: `${colors.accent}20` }]}>
+                            <Text style={[styles.currentTagText, { color: colors.accent }]}>Actuel</Text>
                           </View>
                         )}
                       </View>
@@ -342,7 +350,7 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, totalP
                   width: currentPage === i ? 7 : 5,
                   height: currentPage === i ? 7 : 5,
                   backgroundColor: currentPage === i
-                    ? (isDark ? '#FFFFFF' : '#1A1A2E')
+                    ? colors.companion
                     : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'),
                 },
               ]} />
@@ -394,7 +402,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, paddingVertical: 2, borderRadius: 8,
     justifyContent: 'center', alignItems: 'center',
   },
-  levelText: { fontSize: 10, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.5 },
+  levelText: { fontSize: 14, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.5 },
 
   // Info column
   infoCol: { flex: 1, alignItems: 'center' },

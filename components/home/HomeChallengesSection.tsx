@@ -353,7 +353,7 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
   return (
     <View style={[styles.container, {
       backgroundColor: colors.backgroundCard,
-      borderColor: colors.border,
+      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
     }]}>
       {/* HEADER */}
       <View style={styles.header}>
@@ -372,7 +372,7 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
       </View>
 
       {/* TABS - combo couleurs du theme */}
-      <View style={[styles.tabsRow, { backgroundColor: `${colors.accentDark}15` }]}>
+      <View style={[styles.tabsRow, { backgroundColor: isDark ? (colors.companion + '15') : (colors.companion + '18') }]}>
         {(['JOUR', 'SEMAINE', 'MOIS'] as TabType[]).map(tab => (
           <TouchableOpacity
             key={tab}

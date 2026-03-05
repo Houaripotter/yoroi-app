@@ -38,7 +38,7 @@ import {
   ChevronRight,
   User,
   Sparkles,
-  Star,
+  Flame,
 } from 'lucide-react-native';
 import {
   getProfile,
@@ -282,7 +282,7 @@ export default function ProfileScreen() {
   useEffect(() => { loadData(); }, []);
 
   const rank = getCurrentRank(totalPoints);
-  const level = getLevel(totalPoints);
+
 
   const handleSave = async () => {
     Keyboard.dismiss();
@@ -623,11 +623,11 @@ export default function ProfileScreen() {
               <Text style={[styles.dojoStatLabel, { color: colors?.textMuted ?? '#6B7280' }]}>XP</Text>
             </View>
 
-            {/* Niveau */}
+            {/* Streak */}
             <View style={styles.dojoStatItem}>
-              <Star size={18} color={colors?.gold ?? '#0ABAB5'} strokeWidth={2.5} />
-              <Text style={[styles.dojoStatValue, { color: colors?.gold ?? '#0ABAB5' }]}>{level.level}</Text>
-              <Text style={[styles.dojoStatLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('gamification.level')}</Text>
+              <Flame size={18} color="#F97316" strokeWidth={2.5} />
+              <Text style={[styles.dojoStatValue, { color: '#F97316' }]}>{streak}</Text>
+              <Text style={[styles.dojoStatLabel, { color: colors?.textMuted ?? '#6B7280' }]}>Streak</Text>
             </View>
 
             {/* Rang */}

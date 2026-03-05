@@ -200,7 +200,6 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = memo(({
             steps={steps}
             stepsGoal={stepsGoal}
             calories={calories}
-            caloriesGoal={caloriesGoal}
           />
         </View>
       </View>

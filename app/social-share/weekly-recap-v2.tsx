@@ -36,7 +36,7 @@ import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { getProfile, calculateStreak } from '@/lib/database';
 import { useAvatar } from '@/lib/AvatarContext';
-import { getCurrentRank } from '@/lib/ranks';
+import { getCurrentRank, rankToLevel } from '@/lib/ranks';
 import { getUnifiedPoints } from '@/lib/gamification';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -77,7 +77,7 @@ export default function WeeklyRecapV2Screen() {
 
         if (profile) {
           setUserName(profile.name || 'Champion');
-          setUserLevel(profile.level || 1);
+          // Level is derived from rank (XP-based)
           if (profile.profile_photo) {
             setUserPhoto(profile.profile_photo);
           }
@@ -90,6 +90,7 @@ export default function WeeklyRecapV2Screen() {
         const totalPoints = await getUnifiedPoints();
         const rank = getCurrentRank(totalPoints);
         setUserRank(rank.name);
+        setUserLevel(rankToLevel(rank));
       } catch (error) {
         logger.error('Error loading user data:', error);
       }

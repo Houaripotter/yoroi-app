@@ -128,7 +128,8 @@ export default function CutModeScreen() {
       // Charger les données du cut
       const saved = await AsyncStorage.getItem(STORAGE_KEY);
       if (saved) {
-        setCutData(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) setCutData(parsed);
       }
 
       // Charger le poids actuel

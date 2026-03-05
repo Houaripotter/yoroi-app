@@ -80,95 +80,67 @@ export default function LegalScreen() {
 
         {/* Welcoming Title */}
         <Text style={[styles.title, { color: isDarkMode ? colors.accent : colors.textPrimary }]}>
-          Avant de commencer
+          Bienvenue dans la Famille Yoroi
         </Text>
 
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Quelques informations importantes
+          Pourquoi cette app existe
         </Text>
 
-        {/* Main Content - Friendly Version */}
+        {/* Personal Story */}
         <View style={[styles.card, { backgroundColor: colors.card }]}>
-          <Text style={[styles.introText, { color: colors.textPrimary }]}>
-            YOROI est ton compagnon de suivi fitness et bien-être. Voici ce que tu dois savoir :
+          <Text style={[styles.storyText, { color: colors.textPrimary }]}>
+            J'ai cr\u00e9\u00e9 YOROI seul, par passion. Un jour, je ne me suis plus support\u00e9 devant le miroir. J'avais \u00e9norm\u00e9ment pris de poids. J'ai voulu trouver une app compl\u00e8te pour me reprendre en main, mais rien ne me convenait. Alors je l'ai construite moi-m\u00eame.
           </Text>
 
-          {/* Positive Points */}
+          <Text style={[styles.storyText, { color: colors.textPrimary }]}>
+            Au fil du temps, des amis et des gens sur des forums m'ont sugg\u00e9r\u00e9 des fonctionnalit\u00e9s. Je les ai ajout\u00e9es. Aujourd'hui, c'est autant votre app que la mienne.
+          </Text>
+
+          <View style={[styles.storyDivider, { backgroundColor: isDarkMode ? colors.accent : '#D4AF37' }]} />
+
+          <Text style={[styles.storyHighlight, { color: isDarkMode ? colors.accent : '#D4AF37' }]}>
+            Une app entre vous et moi.
+          </Text>
+
+          <Text style={[styles.storyText, { color: colors.textPrimary, marginBottom: 4 }]}>
+            Pas de soci\u00e9t\u00e9 derri\u00e8re, pas d'argent, pas de pub. Juste un passionn\u00e9 qui se bat pour se sentir mieux. Un peu comme vous, peut-\u00eatre. L'esprit du samoura\u00ef : on n'abandonne jamais.
+          </Text>
+
+          <Text style={[styles.storyItalic, { color: colors.textSecondary }]}>
+            Vos retours et votre bienveillance comptent \u00e9norm\u00e9ment. Merci d'\u00eatre l\u00e0.
+          </Text>
+        </View>
+
+        {/* Privacy & Info */}
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
           <View style={styles.featureList}>
             <View style={styles.featureItem}>
               <View style={[styles.featureIcon, { backgroundColor: '#10B98120' }]}>
-                <Ionicons name="fitness" size={20} color="#10B981" />
+                <Ionicons name="lock-closed" size={20} color="#10B981" />
               </View>
               <Text style={[styles.featureText, { color: colors.textPrimary }]}>
-                Suis ta progression et tes performances
+                100% hors ligne, tes donn\u00e9es restent sur ton t\u00e9l\u00e9phone
               </Text>
             </View>
 
             <View style={styles.featureItem}>
               <View style={[styles.featureIcon, { backgroundColor: '#3B82F620' }]}>
-                <Ionicons name="analytics" size={20} color="#3B82F6" />
+                <Ionicons name="eye-off" size={20} color="#3B82F6" />
               </View>
               <Text style={[styles.featureText, { color: colors.textPrimary }]}>
-                Analyse tes données d'entraînement
+                Aucun tracking, aucune pub, aucun compte requis
               </Text>
             </View>
 
             <View style={styles.featureItem}>
               <View style={[styles.featureIcon, { backgroundColor: '#8B5CF620' }]}>
-                <Ionicons name="trophy" size={20} color="#8B5CF6" />
+                <Ionicons name="heart" size={20} color="#8B5CF6" />
               </View>
               <Text style={[styles.featureText, { color: colors.textPrimary }]}>
-                Atteins tes objectifs avec motivation
+                \u00c9coute ton corps, consulte un pro si besoin
               </Text>
             </View>
-          </View>
-
-          {/* Gentle Reminder */}
-          <View style={[styles.reminderBox, {
-            backgroundColor: isDarkMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.08)',
-            borderColor: isDarkMode ? '#3B82F6' : '#93C5FD'
-          }]}>
-            <View style={styles.reminderHeader}>
-              <Ionicons
-                name="information-circle"
-                size={22}
-                color="#3B82F6"
-              />
-              <Text style={[styles.reminderTitle, { color: '#3B82F6' }]}>
-                Bon à savoir
-              </Text>
-            </View>
-
-            <Text style={[styles.reminderText, { color: colors.textPrimary }]}>
-              YOROI est un outil de suivi personnel. Pour tout objectif de santé spécifique, n'hésite pas à consulter un professionnel qui pourra t'accompagner.
-            </Text>
-          </View>
-
-          {/* Health Tip - Friendly */}
-          <View style={[styles.tipBox, {
-            backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.08)',
-          }]}>
-            <Ionicons name="heart" size={18} color="#10B981" />
-            <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-              Écoute ton corps ! Si quelque chose ne va pas pendant l'effort, fais une pause.
-            </Text>
-          </View>
-
-          {/* Privacy Info */}
-          <View style={[styles.reminderBox, {
-            backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.08)',
-            borderColor: isDarkMode ? '#10B981' : '#6EE7B7',
-            marginTop: 16,
-          }]}>
-            <View style={styles.reminderHeader}>
-              <Ionicons name="lock-closed" size={22} color="#10B981" />
-              <Text style={[styles.reminderTitle, { color: '#10B981' }]}>
-                100% hors ligne
-              </Text>
-            </View>
-            <Text style={[styles.reminderText, { color: colors.textPrimary }]}>
-              Tes données restent sur ton appareil. Aucune donnée n'est envoyée sur Internet. Pas de tracking, pas d'analytics, pas de publicité.
-            </Text>
           </View>
         </View>
 
@@ -355,5 +327,29 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     flex: 1,
+  },
+  storyText: {
+    fontSize: 15,
+    lineHeight: 23,
+    marginBottom: 12,
+  },
+  storyHighlight: {
+    fontSize: 17,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  storyDivider: {
+    width: 40,
+    height: 2,
+    borderRadius: 1,
+    alignSelf: 'center',
+    marginVertical: 8,
+  },
+  storyItalic: {
+    fontSize: 14,
+    lineHeight: 21,
+    fontStyle: 'italic',
+    marginTop: 4,
   },
 });

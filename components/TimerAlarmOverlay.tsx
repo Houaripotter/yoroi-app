@@ -41,8 +41,8 @@ export const TimerAlarmOverlay: React.FC<TimerAlarmOverlayProps> = ({
   const insets = useSafeAreaInsets();
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
-  const vibrationRef = useRef<NodeJS.Timeout | null>(null);
-  const soundRef = useRef<NodeJS.Timeout | null>(null);
+  const vibrationRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const soundRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Pulse animation for the logo
   const startPulseAnimation = useCallback(() => {

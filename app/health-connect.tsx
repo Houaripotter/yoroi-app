@@ -132,7 +132,7 @@ export default function HealthConnectScreen() {
             );
             break;
 
-          case 'HEALTH_CONNECT_NOT_INSTALLED':
+          case 'HEALTH_CONNECT_NOT_INSTALLED' as any:
             showPopup(
               'Health Connect non installé',
               'Health Connect n\'est pas installé sur ton téléphone. C\'est l\'app de Google qui centralise toutes tes données de santé.\n\nInstalle-la depuis le Play Store pour continuer.',
