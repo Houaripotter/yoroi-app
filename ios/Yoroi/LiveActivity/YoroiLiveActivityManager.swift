@@ -13,6 +13,24 @@ class YoroiLiveActivityManager: NSObject {
     set { _currentActivity = newValue }
   }
 
+  // Construit un ContentState depuis un NSDictionary
+  @available(iOS 16.2, *)
+  private func buildState(_ data: NSDictionary, fallback: TimerAttributes.ContentState? = nil) -> TimerAttributes.ContentState {
+    let endTimeInterval = data["endTime"] as? Double
+    let endTime = endTimeInterval.map { Date(timeIntervalSince1970: $0) }
+
+    return TimerAttributes.ContentState(
+      endTime: endTime,
+      timeRemaining: data["timeRemaining"] as? Int ?? fallback?.timeRemaining ?? 0,
+      isRunning: data["isRunning"] as? Bool ?? fallback?.isRunning ?? true,
+      mode: data["mode"] as? String ?? fallback?.mode ?? "custom",
+      phase: data["phase"] as? String ?? fallback?.phase ?? "work",
+      currentRound: data["currentRound"] as? Int ?? fallback?.currentRound ?? 1,
+      totalRounds: data["totalRounds"] as? Int ?? fallback?.totalRounds ?? 1,
+      timerName: data["timerName"] as? String ?? fallback?.timerName ?? "Timer"
+    )
+  }
+
   @objc
   func areActivitiesEnabled(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
     if #available(iOS 16.1, *) {
@@ -25,16 +43,15 @@ class YoroiLiveActivityManager: NSObject {
   @objc
   func startActivity(_ data: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
     if #available(iOS 16.2, *) {
-      let activityName = data["activityName"] as? String ?? "Timer"
-      let elapsedSeconds = data["elapsedSeconds"] as? Int ?? 0
-      let isRunning = data["isRunning"] as? Bool ?? true
+      // Arrêter l'activité précédente si elle existe
+      if let existing = self.currentActivity {
+        Task { await existing.end(dismissalPolicy: .immediate) }
+        self.currentActivity = nil
+      }
 
+      let activityName = data["activityName"] as? String ?? "Yoroi Timer"
       let attributes = TimerAttributes(activityName: activityName)
-      let state = TimerAttributes.ContentState(
-        elapsedSeconds: elapsedSeconds,
-        isRunning: isRunning,
-        heartRate: data["heartRate"] as? Int
-      )
+      let state = buildState(data)
 
       do {
         let content = ActivityContent(state: state, staleDate: nil)
@@ -57,20 +74,11 @@ class YoroiLiveActivityManager: NSObject {
   func updateActivity(_ data: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
     if #available(iOS 16.2, *) {
       guard let activity = self.currentActivity else {
-        reject("NO_ACTIVITY", "No active Live Activity", nil)
+        resolve(["success": false])
         return
       }
 
-      let currentState = activity.content.state
-      let elapsedSeconds = data["elapsedSeconds"] as? Int ?? currentState.elapsedSeconds
-      let isRunning = data["isRunning"] as? Bool ?? currentState.isRunning
-      let heartRate = data["heartRate"] as? Int ?? currentState.heartRate
-
-      let newState = TimerAttributes.ContentState(
-        elapsedSeconds: elapsedSeconds,
-        isRunning: isRunning,
-        heartRate: heartRate
-      )
+      let newState = buildState(data, fallback: activity.content.state)
 
       Task {
         let content = ActivityContent(state: newState, staleDate: nil)
@@ -78,7 +86,7 @@ class YoroiLiveActivityManager: NSObject {
         resolve(["success": true])
       }
     } else {
-      reject("UNAVAILABLE", "iOS 16.2+ required", nil)
+      resolve(["success": false])
     }
   }
 
@@ -91,11 +99,9 @@ class YoroiLiveActivityManager: NSObject {
       }
 
       Task {
-        let finalState = TimerAttributes.ContentState(
-          elapsedSeconds: activity.content.state.elapsedSeconds,
-          isRunning: false,
-          heartRate: nil
-        )
+        var finalState = activity.content.state
+        finalState.isRunning = false
+        finalState.endTime = nil
         let content = ActivityContent(state: finalState, staleDate: nil)
         await activity.end(content, dismissalPolicy: .immediate)
         self.currentActivity = nil
