@@ -1091,7 +1091,7 @@ struct MuscleGroupPage: View {
     }
     .navigationTitle(group)
     .sheet(item: $selectedExercise) { exercise in
-      let catColor = CarnetFullPage.catColors[exercise.category.lowercased()] ?? session.accentColor
+      let catColor = watchCatColors[exercise.category.lowercased()] ?? session.accentColor
       AddEntryPage(
         exerciseName: exercise.name,
         exerciseId: exercise.id,

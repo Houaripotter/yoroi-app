@@ -65,7 +65,9 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
   private var targetWeight: Double  { ud.double(forKey: "yoroi_targetWeight") }
   private var startWeight: Double   { ud.double(forKey: "yoroi_startWeight") }
   private var calories: Int       { ud.integer(forKey: "yoroi_calories") }
+  private var caloriesGoal: Int   { let v = ud.integer(forKey: "yoroi_caloriesGoal"); return v > 0 ? v : 500 }
   private var distance: Double    { ud.double(forKey: "yoroi_distance") }
+  private var distanceGoal: Double { let v = ud.double(forKey: "yoroi_distanceGoal"); return v > 0 ? v : 5.0 }
   private var userLevel: Int      { let v = ud.integer(forKey: "yoroi_level"); return v > 0 ? v : 1 }
   private var userRank: String    { ud.string(forKey: "yoroi_rank") ?? "Recrue" }
 
@@ -199,9 +201,6 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     let text  = bpm > 0 ? "\(bpm)" : "--"
     // Jauge : 40 BPM = 0 %, 200 BPM = 100 %
     let frac  = bpm > 0 ? Float(max(0, min(bpm - 40, 160))) / 160.0 : 0.0
-    // Couleur : vert si normal (60-100), orange si élevé, rouge si très élevé
-    let gaugeColor: UIColor = bpm < 60 ? .yBlue : (bpm <= 100 ? .yGreen : (bpm <= 140 ? .yOrange : .yRed))
-
     switch family {
 
     case .graphicCircular:
@@ -353,7 +352,7 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     case .graphicCircular:
       let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
       t.centerTextProvider = centerProvider
-      t.bottomTextProvider = CLKSimpleTextProvider(text: running ? "min" : statusText)
+      t.bottomTextProvider = CLKSimpleTextProvider(text: running ? "min" : "timer")
       t.gaugeProvider      = gaugeProvider
       return t
 
@@ -543,7 +542,7 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     case .graphicCircular:
       let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
       t.centerTextProvider = CLKSimpleTextProvider(text: mins > 0 ? "\(hours)h\(rem > 0 ? "\(rem)" : "")" : "--")
-      t.bottomTextProvider = CLKSimpleTextProvider(text: "/\(goal / 60)h sommeil")
+      t.bottomTextProvider = CLKSimpleTextProvider(text: "/\(goal / 60)h")
       t.gaugeProvider = CLKSimpleGaugeProvider(
         style: .fill,
         gaugeColors: [.yRed, .yOrange, .yIndigo],
@@ -742,7 +741,7 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     case .graphicCircular:
       let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
       t.centerTextProvider = CLKSimpleTextProvider(text: text)
-      t.bottomTextProvider = CLKSimpleTextProvider(text: "12-20 rpm")
+      t.bottomTextProvider = CLKSimpleTextProvider(text: "12-20")
       t.gaugeProvider = CLKSimpleGaugeProvider(
         style: .fill,
         gaugeColors: [.yOrange, .yGreen, .yOrange],
@@ -788,7 +787,7 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
       // Plus la FC repos est basse, mieux c'est — frac inverse (80→0%, 40→100%)
       let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
       t.centerTextProvider = CLKSimpleTextProvider(text: text)
-      t.bottomTextProvider = CLKSimpleTextProvider(text: "bpm repos")
+      t.bottomTextProvider = CLKSimpleTextProvider(text: "FC repos")
       t.gaugeProvider = CLKSimpleGaugeProvider(
         style: .fill,
         gaugeColors: [.yRed, .yOrange, .yGreen],

@@ -15,10 +15,10 @@ import WatchKit
 
 struct CarnetPage: View {
   @EnvironmentObject var session: WatchSessionManager
-  @State private var selectedTab: CarnetTab = .exercices
+  @State private var selectedTab: CarnetTab = .bibliotheque
 
   enum CarnetTab: String, CaseIterable {
-    case exercices = "Exercices"
+    case bibliotheque = "Bibliotheque"
     case historique = "Historique"
   }
 
@@ -28,7 +28,7 @@ struct CarnetPage: View {
         // Onglets
         tabSelector
         // Contenu
-        if selectedTab == .exercices {
+        if selectedTab == .bibliotheque {
           ExercicesListView()
         } else {
           HistoriqueView()
@@ -64,6 +64,7 @@ struct CarnetPage: View {
 struct ExercicesListView: View {
   @EnvironmentObject var session: WatchSessionManager
   @State private var selectedFilter: String = "Tous"
+  @State private var showLibrary = false
   private let filters = ["Tous", "Force", "Endurance", "Vitesse", "Puissance"]
 
   var filtered: [BenchmarkRecord] {
@@ -76,11 +77,29 @@ struct ExercicesListView: View {
   }
 
   var body: some View {
-    if session.benchmarks.isEmpty {
-      emptyState
-    } else {
-      ScrollView {
-        VStack(spacing: 0) {
+    ScrollView {
+      VStack(spacing: 0) {
+        // Add button — always visible
+        Button(action: { showLibrary = true }) {
+          HStack(spacing: 6) {
+            Image(systemName: "plus.circle.fill")
+              .font(.system(size: 13))
+            Text("Ajouter un exercice")
+              .font(.system(size: 11, weight: .bold))
+          }
+          .foregroundColor(session.textOnAccent)
+          .frame(maxWidth: .infinity)
+          .padding(.vertical, 8)
+          .background(session.accentColor)
+          .cornerRadius(10)
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 6)
+        .padding(.top, 6)
+        .padding(.bottom, 4)
+
+        // Only show filter + records when there are records
+        if !session.benchmarks.isEmpty {
           filterBar
           VStack(spacing: 6) {
             ForEach(filtered) { record in
@@ -94,6 +113,9 @@ struct ExercicesListView: View {
           .padding(.bottom, 8)
         }
       }
+    }
+    .sheet(isPresented: $showLibrary) {
+      ExerciseLibraryPage()
     }
   }
 
@@ -116,24 +138,6 @@ struct ExercicesListView: View {
       .padding(.horizontal, 6)
       .padding(.vertical, 5)
     }
-  }
-
-  private var emptyState: some View {
-    VStack(spacing: 10) {
-      Image(systemName: "trophy")
-        .font(.largeTitle)
-        .foregroundStyle(session.accentColor.opacity(0.4))
-      Text("Aucun exercice")
-        .font(.caption)
-        .fontWeight(.semibold)
-        .foregroundStyle(session.textSecondary)
-      Text("Ajoute des records\ndepuis l'app iPhone")
-        .font(.system(size: 10))
-        .foregroundStyle(session.textSecondary)
-        .multilineTextAlignment(.center)
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .padding(.vertical, 20)
   }
 }
 
