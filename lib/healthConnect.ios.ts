@@ -45,6 +45,9 @@ export interface HeartRateSample {
 }
 
 export interface WorkoutDetails {
+  cacheVersion?: number;  // Incrémenter si algo de calcul change (invalide cache)
+  startLatitude?: number;   // Premier point GPS (pour localisation même sans route)
+  startLongitude?: number;
   // Route GPS
   routePoints?: Array<{
     latitude: number;
@@ -282,6 +285,9 @@ export const SOURCE_NAME_MAP: Record<string, string> = {
   'Samsung Galaxy Watch': 'samsung',
   // Yoroi manual
   'Yoroi': 'manual', 'YOROI': 'manual',
+  // HealthKit proxy (apps tierces qui écrivent via HealthKit sans nom propre)
+  'SourceProxy': 'apple_health', 'com.apple.health': 'apple_health',
+  'Health': 'apple_health', 'Apple Health': 'apple_health',
 };
 
 /**
@@ -884,6 +890,8 @@ class HealthConnectService {
         'HKQuantityTypeIdentifierBodyTemperature',
         // Entraînements
         'HKWorkoutTypeIdentifier',
+        // Routes GPS des séances (indispensable pour la carte du parcours)
+        'HKSeriesTypeWorkoutRoute',
       ];
 
       const toShare = [
@@ -1610,25 +1618,74 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const queryOptions = this.createQueryOptions(today, new Date());
-      if (!queryOptions) {
-        return null;
+      // Méthode 1 : queryStatisticsForQuantity (dédoublonnage iPhone + Watch)
+      try {
+        if (!isRunningInExpoGo) {
+          const HK = require('@kingstinct/react-native-healthkit');
+          if (typeof HK.queryStatisticsForQuantity === 'function') {
+            const stats = await HK.queryStatisticsForQuantity(
+              'HKQuantityTypeIdentifierDistanceWalkingRunning',
+              ['cumulativeSum'],
+              {
+                filter: {
+                  date: {
+                    startDate: today,
+                    endDate: new Date(),
+                  },
+                },
+              }
+            );
+
+            const raw = stats?.sumQuantity?.quantity ?? 0;
+            if (raw > 0) {
+              // HealthKit retourne la distance en mètres pour ce type
+              // Si la valeur est < 200, elle est probablement déjà en km
+              const totalKm = raw > 200 ? Math.round((raw / 1000) * 10) / 10 : Math.round(raw * 10) / 10;
+              logger.info('[HealthKit] Distance via queryStatisticsForQuantity:', totalKm, 'km (raw:', raw, ')');
+              if (totalKm > 0) {
+                return {
+                  walking: Math.round(totalKm * 0.6 * 10) / 10,
+                  running: Math.round(totalKm * 0.4 * 10) / 10,
+                  total: totalKm,
+                  unit: 'km',
+                };
+              }
+            }
+          }
+        }
+      } catch (statsError) {
+        logger.warn('[HealthKit] queryStatisticsForQuantity distance echoue, fallback:', statsError);
       }
+
+      // Méthode 2 : queryQuantitySamples (fallback)
+      const queryOptions = this.createQueryOptions(today, new Date());
+      if (!queryOptions) return null;
 
       const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierDistanceWalkingRunning', queryOptions);
 
-      if (samples && samples.length > 0) {
-        const totalMeters = samples.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0);
-        const totalKm = totalMeters / 1000;
+      if (!samples || !Array.isArray(samples) || samples.length === 0) return null;
 
-        return {
-          walking: Math.round(totalKm * 0.6 * 10) / 10, // Estimation 60% marche
-          running: Math.round(totalKm * 0.4 * 10) / 10, // Estimation 40% course
-          total: Math.round(totalKm * 10) / 10,
-          unit: 'km',
-        };
-      }
-      return null;
+      const validSamples = samples.filter((s: any) => s && typeof s.quantity !== 'undefined' && !isNaN(Number(s.quantity)));
+      if (validSamples.length === 0) return null;
+
+      const totalRaw = validSamples.reduce((sum: number, s: any) => sum + (Number(s.quantity) || 0), 0);
+      if (totalRaw <= 0) return null;
+
+      // Détecter l'unité : si > 200, c'est probablement des mètres
+      const totalKm = totalRaw > 200
+        ? Math.round((totalRaw / 1000) * 10) / 10
+        : Math.round(totalRaw * 10) / 10;
+
+      logger.info('[HealthKit] Distance via fallback queryQuantitySamples:', totalKm, 'km (raw:', totalRaw, ')');
+
+      if (totalKm <= 0) return null;
+
+      return {
+        walking: Math.round(totalKm * 0.6 * 10) / 10,
+        running: Math.round(totalKm * 0.4 * 10) / 10,
+        total: totalKm,
+        unit: 'km',
+      };
     }, 'distance');
   }
 
@@ -1663,7 +1720,7 @@ class HealthConnectService {
       const queryOptions = this.createQueryOptions(today, new Date());
       if (!queryOptions) return null;
 
-      const samples = await HealthKit.queryQuantitySamples('HKCategoryTypeIdentifierAppleStandHour', queryOptions);
+      const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierAppleStandHour', queryOptions);
       if (samples && samples.length > 0) {
         // Each sample = 1 hour stood
         return samples.length;
@@ -2064,9 +2121,27 @@ class HealthConnectService {
 
       const details: WorkoutDetails = {};
 
+      // LOG DEBUG: dump brut du workout pour voir toutes les donnees Apple disponibles
+      if (__DEV__) {
+        const rawEvents = (workout.events || []) as any[];
+        logger.info('[HealthKit] workout.uuid:', workout.uuid);
+        logger.info('[HealthKit] workout.metadata keys:', Object.keys(workout.metadata || {}));
+        logger.info('[HealthKit] workout.metadata values:', JSON.stringify(workout.metadata || {}));
+        logger.info('[HealthKit] workout.events count:', rawEvents.length);
+        if (rawEvents.length > 0) {
+          logger.info('[HealthKit] workout.events[0] raw:', JSON.stringify(rawEvents[0]));
+          // Log tous les events segment (type 7) pour voir si Apple y stocke des infos de zone
+          const segmentEvents = rawEvents.filter((e: any) => e.type === 7);
+          if (segmentEvents.length > 0) {
+            logger.info('[HealthKit] Segment events (type 7):', JSON.stringify(segmentEvents));
+          }
+        }
+      }
+
       // Duration
       const durationMs = new Date(workout.endDate).getTime() - new Date(workout.startDate).getTime();
-      details.durationMinutes = Math.round(durationMs / 60000);
+      // Garder les secondes (ex: 32.933 min = 32 min 56 sec) pour afficher "0:32:56" comme Apple
+      details.durationMinutes = durationMs / 60000;
 
       // Indoor
       details.isIndoor = workout.metadataIndoorWorkout ?? false;
@@ -2093,6 +2168,10 @@ class HealthConnectService {
       // Qualite de l'air (metadata custom Apple, pas toujours present)
       // Apple stocke l'AQI dans les metadata du workout si l'app Weather l'a enregistre
       const workoutMeta = workout.metadata || {};
+      // Log les cles de metadata disponibles (debug)
+      if (__DEV__ && Object.keys(workoutMeta).length > 0) {
+        logger.info('[HealthKit] Metadata workout disponibles:', Object.keys(workoutMeta));
+      }
       const rawAqi = workout.metadataWeatherAirQualityIndex
         ?? workoutMeta.HKWeatherAirQualityIndex
         ?? workoutMeta.HKMetadataKeyWeatherAirQualityIndex;
@@ -2175,6 +2254,10 @@ class HealthConnectService {
                 maxLon: Math.max(...lons),
               };
 
+              // Point de départ GPS (pour afficher la localisation même sans route complète)
+              details.startLatitude = allLocations[0].latitude;
+              details.startLongitude = allLocations[0].longitude;
+
               // Splits seront calcules apres HR (pour inclure avgHeartRate par split)
               if (details.distanceKm && details.distanceKm > 0.5) {
                 details.splits = this.computeSplits(allLocations);
@@ -2203,26 +2286,37 @@ class HealthConnectService {
               bpm: Math.round(s.quantity),
             }));
 
-            // Zones FC personnalisees (basees sur maxHR comme Apple Health)
+            // Zones FC: lire le vrai maxHR personnel depuis les metadonnees Apple Watch du workout
+            // Apple Watch ecrit HKMaximumHeartRate dans chaque workout = max HR personnel utilise pour calculer les zones
             let maxHR = 190; // fallback
             try {
-              const dob = HealthKit.getDateOfBirth ? HealthKit.getDateOfBirth() : undefined;
-              if (dob) {
-                const age = Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
-                if (age > 10 && age < 100) maxHR = 220 - age;
+              // 1. Priorite: lire HKMaximumHeartRate depuis les metadonnees du workout (ecrit par Apple Watch)
+              const metaMaxHR = workoutMeta['HKMaximumHeartRate'];
+              if (metaMaxHR != null) {
+                const metaVal = typeof metaMaxHR === 'object'
+                  ? ((metaMaxHR as any).quantity ?? (metaMaxHR as any).value ?? Number(metaMaxHR))
+                  : Number(metaMaxHR);
+                if (!isNaN(metaVal) && metaVal > 100 && metaVal < 250) {
+                  maxHR = Math.round(metaVal);
+                  logger.info('[HealthKit] maxHR lu depuis metadata workout:', maxHR);
+                }
+              } else {
+                // 2. Fallback: date de naissance -> 220-age
+                const dob = HealthKit.getDateOfBirth ? HealthKit.getDateOfBirth() : undefined;
+                if (dob) {
+                  const age = Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+                  if (age > 10 && age < 100) maxHR = 220 - age;
+                }
               }
             } catch (e) {
-              logger.warn('[HealthKit] Impossible de lire DOB pour maxHR:', e);
-            }
-            // Fallback: utiliser la FC max observee dans le workout
-            if (maxHR === 190 && details.maxHeartRate && details.maxHeartRate > 100) {
-              maxHR = details.maxHeartRate;
+              logger.warn('[HealthKit] Impossible de lire maxHR:', e);
             }
 
-            const z1Max = Math.round(maxHR * 0.6);
-            const z2Max = Math.round(maxHR * 0.7);
-            const z3Max = Math.round(maxHR * 0.8);
-            const z4Max = Math.round(maxHR * 0.9);
+            // Seuils zones Apple Fitness: 50% / 60% / 70% / 80% de maxHR
+            const z1Max = Math.round(maxHR * 0.50);
+            const z2Max = Math.round(maxHR * 0.60);
+            const z3Max = Math.round(maxHR * 0.70);
+            const z4Max = Math.round(maxHR * 0.80);
 
             const zones = [
               { zone: 1, name: 'Z1 Recup', minBpm: 0, maxBpm: z1Max, durationSeconds: 0, color: '#94A3B8' },
@@ -2247,6 +2341,7 @@ class HealthConnectService {
             }
 
             details.heartRateZones = zones;
+            details.cacheVersion = 3; // v3: maxHR lu depuis metadata Apple Watch (HKMaximumHeartRate)
 
             // Recalculer splits avec avgHeartRate par split si on a des GPS locations
             if (allGpsLocations.length > 0 && details.distanceKm && details.distanceKm > 0.5) {

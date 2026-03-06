@@ -1,86 +1,93 @@
 // ===================================================
-// YOROI - SYSTÈME RESPONSIVE IPHONE/IPAD
+// YOROI - SYSTÈME RESPONSIVE IPHONE / IPAD / WATCH
 // ===================================================
 
-import { Dimensions, Platform } from 'react-native';
-
-// Récupérer les dimensions de l'écran
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+import { Dimensions, Platform, PixelRatio } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 
 // ===================================================
-// DÉTECTION DU TYPE D'APPAREIL
+// DÉTECTION DU TYPE D'APPAREIL (statique, fiable)
 // ===================================================
 
 /**
- * Détecte si l'appareil est un iPad
+ * Détecte si l'appareil est un iPad.
+ * Utilise Platform.isPad (RN 0.64+) en priorité.
  */
 export const isIPad = (): boolean => {
   if (Platform.OS !== 'ios') return false;
-
-  // iPad a un ratio plus proche de 4:3 vs iPhone 16:9
-  const ratio = SCREEN_HEIGHT / SCREEN_WIDTH;
-
-  // iPad: ~1.33 (4:3) ou ~1.43 (iPad Pro)
-  // iPhone: ~2.16 (16:9) ou plus
-  return ratio < 1.6;
+  if ((Platform as any).isPad) return true;
+  // Fallback: ratio écran proche de 4:3
+  const { width, height } = Dimensions.get('window');
+  return Math.max(width, height) / Math.min(width, height) < 1.6;
 };
 
-/**
- * Détecte si l'appareil est un iPhone
- */
-export const isIPhone = (): boolean => {
-  return Platform.OS === 'ios' && !isIPad();
-};
+export const isIPhone = (): boolean => Platform.OS === 'ios' && !isIPad();
+export const isAndroid = (): boolean => Platform.OS === 'android';
 
 // ===================================================
-// DIMENSIONS DE BASE
+// DIMENSIONS DE RÉFÉRENCE
 // ===================================================
 
-// Dimensions de référence (iPhone 14 Pro)
-const IPHONE_WIDTH = 393;
-const IPHONE_HEIGHT = 852;
+// Référence : iPhone 14 Pro (393 × 852)
+const REF_WIDTH = 393;
+const REF_HEIGHT = 852;
 
-// Facteur de scaling pour iPad
-const IPAD_SCALE_FACTOR = 1.5; // iPad affiche 50% plus grand
+// Facteurs selon taille d'iPhone
+// SE / petits  : ~375px → factor ~0.95
+// Standard     : ~390px → factor ~1.00
+// Pro Max / Plus: ~430px → factor ~1.09
+const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val));
+
+// ===================================================
+// FONCTIONS DE SCALE STATIQUES (pour StyleSheet)
+// ===================================================
+
+const { width: SW, height: SH } = Dimensions.get('window');
 
 /**
- * Scale une valeur selon l'appareil
- * @param size Taille de base (pour iPhone)
- * @returns Taille adaptée à l'appareil
+ * Scale horizontal basé sur la largeur de l'écran.
+ * Sur iPad, limité à 1.4× pour éviter les éléments trop grands.
  */
 export const scale = (size: number): number => {
   if (isIPad()) {
-    return Math.round(size * IPAD_SCALE_FACTOR);
+    const s = clamp(SW / REF_WIDTH, 1.2, 1.8);
+    return Math.round(size * s);
   }
-
-  // Pour iPhone, on scale proportionnellement à la largeur
-  const scaleWidth = SCREEN_WIDTH / IPHONE_WIDTH;
-  return Math.round(size * scaleWidth);
+  const s = clamp(SW / REF_WIDTH, 0.85, 1.15);
+  return Math.round(size * s);
 };
 
 /**
- * Scale vertical (basé sur la hauteur)
+ * Scale vertical basé sur la hauteur de l'écran.
  */
 export const scaleVertical = (size: number): number => {
   if (isIPad()) {
-    return Math.round(size * IPAD_SCALE_FACTOR);
+    const s = clamp(SH / REF_HEIGHT, 1.2, 1.8);
+    return Math.round(size * s);
   }
-
-  const scaleHeight = SCREEN_HEIGHT / IPHONE_HEIGHT;
-  return Math.round(size * scaleHeight);
+  const s = clamp(SH / REF_HEIGHT, 0.85, 1.15);
+  return Math.round(size * s);
 };
 
 /**
- * Scale modéré (entre scale normal et pas de scale)
- * Utilisé pour les textes, les espacements, etc.
+ * Scale modéré — mélange entre la taille originale et le scale complet.
+ * Idéal pour les polices (évite les extrêmes).
+ * factor=0 → pas de scale, factor=1 → scale complet
  */
-export const scaleModerate = (size: number, factor: number = 0.5): number => {
-  const scaledSize = scale(size);
-  return Math.round(size + (scaledSize - size) * factor);
+export const scaleModerate = (size: number, factor: number = 0.45): number => {
+  return Math.round(size + (scale(size) - size) * factor);
+};
+
+/**
+ * Normalise une taille de police selon la densité de l'écran.
+ */
+export const normalizeFontSize = (size: number): number => {
+  const scaled = scaleModerate(size, 0.35);
+  return Math.round(PixelRatio.roundToNearestPixel(scaled));
 };
 
 // ===================================================
-// VALEURS RESPONSIVES COMMUNES
+// VALEURS RESPONSIVES STATIQUES (pour StyleSheet.create)
 // ===================================================
 
 export const responsive = {
@@ -106,18 +113,18 @@ export const responsive = {
   radiusM: scale(12),
   radiusL: scale(16),
   radiusXL: scale(20),
-  radiusRound: scale(999),
+  radiusRound: 999,
 
   // Font Sizes
-  fontXS: scaleModerate(10, 0.3),
-  fontS: scaleModerate(12, 0.3),
-  fontM: scaleModerate(14, 0.3),
-  fontL: scaleModerate(16, 0.3),
-  fontXL: scaleModerate(18, 0.3),
-  fontXXL: scaleModerate(20, 0.3),
-  fontTitle: scaleModerate(24, 0.4),
-  fontLarge: scaleModerate(28, 0.4),
-  fontHuge: scaleModerate(32, 0.4),
+  fontXS: normalizeFontSize(10),
+  fontS: normalizeFontSize(12),
+  fontM: normalizeFontSize(14),
+  fontL: normalizeFontSize(16),
+  fontXL: normalizeFontSize(18),
+  fontXXL: normalizeFontSize(20),
+  fontTitle: normalizeFontSize(24),
+  fontLarge: normalizeFontSize(28),
+  fontHuge: normalizeFontSize(32),
 
   // Icon Sizes
   iconXS: scale(16),
@@ -149,101 +156,135 @@ export const responsive = {
   tabBarHeight: scale(60),
   tabBarIconSize: scale(24),
 
-  // Screen Dimensions
-  screenWidth: SCREEN_WIDTH,
-  screenHeight: SCREEN_HEIGHT,
+  // Screen Dimensions (statiques, pour infos)
+  screenWidth: SW,
+  screenHeight: SH,
 
-  // Safe Area (approximation)
+  // Safe Area
   safeAreaTop: isIPad() ? 20 : 44,
   safeAreaBottom: isIPad() ? 20 : 34,
 };
 
 // ===================================================
-// HELPERS POUR STYLES CONDITIONNELS
+// HOOK DYNAMIQUE — s'adapte à l'orientation en temps réel
 // ===================================================
 
 /**
- * Retourne une valeur selon l'appareil
- * @param iphoneValue Valeur pour iPhone
- * @param ipadValue Valeur pour iPad
+ * useResponsive — hook React qui recalcule tout dynamiquement
+ * lors de rotations d'écran ou de changements de fenêtre (iPad multitâche).
+ *
+ * Usage:
+ *   const { s, fs, ip, cols, screenWidth } = useResponsive();
  */
-export const deviceValue = <T,>(iphoneValue: T, ipadValue: T): T => {
-  return isIPad() ? ipadValue : iphoneValue;
+export function useResponsive() {
+  const { width, height } = useWindowDimensions();
+
+  const pad = isIPad();
+  const isLandscape = width > height;
+
+  // Scale horizontal dynamique
+  const s = (size: number): number => {
+    const factor = pad
+      ? clamp(width / REF_WIDTH, 1.0, 2.0)
+      : clamp(width / REF_WIDTH, 0.82, 1.18);
+    return Math.round(size * factor);
+  };
+
+  // Scale vertical dynamique
+  const sv = (size: number): number => {
+    const factor = pad
+      ? clamp(height / REF_HEIGHT, 1.0, 2.0)
+      : clamp(height / REF_HEIGHT, 0.82, 1.18);
+    return Math.round(size * factor);
+  };
+
+  // Font size dynamique
+  const fs = (size: number): number => {
+    const scaled = s(size);
+    return Math.round(size + (scaled - size) * 0.4);
+  };
+
+  // Nombre de colonnes selon l'écran
+  const cols = (defaultCols = 2): number => {
+    if (pad) return isLandscape ? 4 : 3;
+    if (width >= 414) return defaultCols + 1; // iPhone Plus/Pro Max
+    return defaultCols;
+  };
+
+  // Largeur d'un élément dans une grille
+  const colWidth = (numCols?: number, spacing = 16): number => {
+    const n = numCols ?? cols();
+    return (width - spacing * (n + 1)) / n;
+  };
+
+  // Largeur max pour les conteneurs (limité à 600 sur iPad)
+  const maxWidth = pad ? Math.min(width, 680) : width;
+
+  // Pill tab bar width
+  const pillWidth = pad
+    ? Math.min(width * 0.7, 600)
+    : width - 24;
+
+  return {
+    width,
+    height,
+    s,
+    sv,
+    fs,
+    cols,
+    colWidth,
+    maxWidth,
+    pillWidth,
+    isIPad: pad,
+    isLandscape,
+    isSmallPhone: !pad && width < 380,   // iPhone SE
+    isLargePhone: !pad && width >= 420,  // iPhone Pro Max / Plus
+  };
+}
+
+// ===================================================
+// HELPERS DEVICE
+// ===================================================
+
+export const deviceValue = <T,>(iphoneValue: T, ipadValue: T): T =>
+  isIPad() ? ipadValue : iphoneValue;
+
+export const deviceStyle = <T extends object>(iphoneStyle: T, ipadStyle: T): T =>
+  isIPad() ? ipadStyle : iphoneStyle;
+
+// ===================================================
+// GRILLE ET GRAPHIQUES
+// ===================================================
+
+export const getGridColumns = (): number => isIPad() ? 3 : 2;
+
+export const getGridItemWidth = (columns?: number, spacing = responsive.paddingL): number => {
+  const cols = columns ?? getGridColumns();
+  return (SW - spacing * (cols + 1)) / cols;
 };
 
-/**
- * Retourne un style selon l'appareil
- */
-export const deviceStyle = <T extends object>(iphoneStyle: T, ipadStyle: T): T => {
-  return isIPad() ? ipadStyle : iphoneStyle;
-};
-
-// ===================================================
-// GRID SYSTEM POUR IPAD
-// ===================================================
-
-/**
- * Nombre de colonnes dans une grille
- * iPhone: 2 colonnes, iPad: 3-4 colonnes
- */
-export const getGridColumns = (): number => {
-  return isIPad() ? 3 : 2;
-};
-
-/**
- * Largeur d'un élément dans une grille
- * @param columns Nombre de colonnes total
- * @param spacing Espacement entre les colonnes
- */
-export const getGridItemWidth = (columns?: number, spacing: number = responsive.paddingL): number => {
-  const cols = columns || getGridColumns();
-  const totalSpacing = spacing * (cols + 1);
-  return (SCREEN_WIDTH - totalSpacing) / cols;
-};
-
-// ===================================================
-// GRAPHIQUES ET DONNÉES
-// ===================================================
-
-/**
- * Nombre de points de données à afficher dans les graphiques
- * iPhone: 3-5 points, iPad: 7-10 points
- */
 export const getChartDataPoints = (type: 'mini' | 'medium' | 'large' = 'mini'): number => {
   if (isIPad()) {
-    switch (type) {
-      case 'mini': return 7;      // Mini graphiques (cards)
-      case 'medium': return 10;    // Graphiques moyens
-      case 'large': return 14;     // Grands graphiques
-      default: return 7;
-    }
-  } else {
-    switch (type) {
-      case 'mini': return 3;       // Mini graphiques (cards)
-      case 'medium': return 5;     // Graphiques moyens
-      case 'large': return 7;      // Grands graphiques
-      default: return 3;
-    }
+    return type === 'mini' ? 7 : type === 'medium' ? 10 : 14;
   }
+  return type === 'mini' ? 3 : type === 'medium' ? 5 : 7;
 };
 
-/**
- * Nombre de jours d'historique à afficher
- */
-export const getHistoryDays = (): number => {
-  return isIPad() ? 7 : 3;
-};
+export const getHistoryDays = (): number => isIPad() ? 7 : 3;
 
 // ===================================================
-// EXPORTS
+// EXPORT DEFAULT
 // ===================================================
 
 export default {
   scale,
   scaleVertical,
   scaleModerate,
+  normalizeFontSize,
   isIPad,
   isIPhone,
+  isAndroid,
+  useResponsive,
   responsive,
   deviceValue,
   deviceStyle,

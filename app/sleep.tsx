@@ -46,6 +46,7 @@ import {
   SleepStats,
 } from '@/lib/sleepService';
 import { notificationService } from '@/lib/notificationService';
+import HealthConnect from '@/lib/healthConnect';
 import logger from '@/lib/security/logger';
 
 // Map des locales date-fns par langue
@@ -83,6 +84,11 @@ export default function SleepScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
+  // Données sommeil Apple Health / Samsung Health
+  const [hkLastNight, setHkLastNight] = useState<{
+    total: number; deep: number; rem: number; core: number; awake: number;
+  } | null>(null);
+
   // Notifications
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [bedtimeReminder, setBedtimeReminder] = useState('22:30');
@@ -93,14 +99,29 @@ export default function SleepScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      const [entriesData, statsData, goalData] = await Promise.all([
+      const [entriesData, statsData, goalData, hkSleepHistory] = await Promise.all([
         getSleepEntries(),
         getSleepStats(),
         getSleepGoal(),
+        HealthConnect.getSleepHistory(1).catch(() => null),
       ]);
       setEntries(entriesData);
       setStats(statsData);
       setGoal(goalData);
+
+      // Données Apple Health / Samsung Health (dernière nuit)
+      if (hkSleepHistory && hkSleepHistory.length > 0) {
+        const last = hkSleepHistory[hkSleepHistory.length - 1];
+        if (last.total > 0) {
+          setHkLastNight({
+            total: last.total,
+            deep: last.deep || 0,
+            rem: last.rem || 0,
+            core: last.core || 0,
+            awake: last.awake || 0,
+          });
+        }
+      }
 
       const notifSettings = notificationService.getSettings();
       setNotificationsEnabled(notifSettings.sleep.enabled);
@@ -174,6 +195,63 @@ export default function SleepScreen() {
 
   const advice = stats ? getSleepAdvice(stats.sleepDebtHours) : null;
 
+  // Données de la dernière nuit : Apple Health / Samsung Health en priorité, sinon entrée manuelle
+  const scoreDuration = (hkLastNight?.total && hkLastNight.total > 0)
+    ? hkLastNight.total
+    : (stats?.lastNightDuration || 0);
+
+  // Qualité dérivée des phases HealthKit (deep+REM / total) → 1-5
+  // Si pas de phases, qualité manuelle. Si aucune, basé sur la durée.
+  const hkQuality = (() => {
+    if (!hkLastNight || hkLastNight.total === 0) return 0;
+    const { deep, rem, core, awake, total } = hkLastNight;
+    if (deep + rem + core > 0) {
+      // On a des phases détaillées → ratio deep+REM
+      const qualityRatio = (deep + rem) / total;
+      if (qualityRatio >= 0.35) return 5;
+      if (qualityRatio >= 0.25) return 4;
+      if (qualityRatio >= 0.15) return 3;
+      if (qualityRatio >= 0.05) return 2;
+      return 1;
+    }
+    // Pas de phases → qualité basée durée vs objectif
+    const durationRatio = Math.min(total / goal, 1);
+    if (durationRatio >= 0.9) return 5;
+    if (durationRatio >= 0.75) return 4;
+    if (durationRatio >= 0.6) return 3;
+    if (durationRatio >= 0.4) return 2;
+    return 1;
+  })();
+
+  const scoreQuality = hkLastNight?.total ? hkQuality : (stats?.lastNightQuality || 0);
+
+  // Score global 0-100 (60% durée, 40% qualité)
+  const sleepScore = (scoreDuration > 0 || scoreQuality > 0)
+    ? Math.round(
+        Math.min(scoreDuration / goal, 1) * 100 * 0.6 +
+        (scoreQuality / 5) * 100 * 0.4
+      )
+    : null;
+
+  // Phases à afficher dans la carte score (HealthKit en priorité)
+  const scorePhases = hkLastNight && (hkLastNight.deep + hkLastNight.rem + hkLastNight.core) > 0
+    ? hkLastNight
+    : null;
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return '#10B981';
+    if (score >= 60) return '#F59E0B';
+    if (score >= 40) return '#F97316';
+    return '#EF4444';
+  };
+
+  const getScoreLabel = (score: number) => {
+    if (score >= 80) return 'Excellent';
+    if (score >= 60) return 'Bien';
+    if (score >= 40) return 'Correct';
+    return 'Insuffisant';
+  };
+
   // Fond bleu marine nuit
   const nightBg = '#0B1120';
   const nightCard = '#131D36';
@@ -200,6 +278,70 @@ export default function SleepScreen() {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+
+        {/* Score de la dernière nuit */}
+        {sleepScore !== null && (
+          <View style={[styles.scoreCard, { backgroundColor: nightCard }]}>
+            <View style={styles.scoreRow}>
+              <View style={styles.scoreLeft}>
+                <Text style={styles.scoreLabel}>DERNIERE NUIT</Text>
+                <Text style={[styles.scoreValue, { color: getScoreColor(sleepScore) }]}>
+                  {sleepScore}
+                  <Text style={styles.scoreMax}>/100</Text>
+                </Text>
+                <Text style={[styles.scoreQuality, { color: getScoreColor(sleepScore) }]}>
+                  {getScoreLabel(sleepScore)}
+                </Text>
+              </View>
+              <View style={styles.scoreRight}>
+                <View style={styles.scoreDetail}>
+                  <Clock size={13} color="#7B8DB5" />
+                  <Text style={styles.scoreDetailText}>
+                    {formatSleepDuration(scoreDuration)}
+                  </Text>
+                </View>
+                <View style={styles.scoreDetail}>
+                  <Star size={13} color="#F59E0B" />
+                  <Text style={styles.scoreDetailText}>
+                    {scoreQuality > 0 ? `${scoreQuality}/5` : '--'}
+                  </Text>
+                </View>
+                {/* Barre de score */}
+                <View style={styles.scoreBarBg}>
+                  <View style={[styles.scoreBarFill, {
+                    width: `${sleepScore}%` as any,
+                    backgroundColor: getScoreColor(sleepScore),
+                  }]} />
+                </View>
+              </View>
+            </View>
+
+            {/* Phases de sommeil Apple Health / Samsung Health */}
+            {scorePhases && (() => {
+              const { deep, rem, core, awake } = scorePhases;
+              const total = deep + rem + core + awake;
+              if (total === 0) return null;
+              const pct = (v: number) => `${Math.round((v / total) * 100)}%` as any;
+              return (
+                <View style={styles.scorePhasesContainer}>
+                  <View style={styles.scorePhaseBar}>
+                    {deep > 0 && <View style={[styles.scorePhaseSegment, { width: pct(deep), backgroundColor: '#1E40AF' }]} />}
+                    {rem > 0 && <View style={[styles.scorePhaseSegment, { width: pct(rem), backgroundColor: '#7C3AED' }]} />}
+                    {core > 0 && <View style={[styles.scorePhaseSegment, { width: pct(core), backgroundColor: '#60A5FA' }]} />}
+                    {awake > 0 && <View style={[styles.scorePhaseSegment, { width: pct(awake), backgroundColor: '#FCA5A5' }]} />}
+                  </View>
+                  <View style={styles.scorePhaseLegend}>
+                    {deep > 0 && <View style={styles.scoreLegendItem}><View style={[styles.scoreLegendDot, { backgroundColor: '#1E40AF' }]} /><Text style={styles.scoreLegendText}>Prof. {Math.round(deep)}m</Text></View>}
+                    {rem > 0 && <View style={styles.scoreLegendItem}><View style={[styles.scoreLegendDot, { backgroundColor: '#7C3AED' }]} /><Text style={styles.scoreLegendText}>REM {Math.round(rem)}m</Text></View>}
+                    {core > 0 && <View style={styles.scoreLegendItem}><View style={[styles.scoreLegendDot, { backgroundColor: '#60A5FA' }]} /><Text style={styles.scoreLegendText}>Léger {Math.round(core)}m</Text></View>}
+                    {awake > 0 && <View style={styles.scoreLegendItem}><View style={[styles.scoreLegendDot, { backgroundColor: '#FCA5A5' }]} /><Text style={styles.scoreLegendText}>Éveillé {Math.round(awake)}m</Text></View>}
+                  </View>
+                </View>
+              );
+            })()}
+          </View>
+        )}
+
         {/* Carte principale */}
         <View style={[styles.mainCard, { backgroundColor: nightCard }]}>
           <View style={styles.mainHeader}>
@@ -426,6 +568,36 @@ const styles = StyleSheet.create({
   title: { flex: 1, fontSize: 20, fontWeight: '800' },
   scrollView: { flex: 1 },
   content: { padding: 16 },
+
+  // Score card
+  scoreCard: {
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  scoreLeft: { alignItems: 'center', minWidth: 80 },
+  scoreLabel: { fontSize: 9, fontWeight: '700', letterSpacing: 1, color: '#7B8DB5', textTransform: 'uppercase', marginBottom: 4 },
+  scoreValue: { fontSize: 52, fontWeight: '900', letterSpacing: -2, lineHeight: 56 },
+  scoreMax: { fontSize: 18, fontWeight: '600', color: '#7B8DB5' },
+  scoreQuality: { fontSize: 11, fontWeight: '700', marginTop: 2 },
+  scoreRight: { flex: 1, gap: 6 },
+  scoreDetail: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  scoreDetailText: { fontSize: 13, fontWeight: '600', color: '#E8ECF4' },
+  scoreBarBg: { height: 6, backgroundColor: '#1E2D4D', borderRadius: 3, overflow: 'hidden', marginTop: 4 },
+  scoreBarFill: { height: '100%', borderRadius: 3 },
+  scorePhasesContainer: { marginTop: 14, borderTopWidth: 1, borderTopColor: '#1E2D4D', paddingTop: 12 },
+  scorePhaseBar: { flexDirection: 'row', height: 8, borderRadius: 4, overflow: 'hidden', backgroundColor: '#1E2D4D' },
+  scorePhaseSegment: { height: '100%' },
+  scorePhaseLegend: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  scoreLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  scoreLegendDot: { width: 8, height: 8, borderRadius: 4 },
+  scoreLegendText: { fontSize: 11, fontWeight: '600', color: '#7B8DB5' },
 
   // Main card
   mainCard: {

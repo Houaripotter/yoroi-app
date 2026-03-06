@@ -14,6 +14,8 @@ interface EssentielActivityCardProps {
   spo2?: number;
   respiratoryRate?: number;
   vo2Max?: number;
+  exerciseMinutes?: number | null;
+  standHours?: number | null;
 }
 
 type MetricDef = {
@@ -35,6 +37,8 @@ export const EssentielActivityCard: React.FC<EssentielActivityCardProps> = ({
   spo2,
   respiratoryRate,
   vo2Max,
+  exerciseMinutes,
+  standHours,
 }) => {
   const { colors } = useTheme();
 
@@ -116,6 +120,28 @@ export const EssentielActivityCard: React.FC<EssentielActivityCardProps> = ({
       bgColor: '#CCFBF1',
       value: String(Math.round(respiratoryRate)),
       unit: 'resp/min',
+    });
+  }
+
+  if (exerciseMinutes != null && exerciseMinutes > 0) {
+    metrics.push({
+      key: 'exercise',
+      icon: 'timer-outline',
+      color: '#F59E0B',
+      bgColor: '#FEF3C7',
+      value: String(Math.round(exerciseMinutes)),
+      unit: 'min exercice',
+    });
+  }
+
+  if (standHours != null && standHours > 0) {
+    metrics.push({
+      key: 'stand',
+      icon: 'human',
+      color: '#06B6D4',
+      bgColor: '#CFFAFE',
+      value: String(Math.round(standHours)),
+      unit: 'h debout',
     });
   }
 

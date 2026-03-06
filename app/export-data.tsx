@@ -264,7 +264,7 @@ export default function ExportDataScreen() {
             Export CSV complet
           </Text>
           <Text style={[styles.csvSectionDesc, { color: colors.textMuted }]}>
-            Poids, composition corporelle et mensurations dans un seul fichier
+            Poids, composition corporelle et mensurations — une ligne par date, format lisible dans Excel et Google Sheets. Reimportable dans Yoroi.
           </Text>
 
           <TouchableOpacity
@@ -318,10 +318,10 @@ export default function ExportDataScreen() {
 
           <View style={styles.infoItem}>
             <Text style={[styles.infoItemLabel, { color: colors.textPrimary }]}>
-              CSV
+              CSV (recommande)
             </Text>
             <Text style={[styles.infoItemText, { color: colors.textMuted }]}>
-              Format tableur compatible Excel, Google Sheets. Parfait pour créer tes propres graphiques.
+              Format tableur optimise pour Excel et Google Sheets. Separateur ";" pour compatibilite maximale. Dates en JJ/MM/AAAA. Inclut des commentaires d'aide. Reimportable dans Yoroi.
             </Text>
           </View>
 

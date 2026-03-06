@@ -1328,6 +1328,11 @@ export const getFirstMeasurement = async (): Promise<Measurement | null> => {
   return result || null;
 };
 
+export const deleteMeasurementRecord = async (id: number): Promise<void> => {
+  const database = await openDatabase();
+  await database.runAsync('DELETE FROM measurements WHERE id = ?', [id]);
+};
+
 // ============================================
 // FONCTIONS CRUD - PLANNING HEBDOMADAIRE
 // ============================================

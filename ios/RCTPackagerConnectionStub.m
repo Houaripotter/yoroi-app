@@ -1,25 +1,54 @@
-// Stubs pour les classes React Native supprimées dans RN 0.81+
-// Requis par expo-dev-launcher et expo-dev-menu pour satisfaire le linker
+// Stub complet RCTPackagerConnection pour expo-dev-menu + expo-dev-launcher
+// Evite le crash de duplication de classe React.framework / Yoroi.debug.dylib
+// expo-dev-menu appelle: [RCTPackagerConnection shared] puis addNotificationHandler:queue:forMethod:
 
 #import <Foundation/Foundation.h>
+#import <dispatch/dispatch.h>
 
-// RCTPackagerConnection (expo-dev-launcher)
+// RCTPackagerConnection - stub complet
 @interface RCTPackagerConnection : NSObject
++ (instancetype)shared;
 + (instancetype)sharedPackagerConnection;
 - (void)setSocketConnectionURL:(NSURL *)url;
-@end
-@implementation RCTPackagerConnection
-+ (instancetype)sharedPackagerConnection { return [[self alloc] init]; }
-- (void)setSocketConnectionURL:(NSURL *)url {}
+- (void)addNotificationHandler:(id)handler queue:(dispatch_queue_t)queue forMethod:(NSString *)method;
+- (void)removeNotificationHandler:(id)handler queue:(dispatch_queue_t)queue forMethod:(NSString *)method;
+- (void)stop;
 @end
 
-// RCTPerfMonitor (expo-dev-menu)
+@implementation RCTPackagerConnection
+
++ (instancetype)shared {
+  static RCTPackagerConnection *instance;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{ instance = [[self alloc] init]; });
+  return instance;
+}
+
++ (instancetype)sharedPackagerConnection {
+  return [self shared];
+}
+
+- (void)setSocketConnectionURL:(NSURL *)url {}
+
+- (void)addNotificationHandler:(id)handler
+                         queue:(dispatch_queue_t)queue
+                     forMethod:(NSString *)method {}
+
+- (void)removeNotificationHandler:(id)handler
+                            queue:(dispatch_queue_t)queue
+                        forMethod:(NSString *)method {}
+
+- (void)stop {}
+
+@end
+
+// RCTPerfMonitor - stub
 @interface RCTPerfMonitor : NSObject
 @end
 @implementation RCTPerfMonitor
 @end
 
-// RCTReconnectingWebSocket (expo-dev-launcher)
+// RCTReconnectingWebSocket - stub
 @interface RCTReconnectingWebSocket : NSObject
 - (instancetype)initWithURL:(NSURL *)url;
 - (void)start;

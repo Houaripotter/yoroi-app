@@ -25,6 +25,8 @@ interface DualComparisonCardProps {
   leftValue: number;
   rightValue: number;
   unit: string;
+  leftUnit?: string;  // unité optionnelle spécifique gauche
+  rightUnit?: string; // unité optionnelle spécifique droite
   onPressLeft?: () => void;
   onPressRight?: () => void;
 }
@@ -66,6 +68,8 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
   leftValue,
   rightValue,
   unit,
+  leftUnit,
+  rightUnit,
   onPressLeft,
   onPressRight,
 }) => {
@@ -171,18 +175,15 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
       }]}
       onLayout={handleLayout}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={[styles.headerIcon, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
-            <ArrowLeftRight size={16} color={colors.textSecondary} strokeWidth={2.5} />
-          </View>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
-        </View>
+      {/* Titre centré avec accent couleur */}
+      <View style={styles.titleRow}>
+        <View style={[styles.titleDash, { backgroundColor: leftColor }]} />
+        <Text style={[styles.titleText, { color: colors.textPrimary }]}>{title.toUpperCase()}</Text>
+        <View style={[styles.titleDash, { backgroundColor: rightColor }]} />
         {(leftValue > 0 && rightValue > 0) && (
           <View style={[styles.deltaBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
             <Text style={[styles.deltaText, { color: colors.textSecondary }]}>
-              {`\u0394 ${smartFormat(delta)} ${unit}`}
+              {`\u0394 ${smartFormat(delta)}`}
             </Text>
           </View>
         )}
@@ -311,7 +312,7 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
           </View>
           <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
             {leftValue > 0 ? smartFormat(leftValue) : '\u2014'}
-            <Text style={[styles.metricUnit, { color: colors.textSecondary }]}> {unit}</Text>
+            <Text style={[styles.metricUnit, { color: colors.textSecondary }]}> {leftUnit !== undefined ? leftUnit : unit}</Text>
           </Text>
           <View style={[styles.progressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
             <View style={[styles.progressFill, { width: `${leftBarWidth}%`, backgroundColor: leftColor }]} />
@@ -332,7 +333,7 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
           </View>
           <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
             {rightValue > 0 ? smartFormat(rightValue) : '\u2014'}
-            <Text style={[styles.metricUnit, { color: colors.textSecondary }]}> {unit}</Text>
+            <Text style={[styles.metricUnit, { color: colors.textSecondary }]}> {rightUnit !== undefined ? rightUnit : unit}</Text>
           </Text>
           <View style={[styles.progressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
             <View style={[styles.progressFill, { width: `${rightBarWidth}%`, backgroundColor: rightColor }]} />
@@ -355,33 +356,29 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  headerLeft: {
+  // Titre centré avec tirets colorés
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    marginBottom: 14,
   },
-  headerIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+  titleDash: {
+    flex: 1,
+    height: 2,
+    borderRadius: 1,
+    opacity: 0.6,
   },
-  title: {
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: -0.3,
+  titleText: {
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 2,
+    textAlign: 'center',
   },
   deltaBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   deltaText: {
     fontSize: 11,

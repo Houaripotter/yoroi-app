@@ -63,6 +63,10 @@
     <string>YOROI enregistre vos pesées quotidiennes, vos séances d'entraînement, vos données d'hydratation et de sommeil pour synchroniser automatiquement vos progrès entre tous vos appareils.</string>
     <key>NSCalendarUsageDescription</key>
     <string>YOROI a besoin d'accéder à votre calendrier pour programmer vos rappels d'entraînement.</string>
+    <key>NSCalendarsUsageDescription</key>
+    <string>YOROI a besoin d'accéder à votre calendrier pour programmer vos rappels d'entraînement.</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>YOROI a besoin d'accéder à votre calendrier pour programmer vos rappels d'entraînement.</string>
     <key>NSFaceIDUsageDescription</key>
     <string>YOROI utilise Face ID pour sécuriser l'accès à vos données personnelles.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>

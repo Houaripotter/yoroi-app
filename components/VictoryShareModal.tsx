@@ -37,7 +37,7 @@ import {
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { calculatePace, formatDuration, formatDistance, BenchmarkEntry } from '@/lib/carnetService';
+import { calculatePace, formatDuration, formatDistance, formatValue, BenchmarkEntry } from '@/lib/carnetService';
 import { LinearGradient } from 'expo-linear-gradient';
 import { logger } from '@/lib/security/logger';
 
@@ -94,7 +94,7 @@ export default function VictoryShareModal({
 
   // Detect activity type
   const isRunningActivity = ['running', 'trail', 'hyrox'].includes(sessionData.category.toLowerCase());
-  const isForceActivity = sessionData.category.toLowerCase() === 'force' || sessionData.category.toLowerCase() === 'musculation';
+  const isForceActivity = ['force', 'musculation', 'bodyweight'].includes(sessionData.category.toLowerCase());
   const isCardioActivity = sessionData.category.toLowerCase() === 'cardio';
   const isCombatActivity = ['jjb', 'jjb_garde', 'jjb_passage', 'jjb_soumission', 'combat', 'striking', 'lutte', 'boxe', 'mma', 'muay_thai'].includes(sessionData.category.toLowerCase());
 
@@ -194,12 +194,18 @@ export default function VictoryShareModal({
   const getCategoryColor = () => {
     switch (sessionData.category.toLowerCase()) {
       case 'force':
+      case 'musculation':
+      case 'bodyweight':
         return '#EF4444';
       case 'running':
         return '#3B82F6';
       case 'trail':
         return '#10B981';
       case 'hyrox':
+        return '#F59E0B';
+      case 'cardio':
+        return '#06B6D4';
+      case 'street_workout':
         return '#F59E0B';
       case 'jjb':
       case 'jjb_garde':
@@ -276,6 +282,11 @@ export default function VictoryShareModal({
 
     return (
       <View style={styles.runningStatsContainer}>
+        {/* Exercise Name */}
+        <Text style={[styles.exerciseName, { color: textColor, marginBottom: 12 }, textShadow]}>
+          {sessionData.exerciseName}
+        </Text>
+
         {/* DISTANCE - Primary */}
         {distanceDisplay && (
           <View style={styles.runningStatBlock}>
@@ -451,7 +462,7 @@ export default function VictoryShareModal({
           {sessionData.distanceKm !== undefined && (
             <View style={[styles.miniStatBlock, { backgroundColor: getCategoryColor() + '30', borderColor: getCategoryColor() + '50', borderWidth: 1 }]}>
               <Text style={[styles.miniStatLabel, { color: getCategoryColor() }, textShadow]}>DISTANCE</Text>
-              <Text style={[styles.miniStatValue, { color: textColor }, textShadow]}>{sessionData.distanceKm} km</Text>
+              <Text style={[styles.miniStatValue, { color: textColor }, textShadow]}>{formatDistance(sessionData.distanceKm)}</Text>
             </View>
           )}
 
@@ -856,11 +867,12 @@ export const createVictoryFromEntry = (
 
   let performance = '';
   if (isForce && (unit === 'kg' || unit === 'lbs')) {
-    performance = entry.reps ? `${entry.value} ${unit} × ${entry.reps}` : `${entry.value} ${unit}`;
+    performance = entry.reps ? `${entry.value} ${unit} × ${entry.reps} reps` : `${entry.value} ${unit}`;
   } else if ((isRunning || isCardio) && unit === 'km') {
     performance = `${entry.value} km`;
   } else {
-    performance = `${entry.value} ${unit}`;
+    // formatValue handles time (seconds→"24min 50s"), reps, meters, etc.
+    performance = formatValue(entry.value, unit as any);
   }
 
   return {
@@ -871,8 +883,12 @@ export const createVictoryFromEntry = (
     duration: entry.duration,
     calories: entry.calories,
     isPR,
-    distanceKm: (isRunning || isCardio) ? (entry.distance || entry.value) : undefined,
-    timeSeconds: (isRunning || isCardio) && entry.duration ? entry.duration * 60 : undefined,
+    distanceKm: (isRunning || isCardio) ? (entry.distance || (unit === 'km' ? entry.value : undefined)) : undefined,
+    // For time-unit benchmarks (e.g. 5km chrono), entry.value IS the time in seconds
+    // For km-unit benchmarks, the time is in entry.duration (minutes)
+    timeSeconds: (isRunning || isCardio)
+      ? (unit === 'time' ? entry.value : (entry.duration ? entry.duration * 60 : undefined))
+      : undefined,
     reps: entry.reps,
     weight: isForce ? entry.value : undefined,
     weightUnit: isForce ? (unit as 'kg' | 'lbs') : undefined,

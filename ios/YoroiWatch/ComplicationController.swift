@@ -41,17 +41,23 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
   // MARK: - Clés UserDefaults (synchronisées depuis WatchSessionManager)
 
   private let ud = UserDefaults.standard
-  private var heartRate: Int      { ud.integer(forKey: "yoroi_heartRate") }
-  private var restingHR: Int      { ud.integer(forKey: "yoroi_restingHR") }
-  private var spo2: Int           { ud.integer(forKey: "yoroi_spo2") }
+  private var heartRate: Int        { ud.integer(forKey: "yoroi_heartRate") }
+  private var heartRateMin: Int     { ud.integer(forKey: "yoroi_heartRateMin") }
+  private var heartRateMax: Int     { ud.integer(forKey: "yoroi_heartRateMax") }
+  private var restingHR: Int        { ud.integer(forKey: "yoroi_restingHR") }
+  private var spo2: Int             { ud.integer(forKey: "yoroi_spo2") }
+  private var spo2Min: Int          { ud.integer(forKey: "yoroi_spo2Min") }
+  private var spo2Max: Int          { ud.integer(forKey: "yoroi_spo2Max") }
+  private var respiratoryRate: Int  { ud.integer(forKey: "yoroi_respiratoryRate") }
   private var localSteps: Int     { ud.integer(forKey: "yoroi_steps") }
   private var stepsGoal: Int      { let v = ud.integer(forKey: "yoroi_stepsGoal"); return v > 0 ? v : 8000 }
   private var hydration: Int      { ud.integer(forKey: "yoroi_hydration") }
   private var hydrationGoal: Int  { let v = ud.integer(forKey: "yoroi_hydrationGoal"); return v > 0 ? v : 3000 }
   private var streak: Int         { ud.integer(forKey: "yoroi_streak") }
-  private var timerRemaining: Int { ud.integer(forKey: "yoroi_timerRemaining") }
-  private var timerTotal: Int     { let v = ud.integer(forKey: "yoroi_timerTotal"); return v > 0 ? v : 90 }
-  private var timerRunning: Bool  { ud.bool(forKey: "yoroi_timerRunning") }
+  private var timerRemaining: Int  { ud.integer(forKey: "yoroi_timerRemaining") }
+  private var timerTotal: Int      { let v = ud.integer(forKey: "yoroi_timerTotal"); return v > 0 ? v : 90 }
+  private var timerRunning: Bool   { ud.bool(forKey: "yoroi_timerRunning") }
+  private var timerEndDate: Date?  { ud.object(forKey: "yoroi_timerEndDate") as? Date }
   private var sleepMinutes: Int   { ud.integer(forKey: "yoroi_sleepMinutes") }
   private var sleepGoal: Int      { let v = ud.integer(forKey: "yoroi_sleepGoal"); return v > 0 ? v : 480 }
   private var sleepQuality: Int   { ud.integer(forKey: "yoroi_sleepQuality") }
@@ -101,7 +107,8 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
       CLKComplicationDescriptor(
         identifier: "yoroi.sleep",
         displayName: "Sommeil",
-        supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .modularSmall]
+        supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .modularSmall],
+        userInfo: ["tabIndex": 3] as [AnyHashable: Any]
       ),
       CLKComplicationDescriptor(
         identifier: "yoroi.weight",
@@ -126,6 +133,11 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
       CLKComplicationDescriptor(
         identifier: "yoroi.restinghr",
         displayName: "FC au Repos",
+        supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall, .modularSmall]
+      ),
+      CLKComplicationDescriptor(
+        identifier: "yoroi.respiratory",
+        displayName: "FR – Fréquence Respiratoire",
         supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall, .modularSmall]
       ),
     ]
@@ -174,8 +186,9 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     case "yoroi.calories":  return caloriesTemplate(family: complication.family)
     case "yoroi.distance":  return distanceTemplate(family: complication.family)
     case "yoroi.rank":      return rankTemplate(family: complication.family)
-    case "yoroi.restinghr": return restingHRTemplate(family: complication.family)
-    default:                return nil
+    case "yoroi.restinghr":   return restingHRTemplate(family: complication.family)
+    case "yoroi.respiratory": return respiratoryTemplate(family: complication.family)
+    default:                  return nil
     }
   }
 
@@ -192,12 +205,14 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     switch family {
 
     case .graphicCircular:
-      let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
-      t.centerTextProvider = CLKSimpleTextProvider(text: text, shortText: text)
+      // Zone color: blue=bradycardie, vert=normal, orange=élevé, rouge=danger
+      let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
+      t.centerTextProvider = CLKSimpleTextProvider(text: text)
+      t.bottomTextProvider = CLKSimpleTextProvider(text: "bpm")
       t.gaugeProvider = CLKSimpleGaugeProvider(
         style: .fill,
-        gaugeColors: [gaugeColor, .yRed],
-        gaugeColorLocations: [0, 1],
+        gaugeColors: [.yGreen, .yOrange, .yRed],
+        gaugeColorLocations: [0, 0.5, 1.0],
         fillFraction: frac
       )
       return t
@@ -247,12 +262,13 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     switch family {
 
     case .graphicCircular:
-      let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
-      t.centerTextProvider = CLKSimpleTextProvider(text: text, shortText: text)
+      let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
+      t.centerTextProvider = CLKSimpleTextProvider(text: val > 0 ? "\(val)" : "--")
+      t.bottomTextProvider = CLKSimpleTextProvider(text: "% SpO2")
       t.gaugeProvider = CLKSimpleGaugeProvider(
         style: .fill,
-        gaugeColors: [color, .yBlue],
-        gaugeColorLocations: [0, 1],
+        gaugeColors: [.yRed, .yOrange, .yGreen],
+        gaugeColorLocations: [0, 0.5, 1.0],
         fillFraction: frac
       )
       return t
@@ -290,53 +306,77 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     }
   }
 
-  // MARK: - ⏱ Timer
+  // MARK: - Timer
 
   private func timerTemplate(family: CLKComplicationFamily) -> CLKComplicationTemplate? {
-    let remaining = timerRemaining
-    let total     = timerTotal
-    let running   = timerRunning
-    let mins      = remaining / 60
-    let secs      = remaining % 60
-    let timeText  = remaining > 0 ? String(format: "%d:%02d", mins, secs) : "0:00"
-    let frac      = total > 0 ? Float(remaining) / Float(total) : 0.0
+    let remaining  = timerRemaining
+    let total      = timerTotal
+    let running    = timerRunning
+    let endDate    = timerEndDate ?? Date().addingTimeInterval(Double(remaining))
+    // La date de début = fin - durée totale (pour la jauge)
+    let startDate  = endDate.addingTimeInterval(-Double(total))
+    let mins       = remaining / 60
+    let secs       = remaining % 60
+    let timeText   = remaining > 0 ? String(format: "%d:%02d", mins, secs) : "0:00"
+    let frac       = total > 0 ? Float(remaining) / Float(total) : 0.0
     let statusText = running ? "EN COURS" : (remaining > 0 ? "PAUSE" : "TIMER")
     let timerColor: UIColor = running ? .yOrange : .yGray
+    let totalMins  = total / 60
+
+    // Quand le timer tourne : providers natifs watchOS — décompte SANS code, même en veille
+    let centerProvider: CLKTextProvider
+    let gaugeProvider: CLKGaugeProvider
+
+    if running {
+      // CLKRelativeDateTextProvider : l'OS met à jour le chiffre tout seul (0:00, 1:23, ...)
+      centerProvider = CLKRelativeDateTextProvider(date: endDate, style: .timer, units: [.minute, .second])
+      // CLKTimeIntervalGaugeProvider : la jauge se vide toute seule entre startDate et endDate
+      gaugeProvider = CLKTimeIntervalGaugeProvider(
+        style: .fill,
+        gaugeColors: [timerColor, .yRed],
+        gaugeColorLocations: [NSNumber(value: 0), NSNumber(value: 1)],
+        start: startDate,
+        end: endDate
+      )
+    } else {
+      centerProvider = CLKSimpleTextProvider(text: timeText)
+      gaugeProvider  = CLKSimpleGaugeProvider(
+        style: .fill,
+        gaugeColors: [timerColor, .yGray],
+        gaugeColorLocations: [0, 1],
+        fillFraction: frac
+      )
+    }
 
     switch family {
 
     case .graphicCircular:
-      let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
-      t.centerTextProvider = CLKSimpleTextProvider(text: timeText, shortText: timeText)
-      t.gaugeProvider = CLKSimpleGaugeProvider(
-        style: .fill,
-        gaugeColors: [timerColor, .yRed],
-        gaugeColorLocations: [0, 1],
-        fillFraction: frac
-      )
+      let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
+      t.centerTextProvider = centerProvider
+      t.bottomTextProvider = CLKSimpleTextProvider(text: running ? "min" : statusText)
+      t.gaugeProvider      = gaugeProvider
       return t
 
     case .graphicCorner:
       let t = CLKComplicationTemplateGraphicCornerGaugeText()
-      t.outerTextProvider = CLKSimpleTextProvider(text: statusText, shortText: "TMR")
-      t.gaugeProvider = CLKSimpleGaugeProvider(
-        style: .fill,
-        gaugeColors: [timerColor, .yRed],
-        gaugeColorLocations: [0, 1],
-        fillFraction: frac
-      )
+      t.outerTextProvider = running
+        ? CLKRelativeDateTextProvider(date: endDate, style: .timer, units: [.minute, .second])
+        : CLKSimpleTextProvider(text: statusText, shortText: "TMR")
+      t.gaugeProvider = gaugeProvider
       return t
 
     case .graphicRectangular:
       let t = CLKComplicationTemplateGraphicRectangularStandardBody()
       t.headerTextProvider = CLKSimpleTextProvider(text: "Timer YOROI")
-      t.body1TextProvider  = CLKSimpleTextProvider(text: timeText)
+      t.body1TextProvider  = centerProvider
       t.body2TextProvider  = CLKSimpleTextProvider(text: statusText)
       return t
 
     case .utilitarianSmall:
       let t = CLKComplicationTemplateUtilitarianSmallFlat()
-      t.textProvider = CLKSimpleTextProvider(text: timeText, shortText: timeText)
+      t.textProvider = running
+        ? CLKRelativeDateTextProvider(date: endDate, style: .timer, units: [.minute, .second])
+        : CLKSimpleTextProvider(text: timeText, shortText: timeText)
       return t
 
     default: return nil
@@ -393,12 +433,14 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     switch family {
 
     case .graphicCircular:
-      let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
-      t.centerTextProvider = CLKSimpleTextProvider(text: text, shortText: text)
+      let goalLabel = stepsGoal >= 1000 ? "/\(stepsGoal / 1000)k" : "/\(stepsGoal)"
+      let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
+      t.centerTextProvider = CLKSimpleTextProvider(text: text)
+      t.bottomTextProvider = CLKSimpleTextProvider(text: "\(goalLabel) pas")
       t.gaugeProvider = CLKSimpleGaugeProvider(
         style: .fill,
-        gaugeColors: [color, .yGreen],
-        gaugeColorLocations: [0, 1],
+        gaugeColors: [.yRed, .yOrange, .yGreen],
+        gaugeColorLocations: [0, 0.5, 1.0],
         fillFraction: frac
       )
       return t
@@ -443,12 +485,16 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     switch family {
 
     case .graphicCircular:
-      let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
-      t.centerTextProvider = CLKSimpleTextProvider(text: text, shortText: text)
+      let centerVal = current > 0 ? (current >= 1000 ? String(format: "%.1f", Double(current) / 1000.0) : "\(current)") : "--"
+      let goalLitres = goal >= 1000 ? String(format: "%.1f", Double(goal) / 1000.0) : "\(goal)"
+      let unitLabel  = current >= 1000 || goal >= 1000 ? "L" : "ml"
+      let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
+      t.centerTextProvider = CLKSimpleTextProvider(text: centerVal)
+      t.bottomTextProvider = CLKSimpleTextProvider(text: "/\(goalLitres)\(unitLabel)")
       t.gaugeProvider = CLKSimpleGaugeProvider(
         style: .fill,
-        gaugeColors: [color, .yCyan],
-        gaugeColorLocations: [0, 1],
+        gaugeColors: [.yRed, .yOrange, .yGreen],
+        gaugeColorLocations: [0, 0.5, 1.0],
         fillFraction: frac
       )
       return t
@@ -495,9 +541,15 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
 
     switch family {
     case .graphicCircular:
-      let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
-      t.centerTextProvider = CLKSimpleTextProvider(text: text, shortText: text)
-      t.gaugeProvider = CLKSimpleGaugeProvider(style: .fill, gaugeColors: [color, .yIndigo], gaugeColorLocations: [0, 1], fillFraction: frac)
+      let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
+      t.centerTextProvider = CLKSimpleTextProvider(text: mins > 0 ? "\(hours)h\(rem > 0 ? "\(rem)" : "")" : "--")
+      t.bottomTextProvider = CLKSimpleTextProvider(text: "/\(goal / 60)h sommeil")
+      t.gaugeProvider = CLKSimpleGaugeProvider(
+        style: .fill,
+        gaugeColors: [.yRed, .yOrange, .yIndigo],
+        gaugeColorLocations: [0, 0.6, 1.0],
+        fillFraction: frac
+      )
       return t
     case .graphicCorner:
       let t = CLKComplicationTemplateGraphicCornerGaugeText()
@@ -507,8 +559,8 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     case .graphicRectangular:
       let t = CLKComplicationTemplateGraphicRectangularStandardBody()
       t.headerTextProvider = CLKSimpleTextProvider(text: "Sommeil")
-      t.body1TextProvider  = CLKSimpleTextProvider(text: mins > 0 ? "\(text)  —  Qualité \(quality) %" : "Pas de donnée")
-      t.body2TextProvider  = CLKSimpleTextProvider(text: frac >= 0.9 ? "Récupération excellente" : (frac >= 0.6 ? "Récupération correcte" : "Récupération insuffisante"))
+      t.body1TextProvider  = CLKSimpleTextProvider(text: mins > 0 ? "\(text)  ·  Qualité \(quality > 0 ? "\(quality)/5" : "--")" : "Pas de donnée")
+      t.body2TextProvider  = CLKSimpleTextProvider(text: frac >= 0.9 ? "Récup. excellente" : (frac >= 0.6 ? "Récup. correcte" : "Récup. insuffisante"))
       return t
     case .modularSmall:
       let t = CLKComplicationTemplateModularSmallStackText()
@@ -533,9 +585,16 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
 
     switch family {
     case .graphicCircular:
-      let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
-      t.centerTextProvider = CLKSimpleTextProvider(text: "\(text)kg", shortText: text)
-      t.gaugeProvider = CLKSimpleGaugeProvider(style: .fill, gaugeColors: [.yTeal, .yGreen], gaugeColorLocations: [0, 1], fillFraction: frac)
+      let objLabel = target > 0 ? "/\(Int(target))kg" : "kg"
+      let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
+      t.centerTextProvider = CLKSimpleTextProvider(text: w > 0 ? "\(text)" : "--")
+      t.bottomTextProvider = CLKSimpleTextProvider(text: objLabel)
+      t.gaugeProvider = CLKSimpleGaugeProvider(
+        style: .fill,
+        gaugeColors: [.yOrange, .yTeal, .yGreen],
+        gaugeColorLocations: [0, 0.5, 1.0],
+        fillFraction: frac
+      )
       return t
     case .graphicCorner:
       let t = CLKComplicationTemplateGraphicCornerStackText()
@@ -567,9 +626,15 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
 
     switch family {
     case .graphicCircular:
-      let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
-      t.centerTextProvider = CLKSimpleTextProvider(text: text, shortText: text)
-      t.gaugeProvider = CLKSimpleGaugeProvider(style: .fill, gaugeColors: [color, .yOrange], gaugeColorLocations: [0, 1], fillFraction: frac)
+      let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
+      t.centerTextProvider = CLKSimpleTextProvider(text: kcal > 0 ? "\(kcal)" : "--")
+      t.bottomTextProvider = CLKSimpleTextProvider(text: "/\(goal) kcal")
+      t.gaugeProvider = CLKSimpleGaugeProvider(
+        style: .fill,
+        gaugeColors: [.yRed, .yOrange, .yGreen],
+        gaugeColorLocations: [0, 0.5, 1.0],
+        fillFraction: frac
+      )
       return t
     case .graphicCorner:
       let t = CLKComplicationTemplateGraphicCornerGaugeText()
@@ -602,9 +667,15 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
 
     switch family {
     case .graphicCircular:
-      let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
-      t.centerTextProvider = CLKSimpleTextProvider(text: "\(text)", shortText: text)
-      t.gaugeProvider = CLKSimpleGaugeProvider(style: .fill, gaugeColors: [color, .yGreen], gaugeColorLocations: [0, 1], fillFraction: frac)
+      let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
+      t.centerTextProvider = CLKSimpleTextProvider(text: km > 0 ? "\(text)" : "--")
+      t.bottomTextProvider = CLKSimpleTextProvider(text: "/\(String(format: "%.0f", goal)) km")
+      t.gaugeProvider = CLKSimpleGaugeProvider(
+        style: .fill,
+        gaugeColors: [.yRed, .yOrange, .yGreen],
+        gaugeColorLocations: [0, 0.5, 1.0],
+        fillFraction: frac
+      )
       return t
     case .graphicCorner:
       let t = CLKComplicationTemplateGraphicCornerGaugeText()
@@ -658,7 +729,52 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     }
   }
 
-  // MARK: - 💤 FC au repos
+  // MARK: - FR Fréquence Respiratoire
+
+  private func respiratoryTemplate(family: CLKComplicationFamily) -> CLKComplicationTemplate? {
+    let rpm  = respiratoryRate
+    let text = rpm > 0 ? "\(rpm)" : "--"
+    // Jauge : 12 rpm = 0 %, 25 rpm = 100 %
+    let frac: Float = rpm > 0 ? Float(max(0, min(rpm - 12, 13))) / 13.0 : 0.0
+    let color: UIColor = rpm >= 12 && rpm <= 20 ? .yTeal : (rpm < 12 ? .yBlue : .yOrange)
+
+    switch family {
+    case .graphicCircular:
+      let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
+      t.centerTextProvider = CLKSimpleTextProvider(text: text)
+      t.bottomTextProvider = CLKSimpleTextProvider(text: "12-20 rpm")
+      t.gaugeProvider = CLKSimpleGaugeProvider(
+        style: .fill,
+        gaugeColors: [.yOrange, .yGreen, .yOrange],
+        gaugeColorLocations: [0, 0.5, 1.0],
+        fillFraction: frac
+      )
+      return t
+    case .graphicCorner:
+      let t = CLKComplicationTemplateGraphicCornerGaugeText()
+      t.outerTextProvider = CLKSimpleTextProvider(text: "FR  \(text) rpm", shortText: "FR")
+      t.gaugeProvider = CLKSimpleGaugeProvider(style: .fill, gaugeColors: [.yTeal, .yCyan], gaugeColorLocations: [0, 1], fillFraction: frac)
+      return t
+    case .graphicRectangular:
+      let t = CLKComplicationTemplateGraphicRectangularStandardBody()
+      t.headerTextProvider = CLKSimpleTextProvider(text: "Fréquence Respiratoire")
+      t.body1TextProvider  = CLKSimpleTextProvider(text: rpm > 0 ? "\(text) rpm" : "-- rpm")
+      t.body2TextProvider  = CLKSimpleTextProvider(text: rpm >= 12 && rpm <= 20 ? "Normal" : (rpm < 12 ? "Lente" : "Rapide"))
+      return t
+    case .utilitarianSmall:
+      let t = CLKComplicationTemplateUtilitarianSmallFlat()
+      t.textProvider = CLKSimpleTextProvider(text: "\(text) FR", shortText: text)
+      return t
+    case .modularSmall:
+      let t = CLKComplicationTemplateModularSmallStackText()
+      t.line1TextProvider = CLKSimpleTextProvider(text: "FR")
+      t.line2TextProvider = CLKSimpleTextProvider(text: text)
+      return t
+    default: return nil
+    }
+  }
+
+  // MARK: - FC au repos
 
   private func restingHRTemplate(family: CLKComplicationFamily) -> CLKComplicationTemplate? {
     let bpm  = restingHR
@@ -669,9 +785,16 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
 
     switch family {
     case .graphicCircular:
-      let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
-      t.centerTextProvider = CLKSimpleTextProvider(text: text, shortText: text)
-      t.gaugeProvider = CLKSimpleGaugeProvider(style: .fill, gaugeColors: [color, .yGreen], gaugeColorLocations: [0, 1], fillFraction: frac)
+      // Plus la FC repos est basse, mieux c'est — frac inverse (80→0%, 40→100%)
+      let t = CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
+      t.centerTextProvider = CLKSimpleTextProvider(text: text)
+      t.bottomTextProvider = CLKSimpleTextProvider(text: "bpm repos")
+      t.gaugeProvider = CLKSimpleGaugeProvider(
+        style: .fill,
+        gaugeColors: [.yRed, .yOrange, .yGreen],
+        gaugeColorLocations: [0, 0.5, 1.0],
+        fillFraction: frac
+      )
       return t
     case .graphicCorner:
       let t = CLKComplicationTemplateGraphicCornerGaugeText()

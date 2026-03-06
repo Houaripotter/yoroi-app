@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -41,7 +40,6 @@ import { HealthInsightsGenerator } from '@/lib/healthInsights';
 import { getProfile } from '@/lib/database';
 import logger from '@/lib/security/logger';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ============================================
 // HEALTH METRICS DASHBOARD
@@ -101,7 +99,6 @@ export default function HealthMetricsScreen() {
   const [bodyTemperatureHistory, setBodyTemperatureHistory] = useState<{ date: string; value: number }[]>([]);
   const [weightHistory, setWeightHistory] = useState<{ date: string; value: number }[]>([]);
   const [vo2MaxHistory, setVO2MaxHistory] = useState<{ date: string; value: number }[]>([]);
-  const [stepsHistory, setStepsHistory] = useState<{ date: string; value: number }[]>([]);
   const [sleepHistory, setSleepHistory] = useState<{
     date: string;
     deep: number;
@@ -146,7 +143,6 @@ export default function HealthMetricsScreen() {
           bodyTempHist,
           weightHist,
           vo2MaxHist,
-          stepsHist,
           sleepHist,
           caloriesHist,
           profile,
@@ -159,7 +155,6 @@ export default function HealthMetricsScreen() {
           healthConnect.getBodyTemperatureHistory(period),
           healthConnect.getWeightHistory(period),
           healthConnect.getVO2MaxHistory(period),
-          healthConnect.getStepsHistory(period),
           healthConnect.getSleepHistory(period),
           healthConnect.getCaloriesHistory(period),
           getProfile().catch(() => null),
@@ -173,7 +168,6 @@ export default function HealthMetricsScreen() {
         setBodyTemperatureHistory(bodyTempHist);
         setWeightHistory(weightHist);
         setVO2MaxHistory(vo2MaxHist);
-        setStepsHistory(stepsHist);
         setSleepHistory(sleepHist);
         setCaloriesHistory(caloriesHist);
 
@@ -202,7 +196,7 @@ export default function HealthMetricsScreen() {
   }, [period]);
 
   // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => { loadHealthData(); }, []);
+  useEffect(() => { loadHealthData(); }, [loadHealthData]);
 
   const handleConnect = async () => {
     try {

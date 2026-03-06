@@ -51,7 +51,7 @@ import {
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { useBadges } from '@/lib/BadgeContext';
-import { addTraining, updateTraining, getTrainingById, getClubs, Club, Exercise, CombatRound, getProfile, getTrainings, getWeights, calculateStreak, getWeeklyPlanById, validateSlot, addWeeklyPlanItem } from '@/lib/database';
+import { addTraining, updateTraining, getTrainingById, getClubs, Club, Exercise, CombatRound, getProfile, getTrainings, getWeights, getWeeklyPlanById, validateSlot, addWeeklyPlanItem } from '@/lib/database';
 import { detectSlotPatterns } from '@/lib/slotSuggestionService';
 import { SPORTS, getSportIcon, getSportName, getClubLogoSource } from '@/lib/sports';
 import { getCurrentRank } from '@/lib/ranks';
@@ -67,6 +67,7 @@ import { successHaptic, errorHaptic, lightHaptic } from '@/lib/haptics';
 import { playWorkoutCompleteSound } from '@/lib/soundManager';
 import { incrementReviewTrigger } from '@/lib/reviewService';
 import { useReviewModal } from '@/components/ReviewModal';
+import { useWatch } from '@/lib/WatchConnectivityProvider';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ExercisePickerModal } from '@/components/ExercisePickerModal';
@@ -92,12 +93,13 @@ const LAST_DURATION_KEY = 'yoroi_last_duration';
 
 export default function AddTrainingScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, gradients, isDark, screenText, screenTextMuted } = useTheme();
+  const { colors, isDark, screenText } = useTheme();
   const { avatarImage: contextAvatar } = useAvatar();
   const router = useRouter();
   const { checkBadges } = useBadges();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { showReviewModal, ReviewModalComponent } = useReviewModal();
+  const { syncWorkout, isWatchAvailable } = useWatch();
   const params = useLocalSearchParams<{ date?: string; editId?: string; slotId?: string; prefillSport?: string; prefillClubId?: string; prefillTime?: string; prefillDuration?: string }>();
   const isEditMode = !!params?.editId;
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -154,7 +156,6 @@ export default function AddTrainingScreen() {
   const [duration, setDuration] = useState(60);
   const [distance, setDistance] = useState<string>(''); // Nouveau: Distance en km
   const [speed, setSpeed] = useState<string>(''); // Nouveau: Vitesse (km/h)
-  const [manualPace, setManualPace] = useState<string>(''); // Allure saisie manuellement
   const [calories, setCalories] = useState<string>(''); // Nouveau: Calories
   const [intensity, setIntensity] = useState<number>(5); // RPE 1-10
   const [pente, setPente] = useState<string>(''); // Pour Tapis (Technogym/Matrix)
@@ -175,23 +176,11 @@ export default function AddTrainingScreen() {
     'Points', 'Avantage', 'KO/TKO', 'Decision',
   ];
 
-  // Calculer l'allure (pace) en direct (uniquement si pas de saisie manuelle)
-  const getLivePace = () => {
-    if (manualPace) return manualPace;
-    const distNum = parseFloat(distance.replace(',', '.'));
-    if (!distNum || !duration) return null;
-    const totalSeconds = duration * 60;
-    const secondsPerKm = totalSeconds / distNum;
-    const mins = Math.floor(secondsPerKm / 60);
-    const secs = Math.round(secondsPerKm % 60);
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [customExerciseName, setCustomExerciseName] = useState('');
   const [techniqueRating, setTechniqueRating] = useState<number | null>(null);
   const [showExerciseModal, setShowExerciseModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [validationStep, setValidationStep] = useState(2); // Étape de validation: 2 = aperçu initial, 3 = aperçu avec photo, 4 = partage final
   const [showPhotoChoiceModal, setShowPhotoChoiceModal] = useState(false);
@@ -199,7 +188,6 @@ export default function AddTrainingScreen() {
   const [showHouariRateModal, setShowHouariRateModal] = useState(false);
   const [lastSavedTrainingId, setLastSavedTrainingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState(''); // Barre de recherche
-  const [lastPerformances, setLastPerformances] = useState<Record<string, any>>({}); // Historique rapide
   const [userName, setUserName] = useState<string>('Champion');
   const [userGender, setUserGender] = useState<'male' | 'female'>('male');
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
@@ -207,11 +195,9 @@ export default function AddTrainingScreen() {
   const [yearlyObjective, setYearlyObjective] = useState<number>(365);
   const [monthlyCount, setMonthlyCount] = useState<number>(0);
   const [weeklyCount, setWeeklyCount] = useState<number>(0);
-  const [showYearlyCountOnCard, setShowYearlyCountOnCard] = useState<boolean>(true);
-  const [showMonthlyCount, setShowMonthlyCount] = useState<boolean>(true);
-  const [showWeeklyCount, setShowWeeklyCount] = useState<boolean>(true);
-  const [showExercisesOnCard, setShowExercisesOnCard] = useState<boolean>(true);
   const [heartRate, setHeartRate] = useState<string>('');
+  const [scoreHome, setScoreHome] = useState<string>('');
+  const [scoreAway, setScoreAway] = useState<string>('');
   const [userWeight, setUserWeight] = useState<number>(75); // Poids par défaut
   const [userAvatar, setUserAvatar] = useState<any>(null);
   const [userRank, setUserRank] = useState<string>('Ashigaru');
@@ -224,11 +210,10 @@ export default function AddTrainingScreen() {
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const [profile, allTrainings, weights, streak] = await Promise.all([
+        const [profile, allTrainings, weights] = await Promise.all([
           getProfile(),
           getTrainings(),
           getWeights(),
-          calculateStreak(),
         ]);
 
         if (profile) {
@@ -295,41 +280,6 @@ export default function AddTrainingScreen() {
       }
     };
     loadUserData();
-  }, []);
-
-  // Charger les dernières performances pour chaque exercice
-  useEffect(() => {
-    const loadLastPerformances = async () => {
-      try {
-        const trainings = await getTrainings(90); // 3 derniers mois
-        const perfMap: Record<string, any> = {};
-        
-        // Parcourir du plus ancien au plus récent pour que le dernier écrase
-        [...trainings].reverse().forEach(t => {
-          if (t.notes) {
-            // Tenter de retrouver l'exercice dans les notes ou via les options
-            // Pour simplifier, on stocke la dernière séance complète par sport si elle a du cardio
-            if (t.distance || t.pente || t.speed) {
-              const sports = t.sport.split(',');
-              sports.forEach(s => {
-                perfMap[s.trim()] = {
-                  distance: t.distance,
-                  pente: t.pente,
-                  speed: t.speed,
-                  watts: t.watts,
-                  resistance: t.resistance,
-                  date: t.date
-                };
-              });
-            }
-          }
-        });
-        setLastPerformances(perfMap);
-      } catch (error) {
-        logger.error('Erreur chargement performances:', error);
-      }
-    };
-    loadLastPerformances();
   }, []);
 
   // Recalculer l'objectif quand le club change
@@ -506,7 +456,7 @@ export default function AddTrainingScreen() {
           }
         }
       } catch (error) {
-        console.error('Erreur prefill slot:', error);
+        logger.error('Erreur prefill slot:', error);
       }
     };
     prefillFromSlot();
@@ -746,7 +696,7 @@ export default function AddTrainingScreen() {
   const calculateCalories = () => {
     const distNum = parseFloat(distance.replace(',', '.'));
     const speedNum = parseFloat(speed.replace(',', '.')) || 5;
-    const weightNum = 75; // Valeur par défaut
+    const weightNum = userWeight || 75;
     if (!distNum && !duration) return;
 
     let calculated = 0;
@@ -1145,37 +1095,10 @@ export default function AddTrainingScreen() {
     });
   };
 
-  const handleFinish = async () => {
-    // Vérifier si on doit demander la notation (ou forcer pour cette feature)
-    // On affiche le modal Houari
-    setShowHouariRateModal(true);
-  };
-
   const handleCloseHouariModal = () => {
     setShowHouariRateModal(false);
     // CRITIQUE : Rediriger l'utilisateur pour ne pas le laisser bloqué sur l'écran d'ajout
     router.replace('/(tabs)');
-  };
-
-  const handleShareModalShare = async () => {
-    setShowShareModal(false);
-    // Marquer qu'on doit demander la review au retour
-    try {
-      await AsyncStorage.setItem('@yoroi_pending_review', 'true');
-    } catch (error) {
-      logger.error('Erreur sauvegarde pending review:', error);
-    }
-    // Navigate to last-session sharing screen avec l'ID précis
-    if (lastSavedTrainingId) {
-      router.replace(`/social-share/last-session?id=${lastSavedTrainingId}`);
-    } else {
-      router.replace('/social-share/last-session');
-    }
-  };
-
-  const handleShareModalSkip = async () => {
-    setShowShareModal(false);
-    handleFinish();
   };
 
   // Quick Fill pour pré-remplir le formulaire avec la dernière séance
@@ -1265,6 +1188,11 @@ export default function AddTrainingScreen() {
         }
       });
 
+      // Score du match (sports collectifs/raquettes)
+      if (scoreHome || scoreAway) {
+        fullNotes += `\nScore: ${scoreHome || '0'}-${scoreAway || '0'}`;
+      }
+
       // Ajouter la description personnalisée
       if (customDescription.trim()) {
         fullNotes += `\n${customDescription.trim()}`;
@@ -1324,6 +1252,7 @@ export default function AddTrainingScreen() {
         resistance: resistance ? (isNaN(parseInt(resistance)) ? undefined : parseInt(resistance)) : undefined,
         watts: watts ? (isNaN(parseInt(watts)) ? undefined : parseInt(watts)) : undefined,
         cadence: cadence ? (isNaN(parseInt(cadence)) ? undefined : parseInt(cadence)) : undefined,
+        heart_rate: heartRate ? (isNaN(parseInt(heartRate)) ? undefined : parseInt(heartRate)) : undefined,
         combat_rounds: combatRounds.length > 0 ? combatRounds : undefined,
         weekly_plan_id: params?.slotId ? parseInt(params.slotId, 10) : undefined,
       };
@@ -1349,7 +1278,7 @@ export default function AddTrainingScreen() {
           const weekStart = monday.toISOString().split('T')[0];
           await validateSlot(slotIdNum, weekStart, Number(newId));
         } catch (e) {
-          console.error('Erreur validation slot:', e);
+          logger.error('Erreur validation slot:', e);
         }
       }
 
@@ -1390,6 +1319,16 @@ export default function AddTrainingScreen() {
       } catch (healthError) {
         // Ne pas bloquer la sauvegarde si l'export échoue
         logger.warn('Export Apple Health échoué (non bloquant):', healthError);
+      }
+
+      // SYNC VERS APPLE WATCH
+      if (isWatchAvailable) {
+        syncWorkout({
+          type: getSportName(selectedSport),
+          duration: duration || 0,
+          calories: calories ? (parseInt(calories) || 0) : 0,
+          date: new Date(format(date, 'yyyy-MM-dd') + 'T' + startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ':00'),
+        }).catch(() => {}); // Non bloquant
       }
 
       // Notifier la home pour refresh instantane des points/quetes
@@ -1489,9 +1428,6 @@ export default function AddTrainingScreen() {
       lightHaptic();
     }
   };
-
-  // Clubs filtrés par sport sélectionné
-  const filteredClubs = clubs.filter(c => c.sport === selectedSport);
 
   // Afficher les muscles et exercices si musculation ou street workout est sélectionné
   const showMuscles = selectedSports.includes('musculation') || selectedSports.includes('street_workout');
@@ -2981,6 +2917,8 @@ export default function AddTrainingScreen() {
                     placeholderTextColor={colors.textMuted}
                     keyboardType="number-pad"
                     maxLength={3}
+                    value={scoreHome}
+                    onChangeText={setScoreHome}
                     onFocus={scrollToFocusedInput}
                   />
                 </View>
@@ -2993,6 +2931,8 @@ export default function AddTrainingScreen() {
                     placeholderTextColor={colors.textMuted}
                     keyboardType="number-pad"
                     maxLength={3}
+                    value={scoreAway}
+                    onChangeText={setScoreAway}
                     onFocus={scrollToFocusedInput}
                   />
                 </View>
@@ -3067,6 +3007,27 @@ export default function AddTrainingScreen() {
                                             </View>
                                           </View>
                   
+                                          {/* FRÉQUENCE CARDIAQUE */}
+                                          <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                                              <Navigation size={18} color="#EF4444" />
+                                              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>Fréquence cardiaque</Text>
+                                            </View>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                                              <TextInput
+                                                style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 12, borderRadius: 12, color: '#EF4444', fontWeight: '800', fontSize: 20, textAlign: 'center', borderWidth: 1, borderColor: colors.border }}
+                                                placeholder="---"
+                                                placeholderTextColor={colors.textMuted}
+                                                keyboardType="number-pad"
+                                                maxLength={3}
+                                                value={heartRate}
+                                                onChangeText={setHeartRate}
+                                                onFocus={scrollToFocusedInput}
+                                              />
+                                              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textMuted }}>BPM</Text>
+                                            </View>
+                                          </View>
+
                                           {/* TECHNIQUE */}
                                           <View style={{ padding: 16, backgroundColor: colors.accent + '05' }}>
                                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -3336,8 +3297,28 @@ export default function AddTrainingScreen() {
                                     paddingVertical: 18,
                                     borderRadius: 24,
                                     alignItems: 'center',
+                                    flexDirection: 'row',
+                                    justifyContent: 'center',
+                                    gap: 10,
                                     borderWidth: 1,
                                     borderColor: colors.border
+                                  }}
+                                  onPress={() => {
+                                    lightHaptic();
+                                    setValidationStep(3);
+                                  }}
+                                >
+                                  <Camera size={20} color={colors.textSecondary} />
+                                  <Text style={{ color: colors.textSecondary, fontWeight: '800', fontSize: 16 }}>
+                                    {cardBackgroundImage ? 'CHANGER LA PHOTO' : 'AJOUTER UNE PHOTO'}
+                                  </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                  style={{
+                                    paddingVertical: 14,
+                                    borderRadius: 24,
+                                    alignItems: 'center',
                                   }}
                                   onPress={() => {
                                     setShowValidationModal(false);
@@ -3345,7 +3326,7 @@ export default function AddTrainingScreen() {
                                     router.replace('/(tabs)');
                                   }}
                                 >
-                                  <Text style={{ color: colors.textSecondary, fontWeight: '800', fontSize: 16 }}>PASSER</Text>
+                                  <Text style={{ color: colors.textMuted, fontWeight: '700', fontSize: 14 }}>PASSER</Text>
                                 </TouchableOpacity>
                               </View>
                                 </>

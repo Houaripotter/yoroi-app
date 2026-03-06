@@ -19,6 +19,7 @@ interface LineSeries {
   history: { date: string; value: number }[];
   currentValue: number;
   onPress?: () => void;
+  unit?: string; // unité spécifique à cette ligne (override le unit global)
 }
 
 interface MultiLineComparisonCardProps {
@@ -210,6 +211,9 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
     );
   };
 
+  const firstColor = lines[0]?.color || '#6366F1';
+  const lastColor = lines[lines.length - 1]?.color || firstColor;
+
   return (
     <View
       style={[styles.container, {
@@ -218,14 +222,11 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
       }]}
       onLayout={handleLayout}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={[styles.headerIcon, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
-            <ArrowLeftRight size={16} color={colors.textSecondary} strokeWidth={2.5} />
-          </View>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
-        </View>
+      {/* Titre centré avec accent couleur */}
+      <View style={styles.titleRow}>
+        <View style={[styles.titleDash, { backgroundColor: firstColor }]} />
+        <Text style={[styles.titleText, { color: colors.textPrimary }]}>{title.toUpperCase()}</Text>
+        <View style={[styles.titleDash, { backgroundColor: lastColor }]} />
         {hasData && (
           <TouchableOpacity onPress={() => setFullscreen(true)} activeOpacity={0.7}
             style={[styles.expandBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
@@ -320,7 +321,7 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
               </View>
               <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
                 {line.currentValue > 0 ? smartFormat(line.currentValue) : '\u2014'}
-                <Text style={[styles.metricUnit, { color: colors.textSecondary }]}> {unit}</Text>
+                <Text style={[styles.metricUnit, { color: colors.textSecondary }]}> {line.unit !== undefined ? line.unit : unit}</Text>
               </Text>
               <View style={[styles.progressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
                 <View style={[styles.progressFill, { width: `${barWidth}%`, backgroundColor: line.color }]} />
@@ -383,34 +384,30 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
   },
-  header: {
+  // Titre centré avec tirets colorés
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
-  },
-  headerIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
     justifyContent: 'center',
-    alignItems: 'center',
+    gap: 10,
+    marginBottom: 14,
   },
-  title: {
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: -0.3,
+  titleDash: {
+    flex: 1,
+    height: 2,
+    borderRadius: 1,
+    opacity: 0.6,
+  },
+  titleText: {
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 2,
+    textAlign: 'center',
   },
   expandBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },

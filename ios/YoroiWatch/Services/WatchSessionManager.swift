@@ -5,6 +5,7 @@ import AVFoundation
 import SwiftUI
 import HealthKit
 import ClockKit
+import UserNotifications
 
 class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
@@ -92,31 +93,23 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     didSet { UserDefaults.standard.set(sleepGoalMinutes, forKey: "yoroi_sleepGoal") }
   }
   @Published var sleepDebt: Double = 0.0
+  @Published var sleepScore: Int = 0
 
   // MARK: - Steps & Health
   @Published var stepsGoal: Int = 8000 {
     didSet { UserDefaults.standard.set(stepsGoal, forKey: "yoroi_stepsGoal"); reloadComplications() }
   }
-  @Published var heartRate: Int = 0 {
-    didSet { UserDefaults.standard.set(heartRate, forKey: "yoroi_heartRate"); reloadComplications() }
-  }
+  // Données santé reçues de l'iPhone (fallback si HealthKit local indisponible)
+  @Published var heartRate: Int = 0
   @Published var heartRateMin: Int = 0
   @Published var heartRateMax: Int = 0
-  @Published var restingHeartRate: Int = 0 {
-    didSet { UserDefaults.standard.set(restingHeartRate, forKey: "yoroi_restingHR"); reloadComplications() }
-  }
-  @Published var spo2: Int = 0 {
-    didSet { UserDefaults.standard.set(spo2, forKey: "yoroi_spo2"); reloadComplications() }
-  }
+  @Published var restingHeartRate: Int = 0
+  @Published var spo2: Int = 0
   @Published var respiratoryRate: Int = 0
-  @Published var activeCalories: Int = 0 {
-    didSet { UserDefaults.standard.set(activeCalories, forKey: "yoroi_calories"); reloadComplications() }
-  }
+  @Published var activeCalories: Int = 0
   @Published var exerciseMinutes: Int = 0
   @Published var standHours: Int = 0
-  @Published var distance: Double = 0.0 {
-    didSet { UserDefaults.standard.set(distance, forKey: "yoroi_distance"); reloadComplications() }
-  }
+  @Published var distance: Double = 0.0
 
   // MARK: - Profile
   @Published var userName: String = ""
@@ -142,8 +135,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     didSet { UserDefaults.standard.set(timerIsRunning, forKey: "yoroi_timerRunning"); reloadComplications() }
   }
   @Published var timerAlarmRinging: Bool = false
-  @Published var timerMode: String = "Repos" // Repos, Combat, Tabata
-  @Published var timerFavorites: [Int] = [] // user saved presets in seconds
+  @Published var timerFavorites: [Int] = []
 
   // MARK: - Carnet (Training Journal)
   @Published var benchmarks: [BenchmarkRecord] = []
@@ -164,12 +156,34 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   @Published var localHeartRate: Int = 0 {
     didSet { UserDefaults.standard.set(localHeartRate, forKey: "yoroi_heartRate"); reloadComplications() }
   }
-  @Published var localActiveCalories: Int = 0
-  @Published var localDistance: Double = 0.0
+  @Published var localActiveCalories: Int = 0 {
+    didSet { UserDefaults.standard.set(localActiveCalories, forKey: "yoroi_calories"); reloadComplications() }
+  }
+  @Published var localDistance: Double = 0.0 {
+    didSet { UserDefaults.standard.set(localDistance, forKey: "yoroi_distance"); reloadComplications() }
+  }
   @Published var localExerciseMinutes: Int = 0
   @Published var localStandHours: Int = 0
   @Published var localSpo2: Int = 0 {
     didSet { UserDefaults.standard.set(localSpo2, forKey: "yoroi_spo2"); reloadComplications() }
+  }
+  @Published var localHeartRateMin: Int = 0 {
+    didSet { UserDefaults.standard.set(localHeartRateMin, forKey: "yoroi_heartRateMin"); reloadComplications() }
+  }
+  @Published var localHeartRateMax: Int = 0 {
+    didSet { UserDefaults.standard.set(localHeartRateMax, forKey: "yoroi_heartRateMax"); reloadComplications() }
+  }
+  @Published var localSpo2Min: Int = 0 {
+    didSet { UserDefaults.standard.set(localSpo2Min, forKey: "yoroi_spo2Min"); reloadComplications() }
+  }
+  @Published var localSpo2Max: Int = 0 {
+    didSet { UserDefaults.standard.set(localSpo2Max, forKey: "yoroi_spo2Max"); reloadComplications() }
+  }
+  @Published var localRestingHR: Int = 0 {
+    didSet { UserDefaults.standard.set(localRestingHR, forKey: "yoroi_restingHR"); reloadComplications() }
+  }
+  @Published var localRespiratoryRate: Int = 0 {
+    didSet { UserDefaults.standard.set(localRespiratoryRate, forKey: "yoroi_respiratoryRate"); reloadComplications() }
   }
 
   private var session: WCSession?
@@ -191,6 +205,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   override init() {
     super.init()
     loadTimerFavorites()
+    loadLocalHistory()
     // Load saved theme colors
     themeAccentHex = UserDefaults.standard.string(forKey: "themeAccentHex") ?? "#D4AF37"
     themeCompanionHex = UserDefaults.standard.string(forKey: "themeCompanionHex") ?? "#FFFFFF"
@@ -218,15 +233,20 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     let readTypes: Set<HKObjectType> = [
       HKQuantityType.quantityType(forIdentifier: .stepCount)!,
       HKQuantityType.quantityType(forIdentifier: .heartRate)!,
+      HKQuantityType.quantityType(forIdentifier: .restingHeartRate)!,
       HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!,
       HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning)!,
       HKQuantityType.quantityType(forIdentifier: .appleExerciseTime)!,
       HKQuantityType.quantityType(forIdentifier: .oxygenSaturation)!,
+      HKQuantityType.quantityType(forIdentifier: .respiratoryRate)!,
       HKCategoryType.categoryType(forIdentifier: .appleStandHour)!,
     ]
 
     healthStore.requestAuthorization(toShare: [], read: readTypes) { [weak self] ok, _ in
-      if ok { self?.fetchAllHealthData() }
+      if ok {
+        self?.fetchAllHealthData()
+        self?.startHealthObservers()
+      }
     }
   }
 
@@ -238,6 +258,8 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     fetchExerciseMinutes()
     fetchStandHours()
     fetchSpO2()
+    fetchRestingHeartRate()
+    fetchRespiratoryRate()
   }
 
   private func fetchSteps() {
@@ -249,14 +271,28 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
   private func fetchHeartRate() {
     let type = HKQuantityType.quantityType(forIdentifier: .heartRate)!
+    let bpmUnit = HKUnit.count().unitDivided(by: .minute())
+    // Dernière mesure
     let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
-    let q = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sort]) { [weak self] _, samples, _ in
+    let latestQ = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sort]) { [weak self] _, samples, _ in
       if let sample = samples?.first as? HKQuantitySample {
-        let bpm = Int(sample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute())))
+        let bpm = Int(sample.quantity.doubleValue(for: bpmUnit))
         DispatchQueue.main.async { self?.localHeartRate = bpm }
       }
     }
-    healthStore.execute(q)
+    healthStore.execute(latestQ)
+    // Min/max du jour
+    let start = Calendar.current.startOfDay(for: Date())
+    let pred = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
+    let statsQ = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: pred, options: [.discreteMin, .discreteMax]) { [weak self] _, result, _ in
+      let minBpm = result?.minimumQuantity()?.doubleValue(for: bpmUnit)
+      let maxBpm = result?.maximumQuantity()?.doubleValue(for: bpmUnit)
+      DispatchQueue.main.async {
+        if let v = minBpm { self?.localHeartRateMin = Int(v) }
+        if let v = maxBpm { self?.localHeartRateMax = Int(v) }
+      }
+    }
+    healthStore.execute(statsQ)
   }
 
   private func fetchActiveCalories() {
@@ -293,14 +329,67 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
   private func fetchSpO2() {
     let type = HKQuantityType.quantityType(forIdentifier: .oxygenSaturation)!
+    // Dernière mesure
     let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
-    let q = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sort]) { [weak self] _, samples, _ in
+    let latestQ = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sort]) { [weak self] _, samples, _ in
       if let sample = samples?.first as? HKQuantitySample {
         let pct = Int(sample.quantity.doubleValue(for: .percent()) * 100)
         DispatchQueue.main.async { self?.localSpo2 = pct }
       }
     }
+    healthStore.execute(latestQ)
+    // Min/max du jour
+    let start = Calendar.current.startOfDay(for: Date())
+    let pred = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
+    let statsQ = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: pred, options: [.discreteMin, .discreteMax]) { [weak self] _, result, _ in
+      let minPct = result?.minimumQuantity()?.doubleValue(for: .percent())
+      let maxPct = result?.maximumQuantity()?.doubleValue(for: .percent())
+      DispatchQueue.main.async {
+        if let v = minPct { self?.localSpo2Min = Int(v * 100) }
+        if let v = maxPct { self?.localSpo2Max = Int(v * 100) }
+      }
+    }
+    healthStore.execute(statsQ)
+  }
+
+  private func fetchRestingHeartRate() {
+    let type = HKQuantityType.quantityType(forIdentifier: .restingHeartRate)!
+    let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+    let q = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sort]) { [weak self] _, samples, _ in
+      if let sample = samples?.first as? HKQuantitySample {
+        let bpm = Int(sample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute())))
+        DispatchQueue.main.async { self?.localRestingHR = bpm }
+      }
+    }
     healthStore.execute(q)
+  }
+
+  private func fetchRespiratoryRate() {
+    let type = HKQuantityType.quantityType(forIdentifier: .respiratoryRate)!
+    let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+    let q = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sort]) { [weak self] _, samples, _ in
+      if let sample = samples?.first as? HKQuantitySample {
+        let rpm = Int(sample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute())))
+        DispatchQueue.main.async { self?.localRespiratoryRate = rpm }
+      }
+    }
+    healthStore.execute(q)
+  }
+
+  private func startHealthObservers() {
+    let ids: [HKQuantityTypeIdentifier] = [
+      .heartRate, .restingHeartRate, .oxygenSaturation, .respiratoryRate,
+      .stepCount, .activeEnergyBurned, .distanceWalkingRunning,
+    ]
+    for id in ids {
+      guard let type = HKQuantityType.quantityType(forIdentifier: id) else { continue }
+      let query = HKObserverQuery(sampleType: type, predicate: nil) { [weak self] _, _, error in
+        guard error == nil else { return }
+        self?.fetchAllHealthData()
+      }
+      healthStore.execute(query)
+      healthStore.enableBackgroundDelivery(for: type, frequency: .immediate) { _, _ in }
+    }
   }
 
   /// Helper: fetch today's cumulative stat for a quantity type
@@ -316,10 +405,9 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
   // MARK: - Timer (Countdown)
 
-  func setTimer(seconds: Int, mode: String? = nil) {
+  func setTimer(seconds: Int) {
     timerTotalSeconds = seconds
     timerRemainingSeconds = seconds
-    if let m = mode { timerMode = m }
   }
 
   func addTimerFavorite(_ seconds: Int) {
@@ -343,32 +431,73 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     timerFavorites = UserDefaults.standard.array(forKey: "timerFavorites") as? [Int] ?? []
   }
 
+  // Source de vérité : date de fin absolue
+  private var timerEndDate: Date? {
+    get { UserDefaults.standard.object(forKey: "yoroi_timerEndDate") as? Date }
+    set { UserDefaults.standard.set(newValue, forKey: "yoroi_timerEndDate") }
+  }
+
   func startTimer() {
     timerAlarmRinging = false
     timerIsRunning = true
-    // Start extended runtime session to keep timer running in background
+
+    // 1. Sauvegarder la date de fin absolue (source de vérité)
+    let endDate = Date().addingTimeInterval(Double(timerRemainingSeconds))
+    timerEndDate = endDate
+
+    // 2. Notification locale — se déclenche même en veille complète
+    scheduleTimerNotification(fireDate: endDate, seconds: timerRemainingSeconds)
+
+    // 3. Session étendue — garde l'app en vie en arrière-plan
     startExtendedSession()
-    timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-      DispatchQueue.main.async {
-        guard let self = self else { return }
-        if self.timerRemainingSeconds > 0 {
-          self.timerRemainingSeconds -= 1
-        } else {
-          self.timerIsRunning = false
-          self.timer?.invalidate()
-          self.timer = nil
-          // DO NOT stop extended session - keep it alive for the alarm
-          self.startAlarm()
-        }
-      }
+
+    // 4. Timer UI — calcule depuis endDate (pas de décrément simple)
+    //    Mode .common = fire même si le RunLoop est dans un autre mode
+    let t = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
+      DispatchQueue.main.async { self?.tickFromEndDate() }
     }
+    RunLoop.main.add(t, forMode: .common)
+    timer = t
+
     sendAction("timerStarted", data: ["seconds": timerTotalSeconds])
+  }
+
+  private func tickFromEndDate() {
+    guard let endDate = timerEndDate else { return }
+    let remaining = max(0, Int(endDate.timeIntervalSinceNow.rounded()))
+    timerRemainingSeconds = remaining
+    if remaining <= 0 {
+      timerIsRunning = false
+      timer?.invalidate()
+      timer = nil
+      timerEndDate = nil
+      startAlarm()
+    }
+  }
+
+  // Appelé quand l'app revient au premier plan : resynchronise depuis endDate
+  func resyncTimerIfNeeded() {
+    guard timerIsRunning, let endDate = timerEndDate else { return }
+    let remaining = max(0, Int(endDate.timeIntervalSinceNow.rounded()))
+    if remaining <= 0 {
+      // Le timer a expiré pendant la veille
+      timerIsRunning = false
+      timer?.invalidate()
+      timer = nil
+      timerEndDate = nil
+      timerRemainingSeconds = 0
+      startAlarm()
+    } else {
+      timerRemainingSeconds = remaining
+    }
   }
 
   func pauseTimer() {
     timerIsRunning = false
     timer?.invalidate()
     timer = nil
+    timerEndDate = nil
+    cancelTimerNotification()
     stopExtendedSession()
   }
 
@@ -377,24 +506,58 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     timerIsRunning = false
     timer?.invalidate()
     timer = nil
+    timerEndDate = nil
+    cancelTimerNotification()
     stopExtendedSession()
     timerRemainingSeconds = timerTotalSeconds
+  }
+
+  // MARK: - Notifications locales (vibration + son en veille)
+
+  private func scheduleTimerNotification(fireDate: Date, seconds: Int) {
+    let center = UNUserNotificationCenter.current()
+    center.removeAllPendingNotificationRequests()
+
+    center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+      guard granted else { return }
+
+      let content = UNMutableNotificationContent()
+      content.title             = "Timer YOROI"
+      content.body              = "Ton timer est terminé !"
+      content.sound             = UNNotificationSound.defaultCritical
+      if #available(watchOS 8.0, *) {
+        content.interruptionLevel = .timeSensitive
+      }
+
+      let delay = max(1, seconds)
+      let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Double(delay), repeats: false)
+      let request = UNNotificationRequest(identifier: "yoroi.timer.end", content: content, trigger: trigger)
+      center.add(request)
+    }
+  }
+
+  private func cancelTimerNotification() {
+    UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["yoroi.timer.end"])
   }
 
   // MARK: - Alarm (looping sound + vibration until stopped)
 
   private func startAlarm() {
     timerAlarmRinging = true
-    // Start looping sound
     playWizzSoundLooping()
-    // Start repeating haptic every 1.5s
+    // Première vibration immédiate
     WKInterfaceDevice.current().play(.notification)
-    hapticTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
+    // Vibrations répétées — mode .common pour rester actif même si le RunLoop bascule
+    let ht = Timer(timeInterval: 1.5, repeats: true) { [weak self] _ in
       DispatchQueue.main.async {
         guard let self = self, self.timerAlarmRinging else { return }
         WKInterfaceDevice.current().play(.notification)
       }
     }
+    RunLoop.main.add(ht, forMode: .common)
+    hapticTimer = ht
+    // Notifications répétées pour continuer à sonner si l'app passe en arrière-plan
+    scheduleAlarmRepeatNotifications()
   }
 
   func stopAlarm() {
@@ -405,8 +568,35 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     // Stop haptic loop
     hapticTimer?.invalidate()
     hapticTimer = nil
+    // Cancel repeat alarm notifications
+    cancelAlarmRepeatNotifications()
     // Now stop extended session
     stopExtendedSession()
+  }
+
+  /// Planifie des notifications toutes les 30s pendant 10 min pour continuer à sonner en arrière-plan
+  private func scheduleAlarmRepeatNotifications() {
+    let center = UNUserNotificationCenter.current()
+    center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
+      guard granted else { return }
+      for i in 1...20 {
+        let content = UNMutableNotificationContent()
+        content.title = "Timer YOROI"
+        content.body  = "Ouvre l'app pour arrêter !"
+        content.sound = .defaultCritical
+        if #available(watchOS 8.0, *) {
+          content.interruptionLevel = .timeSensitive
+        }
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Double(i * 30), repeats: false)
+        let request = UNNotificationRequest(identifier: "yoroi.alarm.repeat.\(i)", content: content, trigger: trigger)
+        center.add(request)
+      }
+    }
+  }
+
+  private func cancelAlarmRepeatNotifications() {
+    let ids = (1...20).map { "yoroi.alarm.repeat.\($0)" }
+    UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
   }
 
   // MARK: - Extended Runtime Session (keeps timer alive in background)
@@ -435,7 +625,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
       try audioSession.setCategory(.playback, mode: .default, options: [])
       try audioSession.setActive(true)
     } catch {
-      print("[YoroiWatch] Audio session error: \(error)")
+      // audio session error ignored
     }
 
     // Try to play the bundled wizz sound in loop
@@ -446,7 +636,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         audioPlayer?.volume = 1.0
         audioPlayer?.play()
       } catch {
-        print("[YoroiWatch] Sound error: \(error)")
+        // sound error ignored
       }
     }
   }
@@ -491,7 +681,24 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
   // MARK: - Carnet / Benchmarks
 
+  @Published var localLogHistory: [LocalLogEntry] = []
+
   func logBenchmarkEntry(benchmarkId: String, exerciseName: String, value: Double, reps: Int, rpe: Int) {
+    // Sauvegarde locale immédiate (visible sans attendre l'iPhone)
+    let entry = LocalLogEntry(
+      id: UUID(),
+      benchmarkId: benchmarkId,
+      exerciseName: exerciseName,
+      value: value,
+      reps: reps,
+      rpe: rpe,
+      date: Date()
+    )
+    localLogHistory.insert(entry, at: 0)
+    if localLogHistory.count > 100 { localLogHistory = Array(localLogHistory.prefix(100)) }
+    saveLocalHistory()
+
+    // Envoi vers l'iPhone
     sendAction("addBenchmarkEntry", data: [
       "benchmarkId": benchmarkId,
       "exerciseName": exerciseName,
@@ -502,14 +709,47 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     ])
   }
 
+  private func saveLocalHistory() {
+    if let data = try? JSONEncoder().encode(localLogHistory) {
+      UserDefaults.standard.set(data, forKey: "yoroi_localLogHistory")
+    }
+  }
+
+  func loadLocalHistory() {
+    if let data = UserDefaults.standard.data(forKey: "yoroi_localLogHistory"),
+       let entries = try? JSONDecoder().decode([LocalLogEntry].self, from: data) {
+      localLogHistory = entries
+    }
+  }
+
   // MARK: - Theme (synced back to phone)
 
   func changeThemeMode(_ mode: String) {
     themeMode = mode
+    // Appliquer les couleurs immédiatement sans attendre l'iPhone
+    applyDefaultThemeColors(for: mode)
     sendAction("changeThemeMode", data: ["themeMode": mode])
-    // Request full sync to get updated theme colors from iPhone
+    // Sync avec l'iPhone pour récupérer les vraies couleurs personnalisées
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
       self.requestSync()
+    }
+  }
+
+  private func applyDefaultThemeColors(for mode: String) {
+    if mode == "light" {
+      themeBgHex          = "#FFFFFF"
+      themeCardBgHex      = "#F2F2F7"
+      themeTextPrimaryHex = "#1A1A1A"
+      themeTextSecondaryHex = "#6B6B6B"
+      themeDividerHex     = "#D1D1D6"
+      themeTextOnAccentHex = "#FFFFFF"
+    } else {
+      themeBgHex          = "#000000"
+      themeCardBgHex      = "#151515"
+      themeTextPrimaryHex = "#FFFFFF"
+      themeTextSecondaryHex = "#E0E0E0"
+      themeDividerHex     = "#2A2A2A"
+      themeTextOnAccentHex = "#FFFFFF"
     }
   }
 
@@ -535,9 +775,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     message["watchAppVersion"] = "2.0.0"
 
     if session.isReachable {
-      session.sendMessage(message, replyHandler: nil) { error in
-        print("[YoroiWatch] Send error: \(error.localizedDescription)")
-      }
+      session.sendMessage(message, replyHandler: nil) { _ in }
     } else {
       var context = session.applicationContext
       context["pendingAction"] = action
@@ -594,9 +832,8 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         DispatchQueue.main.async {
           self.profileImageData = data
         }
-        print("[YoroiWatch] Profile photo received via file transfer (\(data.count) bytes)")
       } catch {
-        print("[YoroiWatch] File transfer error: \(error)")
+        // file transfer error ignored
       }
     }
   }
@@ -635,6 +872,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     if let swt = data["sleepWakeTime"] as? String { sleepWakeTime = swt }
     if let sg = intVal("sleepGoal") { sleepGoalMinutes = sg }
     if let sdb = data["sleepDebt"] as? Double { sleepDebt = sdb }
+    if let ss = intVal("sleepScore") { sleepScore = ss }
     if let sg = intVal("stepsGoal") { stepsGoal = sg }
 
     // Body composition
@@ -659,6 +897,14 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     if let imgBase64 = data["profileImage"] as? String,
        let imgData = Data(base64Encoded: imgBase64) {
       profileImageData = imgData
+    }
+
+    // Préférences (unités + timer)
+    if let us = data["unitSystem"] as? String {
+      UserDefaults.standard.set(us, forKey: "unitSystem")
+    }
+    if let dts = intVal("defaultTimerSeconds"), dts >= 10 {
+      UserDefaults.standard.set(dts, forKey: "defaultTimerSeconds")
     }
 
     // Theme colors + mode
@@ -749,11 +995,9 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
 extension WatchSessionManager: WKExtendedRuntimeSessionDelegate {
   func extendedRuntimeSessionDidStart(_ extendedRuntimeSession: WKExtendedRuntimeSession) {
-    print("[YoroiWatch] Extended session started")
   }
 
   func extendedRuntimeSessionWillExpire(_ extendedRuntimeSession: WKExtendedRuntimeSession) {
-    print("[YoroiWatch] Extended session expiring")
     // If timer or alarm still active, fire a last burst of haptics
     if timerIsRunning || timerAlarmRinging {
       WKInterfaceDevice.current().play(.notification)
@@ -764,12 +1008,10 @@ extension WatchSessionManager: WKExtendedRuntimeSessionDelegate {
   }
 
   func extendedRuntimeSession(_ extendedRuntimeSession: WKExtendedRuntimeSession, didInvalidateWith reason: WKExtendedRuntimeSessionInvalidationReason, error: Error?) {
-    print("[YoroiWatch] Extended session ended: \(reason.rawValue)")
     // If timer or alarm is still active, try to restart extended session
     DispatchQueue.main.async { [weak self] in
       guard let self = self else { return }
       if self.timerIsRunning || self.timerAlarmRinging {
-        print("[YoroiWatch] Restarting extended session for active timer/alarm")
         self.startExtendedSession()
       }
     }
@@ -1085,6 +1327,27 @@ struct DayHydration: Identifiable {
   var progress: Double {
     guard goal > 0 else { return 0 }
     return min(1.0, Double(amount) / Double(goal))
+  }
+}
+
+struct LocalLogEntry: Identifiable, Codable {
+  let id: UUID
+  let benchmarkId: String
+  let exerciseName: String
+  let value: Double
+  let reps: Int
+  let rpe: Int
+  let date: Date
+
+  var formattedValue: String {
+    value > 0 ? String(format: value.truncatingRemainder(dividingBy: 1) == 0 ? "%.0f kg" : "%.1f kg", value) : "--"
+  }
+
+  var shortDate: String {
+    let f = DateFormatter()
+    f.locale = Locale(identifier: "fr_FR")
+    f.dateFormat = "d MMM HH:mm"
+    return f.string(from: date)
   }
 }
 

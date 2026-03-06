@@ -117,25 +117,51 @@ export default React.memo(function BenchmarkDetailModal({
             </TouchableOpacity>
           </View>
 
-          {/* Mini Chart Placeholder */}
+          {/* Mini Chart */}
           {entries.length > 1 && (
             <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-              <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>Progression</Text>
+              {/* Header: title + % progression */}
+              {(() => {
+                const chronological = [...entries].reverse();
+                const first = chronological[0];
+                const latest = chronological[chronological.length - 1];
+                const pct = first.value > 0
+                  ? ((latest.value - first.value) / first.value * 100)
+                  : 0;
+                const isPositive = pct >= 0;
+                return (
+                  <View style={styles.chartHeader}>
+                    <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>Progression</Text>
+                    <View style={[styles.chartPctBadge, { backgroundColor: isPositive ? '#10B98120' : '#EF444420' }]}>
+                      <Text style={[styles.chartPctText, { color: isPositive ? '#10B981' : '#EF4444' }]}>
+                        {isPositive ? '+' : ''}{pct.toFixed(1)}%
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })()}
               <View style={styles.chartPlaceholder}>
-                {entries.slice(0, 10).reverse().map((entry, index) => {
-                  const maxVal = Math.max(...entries.map(e => e.value));
-                  const minVal = Math.min(...entries.map(e => e.value));
+                {entries.slice(0, 10).reverse().map((entry, index, arr) => {
+                  const maxVal = Math.max(...arr.map(e => e.value));
+                  const minVal = Math.min(...arr.map(e => e.value));
                   const range = maxVal - minVal || 1;
                   const heightPercent = ((entry.value - minVal) / range) * 100;
+                  const isLatest = index === arr.length - 1;
+                  const isPRBar = pr && entry.id === pr.id;
 
                   return (
                     <View key={entry.id} style={styles.chartBarContainer}>
+                      {isLatest && (
+                        <Text style={[styles.chartBarLabel, { color: benchmark.color }]}>
+                          {entry.value % 1 === 0 ? entry.value : entry.value.toFixed(1)}
+                        </Text>
+                      )}
                       <View
                         style={[
                           styles.chartBar,
                           {
-                            backgroundColor: benchmark.color,
-                            height: `${Math.max(20, heightPercent)}%`
+                            backgroundColor: isPRBar ? benchmark.color : benchmark.color + '60',
+                            height: `${Math.max(15, heightPercent)}%`,
                           }
                         ]}
                       />
@@ -143,6 +169,9 @@ export default React.memo(function BenchmarkDetailModal({
                   );
                 })}
               </View>
+              <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
+                {entries.length} entrée{entries.length > 1 ? 's' : ''} · barre brillante = PR
+              </Text>
             </View>
           )}
 
@@ -257,23 +286,49 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 16,
   },
+  chartHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
   chartTitle: {
     fontSize: 16,
     fontWeight: '700',
-    marginBottom: 16,
+  },
+  chartPctBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  chartPctText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   chartPlaceholder: {
     flexDirection: 'row',
     height: 120,
-    gap: 8,
+    gap: 6,
+    alignItems: 'flex-end',
   },
   chartBarContainer: {
     flex: 1,
     justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  chartBarLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginBottom: 2,
   },
   chartBar: {
     width: '100%',
     borderRadius: 4,
+  },
+  chartSubtitle: {
+    fontSize: 11,
+    marginTop: 10,
+    textAlign: 'center',
   },
   historyCard: {
     borderRadius: 16,

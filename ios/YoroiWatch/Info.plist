@@ -21,7 +21,7 @@
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Yoroi utilise vos donnees de sante pour afficher vos pas et calories brulees sur votre Apple Watch.</string>
+	<string>Yoroi utilise vos donnees de sante (frequence cardiaque, SpO2, frequence respiratoire, FC au repos, pas, calories, distance, sommeil) pour afficher des donnees en temps reel sur le cadran de votre Apple Watch.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Yoroi enregistre vos entrainements dans Apple Sante.</string>
 	<key>RCTNewArchEnabled</key>
@@ -35,6 +35,12 @@
 	<true/>
 	<key>WKCompanionAppBundleIdentifier</key>
 	<string>com.houari.yoroi</string>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>Yoroi utilise les notifications pour sonner quand ton timer est terminé, même en veille.</string>
+	<key>WKBackgroundModes</key>
+	<array>
+		<string>self-care</string>
+	</array>
 	<key>CLKComplicationPrincipalClass</key>
 	<string>$(PRODUCT_MODULE_NAME).ComplicationController</string>
 	<key>CLKComplicationFamilies</key>

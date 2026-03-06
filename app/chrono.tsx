@@ -151,7 +151,7 @@ export default function ChronoScreen() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const gongSoundRef = useRef<Audio.Sound | null>(null);
   const beepSoundRef = useRef<Audio.Sound | null>(null);
-  const whistleSoundRef = useRef<Audio.Sound | null>(null);
+  const wizzSoundRef = useRef<Audio.Sound | null>(null);
   const warned10secRef = useRef<boolean>(false);
   const lastMinuteRef = useRef<number>(0);
 
@@ -163,7 +163,8 @@ export default function ChronoScreen() {
       if (intervalRef.current) clearInterval(intervalRef.current);
       gongSoundRef.current?.unloadAsync();
       beepSoundRef.current?.unloadAsync();
-      whistleSoundRef.current?.unloadAsync();
+      wizzSoundRef.current?.unloadAsync();
+      Vibration.cancel();
     };
   }, []);
 
@@ -179,11 +180,10 @@ export default function ChronoScreen() {
       );
       beepSoundRef.current = beepSound;
 
-      // Utiliser gong comme whistle si pas disponible
-      const { sound: whistleSound } = await Audio.Sound.createAsync(
-        require('@/assets/sounds/gong.mp3')
+      const { sound: wizzSound } = await Audio.Sound.createAsync(
+        require('@/assets/sounds/wizz-made-with-Voicemod.mp3')
       );
-      whistleSoundRef.current = whistleSound;
+      wizzSoundRef.current = wizzSound;
     } catch (error) {
       logger.info('Sons non disponibles:', error);
     }
@@ -261,15 +261,28 @@ export default function ChronoScreen() {
     }
   };
 
-  const playWhistle = async () => {
+  const playWizzLoop = async () => {
     try {
-      if (whistleSoundRef.current) {
-        await whistleSoundRef.current.setPositionAsync(0);
-        await whistleSoundRef.current.playAsync();
+      if (wizzSoundRef.current) {
+        await wizzSoundRef.current.setPositionAsync(0);
+        await wizzSoundRef.current.setIsLoopingAsync(true);
+        await wizzSoundRef.current.playAsync();
       }
-      Vibration.vibrate([0, 300, 100, 300, 100, 300]);
+      Vibration.vibrate([0, 400, 200], true);
     } catch (error) {
-      logger.info('Erreur whistle:', error);
+      logger.info('Erreur wizz loop:', error);
+    }
+  };
+
+  const stopWizzLoop = async () => {
+    try {
+      if (wizzSoundRef.current) {
+        await wizzSoundRef.current.stopAsync();
+        await wizzSoundRef.current.setIsLoopingAsync(false);
+      }
+      Vibration.cancel();
+    } catch (error) {
+      logger.info('Erreur stop wizz:', error);
     }
   };
 
@@ -468,7 +481,7 @@ export default function ChronoScreen() {
   }, [mode, amrapDuration, reposDuration, timer.workDuration]);
 
   const pauseTimer = () => {
-    // Annuler la notification planifiée
+    stopWizzLoop();
     timerNotifications.cancelNotification().catch(e => logger.error('Cancel notification error:', e));
     setTimer((prev) => ({ ...prev, isRunning: false }));
   };
@@ -478,7 +491,7 @@ export default function ChronoScreen() {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    // Annuler la notification planifiée
+    stopWizzLoop();
     timerNotifications.cancelNotification().catch(e => logger.error('Cancel notification error:', e));
     initializeTimer(mode);
   };
@@ -525,7 +538,7 @@ export default function ChronoScreen() {
           if (mode === 'emom') {
             const currentMinute = Math.ceil(prev.timeRemaining / 60);
             if (currentMinute !== lastMinuteRef.current && prev.timeRemaining % 60 === 0 && prev.timeRemaining > 0) {
-              playGong();
+              playBeep();
               lastMinuteRef.current = currentMinute;
             }
             // 3 secondes avant la nouvelle minute
@@ -543,7 +556,7 @@ export default function ChronoScreen() {
                 // Fin effort, passer au repos
                 if (prev.currentRound >= prev.totalRounds) {
                   // Tabata terminé !
-                  playWhistle();
+                  playWizzLoop();
                   successHaptic();
                   return { ...prev, isRunning: false, phase: 'idle', timeRemaining: 0 };
                 }
@@ -564,11 +577,11 @@ export default function ChronoScreen() {
             // EMOM logic
             if (mode === 'emom') {
               if (prev.currentMinute >= prev.totalRounds) {
-                playWhistle();
+                playWizzLoop();
                 successHaptic();
                 return { ...prev, isRunning: false, phase: 'idle', timeRemaining: 0 };
               }
-              playGong();
+              playBeep();
               return {
                 ...prev,
                 timeRemaining: 60,
@@ -578,14 +591,14 @@ export default function ChronoScreen() {
 
             // AMRAP logic
             if (mode === 'amrap') {
-              playWhistle();
+              playWizzLoop();
               successHaptic();
               return { ...prev, isRunning: false, phase: 'idle', timeRemaining: 0 };
             }
 
-            // REPOS logic (beep pour musculation, pas gong)
+            // REPOS logic
             if (mode === 'repos') {
-              playBeep();
+              playWizzLoop();
               successHaptic();
               setReposCount(c => c + 1);
               return { ...prev, isRunning: false, phase: 'idle', timeRemaining: 0 };
@@ -595,7 +608,7 @@ export default function ChronoScreen() {
             if (mode === 'custom') {
               if (prev.phase === 'work') {
                 if (prev.currentRound >= prev.totalRounds) {
-                  playWhistle();
+                  playWizzLoop();
                   successHaptic();
                   return { ...prev, isRunning: false, phase: 'idle', timeRemaining: 0 };
                 }

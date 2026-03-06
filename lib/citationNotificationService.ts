@@ -265,13 +265,30 @@ export const initCitationNotifications = async (): Promise<void> => {
   try {
     const settings = await getCitationNotifSettings();
 
-    if (settings.enabled) {
-      // Vérifier si on doit replanifier (tous les 3 jours)
-      const lastScheduled = await AsyncStorage.getItem('@yoroi_citation_last_scheduled');
-      const now = Date.now();
-      const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+    if (!settings.enabled) {
+      await cancelAllCitationNotifications();
+      return;
+    }
 
-      if (!lastScheduled || now - parseInt(lastScheduled, 10) > threeDaysMs) {
+    // Vérifier si on doit replanifier (tous les 3 jours)
+    const lastScheduled = await AsyncStorage.getItem('@yoroi_citation_last_scheduled');
+    const now = Date.now();
+    const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+
+    if (!lastScheduled || now - parseInt(lastScheduled, 10) > threeDaysMs) {
+      // Annuler TOUTES les notifs pendantes avant de replanifier
+      // Evite les doublons entre anciens builds et nouvelles installations
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      await scheduleCitationNotifications();
+      await AsyncStorage.setItem('@yoroi_citation_last_scheduled', now.toString());
+    } else {
+      // Verifier que les notifs existent encore (ex: apres reinstallation)
+      const pending = await Notifications.getAllScheduledNotificationsAsync();
+      const citationPending = pending.filter(n =>
+        (n.content.data as any)?.type === 'citation'
+      );
+      if (citationPending.length === 0) {
+        // Plus rien de planifié, replanifier sans attendre le délai
         await scheduleCitationNotifications();
         await AsyncStorage.setItem('@yoroi_citation_last_scheduled', now.toString());
       }

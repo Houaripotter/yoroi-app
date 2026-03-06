@@ -21,7 +21,10 @@
       "infoPlist": {
         "NSHealthShareUsageDescription": "YOROI lit vos données de poids, composition corporelle, sommeil, pas, fréquence cardiaque et calories pour afficher vos statistiques de progression, calculer vos objectifs personnalisés et suivre votre évolution physique au fil du temps.",
         "NSHealthUpdateUsageDescription": "YOROI enregistre vos pesées quotidiennes, vos séances d'entraînement, vos données d'hydratation et de sommeil pour synchroniser automatiquement vos progrès entre tous vos appareils.",
-        "NSSupportsLiveActivities": true
+        "NSSupportsLiveActivities": true,
+        "NSCalendarsUsageDescription": "YOROI accède à votre calendrier pour vous rappeler vos séances d'entraînement planifiées.",
+        "NSCalendarsFullAccessUsageDescription": "YOROI accède à votre calendrier pour vous rappeler vos séances d'entraînement planifiées.",
+        "NSRemindersUsageDescription": "YOROI utilise les rappels pour vos objectifs fitness."
       },
       "entitlements": {
         "com.apple.developer.healthkit": true,

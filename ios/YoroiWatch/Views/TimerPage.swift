@@ -22,7 +22,6 @@ struct DashboardPage: View {
 
   @EnvironmentObject var session: WatchSessionManager
   @State private var showTimer = false
-  @State private var showCarnet = false
   @State private var showSteps = false
   @State private var isRefreshing = false
 
@@ -34,8 +33,11 @@ struct DashboardPage: View {
           // ── PROFILE HEADER ──
           profileHeader
 
-          // ── QUICK ACTIONS ROW: Timer + Steps + Carnet ──
-          quickActionsRow
+          // ── TIMER ACTION ──
+          timerActionRow
+
+          // ── GOALS RINGS: Steps + Hydration + Calories ──
+          goalsRingRow
 
           // ── HEALTH METRICS GRID ──
           healthMetricsGrid
@@ -60,9 +62,6 @@ struct DashboardPage: View {
     }
     .sheet(isPresented: $showTimer) {
       TimerDetailPage()
-    }
-    .sheet(isPresented: $showCarnet) {
-      CarnetFullPage()
     }
     .sheet(isPresented: $showSteps) {
       StepsDetailPage(steps: session.localSteps)
@@ -138,83 +137,123 @@ struct DashboardPage: View {
     return String(session.userName.prefix(2)).uppercased()
   }
 
-  // MARK: - Quick Actions (Timer + Steps + Carnet)
-  private var quickActionsRow: some View {
-    HStack(spacing: 10) {
-      // Timer circle
-      Button(action: { showTimer = true }) {
-        VStack(spacing: 3) {
-          ZStack {
+  // MARK: - Timer Action Row
+  private var timerActionRow: some View {
+    Button(action: { showTimer = true }) {
+      HStack(spacing: 10) {
+        ZStack {
+          Circle()
+            .fill(session.accentColor.opacity(0.15))
+            .frame(width: 38, height: 38)
+
+          if session.timerIsRunning {
             Circle()
-              .fill(session.accentColor.opacity(0.15))
-              .frame(width: 44, height: 44)
-
-            if session.timerIsRunning {
-              Circle()
-                .trim(from: 0, to: timerProgress)
-                .stroke(session.accentColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .frame(width: 44, height: 44)
-            }
-
-            Image(systemName: session.timerAlarmRinging ? "bell.fill" : (session.timerIsRunning ? "pause.fill" : "timer"))
-              .font(.system(size: 16))
-              .foregroundColor(session.timerAlarmRinging ? redColor : session.accentColor)
+              .trim(from: 0, to: timerProgress)
+              .stroke(session.accentColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+              .rotationEffect(.degrees(-90))
+              .frame(width: 38, height: 38)
           }
+
+          Image(systemName: session.timerAlarmRinging ? "bell.fill" : (session.timerIsRunning ? "pause.fill" : "timer"))
+            .font(.system(size: 15))
+            .foregroundColor(session.timerAlarmRinging ? redColor : session.accentColor)
+        }
+
+        VStack(alignment: .leading, spacing: 1) {
+          Text("MINUTEUR")
+            .font(.system(size: 8, weight: .heavy))
+            .foregroundColor(session.accentColor)
+            .tracking(1)
           Text(session.timerAlarmRinging
-            ? "STOP"
+            ? "Termine !"
             : (session.timerIsRunning
               ? session.formattedTime(session.timerRemainingSeconds)
-              : "Timer"))
-            .font(.system(size: 8, weight: .semibold))
-            .foregroundColor(session.timerAlarmRinging ? redColor : (session.timerIsRunning ? session.accentColor : session.textSecondary))
+              : "Appuyer pour demarrer"))
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundColor(session.timerAlarmRinging ? redColor : (session.timerIsRunning ? session.textPrimary : session.textSecondary))
         }
-      }
-      .buttonStyle(.plain)
 
-      // Steps circle
+        Spacer()
+
+        Image(systemName: "chevron.right")
+          .font(.system(size: 9))
+          .foregroundColor(session.textSecondary.opacity(0.5))
+      }
+      .padding(.horizontal, 10)
+      .padding(.vertical, 8)
+      .background(session.cardBg)
+      .cornerRadius(10)
+    }
+    .buttonStyle(.plain)
+  }
+
+  // MARK: - Goals Rings (Steps + Hydration + Calories)
+  private var goalsRingRow: some View {
+    HStack(spacing: 8) {
+      // Steps ring
       Button(action: { showSteps = true }) {
         VStack(spacing: 3) {
           ZStack {
             Circle()
-              .fill(greenColor.opacity(0.15))
+              .fill(greenColor.opacity(0.12))
               .frame(width: 44, height: 44)
-
             Circle()
               .trim(from: 0, to: stepsProgress)
               .stroke(greenColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
               .rotationEffect(.degrees(-90))
               .frame(width: 44, height: 44)
-
             Image(systemName: "figure.walk")
-              .font(.system(size: 16))
+              .font(.system(size: 13))
               .foregroundColor(greenColor)
           }
-          Text("\(displaySteps > 0 ? formattedSteps : "--")")
+          Text(displaySteps > 0 ? "\(displaySteps)" : "--")
             .font(.system(size: 8, weight: .semibold))
             .foregroundColor(session.textSecondary)
         }
       }
       .buttonStyle(.plain)
 
-      // Carnet circle
-      Button(action: { showCarnet = true }) {
-        VStack(spacing: 3) {
-          ZStack {
-            Circle()
-              .fill(cyanColor.opacity(0.15))
-              .frame(width: 44, height: 44)
-
-            Image(systemName: "book.fill")
-              .font(.system(size: 16))
-              .foregroundColor(cyanColor)
-          }
-          Text("Carnet")
-            .font(.system(size: 8, weight: .semibold))
-            .foregroundColor(session.textSecondary)
+      // Hydration ring
+      VStack(spacing: 3) {
+        ZStack {
+          Circle()
+            .fill(cyanColor.opacity(0.12))
+            .frame(width: 44, height: 44)
+          Circle()
+            .trim(from: 0, to: hydrationProgress)
+            .stroke(cyanColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+            .rotationEffect(.degrees(-90))
+            .frame(width: 44, height: 44)
+          Image(systemName: "drop.fill")
+            .font(.system(size: 13))
+            .foregroundColor(cyanColor)
         }
+        Text(session.hydrationCurrent > 0
+          ? String(format: "%.1fL", Double(session.hydrationCurrent) / 1000.0)
+          : "--")
+          .font(.system(size: 8, weight: .semibold))
+          .foregroundColor(session.textSecondary)
       }
-      .buttonStyle(.plain)
+
+      // Calories ring
+      VStack(spacing: 3) {
+        ZStack {
+          Circle()
+            .fill(orangeColor.opacity(0.12))
+            .frame(width: 44, height: 44)
+          Circle()
+            .trim(from: 0, to: caloriesProgress)
+            .stroke(orangeColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+            .rotationEffect(.degrees(-90))
+            .frame(width: 44, height: 44)
+          Image(systemName: "flame.fill")
+            .font(.system(size: 13))
+            .foregroundColor(orangeColor)
+        }
+        Text(displayCalories > 0 ? "\(displayCalories)" : "--")
+          .font(.system(size: 8, weight: .semibold))
+          .foregroundColor(session.textSecondary)
+      }
     }
     .padding(.vertical, 4)
   }
@@ -229,11 +268,12 @@ struct DashboardPage: View {
     return min(1.0, Double(displaySteps) / Double(goal))
   }
 
-  private var formattedSteps: String {
-    if displaySteps >= 1000 {
-      return String(format: "%.1fk", Double(displaySteps) / 1000.0)
-    }
-    return "\(displaySteps)"
+  private var hydrationProgress: Double {
+    return min(1.0, Double(session.hydrationCurrent) / 2500.0)
+  }
+
+  private var caloriesProgress: Double {
+    return min(1.0, Double(displayCalories) / 500.0)
   }
 
   // MARK: - Health Metrics Grid
@@ -635,9 +675,6 @@ struct TimerDetailPage: View {
             Text(session.formattedTime(session.timerRemainingSeconds))
               .font(.system(size: 28, weight: .bold, design: .monospaced))
               .foregroundColor(session.textPrimary)
-            Text(session.timerMode)
-              .font(.system(size: 8, weight: .medium))
-              .foregroundColor(session.textSecondary)
           }
         }
         .frame(width: 110, height: 110)
@@ -730,7 +767,7 @@ struct TimerDetailPage: View {
       // Pulsing ring
       ZStack {
         Circle()
-          .fill(redColor.opacity(0.15))
+          .fill(redColor.opacity(0.25))
           .frame(width: 120, height: 120)
 
         Circle()
@@ -744,12 +781,8 @@ struct TimerDetailPage: View {
 
       Text("TERMINE !")
         .font(.system(size: 14, weight: .heavy))
-        .foregroundColor(session.textPrimary)
+        .foregroundColor(.white)
         .tracking(1)
-
-      Text(session.timerMode)
-        .font(.system(size: 10, weight: .medium))
-        .foregroundColor(session.textSecondary)
 
       // Big stop button
       Button(action: {
@@ -775,6 +808,8 @@ struct TimerDetailPage: View {
 
       Spacer()
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(Color.black)
   }
 
   // MARK: - Custom Timer Sheet
@@ -832,7 +867,7 @@ struct TimerDetailPage: View {
           let total = customMinutes * 60 + customSeconds
           guard total > 0 else { return }
           selectedPreset = total
-          session.setTimer(seconds: total, mode: "Perso")
+          session.setTimer(seconds: total)
           showCustom = false
         }) {
           Text("Valider")
@@ -924,220 +959,21 @@ struct StepsDetailPage: View {
   }
 }
 
-// ============================================================
-// CARNET FULL PAGE (Records + Exercise Library + Add)
-// ============================================================
-
-struct CarnetFullPage: View {
-  @EnvironmentObject var session: WatchSessionManager
-  @State private var showLibrary = false
-  @State private var selectedRecord: BenchmarkRecord? = nil
-
-  static let catColors: [String: Color] = [
-    "musculation": Color(red: 0.937, green: 0.267, blue: 0.267),
-    "force": Color(red: 0.937, green: 0.267, blue: 0.267),
-    "running": Color(red: 0.231, green: 0.510, blue: 0.965),
-    "trail": Color(red: 0.063, green: 0.725, blue: 0.506),
-    "cardio": Color(red: 0.063, green: 0.725, blue: 0.506),
-    "hyrox": Color(red: 0.961, green: 0.620, blue: 0.043),
-    "halterophilie": Color(red: 0.831, green: 0.686, blue: 0.216),
-    "crossfit": Color(red: 0.961, green: 0.620, blue: 0.043),
-    "combat": Color(red: 0.937, green: 0.267, blue: 0.267),
-    "strongman": Color(red: 0.545, green: 0.361, blue: 0.965),
-    "bodyweight": Color(red: 0.545, green: 0.361, blue: 0.965),
-    "custom": Color(red: 0.420, green: 0.451, blue: 0.498),
-  ]
-
-  var body: some View {
-    NavigationView {
-      ScrollView {
-        VStack(alignment: .leading, spacing: 8) {
-
-          Button(action: { showLibrary = true }) {
-            HStack(spacing: 6) {
-              Image(systemName: "plus.circle.fill")
-                .font(.system(size: 14))
-              Text("Ajouter un record")
-                .font(.system(size: 11, weight: .bold))
-            }
-            .foregroundColor(session.textOnAccent)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(session.accentColor)
-            .cornerRadius(10)
-          }
-          .buttonStyle(.plain)
-
-          if !session.benchmarks.isEmpty {
-            Text("MES RECORDS")
-              .font(.system(size: 8, weight: .heavy))
-              .foregroundColor(session.accentColor)
-              .tracking(1)
-
-            let grouped = groupedBenchmarks
-            ForEach(Array(grouped.keys.sorted()), id: \.self) { category in
-              let catColor = CarnetFullPage.catColors[category.lowercased()] ?? session.accentColor
-              let records = grouped[category] ?? []
-
-              HStack(spacing: 4) {
-                RoundedRectangle(cornerRadius: 2)
-                  .fill(catColor)
-                  .frame(width: 3, height: 14)
-                Text(category.uppercased())
-                  .font(.system(size: 9, weight: .heavy))
-                  .foregroundColor(catColor)
-                  .tracking(0.5)
-              }
-              .padding(.top, 2)
-
-              ForEach(records) { record in
-                Button(action: { selectedRecord = record }) {
-                  RecordCard(record: record, catColor: catColor)
-                }
-                .buttonStyle(.plain)
-              }
-            }
-          } else {
-            VStack(spacing: 8) {
-              Image(systemName: "trophy")
-                .font(.system(size: 20))
-                .foregroundColor(session.textSecondary)
-              Text("Aucun record")
-                .font(.system(size: 11))
-                .foregroundColor(session.textSecondary)
-              Text("Utilise le + pour ajouter")
-                .font(.system(size: 9))
-                .foregroundColor(session.textSecondary.opacity(0.7))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.top, 16)
-          }
-
-          if !session.recentWorkouts.isEmpty {
-            Text("SEANCES")
-              .font(.system(size: 8, weight: .heavy))
-              .foregroundColor(.cyan)
-              .tracking(1)
-              .padding(.top, 6)
-
-            ForEach(session.recentWorkouts.prefix(5)) { workout in
-              HStack(spacing: 6) {
-                Image(systemName: workout.icon)
-                  .font(.system(size: 11))
-                  .foregroundColor(.cyan)
-                  .frame(width: 20)
-                VStack(alignment: .leading, spacing: 1) {
-                  Text(workout.type.capitalized)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(session.textPrimary)
-                  Text(workout.formattedDuration)
-                    .font(.system(size: 8))
-                    .foregroundColor(session.textSecondary)
-                }
-                Spacer()
-                Text(workout.date)
-                  .font(.system(size: 8))
-                  .foregroundColor(session.textSecondary)
-              }
-              .padding(.vertical, 2)
-            }
-          }
-        }
-        .padding(.horizontal, 4)
-      }
-      .refreshable {
-        session.requestSync()
-        try? await Task.sleep(nanoseconds: 1_500_000_000)
-      }
-      .navigationTitle("Carnet")
-    }
-    .sheet(isPresented: $showLibrary) {
-      ExerciseLibraryPage()
-    }
-    .sheet(item: $selectedRecord) { record in
-      let catColor = CarnetFullPage.catColors[record.category.lowercased()] ?? session.accentColor
-      AddEntryPage(
-        exerciseName: record.name,
-        exerciseId: record.id,
-        unit: record.unit,
-        catColor: catColor,
-        currentPR: record.formattedPR,
-        lastValue: record.lastValue > 0 ? record.lastValue : record.pr
-      )
-    }
-  }
-
-  private var groupedBenchmarks: [String: [BenchmarkRecord]] {
-    var result: [String: [BenchmarkRecord]] = [:]
-    for b in session.benchmarks {
-      let cat = b.category.isEmpty ? "Force" : b.category
-      result[cat, default: []].append(b)
-    }
-    return result
-  }
-}
-
-// MARK: - Record Card
-
-struct RecordCard: View {
-  @EnvironmentObject var session: WatchSessionManager
-  let record: BenchmarkRecord
-  let catColor: Color
-
-  var body: some View {
-    HStack(spacing: 6) {
-      RoundedRectangle(cornerRadius: 2)
-        .fill(catColor)
-        .frame(width: 3)
-
-      Image(systemName: record.icon)
-        .font(.system(size: 11))
-        .foregroundColor(catColor)
-        .frame(width: 22, height: 22)
-        .background(catColor.opacity(0.15))
-        .cornerRadius(5)
-
-      VStack(alignment: .leading, spacing: 1) {
-        Text(record.name)
-          .font(.system(size: 10, weight: .semibold))
-          .foregroundColor(session.textPrimary)
-          .lineLimit(1)
-
-        HStack(spacing: 3) {
-          Text(record.formattedPR)
-            .font(.system(size: 9, weight: .bold))
-            .foregroundColor(catColor)
-
-          if record.prReps > 0 {
-            Text("x\(record.prReps)")
-              .font(.system(size: 7))
-              .foregroundColor(session.textSecondary)
-          }
-
-          if record.pr > 0 {
-            Text("PR")
-              .font(.system(size: 6, weight: .heavy))
-              .foregroundColor(.white)
-              .padding(.horizontal, 3)
-              .padding(.vertical, 1)
-              .background(catColor)
-              .cornerRadius(3)
-          }
-        }
-      }
-
-      Spacer()
-
-      Image(systemName: "chevron.right")
-        .font(.system(size: 8))
-        .foregroundColor(session.textSecondary.opacity(0.5))
-    }
-    .padding(.vertical, 5)
-    .padding(.horizontal, 4)
-    .background(session.cardBg)
-    .cornerRadius(8)
-  }
-}
+// Shared category colors used by ExerciseLibraryPage and MuscleGroupPage
+private let watchCatColors: [String: Color] = [
+  "musculation": Color(red: 0.937, green: 0.267, blue: 0.267),
+  "force": Color(red: 0.937, green: 0.267, blue: 0.267),
+  "running": Color(red: 0.231, green: 0.510, blue: 0.965),
+  "trail": Color(red: 0.063, green: 0.725, blue: 0.506),
+  "cardio": Color(red: 0.063, green: 0.725, blue: 0.506),
+  "hyrox": Color(red: 0.961, green: 0.620, blue: 0.043),
+  "halterophilie": Color(red: 0.831, green: 0.686, blue: 0.216),
+  "crossfit": Color(red: 0.961, green: 0.620, blue: 0.043),
+  "combat": Color(red: 0.937, green: 0.267, blue: 0.267),
+  "strongman": Color(red: 0.545, green: 0.361, blue: 0.965),
+  "bodyweight": Color(red: 0.545, green: 0.361, blue: 0.965),
+  "custom": Color(red: 0.420, green: 0.451, blue: 0.498),
+]
 
 // ============================================================
 // EXERCISE LIBRARY PAGE

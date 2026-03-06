@@ -269,20 +269,32 @@ export const WatchConnectivity = {
 
   /**
    * Envoie les données d'hydratation à la Watch
+   * Essaie sendMessage (immédiat) si la Watch est joignable, sinon updateApplicationContext (background)
    */
   sendHydrationUpdate: async (waterIntake: number, date: Date = new Date()): Promise<void> => {
+    const payload = {
+      hydrationUpdate: {
+        waterIntake,
+        date: date.toISOString(),
+        timestamp: Date.now(),
+      },
+    };
     try {
-      await WatchConnectivity.updateApplicationContext({
-        hydrationUpdate: {
-          waterIntake,
-          date: date.toISOString(),
-          timestamp: Date.now(),
-        },
-      });
+      const reachable = await WatchConnectivity.isWatchReachable();
+      if (reachable) {
+        await WatchConnectivity.sendMessageToWatch(payload);
+      } else {
+        await WatchConnectivity.updateApplicationContext(payload);
+      }
       if (__DEV__) logger.info('Hydration update sent to Watch:', waterIntake);
     } catch (error) {
-      logger.error('Error sending hydration to Watch:', error);
-      throw error;
+      // Fallback: si sendMessage échoue (Watch pas joignable), utiliser le contexte
+      try {
+        await WatchConnectivity.updateApplicationContext(payload);
+      } catch (e2) {
+        logger.error('Error sending hydration to Watch:', e2);
+        throw e2;
+      }
     }
   },
 

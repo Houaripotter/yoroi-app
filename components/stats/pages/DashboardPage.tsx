@@ -28,7 +28,6 @@ import { format, parseISO, subDays } from 'date-fns';
 import { router } from 'expo-router';
 import { fr } from 'date-fns/locale';
 import { StatsDetailModal } from '../StatsDetailModal';
-import { StatsExplanation } from '../StatsExplanation';
 import { StatsHeader, Period } from '../StatsHeader';
 import { logger } from '@/lib/security/logger';
 
@@ -353,17 +352,16 @@ export const DashboardPage: React.FC = React.memo(() => {
         onPeriodChange={setSelectedPeriod}
       />
 
-      <StatsExplanation
-        title="Comment lire tes stats ?"
-        text="Cette page regroupe les indicateurs clés de tes 5 piliers : Corps (poids), Composition (gras/muscle), Mensures (cm), Discipline (fréquence) et Santé (récupération). Clique sur une carte pour voir l'historique complet."
-        color={colors.accent}
-      />
-
       <View style={styles.gridContainer}>
-      {groupedThemes.map(({ theme, metrics }) => (
+      {groupedThemes.map(({ theme, metrics }) => {
+        const firstColor = metrics[0]?.color || colors.accent;
+        const lastColor = metrics[metrics.length - 1]?.color || firstColor;
+        return (
         <View key={theme} style={styles.themeSection}>
-          <View style={{ backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderRadius: 10, paddingVertical: 6, paddingHorizontal: 10, alignSelf: 'flex-start', marginBottom: 8, marginLeft: 4 }}>
-            <Text style={[styles.themeTitle, { color: colors.textSecondary, marginBottom: 0, marginLeft: 0 }]}>{theme}</Text>
+          <View style={styles.themeTitleRow}>
+            <View style={[styles.themeTitleDash, { backgroundColor: firstColor }]} />
+            <Text style={[styles.themeTitleText, { color: colors.textPrimary }]}>{theme.toUpperCase()}</Text>
+            <View style={[styles.themeTitleDash, { backgroundColor: lastColor }]} />
           </View>
           <View style={styles.grid}>
             {metrics.map(metric => (
@@ -378,7 +376,8 @@ export const DashboardPage: React.FC = React.memo(() => {
             ))}
           </View>
         </View>
-      ))}
+        );
+      })}
       </View>
 
       <View style={{ height: 40 }} />
@@ -418,14 +417,24 @@ const styles = StyleSheet.create({
   themeSection: {
     marginBottom: 24,
   },
-  themeTitle: {
-    fontSize: 13,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
+  themeTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     marginBottom: 12,
-    marginLeft: 4,
-    opacity: 0.8,
+    paddingHorizontal: 4,
+  },
+  themeTitleDash: {
+    flex: 1,
+    height: 2,
+    borderRadius: 1,
+    opacity: 0.6,
+  },
+  themeTitleText: {
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 2,
+    textAlign: 'center',
   },
   grid: {
     flexDirection: 'row',

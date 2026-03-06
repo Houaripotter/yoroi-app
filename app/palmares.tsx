@@ -265,7 +265,7 @@ export default function PalmaresScreen() {
                 <View style={styles.fightHeader}>
                   <View style={styles.fightHeaderLeft}>
                     <Text style={[styles.fightNumber, { color: colors.textMuted }]}>
-                      Combat #{combats.length - combats.indexOf(combat)}
+                      Combat #{filteredCombats.length - index}
                     </Text>
                     <View style={styles.fightDate}>
                       <Calendar size={14} color={colors.textMuted} />

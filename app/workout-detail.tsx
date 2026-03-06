@@ -217,6 +217,27 @@ function formatDateFull(date: string, startTime?: string): string {
   } catch { return date; }
 }
 
+function formatDateHeader(date: string): string {
+  try {
+    return new Date(date).toLocaleDateString('fr-FR', {
+      weekday: 'short', day: 'numeric', month: 'short',
+    });
+  } catch { return ''; }
+}
+
+// Noms lisibles pour les sources — masque les noms internes laids
+function getSourceDisplayName(source: string): string | null {
+  const map: Record<string, string> = {
+    apple_watch: 'Apple Watch', apple_health: 'Apple Sante',
+    iphone: 'iPhone', strava: 'Strava', garmin: 'Garmin',
+    polar: 'Polar', whoop: 'Whoop', suunto: 'Suunto',
+    coros: 'Coros', wahoo: 'Wahoo', samsung: 'Samsung',
+    fitbit: 'Fitbit', withings: 'Withings', amazfit: 'Amazfit',
+    huawei: 'Huawei', oura: 'Oura', peloton: 'Peloton',
+  };
+  return map[source] ?? null; // null = ne pas afficher
+}
+
 function getAirQualityColor(aqi: number): string {
   if (aqi <= 50) return '#22C55E';   // Bon - vert
   if (aqi <= 100) return '#EAB308';  // Modere - jaune
@@ -364,10 +385,12 @@ export default function WorkoutDetailScreen() {
       if (tr.workout_details_json) {
         try {
           const cached = JSON.parse(tr.workout_details_json);
+          // v3: invalider les anciens caches (v1: maxHR séance, v2: 220-age, v3: HKMaximumHeartRate metadata)
+          const isStaleCache = (cached.cacheVersion ?? 1) < 3;
           // Verifier que le cache a du contenu utile (pas juste durationMinutes)
           const hasRichData = cached.heartRateSamples?.length > 0 || cached.routePoints?.length > 0
             || cached.heartRateZones?.length > 0 || cached.weatherTemp != null;
-          if (hasRichData) {
+          if (hasRichData && !isStaleCache) {
             setDetails(cached);
             // Cache incomplet: GPS ou qualite d'air manquants -> re-fetch en background
             const missingGPS = !cached.routePoints?.length;
@@ -378,7 +401,7 @@ export default function WorkoutDetailScreen() {
               );
             }
           } else {
-            // Cache pauvre, re-fetcher depuis HealthKit
+            // Cache périmé ou pauvre, re-fetcher depuis HealthKit
             await loadDetailsFromHealthKit(
               tr.healthkit_uuid || 'fallback', id, fallbackStart, tr.duration_minutes, tr,
             );
@@ -438,9 +461,10 @@ export default function WorkoutDetailScreen() {
         }
       }
     }
-    // HealthKit n'a rien retourne (simulateur ou pas de donnees) -> donnees demo
-    if (trainingRecord) {
-      logger.info('[WorkoutDetail] HealthKit vide, generation donnees demo pour preview UI');
+    // HealthKit n'a rien retourné - ne pas afficher de données inventées
+    if (__DEV__ && trainingRecord) {
+      // En dev/simulateur uniquement : données de prévisualisation UI
+      logger.info('[WorkoutDetail] HealthKit vide (simulateur), données demo pour preview UI');
       setDetails(generateDemoDetails(trainingRecord));
     }
     setDetailsLoading(false);
@@ -449,7 +473,7 @@ export default function WorkoutDetailScreen() {
   if (loading) {
     return (
       <View style={[styles.screenRoot, { backgroundColor: screenBackground }]}>
-        <Header title={t('workoutDetail.title') || 'Detail Seance'} showBack />
+        <Header title="" showBack />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -460,7 +484,7 @@ export default function WorkoutDetailScreen() {
   if (!training) {
     return (
       <View style={[styles.screenRoot, { backgroundColor: screenBackground }]}>
-        <Header title={t('workoutDetail.title') || 'Detail Seance'} showBack />
+        <Header title="" showBack />
         <View style={styles.loadingContainer}>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
             Seance introuvable
@@ -493,7 +517,7 @@ export default function WorkoutDetailScreen() {
 
   return (
     <View style={[styles.screenRoot, { backgroundColor: screenBackground }]}>
-      <Header title={t('workoutDetail.title') || 'Detail Seance'} showBack />
+      <Header title={formatDateHeader(training.date)} showBack />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -509,7 +533,15 @@ export default function WorkoutDetailScreen() {
               </View>
               <View style={styles.heroTitleBlock}>
                 <Text style={styles.heroSportName} numberOfLines={1}>
-                  {training.session_type || sportName}
+                  {(() => {
+                    const base = training.session_type || sportName;
+                    if (!details?.isIndoor) return base;
+                    const indoorSuffix: Record<string, string> = {
+                      'Marche': 'Marche (tapis)', 'Course': 'Course (tapis)',
+                      'Velo': 'Velo (interieur)', 'Randonnee': 'Randonnee (int.)',
+                    };
+                    return indoorSuffix[base] || base;
+                  })()}
                 </Text>
                 <Text style={styles.heroDate}>
                   {training.start_time ? `${training.start_time}-${addMinutesToTime(training.start_time, duration)}` : ''}
@@ -563,10 +595,12 @@ export default function WorkoutDetailScreen() {
                   <Text style={styles.heroBadgeText}>Outdoor</Text>
                 </View>
               )}
-              {training.source && training.source !== 'manual' && (
+              {training.source && training.source !== 'manual' && getSourceDisplayName(training.source) && (
                 <View style={styles.heroBadge}>
                   <Heart size={12} color="#FFFFFF" />
-                  <Text style={styles.heroBadgeText}>{training.source}</Text>
+                  <Text style={styles.heroBadgeText}>
+                    {getSourceDisplayName(training.source)}
+                  </Text>
                 </View>
               )}
               {details?.elevationAscended != null && details.elevationAscended > 0 && (
@@ -579,11 +613,11 @@ export default function WorkoutDetailScreen() {
           </View>
         </AnimatedCard>
 
-        {/* ═══ DETAILS DE L'EXERCICE - Style Apple Health ═══ */}
+        {/* ═══ DETAILS DE L'EXERCICE - Style Apple Fitness ═══ */}
+        <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
+          Détails de l'exercice {'>'}
+        </Text>
         <AnimatedCard delay={80} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-          <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
-            Details de l'exercice
-          </Text>
           <View style={[styles.appleDetailsGrid, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
             {/* Row 1: Duree + Distance */}
             <View style={styles.appleDetailsRow}>
@@ -706,17 +740,13 @@ export default function WorkoutDetailScreen() {
           </AnimatedCard>
         )}
 
-        {/* ═══ FREQUENCE CARDIAQUE - Barres colorees par zone ═══ */}
+        {/* ═══ FREQUENCE CARDIAQUE ═══ */}
         {hrSamples && hrSamples.length > 2 && (
+          <>
+          <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
+            Fréquence cardiaque {'>'}
+          </Text>
           <AnimatedCard delay={160} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-            <View style={styles.sectionHeader}>
-              <View style={[styles.sectionIconBg, { backgroundColor: '#EF444415' }]}>
-                <Heart size={16} color="#EF4444" />
-              </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('workoutDetail.heartRate') || 'Frequence cardiaque'}
-              </Text>
-            </View>
 
             {/* FC moyenne en grand */}
             <Text style={[styles.hrAvgLabel, { color: colors.textMuted }]}>Freq. cardiaque moy.</Text>
@@ -742,19 +772,13 @@ export default function WorkoutDetailScreen() {
               <HRStatBadge label="Max" value={details?.maxHeartRate} color="#EF4444" textColor={colors.text} mutedColor={colors.textMuted} isDark={isDark} />
             </View>
           </AnimatedCard>
+          </>
         )}
 
         {/* ═══ ZONES CARDIAQUES ═══ */}
         {hrZones && hrZones.length > 0 && (
           <AnimatedCard delay={240} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-            <View style={styles.sectionHeader}>
-              <View style={[styles.sectionIconBg, { backgroundColor: '#F9731615' }]}>
-                <Zap size={16} color="#F97316" />
-              </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('workoutDetail.heartRateZones') || 'Zones cardiaques'}
-              </Text>
-            </View>
+            <Text style={[styles.sectionTitleInCard, { color: colors.text }]}>Zones cardiaques</Text>
             <HeartRateZonesBar zones={hrZones} />
           </AnimatedCard>
         )}
@@ -762,14 +786,7 @@ export default function WorkoutDetailScreen() {
         {/* ═══ RECUPERATION FC ═══ */}
         {details?.recoveryHR && (
           <AnimatedCard delay={320} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-            <View style={styles.sectionHeader}>
-              <View style={[styles.sectionIconBg, { backgroundColor: '#06B6D415' }]}>
-                <TrendingUp size={16} color="#06B6D4" />
-              </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('workoutDetail.recovery') || 'Recuperation FC'}
-              </Text>
-            </View>
+            <Text style={[styles.sectionTitleInCard, { color: colors.text }]}>Récupération FC</Text>
             <View style={styles.recoveryRow}>
               <RecoveryItem
                 label="Fin" bpm={details.recoveryHR.atEnd}
@@ -795,15 +812,11 @@ export default function WorkoutDetailScreen() {
 
         {/* ═══ INTERMEDIAIRES ═══ */}
         {splits && splits.length > 0 && (
+          <>
+          <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
+            Intermédiaires {'>'}
+          </Text>
           <AnimatedCard delay={400} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-            <View style={styles.sectionHeader}>
-              <View style={[styles.sectionIconBg, { backgroundColor: '#6366f115' }]}>
-                <Timer size={16} color="#6366f1" />
-              </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('workoutDetail.splits') || 'Intermediaires'}
-              </Text>
-            </View>
             <View style={[styles.splitHeaderRow, { borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
               <Text style={[styles.splitHeaderCell, styles.splitIdxCell, { color: colors.textMuted }]}></Text>
               <Text style={[styles.splitHeaderCell, styles.splitTimeCell, { color: colors.textMuted }]}>Duree</Text>
@@ -847,19 +860,16 @@ export default function WorkoutDetailScreen() {
               );
             })}
           </AnimatedCard>
+          </>
         )}
 
-        {/* ═══ PARCOURS GPS ═══ */}
+        {/* ═══ PLAN (GPS + METEO) ═══ */}
         {route && route.length > 2 && (
+          <>
+          <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
+            Plan {'>'}
+          </Text>
           <AnimatedCard delay={480} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-            <View style={styles.sectionHeader}>
-              <View style={[styles.sectionIconBg, { backgroundColor: '#22C55E15' }]}>
-                <MapPin size={16} color="#22C55E" />
-              </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('workoutDetail.route') || 'Parcours'}
-              </Text>
-            </View>
             <View style={styles.mapContainer}>
               <WorkoutMapRoute
                 routePoints={route}
@@ -890,20 +900,16 @@ export default function WorkoutDetailScreen() {
               )}
             </View>
           </AnimatedCard>
+          </>
         )}
 
-        {/* ═══ LIEU D'ENTRAINEMENT (pin GPS manuel) ═══ */}
-        {!route?.length && training.location_lat != null && training.location_lon != null && (
+        {/* ═══ LIEU D'ENTRAINEMENT (pin GPS, fallback sans tracé) ═══ */}
+        {!route?.length && (training.location_lat != null || details?.startLatitude != null) && (
+          <>
+          <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
+            Plan {'>'}
+          </Text>
           <AnimatedCard delay={480} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-            <View style={styles.sectionHeader}>
-              <View style={[styles.sectionIconBg, { backgroundColor: '#22C55E15' }]}>
-                <MapPin size={16} color="#22C55E" />
-              </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Lieu d'entrainement
-              </Text>
-            </View>
-
             {Platform.OS === 'ios' ? (
               /* iOS : Apple Maps natif, aucune cle API requise */
               <View style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 4 }}>
@@ -911,8 +917,8 @@ export default function WorkoutDetailScreen() {
                   provider={PROVIDER_DEFAULT}
                   style={{ height: 220 }}
                   initialRegion={{
-                    latitude: training.location_lat,
-                    longitude: training.location_lon,
+                    latitude: training.location_lat ?? details?.startLatitude ?? 0,
+                    longitude: training.location_lon ?? details?.startLongitude ?? 0,
                     latitudeDelta: 0.005,
                     longitudeDelta: 0.005,
                   }}
@@ -922,7 +928,10 @@ export default function WorkoutDetailScreen() {
                   userInterfaceStyle={isDark ? 'dark' : 'light'}
                 >
                   <Marker
-                    coordinate={{ latitude: training.location_lat, longitude: training.location_lon }}
+                    coordinate={{
+                      latitude: training.location_lat ?? details?.startLatitude ?? 0,
+                      longitude: training.location_lon ?? details?.startLongitude ?? 0,
+                    }}
                     pinColor={sportColor}
                   />
                 </MapView>
@@ -976,19 +985,16 @@ export default function WorkoutDetailScreen() {
               </View>
             ) : null}
           </AnimatedCard>
+          </>
         )}
 
-        {/* ═══ METEO ═══ */}
+        {/* ═══ CONDITIONS ═══ */}
         {(details?.weatherTemp != null || details?.weatherHumidity != null || details?.weatherCondition || details?.airQualityIndex) && (
+          <>
+          <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
+            Conditions {'>'}
+          </Text>
           <AnimatedCard delay={560} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-            <View style={styles.sectionHeader}>
-              <View style={[styles.sectionIconBg, { backgroundColor: '#F59E0B15' }]}>
-                <Thermometer size={16} color="#F59E0B" />
-              </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('workoutDetail.weather') || 'Meteo'}
-              </Text>
-            </View>
             <View style={styles.weatherRow}>
               {details?.weatherTemp != null && (
                 <View style={[styles.weatherCard, { backgroundColor: isDark ? '#F59E0B15' : '#F59E0B12' }]}>
@@ -1044,21 +1050,23 @@ export default function WorkoutDetailScreen() {
               </View>
             )}
           </AnimatedCard>
+          </>
         )}
 
         {/* === EFFORT PERCU (RPE) + NOTES === */}
-        {((training.intensity ?? 0) > 0 || (training.notes && training.notes.trim())) && (
+        {(() => {
+          // Filtrer les notes auto-generees (ex: "marche (33min)", "running (45min)")
+          const rawNotes = training.notes?.trim() || '';
+          const isAutoNote = /^[a-zA-ZÀ-ÿ\s]+\(\d+\s*min\)$/i.test(rawNotes);
+          const hasRealNotes = rawNotes.length > 0 && !isAutoNote;
+          if ((training.intensity ?? 0) <= 0 && !hasRealNotes) return null;
+          return (
           <AnimatedCard delay={640} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
             {(training.intensity ?? 0) > 0 && (
               <>
-                <View style={styles.sectionHeader}>
-                  <View style={[styles.sectionIconBg, { backgroundColor: '#F9731615' }]}>
-                    <Activity size={16} color="#F97316" />
-                  </View>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                    Effort percu (RPE)
-                  </Text>
-                </View>
+                <Text style={[styles.sectionTitleInCard, { color: colors.text }]}>
+                  Effort
+                </Text>
                 <View style={styles.rpeContainer}>
                   <View style={[styles.rpeBarBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
                     <View style={[styles.rpeBarFill, {
@@ -1078,23 +1086,17 @@ export default function WorkoutDetailScreen() {
                 </View>
               </>
             )}
-            {training.notes && training.notes.trim() && (
+            {hasRealNotes && (
               <View style={(training.intensity ?? 0) > 0 ? { marginTop: 16, paddingTop: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' } : undefined}>
-                <View style={styles.sectionHeader}>
-                  <View style={[styles.sectionIconBg, { backgroundColor: '#6366f115' }]}>
-                    <MaterialCommunityIcons name="note-text-outline" size={16} color="#6366f1" />
-                  </View>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                    Notes
-                  </Text>
-                </View>
+                <Text style={[styles.sectionTitleInCard, { color: colors.text }]}>Notes</Text>
                 <Text style={[styles.notesText, { color: colors.textSecondary }]}>
-                  {training.notes}
+                  {rawNotes}
                 </Text>
               </View>
             )}
           </AnimatedCard>
-        )}
+          );
+        })()}
 
         <View style={{ height: insets.bottom + 30 }} />
       </ScrollView>
@@ -1327,6 +1329,9 @@ const styles = StyleSheet.create({
   // Apple details grid
   appleSectionTitle: {
     fontSize: 18, fontWeight: '700', marginBottom: 12, letterSpacing: -0.3,
+  },
+  sectionTitleInCard: {
+    fontSize: 15, fontWeight: '700', letterSpacing: -0.2, marginBottom: 12,
   },
   appleDetailsGrid: {
     borderRadius: 14, overflow: 'hidden',

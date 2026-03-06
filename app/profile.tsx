@@ -48,7 +48,7 @@ import {
   Profile,
  getWeights, getTrainings } from '@/lib/database';
 import { getCurrentRank } from '@/lib/ranks';
-import { getLevel, calculateAndStoreUnifiedPoints } from '@/lib/gamification';
+import { calculateAndStoreUnifiedPoints } from '@/lib/gamification';
 import { getUnlockedBadges } from '@/lib/badges';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -430,7 +430,7 @@ export default function ProfileScreen() {
       t('profile.howToAddPhoto') || 'Choisis comment ajouter ta photo',
       [
         {
-          text: '📸 ' + (t('profile.takePhoto') || 'Prendre une photo'),
+          text: t('profile.takePhoto') || 'Prendre une photo',
           style: 'primary',
           onPress: async () => {
             setTimeout(() => {
@@ -439,7 +439,7 @@ export default function ProfileScreen() {
           }
         },
         {
-          text: '🖼️ ' + (t('profile.chooseFromGallery') || 'Choisir depuis la galerie'),
+          text: t('profile.chooseFromGallery') || 'Choisir depuis la galerie',
           style: 'default',
           onPress: async () => {
             setTimeout(() => {

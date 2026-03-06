@@ -241,6 +241,7 @@ function RootLayoutContent() {
         <Stack.Screen name="themes" options={{ presentation: 'card' }} />
         <Stack.Screen name="logo-selection" options={{ presentation: 'card' }} />
         <Stack.Screen name="export-data" options={{ presentation: 'card' }} />
+        <Stack.Screen name="companion" options={{ presentation: 'card' }} />
         <Stack.Screen name="legal" options={{ presentation: 'card' }} />
         <Stack.Screen name="ideas" options={{ presentation: 'card' }} />
         <Stack.Screen name="citations" options={{ presentation: 'card' }} />
@@ -335,12 +336,11 @@ export default function RootLayout() {
               }
               await AsyncStorage.setItem('@yoroi_healthkit_asked', 'true');
             } else {
-              // Deja demande: initialiser et relancer l'observer
+              // Deja demande: initialiser ET re-connecter pour s'assurer que les permissions sont actives
               await healthConnect.initialize();
-              const status = healthConnect.getSyncStatus();
-              // Toujours tenter l'observer si HealthKit est disponible (meme si pas "connecte" formellement)
-              const available = await healthConnect.isAvailable();
-              if (status.isConnected || available) {
+              // connect() est idempotent: si permissions deja accordees il ne redemande pas
+              const connected = await healthConnect.connect();
+              if (connected) {
                 await healthConnect.setupWorkoutObserver();
               }
             }

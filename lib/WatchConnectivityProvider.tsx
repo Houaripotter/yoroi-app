@@ -19,13 +19,13 @@
  */
 
 import React, { createContext, useContext, ReactNode, useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { Platform, Animated, View, Text, StyleSheet, AppState, AppStateStatus, DeviceEventEmitter } from 'react-native';
+import { Platform, AppState, AppStateStatus, DeviceEventEmitter } from 'react-native';
 import { WatchConnectivity } from '@/lib/watchConnectivity.ios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '@/lib/security/logger';
 import { addWeight, getProfile } from '@/lib/database';
-import { getBenchmarks, addBenchmarkEntry, getOrCreateBenchmarkFromWatch, importWatchExercisesToPhone, getBenchmarkPR, getBenchmarkLast } from '@/lib/carnetService';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { getBenchmarks, addBenchmarkEntry, getOrCreateBenchmarkFromWatch, importWatchExercisesToPhone, getBenchmarkPR, getBenchmarkLast, syncCarnetToWatch } from '@/lib/carnetService';
+import { saveNotification } from '@/lib/notificationHistoryService';
 import * as Device from 'expo-device';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { themeColors, getTheme, ThemeColor } from '@/constants/themes';
@@ -205,11 +205,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
   const [isSyncing, setIsSyncing] = useState(false);
   const [pendingSyncsCount, setPendingSyncsCount] = useState(0);
 
-  // Animation de la bannière
-  const bannerAnim = useRef(new Animated.Value(-100)).current;
-  const [syncMessage, setSyncMessage] = useState('');
-  const [bannerIcon, setBannerIcon] = useState('watch');
-  const [bannerColor, setBannerColor] = useState('#4ade80');
+  // (plus de bannière — les événements importants vont dans le centre de notifications)
 
   // NOUVEAU : Refs pour throttling et queue
   const lastSyncTimestamps = useRef<Record<string, number>>({});
@@ -218,36 +214,18 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
   const syncDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const appState = useRef<AppStateStatus>(AppState.currentState);
 
-  // UX FEEDBACK: Bannière améliorée avec icônes et couleurs
+  // Remplace le banner — enregistre silencieusement dans le centre de notifications
   const showSyncBanner = useCallback((message: string, type: 'info' | 'success' | 'error' | 'loading' = 'info') => {
-    if (!message || message.trim() === '') return; // Ne pas afficher de banner vide
-    setSyncMessage(message);
-
-    // Icônes et couleurs selon le type
-    switch (type) {
-      case 'loading':
-        setBannerIcon('sync');
-        setBannerColor('#3b82f6'); // Bleu
-        break;
-      case 'success':
-        setBannerIcon('check-circle');
-        setBannerColor('#4ade80'); // Vert
-        break;
-      case 'error':
-        setBannerIcon('alert-circle');
-        setBannerColor('#ef4444'); // Rouge
-        break;
-      default:
-        setBannerIcon('watch');
-        setBannerColor('#8b5cf6'); // Violet
-    }
-
-    Animated.sequence([
-      Animated.spring(bannerAnim, { toValue: 50, useNativeDriver: true, speed: 12 }),
-      Animated.delay(type === 'error' ? 3000 : 2000),
-      Animated.timing(bannerAnim, { toValue: -100, duration: 500, useNativeDriver: true })
-    ]).start();
-  }, [bannerAnim]);
+    if (!message || message.trim() === '') return;
+    // Seulement les événements significatifs (pas loading, pas info générique)
+    if (type === 'loading') return;
+    if (type === 'info' && (message.includes('plus tard') || message.includes('Synchronisat'))) return;
+    // Nettoyer le message (retirer emojis)
+    const clean = message.replace(/[\u{1F300}-\u{1FFFF}]/gu, '').replace(/[\u2600-\u27BF]/gu, '').trim();
+    if (!clean) return;
+    const title = type === 'error' ? 'Erreur Watch' : 'Watch';
+    saveNotification(title, clean, 'watch_sync').catch(() => {});
+  }, []);
 
   // LOGGING: Logger détaillé avec timestamps
   const logSync = useCallback((action: string, details?: any) => {
@@ -529,6 +507,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           const goal = parseInt(msg.stepsGoal);
           if (goal >= 1000 && goal <= 30000) {
             await AsyncStorage.setItem('@yoroi_steps_goal', String(goal));
+            DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
             logSync('handleWatchMessage - Steps goal updated from Watch', { goal });
           }
         }
@@ -537,6 +516,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           const goal = parseInt(msg.hydrationGoal);
           if (goal >= 500 && goal <= 6000) {
             await AsyncStorage.setItem('@yoroi_hydration_goal', String(goal));
+            DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
             logSync('handleWatchMessage - Hydration goal updated from Watch', { goal });
           }
         }
@@ -607,6 +587,8 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
                 DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
                 showSyncBanner(`${benchmark.name} synchronise depuis la montre`, 'success');
                 logSync('handleWatchMessage - Benchmark entry added from Watch', { watchId, exerciseName, value, reps });
+                // Push updated benchmarks back to Watch immediately
+                syncCarnetToWatch().catch(() => {});
               }
             }
           } catch (e) {
@@ -645,6 +627,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
             const settings = settingsStr ? JSON.parse(settingsStr) : {};
             settings.weight_unit = unit;
             await AsyncStorage.setItem('@yoroi_settings', JSON.stringify(settings));
+            DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
             logSync('handleWatchMessage - Unit system changed from Watch', { unit });
           } catch (e) {
             logSync('handleWatchMessage - Error changing unit', e);
@@ -661,7 +644,6 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         }
 
         if (msg.testSignal) {
-          showSyncBanner('Apple Watch connectee', 'info');
           logSync('handleWatchMessage - Test signal reçu');
         }
 
@@ -807,27 +789,24 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         }
 
         // Listeners
+        let reachabilityDebounceTimer: ReturnType<typeof setTimeout> | null = null;
         reachabilityListener = WatchConnectivity.onReachabilityChanged(async (status) => {
           setIsReachable(status.isReachable);
           setIsAvailable(status.isPaired && status.isWatchAppInstalled);
 
           logSync('Reachability changé', status);
 
-          if (status.isReachable) {
-            showSyncBanner('⌚ Watch connectée', 'info');
-
-            // NOUVEAU : Récupérer données en attente
-            await retrieveWatchData();
-
-            // NOUVEAU : Traiter syncs en attente
-            await processPendingSyncs();
-
-            // Sync iPhone → Watch
-            syncAllData();
-            syncProfileToWatch();
-          } else {
-            showSyncBanner('⌚ Watch déconnectée', 'error');
-          }
+          // Debounce: ignorer les changements rapides (connexions/déconnexions en rafale)
+          if (reachabilityDebounceTimer) clearTimeout(reachabilityDebounceTimer);
+          reachabilityDebounceTimer = setTimeout(async () => {
+            if (status.isReachable) {
+              await retrieveWatchData();
+              await processPendingSyncs();
+              syncAllData();
+              syncProfileToWatch();
+            }
+            // Pas de banner de déconnexion — trop intrusif
+          }, 2000);
         });
 
         messageListener = WatchConnectivity.onMessageReceived((message) => {
@@ -999,7 +978,8 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
 
       // 1. Récupérer données
       const { getSleepStats, getSleepGoal, getTodaySleep } = require('@/lib/sleepService');
-      const [profile, weight, waterIntake, streak, avatarConfig, level, rank, benchmarksList, savedThemeColor, savedStepsGoal, savedHydrationGoal, sleepStatsData, sleepGoalData, todaySleep, savedThemeMode] = await Promise.all([
+      const { getWeights, getTrainings } = require('@/lib/database');
+      const [profile, weight, waterIntake, streak, avatarConfig, level, rank, benchmarksList, savedThemeColor, savedStepsGoal, savedHydrationGoal, sleepStatsData, sleepGoalData, todaySleep, savedThemeMode, savedSettings, savedTimerPreset, weightEntries, recentTrainings] = await Promise.all([
         getProfile(),
         AsyncStorage.getItem('currentWeight'),
         AsyncStorage.getItem('waterIntake'),
@@ -1015,6 +995,10 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         getSleepGoal().catch(() => 480),
         getTodaySleep().catch(() => null),
         AsyncStorage.getItem('yoroi_theme_mode_v5'),
+        AsyncStorage.getItem('@yoroi_settings'),
+        AsyncStorage.getItem('@yoroi_default_timer'),
+        getWeights(30).catch(() => []),
+        getTrainings(7).catch(() => []),
       ]);
 
       // 2. Construire megaPack OPTIMISÉ avec VERSIONING
@@ -1031,6 +1015,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           id: b.id,
           name: b.name,
           category: b.category || 'Force',
+          sport: b.sport || b.muscleGroup || '',
           unit: b.unit || 'kg',
           pr: pr?.value || 0,
           prReps: pr?.reps || 0,
@@ -1078,17 +1063,20 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       const syncFullTheme = getTheme((savedThemeColor || 'ocean') as ThemeColor, themeMode as 'dark' | 'light');
 
       // Sleep data from sleepService (source unique de verite)
+      const sleepGoalMinutes = sleepGoalData || 480;
       let sleepInfo: any = {};
       if (sleepStatsData) {
-        sleepInfo.sleepDuration = Math.round(sleepStatsData.lastNightDuration || 0); // minutes
+        const duration = Math.round(sleepStatsData.lastNightDuration || 0);
+        sleepInfo.sleepDuration = duration; // minutes
         sleepInfo.sleepQuality = Math.round(sleepStatsData.lastNightQuality || 0); // 1-5
         sleepInfo.sleepDebt = sleepStatsData.sleepDebtHours || 0; // heures
+        sleepInfo.sleepScore = Math.min(Math.round((duration / sleepGoalMinutes) * 100), 100); // 0-100
       }
       if (todaySleep) {
         sleepInfo.sleepBedTime = todaySleep.bedTime || '--:--';
         sleepInfo.sleepWakeTime = todaySleep.wakeTime || '--:--';
       }
-      sleepInfo.sleepGoal = sleepGoalData || 480;
+      sleepInfo.sleepGoal = sleepGoalMinutes;
 
       // Build hydration weekly data for Watch (last 7 days) — batch fetch
       let hydrationWeeklyData: { day: string; amount: number; goal: number }[] = [];
@@ -1132,6 +1120,22 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         // Objectifs (read from saved values)
         stepsGoal: savedStepsGoal ? parseInt(savedStepsGoal) : 10000,
         hydrationGoal: savedHydrationGoal ? parseInt(savedHydrationGoal) : 2500,
+        // Préférences
+        unitSystem: (() => { try { return savedSettings ? JSON.parse(savedSettings).weight_unit || 'kg' : 'kg'; } catch { return 'kg'; } })(),
+        defaultTimerSeconds: savedTimerPreset ? parseInt(savedTimerPreset) : 90,
+        // Historique poids (evolution chart)
+        weightHistory: (weightEntries || []).slice(0, 10).map((e: any) => ({ weight: e.weight, date: e.date || '' })),
+        // Composition corporelle (dernière entrée)
+        bodyFat: weightEntries?.[0]?.fat_percent || 0,
+        muscleMass: weightEntries?.[0]?.muscle_percent || 0,
+        waterPercent: weightEntries?.[0]?.water_percent || 0,
+        // Séances récentes (dashboard)
+        recentWorkouts: (recentTrainings || []).slice(0, 3).map((t: any) => ({
+          type: t.sport || t.category || 'Entrainement',
+          duration: t.duration_minutes || t.duration || 0,
+          calories: t.calories || 0,
+          date: t.date || '',
+        })),
         // Sleep data
         ...sleepInfo,
         // Health data
@@ -1269,25 +1273,9 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
   return (
     <WatchContext.Provider value={contextValue}>
       {children}
-
-      <Animated.View style={[styles.banner, { transform: [{ translateY: bannerAnim }] }]}>
-        <View style={[styles.bannerContent, { backgroundColor: bannerColor }]}>
-          <View style={styles.iconContainer}>
-            <MaterialCommunityIcons name={bannerIcon as any} size={20} color="#000" />
-          </View>
-          <Text style={styles.bannerText}>{syncMessage}</Text>
-        </View>
-      </Animated.View>
     </WatchContext.Provider>
   );
 }
-
-const styles = StyleSheet.create({
-  banner: { position: 'absolute', top: 0, left: 20, right: 20, zIndex: 9999, alignItems: 'center' },
-  bannerContent: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 25, gap: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
-  iconContainer: { width: 28, height: 28, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  bannerText: { color: '#000', fontWeight: '800', fontSize: 14 }
-});
 
 export function useWatch() {
   const context = useContext(WatchContext);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useId } from 'react';
 import { TextInput, View, Text, StyleSheet, InputAccessoryView, Platform } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 // 🔒 SÉCURITÉ: Validation des inputs
@@ -170,7 +170,8 @@ export const NumericInput: React.FC<NumericInputProps> = ({
   const textColor = error ? '#FF3B30' : (color || colors.textPrimary);
   const borderColor = error ? 'rgba(255, 59, 48, 0.3)' : 'transparent';
 
-  const accessoryId = 'numericInputEmptyAccessory';
+  const instanceId = useId();
+  const accessoryId = `numericInput-${instanceId}`;
 
   if (label) {
     return (

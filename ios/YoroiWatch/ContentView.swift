@@ -45,10 +45,9 @@ struct ContentView: View {
       session.requestSync()
     }
     // Deep link depuis une complication : navigation automatique vers le bon onglet
-    .onChange(of: session.requestedTab) { newTab in
-      guard newTab > 0 else { return }
-      withAnimation { selectedTab = newTab }
-      // Remettre à zéro pour ne pas re-naviguer au prochain onAppear
+    .onChange(of: session.requestedTab) {
+      guard session.requestedTab > 0 else { return }
+      withAnimation { selectedTab = session.requestedTab }
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
         session.requestedTab = 0
       }

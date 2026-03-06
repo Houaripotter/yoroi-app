@@ -41,22 +41,22 @@ struct WeightPage: View {
               accentColor: session.accentColor,
               emptyColor: session.dividerColor
             )
-            .frame(width: 140, height: 78)
+            .frame(width: WatchScreen.s(140), height: WatchScreen.s(78))
 
             VStack(spacing: 0) {
               HStack(alignment: .firstTextBaseline, spacing: 1) {
                 Text(session.currentWeight > 0 ? String(format: "%.1f", session.currentWeight) : "--")
-                  .font(.system(size: 24, weight: .black))
+                  .font(.system(size: WatchScreen.bigNumberSize, weight: .black))
                   .foregroundColor(session.textPrimary)
                 Text("kg")
-                  .font(.system(size: 10, weight: .semibold))
+                  .font(.system(size: WatchScreen.labelSize, weight: .semibold))
                   .foregroundColor(session.textSecondary)
               }
               Text(progressText)
-                .font(.system(size: 8, weight: .semibold))
+                .font(.system(size: WatchScreen.fs(8), weight: .semibold))
                 .foregroundColor(session.textSecondary)
             }
-            .offset(y: 18)
+            .offset(y: WatchScreen.s(18))
           }
 
           // 3 stats
@@ -128,10 +128,10 @@ struct WeightPage: View {
             .tracking(1)
 
           BMIGaugeView2(bmi: session.bmi, needleColor: session.textPrimary, labelColor: session.textSecondary)
-            .frame(width: 130, height: 78)
+            .frame(width: WatchScreen.s(130), height: WatchScreen.s(78))
 
           Text(String(format: "%.1f", session.bmi))
-            .font(.system(size: 22, weight: .black))
+            .font(.system(size: WatchScreen.bigNumberSize, weight: .black))
             .foregroundColor(session.textPrimary)
 
           Text(bmiCategory)
@@ -237,7 +237,12 @@ struct WeightPage: View {
     return pct > 0 ? "\(pct)% atteint" : "Debut du parcours"
   }
 
-  private var userGoalLabel: String { "PERTE DE POIDS" }
+  private var userGoalLabel: String {
+    guard session.targetWeight > 0, session.startWeight > 0 else { return "OBJECTIF POIDS" }
+    if session.startWeight > session.targetWeight { return "PERTE DE POIDS" }
+    if session.startWeight < session.targetWeight { return "PRISE DE MASSE" }
+    return "MAINTIEN"
+  }
 
   private var monthlyLoss: Double {
     guard session.weightHistory.count >= 2 else { return 0 }
@@ -352,17 +357,18 @@ struct CompoMetric: View {
   let color: Color
   var textPrimary: Color = .gray
   var body: some View {
+    let ringSize = WatchScreen.s(32)
     VStack(spacing: 3) {
       ZStack {
-        Circle().stroke(color.opacity(0.15), lineWidth: 3)
+        Circle().stroke(color.opacity(0.15), lineWidth: WatchScreen.s(3))
         Circle().trim(from: 0, to: min(1, value / 100))
-          .stroke(color, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+          .stroke(color, style: StrokeStyle(lineWidth: WatchScreen.s(3), lineCap: .round))
           .rotationEffect(.degrees(-90))
       }
-      .frame(width: 32, height: 32)
+      .frame(width: ringSize, height: ringSize)
       Text(value > 0 ? String(format: "%.0f%%", value) : "--%")
-        .font(.system(size: 10, weight: .bold)).foregroundColor(color)
-      Text(label).font(.system(size: 7)).foregroundColor(textPrimary)
+        .font(.system(size: WatchScreen.fs(10), weight: .bold)).foregroundColor(color)
+      Text(label).font(.system(size: WatchScreen.fs(7))).foregroundColor(textPrimary)
     }
   }
 }
@@ -461,23 +467,41 @@ struct WeightInputSheet: View {
   @Binding var weight: Double
   var session: WatchSessionManager
   var onSave: (Double) -> Void
+  @State private var crownWeight: Double = 0
+
   var body: some View {
     VStack(spacing: 10) {
       Text("PESEE").font(.system(size: 9, weight: .heavy)).foregroundColor(session.accentColor).tracking(2)
-      Text(String(format: "%.1f kg", weight)).font(.system(size: 28, weight: .bold)).foregroundColor(session.textPrimary)
-      HStack(spacing: 20) {
-        Button(action: { weight = max(30, weight - 0.1) }) {
-          Image(systemName: "minus.circle.fill").font(.system(size: 26)).foregroundColor(.red)
+      Text(String(format: "%.1f kg", weight))
+        .font(.system(size: 28, weight: .bold))
+        .foregroundColor(session.textPrimary)
+        .focusable()
+        .digitalCrownRotation($crownWeight, from: 30, through: 250, by: 0.1,
+                               sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: true)
+        .onChange(of: crownWeight) { weight = crownWeight.rounded(toPlaces: 1) }
+      HStack(spacing: 16) {
+        Button(action: { weight = max(30, (weight - 1.0).rounded(toPlaces: 1)); crownWeight = weight }) {
+          Image(systemName: "minus.circle.fill").font(.system(size: 28)).foregroundColor(.red)
         }.buttonStyle(.plain)
-        Button(action: { weight = min(200, weight + 0.1) }) {
-          Image(systemName: "plus.circle.fill").font(.system(size: 26)).foregroundColor(.green)
+        Button(action: { weight = min(250, (weight + 1.0).rounded(toPlaces: 1)); crownWeight = weight }) {
+          Image(systemName: "plus.circle.fill").font(.system(size: 28)).foregroundColor(.green)
         }.buttonStyle(.plain)
       }
+      Text("Tourne la couronne pour ajuster")
+        .font(.system(size: 8)).foregroundColor(session.textSecondary)
       Button(action: { onSave(weight) }) {
         Text("Valider").font(.system(size: 12, weight: .bold)).foregroundColor(session.textOnAccent)
           .frame(maxWidth: .infinity).padding(.vertical, 8).background(session.accentColor).cornerRadius(8)
       }.buttonStyle(.plain)
     }
     .padding()
+    .onAppear { crownWeight = weight }
+  }
+}
+
+private extension Double {
+  func rounded(toPlaces places: Int) -> Double {
+    let divisor = pow(10.0, Double(places))
+    return (self * divisor).rounded() / divisor
   }
 }

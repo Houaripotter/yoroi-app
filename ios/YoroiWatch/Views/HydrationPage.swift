@@ -42,18 +42,18 @@ struct HydrationPage: View {
               accentColor: accentColor,
               goalLiters: goalLiters
             )
-            .frame(width: 90, height: 84)
+            .frame(width: WatchScreen.s(90), height: WatchScreen.s(84))
 
             VStack(spacing: 0) {
               Text("\(session.hydrationCurrent)")
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: WatchScreen.fs(14), weight: .bold))
                 .foregroundColor(session.textPrimary)
               Text("ml")
-                .font(.system(size: 7))
+                .font(.system(size: WatchScreen.fs(7)))
                 .foregroundColor(session.textPrimary.opacity(0.7))
             }
           }
-          .frame(height: 88)
+          .frame(height: WatchScreen.s(88))
 
           // Value
           HStack(spacing: 2) {
@@ -172,24 +172,24 @@ struct HydrationPage: View {
           }
 
           Text(String(format: "%.1f L", Double(session.hydrationGoal) / 1000))
-            .font(.system(size: 24, weight: .bold))
+            .font(.system(size: WatchScreen.bigNumberSize, weight: .bold))
             .foregroundColor(session.textPrimary)
 
-          HStack(spacing: 20) {
-            Button(action: { session.hydrationGoal = max(500, session.hydrationGoal - 250) }) {
+          HStack(spacing: WatchScreen.s(20)) {
+            Button(action: { session.updateHydrationGoal(max(500, session.hydrationGoal - 250)) }) {
               Image(systemName: "minus")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: WatchScreen.fs(14), weight: .semibold))
                 .foregroundColor(session.textPrimary)
-                .frame(width: 32, height: 32)
+                .frame(width: WatchScreen.s(32), height: WatchScreen.s(32))
                 .background(session.cardBg)
                 .cornerRadius(8)
             }.buttonStyle(.plain)
 
-            Button(action: { session.hydrationGoal = min(6000, session.hydrationGoal + 250) }) {
+            Button(action: { session.updateHydrationGoal(min(6000, session.hydrationGoal + 250)) }) {
               Image(systemName: "plus")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: WatchScreen.fs(14), weight: .semibold))
                 .foregroundColor(session.textPrimary)
-                .frame(width: 32, height: 32)
+                .frame(width: WatchScreen.s(32), height: WatchScreen.s(32))
                 .background(session.cardBg)
                 .cornerRadius(8)
             }.buttonStyle(.plain)

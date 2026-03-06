@@ -152,6 +152,8 @@ export default function TrainingJournalScreen() {
   const [activeTab, setActiveTab] = useState<'records' | 'techniques'>('records');
 
   // New selection states for records (Mirroring Watch app)
+  const [isSportPickerVisible, setIsSportPickerVisible] = useState(false);
+  const [selectedSport, setSelectedSport] = useState<string | null>(null);
   const [isMusclePickerVisible, setIsMusclePickerVisible] = useState(false);
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
   const [isExercisePickerVisible, setIsExercisePickerVisible] = useState(false);
@@ -198,9 +200,10 @@ export default function TrainingJournalScreen() {
   const [victorySessionData, setVictorySessionData] = useState<VictorySessionData | null>(null);
 
   // Computed stats from local data
+  const benchmarksWithEntries = benchmarks.filter(b => b.entries && b.entries.length > 0);
   const stats = {
-    totalBenchmarks: benchmarks.length,
-    totalPRs: benchmarks.reduce((count, b) => count + (b.entries?.length || 0), 0),
+    totalBenchmarks: benchmarksWithEntries.length,
+    totalPRs: benchmarksWithEntries.reduce((count, b) => count + (b.entries?.length || 0), 0),
     skillsMastered: skills.filter(s => s.status === 'mastered').length,
     totalDrills: skills.reduce((count, s) => count + (s.drillCount || 0), 0),
   };
@@ -397,11 +400,12 @@ export default function TrainingJournalScreen() {
         return;
       }
 
-      const [fetchedBenchmarks, fetchedSkills] = await Promise.all([
+      const [fetchedBenchmarks, fetchedSkills, count] = await Promise.all([
         getBenchmarks(),
         getSkills(),
+        getTrashCount(),
       ]);
-      
+
       // If no benchmarks, offer to initialize common ones
       if (fetchedBenchmarks.length === 0) {
         // We could call a helper here to create the 'Big 3' + Poids de Corps
@@ -409,6 +413,7 @@ export default function TrainingJournalScreen() {
 
       setBenchmarks(fetchedBenchmarks);
       setSkills(fetchedSkills);
+      setTrashCount(count);
     } catch (error) {
       logger.error('Error loading data:', error);
     }
@@ -439,12 +444,20 @@ export default function TrainingJournalScreen() {
     return true;
   };
 
-  // Filter benchmarks (by global filter AND search query)
+  // Filter benchmarks (by global filter AND search query) - only show benchmarks WITH entries
+  // Sorted by most recent entry first
   const filteredBenchmarks = benchmarks.filter(b => {
+    const hasEntries = b.entries && b.entries.length > 0;
     const matchesGlobal = matchesGlobalFilter(b.category, null);
     const matchesSearch = searchQuery.trim() === '' ||
       b.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesGlobal && matchesSearch;
+    return hasEntries && matchesGlobal && matchesSearch;
+  }).sort((a, b) => {
+    const lastA = getBenchmarkLast(a);
+    const lastB = getBenchmarkLast(b);
+    if (!lastA) return 1;
+    if (!lastB) return -1;
+    return new Date(lastB.date).getTime() - new Date(lastA.date).getTime();
   });
 
   // Group benchmarks by category and sub-group muscu by muscle
@@ -683,8 +696,8 @@ export default function TrainingJournalScreen() {
     if (isSubmitting) return; // Anti-spam protection
     if (!selectedBenchmark || !newEntryValue.trim()) return;
 
-    // For Force exercises (kg/lbs), reps is mandatory
-    const isForceExercise = selectedBenchmark.category === 'force' &&
+    // For Force/Musculation exercises (kg/lbs), reps is mandatory
+    const isForceExercise = ['force', 'musculation'].includes(selectedBenchmark.category) &&
       (selectedBenchmark.unit === 'kg' || selectedBenchmark.unit === 'lbs');
 
     if (isForceExercise && !newEntryReps.trim()) {
@@ -777,7 +790,10 @@ export default function TrainingJournalScreen() {
         isPR,
         // Running-specific: for pace calculation
         distanceKm: (isRunning || selectedBenchmark.category === 'cardio') && advancedMetrics.distance ? advancedMetrics.distance : (isRunning && selectedBenchmark.unit === 'km' ? value : undefined),
-        timeSeconds: (isRunning || selectedBenchmark.category === 'cardio') && duration ? duration * 60 : undefined,
+        // For time-unit benchmarks, value IS the time in seconds. Otherwise use session duration.
+        timeSeconds: (isRunning || selectedBenchmark.category === 'cardio')
+          ? (selectedBenchmark.unit === 'time' ? value : (duration ? duration * 60 : undefined))
+          : undefined,
         // Advanced metrics for social card
         ...advancedMetrics,
       });
@@ -787,6 +803,18 @@ export default function TrainingJournalScreen() {
 
       showToast(isPR ? 'Nouveau Record !' : 'Enregistrement sauvegardé');
       loadData();
+
+      // SYNC VERS LA MONTRE si nouveau record
+      if (isPR && isWatchAvailable) {
+        const updatedBenchmarks = await getBenchmarks();
+        const recordsToSync = updatedBenchmarks.map(b => ({
+          exercise: b.name,
+          weight: getBenchmarkPR(b)?.value || 0,
+          reps: getBenchmarkPR(b)?.reps || 0,
+          date: getBenchmarkPR(b)?.date || new Date().toISOString()
+        }));
+        syncRecords(recordsToSync).catch(() => {}); // Non bloquant
+      }
 
       // Refresh selected benchmark
       const updated = await getBenchmarks();
@@ -897,7 +925,7 @@ export default function TrainingJournalScreen() {
       impactAsync(ImpactFeedbackStyle.Light);
       const success = await restoreBenchmark(benchmarkId);
       if (success) {
-        await loadData();
+        await Promise.all([loadData(), loadTrashData()]);
         showPopup({
           title: 'Restauré',
           message: 'Record restauré avec succès',
@@ -921,7 +949,7 @@ export default function TrainingJournalScreen() {
       impactAsync(ImpactFeedbackStyle.Light);
       const success = await restoreSkill(skillId);
       if (success) {
-        await loadData();
+        await Promise.all([loadData(), loadTrashData()]);
         showPopup({
           title: 'Restauré',
           message: 'Technique restaurée avec succès',
@@ -1004,6 +1032,13 @@ export default function TrainingJournalScreen() {
     };
     const isPR = pr && last && last.value === pr.value;
 
+    // Trend: compare last 2 entries (sorted by date desc)
+    const sortedEntries = [...benchmark.entries].sort((a, b) =>
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    const trendUp = sortedEntries.length >= 2 && sortedEntries[0].value > sortedEntries[1].value;
+    const trendDown = sortedEntries.length >= 2 && sortedEntries[0].value < sortedEntries[1].value;
+
     // Format performance string: "100 kg × 5" for Force, "10km • 5:30 /km" for Running, etc.
     const getPerformanceString = () => {
       if (!last) return '--';
@@ -1049,6 +1084,12 @@ export default function TrainingJournalScreen() {
               <View style={[styles.compactPRBadge, { backgroundColor: benchmark.color }]}>
                 <Text style={styles.compactPRText}>PR</Text>
               </View>
+            )}
+            {!isPR && trendUp && (
+              <TrendingUp size={13} color="#10B981" strokeWidth={2.5} />
+            )}
+            {!isPR && trendDown && (
+              <TrendingUp size={13} color="#EF4444" strokeWidth={2.5} style={{ transform: [{ scaleY: -1 }] }} />
             )}
           </View>
         </View>
@@ -1269,11 +1310,11 @@ export default function TrainingJournalScreen() {
             style={[styles.fabMenuItem, { backgroundColor: '#EF4444' }]}
             onPress={() => {
               setShowFabMenu(false);
-              setIsMusclePickerVisible(true);
+              setIsSportPickerVisible(true);
             }}
           >
             <Dumbbell size={22} color="#FFFFFF" />
-            <Text style={styles.fabMenuText}>Performance (Chiffre)</Text>
+            <Text style={styles.fabMenuText}>Mon Record</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -1310,7 +1351,10 @@ export default function TrainingJournalScreen() {
         <TouchableOpacity
           onPress={() => {
             if (isModalProcessing) return;
-            executeModalOnce(async () => setShowTrashModal(true));
+            executeModalOnce(async () => {
+              await loadTrashData();
+              setShowTrashModal(true);
+            });
           }}
           style={[styles.trashButton, {
             backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.25)',
@@ -1368,7 +1412,7 @@ export default function TrainingJournalScreen() {
           </Text>
           <View style={[styles.tabBadge, { backgroundColor: activeTab === 'records' ? (isDark ? '#EF4444' : colors.accent) : (colors.textMuted + '25') }]}>
             <Text style={[styles.tabBadgeText, { color: activeTab === 'records' ? '#FFFFFF' : colors.textMuted }]}>
-              {benchmarks.length}
+              {benchmarksWithEntries.length}
             </Text>
           </View>
         </TouchableOpacity>
@@ -1495,18 +1539,29 @@ export default function TrainingJournalScreen() {
               </View>
               <TouchableOpacity
                 style={[styles.addSectionBtn, { backgroundColor: '#EF444420' }]}
-                onPress={() => setIsMusclePickerVisible(true)}
+                onPress={() => setIsSportPickerVisible(true)}
               >
                 <Plus size={16} color="#EF4444" strokeWidth={3} />
               </TouchableOpacity>
             </View>
 
             {filteredBenchmarks.length === 0 ? (
+              searchQuery.trim() !== '' ? (
+                <View style={[styles.emptyCompactCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                  <Search size={32} color={colors.textMuted} />
+                  <Text style={[styles.emptyCompactText, { color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginTop: 8 }]}>
+                    Aucun résultat
+                  </Text>
+                  <Text style={[styles.emptyCompactText, { color: colors.textMuted, fontSize: 14, marginTop: 4, textAlign: 'center', paddingHorizontal: 20 }]}>
+                    Aucun record trouvé pour "{searchQuery}"
+                  </Text>
+                </View>
+              ) : (
               <TouchableOpacity
                 style={[styles.emptyCompactCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                 onPress={() => {
                   impactAsync(ImpactFeedbackStyle.Medium);
-                  setIsMusclePickerVisible(true);
+                  setIsSportPickerVisible(true);
                 }}
               >
                 <TrendingUp size={32} color={colors.textMuted} />
@@ -1523,6 +1578,7 @@ export default function TrainingJournalScreen() {
                   </Text>
                 </View>
               </TouchableOpacity>
+              )
             ) : (
               Object.keys(groupedBenchmarks).map((categoryName) => {
                 // Get the color from the first benchmark in this category
@@ -1856,7 +1912,58 @@ export default function TrainingJournalScreen() {
         </Animated.View>
       )}
 
-      {/* MUSCLE PICKER MODAL */}
+      {/* SPORT PICKER MODAL - Etape 1 */}
+      <Modal visible={isSportPickerVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background, height: '75%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>CHOISIR UN SPORT</Text>
+              <TouchableOpacity onPress={() => setIsSportPickerVisible(false)}>
+                <X size={24} color={colors.textPrimary} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+              {([
+                { name: 'Musculation', label: 'MUSCULATION', icon: 'dumbbell', color: '#EF4444', hasMuscleGroups: true },
+                { name: 'Hyrox', label: 'HYROX', icon: 'flame', color: '#D97706', hasMuscleGroups: false },
+                { name: 'CrossFit', label: 'CROSSFIT', icon: 'flame', color: '#F59E0B', hasMuscleGroups: false },
+                { name: 'Running', label: 'RUNNING', icon: 'timer', color: '#3B82F6', hasMuscleGroups: false },
+                { name: 'Cardio', label: 'CARDIO APPAREILS', icon: 'timer', color: '#06B6D4', hasMuscleGroups: false },
+                { name: 'Combat', label: 'COMBAT / MMA', icon: 'swords', color: '#8B5CF6', hasMuscleGroups: false },
+                { name: 'Strongman', label: 'STRONGMAN', icon: 'dumbbell', color: '#B91C1C', hasMuscleGroups: false },
+                { name: 'Olympique', label: 'HALTÉROPHILIE', icon: 'dumbbell', color: '#DC2626', hasMuscleGroups: false },
+                { name: 'Street Workout', label: 'STREET WORKOUT', icon: 'dumbbell', color: '#F59E0B', hasMuscleGroups: false },
+              ] as const).map((sport) => {
+                const IconComponent = sport.icon === 'flame' ? Flame : sport.icon === 'timer' ? Timer : sport.icon === 'swords' ? Swords : Dumbbell;
+                return (
+                  <TouchableOpacity
+                    key={sport.name}
+                    style={[styles.muscleItem, { backgroundColor: colors.backgroundCard }]}
+                    onPress={() => {
+                      setSelectedSport(sport.name);
+                      setIsSportPickerVisible(false);
+                      if (sport.hasMuscleGroups) {
+                        setIsMusclePickerVisible(true);
+                      } else {
+                        setSelectedMuscleGroup(sport.name);
+                        setIsExercisePickerVisible(true);
+                      }
+                    }}
+                  >
+                    <View style={[styles.muscleIcon, { backgroundColor: sport.color + '20' }]}>
+                      <IconComponent size={20} color={sport.color} />
+                    </View>
+                    <Text style={[styles.muscleText, { color: colors.textPrimary }]}>{sport.label}</Text>
+                    <ChevronRight size={20} color={colors.textMuted} />
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MUSCLE PICKER MODAL - Etape 2 (Musculation uniquement) */}
       <Modal
         visible={isMusclePickerVisible}
         animationType="slide"
@@ -1865,55 +1972,50 @@ export default function TrainingJournalScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.background, height: '70%' }]}>
             <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => { setIsMusclePickerVisible(false); setIsSportPickerVisible(true); }} style={{ padding: 4 }}>
+                <ChevronLeft size={24} color={colors.textPrimary} />
+              </TouchableOpacity>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>GROUPE MUSCULAIRE</Text>
               <TouchableOpacity onPress={() => setIsMusclePickerVisible(false)}>
                 <X size={24} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-              {
-                ([
-                  { name: 'PECTORAUX', icon: 'dumbbell', color: '#EF4444', group: 'Pectoraux' },
-                  { name: 'DOS', icon: 'dumbbell', color: '#3B82F6', group: 'Dos' },
-                  { name: 'EPAULES', icon: 'dumbbell', color: '#F59E0B', group: 'Epaules' },
-                  { name: 'BRAS', icon: 'dumbbell', color: '#EC4899', group: 'Bras' },
-                  { name: 'JAMBES', icon: 'dumbbell', color: '#10B981', group: 'Jambes' },
-                  { name: 'ABDOS', icon: 'dumbbell', color: '#8B5CF6', group: 'Abdos' },
-                  { name: 'OLYMPIQUE', icon: 'dumbbell', color: '#DC2626', group: 'Olympique' },
-                  { name: 'CROSSFIT', icon: 'flame', color: '#F59E0B', group: 'CrossFit' },
-                  { name: 'HYROX', icon: 'flame', color: '#D97706', group: 'Hyrox' },
-                  { name: 'RUNNING', icon: 'timer', color: '#3B82F6', group: 'Running' },
-                  { name: 'CARDIO', icon: 'timer', color: '#06B6D4', group: 'Cardio' },
-                  { name: 'COMBAT', icon: 'swords', color: '#8B5CF6', group: 'Combat' },
-                  { name: 'STRONGMAN', icon: 'dumbbell', color: '#B91C1C', group: 'Strongman' },
-                ] as const).map((muscle) => {
-                  const IconComponent = muscle.icon === 'flame' ? Flame : muscle.icon === 'timer' ? Timer : muscle.icon === 'swords' ? Swords : Dumbbell;
-                  return (
-                    <TouchableOpacity
-                      key={muscle.name}
-                      style={[styles.muscleItem, { backgroundColor: colors.backgroundCard }]}
-                      onPress={() => {
-                        setSelectedMuscleGroup(muscle.group);
-                        setIsMusclePickerVisible(false);
-                        setIsExercisePickerVisible(true);
-                      }}
-                    >
-                      <View style={[styles.muscleIcon, { backgroundColor: muscle.color + '20' }]}>
-                        <IconComponent size={20} color={muscle.color} />
-                      </View>
-                      <Text style={[styles.muscleText, { color: colors.textPrimary }]}>{muscle.name}</Text>
-                      <ChevronRight size={20} color={colors.textMuted} />
-                    </TouchableOpacity>
-                  );
-                })
-              }
+              {([
+                { name: 'PECTORAUX', icon: 'dumbbell', color: '#EF4444', group: 'Pectoraux' },
+                { name: 'DOS', icon: 'dumbbell', color: '#3B82F6', group: 'Dos' },
+                { name: 'EPAULES', icon: 'dumbbell', color: '#F59E0B', group: 'Epaules' },
+                { name: 'BRAS', icon: 'dumbbell', color: '#EC4899', group: 'Bras' },
+                { name: 'JAMBES', icon: 'dumbbell', color: '#10B981', group: 'Jambes' },
+                { name: 'ABDOS', icon: 'dumbbell', color: '#8B5CF6', group: 'Abdos' },
+                { name: 'MACHINES', icon: 'dumbbell', color: '#6B7280', group: 'Machines' },
+                { name: 'HALTÉROPHILIE', icon: 'dumbbell', color: '#DC2626', group: 'Olympique' },
+              ] as const).map((muscle) => {
+                return (
+                  <TouchableOpacity
+                    key={muscle.name}
+                    style={[styles.muscleItem, { backgroundColor: colors.backgroundCard }]}
+                    onPress={() => {
+                      setSelectedMuscleGroup(muscle.group);
+                      setIsMusclePickerVisible(false);
+                      setIsExercisePickerVisible(true);
+                    }}
+                  >
+                    <View style={[styles.muscleIcon, { backgroundColor: muscle.color + '20' }]}>
+                      <Dumbbell size={20} color={muscle.color} />
+                    </View>
+                    <Text style={[styles.muscleText, { color: colors.textPrimary }]}>{muscle.name}</Text>
+                    <ChevronRight size={20} color={colors.textMuted} />
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
           </View>
         </View>
       </Modal>
 
-      {/* EXERCISE PICKER MODAL */}
+      {/* EXERCISE PICKER MODAL - Etape 3 */}
       <Modal
         visible={isExercisePickerVisible}
         animationType="slide"
@@ -1922,6 +2024,19 @@ export default function TrainingJournalScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.background, height: '80%' }]}>
             <View style={styles.modalHeader}>
+              <TouchableOpacity
+                onPress={() => {
+                  setIsExercisePickerVisible(false);
+                  if (selectedSport === 'Musculation') {
+                    setIsMusclePickerVisible(true);
+                  } else {
+                    setIsSportPickerVisible(true);
+                  }
+                }}
+                style={{ padding: 4 }}
+              >
+                <ChevronLeft size={24} color={colors.textPrimary} />
+              </TouchableOpacity>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{selectedMuscleGroup?.toUpperCase()}</Text>
               <TouchableOpacity onPress={() => setIsExercisePickerVisible(false)}>
                 <X size={24} color={colors.textPrimary} />

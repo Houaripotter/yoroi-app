@@ -129,7 +129,7 @@ export const Celebration: React.FC<CelebrationProps> = ({
           break;
         case 'milestone':
           // Milestone → Badge fanfare Pokemon
-          soundFile = require('@/assets/sounds/pokemon-heartgold-&-soulsilver-ost-fanfare-(badge-get)-made-with-Voicemod.mp3');
+          soundFile = require('@/assets/sounds/pokemon-heartgold-soulsilver-ost-fanfare-badge-get-made-with-Voicemod.mp3');
           break;
         default:
           soundFile = require('@/assets/sounds/gong.mp3');

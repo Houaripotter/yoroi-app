@@ -323,7 +323,7 @@ export default function ImportCSVScreen() {
                   Telecharge le modele
                 </Text>
                 <Text style={[styles.stepDesc, { color: colors.textMuted }]}>
-                  Un fichier avec 24 colonnes : date, poids, composition et mensurations. Ouvre-le dans Excel, Google Sheets ou Numbers.
+                  Ouvre-le dans Excel, Google Sheets ou Numbers. Le fichier contient des instructions en commentaires et des exemples pre-remplis.
                 </Text>
               </View>
             </View>
@@ -337,7 +337,7 @@ export default function ImportCSVScreen() {
                   Remplis tes donnees
                 </Text>
                 <Text style={[styles.stepDesc, { color: colors.textMuted }]}>
-                  Une ligne par date. Laisse vides les colonnes que tu n'as pas. Tu peux mettre juste le poids, juste les mensurations, ou tout.
+                  Une ligne par date (JJ/MM/AAAA ou AAAA-MM-JJ). Laisse vides les colonnes que tu n'as pas. Decimales avec "." ou "," les deux marchent.
                 </Text>
               </View>
             </View>
@@ -351,7 +351,7 @@ export default function ImportCSVScreen() {
                   Importe dans Yoroi
                 </Text>
                 <Text style={[styles.stepDesc, { color: colors.textMuted }]}>
-                  Renvoie le fichier sur ton telephone puis selectionne-le ci-dessous.
+                  Sauvegarde le fichier sur iCloud ou Google Drive, puis selectionne-le ci-dessous. Yoroi accepte les fichiers des versions precedentes.
                 </Text>
               </View>
             </View>
@@ -416,8 +416,18 @@ export default function ImportCSVScreen() {
               </Text>
               <Text style={[styles.tipText, { color: colors.textSecondary }]}>
                 {Platform.OS === 'ios'
-                  ? 'Enregistre le modele dans iCloud Drive sur ton Mac, il apparait dans l\'app Fichiers sur ton iPhone.'
-                  : 'Enregistre le modele dans Google Drive sur ton PC, puis ouvre-le depuis l\'app Fichiers.'}
+                  ? 'Sauvegarde le fichier dans iCloud Drive sur ton Mac. Il apparait dans Fichiers sur iPhone. Tu peux aussi l\'envoyer par AirDrop ou email.'
+                  : 'Sauvegarde dans Google Drive sur ton PC, puis ouvre depuis Fichiers. WhatsApp ou email fonctionnent aussi.'}
+              </Text>
+            </View>
+
+            {/* Rétro-compat */}
+            <View style={[styles.tipCard, { backgroundColor: `${colors.accent}08`, borderColor: `${colors.accent}30` }]}>
+              <Text style={[styles.tipTitle, { color: colors.accent }]}>
+                Compatibilite
+              </Text>
+              <Text style={[styles.tipText, { color: colors.textSecondary }]}>
+                Yoroi accepte les fichiers exportes depuis n'importe quelle version precedente de l'app. Les separateurs "," et ";" sont reconnus automatiquement. Les dates en JJ/MM/AAAA et AAAA-MM-JJ sont toutes les deux supportees.
               </Text>
             </View>
           </View>

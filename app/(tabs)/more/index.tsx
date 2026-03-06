@@ -53,6 +53,7 @@ import { CheckCircle, AlertCircle,
   Castle,
   Search,
   RefreshCw,
+  Table,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
@@ -167,6 +168,7 @@ const TOOL_SECTIONS: ToolSection[] = [
   {
     title: 'DONNEES',
     items: [
+      { id: 'companion', label: 'Mes donnees', sublabel: 'Tableau, graphiques, ajout et export CSV', Icon: Table, route: '/companion', iconColor: '#4F8EF7' },
       { id: 'import-csv', label: 'Import CSV', sublabel: 'Importer poids, seances, sommeil... depuis un PC', Icon: Upload, route: '/import-csv', iconColor: '#6366F1' },
       { id: 'export-data', label: 'Exporter', sublabel: 'Sauvegarder tes donnees en JSON, CSV ou rapport', Icon: Download, handler: 'export', iconColor: '#10B981' },
     ],

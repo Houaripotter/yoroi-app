@@ -1,6 +1,6 @@
 // ============================================
 // TRAINING TAB PAGE - Discipline + Performance
-// Fusion des 2 anciens onglets en un seul scroll
+// Même structure que Corps : titres dans les cartes
 // ============================================
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
@@ -14,13 +14,12 @@ import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { MetricProgressGrid } from '../charts/MetricProgressGrid';
-import { ScrollableLineChart } from '../charts/ScrollableLineChart';
+import { DualComparisonCard } from '../charts/DualComparisonCard';
 import { StrainGauge } from '../advanced/StrainGauge';
-import { StatsExplanation } from '../StatsExplanation';
 import { PerformanceRadar } from '@/components/PerformanceRadar';
 import { aggregateTrainingData } from '@/lib/statsAggregation';
 import { getTrainings } from '@/lib/database';
-import { Flame, Target, Calendar, Award, Timer, TrendingUp, Zap } from 'lucide-react-native';
+import { Flame, Target, Calendar, Award, Timer } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { logger } from '@/lib/security/logger';
@@ -119,12 +118,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
     return zone ? { color: zone.color, label: zone.label } : { color: '#94A3B8', label: t('statsPages.discipline.unknown') };
   };
 
-  const getPeriodDescription = (period: Period) => {
-    const periodMap: { [key: string]: string } = { '7j': t('statsPages.days7'), '30j': t('statsPages.days30'), '90j': t('statsPages.days90'), 'tout': t('statsPages.allPeriod') };
-    return periodMap[period] || t('statsPages.allPeriod');
-  };
-
-  // Memoized sessions sparkline
+  // Sessions sparkline (par semaine)
   const sessionsSparkline = useMemo(() => {
     if (trainingHistory.duration.length < 2) return [];
     const weekMap: Record<string, number> = {};
@@ -137,9 +131,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
 
   const getModalData = useCallback(() => {
     if (!selectedMetric || !allTrainingsData.length) return [];
-
     const sortedTrainings = [...allTrainingsData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
     switch (selectedMetric.key) {
       case 'intensity':
         return sortedTrainings.filter(t => t.intensity && t.intensity > 0).map(t => ({ value: t.intensity, label: format(new Date(t.date), 'd MMM', { locale: dateLocale }), date: t.date }));
@@ -194,7 +186,6 @@ export const TrainingTabPage: React.FC = React.memo(() => {
         />
       }
     >
-      {/* ========== SECTION DISCIPLINE ========== */}
       <StatsHeader
         title={t('statsPages.discipline.title')}
         description="Discipline, charge et performance"
@@ -202,42 +193,15 @@ export const TrainingTabPage: React.FC = React.memo(() => {
         onPeriodChange={setSelectedPeriod}
       />
 
-      <StatsExplanation
-        title="Discipline & Charge"
-        text={"La Discipline mesure ta r\u00E9gularit\u00E9 (fr\u00E9quence des s\u00E9ances). La Charge d'entra\u00EEnement est calcul\u00E9e en multipliant la dur\u00E9e par l'intensit\u00E9 (RPE)."}
-        color="#8B5CF6"
-      />
-
-      <StatsSection title={"Volume d'entra\u00EEnement"} description={"\u00C9volution de tes sessions sur la p\u00E9riode"}>
-        <ScrollableLineChart
-          data={trainingHistory.duration}
-          color="#10B981"
-          unit=" min"
-          height={200}
-          onPress={() => setSelectedMetric({ key: 'duration', label: t('statsPages.discipline.duration'), color: '#10B981', unit: 'min', icon: <Timer size={18} color="#10B981" strokeWidth={2.5} /> })}
-        />
-      </StatsSection>
-
-      {trainingData && trainingData.weeklyLoad > 0 && (
-        <StatsSection title={t('statsPages.discipline.trainingLoad')} description={t('statsPages.discipline.trainingLoadDesc')}>
-          <TouchableOpacity activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'load', label: t('statsPages.discipline.load'), color: '#8B5CF6', unit: 'pts', icon: <Flame size={18} color="#8B5CF6" strokeWidth={2.5} /> })}>
-            <StrainGauge strain={Math.min(trainingData.weeklyLoad / 50, 21)} label={t('statsPages.discipline.load')} />
-          </TouchableOpacity>
-        </StatsSection>
-      )}
-
-      <StatsSection title={t('statsPages.discipline.intensityAndVolume')} description={t('statsPages.clickToSeeChart')}>
-        <View style={styles.grid}>
-          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'load', label: t('statsPages.discipline.weeklyLoad'), color: '#8B5CF6', unit: 'pts', icon: <Flame size={18} color="#8B5CF6" strokeWidth={2.5} /> })}>
-            <MetricCard label={t('statsPages.discipline.weeklyLoad')} value={trainingData?.weeklyLoad || 0} unit="pts" icon={<Flame size={24} color="#8B5CF6" strokeWidth={2.5} />} color="#8B5CF6" sparklineData={trainingHistory.load.map(h => ({ value: h.value }))} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'intensity', label: t('statsPages.discipline.intensity'), color: '#EF4444', unit: '/10', icon: <Target size={18} color="#EF4444" strokeWidth={2.5} /> })}>
-            <MetricCard label={t('statsPages.discipline.averageIntensity')} value={trainingData?.averageIntensity || 0} unit="/10" icon={<Target size={24} color="#EF4444" strokeWidth={2.5} />} color="#EF4444" sparklineData={trainingHistory.intensity.map(h => ({ value: h.value }))} />
-          </TouchableOpacity>
+      {/* ========== VOLUME + MÉTRIQUES dans le même corps ========== */}
+      <StatsSection>
+        {/* Titre centré dans le corps */}
+        <View style={[styles.cardTitleRow, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+          <View style={[styles.cardTitleDash, { backgroundColor: '#10B981' }]} />
+          <Text style={[styles.cardTitleText, { color: colors.textPrimary }]}>VOLUME D'ENTRAÎNEMENT</Text>
+          <View style={[styles.cardTitleDash, { backgroundColor: '#06B6D4' }]} />
         </View>
-      </StatsSection>
-
-      <StatsSection title={t('statsPages.discipline.volume')} description={t('statsPages.discipline.volumeDesc')}>
+        {/* MetricCards Sessions + Durée totale */}
         <View style={styles.grid}>
           <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'sessions', label: t('statsPages.discipline.sessions'), color: '#10B981', unit: '', icon: <Calendar size={18} color="#10B981" strokeWidth={2.5} /> })}>
             <MetricCard label={t('statsPages.discipline.sessions')} value={trainingData?.count || 0} unit={t('statsPages.discipline.total')} icon={<Calendar size={24} color="#10B981" strokeWidth={2.5} />} color="#10B981" sparklineData={sessionsSparkline} />
@@ -248,62 +212,159 @@ export const TrainingTabPage: React.FC = React.memo(() => {
         </View>
       </StatsSection>
 
-      {/* Historique Intensite */}
-      <StatsSection title={t('statsPages.discipline.intensityHistory')} description={`${t('statsPages.discipline.intensityHistoryDesc')} ${getPeriodDescription(selectedPeriod)}`}>
-        {trainingHistory.intensity.length > 0 ? (
-          <TouchableOpacity activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'intensity', label: t('statsPages.discipline.intensity'), color: '#EF4444', unit: '/10', icon: <Target size={18} color="#EF4444" strokeWidth={2.5} /> })}>
-            <MetricProgressGrid data={trainingHistory.intensity} unit="/10" healthRange={INTENSITY_RANGES} color="#EF4444" getStatus={getIntensityStatus} />
+      {/* ========== HISTORIQUE RÉCENT — horizontal, le plus récent à GAUCHE ========== */}
+      {allTrainingsData.length > 0 && (
+        <StatsSection>
+          <View style={[styles.cardTitleRow, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+            <View style={[styles.cardTitleDash, { backgroundColor: '#10B981' }]} />
+            <Text style={[styles.cardTitleText, { color: colors.textPrimary }]}>SÉANCES RÉCENTES</Text>
+            <View style={[styles.cardTitleDash, { backgroundColor: '#10B981' }]} />
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.historyScrollContent}
+          >
+            {allTrainingsData.slice(0, 20).map((entry, index) => {
+              const prevEntry = allTrainingsData[index + 1];
+              const durationChange = prevEntry && prevEntry.duration ? entry.duration - prevEntry.duration : 0;
+              const isFirst = index === 0;
+              const intensityZone = entry.intensity ? getIntensityStatus(entry.intensity) : null;
+              return (
+                <TouchableOpacity
+                  key={entry.id || index}
+                  activeOpacity={0.7}
+                  onPress={() => setSelectedMetric({ key: 'duration', label: t('statsPages.discipline.duration'), color: '#10B981', unit: 'min', icon: <Timer size={18} color="#10B981" strokeWidth={2.5} /> })}
+                  style={[
+                    styles.historyCard,
+                    { backgroundColor: colors.backgroundCard, borderColor: isFirst ? '#10B981' : colors.border },
+                    isFirst && styles.historyCardRecent,
+                  ]}
+                >
+                  {isFirst && (
+                    <View style={styles.historyCardBadge}>
+                      <Text style={styles.historyCardBadgeText}>Récent</Text>
+                    </View>
+                  )}
+                  <Text style={[styles.historyCardDate, { color: colors.textMuted }]}>
+                    {format(new Date(entry.date), 'd MMM', { locale: fr })}
+                  </Text>
+                  {entry.duration > 0 && (
+                    <Text style={[styles.historyCardMain, { color: isFirst ? '#10B981' : colors.textPrimary }]}>
+                      {entry.duration}<Text style={styles.historyCardUnit}> min</Text>
+                    </Text>
+                  )}
+                  {durationChange !== 0 && entry.duration > 0 && (
+                    <Text style={[styles.historyCardChange, { color: durationChange > 0 ? '#10B981' : '#EF4444' }]}>
+                      {durationChange > 0 ? '+' : ''}{durationChange} min
+                    </Text>
+                  )}
+                  {intensityZone && entry.intensity > 0 && (
+                    <View style={[styles.historyCardBadge, { backgroundColor: `${intensityZone.color}20` }]}>
+                      <Text style={[styles.historyCardBadgeText, { color: intensityZone.color }]}>
+                        RPE {entry.intensity}/10
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </StatsSection>
+      )}
+
+      {/* ========== CHARGE + INTENSITÉ dans le même corps ========== */}
+      <StatsSection>
+        <View style={[styles.cardTitleRow, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+          <View style={[styles.cardTitleDash, { backgroundColor: '#8B5CF6' }]} />
+          <Text style={[styles.cardTitleText, { color: colors.textPrimary }]}>CHARGE D'ENTRAÎNEMENT</Text>
+          <View style={[styles.cardTitleDash, { backgroundColor: '#EF4444' }]} />
+        </View>
+        {trainingData && trainingData.weeklyLoad > 0 && (
+          <TouchableOpacity activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'load', label: t('statsPages.discipline.load'), color: '#8B5CF6', unit: 'pts', icon: <Flame size={18} color="#8B5CF6" strokeWidth={2.5} /> })} style={{ marginBottom: 12 }}>
+            <StrainGauge strain={Math.min(trainingData.weeklyLoad / 50, 21)} label={t('statsPages.discipline.load')} />
           </TouchableOpacity>
-        ) : (
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('statsPages.noDataForPeriod')}</Text>
         )}
+        <View style={styles.grid}>
+          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'load', label: t('statsPages.discipline.weeklyLoad'), color: '#8B5CF6', unit: 'pts', icon: <Flame size={18} color="#8B5CF6" strokeWidth={2.5} /> })}>
+            <MetricCard label={t('statsPages.discipline.weeklyLoad')} value={trainingData?.weeklyLoad || 0} unit="pts" icon={<Flame size={24} color="#8B5CF6" strokeWidth={2.5} />} color="#8B5CF6" sparklineData={trainingHistory.load.map(h => ({ value: h.value }))} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'intensity', label: t('statsPages.discipline.intensity'), color: '#EF4444', unit: '/10', icon: <Target size={18} color="#EF4444" strokeWidth={2.5} /> })}>
+            <MetricCard label={t('statsPages.discipline.averageIntensity')} value={trainingData?.averageIntensity || 0} unit="/10" icon={<Target size={24} color="#EF4444" strokeWidth={2.5} />} color="#EF4444" sparklineData={trainingHistory.intensity.map(h => ({ value: h.value }))} />
+          </TouchableOpacity>
+        </View>
       </StatsSection>
 
-      {/* Historique Duree */}
-      <StatsSection title={t('statsPages.discipline.durationHistory')} description={`${t('statsPages.discipline.durationHistoryDesc')} ${getPeriodDescription(selectedPeriod)}`}>
-        {trainingHistory.duration.length > 0 ? (
-          <TouchableOpacity activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'duration', label: t('statsPages.discipline.duration'), color: '#10B981', unit: 'min', icon: <Timer size={18} color="#10B981" strokeWidth={2.5} /> })}>
-            <MetricProgressGrid data={trainingHistory.duration} unit="min" color="#10B981" showEvolution={true} evolutionGoal="increase" />
-          </TouchableOpacity>
-        ) : (
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('statsPages.noDataForPeriod')}</Text>
-        )}
-      </StatsSection>
-
-      {/* ========== SECTION PERFORMANCE ========== */}
+      {/* ========== INTENSITÉ / DURÉE — DualComparisonCard ========== */}
       <View style={styles.sectionDivider} />
 
-      <StatsExplanation
-        title="Performance & Records"
-        text={"La Performance suit l'\u00E9volution de tes capacit\u00E9s physiques (force, endurance, vitesse). Tes Records Personnels (PR) sont extraits de tes notes de s\u00E9ances."}
-        color="#F59E0B"
-      />
-
-      <StatsSection title={t('statsPages.performance.personalRecords')} description={t('statsPages.performance.personalRecordsDesc')}>
-        <View style={styles.grid}>
-          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7}>
-            <MetricCard label={t('statsPages.performance.totalRecords')} value="0" unit={t('statsPages.performance.records')} icon={<Award size={24} color="#F59E0B" strokeWidth={2.5} />} color="#F59E0B" sparklineData={[]} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7}>
-            <MetricCard label={t('statsPages.performance.thisMonth')} value="0" unit={t('statsPages.performance.new')} icon={<TrendingUp size={24} color="#10B981" strokeWidth={2.5} />} color="#10B981" sparklineData={[]} />
-          </TouchableOpacity>
-        </View>
+      <StatsSection>
+        <DualComparisonCard
+          title="Intensité / Durée"
+          leftLabel={t('statsPages.discipline.intensity')}
+          rightLabel={t('statsPages.discipline.duration')}
+          leftColor="#EF4444"
+          rightColor="#10B981"
+          leftHistory={trainingHistory.intensity}
+          rightHistory={trainingHistory.duration}
+          leftValue={trainingData?.averageIntensity || 0}
+          rightValue={trainingData?.averageDuration || 0}
+          unit=""
+          leftUnit="/10"
+          rightUnit="min"
+          onPressLeft={() => setSelectedMetric({ key: 'intensity', label: t('statsPages.discipline.intensity'), color: '#EF4444', unit: '/10', icon: <Target size={18} color="#EF4444" strokeWidth={2.5} /> })}
+          onPressRight={() => setSelectedMetric({ key: 'duration', label: t('statsPages.discipline.duration'), color: '#10B981', unit: 'min', icon: <Timer size={18} color="#10B981" strokeWidth={2.5} /> })}
+        />
       </StatsSection>
 
-      <StatsSection title={t('statsPages.performance.progression')} description={t('statsPages.performance.progressionDesc')}>
-        <View style={styles.grid}>
-          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7}>
-            <MetricCard label={t('statsPages.performance.globalScore')} value="0" unit="/100" icon={<Target size={24} color="#8B5CF6" strokeWidth={2.5} />} color="#8B5CF6" sparklineData={[]} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7}>
-            <MetricCard label={t('statsPages.performance.improvement')} value="0" unit="%" icon={<Zap size={24} color="#EF4444" strokeWidth={2.5} />} color="#EF4444" sparklineData={[]} />
-          </TouchableOpacity>
-        </View>
-      </StatsSection>
+      {/* ========== GRILLES HISTORIQUE ========== */}
 
-      {/* RADAR PERFORMANCE */}
-      <StatsSection title="Radar Performance" description={"Vue d'ensemble de tes capacit\u00E9s"}>
-        <View style={[styles.radarCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
+      {/* Historique Intensite */}
+      {trainingHistory.intensity.length > 0 && (
+        <StatsSection>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setSelectedMetric({ key: 'intensity', label: t('statsPages.discipline.intensity'), color: '#EF4444', unit: '/10', icon: <Target size={18} color="#EF4444" strokeWidth={2.5} /> })}
+            style={[styles.gridCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}
+          >
+            <View style={styles.cardTitleRow}>
+              <View style={[styles.cardTitleDash, { backgroundColor: '#EF4444' }]} />
+              <Text style={[styles.cardTitleText, { color: colors.textPrimary }]}>HISTORIQUE INTENSITÉ</Text>
+              <View style={[styles.cardTitleDash, { backgroundColor: '#EF4444' }]} />
+            </View>
+            <MetricProgressGrid data={trainingHistory.intensity} unit="/10" healthRange={INTENSITY_RANGES} color="#EF4444" getStatus={getIntensityStatus} />
+          </TouchableOpacity>
+        </StatsSection>
+      )}
+
+      {/* Historique Duree */}
+      {trainingHistory.duration.length > 0 && (
+        <StatsSection>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setSelectedMetric({ key: 'duration', label: t('statsPages.discipline.duration'), color: '#10B981', unit: 'min', icon: <Timer size={18} color="#10B981" strokeWidth={2.5} /> })}
+            style={[styles.gridCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}
+          >
+            <View style={styles.cardTitleRow}>
+              <View style={[styles.cardTitleDash, { backgroundColor: '#10B981' }]} />
+              <Text style={[styles.cardTitleText, { color: colors.textPrimary }]}>HISTORIQUE DURÉE</Text>
+              <View style={[styles.cardTitleDash, { backgroundColor: '#10B981' }]} />
+            </View>
+            <MetricProgressGrid data={trainingHistory.duration} unit="min" color="#10B981" showEvolution={true} evolutionGoal="increase" />
+          </TouchableOpacity>
+        </StatsSection>
+      )}
+
+      {/* ========== RADAR PERFORMANCE ========== */}
+      <View style={styles.sectionDivider} />
+
+      <StatsSection>
+        <View style={[styles.gridCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+          <View style={styles.cardTitleRow}>
+            <View style={[styles.cardTitleDash, { backgroundColor: '#F59E0B' }]} />
+            <Text style={[styles.cardTitleText, { color: colors.textPrimary }]}>RADAR PERFORMANCE</Text>
+            <View style={[styles.cardTitleDash, { backgroundColor: '#8B5CF6' }]} />
+          </View>
           <View style={styles.radarContainer}>
             <PerformanceRadar size={280} />
           </View>
@@ -350,12 +411,6 @@ const styles = StyleSheet.create({
   gridItem: {
     flex: 1,
   },
-  emptyText: {
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-    paddingVertical: 20,
-  },
   sectionDivider: {
     height: 1,
     marginHorizontal: 32,
@@ -363,13 +418,88 @@ const styles = StyleSheet.create({
     opacity: 0.15,
     backgroundColor: '#888',
   },
-  radarCard: {
-    borderRadius: 20,
-    padding: 16,
+  // Titre centré dans le corps (même style que MultiLineComparisonCard)
+  cardTitleRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
+    marginBottom: 14,
+    borderRadius: 20,
+    borderWidth: 0,
+    padding: 0,
+  },
+  cardTitleDash: {
+    flex: 1,
+    height: 2,
+    borderRadius: 1,
+    opacity: 0.6,
+  },
+  cardTitleText: {
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 2,
+    textAlign: 'center',
+  },
+  // Card wrapper pour MetricProgressGrid et Radar
+  gridCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   radarContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Historique horizontal
+  historyScrollContent: {
+    paddingHorizontal: 4,
+    gap: 10,
+  },
+  historyCard: {
+    width: 110,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    padding: 12,
+    alignItems: 'center',
+    gap: 4,
+  },
+  historyCardRecent: {
+    borderWidth: 2,
+  },
+  historyCardBadge: {
+    backgroundColor: '#10B98120',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginBottom: 2,
+  },
+  historyCardBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#10B981',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  historyCardDate: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  historyCardMain: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  historyCardUnit: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  historyCardChange: {
+    fontSize: 11,
+    fontWeight: '600',
   },
 });

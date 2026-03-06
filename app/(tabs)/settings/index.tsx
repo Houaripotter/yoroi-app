@@ -48,6 +48,7 @@ import {
   MessageSquareQuote,
   Eye,
   LucideIcon,
+  Table,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -119,6 +120,7 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
   {
     title: 'MES DONNEES',
     items: [
+      { id: 'companion', label: 'Mes donnees', sublabel: 'Tableau, graphiques, ajout et export CSV', Icon: Table, iconColor: '#4F8EF7', route: '/companion' },
       { id: 'export', label: 'Sauvegarder', sublabel: 'Backup complet (JSON ou CSV)', Icon: Download, iconColor: '#14B8A6', handler: 'export' },
       { id: 'import', label: 'Restaurer', sublabel: 'Importer un backup', Icon: Upload, iconColor: '#14B8A6', handler: 'import' },
       { id: 'import-csv', label: 'Import CSV', sublabel: 'Importer depuis un ordinateur (PC/Mac)', Icon: FileUp, iconColor: '#6366F1', route: '/import-csv' },

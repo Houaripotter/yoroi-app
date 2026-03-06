@@ -336,7 +336,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
         let timeStr = '';
         try {
           const d = parseISO(training.date);
-          dateStr = format(d, 'EEE d MMM', { locale: dateLocale });
+          dateStr = format(d, 'EEE d MMM yyyy', { locale: dateLocale });
           if (training.start_time) {
             const [sh, sm] = training.start_time.split(':').map(Number);
             const endMin = sh * 60 + sm + duration;

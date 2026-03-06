@@ -61,6 +61,9 @@ export function useBreakpoint() {
   };
 }
 
+// Re-export useResponsive pour un import pratique depuis hooks/
+export { useResponsive } from '@/constants/responsive';
+
 // Valeurs statiques pour les composants qui ne peuvent pas utiliser de hooks
 export const STATIC_DIMENSIONS = {
   // Valeurs par défaut (iPhone standard)

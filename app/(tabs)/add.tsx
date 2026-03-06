@@ -55,6 +55,7 @@ import { exportDataToJSON, exportDataToCSV } from '@/lib/exportService';
 import { draftService, WeightDraft } from '@/lib/draftService';
 import logger from '@/lib/security/logger';
 import HealthConnect from '@/lib/healthConnect';
+import { useWatch } from '@/lib/WatchConnectivityProvider';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
 
@@ -76,12 +77,90 @@ const MOODS: { id: string; icon: LucideIcon; labelKey: string; color: string }[]
 // Date locales map
 
 
+// ============================================
+// COMPOSANTS STABLES (définis en dehors du composant parent)
+// Crucial: évite les remounts à chaque re-render qui cassent le clavier
+// ============================================
+
+type ColorsType = any;
+
+const Card = ({ children, style, colors }: { children: React.ReactNode; style?: any; colors: ColorsType }) => (
+  <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderColor: colors.border }, style]}>
+    {children}
+  </View>
+);
+
+const SectionHeader = ({
+  icon: Icon,
+  color,
+  title,
+  subtitle,
+  colors,
+}: {
+  icon: any;
+  color: string;
+  title: string;
+  subtitle?: string;
+  colors: ColorsType;
+}) => (
+  <View style={styles.sectionHeader}>
+    <View style={[styles.sectionIcon, { backgroundColor: `${color}20` }]}>
+      <Icon size={20} color={color} />
+    </View>
+    <View style={{ flex: 1 }}>
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{title}</Text>
+      {subtitle && (
+        <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>{subtitle}</Text>
+      )}
+    </View>
+  </View>
+);
+
+const InputRow = ({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  suffix,
+  color,
+  colors,
+  isDark,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder: string;
+  suffix: string;
+  color: string;
+  colors: ColorsType;
+  isDark: boolean;
+}) => (
+  <View style={styles.inputRow}>
+    <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{label}</Text>
+    <View style={styles.inputWrapper}>
+      <NumericInput
+        value={value}
+        onValueChange={onChangeText}
+        placeholder={placeholder}
+        unit={suffix}
+        allowDecimal={true}
+        maxDecimals={1}
+        maxLength={4}
+        color={color}
+        backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+        inputStyle={styles.input}
+      />
+    </View>
+  </View>
+);
+
 export default function AddScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark, screenBackground } = useTheme();
   const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { syncWeight: syncWeightToWatch, isWatchAvailable } = useWatch();
   const dateLocale = fr;
 
   // Weight input ref - Isolé pour éviter les re-renders
@@ -434,6 +513,11 @@ export default function AddScreen() {
         logger.warn('Export Apple Health echoue (non bloquant):', healthError);
       }
 
+      // SYNC VERS APPLE WATCH
+      if (isWatchAvailable && weight) {
+        syncWeightToWatch(weight).catch(() => {}); // Non bloquant
+      }
+
       // Effacer le brouillon car sauvegarde reussie
       await draftService.clearWeightDraft();
 
@@ -526,65 +610,6 @@ export default function AddScreen() {
     router.back();
   };
 
-  // Card Component
-  const Card = ({ children, style }: { children: React.ReactNode; style?: any }) => (
-    <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderColor: colors.border }, style]}>
-      {children}
-    </View>
-  );
-
-  // Section Header
-  const SectionHeader = ({
-    icon: Icon,
-    color,
-    title,
-    subtitle
-  }: {
-    icon: any;
-    color: string;
-    title: string;
-    subtitle?: string;
-  }) => (
-    <View style={styles.sectionHeader}>
-      <View style={[styles.sectionIcon, { backgroundColor: `${color}20` }]}>
-        <Icon size={20} color={color} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{title}</Text>
-        {subtitle && (
-          <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>{subtitle}</Text>
-        )}
-      </View>
-    </View>
-  );
-
-  // Input Row - Utilise NumericInput pour éviter les crashes
-  const InputRow = ({ label, value, onChangeText, placeholder, suffix, color }: {
-    label: string;
-    value: string;
-    onChangeText: (text: string) => void;
-    placeholder: string;
-    suffix: string;
-    color: string;
-  }) => (
-    <View style={styles.inputRow}>
-      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{label}</Text>
-      <View style={styles.inputWrapper}>
-        <NumericInput
-          value={value}
-          onValueChange={onChangeText}
-          placeholder={placeholder}
-          unit={suffix}
-          allowDecimal={true}
-          maxDecimals={1}
-          maxLength={4}
-          color={color}
-          backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
-          inputStyle={styles.input}
-        />
-      </View>
-    </View>
-  );
 
   return (
     <KeyboardAvoidingView
@@ -666,8 +691,8 @@ export default function AddScreen() {
         {/* ═══════════════════════════════════════════ */}
         {/* POIDS - SECTION PRINCIPALE */}
         {/* ═══════════════════════════════════════════ */}
-        <Card style={styles.weightCard}>
-          <SectionHeader icon={Scale} color={colors.accentText} title={t('add.myWeight')} />
+        <Card style={styles.weightCard} colors={colors}>
+          <SectionHeader icon={Scale} color={colors.accentText} title={t('add.myWeight')} colors={colors} />
 
           {/* Weight Input - Isolé pour éviter les bugs de re-render */}
           <WeightInput
@@ -679,15 +704,16 @@ export default function AddScreen() {
         {/* ═══════════════════════════════════════════ */}
         {/* COMPOSITION CORPORELLE */}
         {/* ═══════════════════════════════════════════ */}
-        <Card>
+        <Card colors={colors}>
           <SectionHeader
             icon={Droplets}
             color="#4ECDC4"
             title={t('add.bodyComposition')}
             subtitle={t('add.connectedScale')}
+            colors={colors}
           />
 
-          {/* Ligne 1: Graisse, Muscle, Eau */}
+          {/* Grille 2 colonnes: Graisse, Muscle, Eau, Os, Graisse Viscérale, Age Métabolique */}
           <View style={styles.compositionGrid}>
             <View style={styles.compositionItem}>
               <View style={[styles.compIcon, { backgroundColor: 'rgba(239,68,68,0.15)' }]}>
@@ -754,10 +780,7 @@ export default function AddScreen() {
                 inputStyle={styles.compInput}
               />
             </View>
-          </View>
 
-          {/* Ligne 2: Os, Graisse Viscérale */}
-          <View style={[styles.compositionGrid, { marginTop: SPACING.lg }]}>
             <View style={styles.compositionItem}>
               <View style={[styles.compIcon, { backgroundColor: 'rgba(168,162,158,0.15)' }]}>
                 <Bone size={18} color="#A8A29E" />
@@ -840,8 +863,8 @@ export default function AddScreen() {
         {/* ═══════════════════════════════════════════ */}
         {/* MENSURATIONS */}
         {/* ═══════════════════════════════════════════ */}
-        <Card>
-          <SectionHeader icon={Ruler} color={colors.accentText} title={t('add.measurements')} />
+        <Card colors={colors}>
+          <SectionHeader icon={Ruler} color={colors.accentText} title={t('add.measurements')} colors={colors} />
 
           <InputRow
             label={t('add.waist')}
@@ -850,6 +873,8 @@ export default function AddScreen() {
             placeholder="00"
             suffix="cm"
             color={colors.accentText}
+            colors={colors}
+            isDark={isDark}
           />
           <InputRow
             label={t('add.navel')}
@@ -858,6 +883,8 @@ export default function AddScreen() {
             placeholder="00"
             suffix="cm"
             color={colors.accentText}
+            colors={colors}
+            isDark={isDark}
           />
           <InputRow
             label={t('add.hips')}
@@ -866,6 +893,8 @@ export default function AddScreen() {
             placeholder="00"
             suffix="cm"
             color={colors.accentText}
+            colors={colors}
+            isDark={isDark}
           />
           <InputRow
             label={t('add.chest')}
@@ -874,6 +903,8 @@ export default function AddScreen() {
             placeholder="00"
             suffix="cm"
             color={colors.accentText}
+            colors={colors}
+            isDark={isDark}
           />
           <InputRow
             label={t('add.neck')}
@@ -882,6 +913,8 @@ export default function AddScreen() {
             placeholder="00"
             suffix="cm"
             color={colors.accentText}
+            colors={colors}
+            isDark={isDark}
           />
 
           {/* Tour de bras - Gauche / Droite */}
@@ -1005,8 +1038,8 @@ export default function AddScreen() {
         {/* ═══════════════════════════════════════════ */}
         {/* MON RESSENTI */}
         {/* ═══════════════════════════════════════════ */}
-        <Card>
-          <SectionHeader icon={Heart} color="#EC4899" title={t('add.myFeeling')} />
+        <Card colors={colors}>
+          <SectionHeader icon={Heart} color="#EC4899" title={t('add.myFeeling')} colors={colors} />
 
           <View style={styles.moodGrid}>
             {MOODS.map((mood) => {
@@ -1447,11 +1480,11 @@ const styles = StyleSheet.create({
   // Composition
   compositionGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
     gap: SPACING.md,
   },
   compositionItem: {
-    flex: 1,
+    width: '47%',
     alignItems: 'center',
   },
   compIcon: {
@@ -1473,11 +1506,6 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   compInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: RADIUS.lg,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
     width: '100%',
   },
   compInput: {
@@ -1505,17 +1533,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: SPACING.md,
   },
-  bmrInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: RADIUS.lg,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-  },
+  bmrInputWrapper: {},
   bmrInput: {
     fontSize: 18,
     fontWeight: '700',
-    width: 60,
+    width: 90,
     textAlign: 'center',
   },
 

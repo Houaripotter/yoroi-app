@@ -341,6 +341,9 @@ export default function HomeScreen() {
   const [spo2, setSpo2] = useState(0);
   const [respiratoryRate, setRespiratoryRate] = useState(0);
   const [vo2Max, setVo2Max] = useState(0);
+  const [exerciseMinutes, setExerciseMinutes] = useState<number | null>(null);
+  const [standHours, setStandHours] = useState<number | null>(null);
+  const [hkSleepHours, setHkSleepHours] = useState(0);
   const [lastSleepPhases, setLastSleepPhases] = useState<{ deep: number; rem: number; core: number; awake: number } | null>(null);
 
   // Hydratation functions
@@ -689,6 +692,8 @@ export default function HomeScreen() {
           HealthConnect.getRespiratoryRate(),
           HealthConnect.getVO2Max(),
           HealthConnect.getSleepHistory(1),
+          HealthConnect.getTodayExerciseMinutes(),
+          HealthConnect.getTodayStandHours(),
         ]);
         const stepsData = results[0].status === 'fulfilled' ? results[0].value : null;
         const caloriesData = results[1].status === 'fulfilled' ? results[1].value : null;
@@ -698,6 +703,8 @@ export default function HomeScreen() {
         const respData = results[5].status === 'fulfilled' ? results[5].value : null;
         const vo2Data = results[6].status === 'fulfilled' ? results[6].value : null;
         const sleepHistory = results[7].status === 'fulfilled' ? results[7].value : null;
+        const exerciseData = results[8].status === 'fulfilled' ? results[8].value : null;
+        const standData = results[9].status === 'fulfilled' ? results[9].value : null;
 
         if (stepsData?.count != null && stepsData.count > 0) setSteps(stepsData.count);
         if (caloriesData?.active != null && caloriesData.active > 0) setCalories(Math.round(caloriesData.active));
@@ -706,11 +713,16 @@ export default function HomeScreen() {
         if (spo2Data?.value != null && spo2Data.value > 0) setSpo2(spo2Data.value);
         if (respData?.value != null && respData.value > 0) setRespiratoryRate(respData.value);
         if (vo2Data?.value != null && vo2Data.value > 0) setVo2Max(vo2Data.value);
+        if (exerciseData != null && exerciseData > 0) setExerciseMinutes(exerciseData);
+        if (standData != null && standData > 0) setStandHours(standData);
         if (sleepHistory && sleepHistory.length > 0) {
-          const last = sleepHistory[0];
+          // Prendre la nuit la plus récente (triée ascending donc dernière)
+          const last = sleepHistory[sleepHistory.length - 1];
           if (last.deep || last.rem || last.core || last.awake) {
             setLastSleepPhases({ deep: last.deep, rem: last.rem, core: last.core, awake: last.awake });
           }
+          // Durée HealthKit pour la carte sommeil si pas d'entrée manuelle
+          if (last.total > 0) setHkSleepHours(last.total / 60);
         }
       } catch (error) {
         logger.info('Donnees activite non disponibles depuis Apple Health');
@@ -1322,7 +1334,7 @@ export default function HomeScreen() {
             <View style={styles.threeCardsRow}>
               <TouchableOpacity onPress={handleNavigateSleep} activeOpacity={0.9} style={styles.compactCard}>
                 <SleepLottieCard
-                  hours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
+                  hours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : hkSleepHours}
                   quality={sleepStats?.lastNightQuality ? (sleepStats.lastNightQuality / 5) * 100 : 0}
                   debt={sleepStats?.sleepDebtHours || 0}
                   goal={sleepGoal / 60}
@@ -1421,6 +1433,8 @@ export default function HomeScreen() {
               spo2={spo2}
               respiratoryRate={respiratoryRate}
               vo2Max={vo2Max}
+              exerciseMinutes={exerciseMinutes}
+              standHours={standHours}
             />
           </View>
         );

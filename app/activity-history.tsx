@@ -122,8 +122,8 @@ export default function ActivityHistoryScreen() {
     }
   }, [period, locale]);
 
-  // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => { loadData(); }, []);
+  // Recharger quand la période change
+  useEffect(() => { loadData(); }, [loadData]);
 
   const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
     if (trend === 'up') return TrendingUp;

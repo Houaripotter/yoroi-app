@@ -93,7 +93,6 @@ export default function HistoryScreen() {
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [loading, setLoading] = useState(true);
-  const [useMockData, setUseMockData] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<'7' | '30' | '90' | 'all'>('all');
   const { isProcessing, executeOnce } = usePreventDoubleClick({ delay: 500 });
   const cancelledRef = useRef(false);
@@ -109,7 +108,6 @@ export default function HistoryScreen() {
       if (cancelledRef.current) return;
       setTrainings(allTrainings);
       setRecords(measurements);
-      setUseMockData(false);
     } catch (error) {
       logger.error('Erreur chargement historique:', error);
       if (!cancelledRef.current) setRecords([]);
@@ -511,14 +509,6 @@ export default function HistoryScreen() {
         {/* View B: Évolution (Graphs) */}
         {viewMode === 'stats' && (
           <>
-            {useMockData && (
-              <View style={[styles.mockDataNotice, { backgroundColor: themeColors.goldMuted, borderColor: themeColors.gold }]}>
-                <Text style={[styles.mockDataText, { color: themeColors.gold }]}>
-                  Données de démonstration (moins de 3 mesures réelles)
-                </Text>
-              </View>
-            )}
-
             {/* Sélecteur de période */}
             <View style={styles.periodSelector}>
               {(['7', '30', '90', 'all'] as const).map((period) => (

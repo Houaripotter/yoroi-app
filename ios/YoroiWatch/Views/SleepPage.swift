@@ -55,43 +55,48 @@ struct SleepPage: View {
             GeometryReader { geo in
               let w = geo.size.width
               let h = geo.size.height
-              Text("\u{2726}").font(.system(size: 4)).foregroundColor(STAR_COLOR).opacity(star1Op).position(x: w * 0.08, y: h * 0.08)
-              Text("\u{2726}").font(.system(size: 3)).foregroundColor(STAR_COLOR).opacity(star2Op).position(x: w * 0.19, y: h * 0.20)
-              Text("\u{2726}").font(.system(size: 3.5)).foregroundColor(STAR_COLOR).opacity(star3Op).position(x: w * 0.34, y: h * 0.06)
-              Text("\u{2726}").font(.system(size: 4)).foregroundColor(STAR_COLOR).opacity(star1Op).position(x: w * 0.88, y: h * 0.14)
-              Text("\u{2726}").font(.system(size: 3)).foregroundColor(Color(red: 0.886, green: 0.910, blue: 0.941)).opacity(star2Op).position(x: w * 0.79, y: h * 0.26)
-              Text("\u{2726}").font(.system(size: 3.5)).foregroundColor(STAR_COLOR).opacity(star3Op).position(x: w * 0.68, y: h * 0.08)
+              let ss = WatchScreen.scaleFactor
+              Text("\u{2726}").font(.system(size: ss * 4)).foregroundColor(STAR_COLOR).opacity(star1Op).position(x: w * 0.08, y: h * 0.08)
+              Text("\u{2726}").font(.system(size: ss * 3)).foregroundColor(STAR_COLOR).opacity(star2Op).position(x: w * 0.19, y: h * 0.20)
+              Text("\u{2726}").font(.system(size: ss * 3.5)).foregroundColor(STAR_COLOR).opacity(star3Op).position(x: w * 0.34, y: h * 0.06)
+              Text("\u{2726}").font(.system(size: ss * 4)).foregroundColor(STAR_COLOR).opacity(star1Op).position(x: w * 0.88, y: h * 0.14)
+              Text("\u{2726}").font(.system(size: ss * 3)).foregroundColor(Color(red: 0.886, green: 0.910, blue: 0.941)).opacity(star2Op).position(x: w * 0.79, y: h * 0.26)
+              Text("\u{2726}").font(.system(size: ss * 3.5)).foregroundColor(STAR_COLOR).opacity(star3Op).position(x: w * 0.68, y: h * 0.08)
             }
 
-            MoonShape().fill(MOON_COLOR).frame(width: 16, height: 16).offset(x: 40, y: -20 + moonFloat)
+            Image(systemName: "moon.fill")
+              .font(.system(size: WatchScreen.s(16)))
+              .foregroundColor(MOON_COLOR)
+              .offset(x: WatchScreen.s(40), y: -WatchScreen.s(20) + moonFloat)
 
             BedSceneView(nightLight: NIGHT_LIGHT, nightMid: NIGHT_MID, nightSoft: NIGHT_SOFT)
-              .scaleEffect(breatheScale).offset(y: 8)
+              .scaleEffect(breatheScale).offset(y: WatchScreen.s(8))
 
+            let zs = WatchScreen.scaleFactor
             ZStack {
-              Text("z").font(.system(size: 6, weight: .heavy)).italic().foregroundColor(NIGHT_SOFT).opacity(zzz1Op).offset(y: zzz1Y)
-              Text("Z").font(.system(size: 8, weight: .heavy)).italic().foregroundColor(NIGHT_LIGHT).opacity(zzz2Op).offset(x: 5, y: -4 + zzz2Y)
-              Text("Z").font(.system(size: 10, weight: .heavy)).italic().foregroundColor(NIGHT_MID).opacity(zzz3Op).offset(x: 11, y: -9 + zzz3Y)
+              Text("z").font(.system(size: zs * 6, weight: .heavy)).italic().foregroundColor(NIGHT_SOFT).opacity(zzz1Op).offset(y: zzz1Y)
+              Text("Z").font(.system(size: zs * 8, weight: .heavy)).italic().foregroundColor(NIGHT_LIGHT).opacity(zzz2Op).offset(x: zs * 5, y: -zs * 4 + zzz2Y)
+              Text("Z").font(.system(size: zs * 10, weight: .heavy)).italic().foregroundColor(NIGHT_MID).opacity(zzz3Op).offset(x: zs * 11, y: -zs * 9 + zzz3Y)
             }
-            .offset(x: 18, y: 18)
+            .offset(x: WatchScreen.s(18), y: WatchScreen.s(18))
           }
-          .frame(height: 80)
+          .frame(height: WatchScreen.s(80))
 
           // Duration + status
           VStack(spacing: 2) {
             if session.sleepDuration > 0 {
               Text("\(sleepH)h\(String(format: "%02d", sleepM))")
-                .font(.system(size: 22, weight: .black)).foregroundColor(session.textPrimary).tracking(-1)
+                .font(.system(size: WatchScreen.bigNumberSize, weight: .black)).foregroundColor(session.textPrimary).tracking(-1)
             } else {
-              Text("--").font(.system(size: 22, weight: .black)).foregroundColor(session.textPrimary)
+              Text("--").font(.system(size: WatchScreen.bigNumberSize, weight: .black)).foregroundColor(session.textPrimary)
             }
             HStack(spacing: 6) {
-              Text(statusText).font(.system(size: 9, weight: .bold)).foregroundColor(statusColor)
-                .padding(.horizontal, 8).padding(.vertical, 2)
+              Text(statusText).font(.system(size: WatchScreen.fs(9), weight: .bold)).foregroundColor(statusColor)
+                .padding(.horizontal, WatchScreen.s(8)).padding(.vertical, 2)
                 .background(statusColor.opacity(0.09)).cornerRadius(6)
               if session.sleepGoalMinutes > 0 {
                 Text("Objectif \(session.sleepGoalMinutes / 60)h")
-                  .font(.system(size: 9, weight: .medium)).foregroundColor(session.textSecondary)
+                  .font(.system(size: WatchScreen.fs(9), weight: .medium)).foregroundColor(session.textSecondary)
               }
             }
           }
@@ -99,13 +104,13 @@ struct SleepPage: View {
           // Bed/Wake times
           HStack(spacing: 0) {
             VStack(spacing: 2) {
-              Image(systemName: "bed.double.fill").font(.system(size: 10)).foregroundColor(NIGHT_MID)
-              Text(session.sleepBedTime).font(.system(size: 14, weight: .bold)).foregroundColor(session.textPrimary)
+              Image(systemName: "bed.double.fill").font(.system(size: WatchScreen.iconSize)).foregroundColor(NIGHT_MID)
+              Text(session.sleepBedTime).font(.system(size: WatchScreen.fs(14), weight: .bold)).foregroundColor(session.textPrimary)
             }.frame(maxWidth: .infinity)
-            Rectangle().fill(session.dividerColor).frame(width: 1, height: 28)
+            Rectangle().fill(session.dividerColor).frame(width: 1, height: WatchScreen.s(28))
             VStack(spacing: 2) {
-              Image(systemName: "sun.max.fill").font(.system(size: 10)).foregroundColor(.yellow)
-              Text(session.sleepWakeTime).font(.system(size: 14, weight: .bold)).foregroundColor(session.textPrimary)
+              Image(systemName: "sun.max.fill").font(.system(size: WatchScreen.iconSize)).foregroundColor(.yellow)
+              Text(session.sleepWakeTime).font(.system(size: WatchScreen.fs(14), weight: .bold)).foregroundColor(session.textPrimary)
             }.frame(maxWidth: .infinity)
           }
         }
@@ -116,42 +121,42 @@ struct SleepPage: View {
         VStack(spacing: 8) {
           HStack(spacing: 6) {
             Image(systemName: session.sleepDebt > 0 ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
-              .font(.system(size: 12))
+              .font(.system(size: WatchScreen.iconSize))
               .foregroundColor(session.sleepDebt > 0 ? .red : .green)
-            Text("Dette").font(.system(size: 11, weight: .semibold)).foregroundColor(session.textSecondary)
+            Text("Dette").font(.system(size: WatchScreen.labelSize, weight: .semibold)).foregroundColor(session.textSecondary)
             Spacer()
             Text(session.sleepDebt > 0 ? String(format: "%.1fh", session.sleepDebt) : "0h")
-              .font(.system(size: 13, weight: .heavy))
+              .font(.system(size: WatchScreen.fs(13), weight: .heavy))
               .foregroundColor(session.sleepDebt > 0 ? .red : .green)
-          }.padding(.horizontal, 6)
+          }.padding(.horizontal, WatchScreen.hPad)
 
           HStack(spacing: 6) {
-            Image(systemName: "moon.fill").font(.system(size: 12)).foregroundColor(NIGHT_MID)
-            Text("Qualite").font(.system(size: 11, weight: .semibold)).foregroundColor(session.textSecondary)
+            Image(systemName: "moon.fill").font(.system(size: WatchScreen.iconSize)).foregroundColor(NIGHT_MID)
+            Text("Score").font(.system(size: WatchScreen.labelSize, weight: .semibold)).foregroundColor(session.textSecondary)
             Spacer()
-            Text("\(Int(qualityPercent))%")
-              .font(.system(size: 13, weight: .heavy))
-              .foregroundColor(qualityPercent >= 80 ? .green : qualityPercent >= 60 ? .yellow : .red)
-          }.padding(.horizontal, 6)
+            Text("\(session.sleepScore)%")
+              .font(.system(size: WatchScreen.fs(13), weight: .heavy))
+              .foregroundColor(session.sleepScore >= 80 ? .green : session.sleepScore >= 60 ? .yellow : .red)
+          }.padding(.horizontal, WatchScreen.hPad)
 
           HStack(spacing: 6) {
-            Image(systemName: "target").font(.system(size: 12)).foregroundColor(NIGHT_MID)
-            Text("Objectif").font(.system(size: 11, weight: .semibold)).foregroundColor(session.textSecondary)
+            Image(systemName: "target").font(.system(size: WatchScreen.iconSize)).foregroundColor(NIGHT_MID)
+            Text("Objectif").font(.system(size: WatchScreen.labelSize, weight: .semibold)).foregroundColor(session.textSecondary)
             Spacer()
             Text("\(session.sleepGoalMinutes / 60)h")
-              .font(.system(size: 10, weight: .bold))
+              .font(.system(size: WatchScreen.fs(10), weight: .bold))
               .foregroundColor(sleepProgress >= 1.0 ? .green : .yellow)
-              .padding(.horizontal, 6).padding(.vertical, 2)
+              .padding(.horizontal, WatchScreen.hPad).padding(.vertical, 2)
               .background((sleepProgress >= 1.0 ? Color.green : Color.yellow).opacity(0.12))
               .cornerRadius(4)
-          }.padding(.horizontal, 6)
+          }.padding(.horizontal, WatchScreen.hPad)
 
           GeometryReader { geo in
             ZStack(alignment: .leading) {
               RoundedRectangle(cornerRadius: 3).fill(NIGHT_MID.opacity(0.15))
               RoundedRectangle(cornerRadius: 3)
                 .fill(LinearGradient(colors: [NIGHT_MID, NIGHT], startPoint: .leading, endPoint: .trailing))
-                .frame(width: geo.size.width * min(1, qualityPercent / 100))
+                .frame(width: geo.size.width * min(1, Double(session.sleepScore) / 100))
             }
           }
           .frame(height: 6).padding(.horizontal, 6)
@@ -169,25 +174,26 @@ struct SleepPage: View {
 
         // ── SECTION 3: Progress Ring ──
         VStack(spacing: 6) {
+          let ringSize = WatchScreen.s(56)
           ZStack {
-            Circle().stroke(NIGHT_MID.opacity(0.15), lineWidth: 5)
+            Circle().stroke(NIGHT_MID.opacity(0.15), lineWidth: WatchScreen.s(5))
             Circle().trim(from: 0, to: sleepProgress)
-              .stroke(NIGHT_MID, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+              .stroke(NIGHT_MID, style: StrokeStyle(lineWidth: WatchScreen.s(5), lineCap: .round))
               .rotationEffect(.degrees(-90))
-            Text("\(Int(qualityPercent))%")
-              .font(.system(size: 13, weight: .black)).foregroundColor(NIGHT_MID)
+            Text("\(session.sleepScore)%")
+              .font(.system(size: WatchScreen.fs(13), weight: .black)).foregroundColor(NIGHT_MID)
           }
-          .frame(width: 56, height: 56)
+          .frame(width: ringSize, height: ringSize)
 
           if sleepProgress >= 1.0 {
             HStack(spacing: 4) {
-              Image(systemName: "checkmark.circle.fill").font(.system(size: 10))
-              Text("Objectif atteint !").font(.system(size: 10, weight: .semibold))
+              Image(systemName: "checkmark.circle.fill").font(.system(size: WatchScreen.fs(10)))
+              Text("Objectif atteint !").font(.system(size: WatchScreen.fs(10), weight: .semibold))
             }.foregroundColor(.green)
           } else if session.sleepDuration > 0 {
             let remaining = max(0, session.sleepGoalMinutes - session.sleepDuration)
             Text("Encore \(remaining / 60)h\(String(format: "%02d", remaining % 60))")
-              .font(.system(size: 10, weight: .semibold)).foregroundColor(session.textSecondary)
+              .font(.system(size: WatchScreen.fs(10), weight: .semibold)).foregroundColor(session.textSecondary)
           }
         }
 
@@ -232,11 +238,6 @@ struct SleepPage: View {
     return min(1.0, Double(session.sleepDuration) / Double(session.sleepGoalMinutes))
   }
 
-  private var qualityPercent: Double {
-    guard session.sleepGoalMinutes > 0 else { return 0 }
-    return min(100, Double(session.sleepDuration) / Double(session.sleepGoalMinutes) * 100)
-  }
-
   private var statusText: String {
     if session.sleepDuration == 0 { return "Aucune donnee" }
     let hours = Double(session.sleepDuration) / 60.0
@@ -276,19 +277,6 @@ struct SleepPage: View {
 }
 
 // MARK: - Moon + Bed Scene + TipRow
-
-struct MoonShape: Shape {
-  func path(in rect: CGRect) -> Path {
-    let scale = min(rect.width, rect.height) / 24
-    var path = Path()
-    let center = CGPoint(x: rect.midX, y: rect.midY)
-    path.addArc(center: CGPoint(x: center.x - 2 * scale, y: center.y + 1 * scale), radius: 9 * scale,
-                startAngle: .degrees(0), endAngle: .degrees(360), clockwise: false)
-    path.addArc(center: CGPoint(x: center.x + 3 * scale, y: center.y - 3 * scale), radius: 7 * scale,
-                startAngle: .degrees(0), endAngle: .degrees(360), clockwise: true)
-    return path
-  }
-}
 
 struct BedSceneView: View {
   let nightLight: Color

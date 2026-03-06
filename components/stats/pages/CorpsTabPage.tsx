@@ -11,12 +11,10 @@ import { useScrollContext } from '@/lib/ScrollContext';
 import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
-import { ScrollableLineChart } from '../charts/ScrollableLineChart';
 import { WeightChartCard } from '../charts/WeightChartCard';
 import { DualComparisonCard } from '../charts/DualComparisonCard';
 import { MultiLineComparisonCard } from '../charts/MultiLineComparisonCard';
 import { StatsDetailModal } from '../StatsDetailModal';
-import { StatsExplanation } from '../StatsExplanation';
 import { aggregateWeightData } from '@/lib/statsAggregation';
 import { getProfile, getAllWeights, getLatestWeight, getLatestMeasurement, getMeasurements } from '@/lib/database';
 import { getUserSettings } from '@/lib/storage';
@@ -60,6 +58,12 @@ export const CorpsTabPage: React.FC = React.memo(() => {
     muscle: any[];
     water: any[];
   }>({ bodyFat: [], muscle: [], water: [] });
+  const [compositionAdvancedHistory, setCompositionAdvancedHistory] = useState<{
+    bone: any[];
+    visceral: any[];
+    bmr: any[];
+    metabolicAge: any[];
+  }>({ bone: [], visceral: [], bmr: [], metabolicAge: [] });
 
   // --- Mensurations state ---
   const [latestMeasurement, setLatestMeasurement] = useState<any>(null);
@@ -168,6 +172,12 @@ export const CorpsTabPage: React.FC = React.memo(() => {
           muscle: filtered.filter((w: any) => w.muscle_percent > 0).map((w: any) => ({ date: w.date, value: w.muscle_percent })).reverse(),
           water: filtered.filter((w: any) => w.water_percent > 0).map((w: any) => ({ date: w.date, value: w.water_percent })).reverse(),
         });
+        setCompositionAdvancedHistory({
+          bone: filtered.filter((w: any) => w.bone_mass > 0).map((w: any) => ({ date: w.date, value: w.bone_mass })).reverse(),
+          visceral: filtered.filter((w: any) => w.visceral_fat > 0).map((w: any) => ({ date: w.date, value: w.visceral_fat })).reverse(),
+          bmr: filtered.filter((w: any) => w.bmr > 0).map((w: any) => ({ date: w.date, value: w.bmr })).reverse(),
+          metabolicAge: filtered.filter((w: any) => w.metabolic_age > 0).map((w: any) => ({ date: w.date, value: w.metabolic_age })).reverse(),
+        });
       }
 
       // --- Mensurations ---
@@ -190,7 +200,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
     }
   };
 
-  // Memoized sparkline data for evolution/average cards
+  // Memoized sparkline data
   const evolutionSparkline = useMemo(() => {
     if (weightHistory.length < 2) return [];
     const first = weightHistory[0]?.value || 1;
@@ -206,11 +216,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
     });
   }, [weightHistory]);
 
-  // Memoized composition sparklines
-  const boneSparkline = useMemo(() => allWeightsData.filter(w => w.bone_mass > 0).map(w => ({ value: w.bone_mass })), [allWeightsData]);
-  const visceralSparkline = useMemo(() => allWeightsData.filter(w => w.visceral_fat > 0).map(w => ({ value: w.visceral_fat })), [allWeightsData]);
-  const bmrSparkline = useMemo(() => allWeightsData.filter(w => w.bmr > 0).map(w => ({ value: w.bmr })), [allWeightsData]);
-  const metabolicAgeSparkline = useMemo(() => allWeightsData.filter(w => w.metabolic_age > 0).map(w => ({ value: w.metabolic_age })), [allWeightsData]);
+  // Composition sparklines
 
   // --- Modal data (memoized) ---
   const getModalData = useCallback(() => {
@@ -251,9 +257,10 @@ export const CorpsTabPage: React.FC = React.memo(() => {
   const fatPercent = latestWeight?.fat_percent || 0;
   const musclePercent = latestWeight?.muscle_percent || 0;
   const waterPercent = latestWeight?.water_percent || 0;
-  const fatStatus = fatPercent > 0 ? getMetricStatus(fatPercent, bodyFatRange) : null;
-  const muscleStatus = musclePercent > 0 ? getMetricStatus(musclePercent, muscleMassRange) : null;
-  const hasCompositionData = latestWeight && (fatPercent > 0 || musclePercent > 0 || waterPercent > 0);
+  const boneMass = latestWeight?.bone_mass || 0;
+  const visceralFat = latestWeight?.visceral_fat || 0;
+  const bmrValue = latestWeight?.bmr || 0;
+  const metabolicAge = latestWeight?.metabolic_age || 0;
 
   const getHealthRangeForModal = () => {
     if (!selectedMetric) return undefined;
@@ -302,7 +309,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         />
       }
     >
-      {/* ========== SECTION POIDS ========== */}
+      {/* ========== SECTION POIDS : graphique + métriques clés dans le même corps ========== */}
       <StatsHeader
         title={t('statsPages.weight.title')}
         description="Poids, composition et mensurations"
@@ -310,24 +317,16 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         onPeriodChange={setSelectedPeriod}
       />
 
-      <StatsExplanation
-        title="Poids & IMC"
-        text="Le Poids est ton indicateur de masse globale. L'IMC (Indice de Masse Corporelle) permet de situer ton poids par rapport à ta taille."
-        color="#3B82F6"
-      />
-
-      <WeightChartCard
-        data={weightData?.values || []}
-        color="#3B82F6"
-        unit=" kg"
-        title={t('statsPages.weight.weightEvolution')}
-      />
-
-      <StatsSection
-        title={t('statsPages.weight.keyMetrics')}
-        description={t('statsPages.clickToSeeHistory')}
-      >
-        <View style={styles.grid}>
+      {/* Evolution du poids + Métriques clés dans le même corps */}
+      <StatsSection>
+        <WeightChartCard
+          data={weightData?.values || []}
+          color="#3B82F6"
+          unit=" kg"
+          title={t('statsPages.weight.weightEvolution')}
+        />
+        {/* Poids actuel + Objectif dans le même corps que le graphique */}
+        <View style={[styles.grid, { marginTop: 12 }]}>
           <TouchableOpacity
             style={styles.gridItem}
             activeOpacity={0.7}
@@ -345,11 +344,60 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         </View>
       </StatsSection>
 
+      {/* Historique récent — horizontal, le plus récent à GAUCHE */}
+      {allWeightsData.length > 0 && (
+        <StatsSection>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.historyScrollContent}
+          >
+            {allWeightsData.slice(0, 20).map((entry, index) => {
+              const prevEntry = allWeightsData[index + 1];
+              const change = prevEntry ? entry.weight - prevEntry.weight : 0;
+              const isFirst = index === 0;
+              return (
+                <TouchableOpacity
+                  key={entry.id || index}
+                  activeOpacity={0.7}
+                  onPress={() => setSelectedMetric({ key: 'weight', label: t('statsPages.weight.currentWeight'), color: '#3B82F6', unit: 'kg', icon: <Scale size={18} color="#3B82F6" strokeWidth={2.5} />, source: 'weight' })}
+                  style={[
+                    styles.historyCard,
+                    { backgroundColor: colors.backgroundCard, borderColor: isFirst ? '#3B82F6' : colors.border },
+                    isFirst && styles.historyCardRecent,
+                  ]}
+                >
+                  {isFirst && (
+                    <View style={styles.historyCardBadge}>
+                      <Text style={styles.historyCardBadgeText}>Récent</Text>
+                    </View>
+                  )}
+                  <Text style={[styles.historyCardDate, { color: colors.textMuted }]}>
+                    {format(new Date(entry.date), 'd MMM', { locale: fr })}
+                  </Text>
+                  <Text style={[styles.historyCardWeight, { color: isFirst ? '#3B82F6' : colors.textPrimary }]}>
+                    {entry.weight?.toFixed(1)} <Text style={styles.historyCardUnit}>kg</Text>
+                  </Text>
+                  {change !== 0 && (
+                    <Text style={[styles.historyCardChange, { color: change < 0 ? '#10B981' : '#EF4444' }]}>
+                      {change > 0 ? '+' : ''}{change.toFixed(1)} kg
+                    </Text>
+                  )}
+                  {entry.fat_percent > 0 && (
+                    <Text style={[styles.historyCardExtra, { color: colors.textMuted }]}>
+                      G: {entry.fat_percent?.toFixed(1)}%
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </StatsSection>
+      )}
+
+      {/* ========== IMC + Statistiques dans le même corps ========== */}
       {bmi != null && bmi > 0 && (
-        <StatsSection
-          title={t('statsPages.weight.bmiTitle')}
-          description={t('statsPages.weight.bmiDesc')}
-        >
+        <StatsSection>
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => setSelectedMetric({ key: 'bmi', label: t('stats.bmi'), color: bmiStatus?.color || '#6366F1', unit: '', icon: <Scale size={18} color={bmiStatus?.color || '#6366F1'} strokeWidth={2.5} />, source: 'weight' })}
@@ -440,122 +488,108 @@ export const CorpsTabPage: React.FC = React.memo(() => {
               );
             })()}
           </TouchableOpacity>
+
+          {/* Statistiques poids dans le même corps que le BMI */}
+          <View style={[styles.grid, { marginTop: 12 }]}>
+            <TouchableOpacity
+              style={styles.gridItem}
+              activeOpacity={0.7}
+              onPress={() => setSelectedMetric({ key: 'evolution', label: t('statsPages.weight.evolution'), color: weightData?.trend === 'up' ? '#F59E0B' : '#10B981', unit: '%', icon: weightData?.trend === 'up' ? <TrendingUp size={18} color="#F59E0B" strokeWidth={2.5} /> : <TrendingDown size={18} color="#10B981" strokeWidth={2.5} />, source: 'weight' })}
+            >
+              <MetricCard label={t('statsPages.weight.evolution')} value={Math.abs(weightData?.changePercent || 0)} unit="%" icon={weightData?.trend === 'up' ? <TrendingUp size={24} color="#F59E0B" strokeWidth={2.5} /> : <TrendingDown size={24} color="#10B981" strokeWidth={2.5} />} color={weightData?.trend === 'up' ? '#F59E0B' : '#10B981'} trend={weightData?.trend} sparklineData={evolutionSparkline} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.gridItem}
+              activeOpacity={0.7}
+              onPress={() => setSelectedMetric({ key: 'average', label: t('statsPages.weight.movingAverage'), color: '#8B5CF6', unit: 'kg', icon: <BarChart3 size={18} color="#8B5CF6" strokeWidth={2.5} />, source: 'weight' })}
+            >
+              <MetricCard label={t('statsPages.weight.average')} value={weightData?.average || 0} unit="kg" icon={<BarChart3 size={24} color="#8B5CF6" strokeWidth={2.5} />} color="#8B5CF6" sparklineData={averageSparkline} />
+            </TouchableOpacity>
+          </View>
         </StatsSection>
       )}
 
-      <StatsSection
-        title={t('statsPages.weight.statistics')}
-        description={t('statsPages.clickToSeeHistory')}
-      >
-        <View style={styles.grid}>
-          <TouchableOpacity
-            style={styles.gridItem}
-            activeOpacity={0.7}
-            onPress={() => setSelectedMetric({ key: 'evolution', label: t('statsPages.weight.evolution'), color: weightData?.trend === 'up' ? '#F59E0B' : '#10B981', unit: '%', icon: weightData?.trend === 'up' ? <TrendingUp size={18} color="#F59E0B" strokeWidth={2.5} /> : <TrendingDown size={18} color="#10B981" strokeWidth={2.5} />, source: 'weight' })}
-          >
-            <MetricCard label={t('statsPages.weight.evolution')} value={Math.abs(weightData?.changePercent || 0)} unit="%" icon={weightData?.trend === 'up' ? <TrendingUp size={24} color="#F59E0B" strokeWidth={2.5} /> : <TrendingDown size={24} color="#10B981" strokeWidth={2.5} />} color={weightData?.trend === 'up' ? '#F59E0B' : '#10B981'} trend={weightData?.trend} sparklineData={evolutionSparkline} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.gridItem}
-            activeOpacity={0.7}
-            onPress={() => setSelectedMetric({ key: 'average', label: t('statsPages.weight.movingAverage'), color: '#8B5CF6', unit: 'kg', icon: <BarChart3 size={18} color="#8B5CF6" strokeWidth={2.5} />, source: 'weight' })}
-          >
-            <MetricCard label={t('statsPages.weight.average')} value={weightData?.average || 0} unit="kg" icon={<BarChart3 size={24} color="#8B5CF6" strokeWidth={2.5} />} color="#8B5CF6" sparklineData={averageSparkline} />
-          </TouchableOpacity>
-        </View>
-      </StatsSection>
-
-      {/* ========== SECTION COMPOSITION ========== */}
+      {/* ========== COMPOSITION CORPORELLE — tous les métriques, cliquables ========== */}
       <View style={styles.sectionDivider} />
 
-      <StatsExplanation
-        title="Composition Corporelle"
-        text={"La Composition analyse la qualit\u00E9 de ton poids. Le taux de Graisse indique tes r\u00E9serves d'\u00E9nergie, la Masse Musculaire refl\u00E8te ta force."}
-        color="#F59E0B"
-      />
+      {/* Graisse / Muscle / Eau */}
+      <StatsSection>
+        <MultiLineComparisonCard
+          title="Composition corporelle"
+          unit="%"
+          lines={[
+            {
+              label: t('statsPages.composition.bodyFat'),
+              color: '#F59E0B',
+              history: compositionHistory.bodyFat,
+              currentValue: fatPercent,
+              onPress: () => setSelectedMetric({ key: 'fat_percent', label: t('statsPages.composition.bodyFat'), color: '#F59E0B', unit: '%', icon: <Flame size={18} color="#F59E0B" strokeWidth={2.5} />, source: 'composition' }),
+            },
+            {
+              label: t('statsPages.composition.muscleMass'),
+              color: '#10B981',
+              history: compositionHistory.muscle,
+              currentValue: musclePercent,
+              onPress: () => setSelectedMetric({ key: 'muscle_percent', label: t('statsPages.composition.muscleMass'), color: '#10B981', unit: '%', icon: <Activity size={18} color="#10B981" strokeWidth={2.5} />, source: 'composition' }),
+            },
+            {
+              label: 'Eau',
+              color: '#06B6D4',
+              history: compositionHistory.water,
+              currentValue: waterPercent,
+              onPress: () => setSelectedMetric({ key: 'water_percent', label: 'Eau corporelle', color: '#06B6D4', unit: '%', icon: <Droplet size={18} color="#06B6D4" strokeWidth={2.5} />, source: 'composition' }),
+            },
+          ]}
+        />
+      </StatsSection>
 
-      {/* Graisse vs Muscle - DualComparisonCard */}
-      {(fatPercent > 0 || musclePercent > 0) && (
-        <StatsSection
-          title={t('statsPages.composition.globalComposition')}
-          description={t('statsPages.composition.globalCompositionDesc')}
-        >
-          <DualComparisonCard
-            title="Graisse vs Muscle"
-            leftLabel={t('statsPages.composition.bodyFat')}
-            rightLabel={t('statsPages.composition.muscle')}
-            leftColor="#F59E0B"
-            rightColor="#10B981"
-            leftHistory={compositionHistory.bodyFat}
-            rightHistory={compositionHistory.muscle}
-            leftValue={fatPercent}
-            rightValue={musclePercent}
-            unit="%"
-            onPressLeft={() => setSelectedMetric({ key: 'fat_percent', label: t('statsPages.composition.bodyFat'), color: '#F59E0B', unit: '%', icon: <Activity size={18} color="#F59E0B" strokeWidth={2.5} />, source: 'composition' })}
-            onPressRight={() => setSelectedMetric({ key: 'muscle_percent', label: t('statsPages.composition.muscleMass'), color: '#10B981', unit: '%', icon: <Activity size={18} color="#10B981" strokeWidth={2.5} />, source: 'composition' })}
-          />
-        </StatsSection>
-      )}
+      {/* Masse osseuse / Graisse viscérale */}
+      <StatsSection>
+        <DualComparisonCard
+          title="Métriques avancées"
+          leftLabel={t('statsPages.composition.boneMass')}
+          rightLabel={t('statsPages.composition.visceralFat')}
+          leftColor="#8B5CF6"
+          rightColor="#EF4444"
+          leftHistory={compositionAdvancedHistory.bone}
+          rightHistory={compositionAdvancedHistory.visceral}
+          leftValue={boneMass}
+          rightValue={visceralFat}
+          unit=""
+          leftUnit="kg"
+          rightUnit="/20"
+          onPressLeft={() => setSelectedMetric({ key: 'bone_mass', label: t('statsPages.composition.boneMass'), color: '#8B5CF6', unit: 'kg', icon: <Bone size={18} color="#8B5CF6" strokeWidth={2.5} />, source: 'composition' })}
+          onPressRight={() => setSelectedMetric({ key: 'visceral_fat', label: t('statsPages.composition.visceralFat'), color: '#EF4444', unit: '/20', icon: <Activity size={18} color="#EF4444" strokeWidth={2.5} />, source: 'composition' })}
+        />
+      </StatsSection>
 
-      {/* ========== SECTION EAU (Hydratation corporelle Tanita) ========== */}
-      {(waterPercent > 0 || compositionHistory.water.length > 0) && (
-        <>
-          <View style={styles.sectionDivider} />
-          <StatsExplanation
-            title="Eau Corporelle"
-            text="L'Eau Corporelle mesure le pourcentage d'eau total dans ton corps. Une bonne hydratation est essentielle pour la performance et la recuperation. Donnees issues de ta balance connectee Tanita."
-            color="#06B6D4"
-          />
-          <StatsSection title="Eau" description="Evolution de ton taux d'eau corporel">
-            <ScrollableLineChart
-              data={compositionHistory.water}
-              color="#06B6D4"
-              unit=" %"
-              height={220}
-            />
-          </StatsSection>
-          <StatsSection title="Hydratation actuelle" description="Clique pour voir l'historique complet">
-            <View style={styles.grid}>
-              <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'water_percent', label: 'Eau corporelle', color: '#06B6D4', unit: '%', icon: <Droplet size={18} color="#06B6D4" strokeWidth={2.5} />, source: 'composition' })}>
-                <MetricCard label="Eau corporelle" value={waterPercent} unit="%" icon={<Droplet size={24} color="#06B6D4" strokeWidth={2.5} />} color="#06B6D4" sparklineData={compositionHistory.water} />
-              </TouchableOpacity>
-            </View>
-          </StatsSection>
-        </>
-      )}
-
-      <StatsSection title={t('statsPages.composition.detailedMetrics')} description={t('statsPages.clickToSeeHistory')}>
-        <View style={styles.grid}>
-          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'bone_mass', label: t('statsPages.composition.boneMass'), color: '#8B5CF6', unit: 'kg', icon: <Bone size={18} color="#8B5CF6" strokeWidth={2.5} />, source: 'composition' })}>
-            <MetricCard label={t('statsPages.composition.boneMass')} value={latestWeight?.bone_mass || 0} unit="kg" icon={<Bone size={24} color="#8B5CF6" strokeWidth={2.5} />} color="#8B5CF6" sparklineData={boneSparkline} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'visceral_fat', label: t('statsPages.composition.visceralFat'), color: '#EF4444', unit: '/20', icon: <Activity size={18} color="#EF4444" strokeWidth={2.5} />, source: 'composition' })}>
-            <MetricCard label={t('statsPages.composition.visceralFat')} value={latestWeight?.visceral_fat || 0} unit="/20" icon={<Activity size={24} color="#EF4444" strokeWidth={2.5} />} color="#EF4444" sparklineData={visceralSparkline} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.grid}>
-          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'bmr', label: t('statsPages.composition.bmr'), color: '#F97316', unit: 'kcal', icon: <Flame size={18} color="#F97316" strokeWidth={2.5} />, source: 'composition' })}>
-            <MetricCard label={t('statsPages.composition.bmr')} value={latestWeight?.bmr || 0} unit="kcal" icon={<Flame size={24} color="#F97316" strokeWidth={2.5} />} color="#F97316" sparklineData={bmrSparkline} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'metabolic_age', label: t('statsPages.composition.metabolicAge'), color: '#6366F1', unit: t('statsPages.composition.years'), icon: <Zap size={18} color="#6366F1" strokeWidth={2.5} />, source: 'composition' })}>
-            <MetricCard label={t('statsPages.composition.metabolicAge')} value={latestWeight?.metabolic_age || 0} unit={t('statsPages.composition.years')} icon={<Zap size={24} color="#6366F1" strokeWidth={2.5} />} color="#6366F1" sparklineData={metabolicAgeSparkline} />
-          </TouchableOpacity>
-        </View>
+      {/* BMR / Age métabolique */}
+      <StatsSection>
+        <DualComparisonCard
+          title="Métabolisme"
+          leftLabel={t('statsPages.composition.bmr')}
+          rightLabel={t('statsPages.composition.metabolicAge')}
+          leftColor="#F97316"
+          rightColor="#6366F1"
+          leftHistory={compositionAdvancedHistory.bmr}
+          rightHistory={compositionAdvancedHistory.metabolicAge}
+          leftValue={bmrValue}
+          rightValue={metabolicAge}
+          unit=""
+          leftUnit="kcal"
+          rightUnit={t('statsPages.composition.years')}
+          onPressLeft={() => setSelectedMetric({ key: 'bmr', label: t('statsPages.composition.bmr'), color: '#F97316', unit: 'kcal', icon: <Flame size={18} color="#F97316" strokeWidth={2.5} />, source: 'composition' })}
+          onPressRight={() => setSelectedMetric({ key: 'metabolic_age', label: t('statsPages.composition.metabolicAge'), color: '#6366F1', unit: t('statsPages.composition.years'), icon: <Zap size={18} color="#6366F1" strokeWidth={2.5} />, source: 'composition' })}
+        />
       </StatsSection>
 
       {/* ========== SECTION MENSURATIONS ========== */}
       <View style={styles.sectionDivider} />
 
-      <StatsExplanation
-        title="Mensurations"
-        text="Suis l'evolution de tes mensurations. Les courbes sont regroupees par zone corporelle. Utilise les filtres pour isoler chaque mesure."
-        color="#8B5CF6"
-      />
-
       {/* Groupe 1: Haut du corps - Cou + Epaules + Poitrine */}
-      <StatsSection title="Haut du corps" description="Cou, epaules et poitrine">
+      <StatsSection>
         <MultiLineComparisonCard
-          title="Cou / Epaules / Poitrine"
+          title="Haut du corps"
           unit="cm"
           lines={[
             {
@@ -584,9 +618,9 @@ export const CorpsTabPage: React.FC = React.memo(() => {
       </StatsSection>
 
       {/* Groupe 2: Tronc - Nombril + Hanche + Taille */}
-      <StatsSection title="Tronc" description="Nombril, hanches et taille">
+      <StatsSection>
         <MultiLineComparisonCard
-          title="Nombril / Hanches / Taille"
+          title="Tronc"
           unit="cm"
           lines={[
             {
@@ -615,9 +649,9 @@ export const CorpsTabPage: React.FC = React.memo(() => {
       </StatsSection>
 
       {/* Groupe 3: Bras - Gauche + Droit */}
-      <StatsSection title={t('statsPages.measurements.arms')} description={t('statsPages.measurements.bicepsLeftRight')}>
+      <StatsSection>
         <DualComparisonCard
-          title={t('statsPages.measurements.arms')}
+          title="Bras"
           leftLabel={t('statsPages.measurements.leftArm')}
           rightLabel={t('statsPages.measurements.rightArm')}
           leftColor="#EF4444"
@@ -633,7 +667,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
       </StatsSection>
 
       {/* Groupe 4: Cuisses - Gauche + Droite */}
-      <StatsSection title={t('statsPages.measurements.legs')} description="Cuisse gauche et droite">
+      <StatsSection>
         <DualComparisonCard
           title="Cuisses"
           leftLabel={t('statsPages.measurements.leftThigh')}
@@ -651,7 +685,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
       </StatsSection>
 
       {/* Groupe 5: Mollets - Gauche + Droit */}
-      <StatsSection title={t('statsPages.measurements.calves') || 'Mollets'} description="Mollet gauche et droit">
+      <StatsSection>
         <DualComparisonCard
           title="Mollets"
           leftLabel={t('statsPages.measurements.leftCalf')}
@@ -726,5 +760,57 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
+  },
+  // Historique horizontal
+  historyScrollContent: {
+    paddingHorizontal: 4,
+    gap: 10,
+  },
+  historyCard: {
+    width: 100,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    padding: 12,
+    alignItems: 'center',
+    gap: 3,
+  },
+  historyCardRecent: {
+    borderWidth: 2,
+  },
+  historyCardBadge: {
+    backgroundColor: '#3B82F620',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginBottom: 2,
+  },
+  historyCardBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#3B82F6',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  historyCardDate: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  historyCardWeight: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  historyCardUnit: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  historyCardChange: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  historyCardExtra: {
+    fontSize: 10,
+    fontWeight: '400',
+    marginTop: 1,
   },
 });

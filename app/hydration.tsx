@@ -191,6 +191,9 @@ export default function HydrationScreen() {
       const amountMl = Math.round(amount * 1000);
       await AsyncStorage.setItem(`${HYDRATION_KEY}_${todayISO}`, amountMl.toString());
 
+      // Sync avec le megaPack Watch : clé 'waterIntake' utilisée par performSync()
+      await AsyncStorage.setItem('waterIntake', amountMl.toString());
+
       // Sync avec le système de badges (storage.ts hydration log)
       try {
         const logData = await AsyncStorage.getItem('@yoroi_hydration_log');

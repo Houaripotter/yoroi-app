@@ -14,7 +14,6 @@ import { router } from 'expo-router';
 
 import { ArrowLeft, TrendingDown, Shield } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
@@ -42,8 +41,6 @@ export default function InfirmaryScreen() {
   const [injuries, setInjuries] = useState<Injury[]>([]);
   const [fitForDutyStatus, setFitForDutyStatus] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
-  const [isCreatorMode, setIsCreatorMode] = useState(false);
-
   // Zone selection modal state
   const [showZoneModal, setShowZoneModal] = useState(false);
   const [overlappingZones, setOverlappingZones] = useState<Zone[]>([]);
@@ -86,9 +83,6 @@ export default function InfirmaryScreen() {
       const injuryStats = await getInjuryStats();
       setStats(injuryStats);
 
-      // Vérifier le mode créateur
-      const creatorMode = await AsyncStorage.getItem('@yoroi_creator_mode');
-      setIsCreatorMode(creatorMode === 'true');
     } catch (error) {
       logger.error('[Infirmary] Erreur chargement:', error);
     }

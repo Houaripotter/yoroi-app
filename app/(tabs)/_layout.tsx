@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, DeviceEventEmitter } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, DeviceEventEmitter } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Home, BarChart2, Plus, Calendar, Wrench, User, Settings, BookOpen } from 'lucide-react-native';
@@ -8,23 +8,9 @@ import React, { useRef, useState, useEffect } from 'react';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { getTabOrder, getLeftTabs, getRightTabs, TAB_ORDER_CHANGED_EVENT } from '@/lib/tabOrderService';
 import type { TabItem } from '@/lib/tabOrderService';
+import { useResponsive } from '@/constants/responsive';
 
 export const DEMO_CHANGED_EVENT = 'YOROI_DEMO_CHANGED';
-
-// ============================================
-// TAB LAYOUT - FLOATING PILL TAB BAR
-// 3 gauche | + integre | 3 droite
-// ============================================
-
-const { width: SCREEN_W } = Dimensions.get('window');
-
-const ICON_SIZE = 22;
-const ICON_SIZE_ACTIVE = 24;
-const PILL_H = 68;
-const PILL_BOTTOM = 22;
-const PILL_R = 22;
-const PILL_MARGIN = 12;
-const PLUS_SIZE = 50;
 
 const isColorDark = (hex: string): boolean => {
   const h = hex.replace('#', '');
@@ -65,6 +51,14 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
   const plusScale = useRef(new Animated.Value(1)).current;
   const plusRotate = useRef(new Animated.Value(0)).current;
   const [tabOrder, setTabOrder] = useState<TabItem[] | null>(null);
+  const { pillWidth, s, fs, isIPad: pad, isSmallPhone } = useResponsive();
+
+  const ICON_SIZE = s(isSmallPhone ? 20 : 22);
+  const ICON_SIZE_ACTIVE = s(isSmallPhone ? 22 : 24);
+  const PILL_H = s(pad ? 72 : 68);
+  const PILL_BOTTOM = s(pad ? 28 : 22);
+  const PILL_R = 22;
+  const PLUS_SIZE = s(pad ? 56 : isSmallPhone ? 46 : 50);
 
   useEffect(() => {
     getTabOrder().then(setTabOrder);
@@ -140,9 +134,8 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
         key={route.key}
         onPress={onPress}
         activeOpacity={0.7}
-        style={styles.tabBtn}
+        style={[styles.tabBtn, { minWidth: s(pad ? 56 : isSmallPhone ? 40 : 46) }]}
       >
-        {/* Fond pour l'onglet actif */}
         {isFocused && (
           <View style={[
             styles.activeBackground,
@@ -157,7 +150,7 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
         <Text
           style={[
             styles.tabLabel,
-            { color: isFocused ? activeColor : inactiveColor },
+            { color: isFocused ? activeColor : inactiveColor, fontSize: fs(isSmallPhone ? 9 : 10) },
             isFocused && styles.tabLabelActive,
           ]}
           numberOfLines={1}
@@ -172,10 +165,13 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
   };
 
   return (
-    <View style={styles.pillOuter} pointerEvents="box-none">
+    <View style={[styles.pillOuter, { bottom: PILL_BOTTOM }]} pointerEvents="box-none">
       <View style={[
         styles.pill,
         {
+          width: pillWidth,
+          height: PILL_H,
+          borderRadius: PILL_R,
           backgroundColor: pillBg,
           borderColor: pillBorder,
           shadowColor: '#000',
@@ -192,6 +188,7 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
         {/* Bouton + integre au centre */}
         <Animated.View style={[
           styles.plusContainer,
+          { width: PLUS_SIZE, height: PLUS_SIZE },
           { transform: [{ scale: plusScale }, { rotate: plusRotateInterpolate }] },
         ]}>
           <TouchableOpacity activeOpacity={0.85} onPress={handlePlusPress} style={styles.plusTouch}>
@@ -252,16 +249,13 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   pillOuter: {
     position: 'absolute',
-    bottom: PILL_BOTTOM,
     left: 0,
     right: 0,
     alignItems: 'center',
   },
 
   pill: {
-    width: SCREEN_W - (PILL_MARGIN * 2),
-    height: PILL_H,
-    borderRadius: PILL_R,
+    // width, height, borderRadius fournis dynamiquement
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -269,7 +263,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
 
-  // Groupe de tabs (gauche ou droite)
   tabGroup: {
     flex: 1,
     flexDirection: 'row',
@@ -277,17 +270,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
   },
 
-  // Chaque onglet
   tabBtn: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
     paddingHorizontal: 4,
-    minWidth: 46,
     position: 'relative',
   },
 
-  // Fond arrondi derriere l'onglet actif
   activeBackground: {
     position: 'absolute',
     top: 4,
@@ -297,9 +287,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
 
-  // Label sous l'icone
   tabLabel: {
-    fontSize: 10,
     fontWeight: '600',
     marginTop: 4,
     letterSpacing: 0.1,
@@ -314,26 +302,23 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
 
-  // Bouton + integre dans la barre
   plusContainer: {
-    width: PLUS_SIZE,
-    height: PLUS_SIZE,
+    // width et height fournis dynamiquement
     marginHorizontal: 4,
   },
   plusTouch: {
     width: '100%',
     height: '100%',
-    borderRadius: PLUS_SIZE / 2,
+    borderRadius: 999,
     overflow: 'hidden',
   },
   plusGrad: {
     width: '100%',
     height: '100%',
-    borderRadius: PLUS_SIZE / 2,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    // Shadow pour donner du relief au +
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 8,

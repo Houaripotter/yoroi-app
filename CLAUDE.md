@@ -1,5 +1,36 @@
 # YOROI - Guide de Développement
 
+## Langue de communication
+
+**TOUJOURS répondre en français.** L'utilisateur ne comprend pas l'anglais. Toutes les explications, résumés, questions et messages doivent être rédigés en français, sans exception.
+
+---
+
+## Convention d'affichage des historiques horizontaux
+
+### Ordre des données dans les ScrollView horizontaux
+
+**TOUJOURS** afficher le résultat le plus récent à GAUCHE (premier élément) et les plus anciens vers la DROITE (scroll vers la droite).
+
+```typescript
+// BON — données triées DESC (newest first = leftmost)
+<ScrollView horizontal showsHorizontalScrollIndicator={false}>
+  {allData.slice(0, 20).map((entry, index) => (
+    // allData[0] = plus récent → s'affiche à gauche
+    <View key={entry.id}>{/* ... */}</View>
+  ))}
+</ScrollView>
+
+// MAUVAIS — données triées ASC (newest last = rightmost)
+<ScrollView horizontal>
+  {allData.reverse().map(...)}  // mettra le plus récent à droite
+</ScrollView>
+```
+
+**Règle** : Si les données sont triées DESC (newest first depuis la DB), ne pas les inverser pour l'affichage horizontal. Si elles sont ASC, utiliser `.slice().reverse()` pour que le plus récent soit index 0 (gauche).
+
+---
+
 ## Règles Importantes pour une UX Fluide
 
 ### 1. NE PAS utiliser `useFocusEffect` pour charger les données

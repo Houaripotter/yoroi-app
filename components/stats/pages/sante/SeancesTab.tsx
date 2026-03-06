@@ -98,7 +98,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
     let timeStr = '';
     try {
       const d = parseISO(training.date);
-      dateStr = format(d, 'EEE d MMM', { locale: fr });
+      dateStr = format(d, 'EEE d MMM yyyy', { locale: fr });
       if (training.start_time) {
         const [sh, sm] = training.start_time.split(':').map(Number);
         const endMin = sh * 60 + sm + duration;
@@ -210,7 +210,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
               {
                 backgroundColor: selectedSport === 'all'
                   ? colors.accent
-                  : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.22)'),
+                  : (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.88)'),
               },
             ]}
             onPress={() => setSelectedSport('all')}
@@ -218,7 +218,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
           >
             <Text style={[
               styles.filterPillText,
-              { color: selectedSport === 'all' ? colors.textOnAccent : (isDark ? colors.textSecondary : '#FFFFFF') },
+              { color: selectedSport === 'all' ? colors.textOnAccent : (isDark ? colors.textSecondary : '#1C1C1E') },
             ]}>
               Tous ({trainings.length})
             </Text>
@@ -239,7 +239,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
                   {
                     backgroundColor: isActive
                       ? sportColor
-                      : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.22)'),
+                      : (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.88)'),
                   },
                 ]}
                 onPress={() => setSelectedSport(sport)}
@@ -248,11 +248,11 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
                 <MaterialCommunityIcons
                   name={sportIcon as any}
                   size={14}
-                  color={isActive ? '#FFFFFF' : (isDark ? sportColor : '#FFFFFF')}
+                  color={isActive ? '#FFFFFF' : (isDark ? sportColor : sportColor)}
                 />
                 <Text style={[
                   styles.filterPillText,
-                  { color: isActive ? '#FFFFFF' : (isDark ? colors.textSecondary : '#FFFFFF') },
+                  { color: isActive ? '#FFFFFF' : (isDark ? colors.textSecondary : '#1C1C1E') },
                 ]}>
                   {sportName} ({count})
                 </Text>

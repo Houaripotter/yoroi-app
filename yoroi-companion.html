@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yoroi — Companion</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:        #080B12;
+  --surface:   #0F1420;
+  --card:      #141A28;
+  --card2:     #1A2235;
+  --border:    #1E2C45;
+  --border2:   #263452;
+  --c1:        #00C2FF;
+  --c2:        #7B2FFF;
+  --c3:        #FF6535;
+  --green:     #00E5A0;
+  --red:       #FF3F5B;
+  --yellow:    #FFD060;
+  --t1:        #E4EBF7;
+  --t2:        #8A9BBE;
+  --t3:        #3D4F6E;
+  --mono:      'DM Mono', 'Courier New', monospace;
+  --sans:      'Syne', sans-serif;
+  --radius:    12px;
+  --shadow:    0 4px 24px rgba(0,0,0,.45);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 15px; scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--t1);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── BG GRID ─────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(0,194,255,.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,194,255,.028) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+/* ─── LAYOUT ──────────────────────────────── */
+#app { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: 0 28px 80px; }
+
+/* ─── HEADER ──────────────────────────────── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 28px 0 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+
+.logo {
+  display: flex; align-items: center; gap: 14px;
+}
+
+.logo-mark {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--sans); font-weight: 800; font-size: 18px;
+  color: #fff; letter-spacing: -1px;
+  box-shadow: 0 0 20px rgba(0,194,255,.3);
+}
+
+.logo-text { display: flex; flex-direction: column; }
+.logo-title { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.5px; color: var(--t1); }
+.logo-sub { font-size: 0.72rem; color: var(--t3); font-family: var(--mono); letter-spacing: 2px; text-transform: uppercase; }
+
+.header-actions { display: flex; gap: 10px; align-items: center; }
+
+/* ─── BUTTONS ─────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 18px; border-radius: 9px; border: none; cursor: pointer;
+  font-family: var(--sans); font-size: 0.85rem; font-weight: 600;
+  transition: all .18s ease; outline: none; white-space: nowrap;
+}
+.btn-ghost {
+  background: var(--card); color: var(--t2); border: 1px solid var(--border2);
+}
+.btn-ghost:hover { background: var(--card2); color: var(--t1); border-color: var(--c1); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  color: #fff;
+  box-shadow: 0 0 16px rgba(0,194,255,.2);
+}
+.btn-primary:hover { box-shadow: 0 0 26px rgba(0,194,255,.4); transform: translateY(-1px); }
+
+.btn-danger { background: rgba(255,63,91,.12); color: var(--red); border: 1px solid rgba(255,63,91,.25); }
+.btn-danger:hover { background: rgba(255,63,91,.22); }
+
+.btn-success { background: rgba(0,229,160,.12); color: var(--green); border: 1px solid rgba(0,229,160,.25); }
+.btn-success:hover { background: rgba(0,229,160,.22); }
+
+/* ─── STATS BAR ───────────────────────────── */
+#stats-bar {
+  display: flex; gap: 14px; margin-bottom: 28px; flex-wrap: wrap;
+}
+.stat-chip {
+  flex: 1; min-width: 140px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 18px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.stat-chip .label { font-size: .72rem; color: var(--t3); text-transform: uppercase; letter-spacing: 1.5px; font-family: var(--mono); }
+.stat-chip .value { font-size: 1.35rem; font-weight: 700; font-family: var(--mono); color: var(--t1); }
+.stat-chip .value span { font-size: .8rem; color: var(--t3); font-weight: 400; }
+.stat-chip .trend { font-size: .75rem; font-family: var(--mono); }
+.trend-up { color: var(--green); }
+.trend-down { color: var(--red); }
+.trend-eq { color: var(--t3); }
+
+/* ─── CHARTS ──────────────────────────────── */
+.charts-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px;
+}
+@media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+
+.chart-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+}
+.chart-card h3 {
+  font-size: .8rem; text-transform: uppercase; letter-spacing: 2px;
+  color: var(--t3); font-family: var(--mono); margin-bottom: 16px;
+}
+.chart-wrap { position: relative; height: 180px; }
+
+/* ─── DROP ZONE ───────────────────────────── */
+#drop-zone {
+  border: 2px dashed var(--border2);
+  border-radius: 16px;
+  padding: 52px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s ease;
+  background: var(--surface);
+  margin-bottom: 28px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+#drop-zone.drag-over {
+  border-color: var(--c1);
+  background: rgba(0,194,255,.04);
+  box-shadow: 0 0 30px rgba(0,194,255,.12);
+}
+#drop-zone .icon { font-size: 2.8rem; }
+#drop-zone h2 { font-size: 1.1rem; font-weight: 700; color: var(--t1); }
+#drop-zone p { font-size: .85rem; color: var(--t2); line-height: 1.6; }
+#drop-zone em { color: var(--c1); font-style: normal; }
+#file-input { display: none; }
+
+/* ─── TABLE SECTION ───────────────────────── */
+.table-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px; gap: 12px; flex-wrap: wrap;
+}
+.table-title { font-size: 1rem; font-weight: 700; color: var(--t1); }
+.table-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* TABS */
+.tabs { display: flex; gap: 4px; background: var(--surface); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
+.tab-btn {
+  padding: 6px 16px; border-radius: 7px; border: none; cursor: pointer;
+  font-family: var(--sans); font-size: .82rem; font-weight: 600;
+  color: var(--t3); background: transparent; transition: all .15s;
+}
+.tab-btn.active { background: var(--card2); color: var(--t1); box-shadow: 0 1px 6px rgba(0,0,0,.3); }
+
+/* TABLE WRAPPER */
+.table-wrap {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  overflow-x: auto;
+}
+
+table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: .82rem; }
+
+thead { background: var(--surface); position: sticky; top: 0; z-index: 10; }
+thead th {
+  padding: 11px 14px; text-align: left;
+  color: var(--t3); font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap; font-weight: 500;
+}
+thead th:first-child {
+  position: sticky; left: 0; z-index: 20; background: var(--surface);
+  min-width: 120px;
+}
+
+tbody tr {
+  border-bottom: 1px solid rgba(30,44,69,.6);
+  transition: background .12s;
+}
+tbody tr:hover { background: rgba(26,34,53,.7); }
+tbody tr:last-child { border-bottom: none; }
+
+td {
+  padding: 9px 14px; color: var(--t1); white-space: nowrap;
+  position: relative;
+}
+td:first-child {
+  position: sticky; left: 0; z-index: 5;
+  background: var(--card); font-weight: 500; color: var(--c1);
+}
+tbody tr:hover td:first-child { background: rgba(26,34,53,.95); }
+
+td.editable { cursor: pointer; }
+td.editable:hover::after {
+  content: '';
+  position: absolute; inset: 2px; border-radius: 6px;
+  border: 1px solid var(--border2); pointer-events: none;
+}
+
+.cell-input {
+  background: var(--card2); border: 1.5px solid var(--c1);
+  color: var(--t1); padding: 4px 8px; border-radius: 6px;
+  font-family: var(--mono); font-size: .82rem; width: 100%; min-width: 70px;
+  outline: none; box-shadow: 0 0 8px rgba(0,194,255,.2);
+}
+
+td.empty { color: var(--t3); }
+
+.cell-flash {
+  animation: flash .4s ease;
+}
+@keyframes flash {
+  0%   { background: rgba(0,229,160,.18); }
+  100% { background: transparent; }
+}
+
+/* DELETE BUTTON in row */
+.delete-btn {
+  opacity: 0; background: none; border: none; cursor: pointer;
+  color: var(--red); font-size: 1rem; padding: 2px 6px;
+  transition: opacity .15s; border-radius: 5px;
+}
+tbody tr:hover .delete-btn { opacity: 1; }
+.delete-btn:hover { background: rgba(255,63,91,.15); }
+
+/* ─── EMPTY STATE ─────────────────────────── */
+#empty-state {
+  text-align: center; padding: 64px 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+}
+#empty-state .big-icon { font-size: 3.5rem; opacity: .3; }
+#empty-state h3 { font-size: 1.1rem; font-weight: 700; color: var(--t2); }
+#empty-state p { font-size: .85rem; color: var(--t3); max-width: 340px; line-height: 1.6; }
+
+/* ─── TOAST ───────────────────────────────── */
+#toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--card2); border: 1px solid var(--border2);
+  color: var(--t1); padding: 12px 22px; border-radius: 10px;
+  font-size: .85rem; font-weight: 600;
+  box-shadow: var(--shadow); z-index: 1000;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+  opacity: 0; white-space: nowrap;
+}
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+#toast.ok   { border-color: rgba(0,229,160,.4); color: var(--green); }
+#toast.err  { border-color: rgba(255,63,91,.4); color: var(--red); }
+
+/* ─── SCROLLBAR ───────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--t3); }
+
+/* ─── MISC ────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .72rem; font-family: var(--mono);
+  padding: 3px 9px; border-radius: 20px;
+}
+.badge-blue { background: rgba(0,194,255,.12); color: var(--c1); border: 1px solid rgba(0,194,255,.2); }
+.badge-purple { background: rgba(123,47,255,.12); color: #A97BFF; border: 1px solid rgba(123,47,255,.2); }
+.badge-green { background: rgba(0,229,160,.12); color: var(--green); border: 1px solid rgba(0,229,160,.2); }
+
+.separator { width: 100%; height: 1px; background: var(--border); margin: 24px 0; }
+
+/* ─── RESPONSIVE ──────────────────────────── */
+@media (max-width: 700px) {
+  #app { padding: 0 14px 60px; }
+  .charts-grid { grid-template-columns: 1fr; }
+  header { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .table-header { flex-direction: column; align-items: flex-start; }
+}
+
+/* ─── ADD ROW MODAL ───────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--card); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 28px; min-width: 320px; max-width: 460px; width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  transform: translateY(12px); transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal h3 { font-size: 1rem; font-weight: 700; margin-bottom: 18px; color: var(--t1); }
+.form-row { margin-bottom: 14px; }
+.form-row label { display: block; font-size: .75rem; color: var(--t3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; font-family: var(--mono); }
+.form-row input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border2);
+  color: var(--t1); padding: 9px 12px; border-radius: 8px;
+  font-family: var(--mono); font-size: .85rem; outline: none;
+  transition: border-color .15s;
+}
+.form-row input:focus { border-color: var(--c1); box-shadow: 0 0 8px rgba(0,194,255,.15); }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ─── HEADER ─────────────────────────── -->
+  <header>
+    <div class="logo">
+      <div class="logo-mark">Y</div>
+      <div class="logo-text">
+        <span class="logo-title">Yoroi</span>
+        <span class="logo-sub">Companion · Mac</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span id="row-count" class="badge badge-blue" style="display:none"></span>
+      <button class="btn btn-ghost" onclick="document.getElementById('file-input').click()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Importer CSV
+      </button>
+      <button class="btn btn-primary" onclick="exportCSV()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exporter pour Yoroi
+      </button>
+    </div>
+  </header>
+
+  <input type="file" id="file-input" accept=".csv,.txt" onchange="handleFileInput(this)">
+
+  <!-- ─── DROP ZONE ─────────────────────── -->
+  <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <div class="icon">📂</div>
+    <h2>Glisse ton fichier CSV ici</h2>
+    <p>Exporte depuis l'app Yoroi iPhone → <em>Exporter mes données</em><br>
+    puis glisse le fichier ici ou clique pour choisir</p>
+    <p style="margin-top:6px; font-size:.78rem; color:var(--t3); font-family:var(--mono)">
+      Compatible : séparateurs ; et , · dates JJ/MM/AAAA et AAAA-MM-JJ · versions v1 et v3
+    </p>
+  </div>
+
+  <!-- ─── STATS BAR ─────────────────────── -->
+  <div id="stats-bar" style="display:none">
+    <div class="stat-chip">
+      <span class="label">Entrées</span>
+      <span class="value" id="stat-count">—</span>
+    </div>
+    <div class="stat-chip">
+      <span class="label">Dernier poids</span>
+      <span class="value" id="stat-weight">—</span>
+    </div>
+    <div class="stat-chip">
+      <span class="label">Évolution poids</span>
+      <span class="value" id="stat-weight-diff">—</span>
+    </div>
+    <div class="stat-chip">
+      <span class="label">Masse grasse</span>
+      <span class="value" id="stat-fat">—</span>
+    </div>
+    <div class="stat-chip">
+      <span class="label">Période</span>
+      <span class="value" id="stat-period" style="font-size:1rem">—</span>
+    </div>
+  </div>
+
+  <!-- ─── CHARTS ─────────────────────────── -->
+  <div class="charts-grid" id="charts-grid" style="display:none">
+    <div class="chart-card">
+      <h3>Évolution du poids</h3>
+      <div class="chart-wrap"><canvas id="chart-weight"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Masse grasse &amp; musculaire</h3>
+      <div class="chart-wrap"><canvas id="chart-fat"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ─── TABLE ─────────────────────────── -->
+  <div id="table-section" style="display:none">
+    <div class="table-header">
+      <span class="table-title">Données</span>
+      <div class="tabs" id="tab-group">
+        <button class="tab-btn active" data-tab="corps" onclick="switchTab(this)">Corps</button>
+        <button class="tab-btn" data-tab="mensuration" onclick="switchTab(this)">Mensurations</button>
+        <button class="tab-btn" data-tab="all" onclick="switchTab(this)">Tout</button>
+      </div>
+      <div class="table-actions">
+        <button class="btn btn-success" onclick="openAddModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter une ligne
+        </button>
+      </div>
+    </div>
+    <div class="table-wrap" id="table-wrap"></div>
+  </div>
+
+  <!-- ─── EMPTY TABLE STATE ─────────────── -->
+  <div id="empty-table" style="display:none">
+    <div class="table-wrap">
+      <div id="empty-state">
+        <div class="big-icon">📋</div>
+        <h3>Aucune donnée chargée</h3>
+        <p>Importe un fichier CSV exporté depuis Yoroi iPhone pour commencer à visualiser et modifier tes données.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- ─── ADD ROW MODAL ─────────────────────── -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <h3>Ajouter une entrée</h3>
+    <div class="form-row">
+      <label>Date</label>
+      <input type="date" id="new-date" />
+    </div>
+    <div class="form-row">
+      <label>Poids (kg)</label>
+      <input type="number" id="new-weight" step="0.1" placeholder="ex: 82.5" />
+    </div>
+    <div class="form-row">
+      <label>Masse grasse (%)</label>
+      <input type="number" id="new-fat" step="0.1" placeholder="ex: 18.2" />
+    </div>
+    <div class="form-row">
+      <label>Masse musculaire (%)</label>
+      <input type="number" id="new-muscle" step="0.1" placeholder="ex: 42.0" />
+    </div>
+    <div class="form-row">
+      <label>Note</label>
+      <input type="text" id="new-note" placeholder="ex: Après compétition" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeAddModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="addRow()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TOAST ─────────────────────────────── -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA MODEL
+// ═══════════════════════════════════════════════
+const COLS_CORPS = [
+  { key: 'weight',   label: 'Poids (kg)',          unit: 'kg' },
+  { key: 'fat',      label: 'Masse grasse (%)',     unit: '%'  },
+  { key: 'muscle',   label: 'Masse musculaire (%)', unit: '%'  },
+  { key: 'water',    label: 'Eau (%)',              unit: '%'  },
+  { key: 'bone',     label: 'Masse osseuse (kg)',   unit: 'kg' },
+  { key: 'visceral', label: 'Graisse visc.',        unit: ''   },
+  { key: 'metaAge',  label: 'Âge métabo.',          unit: 'ans'},
+  { key: 'bmr',      label: 'Métabolisme (kcal)',   unit: 'kcal'},
+  { key: 'note',     label: 'Note',                 unit: '', type: 'text' },
+];
+const COLS_MENSURATION = [
+  { key: 'chest',      label: 'Poitrine (cm)',       unit: 'cm' },
+  { key: 'waist',      label: 'Tour taille (cm)',    unit: 'cm' },
+  { key: 'navel',      label: 'Nombril (cm)',        unit: 'cm' },
+  { key: 'hips',       label: 'Hanches (cm)',        unit: 'cm' },
+  { key: 'leftArm',    label: 'Bras G (cm)',         unit: 'cm' },
+  { key: 'rightArm',   label: 'Bras D (cm)',         unit: 'cm' },
+  { key: 'leftThigh',  label: 'Cuisse G (cm)',       unit: 'cm' },
+  { key: 'rightThigh', label: 'Cuisse D (cm)',       unit: 'cm' },
+  { key: 'leftCalf',   label: 'Mollet G (cm)',       unit: 'cm' },
+  { key: 'rightCalf',  label: 'Mollet D (cm)',       unit: 'cm' },
+  { key: 'shoulders',  label: 'Épaules (cm)',        unit: 'cm' },
+  { key: 'neck',       label: 'Cou (cm)',            unit: 'cm' },
+];
+
+// CSV header → internal key (rétro-compat v1 + v3)
+const CSV_MAP = {
+  'date':'date','Date':'date',
+  'Poids (kg)':'weight','Poids':'weight','poids':'weight','weight':'weight','Weight (kg)':'weight',
+  'Masse grasse (%)':'fat','Graisse (%)':'fat','graisse':'fat','fat_percent':'fat','MG (%)':'fat','Body Fat (%)':'fat',
+  'Masse musculaire (%)':'muscle','Muscle (%)':'muscle','muscle':'muscle','muscle_percent':'muscle','MM (%)':'muscle',
+  'Eau (%)':'water','water_percent':'water','Eau':'water',
+  'Masse osseuse (kg)':'bone','bone_mass':'bone','Masse osseuse':'bone',
+  'Graisse viscerale':'visceral','Graisse viscérale':'visceral','visceral_fat':'visceral','GV':'visceral',
+  'Age metabolique':'metaAge','Âge métabolique':'metaAge','Age métabolique':'metaAge','metabolic_age':'metaAge',
+  'Metabolisme (kcal)':'bmr','Metabolisme basal (kcal)':'bmr','BMR (kcal)':'bmr','bmr':'bmr','BMR':'bmr',
+  'Poitrine (cm)':'chest','Poitrine':'chest','chest':'chest',
+  'Tour de taille (cm)':'waist','Taille (cm)':'waist','waist':'waist','Tour taille (cm)':'waist',
+  'Nombril (cm)':'navel','navel':'navel','Abdomen (cm)':'navel',
+  'Tour de hanches (cm)':'hips','Hanches (cm)':'hips','hips':'hips',
+  'Bras gauche (cm)':'leftArm','Bras G (cm)':'leftArm','left_arm':'leftArm',
+  'Bras droit (cm)':'rightArm','Bras D (cm)':'rightArm','right_arm':'rightArm',
+  'Cuisse gauche (cm)':'leftThigh','Cuisse G (cm)':'leftThigh','left_thigh':'leftThigh',
+  'Cuisse droite (cm)':'rightThigh','Cuisse D (cm)':'rightThigh','right_thigh':'rightThigh',
+  'Mollet gauche (cm)':'leftCalf','Mollet G (cm)':'leftCalf','left_calf':'leftCalf',
+  'Mollet droit (cm)':'rightCalf','Mollet D (cm)':'rightCalf','right_calf':'rightCalf',
+  'Epaules (cm)':'shoulders','Épaules (cm)':'shoulders','shoulders':'shoulders',
+  'Cou (cm)':'neck','neck':'neck',
+  'Note':'note','note':'note','Notes':'note','Commentaire':'note',
+};
+
+let data    = [];    // [{date:'2026-01-15', weight:82.5, ...}, ...]
+let curTab  = 'corps';
+let charts  = {};
+
+// ═══════════════════════════════════════════════
+// DATE UTILS
+// ═══════════════════════════════════════════════
+function parseDate(s) {
+  if (!s || !s.trim()) return null;
+  s = s.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  if (/^\d{4}\/\d{2}\/\d{2}$/.test(s)) return s.replace(/\//g,'-');
+  const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  if (m) {
+    const d = m[1].padStart(2,'0'), mo = m[2].padStart(2,'0'), y = m[3];
+    return `${y}-${mo}-${d}`;
+  }
+  return null;
+}
+function displayDate(iso) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function todayISO() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// ═══════════════════════════════════════════════
+// CSV PARSING
+// ═══════════════════════════════════════════════
+function detectSep(line) {
+  const sc = (line.match(/;/g)||[]).length;
+  const co = (line.match(/,/g)||[]).length;
+  return sc > co ? ';' : ',';
+}
+function parseCSVLine(line, sep) {
+  const res = []; let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { if (inQ && line[i+1]==='"') { cur+='"'; i++; } else inQ=!inQ; }
+    else if (c === sep && !inQ) { res.push(cur.trim()); cur=''; }
+    else cur += c;
+  }
+  res.push(cur.trim());
+  return res;
+}
+function normalizeHeader(h) {
+  return h.replace(/^"|"$/g,'').replace(/^\uFEFF/,'').trim()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'').normalize('NFC');
+}
+function parseFloat2(s) {
+  if (!s || !s.trim()) return undefined;
+  const n = parseFloat(s.trim().replace(',','.'));
+  return isNaN(n) ? undefined : n;
+}
+
+function parseCSV(text) {
+  const clean = text.replace(/^\uFEFF/,'');
+  const lines = clean.split(/\r?\n/);
+  let sep = ','; let headers = [];
+  const rows = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line || line.startsWith('#')) continue;
+    if (!headers.length) {
+      sep = detectSep(line);
+      headers = parseCSVLine(line, sep).map(normalizeHeader);
+      continue;
+    }
+    const fields = parseCSVLine(line, sep);
+    if (fields.every(f => !f.trim())) continue;
+
+    const raw = {};
+    for (let j = 0; j < headers.length; j++) {
+      const hRaw = headers[j];
+      const key = CSV_MAP[hRaw] || CSV_MAP[hRaw.replace(/[\u0300-\u036f]/g,'')] || null;
+      if (key && key !== 'source') raw[key] = fields[j] || '';
+    }
+
+    if (!raw.date) continue;
+    const iso = parseDate(raw.date);
+    if (!iso) continue;
+
+    const row = { date: iso };
+    const numKeys = ['weight','fat','muscle','water','bone','visceral','metaAge','bmr',
+                     'chest','waist','navel','hips','leftArm','rightArm','leftThigh',
+                     'rightThigh','leftCalf','rightCalf','shoulders','neck'];
+    for (const k of numKeys) {
+      const v = parseFloat2(raw[k]);
+      if (v !== undefined) row[k] = v;
+    }
+    if (raw.note && raw.note.trim()) row.note = raw.note.trim();
+    rows.push(row);
+  }
+
+  return rows.sort((a,b) => b.date.localeCompare(a.date));
+}
+
+// ═══════════════════════════════════════════════
+// CSV EXPORT
+// ═══════════════════════════════════════════════
+function exportCSV() {
+  if (!data.length) { showToast('Aucune donnée à exporter', 'err'); return; }
+
+  const SEP = ';';
+  const now = new Date();
+  const dateStr = displayDate(todayISO());
+  const H = [
+    'Date','Poids (kg)','Masse grasse (%)','Masse musculaire (%)','Eau (%)','Masse osseuse (kg)',
+    'Graisse viscerale','Age metabolique','Metabolisme (kcal)',
+    'Poitrine (cm)','Tour de taille (cm)','Nombril (cm)','Tour de hanches (cm)',
+    'Bras gauche (cm)','Bras droit (cm)','Cuisse gauche (cm)','Cuisse droite (cm)',
+    'Mollet gauche (cm)','Mollet droit (cm)','Epaules (cm)','Cou (cm)','Note'
+  ];
+
+  const lines = [
+    `# YOROI - Export de donnees`,
+    `# Date d'export : ${dateStr}`,
+    `# ${data.length} entree(s) — Separateur ";" — Compatible Yoroi iPhone`,
+    `# Pour reimporter : Import CSV dans l'app Yoroi`,
+    '#',
+    H.join(SEP),
+  ];
+
+  for (const row of [...data].sort((a,b) => b.date.localeCompare(a.date))) {
+    const f = v => (v === undefined || v === null || v === '') ? '' : String(v);
+    const noteVal = (row.note||'').includes(SEP) ? `"${row.note}"` : (row.note||'');
+    lines.push([
+      displayDate(row.date),
+      f(row.weight), f(row.fat), f(row.muscle), f(row.water), f(row.bone),
+      f(row.visceral), f(row.metaAge), f(row.bmr),
+      f(row.chest), f(row.waist), f(row.navel), f(row.hips),
+      f(row.leftArm), f(row.rightArm), f(row.leftThigh), f(row.rightThigh),
+      f(row.leftCalf), f(row.rightCalf), f(row.shoulders), f(row.neck),
+      noteVal,
+    ].join(SEP));
+  }
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const filename = `yoroi_donnees_${todayISO()}.csv`;
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+  showToast(`Exporté : ${filename}`, 'ok');
+}
+
+// ═══════════════════════════════════════════════
+// FILE HANDLING
+// ═══════════════════════════════════════════════
+function handleFileInput(input) {
+  const file = input.files[0];
+  if (!file) return;
+  readFile(file);
+  input.value = '';
+}
+function readFile(file) {
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const rows = parseCSV(e.target.result);
+      if (!rows.length) { showToast('Aucune ligne valide trouvée', 'err'); return; }
+      data = rows;
+      render();
+      showToast(`${rows.length} entrée(s) chargée(s)`, 'ok');
+    } catch(err) {
+      showToast('Erreur lecture fichier : ' + err.message, 'err');
+    }
+  };
+  r.readAsText(file, 'utf-8');
+}
+
+// Drag & Drop
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) readFile(file);
+});
+
+// ═══════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════
+function render() {
+  updateStats();
+  renderCharts();
+  renderTable();
+
+  document.getElementById('drop-zone').style.display = 'none';
+  document.getElementById('stats-bar').style.display = 'flex';
+  document.getElementById('charts-grid').style.display = 'grid';
+  document.getElementById('table-section').style.display = 'block';
+  document.getElementById('empty-table').style.display = 'none';
+
+  const cnt = document.getElementById('row-count');
+  cnt.style.display = 'flex';
+  cnt.textContent = `${data.length} entrée${data.length > 1 ? 's' : ''}`;
+}
+
+// ─── STATS ───────────────────────────────────
+function updateStats() {
+  const sorted = [...data].sort((a,b) => a.date.localeCompare(b.date));
+  const withWeight = sorted.filter(r => r.weight !== undefined);
+  const withFat    = sorted.filter(r => r.fat !== undefined);
+
+  document.getElementById('stat-count').innerHTML =
+    `${data.length} <span>lignes</span>`;
+
+  if (withWeight.length) {
+    const last = withWeight[withWeight.length-1];
+    document.getElementById('stat-weight').innerHTML =
+      `${last.weight.toFixed(1)} <span>kg</span>`;
+
+    if (withWeight.length > 1) {
+      const first = withWeight[0];
+      const diff = last.weight - first.weight;
+      const sign = diff > 0 ? '+' : '';
+      const cls  = diff < 0 ? 'trend-down' : diff > 0 ? 'trend-up' : 'trend-eq';
+      document.getElementById('stat-weight-diff').innerHTML =
+        `<span class="${cls}">${sign}${diff.toFixed(1)} kg</span>`;
+    } else {
+      document.getElementById('stat-weight-diff').innerHTML = `<span class="trend-eq">—</span>`;
+    }
+  } else {
+    document.getElementById('stat-weight').innerHTML = `<span>—</span>`;
+    document.getElementById('stat-weight-diff').innerHTML = `<span class="trend-eq">—</span>`;
+  }
+
+  if (withFat.length) {
+    const last = withFat[withFat.length-1];
+    document.getElementById('stat-fat').innerHTML =
+      `${last.fat.toFixed(1)} <span>%</span>`;
+  } else {
+    document.getElementById('stat-fat').innerHTML = `<span>—</span>`;
+  }
+
+  if (data.length) {
+    const dates = data.map(r=>r.date).sort();
+    document.getElementById('stat-period').innerHTML =
+      `${displayDate(dates[0])} → ${displayDate(dates[dates.length-1])}`;
+  }
+}
+
+// ─── CHARTS ──────────────────────────────────
+Chart.defaults.color = '#8A9BBE';
+Chart.defaults.font.family = "'DM Mono', monospace";
+
+function renderCharts() {
+  const sorted = [...data].filter(r=>r.weight||r.fat||r.muscle).sort((a,b)=>a.date.localeCompare(b.date));
+  const labels = sorted.map(r => displayDate(r.date));
+
+  // Destroy old
+  Object.values(charts).forEach(c => c.destroy && c.destroy());
+  charts = {};
+
+  // Weight chart
+  const wData = sorted.map(r => r.weight ?? null);
+  const wCtx  = document.getElementById('chart-weight').getContext('2d');
+  const wGrad = wCtx.createLinearGradient(0,0,0,160);
+  wGrad.addColorStop(0, 'rgba(0,194,255,.35)');
+  wGrad.addColorStop(1, 'rgba(0,194,255,.02)');
+  charts.weight = new Chart(wCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Poids (kg)', data: wData,
+        borderColor: '#00C2FF', borderWidth: 2,
+        pointBackgroundColor: '#00C2FF', pointRadius: 3, pointHoverRadius: 5,
+        backgroundColor: wGrad, fill: true, tension: 0.4, spanGaps: true,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { mode: 'index' } },
+      scales: {
+        x: { grid: { color: 'rgba(30,44,69,.5)' }, ticks: { maxTicksLimit: 8 } },
+        y: { grid: { color: 'rgba(30,44,69,.5)' } }
+      }
+    }
+  });
+
+  // Fat + Muscle chart
+  const fData = sorted.map(r => r.fat ?? null);
+  const mData = sorted.map(r => r.muscle ?? null);
+  const fCtx  = document.getElementById('chart-fat').getContext('2d');
+  const fGrad = fCtx.createLinearGradient(0,0,0,160);
+  fGrad.addColorStop(0, 'rgba(255,101,53,.3)');
+  fGrad.addColorStop(1, 'rgba(255,101,53,.02)');
+  const mGrad = fCtx.createLinearGradient(0,0,0,160);
+  mGrad.addColorStop(0, 'rgba(0,229,160,.3)');
+  mGrad.addColorStop(1, 'rgba(0,229,160,.02)');
+  charts.fat = new Chart(fCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Masse grasse (%)', data: fData,
+          borderColor: '#FF6535', borderWidth: 2,
+          pointBackgroundColor: '#FF6535', pointRadius: 3,
+          backgroundColor: fGrad, fill: true, tension: 0.4, spanGaps: true,
+        },
+        {
+          label: 'Masse musculaire (%)', data: mData,
+          borderColor: '#00E5A0', borderWidth: 2,
+          pointBackgroundColor: '#00E5A0', pointRadius: 3,
+          backgroundColor: mGrad, fill: true, tension: 0.4, spanGaps: true,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { boxWidth: 10, padding: 12 } }, tooltip: { mode: 'index' } },
+      scales: {
+        x: { grid: { color: 'rgba(30,44,69,.5)' }, ticks: { maxTicksLimit: 8 } },
+        y: { grid: { color: 'rgba(30,44,69,.5)' } }
+      }
+    }
+  });
+}
+
+// ─── TABLE ────────────────────────────────────
+function getTabCols() {
+  if (curTab === 'corps') return COLS_CORPS;
+  if (curTab === 'mensuration') return COLS_MENSURATION;
+  return [...COLS_CORPS, ...COLS_MENSURATION.filter(c => !COLS_CORPS.find(cc=>cc.key===c.key))];
+}
+
+function renderTable() {
+  const cols = getTabCols();
+  const wrap = document.getElementById('table-wrap');
+
+  let html = `<table><thead><tr>
+    <th>Date</th>
+    ${cols.map(c=>`<th>${c.label}</th>`).join('')}
+    <th></th>
+  </tr></thead><tbody>`;
+
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    html += `<tr data-idx="${i}">`;
+    html += `<td>${displayDate(row.date)}</td>`;
+    for (const col of cols) {
+      const val = row[col.key];
+      const hasVal = val !== undefined && val !== null && val !== '';
+      if (col.type === 'text') {
+        html += `<td class="editable ${hasVal?'':'empty'}" onclick="startEdit(${i},'${col.key}','text')" title="Cliquer pour modifier">
+          ${hasVal ? escapeHtml(String(val)) : '—'}
+        </td>`;
+      } else {
+        html += `<td class="editable ${hasVal?'':'empty'}" onclick="startEdit(${i},'${col.key}','number')" title="Cliquer pour modifier">
+          ${hasVal ? val : '—'}
+        </td>`;
+      }
+    }
+    html += `<td><button class="delete-btn" onclick="deleteRow(${i})" title="Supprimer">✕</button></td>`;
+    html += `</tr>`;
+  }
+
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function startEdit(rowIdx, key, type) {
+  const row  = document.querySelector(`tr[data-idx="${rowIdx}"]`);
+  if (!row) return;
+  const cols = getTabCols();
+  const colIdx = key === 'note' ? cols.findIndex(c=>c.key==='note') : cols.findIndex(c=>c.key===key);
+  const td = row.querySelectorAll('td')[colIdx + 1]; // +1 for date column
+  if (!td) return;
+
+  const cur = data[rowIdx][key] ?? '';
+  td.innerHTML = `<input class="cell-input" type="${type === 'text' ? 'text' : 'number'}"
+    step="0.1" value="${escapeHtml(String(cur))}"
+    onblur="commitEdit(${rowIdx},'${key}',this)"
+    onkeydown="if(event.key==='Enter')this.blur(); if(event.key==='Escape'){cancelEdit(${rowIdx},'${key}',this,'${type}')}"
+    autofocus
+  >`;
+  td.querySelector('input').select();
+}
+
+function commitEdit(rowIdx, key, input) {
+  const val = input.value.trim();
+  const col = [...COLS_CORPS, ...COLS_MENSURATION].find(c=>c.key===key);
+  const isText = col && col.type === 'text' || key === 'note';
+
+  if (isText) {
+    data[rowIdx][key] = val || undefined;
+  } else {
+    const n = parseFloat(val.replace(',','.'));
+    data[rowIdx][key] = isNaN(n) ? undefined : n;
+  }
+
+  renderTable();
+  // flash the updated cell
+  const row = document.querySelector(`tr[data-idx="${rowIdx}"]`);
+  const cols = getTabCols();
+  const colIdx = cols.findIndex(c=>c.key===key);
+  if (row) {
+    const td = row.querySelectorAll('td')[colIdx + 1];
+    if (td) { td.classList.add('cell-flash'); setTimeout(()=>td.classList.remove('cell-flash'), 500); }
+  }
+  updateStats();
+  renderCharts();
+}
+
+function cancelEdit(rowIdx, key, input, type) {
+  renderTable();
+}
+
+function deleteRow(idx) {
+  data.splice(idx, 1);
+  render();
+  showToast('Ligne supprimée', 'ok');
+}
+
+function switchTab(btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  curTab = btn.dataset.tab;
+  renderTable();
+}
+
+// ═══════════════════════════════════════════════
+// ADD ROW MODAL
+// ═══════════════════════════════════════════════
+function openAddModal() {
+  document.getElementById('new-date').value = todayISO();
+  document.getElementById('new-weight').value = '';
+  document.getElementById('new-fat').value = '';
+  document.getElementById('new-muscle').value = '';
+  document.getElementById('new-note').value = '';
+  document.getElementById('add-modal').classList.add('open');
+  setTimeout(() => document.getElementById('new-date').focus(), 80);
+}
+function closeAddModal() {
+  document.getElementById('add-modal').classList.remove('open');
+}
+document.getElementById('add-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeAddModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeAddModal();
+});
+
+function addRow() {
+  const dateVal = document.getElementById('new-date').value;
+  const iso = parseDate(dateVal);
+  if (!iso) { showToast('Date invalide', 'err'); return; }
+
+  if (data.find(r => r.date === iso)) {
+    showToast('Une entrée existe déjà pour cette date', 'err');
+    return;
+  }
+
+  const row = { date: iso };
+  const w = parseFloat(document.getElementById('new-weight').value);
+  const f = parseFloat(document.getElementById('new-fat').value);
+  const m = parseFloat(document.getElementById('new-muscle').value);
+  const n = document.getElementById('new-note').value.trim();
+  if (!isNaN(w)) row.weight = w;
+  if (!isNaN(f)) row.fat = f;
+  if (!isNaN(m)) row.muscle = m;
+  if (n) row.note = n;
+
+  data.push(row);
+  data.sort((a,b) => b.date.localeCompare(a.date));
+  closeAddModal();
+  render();
+  showToast(`Entrée ajoutée : ${displayDate(iso)}`, 'ok');
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + (type || '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 2800);
+}
+
+// ═══════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); exportCSV(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'o') { e.preventDefault(); document.getElementById('file-input').click(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'n') { e.preventDefault(); if (data.length) openAddModal(); }
+});
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+document.getElementById('empty-table').style.display = 'none';
+document.getElementById('table-section').style.display = 'none';
+</script>
+</body>
+</html>

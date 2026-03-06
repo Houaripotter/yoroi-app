@@ -26,6 +26,7 @@
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		CARNETPAGE001BUILDF00001 /* CarnetPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CARNETPAGE001FILEREF0001 /* CarnetPage.swift */; };
 		COMPLICCNTRL01BUILDF0001 /* ComplicationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = COMPLICCNTRL01FILEREF0001 /* ComplicationController.swift */; };
+		WATCHUTILS001BUILDF00001 /* WatchUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = WATCHUTILS001FILEREF00001 /* WatchUtils.swift */; };
 		D33204A0A2246F4E1F69529F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BDA7F51DE3199FA753FF4521 /* Assets.xcassets */; };
 		D6D98440C02A34740C0F71DA /* WatchConnectivityBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E49616A4A5F9C00ECDA0DD06 /* WatchConnectivityBridge.swift */; };
 		E11C770F9EC353BDED32219F /* WatchConnectivityBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 38DF121D8F7FCBF2DDD2D5B3 /* WatchConnectivityBridge.m */; };
@@ -72,7 +73,7 @@
 		13B07F961A680F5B00A75B9A /* Yoroi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yoroi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Yoroi/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Yoroi/Info.plist; sourceTree = "<group>"; };
-		14F08D3C04354160B9E8F92A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = PrivacyInfo.xcprivacy; path = Yoroi/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		14F08D3C04354160B9E8F92A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = PrivacyInfo.xcprivacy; path = Yoroi/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		2271CA4C6402AF138B83E3A4 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Yoroi/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		354ADA1C37DEB571464D64E1 /* SleepPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SleepPage.swift; sourceTree = "<group>"; };
 		38DF121D8F7FCBF2DDD2D5B3 /* WatchConnectivityBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = WatchConnectivityBridge.m; sourceTree = "<group>"; };
@@ -93,6 +94,7 @@
 		C60C9F16AACE99230853813A /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/WatchConnectivity.framework; sourceTree = DEVELOPER_DIR; };
 		CARNETPAGE001FILEREF0001 /* CarnetPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CarnetPage.swift; sourceTree = "<group>"; };
 		COMPLICCNTRL01FILEREF0001 /* ComplicationController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ComplicationController.swift; sourceTree = "<group>"; };
+		WATCHUTILS001FILEREF00001 /* WatchUtils.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchUtils.swift; sourceTree = "<group>"; };
 		D767F6BF1B2714353253616C /* WeightPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WeightPage.swift; sourceTree = "<group>"; };
 		E49616A4A5F9C00ECDA0DD06 /* WatchConnectivityBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchConnectivityBridge.swift; sourceTree = "<group>"; };
 		E925914387B2F6992FA479C6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
@@ -100,7 +102,7 @@
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Yoroi/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Yoroi-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Yoroi-Bridging-Header.h"; path = "Yoroi/Yoroi-Bridging-Header.h"; sourceTree = "<group>"; };
 		F1A2B3C4D5E6F70900SETTINGS /* SettingsPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsPage.swift; sourceTree = "<group>"; };
-		RCTPKGCNSTUB0FILEREF0001 /* RCTPackagerConnectionStub.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = RCTPackagerConnectionStub.m; path = RCTPackagerConnectionStub.m; sourceTree = SOURCE_ROOT; };
+		RCTPKGCNSTUB0FILEREF0001 /* RCTPackagerConnectionStub.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = RCTPackagerConnectionStub.m; sourceTree = SOURCE_ROOT; };
 		WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "wizz-made-with-Voicemod.mp3"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -133,7 +135,6 @@
 				46F1366910D3214FC92EAF70 /* Pods-Yoroi.debug.xcconfig */,
 				5BA7DB08F3B62003BD145B10 /* Pods-Yoroi.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -203,9 +204,9 @@
 				BA0F210D88915A040CE036D6 /* YoroiWatchApp.swift */,
 				0F56E12FDA5FBF6C2FE9088F /* ContentView.swift */,
 				COMPLICCNTRL01FILEREF0001 /* ComplicationController.swift */,
+				WATCHUTILS001FILEREF00001 /* WatchUtils.swift */,
 				WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */,
 			);
-			name = YoroiWatch;
 			path = YoroiWatch;
 			sourceTree = SOURCE_ROOT;
 		};
@@ -219,7 +220,6 @@
 				F1A2B3C4D5E6F70900SETTINGS /* SettingsPage.swift */,
 				CARNETPAGE001FILEREF0001 /* CarnetPage.swift */,
 			);
-			name = Views;
 			path = Views;
 			sourceTree = "<group>";
 		};
@@ -260,7 +260,6 @@
 			children = (
 				A2F8EC010D7BFA66D009900F /* WatchSessionManager.swift */,
 			);
-			name = Services;
 			path = Services;
 			sourceTree = "<group>";
 		};
@@ -563,6 +562,7 @@
 				5BA41E06B49FCA34D60842E5 /* WatchSessionManager.swift in Sources */,
 				CARNETPAGE001BUILDF00001 /* CarnetPage.swift in Sources */,
 				COMPLICCNTRL01BUILDF0001 /* ComplicationController.swift in Sources */,
+				WATCHUTILS001BUILDF00001 /* WatchUtils.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

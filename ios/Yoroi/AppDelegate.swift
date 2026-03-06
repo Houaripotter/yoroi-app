@@ -64,7 +64,27 @@ class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
 #if DEBUG
     return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: ".expo/.virtual-metro-entry")
 #else
-    return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
+    // Chercher le bundle dans plusieurs emplacements possibles
+    if let bundleURL = Bundle.main.url(forResource: "main", withExtension: "jsbundle") {
+      return bundleURL
+    }
+    
+    // Fallback : chercher dans le bundle principal
+    if let bundlePath = Bundle.main.path(forResource: "main", ofType: "jsbundle") {
+      return URL(fileURLWithPath: bundlePath)
+    }
+    
+    // Si aucun bundle n'est trouvé, afficher une erreur claire
+    print("❌ ERREUR: main.jsbundle introuvable dans le bundle de l'app!")
+    print("📝 Exécutez: ./build-ios-bundle.sh")
+    print("📝 Ou: npx expo export:embed --platform ios")
+    
+    // En dernier recours, essayer le Metro bundler même en Release (pour debug)
+    #if DEBUG
+    return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: ".expo/.virtual-metro-entry")
+    #else
+    return nil
+    #endif
 #endif
   }
 }

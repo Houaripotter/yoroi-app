@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Animated,
   StatusBar,
-  Dimensions,
   Keyboard,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -43,8 +42,6 @@ import { useBadges } from '@/lib/BadgeContext';
 import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, GRADIENTS } from '@/constants/design';
 import logger from '@/lib/security/logger';
 import { useWatch } from '@/lib/WatchConnectivityProvider';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ============================================
 // ECRAN DE SAISIE - DESIGN V5 VIBRANT
@@ -147,10 +144,6 @@ export default function EntryScreen() {
     if (selectedDate) {
       setDate(selectedDate);
     }
-  };
-
-  const formatInputValue = (text: string) => {
-    return text.replace(/[^0-9.,]/g, '');
   };
 
   const getWeightDifference = () => {

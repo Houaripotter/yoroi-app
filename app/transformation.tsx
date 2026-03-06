@@ -44,7 +44,7 @@ export default function TransformationScreen() {
       const fetchedPhotos = await getPhotosFromStorage();
 
       // DEBUG : Afficher les photos chargées
-      logger.info('📸 Photos chargées:', fetchedPhotos.length);
+      logger.info('Photos chargées:', fetchedPhotos.length);
       fetchedPhotos.forEach((photo, index) => {
         logger.info(`  Photo ${index + 1}:`, {
           id: photo.id,
@@ -376,7 +376,7 @@ export default function TransformationScreen() {
               </View>
             </View>
             <Text style={[styles.selectionTitle, { color: colors.textPrimary }]}>
-              Choisis ta photo AVANT ⏪
+              Choisis ta photo AVANT
             </Text>
             <Text style={[styles.selectionSubtitle, { color: colors.textSecondary }]}>
               Sélectionne la photo de départ de ta transformation
@@ -457,7 +457,7 @@ export default function TransformationScreen() {
               </View>
             </View>
             <Text style={[styles.selectionTitle, { color: colors.textPrimary }]}>
-              Choisis ta photo APRÈS ⏩
+              Choisis ta photo APRÈS
             </Text>
             <Text style={[styles.selectionSubtitle, { color: colors.textSecondary }]}>
               Sélectionne ta photo la plus récente

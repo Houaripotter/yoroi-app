@@ -4,6 +4,7 @@ import SwiftUI
 struct YoroiWatchApp: App {
 
   @StateObject private var sessionManager = WatchSessionManager.shared
+  @Environment(\.scenePhase) private var scenePhase
 
   var body: some Scene {
     WindowGroup {
@@ -15,6 +16,12 @@ struct YoroiWatchApp: App {
                 let tabIndex = info["tabIndex"] as? Int else { return }
           sessionManager.requestedTab = tabIndex
         }
+    }
+    .onChange(of: scenePhase) {
+      if scenePhase == .active {
+        // Montre se réveille : recalcule le timer depuis la date de fin
+        sessionManager.resyncTimerIfNeeded()
+      }
     }
   }
 }

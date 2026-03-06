@@ -15,6 +15,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
+import { useWatch } from '@/lib/WatchConnectivityProvider';
 import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { Camera, Image as ImageIcon, GitCompare, X, Shield, Eye, EyeOff, TrendingDown, Calendar, Award } from 'lucide-react-native';
@@ -42,6 +43,7 @@ export default function PhotosScreen() {
 
   // Custom popup
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { syncWeight: syncWeightToWatch, isWatchAvailable } = useWatch();
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -158,6 +160,9 @@ export default function PhotosScreen() {
           source: 'manual',
         });
         logger.info(`Poids enregistré dans la base: ${weight} kg`);
+        if (isWatchAvailable) {
+          syncWeightToWatch(weight).catch(() => {}); // Non bloquant
+        }
       } catch (error) {
         logger.error('❌ Erreur lors de l\'enregistrement du poids:', error);
       }
