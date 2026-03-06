@@ -256,7 +256,6 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     let text  = val > 0 ? "\(val)%" : "--%"
     // Jauge : 90 % = 0, 100 % = 1
     let frac  = val > 0 ? Float(max(0, val - 90)) / 10.0 : 0.0
-    let color: UIColor = val >= 95 ? .yCyan : (val >= 90 ? .yOrange : .yRed)
 
     switch family {
 
@@ -427,7 +426,6 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     let goal  = stepsGoal
     let frac  = goal > 0 ? Float(min(steps, goal)) / Float(goal) : 0.0
     let text  = steps >= 1000 ? String(format: "%.1fk", Double(steps) / 1000.0) : "\(steps)"
-    let color: UIColor = frac >= 1.0 ? .yGreen : (frac >= 0.5 ? .yOrange : .yBlue)
 
     switch family {
 
@@ -479,7 +477,6 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     let goal    = hydrationGoal
     let frac    = goal > 0 ? Float(min(current, goal)) / Float(goal) : 0.0
     let text    = current >= 1000 ? String(format: "%.1fL", Double(current) / 1000.0) : "\(current)ml"
-    let color: UIColor = frac >= 1.0 ? .yGreen : (frac >= 0.5 ? .yCyan : .yBlue)
 
     switch family {
 
@@ -536,7 +533,6 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     let rem     = mins % 60
     let text    = mins > 0 ? String(format: "%dh%02d", hours, rem) : "--"
     let frac    = goal > 0 ? Float(min(mins, goal)) / Float(goal) : 0.0
-    let color: UIColor = frac >= 0.9 ? .yIndigo : (frac >= 0.6 ? .yPurple : .yGray)
 
     switch family {
     case .graphicCircular:
@@ -618,10 +614,9 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
 
   private func caloriesTemplate(family: CLKComplicationFamily) -> CLKComplicationTemplate? {
     let kcal  = calories
+    let goal  = caloriesGoal
     let text  = kcal > 0 ? "\(kcal)" : "--"
-    let goal  = 500 // objectif par défaut calories actives
     let frac  = Float(min(kcal, goal)) / Float(goal)
-    let color: UIColor = frac >= 1.0 ? .yGreen : (frac >= 0.5 ? .yOrange : .yRed)
 
     switch family {
     case .graphicCircular:
@@ -658,11 +653,10 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
 
   private func distanceTemplate(family: CLKComplicationFamily) -> CLKComplicationTemplate? {
     let km    = distance
+    let goal  = distanceGoal
     let text  = km > 0 ? String(format: km >= 10 ? "%.1f" : "%.2f", km) : "--"
     let unit  = "km"
-    let goal  = 5.0 // objectif par défaut 5 km
     let frac  = Float(min(km / goal, 1.0))
-    let color: UIColor = frac >= 1.0 ? .yGreen : (frac >= 0.5 ? .yYellow : .yBlue)
 
     switch family {
     case .graphicCircular:
@@ -735,7 +729,6 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     let text = rpm > 0 ? "\(rpm)" : "--"
     // Jauge : 12 rpm = 0 %, 25 rpm = 100 %
     let frac: Float = rpm > 0 ? Float(max(0, min(rpm - 12, 13))) / 13.0 : 0.0
-    let color: UIColor = rpm >= 12 && rpm <= 20 ? .yTeal : (rpm < 12 ? .yBlue : .yOrange)
 
     switch family {
     case .graphicCircular:
@@ -780,7 +773,6 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     let text = bpm > 0 ? "\(bpm)" : "--"
     // Jauge : 40-80 BPM, plus bas = meilleure forme
     let frac: Float = bpm > 0 ? Float(max(0, 80 - bpm)) / 40.0 : 0.0
-    let color: UIColor = bpm < 60 ? .yGreen : (bpm <= 70 ? .yYellow : .yOrange)
 
     switch family {
     case .graphicCircular:
