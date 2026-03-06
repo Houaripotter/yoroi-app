@@ -23,8 +23,9 @@ import { Platform, AppState, AppStateStatus, DeviceEventEmitter } from 'react-na
 import { WatchConnectivity } from '@/lib/watchConnectivity.ios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '@/lib/security/logger';
-import { addWeight, getProfile } from '@/lib/database';
+import { addWeight, getProfile, getTrainings } from '@/lib/database';
 import { getBenchmarks, addBenchmarkEntry, getOrCreateBenchmarkFromWatch, importWatchExercisesToPhone, getBenchmarkPR, getBenchmarkLast, syncCarnetToWatch } from '@/lib/carnetService';
+import { getGlobalGoalStats } from '@/lib/trainingGoalsService';
 import { saveNotification } from '@/lib/notificationHistoryService';
 import * as Device from 'expo-device';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
@@ -606,6 +607,8 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
               source: 'apple',
             });
             await AsyncStorage.setItem('currentWeight', String(weight));
+            DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+            DeviceEventEmitter.emit('WEIGHT_UPDATED', { weight });
             showSyncBanner('Poids synchronise', 'success');
             logSync('handleWatchMessage - Poids ajoute depuis Watch', { weight });
           }
@@ -834,13 +837,17 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
 
     init();
 
-    // Observer AppState pour traiter syncs au retour en foreground
+    // Observer AppState : sync bidirectionnelle au retour en foreground
     const appStateSubscription = AppState.addEventListener('change', async (nextAppState) => {
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-        logSync('App foreground - Traitement syncs');
+        logSync('App foreground - Sync bidirectionnelle');
         await processPendingSyncs();
         if (isReachable) {
+          // Récupérer les données Watch → iPhone
           await retrieveWatchData();
+          // Pousser les données iPhone → Watch (les changements faits pendant le background)
+          syncAllData();
+          syncProfileToWatch();
         }
       }
       appState.current = nextAppState;
@@ -1001,6 +1008,25 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         getTrainings(7).catch(() => []),
       ]);
 
+      // 1b. Stats entrainements annuels pour complications Watch
+      let yearlyWorkouts = 0;
+      let workoutYearGoal = 0;
+      try {
+        const currentYear = new Date().getFullYear();
+        const { getTrainings: getAllTrainings } = require('@/lib/database');
+        const allTrainings: any[] = await getAllTrainings().catch(() => []);
+        const uniqueDays = new Set<string>();
+        for (const t of allTrainings) {
+          const dateStr = t.date ? String(t.date).split('T')[0] : '';
+          if (dateStr.startsWith(String(currentYear))) {
+            uniqueDays.add(dateStr);
+          }
+        }
+        yearlyWorkouts = uniqueDays.size;
+        const globalStats = await getGlobalGoalStats().catch(() => ({ totalWeeklyTarget: 0 }));
+        workoutYearGoal = (globalStats.totalWeeklyTarget || 0) * 52;
+      } catch { /* non bloquant */ }
+
       // 2. Construire megaPack OPTIMISÉ avec VERSIONING
       let parsedAvatar = avatarConfig ? JSON.parse(avatarConfig) : { pack: 'samurai' };
       if (parsedAvatar && !parsedAvatar.pack && parsedAvatar.id) {
@@ -1075,8 +1101,41 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       if (todaySleep) {
         sleepInfo.sleepBedTime = todaySleep.bedTime || '--:--';
         sleepInfo.sleepWakeTime = todaySleep.wakeTime || '--:--';
+        if (todaySleep.phases) {
+          sleepInfo.sleepPhaseDeep = todaySleep.phases.deep || 0;
+          sleepInfo.sleepPhaseREM = todaySleep.phases.rem || 0;
+          sleepInfo.sleepPhaseCore = todaySleep.phases.core || 0;
+          sleepInfo.sleepPhaseAwake = todaySleep.phases.awake || 0;
+        }
       }
       sleepInfo.sleepGoal = sleepGoalMinutes;
+
+      // Competition & Readiness
+      let competitionInfo: any = {};
+      try {
+        const { getNextCompetition } = require('@/lib/database');
+        const { calculateReadinessScore } = require('@/lib/readinessService');
+        const [nextComp, readiness] = await Promise.all([
+          getNextCompetition().catch(() => null),
+          calculateReadinessScore().catch(() => null),
+        ]);
+        if (nextComp) {
+          const compDate = new Date(nextComp.date);
+          const today = new Date();
+          const daysLeft = Math.ceil((compDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          if (daysLeft >= 0) {
+            competitionInfo.nextCompName = nextComp.nom || nextComp.name || '';
+            competitionInfo.nextCompDate = nextComp.date || '';
+            competitionInfo.nextCompDaysLeft = daysLeft;
+            competitionInfo.nextCompSport = nextComp.sport || '';
+          }
+        }
+        if (readiness) {
+          competitionInfo.readinessScore = readiness.score || 0;
+          competitionInfo.readinessLevel = readiness.level || 'moderate';
+          competitionInfo.readinessReco = readiness.recommendation || 'caution';
+        }
+      } catch { /* non bloquant */ }
 
       // Build hydration weekly data for Watch (last 7 days) — batch fetch
       let hydrationWeeklyData: { day: string; amount: number; goal: number }[] = [];
@@ -1120,6 +1179,8 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         // Objectifs (read from saved values)
         stepsGoal: savedStepsGoal ? parseInt(savedStepsGoal) : 10000,
         hydrationGoal: savedHydrationGoal ? parseInt(savedHydrationGoal) : 2500,
+        caloriesGoal: 500,
+        distanceGoal: 5.0,
         // Préférences
         unitSystem: (() => { try { return savedSettings ? JSON.parse(savedSettings).weight_unit || 'kg' : 'kg'; } catch { return 'kg'; } })(),
         defaultTimerSeconds: savedTimerPreset ? parseInt(savedTimerPreset) : 90,
@@ -1136,8 +1197,13 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           calories: t.calories || 0,
           date: t.date || '',
         })),
+        // Stats annuelles pour complications Watch
+        yearlyWorkouts,
+        workoutYearGoal,
         // Sleep data
         ...sleepInfo,
+        // Competition & Readiness
+        ...competitionInfo,
         // Health data
         ...healthData,
         // Theme colors + mode for Watch
@@ -1241,7 +1307,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     }
   }, [isAvailable, isReachable, showSyncBanner, logSync, retryWithBackoff]);
 
-  // Sync complète avec debounce
+  // Sync complète avec debounce (1s pour une réactivité optimale)
   const syncAllData = useCallback((): Promise<void> => {
     if (syncDebounceTimer.current) {
       clearTimeout(syncDebounceTimer.current);
@@ -1250,9 +1316,20 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     return new Promise<void>((resolve) => {
       syncDebounceTimer.current = setTimeout(() => {
         performSync().then(resolve).catch(resolve);
-      }, 2000);
+      }, 1000);
     });
   }, [performSync]);
+
+  // ─── Sync automatique iPhone → Watch quand les données changent ───
+  // Chaque fois que l'iPhone modifie une donnée (poids, hydratation, sommeil...),
+  // YOROI_DATA_CHANGED est émis → megaPack poussé immédiatement à la montre.
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
+      if (isReachable) syncAllData();
+    });
+    return () => sub.remove();
+  }, [isReachable, syncAllData]);
 
   // Context value
   const contextValue = useMemo(() => ({
