@@ -916,6 +916,9 @@ class HealthConnectService {
       'HKQuantityTypeIdentifierLeanBodyMass',
       'HKQuantityTypeIdentifierStepCount',
       'HKQuantityTypeIdentifierDistanceWalkingRunning',
+      'HKQuantityTypeIdentifierDistanceCycling',
+      'HKQuantityTypeIdentifierDistanceSwimming',
+      'HKQuantityTypeIdentifierDistanceDownhillSnowSports',
       'HKQuantityTypeIdentifierAppleExerciseTime',
       'HKQuantityTypeIdentifierAppleStandTime',
       'HKCategoryTypeIdentifierAppleStandHour',
@@ -931,6 +934,8 @@ class HealthConnectService {
       'HKQuantityTypeIdentifierRespiratoryRate',
       'HKQuantityTypeIdentifierBodyTemperature',
       'HKWorkoutTypeIdentifier',
+      // Route GPS des séances (indispensable pour la carte du parcours)
+      'HKSeriesTypeWorkoutRoute',
       'HKQuantityTypeIdentifierBloodPressureSystolic',
       'HKQuantityTypeIdentifierBloodPressureDiastolic',
       'HKQuantityTypeIdentifierBloodGlucose',
@@ -964,6 +969,9 @@ class HealthConnectService {
         // Activité
         'HKQuantityTypeIdentifierStepCount',
         'HKQuantityTypeIdentifierDistanceWalkingRunning',
+        'HKQuantityTypeIdentifierDistanceCycling',
+        'HKQuantityTypeIdentifierDistanceSwimming',
+        'HKQuantityTypeIdentifierDistanceDownhillSnowSports',
         'HKQuantityTypeIdentifierAppleExerciseTime',
         'HKQuantityTypeIdentifierAppleStandTime',
         'HKCategoryTypeIdentifierAppleStandHour',
@@ -2515,12 +2523,20 @@ class HealthConnectService {
       // Indoor
       details.isIndoor = workout.metadataIndoorWorkout ?? false;
 
-      // Elevation
-      if (workout.metadataElevationAscended) {
-        details.elevationAscended = Math.round(workout.metadataElevationAscended.quantity);
+      // Elevation — plusieurs noms possibles selon la version du SDK react-native-health
+      const elevAscRaw = workout.metadataElevationAscended
+        ?? workout.metadata?.HKElevationAscended
+        ?? workout.metadata?.['HKMetadataKeyElevationAscended'];
+      if (elevAscRaw != null) {
+        const val = typeof elevAscRaw === 'object' ? elevAscRaw.quantity : Number(elevAscRaw);
+        if (!isNaN(val) && val > 0) details.elevationAscended = Math.round(val);
       }
-      if (workout.metadataElevationDescended) {
-        details.elevationDescended = Math.round(workout.metadataElevationDescended.quantity);
+      const elevDescRaw = workout.metadataElevationDescended
+        ?? workout.metadata?.HKElevationDescended
+        ?? workout.metadata?.['HKMetadataKeyElevationDescended'];
+      if (elevDescRaw != null) {
+        const val = typeof elevDescRaw === 'object' ? elevDescRaw.quantity : Number(elevDescRaw);
+        if (!isNaN(val) && val > 0) details.elevationDescended = Math.round(val);
       }
 
       // Météo (directement sur le sample HealthKit)
@@ -2562,9 +2578,11 @@ class HealthConnectService {
         if (typeof workout.getAllStatistics === 'function') {
           const stats = await workout.getAllStatistics();
 
-          // Distance
+          // Distance — couvre course/marche, vélo, natation, ski/snowboard
           const distStat = stats['HKQuantityTypeIdentifierDistanceWalkingRunning']
-            || stats['HKQuantityTypeIdentifierDistanceCycling'];
+            || stats['HKQuantityTypeIdentifierDistanceCycling']
+            || stats['HKQuantityTypeIdentifierDistanceSwimming']
+            || stats['HKQuantityTypeIdentifierDistanceDownhillSnowSports'];
           if (distStat?.sumQuantity) {
             details.distanceKm = Math.round(distStat.sumQuantity.quantity / 1000 * 100) / 100;
           }
@@ -2712,7 +2730,7 @@ class HealthConnectService {
             }
 
             details.heartRateZones = zones;
-            details.cacheVersion = 3; // v3: maxHR lu depuis metadata Apple Watch (HKMaximumHeartRate)
+            details.cacheVersion = 4; // v4: permissions distance complètes + élévation fallback + sports aquatiques/neige
 
             // Recalculer splits avec avgHeartRate par split si on a des GPS locations
             if (allGpsLocations.length > 0 && details.distanceKm && details.distanceKm > 0.5) {
@@ -3066,6 +3084,33 @@ class HealthConnectService {
       }
     } catch (error) {
       logger.error('Erreur lecture historique SpO2:', error);
+    }
+    return [];
+  }
+
+  async getRespiratoryRateHistory(days: number = 0): Promise<Array<{ date: string; value: number }>> {
+    if (!HealthKit) return [];
+    try {
+      const fromDate = days > 0
+        ? (() => { const d = new Date(); d.setDate(d.getDate() - days); d.setHours(0, 0, 0, 0); return d; })()
+        : new Date(2000, 0, 1);
+      const queryOptions = this.createQueryOptions(fromDate, new Date(), { ascending: true, limit: 0 });
+      if (!queryOptions) return [];
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierRespiratoryRate', queryOptions);
+      if (samples && samples.length > 0) {
+        const groupedByDay: { [key: string]: number[] } = {};
+        samples.forEach((s: any) => {
+          const date = new Date(s.startDate).toISOString().split('T')[0];
+          if (!groupedByDay[date]) groupedByDay[date] = [];
+          groupedByDay[date].push(s.quantity);
+        });
+        return Object.keys(groupedByDay).map(date => ({
+          date,
+          value: Math.round(groupedByDay[date].reduce((a, b) => a + b, 0) / groupedByDay[date].length * 10) / 10,
+        })).sort((a, b) => a.date.localeCompare(b.date));
+      }
+    } catch (error) {
+      logger.error('Erreur lecture historique fréquence respiratoire:', error);
     }
     return [];
   }

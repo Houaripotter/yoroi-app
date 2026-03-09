@@ -23,14 +23,29 @@ const DEFAULT_SETTINGS: TimerNotifSettings = {
   workoutFinished: true,
 };
 
-// Configuration des notifications
+// Configuration des notifications — priorité max, affichage même en premier plan
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    priority: Notifications.AndroidNotificationPriority.MAX,
   } as Notifications.NotificationBehavior),
 });
+
+// Canal Android haute priorité (crée une fois au démarrage)
+if (Platform.OS === 'android') {
+  Notifications.setNotificationChannelAsync('timer_alarm', {
+    name: 'Alarme Timer YOROI',
+    importance: Notifications.AndroidImportance.MAX,
+    sound: 'default',
+    vibrationPattern: [0, 400, 200, 400, 200, 400],
+    bypassDnd: true,
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    enableLights: true,
+    lightColor: '#EF4444',
+  });
+}
 
 class TimerNotificationsService {
   private notificationId: string | null = null;
@@ -83,7 +98,15 @@ class TimerNotificationsService {
     let finalStatus = existingStatus;
 
     if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
+      const { status } = await Notifications.requestPermissionsAsync({
+        ios: {
+          allowAlert: true,
+          allowBadge: true,
+          allowSound: true,
+          allowCriticalAlerts: true,  // plein écran même en silencieux
+          provideAppNotificationSettings: false,
+        },
+      });
       finalStatus = status;
     }
 
@@ -113,10 +136,21 @@ class TimerNotificationsService {
         content: {
           title,
           body,
-          sound: true,
-          priority: Notifications.AndroidNotificationPriority.HIGH,
-          vibrate: [0, 250, 250, 250],
+          sound: 'default',
+          priority: Notifications.AndroidNotificationPriority.MAX,
+          vibrate: [0, 400, 200, 400, 200, 400],
           data: { type: 'timer_finished' },
+          // iOS : interruption critique — s'affiche plein écran sur l'écran verrouillé
+          // et passe à travers le mode silence et Focus
+          ...(Platform.OS === 'ios' && {
+            interruptionLevel: 'critical' as any,
+          }),
+          // Android : canal haute priorité + intent plein écran
+          ...(Platform.OS === 'android' && {
+            channelId: 'timer_alarm',
+            fullScreenIntent: true,
+            sticky: false,
+          }),
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,

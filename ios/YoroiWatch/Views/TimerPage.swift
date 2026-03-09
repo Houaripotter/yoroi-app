@@ -39,16 +39,14 @@ struct DashboardPage: View {
           // ── CARNET SHORTCUT ──
           carnetShortcutRow
 
+          // ── POIDS ──
+          weightMiniRow
+
           // ── GOALS RINGS: Steps + Hydration + Calories ──
           goalsRingRow
 
           // ── HEALTH METRICS GRID ──
           healthMetricsGrid
-
-          // ── STREAK ──
-          if session.streak > 0 {
-            streakBanner
-          }
 
           // ── RECENT SESSIONS ──
           if !session.recentWorkouts.isEmpty {
@@ -234,6 +232,66 @@ struct DashboardPage: View {
             Text("Logger une séance")
               .font(.system(size: 9))
               .foregroundColor(session.textSecondary)
+          }
+        }
+
+        Spacer()
+
+        Image(systemName: "chevron.right")
+          .font(.system(size: 9))
+          .foregroundColor(session.textSecondary.opacity(0.5))
+      }
+      .padding(.horizontal, 10)
+      .padding(.vertical, 8)
+      .background(session.cardBg)
+      .cornerRadius(10)
+    }
+    .buttonStyle(.plain)
+  }
+
+  // MARK: - Weight Mini Row
+  private var weightMiniRow: some View {
+    Button(action: { session.requestedTab = 1 }) {
+      HStack(spacing: 10) {
+        ZStack {
+          RoundedRectangle(cornerRadius: 8)
+            .fill(session.accentColor.opacity(0.15))
+            .frame(width: 38, height: 38)
+          Image(systemName: "scalemass.fill")
+            .font(.system(size: 16))
+            .foregroundColor(session.accentColor)
+        }
+
+        VStack(alignment: .leading, spacing: 2) {
+          Text("POIDS")
+            .font(.system(size: 8, weight: .heavy))
+            .foregroundColor(session.accentColor)
+            .tracking(1)
+
+          HStack(spacing: 4) {
+            if session.currentWeight > 0 {
+              Text(String(format: "%.1f kg", session.currentWeight))
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(session.textPrimary)
+
+              if let delta = session.weightTrendDelta {
+                let neutral = abs(delta) < 0.1
+                let isUp = delta > 0
+                HStack(spacing: 2) {
+                  Image(systemName: neutral ? "minus" : (isUp ? "arrow.up" : "arrow.down"))
+                    .font(.system(size: 8, weight: .bold))
+                  if !neutral {
+                    Text(String(format: "%.1f", abs(delta)))
+                      .font(.system(size: 9, weight: .semibold))
+                  }
+                }
+                .foregroundColor(neutral ? session.textSecondary : (isUp ? .red : .green))
+              }
+            } else {
+              Text("Non mesuré")
+                .font(.system(size: 9))
+                .foregroundColor(session.textSecondary)
+            }
           }
         }
 
@@ -746,7 +804,10 @@ struct TimerDetailPage: View {
             .animation(.linear(duration: 1), value: session.timerRemainingSeconds)
 
           VStack(spacing: 2) {
-            Text(session.formattedTime(session.timerRemainingSeconds))
+            let displaySecs = (session.timerRemainingSeconds == 0 && !session.timerIsRunning)
+              ? session.timerTotalSeconds
+              : session.timerRemainingSeconds
+            Text(session.formattedTime(displaySecs))
               .font(.system(size: 28, weight: .bold, design: .monospaced))
               .foregroundColor(session.textPrimary)
           }

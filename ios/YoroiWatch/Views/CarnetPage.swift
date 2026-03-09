@@ -334,7 +334,7 @@ struct LogEntryView: View {
   let record: BenchmarkRecord
   @Environment(\.dismiss) var dismiss
 
-  enum Step { case poids, reps, rpe, confirm }
+  enum Step { case poids, reps, rpe, confirm, rest }
   @State private var step: Step = .poids
 
   // Valeurs
@@ -364,9 +364,14 @@ struct LogEntryView: View {
             rpe: rpe
           )
           WKInterfaceDevice.current().play(.success)
-          dismiss()
+          step = .rest
         }
       )
+    case .rest: RestTimerStep(onSkip: { dismiss() }, onStart: { secs in
+        session.setTimer(seconds: secs)
+        session.startTimer()
+        dismiss()
+      })
     }
   }
 }
@@ -792,4 +797,73 @@ private func bigButton(icon: String, color: Color, size: CGFloat = 44, action: @
       .clipShape(Circle())
   }
   .buttonStyle(.plain)
+}
+
+// MARK: - Timer de Repos
+
+struct RestTimerStep: View {
+  @EnvironmentObject var session: WatchSessionManager
+  let onSkip: () -> Void
+  let onStart: (Int) -> Void
+
+  private let presets: [(Int, String)] = [
+    (45,  "45s"),
+    (60,  "1min"),
+    (90,  "1:30"),
+    (120, "2min"),
+    (180, "3min"),
+  ]
+
+  var body: some View {
+    ScrollView {
+      VStack(spacing: 8) {
+        // Header
+        HStack(spacing: 6) {
+          Image(systemName: "timer")
+            .font(.system(size: 14))
+            .foregroundColor(session.accentColor)
+          Text("REPOS ?")
+            .font(.system(size: 13, weight: .heavy))
+            .foregroundColor(session.textPrimary)
+            .tracking(1)
+        }
+        .padding(.top, 4)
+
+        Text("Lance un timer de repos")
+          .font(.system(size: 10))
+          .foregroundColor(session.textSecondary)
+          .multilineTextAlignment(.center)
+
+        // Presets en grille 2 colonnes
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
+          ForEach(presets, id: \.0) { (secs, label) in
+            Button(action: { onStart(secs) }) {
+              Text(label)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(session.textPrimary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(session.accentColor.opacity(0.18))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+            .buttonStyle(.plain)
+          }
+        }
+
+        // Passer
+        Button(action: onSkip) {
+          Text("Passer")
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundColor(session.textSecondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(Color.white.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+        .buttonStyle(.plain)
+      }
+      .padding(.horizontal, 8)
+      .padding(.bottom, 8)
+    }
+  }
 }

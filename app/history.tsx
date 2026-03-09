@@ -23,6 +23,7 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import logger from '@/lib/security/logger';
 import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
+import { useDevMode } from '@/lib/DevModeContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -79,6 +80,7 @@ const MEASUREMENT_METRICS: MeasurementMetricOption[] = [
 export default function HistoryScreen() {
   const { colors: themeColors } = useTheme();
   const { t, formatDate, locale } = useI18n();
+  const { isDevMode } = useDevMode();
 
   // Mois traduits dynamiquement
   const MONTHS = useMemo(() => [
@@ -320,7 +322,19 @@ export default function HistoryScreen() {
 
   return (
     <ScreenWrapper noPadding>
-      <Header title="Historique" showBack />
+      <Header
+        title="Historique"
+        showBack
+        rightElement={isDevMode ? (
+          <TouchableOpacity
+            onPress={() => router.push('/workout-detail?demo=1' as any)}
+            style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: 'rgba(99,102,241,0.15)' }}
+            activeOpacity={0.7}
+          >
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#6366F1' }}>Démo</Text>
+          </TouchableOpacity>
+        ) : undefined}
+      />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}

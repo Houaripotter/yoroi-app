@@ -148,6 +148,23 @@ export const COACHES: Coach[] = [
 
 export const CLUBS: Club[] = [
   {
+    id: 'team-warriors',
+    name: 'Team Warriors',
+    type: 'MMA / Lutte / JJB / Grappling / Boxe Thaï / Boxe Anglaise',
+    location: 'Marseille 14e arrondissement',
+    trainers: [
+      'Chaouki — Coach pied-poing & MMA, ancien combattant pro (20+ ans d\'expérience)',
+      'Vincent Delguerra — Combattant MMA professionnel, recordman du nombre de combats pro en France',
+    ],
+    bio: 'MMA, JJB, Lutte, Grappling, Boxe Thaï, Boxe Anglaise.\n\nClub phare du 14e arrondissement de Marseille, la Team Warriors forme des athlètes complets et des champions reconnus aux niveaux national et international. Parmi ses membres, Vincent Delguerra, recordman du nombre de combats MMA professionnels en France, a affronté les meilleurs sur les plus grandes scènes : l\'ARES, la meilleure organisation MMA française, le PFL et d\'autres grandes organisations européennes et mondiales.\n\nEncadrée par Chaouki, ancien combattant professionnel avec plus de 20 ans d\'expérience au plus haut niveau, la Team Warriors propose un enseignement sérieux dans toutes les disciplines du combat.\n\nMais la Team Warriors, c\'est avant tout une famille. Un lieu ouvert à tous, débutants, compétiteurs et jeunes du quartier, où le sport construit autant l\'athlète que la personne. Venez vous entraîner, vous serez les bienvenus.',
+    instagram: ['@tchouki13', '@vins_delguerra'],
+    imageUrl: require('@/assets/partenaires/clubs/teamwarrios.jpg'),
+    photos: [
+      require('@/assets/partenaires/clubs/teamwarrios.jpg'),
+    ],
+    featured: true,
+  },
+  {
     id: 'gracie-barra-olives',
     name: 'Gracie Barra Les Olives',
     type: 'Jiu-Jitsu Brésilien',

@@ -16,8 +16,10 @@ import {
   Animated,
   Platform,
   TouchableOpacity,
+  Modal,
 } from 'react-native';
 import Svg, { Rect, Line } from 'react-native-svg';
+import { MuscleMapCard } from '@/components/MuscleMapCard';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { getUserSettings } from '@/lib/storage';
@@ -25,7 +27,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Clock, MapPin, Flame, Heart, Timer, TrendingUp,
   Mountain, Thermometer, Droplets, Zap, Activity,
-  Wind, ArrowUp, ArrowDown,
+  Wind, ArrowUp, ArrowDown, Maximize2, X,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/ThemeContext';
@@ -190,7 +192,7 @@ const formatDuration = (minutes: number): string => {
   if (!minutes || minutes <= 0) return '0 min';
   const h = Math.floor(minutes / 60);
   const m = Math.round(minutes % 60);
-  if (h > 0) return `${h}h ${m.toString().padStart(2, '0')}`;
+  if (h > 0) return `${h}h ${m > 0 ? `${m}min` : ''}`.trim();
   return `${m} min`;
 };
 
@@ -342,9 +344,9 @@ const DetailsSkeleton: React.FC<{ colors: any; isDark: boolean }> = ({ colors, i
 
 export default function WorkoutDetailScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, isDark, screenBackground } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t } = useI18n();
-  const params = useLocalSearchParams<{ id?: string }>();
+  const params = useLocalSearchParams<{ id?: string; demo?: string }>();
   const router = useRouter();
 
   const [training, setTraining] = useState<Training | null>(null);
@@ -354,10 +356,14 @@ export default function WorkoutDetailScreen() {
   const [userZones, setUserZones] = useState<{ z1max: number; z2max: number; z3max: number; z4max: number } | null>(null);
 
   useEffect(() => {
-    loadData();
     getUserSettings().then(s => {
       if (s.heartRateZones) setUserZones(s.heartRateZones);
     });
+    if (params.demo === '1') {
+      loadDemoData();
+    } else {
+      loadData();
+    }
   }, []);
 
   // Zones cardiaques: utiliser les zones perso si configurées, sinon celles de HealthKit
@@ -385,6 +391,34 @@ export default function WorkoutDetailScreen() {
     }
     return details?.heartRateZones;
   }, [userZones, details?.heartRateSamples, details?.heartRateZones]);
+
+  const loadDemoData = () => {
+    const demoTraining: Training = {
+      id: 0,
+      sport: 'running',
+      session_type: 'Course à pied',
+      date: new Date().toISOString().slice(0, 10),
+      start_time: '07:30',
+      duration_minutes: 63,
+      distance: 10.2,
+      calories: 612,
+      heart_rate: 157,
+      max_heart_rate: 183,
+      intensity: 7,
+      is_outdoor: 1,
+      source: 'apple_watch',
+      location_name: 'Bois de Vincennes',
+      location_lat: 48.8330,
+      location_lon: 2.4370,
+      notes: 'Super séance, bonnes sensations sur les 5 derniers km.',
+      muscles: null,
+      exercises: null,
+      created_at: new Date().toISOString(),
+    } as unknown as Training;
+    setTraining(demoTraining);
+    setDetails(generateDemoDetails(demoTraining));
+    setLoading(false);
+  };
 
   const loadData = async () => {
     try {
@@ -418,8 +452,8 @@ export default function WorkoutDetailScreen() {
       if (tr.workout_details_json) {
         try {
           const cached = JSON.parse(tr.workout_details_json);
-          // v3: invalider les anciens caches (v1: maxHR séance, v2: 220-age, v3: HKMaximumHeartRate metadata)
-          const isStaleCache = (cached.cacheVersion ?? 1) < 3;
+          // v4: invalider les anciens caches (v3: HKMaximumHeartRate metadata, v4: distance complète + élévation fallback)
+          const isStaleCache = (cached.cacheVersion ?? 1) < 4;
           // Verifier que le cache a du contenu utile (pas juste durationMinutes)
           const hasRichData = cached.heartRateSamples?.length > 0 || cached.routePoints?.length > 0
             || cached.heartRateZones?.length > 0 || cached.weatherTemp != null;
@@ -768,6 +802,18 @@ export default function WorkoutDetailScreen() {
           </View>
         </AnimatedCard>
 
+        {/* ═══ CARTE MUSCULAIRE ═══ */}
+        {training.sport && (
+          <AnimatedCard delay={140}>
+            <MuscleMapCard
+              sport={training.sport}
+              sportName={getSportName(training.sport)}
+              sportColor={getSportColor(training.sport)}
+              customMuscles={training.muscles || undefined}
+            />
+          </AnimatedCard>
+        )}
+
         {/* ═══ LOADING DETAILS SKELETON ═══ */}
         {detailsLoading && !hasDetails && (
           <AnimatedCard delay={160}>
@@ -926,154 +972,90 @@ export default function WorkoutDetailScreen() {
           </>
         )}
 
-        {/* ═══ PLAN (GPS + MÉTÉO) ═══ */}
-        {route && route.length > 2 && (
-          <>
-          <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
-            Plan {'>'}
-          </Text>
-          <AnimatedCard delay={480} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-            <View style={styles.mapContainer}>
-              <WorkoutMapRoute
-                routePoints={route}
-                boundingBox={details?.routeBoundingBox}
-                height={260}
-                strokeColor={sportColor}
-                strokeWidth={4}
-              />
-            </View>
-            <View style={styles.routeStats}>
-              {details?.distanceKm != null && (
-                <View style={[styles.routeStatItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
-                  <MapPin size={14} color={sportColor} />
-                  <Text style={[styles.routeStatValue, { color: colors.text }]}>{details.distanceKm} km</Text>
-                </View>
-              )}
-              {details?.elevationAscended != null && details.elevationAscended > 0 && (
-                <View style={[styles.routeStatItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
-                  <ArrowUp size={14} color="#22C55E" />
-                  <Text style={[styles.routeStatValue, { color: colors.text }]}>{details.elevationAscended}m</Text>
-                </View>
-              )}
-              {details?.elevationDescended != null && details.elevationDescended > 0 && (
-                <View style={[styles.routeStatItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
-                  <ArrowDown size={14} color="#EF4444" />
-                  <Text style={[styles.routeStatValue, { color: colors.text }]}>{details.elevationDescended}m</Text>
-                </View>
-              )}
-            </View>
-          </AnimatedCard>
-          </>
-        )}
+        {/* ═══ GPS (tracé / lieu / indisponible) ═══ */}
+        {(() => {
+          const pinLat = training.location_lat ?? details?.startLatitude;
+          const pinLon = training.location_lon ?? details?.startLongitude;
+          const hasPin = pinLat != null && pinLon != null
+            && !isNaN(pinLat) && !isNaN(pinLon)
+            && (pinLat !== 0 || pinLon !== 0);
+          const hasRoute = route != null && route.length > 2;
+          const cardStyle = [styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }];
 
-        {/* ═══ LIEU D'ENTRAÎNEMENT (pin GPS, fallback sans tracé) ═══ */}
-        {!route?.length && (() => {
-          const lat = training.location_lat ?? details?.startLatitude;
-          const lon = training.location_lon ?? details?.startLongitude;
-          return lat != null && lon != null && !isNaN(lat) && !isNaN(lon) && (lat !== 0 || lon !== 0);
-        })() && (
-          <>
-          <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
-            Plan {'>'}
-          </Text>
-          <AnimatedCard delay={480} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-            {Platform.OS === 'ios' ? (
-              /* iOS : Apple Maps natif, aucune cle API requise */
-              <View style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 4 }}>
-                <MapView
-                  provider={PROVIDER_DEFAULT}
-                  style={{ height: 220 }}
-                  initialRegion={{
-                    latitude: training.location_lat ?? details?.startLatitude ?? 0,
-                    longitude: training.location_lon ?? details?.startLongitude ?? 0,
-                    latitudeDelta: 0.005,
-                    longitudeDelta: 0.005,
-                  }}
-                  scrollEnabled={false}
-                  zoomEnabled={false}
-                  mapType="hybrid"
-                  userInterfaceStyle={isDark ? 'dark' : 'light'}
-                >
-                  <Marker
-                    coordinate={{
-                      latitude: training.location_lat ?? details?.startLatitude ?? 0,
-                      longitude: training.location_lon ?? details?.startLongitude ?? 0,
-                    }}
-                    pinColor={sportColor}
+          if (hasRoute) {
+            return (
+              <>
+              <Text style={[styles.appleSectionTitle, { color: colors.text }]}>Tracé GPS {'>'}</Text>
+              <AnimatedCard delay={480} style={cardStyle}>
+                <View style={styles.mapContainer}>
+                  <WorkoutMapRoute
+                    routePoints={route}
+                    boundingBox={details?.routeBoundingBox}
+                    height={260}
+                    strokeColor={sportColor}
+                    strokeWidth={4}
                   />
-                </MapView>
-              </View>
-            ) : (
-              /* Android : carte de coordonnees + bouton ouvrir dans Maps */
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => {
-                  const lat = training.location_lat!;
-                  const lon = training.location_lon!;
-                  const label = encodeURIComponent(training.location_name || 'Lieu d\'entraînement');
-                  safeOpenURL(`geo:${lat},${lon}?q=${lat},${lon}(${label})`);
-                }}
-                style={{
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  backgroundColor: isDark ? 'rgba(34,197,94,0.08)' : 'rgba(34,197,94,0.06)',
-                  borderWidth: 1,
-                  borderColor: '#22C55E40',
-                  padding: 16,
-                  alignItems: 'center',
-                  gap: 8,
-                  marginBottom: 4,
-                }}
-              >
-                <MapPin size={32} color="#22C55E" />
-                <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text, textAlign: 'center' }}>
-                  {training.location_name || 'Lieu capturé'}
-                </Text>
-                <Text style={{ fontSize: 12, color: colors.textMuted }}>
-                  {training.location_lat!.toFixed(5)}, {training.location_lon!.toFixed(5)}
-                </Text>
-                <View style={{
-                  marginTop: 4, paddingHorizontal: 16, paddingVertical: 8,
-                  borderRadius: 20, backgroundColor: '#22C55E',
-                }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#FFFFFF' }}>
-                    Ouvrir dans Maps
-                  </Text>
                 </View>
-              </TouchableOpacity>
-            )}
+                <View style={styles.routeStats}>
+                  {details?.distanceKm != null && (
+                    <View style={[styles.routeStatItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+                      <MapPin size={14} color={sportColor} />
+                      <Text style={[styles.routeStatValue, { color: colors.text }]}>{details.distanceKm} km</Text>
+                    </View>
+                  )}
+                  {details?.elevationAscended != null && details.elevationAscended > 0 && (
+                    <View style={[styles.routeStatItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+                      <ArrowUp size={14} color="#22C55E" />
+                      <Text style={[styles.routeStatValue, { color: colors.text }]}>{details.elevationAscended}m</Text>
+                    </View>
+                  )}
+                  {details?.elevationDescended != null && details.elevationDescended > 0 && (
+                    <View style={[styles.routeStatItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+                      <ArrowDown size={14} color="#EF4444" />
+                      <Text style={[styles.routeStatValue, { color: colors.text }]}>{details.elevationDescended}m</Text>
+                    </View>
+                  )}
+                </View>
+              </AnimatedCard>
+              </>
+            );
+          }
 
-            {training.location_name && Platform.OS === 'ios' ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
-                <MapPin size={13} color={sportColor} />
-                <Text style={{ fontSize: 13, color: colors.text, fontWeight: '600' }}>
-                  {training.location_name}
+          if (hasPin) {
+            return (
+              <>
+              <Text style={[styles.appleSectionTitle, { color: colors.text }]}>Lieu {'>'}</Text>
+              <AnimatedCard delay={480} style={cardStyle}>
+                <MapPinView
+                  latitude={pinLat}
+                  longitude={pinLon}
+                  locationName={training.location_name || undefined}
+                  pinColor={sportColor}
+                  height={220}
+                />
+              </AnimatedCard>
+              </>
+            );
+          }
+
+          // Aucune donnée GPS
+          return (
+            <>
+            <Text style={[styles.appleSectionTitle, { color: colors.text }]}>Localisation {'>'}</Text>
+            <AnimatedCard delay={480} style={cardStyle}>
+              <View style={{ alignItems: 'center', paddingVertical: 16, gap: 8 }}>
+                <MapPin size={32} color={isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'} />
+                <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMuted, textAlign: 'center' }}>
+                  Aucune donnée GPS pour cette séance
+                </Text>
+                <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', lineHeight: 18 }}>
+                  Active la capture GPS lors de l'enregistrement pour voir ta trace ici.
                 </Text>
               </View>
-            ) : null}
-          </AnimatedCard>
-          </>
-        )}
-
-        {/* ═══ GPS NON DISPO (placeholder) ═══ */}
-        {!route?.length && !(training.location_lat != null && training.location_lon != null && !isNaN(training.location_lat) && !isNaN(training.location_lon) && (training.location_lat !== 0 || training.location_lon !== 0)) && !details?.startLatitude && (
-          <>
-          <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
-            Plan {'>'}
-          </Text>
-          <AnimatedCard delay={480} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-            <View style={{ alignItems: 'center', paddingVertical: 16, gap: 8 }}>
-              <MapPin size={32} color={isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'} />
-              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMuted, textAlign: 'center' }}>
-                Aucune donnée GPS pour cette séance
-              </Text>
-              <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', lineHeight: 18 }}>
-                Active la capture GPS lors de l'enregistrement pour voir ta trace ici.
-              </Text>
-            </View>
-          </AnimatedCard>
-          </>
-        )}
+            </AnimatedCard>
+            </>
+          );
+        })()}
 
         {/* ═══ CONDITIONS ═══ */}
         {(details?.weatherTemp != null || details?.weatherHumidity != null || details?.weatherCondition || details?.airQualityIndex) && (
@@ -1194,6 +1176,118 @@ export default function WorkoutDetailScreen() {
 // ============================================
 // SUB-COMPONENTS
 // ============================================
+
+// ============================================
+// MAP PIN VIEW — Carte avec point de départ + modal plein écran
+// ============================================
+
+const MapPinView: React.FC<{
+  latitude: number;
+  longitude: number;
+  locationName?: string;
+  pinColor: string;
+  height?: number;
+}> = ({ latitude, longitude, locationName, pinColor, height = 220 }) => {
+  const { isDark } = useTheme();
+  const insets = useSafeAreaInsets();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const region = {
+    latitude,
+    longitude,
+    latitudeDelta: 0.005,
+    longitudeDelta: 0.005,
+  };
+
+  const btnBg = 'rgba(0,0,0,0.6)';
+
+  const renderMap = (fullscreen: boolean) => (
+    <MapView
+      provider={PROVIDER_DEFAULT}
+      style={{ flex: 1 }}
+      initialRegion={region}
+      scrollEnabled
+      zoomEnabled
+      rotateEnabled={fullscreen}
+      pitchEnabled={fullscreen}
+      mapType="hybrid"
+      showsCompass={fullscreen}
+      showsScale={fullscreen}
+      showsTraffic={false}
+      showsBuildings
+      showsIndoors={false}
+      showsPointsOfInterest={false}
+      toolbarEnabled={false}
+      loadingEnabled
+      {...(Platform.OS === 'ios' ? { userInterfaceStyle: isDark ? 'dark' : 'light' } : {})}
+    >
+      <Marker coordinate={{ latitude, longitude }} pinColor={pinColor} />
+    </MapView>
+  );
+
+  return (
+    <>
+      {/* Preview inline */}
+      <View style={{ height, borderRadius: 12, overflow: 'hidden', marginBottom: 4 }}>
+        {renderMap(false)}
+        {/* Bouton plein écran */}
+        <TouchableOpacity
+          style={{
+            position: 'absolute', top: 10, right: 10,
+            width: 36, height: 36, borderRadius: 10,
+            backgroundColor: btnBg,
+            justifyContent: 'center', alignItems: 'center',
+          }}
+          onPress={() => setIsFullscreen(true)}
+          activeOpacity={0.7}
+        >
+          <Maximize2 size={16} color="#FFF" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Nom du lieu */}
+      {locationName ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+          <MapPin size={13} color={pinColor} />
+          <Text style={{ fontSize: 13, color: isDark ? '#FFFFFF' : '#000000', fontWeight: '600' }}>
+            {locationName}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Modal plein écran */}
+      <Modal visible={isFullscreen} animationType="slide" presentationStyle="fullScreen">
+        <View style={{ flex: 1 }}>
+          {renderMap(true)}
+          {/* Fermer */}
+          <TouchableOpacity
+            style={{
+              position: 'absolute', top: insets.top + 10, left: 16,
+              width: 36, height: 36, borderRadius: 10,
+              backgroundColor: btnBg,
+              justifyContent: 'center', alignItems: 'center',
+            }}
+            onPress={() => setIsFullscreen(false)}
+            activeOpacity={0.7}
+          >
+            <X size={18} color="#FFF" />
+          </TouchableOpacity>
+          {/* Nom du lieu en bas */}
+          {locationName && (
+            <View style={{
+              position: 'absolute', bottom: insets.bottom + 16, left: 16, right: 16,
+              backgroundColor: btnBg, paddingHorizontal: 16, paddingVertical: 10,
+              borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 8,
+            }}>
+              <MapPin size={14} color={pinColor} />
+              <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '700', flex: 1 }}>{locationName}</Text>
+            </View>
+          )}
+        </View>
+      </Modal>
+    </>
+  );
+};
 
 // ============================================
 // HR BARS CHART - Barres verticales colorees par zone (style Apple Health)

@@ -40,6 +40,10 @@
 		RCTPKGCNSTUB0BUILDF00001 /* RCTPackagerConnectionStub.m in Sources */ = {isa = PBXBuildFile; fileRef = RCTPKGCNSTUB0FILEREF0001 /* RCTPackagerConnectionStub.m */; };
 		MULTIPEER01BUILDF00001 /* MultipeerBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = MULTIPEER01FILEREF00001 /* MultipeerBridge.swift */; };
 		MULTIPEER02BUILDF00001 /* MultipeerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = MULTIPEER02FILEREF00001 /* MultipeerBridge.m */; };
+		TORCH001SWFBUILDF000001 /* TorchModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = TORCH001SWFFILEREF00001 /* TorchModule.swift */; };
+		TORCH001OBJBUILDF000001 /* TorchModule.m in Sources */ = {isa = PBXBuildFile; fileRef = TORCH001OBJFILEREF000001 /* TorchModule.m */; };
+		BGTASK01SWFBUILDF000001 /* BackgroundTaskModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = BGTASK01SWFFILEREF000001 /* BackgroundTaskModule.swift */; };
+		BGTASK01OBJBUILDF000001 /* BackgroundTaskModule.m in Sources */ = {isa = PBXBuildFile; fileRef = BGTASK01OBJFILEREF000001 /* BackgroundTaskModule.m */; };
 		WATCHUTILS001BUILDF00001 /* WatchUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = WATCHUTILS001FILEREF00001 /* WatchUtils.swift */; };
 		WIZZ50UND0001F1LEREF0001 /* wizz-made-with-Voicemod.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */; };
 		WORKOUTPAG01BUILDF000001 /* WorkoutPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */; };
@@ -111,6 +115,10 @@
 		WATCHUTILS001FILEREF00001 /* WatchUtils.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchUtils.swift; sourceTree = "<group>"; };
 		MULTIPEER01FILEREF00001 /* MultipeerBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MultipeerBridge.swift; sourceTree = "<group>"; };
 		MULTIPEER02FILEREF00001 /* MultipeerBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MultipeerBridge.m; sourceTree = "<group>"; };
+		TORCH001SWFFILEREF00001 /* TorchModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TorchModule.swift; path = Yoroi/TorchModule.swift; sourceTree = "<group>"; };
+		TORCH001OBJFILEREF000001 /* TorchModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = TorchModule.m; path = Yoroi/TorchModule.m; sourceTree = "<group>"; };
+		BGTASK01SWFFILEREF000001 /* BackgroundTaskModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BackgroundTaskModule.swift; path = Yoroi/BackgroundTaskModule.swift; sourceTree = "<group>"; };
+		BGTASK01OBJFILEREF000001 /* BackgroundTaskModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BackgroundTaskModule.m; path = Yoroi/BackgroundTaskModule.m; sourceTree = "<group>"; };
 		WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "wizz-made-with-Voicemod.mp3"; sourceTree = "<group>"; };
 		WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutPage.swift; sourceTree = "<group>"; };
 		TIMERALRMVW1FILEREF000001 /* TimerAlarmNotificationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerAlarmNotificationView.swift; sourceTree = "<group>"; };
@@ -153,6 +161,10 @@
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
 				F11748442D0722820044C1D9 /* Yoroi-Bridging-Header.h */,
+				TORCH001SWFFILEREF00001 /* TorchModule.swift */,
+				TORCH001OBJFILEREF000001 /* TorchModule.m */,
+				BGTASK01SWFFILEREF000001 /* BackgroundTaskModule.swift */,
+				BGTASK01OBJFILEREF000001 /* BackgroundTaskModule.m */,
 				A1B2C3D400000010 /* TimerAttributes.swift */,
 				A1B2C3D400000020 /* YoroiLiveActivityManager.swift */,
 				A1B2C3D400000030 /* YoroiLiveActivityManager.m */,
@@ -571,6 +583,10 @@
 				RCTPKGCNSTUB0BUILDF00001 /* RCTPackagerConnectionStub.m in Sources */,
 				MULTIPEER01BUILDF00001 /* MultipeerBridge.swift in Sources */,
 				MULTIPEER02BUILDF00001 /* MultipeerBridge.m in Sources */,
+				TORCH001SWFBUILDF000001 /* TorchModule.swift in Sources */,
+				TORCH001OBJBUILDF000001 /* TorchModule.m in Sources */,
+				BGTASK01SWFBUILDF000001 /* BackgroundTaskModule.swift in Sources */,
+				BGTASK01OBJBUILDF000001 /* BackgroundTaskModule.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

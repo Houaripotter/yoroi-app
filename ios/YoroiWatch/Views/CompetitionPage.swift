@@ -30,6 +30,9 @@ struct CompetitionPage: View {
         // ── POIDS & CORPS ──
         bodyCard
 
+        // ── SEMAINE ──
+        weeklySection
+
         // ── TOP 3 PRs ──
         if !session.benchmarks.isEmpty {
           prSection
@@ -157,6 +160,68 @@ struct CompetitionPage: View {
         .foregroundColor(session.textSecondary)
     }
     .frame(maxWidth: .infinity)
+  }
+
+  // ── Résumé hebdo ──
+  private var weeklySection: some View {
+    VStack(spacing: 6) {
+      HStack {
+        Image(systemName: "calendar.badge.checkmark")
+          .font(.system(size: 9))
+          .foregroundColor(session.accentColor)
+        Text("CETTE SEMAINE")
+          .font(.system(size: 9, weight: .bold))
+          .foregroundColor(session.accentColor)
+          .tracking(1)
+        Spacer()
+      }
+
+      HStack(spacing: 0) {
+        VStack(spacing: 2) {
+          Text("\(session.weeklyWorkoutCount)")
+            .font(.system(size: WatchScreen.fs(20), weight: .black))
+            .foregroundColor(session.textPrimary)
+          Text("séances")
+            .font(.system(size: 7))
+            .foregroundColor(session.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+
+        Rectangle().fill(session.dividerColor).frame(width: 1, height: 32)
+
+        VStack(spacing: 2) {
+          Text("\(session.weeklyCaloriesBurned)")
+            .font(.system(size: WatchScreen.fs(20), weight: .black))
+            .foregroundColor(session.textPrimary)
+            .minimumScaleFactor(0.7)
+            .lineLimit(1)
+          Text("kcal")
+            .font(.system(size: 7))
+            .foregroundColor(session.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+
+        Rectangle().fill(session.dividerColor).frame(width: 1, height: 32)
+
+        VStack(spacing: 2) {
+          HStack(spacing: 2) {
+            Image(systemName: "flame.fill")
+              .font(.system(size: 8))
+              .foregroundColor(.orange)
+            Text("\(session.streak)")
+              .font(.system(size: WatchScreen.fs(20), weight: .black))
+              .foregroundColor(session.textPrimary)
+          }
+          Text("streak")
+            .font(.system(size: 7))
+            .foregroundColor(session.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+      }
+      .padding(.vertical, 10)
+      .background(session.cardBg)
+      .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
   }
 
   // ── Top 3 PRs ──

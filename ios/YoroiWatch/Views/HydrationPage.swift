@@ -10,6 +10,8 @@ struct HydrationPage: View {
   @State private var waveOffset: Double = 0
   @State private var showToast = false
   @State private var toastText = ""
+  @State private var customAmount: Int = 200
+  @State private var crownCustom: Double = 200
 
   private let CYAN = Color(red: 0.024, green: 0.714, blue: 0.831)
   private let GREEN = Color(red: 0.063, green: 0.725, blue: 0.506)
@@ -109,6 +111,49 @@ struct HydrationPage: View {
             }
           }, alignment: .top
         )
+
+        // ── SECTION 1b: Couronne Digitale ──
+        VStack(spacing: 6) {
+          HStack(spacing: 4) {
+            Image(systemName: "digitalcrown.arrow.clockwise")
+              .font(.system(size: 10))
+              .foregroundColor(CYAN)
+            Text("Couronne")
+              .font(.system(size: 10, weight: .semibold))
+              .foregroundColor(session.textSecondary)
+          }
+
+          Text("\(customAmount) ml")
+            .font(.system(size: WatchScreen.bigNumberSize, weight: .bold))
+            .foregroundColor(session.textPrimary)
+
+          Button(action: { addWater(customAmount) }) {
+            HStack(spacing: 6) {
+              Image(systemName: "plus.circle.fill")
+                .font(.system(size: 12))
+              Text("Ajouter \(customAmount) ml")
+                .font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundColor(session.textOnAccent)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(CYAN)
+            .cornerRadius(10)
+          }
+          .buttonStyle(.plain)
+        }
+        .digitalCrownRotation(
+          $crownCustom,
+          from: 50,
+          through: 2000,
+          by: 50,
+          sensitivity: .medium,
+          isContinuous: false,
+          isHapticFeedbackEnabled: true
+        )
+        .onChange(of: crownCustom) {
+          customAmount = max(50, min(2000, Int(crownCustom.rounded() / 50) * 50))
+        }
 
         Divider().background(session.dividerColor)
 

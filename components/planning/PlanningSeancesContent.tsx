@@ -17,6 +17,7 @@ import { Training, Club } from '@/lib/database';
 import { getSportIcon, getSportName, getSportColor } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ChevronLeft, ChevronRight, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { useDevMode } from '@/lib/DevModeContext';
 import { format, parseISO, isSameMonth, addMonths, subMonths } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { router } from 'expo-router';
@@ -204,6 +205,7 @@ const TechniqueStars = ({ value, color }: { value: number; color: string }) => (
 export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ workouts, clubs = [] }) => {
   const { colors, isDark } = useTheme();
   const { t, locale } = useI18n();
+  const { isDevMode } = useDevMode();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedSport, setSelectedSport] = useState<string>('all');
   const [showAllMonths, setShowAllMonths] = useState(true);
@@ -390,6 +392,25 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
         <View style={[styles.emptyCard, { backgroundColor: cardBg }]}>
           <Dumbbell size={38} color={colors.textMuted} strokeWidth={1.5} />
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('planning.noSessions')}</Text>
+          {isDevMode && (
+            <TouchableOpacity
+              onPress={() => router.push('/workout-detail?demo=1' as any)}
+              style={{
+                marginTop: 12,
+                paddingHorizontal: 18,
+                paddingVertical: 9,
+                borderRadius: 20,
+                backgroundColor: 'rgba(99,102,241,0.12)',
+                borderWidth: 1,
+                borderColor: 'rgba(99,102,241,0.25)',
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={{ fontSize: 13, fontWeight: '700', color: '#6366F1' }}>
+                Voir une séance exemple
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 

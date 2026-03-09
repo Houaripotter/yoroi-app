@@ -2,7 +2,7 @@ import React, { useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { ScrollableLineChart } from '../../charts/ScrollableLineChart';
-import { Moon, Plus, ChevronRight } from 'lucide-react-native';
+import { Moon, Plus, ChevronRight, Coffee, Brain } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -24,6 +24,7 @@ interface SommeilTabProps {
   };
   sleepHistory: { date: string; value: number }[];
   rawSleepHistory?: any[];
+  mindfulMinutes?: number;
   onMetricPress?: (metric: { key: string; label: string; color: string; unit: string; icon: React.ReactNode }) => void;
 }
 
@@ -46,20 +47,79 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
   sleepComparisonData,
   sleepHistory,
   rawSleepHistory = [],
+  mindfulMinutes = 0,
   onMetricPress,
 }) => {
   const { colors, isDark } = useTheme();
 
   const avgHours = sleepPhasesData.totalSleepMin > 0 ? sleepPhasesData.totalSleepMin / 60 : 0;
 
+  // Score de sommeil A/B/C/D basé sur durée + phases
+  const sleepScore = useMemo(() => {
+    const avg = sleepPhasesData.totalSleepMin;
+    if (avg === 0) return null;
+    const hours = avg / 60;
+
+    // Score durée (sur 100)
+    let durationScore = 0;
+    if (hours >= 7 && hours <= 9) durationScore = 100;
+    else if (hours > 9 && hours <= 10) durationScore = 80;
+    else if (hours >= 6 && hours < 7) durationScore = 65;
+    else if (hours >= 5 && hours < 6) durationScore = 35;
+    else durationScore = 10;
+
+    // Score phases (sur 100)
+    const total = sleepPhasesData.avgDeep + sleepPhasesData.avgRem + sleepPhasesData.avgCore + sleepPhasesData.avgAwake;
+    let phaseScore = 70; // neutre si pas de données
+    if (total > 0) {
+      const deepRatio = sleepPhasesData.avgDeep / total;
+      const remRatio = sleepPhasesData.avgRem / total;
+      const deepScore = deepRatio >= 0.13 && deepRatio <= 0.28 ? 100 : deepRatio > 0.05 ? 60 : 20;
+      const remScore = remRatio >= 0.18 && remRatio <= 0.30 ? 100 : remRatio > 0.08 ? 60 : 20;
+      phaseScore = (deepScore + remScore) / 2;
+    }
+
+    const final = Math.round(durationScore * 0.6 + phaseScore * 0.4);
+    if (final >= 85) return { grade: 'A', label: 'Excellent', color: '#22C55E' };
+    if (final >= 70) return { grade: 'B', label: 'Bon', color: '#3B82F6' };
+    if (final >= 50) return { grade: 'C', label: 'Moyen', color: '#F59E0B' };
+    return { grade: 'D', label: 'Insuffisant', color: '#EF4444' };
+  }, [sleepPhasesData]);
+
   // Defensive + Memoize sorted nights (max 50 for display)
   const safeSleepHistory = Array.isArray(rawSleepHistory) ? rawSleepHistory : [];
   const safeSleepChartHistory = Array.isArray(sleepHistory) ? sleepHistory : [];
   const sortedNights = useMemo(
     () => [...safeSleepHistory]
-      .filter(item => item?.date)
+      .filter(item => {
+        if (!item?.date) return false;
+        const total = item.total || item.duration || 0;
+        // Exclure les siestes (< 3h en journée)
+        if (total > 0 && total < 180) {
+          if (!item.startTime) return false;
+          const hour = new Date(item.startTime).getHours();
+          if (hour >= 9 && hour <= 21) return false;
+        }
+        return true;
+      })
       .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
       .slice(0, 50),
+    [safeSleepHistory]
+  );
+
+  // Siestes = sommeil < 3h en journée (9h-21h)
+  const siestes = useMemo(
+    () => [...safeSleepHistory]
+      .filter(item => {
+        if (!item?.date) return false;
+        const total = item.total || item.duration || 0;
+        if (total <= 0 || total >= 180) return false;
+        if (!item.startTime) return true; // durée courte sans heure → probablement sieste
+        const hour = new Date(item.startTime).getHours();
+        return hour >= 9 && hour <= 21;
+      })
+      .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+      .slice(0, 10),
     [safeSleepHistory]
   );
 
@@ -157,6 +217,14 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
             <Text style={[styles.heroSubLabel, { color: colors.textMuted }]}>
               Hors éveils · peut différer d'Apple Santé
             </Text>
+            {sleepScore && (
+              <View style={styles.scoreRow}>
+                <View style={[styles.scoreBadge, { backgroundColor: sleepScore.color + '22', borderColor: sleepScore.color + '55' }]}>
+                  <Text style={[styles.scoreGrade, { color: sleepScore.color }]}>{sleepScore.grade}</Text>
+                </View>
+                <Text style={[styles.scoreLabel, { color: sleepScore.color }]}>{sleepScore.label}</Text>
+              </View>
+            )}
             <View style={[styles.seeDetailRow]}>
               <Moon size={13} color={'#6366F1'} strokeWidth={2} />
               <Text style={[styles.seeDetailText, { color: '#6366F1' }]}>
@@ -260,6 +328,33 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
         </View>
       )}
 
+      {/* Minutes de meditation */}
+      {mindfulMinutes > 0 && (
+        <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+          <View style={styles.mindfulHeader}>
+            <Brain size={18} color="#8B5CF6" strokeWidth={2} />
+            <Text style={[styles.cardTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
+              Meditation du jour
+            </Text>
+          </View>
+          <View style={styles.mindfulRow}>
+            <Text style={[styles.mindfulValue, { color: '#8B5CF6' }]}>
+              {mindfulMinutes}
+            </Text>
+            <Text style={[styles.mindfulUnit, { color: colors.textMuted }]}>
+              min
+            </Text>
+          </View>
+          <Text style={[styles.mindfulNote, { color: colors.textMuted }]}>
+            {mindfulMinutes >= 10
+              ? 'Bonne seance de pleine conscience'
+              : mindfulMinutes >= 5
+              ? 'Continue comme ca'
+              : 'Chaque minute compte'}
+          </Text>
+        </View>
+      )}
+
       {/* Graphique historique */}
       {safeSleepChartHistory.length > 0 && (
         <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
@@ -296,6 +391,71 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
             windowSize={5}
             removeClippedSubviews={true}
           />
+        </View>
+      )}
+
+      {/* Siestes detectees */}
+      {siestes.length > 0 && (
+        <View>
+          <View style={styles.siestesTitleRow}>
+            <Coffee size={16} color="#F59E0B" strokeWidth={2} />
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
+              Siestes ({siestes.length})
+            </Text>
+          </View>
+          {siestes.map((sieste, index) => {
+            const total = sieste.total || sieste.duration || 0;
+            const minutes = Math.round(total);
+            let formattedDate = sieste.date || '';
+            try {
+              formattedDate = format(parseISO(sieste.date), 'EEE d MMM', { locale: fr });
+            } catch {}
+
+            let timeStr = '';
+            if (sieste.startTime) {
+              try {
+                const d = new Date(sieste.startTime);
+                timeStr = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+              } catch {}
+            }
+
+            const isFirst = index === 0;
+            const isLast = index === siestes.length - 1;
+
+            return (
+              <View
+                key={(sieste.date || '') + index}
+                style={[
+                  styles.siesteRow,
+                  {
+                    backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+                    borderBottomColor: isLast ? 'transparent' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'),
+                  },
+                  isFirst && styles.siesteRowFirst,
+                  isLast && styles.siesteRowLast,
+                ]}
+              >
+                <View style={styles.siesteIcon}>
+                  <Coffee size={14} color="#F59E0B" strokeWidth={2} />
+                </View>
+                <View style={styles.siesteInfo}>
+                  <Text style={[styles.siesteDate, { color: colors.textPrimary }]}>
+                    {formattedDate}
+                  </Text>
+                  {timeStr ? (
+                    <Text style={[styles.siesteTime, { color: colors.textMuted }]}>
+                      a {timeStr}
+                    </Text>
+                  ) : null}
+                </View>
+                <Text style={[styles.siesteDuration, { color: '#F59E0B' }]}>
+                  {minutes >= 60
+                    ? `${Math.floor(minutes / 60)}h ${(minutes % 60).toString().padStart(2, '0')}min`
+                    : `${minutes} min`}
+                </Text>
+              </View>
+            );
+          })}
         </View>
       )}
     </View>
@@ -461,6 +621,55 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '500',
   },
+  mindfulHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  mindfulRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+    marginBottom: 6,
+  },
+  mindfulValue: {
+    fontSize: 36,
+    fontWeight: '700',
+    letterSpacing: -1,
+  },
+  mindfulUnit: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  mindfulNote: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  scoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 10,
+    marginBottom: 2,
+  },
+  scoreBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scoreGrade: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  scoreLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
   seeDetailRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -470,5 +679,56 @@ const styles = StyleSheet.create({
   seeDetailText: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  siestesTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  siesteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  siesteRowFirst: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  siesteRowLast: {
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    marginBottom: 12,
+  },
+  siesteIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  siesteInfo: {
+    flex: 1,
+  },
+  siesteDate: {
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+    textTransform: 'capitalize',
+  },
+  siesteTime: {
+    fontSize: 12,
+    fontWeight: '400',
+    marginTop: 2,
+  },
+  siesteDuration: {
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
 });

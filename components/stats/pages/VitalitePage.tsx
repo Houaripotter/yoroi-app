@@ -84,7 +84,8 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
     standHours: any[];
     spo2: any[];
     respiratoryRate: any[];
-  }>({ sleep: [], heartRate: [], hrv: [], steps: [], calories: [], distance: [], exerciseMinutes: [], standHours: [], spo2: [], respiratoryRate: [] });
+    vo2max: any[];
+  }>({ sleep: [], heartRate: [], hrv: [], steps: [], calories: [], distance: [], exerciseMinutes: [], standHours: [], spo2: [], respiratoryRate: [], vo2max: [] });
 
   const [sleepPhasesData, setSleepPhasesData] = useState<{
     avgAwake: number; avgRem: number; avgCore: number; avgDeep: number;
@@ -105,6 +106,11 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
   const [todayExerciseMinutes, setTodayExerciseMinutes] = useState(0);
   const [todayStandHours, setTodayStandHours] = useState(0);
 
+  const [todayFloors, setTodayFloors] = useState(0);
+  const [todayMindfulMinutes, setTodayMindfulMinutes] = useState(0);
+  const [todayHydration, setTodayHydration] = useState(0);
+  const [todayBodyTemp, setTodayBodyTemp] = useState(0);
+  const [todayBloodGlucose, setTodayBloodGlucose] = useState(0);
   const [tabLoading, setTabLoading] = useState(false);
   const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set());
 
@@ -130,7 +136,7 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
   // Invalider les tabs chargees ET vider les données quand la periode change
   useEffect(() => {
     setLoadedTabs(new Set());
-    setVitalHistory({ sleep: [], heartRate: [], hrv: [], steps: [], calories: [], distance: [], exerciseMinutes: [], standHours: [], spo2: [], respiratoryRate: [] });
+    setVitalHistory({ sleep: [], heartRate: [], hrv: [], steps: [], calories: [], distance: [], exerciseMinutes: [], standHours: [], spo2: [], respiratoryRate: [], vo2max: [] });
     setRawSleepHistory([]);
     setTrainings([]);
     setSleepPhasesData({ avgAwake: 0, avgRem: 0, avgCore: 0, avgDeep: 0, totalSleepMin: 0, nightsCount: 0 });
@@ -220,16 +226,23 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
 
       const results = await Promise.race([
         Promise.allSettled([
-          healthConnect.getLastSleep(),
-          healthConnect.getTodayHeartRate(),
-          healthConnect.getTodayHRV(),
-          healthConnect.getOxygenSaturation?.(),
-          healthConnect.getRespiratoryRate?.(),
-          healthConnect.getTodaySteps(),
-          healthConnect.getTodayCalories(),
-          healthConnect.getTodayDistance?.(),
-          healthConnect.getTodayExerciseMinutes?.(),
-          healthConnect.getTodayStandHours?.(),
+          healthConnect.getLastSleep(),                      // 0
+          healthConnect.getTodayHeartRate(),                 // 1
+          healthConnect.getTodayHRV(),                       // 2
+          healthConnect.getOxygenSaturation?.(),             // 3
+          healthConnect.getRespiratoryRate?.(),              // 4
+          healthConnect.getTodaySteps(),                     // 5
+          healthConnect.getTodayCalories(),                  // 6
+          healthConnect.getTodayDistance?.(),                // 7
+          healthConnect.getTodayExerciseMinutes?.(),         // 8
+          healthConnect.getTodayStandHours?.(),              // 9
+          (healthConnect.getVO2Max?.() ?? Promise.resolve(null)),          // 10
+          (healthConnect.getBloodPressure?.() ?? Promise.resolve(null)),   // 11
+          (healthConnect.getFloorsClimbed?.() ?? Promise.resolve(null)),   // 12
+          (healthConnect.getMindfulMinutes?.() ?? Promise.resolve(null)),  // 13
+          (healthConnect.getTodayHydration?.() ?? Promise.resolve(null)),  // 14
+          (healthConnect.getBodyTemperature?.() ?? Promise.resolve(null)), // 15
+          (healthConnect.getBloodGlucose?.() ?? Promise.resolve(null)),    // 16
         ]),
         timeoutPromise,
       ]);
@@ -239,8 +252,10 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
       const hrv = results[2].status === 'fulfilled' ? results[2].value : { value: 0, baseline: 0 };
       const oxygenSaturation = results[3].status === 'fulfilled' ? results[3].value : null;
       const respiratoryRate = results[4].status === 'fulfilled' ? results[4].value : null;
+      const vo2max = (results as any)[10]?.status === 'fulfilled' ? (results as any)[10].value : null;
+      const bloodPressure = (results as any)[11]?.status === 'fulfilled' ? (results as any)[11].value : null;
 
-      setHealthData({ sleep, heartRate, hrv, oxygenSaturation, respiratoryRate });
+      setHealthData({ sleep, heartRate, hrv, oxygenSaturation, respiratoryRate, vo2max, bloodPressure });
       setTodaySteps((results[5] as any).status === 'fulfilled' ? (results[5] as any).value?.count || 0 : 0);
       setTodayCalories((results[6] as any).status === 'fulfilled' ? (results[6] as any).value?.active || 0 : 0);
       // Distance en km
@@ -249,6 +264,23 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
       setTodayDistance(dist);
       setTodayExerciseMinutes(results[8]?.status === 'fulfilled' ? ((results[8] as any).value || 0) : 0);
       setTodayStandHours(results[9]?.status === 'fulfilled' ? ((results[9] as any).value || 0) : 0);
+      setTodayFloors((results as any)[12]?.status === 'fulfilled' ? ((results as any)[12].value || 0) : 0);
+      const mindfulData = (results as any)[13]?.status === 'fulfilled' ? (results as any)[13].value : null;
+      setTodayMindfulMinutes(mindfulData?.minutes || 0);
+      const hydrationData = (results as any)[14]?.status === 'fulfilled' ? (results as any)[14].value : null;
+      setTodayHydration(hydrationData?.amount || 0);
+      const bodyTempData = (results as any)[15]?.status === 'fulfilled' ? (results as any)[15].value : null;
+      setTodayBodyTemp(bodyTempData?.value || 0);
+      const bloodGlucoseData = (results as any)[16]?.status === 'fulfilled' ? (results as any)[16].value : null;
+      setTodayBloodGlucose(bloodGlucoseData?.value || 0);
+      // Ajouter bodyTemperature et bloodGlucose dans healthData pour les tabs
+      if (bodyTempData || bloodGlucoseData) {
+        setHealthData((prev: any) => prev ? {
+          ...prev,
+          bodyTemperature: bodyTempData,
+          bloodGlucose: bloodGlucoseData,
+        } : prev);
+      }
     } catch (error) {
       logger.error('Error loading base health data:', error);
     } finally {
@@ -328,14 +360,16 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
         }
 
         case 'signes': {
-          const [heartRateHistory, hrvHistory, spo2History] = await withTimeout(
+          const [heartRateHistory, hrvHistory, spo2History, respRateHistory, vo2maxHistory] = await withTimeout(
             Promise.all([
               healthConnect.getRestingHRHistory?.(days) || [],
               healthConnect.getHRVHistory?.(days) || [],
               (healthConnect.getOxygenSaturationHistory?.(days) ?? Promise.resolve([])).catch(() => []),
+              (healthConnect.getRespiratoryRateHistory?.(days) ?? Promise.resolve([])).catch(() => []),
+              (healthConnect.getVO2MaxHistory?.(days) ?? Promise.resolve([])).catch(() => []),
             ]),
             timeoutMs,
-            [[], [], []]
+            [[], [], [], [], []]
           );
 
           // HRV baseline
@@ -354,6 +388,12 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
             })).reverse() : [],
             spo2: Array.isArray(spo2History) ? spo2History.map((s: any) => ({
               date: s.date, value: s.value || 0,
+            })).reverse() : [],
+            respiratoryRate: Array.isArray(respRateHistory) ? respRateHistory.map((r: any) => ({
+              date: r.date, value: r.value || 0,
+            })).reverse() : [],
+            vo2max: Array.isArray(vo2maxHistory) ? vo2maxHistory.map((v: any) => ({
+              date: v.date, value: v.value || 0,
             })).reverse() : [],
           }));
           break;
@@ -681,6 +721,7 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
             sleepComparisonData={sleepComparisonData}
             sleepHistory={vitalHistory.sleep}
             rawSleepHistory={rawSleepHistory}
+            mindfulMinutes={todayMindfulMinutes}
             onMetricPress={setSelectedMetric}
           />
         )}
@@ -698,10 +739,15 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
             hrv={healthData?.hrv}
             oxygenSaturation={healthData?.oxygenSaturation}
             respiratoryRate={healthData?.respiratoryRate}
+            vo2max={healthData?.vo2max}
+            bloodPressure={healthData?.bloodPressure}
+            bodyTemperature={healthData?.bodyTemperature}
+            bloodGlucose={healthData?.bloodGlucose}
             heartRateHistory={vitalHistory.heartRate}
             hrvHistory={vitalHistory.hrv}
             spo2History={vitalHistory.spo2}
             respiratoryRateHistory={vitalHistory.respiratoryRate}
+            vo2maxHistory={vitalHistory.vo2max}
             onMetricPress={setSelectedMetric}
           />
         )}
@@ -716,6 +762,11 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
             distance={todayDistance}
             exerciseMinutes={todayExerciseMinutes}
             standHours={todayStandHours}
+            floors={todayFloors}
+            todayHydration={todayHydration}
+            weeklyExerciseMinutes={vitalHistory.exerciseMinutes
+              .slice(0, 7)
+              .reduce((sum, d) => sum + (d.value || 0), 0)}
             stepsHistory={vitalHistory.steps}
             caloriesHistory={vitalHistory.calories}
             distanceHistory={vitalHistory.distance}

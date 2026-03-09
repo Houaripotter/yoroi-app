@@ -41,6 +41,8 @@ import { roninModeService, RONIN_THEME } from '@/lib/roninMode';
 import { saveTrainingLoad } from '@/lib/trainingLoadService';
 import { useLiveActivity } from '@/lib/hooks/useLiveActivity';
 import { timerNotifications } from '@/lib/timerNotifications';
+import { flashService } from '@/lib/flashService';
+import { backgroundTaskService } from '@/lib/backgroundTaskService';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -389,6 +391,10 @@ export default function TimerScreen() {
         timerNotifications.scheduleTimerEndNotification(mode, initialTime)
           .catch(e => logger.error('Notification error:', e));
       }
+
+      // Demander du temps d'exécution iOS en arrière-plan
+      // (garde le JS vivant ~30s après verrouillage → le flash JS peut toujours tirer)
+      backgroundTaskService.begin();
     }
 
     // Garder l'ecran allume pendant le timer (sans bloquer)
@@ -402,7 +408,7 @@ export default function TimerScreen() {
   const pauseTimer = () => {
     triggerHaptic('light');
     deactivateKeepAwake();
-    // Annuler la notification planifiée
+    backgroundTaskService.end();
     timerNotifications.cancelNotification().catch(e => logger.error('Cancel notification error:', e));
     setTimerState('paused');
   };
@@ -411,7 +417,7 @@ export default function TimerScreen() {
   const resumeTimer = () => {
     triggerHaptic('light');
     activateKeepAwakeAsync().catch(e => logger.error('KeepAwake error:', e));
-    // Replanifier la notification avec le temps restant
+    backgroundTaskService.begin();
     if (mode !== 'fortime' && timeRemaining > 0) {
       timerNotifications.scheduleTimerEndNotification(mode, timeRemaining)
         .catch(e => logger.error('Notification error:', e));
@@ -423,9 +429,9 @@ export default function TimerScreen() {
   const resetTimer = () => {
     triggerHaptic('medium');
     deactivateKeepAwake();
+    backgroundTaskService.end();
     setTimerState('idle');
 
-    // Annuler la notification planifiée
     timerNotifications.cancelNotification().catch(e => logger.error('Cancel notification error:', e));
 
     // Arrêter la Live Activity
@@ -699,7 +705,10 @@ export default function TimerScreen() {
               soundManager.playBeep();
             }
             triggerHaptic('heavy');
-            Vibration.vibrate([0, 500, 200, 500]);
+            Vibration.vibrate([0, 500, 200, 500, 200, 500]);
+            // Flash + libération tâche arrière-plan
+            flashService.alarm();
+            backgroundTaskService.end();
 
             // Logique selon le mode
             switch (mode) {
@@ -1485,114 +1494,55 @@ export default function TimerScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Timer Display */}
-        <View style={[
-          styles.timerContainer,
-          timerState !== 'idle' && {
-            backgroundColor: `${statusColor}08`,
-            borderRadius: RADIUS.xxl,
-            padding: SPACING.xl,
-          }
-        ]}>
+        {/* ── Timer : cercle à gauche, boutons à droite ── */}
+        <View style={styles.timerContainer}>
+
+          {/* Cercle compact */}
           <View style={styles.progressRing}>
-            <Svg width={340} height={340} style={styles.svgRing}>
+            <Svg width={220} height={220} style={styles.svgRing}>
               <Circle
-                cx={170}
-                cy={170}
-                r={155}
-                stroke={`${statusColor}15`}
-                strokeWidth={8}
+                cx={110}
+                cy={110}
+                r={98}
+                stroke={`${statusColor}18`}
+                strokeWidth={10}
                 fill="transparent"
               />
               <Circle
-                cx={170}
-                cy={170}
-                r={155}
+                cx={110}
+                cy={110}
+                r={98}
                 stroke={statusColor}
-                strokeWidth={8}
+                strokeWidth={10}
                 fill="transparent"
-                strokeDasharray={2 * Math.PI * 155}
-                strokeDashoffset={2 * Math.PI * 155 * (1 - progress / 100)}
+                strokeDasharray={2 * Math.PI * 98}
+                strokeDashoffset={2 * Math.PI * 98 * (1 - progress / 100)}
                 strokeLinecap="round"
-                transform="rotate(-90 170 170)"
+                transform="rotate(-90 110 110)"
               />
             </Svg>
 
             <View style={styles.timeDisplay}>
-              {/* Boutons play/stop inline avec le temps */}
-              <View style={styles.inlineControls}>
-                {/* Bouton Stop/Reset à gauche */}
-                {timerState !== 'idle' && (
-                  <TouchableOpacity
-                    style={[styles.inlineControlBtn, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}
-                    onPress={resetTimer}
-                  >
-                    <Square size={22} color="#EF4444" fill="#EF4444" />
-                  </TouchableOpacity>
-                )}
-                {timerState === 'idle' && <View style={styles.inlineControlPlaceholder} />}
+              <Text style={[
+                styles.timeText,
+                { color: statusColor },
+                isRoninMode && {
+                  fontSize: RONIN_THEME.timer.fontSize,
+                  fontWeight: RONIN_THEME.timer.fontWeight as any,
+                  color: RONIN_THEME.timer.color,
+                }
+              ]}>
+                {formatTime(timeRemaining)}
+              </Text>
 
-                {/* Temps au centre */}
-                <Text style={[
-                  styles.timeText,
-                  { color: statusColor },
-                  isRoninMode && {
-                    fontSize: RONIN_THEME.timer.fontSize,
-                    fontWeight: RONIN_THEME.timer.fontWeight as any,
-                    color: RONIN_THEME.timer.color,
-                  }
-                ]}>
-                  {formatTime(timeRemaining)}
-                </Text>
-
-                {/* Bouton Play/Pause à droite */}
-                {timerState === 'idle' && (
-                  <TouchableOpacity
-                    style={[styles.inlineControlBtn, { backgroundColor: `${colors.accent}25` }]}
-                    onPress={startTimer}
-                  >
-                    <Play size={22} color={colors.accent} fill={colors.accent} />
-                  </TouchableOpacity>
-                )}
-                {timerState === 'running' && (
-                  <TouchableOpacity
-                    style={[styles.inlineControlBtn, { backgroundColor: 'rgba(251, 191, 36, 0.15)' }]}
-                    onPress={pauseTimer}
-                  >
-                    <Pause size={22} color="#FBBF24" fill="#FBBF24" />
-                  </TouchableOpacity>
-                )}
-                {timerState === 'paused' && (
-                  <TouchableOpacity
-                    style={[styles.inlineControlBtn, { backgroundColor: `${colors.accent}25` }]}
-                    onPress={resumeTimer}
-                  >
-                    <Play size={22} color={colors.accent} fill={colors.accent} />
-                  </TouchableOpacity>
-                )}
-                {timerState === 'finished' && <View style={styles.inlineControlPlaceholder} />}
-              </View>
-              {/* Format fraction pour le mode combat */}
               {mode === 'combat' ? (
                 <View style={styles.fractionDisplay}>
-                  <Text style={[
-                    styles.statusText,
-                    { color: statusColor },
-                    isRoninMode && {
-                      fontSize: RONIN_THEME.phase.fontSize,
-                      fontWeight: RONIN_THEME.phase.fontWeight as any,
-                      letterSpacing: RONIN_THEME.phase.letterSpacing,
-                      color: RONIN_THEME.phase.color,
-                    }
-                  ]}>
-                    {isInRest ? 'REPOS' : `ROUND ${currentRound}/${totalRounds}`}
+                  <Text style={[styles.statusText, { color: statusColor }]}>
+                    {isInRest ? 'REPOS' : `R${currentRound}/${totalRounds}`}
                   </Text>
                   <View style={[styles.fractionLine, { backgroundColor: statusColor }]} />
-                  <Text style={[
-                    styles.fractionBottom,
-                    { color: colors.textMuted },
-                    isRoninMode && { color: RONIN_THEME.text }
-                  ]}>
-                    {isInRest ? `Prochain round : ${currentRound + 1}/${totalRounds}` : `Temps de repos : ${formatTime(restDuration)}`}
+                  <Text style={[styles.fractionBottom, { color: colors.textMuted }]}>
+                    {isInRest ? `Prochain: R${currentRound + 1}` : `Repos: ${formatTime(restDuration)}`}
                   </Text>
                 </View>
               ) : (
@@ -1609,12 +1559,54 @@ export default function TimerScreen() {
                   {getStatusText()}
                 </Text>
               )}
+
               {timeRemaining <= 10 && timerState === 'running' && (
-                <Text style={[styles.warningText, { color: '#EF4444' }]}>
-                  PREPARE-TOI !
-                </Text>
+                <Text style={[styles.warningText, { color: '#EF4444' }]}>GO !</Text>
               )}
             </View>
+          </View>
+
+          {/* Boutons à droite du cercle */}
+          <View style={styles.timerBtnsCol}>
+            {/* Bouton principal : Play / Pause */}
+            {timerState === 'idle' && (
+              <TouchableOpacity
+                style={[styles.timerBtnMain, { backgroundColor: statusColor }]}
+                onPress={startTimer}
+                activeOpacity={0.78}
+              >
+                <Play size={32} color="#fff" fill="#fff" />
+              </TouchableOpacity>
+            )}
+            {timerState === 'running' && (
+              <TouchableOpacity
+                style={[styles.timerBtnMain, { backgroundColor: '#3B82F6' }]}
+                onPress={pauseTimer}
+                activeOpacity={0.78}
+              >
+                <Pause size={28} color="#fff" fill="#fff" />
+              </TouchableOpacity>
+            )}
+            {timerState === 'paused' && (
+              <TouchableOpacity
+                style={[styles.timerBtnMain, { backgroundColor: statusColor }]}
+                onPress={resumeTimer}
+                activeOpacity={0.78}
+              >
+                <Play size={32} color="#fff" fill="#fff" />
+              </TouchableOpacity>
+            )}
+
+            {/* Bouton Stop — secondaire, visible seulement si actif */}
+            {timerState !== 'idle' && (
+              <TouchableOpacity
+                style={styles.timerBtnStop}
+                onPress={resetTimer}
+                activeOpacity={0.78}
+              >
+                <Square size={20} color="#fff" fill="#fff" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -1898,15 +1890,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Timer
+  // Timer — layout horizontal : cercle + boutons côte à côte
   timerContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.xl,
-    marginTop: SPACING.lg,
+    justifyContent: 'center',
+    marginBottom: SPACING.lg,
+    marginTop: SPACING.md,
+    gap: 28,
   },
   progressRing: {
-    width: 340,
-    height: 340,
+    width: 220,
+    height: 220,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1915,29 +1910,43 @@ const styles = StyleSheet.create({
   },
   timeDisplay: {
     alignItems: 'center',
-  },
-  inlineControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
-  },
-  inlineControlBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inlineControlPlaceholder: {
-    width: 48,
-    height: 48,
   },
   timeText: {
-    fontSize: 96,
+    fontSize: 54,
     fontWeight: '200',
     fontVariant: ['tabular-nums'],
-    letterSpacing: 4,
+    letterSpacing: 1,
+  },
+  // Colonne de boutons à droite du cercle
+  timerBtnsCol: {
+    alignItems: 'center',
+    gap: 14,
+  },
+  timerBtnMain: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  timerBtnStop: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EF4444',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.30,
+    shadowRadius: 6,
+    elevation: 4,
   },
   statusText: {
     fontSize: 24,

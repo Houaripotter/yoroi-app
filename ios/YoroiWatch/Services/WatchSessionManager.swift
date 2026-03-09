@@ -671,6 +671,44 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     }
   }
 
+  // MARK: - Weekly Stats
+
+  var weeklyWorkoutCount: Int {
+    let calendar = Calendar.current
+    let now = Date()
+    let fmt = DateFormatter()
+    fmt.dateFormat = "yyyy-MM-dd"
+    return recentWorkouts.filter { entry in
+      guard let d = fmt.date(from: entry.date) else { return false }
+      return calendar.isDate(d, equalTo: now, toGranularity: .weekOfYear)
+    }.count
+  }
+
+  var weeklyCaloriesBurned: Int {
+    let calendar = Calendar.current
+    let now = Date()
+    let fmt = DateFormatter()
+    fmt.dateFormat = "yyyy-MM-dd"
+    return recentWorkouts.filter { entry in
+      guard let d = fmt.date(from: entry.date) else { return false }
+      return calendar.isDate(d, equalTo: now, toGranularity: .weekOfYear)
+    }.reduce(0) { $0 + $1.calories }
+  }
+
+  /// Delta poids vs il y a 7 jours (positif = prise, négatif = perte)
+  var weightTrendDelta: Double? {
+    let fmt = DateFormatter()
+    fmt.dateFormat = "yyyy-MM-dd"
+    let sorted = weightHistory.compactMap { entry -> (Double, Date)? in
+      guard let d = fmt.date(from: entry.date) else { return nil }
+      return (entry.weight, d)
+    }.sorted { $0.1 > $1.1 }
+    guard let latest = sorted.first else { return nil }
+    let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+    guard let prev = sorted.first(where: { $0.1 <= weekAgo }) else { return nil }
+    return latest.0 - prev.0
+  }
+
   func formattedTime(_ totalSeconds: Int) -> String {
     let h = totalSeconds / 3600
     let m = (totalSeconds % 3600) / 60

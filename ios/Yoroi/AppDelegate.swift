@@ -1,6 +1,8 @@
 import Expo
 import React
 import ReactAppDependencyProvider
+import UserNotifications
+import AVFoundation
 
 @UIApplicationMain
 public class AppDelegate: ExpoAppDelegate {
@@ -29,6 +31,9 @@ public class AppDelegate: ExpoAppDelegate {
       launchOptions: launchOptions)
 #endif
 
+    // Enregistrer le délégué de notifications pour intercepter les alarmes timer
+    UNUserNotificationCenter.current().delegate = self
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -52,6 +57,58 @@ public class AppDelegate: ExpoAppDelegate {
   }
 }
 
+// MARK: - Notification delegate : flash + vibration à la réception de l'alarme timer
+extension AppDelegate: UNUserNotificationCenterDelegate {
+
+  /// Appelé quand une notification arrive PENDANT que l'app est au premier plan
+  public func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    let data = notification.request.content.userInfo
+    if let type = data["type"] as? String, type == "timer_finished" {
+      flashAlarm()
+    }
+    completionHandler([.banner, .sound, .badge])
+  }
+
+  /// Appelé quand l'utilisateur tape sur la notification (app en veille/fond)
+  public func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    let data = response.notification.request.content.userInfo
+    if let type = data["type"] as? String, type == "timer_finished" {
+      flashAlarm()
+    }
+    completionHandler()
+  }
+
+  /// Flash stroboscopique : 6 clignotements de 250ms
+  private func flashAlarm() {
+    guard let device = AVCaptureDevice.default(for: .video),
+          device.hasTorch else { return }
+    var count = 0
+    Timer.scheduledTimer(withTimeInterval: 0.22, repeats: true) { timer in
+      do {
+        try device.lockForConfiguration()
+        device.torchMode = (count % 2 == 0) ? .on : .off
+        device.unlockForConfiguration()
+      } catch {}
+      count += 1
+      if count >= 12 {
+        timer.invalidate()
+        try? device.lockForConfiguration()
+        device.torchMode = .off
+        device.unlockForConfiguration()
+      }
+    }
+  }
+}
+
+// MARK: -
 class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
   // Extension point for config-plugins
 

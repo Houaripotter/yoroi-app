@@ -8,5 +8,9 @@
     <true/>
     <key>com.apple.developer.healthkit.background-delivery</key>
     <true/>
+    <key>com.apple.developer.usernotifications.critical-alerts</key>
+    <true/>
+    <key>com.apple.developer.usernotifications.time-sensitive</key>
+    <true/>
   </dict>
 </plist>

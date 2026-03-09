@@ -166,13 +166,13 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
         identifier: "yoroi.calories",
         displayName: "Calories Actives",
         supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall],
-        userInfo: ["tabIndex": Tab.dashboard] as [AnyHashable: Any]
+        userInfo: ["tabIndex": Tab.workout] as [AnyHashable: Any]
       ),
       CLKComplicationDescriptor(
         identifier: "yoroi.distance",
         displayName: "Distance",
         supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall],
-        userInfo: ["tabIndex": Tab.dashboard] as [AnyHashable: Any]
+        userInfo: ["tabIndex": Tab.workout] as [AnyHashable: Any]
       ),
       CLKComplicationDescriptor(
         identifier: "yoroi.rank",
@@ -191,6 +191,12 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
         displayName: "FR – Fréquence Respiratoire",
         supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall, .modularSmall],
         userInfo: ["tabIndex": Tab.dashboard] as [AnyHashable: Any]
+      ),
+      CLKComplicationDescriptor(
+        identifier: "yoroi.addexercice",
+        displayName: "Carnet – Ajouter une série",
+        supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall],
+        userInfo: ["tabIndex": Tab.carnet] as [AnyHashable: Any]
       ),
     ]
     handler(descriptors)
@@ -240,6 +246,7 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     case "yoroi.rank":       return rankTemplate(family: complication.family)
     case "yoroi.restinghr":  return restingHRTemplate(family: complication.family)
     case "yoroi.respiratory": return respiratoryTemplate(family: complication.family)
+    case "yoroi.addexercice": return addExerciceTemplate(family: complication.family)
     default:                  return nil
     }
   }
@@ -923,6 +930,48 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
       let t = CLKComplicationTemplateModularSmallStackText()
       t.line1TextProvider = CLKSimpleTextProvider(text: "FR")
       t.line2TextProvider = CLKSimpleTextProvider(text: text)
+      return t
+
+    default: return nil
+    }
+  }
+
+  // MARK: - Ajouter Exercice
+  // Complication dédiée pour ouvrir le Carnet et logger une série rapidement
+
+  private func addExerciceTemplate(family: CLKComplicationFamily) -> CLKComplicationTemplate? {
+    let prCount = carnetTotalPRs
+    let lastEx  = carnetLastExercise
+
+    switch family {
+
+    case .graphicCircular:
+      let t = CLKComplicationTemplateGraphicCircularStackText()
+      t.line1TextProvider = CLKSimpleTextProvider(text: "+")
+      t.line2TextProvider = CLKSimpleTextProvider(text: "CARNET")
+      return t
+
+    case .graphicCorner:
+      let t = CLKComplicationTemplateGraphicCornerStackText()
+      t.innerTextProvider = CLKSimpleTextProvider(text: prCount > 0 ? "\(prCount) PRs" : "Logger")
+      t.outerTextProvider = CLKSimpleTextProvider(
+        text: lastEx.isEmpty ? "Carnet YOROI" : lastEx,
+        shortText: "Carnet"
+      )
+      return t
+
+    case .graphicRectangular:
+      let t = CLKComplicationTemplateGraphicRectangularStandardBody()
+      t.headerTextProvider = CLKSimpleTextProvider(text: "Carnet YOROI")
+      t.body1TextProvider  = CLKSimpleTextProvider(text: "Logger une série")
+      t.body2TextProvider  = CLKSimpleTextProvider(
+        text: prCount > 0 ? "\(prCount) exercices logués" : "Démarre ta séance !"
+      )
+      return t
+
+    case .utilitarianSmall:
+      let t = CLKComplicationTemplateUtilitarianSmallFlat()
+      t.textProvider = CLKSimpleTextProvider(text: "+ Série", shortText: "+")
       return t
 
     default: return nil

@@ -2,7 +2,7 @@ import React, { useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { ScrollableLineChart } from '../../charts/ScrollableLineChart';
-import { Footprints, Route, Timer, PersonStanding, Flame } from 'lucide-react-native';
+import { Footprints, Route, Timer, PersonStanding, Flame, Building2, Target, Droplets } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -12,12 +12,17 @@ interface PasTabProps {
   distance: number;
   exerciseMinutes: number;
   standHours: number;
+  floors?: number;
+  weeklyExerciseMinutes?: number;
+  todayHydration?: number;
   stepsHistory: { date: string; value: number }[];
   caloriesHistory: { date: string; value: number }[];
   distanceHistory: { date: string; value: number }[];
   exerciseMinutesHistory: { date: string; value: number }[];
   standHoursHistory: { date: string; value: number }[];
 }
+
+const WEEKLY_GOAL = 150; // OMS recommande 150 min/semaine
 
 const getStepsColor = (value: number): string => {
   if (value >= 10000) return '#22C55E';
@@ -32,6 +37,9 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
   distance,
   exerciseMinutes,
   standHours,
+  floors = 0,
+  weeklyExerciseMinutes = 0,
+  todayHydration = 0,
   stepsHistory,
   caloriesHistory,
   distanceHistory,
@@ -47,7 +55,7 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
   const safeExerciseHistory = Array.isArray(exerciseMinutesHistory) ? exerciseMinutesHistory : [];
   const safeStandHistory = Array.isArray(standHoursHistory) ? standHoursHistory : [];
 
-  const hasData = steps > 0 || calories > 0 || distance > 0 || exerciseMinutes > 0 || standHours > 0 || safeStepsHistory.length > 0;
+  const hasData = steps > 0 || calories > 0 || distance > 0 || exerciseMinutes > 0 || standHours > 0 || floors > 0 || safeStepsHistory.length > 0;
 
   // Memoize sorted + limited history (max 50 entries for display)
   const sortedHistory = useMemo(
@@ -158,8 +166,79 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
               <Text style={[styles.metricUnit, { color: colors.textMuted }]}>h debout</Text>
             </View>
           )}
+          {floors > 0 && (
+            <View style={styles.metricItem}>
+              <Building2 size={18} color="#A78BFA" strokeWidth={2} />
+              <Text style={[styles.metricValue, { color: '#A78BFA' }]}>
+                {Math.round(floors)}
+              </Text>
+              <Text style={[styles.metricUnit, { color: colors.textMuted }]}>étages</Text>
+            </View>
+          )}
         </View>
       </View>
+
+      {/* Minutes intensives hebdomadaires */}
+      {weeklyExerciseMinutes > 0 && (
+        <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+          <View style={styles.weeklyHeader}>
+            <Target size={18} color="#22C55E" strokeWidth={2} />
+            <Text style={[styles.cardTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
+              Minutes intensives / semaine
+            </Text>
+          </View>
+          <View style={styles.weeklyRow}>
+            <Text style={[styles.weeklyValue, { color: weeklyExerciseMinutes >= WEEKLY_GOAL ? '#22C55E' : '#F97316' }]}>
+              {Math.round(weeklyExerciseMinutes)}
+            </Text>
+            <Text style={[styles.weeklyGoal, { color: colors.textMuted }]}>/ {WEEKLY_GOAL} min</Text>
+          </View>
+          <View style={[styles.weeklyBarBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)' }]}>
+            <View style={[styles.weeklyBarFill, {
+              width: `${Math.min(100, (weeklyExerciseMinutes / WEEKLY_GOAL) * 100)}%`,
+              backgroundColor: weeklyExerciseMinutes >= WEEKLY_GOAL ? '#22C55E' : '#F97316',
+            }]} />
+          </View>
+          <Text style={[styles.weeklyNote, { color: colors.textMuted }]}>
+            {weeklyExerciseMinutes >= WEEKLY_GOAL
+              ? `Objectif OMS atteint (+${Math.round(weeklyExerciseMinutes - WEEKLY_GOAL)} min de bonus)`
+              : `${Math.round(WEEKLY_GOAL - weeklyExerciseMinutes)} min pour atteindre l'objectif OMS`}
+          </Text>
+        </View>
+      )}
+
+      {/* Hydratation */}
+      {todayHydration > 0 && (
+        <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+          <View style={styles.weeklyHeader}>
+            <Droplets size={18} color="#3B82F6" strokeWidth={2} />
+            <Text style={[styles.cardTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
+              Hydratation du jour
+            </Text>
+          </View>
+          <View style={styles.weeklyRow}>
+            <Text style={[styles.weeklyValue, { color: todayHydration >= 2000 ? '#22C55E' : '#3B82F6' }]}>
+              {todayHydration >= 1000
+                ? `${(todayHydration / 1000).toFixed(1)}`
+                : `${todayHydration}`}
+            </Text>
+            <Text style={[styles.weeklyGoal, { color: colors.textMuted }]}>
+              {todayHydration >= 1000 ? '/ 2 L' : '/ 2000 ml'}
+            </Text>
+          </View>
+          <View style={[styles.weeklyBarBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)' }]}>
+            <View style={[styles.weeklyBarFill, {
+              width: `${Math.min(100, (todayHydration / 2000) * 100)}%`,
+              backgroundColor: todayHydration >= 2000 ? '#22C55E' : '#3B82F6',
+            }]} />
+          </View>
+          <Text style={[styles.weeklyNote, { color: colors.textMuted }]}>
+            {todayHydration >= 2000
+              ? `Objectif atteint (+${Math.round((todayHydration - 2000))} ml de bonus)`
+              : `${Math.round(2000 - todayHydration)} ml pour atteindre l'objectif`}
+          </Text>
+        </View>
+      )}
 
       {/* Graphique pas */}
       {safeStepsHistory.length > 0 && (
@@ -317,6 +396,41 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 10,
     letterSpacing: -0.3,
+  },
+  weeklyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  weeklyRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+    marginBottom: 10,
+  },
+  weeklyValue: {
+    fontSize: 36,
+    fontWeight: '700',
+    letterSpacing: -1,
+  },
+  weeklyGoal: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  weeklyBarBg: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  weeklyBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  weeklyNote: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   dayRow: {
     flexDirection: 'row',

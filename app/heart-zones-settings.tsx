@@ -2,8 +2,8 @@
 // YOROI - CONFIGURATION ZONES CARDIAQUES
 // ============================================
 // L'utilisateur saisit ses 4 seuils personnels (BPM)
-// Les 5 zones sont calculées automatiquement.
-// Ces zones sont ensuite utilisées dans tous les détails de séances.
+// identiques à ce qu'affiche Apple Santé / Google Fit.
+// Calcul Karvonen disponible (méthode "fréquence de repos" d'Apple).
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Heart, ChevronLeft, Check } from 'lucide-react-native';
+import { Heart, ChevronLeft, Check, Calculator, BookOpen } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { getUserSettings, saveUserSettings } from '@/lib/storage';
 
@@ -26,18 +26,27 @@ const ZONE_COLORS = ['#3B82F6', '#22C55E', '#EAB308', '#F97316', '#EF4444'];
 const ZONE_NAMES = ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5'];
 const ZONE_LABELS = ['Récupération', 'Endurance', 'Tempo', 'Seuil', 'Max'];
 
+type CalcMode = 'manual' | 'karvonen';
+
 export default function HeartZonesSettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
 
+  // Seuils manuels
   const [z1max, setZ1max] = useState('119');
   const [z2max, setZ2max] = useState('135');
   const [z3max, setZ3max] = useState('150');
   const [z4max, setZ4max] = useState('169');
   const [saved, setSaved] = useState(false);
   const [hasExisting, setHasExisting] = useState(false);
-  const [age, setAge] = useState('');
+
+  // Mode de calcul
+  const [calcMode, setCalcMode] = useState<CalcMode>('manual');
+
+  // Karvonen : FCmax + FC repos
+  const [fcmax, setFcmax] = useState('');
+  const [fcrepos, setFcrepos] = useState('');
 
   useEffect(() => {
     getUserSettings().then(s => {
@@ -48,20 +57,25 @@ export default function HeartZonesSettingsScreen() {
         setZ4max(String(s.heartRateZones.z4max));
         setHasExisting(true);
       }
-      // Note: l'âge n'est pas stocké dans UserSettings, on le laisse vide
     });
   }, []);
 
-  const handleAutoCalculate = () => {
-    const a = parseInt(age);
-    if (!a || a < 10 || a > 100) return;
-    const fcmax = 220 - a;
-    // Seuils Apple Fitness : 60% / 70% / 80% / 90% de FCmax
-    setZ1max(String(Math.round(fcmax * 0.60)));
-    setZ2max(String(Math.round(fcmax * 0.70)));
-    setZ3max(String(Math.round(fcmax * 0.80)));
-    setZ4max(String(Math.round(fcmax * 0.90)));
+  // Calcul Karvonen : identique à la méthode "fréquence de repos" d'Apple
+  // Seuils : réserve × 60/70/80/90% + FC repos
+  const handleKarvonenCalc = () => {
+    const max = parseInt(fcmax);
+    const repos = parseInt(fcrepos);
+    if (!max || !repos || max <= repos || max > 230 || repos < 30) return;
+    const reserve = max - repos;
+    setZ1max(String(Math.round(repos + reserve * 0.60)));
+    setZ2max(String(Math.round(repos + reserve * 0.70)));
+    setZ3max(String(Math.round(repos + reserve * 0.80)));
+    setZ4max(String(Math.round(repos + reserve * 0.90)));
+    setCalcMode('manual'); // bascule sur la vue manuelle pour confirmer/affiner
   };
+
+  const karvonenReady =
+    parseInt(fcmax) > 100 && parseInt(fcrepos) >= 30 && parseInt(fcmax) > parseInt(fcrepos);
 
   const v1 = parseInt(z1max) || 0;
   const v2 = parseInt(z2max) || 0;
@@ -98,9 +112,9 @@ export default function HeartZonesSettingsScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: isDark ? '#000000' : '#F2F2F7' }]}>
         {/* Header */}
-        <View style={[styles.header, { paddingTop: insets.top + 12, backgroundColor: colors.background }]}>
+        <View style={[styles.header, { paddingTop: insets.top + 12, backgroundColor: isDark ? '#000000' : '#F2F2F7' }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <ChevronLeft size={24} color={colors.text} />
           </TouchableOpacity>
@@ -112,85 +126,138 @@ export default function HeartZonesSettingsScreen() {
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Explication */}
+          {/* Info : où trouver ses zones */}
           <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)', borderColor: 'rgba(59,130,246,0.25)' }]}>
-            <Heart size={16} color="#3B82F6" />
+            <BookOpen size={16} color="#3B82F6" />
             <Text style={[styles.infoText, { color: colors.textMuted }]}>
-              Entre tes 4 seuils personnels en BPM. Tu peux les retrouver dans l'app Forme (Apple Fitness) dans tes réglages de fréquence cardiaque.
+              Pour avoir les mêmes zones que Apple : ouvre{' '}
+              <Text style={{ fontWeight: '700', color: colors.text }}>Apple Santé</Text>
+              {' '}→ Résumé → Fréquence cardiaque → puis fais défiler jusqu'aux zones. Recopie les 4 seuils ici.
             </Text>
           </View>
 
-          {/* Calcul automatique */}
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>CALCUL AUTOMATIQUE</Text>
-          <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
-            <View style={[styles.row, { borderBottomWidth: 0 }]}>
-              <Text style={[styles.rowLabel, { color: colors.text }]}>Ton âge</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                    color: colors.text,
-                    borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)',
-                  },
-                ]}
-                value={age}
-                onChangeText={setAge}
-                keyboardType="number-pad"
-                placeholder="ex: 30"
-                placeholderTextColor={colors.textMuted}
-                maxLength={3}
-              />
-              <Text style={[styles.unit, { color: colors.textMuted }]}>ans</Text>
-            </View>
+          {/* Sélecteur de mode */}
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>MÉTHODE</Text>
+          <View style={[styles.modeRow, { backgroundColor: colors.backgroundCard }]}>
             <TouchableOpacity
-              style={[
-                styles.autoCalcBtn,
-                {
-                  backgroundColor: parseInt(age) >= 10 ? 'rgba(59,130,246,0.12)' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'),
-                  borderColor: parseInt(age) >= 10 ? 'rgba(59,130,246,0.25)' : 'transparent',
-                },
-              ]}
-              onPress={handleAutoCalculate}
-              disabled={!parseInt(age) || parseInt(age) < 10}
-              activeOpacity={0.7}
+              style={[styles.modeBtn, calcMode === 'manual' && { backgroundColor: '#EF4444' }]}
+              onPress={() => setCalcMode('manual')}
+              activeOpacity={0.8}
             >
-              <Text style={{ fontSize: 14, fontWeight: '700', color: parseInt(age) >= 10 ? '#3B82F6' : colors.textMuted }}>
-                Calculer mes zones (FCmax = {parseInt(age) >= 10 ? 220 - parseInt(age) : '?'} bpm)
+              <Text style={[styles.modeBtnText, { color: calcMode === 'manual' ? '#FFF' : colors.textMuted }]}>
+                Saisie manuelle
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modeBtn, calcMode === 'karvonen' && { backgroundColor: '#3B82F6' }]}
+              onPress={() => setCalcMode('karvonen')}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.modeBtnText, { color: calcMode === 'karvonen' ? '#FFF' : colors.textMuted }]}>
+                Calcul Karvonen
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Seuils */}
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>TES SEUILS PERSONNELS</Text>
-
-          <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
-            {[
-              { label: 'Seuil Z1 / Z2', hint: 'ex: 119', value: z1max, set: setZ1max, color: ZONE_COLORS[0] },
-              { label: 'Seuil Z2 / Z3', hint: 'ex: 135', value: z2max, set: setZ2max, color: ZONE_COLORS[1] },
-              { label: 'Seuil Z3 / Z4', hint: 'ex: 150', value: z3max, set: setZ3max, color: ZONE_COLORS[2] },
-              { label: 'Seuil Z4 / Z5', hint: 'ex: 169', value: z4max, set: setZ4max, color: ZONE_COLORS[3] },
-            ].map((item, i) => (
-              <View key={i} style={[styles.row, i < 3 && { borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-                <View style={[styles.rowDot, { backgroundColor: item.color }]} />
-                <Text style={[styles.rowLabel, { color: colors.text }]}>{item.label}</Text>
-                <TextInput
-                  style={inputStyle}
-                  value={item.value}
-                  onChangeText={item.set}
-                  keyboardType="number-pad"
-                  placeholder={item.hint}
-                  placeholderTextColor={colors.textMuted}
-                  maxLength={3}
-                />
-                <Text style={[styles.unit, { color: colors.textMuted }]}>BPM</Text>
+          {/* ── MODE KARVONEN ── */}
+          {calcMode === 'karvonen' && (
+            <>
+              <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
+                <View style={[styles.row, { borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
+                  <Text style={[styles.rowLabel, { color: colors.text }]}>FC max</Text>
+                  <Text style={[styles.rowHint, { color: colors.textMuted }]}>ton maximum absolu</Text>
+                  <TextInput
+                    style={inputStyle}
+                    value={fcmax}
+                    onChangeText={setFcmax}
+                    keyboardType="number-pad"
+                    placeholder="190"
+                    placeholderTextColor={colors.textMuted}
+                    maxLength={3}
+                  />
+                  <Text style={[styles.unit, { color: colors.textMuted }]}>BPM</Text>
+                </View>
+                <View style={[styles.row, { borderBottomWidth: 0 }]}>
+                  <Text style={[styles.rowLabel, { color: colors.text }]}>FC repos</Text>
+                  <Text style={[styles.rowHint, { color: colors.textMuted }]}>le matin au réveil</Text>
+                  <TextInput
+                    style={inputStyle}
+                    value={fcrepos}
+                    onChangeText={setFcrepos}
+                    keyboardType="number-pad"
+                    placeholder="55"
+                    placeholderTextColor={colors.textMuted}
+                    maxLength={3}
+                  />
+                  <Text style={[styles.unit, { color: colors.textMuted }]}>BPM</Text>
+                </View>
               </View>
-            ))}
-          </View>
 
-          {/* Apercu zones */}
+              {karvonenReady && (
+                <View style={[styles.karvonenPreview, { backgroundColor: isDark ? 'rgba(59,130,246,0.08)' : 'rgba(59,130,246,0.06)', borderColor: 'rgba(59,130,246,0.2)' }]}>
+                  <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 6 }}>
+                    Réserve FC = {parseInt(fcmax)} − {parseInt(fcrepos)} = {parseInt(fcmax) - parseInt(fcrepos)} bpm
+                  </Text>
+                  {[0.60, 0.70, 0.80, 0.90].map((pct, i) => {
+                    const val = Math.round(parseInt(fcrepos) + (parseInt(fcmax) - parseInt(fcrepos)) * pct);
+                    return (
+                      <Text key={i} style={{ fontSize: 12, color: ZONE_COLORS[i], fontWeight: '600' }}>
+                        Seuil Z{i + 1}/Z{i + 2} : {val} BPM ({Math.round(pct * 100)}% réserve)
+                      </Text>
+                    );
+                  })}
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={[
+                  styles.calcBtn,
+                  { backgroundColor: karvonenReady ? '#3B82F6' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)') },
+                ]}
+                onPress={handleKarvonenCalc}
+                disabled={!karvonenReady}
+                activeOpacity={0.8}
+              >
+                <Calculator size={18} color={karvonenReady ? '#FFF' : colors.textMuted} />
+                <Text style={{ fontSize: 15, fontWeight: '700', color: karvonenReady ? '#FFF' : colors.textMuted }}>
+                  Appliquer ces zones
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {/* ── MODE MANUEL ── */}
+          {calcMode === 'manual' && (
+            <>
+              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>TES 4 SEUILS (en BPM)</Text>
+              <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
+                {[
+                  { label: 'Seuil Z1 / Z2', hint: 'ex: 119', value: z1max, set: setZ1max, color: ZONE_COLORS[0] },
+                  { label: 'Seuil Z2 / Z3', hint: 'ex: 135', value: z2max, set: setZ2max, color: ZONE_COLORS[1] },
+                  { label: 'Seuil Z3 / Z4', hint: 'ex: 150', value: z3max, set: setZ3max, color: ZONE_COLORS[2] },
+                  { label: 'Seuil Z4 / Z5', hint: 'ex: 169', value: z4max, set: setZ4max, color: ZONE_COLORS[3] },
+                ].map((item, i) => (
+                  <View key={i} style={[styles.row, i < 3 && { borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
+                    <View style={[styles.rowDot, { backgroundColor: item.color }]} />
+                    <Text style={[styles.rowLabel, { color: colors.text }]}>{item.label}</Text>
+                    <TextInput
+                      style={inputStyle}
+                      value={item.value}
+                      onChangeText={item.set}
+                      keyboardType="number-pad"
+                      placeholder={item.hint}
+                      placeholderTextColor={colors.textMuted}
+                      maxLength={3}
+                    />
+                    <Text style={[styles.unit, { color: colors.textMuted }]}>BPM</Text>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+
+          {/* Aperçu zones */}
           <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>APERCU DE TES ZONES</Text>
-
           <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
             {zones.map((z, i) => (
               <View key={i} style={[styles.zoneRow, i < 4 && { borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
@@ -252,12 +319,25 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 10,
     padding: 14,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
   },
   infoText: { flex: 1, fontSize: 13, lineHeight: 18 },
   sectionTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5, marginTop: 4 },
   card: { borderRadius: 16, overflow: 'hidden' },
+  modeRow: {
+    flexDirection: 'row',
+    borderRadius: 14,
+    padding: 4,
+    gap: 4,
+  },
+  modeBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modeBtnText: { fontSize: 13, fontWeight: '700' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -267,6 +347,7 @@ const styles = StyleSheet.create({
   },
   rowDot: { width: 10, height: 10, borderRadius: 5 },
   rowLabel: { flex: 1, fontSize: 14, fontWeight: '500' },
+  rowHint: { fontSize: 11, maxWidth: 80, textAlign: 'right' },
   input: {
     width: 64,
     height: 36,
@@ -277,13 +358,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   unit: { fontSize: 12, fontWeight: '500', width: 30 },
-  autoCalcBtn: {
-    marginHorizontal: 16,
-    marginBottom: 14,
-    paddingVertical: 12,
-    borderRadius: 10,
+  karvonenPreview: {
+    padding: 14,
+    borderRadius: 12,
     borderWidth: 1,
+    gap: 4,
+  },
+  calcBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 52,
+    borderRadius: 14,
   },
   zoneRow: {
     flexDirection: 'row',
