@@ -30,13 +30,13 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING } from '@/constants/appTheme';
-import { COACHES, NUTRITIONISTS, OSTEOPATHS, Coach, Nutritionist, Osteopath } from '@/data/partners';
+import { COACHES, NUTRITIONISTS, OSTEOPATHS, SPORT_DOCTORS, Coach, Nutritionist, Osteopath, SportDoctor } from '@/data/partners';
 
 export default function HealthProfessionalsScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const [activeTab, setActiveTab] = useState<'kines' | 'nutritionists' | 'osteos'>('kines');
-  const [selectedProfessional, setSelectedProfessional] = useState<Coach | Nutritionist | Osteopath | null>(null);
+  const [activeTab, setActiveTab] = useState<'kines' | 'nutritionists' | 'osteos' | 'sport-doctors'>('kines');
+  const [selectedProfessional, setSelectedProfessional] = useState<Coach | Nutritionist | Osteopath | SportDoctor | null>(null);
 
   // Filtrer les kinés depuis COACHES
   const kines = COACHES.filter(c => c.type === 'kine');
@@ -47,9 +47,7 @@ export default function HealthProfessionalsScreen() {
   };
 
   const openEmail = () => {
-    const email = 'yoroiapp@hotmail.com';
-    const subject = 'Partenariat Professionnel de Santé YOROI';
-    safeOpenURL(`mailto:${email}?subject=${encodeURIComponent(subject)}`);
+    safeOpenURL('https://www.instagram.com/yoroiapp');
   };
 
   const openWebsite = (url: string) => {
@@ -76,13 +74,18 @@ export default function HealthProfessionalsScreen() {
               Professionnels de Santé
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              Kinés, nutritionnistes et ostéopathes recommandés
+              Kinés, nutritionnistes, ostéopathes et médecins du sport
             </Text>
           </View>
         </View>
 
         {/* Tabs */}
-        <View style={[styles.tabs, { backgroundColor: colors.backgroundCard }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={[styles.tabs, { backgroundColor: colors.backgroundCard }]}
+          contentContainerStyle={{ flexDirection: 'row', padding: 4, gap: 4 }}
+        >
           <TouchableOpacity
             style={[
               styles.tab,
@@ -131,7 +134,23 @@ export default function HealthProfessionalsScreen() {
               Ostéos
             </Text>
           </TouchableOpacity>
-        </View>
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              activeTab === 'sport-doctors' && { backgroundColor: colors.accent },
+            ]}
+            onPress={() => setActiveTab('sport-doctors')}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                { color: activeTab === 'sport-doctors' ? colors.textOnAccent : colors.textPrimary },
+              ]}
+            >
+              Médecin
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
 
         {/* Liste Kinés */}
         {activeTab === 'kines' && (
@@ -203,6 +222,32 @@ export default function HealthProfessionalsScreen() {
           </View>
         )}
 
+        {/* Liste Médecins du Sport */}
+        {activeTab === 'sport-doctors' && (
+          <View style={styles.list}>
+            {SPORT_DOCTORS.length > 0 ? (
+              SPORT_DOCTORS.map(doctor => (
+                <ProfessionalCard
+                  key={doctor.id}
+                  professional={doctor}
+                  colors={colors}
+                  isDark={isDark}
+                  onPress={() => setSelectedProfessional(doctor)}
+                />
+              ))
+            ) : (
+              <View style={[styles.emptyState, { backgroundColor: colors.backgroundCard }]}>
+                <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                  Aucun médecin du sport pour le moment
+                </Text>
+                <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
+                  Les partenariats arrivent bientôt !
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Devenir Partenaire */}
         <View style={[styles.becomePartner, { backgroundColor: colors.backgroundCard }]}>
           <Text style={styles.becomePartnerIcon}></Text>
@@ -217,7 +262,7 @@ export default function HealthProfessionalsScreen() {
             onPress={openEmail}
             activeOpacity={0.8}
           >
-            <Mail size={18} color={colors.textOnAccent} />
+            <ExternalLink size={18} color={colors.textOnAccent} />
             <Text style={[styles.becomePartnerButtonText, { color: colors.textOnAccent }]}>
               Nous contacter
             </Text>
@@ -486,19 +531,19 @@ const styles = StyleSheet.create({
 
   // Tabs
   tabs: {
-    flexDirection: 'row',
-    padding: 4,
     borderRadius: 12,
     marginBottom: SPACING.lg,
+    flexGrow: 0,
   },
   tab: {
-    flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   tabText: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600',
   },
 

@@ -36,7 +36,7 @@ const COLORS = {
 
 // Generer le HTML pour le PDF
 const generatePDFHTML = async (period: ExportPeriod): Promise<string> => {
-  // Charger les donnees
+  // Charger les données
   const profile = await getProfile();
   const allWeights = await getAllMeasurements();
   const allMeasurements = await getMeasurements();
@@ -69,7 +69,7 @@ const generatePDFHTML = async (period: ExportPeriod): Promise<string> => {
   const lastMeasurement = measurements[measurements.length - 1];
 
   const dateStr = format(now, 'dd MMMM yyyy', { locale: fr });
-  const periodLabel = period === '30j' ? '30 derniers jours' : period === '90j' ? '90 derniers jours' : 'Toutes les donnees';
+  const periodLabel = period === '30j' ? '30 derniers jours' : period === '90j' ? '90 derniers jours' : 'Toutes les données';
 
   return `
 <!DOCTYPE html>
@@ -224,8 +224,8 @@ const generatePDFHTML = async (period: ExportPeriod): Promise<string> => {
     </div>
   </div>
 
-  <!-- RESUME POIDS -->
-  <h2>Resume du poids</h2>
+  <!-- RÉSUMÉ POIDS -->
+  <h2>Résumé du poids</h2>
   <div class="card">
     <div class="stats-grid">
       <div class="stat-item">
@@ -309,7 +309,7 @@ const generatePDFHTML = async (period: ExportPeriod): Promise<string> => {
   <!-- FOOTER -->
   <div class="footer">
     <p>Document genere par <strong>YOROI</strong> - Application de suivi fitness</p>
-    <p style="margin-top: 4px;">Ce rapport est fourni a titre informatif. Consultez un professionnel de sante pour toute decision medicale.</p>
+    <p style="margin-top: 4px;">Ce rapport est fourni a titre informatif. Consultez un professionnel de santé pour toute decision medicale.</p>
   </div>
 </body>
 </html>

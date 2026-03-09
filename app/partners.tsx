@@ -65,9 +65,12 @@ export default function PartnersScreen() {
   };
 
   const openEmail = (email?: string) => {
-    const emailAddress = email || 'yoroiapp@hotmail.com';
-    const subject = email ? 'Contact via YOROI' : 'Partenariat YOROI';
-    safeOpenURL(`mailto:${emailAddress}?subject=${encodeURIComponent(subject)}`);
+    if (!email) {
+      // Bouton "Nous contacter" → Instagram Yoroi
+      safeOpenURL('https://www.instagram.com/yoroiapp');
+      return;
+    }
+    safeOpenURL(`mailto:${email}?subject=${encodeURIComponent('Contact via YOROI')}`);
   };
 
   const openWebsite = (url: string) => {
@@ -183,7 +186,7 @@ export default function PartnersScreen() {
             onPress={() => openEmail()}
             activeOpacity={0.8}
           >
-            <Mail size={18} color={colors.textOnAccent} />
+            <ExternalLink size={18} color={colors.textOnAccent} />
             <Text style={[styles.becomePartnerButtonText, { color: colors.textOnAccent }]}>
               Nous contacter
             </Text>

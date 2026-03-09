@@ -247,11 +247,8 @@ export default function ThemesScreen() {
 
         {/* Header : apercu du theme actif */}
         <View style={[styles.headerPreview, { overflow: 'hidden' }]}>
-          <LinearGradient
-            colors={[activeAccent, activeCompanion]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.headerGradient}
+          <View
+            style={[styles.headerGradient, { backgroundColor: activeAccent }]}
           >
             {/* Kanji watermark */}
             <Text style={[styles.headerKanji, { color: 'rgba(255,255,255,0.15)' }]}>
@@ -272,7 +269,7 @@ export default function ThemesScreen() {
                 </Text>
               </View>
             </View>
-          </LinearGradient>
+          </View>
         </View>
 
         {/* Mode d'affichage */}
@@ -363,14 +360,12 @@ export default function ThemesScreen() {
                   disabled={!isUnlocked}
                   activeOpacity={0.7}
                 >
-                  {/* Banniere gradient accent -> companion */}
+                  {/* Banniere couleur unique */}
                   <View style={styles.bannerContainer}>
-                    <LinearGradient
-                      colors={[themeAccentColor, themeCompanionColor]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
+                    <View
                       style={[
                         styles.colorBanner,
+                        { backgroundColor: themeAccentColor },
                         isActive && { borderTopLeftRadius: 11, borderTopRightRadius: 11 },
                       ]}
                     />
@@ -382,10 +377,9 @@ export default function ThemesScreen() {
                       {theme.name}
                     </Text>
                     {isUnlocked ? (
-                      /* Deux cercles : couleur principale + couleur companion */
+                      /* Un seul cercle couleur */
                       <View style={styles.colorCirclesRow}>
                         <View style={[styles.colorCircle, { backgroundColor: themeAccentColor }]} />
-                        <View style={[styles.colorCircle, styles.colorCircleOverlap, { backgroundColor: themeCompanionColor }]} />
                       </View>
                     ) : (
                       <Text style={[styles.themeDescription, { color: colors.textMuted }]}>

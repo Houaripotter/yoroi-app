@@ -36,5 +36,5 @@ rootProject.name = 'Yoroi'
 expoAutolinking.useExpoVersionCatalog()
 
 include ':app'
-include ':wear'
+// include ':wear' // WearOS companion app - excluded from phone build
 includeBuild(expoAutolinking.reactNativeGradlePlugin)

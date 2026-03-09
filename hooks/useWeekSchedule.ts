@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { DeviceEventEmitter } from 'react-native';
 import { getTrainings, getClubs, Training, Club } from '@/lib/database';
 import { getDay, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { getWeekRestDays } from '@/lib/restDaysService';
@@ -54,6 +55,12 @@ export const useWeekSchedule = () => {
   // Charger au montage initial
   useEffect(() => {
     loadData();
+  }, [loadData]);
+
+  // Recharger instantanément quand une séance est ajoutée/modifiée
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadData);
+    return () => sub.remove();
   }, [loadData]);
 
   const weekSchedule: DaySchedule[] = useMemo(() => {

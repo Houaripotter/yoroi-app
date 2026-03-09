@@ -1,6 +1,6 @@
 // ============================================
 // ECRAN CRENEAUX REGULIERS
-// Page plein ecran pour gerer ses entrainements recurrents
+// Page plein ecran pour gerer ses entraînements recurrents
 // ============================================
 
 import React from 'react';

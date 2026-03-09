@@ -1,8 +1,7 @@
 // ============================================
-// YOROI - PLANNING SEANCES CONTENT
+// YOROI - PLANNING SÉANCES CONTENT
 // ============================================
-// Liste des seances avec filtre sport, navigation mois, resume
-// Affiche UNIQUEMENT les donnees reelles Apple Health / sources externes
+// Liste des séances avec filtre sport, navigation mois, résumé complet
 
 import React, { useState, useMemo } from 'react';
 import {
@@ -11,21 +10,43 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { Training } from '@/lib/database';
+import { Training, Club } from '@/lib/database';
 import { getSportIcon, getSportName, getSportColor } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ChevronLeft, ChevronRight, Dumbbell } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { format, parseISO, isSameMonth, addMonths, subMonths } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { router } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { WorkoutMapRoute } from '@/components/WorkoutMapRoute';
 
 interface PlanningSeancesContentProps {
   workouts: Training[];
+  clubs?: Club[];
+}
+
+interface RoutePoint {
+  latitude: number;
+  longitude: number;
+  altitude?: number;
+  speed?: number;
+}
+
+interface BoundingBox {
+  minLat: number; maxLat: number;
+  minLon: number; maxLon: number;
+}
+
+interface Split {
+  index: number;
+  distanceKm: number;
+  durationSeconds?: number;
+  paceSecondsPerKm: number;
+  elevationGain?: number;
+  avgHeartRate?: number;
 }
 
 interface ParsedDetails {
@@ -44,7 +65,9 @@ interface ParsedDetails {
   airQualityIndex?: number;
   airQualityCategory?: string;
   hasRoute?: boolean;
-  splitsCount?: number;
+  routePoints?: RoutePoint[];
+  routeBoundingBox?: BoundingBox;
+  splits?: Split[];
   recoveryHR?: { atEnd?: number; after1Min?: number; after2Min?: number };
   heartRateZones?: { zone: number; name: string; durationSeconds: number; color: string }[];
 }
@@ -52,8 +75,8 @@ interface ParsedDetails {
 const formatDuration = (minutes: number): string => {
   const h = Math.floor(minutes / 60);
   const m = Math.round(minutes % 60);
-  if (h === 0) return `${m} min`;
-  return `${h}h${m > 0 ? ` ${m.toString().padStart(2, '0')}` : ''}`;
+  if (h === 0) return `${m}min`;
+  return `${h}h${m > 0 ? `${m.toString().padStart(2, '0')}` : ''}`;
 };
 
 const formatDurationCompact = (minutes: number): string => {
@@ -72,7 +95,7 @@ const formatCalories = (cal: number): string => {
 const formatPace = (secondsPerKm: number): string => {
   const mins = Math.floor(secondsPerKm / 60);
   const secs = Math.round(secondsPerKm % 60);
-  return `${mins}'${secs.toString().padStart(2, '0')}"/km`;
+  return `${mins}'${secs.toString().padStart(2, '0')}"`;
 };
 
 const parseWorkoutDetails = (json?: string): ParsedDetails => {
@@ -95,7 +118,9 @@ const parseWorkoutDetails = (json?: string): ParsedDetails => {
       airQualityIndex: d.airQualityIndex || undefined,
       airQualityCategory: d.airQualityCategory || undefined,
       hasRoute: d.routePoints && d.routePoints.length > 0,
-      splitsCount: d.splits ? d.splits.length : undefined,
+      routePoints: d.routePoints && d.routePoints.length > 0 ? d.routePoints : undefined,
+      routeBoundingBox: d.routeBoundingBox || undefined,
+      splits: d.splits && d.splits.length > 0 ? d.splits : undefined,
       recoveryHR: d.recoveryHR || undefined,
       heartRateZones: d.heartRateZones || undefined,
     };
@@ -104,12 +129,95 @@ const parseWorkoutDetails = (json?: string): ParsedDetails => {
   }
 };
 
-export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ workouts }) => {
+// Badge de source (Apple Watch, Garmin, etc.)
+const SourceBadge = ({ source, colors, isDark }: { source?: string; colors: any; isDark: boolean }) => {
+  if (!source || source === 'manual') return null;
+  const srcMap: Record<string, { icon: string; label: string; color: string }> = {
+    apple_health: { icon: 'apple', label: 'Apple Health', color: '#FF2D55' },
+    apple_watch: { icon: 'watch', label: 'Apple Watch', color: '#FF2D55' },
+    garmin: { icon: 'watch-variant', label: 'Garmin', color: '#007ACC' },
+    samsung: { icon: 'samsung', label: 'Samsung', color: '#1428A0' },
+    strava: { icon: 'run-fast', label: 'Strava', color: '#FC4C02' },
+    wahoo: { icon: 'bike', label: 'Wahoo', color: '#009BDF' },
+    polar: { icon: 'heart-pulse', label: 'Polar', color: '#CC0000' },
+    suunto: { icon: 'compass', label: 'Suunto', color: '#E85D04' },
+  };
+  const info = srcMap[source] || { icon: 'sync', label: source, color: colors.textMuted };
+  return (
+    <View style={[badgeStyles.sourceBadge, { backgroundColor: info.color + '18' }]}>
+      <MaterialCommunityIcons name={info.icon as any} size={11} color={info.color} />
+      <Text style={[badgeStyles.sourceBadgeText, { color: info.color }]}>{info.label}</Text>
+    </View>
+  );
+};
+
+const badgeStyles = StyleSheet.create({
+  sourceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  sourceBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+});
+
+// Intensité RPE sous forme de barres
+const IntensityBar = ({ value, color }: { value: number; color: string }) => {
+  const bars = 10;
+  return (
+    <View style={{ flexDirection: 'row', gap: 2, alignItems: 'center' }}>
+      {Array.from({ length: bars }).map((_, i) => (
+        <View
+          key={i}
+          style={{
+            width: 5,
+            height: i < value ? 10 + (i * 0.8) : 8,
+            borderRadius: 2,
+            backgroundColor: i < value ? color : 'rgba(128,128,128,0.18)',
+          }}
+        />
+      ))}
+    </View>
+  );
+};
+
+// Étoiles technique
+const TechniqueStars = ({ value, color }: { value: number; color: string }) => (
+  <View style={{ flexDirection: 'row', gap: 2 }}>
+    {[1, 2, 3, 4, 5].map(i => (
+      <MaterialCommunityIcons
+        key={i}
+        name={i <= value ? 'star' : 'star-outline'}
+        size={13}
+        color={i <= value ? color : 'rgba(128,128,128,0.35)'}
+      />
+    ))}
+  </View>
+);
+
+export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ workouts, clubs = [] }) => {
   const { colors, isDark } = useTheme();
   const { t, locale } = useI18n();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedSport, setSelectedSport] = useState<string>('all');
   const [showAllMonths, setShowAllMonths] = useState(true);
+  const [expandedGPS, setExpandedGPS] = useState<Set<number>>(new Set());
+
+  const toggleGPS = (id: number) => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    setExpandedGPS(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const dateLocale = locale === 'fr' ? fr : enUS;
 
@@ -122,11 +230,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
     () => showAllMonths
       ? allWorkoutsSorted
       : allWorkoutsSorted.filter(w => {
-          try {
-            return isSameMonth(parseISO(w.date), currentMonth);
-          } catch {
-            return false;
-          }
+          try { return isSameMonth(parseISO(w.date), currentMonth); } catch { return false; }
         }),
     [allWorkoutsSorted, currentMonth, showAllMonths]
   );
@@ -138,9 +242,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
 
   const sportCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    monthWorkouts.forEach(w => {
-      if (w.sport) counts[w.sport] = (counts[w.sport] || 0) + 1;
-    });
+    monthWorkouts.forEach(w => { if (w.sport) counts[w.sport] = (counts[w.sport] || 0) + 1; });
     return counts;
   }, [monthWorkouts]);
 
@@ -149,10 +251,10 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
     [monthWorkouts, selectedSport]
   );
 
-  // Summary stats - only real data, no estimations
   const totalSessions = filteredWorkouts.length;
   const totalMinutes = filteredWorkouts.reduce((sum, w) => sum + (w.duration_minutes || w.duration || 0), 0);
   const totalCalories = filteredWorkouts.reduce((sum, w) => sum + (w.calories || 0), 0);
+  const totalDistance = filteredWorkouts.reduce((sum, w) => sum + (w.distance || 0), 0);
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     impactAsync(ImpactFeedbackStyle.Light);
@@ -166,67 +268,61 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
     setSelectedSport('all');
   };
 
-  const summaryItems = [
-    { value: totalSessions.toString(), label: t('planning.sessions'), color: colors.accent },
-    { value: formatDurationCompact(totalMinutes), label: 'total', color: '#F97316' },
-    { value: totalCalories > 0 ? formatCalories(totalCalories) : '--', label: 'kcal', color: '#EF4444' },
-  ];
+  const cardBg = isDark ? colors.backgroundCard : '#FFFFFF';
+  const dividerColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
 
   return (
     <View style={styles.container}>
-      {/* Month navigation header */}
+
+      {/* ── HEADER MOIS ── */}
       <View style={styles.monthHeader}>
         {!showAllMonths && (
-          <TouchableOpacity onPress={() => navigateMonth('prev')} style={styles.monthArrow} activeOpacity={0.6}>
-            <ChevronLeft size={22} color={colors.textPrimary} />
+          <TouchableOpacity onPress={() => navigateMonth('prev')} style={styles.arrowBtn} activeOpacity={0.6}>
+            <ChevronLeft size={20} color={colors.textPrimary} />
           </TouchableOpacity>
         )}
-        <TouchableOpacity onPress={toggleMonthFilter} activeOpacity={0.7}>
+        <TouchableOpacity onPress={toggleMonthFilter} activeOpacity={0.75} style={{ flex: 1, alignItems: 'center' }}>
           <Text style={[styles.monthTitle, { color: colors.textPrimary }]}>
             {showAllMonths
-              ? (locale === 'fr' ? 'Toutes les seances' : 'All sessions')
-              : format(currentMonth, 'MMMM yyyy', { locale: dateLocale }).replace(/^\w/, c => c.toUpperCase())
-            }
+              ? 'Toutes les séances'
+              : format(currentMonth, 'MMMM yyyy', { locale: dateLocale }).replace(/^\w/, c => c.toUpperCase())}
           </Text>
         </TouchableOpacity>
         {!showAllMonths && (
-          <TouchableOpacity onPress={() => navigateMonth('next')} style={styles.monthArrow} activeOpacity={0.6}>
-            <ChevronRight size={22} color={colors.textPrimary} />
+          <TouchableOpacity onPress={() => navigateMonth('next')} style={styles.arrowBtn} activeOpacity={0.6}>
+            <ChevronRight size={20} color={colors.textPrimary} />
           </TouchableOpacity>
         )}
         <TouchableOpacity
           onPress={toggleMonthFilter}
-          style={[styles.filterToggle, {
+          style={[styles.toggleBtn, {
             backgroundColor: showAllMonths
-              ? (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)')
-              : colors.accent,
+              ? (isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)')
+              : colors.accent + 'E0',
           }]}
-          activeOpacity={0.7}
+          activeOpacity={0.75}
         >
-          <Text style={[styles.filterToggleText, {
+          <Text style={[styles.toggleBtnText, {
             color: showAllMonths ? colors.textSecondary : colors.textOnAccent,
           }]}>
-            {showAllMonths ? (locale === 'fr' ? 'Par mois' : 'By month') : (locale === 'fr' ? 'Tout' : 'All')}
+            {showAllMonths ? 'Par mois' : 'Tout'}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Sport filter pills */}
+      {/* ── FILTRES SPORT ── */}
       {uniqueSports.length > 1 && (
         <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
+          horizontal showsHorizontalScrollIndicator={false}
           style={styles.filterScroll}
           contentContainerStyle={styles.filterContent}
         >
           <TouchableOpacity
             style={[styles.filterPill, {
-              backgroundColor: selectedSport === 'all'
-                ? colors.accent
-                : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+              backgroundColor: selectedSport === 'all' ? colors.accent : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
             }]}
             onPress={() => setSelectedSport('all')}
-            activeOpacity={0.7}
+            activeOpacity={0.75}
           >
             <Text style={[styles.filterPillText, {
               color: selectedSport === 'all' ? colors.textOnAccent : colors.textSecondary,
@@ -235,33 +331,22 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
             </Text>
           </TouchableOpacity>
 
-          {uniqueSports.map((sport) => {
+          {uniqueSports.map(sport => {
             const isActive = selectedSport === sport;
             const sportColor = getSportColor(sport);
             const sportIcon = getSportIcon(sport);
-            const sportName = getSportName(sport);
-            const count = sportCounts[sport] || 0;
-
             return (
               <TouchableOpacity
                 key={sport}
                 style={[styles.filterPill, {
-                  backgroundColor: isActive
-                    ? sportColor
-                    : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+                  backgroundColor: isActive ? sportColor : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
                 }]}
                 onPress={() => setSelectedSport(sport)}
-                activeOpacity={0.7}
+                activeOpacity={0.75}
               >
-                <MaterialCommunityIcons
-                  name={sportIcon as any}
-                  size={14}
-                  color={isActive ? '#FFFFFF' : sportColor}
-                />
-                <Text style={[styles.filterPillText, {
-                  color: isActive ? '#FFFFFF' : colors.textSecondary,
-                }]}>
-                  {sportName} ({count})
+                <MaterialCommunityIcons name={sportIcon as any} size={13} color={isActive ? '#FFF' : sportColor} />
+                <Text style={[styles.filterPillText, { color: isActive ? '#FFF' : colors.textSecondary }]}>
+                  {getSportName(sport)} ({sportCounts[sport] || 0})
                 </Text>
               </TouchableOpacity>
             );
@@ -269,232 +354,364 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
         </ScrollView>
       )}
 
-      {/* Summary chips */}
-      <View style={styles.summaryRow}>
-        {summaryItems.map((item, i) => (
-          <View
-            key={i}
-            style={[styles.summaryCard, {
-              backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
-              borderLeftWidth: 3,
-              borderLeftColor: item.color,
-            }]}
-          >
-            <Text style={[styles.summaryValue, { color: item.color }]}>{item.value}</Text>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{item.label}</Text>
-          </View>
-        ))}
+      {/* ── RÉSUMÉ STATS ── */}
+      <View style={[styles.summaryStrip, { backgroundColor: cardBg }]}>
+        <View style={styles.summaryItem}>
+          <Text style={[styles.summaryNum, { color: colors.accent }]}>{totalSessions}</Text>
+          <Text style={[styles.summaryLbl, { color: colors.textMuted }]}>{t('planning.sessions')}</Text>
+        </View>
+        <View style={[styles.summaryDivider, { backgroundColor: dividerColor }]} />
+        <View style={styles.summaryItem}>
+          <Text style={[styles.summaryNum, { color: '#F97316' }]}>{formatDurationCompact(totalMinutes)}</Text>
+          <Text style={[styles.summaryLbl, { color: colors.textMuted }]}>total</Text>
+        </View>
+        {totalCalories > 0 && (
+          <>
+            <View style={[styles.summaryDivider, { backgroundColor: dividerColor }]} />
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryNum, { color: '#EF4444' }]}>{formatCalories(totalCalories)}</Text>
+              <Text style={[styles.summaryLbl, { color: colors.textMuted }]}>kcal</Text>
+            </View>
+          </>
+        )}
+        {totalDistance > 0.1 && (
+          <>
+            <View style={[styles.summaryDivider, { backgroundColor: dividerColor }]} />
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryNum, { color: '#22C55E' }]}>{totalDistance.toFixed(1)} km</Text>
+              <Text style={[styles.summaryLbl, { color: colors.textMuted }]}>distance</Text>
+            </View>
+          </>
+        )}
       </View>
 
-      {/* Empty state */}
+      {/* ── ÉTAT VIDE ── */}
       {filteredWorkouts.length === 0 && (
-        <View style={[styles.emptyCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
-          <Dumbbell size={40} color={colors.textMuted} strokeWidth={1.5} />
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            {t('planning.noSessions')}
-          </Text>
+        <View style={[styles.emptyCard, { backgroundColor: cardBg }]}>
+          <Dumbbell size={38} color={colors.textMuted} strokeWidth={1.5} />
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('planning.noSessions')}</Text>
         </View>
       )}
 
-      {/* Sessions list */}
+      {/* ── LISTE DES SÉANCES ── */}
       {filteredWorkouts.map((training, index) => {
+        const sportColor = getSportColor(training.sport);
         const sportIcon = getSportIcon(training.sport);
         const sportName = getSportName(training.sport);
-        const sportColor = getSportColor(training.sport);
         const duration = training.duration_minutes || training.duration || 0;
         const det = parseWorkoutDetails(training.workout_details_json);
 
-        // Distance: from details or training field
+        // Métriques
         const distance = det.distanceKm || training.distance || 0;
-        // Pace: only from Apple Health
         const pace = det.avgPaceSecondsPerKm;
-        // Elevation
         const elevUp = det.elevationAscended;
         const elevDown = det.elevationDescended;
-        // HR: from details or training field
         const avgHR = det.avgHeartRate || training.heart_rate || 0;
         const maxHR = det.maxHeartRate || training.max_heart_rate || 0;
         const minHR = det.minHeartRate || 0;
-        // Calories: only real (from Apple Health)
         const cal = det.activeCalories || training.calories || 0;
-        // Weather
+        const hrZones = det.heartRateZones;
         const weather = det.weatherTemp != null ? det.weatherTemp : undefined;
         const humidity = det.weatherHumidity;
         const weatherCond = det.weatherCondition;
-        // Air quality
         const aqi = det.airQualityIndex;
         const aqiCat = det.airQualityCategory;
-        // GPS & splits
         const hasGPS = det.hasRoute;
-        const splits = det.splitsCount;
-        // Recovery HR
         const recovery = det.recoveryHR;
-        // HR Zones
-        const hrZones = det.heartRateZones;
 
+        // Club associé
+        const club = training.club_id ? clubs.find(c => c.id === training.club_id) : null;
+
+        // Date et heure
         let dateStr = '';
         let timeStr = '';
         try {
           const d = parseISO(training.date);
-          dateStr = format(d, 'EEE d MMM yyyy', { locale: dateLocale });
+          dateStr = format(d, 'EEE d MMM', { locale: dateLocale });
           if (training.start_time) {
             const [sh, sm] = training.start_time.split(':').map(Number);
             const endMin = sh * 60 + sm + duration;
             const eh = Math.floor(endMin / 60) % 24;
             const em = endMin % 60;
-            timeStr = `${sh.toString().padStart(2, '0')}:${sm.toString().padStart(2, '0')}-${eh.toString().padStart(2, '0')}:${em.toString().padStart(2, '0')}`;
+            timeStr = `${sh.toString().padStart(2, '0')}:${sm.toString().padStart(2, '0')} – ${eh.toString().padStart(2, '0')}:${em.toString().padStart(2, '0')}`;
           }
-        } catch {
-          dateStr = training.date;
+        } catch { dateStr = training.date; }
+
+        // Types de session
+        let sessionTypes: string[] = [];
+        if (training.session_types) {
+          try { sessionTypes = JSON.parse(training.session_types); } catch {}
+        } else if (training.session_type) {
+          sessionTypes = [training.session_type];
         }
 
-        const hasSecondaryData = distance > 0 || avgHR > 0 || pace || elevUp || weather != null || aqi;
+        // Muscles
+        let muscleGroups: string[] = [];
+        if (training.muscles) {
+          try { muscleGroups = JSON.parse(training.muscles); } catch {}
+        }
+
+        const hasMetrics = duration > 0 || cal > 0 || distance > 0 || avgHR > 0 || training.watts || training.speed || training.cadence || training.rounds;
+        const intensityVal = training.intensity || 0;
+        const techniqueVal = training.technique_rating || 0;
 
         return (
+          <React.Fragment key={training.id ?? index}>
           <TouchableOpacity
-            key={training.id || index}
-            style={[styles.sessionCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}
-            activeOpacity={0.7}
+            style={[styles.card, { backgroundColor: cardBg, borderLeftColor: sportColor }]}
+            activeOpacity={0.75}
             onPress={() => {
-              if (training.id) {
+              if (training.id != null) {
                 impactAsync(ImpactFeedbackStyle.Light);
                 router.push(`/workout-detail?id=${training.id}` as any);
               }
             }}
           >
-            <View style={styles.sessionRow}>
-              {/* Sport icon */}
-              <View style={[styles.sportIconContainer, { backgroundColor: sportColor + '18' }]}>
+            {/* ── LIGNE 1 : Sport + Source ── */}
+            <View style={styles.cardHeader}>
+              <View style={[styles.sportIconWrap, { backgroundColor: sportColor + '20' }]}>
                 <MaterialCommunityIcons name={sportIcon as any} size={22} color={sportColor} />
               </View>
-
-              {/* Main info */}
-              <View style={styles.sessionInfo}>
-                <Text style={[styles.sessionSport, { color: colors.textPrimary }]} numberOfLines={1}>
+              <View style={styles.headerInfo}>
+                <Text style={[styles.sportTitle, { color: colors.textPrimary }]} numberOfLines={1}>
                   {sportName}
+                  {club ? <Text style={[styles.clubLabel, { color: sportColor }]}> · {club.name}</Text> : null}
                 </Text>
-                <Text style={[styles.sessionDate, { color: colors.textMuted }]}>
-                  {dateStr}{timeStr ? ` \u00B7 ${timeStr}` : ''}
-                </Text>
+                <View style={styles.dateRow}>
+                  <Text style={[styles.dateText, { color: colors.textSecondary }]}>{dateStr}</Text>
+                  {timeStr ? <Text style={[styles.timeText, { color: colors.textMuted }]}> · {timeStr}</Text> : null}
+                </View>
               </View>
-
-              {/* Metrics right */}
-              <View style={styles.sessionMetrics}>
-                {duration > 0 && (
-                  <Text style={[styles.sessionMetricValue, { color: colors.textPrimary }]}>
-                    {formatDuration(duration)}
-                  </Text>
-                )}
-                {cal > 0 && (
-                  <Text style={[styles.sessionMetricSub, { color: '#F97316' }]}>
-                    {cal} kcal
-                  </Text>
-                )}
-              </View>
+              <SourceBadge source={training.source} colors={colors} isDark={isDark} />
+              <ChevronRight size={16} color={colors.textMuted} style={{ marginLeft: 4 }} />
             </View>
 
-            {/* Secondary line: all Apple Health data */}
-            {hasSecondaryData && (
-              <View style={[styles.sessionSecondary, { borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-                {/* Distance */}
-                {distance > 0 && (
-                  <View style={styles.metricChip}>
-                    <MaterialCommunityIcons name="map-marker-distance" size={12} color={colors.textMuted} />
-                    <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
-                      {distance.toFixed(2)} km
-                    </Text>
+            {/* ── BADGES : types session, outdoor, GPS ── */}
+            {(sessionTypes.length > 0 || training.is_outdoor || hasGPS || training.location_name || training.technical_theme) && (
+              <View style={styles.tagsRow}>
+                {sessionTypes.map((st, i) => (
+                  <View key={i} style={[styles.tag, { backgroundColor: sportColor + '18' }]}>
+                    <Text style={[styles.tagText, { color: sportColor }]}>{st}</Text>
+                  </View>
+                ))}
+                {training.is_outdoor && (
+                  <View style={[styles.tag, { backgroundColor: '#22C55E18' }]}>
+                    <MaterialCommunityIcons name="nature" size={11} color="#22C55E" />
+                    <Text style={[styles.tagText, { color: '#22C55E' }]}>Extérieur</Text>
                   </View>
                 )}
-                {/* Pace */}
-                {pace && pace > 0 && pace < 1800 && (
-                  <View style={styles.metricChip}>
-                    <MaterialCommunityIcons name="speedometer" size={12} color={colors.textMuted} />
-                    <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
-                      {formatPace(pace)}
-                    </Text>
-                  </View>
-                )}
-                {/* Elevation */}
-                {elevUp != null && elevUp > 0 && (
-                  <View style={styles.metricChip}>
-                    <MaterialCommunityIcons name="elevation-rise" size={12} color={colors.textMuted} />
-                    <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
-                      +{Math.round(elevUp)}m
-                      {elevDown != null && elevDown > 0 ? ` / -${Math.round(elevDown)}m` : ''}
-                    </Text>
-                  </View>
-                )}
-                {/* Heart rate */}
-                {avgHR > 0 && (
-                  <View style={styles.metricChip}>
-                    <MaterialCommunityIcons name="heart-pulse" size={12} color="#EF4444" />
-                    <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
-                      {minHR > 0 ? `${minHR}/` : ''}{avgHR}{maxHR > 0 ? `/${maxHR}` : ''} bpm
-                    </Text>
-                  </View>
-                )}
-                {/* GPS */}
                 {hasGPS && (
-                  <View style={styles.metricChip}>
-                    <MaterialCommunityIcons name="crosshairs-gps" size={12} color="#3B82F6" />
-                    <Text style={[styles.sessionSecondaryText, { color: '#3B82F6' }]}>GPS</Text>
+                  <View style={[styles.tag, { backgroundColor: '#3B82F618' }]}>
+                    <MaterialCommunityIcons name="crosshairs-gps" size={11} color="#3B82F6" />
+                    <Text style={[styles.tagText, { color: '#3B82F6' }]}>GPS</Text>
                   </View>
                 )}
-                {/* Splits */}
-                {splits != null && splits > 0 && (
-                  <View style={styles.metricChip}>
-                    <MaterialCommunityIcons name="chart-timeline-variant" size={12} color={colors.textMuted} />
-                    <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
-                      {splits} splits
-                    </Text>
+                {training.location_name && (
+                  <View style={[styles.tag, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)' }]}>
+                    <MaterialCommunityIcons name="map-marker-outline" size={11} color={colors.textMuted} />
+                    <Text style={[styles.tagText, { color: colors.textMuted }]} numberOfLines={1}>{training.location_name}</Text>
+                  </View>
+                )}
+                {training.technical_theme && (
+                  <View style={[styles.tag, { backgroundColor: '#8B5CF618' }]}>
+                    <MaterialCommunityIcons name="lightbulb-outline" size={11} color="#8B5CF6" />
+                    <Text style={[styles.tagText, { color: '#8B5CF6' }]} numberOfLines={1}>{training.technical_theme}</Text>
                   </View>
                 )}
               </View>
             )}
 
-            {/* HR Zones compact bar */}
-            {hrZones && hrZones.some(z => z.durationSeconds > 0) && (
-              <View style={styles.zonesRow}>
-                <Text style={[styles.zonesLabel, { color: colors.textMuted }]}>Zones FC</Text>
-                <View style={styles.zonesBar}>
-                  {(() => {
-                    const totalZ = hrZones.reduce((s, z) => s + z.durationSeconds, 0);
-                    if (totalZ === 0) return null;
-                    return hrZones.map((z, i) => {
+            {/* ── GRILLE MÉTRIQUES ── */}
+            {hasMetrics && (
+              <View style={[styles.metricsGrid, { borderTopColor: dividerColor }]}>
+                {duration > 0 && (
+                  <View style={styles.metricItem}>
+                    <MaterialCommunityIcons name="clock-outline" size={15} color={colors.textMuted} />
+                    <Text style={[styles.metricValue, { color: colors.textPrimary }]}>{formatDuration(duration)}</Text>
+                    <Text style={[styles.metricLabel, { color: colors.textMuted }]}>durée</Text>
+                  </View>
+                )}
+                {cal > 0 && (
+                  <View style={styles.metricItem}>
+                    <MaterialCommunityIcons name="fire" size={15} color="#F97316" />
+                    <Text style={[styles.metricValue, { color: colors.textPrimary }]}>{formatCalories(cal)}</Text>
+                    <Text style={[styles.metricLabel, { color: colors.textMuted }]}>kcal</Text>
+                  </View>
+                )}
+                {distance > 0 && (
+                  <View style={styles.metricItem}>
+                    <MaterialCommunityIcons name="map-marker-distance" size={15} color="#22C55E" />
+                    <Text style={[styles.metricValue, { color: colors.textPrimary }]}>{distance.toFixed(2)}</Text>
+                    <Text style={[styles.metricLabel, { color: colors.textMuted }]}>km</Text>
+                  </View>
+                )}
+                {avgHR > 0 && (
+                  <View style={styles.metricItem}>
+                    <MaterialCommunityIcons name="heart-pulse" size={15} color="#EF4444" />
+                    <Text style={[styles.metricValue, { color: colors.textPrimary }]}>{avgHR}</Text>
+                    <Text style={[styles.metricLabel, { color: colors.textMuted }]}>bpm moy</Text>
+                  </View>
+                )}
+                {maxHR > 0 && (
+                  <View style={styles.metricItem}>
+                    <MaterialCommunityIcons name="heart-flash" size={15} color="#EF4444" />
+                    <Text style={[styles.metricValue, { color: colors.textPrimary }]}>{maxHR}</Text>
+                    <Text style={[styles.metricLabel, { color: colors.textMuted }]}>bpm max</Text>
+                  </View>
+                )}
+                {pace && pace > 0 && pace < 1800 && (
+                  <View style={styles.metricItem}>
+                    <MaterialCommunityIcons name="speedometer" size={15} color="#06B6D4" />
+                    <Text style={[styles.metricValue, { color: colors.textPrimary }]}>{formatPace(pace)}</Text>
+                    <Text style={[styles.metricLabel, { color: colors.textMuted }]}>allure</Text>
+                  </View>
+                )}
+                {elevUp != null && elevUp > 0 && (
+                  <View style={styles.metricItem}>
+                    <MaterialCommunityIcons name="elevation-rise" size={15} color="#A78BFA" />
+                    <Text style={[styles.metricValue, { color: colors.textPrimary }]}>+{Math.round(elevUp)}m</Text>
+                    <Text style={[styles.metricLabel, { color: colors.textMuted }]}>dénivelé</Text>
+                  </View>
+                )}
+                {training.speed != null && training.speed > 0 && (
+                  <View style={styles.metricItem}>
+                    <MaterialCommunityIcons name="speedometer-medium" size={15} color="#06B6D4" />
+                    <Text style={[styles.metricValue, { color: colors.textPrimary }]}>{training.speed.toFixed(1)}</Text>
+                    <Text style={[styles.metricLabel, { color: colors.textMuted }]}>km/h</Text>
+                  </View>
+                )}
+                {training.watts != null && training.watts > 0 && (
+                  <View style={styles.metricItem}>
+                    <MaterialCommunityIcons name="lightning-bolt" size={15} color="#EAB308" />
+                    <Text style={[styles.metricValue, { color: colors.textPrimary }]}>{training.watts}</Text>
+                    <Text style={[styles.metricLabel, { color: colors.textMuted }]}>watts</Text>
+                  </View>
+                )}
+                {training.cadence != null && training.cadence > 0 && (
+                  <View style={styles.metricItem}>
+                    <MaterialCommunityIcons name="rotate-3d-variant" size={15} color="#8B5CF6" />
+                    <Text style={[styles.metricValue, { color: colors.textPrimary }]}>{training.cadence}</Text>
+                    <Text style={[styles.metricLabel, { color: colors.textMuted }]}>rpm</Text>
+                  </View>
+                )}
+                {training.rounds != null && training.rounds > 0 && (
+                  <View style={styles.metricItem}>
+                    <MaterialCommunityIcons name="boxing-glove" size={15} color={sportColor} />
+                    <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
+                      {training.rounds}×{training.round_duration ? `${training.round_duration}min` : ''}
+                    </Text>
+                    <Text style={[styles.metricLabel, { color: colors.textMuted }]}>rounds</Text>
+                  </View>
+                )}
+                {training.pente != null && training.pente > 0 && (
+                  <View style={styles.metricItem}>
+                    <MaterialCommunityIcons name="slope-uphill" size={15} color="#F59E0B" />
+                    <Text style={[styles.metricValue, { color: colors.textPrimary }]}>{training.pente}%</Text>
+                    <Text style={[styles.metricLabel, { color: colors.textMuted }]}>pente</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* ── ZONES FC ── */}
+            {hrZones && hrZones.some(z => z.durationSeconds > 0) && (() => {
+              const totalZ = hrZones.reduce((s, z) => s + z.durationSeconds, 0);
+              if (totalZ === 0) return null;
+              return (
+                <View style={[styles.zonesSection, { borderTopColor: dividerColor }]}>
+                  <Text style={[styles.zonesSectionTitle, { color: colors.textMuted }]}>Zones FC</Text>
+                  <View style={styles.zonesBarWrap}>
+                    {hrZones.map((z, i) => {
                       const pct = (z.durationSeconds / totalZ) * 100;
                       if (pct < 1) return null;
                       return (
-                        <View
-                          key={i}
-                          style={[styles.zoneSegment, {
-                            backgroundColor: z.color,
-                            flex: pct,
-                          }]}
-                        />
+                        <View key={i} style={[styles.zoneSegment, { flex: pct, backgroundColor: z.color }]} />
                       );
-                    });
-                  })()}
+                    })}
+                  </View>
+                  <View style={styles.zonesLegend}>
+                    {hrZones.filter(z => (z.durationSeconds / totalZ) * 100 >= 1).map((z, i) => {
+                      const pct = Math.round((z.durationSeconds / totalZ) * 100);
+                      const mins = Math.floor(z.durationSeconds / 60);
+                      return (
+                        <View key={i} style={styles.zoneLegendItem}>
+                          <View style={[styles.zoneDot, { backgroundColor: z.color }]} />
+                          <Text style={[styles.zoneLegendText, { color: colors.textMuted }]}>
+                            Z{z.zone} {pct}% ({mins}min)
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
                 </View>
+              );
+            })()}
+
+            {/* ── INTENSITÉ + TECHNIQUE ── */}
+            {(intensityVal > 0 || techniqueVal > 0) && (
+              <View style={[styles.ratingRow, { borderTopColor: dividerColor }]}>
+                {intensityVal > 0 && (
+                  <View style={styles.ratingItem}>
+                    <Text style={[styles.ratingLabel, { color: colors.textMuted }]}>Intensité RPE</Text>
+                    <View style={styles.ratingContent}>
+                      <IntensityBar value={intensityVal} color={sportColor} />
+                      <Text style={[styles.ratingNum, { color: sportColor }]}>{intensityVal}/10</Text>
+                    </View>
+                  </View>
+                )}
+                {techniqueVal > 0 && (
+                  <View style={styles.ratingItem}>
+                    <Text style={[styles.ratingLabel, { color: colors.textMuted }]}>Technique</Text>
+                    <View style={styles.ratingContent}>
+                      <TechniqueStars value={techniqueVal} color="#F59E0B" />
+                    </View>
+                  </View>
+                )}
               </View>
             )}
 
-            {/* Weather & Air quality */}
-            {(weather != null || aqi) && (
-              <View style={[styles.weatherRow, { borderTopColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]}>
+            {/* ── MUSCLES ── */}
+            {muscleGroups.length > 0 && (
+              <View style={[styles.musclesRow, { borderTopColor: dividerColor }]}>
+                <MaterialCommunityIcons name="dumbbell" size={12} color={colors.textMuted} />
+                <Text style={[styles.musclesText, { color: colors.textMuted }]}>{muscleGroups.join(' · ')}</Text>
+              </View>
+            )}
+
+            {/* ── RÉCUP HR ── */}
+            {recovery && recovery.atEnd && (
+              <View style={[styles.recoveryRow, { borderTopColor: dividerColor }]}>
+                <MaterialCommunityIcons name="heart-minus" size={13} color="#8B5CF6" />
+                <Text style={[styles.recoveryText, { color: colors.textMuted }]}>
+                  Récup FC : {recovery.atEnd} bpm
+                  {recovery.after1Min ? ` → ${recovery.after1Min}` : ''}
+                  {recovery.after2Min ? ` → ${recovery.after2Min}` : ''}
+                </Text>
+              </View>
+            )}
+
+            {/* ── MÉTÉO & AQI ── */}
+            {(weather != null || aqi != null) && (
+              <View style={[styles.weatherRow, { borderTopColor: dividerColor }]}>
                 {weather != null && (
-                  <View style={styles.metricChip}>
-                    <MaterialCommunityIcons name="thermometer" size={12} color={colors.textMuted} />
-                    <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
-                      {Math.round(weather)}{'\u00B0'}C
-                      {humidity != null ? ` / ${Math.round(humidity)}%` : ''}
-                      {weatherCond ? ` ${weatherCond}` : ''}
+                  <View style={styles.weatherItem}>
+                    <MaterialCommunityIcons name="thermometer" size={13} color={colors.textMuted} />
+                    <Text style={[styles.weatherText, { color: colors.textMuted }]}>
+                      {Math.round(weather)}°C{humidity != null ? ` · ${Math.round(humidity)}%` : ''}
+                      {weatherCond ? ` · ${weatherCond}` : ''}
                     </Text>
                   </View>
                 )}
                 {aqi != null && (
-                  <View style={styles.metricChip}>
-                    <MaterialCommunityIcons name="weather-windy" size={12} color={aqi <= 50 ? '#22C55E' : aqi <= 100 ? '#EAB308' : '#EF4444'} />
-                    <Text style={[styles.sessionSecondaryText, { color: aqi <= 50 ? '#22C55E' : aqi <= 100 ? '#EAB308' : '#EF4444' }]}>
+                  <View style={styles.weatherItem}>
+                    <MaterialCommunityIcons
+                      name="weather-windy"
+                      size={13}
+                      color={aqi <= 50 ? '#22C55E' : aqi <= 100 ? '#EAB308' : '#EF4444'}
+                    />
+                    <Text style={[styles.weatherText, {
+                      color: aqi <= 50 ? '#22C55E' : aqi <= 100 ? '#EAB308' : '#EF4444',
+                    }]}>
                       AQI {aqi}{aqiCat ? ` (${aqiCat})` : ''}
                     </Text>
                   </View>
@@ -502,32 +719,126 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
               </View>
             )}
 
-            {/* Recovery HR */}
-            {recovery && recovery.atEnd && (
-              <View style={[styles.weatherRow, { borderTopColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]}>
-                <View style={styles.metricChip}>
-                  <MaterialCommunityIcons name="heart-minus" size={12} color="#8B5CF6" />
-                  <Text style={[styles.sessionSecondaryText, { color: colors.textMuted }]}>
-                    Recup: {recovery.atEnd} bpm
-                    {recovery.after1Min ? ` \u2192 ${recovery.after1Min}` : ''}
-                    {recovery.after2Min ? ` \u2192 ${recovery.after2Min}` : ''}
+            {/* ── GPS + SPLITS ── */}
+            {det.routePoints && det.routePoints.length > 2 && training.id != null && (
+              <View style={[styles.gpsSection, { borderTopColor: dividerColor }]}>
+                {/* Bouton toggle */}
+                <TouchableOpacity
+                  style={[styles.gpsToggleBtn, { backgroundColor: expandedGPS.has(training.id!) ? sportColor + '22' : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)') }]}
+                  onPress={() => toggleGPS(training.id!)}
+                  activeOpacity={0.75}
+                >
+                  <MaterialCommunityIcons name="crosshairs-gps" size={15} color={expandedGPS.has(training.id!) ? sportColor : colors.textSecondary} />
+                  <Text style={[styles.gpsToggleText, { color: expandedGPS.has(training.id!) ? sportColor : colors.textSecondary }]}>
+                    Parcours GPS · {det.routePoints.length} points
+                    {det.splits ? ` · ${det.splits.length} km` : ''}
                   </Text>
-                </View>
+                  {expandedGPS.has(training.id!) ? (
+                    <ChevronUp size={15} color={expandedGPS.has(training.id!) ? sportColor : colors.textSecondary} />
+                  ) : (
+                    <ChevronDown size={15} color={colors.textSecondary} />
+                  )}
+                </TouchableOpacity>
+
+                {/* Carte + splits dépliés */}
+                {expandedGPS.has(training.id!) && (
+                  <View style={styles.gpsContent}>
+                    {/* Mini carte */}
+                    <View style={styles.mapWrap}>
+                      <WorkoutMapRoute
+                        routePoints={det.routePoints}
+                        boundingBox={det.routeBoundingBox}
+                        height={200}
+                        strokeColor={sportColor}
+                        strokeWidth={4}
+                      />
+                    </View>
+
+                    {/* Stats de route */}
+                    <View style={styles.routeStatsRow}>
+                      {det.distanceKm != null && (
+                        <View style={[styles.routeStatChip, { backgroundColor: sportColor + '18' }]}>
+                          <MaterialCommunityIcons name="map-marker-distance" size={13} color={sportColor} />
+                          <Text style={[styles.routeStatText, { color: sportColor }]}>{det.distanceKm.toFixed(2)} km</Text>
+                        </View>
+                      )}
+                      {det.elevationAscended != null && det.elevationAscended > 0 && (
+                        <View style={[styles.routeStatChip, { backgroundColor: '#22C55E18' }]}>
+                          <MaterialCommunityIcons name="elevation-rise" size={13} color="#22C55E" />
+                          <Text style={[styles.routeStatText, { color: '#22C55E' }]}>+{Math.round(det.elevationAscended)}m</Text>
+                        </View>
+                      )}
+                      {det.elevationDescended != null && det.elevationDescended > 0 && (
+                        <View style={[styles.routeStatChip, { backgroundColor: '#EF444418' }]}>
+                          <MaterialCommunityIcons name="elevation-decline" size={13} color="#EF4444" />
+                          <Text style={[styles.routeStatText, { color: '#EF4444' }]}>-{Math.round(det.elevationDescended)}m</Text>
+                        </View>
+                      )}
+                      {det.avgPaceSecondsPerKm != null && det.avgPaceSecondsPerKm > 0 && det.avgPaceSecondsPerKm < 1800 && (
+                        <View style={[styles.routeStatChip, { backgroundColor: '#06B6D418' }]}>
+                          <MaterialCommunityIcons name="speedometer" size={13} color="#06B6D4" />
+                          <Text style={[styles.routeStatText, { color: '#06B6D4' }]}>{formatPace(det.avgPaceSecondsPerKm)}/km</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Table des splits */}
+                    {det.splits && det.splits.length > 0 && (
+                      <View style={[styles.splitsTable, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderRadius: 12 }]}>
+                        {/* Header */}
+                        <View style={[styles.splitRow, { borderBottomColor: dividerColor }]}>
+                          <Text style={[styles.splitHeader, styles.splitKmCol, { color: colors.textMuted }]}>km</Text>
+                          <Text style={[styles.splitHeader, styles.splitTimeCol, { color: colors.textMuted }]}>Durée</Text>
+                          <Text style={[styles.splitHeader, styles.splitPaceCol, { color: colors.textMuted }]}>Allure</Text>
+                          <Text style={[styles.splitHeader, styles.splitElevCol, { color: colors.textMuted }]}>D+</Text>
+                          <Text style={[styles.splitHeader, styles.splitHRCol, { color: colors.textMuted }]}>FC</Text>
+                        </View>
+                        {det.splits.map((split, si) => {
+                          const isFastest = det.splits!.reduce((minIdx, s, i) => s.paceSecondsPerKm < det.splits![minIdx].paceSecondsPerKm ? i : minIdx, 0) === si;
+                          const dSec = split.durationSeconds;
+                          const dStr = dSec != null
+                            ? `${Math.floor(dSec / 60)}'${(dSec % 60).toString().padStart(2, '0')}"`
+                            : '--';
+                          return (
+                            <View
+                              key={split.index}
+                              style={[styles.splitRow, { borderBottomColor: dividerColor, backgroundColor: isFastest ? sportColor + '12' : 'transparent' }]}
+                            >
+                              <Text style={[styles.splitCell, styles.splitKmCol, { color: colors.textMuted }]}>{split.index}</Text>
+                              <Text style={[styles.splitCell, styles.splitTimeCol, { color: '#F59E0B', fontWeight: '700' }]}>{dStr}</Text>
+                              <Text style={[styles.splitCell, styles.splitPaceCol, { color: '#22C55E', fontWeight: isFastest ? '800' : '600' }]}>
+                                {formatPace(split.paceSecondsPerKm)}
+                              </Text>
+                              <Text style={[styles.splitCell, styles.splitElevCol, { color: '#3B82F6' }]}>
+                                {split.elevationGain != null && split.elevationGain > 0 ? `+${split.elevationGain}m` : '-'}
+                              </Text>
+                              <Text style={[styles.splitCell, styles.splitHRCol, { color: '#EF4444' }]}>
+                                {split.avgHeartRate ? `${split.avgHeartRate}` : '-'}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    )}
+                  </View>
+                )}
               </View>
             )}
 
-            {/* Source badge */}
-            {training.source && training.source !== 'manual' && (
-              <View style={styles.sourceRow}>
-                <Text style={[styles.sessionSourceBadge, {
-                  color: colors.textMuted,
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                }]}>
-                  {training.source}
+            {/* ── NOTES ── */}
+            {training.notes && training.notes.trim().length > 0 && (
+              <View style={[styles.notesRow, { borderTopColor: dividerColor, backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.025)' }]}>
+                <MaterialCommunityIcons name="note-text-outline" size={13} color={colors.textMuted} />
+                <Text style={[styles.notesText, { color: colors.textSecondary }]} numberOfLines={3}>
+                  {training.notes}
                 </Text>
               </View>
             )}
           </TouchableOpacity>
+          {index < filteredWorkouts.length - 1 && (
+            <View style={[styles.sessionSeparator, { backgroundColor: colors.accent }]} />
+          )}
+          </React.Fragment>
         );
       })}
     </View>
@@ -538,32 +849,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  // ── Header mois
   monthHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    gap: 16,
-    marginBottom: 8,
+    paddingVertical: 6,
+    marginBottom: 10,
+    gap: 8,
   },
-  monthArrow: {
-    padding: 4,
+  arrowBtn: {
+    padding: 6,
   },
   monthTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '700',
-    minWidth: 120,
     textAlign: 'center',
   },
-  filterToggle: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
+  toggleBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
   },
-  filterToggleText: {
+  toggleBtnText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
+  // ── Filtres sport
   filterScroll: {
     marginBottom: 12,
   },
@@ -583,29 +894,37 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  summaryRow: {
+  // ── Résumé
+  summaryStrip: {
     flexDirection: 'row',
-    gap: 8,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
     marginBottom: 16,
+    alignItems: 'center',
+    justifyContent: 'space-around',
   },
-  summaryCard: {
+  summaryItem: {
+    alignItems: 'center',
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
   },
-  summaryValue: {
-    fontSize: 18,
+  summaryNum: {
+    fontSize: 20,
     fontWeight: '800',
   },
-  summaryLabel: {
+  summaryLbl: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
     marginTop: 2,
   },
+  summaryDivider: {
+    width: 1,
+    height: 28,
+  },
+  // ── Vide
   emptyCard: {
     borderRadius: 16,
-    padding: 40,
+    padding: 44,
     alignItems: 'center',
     gap: 12,
   },
@@ -614,104 +933,316 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
-  sessionCard: {
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 8,
+  // ── Carte séance
+  card: {
+    borderRadius: 18,
+    borderLeftWidth: 4,
+    marginBottom: 0,
+    paddingTop: 18,
+    paddingBottom: 14,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  sessionRow: {
+  // ── Séparateur thème entre séances
+  sessionSeparator: {
+    height: 4,
+    borderRadius: 2,
+    marginVertical: 10,
+    opacity: 0.35,
+  },
+  // Header
+  cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 11,
+    marginBottom: 10,
   },
-  sportIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  sportIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  sessionInfo: {
+  headerInfo: {
     flex: 1,
-    gap: 2,
   },
-  sessionSport: {
-    fontSize: 15,
+  sportTitle: {
+    fontSize: 16,
     fontWeight: '700',
+    lineHeight: 20,
   },
-  sessionDate: {
+  clubLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  dateText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  timeText: {
     fontSize: 12,
     fontWeight: '500',
   },
-  sessionMetrics: {
-    alignItems: 'flex-end',
-    gap: 2,
+  // Tags
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 10,
   },
-  sessionMetricValue: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  sessionMetricSub: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  sessionSecondary: {
+  tag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    flexWrap: 'wrap',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  metricChip: {
+  tagText: {
+    fontSize: 11,
+    fontWeight: '600',
+    maxWidth: 150,
+  },
+  // Métriques
+  metricsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    borderTopWidth: 1,
+    paddingTop: 12,
+    paddingBottom: 8,
+    gap: 0,
+    rowGap: 12,
+  },
+  metricItem: {
+    width: '25%',
     alignItems: 'center',
     gap: 3,
   },
-  sessionSecondaryText: {
-    fontSize: 11,
+  metricValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  metricLabel: {
+    fontSize: 10,
     fontWeight: '500',
   },
-  zonesRow: {
+  // Zones FC
+  zonesSection: {
+    borderTopWidth: 1,
+    paddingTop: 10,
+    paddingBottom: 8,
+    gap: 6,
+  },
+  zonesSectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  zonesBarWrap: {
+    flexDirection: 'row',
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    gap: 1,
+  },
+  zoneSegment: {
+    height: 8,
+    borderRadius: 2,
+  },
+  zonesLegend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 2,
+  },
+  zoneLegendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  zoneDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  zoneLegendText: {
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  // Intensité & technique
+  ratingRow: {
+    borderTopWidth: 1,
+    paddingTop: 10,
+    paddingBottom: 8,
+    gap: 10,
+  },
+  ratingItem: {
+    gap: 4,
+  },
+  ratingLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  ratingContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 8,
   },
-  zonesLabel: {
-    fontSize: 10,
-    fontWeight: '600',
+  ratingNum: {
+    fontSize: 12,
+    fontWeight: '700',
   },
-  zonesBar: {
-    flex: 1,
-    flexDirection: 'row',
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  zoneSegment: {
-    height: 6,
-  },
-  weatherRow: {
+  // Muscles
+  musclesRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginTop: 6,
-    paddingTop: 6,
+    gap: 6,
     borderTopWidth: 1,
+    paddingTop: 8,
+    paddingBottom: 6,
+  },
+  musclesText: {
+    fontSize: 11,
+    fontWeight: '500',
+    flex: 1,
+  },
+  // Récup HR
+  recoveryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderTopWidth: 1,
+    paddingTop: 8,
+    paddingBottom: 6,
+  },
+  recoveryText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  // Météo
+  weatherRow: {
+    flexDirection: 'row',
+    gap: 14,
+    borderTopWidth: 1,
+    paddingTop: 8,
+    paddingBottom: 6,
     flexWrap: 'wrap',
   },
-  sourceRow: {
-    marginTop: 6,
+  weatherItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
-  sessionSourceBadge: {
-    fontSize: 10,
-    fontWeight: '600',
+  weatherText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  // Notes
+  notesRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 7,
+    borderTopWidth: 1,
+    paddingTop: 9,
+    paddingBottom: 10,
+    marginTop: 2,
+    borderRadius: 8,
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    overflow: 'hidden',
-    alignSelf: 'flex-start',
+    marginHorizontal: -8,
+    marginBottom: 2,
   },
+  notesText: {
+    fontSize: 12,
+    fontWeight: '400',
+    flex: 1,
+    lineHeight: 18,
+  },
+  // ── GPS section
+  gpsSection: {
+    borderTopWidth: 1,
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  gpsToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 12,
+    marginBottom: 4,
+  },
+  gpsToggleText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  gpsContent: {
+    marginTop: 6,
+    gap: 10,
+  },
+  mapWrap: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  routeStatsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  routeStatChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  routeStatText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  // Splits table
+  splitsTable: {
+    overflow: 'hidden',
+    paddingHorizontal: 8,
+    paddingBottom: 4,
+  },
+  splitRow: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderRadius: 6,
+  },
+  splitHeader: {
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  splitCell: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  splitKmCol: { width: 24, textAlign: 'center' },
+  splitTimeCol: { flex: 1 },
+  splitPaceCol: { width: 64 },
+  splitElevCol: { width: 44 },
+  splitHRCol: { width: 40, textAlign: 'right' },
 });

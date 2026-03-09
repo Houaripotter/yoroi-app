@@ -270,13 +270,13 @@ export const WEIGHT_BADGES: Badge[] = [
   },
 ];
 
-// BADGES ENTRAINEMENT
+// BADGES ENTRAÎNEMENT
 export const TRAINING_BADGES: Badge[] = [
   {
     id: 'first_training',
     name: 'Premier combat',
     iconComponent: Dumbbell,
-    description: '5 entrainements completes',
+    description: '5 entraînements completes',
     category: 'training',
     requirement: 5,
     xpReward: 25,
@@ -285,7 +285,7 @@ export const TRAINING_BADGES: Badge[] = [
     id: 'beginner',
     name: 'Debutant',
     iconComponent: Dumbbell,
-    description: '10 entrainements completes',
+    description: '10 entraînements completes',
     category: 'training',
     requirement: 10,
     xpReward: 50,
@@ -294,7 +294,7 @@ export const TRAINING_BADGES: Badge[] = [
     id: 'committed',
     name: 'Engage',
     iconComponent: Award,
-    description: '25 entrainements completes',
+    description: '25 entraînements completes',
     category: 'training',
     requirement: 25,
     xpReward: 100,
@@ -303,7 +303,7 @@ export const TRAINING_BADGES: Badge[] = [
     id: 'regular',
     name: 'Regulier',
     iconComponent: Award,
-    description: '50 entrainements completes',
+    description: '50 entraînements completes',
     category: 'training',
     requirement: 50,
     xpReward: 200,
@@ -312,7 +312,7 @@ export const TRAINING_BADGES: Badge[] = [
     id: 'warrior',
     name: 'Athlète',
     iconComponent: Swords,
-    description: '100 entrainements completes',
+    description: '100 entraînements completes',
     category: 'training',
     requirement: 100,
     xpReward: 500,
@@ -321,7 +321,7 @@ export const TRAINING_BADGES: Badge[] = [
     id: 'veteran',
     name: 'Veteran',
     iconComponent: Swords,
-    description: '200 entrainements completes',
+    description: '200 entraînements completes',
     category: 'training',
     requirement: 200,
     xpReward: 800,
@@ -330,7 +330,7 @@ export const TRAINING_BADGES: Badge[] = [
     id: 'elite',
     name: 'Elite',
     iconComponent: Shield,
-    description: '300 entrainements completes',
+    description: '300 entraînements completes',
     category: 'training',
     requirement: 300,
     xpReward: 1200,
@@ -339,7 +339,7 @@ export const TRAINING_BADGES: Badge[] = [
     id: 'master',
     name: 'Maitre',
     iconComponent: Shield,
-    description: '500 entrainements completes',
+    description: '500 entraînements completes',
     category: 'training',
     requirement: 500,
     xpReward: 2000,
@@ -348,7 +348,7 @@ export const TRAINING_BADGES: Badge[] = [
     id: 'legend',
     name: 'Legende',
     iconComponent: Crown,
-    description: '1000 entrainements completes',
+    description: '1000 entraînements completes',
     category: 'training',
     requirement: 1000,
     xpReward: 5000,
@@ -357,7 +357,7 @@ export const TRAINING_BADGES: Badge[] = [
     id: 'champion',
     name: 'Champion',
     iconComponent: Medal,
-    description: '400 entrainements completes',
+    description: '400 entraînements completes',
     category: 'training',
     requirement: 400,
     xpReward: 1500,
@@ -366,7 +366,7 @@ export const TRAINING_BADGES: Badge[] = [
     id: 'unstoppable',
     name: 'Inarretable',
     iconComponent: Mountain,
-    description: '750 entrainements completes',
+    description: '750 entraînements completes',
     category: 'training',
     requirement: 750,
     xpReward: 3000,
@@ -397,7 +397,7 @@ export const SPECIAL_BADGES: Badge[] = [
     id: 'night_owl',
     name: 'Noctambule',
     iconComponent: Brain,
-    description: '10 entrainements apres 21h',
+    description: '10 entraînements apres 21h',
     category: 'special',
     requirement: 10,
     xpReward: 100,
@@ -442,7 +442,7 @@ export const SPECIAL_BADGES: Badge[] = [
     id: 'double_session',
     name: 'Double session',
     iconComponent: Flame,
-    description: '2 entrainements en 1 jour',
+    description: '2 entraînements en 1 jour',
     category: 'special',
     requirement: 1,
     xpReward: 150,
@@ -451,7 +451,7 @@ export const SPECIAL_BADGES: Badge[] = [
     id: 'weekend_warrior',
     name: 'Athlète weekend',
     iconComponent: Calendar,
-    description: 'Entrainement samedi et dimanche',
+    description: 'Entraînement samedi et dimanche',
     category: 'special',
     requirement: 1,
     xpReward: 100,
@@ -460,7 +460,7 @@ export const SPECIAL_BADGES: Badge[] = [
     id: 'seven_days_straight',
     name: 'Semaine parfaite',
     iconComponent: Trophy,
-    description: '7 jours entrainement consecutifs',
+    description: '7 jours entraînement consecutifs',
     category: 'special',
     requirement: 7,
     xpReward: 200,
@@ -469,7 +469,7 @@ export const SPECIAL_BADGES: Badge[] = [
     id: 'perfect_month',
     name: 'Mois parfait',
     iconComponent: Crown,
-    description: '30 jours entrainement consecutifs',
+    description: '30 jours entraînement consecutifs',
     category: 'special',
     requirement: 30,
     xpReward: 500,
@@ -496,7 +496,7 @@ export const SPECIAL_BADGES: Badge[] = [
     id: 'triple_session',
     name: 'Triple session',
     iconComponent: Zap,
-    description: '3 entrainements en 1 jour',
+    description: '3 entraînements en 1 jour',
     category: 'special',
     requirement: 1,
     xpReward: 300,
@@ -791,7 +791,7 @@ export interface BadgeStats {
   goalReached: boolean;
   halfwayGoalReached: boolean;
 
-  // Entrainements
+  // Entraînements
   totalWorkouts: number;
 
   // Special
@@ -897,7 +897,7 @@ const countEarlyMeasurements = (measurements: Measurement[]): number => {
 };
 
 /**
- * Compter les entrainements apres 21h
+ * Compter les entraînements apres 21h
  */
 const countLateWorkouts = (workouts: Workout[]): number => {
   return workouts.filter(w => {
@@ -1184,7 +1184,7 @@ export const checkAndUnlockBadges = async (): Promise<Badge[]> => {
         shouldUnlock = stats.goalReached;
         break;
 
-      // ENTRAINEMENT
+      // ENTRAÎNEMENT
       case 'beginner':
         shouldUnlock = stats.totalWorkouts >= 10;
         break;
@@ -1249,7 +1249,7 @@ export const checkAndUnlockBadges = async (): Promise<Badge[]> => {
         shouldUnlock = stats.halfwayGoalReached;
         break;
 
-      // NOUVEAUX BADGES ENTRAINEMENT
+      // NOUVEAUX BADGES ENTRAÎNEMENT
       case 'first_training':
         shouldUnlock = stats.totalWorkouts >= 5;
         break;
@@ -1437,7 +1437,7 @@ export const getAllBadgesProgress = async (): Promise<BadgeProgress[]> => {
         currentProgress = stats.halfwayGoalReached ? 1 : 0;
         break;
 
-      // ENTRAINEMENT
+      // ENTRAÎNEMENT
       case 'first_training':
       case 'beginner':
       case 'committed':

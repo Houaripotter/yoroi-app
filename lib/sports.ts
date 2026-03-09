@@ -860,7 +860,7 @@ export const SPORTS: Sport[] = [
   },
   {
     id: 'foam_roller',
-    name: 'Foam Roller / Recuperation',
+    name: 'Foam Roller / Récupération',
     icon: 'human-handsup',
     color: '#A78BFA',
     category: 'fitness',
@@ -1228,8 +1228,8 @@ export const SPORTS: Sport[] = [
 
   // === SPORTS MANQUANTS APPLE HEALTH (phantom IDs) ===
   {
-    id: 'recuperation',
-    name: 'Recuperation / Cooldown',
+    id: 'récupération',
+    name: 'Récupération / Cooldown',
     icon: 'human-handsup',
     color: '#94A3B8',
     category: 'fitness',
@@ -1322,7 +1322,7 @@ export const SPORTS: Sport[] = [
   },
   {
     id: 'mobilite',
-    name: 'Mobilite / Etirements dynamiques',
+    name: 'Mobilite / Étirements dynamiques',
     icon: 'human-handsup',
     color: '#8B5CF6',
     category: 'fitness',
@@ -1587,8 +1587,18 @@ export const getClubLogoSource = (logoUri?: string): any => {
     return CLUB_LOGOS[logoUri];
   }
 
-  // Si c'est une URI externe (commence par http ou file)
-  if (logoUri.startsWith('http') || logoUri.startsWith('file')) {
+  // Si c'est une URI vers un fichier ou une ressource externe
+  if (
+    logoUri.startsWith('http') ||
+    logoUri.startsWith('file') ||
+    logoUri.startsWith('content') || // Android content provider
+    logoUri.startsWith('ph://')      // iOS Photos framework
+  ) {
+    return { uri: logoUri };
+  }
+
+  // URI base64
+  if (logoUri.startsWith('data:image')) {
     return { uri: logoUri };
   }
 

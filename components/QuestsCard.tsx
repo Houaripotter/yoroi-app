@@ -351,7 +351,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
           }
         }
       } catch (error) {
-        logger.error('Erreur toggle defi:', error);
+        logger.error('Erreur toggle défi:', error);
         // Revert en cas d'erreur
         updateQuestLocally(quest.id, wasCompleted, quest.xp);
       }
@@ -488,7 +488,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
             style={styles.headerLeft}
             onPress={() => {
               impactAsync(ImpactFeedbackStyle.Light);
-              router.push('/gamification?tab=defis');
+              router.push('/gamification?tab=défis');
             }}
           >
             <Animated.View style={[styles.iconWrapper, { transform: [{ scale: pulseAnim }] }]}>
@@ -871,7 +871,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
 
           <TouchableOpacity 
             style={styles.seeAllButton}
-            onPress={() => router.push('/gamification?tab=defis')}
+            onPress={() => router.push('/gamification?tab=défis')}
           >
             <Text style={styles.seeAllText}>Voir tout</Text>
             <ChevronRight size={16} color="#FFD700" />

@@ -115,21 +115,17 @@ export const Celebration: React.FC<CelebrationProps> = ({
       // Sélectionner le son approprié selon le type
       switch (type) {
         case 'rank_up':
-          // Level up → Pokemon level up
-          soundFile = require('@/assets/sounds/pokemon-level-up-made-with-Voicemod.mp3');
+          soundFile = require('@/assets/sounds/level-up.mp3');
           break;
         case 'challenge_complete':
-          // Défi complété → Sonic ring
-          soundFile = require('@/assets/sounds/sonic-ring-sound-effect-made-with-Voicemod.mp3');
+          soundFile = require('@/assets/sounds/ring.mp3');
           break;
         case 'goal_reached':
         case 'streak_record':
-          // Victoire → Mario
-          soundFile = require('@/assets/sounds/super-mario-64-soundtrack-slider-made-with-Voicemod.mp3');
+          soundFile = require('@/assets/sounds/victory.mp3');
           break;
         case 'milestone':
-          // Milestone → Badge fanfare Pokemon
-          soundFile = require('@/assets/sounds/pokemon-heartgold-soulsilver-ost-fanfare-badge-get-made-with-Voicemod.mp3');
+          soundFile = require('@/assets/sounds/fanfare-badge.mp3');
           break;
         default:
           soundFile = require('@/assets/sounds/gong.mp3');

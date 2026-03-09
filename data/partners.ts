@@ -209,6 +209,29 @@ export const OSTEOPATHS: Osteopath[] = [
 ];
 
 // ═══════════════════════════════════════════════
+// MÉDECINS DU SPORT
+// ═══════════════════════════════════════════════
+
+export interface SportDoctor {
+  id: string;
+  name: string;
+  title: string;
+  specialties: string[];
+  location: string;
+  bio?: string;
+  instagram?: string;
+  website?: string;
+  phone?: string;
+  email?: string;
+  imageUrl?: any;
+  featured: boolean;
+}
+
+export const SPORT_DOCTORS: SportDoctor[] = [
+  // Vide pour l'instant - section "Bientôt disponible"
+];
+
+// ═══════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════
 

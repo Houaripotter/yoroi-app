@@ -440,7 +440,7 @@ export const AddSlotModal: React.FC<AddSlotModalProps> = ({
 
           {/* Duration */}
           <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            Duree (minutes)
+            Durée (minutes)
           </Text>
           <View style={styles.durationRow}>
             {[30, 45, 60, 90, 120].map(d => (
@@ -483,7 +483,7 @@ export const AddSlotModal: React.FC<AddSlotModalProps> = ({
 
           {/* Session type */}
           <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            Type de seance (optionnel)
+            Type de séance (optionnel)
           </Text>
           <TextInput
             style={[styles.textInput, { backgroundColor: colors.backgroundElevated, borderColor: colors.border, color: colors.textPrimary }]}

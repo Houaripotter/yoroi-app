@@ -71,13 +71,13 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
 
   const handleScrollContentSize = useCallback((contentWidth: number) => {
     if (scrollRef.current && contentWidth > cardWidth - 32) {
-      scrollRef.current.scrollToEnd({ animated: false });
+      scrollRef.current.scrollTo({ x: 0, animated: false });
     }
   }, [cardWidth]);
 
   const handleFsScrollContentSize = useCallback((contentWidth: number) => {
     if (fsScrollRef.current && contentWidth > SCREEN_WIDTH) {
-      fsScrollRef.current.scrollToEnd({ animated: false });
+      fsScrollRef.current.scrollTo({ x: 0, animated: false });
     }
   }, []);
 
@@ -197,7 +197,7 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
               </G>
             ))}
             {ld.pts.length > 0 && (() => {
-              const lp = ld.pts[ld.pts.length - 1];
+              const lp = ld.pts[0];
               return (
                 <G>
                   <Rect x={lp.x - 20} y={lp.y - 24} width={40} height={16} rx={6} ry={6} fill={ld.color} opacity={0.9} />
@@ -278,7 +278,7 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
           </View>
           {/* Hint scroll */}
           <View style={styles.hintBar}>
-            <Text style={[styles.hintText, { color: colors.textMuted }]}>Defiler pour voir plus</Text>
+            <Text style={[styles.hintText, { color: colors.textMuted }]}>Defiler pour voir plus · Recent a gauche</Text>
           </View>
         </View>
       )}

@@ -6,8 +6,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import { getDailyHydration } from '@/lib/quests';
+import { getSleepEntries } from '@/lib/sleepService';
 import { calculateAndStoreUnifiedPoints } from './gamification';
-import { getWeights, calculateStreak, getTrainings } from './database';
+import { getWeights, calculateStreak, getTrainings, getProfile } from './database';
 import { format, startOfWeek, startOfMonth } from 'date-fns';
 
 // ============================================
@@ -347,11 +348,11 @@ const getMonthStartStr = () => format(startOfMonth(new Date()), 'yyyy-MM-dd');
 let syncInProgress = false;
 
 /**
- * Reset automatique des defis selon la periode.
+ * Reset automatique des défis selon la periode.
  * - Quotidiens : reset chaque nouveau jour
  * - Hebdo : reset chaque nouvelle semaine (lundi)
  * - Mensuels : reset chaque nouveau mois
- * Ne reset PAS les defis deja reclames (claimed) pour eviter de perdre des XP
+ * Ne reset PAS les défis deja reclames (claimed) pour eviter de perdre des XP
  */
 const autoResetIfNeeded = async (): Promise<void> => {
   try {
@@ -404,13 +405,13 @@ const autoResetIfNeeded = async (): Promise<void> => {
 };
 
 // ============================================
-// SYNCHRONISATION AUTOMATIQUE AVEC LES DONNEES REELLES
+// SYNCHRONISATION AUTOMATIQUE AVEC LES DONNÉES REELLES
 // ============================================
 
 /**
- * Synchronise TOUS les defis avec les donnees reelles de l'app.
+ * Synchronise TOUS les défis avec les données reelles de l'app.
  * Lit les trainings, poids, hydratation, sommeil, streak depuis la BDD
- * et met a jour la progression de chaque defi automatiquement.
+ * et met a jour la progression de chaque défi automatiquement.
  */
 export const syncAllChallenges = async (): Promise<string[]> => {
   // Verrou: si une sync est deja en cours, on attend pas (evite les doublons)
@@ -426,7 +427,7 @@ export const syncAllChallenges = async (): Promise<string[]> => {
     const monthStart = getMonthStartStr();
     const newlyCompleted: string[] = [];
 
-    // Charger toutes les donnees en parallele
+    // Charger toutes les données en parallele
     const [trainings, weights, streak, hydrationLiters] = await Promise.all([
       getTrainings().catch(() => []),
       getWeights().catch(() => []),
@@ -434,7 +435,7 @@ export const syncAllChallenges = async (): Promise<string[]> => {
       getDailyHydration().catch(() => 0),
     ]);
 
-    // Sommeil via HealthKit (optionnel, ne bloque pas)
+    // Sommeil via HealthKit (optionnel) + fallback sur entrées locales
     let sleepHours = 0;
     let weeklySleepHours: number[] = [];
     try {
@@ -450,13 +451,30 @@ export const syncAllChallenges = async (): Promise<string[]> => {
       }
     } catch { /* HealthKit non dispo */ }
 
-    // Lire la progression actuelle (pour ne pas ecraser les defis deja claimed)
+    // Fallback : entrées locales si HealthKit n'a rien retourné
+    if (sleepHours === 0 || weeklySleepHours.length === 0) {
+      try {
+        const localSleep = await getSleepEntries();
+        // Entrée du jour (la plus récente avec date = today)
+        const todaySleep = localSleep.find(e => e.date === today);
+        if (todaySleep && sleepHours === 0) {
+          sleepHours = todaySleep.duration / 60;
+        }
+        // Semaine courante
+        if (weeklySleepHours.length === 0) {
+          const weekEntries = localSleep.filter(e => e.date >= weekStart);
+          weeklySleepHours = weekEntries.map(e => e.duration / 60);
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Lire la progression actuelle (pour ne pas ecraser les défis deja claimed)
     const progress = await getChallengeProgress();
 
-    // Helper: met a jour un defi seulement si pas deja claimed
+    // Helper: met a jour un défi seulement si pas deja claimed
     const syncChallenge = (id: string, current: number, target: number) => {
       const existing = progress[id];
-      // Ne pas toucher aux defis deja reclames
+      // Ne pas toucher aux défis deja reclames
       if (existing?.claimed) return;
       const completed = current >= target;
       const wasCompleted = existing?.completed || false;
@@ -473,9 +491,9 @@ export const syncAllChallenges = async (): Promise<string[]> => {
       }
     };
 
-    // === DEFIS QUOTIDIENS ===
+    // === DÉFIS QUOTIDIENS ===
 
-    // Entrainement du jour
+    // Entraînement du jour
     const todayTrainings = trainings.filter(t => t.date === today);
     syncChallenge('daily_training', todayTrainings.length, 1);
 
@@ -490,9 +508,9 @@ export const syncAllChallenges = async (): Promise<string[]> => {
     const todayWeighs = weights.filter(w => w.date === today);
     syncChallenge('daily_weigh', todayWeighs.length > 0 ? 1 : 0, 1);
 
-    // === DEFIS HEBDOMADAIRES ===
+    // === DÉFIS HEBDOMADAIRES ===
 
-    // 5 entrainements cette semaine
+    // 5 entraînements cette semaine
     const weekTrainings = trainings.filter(t => t.date >= weekStart);
     syncChallenge('weekly_5_trainings', weekTrainings.length, 5);
 
@@ -523,22 +541,20 @@ export const syncAllChallenges = async (): Promise<string[]> => {
       syncChallenge('weekly_sleep_quality', Math.round(avgSleep * 10) / 10, 7);
     }
 
-    // === DEFIS MENSUELS ===
+    // === DÉFIS MENSUELS ===
 
-    // 20 entrainements ce mois
+    // 20 entraînements ce mois
     const monthTrainings = trainings.filter(t => t.date >= monthStart);
     syncChallenge('monthly_20_trainings', monthTrainings.length, 20);
 
-    // Objectif de poids (on check si un objectif existe et est atteint)
+    // Objectif de poids — lu depuis le profil (profile.target_weight)
     try {
-      const goalStr = await AsyncStorage.getItem('@yoroi_weight_goal');
-      if (goalStr) {
-        const goal = parseFloat(goalStr);
-        if (weights.length > 0 && goal > 0) {
-          const latestWeight = weights[0]?.weight || 0;
-          const reached = latestWeight <= goal ? 1 : 0;
-          syncChallenge('monthly_weight_goal', reached, 1);
-        }
+      const profile = await getProfile();
+      const goal = profile?.target_weight;
+      if (goal && goal > 0 && weights.length > 0) {
+        const latestWeight = weights[0]?.weight || 0;
+        const reached = latestWeight <= goal ? 1 : 0;
+        syncChallenge('monthly_weight_goal', reached, 1);
       }
     } catch { /* ignore */ }
 
@@ -558,7 +574,7 @@ export const syncAllChallenges = async (): Promise<string[]> => {
 };
 
 /**
- * Recupere les defis quotidiens (synchronise automatiquement)
+ * Recupere les défis quotidiens (synchronise automatiquement)
  */
 export const getDailyChallenges = async (): Promise<ActiveChallenge[]> => {
   await syncAllChallenges();
@@ -567,7 +583,7 @@ export const getDailyChallenges = async (): Promise<ActiveChallenge[]> => {
 };
 
 /**
- * Recupere les defis hebdomadaires (synchronise automatiquement)
+ * Recupere les défis hebdomadaires (synchronise automatiquement)
  */
 export const getWeeklyChallenges = async (): Promise<ActiveChallenge[]> => {
   await syncAllChallenges();
@@ -576,7 +592,7 @@ export const getWeeklyChallenges = async (): Promise<ActiveChallenge[]> => {
 };
 
 /**
- * Recupere les defis mensuels (synchronise automatiquement)
+ * Recupere les défis mensuels (synchronise automatiquement)
  */
 export const getMonthlyChallenges = async (): Promise<ActiveChallenge[]> => {
   await syncAllChallenges();
@@ -585,7 +601,7 @@ export const getMonthlyChallenges = async (): Promise<ActiveChallenge[]> => {
 };
 
 /**
- * Recupere le total XP gagne via les defis
+ * Recupere le total XP gagne via les défis
  */
 export const getTotalChallengeXP = async (): Promise<number> => {
   try {
@@ -597,8 +613,22 @@ export const getTotalChallengeXP = async (): Promise<number> => {
 };
 
 /**
- * Reinitialise les defis quotidiens (appele chaque jour)
+ * Reinitialise les défis quotidiens (appele chaque jour)
  */
+/**
+ * Synchronise les défis et retourne les noms des défis nouvellement completes.
+ * A appeler apres chaque sauvegarde de données (poids, hydratation, sommeil, entraînement).
+ * @returns tableau de { title, xp } pour chaque défi nouvellement complete
+ */
+export const syncAndGetNewlyCompleted = async (): Promise<{ id: string; title: string; xp: number }[]> => {
+  const newlyCompletedIds = await syncAllChallenges();
+  if (!newlyCompletedIds.length) return [];
+  return newlyCompletedIds.map(id => {
+    const challenge = ALL_CHALLENGES.find(c => c.id === id);
+    return challenge ? { id, title: challenge.title, xp: challenge.reward.xp } : null;
+  }).filter(Boolean) as { id: string; title: string; xp: number }[];
+};
+
 export const resetDailyChallenges = async (): Promise<void> => {
   try {
     const progress = await getChallengeProgress();

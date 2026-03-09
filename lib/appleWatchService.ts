@@ -5,6 +5,7 @@
 
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import logger from './security/logger';
 import { addWeight } from './database';
 import { syncCarnetToWatch } from './carnetService';
@@ -121,6 +122,8 @@ class AppleWatchService {
             await this.handleHydrationFromWatch(message.amount, message.timestamp);
           } else if (message.action === 'addWeight') {
             await this.handleWeightFromWatch(message.weight, message.timestamp);
+          } else if (message.action === 'timerFinished') {
+            await this.handleTimerFinishedFromWatch();
           }
         })
       );
@@ -306,6 +309,25 @@ class AppleWatchService {
   // ============================================
 
   /**
+   * Envoyer une notification locale iPhone quand le timer Watch est terminé
+   */
+  private async handleTimerFinishedFromWatch() {
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Timer terminé',
+          body: 'Reprends ta séance !',
+          sound: true,
+        },
+        trigger: null, // immédiate
+      });
+      logger.info('Notification iPhone "timer terminé" envoyée');
+    } catch (error) {
+      logger.error('Erreur notification timer iPhone:', error);
+    }
+  }
+
+  /**
    * Gerer l'ajout d'hydratation depuis la watch avec deduplication
    */
   private async handleHydrationFromWatch(amount: number, timestamp?: number) {
@@ -341,7 +363,7 @@ class AppleWatchService {
 
       logger.info(`Hydratation mise a jour: ${current}ml -> ${newTotal}ml`);
 
-      // Re-sync vers la watch avec les nouvelles donnees
+      // Re-sync vers la watch avec les nouvelles données
       await this.syncToWatch();
     } catch (error) {
       logger.error('Erreur ajout hydratation:', error);
@@ -377,7 +399,7 @@ class AppleWatchService {
 
       const today = new Date().toISOString().split('T')[0];
 
-      // Sauvegarder dans la base de donnees SQLite
+      // Sauvegarder dans la base de données SQLite
       await addWeight({
         weight,
         source: 'apple',

@@ -23,18 +23,15 @@ struct CarnetPage: View {
   }
 
   var body: some View {
-    NavigationStack {
-      VStack(spacing: 0) {
-        // Onglets
-        tabSelector
-        // Contenu
-        if selectedTab == .bibliotheque {
-          ExercicesListView()
-        } else {
-          HistoriqueView()
-        }
+    VStack(spacing: 0) {
+      // Onglets
+      tabSelector
+      // Contenu
+      if selectedTab == .bibliotheque {
+        ExercicesListView()
+      } else {
+        HistoriqueView()
       }
-      .navigationTitle("Carnet")
     }
   }
 
@@ -67,9 +64,11 @@ struct ExercicesListView: View {
   @State private var showLibrary = false
   private let filters = ["Tous", "Force", "Endurance", "Vitesse", "Puissance"]
 
+  // Filtre les benchmarks selon la categorie ET uniquement ceux qui ont deja ete logges (pr > 0)
   var filtered: [BenchmarkRecord] {
-    guard selectedFilter != "Tous" else { return session.benchmarks }
-    return session.benchmarks.filter {
+    let withPR = session.benchmarks.filter { $0.pr > 0 }
+    guard selectedFilter != "Tous" else { return withPR }
+    return withPR.filter {
       $0.category.lowercased() == selectedFilter.lowercased() ||
       ($0.category.lowercased() == "speed"  && selectedFilter == "Vitesse") ||
       ($0.category.lowercased() == "power"  && selectedFilter == "Puissance")
@@ -98,8 +97,8 @@ struct ExercicesListView: View {
         .padding(.top, 6)
         .padding(.bottom, 4)
 
-        // Only show filter + records when there are records
-        if !session.benchmarks.isEmpty {
+        // Only show filter + records when there are records with PR
+        if !filtered.isEmpty {
           filterBar
           VStack(spacing: 6) {
             ForEach(filtered) { record in
@@ -111,6 +110,19 @@ struct ExercicesListView: View {
           }
           .padding(.horizontal, 6)
           .padding(.bottom, 8)
+        } else if !session.benchmarks.isEmpty {
+          // Des benchmarks existent mais aucun avec PR dans ce filtre
+          VStack(spacing: 6) {
+            Image(systemName: "dumbbell")
+              .font(.title2)
+              .foregroundStyle(session.accentColor.opacity(0.5))
+            Text("Aucun PR enregistre")
+              .font(.system(size: 11, weight: .semibold))
+              .foregroundStyle(session.textSecondary)
+              .multilineTextAlignment(.center)
+          }
+          .frame(maxWidth: .infinity)
+          .padding(.vertical, 20)
         }
       }
     }
@@ -129,7 +141,7 @@ struct ExercicesListView: View {
               .foregroundStyle(selectedFilter == f ? .black : session.textSecondary)
               .padding(.horizontal, 8)
               .padding(.vertical, 4)
-              .background(selectedFilter == f ? session.accentColor : session.cardBg)
+              .background(selectedFilter == f ? session.accentColor : Color.white.opacity(0.12))
               .clipShape(Capsule())
           }
           .buttonStyle(.plain)
@@ -148,6 +160,8 @@ struct ExerciceRow: View {
   let record: BenchmarkRecord
 
   var body: some View {
+    let vPad: CGFloat = WatchScreen.isUltra ? 10 : 8
+
     HStack(spacing: 10) {
       Image(systemName: record.icon)
         .font(.system(size: 14))
@@ -159,7 +173,8 @@ struct ExerciceRow: View {
           .font(.caption)
           .fontWeight(.bold)
           .foregroundStyle(session.textPrimary)
-          .lineLimit(1)
+          .lineLimit(2)
+          .minimumScaleFactor(0.75)
         if !record.sport.isEmpty {
           Text(record.sport)
             .font(.system(size: 9))
@@ -182,12 +197,12 @@ struct ExerciceRow: View {
       }
     }
     .padding(.horizontal, 10)
-    .padding(.vertical, 9)
-    .background(session.cardBg)
+    .padding(.vertical, vPad)
+    .background(Color.white.opacity(0.12))
     .clipShape(RoundedRectangle(cornerRadius: 10))
     .overlay(
       RoundedRectangle(cornerRadius: 10)
-        .stroke(categoryColor(record.category).opacity(0.2), lineWidth: 1)
+        .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
     )
   }
 
@@ -278,8 +293,12 @@ struct BenchmarkDetailView: View {
         .foregroundStyle(session.accentColor.opacity(0.8))
     }
     .padding(12)
-    .background(session.cardBg)
+    .background(Color.white.opacity(0.12))
     .clipShape(RoundedRectangle(cornerRadius: 12))
+    .overlay(
+      RoundedRectangle(cornerRadius: 12)
+        .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
+    )
   }
 
   private func entryRow(_ entry: LocalLogEntry) -> some View {
@@ -299,8 +318,12 @@ struct BenchmarkDetailView: View {
     }
     .padding(.horizontal, 10)
     .padding(.vertical, 7)
-    .background(session.cardBg)
+    .background(Color.white.opacity(0.12))
     .clipShape(RoundedRectangle(cornerRadius: 8))
+    .overlay(
+      RoundedRectangle(cornerRadius: 8)
+        .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
+    )
   }
 }
 
@@ -368,7 +391,7 @@ struct PoidsStep: View {
 
       // Valeur principale — grande et lisible
       Text(formattedWeight)
-        .font(.system(size: 36, weight: .black, design: .rounded))
+        .font(.system(size: WatchScreen.isUltra ? 40 : 36, weight: .black, design: .rounded))
         .foregroundStyle(session.textPrimary)
         .frame(maxWidth: .infinity)
         .contentShape(Rectangle())
@@ -377,7 +400,7 @@ struct PoidsStep: View {
         .digitalCrownRotation(
           $crownWeight,
           from: 0, through: 500, by: step,
-          sensitivity: .medium,
+          sensitivity: .high,
           isContinuous: false,
           isHapticFeedbackEnabled: true
         )
@@ -386,15 +409,15 @@ struct PoidsStep: View {
 
       // Boutons +/-  (gros pour les doigts)
       HStack(spacing: 12) {
-        bigButton(icon: "minus", color: .red) {
+        bigButton(icon: "minus", color: .red, size: 50) {
           weight = max(0, weight - step)
           crownWeight = weight
         }
-        bigButton(icon: "arrow.up.arrow.down", color: session.accentColor) {
+        bigButton(icon: "arrow.up.arrow.down", color: session.accentColor, size: 50) {
           // indique qu'on peut utiliser la couronne
           WKInterfaceDevice.current().play(.click)
         }
-        bigButton(icon: "plus", color: .green) {
+        bigButton(icon: "plus", color: .green, size: 50) {
           weight += step
           crownWeight = weight
         }
@@ -439,14 +462,14 @@ struct RepsStep: View {
         .tracking(1)
 
       Text("\(reps)")
-        .font(.system(size: 48, weight: .black, design: .rounded))
+        .font(.system(size: WatchScreen.isUltra ? 52 : 48, weight: .black, design: .rounded))
         .foregroundStyle(session.textPrimary)
         .frame(maxWidth: .infinity)
         .focusable(true, interactions: .automatic)
         .digitalCrownRotation(
           $crownReps,
           from: 1, through: 100, by: 1,
-          sensitivity: .medium,
+          sensitivity: .high,
           isContinuous: false,
           isHapticFeedbackEnabled: true
         )
@@ -454,14 +477,14 @@ struct RepsStep: View {
         .onAppear { crownReps = Double(reps) }
 
       HStack(spacing: 12) {
-        bigButton(icon: "minus", color: .red) {
+        bigButton(icon: "minus", color: .red, size: 50) {
           reps = max(1, reps - 1)
           crownReps = Double(reps)
         }
-        bigButton(icon: "arrow.up.arrow.down", color: session.accentColor) {
+        bigButton(icon: "arrow.up.arrow.down", color: session.accentColor, size: 50) {
           WKInterfaceDevice.current().play(.click)
         }
-        bigButton(icon: "plus", color: .green) {
+        bigButton(icon: "plus", color: .green, size: 50) {
           reps = min(100, reps + 1)
           crownReps = Double(reps)
         }
@@ -499,6 +522,9 @@ struct RPEStep: View {
   let onBack: () -> Void
   let onNext: () -> Void
 
+  // Digital Crown pour RPE
+  @State private var crownRpe: Double = 7
+
   // Couleurs par niveau RPE
   private func rpeColor(_ value: Int) -> Color {
     switch value {
@@ -530,18 +556,40 @@ struct RPEStep: View {
           .font(.system(size: 10))
           .foregroundStyle(rpeColor(rpe))
       }
+      // Crown indicator — tap pour activer la couronne
+      Text("\(rpe)")
+        .font(.system(size: 28, weight: .black, design: .rounded))
+        .foregroundStyle(rpeColor(rpe))
+        .frame(maxWidth: .infinity)
+        .focusable(true, interactions: .automatic)
+        .digitalCrownRotation(
+          $crownRpe,
+          from: 1, through: 10, by: 1,
+          sensitivity: .low,
+          isContinuous: false,
+          isHapticFeedbackEnabled: true
+        )
+        .onChange(of: crownRpe) { rpe = max(1, min(10, Int(crownRpe))) }
+        .onAppear { crownRpe = Double(rpe) }
 
       // Grille 5x2 — gros boutons faciles a taper
       LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 5), spacing: 6) {
         ForEach(1...10, id: \.self) { value in
-          Button(action: { rpe = value }) {
+          Button(action: {
+            rpe = value
+            crownRpe = Double(value)
+          }) {
             Text("\(value)")
               .font(.system(size: 14, weight: .bold))
               .frame(maxWidth: .infinity)
-              .padding(.vertical, 9)
-              .background(rpe == value ? rpeColor(value) : session.cardBg)
+              .padding(.vertical, 11)
+              .background(rpe == value ? rpeColor(value) : Color.white.opacity(0.12))
               .foregroundStyle(rpe == value ? .black : session.textSecondary)
               .clipShape(RoundedRectangle(cornerRadius: 8))
+              .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                  .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
+              )
           }
           .buttonStyle(.plain)
         }
@@ -602,8 +650,12 @@ struct ConfirmStep: View {
         summaryRow(label: "RPE",      value: "\(rpe)/10")
       }
       .padding(10)
-      .background(session.cardBg)
+      .background(Color.white.opacity(0.12))
       .clipShape(RoundedRectangle(cornerRadius: 12))
+      .overlay(
+        RoundedRectangle(cornerRadius: 12)
+          .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
+      )
 
       HStack(spacing: 8) {
         Button(action: onBack) {
@@ -682,7 +734,9 @@ struct HistoriqueView: View {
   }
 
   private func historyRow(_ entry: LocalLogEntry) -> some View {
-    HStack(spacing: 8) {
+    let vPad: CGFloat = WatchScreen.isUltra ? 10 : 8
+
+    return HStack(spacing: 8) {
       VStack(alignment: .leading, spacing: 2) {
         Text(entry.exerciseName)
           .font(.system(size: 11, weight: .bold))
@@ -707,9 +761,13 @@ struct HistoriqueView: View {
         .multilineTextAlignment(.trailing)
     }
     .padding(.horizontal, 10)
-    .padding(.vertical, 8)
-    .background(session.cardBg)
+    .padding(.vertical, vPad)
+    .background(Color.white.opacity(0.12))
     .clipShape(RoundedRectangle(cornerRadius: 10))
+    .overlay(
+      RoundedRectangle(cornerRadius: 10)
+        .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
+    )
   }
 
   private func rpeColor(_ value: Int) -> Color {
@@ -724,12 +782,12 @@ struct HistoriqueView: View {
 
 // MARK: - Helper bouton +/-
 
-private func bigButton(icon: String, color: Color, action: @escaping () -> Void) -> some View {
+private func bigButton(icon: String, color: Color, size: CGFloat = 44, action: @escaping () -> Void) -> some View {
   Button(action: action) {
     Image(systemName: icon)
       .font(.system(size: 16, weight: .bold))
       .foregroundStyle(color)
-      .frame(width: 44, height: 44)
+      .frame(width: size, height: size)
       .background(color.opacity(0.12))
       .clipShape(Circle())
   }

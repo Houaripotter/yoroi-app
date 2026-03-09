@@ -75,7 +75,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
   };
 
   const summaryItems = [
-    { value: totalSessions.toString(), label: 'seances', color: colors.accent },
+    { value: totalSessions.toString(), label: 'séances', color: colors.accent },
     { value: formatDurationCompact(totalMinutes), label: 'total', color: '#F97316' },
     { value: totalCalories > 0 ? formatCalories(totalCalories) : '--', label: 'kcal', color: '#EF4444' },
   ];
@@ -121,7 +121,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
         style={[styles.sessionCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}
         activeOpacity={0.7}
         onPress={() => {
-          if (training.id) {
+          if (training.id != null) {
             router.push(`/workout-detail?id=${training.id}` as any);
           }
         }}
@@ -188,7 +188,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
       <View style={[styles.emptyCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
         <Dumbbell size={40} color={colors.textMuted} strokeWidth={1.5} />
         <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-          Aucune seance sur cette periode
+          Aucune séance sur cette periode
         </Text>
       </View>
     );
@@ -262,33 +262,33 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
         </ScrollView>
       )}
 
-      {/* Tri + Resume */}
+      {/* Tri + Résumé */}
       <View style={styles.sortAndSummary}>
         <TouchableOpacity
-          style={[styles.sortButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.22)' }]}
+          style={[styles.sortButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.12)' : colors.accent + '30', borderWidth: 1 }]}
           onPress={() => setSortOrder(prev => prev === 'recent' ? 'oldest' : 'recent')}
           activeOpacity={0.7}
         >
           {sortOrder === 'recent' ? (
-            <ArrowDown size={14} color={isDark ? colors.accent : '#FFFFFF'} strokeWidth={2.5} />
+            <ArrowDown size={14} color={colors.accent} strokeWidth={2.5} />
           ) : (
-            <ArrowUp size={14} color={isDark ? colors.accent : '#FFFFFF'} strokeWidth={2.5} />
+            <ArrowUp size={14} color={colors.accent} strokeWidth={2.5} />
           )}
-          <Text style={[styles.sortText, { color: isDark ? colors.accent : '#FFFFFF' }]}>
-            {sortOrder === 'recent' ? 'Recent' : 'Ancien'}
+          <Text style={[styles.sortText, { color: colors.accent }]}>
+            {sortOrder === 'recent' ? 'Récent' : 'Ancien'}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Resume en haut */}
+      {/* Résumé en haut */}
       <View style={styles.summaryRow}>
         {summaryItems.map((item, i) => (
           <View
             key={i}
             style={[styles.summaryCard, {
               backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
-              borderLeftWidth: 3,
-              borderLeftColor: item.color,
+              borderTopWidth: 3,
+              borderTopColor: item.color,
             }]}
           >
             <Text style={[styles.summaryValue, { color: item.color }]}>{item.value}</Text>
@@ -297,7 +297,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
         ))}
       </View>
 
-      {/* Liste virtualisee des seances */}
+      {/* Liste virtualisee des séances */}
       <FlatList
         data={filteredTrainings}
         renderItem={renderSession}

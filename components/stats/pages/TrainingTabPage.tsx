@@ -193,105 +193,109 @@ export const TrainingTabPage: React.FC = React.memo(() => {
         onPeriodChange={setSelectedPeriod}
       />
 
-      {/* ========== VOLUME + MÉTRIQUES dans le même corps ========== */}
+      {/* ========== VOLUME + SÉANCES RÉCENTES dans la même carte ========== */}
       <StatsSection>
-        {/* Titre centré dans le corps */}
-        <View style={[styles.cardTitleRow, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
-          <View style={[styles.cardTitleDash, { backgroundColor: '#10B981' }]} />
-          <Text style={[styles.cardTitleText, { color: colors.textPrimary }]}>VOLUME D'ENTRAÎNEMENT</Text>
-          <View style={[styles.cardTitleDash, { backgroundColor: '#06B6D4' }]} />
-        </View>
-        {/* MetricCards Sessions + Durée totale */}
-        <View style={styles.grid}>
-          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'sessions', label: t('statsPages.discipline.sessions'), color: '#10B981', unit: '', icon: <Calendar size={18} color="#10B981" strokeWidth={2.5} /> })}>
-            <MetricCard label={t('statsPages.discipline.sessions')} value={trainingData?.count || 0} unit={t('statsPages.discipline.total')} icon={<Calendar size={24} color="#10B981" strokeWidth={2.5} />} color="#10B981" sparklineData={sessionsSparkline} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'total_duration', label: t('statsPages.discipline.totalDuration'), color: '#06B6D4', unit: 'h', icon: <Timer size={18} color="#06B6D4" strokeWidth={2.5} /> })}>
-            <MetricCard label={t('statsPages.discipline.totalDuration')} value={formatDurationHM(trainingData?.totalDuration || 0)} unit="" icon={<Award size={24} color="#06B6D4" strokeWidth={2.5} />} color="#06B6D4" sparklineData={trainingHistory.duration.map(h => ({ value: h.value }))} />
-          </TouchableOpacity>
+        <View style={[styles.gridCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+          {/* Titre volume */}
+          <View style={styles.cardTitleRow}>
+            <View style={[styles.cardTitleDash, { backgroundColor: '#10B981' }]} />
+            <Text style={[styles.cardTitleText, { color: colors.textPrimary }]}>VOLUME D'ENTRAÎNEMENT</Text>
+            <View style={[styles.cardTitleDash, { backgroundColor: '#06B6D4' }]} />
+          </View>
+          {/* MetricCards Sessions + Durée totale */}
+          <View style={styles.grid}>
+            <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'sessions', label: t('statsPages.discipline.sessions'), color: '#10B981', unit: '', icon: <Calendar size={18} color="#10B981" strokeWidth={2.5} /> })}>
+              <MetricCard label={t('statsPages.discipline.sessions')} value={trainingData?.count || 0} unit={t('statsPages.discipline.total')} icon={<Calendar size={24} color="#10B981" strokeWidth={2.5} />} color="#10B981" sparklineData={sessionsSparkline} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'total_duration', label: t('statsPages.discipline.totalDuration'), color: '#06B6D4', unit: 'h', icon: <Timer size={18} color="#06B6D4" strokeWidth={2.5} /> })}>
+              <MetricCard label={t('statsPages.discipline.totalDuration')} value={formatDurationHM(trainingData?.totalDuration || 0)} unit="" icon={<Award size={24} color="#06B6D4" strokeWidth={2.5} />} color="#06B6D4" sparklineData={trainingHistory.duration.map(h => ({ value: h.value }))} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Séances récentes — horizontal — fusionnées dans la même carte */}
+          {allTrainingsData.length > 0 && (
+            <View style={{ marginTop: 16 }}>
+              <View style={styles.cardTitleRow}>
+                <View style={[styles.cardTitleDash, { backgroundColor: '#10B981', opacity: 0.3 }]} />
+                <Text style={[styles.cardSubtitleText, { color: colors.textMuted }]}>SÉANCES RÉCENTES ({allTrainingsData.length})</Text>
+                <View style={[styles.cardTitleDash, { backgroundColor: '#10B981', opacity: 0.3 }]} />
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.historyScrollContent}
+              >
+                {allTrainingsData.slice(0, 20).map((entry, index) => {
+                  const prevEntry = allTrainingsData[index + 1];
+                  const durationChange = prevEntry && prevEntry.duration ? entry.duration - prevEntry.duration : 0;
+                  const isFirst = index === 0;
+                  const intensityZone = entry.intensity ? getIntensityStatus(entry.intensity) : null;
+                  return (
+                    <TouchableOpacity
+                      key={entry.id || index}
+                      activeOpacity={0.7}
+                      onPress={() => setSelectedMetric({ key: 'duration', label: t('statsPages.discipline.duration'), color: '#10B981', unit: 'min', icon: <Timer size={18} color="#10B981" strokeWidth={2.5} /> })}
+                      style={[
+                        styles.historyCard,
+                        { backgroundColor: isDark ? colors.backgroundCard : `${isFirst ? '#10B981' : '#6366F1'}08`, borderColor: isFirst ? '#10B981' : colors.border },
+                        isFirst && styles.historyCardRecent,
+                      ]}
+                    >
+                      {isFirst && (
+                        <View style={[styles.historyCardBadge, { backgroundColor: '#10B98120' }]}>
+                          <Text style={[styles.historyCardBadgeText, { color: '#10B981' }]}>RECENT</Text>
+                        </View>
+                      )}
+                      <Text style={[styles.historyCardDate, { color: colors.textMuted }]}>
+                        {format(new Date(entry.date), 'd MMM yyyy', { locale: fr })}
+                      </Text>
+                      {entry.duration > 0 && (
+                        <Text style={[styles.historyCardMain, { color: isFirst ? '#10B981' : colors.textPrimary }]}>
+                          {entry.duration}<Text style={styles.historyCardUnit}> min</Text>
+                        </Text>
+                      )}
+                      {durationChange !== 0 && entry.duration > 0 && (
+                        <Text style={[styles.historyCardChange, { color: durationChange > 0 ? '#10B981' : '#EF4444' }]}>
+                          {durationChange > 0 ? '+' : ''}{durationChange} min
+                        </Text>
+                      )}
+                      {intensityZone && entry.intensity > 0 && (
+                        <View style={[styles.historyCardBadge, { backgroundColor: `${intensityZone.color}20` }]}>
+                          <Text style={[styles.historyCardBadgeText, { color: intensityZone.color }]}>
+                            RPE {entry.intensity}/10
+                          </Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
         </View>
       </StatsSection>
 
-      {/* ========== HISTORIQUE RÉCENT — horizontal, le plus récent à GAUCHE ========== */}
-      {allTrainingsData.length > 0 && (
-        <StatsSection>
-          <View style={[styles.cardTitleRow, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
-            <View style={[styles.cardTitleDash, { backgroundColor: '#10B981' }]} />
-            <Text style={[styles.cardTitleText, { color: colors.textPrimary }]}>SÉANCES RÉCENTES</Text>
-            <View style={[styles.cardTitleDash, { backgroundColor: '#10B981' }]} />
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.historyScrollContent}
-          >
-            {allTrainingsData.slice(0, 20).map((entry, index) => {
-              const prevEntry = allTrainingsData[index + 1];
-              const durationChange = prevEntry && prevEntry.duration ? entry.duration - prevEntry.duration : 0;
-              const isFirst = index === 0;
-              const intensityZone = entry.intensity ? getIntensityStatus(entry.intensity) : null;
-              return (
-                <TouchableOpacity
-                  key={entry.id || index}
-                  activeOpacity={0.7}
-                  onPress={() => setSelectedMetric({ key: 'duration', label: t('statsPages.discipline.duration'), color: '#10B981', unit: 'min', icon: <Timer size={18} color="#10B981" strokeWidth={2.5} /> })}
-                  style={[
-                    styles.historyCard,
-                    { backgroundColor: colors.backgroundCard, borderColor: isFirst ? '#10B981' : colors.border },
-                    isFirst && styles.historyCardRecent,
-                  ]}
-                >
-                  {isFirst && (
-                    <View style={styles.historyCardBadge}>
-                      <Text style={styles.historyCardBadgeText}>Récent</Text>
-                    </View>
-                  )}
-                  <Text style={[styles.historyCardDate, { color: colors.textMuted }]}>
-                    {format(new Date(entry.date), 'd MMM', { locale: fr })}
-                  </Text>
-                  {entry.duration > 0 && (
-                    <Text style={[styles.historyCardMain, { color: isFirst ? '#10B981' : colors.textPrimary }]}>
-                      {entry.duration}<Text style={styles.historyCardUnit}> min</Text>
-                    </Text>
-                  )}
-                  {durationChange !== 0 && entry.duration > 0 && (
-                    <Text style={[styles.historyCardChange, { color: durationChange > 0 ? '#10B981' : '#EF4444' }]}>
-                      {durationChange > 0 ? '+' : ''}{durationChange} min
-                    </Text>
-                  )}
-                  {intensityZone && entry.intensity > 0 && (
-                    <View style={[styles.historyCardBadge, { backgroundColor: `${intensityZone.color}20` }]}>
-                      <Text style={[styles.historyCardBadgeText, { color: intensityZone.color }]}>
-                        RPE {entry.intensity}/10
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </StatsSection>
-      )}
-
-      {/* ========== CHARGE + INTENSITÉ dans le même corps ========== */}
+      {/* ========== CHARGE + INTENSITÉ dans la même carte ========== */}
       <StatsSection>
-        <View style={[styles.cardTitleRow, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
-          <View style={[styles.cardTitleDash, { backgroundColor: '#8B5CF6' }]} />
-          <Text style={[styles.cardTitleText, { color: colors.textPrimary }]}>CHARGE D'ENTRAÎNEMENT</Text>
-          <View style={[styles.cardTitleDash, { backgroundColor: '#EF4444' }]} />
-        </View>
-        {trainingData && trainingData.weeklyLoad > 0 && (
-          <TouchableOpacity activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'load', label: t('statsPages.discipline.load'), color: '#8B5CF6', unit: 'pts', icon: <Flame size={18} color="#8B5CF6" strokeWidth={2.5} /> })} style={{ marginBottom: 12 }}>
-            <StrainGauge strain={Math.min(trainingData.weeklyLoad / 50, 21)} label={t('statsPages.discipline.load')} />
-          </TouchableOpacity>
-        )}
-        <View style={styles.grid}>
-          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'load', label: t('statsPages.discipline.weeklyLoad'), color: '#8B5CF6', unit: 'pts', icon: <Flame size={18} color="#8B5CF6" strokeWidth={2.5} /> })}>
-            <MetricCard label={t('statsPages.discipline.weeklyLoad')} value={trainingData?.weeklyLoad || 0} unit="pts" icon={<Flame size={24} color="#8B5CF6" strokeWidth={2.5} />} color="#8B5CF6" sparklineData={trainingHistory.load.map(h => ({ value: h.value }))} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'intensity', label: t('statsPages.discipline.intensity'), color: '#EF4444', unit: '/10', icon: <Target size={18} color="#EF4444" strokeWidth={2.5} /> })}>
-            <MetricCard label={t('statsPages.discipline.averageIntensity')} value={trainingData?.averageIntensity || 0} unit="/10" icon={<Target size={24} color="#EF4444" strokeWidth={2.5} />} color="#EF4444" sparklineData={trainingHistory.intensity.map(h => ({ value: h.value }))} />
-          </TouchableOpacity>
+        <View style={[styles.gridCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+          <View style={styles.cardTitleRow}>
+            <View style={[styles.cardTitleDash, { backgroundColor: '#8B5CF6' }]} />
+            <Text style={[styles.cardTitleText, { color: colors.textPrimary }]}>CHARGE D'ENTRAÎNEMENT</Text>
+            <View style={[styles.cardTitleDash, { backgroundColor: '#EF4444' }]} />
+          </View>
+          {trainingData && trainingData.weeklyLoad > 0 && (
+            <TouchableOpacity activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'load', label: t('statsPages.discipline.load'), color: '#8B5CF6', unit: 'pts', icon: <Flame size={18} color="#8B5CF6" strokeWidth={2.5} /> })} style={{ marginBottom: 12 }}>
+              <StrainGauge strain={Math.min(trainingData.weeklyLoad / 50, 21)} label={t('statsPages.discipline.load')} />
+            </TouchableOpacity>
+          )}
+          <View style={styles.grid}>
+            <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'load', label: t('statsPages.discipline.weeklyLoad'), color: '#8B5CF6', unit: 'pts', icon: <Flame size={18} color="#8B5CF6" strokeWidth={2.5} /> })}>
+              <MetricCard label={t('statsPages.discipline.weeklyLoad')} value={trainingData?.weeklyLoad || 0} unit="pts" icon={<Flame size={24} color="#8B5CF6" strokeWidth={2.5} />} color="#8B5CF6" sparklineData={trainingHistory.load.map(h => ({ value: h.value }))} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.gridItem} activeOpacity={0.7} onPress={() => setSelectedMetric({ key: 'intensity', label: t('statsPages.discipline.intensity'), color: '#EF4444', unit: '/10', icon: <Target size={18} color="#EF4444" strokeWidth={2.5} /> })}>
+              <MetricCard label={t('statsPages.discipline.averageIntensity')} value={trainingData?.averageIntensity || 0} unit="/10" icon={<Target size={24} color="#EF4444" strokeWidth={2.5} />} color="#EF4444" sparklineData={trainingHistory.intensity.map(h => ({ value: h.value }))} />
+            </TouchableOpacity>
+          </View>
         </View>
       </StatsSection>
 
@@ -337,7 +341,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
         </StatsSection>
       )}
 
-      {/* Historique Duree */}
+      {/* Historique Durée */}
       {trainingHistory.duration.length > 0 && (
         <StatsSection>
           <TouchableOpacity
@@ -435,9 +439,15 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   cardTitleText: {
-    fontSize: 12,
+    fontSize: 15,
     fontWeight: '900',
-    letterSpacing: 2,
+    letterSpacing: 1.5,
+    textAlign: 'center',
+  },
+  cardSubtitleText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.5,
     textAlign: 'center',
   },
   // Card wrapper pour MetricProgressGrid et Radar

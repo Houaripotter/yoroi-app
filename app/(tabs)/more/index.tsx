@@ -16,7 +16,6 @@ import { CheckCircle, AlertCircle,
   Camera,
   Star,
   ChevronRight,
-  Building2,
   Ruler,
   Download,
   Upload,
@@ -47,7 +46,6 @@ import { CheckCircle, AlertCircle,
   Clock,
   Droplets,
   Stethoscope,
-  BarChart2,
   Layers,
   Trash2,
   Castle,
@@ -60,6 +58,7 @@ import { router } from 'expo-router';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { exportDataToJSON, exportEditableCSV, exportEmptyTemplate } from '@/lib/exportService';
+import { safeOpenURL } from '@/lib/security/validators';
 import { scale, scaleModerate } from '@/constants/responsive';
 import { resetAllData } from '@/lib/storage';
 import logger from '@/lib/security/logger';
@@ -87,22 +86,22 @@ interface ToolSection {
 
 const TOOL_SECTIONS: ToolSection[] = [
   {
-    title: 'ENTRAINEMENT',
+    title: 'ENTRAÎNEMENT',
     items: [
-      { id: 'add-training', label: 'Ajouter une seance', sublabel: 'Enregistrer un entrainement', Icon: Dumbbell, route: '/add-training', iconColor: '#EF4444' },
-      { id: 'training-journal', label: "Carnet d'entrainement", sublabel: 'Historique de toutes tes seances', Icon: BookOpen, route: '/training-journal', iconColor: '#F97316' },
-      { id: 'history', label: 'Historique seances', sublabel: 'Recherche et filtres avances', Icon: History, route: '/history', iconColor: '#6366F1' },
-      { id: 'activity-history', label: 'Seances detaillees', sublabel: 'FC, allure, GPS, zones cardiaques', Icon: Activity, route: '/activity-history', iconColor: '#10B981' },
+      { id: 'add-training', label: 'Ajouter une séance', sublabel: 'Enregistrer un entraînement', Icon: Dumbbell, route: '/add-training', iconColor: '#EF4444' },
+      { id: 'training-journal', label: "Carnet d'entraînement", sublabel: 'Historique de toutes tes séances', Icon: BookOpen, route: '/training-journal', iconColor: '#F97316' },
+      { id: 'history', label: 'Historique séances', sublabel: 'Recherche et filtres avances', Icon: History, route: '/history', iconColor: '#6366F1' },
+      { id: 'activity-history', label: 'Séances detaillees', sublabel: 'FC, allure, GPS, zones cardiaques', Icon: Activity, route: '/activity-history', iconColor: '#10B981' },
       { id: 'training-goals', label: 'Objectifs sportifs', sublabel: 'Definir et suivre tes objectifs', Icon: Target, route: '/training-goals', iconColor: '#10B981' },
       { id: 'records', label: 'Records personnels', sublabel: 'Tes meilleures performances', Icon: Trophy, route: '/records', iconColor: '#EF4444' },
       { id: 'sport', label: 'Mes sports', sublabel: 'Gerer tes disciplines', Icon: Swords, route: '/sport', iconColor: '#EC4899' },
-      { id: 'slots', label: 'Creneaux reguliers', sublabel: 'Gerer tes entrainements recurrents', Icon: RefreshCw, route: '/slots', iconColor: '#6366F1' },
+      { id: 'slots', label: 'Creneaux reguliers', sublabel: 'Gerer tes entraînements recurrents', Icon: RefreshCw, route: '/slots', iconColor: '#6366F1' },
       { id: 'timer', label: 'Timer', sublabel: 'Chrono, rounds, HIIT, Tabata', Icon: Timer, route: '/timer', iconColor: '#4ECDC4' },
       { id: 'schedule', label: 'Emploi du temps', sublabel: 'Programme de la semaine', Icon: Clock, route: '/(tabs)/planning', iconColor: '#3B82F6' },
     ],
   },
   {
-    title: 'CORPS & SANTE',
+    title: 'CORPS & SANTÉ',
     items: [
       { id: 'weight', label: 'Poids', sublabel: "Suivi de l'evolution du poids", Icon: Scale, route: '/body-composition', iconColor: '#3B82F6' },
       { id: 'measurements', label: 'Mensurations', sublabel: 'Tour de bras, taille, cuisses...', Icon: Ruler, route: '/measurements', iconColor: '#8B5CF6' },
@@ -117,12 +116,12 @@ const TOOL_SECTIONS: ToolSection[] = [
   {
     title: 'SUIVI QUOTIDIEN',
     items: [
-      { id: 'sleep', label: 'Sommeil', sublabel: 'Qualite et duree de tes nuits', Icon: Moon, route: '/sleep', iconColor: '#6366F1' },
+      { id: 'sleep', label: 'Sommeil', sublabel: 'Qualité et durée de tes nuits', Icon: Moon, route: '/sleep', iconColor: '#6366F1' },
       { id: 'hydration', label: 'Hydratation', sublabel: "Suivi de l'eau par jour", Icon: Droplets, route: '/hydration', iconColor: '#3B82F6' },
       { id: 'fasting', label: 'Jeune', sublabel: 'Ramadan, intermittent, OMAD', Icon: Utensils, route: '/fasting', iconColor: '#A855F7' },
       { id: 'nutrition-plan', label: 'Nutrition', sublabel: 'Plan alimentaire et macros', Icon: Apple, route: '/nutrition-plan', iconColor: '#10B981' },
-      { id: 'energy', label: 'Energie', sublabel: 'Niveau de charge et fatigue', Icon: Zap, route: '/energy', iconColor: '#F59E0B' },
-      { id: 'health-metrics', label: 'Sante', sublabel: 'Donnees Apple Health / Google Fit', Icon: Stethoscope, route: '/health-metrics', iconColor: '#EC4899' },
+      { id: 'energy', label: 'Énergie', sublabel: 'Niveau de charge et fatigue', Icon: Zap, route: '/energy', iconColor: '#F59E0B' },
+      { id: 'health-metrics', label: 'Santé', sublabel: 'Données Apple Health / Google Fit', Icon: Stethoscope, route: '/health-metrics', iconColor: '#EC4899' },
     ],
   },
   {
@@ -151,35 +150,39 @@ const TOOL_SECTIONS: ToolSection[] = [
       { id: 'dojo', label: 'Mon Dojo', sublabel: 'XP, badges, avatars, rang', Icon: Castle, route: '/gamification', iconColor: '#8B5CF6' },
       { id: 'gamification', label: 'Progression', sublabel: 'XP, niveaux, rang', Icon: Sparkles, route: '/gamification', iconColor: '#F59E0B' },
       { id: 'badges', label: 'Badges', sublabel: 'Succes debloques', Icon: Award, route: '/badges', iconColor: '#EC4899' },
-      { id: 'challenges', label: 'Defis', sublabel: 'Quotidiens et hebdomadaires', Icon: Target, route: '/challenges', iconColor: '#10B981' },
-      { id: 'leaderboard', label: 'Classement', sublabel: 'Compare-toi aux autres', Icon: BarChart2, route: '/leaderboard', iconColor: '#6366F1' },
+      { id: 'challenges', label: 'Défis', sublabel: 'Quotidiens et hebdomadaires', Icon: Target, route: '/challenges', iconColor: '#10B981' },
     ],
   },
   {
     title: 'HISTORIQUES & COURBES',
     items: [
-      { id: 'activity-history-2', label: 'Activite quotidienne', sublabel: 'Pas, calories brulees', Icon: Activity, route: '/activity-history', iconColor: '#10B981' },
+      { id: 'activity-history-2', label: 'Activité quotidienne', sublabel: 'Pas, calories brulees', Icon: Activity, route: '/activity-history', iconColor: '#10B981' },
       { id: 'sleep-history', label: 'Historique sommeil', sublabel: 'Courbes et tendances', Icon: Moon, route: '/sleep-history', iconColor: '#6366F1' },
       { id: 'composition-detail', label: 'Courbes composition', sublabel: 'Evolution gras, muscle, eau', Icon: Layers, route: '/composition-detail', iconColor: '#4ECDC4' },
       { id: 'measurements-detail', label: 'Courbes mensurations', sublabel: 'Evolution des mesures', Icon: Ruler, route: '/measurements-detail', iconColor: '#8B5CF6' },
-      { id: 'energy-recovery', label: 'Charge & recuperation', sublabel: 'Suivi de la forme', Icon: Zap, route: '/energy', iconColor: '#F59E0B' },
+      { id: 'energy-recovery', label: 'Charge & récupération', sublabel: 'Suivi de la forme', Icon: Zap, route: '/energy', iconColor: '#F59E0B' },
     ],
   },
   {
-    title: 'DONNEES',
+    title: 'DONNÉES',
     items: [
-      { id: 'companion', label: 'Mes donnees', sublabel: 'Tableau, graphiques, ajout et export CSV', Icon: Table, route: '/companion', iconColor: '#4F8EF7' },
-      { id: 'import-csv', label: 'Import CSV', sublabel: 'Importer poids, seances, sommeil... depuis un PC', Icon: Upload, route: '/import-csv', iconColor: '#6366F1' },
-      { id: 'export-data', label: 'Exporter', sublabel: 'Sauvegarder tes donnees en JSON, CSV ou rapport', Icon: Download, handler: 'export', iconColor: '#10B981' },
+      { id: 'companion', label: 'Mes données', sublabel: 'Tableau, graphiques, ajout et export CSV', Icon: Table, route: '/companion', iconColor: '#4F8EF7' },
+      { id: 'import-csv', label: 'Import CSV', sublabel: 'Importer poids, séances, sommeil... depuis un PC', Icon: Upload, route: '/import-csv', iconColor: '#6366F1' },
+      { id: 'export-data', label: 'Exporter', sublabel: 'Sauvegarder tes données en JSON, CSV ou rapport', Icon: Download, handler: 'export', iconColor: '#10B981' },
     ],
   },
   {
     title: 'COMMUNAUTE & SAVOIR',
     items: [
-      { id: 'clubs', label: 'Clubs & Salles', sublabel: "Tes partenaires d'entrainement", Icon: Building2, route: '/clubs', iconColor: '#818CF8' },
-      { id: 'nutritionists', label: 'Pros de sante', sublabel: 'Kines, nutritionnistes, medecins', Icon: Heart, route: '/nutritionists', iconColor: '#F87171' },
       { id: 'savoir', label: 'Savoir', sublabel: 'Articles sur la science du sport', Icon: FlaskConical, route: '/savoir', iconColor: '#8B5CF6' },
       { id: 'sources', label: 'Sources scientifiques', sublabel: 'References academiques', Icon: BookOpen, route: '/scientific-sources', iconColor: '#10B981' },
+    ],
+  },
+  {
+    title: 'PARTENAIRES',
+    items: [
+      { id: 'partners', label: 'Coachs & Clubs', sublabel: 'Sander, Junior, Fouad, clubs partenaires', Icon: Swords, route: '/partners', iconColor: '#818CF8' },
+      { id: 'health-professionals', label: 'Pros de Santé', sublabel: 'Kinés, médecins, nutritionnistes', Icon: Stethoscope, route: '/health-professionals', iconColor: '#F87171' },
     ],
   },
 ];
@@ -255,15 +258,37 @@ export default function MoreScreen() {
     setRefreshing(false);
   }, [loadData]);
 
-  // Load favorites on mount
+  // Load favorites on mount — defaults pour le premier lancement
+  const DEFAULT_FAVORITES = ['timer', 'infirmary', 'photos', 'import-csv', 'savoir', 'partners', 'health-professionals'];
+
+  // IDs à toujours injecter dans les favoris (même pour utilisateurs existants)
+  const MANDATORY_FAVORITES = ['partners', 'health-professionals'];
+
   useEffect(() => {
     AsyncStorage.getItem(FAVORITES_KEY).then(saved => {
-      if (saved) {
+      if (saved !== null) {
         try {
-          setFavorites(new Set(JSON.parse(saved)));
+          const parsed: string[] = JSON.parse(saved);
+          const merged = new Set(parsed);
+          // Injecter les nouveaux favoris obligatoires si absents
+          let changed = false;
+          for (const id of MANDATORY_FAVORITES) {
+            if (!merged.has(id)) {
+              merged.add(id);
+              changed = true;
+            }
+          }
+          setFavorites(merged);
+          if (changed) {
+            AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify([...merged]));
+          }
         } catch {
           // ignore parse errors
         }
+      } else {
+        // Premier lancement : mettre les favoris par défaut
+        setFavorites(new Set(DEFAULT_FAVORITES));
+        AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(DEFAULT_FAVORITES));
       }
     });
   }, []);
@@ -333,7 +358,7 @@ export default function MoreScreen() {
 
   const handleExport = async () => {
     showPopup(
-      'Exporter mes donnees',
+      'Exporter mes données',
       'Choisis le format de sauvegarde',
       [
         { text: 'Annuler', style: 'cancel' },
@@ -346,10 +371,10 @@ export default function MoreScreen() {
   const handleExportEditable = async () => {
     showPopup(
       'Export Editable',
-      'Exporte tes donnees dans un format que tu peux modifier sur ordinateur puis reimporter',
+      'Exporte tes données dans un format que tu peux modifier sur ordinateur puis reimporter',
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Mes Donnees', style: 'primary', onPress: () => exportEditableCSV() },
+        { text: 'Mes Données', style: 'primary', onPress: () => exportEditableCSV() },
         { text: 'Template Vide', style: 'default', onPress: () => exportEmptyTemplate() },
       ]
     );
@@ -358,6 +383,10 @@ export default function MoreScreen() {
   const handleItemPress = useCallback((item: ToolItem) => {
     if (item.handler === 'export') {
       handleExport();
+      return;
+    }
+    if (item.handler === 'instagram-yoroiapp') {
+      safeOpenURL('https://www.instagram.com/yoroiapp');
       return;
     }
     if (item.route) {
@@ -508,7 +537,7 @@ export default function MoreScreen() {
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <Wrench size={28} color={isDark ? colors.accent : '#FFFFFF'} strokeWidth={2} />
-            <Text style={[styles.title, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>Outils</Text>
+            <Text style={[styles.title, { color: '#FFFFFF' }]}>Outils</Text>
           </View>
         </View>
 
@@ -561,7 +590,7 @@ export default function MoreScreen() {
         {filteredSections.map((section) => (
           <View key={section.title} style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: isDark ? colors.textMuted : 'rgba(255,255,255,0.7)' }]}>{section.title}</Text>
+              <Text style={[styles.sectionTitle, { color: 'rgba(255,255,255,0.7)' }]}>{section.title}</Text>
             </View>
             {section.items.map(renderToolItem)}
           </View>
@@ -584,13 +613,13 @@ export default function MoreScreen() {
           </View>
 
           <View style={styles.madeWith}>
-            <Text style={{ color: isDark ? colors.textMuted : 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '500' }}>{t('menu.madeWithLove')}</Text>
+            <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '500' }}>{t('menu.madeWithLove')}</Text>
             <Heart size={14} color="#EF4444" fill="#EF4444" />
-            <Text style={{ color: isDark ? colors.textMuted : 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '500' }}>{t('menu.inFrance')}</Text>
+            <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '500' }}>{t('menu.inFrance')}</Text>
           </View>
 
           <TouchableOpacity onPress={handleVersionTap} activeOpacity={1}>
-            <Text style={{ color: isDark ? colors.textMuted : 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 12, textAlign: 'center' }}>
+            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 12, textAlign: 'center' }}>
               YOROI Version 2.0
             </Text>
           </TouchableOpacity>

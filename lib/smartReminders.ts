@@ -10,6 +10,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { getAllMeasurements, getAllWorkouts, Measurement } from './storage';
 import logger from '@/lib/security/logger';
+import { saveNotification } from '@/lib/notificationHistoryService';
 
 // ============================================
 // CLES DE STOCKAGE
@@ -211,7 +212,7 @@ export const analyzeHabits = async (): Promise<DetectedHabits> => {
       }
     });
 
-    // Analyser les entrainements
+    // Analyser les entraînements
     const trainingTimes: number[] = [];
     const trainingDaysSet: Set<number> = new Set();
 
@@ -336,7 +337,7 @@ export const generateWeightReminderMessage = (habits: DetectedHabits): ReminderM
 };
 
 /**
- * Generer un message de rappel entrainement
+ * Generer un message de rappel entraînement
  */
 export const generateTrainingReminderMessage = (habits: DetectedHabits): ReminderMessage => {
   const now = new Date();
@@ -346,7 +347,7 @@ export const generateTrainingReminderMessage = (habits: DetectedHabits): Reminde
     const timeStr = habits.avgTrainingTime || '18h';
     return {
       type: 'training',
-      title: 'Entrainement',
+      title: 'Entraînement',
       body: `Tu t'entraines souvent le ${dayName}. C'est l'heure de se bouger !`,
       emoji: '',
     };
@@ -354,7 +355,7 @@ export const generateTrainingReminderMessage = (habits: DetectedHabits): Reminde
 
   return {
     type: 'training',
-    title: 'Entrainement',
+    title: 'Entraînement',
     body: 'C\'est le moment de s\'entrainer !',
     emoji: '',
   };
@@ -418,7 +419,7 @@ export const generateStreakProtectionMessage = (habits: DetectedHabits): Reminde
 // ============================================
 
 /**
- * Formater les jours d'entrainement detectes
+ * Formater les jours d'entraînement detectes
  */
 export const formatTrainingDays = (days: number[]): string => {
   if (days.length === 0) return 'Non detecte';
@@ -434,7 +435,7 @@ export const formatWeighTime = (time: string | null): string => {
 };
 
 /**
- * Verifier si c'est un jour d'entrainement
+ * Verifier si c'est un jour d'entraînement
  */
 export const isTrainingDay = (habits: DetectedHabits): boolean => {
   const today = new Date().getDay();
@@ -528,6 +529,9 @@ export const scheduleSmartNotification = async (
         repeats: false,
       },
     });
+
+    // Sauvegarder dans la cloche de notifications
+    saveNotification(message.title, message.body, message.type, { identifier }).catch(() => {});
 
     return identifier;
   } catch (error) {

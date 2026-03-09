@@ -140,7 +140,7 @@ export default function HealthConnectScreen() {
                 { text: 'Plus tard', style: 'cancel' },
                 {
                   text: 'Installer',
-                  onPress: () => Linking.openURL('market://details?id=com.google.android.apps.healthdata'),
+                  onPress: () => safeOpenURL('market://details?id=com.google.android.apps.healthdata'),
                   style: 'primary'
                 }
               ]
@@ -174,7 +174,7 @@ export default function HealthConnectScreen() {
 
     showPopup(
       'Deconnecter ?',
-      `Veux-tu vraiment deconnecter YOROI de ${healthConnect.getProviderName()} ? Tes donnees ne seront plus synchronisees automatiquement.`,
+      `Veux-tu vraiment deconnecter YOROI de ${healthConnect.getProviderName()} ? Tes données ne seront plus synchronisees automatiquement.`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -201,7 +201,7 @@ export default function HealthConnectScreen() {
 
       showPopup(
         'Synchronise !',
-        'Tes donnees de sante ont ete mises a jour.',
+        'Tes données de santé ont ete mises a jour.',
         [{ text: 'OK', style: 'primary' }]
       );
     } catch (error) {

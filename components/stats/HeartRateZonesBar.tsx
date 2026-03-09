@@ -1,5 +1,5 @@
 // ============================================
-// HEART RATE ZONES BAR - Style Apple Sante
+// HEART RATE ZONES BAR - Style Apple Santé
 // Zone 1 bleu, Zone 2 vert, Zone 3 jaune,
 // Zone 4 orange, Zone 5 rouge/rose
 // ============================================
@@ -85,7 +85,7 @@ export const HeartRateZonesBar: React.FC<HeartRateZonesBarProps> = ({
               />
             </View>
 
-            {/* Duree */}
+            {/* Durée */}
             <Text style={[styles.zoneDuration, { color: colors.text }]}>
               {formatDuration(zone.durationSeconds)}
             </Text>
@@ -100,7 +100,7 @@ export const HeartRateZonesBar: React.FC<HeartRateZonesBarProps> = ({
 
       {/* Texte explicatif comme Apple */}
       <Text style={[styles.disclaimer, { color: colors.textMuted }]}>
-        Estimation du temps passe dans chaque zone de frequence cardiaque.
+        Estimation du temps passe dans chaque zone de fréquence cardiaque.
       </Text>
     </View>
   );

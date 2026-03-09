@@ -556,8 +556,12 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     }
     RunLoop.main.add(ht, forMode: .common)
     hapticTimer = ht
-    // Notifications répétées pour continuer à sonner si l'app passe en arrière-plan
+    // Notifications toutes les 15s pendant 15 min
     scheduleAlarmRepeatNotifications()
+    // Background refresh dans 12 min pour replanifier → boucle infinie
+    scheduleAlarmBackgroundRefresh()
+    // Notifier l'iPhone que le timer est terminé (notification locale iPhone)
+    sendAction("timerFinished")
   }
 
   func stopAlarm() {
@@ -574,20 +578,26 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     stopExtendedSession()
   }
 
-  /// Planifie des notifications toutes les 30s pendant 10 min pour continuer à sonner en arrière-plan
+  /// Planifie des notifications toutes les 15s pendant 15 min — puis un background refresh replanifie
   private func scheduleAlarmRepeatNotifications() {
     let center = UNUserNotificationCenter.current()
-    center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
+    // Nettoyer les anciennes
+    let oldIds = (1...60).map { "yoroi.alarm.repeat.\($0)" }
+    center.removePendingNotificationRequests(withIdentifiers: oldIds)
+
+    center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
       guard granted else { return }
-      for i in 1...20 {
+      for i in 1...60 {
         let content = UNMutableNotificationContent()
         content.title = "Timer YOROI"
         content.body  = "Ouvre l'app pour arrêter !"
         content.sound = .defaultCritical
+        content.categoryIdentifier = "yoroi.timer.alarm"
         if #available(watchOS 8.0, *) {
           content.interruptionLevel = .timeSensitive
         }
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Double(i * 30), repeats: false)
+        // 15s entre chaque notification → 60 × 15 = 15 minutes
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Double(i * 15), repeats: false)
         let request = UNNotificationRequest(identifier: "yoroi.alarm.repeat.\(i)", content: content, trigger: trigger)
         center.add(request)
       }
@@ -595,8 +605,28 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   }
 
   private func cancelAlarmRepeatNotifications() {
-    let ids = (1...20).map { "yoroi.alarm.repeat.\($0)" }
+    let ids = (1...60).map { "yoroi.alarm.repeat.\($0)" }
     UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
+  }
+
+  // MARK: - Background refresh (replanifie l'alarme avant épuisement des notifications)
+
+  func scheduleAlarmBackgroundRefresh() {
+    // Se déclenche dans 12 min (avant que les 15 min de notifications se terminent)
+    let fireDate = Date().addingTimeInterval(12 * 60)
+    WKExtension.shared().scheduleBackgroundRefresh(
+      withPreferredDate: fireDate,
+      userInfo: "yoroi.alarm.refresh" as NSString
+    ) { _ in }
+  }
+
+  /// Appelé par le background task handler dans YoroiWatchApp
+  func handleAlarmBackgroundRefresh() {
+    guard timerAlarmRinging else { return }
+    // Replanifier un nouveau lot de 60 notifications + vibration + nouveau refresh
+    scheduleAlarmRepeatNotifications()
+    scheduleAlarmBackgroundRefresh()
+    WKInterfaceDevice.current().play(.notification)
   }
 
   // MARK: - Extended Runtime Session (keeps timer alive in background)
@@ -642,8 +672,12 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   }
 
   func formattedTime(_ totalSeconds: Int) -> String {
-    let m = totalSeconds / 60
+    let h = totalSeconds / 3600
+    let m = (totalSeconds % 3600) / 60
     let s = totalSeconds % 60
+    if h > 0 {
+      return String(format: "%d:%02d:%02d", h, m, s)
+    }
     return String(format: "%d:%02d", m, s)
   }
 
@@ -971,6 +1005,14 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
           entryCount: dict["entryCount"] as? Int ?? 0
         )
       }
+      // Persist Carnet summary for complications
+      let withPR = benchmarks.filter { $0.pr > 0 }
+      UserDefaults.standard.set(withPR.count, forKey: "yoroi_carnet_totalPRs")
+      if let top = withPR.sorted(by: { $0.entryCount > $1.entryCount }).first {
+        UserDefaults.standard.set(top.name, forKey: "yoroi_carnet_lastExercise")
+        UserDefaults.standard.set(top.pr, forKey: "yoroi_carnet_lastPR")
+        UserDefaults.standard.set(top.unit, forKey: "yoroi_carnet_lastUnit")
+      }
     }
 
     // Recent workouts
@@ -1270,10 +1312,70 @@ struct ExerciseTemplate: Identifiable {
     ExerciseTemplate(id: "car_deadlift", name: "Car deadlift", muscleGroup: "Strongman", category: "Strongman", unit: "reps", icon: "scalemass.fill"),
     ExerciseTemplate(id: "sandbag_carry", name: "Sandbag carry", muscleGroup: "Strongman", category: "Strongman", unit: "time", icon: "figure.strengthtraining.functional"),
     ExerciseTemplate(id: "keg_toss", name: "Keg toss", muscleGroup: "Strongman", category: "Strongman", unit: "reps", icon: "figure.strengthtraining.functional"),
+
+    // ═══════════════════════════════════════
+    // FESSIERS (18 exercices)
+    // ═══════════════════════════════════════
+    ExerciseTemplate(id: "hip_thrust_b", name: "Hip thrust barre", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "hip_thrust_h", name: "Hip thrust haltere", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "hip_thrust_m", name: "Hip thrust machine", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "glute_bridge", name: "Glute bridge", muscleGroup: "Fessiers", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "glute_bridge_u", name: "Glute bridge unilateral", muscleGroup: "Fessiers", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "kickback_c", name: "Cable kickback", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "abduction", name: "Abduction hanche", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "abduction_m", name: "Machine abduction", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "fentes_l", name: "Fentes laterales", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "step_up", name: "Step up (boite)", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "rdl_uni", name: "RDL unilateral", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "donkey_kick", name: "Donkey kick", muscleGroup: "Fessiers", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "quadruped_ext", name: "Extension quadrupedie", muscleGroup: "Fessiers", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "sumo_squat", name: "Squat sumo leste", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "pistol_glute", name: "Pistol squat", muscleGroup: "Fessiers", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "monster_walk", name: "Monster walk elastique", muscleGroup: "Fessiers", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "clamshell", name: "Clamshell", muscleGroup: "Fessiers", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "squat_wall", name: "Squat isometrique (mur)", muscleGroup: "Fessiers", category: "Musculation", unit: "time", icon: "figure.strengthtraining.traditional"),
+
+    // ═══════════════════════════════════════
+    // ISCHIOS & MOLLETS (16 exercices)
+    // ═══════════════════════════════════════
+    ExerciseTemplate(id: "nordic_curl", name: "Nordic curl", muscleGroup: "Ischios", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "leg_curl_c", name: "Leg curl couche", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "leg_curl_s", name: "Leg curl assis", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "rdl_isch", name: "Soulevé de terre roumain", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "rdl_halt", name: "RDL halteres", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "good_morn", name: "Good morning", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "pull_thr", name: "Cable pull through", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "glute_ham", name: "Glute ham raise", muscleGroup: "Ischios", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "inertie_isch", name: "Curl ischio elastique", muscleGroup: "Ischios", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "mollets_d", name: "Mollets debout machine", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "mollets_as", name: "Mollets assis machine", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "mollets_uni", name: "Mollets unilateral", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "mollets_donkey", name: "Donkey calf raise", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "mollets_saut", name: "Jump rope mollets", muscleGroup: "Ischios", category: "Musculation", unit: "time", icon: "figure.jumprope"),
+    ExerciseTemplate(id: "tibialis", name: "Tibialis raise", muscleGroup: "Ischios", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "ankle_circle", name: "Cercles chevilles", muscleGroup: "Ischios", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+
+    // ═══════════════════════════════════════
+    // MOBILITE & GAINAGE (14 exercices)
+    // ═══════════════════════════════════════
+    ExerciseTemplate(id: "planche", name: "Planche", muscleGroup: "Mobilite", category: "Musculation", unit: "time", icon: "figure.core.training"),
+    ExerciseTemplate(id: "planche_lat", name: "Planche laterale", muscleGroup: "Mobilite", category: "Musculation", unit: "time", icon: "figure.core.training"),
+    ExerciseTemplate(id: "planche_dyn", name: "Planche dynamique", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.core.training"),
+    ExerciseTemplate(id: "hollow_body", name: "Hollow body hold", muscleGroup: "Mobilite", category: "Musculation", unit: "time", icon: "figure.core.training"),
+    ExerciseTemplate(id: "dead_bug", name: "Dead bug", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.core.training"),
+    ExerciseTemplate(id: "bird_dog", name: "Bird dog", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.core.training"),
+    ExerciseTemplate(id: "hip_90_90", name: "Hip 90/90 stretch", muscleGroup: "Mobilite", category: "Musculation", unit: "time", icon: "figure.flexibility"),
+    ExerciseTemplate(id: "pigeon_pose", name: "Pigeon pose", muscleGroup: "Mobilite", category: "Musculation", unit: "time", icon: "figure.flexibility"),
+    ExerciseTemplate(id: "jefferson_curl", name: "Jefferson curl", muscleGroup: "Mobilite", category: "Musculation", unit: "kg", icon: "figure.flexibility"),
+    ExerciseTemplate(id: "cossack_squat", name: "Cossack squat", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "world_greatest", name: "World's greatest stretch", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.flexibility"),
+    ExerciseTemplate(id: "cat_cow", name: "Cat cow", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.flexibility"),
+    ExerciseTemplate(id: "thoracic_rot", name: "Rotation thoracique", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.flexibility"),
+    ExerciseTemplate(id: "ankle_mob", name: "Mobilite cheville", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.flexibility"),
   ]
 
   static var muscleGroups: [String] {
-    let order = ["Pectoraux", "Dos", "Epaules", "Bras", "Jambes", "Abdos", "Olympique", "CrossFit", "Hyrox", "Running", "Cardio", "Combat", "Strongman"]
+    let order = ["Pectoraux", "Dos", "Epaules", "Bras", "Jambes", "Fessiers", "Ischios", "Abdos", "Mobilite", "Olympique", "CrossFit", "Hyrox", "Running", "Cardio", "Combat", "Strongman"]
     return order
   }
 

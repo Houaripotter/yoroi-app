@@ -2,14 +2,14 @@
 // DUAL COMPARISON CARD - Grand graphique dual-line scrollable
 // 2 courbes colorees + gradient fills + legende
 // + barres de progression modernes en dessous
-// Scroll horizontal + auto-scroll vers les donnees recentes
+// Scroll horizontal + auto-scroll vers les données recentes
 // ============================================
 
 import React, { useState, useMemo, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent, ScrollView, Dimensions, Modal } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import Svg, { Path, Circle as SvgCircle, Line, Text as SvgText, Defs, LinearGradient, Stop, G, Rect } from 'react-native-svg';
-import { ArrowLeftRight, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
+import { ArrowLeftRight, TrendingUp, TrendingDown, Minus, Maximize2, X } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useI18n } from '@/lib/I18nContext';
@@ -32,6 +32,7 @@ interface DualComparisonCardProps {
 }
 
 const CHART_HEIGHT = 220;
+const FULLSCREEN_HEIGHT = Dimensions.get('window').height * 0.55;
 const PAD_TOP = 30;
 const PAD_BOTTOM = 35;
 const PAD_LEFT = 45;
@@ -78,31 +79,47 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
   const dateLocale = fr;
   const [cardWidth, setCardWidth] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+  const fsScrollRef = useRef<ScrollView>(null);
+  const [showLeft, setShowLeft] = useState(true);
+  const [showRight, setShowRight] = useState(true);
+  const [fullscreen, setFullscreen] = useState(false);
 
   const handleLayout = (e: LayoutChangeEvent) => {
     setCardWidth(e.nativeEvent.layout.width);
   };
 
-  const hasLeftData = leftHistory.length >= 1;
-  const hasRightData = rightHistory.length >= 1;
-  const hasData = hasLeftData || hasRightData;
+  const toggleLeft = () => {
+    if (showLeft && !showRight) return; // garder au moins une
+    setShowLeft(v => !v);
+  };
+  const toggleRight = () => {
+    if (showRight && !showLeft) return;
+    setShowRight(v => !v);
+  };
+
+  const hasData = (leftHistory.length >= 1) || (rightHistory.length >= 1);
   const maxValue = Math.max(leftValue, rightValue, 1);
   const delta = Math.abs(leftValue - rightValue);
-  const maxLen = Math.max(leftHistory.length, rightHistory.length);
-  const isScrollable = maxLen > 5;
 
-  const chartData = useMemo(() => {
-    if (!hasData || cardWidth === 0) return null;
+  const computeChart = useCallback((containerWidth: number, chartHeight: number) => {
+    const activeLeft = showLeft && leftHistory.length >= 1;
+    const activeRight = showRight && rightHistory.length >= 1;
+    if ((!activeLeft && !activeRight) || containerWidth === 0) return null;
 
-    const minWidth = cardWidth - 32;
-    const scrollableWidth = isScrollable ? Math.max(minWidth, maxLen * POINT_WIDTH) : minWidth;
+    const activeMaxLen = Math.max(
+      activeLeft ? leftHistory.length : 0,
+      activeRight ? rightHistory.length : 0,
+    );
+    const activeIsScrollable = activeMaxLen > 5;
+    const minWidth = containerWidth - 32;
+    const scrollableWidth = activeIsScrollable ? Math.max(minWidth, activeMaxLen * POINT_WIDTH) : minWidth;
     const svgWidth = scrollableWidth;
     const plotW = svgWidth - PAD_LEFT - PAD_RIGHT;
-    const plotH = CHART_HEIGHT - PAD_TOP - PAD_BOTTOM;
+    const plotH = chartHeight - PAD_TOP - PAD_BOTTOM;
 
     const allValues = [
-      ...(hasLeftData ? leftHistory.map(h => h.value) : []),
-      ...(hasRightData ? rightHistory.map(h => h.value) : []),
+      ...(activeLeft ? leftHistory.map(h => h.value) : []),
+      ...(activeRight ? rightHistory.map(h => h.value) : []),
     ];
     const dataMin = Math.min(...allValues);
     const dataMax = Math.max(...allValues);
@@ -119,8 +136,8 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
         value: d.value,
       }));
 
-    const leftPts = hasLeftData ? toPoints(leftHistory) : [];
-    const rightPts = hasRightData ? toPoints(rightHistory) : [];
+    const leftPts = activeLeft ? toPoints(leftHistory) : [];
+    const rightPts = activeRight ? toPoints(rightHistory) : [];
     const leftLine = buildSmooth(leftPts);
     const rightLine = buildSmooth(rightPts);
     const leftArea = leftPts.length > 0
@@ -136,7 +153,9 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
       return { val: Math.round(val * 10) / 10, y: PAD_TOP + plotH - (plotH / ySteps) * i };
     });
 
-    const longestHistory = leftHistory.length >= rightHistory.length ? leftHistory : rightHistory;
+    const longestHistory = (activeLeft ? leftHistory.length : 0) >= (activeRight ? rightHistory.length : 0)
+      ? (activeLeft ? leftHistory : rightHistory)
+      : rightHistory;
     const maxXLabels = Math.floor(svgWidth / 60);
     const xLabels = longestHistory.map((h, i) => {
       const x = PAD_LEFT + (i / Math.max(longestHistory.length - 1, 1)) * plotW;
@@ -145,15 +164,23 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
       return { x, label };
     });
 
-    return { svgWidth, leftPts, rightPts, leftLine, rightLine, leftArea, rightArea, yLabels, xLabels, maxXLabels, plotBottom };
-  }, [hasData, cardWidth, leftHistory, rightHistory, dateLocale, isScrollable, maxLen]);
+    return { svgWidth, leftPts, rightPts, leftLine, rightLine, leftArea, rightArea, yLabels, xLabels, maxXLabels, plotBottom, chartHeight, activeIsScrollable };
+  }, [showLeft, showRight, leftHistory, rightHistory, dateLocale]);
 
-  // Auto-scroll to latest data (right end)
+  const chartData = useMemo(() => computeChart(cardWidth, CHART_HEIGHT), [computeChart, cardWidth]);
+
+  // Auto-scroll to left (newest data first = left side)
   const handleContentSizeChange = useCallback((contentWidth: number) => {
-    if (isScrollable && scrollRef.current && contentWidth > cardWidth - 32) {
-      scrollRef.current.scrollToEnd({ animated: false });
+    if (chartData?.activeIsScrollable && scrollRef.current && contentWidth > cardWidth - 32) {
+      scrollRef.current.scrollTo({ x: 0, animated: false });
     }
-  }, [isScrollable, cardWidth]);
+  }, [chartData, cardWidth]);
+
+  const handleFsContentSizeChange = useCallback((contentWidth: number) => {
+    if (fsScrollRef.current && contentWidth > SCREEN_WIDTH) {
+      fsScrollRef.current.scrollTo({ x: 0, animated: false });
+    }
+  }, []);
 
   const leftTrend = leftHistory.length >= 2
     ? (leftHistory[leftHistory.length - 1].value > leftHistory[leftHistory.length - 2].value ? 'up' : leftHistory[leftHistory.length - 1].value < leftHistory[leftHistory.length - 2].value ? 'down' : 'stable')
@@ -180,7 +207,39 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
         <View style={[styles.titleDash, { backgroundColor: leftColor }]} />
         <Text style={[styles.titleText, { color: colors.textPrimary }]}>{title.toUpperCase()}</Text>
         <View style={[styles.titleDash, { backgroundColor: rightColor }]} />
-        {(leftValue > 0 && rightValue > 0) && (
+        {hasData && (
+          <TouchableOpacity onPress={() => setFullscreen(true)} activeOpacity={0.7}
+            style={[styles.expandBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+            <Maximize2 size={14} color={colors.textSecondary} strokeWidth={2.5} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Chips de filtre gauche/droite */}
+      <View style={styles.chipRow}>
+        <TouchableOpacity
+          style={[styles.chip, {
+            backgroundColor: showLeft ? leftColor : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+            borderColor: showLeft ? leftColor : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'),
+          }]}
+          onPress={toggleLeft}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.chipDot, { backgroundColor: showLeft ? '#FFFFFF' : leftColor }]} />
+          <Text style={[styles.chipText, { color: showLeft ? '#FFFFFF' : colors.textSecondary }]}>{leftLabel}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.chip, {
+            backgroundColor: showRight ? rightColor : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+            borderColor: showRight ? rightColor : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'),
+          }]}
+          onPress={toggleRight}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.chipDot, { backgroundColor: showRight ? '#FFFFFF' : rightColor }]} />
+          <Text style={[styles.chipText, { color: showRight ? '#FFFFFF' : colors.textSecondary }]}>{rightLabel}</Text>
+        </TouchableOpacity>
+        {(leftValue > 0 && rightValue > 0 && showLeft && showRight) && (
           <View style={[styles.deltaBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
             <Text style={[styles.deltaText, { color: colors.textSecondary }]}>
               {`\u0394 ${smartFormat(delta)}`}
@@ -197,7 +256,7 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
             horizontal
             showsHorizontalScrollIndicator={false}
             onContentSizeChange={handleContentSizeChange}
-            scrollEnabled={isScrollable}
+            scrollEnabled={chartData.activeIsScrollable}
           >
             <Svg width={chartData.svgWidth} height={CHART_HEIGHT}>
               <Defs>
@@ -249,7 +308,7 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
 
               {/* Value labels */}
               {chartData.leftPts.length > 0 && (() => {
-                const lp = chartData.leftPts[chartData.leftPts.length - 1];
+                const lp = chartData.leftPts[0];
                 return (
                   <G>
                     <Rect x={lp.x - 20} y={lp.y - 24} width={40} height={16} rx={6} ry={6} fill={leftColor} opacity={0.9} />
@@ -258,7 +317,7 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
                 );
               })()}
               {chartData.rightPts.length > 0 && (() => {
-                const rp = chartData.rightPts[chartData.rightPts.length - 1];
+                const rp = chartData.rightPts[0];
                 return (
                   <G>
                     <Rect x={rp.x - 20} y={rp.y - 24} width={40} height={16} rx={6} ry={6} fill={rightColor} opacity={0.9} />
@@ -282,7 +341,7 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
           </View>
           {isScrollable && (
             <View style={styles.hintBar}>
-              <Text style={[styles.hintText, { color: colors.textMuted }]}>Defiler pour voir plus</Text>
+              <Text style={[styles.hintText, { color: colors.textMuted }]}>Defiler pour voir plus · Recent a gauche</Text>
             </View>
           )}
         </View>
@@ -291,11 +350,85 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
       {!hasData && (
         <View style={styles.emptyChart}>
           <ArrowLeftRight size={28} color={colors.textMuted} strokeWidth={1.5} />
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>Min. 2 mesures pour voir le graphique</Text>
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>Min. 1 mesure pour voir le graphique</Text>
         </View>
       )}
 
       <View style={[styles.separator, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]} />
+
+      {/* Modal fullscreen */}
+      <Modal visible={fullscreen} animationType="slide" transparent statusBarTranslucent>
+        <View style={[styles.fullscreenOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.95)' : 'rgba(255,255,255,0.98)' }]}>
+          <View style={styles.fullscreenHeader}>
+            <Text style={[styles.fullscreenTitle, { color: colors.textPrimary }]}>{title}</Text>
+            <TouchableOpacity onPress={() => setFullscreen(false)} style={[styles.closeBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' }]}>
+              <X size={20} color={colors.textPrimary} strokeWidth={2.5} />
+            </TouchableOpacity>
+          </View>
+          {/* Chips en fullscreen */}
+          <View style={[styles.chipRow, { paddingHorizontal: 20 }]}>
+            <TouchableOpacity
+              style={[styles.chip, { backgroundColor: showLeft ? leftColor : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderColor: showLeft ? leftColor : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)') }]}
+              onPress={toggleLeft} activeOpacity={0.7}
+            >
+              <View style={[styles.chipDot, { backgroundColor: showLeft ? '#FFFFFF' : leftColor }]} />
+              <Text style={[styles.chipText, { color: showLeft ? '#FFFFFF' : colors.textSecondary }]}>{leftLabel}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.chip, { backgroundColor: showRight ? rightColor : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'), borderColor: showRight ? rightColor : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)') }]}
+              onPress={toggleRight} activeOpacity={0.7}
+            >
+              <View style={[styles.chipDot, { backgroundColor: showRight ? '#FFFFFF' : rightColor }]} />
+              <Text style={[styles.chipText, { color: showRight ? '#FFFFFF' : colors.textSecondary }]}>{rightLabel}</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView ref={fsScrollRef} horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 20 }} onContentSizeChange={handleFsContentSizeChange}>
+            {(() => {
+              const fsData = computeChart(Math.max(SCREEN_WIDTH, Math.max(showLeft ? leftHistory.length : 0, showRight ? rightHistory.length : 0) * 100), FULLSCREEN_HEIGHT);
+              if (!fsData) return null;
+              const fsCH = FULLSCREEN_HEIGHT;
+              return (
+                <Svg width={fsData.svgWidth} height={fsCH}>
+                  <Defs>
+                    <LinearGradient id="dualGrad-left-fs" x1="0" y1="0" x2="0" y2="1">
+                      <Stop offset="0" stopColor={leftColor} stopOpacity={isDark ? '0.40' : '0.30'} />
+                      <Stop offset="0.5" stopColor={leftColor} stopOpacity={isDark ? '0.15' : '0.10'} />
+                      <Stop offset="1" stopColor={leftColor} stopOpacity="0.02" />
+                    </LinearGradient>
+                    <LinearGradient id="dualGrad-right-fs" x1="0" y1="0" x2="0" y2="1">
+                      <Stop offset="0" stopColor={rightColor} stopOpacity={isDark ? '0.40' : '0.30'} />
+                      <Stop offset="0.5" stopColor={rightColor} stopOpacity={isDark ? '0.15' : '0.10'} />
+                      <Stop offset="1" stopColor={rightColor} stopOpacity="0.02" />
+                    </LinearGradient>
+                  </Defs>
+                  {fsData.yLabels.map((yl, i) => (
+                    <Line key={`fshg-${i}`} x1={PAD_LEFT} y1={yl.y} x2={fsData.svgWidth - PAD_RIGHT} y2={yl.y} stroke={gridColor} strokeWidth={1} strokeDasharray="4,6" />
+                  ))}
+                  {fsData.yLabels.map((yl, i) => (
+                    <SvgText key={`fsyl-${i}`} x={PAD_LEFT - 8} y={yl.y + 4} fontSize={9} fontWeight="700" fill={textMuted} textAnchor="end">{yl.val.toFixed(1)}</SvgText>
+                  ))}
+                  {fsData.leftArea && <Path d={fsData.leftArea} fill="url(#dualGrad-left-fs)" />}
+                  {fsData.leftLine && <Path d={fsData.leftLine} fill="none" stroke={leftColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />}
+                  {fsData.leftPts.map((pt, idx) => (
+                    <G key={`fslp-${idx}`}>
+                      <SvgCircle cx={pt.x} cy={pt.y} r={5} fill={leftColor} opacity={0.12} />
+                      <SvgCircle cx={pt.x} cy={pt.y} r={3.5} fill={isDark ? colors.backgroundCard : '#FFFFFF'} stroke={leftColor} strokeWidth={2} />
+                    </G>
+                  ))}
+                  {fsData.rightArea && <Path d={fsData.rightArea} fill="url(#dualGrad-right-fs)" />}
+                  {fsData.rightLine && <Path d={fsData.rightLine} fill="none" stroke={rightColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />}
+                  {fsData.rightPts.map((pt, idx) => (
+                    <G key={`fsrp-${idx}`}>
+                      <SvgCircle cx={pt.x} cy={pt.y} r={5} fill={rightColor} opacity={0.12} />
+                      <SvgCircle cx={pt.x} cy={pt.y} r={3.5} fill={isDark ? colors.backgroundCard : '#FFFFFF'} stroke={rightColor} strokeWidth={2} />
+                    </G>
+                  ))}
+                </Svg>
+              );
+            })()}
+          </ScrollView>
+        </View>
+      </Modal>
 
       {/* Metric cards */}
       <View style={styles.metricsRow}>
@@ -375,6 +508,38 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     textAlign: 'center',
   },
+  expandBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+    alignItems: 'center',
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  chipDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  chipText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
   deltaBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -383,6 +548,29 @@ const styles = StyleSheet.create({
   deltaText: {
     fontSize: 11,
     fontWeight: '700',
+  },
+  fullscreenOverlay: {
+    flex: 1,
+    paddingTop: 60,
+  },
+  fullscreenHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  fullscreenTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chartContainer: {
     marginBottom: 4,

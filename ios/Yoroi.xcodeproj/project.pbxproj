@@ -25,8 +25,8 @@
 		A1B2C3D400000003 /* YoroiLiveActivityManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000030 /* YoroiLiveActivityManager.m */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		CARNETPAGE001BUILDF00001 /* CarnetPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CARNETPAGE001FILEREF0001 /* CarnetPage.swift */; };
+		COMPETPAGE01BUILDF000001 /* CompetitionPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = COMPETPAGE01FILEREF000001 /* CompetitionPage.swift */; };
 		COMPLICCNTRL01BUILDF0001 /* ComplicationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = COMPLICCNTRL01FILEREF0001 /* ComplicationController.swift */; };
-		WATCHUTILS001BUILDF00001 /* WatchUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = WATCHUTILS001FILEREF00001 /* WatchUtils.swift */; };
 		D33204A0A2246F4E1F69529F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BDA7F51DE3199FA753FF4521 /* Assets.xcassets */; };
 		D6D98440C02A34740C0F71DA /* WatchConnectivityBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E49616A4A5F9C00ECDA0DD06 /* WatchConnectivityBridge.swift */; };
 		E11C770F9EC353BDED32219F /* WatchConnectivityBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 38DF121D8F7FCBF2DDD2D5B3 /* WatchConnectivityBridge.m */; };
@@ -38,7 +38,12 @@
 		FD7C9F57DFFF6CF797EF939D /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49841AC244D54BFE9CC6D2C4 /* HealthKit.framework */; };
 		FF32897EE0BEC2AECA52ABBF /* YoroiWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0F210D88915A040CE036D6 /* YoroiWatchApp.swift */; };
 		RCTPKGCNSTUB0BUILDF00001 /* RCTPackagerConnectionStub.m in Sources */ = {isa = PBXBuildFile; fileRef = RCTPKGCNSTUB0FILEREF0001 /* RCTPackagerConnectionStub.m */; };
+		MULTIPEER01BUILDF00001 /* MultipeerBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = MULTIPEER01FILEREF00001 /* MultipeerBridge.swift */; };
+		MULTIPEER02BUILDF00001 /* MultipeerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = MULTIPEER02FILEREF00001 /* MultipeerBridge.m */; };
+		WATCHUTILS001BUILDF00001 /* WatchUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = WATCHUTILS001FILEREF00001 /* WatchUtils.swift */; };
 		WIZZ50UND0001F1LEREF0001 /* wizz-made-with-Voicemod.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */; };
+		WORKOUTPAG01BUILDF000001 /* WorkoutPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */; };
+		TIMERALRMVW1BUILDF000001 /* TimerAlarmNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIMERALRMVW1FILEREF000001 /* TimerAlarmNotificationView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -93,8 +98,8 @@
 		BDA7F51DE3199FA753FF4521 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C60C9F16AACE99230853813A /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/WatchConnectivity.framework; sourceTree = DEVELOPER_DIR; };
 		CARNETPAGE001FILEREF0001 /* CarnetPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CarnetPage.swift; sourceTree = "<group>"; };
+		COMPETPAGE01FILEREF000001 /* CompetitionPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompetitionPage.swift; sourceTree = "<group>"; };
 		COMPLICCNTRL01FILEREF0001 /* ComplicationController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ComplicationController.swift; sourceTree = "<group>"; };
-		WATCHUTILS001FILEREF00001 /* WatchUtils.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchUtils.swift; sourceTree = "<group>"; };
 		D767F6BF1B2714353253616C /* WeightPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WeightPage.swift; sourceTree = "<group>"; };
 		E49616A4A5F9C00ECDA0DD06 /* WatchConnectivityBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchConnectivityBridge.swift; sourceTree = "<group>"; };
 		E925914387B2F6992FA479C6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
@@ -103,7 +108,12 @@
 		F11748442D0722820044C1D9 /* Yoroi-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Yoroi-Bridging-Header.h"; path = "Yoroi/Yoroi-Bridging-Header.h"; sourceTree = "<group>"; };
 		F1A2B3C4D5E6F70900SETTINGS /* SettingsPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsPage.swift; sourceTree = "<group>"; };
 		RCTPKGCNSTUB0FILEREF0001 /* RCTPackagerConnectionStub.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = RCTPackagerConnectionStub.m; sourceTree = SOURCE_ROOT; };
+		WATCHUTILS001FILEREF00001 /* WatchUtils.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchUtils.swift; sourceTree = "<group>"; };
+		MULTIPEER01FILEREF00001 /* MultipeerBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MultipeerBridge.swift; sourceTree = "<group>"; };
+		MULTIPEER02FILEREF00001 /* MultipeerBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MultipeerBridge.m; sourceTree = "<group>"; };
 		WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "wizz-made-with-Voicemod.mp3"; sourceTree = "<group>"; };
+		WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutPage.swift; sourceTree = "<group>"; };
+		TIMERALRMVW1FILEREF000001 /* TimerAlarmNotificationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerAlarmNotificationView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -152,6 +162,7 @@
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				14F08D3C04354160B9E8F92A /* PrivacyInfo.xcprivacy */,
 				2013024F5B40FDE60BB3341A /* WatchConnectivity */,
+				MULTIPEER0GROUP0000001 /* Multipeer */,
 			);
 			name = Yoroi;
 			sourceTree = "<group>";
@@ -165,6 +176,16 @@
 			);
 			name = WatchConnectivity;
 			path = Yoroi/WatchConnectivity;
+			sourceTree = "<group>";
+		};
+		MULTIPEER0GROUP0000001 /* Multipeer */ = {
+			isa = PBXGroup;
+			children = (
+				MULTIPEER01FILEREF00001 /* MultipeerBridge.swift */,
+				MULTIPEER02FILEREF00001 /* MultipeerBridge.m */,
+			);
+			name = Multipeer;
+			path = Yoroi/Multipeer;
 			sourceTree = "<group>";
 		};
 		2402FBF98BE7C07171A62547 /* Yoroi */ = {
@@ -219,6 +240,9 @@
 				354ADA1C37DEB571464D64E1 /* SleepPage.swift */,
 				F1A2B3C4D5E6F70900SETTINGS /* SettingsPage.swift */,
 				CARNETPAGE001FILEREF0001 /* CarnetPage.swift */,
+				COMPETPAGE01FILEREF000001 /* CompetitionPage.swift */,
+				WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */,
+				TIMERALRMVW1FILEREF000001 /* TimerAlarmNotificationView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -545,6 +569,8 @@
 				D6D98440C02A34740C0F71DA /* WatchConnectivityBridge.swift in Sources */,
 				E11C770F9EC353BDED32219F /* WatchConnectivityBridge.m in Sources */,
 				RCTPKGCNSTUB0BUILDF00001 /* RCTPackagerConnectionStub.m in Sources */,
+				MULTIPEER01BUILDF00001 /* MultipeerBridge.swift in Sources */,
+				MULTIPEER02BUILDF00001 /* MultipeerBridge.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -561,6 +587,9 @@
 				F1A2B3C4D5E6F70800SETTINGS /* SettingsPage.swift in Sources */,
 				5BA41E06B49FCA34D60842E5 /* WatchSessionManager.swift in Sources */,
 				CARNETPAGE001BUILDF00001 /* CarnetPage.swift in Sources */,
+				COMPETPAGE01BUILDF000001 /* CompetitionPage.swift in Sources */,
+				WORKOUTPAG01BUILDF000001 /* WorkoutPage.swift in Sources */,
+				TIMERALRMVW1BUILDF000001 /* TimerAlarmNotificationView.swift in Sources */,
 				COMPLICCNTRL01BUILDF0001 /* ComplicationController.swift in Sources */,
 				WATCHUTILS001BUILDF00001 /* WatchUtils.swift in Sources */,
 			);

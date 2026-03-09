@@ -1,7 +1,7 @@
 // ============================================
 // YOROI - SOURCE BADGE COMPONENT
 // ============================================
-// Affiche un petit badge indiquant l'origine des donnees de sante
+// Affiche un petit badge indiquant l'origine des données de santé
 // (Withings, Garmin, Polar, Apple Watch, etc.)
 // ============================================
 
@@ -24,10 +24,10 @@ const SOURCE_CONFIG: Record<string, { label: string; color: string; short: strin
   suunto:        { label: 'Suunto',         color: '#000000', short: 'Su' },
   oura:          { label: 'Oura',           color: '#D4AF37', short: 'Or' },
   iphone:        { label: 'iPhone',         color: '#666666', short: 'iP' },
-  apple_health:  { label: 'Apple Sante',    color: '#FF3B30', short: 'AS' },
+  apple_health:  { label: 'Apple Santé',    color: '#FF3B30', short: 'AS' },
   health_connect:{ label: 'Health Connect', color: '#4285F4', short: 'HC' },
   manual:        { label: 'Manuel',         color: '#9CA3AF', short: 'M' },
-  apple:         { label: 'Apple Sante',    color: '#FF3B30', short: 'AS' },
+  apple:         { label: 'Apple Santé',    color: '#FF3B30', short: 'AS' },
 };
 
 interface SourceBadgeProps {

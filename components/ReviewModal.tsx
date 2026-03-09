@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Image,
+  Platform,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@/lib/ThemeContext';
@@ -21,6 +22,8 @@ import { requestReview } from 'expo-store-review';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Star, Check, Clock } from 'lucide-react-native';
 import logger from '@/lib/security/logger';
+import { safeOpenURL } from '@/lib/security/validators';
+import APP_CONFIG from '@/lib/appConfig';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const REVIEW_ASKED_KEY = 'yoroi_review_asked';
@@ -39,7 +42,12 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
     onClose();
 
     try {
-      await requestReview();
+      if (Platform.OS === 'android') {
+        // Sur Android, ouvrir directement la recherche Play Store
+        await safeOpenURL(APP_CONFIG.getReviewUrl());
+      } else {
+        await requestReview();
+      }
       await AsyncStorage.setItem(REVIEW_ASKED_KEY, 'true');
     } catch (error) {
       logger.info('Store review error:', error);
@@ -99,7 +107,9 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
 
               {/* Message explicatif */}
               <Text style={[styles.message, { color: colors.textSecondary }]}>
-                Si l'app t'aide au quotidien, ta note sur l'App Store permet a Yoroi d'apparaitre dans les recherches et d'atteindre plus de sportifs.
+                {Platform.OS === 'android'
+                  ? "Si l'app t'aide au quotidien, ta note sur le Play Store permet a Yoroi d'apparaitre dans les recherches et d'atteindre plus de sportifs."
+                  : "Si l'app t'aide au quotidien, ta note sur l'App Store permet a Yoroi d'apparaitre dans les recherches et d'atteindre plus de sportifs."}
               </Text>
 
               <Text style={[styles.messageSecondary, { color: colors.textMuted }]}>

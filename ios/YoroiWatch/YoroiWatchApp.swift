@@ -1,4 +1,5 @@
 import SwiftUI
+import WatchKit
 
 @main
 struct YoroiWatchApp: App {
@@ -23,5 +24,16 @@ struct YoroiWatchApp: App {
         sessionManager.resyncTimerIfNeeded()
       }
     }
+    // ── Background refresh : replanifie l'alarme à l'infini ──
+    .backgroundTask(.appRefresh("yoroi.alarm.refresh")) {
+      // Si l'alarme sonne encore, replanifier un nouveau lot de notifications
+      // et programmer le prochain refresh dans 12 min → boucle infinie jusqu'au STOP
+      if sessionManager.timerAlarmRinging {
+        sessionManager.handleAlarmBackgroundRefresh()
+      }
+    }
+
+    // ── Notification plein écran quand la montre est verrouillée ──
+    WKNotificationScene(controller: TimerAlarmNotificationController.self, category: "yoroi.timer.alarm")
   }
 }

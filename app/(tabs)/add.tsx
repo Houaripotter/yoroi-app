@@ -46,8 +46,9 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { SPACING, RADIUS } from '@/constants/design';
 import { addWeight, addMeasurementRecord } from '@/lib/database';
-import { format, Locale } from 'date-fns';
-import { fr, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
+import { syncAndGetNewlyCompleted } from '@/lib/challengesService';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { NumericInput } from '@/components/NumericInput';
 import { WeightInput, WeightInputHandle } from '@/components/WeightInput';
 import { backupReminderService } from '@/lib/backupReminderService';
@@ -137,20 +138,19 @@ const InputRow = ({
 }) => (
   <View style={styles.inputRow}>
     <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{label}</Text>
-    <View style={styles.inputWrapper}>
-      <NumericInput
-        value={value}
-        onValueChange={onChangeText}
-        placeholder={placeholder}
-        unit={suffix}
-        allowDecimal={true}
-        maxDecimals={1}
-        maxLength={4}
-        color={color}
-        backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
-        inputStyle={styles.input}
-      />
-    </View>
+    <NumericInput
+      value={value}
+      onValueChange={onChangeText}
+      placeholder={placeholder}
+      unit={suffix}
+      allowDecimal={true}
+      maxDecimals={1}
+      maxLength={4}
+      color={color}
+      backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+      style={styles.measureInputWrapper}
+      inputStyle={styles.measureInput}
+    />
   </View>
 );
 
@@ -523,6 +523,21 @@ export default function AddScreen() {
 
       // Notifier la home pour refresh instantane des points/quetes
       DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+
+      // Verifier si des défis sont nouvellement completes
+      try {
+        const newChallenges = await syncAndGetNewlyCompleted();
+        if (newChallenges.length > 0) {
+          const names = newChallenges.map(c => `"${c.title}" (+${c.xp} XP)`).join('\n');
+          setTimeout(() => {
+            showPopup(
+              'Bravo, défi valide !',
+              `Ton poids a valide :\n${names}\n\nVa dans "Défis" pour reclamer tes XP !`,
+              [{ text: 'Super !', style: 'primary' }]
+            );
+          }, 800);
+        }
+      } catch { /* non bloquant */ }
 
       // Afficher la belle modal de succes
       setSavedWeight(weight ?? null);
@@ -935,6 +950,7 @@ export default function AddScreen() {
                   maxLength={4}
                   color={colors.accentText}
                   backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+                  style={styles.dualNumericWrapper}
                   inputStyle={styles.dualInput}
                 />
               </View>
@@ -950,6 +966,7 @@ export default function AddScreen() {
                   maxLength={4}
                   color={colors.accentText}
                   backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+                  style={styles.dualNumericWrapper}
                   inputStyle={styles.dualInput}
                 />
               </View>
@@ -974,6 +991,7 @@ export default function AddScreen() {
                   maxLength={4}
                   color={colors.accentText}
                   backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+                  style={styles.dualNumericWrapper}
                   inputStyle={styles.dualInput}
                 />
               </View>
@@ -989,6 +1007,7 @@ export default function AddScreen() {
                   maxLength={4}
                   color={colors.accentText}
                   backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+                  style={styles.dualNumericWrapper}
                   inputStyle={styles.dualInput}
                 />
               </View>
@@ -1013,6 +1032,7 @@ export default function AddScreen() {
                   maxLength={4}
                   color={colors.accentText}
                   backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+                  style={styles.dualNumericWrapper}
                   inputStyle={styles.dualInput}
                 />
               </View>
@@ -1028,6 +1048,7 @@ export default function AddScreen() {
                   maxLength={4}
                   color={colors.accentText}
                   backgroundColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+                  style={styles.dualNumericWrapper}
                   inputStyle={styles.dualInput}
                 />
               </View>
@@ -1532,12 +1553,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     marginLeft: SPACING.md,
+    marginRight: SPACING.md,
   },
-  bmrInputWrapper: {},
+  bmrInputWrapper: {
+    minWidth: 110,
+  },
   bmrInput: {
     fontSize: 18,
     fontWeight: '700',
-    width: 90,
     textAlign: 'center',
   },
 
@@ -1568,14 +1591,13 @@ const styles = StyleSheet.create({
     width: 18,
     textAlign: 'center',
   },
-  dualInput: {
+  dualNumericWrapper: {
     flex: 1,
+  },
+  dualInput: {
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: RADIUS.md,
   },
 
   // Input Row
@@ -1588,22 +1610,22 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   inputLabel: {
+    flex: 1,
     fontSize: 14,
     fontWeight: '500',
+    marginRight: SPACING.md,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  input: {
+  measureInputWrapper: {
+    minWidth: 100,
+  },
+  measureInput: {
     fontSize: 16,
     fontWeight: '700',
-    width: 60,
     textAlign: 'center',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.md,
-    marginRight: SPACING.sm,
   },
   inputSuffix: {
     fontSize: 14,

@@ -1,5 +1,5 @@
 // ============================================
-// YOROI - SERVICE BONUS SANTE
+// YOROI - SERVICE BONUS SANTÉ
 // ============================================
 // Bonus quotidiens depuis Apple Health / Health Connect
 // Pas >= 8000 : +10 pts/jour
@@ -45,7 +45,7 @@ interface HealthBonusHistory {
 // ============================================
 
 /**
- * Calcule le bonus sante du jour a partir des donnees Apple Health / Health Connect.
+ * Calcule le bonus santé du jour a partir des données Apple Health / Health Connect.
  * Stocke le resultat dans l'historique et met a jour le total cumule.
  * Idempotent : peut etre appele plusieurs fois par jour sans doubler les points.
  */
@@ -53,7 +53,7 @@ export const calculateDailyHealthBonus = async (): Promise<DailyBonusEntry> => {
   const today = new Date().toISOString().split('T')[0];
 
   try {
-    // Lire les donnees de sante via le service unifie
+    // Lire les données de santé via le service unifie
     let steps = 0;
     let sleepMinutes = 0;
     let activeCalories = 0;
@@ -117,13 +117,13 @@ export const calculateDailyHealthBonus = async (): Promise<DailyBonusEntry> => {
 
     return entry;
   } catch (error) {
-    logger.error('[HealthBonus] Erreur calcul bonus sante:', error);
+    logger.error('[HealthBonus] Erreur calcul bonus santé:', error);
     return { date: today, stepsBonus: 0, sleepBonus: 0, caloriesBonus: 0, total: 0 };
   }
 };
 
 /**
- * Retourne le total cumule des bonus sante (lu par gamification.ts).
+ * Retourne le total cumule des bonus santé (lu par gamification.ts).
  */
 export const getHealthBonusTotal = async (): Promise<number> => {
   try {

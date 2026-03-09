@@ -56,13 +56,13 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
           activeOpacity={0.7}
           onPress={() => onMetricPress?.({
             key: 'heart_rate',
-            label: 'Frequence cardiaque',
+            label: 'Fréquence cardiaque',
             color: '#EC4899',
             unit: 'bpm',
             icon: <Heart size={18} color="#EC4899" strokeWidth={2.5} />,
           })}
         >
-          <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Frequence cardiaque</Text>
+          <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Fréquence cardiaque</Text>
           <Text style={[styles.heroValue, { color: '#EC4899' }]}>
             {restingHR > 0 ? restingHR : currentHR}
             <Text style={styles.heroUnit}> bpm</Text>
@@ -201,13 +201,13 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
           activeOpacity={0.7}
           onPress={() => onMetricPress?.({
             key: 'respiratory_rate',
-            label: 'Frequence respiratoire',
+            label: 'Fréquence respiratoire',
             color: '#8B5CF6',
             unit: 'resp/min',
             icon: <Wind size={18} color="#8B5CF6" strokeWidth={2.5} />,
           })}
         >
-          <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Frequence respiratoire</Text>
+          <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Fréquence respiratoire</Text>
           <Text style={[styles.heroValue, { color: '#8B5CF6' }]}>
             {Math.round(respRate)}
             <Text style={styles.heroUnit}> resp/min</Text>
@@ -236,7 +236,7 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
         <View style={[styles.emptyCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
           <Heart size={40} color={colors.textMuted} strokeWidth={1.5} />
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            Aucune donnee de signes vitaux disponible
+            Aucune donnée de signes vitaux disponible
           </Text>
         </View>
       )}

@@ -69,7 +69,7 @@ export default function MatTimeScreen() {
     try {
       setIsLoading(true);
 
-      // Charger tous les entrainements
+      // Charger tous les entraînements
       const allTrainings = await getTrainings();
       const trainingStats = await getTrainingStats();
 
@@ -95,7 +95,7 @@ export default function MatTimeScreen() {
       let longestSession = 0;
       const disciplineMap: Record<string, { minutes: number; sessions: number }> = {};
 
-      // Donnees par jour de la semaine
+      // Données par jour de la semaine
       const weekDays = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
       const weeklyData = weekDays.map(day => ({ day, minutes: 0 }));
 

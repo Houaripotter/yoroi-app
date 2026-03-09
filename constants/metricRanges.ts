@@ -102,7 +102,7 @@ CLASSIFICATION (Gallagher et al. 2000, n=1626 sujets):
 - 2-5% : Graisse essentielle (minimum physiologique)
 - 6-13% : Athlete - Niveau competition
 - 14-17% : Fitness - Excellente condition
-- 18-24% : Moyenne population en bonne sante
+- 18-24% : Moyenne population en bonne santé
 - 25%+ : Surpoids/Obesite - Risques metaboliques accrus
 
 PREUVES SCIENTIFIQUES:
@@ -160,7 +160,7 @@ CLASSIFICATION (Gallagher et al. 2000):
 - 10-13% : Graisse essentielle (minimum physiologique)
 - 14-20% : Athlete - Niveau competition
 - 21-24% : Fitness - Excellente condition
-- 25-31% : Moyenne population en bonne sante
+- 25-31% : Moyenne population en bonne santé
 - 32%+ : Surpoids/Obesite - Risques metaboliques accrus
 
 DIFFERENCE BIOLOGIQUE HOMMES/FEMMES:
@@ -218,7 +218,7 @@ export const MUSCLE_MASS_RANGE_MALE: MetricRange = {
 CLASSIFICATION (Janssen et al. 2000, etude IRM sur 468 sujets):
 - <38% : Faible - Sarcopenie probable
 - 38-44% : Normal - Population sedentaire
-- 44-52% : Bon - Activite physique reguliere
+- 44-52% : Bon - Activité physique reguliere
 - 52%+ : Athlete - Niveau sportif
 
 PREUVES SCIENTIFIQUES:
@@ -234,7 +234,7 @@ CALCUL:
 Homme 75kg x 45% = 33.75 kg de muscles squelettiques.
 
 RECOMMANDATIONS (ACSM):
-2-3 seances de musculation/semaine, tous les groupes musculaires.`,
+2-3 séances de musculation/semaine, tous les groupes musculaires.`,
 };
 
 export const MUSCLE_MASS_RANGE_FEMALE: MetricRange = {
@@ -278,7 +278,7 @@ export const MUSCLE_MASS_RANGE_FEMALE: MetricRange = {
 CLASSIFICATION (Janssen et al. 2000):
 - <31% : Faible - Sarcopenie probable
 - 31-36% : Normal - Population sedentaire
-- 36-42% : Bon - Activite physique reguliere
+- 36-42% : Bon - Activité physique reguliere
 - 42%+ : Athlete - Niveau sportif
 
 DIFFERENCE BIOLOGIQUE:
@@ -293,7 +293,7 @@ APRES LA MENOPAUSE:
 Perte acceleree de muscle si pas d'exercice de resistance.
 
 RECOMMANDATIONS (ACSM):
-2-3 seances de musculation/semaine. Les charges lourdes sont sures et efficaces.`,
+2-3 séances de musculation/semaine. Les charges lourdes sont sures et efficaces.`,
 };
 
 export const BONE_MASS_RANGE_MALE: MetricRange = {
@@ -569,7 +569,7 @@ export const BMR_RANGE_MALE: (weight: number, height: number, age: number) => Me
     unit: 'kcal',
     source: 'Mifflin MD et al. Am J Clin Nutr 1990 - PMID: 2305711',
     sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/2305711/',
-    explanation: `Le metabolisme de base (BMR) = energie brulee au repos complet pendant 24h.
+    explanation: `Le metabolisme de base (BMR) = énergie brulee au repos complet pendant 24h.
 
 TON BMR ESTIME: environ ${Math.round(idealBMR)} kcal/jour
 (Base sur: ${weight}kg, ${height}cm, ${age} ans)
@@ -578,7 +578,7 @@ EQUATION MIFFLIN-ST JEOR (Mifflin et al. 1990):
 Validee sur 498 sujets, precision +/-10% vs calorimetrie indirecte.
 BMR = 10 x poids + 6.25 x taille - 5 x age + 5
 
-DEPENSE TOTALE (facteurs d'activite valides):
+DEPENSE TOTALE (facteurs d'activité valides):
 - Sedentaire (1.2): environ ${Math.round(idealBMR * 1.2)} kcal
 - Peu actif (1.375): environ ${Math.round(idealBMR * 1.375)} kcal
 - Actif (1.55): environ ${Math.round(idealBMR * 1.55)} kcal
@@ -634,7 +634,7 @@ export const BMR_RANGE_FEMALE: (weight: number, height: number, age: number) => 
     unit: 'kcal',
     source: 'Mifflin MD et al. Am J Clin Nutr 1990 - PMID: 2305711',
     sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/2305711/',
-    explanation: `Le metabolisme de base (BMR) = energie brulee au repos complet pendant 24h.
+    explanation: `Le metabolisme de base (BMR) = énergie brulee au repos complet pendant 24h.
 
 TON BMR ESTIME: environ ${Math.round(idealBMR)} kcal/jour
 (Base sur: ${weight}kg, ${height}cm, ${age} ans)
@@ -705,7 +705,7 @@ export const RESTING_HR_RANGE: MetricRange = {
   unit: 'bpm',
   source: 'Fox K et al. Eur Heart J 2007 - PMID: 17303589',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/17303589/',
-  explanation: `La frequence cardiaque au repos est un predicteur independant de mortalite cardiovasculaire.
+  explanation: `La fréquence cardiaque au repos est un predicteur independant de mortalite cardiovasculaire.
 
 CLASSIFICATION (Fox et al. 2007, meta-analyse 46 etudes):
 - 40-55 bpm : Athlete - Coeur tres efficace
@@ -719,7 +719,7 @@ PREUVES SCIENTIFIQUES:
 - +10 bpm de FC repos = +20% risque mortalite CV (Cooney MT, Eur J Prev Cardiol 2010)
 - FC <60 bpm associee a meilleure survie long terme
 
-EFFET DE L'ENTRAINEMENT:
+EFFET DE L'ENTRAÎNEMENT:
 - Endurance reguliere: -10 a -15 bpm en 3-6 mois
 - Athletes elite: 35-45 bpm (bradycardie physiologique)
 
@@ -785,7 +785,7 @@ Meta-analyse 33 etudes, 102 980 sujets:
 
 DECLIN AVEC L'AGE:
 -1% par an apres 25 ans (Hawkins S, Sports Med 2003)
-L'entrainement ralentit ce declin d'environ 50%.
+L'entraînement ralentit ce declin d'environ 50%.
 
 VALEURS DE REFERENCE:
 - Sedentaire: 25-35 ml/kg/min
@@ -1129,7 +1129,7 @@ export const SLEEP_HOURS_RANGE: MetricRange = {
   unit: 'h',
   source: 'Cappuccio FP et al. Sleep 2010 - PMID: 20469800',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/20469800/',
-  explanation: `La duree de sommeil optimale pour la sante.
+  explanation: `La durée de sommeil optimale pour la santé.
 
 CLASSIFICATION (Cappuccio et al. 2010, meta-analyse 16 etudes):
 - <6h : Insuffisant - +48% risque mortalite
@@ -1144,7 +1144,7 @@ PREUVES SCIENTIFIQUES:
 - >9h = associe a depression, inflammation
 
 BESOINS INDIVIDUELS:
-- Athletes: 9-10h pour recuperation optimale (Mah CD, Sleep 2011)
+- Athletes: 9-10h pour récupération optimale (Mah CD, Sleep 2011)
 - Genetique: 3-5% sont "short sleepers" vrais
 
 HYGIENE DU SOMMEIL:
@@ -1190,7 +1190,7 @@ export const SLEEP_QUALITY_RANGE: MetricRange = {
   unit: '%',
   source: 'Ohayon M et al. Sleep Med Rev 2017 - PMID: 27568340',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/27568340/',
-  explanation: `La qualite du sommeil = efficacite (temps endormi / temps au lit).
+  explanation: `La qualité du sommeil = efficacité (temps endormi / temps au lit).
 
 CLASSIFICATION (consensus NSF, Ohayon et al. 2017):
 - <50% : Mauvaise - Insomnie clinique probable
@@ -1198,10 +1198,10 @@ CLASSIFICATION (consensus NSF, Ohayon et al. 2017):
 - 70-85% : Bonne - Sommeil correct
 - >85% : Excellente - Sommeil reparateur
 
-CRITERES DE QUALITE (Buysse DJ, Sleep 2014):
+CRITERES DE QUALITÉ (Buysse DJ, Sleep 2014):
 - Latence <15-20 min
 - Reveils <2x/nuit
-- Efficacite >85%
+- Efficacité >85%
 - Sommeil profond 15-25%
 - REM 20-25%
 
@@ -1213,10 +1213,10 @@ CE QUI DEGRADE:
 
 IMPACT PERFORMANCE:
 - +20% performance sportive avec bon sommeil (Mah CD, Sleep 2011)
-- Recuperation musculaire pendant sommeil profond
+- Récupération musculaire pendant sommeil profond
 
 CONSEIL:
-Qualite > Duree. 7h de qualite > 9h fragmentees.`,
+Qualité > Durée. 7h de qualité > 9h fragmentees.`,
 };
 
 export const HRV_RANGE: MetricRange = {
@@ -1258,9 +1258,9 @@ export const HRV_RANGE: MetricRange = {
   explanation: `La VFC (HRV) mesure les variations entre chaque battement cardiaque.
 
 CLASSIFICATION (RMSSD, valeurs moyennes):
-- 80+ ms : Excellent - Recuperation optimale
+- 80+ ms : Excellent - Récupération optimale
 - 60-80 ms : Bon - Bonne adaptation
-- 40-60 ms : Moyen - Recuperation en cours
+- 40-60 ms : Moyen - Récupération en cours
 - 20-40 ms : Faible - Stress physiologique
 
 VARIABILITE INDIVIDUELLE:
@@ -1278,7 +1278,7 @@ CE QUI BAISSE L'HRV:
 - Manque de sommeil
 
 AMELIORATION:
-- Entrainement aerobie regulier
+- Entraînement aerobie regulier
 - Respiration lente (6/min)
 - Sommeil 7-9h
 

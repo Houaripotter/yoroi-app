@@ -15,10 +15,12 @@ import {
   Modal,
   Pressable,
   Image,
+  RefreshControl,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, ImpactFeedbackStyle , notificationAsync, NotificationFeedbackType } from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
 import {
@@ -64,7 +66,7 @@ import {
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { RANKS, getCurrentRank, getNextRank, getRankProgress, getDaysToNextRank } from '@/lib/ranks';
-import { calculateAndStoreUnifiedPoints, getUnifiedPoints } from '@/lib/gamification';
+import { calculateAndStoreUnifiedPoints, getUnifiedPoints, getUnifiedPointsBreakdown, type UnifiedPointsBreakdown } from '@/lib/gamification';
 import { getProfile, getWeights, getTrainings, calculateStreak } from '@/lib/database';
 import { AnimatedCard } from '@/components/AnimatedCard';
 import { AchievementCelebration } from '@/components/AchievementCelebration';
@@ -87,7 +89,7 @@ import {
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const DEFAULT_AVATAR_IMAGE = require('@/assets/avatars/samurai/samurai_neutral.png');
 
-// Rotation pour n'afficher que 5 defis (identique a HomeChallengesSection)
+// Rotation pour n'afficher que 5 défis (identique a HomeChallengesSection)
 const getWeekNumber = (): number => {
   const now = new Date();
   const start = new Date(now.getFullYear(), 0, 1);
@@ -314,9 +316,9 @@ export default function DojoScreen() {
   const [goalReached, setGoalReached] = useState(false);
   const [trainedToday, setTrainedToday] = useState(false);
 
-  // Tab initial depuis les params URL (defis quand on vient de QuestsCard)
+  // Tab initial depuis les params URL (défis quand on vient de QuestsCard)
   const initialTab = (tab === 'defis' || tab === 'badges' || tab === 'rangs' || tab === 'historique') ? tab : 'rangs';
-  const [selectedTab, setSelectedTab] = useState<'rangs' | 'badges' | 'defis' | 'historique'>(initialTab);
+  const [selectedTab, setSelectedTab] = useState<'rangs' | 'badges' | 'défis' | 'historique'>(initialTab);
 
   // Animations
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -338,6 +340,17 @@ export default function DojoScreen() {
   const [monthlyQuests, setMonthlyQuests] = useState<QuestWithProgress[]>([]);
   const [defisTab, setDefisTab] = useState<'day' | 'week' | 'month'>('day');
   const [previewQuest, setPreviewQuest] = useState<QuestWithProgress | null>(null);
+  const [xpBreakdown, setXpBreakdown] = useState<UnifiedPointsBreakdown | null>(null);
+  const [defisCountdown, setDefisCountdown] = useState('');
+
+  // Coffre mysterieux
+  const CHEST_KEY = '@yoroi_mystery_chest_week';
+  const [chestOpenedThisWeek, setChestOpenedThisWeek] = useState(false);
+  const [chestIsOpen, setChestIsOpen] = useState(false);
+  const [chestBonusXp, setChestBonusXp] = useState(0);
+  const chestScaleAnim = useRef(new Animated.Value(1)).current;
+  const chestContentAnim = useRef(new Animated.Value(0)).current;
+  const chestShakeAnim = useRef(new Animated.Value(0)).current;
 
   // Animations
   useEffect(() => {
@@ -372,6 +385,39 @@ export default function DojoScreen() {
       rotate.stop();
     };
   }, []);
+
+  // Compte à rebours défis — se remet à jour quand l'onglet change
+  useEffect(() => {
+    const getDeadline = () => {
+      const now = new Date();
+      if (defisTab === 'day') {
+        const d = new Date(now); d.setHours(24, 0, 0, 0); return d;
+      }
+      if (defisTab === 'week') {
+        const d = new Date(now);
+        const day = d.getDay();
+        d.setDate(d.getDate() + (day === 0 ? 1 : 8 - day));
+        d.setHours(0, 0, 0, 0); return d;
+      }
+      return new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
+    };
+    const fmt = (ms: number) => {
+      if (ms <= 0) return '00:00:00';
+      const t = Math.floor(ms / 1000);
+      const days = Math.floor(t / 86400);
+      const h = Math.floor((t % 86400) / 3600);
+      const m = Math.floor((t % 3600) / 60);
+      const s = t % 60;
+      const mm = m.toString().padStart(2, '0');
+      const ss = s.toString().padStart(2, '0');
+      if (days > 0) return `${days}j ${h.toString().padStart(2, '0')}h ${mm}m`;
+      return `${h.toString().padStart(2, '0')}:${mm}:${ss}`;
+    };
+    const tick = () => setDefisCountdown(fmt(getDeadline().getTime() - Date.now()));
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [defisTab]);
 
   // Charger les données
   const cancelledRef = useRef(false);
@@ -417,13 +463,32 @@ export default function DojoScreen() {
         }
       }
 
-      // Calculer et stocker les points unifies (inclut quetes, challenges, bonus sante)
+      // Calculer et stocker les points unifies (inclut quetes, challenges, bonus santé)
       const points = await calculateAndStoreUnifiedPoints(weights.length, trainings.length, streakDays);
-      if (!cancelledRef.current) setTotalPoints(points);
+      if (!cancelledRef.current) {
+        setTotalPoints(points);
+        const breakdown = await getUnifiedPointsBreakdown();
+        setXpBreakdown(breakdown);
+
+        // Verifier si le coffre a deja ete ouvert cette semaine
+        const day = new Date().getDay();
+        const diff = new Date().getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(new Date().setDate(diff));
+        const weekId = monday.toISOString().split('T')[0];
+        const storedWeekId = await AsyncStorage.getItem(CHEST_KEY);
+        setChestOpenedThisWeek(storedWeekId === weekId);
+      }
     } catch (error) {
       logger.error('Erreur chargement Dojo:', error);
     }
   }, []);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
   useEffect(() => {
     cancelledRef.current = false;
@@ -515,12 +580,61 @@ export default function DojoScreen() {
     outputRange: ['0deg', '360deg'],
   });
 
+  // Ouvrir le coffre mystere
+  const openChest = async () => {
+    if (chestOpenedThisWeek || chestIsOpen) return;
+    impactAsync(ImpactFeedbackStyle.Heavy);
+    notificationAsync(NotificationFeedbackType.Success);
+
+    // Bonus XP selon le streak
+    const bonus = streak >= 100 ? 100 : streak >= 30 ? 75 : streak >= 14 ? 50 : 25;
+    setChestBonusXp(bonus);
+
+    // Animation de shake puis ouverture
+    Animated.sequence([
+      Animated.timing(chestShakeAnim, { toValue: 8, duration: 60, useNativeDriver: true }),
+      Animated.timing(chestShakeAnim, { toValue: -8, duration: 60, useNativeDriver: true }),
+      Animated.timing(chestShakeAnim, { toValue: 6, duration: 60, useNativeDriver: true }),
+      Animated.timing(chestShakeAnim, { toValue: -6, duration: 60, useNativeDriver: true }),
+      Animated.timing(chestShakeAnim, { toValue: 0, duration: 60, useNativeDriver: true }),
+      Animated.spring(chestScaleAnim, { toValue: 1.15, friction: 4, tension: 100, useNativeDriver: true }),
+      Animated.spring(chestScaleAnim, { toValue: 1, friction: 6, tension: 80, useNativeDriver: true }),
+    ]).start();
+
+    Animated.timing(chestContentAnim, {
+      toValue: 1,
+      duration: 500,
+      delay: 400,
+      useNativeDriver: true,
+    }).start();
+
+    setChestIsOpen(true);
+
+    // Sauvegarder que le coffre a ete ouvert cette semaine
+    const day = new Date().getDay();
+    const diff = new Date().getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(new Date().setDate(diff));
+    const weekId = monday.toISOString().split('T')[0];
+    await AsyncStorage.setItem(CHEST_KEY, weekId);
+    setChestOpenedThisWeek(true);
+
+    // Sauvegarder le bonus XP dans le systeme de points
+    try {
+      const existingBonus = await AsyncStorage.getItem('@yoroi_chest_xp_total');
+      const current = existingBonus ? parseInt(existingBonus, 10) : 0;
+      await AsyncStorage.setItem('@yoroi_chest_xp_total', (current + bonus).toString());
+    } catch {}
+  };
+
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.mainScrollView}
         contentContainerStyle={styles.mainScrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
+        }
       >
       {/* Header avec gradient */}
       <LinearGradient
@@ -632,8 +746,7 @@ export default function DojoScreen() {
                 color: nextRank.color
               })}
               <Text style={styles.nextRankText}>
-                <Text style={{ fontWeight: '800', color: nextRank.color }}>{nextRank.name}</Text>
-                {' '}{t('gamification.in')} <Text style={{ fontWeight: '800' }}>{daysToNextRank}</Text> {t('common.days').toLowerCase()}
+                Encore <Text style={{ fontWeight: '800', color: nextRank.color }}>{daysToNextRank} XP</Text> pour atteindre <Text style={{ fontWeight: '800', color: nextRank.color }}>{nextRank.name}</Text>
               </Text>
             </View>
             <View style={styles.nextRankProgressBar}>
@@ -751,6 +864,126 @@ export default function DojoScreen() {
                 </View>
               )}
             </View>
+
+            {/* XP Breakdown */}
+            {xpBreakdown && xpBreakdown.total > 0 && (
+              <View style={[styles.xpBreakdownCard, { backgroundColor: isDark ? '#1A1A2E' : '#FFFFFF' }]}>
+                <View style={styles.xpBreakdownHeader}>
+                  <Zap size={16} color="#FFD700" fill="#FFD700" />
+                  <Text style={[styles.xpBreakdownTitle, { color: colors.textPrimary }]}>Composition de tes XP</Text>
+                </View>
+                {[
+                  { label: 'Entraînements & pesées', value: xpBreakdown.activityPoints, color: '#F97316', icon: Dumbbell },
+                  { label: 'Quetes completees', value: xpBreakdown.questsXp, color: '#8B5CF6', icon: CheckCircle2 },
+                  { label: 'Défis valides', value: (xpBreakdown.challengesXp || 0) + (xpBreakdown.challengeServiceXp || 0), color: '#10B981', icon: Target },
+                  { label: 'Bonus santé', value: xpBreakdown.healthBonus, color: '#3B82F6', icon: Heart },
+                  { label: 'Coffres de serie', value: xpBreakdown.chestXp || 0, color: '#F59E0B', icon: Gift },
+                  { label: 'Bonus de connexion', value: xpBreakdown.loginBonusXp || 0, color: '#06B6D4', icon: Zap },
+                ].filter(item => item.value > 0).map((item, i) => (
+                  <View key={i} style={styles.xpBreakdownRow}>
+                    <View style={[styles.xpBreakdownDot, { backgroundColor: item.color }]} />
+                    <Text style={[styles.xpBreakdownLabel, { color: colors.textSecondary }]}>{item.label}</Text>
+                    <Text style={[styles.xpBreakdownValue, { color: item.color }]}>+{item.value} XP</Text>
+                  </View>
+                ))}
+                <View style={[styles.xpBreakdownTotal, { borderTopColor: colors.border }]}>
+                  <Text style={[styles.xpBreakdownTotalLabel, { color: colors.textMuted }]}>Total</Text>
+                  <Text style={[styles.xpBreakdownTotalValue, { color: colors.textPrimary }]}>{xpBreakdown.total} XP</Text>
+                </View>
+              </View>
+            )}
+
+            {/* COFFRE MYSTERIEUX - disponible si streak >= 7 */}
+            {streak >= 7 && (
+              <TouchableOpacity
+                activeOpacity={chestIsOpen || chestOpenedThisWeek ? 1 : 0.8}
+                onPress={openChest}
+                disabled={chestIsOpen || chestOpenedThisWeek}
+                style={[styles.chestCard, {
+                  backgroundColor: isDark ? '#1A1A2E' : '#FFFFFF',
+                  borderColor: chestIsOpen ? '#F59E0B' : `${colors.accent}30`,
+                  borderWidth: 1.5,
+                }]}
+              >
+                <LinearGradient
+                  colors={chestIsOpen
+                    ? ['rgba(245,158,11,0.12)', 'transparent']
+                    : [`${colors.accent}08`, 'transparent']
+                  }
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFillObject}
+                />
+
+                {/* Header coffre */}
+                <View style={styles.chestHeader}>
+                  <View style={styles.chestHeaderLeft}>
+                    <Animated.View style={{
+                      transform: [
+                        { scale: chestScaleAnim },
+                        { translateX: chestShakeAnim },
+                      ]
+                    }}>
+                      {chestIsOpen
+                        ? <Gift size={28} color="#F59E0B" />
+                        : chestOpenedThisWeek
+                          ? <Gift size={28} color={colors.textMuted} />
+                          : <Gift size={28} color={colors.accent} />
+                      }
+                    </Animated.View>
+                    <View>
+                      <Text style={[styles.chestTitle, { color: colors.textPrimary }]}>
+                        {chestIsOpen
+                          ? 'Coffre ouvert !'
+                          : chestOpenedThisWeek
+                            ? 'Coffre de la semaine'
+                            : 'Coffre de serie'
+                        }
+                      </Text>
+                      <Text style={[styles.chestSubtitle, { color: colors.textMuted }]}>
+                        {chestIsOpen
+                          ? `+${chestBonusXp} XP bonus gagnes !`
+                          : chestOpenedThisWeek
+                            ? 'Prochain coffre lundi'
+                            : `Serie de ${streak} jours - Ouvre ton coffre !`
+                        }
+                      </Text>
+                    </View>
+                  </View>
+
+                  {!chestIsOpen && !chestOpenedThisWeek && (
+                    <View style={[styles.chestBadge, { backgroundColor: `${colors.accent}20` }]}>
+                      <Lock size={12} color={colors.accent} />
+                      <Text style={[styles.chestBadgeText, { color: colors.accent }]}>
+                        +{streak >= 100 ? 100 : streak >= 30 ? 75 : streak >= 14 ? 50 : 25} XP
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Contenu apres ouverture */}
+                {chestIsOpen && (
+                  <Animated.View style={[styles.chestContent, { opacity: chestContentAnim }]}>
+                    <View style={[styles.chestRewardRow, { backgroundColor: 'rgba(245,158,11,0.1)' }]}>
+                      <Zap size={18} color="#F59E0B" fill="#F59E0B" />
+                      <Text style={[styles.chestRewardText, { color: '#F59E0B' }]}>
+                        +{chestBonusXp} XP bonus de serie !
+                      </Text>
+                      <Sparkles size={16} color="#F59E0B" />
+                    </View>
+                    <Text style={[styles.chestRewardHint, { color: colors.textMuted }]}>
+                      Prochain coffre disponible lundi prochain
+                    </Text>
+                  </Animated.View>
+                )}
+
+                {!chestIsOpen && !chestOpenedThisWeek && (
+                  <Text style={[styles.chestTapHint, { color: colors.textMuted }]}>
+                    Appuie pour ouvrir
+                  </Text>
+                )}
+              </TouchableOpacity>
+            )}
 
             {/* Liste des rangs */}
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
@@ -1051,7 +1284,36 @@ export default function DojoScreen() {
         {/* ═══════════════════════════════════════ */}
         {selectedTab === 'defis' && (
           <View>
-            {/* Onglets Jour/Semaine/Mois */}
+            {/* ── Carte explicative ── */}
+            <View style={[styles.defisExplainCard, { backgroundColor: isDark ? 'rgba(255,215,0,0.07)' : 'rgba(255,215,0,0.12)', borderColor: 'rgba(255,215,0,0.3)' }]}>
+              <View style={styles.defisExplainRow}>
+                <Zap size={15} color="#FFD700" fill="#FFD700" />
+                <Text style={[styles.defisExplainTitle, { color: isDark ? '#FFD700' : '#B8860B' }]}>
+                  Comment fonctionnent les défis ?
+                </Text>
+              </View>
+              <Text style={[styles.defisExplainText, { color: colors.textMuted }]}>
+                Chaque défi complété te rapporte des <Text style={{ fontWeight: '800', color: isDark ? '#FFD700' : '#B8860B' }}>XP (points d'expérience)</Text>.
+                Les XP font monter ton rang dans le Dojo — de Ronin jusqu'à Shogun.
+                Plus ton rang est élevé, plus tu débloques d'avantages.
+              </Text>
+              <View style={styles.defisExplainGrid}>
+                <View style={[styles.defisExplainItem, { backgroundColor: isDark ? 'rgba(249,115,22,0.12)' : 'rgba(249,115,22,0.1)' }]}>
+                  <Clock size={12} color="#F97316" />
+                  <Text style={[styles.defisExplainItemText, { color: '#F97316' }]}>Jour{'\n'}reset à minuit</Text>
+                </View>
+                <View style={[styles.defisExplainItem, { backgroundColor: isDark ? 'rgba(139,92,246,0.12)' : 'rgba(139,92,246,0.1)' }]}>
+                  <Clock size={12} color="#8B5CF6" />
+                  <Text style={[styles.defisExplainItemText, { color: '#8B5CF6' }]}>Semaine{'\n'}reset lundi 00h</Text>
+                </View>
+                <View style={[styles.defisExplainItem, { backgroundColor: isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.1)' }]}>
+                  <Clock size={12} color="#3B82F6" />
+                  <Text style={[styles.defisExplainItemText, { color: '#3B82F6' }]}>Mois{'\n'}reset le 1er</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* ── Onglets Jour/Semaine/Mois + compte à rebours ── */}
             <View style={[styles.defisTabsRow, { backgroundColor: isDark ? '#1A1A2E' : '#F8FAFC' }]}>
               {(['day', 'week', 'month'] as const).map((tab) => {
                 const isActive = defisTab === tab;
@@ -1086,6 +1348,17 @@ export default function DojoScreen() {
                   </TouchableOpacity>
                 );
               })}
+            </View>
+
+            {/* Compte à rebours actif */}
+            <View style={styles.defisCountdownRow}>
+              <Clock size={12} color={defisTab === 'day' ? '#F97316' : defisTab === 'week' ? '#8B5CF6' : '#3B82F6'} />
+              <Text style={[styles.defisCountdownLabel, { color: colors.textMuted }]}>
+                {defisTab === 'day' ? 'Reset dans' : defisTab === 'week' ? 'Reset lundi dans' : 'Reset le 1er dans'}
+              </Text>
+              <Text style={[styles.defisCountdownValue, { color: defisTab === 'day' ? '#F97316' : defisTab === 'week' ? '#8B5CF6' : '#3B82F6' }]}>
+                {defisCountdown}
+              </Text>
             </View>
 
             {/* Liste des défis */}
@@ -1413,6 +1686,53 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   mainScrollView: { flex: 1 },
   mainScrollContent: { flexGrow: 1 },
+
+  // Coffre mysterieux
+  chestCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  chestHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  chestHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  chestTitle: { fontSize: 15, fontWeight: '800', letterSpacing: -0.3 },
+  chestSubtitle: { fontSize: 12, fontWeight: '500', marginTop: 2 },
+  chestBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  chestBadgeText: { fontSize: 12, fontWeight: '800' },
+  chestContent: { marginTop: 14, gap: 8 },
+  chestRewardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  chestRewardText: { fontSize: 15, fontWeight: '800', flex: 1 },
+  chestRewardHint: { fontSize: 11, fontWeight: '500', textAlign: 'center' },
+  chestTapHint: { fontSize: 11, fontWeight: '600', textAlign: 'center', marginTop: 10, fontStyle: 'italic' },
 
   // ═══════════════════════════════════════
   // HEADER GRADIENT
@@ -1748,6 +2068,21 @@ const styles = StyleSheet.create({
   // ═══════════════════════════════════════
   // RANK CARDS
   // ═══════════════════════════════════════
+  xpBreakdownCard: {
+    padding: 16,
+    borderRadius: 18,
+    marginBottom: 12,
+  },
+  xpBreakdownHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  xpBreakdownTitle: { fontSize: 14, fontWeight: '800' },
+  xpBreakdownRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 5 },
+  xpBreakdownDot: { width: 8, height: 8, borderRadius: 4 },
+  xpBreakdownLabel: { flex: 1, fontSize: 13, fontWeight: '500' },
+  xpBreakdownValue: { fontSize: 13, fontWeight: '800' },
+  xpBreakdownTotal: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingTop: 10, borderTopWidth: 1 },
+  xpBreakdownTotalLabel: { fontSize: 12, fontWeight: '600' },
+  xpBreakdownTotalValue: { fontSize: 16, fontWeight: '900' },
+
   rankCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2261,7 +2596,68 @@ const styles = StyleSheet.create({
   },
 
   // ═══════════════════════════════════════
-  // DEFIS TABS (Jour/Semaine/Mois)
+  // DÉFIS — EXPLICATION + COUNTDOWN
+  // ═══════════════════════════════════════
+  defisExplainCard: {
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 14,
+    borderWidth: 1,
+    gap: 8,
+  },
+  defisExplainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  defisExplainTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  defisExplainText: {
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 17,
+  },
+  defisExplainGrid: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  defisExplainItem: {
+    flex: 1,
+    borderRadius: 10,
+    padding: 8,
+    gap: 4,
+    alignItems: 'center',
+  },
+  defisExplainItemText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 13,
+  },
+  defisCountdownRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 4,
+    paddingTop: 10,
+    paddingBottom: 2,
+  },
+  defisCountdownLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    flex: 1,
+  },
+  defisCountdownValue: {
+    fontSize: 13,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
+
+  // ═══════════════════════════════════════
+  // DÉFIS TABS (Jour/Semaine/Mois)
   // ═══════════════════════════════════════
   defisTabsRow: {
     flexDirection: 'row',

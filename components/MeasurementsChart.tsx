@@ -148,12 +148,12 @@ export const MeasurementsChart: React.FC<MeasurementsChartProps> = memo(({
     return path;
   };
 
-  // Verifier si des donnees existent pour une mesure
+  // Verifier si des données existent pour une mesure
   const hasMeasureData = (key: string) => {
     return data.some(d => d[key as keyof Measurement] !== undefined && d[key as keyof Measurement] !== null);
   };
 
-  // Mesures disponibles (avec donnees)
+  // Mesures disponibles (avec données)
   const availableMeasures = MEASUREMENT_CONFIG.filter(m => hasMeasureData(m.key));
 
   // Formater les labels de date
@@ -301,7 +301,7 @@ export const MeasurementsChart: React.FC<MeasurementsChartProps> = memo(({
           <Text style={[styles.noDataText, { color: colors.textMuted }]}>
             {data.length === 0
               ? 'Aucune mensuration enregistree'
-              : 'Pas assez de donnees pour cette periode'
+              : 'Pas assez de données pour cette periode'
             }
           </Text>
           <Text style={[styles.noDataHint, { color: colors.textMuted }]}>

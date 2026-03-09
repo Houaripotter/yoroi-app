@@ -53,7 +53,7 @@ type Period = 7 | 30 | 90;
 const TERM_DEFINITIONS: Record<string, { short: string; full: string }> = {
   HRV: {
     short: 'Variabilite Cardiaque',
-    full: 'Variabilite de la frequence cardiaque - Mesure l\'intervalle entre les battements. Plus elle est elevee, meilleure est ta recuperation.',
+    full: 'Variabilite de la fréquence cardiaque - Mesure l\'intervalle entre les battements. Plus elle est elevee, meilleure est ta récupération.',
   },
   SDNN: {
     short: 'Ecart-type intervalle NN',
@@ -73,10 +73,10 @@ const TERM_DEFINITIONS: Record<string, { short: string; full: string }> = {
   },
   BPM: {
     short: 'Battements/min',
-    full: 'Battements par minute - Mesure de la frequence cardiaque.',
+    full: 'Battements par minute - Mesure de la fréquence cardiaque.',
   },
   FC: {
-    short: 'Frequence Cardiaque',
+    short: 'Fréquence Cardiaque',
     full: 'Nombre de battements du coeur par minute.',
   },
 };
@@ -461,7 +461,7 @@ export default function HealthMetricsScreen() {
                   colors={colors}
                   onPress={() => setSelectedModal({
                     type: 'hrv',
-                    title: 'HRV (Variabilite de la Frequence Cardiaque)',
+                    title: 'HRV (Variabilite de la Fréquence Cardiaque)',
                     data: hrvHistory,
                     color: colors.purple,
                     unit: 'ms',
@@ -537,7 +537,7 @@ export default function HealthMetricsScreen() {
                   value={`${healthData.heartRateVariability.value}`}
                   unit="ms"
                   subtitle="Variabilite Cardiaque"
-                  details="Plus eleve = meilleure recuperation"
+                  details="Plus eleve = meilleure récupération"
                   badge={getHRVBadge(healthData.heartRateVariability.value)}
                   colors={colors}
                   size="large"
@@ -983,7 +983,7 @@ function SleepCard({ sleep, colors }: { sleep: HealthData['sleep']; colors: any 
               minutes={sleep.phases.deep}
               color="#8B5CF6"
               colors={colors}
-              definition="Recuperation physique et musculaire"
+              definition="Récupération physique et musculaire"
             />
             <SleepPhaseLegendItem
               label="REM (Sommeil Paradoxal)"

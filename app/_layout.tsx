@@ -17,9 +17,11 @@ import { applyDataRetention, getSelectedLogo } from '@/lib/storage';
 import { autoImportCompetitionsOnFirstLaunch } from '@/lib/importCompetitionsService';
 import { forceReimportEvents } from '@/lib/eventsService';
 import { notificationService } from '@/lib/notificationService';
+import { saveNotification } from '@/lib/notificationHistoryService';
 import { migrateAvatarSystem } from '@/lib/avatarMigration';
 import { initCitationNotifications } from '@/lib/citationNotificationService';
 import { setupNotificationHandler } from '@/lib/eveningHealthTipsService';
+import { initPeerSync, stopPeerSync } from '@/lib/peerSyncService';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/security/logger';
 import { appleWatchService } from '@/lib/appleWatchService';
@@ -99,17 +101,30 @@ function RootLayoutContent() {
     // Handler pour les clics sur notifications
     const notifSubscription = setupNotificationHandler();
 
-    // Deep link: quand l'utilisateur tape sur une notification workout
+    // Capturer toutes les notifications reçues en foreground → cloche
+    const foregroundNotifSubscription = Notifications.addNotificationReceivedListener((notification) => {
+      const { title, body, data } = notification.request.content;
+      if (title) {
+        const type = (data?.type as string) ?? 'general';
+        saveNotification(title, body ?? '', type, data as Record<string, any> | undefined).catch(() => {});
+      }
+    });
+
+    // Deep link: quand l'utilisateur tape sur une notification (background/killed)
     const workoutNotifSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data;
+      const { title, body, data } = response.notification.request.content;
       const actionId = response.actionIdentifier;
+
+      // Sauvegarder dans la cloche (notifications reçues en background puis tapées)
+      if (title) {
+        const type = (data?.type as string) ?? 'general';
+        saveNotification(title, body ?? '', type, data as Record<string, any> | undefined).catch(() => {});
+      }
 
       if (data?.type === 'workout_complete' && data?.workoutId) {
         if (actionId === 'share') {
-          // Action "Partager" - aller directement au partage social
           router.push(`/social-share/last-session?workoutId=${data.workoutId}` as any);
         } else {
-          // Tap sur la notification ou action "Voir" - aller au detail workout
           router.push(`/social-share/last-session?workoutId=${data.workoutId}` as any);
         }
       }
@@ -126,7 +141,7 @@ function RootLayoutContent() {
       }
 
       // Retour au foreground: checker les nouveaux workouts immediatement
-      // Detecte les seances terminees sur Garmin, Fitbit, Polar, Suunto, COROS, Withings, Apple Watch, Samsung, etc.
+      // Detecte les séances terminees sur Garmin, Fitbit, Polar, Suunto, COROS, Withings, Apple Watch, Samsung, etc.
       if (nextAppState === 'active' && previousAppState !== 'active') {
         try {
           if (typeof healthConnect.checkNewWorkoutsNow === 'function') {
@@ -138,10 +153,12 @@ function RootLayoutContent() {
     });
 
     return () => {
-      notifSubscription.remove();
-      workoutNotifSubscription.remove();
-      appStateSubscription.remove();
+      notifSubscription?.remove?.();
+      foregroundNotifSubscription?.remove?.();
+      workoutNotifSubscription?.remove?.();
+      appStateSubscription?.remove?.();
       appleWatchService.cleanup();
+      stopPeerSync().catch(() => {});
     };
   }, []);
 
@@ -281,7 +298,7 @@ export default function RootLayout() {
         // DB FIRST: Toutes les opérations DB-dépendantes APRÈS initDatabase
         try {
           await initDatabase();
-          logger.info('Base de donnees initialisee');
+          logger.info('Base de données initialisee');
           await forceReimportEvents();
           logger.info('Catalogue événements reimporté avec succès');
         } catch (err) {
@@ -318,6 +335,10 @@ export default function RootLayout() {
           applyDataRetention()
             .then(() => logger.info('Data retention policy applied'))
             .catch(err => logger.error('Erreur data retention:', err)),
+
+          initPeerSync()
+            .then(() => logger.info('PeerSync iPhone<->iPad démarré'))
+            .catch(err => logger.error('Erreur PeerSync:', err)),
         ]);
 
         // HealthKit: demander permission au premier lancement (iOS uniquement)
@@ -331,17 +352,23 @@ export default function RootLayout() {
               const connected = await healthConnect.connect();
               if (connected) {
                 logger.info('[HealthKit] Permission accordee au premier lancement');
-                // Lancer l'observer workout en background
                 await healthConnect.setupWorkoutObserver();
+                await AsyncStorage.setItem('@yoroi_healthkit_asked', 'true');
+                // Import complet de tout l'historique en arriere-plan
+                healthConnect.importFullHistory().catch(err => logger.error('Erreur import historique:', err));
               }
-              await AsyncStorage.setItem('@yoroi_healthkit_asked', 'true');
+              // Si connect() a echoue (module indispo ou permissions refusees), ne pas marquer
+              // => la popup reapparaitra au prochain lancement
             } else {
-              // Deja demande: initialiser ET re-connecter pour s'assurer que les permissions sont actives
               await healthConnect.initialize();
-              // connect() est idempotent: si permissions deja accordees il ne redemande pas
               const connected = await healthConnect.connect();
               if (connected) {
                 await healthConnect.setupWorkoutObserver();
+                // Import complet si pas encore fait (utilisateurs existants)
+                const alreadyImported = await AsyncStorage.getItem('@yoroi_full_history_imported');
+                if (!alreadyImported) {
+                  healthConnect.importFullHistory().catch(err => logger.error('Erreur import historique:', err));
+                }
               }
             }
           } catch (err) {

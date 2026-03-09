@@ -28,7 +28,7 @@ export interface ScenarioResult {
 }
 
 export interface PredictionResult {
-  // Donnees actuelles
+  // Données actuelles
   currentWeight: number;
   targetWeight: number;
   startWeight: number;
@@ -48,7 +48,7 @@ export interface PredictionResult {
   predictedDate: Date | null;
   dateLabel: string;
 
-  // Predictions intermediaires
+  // Predictions intermédiaires
   in1Week: number;
   in1Month: number;
   in3Months: number;
@@ -164,14 +164,14 @@ const linearRegression = (data: { x: number; y: number }[]): RegressionResult =>
 
 export const calculatePrediction = async (): Promise<PredictionResult | null> => {
   try {
-    // Recuperer les donnees
+    // Recuperer les données
     const [measurements, settings] = await Promise.all([
       getAllMeasurements(),
       getUserSettings(),
     ]);
 
     if (measurements.length < 3) {
-      return null; // Pas assez de donnees
+      return null; // Pas assez de données
     }
 
     const targetWeight = settings.weight_goal || settings.targetWeight;
@@ -205,7 +205,7 @@ export const calculatePrediction = async (): Promise<PredictionResult | null> =>
       ? recentMeasurements
       : sorted.slice(-Math.min(10, sorted.length));
 
-    // Preparer les donnees pour la regression
+    // Preparer les données pour la regression
     const firstDate = new Date(dataForRegression[0].date);
     const regressionData = dataForRegression.map(m => ({
       x: daysBetween(firstDate, new Date(m.date)),
@@ -240,7 +240,7 @@ export const calculatePrediction = async (): Promise<PredictionResult | null> =>
       dateLabel = 'Progression stable';
     }
 
-    // Predictions intermediaires
+    // Predictions intermédiaires
     const in1Week = currentWeight - (weeklyLoss * 1);
     const in1Month = currentWeight - (weeklyLoss * 4.33);
     const in3Months = currentWeight - (weeklyLoss * 13);
@@ -320,17 +320,17 @@ export const calculatePrediction = async (): Promise<PredictionResult | null> =>
     }
 
     if (weeklyLoss > 1.5) {
-      warnings.push('Perte excessive ! Consulte un professionnel de sante.');
+      warnings.push('Perte excessive ! Consulte un professionnel de santé.');
     }
 
     if (isGainingWeight) {
       warnings.push('Tu reprends du poids. Pas de panique, analysons ensemble.');
-      tips.push('Revoir ton alimentation et ton activite physique');
+      tips.push('Revoir ton alimentation et ton activité physique');
       tips.push('Verifier si tu bois assez d\'eau');
     }
 
     if (isStable && remaining > 0) {
-      tips.push('Ta progression stagne. Essaie de varier tes entrainements !');
+      tips.push('Ta progression stagne. Essaie de varier tes entraînements !');
       tips.push('Un leger deficit calorique peut relancer la perte');
     }
 
@@ -394,7 +394,7 @@ export const calculatePrediction = async (): Promise<PredictionResult | null> =>
 };
 
 // ============================================
-// FONCTION POUR OBTENIR UN RESUME SIMPLE
+// FONCTION POUR OBTENIR UN RÉSUMÉ SIMPLE
 // ============================================
 
 export const getPredictionSummary = async (): Promise<{

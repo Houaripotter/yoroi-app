@@ -74,7 +74,7 @@ export const exportTrainingToCSV = async (sport?: string): Promise<string | null
     }
 
     // Header CSV
-    let csvContent = 'Date,Exercice,Sport,Type,Sets,Reps,Poids (kg),Distance (km),Temps (min),Qualite (1-5)\n';
+    let csvContent = 'Date,Exercice,Sport,Type,Sets,Reps,Poids (kg),Distance (km),Temps (min),Qualité (1-5)\n';
 
     items.forEach((item) => {
       const logs = getPracticeLogsByItemId(item.id);

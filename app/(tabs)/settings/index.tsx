@@ -15,12 +15,12 @@ import {
   Platform,
   ActivityIndicator,
   DeviceEventEmitter,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Settings,
-  User,
   UserRound,
   Hash,
   Image as ImageIcon,
@@ -36,8 +36,8 @@ import {
   ShieldCheck,
   Lock,
   Trash2,
+  LogOut,
   Info,
-  MessageCircle,
   Lightbulb,
   Camera,
   Star,
@@ -53,17 +53,19 @@ import {
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { CheckCircle, AlertCircle } from 'lucide-react-native';
+import { CheckCircle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { safeOpenURL } from '@/lib/security/validators';
 // Demo data removed - all data comes from Apple Health / Health Connect
 import { Smartphone, BookOpen, Syringe, BarChart3, Database } from 'lucide-react-native';
 import { exportDataToJSON, importDataFromJSON, exportEditableCSV, importEditableCSV, exportEmptyTemplate } from '@/lib/exportService';
+import * as FileSystem from 'expo-file-system';
 import { generateProgressPDF } from '@/lib/pdfExport';
 import { resetAllData, resetDataOnly } from '@/lib/storage';
+import { resetDatabase } from '@/lib/database';
 import logger from '@/lib/security/logger';
-import { generateHeryDemoData, restoreRealData, isDemoDataActive } from '@/lib/demoDataService';
+import { generateHenryDemoData, restoreRealData, isDemoDataActive } from '@/lib/demoDataService';
 import { notificationService } from '@/lib/notificationService';
 
 // ============================================
@@ -92,8 +94,8 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
     items: [
       { id: 'profile', label: 'Mon Profil', sublabel: 'Infos personnelles', Icon: UserRound, iconColor: '#3B82F6', route: '/profile' },
       { id: 'avatar', label: 'Avatar', sublabel: 'Personnaliser ton avatar', Icon: UserRound, iconColor: '#F97316', route: '/avatar-selection' },
-      { id: 'frame', label: 'Cadre Photo', sublabel: 'Forme de ta photo de profil', Icon: Hash, iconColor: '#8B5CF6', route: '/frame-selection' },
-      { id: 'logos', label: 'Logos', sublabel: 'Logos personnalises', Icon: ImageIcon, iconColor: '#8B5CF6', route: '/logo-selection' },
+      { id: 'frame', label: 'Photo de profil', sublabel: 'Cadre, accessoires et bordure', Icon: Hash, iconColor: '#8B5CF6', route: '/frame-selection' },
+      { id: 'logos', label: 'Logo de l\'app', sublabel: 'Personalise l\'icone Yoroi sur ton ecran', Icon: ImageIcon, iconColor: '#8B5CF6', route: '/logo-selection' },
     ],
   },
   {
@@ -114,30 +116,32 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
     title: 'NOTIFICATIONS & CONNECTIVITE',
     items: [
       { id: 'notifications', label: 'Notifications', sublabel: 'Rappels, briefing, alertes intelligentes', Icon: Bell, iconColor: '#F59E0B', route: '/notifications' },
-{ id: 'health-data', label: 'Donnees Sante', sublabel: 'Synchronise tes donnees sante', Icon: Stethoscope, iconColor: '#EC4899', route: '/connected-devices' },
+      { id: 'health-data', label: 'Données Santé', sublabel: 'Synchronise tes données santé', Icon: Stethoscope, iconColor: '#EC4899', route: '/connected-devices' },
+      { id: 'heart-zones', label: 'Zones cardiaques', sublabel: 'Configure tes 5 zones personnelles', Icon: Heart, iconColor: '#EF4444', route: '/heart-zones-settings' },
     ],
   },
   {
-    title: 'MES DONNEES',
+    title: 'MES DONNÉES',
     items: [
-      { id: 'companion', label: 'Mes donnees', sublabel: 'Tableau, graphiques, ajout et export CSV', Icon: Table, iconColor: '#4F8EF7', route: '/companion' },
+      { id: 'companion', label: 'Mes données', sublabel: 'Tableau, graphiques, ajout et export CSV', Icon: Table, iconColor: '#4F8EF7', route: '/companion' },
       { id: 'export', label: 'Sauvegarder', sublabel: 'Backup complet (JSON ou CSV)', Icon: Download, iconColor: '#14B8A6', handler: 'export' },
       { id: 'import', label: 'Restaurer', sublabel: 'Importer un backup', Icon: Upload, iconColor: '#14B8A6', handler: 'import' },
       { id: 'import-csv', label: 'Import CSV', sublabel: 'Importer depuis un ordinateur (PC/Mac)', Icon: FileUp, iconColor: '#6366F1', route: '/import-csv' },
       { id: 'pdf', label: 'Rapport PDF', sublabel: 'Pour medecin ou coach', Icon: FileText, iconColor: '#6B7280', handler: 'pdf' },
-      { id: 'privacy', label: 'Vie Privee & Donnees', sublabel: 'Gere tes donnees personnelles', Icon: ShieldCheck, iconColor: '#14B8A6', route: '/privacy-data' },
+      { id: 'clear-cache', label: 'Vider le cache', sublabel: 'Libere de l\'espace, garde tes données', Icon: Database, iconColor: '#F59E0B', handler: 'clear-cache' },
+      { id: 'privacy', label: 'Vie Privee & Données', sublabel: 'Gere tes données personnelles', Icon: ShieldCheck, iconColor: '#14B8A6', route: '/privacy-data' },
       { id: 'privacy-policy', label: 'Politique de confidentialite', sublabel: '', Icon: Lock, iconColor: '#6B7280', handler: 'privacy-policy' },
-      { id: 'reset', label: 'Reinitialiser Tout', sublabel: 'Effacer toutes les donnees', Icon: Trash2, iconColor: '#EF4444', handler: 'reset', labelColor: '#EF4444' },
+      { id: 'clean-uninstall', label: 'Quitter sans laisser de trace', sublabel: 'Efface tout avant de desinstaller', Icon: LogOut, iconColor: '#EF4444', handler: 'clean-uninstall', labelColor: '#EF4444' },
+      { id: 'reset', label: 'Reinitialiser Tout', sublabel: 'Effacer toutes les données', Icon: Trash2, iconColor: '#EF4444', handler: 'reset', labelColor: '#EF4444' },
     ],
   },
   {
     title: 'SUPPORT & A PROPOS',
     items: [
-      { id: 'contact', label: 'Contact', sublabel: 'Disponible par mail', Icon: MessageCircle, iconColor: '#14B8A6', handler: 'contact' },
+      { id: 'about', label: 'A propos de Yoroi', sublabel: 'Qui suis-je et pourquoi cette app', Icon: Info, iconColor: '#8B5CF6', handler: 'about' },
       { id: 'ideas', label: 'Boite a idees', sublabel: 'Proposer des idees et signaler des bugs', Icon: Lightbulb, iconColor: '#14B8A6', handler: 'ideas' },
       { id: 'instagram', label: 'Instagram : Yoroiapp', sublabel: "Suis l'avancee", Icon: Camera, iconColor: '#EC4899', handler: 'instagram' },
       { id: 'rate', label: "Noter l'App", sublabel: 'Laisse un avis sur le Store', Icon: Star, iconColor: '#F59E0B', handler: 'rate' },
-      { id: 'store', label: 'YOROI sur le Store', sublabel: '', Icon: Heart, iconColor: '#3B82F6', handler: 'store' },
     ],
   },
 ];
@@ -148,9 +152,10 @@ const CREATOR_ITEMS: SettingsItem[] = [
   { id: 'creator-journal', label: 'Mode Carnet', sublabel: 'Desactive', Icon: BookOpen, iconColor: '#F97316', handler: 'toggle-journal' },
   { id: 'creator-surgeon', label: 'Mode Chirurgien', sublabel: 'Desactive', Icon: Syringe, iconColor: '#EF4444', handler: 'toggle-surgeon' },
   { id: 'creator-mock', label: 'Stats Mock', sublabel: 'Desactive', Icon: BarChart3, iconColor: '#8B5CF6', handler: 'toggle-mock' },
-  { id: 'creator-hery', label: 'Profil Demo Hery', sublabel: 'Injecter donnees realistes', Icon: Database, iconColor: '#10B981', handler: 'demo-hery' },
+  { id: 'creator-hery', label: 'Profil Demo Henry', sublabel: 'Injecter données realistes', Icon: Database, iconColor: '#10B981', handler: 'demo-hery' },
   { id: 'creator-onboarding', label: 'Voir Onboarding', sublabel: 'Previsualiser l\'ecran d\'accueil', Icon: Eye, iconColor: '#06B6D4', handler: 'preview-onboarding' },
-  { id: 'creator-reset', label: 'Tout Desactiver', sublabel: 'Nettoyer les donnees de demo', Icon: Trash2, iconColor: '#EF4444', handler: 'reset-creator', labelColor: '#EF4444' },
+  { id: 'creator-reset', label: 'Tout Desactiver', sublabel: 'Nettoyer les données de demo', Icon: Trash2, iconColor: '#EF4444', handler: 'reset-creator', labelColor: '#EF4444' },
+  { id: 'creator-purge', label: 'PURGE FORCEE', sublabel: 'Efface poids + séances (SQLite direct)', Icon: Trash2, iconColor: '#FF0000', handler: 'purge-data', labelColor: '#FF0000' },
 ];
 
 // ============================================
@@ -170,6 +175,10 @@ export default function SettingsScreen() {
   // Reset modal
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState('');
+
+  // Clean uninstall modal
+  const [cleanUninstallVisible, setCleanUninstallVisible] = useState(false);
+  const [cleanStep, setCleanStep] = useState(0); // 0=intro, 1=data cleared, 2=done
 
   // Language modal
 
@@ -264,12 +273,61 @@ export default function SettingsScreen() {
       setIsSurgeonMode(false);
       setIsMockStatsMode(false);
       setIsGenerating(false);
-      showPopup('Reset', isDemoActive ? 'Modes desactives. Tes vraies donnees ont ete restaurees.' : 'Tous les modes sont desactives.', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Reset', isDemoActive ? 'Modes desactives. Tes vraies données ont ete restaurees.' : 'Tous les modes sont desactives.', [{ text: 'OK', style: 'primary' }]);
     } catch (error) {
       setIsGenerating(false);
       logger.error('[Creator] Reset error:', error);
-      showPopup('Erreur', 'Impossible de restaurer les donnees.', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Erreur', 'Impossible de restaurer les données.', [{ text: 'OK', style: 'primary' }]);
     }
+  };
+
+  const handleForceDeleteData = () => {
+    showPopup(
+      'PURGE FORCEE',
+      'Va supprimer TOUTES les séances et tous les poids directement dans la base de données. Continuer ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'SUPPRIMER',
+          style: 'primary',
+          onPress: async () => {
+            setIsGenerating(true);
+            try {
+              await resetDatabase();
+              // Aussi vider les clés AsyncStorage liées aux données demo ET Apple Health
+              await AsyncStorage.multiRemove([
+                '@yoroi_demo_data_active',
+                '@yoroi_demo_backup_sqlite',
+                '@yoroi_demo_backup_async',
+                '@yoroi_screenshot_mode',
+                '@yoroi_journal_screenshot_mode',
+                '@yoroi_surgeon_mode',
+                '@yoroi_mock_stats_mode',
+                '@yoroi_imported_workouts',      // fingerprints Apple Health
+                '@yoroi_healthkit_asked',         // flag premier lancement HealthKit
+                '@yoroi_competitions_auto_imported', // compétitions auto-importées
+              ]);
+              setIsDemoActive(false);
+              setIsGlobalScreenshotMode(false);
+              setIsJournalScreenshotMode(false);
+              setIsSurgeonMode(false);
+              setIsMockStatsMode(false);
+              DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+              setIsGenerating(false);
+              showPopup(
+                'Purge terminee',
+                'Toutes les séances et poids ont été supprimés. Ferme et rouvre l\'app pour confirmer.',
+                [{ text: 'OK', style: 'primary' }]
+              );
+            } catch (error) {
+              setIsGenerating(false);
+              logger.error('[Creator] Purge error:', error);
+              showPopup('Erreur', String(error), [{ text: 'OK', style: 'primary' }]);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const loadUnits = async () => {
@@ -310,9 +368,9 @@ export default function SettingsScreen() {
         case 'creator-mock':
           return { ...item, sublabel: isMockStatsMode ? 'Active' : 'Desactive' };
         case 'creator-hery':
-          return { ...item, sublabel: isDemoActive ? 'Active - donnees demo injectees' : 'Injecter donnees realistes' };
+          return { ...item, sublabel: isDemoActive ? 'Active - données demo injectees' : 'Injecter données realistes' };
         case 'creator-reset':
-          return { ...item, sublabel: isDemoActive ? 'Restaurer tes vraies donnees' : 'Nettoyer les donnees de demo' };
+          return { ...item, sublabel: isDemoActive ? 'Restaurer tes vraies données' : 'Nettoyer les données de demo' };
         default:
           return item;
       }
@@ -350,7 +408,7 @@ export default function SettingsScreen() {
 
   const handleExport = () => {
     showPopup(
-      'Exporter mes donnees',
+      'Exporter mes données',
       'Choisis le format de sauvegarde',
       [
         { text: 'Annuler', style: 'cancel' },
@@ -363,10 +421,10 @@ export default function SettingsScreen() {
   const handleExportEditable = () => {
     showPopup(
       'Export Editable',
-      'Exporte tes donnees dans un format modifiable sur ordinateur',
+      'Exporte tes données dans un format modifiable sur ordinateur',
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Mes Donnees', style: 'primary', onPress: () => exportEditableCSV() },
+        { text: 'Mes Données', style: 'primary', onPress: () => exportEditableCSV() },
         { text: 'Template Vide', style: 'default', onPress: () => exportEmptyTemplate() },
       ]
     );
@@ -374,7 +432,7 @@ export default function SettingsScreen() {
 
   const handleImport = () => {
     showPopup(
-      'Restaurer mes donnees',
+      'Restaurer mes données',
       'Choisis le type de fichier a importer',
       [
         { text: 'Annuler', style: 'cancel' },
@@ -450,7 +508,7 @@ export default function SettingsScreen() {
   const handleResetAll = () => {
     showPopup(
       'Sauvegarde recommandee',
-      'Avant de reinitialiser, on te recommande de sauvegarder tes donnees.',
+      'Avant de reinitialiser, on te recommande de sauvegarder tes données.',
       [
         { text: 'Annuler', style: 'cancel' },
         { text: 'Sauvegarder d\'abord', style: 'primary', onPress: async () => {
@@ -472,8 +530,8 @@ export default function SettingsScreen() {
         setResetModalVisible(false);
         setResetConfirmText('');
         showPopup(
-          'Donnees supprimees',
-          'Tes donnees ont ete effacees. Tes photos ont ete conservees.',
+          'Données supprimees',
+          'Tes données ont ete effacees. Tes photos ont ete conservees.',
           [{ text: 'OK', style: 'primary', onPress: () => router.replace('/onboarding') }],
           <CheckCircle size={32} color="#10B981" />
         );
@@ -519,12 +577,12 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleDemoHery = () => {
+  const handleDemoHenry = () => {
     showPopup(
-      'Profil Demo Hery',
+      'Profil Demo Henry',
       isDemoActive
-        ? 'Le mode demo est deja actif. Regenerer les donnees ?'
-        : 'Tes vraies donnees seront sauvegardees automatiquement et restaurees quand tu desactiveras le mode demo.',
+        ? 'Le mode demo est deja actif. Regenerer les données ?'
+        : 'Tes vraies données seront sauvegardees automatiquement et restaurees quand tu desactiveras le mode demo.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -533,26 +591,98 @@ export default function SettingsScreen() {
           onPress: async () => {
             setIsGenerating(true);
             try {
-              const result = await generateHeryDemoData();
+              const result = await generateHenryDemoData();
               setIsDemoActive(true);
               setIsGenerating(false);
               DeviceEventEmitter.emit('YOROI_DEMO_CHANGED');
               notificationAsync(NotificationFeedbackType.Success);
               showPopup(
-                'Profil Heny cree',
-                `${result.workouts} seances, ${result.weights} pesees, ${result.measurements} mensurations, ${result.sleepEntries} nuits, ${result.benchmarks} benchmarks, ${result.skills} techniques.\n\nTes vraies donnees sont sauvegardees. Utilise "Tout Desactiver" pour les restaurer.`,
+                'Profil Henry cree',
+                `${result.workouts} séances, ${result.weights} pesees, ${result.measurements} mensurations, ${result.sleepEntries} nuits, ${result.benchmarks} benchmarks, ${result.skills} techniques.\n\nTes vraies données sont sauvegardees. Utilise "Tout Desactiver" pour les restaurer.`,
                 [{ text: 'OK', style: 'primary', onPress: () => router.replace('/(tabs)') }]
               );
             } catch (error) {
               setIsGenerating(false);
               logger.error('[DemoData] Error:', error);
-              showPopup('Erreur', 'Impossible de generer les donnees demo.', [{ text: 'OK', style: 'primary' }]);
+              showPopup('Erreur', 'Impossible de generer les données demo.', [{ text: 'OK', style: 'primary' }]);
             }
           },
         },
       ]
     );
   };
+
+  const handleClearCache = useCallback(() => {
+    showPopup(
+      'Vider le cache',
+      'Efface les fichiers temporaires et les images en cache. Tes données, séances et statistiques sont conservees.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Vider',
+          style: 'primary',
+          onPress: async () => {
+            setIsGenerating(true);
+            try {
+              // Vider le dossier cache expo-file-system
+              const cacheDir = FileSystem.cacheDirectory;
+              if (cacheDir) {
+                const items = await FileSystem.readDirectoryAsync(cacheDir).catch(() => []);
+                await Promise.all(
+                  items.map((name) =>
+                    FileSystem.deleteAsync(`${cacheDir}${name}`, { idempotent: true }).catch(() => {})
+                  )
+                );
+              }
+
+              // Supprimer les clés AsyncStorage non essentielles (preview, onboarding vues, etc.)
+              const allKeys = await AsyncStorage.getAllKeys();
+              const cacheKeys = allKeys.filter((k) =>
+                k.startsWith('@yoroi_preview_') ||
+                k.startsWith('@yoroi_cache_') ||
+                k.startsWith('@yoroi_tmp_')
+              );
+              if (cacheKeys.length > 0) {
+                await AsyncStorage.multiRemove(cacheKeys);
+              }
+
+              notificationAsync(NotificationFeedbackType.Success);
+              showPopup('Cache vide !', 'Le cache a ete nettoye avec succes.', [{ text: 'OK', style: 'primary' }]);
+            } catch (e) {
+              logger.error('Clear cache error', e);
+              showPopup('Erreur', 'Impossible de vider le cache.', [{ text: 'OK', style: 'cancel' }]);
+            } finally {
+              setIsGenerating(false);
+            }
+          },
+        },
+      ]
+    );
+  }, [showPopup]);
+
+  const handleCleanUninstall = useCallback(async () => {
+    setIsGenerating(true);
+    try {
+      await resetDatabase();
+      await resetAllData();
+      const allKeys = await AsyncStorage.getAllKeys();
+      const toRemove = allKeys.filter(k => k.startsWith('@yoroi'));
+      if (toRemove.length > 0) await AsyncStorage.multiRemove(toRemove);
+      const cacheDir = FileSystem.cacheDirectory;
+      if (cacheDir) {
+        const items = await FileSystem.readDirectoryAsync(cacheDir).catch(() => []);
+        await Promise.all(items.map(name =>
+          FileSystem.deleteAsync(`${cacheDir}${name}`, { idempotent: true }).catch(() => {})
+        ));
+      }
+      notificationAsync(NotificationFeedbackType.Success);
+      setCleanStep(1);
+    } catch (e) {
+      logger.error('Clean uninstall error', e);
+    } finally {
+      setIsGenerating(false);
+    }
+  }, []);
 
   const handleItemPress = useCallback((item: SettingsItem) => {
     impactAsync(ImpactFeedbackStyle.Light);
@@ -564,20 +694,28 @@ export default function SettingsScreen() {
       case 'pdf': handleExportPDF(); return;
       case 'reset': handleResetAll(); return;
       case 'units': setUnitsModalVisible(true); return;
-      case 'contact': router.push({ pathname: '/ideas', params: { category: 'other' } } as any); return;
       case 'ideas': router.push({ pathname: '/ideas', params: { category: 'feature' } } as any); return;
+      case 'about': router.push({ pathname: '/onboarding', params: { preview: 'true', page: '0' } } as any); return;
       case 'instagram': safeOpenURL('https://www.instagram.com/yoroiapp'); return;
       case 'rate':
-      case 'store': safeOpenURL('https://apps.apple.com/fr/app/yoroi-suivi-poids-sport/id6757306612'); return;
+        if (Platform.OS === 'android') {
+          safeOpenURL('https://play.google.com/store/search?q=Yoroi+Suivi+poids+Sport&c=apps');
+        } else {
+          safeOpenURL('https://apps.apple.com/fr/app/yoroi-suivi-poids-sport/id6757306612');
+        }
+        return;
       case 'privacy-policy': safeOpenURL('https://easy-woodwind-a70.notion.site/Yoroi-App-2d950188283880dbbd44d7e5abefecbb'); return;
       // Creator mode toggles
       case 'toggle-screenshot': toggleGlobalScreenshotMode(!isGlobalScreenshotMode); return;
       case 'toggle-journal': toggleJournalScreenshotMode(!isJournalScreenshotMode); return;
       case 'toggle-surgeon': toggleSurgeonMode(!isSurgeonMode); return;
       case 'toggle-mock': toggleMockStatsMode(!isMockStatsMode); return;
-      case 'demo-hery': handleDemoHery(); return;
-      case 'preview-onboarding': router.push('/onboarding' as any); return;
+      case 'demo-hery': handleDemoHenry(); return;
+      case 'preview-onboarding': router.push({ pathname: '/onboarding', params: { preview: 'true' } } as any); return;
       case 'reset-creator': resetAllCreatorModes(); return;
+      case 'purge-data': handleForceDeleteData(); return;
+      case 'clear-cache': handleClearCache(); return;
+      case 'clean-uninstall': setCleanStep(0); setCleanUninstallVisible(true); return;
     }
 
     // Route-based items
@@ -640,8 +778,8 @@ export default function SettingsScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Settings size={26} color={isDark ? colors.textPrimary : '#FFFFFF'} strokeWidth={2} />
-          <Text style={[styles.headerTitle, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>Reglages</Text>
+          <Settings size={26} color="#FFFFFF" strokeWidth={2} />
+          <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Reglages</Text>
         </View>
 
         {/* Search Bar */}
@@ -661,7 +799,7 @@ export default function SettingsScreen() {
         {/* Sections */}
         {filteredSections.map((section) => (
           <View key={section.title} style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: isDark ? colors.textMuted : 'rgba(255,255,255,0.7)' }]}>{section.title}</Text>
+            <Text style={[styles.sectionTitle, { color: 'rgba(255,255,255,0.7)' }]}>{section.title}</Text>
             <View style={[styles.card, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
               {section.items.map((item, idx) =>
                 renderItem(item, idx === section.items.length - 1)
@@ -673,7 +811,7 @@ export default function SettingsScreen() {
         {/* Creator Mode - standard rows, visible only when unlocked */}
         {screenshotMenuUnlocked && filteredCreatorItems.length > 0 && (
           <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: isDark ? colors.textMuted : 'rgba(255,255,255,0.7)' }]}>CREATEUR</Text>
+            <Text style={[styles.sectionTitle, { color: 'rgba(255,255,255,0.7)' }]}>CREATEUR</Text>
             <View style={[styles.card, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
               {filteredCreatorItems.map((item, idx) =>
                 renderItem(item, idx === filteredCreatorItems.length - 1)
@@ -684,7 +822,7 @@ export default function SettingsScreen() {
 
         {/* Version */}
         <TouchableOpacity onPress={handleVersionTap} activeOpacity={1} style={styles.versionContainer}>
-          <Text style={[styles.versionText, { color: isDark ? colors.textMuted : 'rgba(255,255,255,0.6)' }]}>YOROI v2.0</Text>
+          <Text style={[styles.versionText, { color: 'rgba(255,255,255,0.5)' }]}>YOROI v2.0</Text>
         </TouchableOpacity>
 
         <View style={{ height: 120 }} />
@@ -756,7 +894,7 @@ export default function SettingsScreen() {
                 <Trash2 size={32} color="#EF4444" />
                 <Text style={[styles.warningTitle, { color: '#EF4444' }]}>Action irreversible</Text>
                 <Text style={[styles.warningText, { color: colors.textSecondary }]}>
-                  Toutes tes donnees seront supprimees : poids, seances, badges, reglages... Tes photos seront conservees.
+                  Toutes tes données seront supprimees : poids, séances, badges, reglages... Tes photos seront conservees.
                 </Text>
               </View>
               <Text style={[styles.confirmLabel, { color: colors.textPrimary }]}>
@@ -784,6 +922,99 @@ export default function SettingsScreen() {
                 <Trash2 size={18} color={isResetConfirmed ? '#FFF' : colors.textMuted} />
                 <Text style={[styles.resetConfirmText, { color: isResetConfirmed ? '#FFF' : colors.textMuted }]}>Tout supprimer</Text>
               </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Clean Uninstall Modal */}
+      <Modal visible={cleanUninstallVisible} transparent animationType="slide" onRequestClose={() => setCleanUninstallVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Quitter sans laisser de trace</Text>
+              <TouchableOpacity onPress={() => setCleanUninstallVisible(false)}>
+                <X size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+
+              {cleanStep === 0 && (
+                <>
+                  <View style={[styles.warningCard, { backgroundColor: '#EF444415', borderColor: '#EF4444' }]}>
+                    <LogOut size={28} color="#EF4444" />
+                    <Text style={[styles.warningTitle, { color: '#EF4444' }]}>3 etapes pour partir proprement</Text>
+                    <Text style={[styles.warningText, { color: colors.textSecondary }]}>
+                      Cette action va effacer TOUTES tes données dans l'app. Ensuite on te guide pour supprimer les acces Apple Santé et desactiver iCloud.
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.resetConfirmBtn, { backgroundColor: '#EF4444', marginTop: 8, width: '100%', justifyContent: 'center' }]}
+                    onPress={handleCleanUninstall}
+                  >
+                    <Trash2 size={18} color="#FFF" />
+                    <Text style={[styles.resetConfirmText, { color: '#FFF' }]}>Etape 1 — Effacer toutes mes données</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.resetCancelBtn, { backgroundColor: colors.backgroundElevated, marginTop: 8, width: '100%', justifyContent: 'center' }]}
+                    onPress={() => setCleanUninstallVisible(false)}
+                  >
+                    <Text style={[styles.resetCancelText, { color: colors.textPrimary }]}>Annuler</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+
+              {cleanStep === 1 && (
+                <>
+                  <View style={[styles.warningCard, { backgroundColor: '#10B98115', borderColor: '#10B981' }]}>
+                    <Text style={{ fontSize: 28 }}>✓</Text>
+                    <Text style={[styles.warningTitle, { color: '#10B981' }]}>Données effacees !</Text>
+                    <Text style={[styles.warningText, { color: colors.textSecondary }]}>
+                      Toutes tes données Yoroi sont supprimees. Suis maintenant les etapes 2 et 3 pour partir sans laisser de trace.
+                    </Text>
+                  </View>
+
+                  <Text style={[styles.confirmLabel, { color: colors.textPrimary, marginTop: 12 }]}>Etape 2 — Revoquer les acces Apple Santé</Text>
+                  <Text style={[styles.warningText, { color: colors.textMuted, marginBottom: 8 }]}>
+                    iOS garde les permissions Santé meme apres desinstallation. Va les supprimer manuellement.
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.resetConfirmBtn, { backgroundColor: '#FF3D80', width: '100%', justifyContent: 'center' }]}
+                    onPress={() => safeOpenURL('x-apple-health://')}
+                  >
+                    <ShieldCheck size={18} color="#FFF" />
+                    <Text style={[styles.resetConfirmText, { color: '#FFF' }]}>Ouvrir Apple Santé</Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.warningText, { color: colors.textMuted, fontSize: 12, marginTop: 4, marginBottom: 12 }]}>
+                    Dans Santé : Acces aux apps → Yoroi → tout desactiver
+                  </Text>
+
+                  <Text style={[styles.confirmLabel, { color: colors.textPrimary }]}>Etape 3 — Desactiver iCloud pour Yoroi</Text>
+                  <Text style={[styles.warningText, { color: colors.textMuted, marginBottom: 8 }]}>
+                    Sans ca, tes données reviennent a la reinstallation.
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.resetConfirmBtn, { backgroundColor: '#6366F1', width: '100%', justifyContent: 'center' }]}
+                    onPress={() => Linking.openSettings()}
+                  >
+                    <Lock size={18} color="#FFF" />
+                    <Text style={[styles.resetConfirmText, { color: '#FFF' }]}>Ouvrir les Reglages iPhone</Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.warningText, { color: colors.textMuted, fontSize: 12, marginTop: 4 }]}>
+                    Dans Reglages : ton nom → iCloud → Sauvegardes → desactive Yoroi
+                  </Text>
+
+                  <TouchableOpacity
+                    style={[styles.resetCancelBtn, { backgroundColor: '#10B98120', borderWidth: 1, borderColor: '#10B981', marginTop: 16, width: '100%', justifyContent: 'center' }]}
+                    onPress={() => setCleanUninstallVisible(false)}
+                  >
+                    <Text style={[styles.resetCancelText, { color: '#10B981' }]}>C'est bon, je peux desinstaller</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+
             </View>
           </View>
         </View>

@@ -137,16 +137,21 @@ export const scheduleCitationNotifications = async (): Promise<boolean> => {
     const style = await getCitationStyle();
     const hours = getNotificationHours(settings.frequency);
     const scheduledIds: string[] = [];
+    const now = new Date();
 
-    // Planifier pour les 7 prochains jours
-    for (let day = 0; day < 7; day++) {
+    // Si l'heure de notification est déjà passée aujourd'hui, commencer demain
+    const notifHour = hours[0] ?? 8;
+    const startDay = now.getHours() >= notifHour ? 1 : 0;
+
+    // Planifier pour les 7 prochains jours (en partant du bon jour)
+    for (let day = startDay; day < startDay + 7; day++) {
       for (const hour of hours) {
         const triggerDate = new Date();
         triggerDate.setDate(triggerDate.getDate() + day);
         triggerDate.setHours(hour, 0, 0, 0);
 
-        // Ne pas planifier pour le passé
-        if (triggerDate <= new Date()) {
+        // Sécurité : ne jamais planifier dans le passé
+        if (triggerDate.getTime() <= now.getTime()) {
           continue;
         }
 
@@ -168,9 +173,9 @@ export const scheduleCitationNotifications = async (): Promise<boolean> => {
         });
 
         scheduledIds.push(notifId);
-
-        // Sauvegarder dans l'historique
-        saveNotification(getNotificationTitle(), citation.text, 'citation', { category: citation.category }).catch(() => {});
+        // NOTE: saveNotification n'est PAS appelé ici.
+        // Les notifications sont enregistrées dans l'historique uniquement à leur RÉCEPTION
+        // via le listener addNotificationReceivedListener dans _layout.tsx.
       }
     }
 
@@ -270,29 +275,13 @@ export const initCitationNotifications = async (): Promise<void> => {
       return;
     }
 
-    // Vérifier si on doit replanifier (tous les 3 jours)
-    const lastScheduled = await AsyncStorage.getItem('@yoroi_citation_last_scheduled');
-    const now = Date.now();
-    const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
-
-    if (!lastScheduled || now - parseInt(lastScheduled, 10) > threeDaysMs) {
-      // Annuler TOUTES les notifs pendantes avant de replanifier
-      // Evite les doublons entre anciens builds et nouvelles installations
-      await Notifications.cancelAllScheduledNotificationsAsync();
-      await scheduleCitationNotifications();
-      await AsyncStorage.setItem('@yoroi_citation_last_scheduled', now.toString());
-    } else {
-      // Verifier que les notifs existent encore (ex: apres reinstallation)
-      const pending = await Notifications.getAllScheduledNotificationsAsync();
-      const citationPending = pending.filter(n =>
-        (n.content.data as any)?.type === 'citation'
-      );
-      if (citationPending.length === 0) {
-        // Plus rien de planifié, replanifier sans attendre le délai
-        await scheduleCitationNotifications();
-        await AsyncStorage.setItem('@yoroi_citation_last_scheduled', now.toString());
-      }
-    }
+    // On replanifie systématiquement : notificationService.initialize() appelle
+    // cancelAllScheduledNotificationsAsync() avant cet appel, ce qui annule toutes
+    // les citations. Il faut donc toujours les remettre en place.
+    // Le spam d'historique est évité car saveNotification() n'est plus appelé
+    // lors de la planification — seulement à la RÉCEPTION via le listener dans _layout.tsx.
+    await scheduleCitationNotifications();
+    await AsyncStorage.setItem('@yoroi_citation_last_scheduled', Date.now().toString());
   } catch (error) {
     logger.error('[CitationNotif] Erreur init:', error);
   }

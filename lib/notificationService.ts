@@ -152,8 +152,8 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 // Messages motivants (UNIVERSELS - pas spécifiques aux sports de combat)
 const TRAINING_MESSAGES = [
   { title: 'C\'est l\'heure !', body: 'Ton entraînement t\'attend. Donne tout !' },
-  { title: 'C\'est parti !', body: 'Bouge ton corps. Let\'s go !' },
-  { title: 'Go training !', body: 'Chaque séance compte. Fais-la maintenant !' },
+  { title: 'C\'est parti !', body: 'Bouge ton corps. Vas-y !' },
+  { title: 'Entraînement !', body: 'Chaque séance compte. Fais-la maintenant !' },
   { title: 'On y va ?', body: 'Ton corps est prêt. Ne le fais pas attendre !' },
   { title: 'Objectif du jour', body: 'Une séance de plus vers ton but !' },
 ];
@@ -371,7 +371,11 @@ class NotificationService {
   }
 
   private async scheduleTrainingNotifications(): Promise<void> {
-    const { time, days } = this.settings.training;
+    const { time } = this.settings.training;
+    // Si aucun jour configuré, utiliser lundi-vendredi par défaut
+    const days = this.settings.training.days.length > 0
+      ? this.settings.training.days
+      : [1, 2, 3, 4, 5];
     const [hours, minutes] = time.split(':').map(Number);
 
     for (const day of days) {
@@ -451,7 +455,11 @@ class NotificationService {
   }
 
   private async scheduleWeighingNotifications(): Promise<void> {
-    const { time, days } = this.settings.weighing;
+    const { time } = this.settings.weighing;
+    // Si aucun jour configuré, peser le matin en semaine par défaut
+    const days = this.settings.weighing.days.length > 0
+      ? this.settings.weighing.days
+      : [1, 2, 3, 4, 5];
     const [hours, minutes] = time.split(':').map(Number);
 
     for (const day of days) {
@@ -496,7 +504,11 @@ class NotificationService {
   }
 
   private async scheduleSleepNotifications(): Promise<void> {
-    const { bedtimeReminder, days } = this.settings.sleep;
+    const { bedtimeReminder } = this.settings.sleep;
+    // Si aucun jour configuré, utiliser tous les jours par défaut
+    const days = this.settings.sleep.days.length > 0
+      ? this.settings.sleep.days
+      : [0, 1, 2, 3, 4, 5, 6];
     const [hours, minutes] = bedtimeReminder.split(':').map(Number);
 
     for (const day of days) {
@@ -570,13 +582,18 @@ class NotificationService {
   }
 
   private async scheduleBriefingNotifications(): Promise<void> {
-    const { time, days } = this.settings.briefing || { time: '07:30', days: [0, 1, 2, 3, 4, 5, 6] };
+    const briefing = this.settings.briefing || { time: '07:30', days: [0, 1, 2, 3, 4, 5, 6] };
+    const { time } = briefing;
+    // Si aucun jour configuré, envoyer tous les jours par défaut
+    const days = (briefing.days?.length ?? 0) > 0
+      ? briefing.days
+      : [0, 1, 2, 3, 4, 5, 6];
     const [hours, minutes] = time.split(':').map(Number);
 
-    for (const day of days) {
-      // Générer le contenu du briefing
-      const briefingContent = await this.generateBriefingContent();
+    // Générer le contenu UNE SEULE FOIS (pas 7 fois) pour éviter 7 accès DB
+    const briefingContent = await this.generateBriefingContent();
 
+    for (const day of days) {
       await Notifications.scheduleNotificationAsync({
         content: {
           title: briefingContent.title,
@@ -960,11 +977,11 @@ class NotificationService {
   }
 
   /**
-   * Notification apres fin de seance - propose de partager sur les reseaux
+   * Notification apres fin de séance - propose de partager sur les reseaux
    */
   async sendWorkoutCompletedNotification(sport: string, durationMin: number, calories?: number): Promise<void> {
     const messages = [
-      { title: 'Seance terminee !', body: `${sport} - ${durationMin} min${calories ? ` - ${calories} kcal` : ''}. Partage ta perf !` },
+      { title: 'Séance terminee !', body: `${sport} - ${durationMin} min${calories ? ` - ${calories} kcal` : ''}. Partage ta perf !` },
       { title: 'Bravo, guerrier !', body: `${sport} dans la poche. Montre ca a tes followers !` },
       { title: `${sport} termine !`, body: `${durationMin} min d'effort. Cree ta carte de partage !` },
       { title: 'Warrior mode', body: `Tu viens de finir ${durationMin} min de ${sport}. Partage le sur tes reseaux !` },

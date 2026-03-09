@@ -47,7 +47,7 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
   {
     id: 'sleep_charge',
     name: 'Sommeil & Charge',
-    description: 'Cartes sommeil et charge d\'entrainement',
+    description: 'Cartes sommeil et charge d\'entraînement',
     icon: 'moon',
     visible: true,
     order: 3,
@@ -70,8 +70,8 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
   },
   {
     id: 'tools_row_2',
-    name: 'Sante & Outils',
-    description: 'Energie, Savoir, Calculateurs',
+    name: 'Santé & Outils',
+    description: 'Énergie, Savoir, Calculateurs',
     icon: 'heart',
     visible: true,
     order: 6,
@@ -86,15 +86,15 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
   },
   {
     id: 'healthspan',
-    name: 'Tendance Sante',
-    description: 'Ton esperance de vie en bonne sante',
+    name: 'Tendance Santé',
+    description: 'Ton esperance de vie en bonne santé',
     icon: 'heart',
     visible: true,
     order: 8,
   },
   {
     id: 'challenges',
-    name: 'Defis du Jour',
+    name: 'Défis du Jour',
     description: 'Tes objectifs quotidiens',
     icon: 'target',
     visible: true,

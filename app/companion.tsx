@@ -10,7 +10,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  FlatList,
   ActivityIndicator,
   Modal,
   TextInput,
@@ -388,63 +387,50 @@ export default function CompanionScreen() {
   // Rendu tableau
   // ----------------------------------------
 
-  const renderHeader = () => (
-    <View style={styles.tableRow}>
-      <View style={[styles.dateCell, styles.headerCell, { backgroundColor: colors.backgroundCard, borderBottomColor: colors.border }]}>
+  const renderTableHeader = () => (
+    <View style={[styles.tableRow, { backgroundColor: colors.backgroundCard, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+      <View style={[styles.dateCell, styles.headerCell]}>
         <Text style={[styles.headerText, { color: colors.textMuted }]}>Date</Text>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={styles.scrollRow}>
-          {COLUMNS.map(col => (
-            <View key={col.key} style={[styles.dataCell, styles.headerCell, { width: col.width, backgroundColor: colors.backgroundCard, borderBottomColor: colors.border }]}>
-              <Text style={[styles.headerText, { color: colors.textMuted }]}>{col.label}</Text>
-              <Text style={[styles.headerUnit, { color: colors.textMuted + '80' }]}>{col.unit}</Text>
-            </View>
-          ))}
-          <View style={[styles.actionCell, styles.headerCell, { backgroundColor: colors.backgroundCard, borderBottomColor: colors.border }]} />
+      {COLUMNS.map(col => (
+        <View key={col.key} style={[styles.dataCell, styles.headerCell, { width: col.width }]}>
+          <Text style={[styles.headerText, { color: colors.textMuted }]}>{col.label}</Text>
+          <Text style={[styles.headerUnit, { color: colors.textMuted + '80' }]}>{col.unit}</Text>
         </View>
-      </ScrollView>
+      ))}
+      <View style={[styles.actionCell, styles.headerCell]} />
     </View>
   );
 
-  const renderRow = ({ item, index }: { item: MergedRow; index: number }) => {
+  const renderDataRow = (item: MergedRow, index: number) => {
     const isEven = index % 2 === 0;
     const bg = isEven ? colors.background : `${colors.backgroundCard}CC`;
 
     return (
-      <View style={[styles.tableRow, { backgroundColor: bg }]}>
-        {/* Date fixe à gauche */}
+      <View key={item.date} style={[styles.tableRow, { backgroundColor: bg }]}>
         <View style={[styles.dateCell, { borderBottomColor: colors.border + '30' }]}>
           <Text style={[styles.dateText, { color: colors.textPrimary }]}>
             {displayDate(item.date)}
           </Text>
         </View>
-
-        {/* Valeurs scrollables */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.scrollRow}>
-            {COLUMNS.map(col => {
-              const val = getVal(item, col.key);
-              const isEmpty = val === '—';
-              return (
-                <View key={col.key} style={[styles.dataCell, { width: col.width, borderBottomColor: colors.border + '30' }]}>
-                  <Text style={[styles.dataText, { color: isEmpty ? colors.textMuted + '40' : colors.textPrimary }]}>
-                    {val}
-                  </Text>
-                </View>
-              );
-            })}
-
-            {/* Bouton supprimer */}
-            <TouchableOpacity
-              style={[styles.actionCell, { borderBottomColor: colors.border + '30' }]}
-              onPress={() => handleDelete(item)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Trash2 size={15} color={colors.textMuted + '80'} strokeWidth={2} />
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+        {COLUMNS.map(col => {
+          const val = getVal(item, col.key);
+          const isEmpty = val === '—';
+          return (
+            <View key={col.key} style={[styles.dataCell, { width: col.width, borderBottomColor: colors.border + '30' }]}>
+              <Text style={[styles.dataText, { color: isEmpty ? colors.textMuted + '40' : colors.textPrimary }]}>
+                {val}
+              </Text>
+            </View>
+          );
+        })}
+        <TouchableOpacity
+          style={[styles.actionCell, { borderBottomColor: colors.border + '30' }]}
+          onPress={() => handleDelete(item)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Trash2 size={15} color={colors.textMuted + '80'} strokeWidth={2} />
+        </TouchableOpacity>
       </View>
     );
   };
@@ -653,20 +639,18 @@ export default function CompanionScreen() {
           </Text>
         </View>
       ) : tab === 'table' ? (
-        <View style={{ flex: 1 }}>
-          {/* En-tête du tableau */}
-          {renderHeader()}
-
-          {/* Lignes */}
-          <FlatList
-            data={rows}
-            keyExtractor={(item) => item.date}
-            renderItem={renderRow}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}
-            initialNumToRender={20}
-          />
-        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} bounces={false}>
+          <View>
+            {renderTableHeader()}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled
+              contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}
+            >
+              {rows.map((item, index) => renderDataRow(item, index))}
+            </ScrollView>
+          </View>
+        </ScrollView>
       ) : (
         <View style={[styles.chartsContainer, { paddingHorizontal: 16 }]}>
           {renderCharts()}

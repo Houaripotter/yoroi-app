@@ -1,9 +1,9 @@
 // ============================================
-// CARNET D'ENTRAINEMENT - HYBRID DASHBOARD
+// CARNET D'ENTRAÎNEMENT - HYBRID DASHBOARD
 // Mes Records (Benchmarks) + Mes Techniques (Skills)
 // ============================================
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,9 @@ import {
   Modal,
   Dimensions,
   Animated,
+  PanResponder,
   DeviceEventEmitter,
+  RefreshControl,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { safeOpenURL } from '@/lib/security/validators';
@@ -84,6 +86,93 @@ import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 import { logger } from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// ============================================
+// SWIPEABLE ROW — swipe gauche pour révéler Supprimer
+// ============================================
+const SwipeableCard = React.memo(function SwipeableCard({
+  onDelete,
+  children,
+}: {
+  onDelete: () => void;
+  children: React.ReactNode;
+}) {
+  const translateX = useRef(new Animated.Value(0)).current;
+  const isOpen = useRef(false);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gs) =>
+        Math.abs(gs.dx) > Math.abs(gs.dy) * 1.5 && Math.abs(gs.dx) > 8,
+      onPanResponderMove: (_, gs) => {
+        if (gs.dx < 0) {
+          translateX.setValue(Math.max(-88, gs.dx));
+        } else if (isOpen.current) {
+          translateX.setValue(Math.min(0, -88 + gs.dx));
+        }
+      },
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dx < -40 || (isOpen.current && gs.dx < 15)) {
+          Animated.spring(translateX, { toValue: -88, useNativeDriver: true, overshootClamping: true }).start();
+          isOpen.current = true;
+        } else {
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: true, overshootClamping: true }).start();
+          isOpen.current = false;
+        }
+      },
+    })
+  ).current;
+
+  const close = useCallback(() => {
+    Animated.spring(translateX, { toValue: 0, useNativeDriver: true, overshootClamping: true }).start();
+    isOpen.current = false;
+  }, [translateX]);
+
+  return (
+    <View style={{ overflow: 'hidden' }}>
+      {/* Bouton rouge derrière */}
+      <View style={swipeStyles.deleteBg}>
+        <TouchableOpacity
+          style={swipeStyles.deleteBtn}
+          onPress={() => { close(); onDelete(); }}
+          activeOpacity={0.8}
+        >
+          <Trash2 size={20} color="#FFFFFF" />
+          <Text style={swipeStyles.deleteText}>Supprimer</Text>
+        </TouchableOpacity>
+      </View>
+      {/* Carte qui glisse */}
+      <Animated.View style={{ transform: [{ translateX }] }} {...panResponder.panHandlers}>
+        {children}
+      </Animated.View>
+    </View>
+  );
+});
+
+const swipeStyles = StyleSheet.create({
+  deleteBg: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 88,
+    backgroundColor: '#EF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteBtn: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
+  },
+  deleteText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+});
 
 // ============================================
 // MAIN COMPONENT
@@ -200,13 +289,16 @@ export default function TrainingJournalScreen() {
   const [victorySessionData, setVictorySessionData] = useState<VictorySessionData | null>(null);
 
   // Computed stats from local data
-  const benchmarksWithEntries = benchmarks.filter(b => b.entries && b.entries.length > 0);
-  const stats = {
+  const benchmarksWithEntries = useMemo(
+    () => benchmarks.filter(b => b.entries && b.entries.length > 0),
+    [benchmarks]
+  );
+  const stats = useMemo(() => ({
     totalBenchmarks: benchmarksWithEntries.length,
     totalPRs: benchmarksWithEntries.reduce((count, b) => count + (b.entries?.length || 0), 0),
     skillsMastered: skills.filter(s => s.status === 'mastered').length,
     totalDrills: skills.reduce((count, s) => count + (s.drillCount || 0), 0),
-  };
+  }), [benchmarksWithEntries, skills]);
 
   // Load user preferences
   useEffect(() => {
@@ -420,6 +512,13 @@ export default function TrainingJournalScreen() {
   }, []);
 
 
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
+
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadData(); }, []);
 
@@ -445,13 +544,15 @@ export default function TrainingJournalScreen() {
   };
 
   // Filter benchmarks (by global filter AND search query) - only show benchmarks WITH entries
+  // Poids de Corps (bodyweight) exclu — c'est le poids de l'utilisateur, pas pertinent ici
   // Sorted by most recent entry first
   const filteredBenchmarks = benchmarks.filter(b => {
     const hasEntries = b.entries && b.entries.length > 0;
+    const isBodyweight = b.category === 'bodyweight';
     const matchesGlobal = matchesGlobalFilter(b.category, null);
     const matchesSearch = searchQuery.trim() === '' ||
       b.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return hasEntries && matchesGlobal && matchesSearch;
+    return hasEntries && !isBodyweight && matchesGlobal && matchesSearch;
   }).sort((a, b) => {
     const lastA = getBenchmarkLast(a);
     const lastB = getBenchmarkLast(b);
@@ -694,13 +795,18 @@ export default function TrainingJournalScreen() {
 
   const handleAddEntry = async () => {
     if (isSubmitting) return; // Anti-spam protection
-    if (!selectedBenchmark || !newEntryValue.trim()) return;
+    if (!selectedBenchmark) return;
 
-    // For Force/Musculation exercises (kg/lbs), reps is mandatory
-    const isForceExercise = ['force', 'musculation'].includes(selectedBenchmark.category) &&
-      (selectedBenchmark.unit === 'kg' || selectedBenchmark.unit === 'lbs');
+    // Detect exercise types
+    // Force + Musculation = toujours poids+reps (peu importe l'unité stockée)
+    const isWeightExercise =
+      selectedBenchmark.category === 'force' || selectedBenchmark.category === 'musculation';
+    const isRunningOrCardio = ['running', 'trail', 'hyrox', 'cardio'].includes(selectedBenchmark.category);
 
-    if (isForceExercise && !newEntryReps.trim()) {
+    // For running/cardio, the value comes from time fields (not newEntryValue)
+    if (!isRunningOrCardio && !newEntryValue.trim()) return;
+
+    if (isWeightExercise && !newEntryReps.trim()) {
       showPopup('Erreur', 'Le nombre de repetitions est obligatoire');
       return;
     }
@@ -710,7 +816,21 @@ export default function TrainingJournalScreen() {
       impactAsync(ImpactFeedbackStyle.Medium);
     let value: number;
 
-    if (selectedBenchmark.unit === 'time') {
+    if (isRunningOrCardio && selectedBenchmark.unit === 'time') {
+      // Compute total time in seconds from H:M:S fields
+      const h = parseInt(runningTimeHours) || 0;
+      const m = parseInt(runningTimeMinutes) || 0;
+      const s = parseInt(runningTimeSeconds) || 0;
+      value = h * 3600 + m * 60 + s;
+      if (value === 0) {
+        showPopup('Erreur', 'Indique la durée de ton effort');
+        setIsSubmitting(false);
+        return;
+      }
+    } else if (isWeightExercise) {
+      // Pour musculation/force, la valeur est toujours un poids en kg/lbs
+      value = parseFloat(newEntryValue);
+    } else if (selectedBenchmark.unit === 'time') {
       value = parseTimeToSeconds(newEntryValue);
     } else {
       value = parseFloat(newEntryValue);
@@ -770,7 +890,7 @@ export default function TrainingJournalScreen() {
       }
 
       // Format performance string
-      const performanceStr = isForceExercise
+      const performanceStr = isWeightExercise
         ? formatForceEntry(value, selectedBenchmark.unit, reps)
         : formatValue(value, selectedBenchmark.unit);
 
@@ -1019,6 +1139,7 @@ export default function TrainingJournalScreen() {
   // RENDER COMPONENTS
   // ============================================
 
+
   // ============================================
   // COMPACT LOG CARD - High density design
   // ============================================
@@ -1039,18 +1160,27 @@ export default function TrainingJournalScreen() {
     const trendUp = sortedEntries.length >= 2 && sortedEntries[0].value > sortedEntries[1].value;
     const trendDown = sortedEntries.length >= 2 && sortedEntries[0].value < sortedEntries[1].value;
 
-    // Format performance string: "100 kg × 5" for Force, "10km • 5:30 /km" for Running, etc.
+    // Format performance string
     const getPerformanceString = () => {
       if (!last) return '--';
-      // Force: show weight × reps
-      if (benchmark.category === 'force' && (benchmark.unit === 'kg' || benchmark.unit === 'lbs')) {
+      // Force / musculation / street_workout / bodyweight → poids × reps REPS
+      if (['force', 'musculation', 'street_workout'].includes(benchmark.category) ||
+          (benchmark.unit === 'kg' || benchmark.unit === 'lbs')) {
         return formatForceEntry(last.value, benchmark.unit, last.reps);
       }
-      // Running/Trail/Hyrox: show distance + pace if duration available
-      if (['running', 'trail', 'hyrox'].includes(benchmark.category) && benchmark.unit === 'km' && last.duration) {
-        const timeSeconds = last.duration * 60; // duration is in minutes
-        const pace = calculatePace(timeSeconds, last.value);
-        return `${last.value}km • ${pace} /km`;
+      // Reps unitaires (tractions, dips sans poids…)
+      if (benchmark.unit === 'reps') {
+        return formatForceEntry(last.value, 'reps', last.reps);
+      }
+      // Running/Trail/Hyrox: show distance + pace
+      if (['running', 'trail', 'hyrox'].includes(benchmark.category)) {
+        const distKm = last.distance ?? (benchmark.unit === 'km' ? last.value : null);
+        const timeS = benchmark.unit === 'time' ? last.value : (last.duration ? last.duration * 60 : null);
+        if (distKm && timeS) {
+          const pace = calculatePace(timeS, distKm);
+          return `${distKm} km • ${pace} /km`;
+        }
+        if (distKm) return `${distKm} km`;
       }
       return formatValue(last.value, benchmark.unit);
     };
@@ -1152,15 +1282,18 @@ export default function TrainingJournalScreen() {
 
     const getPerformanceString = () => {
       if (!last) return '--';
-      // Force: show weight × reps
-      if (benchmark.category === 'force' && (benchmark.unit === 'kg' || benchmark.unit === 'lbs')) {
+      if (['force', 'musculation', 'street_workout'].includes(benchmark.category) ||
+          benchmark.unit === 'kg' || benchmark.unit === 'lbs') {
         return formatForceEntry(last.value, benchmark.unit, last.reps);
       }
-      // Running/Trail/Hyrox: show distance + pace if duration available
-      if (['running', 'trail', 'hyrox'].includes(benchmark.category) && benchmark.unit === 'km' && last.duration) {
-        const timeSeconds = last.duration * 60;
-        const pace = calculatePace(timeSeconds, last.value);
-        return `${last.value}km • ${pace} /km`;
+      if (benchmark.unit === 'reps') {
+        return formatForceEntry(last.value, 'reps', last.reps);
+      }
+      if (['running', 'trail', 'hyrox'].includes(benchmark.category)) {
+        const distKm = last.distance ?? (benchmark.unit === 'km' ? last.value : null);
+        const timeS = benchmark.unit === 'time' ? last.value : (last.duration ? last.duration * 60 : null);
+        if (distKm && timeS) return `${distKm} km • ${calculatePace(timeS, distKm)} /km`;
+        if (distKm) return `${distKm} km`;
       }
       return formatValue(last.value, benchmark.unit);
     };
@@ -1347,7 +1480,7 @@ export default function TrainingJournalScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ChevronLeft size={28} color={isDark ? colors.textPrimary : '#FFFFFF'} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>Carnet d'Entrainement</Text>
+        <Text style={[styles.headerTitle, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>Carnet d'Entraînement</Text>
         <TouchableOpacity
           onPress={() => {
             if (isModalProcessing) return;
@@ -1510,7 +1643,38 @@ export default function TrainingJournalScreen() {
         })}
       </ScrollView>
 
-      <ScrollView style={[styles.content, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]} showsVerticalScrollIndicator={false}>
+      {/* Légende des icônes — visible uniquement sur l'onglet Records */}
+      {activeTab === 'records' && (
+        <View style={[styles.legendRow, { backgroundColor: isDark ? colors.background : '#FFFFFF', borderBottomColor: colors.border }]}>
+          <View style={styles.legendItem}>
+            <TrendingUp size={12} color="#10B981" strokeWidth={2.5} />
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>Progression</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <TrendingUp size={12} color="#EF4444" strokeWidth={2.5} style={{ transform: [{ scaleY: -1 }] }} />
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>Régression</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendPRBadge, { backgroundColor: '#EF4444' }]}>
+              <Text style={styles.legendPRText}>PR</Text>
+            </View>
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>Record perso</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>Swipe</Text>
+            <Trash2 size={11} color={colors.textMuted} />
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>suppr.</Text>
+          </View>
+        </View>
+      )}
+
+      <ScrollView
+        style={[styles.content, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
+        }
+      >
         {/* Stats Summary */}
         <View style={[styles.statsRow, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
           <View style={styles.statItem}>
@@ -1602,7 +1766,11 @@ export default function TrainingJournalScreen() {
                       )}
                       
                       <View style={styles.compactCardsList}>
-                        {groupedBenchmarks[categoryName][muscleGroup].map(renderCompactBenchmarkCard)}
+                        {groupedBenchmarks[categoryName][muscleGroup].map(b => (
+                          <SwipeableCard key={b.id} onDelete={() => handleDeleteBenchmark(b.id)}>
+                            {renderCompactBenchmarkCard(b)}
+                          </SwipeableCard>
+                        ))}
                       </View>
                     </View>
                   ))}
@@ -3317,6 +3485,34 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   compactPRText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  // Légende icônes
+  legendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingHorizontal: 16,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  legendText: {
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  legendPRBadge: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 3,
+  },
+  legendPRText: {
     color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '800',

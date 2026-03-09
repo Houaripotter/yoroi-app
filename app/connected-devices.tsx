@@ -38,6 +38,7 @@ import {
   Wifi,
   AlertTriangle,
   Search,
+  Download,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -76,13 +77,13 @@ const BRAND_CONFIGS: BrandConfig[] = [
     types: ['Poids', 'Graisse', 'Masse maigre', 'FC', 'Sommeil'],
     stepsIOS: [
       'Ouvre Health Mate sur ton iPhone',
-      'Va dans Profil > Sante > Apple Sante',
+      'Va dans Profil > Santé > Apple Santé',
       'Active toutes les categories',
       'Reviens ici et synchronise',
     ],
     stepsAndroid: [
       'Ouvre Health Mate sur ton telephone',
-      'Va dans Profil > Sante > Health Connect',
+      'Va dans Profil > Santé > Health Connect',
       'Active toutes les categories',
       'Reviens ici et synchronise',
     ],
@@ -93,17 +94,17 @@ const BRAND_CONFIGS: BrandConfig[] = [
     color: '#007DC5',
     emoji: 'G',
     types: ['Pas', 'FC', 'Sommeil', 'Calories', 'Distance', 'VO2 Max', 'HRV', 'SpO2'],
-    introIOS: "Garmin se connecte a YOROI via Apple Sante. Aucune connexion directe n'est possible.",
+    introIOS: "Garmin se connecte a YOROI via Apple Santé. Aucune connexion directe n'est possible.",
     introAndroid: 'Garmin se connecte a YOROI via Health Connect.',
     stepsIOS: [
       'Ouvre Garmin Connect sur ton iPhone',
-      'Va dans Profil > Sante > Apple Sante',
+      'Va dans Profil > Santé > Apple Santé',
       'Active toutes les categories',
       'Reviens dans YOROI et appuie sur Synchroniser',
     ],
     stepsAndroid: [
       'Ouvre Garmin Connect sur ton telephone',
-      'Va dans Profil > Sante > Health Connect',
+      'Va dans Profil > Santé > Health Connect',
       'Active toutes les categories',
       'Reviens dans YOROI et appuie sur Synchroniser',
     ],
@@ -116,14 +117,14 @@ const BRAND_CONFIGS: BrandConfig[] = [
     types: ['FC', 'HRV', 'Sommeil', 'Calories', 'Distance'],
     stepsIOS: [
       'Ouvre Polar Flow sur ton iPhone',
-      'Va dans Reglages > Apple Sante',
-      'Active le partage de toutes les donnees',
+      'Va dans Reglages > Apple Santé',
+      'Active le partage de toutes les données',
       'Reviens ici et synchronise',
     ],
     stepsAndroid: [
       'Ouvre Polar Flow sur ton telephone',
       'Va dans Reglages > Health Connect',
-      'Active le partage de toutes les donnees',
+      'Active le partage de toutes les données',
       'Reviens ici et synchronise',
     ],
   },
@@ -135,7 +136,7 @@ const BRAND_CONFIGS: BrandConfig[] = [
     types: ['FC', 'HRV', 'Sommeil', 'Strain', 'Recovery'],
     stepsIOS: [
       'Ouvre WHOOP sur ton iPhone',
-      'Va dans Reglages > Apps connectees > Apple Sante',
+      'Va dans Reglages > Apps connectees > Apple Santé',
       'Active toutes les categories',
       'Reviens ici et synchronise',
     ],
@@ -154,14 +155,14 @@ const BRAND_CONFIGS: BrandConfig[] = [
     types: ['FC', 'HRV', 'Sommeil', 'Pas', 'SpO2', 'Distance'],
     stepsIOS: [
       'Ouvre l\'app Fitbit sur ton iPhone',
-      'Va dans Compte > Activite et bien-etre > Apple Sante',
-      'Active toutes les categories de donnees',
+      'Va dans Compte > Activité et bien-etre > Apple Santé',
+      'Active toutes les categories de données',
       'Reviens ici et synchronise',
     ],
     stepsAndroid: [
       'Ouvre l\'app Fitbit sur ton telephone',
-      'Va dans Compte > Activite et bien-etre > Health Connect',
-      'Active toutes les categories de donnees',
+      'Va dans Compte > Activité et bien-etre > Health Connect',
+      'Active toutes les categories de données',
       'Reviens ici et synchronise',
     ],
   },
@@ -173,7 +174,7 @@ const BRAND_CONFIGS: BrandConfig[] = [
     types: ['Poids', 'Graisse', 'Masse maigre', 'BMR'],
     stepsIOS: [
       'Ouvre l\'app de ta balance (Xiaomi, Renpho, Eufy, Omron...)',
-      'Va dans Reglages > Apple Sante',
+      'Va dans Reglages > Apple Santé',
       'Active le partage du poids et de la composition',
       'Reviens ici et synchronise',
     ],
@@ -201,7 +202,7 @@ const SOURCE_DISPLAY: Record<string, { name: string; color: string; emoji: strin
   suunto: { name: 'Suunto', color: '#000000', emoji: 'Su' },
   oura: { name: 'Oura', color: '#D4AF37', emoji: 'Or' },
   iphone: { name: 'iPhone', color: '#666666', emoji: 'iP' },
-  apple_health: { name: 'Apple Sante', color: '#FF3B30', emoji: 'AS' },
+  apple_health: { name: 'Apple Santé', color: '#FF3B30', emoji: 'AS' },
   health_connect: { name: 'Health Connect', color: '#4285F4', emoji: 'HC' },
   manual: { name: 'Saisie manuelle', color: '#9CA3AF', emoji: 'M' },
 };
@@ -253,6 +254,8 @@ export default function ConnectedDevicesScreen() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState('');
   const [detectedSources, setDetectedSources] = useState<DetectedSource[]>([]);
   const [expandedBrand, setExpandedBrand] = useState<string | null>(null);
   const [showDataMatrix, setShowDataMatrix] = useState(false);
@@ -305,7 +308,7 @@ export default function ConnectedDevicesScreen() {
         showPopup(
           'Non disponible',
           Platform.OS === 'ios'
-            ? "L'app Sante n'est pas disponible sur cet appareil."
+            ? "L'app Santé n'est pas disponible sur cet appareil."
             : "Health Connect n'est pas disponible. Installe-le depuis le Play Store.",
           [{ text: "J'ai compris", style: 'primary' }]
         );
@@ -329,7 +332,7 @@ export default function ConnectedDevicesScreen() {
             showPopup(
               'Permissions refusees',
               Platform.OS === 'ios'
-                ? "Va dans Reglages > Sante > Partage de donnees > YOROI et active les permissions."
+                ? "Va dans Reglages > Santé > Partage de données > YOROI et active les permissions."
                 : "Autorise l'acces dans les parametres de l'app.",
               [
                 { text: 'Annuler', style: 'cancel' },
@@ -358,7 +361,7 @@ export default function ConnectedDevicesScreen() {
     impactAsync(ImpactFeedbackStyle.Medium);
     showPopup(
       'Deconnecter ?',
-      `Tes donnees ne seront plus synchronisees automatiquement.`,
+      `Tes données ne seront plus synchronisees automatiquement.`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -382,11 +385,36 @@ export default function ConnectedDevicesScreen() {
       setSyncStatus(healthConnect.getSyncStatus());
       // Reload detected sources
       loadData();
-      showPopup('Synchronise !', 'Tes donnees de sante ont ete mises a jour.', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Synchronise !', 'Tes données de santé ont ete mises a jour.', [{ text: 'OK', style: 'primary' }]);
     } catch (error) {
       logger.error('[ConnectedDevices] Sync error:', error);
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleImportHistory = async () => {
+    if (isImporting) return;
+    impactAsync(ImpactFeedbackStyle.Medium);
+    setIsImporting(true);
+    setImportProgress('Démarrage...');
+    try {
+      await AsyncStorage.removeItem('@yoroi_full_history_imported');
+      const result = await healthConnect.importFullHistory((step, current, total) => {
+        setImportProgress(`${step} (${current}/${total})`);
+      });
+      const total = result.weights + result.sleep + result.steps + result.workouts;
+      showPopup(
+        'Import terminé !',
+        `${result.workouts} séances · ${result.weights} pesées · ${result.sleep} nuits de sommeil · ${result.steps} jours de pas`,
+        [{ text: 'Super !', style: 'primary' }]
+      );
+    } catch (error) {
+      logger.error('[ConnectedDevices] Import history error:', error);
+      showPopup('Erreur', 'Impossible d\'importer l\'historique.', [{ text: 'OK', style: 'primary' }]);
+    } finally {
+      setIsImporting(false);
+      setImportProgress('');
     }
   };
 
@@ -477,7 +505,7 @@ export default function ConnectedDevicesScreen() {
               Appareils connectes
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              Recupere tes donnees automatiquement
+              Recupere tes données automatiquement
             </Text>
           </View>
         </View>
@@ -530,15 +558,34 @@ export default function ConnectedDevicesScreen() {
               </Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity
-              style={[styles.disconnectBtn, { borderColor: colors.border }]}
-              onPress={handleDisconnect}
-            >
-              <X size={14} color={colors.textMuted} />
-              <Text style={[styles.disconnectBtnText, { color: colors.textMuted }]}>
-                Deconnecter
-              </Text>
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity
+                style={[styles.importBtn, { borderColor: colors.accent }]}
+                onPress={handleImportHistory}
+                disabled={isImporting}
+              >
+                {isImporting ? (
+                  <>
+                    <ActivityIndicator size="small" color={colors.accent} />
+                    <Text style={[styles.importBtnText, { color: colors.accent }]}>{importProgress}</Text>
+                  </>
+                ) : (
+                  <>
+                    <Download size={14} color={colors.accent} />
+                    <Text style={[styles.importBtnText, { color: colors.accent }]}>Importer tout l'historique</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.disconnectBtn, { borderColor: colors.border }]}
+                onPress={handleDisconnect}
+              >
+                <X size={14} color={colors.textMuted} />
+                <Text style={[styles.disconnectBtnText, { color: colors.textMuted }]}>
+                  Deconnecter
+                </Text>
+              </TouchableOpacity>
+            </>
           )}
         </View>
 
@@ -594,7 +641,7 @@ export default function ConnectedDevicesScreen() {
         <View style={[styles.infoNote, { backgroundColor: `${colors.accent}10` }]}>
           <Wifi size={16} color={colors.accent} />
           <Text style={[styles.infoNoteText, { color: colors.accent }]}>
-            YOROI recupere les donnees via {providerName}. Configure ton appareil pour y partager ses donnees.
+            YOROI recupere les données via {providerName}. Configure ton appareil pour y partager ses données.
           </Text>
         </View>
 
@@ -697,7 +744,7 @@ export default function ConnectedDevicesScreen() {
                 {
                   label: diagResult.hasWeight && diagResult.weightValue
                     ? `Dernier poids : ${diagResult.weightValue.toFixed(1)} kg`
-                    : 'Donnees de poids recues',
+                    : 'Données de poids recues',
                   ok: diagResult.hasWeight,
                 },
               ].map((item, index) => (
@@ -729,16 +776,16 @@ export default function ConnectedDevicesScreen() {
                 {!diagResult.available
                   ? Platform.OS === 'android'
                     ? "Installe Health Connect depuis le Play Store, puis reviens ici."
-                    : "L'app Sante n'est pas disponible sur cet appareil."
+                    : "L'app Santé n'est pas disponible sur cet appareil."
                   : !diagResult.permissions
                     ? `Autorise YOROI a acceder a ${providerName} en appuyant sur "Connecter" ci-dessus.`
-                    : `Assure-toi que ton appareil est bien connecte a ${providerName} dans les reglages de l'app de ton appareil (Garmin Connect, Withings, Fitbit...). Les donnees peuvent prendre quelques minutes a se synchroniser.`}
+                    : `Assure-toi que ton appareil est bien connecte a ${providerName} dans les reglages de l'app de ton appareil (Garmin Connect, Withings, Fitbit...). Les données peuvent prendre quelques minutes a se synchroniser.`}
               </Text>
             </View>
           )}
         </View>
 
-        {/* ═══ SECTION 5: MATRICE DE DONNEES ═══ */}
+        {/* ═══ SECTION 5: MATRICE DE DONNÉES ═══ */}
         <TouchableOpacity
           style={[styles.matrixToggle, { backgroundColor: colors.backgroundCard }]}
           onPress={() => {
@@ -748,7 +795,7 @@ export default function ConnectedDevicesScreen() {
         >
           <Activity size={18} color={colors.accent} />
           <Text style={[styles.matrixToggleText, { color: colors.textPrimary }]}>
-            Matrice des donnees par appareil
+            Matrice des données par appareil
           </Text>
           {showDataMatrix ? (
             <ChevronUp size={18} color={colors.textMuted} />
@@ -810,7 +857,7 @@ export default function ConnectedDevicesScreen() {
         <View style={[styles.benefitsCard, { backgroundColor: colors.backgroundCard }]}>
           {[
             { icon: Zap, title: 'Automatique', desc: 'Plus besoin de tout entrer manuellement', iconColor: colors.accent },
-            { icon: Shield, title: 'Securise', desc: 'Tes donnees restent sur ton telephone', iconColor: colors.accent },
+            { icon: Shield, title: 'Securise', desc: 'Tes données restent sur ton telephone', iconColor: colors.accent },
             { icon: Smartphone, title: 'Compatible', desc: 'Fonctionne avec toutes les marques', iconColor: colors.accent },
           ].map((benefit, index) => {
             const Icon = benefit.icon;
@@ -954,6 +1001,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  importBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 12,
+  },
+  importBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   disconnectBtn: {
     flexDirection: 'row',

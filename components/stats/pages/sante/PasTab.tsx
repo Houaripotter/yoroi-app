@@ -103,7 +103,7 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
       <View style={[styles.emptyCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
         <Footprints size={40} color={colors.textMuted} strokeWidth={1.5} />
         <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-          Aucune donnee de pas disponible
+          Aucune donnée de pas disponible
         </Text>
       </View>
     );

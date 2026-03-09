@@ -18,9 +18,10 @@ import {
   NativeScrollEvent,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, ChevronRight, Trophy, Target, Swords, Crown, Shield } from 'lucide-react-native';
+import { Flame, ChevronRight, Trophy, Target, Crown, Shield, Zap } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getCurrentRank, getNextRank, getRankProgress, getDaysToNextRank, RANKS } from '@/lib/ranks';
+import { getDynamicTitle } from '@/lib/dynamicTitleService';
 import { useI18n } from '@/lib/I18nContext';
 import { useTheme } from '@/lib/ThemeContext';
 import { router } from 'expo-router';
@@ -30,7 +31,7 @@ const LEVEL_MAP: Record<string, number> = {
   ashigaru: 1, bushi: 2, samurai: 3, ronin: 4, shogun: 5,
 };
 
-const PAGES = 5;
+const PAGES = 4;
 const SCREEN_W = Dimensions.get('window').width;
 
 interface RankCitationCardProps {
@@ -48,17 +49,27 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, totalP
   // Utiliser la couleur du theme au lieu de la couleur hardcodee du rang
   const rank = useMemo(() => ({ ...rawRank, color: colors.accent }), [rawRank, colors.accent]);
   const rawNextRank = useMemo(() => getNextRank(totalPoints), [totalPoints]);
-  // Si le prochain rang a une couleur trop claire pour le mode light, utiliser textSecondary
+  // Toujours utiliser la couleur du theme pour le prochain rang (coherence visuelle)
   const nextRank = useMemo(() => {
     if (!rawNextRank) return null;
-    // Jaune (#FFD700) illisible sur fond blanc => utiliser accent du theme
-    const lightColors = ['#FFD700', '#FBBF24', '#FCD34D'];
-    const needsOverride = !isDark && lightColors.some(c => rawNextRank.color.toUpperCase().startsWith(c.toUpperCase()));
-    return { ...rawNextRank, color: needsOverride ? colors.accent : rawNextRank.color };
-  }, [rawNextRank, isDark, colors.accent]);
+    return { ...rawNextRank, color: colors.accent };
+  }, [rawNextRank, colors.accent]);
   const progress = useMemo(() => getRankProgress(totalPoints), [totalPoints]);
   const pointsToNext = useMemo(() => getDaysToNextRank(totalPoints), [totalPoints]);
   const level = LEVEL_MAP[rank.id] || 1;
+
+  // Titre dynamique calcule depuis streak + totalPoints (approxime les entraînements)
+  const approxTrainings = Math.floor(totalPoints / 20); // 20 XP par entraînement en moyenne
+  const dynamicTitle = useMemo(
+    () => getDynamicTitle(streak, approxTrainings, 0),
+    [streak, approxTrainings]
+  );
+
+  // Bonus weekend (samedi=6, dimanche=0)
+  const isWeekend = useMemo(() => {
+    const day = new Date().getDay();
+    return day === 0 || day === 6;
+  }, []);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -100,19 +111,9 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, totalP
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
 
-      {/* CITATION DU JOUR */}
-      {dailyQuote ? (
-        <View style={[styles.card, styles.quoteCard, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.quoteLabel, { color: colors.textMuted }]}>
-            {t('home.quoteOfTheDay') || 'CITATION DU JOUR'}
-          </Text>
-          <Text style={[styles.quoteText, { color: colors.textPrimary }]} numberOfLines={4}>
-            "{dailyQuote}"
-          </Text>
-        </View>
-      ) : null}
+      {/* CITATION DU JOUR - affichée uniquement via notification, pas dans l'UI */}
 
-      {/* CARTE RANG - 5 pages */}
+      {/* CARTE RANG - 4 pages */}
       <View style={[styles.card, styles.rankCard, { backgroundColor: colors.backgroundCard }]}>
         <ScrollView
           ref={scrollRef}
@@ -158,6 +159,21 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, totalP
                   </View>
                 </View>
 
+                {/* Titre dynamique + badge weekend */}
+                <View style={styles.titleRow}>
+                  <View style={[styles.dynamicTitleChip, { backgroundColor: `${rank.color}14` }]}>
+                    <Text style={[styles.dynamicTitleText, { color: rank.color }]}>
+                      {dynamicTitle.title}
+                    </Text>
+                  </View>
+                  {isWeekend && (
+                    <View style={styles.weekendBadge}>
+                      <Zap size={8} color="#F59E0B" fill="#F59E0B" />
+                      <Text style={styles.weekendBadgeText}>Week-end +50% XP</Text>
+                    </View>
+                  )}
+                </View>
+
                 <Text style={[styles.rankJp, { color: colors.textMuted }]}>{rank.nameJp}</Text>
 
                 <View style={styles.progressRow}>
@@ -175,15 +191,23 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, totalP
 
                 {nextRank ? (
                   <View style={styles.nextRow}>
-                    <View style={[styles.nextDot, { backgroundColor: nextRank.color }]} />
+                    <View style={[styles.nextDot, { backgroundColor: rank.color }]} />
                     <Text style={[styles.nextText, { color: colors.textMuted }]}>
-                      <Text style={{ fontWeight: '800', color: nextRank.color }}>{nextRank.name}</Text>
+                      <Text style={{ fontWeight: '800', color: rank.color }}>{nextRank.name}</Text>
                       {' '}{pointsToNext} XP restants
                     </Text>
                   </View>
                 ) : (
                   <Text style={[styles.nextText, { color: rank.color, fontWeight: '800' }]}>Rang maximum atteint</Text>
                 )}
+
+                {/* Description + récompense du rang actuel */}
+                {rank.description && (
+                  <Text style={[styles.rankDescription, { color: colors.textMuted, marginTop: 5 }]} numberOfLines={2}>
+                    {rank.description}
+                  </Text>
+                )}
+{/* reward chip supprime : info non factuelle */}
               </View>
 
               <ChevronRight size={16} color={colors.textMuted} />
@@ -309,35 +333,6 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, totalP
             </ScrollView>
           </View>
 
-          {/* ═══ PAGE 5: Description du rang (scrollable) ═══ */}
-          <View style={[styles.page, { width: pageWidth }]}>
-            <View style={styles.pageHeader}>
-              <Swords size={16} color={rank.color} />
-              <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Ton rang</Text>
-            </View>
-
-            <ScrollView
-              nestedScrollEnabled
-              showsVerticalScrollIndicator={false}
-              style={styles.innerScroll}
-            >
-              <TouchableOpacity onPress={navigateToGamification} activeOpacity={0.9}>
-                <View style={styles.centeredContent}>
-                  <Text style={[styles.bigRankName, { color: rank.color }]}>{rank.name}</Text>
-                  <Text style={[styles.rankJpSmall, { color: colors.textMuted }]}>{rank.nameJp}</Text>
-                  <Text style={[styles.rankDescription, { color: colors.textSecondary }]}>
-                    {rank.description}
-                  </Text>
-                  {rank.reward && (
-                    <View style={[styles.rewardChip, { backgroundColor: `${rank.color}12` }]}>
-                      <Trophy size={12} color={rank.color} />
-                      <Text style={[styles.rewardText, { color: rank.color }]}>{rank.reward}</Text>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
         </ScrollView>
 
         {/* Dots */}
@@ -385,7 +380,7 @@ const styles = StyleSheet.create({
   quoteText: { fontSize: 15.5, fontWeight: '500', fontStyle: 'italic', lineHeight: 23, letterSpacing: 0.2, textAlign: 'center' },
 
   // Pages - compact
-  page: { paddingHorizontal: 14, paddingTop: 10, paddingBottom: 2 },
+  page: { paddingHorizontal: 14, paddingTop: 10, paddingBottom: 16 },
   pageInner: { flex: 1 },
   pageHeader: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 10 },
   pageTitle: { fontSize: 13, fontWeight: '800' },
@@ -394,9 +389,9 @@ const styles = StyleSheet.create({
   rankRow: { flexDirection: 'row', alignItems: 'center' },
 
   // Avatar column - image en haut, "Niveau X" en dessous
-  avatarCol: { alignItems: 'center', marginRight: 12, marginTop: -10, marginBottom: 0 },
-  avatarImg: { width: 110, height: 110, resizeMode: 'contain' } as any,
-  avatarPlaceholder: { width: 110, height: 110, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F0F0F0', borderRadius: 55 },
+  avatarCol: { alignItems: 'center', marginRight: 12 },
+  avatarImg: { width: 90, height: 90, resizeMode: 'contain' } as any,
+  avatarPlaceholder: { width: 90, height: 90, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F0F0F0', borderRadius: 45 },
   levelBadge: {
     marginTop: 2,
     paddingHorizontal: 10, paddingVertical: 2, borderRadius: 8,
@@ -406,10 +401,15 @@ const styles = StyleSheet.create({
 
   // Info column
   infoCol: { flex: 1, alignItems: 'center' },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   rankName: { fontSize: 15, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.5 },
   streakChip: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8 },
   streakChipText: { fontSize: 11, fontWeight: '800', color: '#F97316' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 3, flexWrap: 'wrap' },
+  dynamicTitleChip: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  dynamicTitleText: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8 },
+  weekendBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: 'rgba(245,158,11,0.15)' },
+  weekendBadgeText: { fontSize: 9, fontWeight: '800', color: '#F59E0B', letterSpacing: 0.5 },
   rankJp: { fontSize: 11, fontWeight: '500', marginTop: 2 },
 
   // Progress
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 9, fontWeight: '600', marginTop: 2 },
 
   // Centered content (Page 3, 5)
-  centeredContent: { alignItems: 'center', gap: 3 },
+  centeredContent: { alignItems: 'center', gap: 5 },
   rankBadgeIcon: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 2 },
   bigRankName: { fontSize: 16, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 2 },
   rankJpSmall: { fontSize: 11, fontWeight: '500' },

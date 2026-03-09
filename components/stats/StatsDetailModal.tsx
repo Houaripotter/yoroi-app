@@ -388,7 +388,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
               </Text>
               {filteredData.length > 0 ? (
                 <ModernLineChart
-                  data={filteredData}
+                  data={[...filteredData].reverse()}
                   color={color}
                   height={260}
                   showGrid={true}

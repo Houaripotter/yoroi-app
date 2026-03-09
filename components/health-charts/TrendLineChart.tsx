@@ -28,7 +28,7 @@ export function TrendLineChart({ title, data, color, unit, colors, goal, onPress
         <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
         <View style={styles.emptyState}>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            Aucune donnee disponible
+            Aucune donnée disponible
           </Text>
         </View>
       </View>

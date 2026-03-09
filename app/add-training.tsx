@@ -85,11 +85,12 @@ const IS_SMALL_SCREEN = SCREEN_WIDTH < 375;
 const FONT_SIZE = TYPOGRAPHY.size;
 
 // ============================================
-// NOUVEL ENTRAINEMENT - VERSION SIMPLIFIEE
+// NOUVEL ENTRAÎNEMENT - VERSION SIMPLIFIEE
 // ============================================
 
 const LAST_SPORT_KEY = 'yoroi_last_sport';
 const LAST_DURATION_KEY = 'yoroi_last_duration';
+const FAVORITES_KEY = 'yoroi_favorite_sports';
 
 export default function AddTrainingScreen() {
   const insets = useSafeAreaInsets();
@@ -110,6 +111,8 @@ export default function AddTrainingScreen() {
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   // Afficher/cacher la section catégories quand sport déjà sélectionné
   const [showAddSportSection, setShowAddSportSection] = useState(false);
+  // Sports favoris (persistés)
+  const [favoriteSports, setFavoriteSports] = useState<string[]>([]);
 
   // Dernier sport utilisé (pour Quick Add)
   const [selectedSports, setSelectedSports] = useState<string[]>([]);
@@ -206,6 +209,13 @@ export default function AddTrainingScreen() {
   const [primarySportError, setPrimarySportError] = useState<boolean>(false);
   const sportSelectorRef = useRef<View>(null);
 
+  // Charger les favoris
+  useEffect(() => {
+    AsyncStorage.getItem(FAVORITES_KEY).then(saved => {
+      if (saved) setFavoriteSports(JSON.parse(saved));
+    }).catch(() => {});
+  }, []);
+
   // Charger les données utilisateur
   useEffect(() => {
     const loadUserData = async () => {
@@ -299,7 +309,7 @@ export default function AddTrainingScreen() {
         const totalCount = Math.min(totalUniqueDays.size + 1, daysElapsed);
 
         let sportCount = 0;
-        let objective = 150; 
+        let objective = 3 * 52; // défaut 3x/semaine
 
         if (selectedClub) {
           const clubTrainings = allTrainings.filter((t: any) => {
@@ -308,7 +318,7 @@ export default function AddTrainingScreen() {
           });
           const sportUniqueDays = new Set(clubTrainings.map((t: any) => new Date(t.date).toISOString().split('T')[0]));
           sportCount = Math.min(sportUniqueDays.size + 1, daysElapsed);
-          objective = selectedClub.sessions_per_week ? selectedClub.sessions_per_week * 52 : 150;
+          objective = (selectedClub.sessions_per_week || 3) * 52;
         } else if (selectedSports.length > 0) {
           // Si un sport principal est défini (multi-sports), filtrer uniquement sur celui-ci
           const targetSports = primarySportForObjective ? [primarySportForObjective] : selectedSports;
@@ -359,7 +369,7 @@ export default function AddTrainingScreen() {
     }
   }, [params?.date]);
 
-  // Charger la seance existante en mode edition
+  // Charger la séance existante en mode edition
   useEffect(() => {
     if (!params?.editId) return;
     const loadEditData = async () => {
@@ -408,7 +418,7 @@ export default function AddTrainingScreen() {
           if (club) setSelectedClub(club);
         }
       } catch (error) {
-        logger.error('Erreur chargement seance edit:', error);
+        logger.error('Erreur chargement séance edit:', error);
       }
     };
     loadEditData();
@@ -626,6 +636,16 @@ export default function AddTrainingScreen() {
     });
   };
 
+  // Toggle favori (long press sur un sport)
+  const toggleFavorite = async (sportId: string) => {
+    const newFavs = favoriteSports.includes(sportId)
+      ? favoriteSports.filter(s => s !== sportId)
+      : [...favoriteSports, sportId];
+    setFavoriteSports(newFavs);
+    await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(newFavs)).catch(() => {});
+    lightHaptic();
+  };
+
   // Toggle une option pour un sport
   const toggleOption = (sportId: string, optionId: string) => {
     setSelectedOptions(prev => {
@@ -662,7 +682,8 @@ export default function AddTrainingScreen() {
       setTimeout(() => {
         try {
           node.measure?.((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-            if (pageY !== undefined) {
+            // Ignorer si pageY invalide (mesure ratée → évite le scroll vers y:0)
+            if (pageY !== undefined && height > 0 && pageY > 80) {
               const targetY = Math.max(0, pageY - 150);
               scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
             }
@@ -1221,7 +1242,7 @@ export default function AddTrainingScreen() {
           if (r.partner) roundLine += ` vs ${r.partner}`;
           if (r.result) roundLine += ` - ${r.result === 'win' ? 'V' : r.result === 'loss' ? 'D' : 'Nul'}`;
           if (r.method) roundLine += ` (${r.method})`;
-          if (r.submissionsGiven) roundLine += ` | ${r.submissionsGiven} sub. donnee${r.submissionsGiven > 1 ? 's' : ''}`;
+          if (r.submissionsGiven) roundLine += ` | ${r.submissionsGiven} sub. donnée${r.submissionsGiven > 1 ? 's' : ''}`;
           if (r.submissionsTaken) roundLine += ` | ${r.submissionsTaken} sub. subie${r.submissionsTaken > 1 ? 's' : ''}`;
           fullNotes += roundLine + '\n';
           if (r.notes) fullNotes += `    ${r.notes}\n`;
@@ -1334,13 +1355,32 @@ export default function AddTrainingScreen() {
       // Notifier la home pour refresh instantane des points/quetes
       DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
 
+      // Verifier si des défis sont nouvellement completes (en arriere-plan)
+      import('@/lib/challengesService').then(async ({ syncAndGetNewlyCompleted }) => {
+        try {
+          const newChallenges = await syncAndGetNewlyCompleted();
+          if (newChallenges.length > 0) {
+            const names = newChallenges.map(c => `"${c.title}" (+${c.xp} XP)`).join('\n');
+            setTimeout(() => {
+              showPopup(
+                'Bravo, défi valide !',
+                `Ta séance a valide :\n${names}\n\nVa dans "Défis" pour reclamer tes XP !`,
+                [{ text: 'Super !', style: 'primary' }]
+              );
+            }, 3000); // Apres le son + modal de validation
+          }
+        } catch { /* non bloquant */ }
+      }).catch(() => {});
+
       // AFFICHER LE MODAL DE VALIDATION (Étape 2) - avant les checks non-critiques
       setCardBackgroundImage(null);
       setShowValidationModal(true);
 
-      // Trigger review et badges en arrière-plan (non bloquant)
+      // Trigger review en arrière-plan (non bloquant)
       incrementReviewTrigger().catch(() => {});
-      checkBadges().catch(() => {});
+      // Badges : délai de 5s pour laisser le son Pokémon se terminer
+      // et éviter que la célébration badge apparaisse pendant la navigation
+      setTimeout(() => { checkBadges().catch(() => {}); }, 5000);
 
       // Detection de pattern : suggerer un creneau regulier si pattern detecte
       if (!isEditMode && !params?.slotId) {
@@ -1367,6 +1407,7 @@ export default function AddTrainingScreen() {
                         duration_minutes: s.avgDuration,
                         club_id: s.clubId,
                       });
+                      setTimeout(() => router.push('/(tabs)/planning' as any), 300);
                     },
                   },
                 ]
@@ -1379,7 +1420,7 @@ export default function AddTrainingScreen() {
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
       errorHaptic();
-      showPopup('Erreur', "Impossible d'enregistrer l'entrainement");
+      showPopup('Erreur', "Impossible d'enregistrer l'entraînement");
     } finally {
       setIsSubmitting(false);
     }
@@ -1678,7 +1719,60 @@ export default function AddTrainingScreen() {
             );
           }
 
-          return filteredCategories.map((category) => {
+          // Section FAVORIS (avant les catégories, seulement si pas de recherche)
+          const favoriteSportObjects = SPORTS.filter(s => favoriteSports.includes(s.id));
+          const showFavorites = favoriteSportObjects.length > 0 && searchQuery.length === 0;
+
+          return (
+            <>
+              {showFavorites && (
+                <View style={styles.categorySection}>
+                  <View style={[styles.categoryHeader, { backgroundColor: colors.card, borderColor: colors.gold + '60' }]}>
+                    <View style={styles.categoryHeaderLeft}>
+                      <View style={[styles.categoryIconBadge, { backgroundColor: colors.gold + '20' }]}>
+                        <MaterialCommunityIcons name="star" size={20} color={colors.gold} />
+                      </View>
+                      <Text style={[styles.categoryLabel, { color: colors.gold }]}>Favoris</Text>
+                    </View>
+                    <Text style={[styles.categorySportCount, { color: colors.textMuted }]}>{favoriteSportObjects.length}</Text>
+                  </View>
+                  <View style={styles.sportsGrid}>
+                    {favoriteSportObjects.map((sport) => {
+                      const isSelected = selectedSports.includes(sport.id);
+                      return (
+                        <TouchableOpacity
+                          key={`fav-${sport.id}`}
+                          style={[
+                            styles.sportGridItem,
+                            { backgroundColor: colors.card, borderColor: colors.gold + '40' },
+                            isSelected && { borderColor: colors.gold, backgroundColor: colors.goldMuted },
+                          ]}
+                          onPress={() => toggleSport(sport.id)}
+                          onLongPress={() => toggleFavorite(sport.id)}
+                          delayLongPress={400}
+                        >
+                          <View style={[styles.sportGridIcon, { backgroundColor: sport.color + '20' }]}>
+                            <MaterialCommunityIcons name={sport.icon as any} size={28} color={isSelected ? colors.gold : sport.color} />
+                          </View>
+                          <Text style={[styles.sportGridName, { color: colors.textPrimary }, isSelected && { color: colors.gold, fontWeight: '700' }]} numberOfLines={1}>
+                            {sport.name}
+                          </Text>
+                          <View style={{ position: 'absolute', top: 4, right: 4 }}>
+                            <MaterialCommunityIcons name="star" size={12} color={colors.gold} />
+                          </View>
+                          {isSelected && (
+                            <View style={[styles.sportGridCheck, { backgroundColor: colors.gold }]}>
+                              <Check size={12} color={colors.textOnGold} strokeWidth={3} />
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {filteredCategories.map((category) => {
             let sportsInCategory = SPORTS.filter(s => s.category === category);
             if (searchQuery.length > 0) {
               sportsInCategory = sportsInCategory.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -1735,6 +1829,7 @@ export default function AddTrainingScreen() {
                     {sportsInCategory.map((sport) => {
                       const isSelected = selectedSports.includes(sport.id);
 
+                      const isFavorite = favoriteSports.includes(sport.id);
                       return (
                         <TouchableOpacity
                           key={sport.id}
@@ -1747,6 +1842,8 @@ export default function AddTrainingScreen() {
                             },
                           ]}
                           onPress={() => toggleSport(sport.id)}
+                          onLongPress={() => toggleFavorite(sport.id)}
+                          delayLongPress={400}
                         >
                           <View style={[styles.sportGridIcon, { backgroundColor: sport.color + '20' }]}>
                             <MaterialCommunityIcons
@@ -1765,6 +1862,11 @@ export default function AddTrainingScreen() {
                           >
                             {sport.name}
                           </Text>
+                          {isFavorite && (
+                            <View style={{ position: 'absolute', top: 4, right: 4 }}>
+                              <MaterialCommunityIcons name="star" size={12} color={colors.gold} />
+                            </View>
+                          )}
                           {isSelected && (
                             <View style={[styles.sportGridCheck, { backgroundColor: colors.gold }]}>
                               <Check size={12} color={colors.textOnGold} strokeWidth={3} />
@@ -1777,7 +1879,9 @@ export default function AddTrainingScreen() {
                 )}
               </View>
             );
-          });
+          })}
+            </>
+          );
         })()}
 
         {/* ═══════════════════════════════════════════ */}
@@ -1891,7 +1995,7 @@ export default function AddTrainingScreen() {
 
                                     {/* CAPTURE GPS */}
                                     <View style={{ marginBottom: 16 }}>
-                                      <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMuted, marginBottom: 8 }}>Lieu d'entrainement</Text>
+                                      <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMuted, marginBottom: 8 }}>Lieu d'entraînement</Text>
                                       {locationLat && locationLon ? (
                                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12, backgroundColor: colors.accent + '15', borderWidth: 1.5, borderColor: colors.accent }}>
                                           <MapPin size={20} color={colors.accent} />
@@ -2073,7 +2177,7 @@ export default function AddTrainingScreen() {
         {selectedSports.length > 0 && (
           <>
             <Text style={[styles.sectionTitle, { color: screenText, marginTop: SPACING.lg, fontWeight: '700' }]}>
-              3. Configure ta seance
+              3. Configure ta séance
             </Text>
             <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
 
@@ -2377,7 +2481,7 @@ export default function AddTrainingScreen() {
               <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
                       <View style={styles.sportOptionsHeader}>
                         <Edit3 size={20} color={colors.gold} />
-                        <Text style={[styles.sportOptionsTitle, { color: colors.textPrimary }]}>Personnalise ta seance</Text>
+                        <Text style={[styles.sportOptionsTitle, { color: colors.textPrimary }]}>Personnalise ta séance</Text>
                       </View>
                       <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 12 }}>Ajoute un exercice ou un detail specifique a la main :</Text>
                       <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -2713,7 +2817,7 @@ export default function AddTrainingScreen() {
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 4, fontWeight: '700' }}>DUREE/ROUND (MIN)</Text>
+                  <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 4, fontWeight: '700' }}>DURÉE/ROUND (MIN)</Text>
                   <TextInput
                     style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 10, borderRadius: 10, color: colors.textPrimary, fontWeight: '800', fontSize: 18, textAlign: 'center', borderWidth: 1, borderColor: colors.border }}
                     value={roundDuration}
@@ -2822,7 +2926,7 @@ export default function AddTrainingScreen() {
                     {/* Submissions given/taken counters */}
                     <View style={{ flexDirection: 'row', gap: 12 }}>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 10, color: '#10B981', marginBottom: 3, fontWeight: '600' }}>SOUMISSIONS DONNEES</Text>
+                        <Text style={{ fontSize: 10, color: '#10B981', marginBottom: 3, fontWeight: '600' }}>SOUMISSIONS DONNÉES</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
                           <TouchableOpacity onPress={() => setCombatRounds(prev => prev.map((r, i) => i === idx ? { ...r, submissionsGiven: Math.max(0, (r.submissionsGiven || 0) - 1) } : r))} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', justifyContent: 'center', alignItems: 'center' }}>
                             <Minus size={14} color={colors.textMuted} />
@@ -2859,7 +2963,7 @@ export default function AddTrainingScreen() {
                   </View>
                 ))}
 
-                {/* Resume combat */}
+                {/* Résumé combat */}
                 {combatRounds.some(r => r.result) && (
                   <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, paddingTop: 8, paddingBottom: 4 }}>
                     <View style={{ alignItems: 'center' }}>
@@ -2876,7 +2980,7 @@ export default function AddTrainingScreen() {
                     </View>
                     <View style={{ alignItems: 'center' }}>
                       <Text style={{ fontSize: 20, fontWeight: '900', color: colors.textPrimary }}>{combatRounds.reduce((acc, r) => acc + (r.submissionsGiven || 0), 0)}</Text>
-                      <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted }}>Sub. donnees</Text>
+                      <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted }}>Sub. données</Text>
                     </View>
                   </View>
                 )}
@@ -3178,7 +3282,9 @@ export default function AddTrainingScreen() {
                                       animationType="fade"
                                     >
                                       <View style={{ flex: 1, backgroundColor: '#F2F2F7', paddingTop: insets.top }}>
-                                        <ConfettiCannon count={200} origin={{x: -10, y: 0}} />
+                                        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} pointerEvents="none">
+                                          <ConfettiCannon count={200} origin={{x: -10, y: 0}} />
+                                        </View>
 
                                         {/* Header Étape 2 - MODE CLAIR */}
                                         <View style={{ marginBottom: 10 }}>
@@ -3192,18 +3298,22 @@ export default function AddTrainingScreen() {
                                 </TouchableOpacity>
 
                                 <View style={{ alignItems: 'center' }}>
-                                  <Text style={{ fontSize: 13, fontWeight: '900', color: colors.gold, letterSpacing: 2, marginBottom: 8 }}>ÉTAPE 2 SUR 4</Text>
+                                  <Text style={{ fontSize: 13, fontWeight: '900', color: colors.gold, letterSpacing: 2, marginBottom: 8 }}>
+                                    {`ÉTAPE ${validationStep} SUR 4`}
+                                  </Text>
                                   <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
                                     {/* Etape 1 (Passée - Gold) */}
                                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
                                     <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
 
-                                    {/* Etape 2 (Actuelle - Big Gold) */}
-                                    <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.5, shadowRadius: 5 }} />
+                                    {/* Etape 2 */}
+                                    <View style={{ width: validationStep === 2 ? 14 : 10, height: validationStep === 2 ? 14 : 10, borderRadius: 7, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: validationStep === 2 ? 0.5 : 0, shadowRadius: 5 }} />
 
-                                    {/* Futur (Noir & Blanc Cassé) */}
-                                    <View style={{ width: 30, height: 2, backgroundColor: colors.border }} />
-                                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.borderLight }} />
+                                    {/* Etape 3 */}
+                                    <View style={{ width: 30, height: 2, backgroundColor: validationStep >= 3 ? colors.gold : colors.border }} />
+                                    <View style={{ width: validationStep === 3 ? 14 : 10, height: validationStep === 3 ? 14 : 10, borderRadius: 7, backgroundColor: validationStep >= 3 ? colors.gold : colors.borderLight, shadowColor: colors.gold, shadowOpacity: validationStep === 3 ? 0.5 : 0, shadowRadius: 5 }} />
+
+                                    {/* Etape 4 (Futur) */}
                                     <View style={{ width: 30, height: 2, backgroundColor: colors.border }} />
                                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.borderLight }} />
                                   </View>
@@ -3213,7 +3323,7 @@ export default function AddTrainingScreen() {
                             </View>
 
 
-                            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingBottom: 40, paddingHorizontal: 20 }}>
+                            <ScrollView showsVerticalScrollIndicator={false} nestedScrollEnabled={true} contentContainerStyle={{ alignItems: 'center', paddingBottom: 40, paddingHorizontal: 20 }}>
                               {validationStep === 2 && (
                                 <>
                               <View style={{ width: 360, borderRadius: 24, overflow: 'hidden', shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 20, elevation: 15, marginBottom: 30 }}>
@@ -3427,11 +3537,13 @@ export default function AddTrainingScreen() {
                                   }}
                                   onPress={() => {
                                     setShowValidationModal(false);
-                                    if (lastSavedTrainingId) {
-                                      router.push(`/social-share/last-session?id=${lastSavedTrainingId}`);
-                                    } else {
-                                      router.push('/social-share/last-session');
-                                    }
+                                    setTimeout(() => {
+                                      if (lastSavedTrainingId) {
+                                        router.push(`/social-share/last-session?id=${lastSavedTrainingId}`);
+                                      } else {
+                                        router.push('/social-share/last-session');
+                                      }
+                                    }, 400);
                                   }}
                                 >
                                   <Share2 size={24} color="#000" strokeWidth={2.5} />
@@ -3498,9 +3610,14 @@ export default function AddTrainingScreen() {
                                     shadowRadius: 15,
                                     elevation: 8
                                   }}
-                                  onPress={async () => {
+                                  onPress={() => {
                                     setShowPhotoChoiceModal(false);
-                                    await pickImageFromGallery();
+                                    setShowValidationModal(false);
+                                    setTimeout(async () => {
+                                      await pickImageFromGallery();
+                                      setValidationStep(3);
+                                      setShowValidationModal(true);
+                                    }, 500);
                                   }}
                                 >
                                   <MaterialCommunityIcons name="image-multiple" size={28} color={colors.textOnAccent} />
@@ -3521,9 +3638,14 @@ export default function AddTrainingScreen() {
                                     shadowRadius: 15,
                                     elevation: 8
                                   }}
-                                  onPress={async () => {
+                                  onPress={() => {
                                     setShowPhotoChoiceModal(false);
-                                    await takePhoto();
+                                    setShowValidationModal(false);
+                                    setTimeout(async () => {
+                                      await takePhoto();
+                                      setValidationStep(3);
+                                      setShowValidationModal(true);
+                                    }, 500);
                                   }}
                                 >
                                   <Camera size={28} color="#000" strokeWidth={2.5} />

@@ -9,7 +9,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Training } from '@/lib/database';
 import { getClubLogoSource, getSportName } from '@/lib/sports';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
@@ -60,6 +59,7 @@ interface SessionCardProps {
     color?: string,
     weight?: string,
     reps?: string,
+    sets?: string,
     distance?: string,
     duration?: string,
     speed?: string,
@@ -106,9 +106,6 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
     const subTxt = isWhite ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
     const borderColor = isWhite ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
 
-    const avatarSource = typeof userAvatar === 'string' ? { uri: userAvatar } : userAvatar;
-    const profileSource = profilePhoto ? { uri: profilePhoto } : null;
-
     // Helper Allure
     const getPace = (speedStr?: string) => {
       const s = parseFloat((speedStr || '0').replace(',', '.'));
@@ -127,25 +124,6 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
     const dateTopContainerStyle = useMemo(() => ({ position: 'absolute' as const, top: 8, left: 0, right: 0, alignItems: 'center' as const, zIndex: 10 }), []);
     const dateBackdropStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 }), []);
     const dateColorStyle = useMemo(() => ({ color: GOLD_COLOR }), []);
-    // SYMMETRIC ALIGNMENT: Both containers have same fixed width (80px fits "ASHIGARU" + padding)
-    // Content is centered inside each container
-    const SIDE_CONTAINER_WIDTH = 80;
-    const profileLeftContainerStyle = useMemo(() => ({
-      width: SIDE_CONTAINER_WIDTH,
-      alignItems: 'center' as const,
-      gap: 4
-    }), []);
-    const usernameBackdropStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, maxWidth: 75 }), []);
-    const usernameTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 9, fontWeight: '900' as const, textAlign: 'center' as const }), []);
-    const usernameShadowStyle = useMemo(() => ({
-      color: GOLD_COLOR, fontSize: 9, fontWeight: '900' as const,
-      textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2,
-      textAlign: 'center' as const, maxWidth: 75
-    }), []);
-    const avatarRightContainerStyle = useMemo(() => ({ width: SIDE_CONTAINER_WIDTH }), []);
-    const rankBackdropStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4, maxWidth: 100 }), []);
-    const rankTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const, textAlign: 'center' as const }), []);
-    const rankLevelTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const, textAlign: 'center' as const, marginTop: 1 }), []);
     const objectifRowStyle = useMemo(() => ({ flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6 }), []);
     const objectifParenthesesStyle = useMemo(() => ({ color: subTxt }), [subTxt]);
     const progressSlashStyle = useMemo(() => ({ color: txt, fontSize: 18, fontWeight: '800' as const }), [txt]);
@@ -170,6 +148,18 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
     const yearDaysNumberStyle = useMemo(() => ({ fontSize: 14 }), []);
     const detailsDividerGoldStyle = useMemo(() => ({ backgroundColor: GOLD_COLOR }), []);
     const scrollMaxHeightStyle = useMemo(() => ({ maxHeight: options && options.length > 7 ? 140 : undefined }), [options]);
+
+    // Calcul du volume total (tonnage) pour la muscu
+    const totalTonnage = useMemo(() => {
+      if (!options || options.length === 0) return 0;
+      return options.reduce((sum, opt) => {
+        const w = parseFloat((opt.weight || '0').replace(',', '.'));
+        const r = parseInt(opt.reps || '0');
+        const s = parseInt(opt.sets || '1');
+        if (w > 0 && r > 0) return sum + w * r * s;
+        return sum;
+      }, 0);
+    }, [options]);
     const sportSeparatorMarginStyle = (i: number) => ({ marginTop: i > 0 ? 8 : 0, marginBottom: 6 });
     const sportSeparatorTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const, letterSpacing: 0.5 }), []);
     const exerciseRowBorderStyle = useMemo(() => ({ borderBottomColor: borderColor }), [borderColor]);
@@ -197,6 +187,10 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
         </View>
       );
     };
+
+    // Quand disableInternalScroll=true, on utilise View au lieu de ScrollView
+    // pour éviter que le ScrollView interne bloque le scroll du parent sur iOS
+    const ExercisesWrapper = (disableInternalScroll ? View : ScrollView) as typeof ScrollView;
 
     return (
       <View ref={ref} style={[styles.card, cardStyle]} collapsable={false}>
@@ -226,55 +220,6 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
               )}
             </View>
 
-            <View style={styles.photoHeader}>
-
-              {/* PHOTO PROFIL (GAUCHE) + NOM */}
-              <View style={profileLeftContainerStyle}>
-                <View style={styles.profileContainer}>
-                  {profileSource ? (
-                    <Image source={profileSource} style={styles.photoImage} resizeMode="cover" />
-                  ) : (
-                    <View style={styles.profilePlaceholder}>
-                      <MaterialCommunityIcons name="account" size={28} color="#000" />
-                    </View>
-                  )}
-                </View>
-                {userName && (
-                  keepPhotoClear ? (
-                    <View style={usernameBackdropStyle}>
-                      <Text style={usernameTextStyle} numberOfLines={2}>
-                        {userName.toUpperCase()}
-                      </Text>
-                    </View>
-                  ) : (
-                    <Text style={usernameShadowStyle} numberOfLines={2}>
-                      {userName.toUpperCase()}
-                    </Text>
-                  )
-                )}
-              </View>
-
-              {/* AVATAR YOROI (DROITE) + RANG + NIVEAU */}
-              <View style={[styles.avatarContainer, avatarRightContainerStyle]}>
-                {userAvatar && (
-                  <View style={styles.avatarCircle}>
-                    <Image source={avatarSource} style={styles.photoImage} resizeMode="contain" />
-                  </View>
-                )}
-                {rank && userLevel !== undefined && userLevel !== null ? (
-                  <View style={rankBackdropStyle}>
-                    <Text style={rankTextStyle} numberOfLines={1}>{rank.toUpperCase()}</Text>
-                    <Text style={rankLevelTextStyle} numberOfLines={1}>
-                      Niveau {userLevel}
-                    </Text>
-                  </View>
-                ) : rank ? (
-                  <View style={rankBackdropStyle}>
-                    <Text style={rankTextStyle} numberOfLines={1}>{rank.toUpperCase()}</Text>
-                  </View>
-                ) : null}
-              </View>
-            </View>
           </LinearGradient>
 
           {/* INFOS BAS DE PHOTO */}
@@ -287,6 +232,11 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
               )}
               <Text style={styles.clubName}>{training.club_name?.toUpperCase() || 'SÉANCE INDIVIDUELLE'}</Text>
             </View>
+            {training.location_name ? (
+              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, fontWeight: '700', letterSpacing: 1, marginTop: 1 }}>
+                {training.location_name.toUpperCase()}
+              </Text>
+            ) : null}
             <Text style={styles.sportName}>{sportNameStr.toUpperCase()}</Text>
           </View>
         </View>
@@ -301,7 +251,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
                 <View style={styles.progressLeft}>
                   <View style={objectifRowStyle}>
                     <Text style={styles.chronoLabel}>OBJECTIF ANNUEL</Text>
-                    <Text style={[styles.chronoLabel, objectifParenthesesStyle]}>(ENTRAINEMENT)</Text>
+                    <Text style={[styles.chronoLabel, objectifParenthesesStyle]}>(ENTRAÎNEMENT)</Text>
                   </View>
                   <View style={styles.progressNumbers}>
                     <Text style={styles.goldLargeNumber}>{yearlyCount}</Text>
@@ -345,14 +295,22 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
             <View style={styles.detailsHeader}>
               <View style={[styles.detailsDivider, detailsDividerGoldStyle]} />
               <Text style={styles.detailsLabel}>DÉTAILS DE LA SÉANCE</Text>
+              {totalTonnage > 0 && (
+                <View style={{ backgroundColor: GOLD_COLOR, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginLeft: 4 }}>
+                  <Text style={{ color: '#000', fontSize: 7, fontWeight: '900' }}>
+                    {totalTonnage >= 1000
+                      ? `${(totalTonnage / 1000).toFixed(1).replace('.', ',')}T`
+                      : `${Math.round(totalTonnage)}KG`} VOL.
+                  </Text>
+                </View>
+              )}
               <View style={[styles.detailsDivider, detailsDividerGoldStyle]} />
             </View>
 
-            <ScrollView
+            <ExercisesWrapper
               style={scrollMaxHeightStyle}
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled={true}
-              scrollEnabled={!disableInternalScroll}
             >
               <View style={styles.exercisesList}>
                 {options && options.length > 0 ? (
@@ -373,33 +331,42 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
                         )}
                         <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
                           <Text style={[styles.exerciseLabel, exerciseLabelStyle]} numberOfLines={1}>{opt.label.toUpperCase()}</Text>
-                        <View style={styles.exerciseStats}>
-                          {opt.weight && renderStyledStat(opt.weight, 'KG')}
-                          {opt.reps && (
-                            <View style={styles.statValue}>
-                              <Text style={[styles.statSeparator, statSeparatorStyle]}> × </Text>
-                              <Text style={styles.statReps}>{opt.reps}</Text>
-                            </View>
-                          )}
-                          {opt.distance && renderStyledStat(opt.distance, 'KM')}
-                          {opt.speed && renderStyledStat(opt.speed, 'KM/H')}
-                          {pace && <Text style={[styles.paceText, paceTextStyle]}>({pace} min/km)</Text>}
-                          {opt.pente && renderStyledStat(opt.pente, '%')}
-                          {opt.stairs && renderStyledStat(opt.stairs, 'FLOORS')}
-                          {opt.calories && renderStyledStat(opt.calories, 'KCAL')}
+                          <View style={styles.exerciseStats}>
+                            {opt.weight && renderStyledStat(opt.weight, 'KG')}
+                            {opt.reps && (
+                              <View style={styles.statValue}>
+                                <Text style={[styles.statSeparator, statSeparatorStyle]}> × </Text>
+                                <Text style={styles.statReps}>{opt.reps}</Text>
+                              </View>
+                            )}
+                            {opt.sets && parseInt(opt.sets) > 1 && (
+                              <View style={styles.statValue}>
+                                <Text style={[styles.statSeparator, statSeparatorStyle]}> × </Text>
+                                <Text style={[styles.paceText, paceTextStyle]}>{opt.sets}s</Text>
+                              </View>
+                            )}
+                            {opt.distance && renderStyledStat(opt.distance, 'KM')}
+                            {opt.duration && renderStyledStat(opt.duration, 'MIN')}
+                            {opt.watts && renderStyledStat(opt.watts, 'W')}
+                            {opt.resistance && renderStyledStat(opt.resistance, 'NV')}
+                            {opt.speed && renderStyledStat(opt.speed, 'KM/H')}
+                            {pace && <Text style={[styles.paceText, paceTextStyle]}>({pace}/km)</Text>}
+                            {opt.pente && renderStyledStat(opt.pente, '%')}
+                            {opt.stairs && renderStyledStat(opt.stairs, 'ÉT.')}
+                            {opt.calories && renderStyledStat(opt.calories, 'KCAL')}
+                          </View>
                         </View>
-                      </View>
                       </React.Fragment>
                     );
                   })
                 ) : (
                   <View>
-                    {/* Metriques globales de la seance style Strava */}
-                    {((training.duration_minutes || 0) > 0 || (training.distance || 0) > 0 || (training.heart_rate || 0) > 0 || (training.calories || 0) > 0) ? (
+                    {/* Metriques globales de la séance style Strava */}
+                    {((training.duration_minutes || 0) > 0 || (training.distance || 0) > 0 || (training.heart_rate || 0) > 0 || (training.calories || 0) > 0 || (training.watts || 0) > 0 || (training.speed || 0) > 0 || (training.cadence || 0) > 0 || (training.resistance || 0) > 0 || (training.pente || 0) > 0 || (training.rounds || 0) > 0 || (training.intensity || 0) > 0 || (training.max_heart_rate || 0) > 0) ? (
                       <View style={styles.globalMetricsGrid}>
                         {(training.duration_minutes || 0) > 0 && (
                           <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>DUREE</Text>
+                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>DURÉE</Text>
                             <View style={styles.exerciseStats}>
                               {renderStyledStat(
                                 Math.floor((training.duration_minutes || 0) / 60) > 0
@@ -431,11 +398,86 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
                             </View>
                           );
                         })()}
+                        {(training.speed || 0) > 0 && !((training.distance || 0) > 0 && (training.duration_minutes || 0) > 0) && (() => {
+                          const pace = getPace((training.speed || 0).toString());
+                          return pace ? (
+                            <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                              <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>ALLURE MOY.</Text>
+                              <View style={styles.exerciseStats}>
+                                {renderStyledStat(pace, '/KM')}
+                              </View>
+                            </View>
+                          ) : null;
+                        })()}
+                        {(training.speed || 0) > 0 && (
+                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>VITESSE MOY.</Text>
+                            <View style={styles.exerciseStats}>
+                              {renderStyledStat((training.speed || 0).toFixed(1), 'KM/H')}
+                            </View>
+                          </View>
+                        )}
+                        {(training.watts || 0) > 0 && (
+                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>PUISSANCE</Text>
+                            <View style={styles.exerciseStats}>
+                              {renderStyledStat(Math.round(training.watts || 0), 'W')}
+                            </View>
+                          </View>
+                        )}
+                        {(training.cadence || 0) > 0 && (
+                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>CADENCE</Text>
+                            <View style={styles.exerciseStats}>
+                              {renderStyledStat(Math.round(training.cadence || 0), 'RPM')}
+                            </View>
+                          </View>
+                        )}
+                        {(training.resistance || 0) > 0 && (
+                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>RÉSISTANCE</Text>
+                            <View style={styles.exerciseStats}>
+                              {renderStyledStat(training.resistance || 0, 'NV')}
+                            </View>
+                          </View>
+                        )}
+                        {(training.pente || 0) > 0 && (
+                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>PENTE</Text>
+                            <View style={styles.exerciseStats}>
+                              {renderStyledStat((training.pente || 0).toFixed(1), '%')}
+                            </View>
+                          </View>
+                        )}
+                        {(training.rounds || 0) > 0 && (
+                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>ROUNDS</Text>
+                            <View style={styles.exerciseStats}>
+                              {renderStyledStat(training.rounds || 0, training.round_duration ? `× ${training.round_duration}MIN` : '')}
+                            </View>
+                          </View>
+                        )}
                         {(training.heart_rate || 0) > 0 && (
                           <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
                             <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>FC MOY.</Text>
                             <View style={styles.exerciseStats}>
                               {renderStyledStat(training.heart_rate || 0, 'BPM')}
+                            </View>
+                          </View>
+                        )}
+                        {(training.max_heart_rate || 0) > 0 && (
+                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>FC MAX.</Text>
+                            <View style={styles.exerciseStats}>
+                              {renderStyledStat(training.max_heart_rate || 0, 'BPM')}
+                            </View>
+                          </View>
+                        )}
+                        {(training.intensity || 0) > 0 && (
+                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>INTENSITÉ (RPE)</Text>
+                            <View style={styles.exerciseStats}>
+                              {renderStyledStat(training.intensity || 0, '/ 10')}
                             </View>
                           </View>
                         )}
@@ -447,14 +489,20 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
                             </View>
                           </View>
                         )}
+                        {training.location_name ? (
+                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>LIEU</Text>
+                            <Text style={[styles.paceText, paceTextStyle]} numberOfLines={1}>{training.location_name.toUpperCase()}</Text>
+                          </View>
+                        ) : null}
                       </View>
                     ) : (
-                      <Text style={[styles.emptyNotesText, emptyNotesStyle]}>{training.notes || 'SEANCE VALIDEE'}</Text>
+                      <Text style={[styles.emptyNotesText, emptyNotesStyle]}>{training.notes || 'SÉANCE VALIDÉE'}</Text>
                     )}
                   </View>
                 )}
               </View>
-            </ScrollView>
+            </ExercisesWrapper>
           </View>
         </View>
 

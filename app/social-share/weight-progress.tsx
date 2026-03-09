@@ -201,7 +201,7 @@ export default function WeightProgressScreen() {
         <View style={styles.errorContainer}>
           <View style={styles.errorIconContainer} />
           <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>
-            Pas encore de donnees
+            Pas encore de données
           </Text>
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>
             {error || 'Enregistre tes pesees pour voir ta progression !'}

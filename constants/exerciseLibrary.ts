@@ -441,7 +441,7 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   { name: 'Tomoe Nage', category: 'jjb', muscle: 'LUTTE', unit: 'reps' },
   { name: 'Uchi Mata', category: 'jjb', muscle: 'LUTTE', unit: 'reps' },
 
-  // DRILLS & ENTRAINEMENT
+  // DRILLS & ENTRAÎNEMENT
   { name: 'Drilling Passage de Garde', category: 'jjb', muscle: 'DRILL', unit: 'reps' },
   { name: 'Flow Rolling', category: 'jjb', muscle: 'COMBAT', unit: 'time' },
   { name: 'Positional Sparring', category: 'jjb', muscle: 'COMBAT', unit: 'time' },

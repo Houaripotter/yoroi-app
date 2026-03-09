@@ -442,11 +442,11 @@ export function validateUsername(username: any): ValidationResult {
     };
   }
 
-  // Que des lettres, espaces, tirets, apostrophes
-  if (!/^[a-zA-ZÀ-ÿ\s'-]+$/.test(name)) {
+  // Que des lettres, chiffres, espaces, tirets, apostrophes (droites et typographiques iOS), points
+  if (!/^[\p{L}\p{N}\s''\u2018\u2019\-.]+$/u.test(name)) {
     return {
       valid: false,
-      error: 'Le nom ne peut contenir que des lettres',
+      error: 'Le nom contient des caractères invalides',
     };
   }
 

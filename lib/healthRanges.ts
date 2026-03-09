@@ -56,7 +56,7 @@ export const BODY_FAT_RANGES_MALE: MetricRangeWithTranslation = {
 CLASSIFICATION (Gallagher et al. 2000, n=1626 sujets):
 - 3-13% : Athlete - Niveau competition
 - 14-17% : Forme - Excellente condition
-- 18-24% : Moyen - Population generale en bonne sante
+- 18-24% : Moyen - Population generale en bonne santé
 - 25%+ : Eleve - Risques metaboliques accrus
 
 PREUVES SCIENTIFIQUES:
@@ -123,7 +123,7 @@ export const MUSCLE_MASS_RANGES_MALE: MetricRangeWithTranslation = {
 CLASSIFICATION (Janssen et al. 2000, etude IRM sur 468 sujets):
 - <38% : Faible - Sarcopenie probable
 - 38-44% : Normal - Population sedentaire
-- 44-52% : Bon - Activite physique reguliere
+- 44-52% : Bon - Activité physique reguliere
 - 52%+ : Excellent - Niveau sportif
 
 PREUVES SCIENTIFIQUES:
@@ -136,7 +136,7 @@ Perte de 3-8% de muscle par decennie apres 30 ans.
 La musculation est le traitement n°1 valide scientifiquement.
 
 RECOMMANDATIONS (ACSM):
-2-3 seances de musculation/semaine, tous les groupes musculaires.`,
+2-3 séances de musculation/semaine, tous les groupes musculaires.`,
   zones: [
     { label: 'low', start: 30, end: 38, color: '#EF4444', status: 'attention' },
     { label: 'normal', start: 39, end: 44, color: '#F97316', status: 'moderate' },
@@ -158,7 +158,7 @@ export const MUSCLE_MASS_RANGES_FEMALE: MetricRangeWithTranslation = {
 CLASSIFICATION (Janssen et al. 2000):
 - <31% : Faible - Sarcopenie probable
 - 31-36% : Normal - Population sedentaire
-- 36-42% : Bon - Activite physique reguliere
+- 36-42% : Bon - Activité physique reguliere
 - 42%+ : Excellent - Niveau sportif
 
 DIFFERENCE BIOLOGIQUE:
@@ -170,7 +170,7 @@ PREUVES SCIENTIFIQUES:
 - Ameliore sensibilite insuline et metabolisme
 
 RECOMMANDATIONS (ACSM):
-2-3 seances de musculation/semaine. Les charges lourdes sont sures et efficaces.`,
+2-3 séances de musculation/semaine. Les charges lourdes sont sures et efficaces.`,
   zones: [
     { label: 'low', start: 25, end: 33, color: '#EF4444', status: 'attention' },
     { label: 'normal', start: 34, end: 39, color: '#F97316', status: 'moderate' },
@@ -266,9 +266,9 @@ export const HRV_RANGES: MetricRangeWithTranslation = {
   explanation: `La VFC (HRV) mesure les variations entre chaque battement cardiaque en millisecondes.
 
 CLASSIFICATION (RMSSD, valeurs moyennes):
-- 70+ ms : Excellent - Recuperation optimale
+- 70+ ms : Excellent - Récupération optimale
 - 50-69 ms : Bon - Bonne adaptation
-- 30-49 ms : Normal - Recuperation en cours
+- 30-49 ms : Normal - Récupération en cours
 - 10-29 ms : Fatigue - Stress physiologique
 
 VARIABILITE INDIVIDUELLE:
@@ -286,7 +286,7 @@ CE QUI BAISSE L'HRV:
 - Manque de sommeil
 
 AMELIORATION:
-- Entrainement aerobie regulier
+- Entraînement aerobie regulier
 - Respiration lente (6/min)
 - Sommeil 7-9h
 
@@ -307,7 +307,7 @@ export const RESTING_HEART_RATE_RANGES: MetricRangeWithTranslation = {
   source: 'Fox K et al. Eur Heart J 2007 - PMID: 17303589',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/17303589/',
   translationKey: 'restingHeartRate',
-  explanation: `La frequence cardiaque au repos est un predicteur independant de mortalite cardiovasculaire.
+  explanation: `La fréquence cardiaque au repos est un predicteur independant de mortalite cardiovasculaire.
 
 CLASSIFICATION (Fox et al. 2007, meta-analyse 46 etudes):
 - 40-60 bpm : Athlete - Coeur tres efficace
@@ -319,7 +319,7 @@ PREUVES SCIENTIFIQUES:
 - +10 bpm de FC repos = +20% risque mortalite CV (Cooney MT, Eur J Prev Cardiol 2010)
 - FC <60 bpm associee a meilleure survie long terme
 
-EFFET DE L'ENTRAINEMENT:
+EFFET DE L'ENTRAÎNEMENT:
 - Endurance reguliere: -10 a -15 bpm en 3-6 mois
 - Athletes elite: 35-45 bpm (bradycardie physiologique)
 
@@ -343,7 +343,7 @@ export const SLEEP_DURATION_RANGES: MetricRangeWithTranslation = {
   source: 'Cappuccio FP et al. Sleep 2010 - PMID: 20469800',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/20469800/',
   translationKey: 'sleepDuration',
-  explanation: `La duree de sommeil optimale pour la sante.
+  explanation: `La durée de sommeil optimale pour la santé.
 
 CLASSIFICATION (Cappuccio et al. 2010, meta-analyse 16 etudes):
 - <6h : Insuffisant - +48% risque mortalite
@@ -358,7 +358,7 @@ PREUVES SCIENTIFIQUES:
 - >9h = associe a depression, inflammation
 
 BESOINS INDIVIDUELS:
-- Athletes: 9-10h pour recuperation optimale (Mah CD, Sleep 2011)
+- Athletes: 9-10h pour récupération optimale (Mah CD, Sleep 2011)
 - Genetique: 3-5% sont "short sleepers" vrais
 
 HYGIENE DU SOMMEIL:
@@ -381,17 +381,17 @@ export const RECOVERY_SCORE_RANGES: MetricRangeWithTranslation = {
   source: 'Plews DJ et al. Int J Sports Physiol Perform 2013 - PMID: 23628627',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/23628627/',
   translationKey: 'recoveryScore',
-  explanation: `Le score de recuperation estime ta capacite a performer et t'entrainer.
+  explanation: `Le score de récupération estime ta capacite a performer et t'entrainer.
 
 CLASSIFICATION:
 - 0-33% : Rouge - Repos recommande
-- 34-66% : Jaune - Entrainement modere possible
+- 34-66% : Jaune - Entraînement modere possible
 - 67-100% : Vert - Capacite optimale
 
 BASE SCIENTIFIQUE (Plews et al. 2013):
 Le score combine plusieurs indicateurs:
 - HRV (variabilite cardiaque)
-- Qualite du sommeil
+- Qualité du sommeil
 - FC repos
 - Fatigue percue
 
@@ -400,7 +400,7 @@ INTERPRETATION:
 - Score bas chronique = risque de surentrainement
 
 CONSEIL:
-Adapte l'intensite de ton entrainement a ton score de recuperation.`,
+Adapte l'intensite de ton entraînement a ton score de récupération.`,
   zones: [
     { label: 'danger', start: 0, end: 33, color: '#EF4444', status: 'danger' },
     { label: 'moderate', start: 34, end: 66, color: '#EAB308', status: 'moderate' },
@@ -636,7 +636,7 @@ export const getBMRRange = (weight: number, height: number, age: number, gender:
       active: Math.round(idealBMR * 1.55),
       veryActive: Math.round(idealBMR * 1.725),
     },
-    explanation: `Le metabolisme de base (BMR) = energie brulee au repos complet pendant 24h.
+    explanation: `Le metabolisme de base (BMR) = énergie brulee au repos complet pendant 24h.
 
 TON BMR ESTIME: environ ${Math.round(idealBMR)} kcal/jour
 (Base sur: ${weight}kg, ${height}cm, ${age} ans)
@@ -644,7 +644,7 @@ TON BMR ESTIME: environ ${Math.round(idealBMR)} kcal/jour
 EQUATION MIFFLIN-ST JEOR (Mifflin et al. 1990):
 Validee sur 498 sujets, precision +/-10% vs calorimetrie indirecte.
 
-DEPENSE TOTALE (facteurs d'activite valides):
+DEPENSE TOTALE (facteurs d'activité valides):
 - Sedentaire (1.2): environ ${Math.round(idealBMR * 1.2)} kcal
 - Peu actif (1.375): environ ${Math.round(idealBMR * 1.375)} kcal
 - Actif (1.55): environ ${Math.round(idealBMR * 1.55)} kcal
@@ -666,7 +666,7 @@ Augmente ton BMR via la masse musculaire!`,
 };
 
 // ============================================
-// ENTRAINEMENT
+// ENTRAÎNEMENT
 // ============================================
 
 export const INTENSITY_RANGES: MetricRangeWithTranslation = {
@@ -676,10 +676,10 @@ export const INTENSITY_RANGES: MetricRangeWithTranslation = {
   source: 'Banister EW, Med Sci Sports Exerc 1991 - PMID: 2017016',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/2017016/',
   translationKey: 'intensity',
-  explanation: `L'intensite d'entrainement mesure l'effort relatif par rapport a ta capacite maximale.
+  explanation: `L'intensite d'entraînement mesure l'effort relatif par rapport a ta capacite maximale.
 
 CLASSIFICATION (Banister TRIMP model):
-- 0-50% : Leger - Recuperation active
+- 0-50% : Leger - Récupération active
 - 50-70% : Modere - Zone aerobie, endurance fondamentale
 - 70-85% : Intense - Zone seuil lactique
 - 85-100% : Maximal - Zone anaerobie
@@ -689,7 +689,7 @@ PREUVES SCIENTIFIQUES:
 - Surentrainement = trop de volume en zone 3 (no man's land)
 
 CONSEIL:
-La majorite de tes entrainements devraient etre en zone facile (conversation possible).`,
+La majorite de tes entraînements devraient etre en zone facile (conversation possible).`,
   zones: [
     { label: 'low', start: 0, end: 50, color: '#EAB308', status: 'good' },
     { label: 'moderate', start: 51, end: 70, color: '#22C55E', status: 'optimal' },

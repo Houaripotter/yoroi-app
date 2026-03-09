@@ -20,7 +20,7 @@ import { Check } from 'lucide-react-native';
 import logger from '@/lib/security/logger';
 
 // ============================================
-// WEEKLY CHALLENGE - COMPOSANT DEFI HEBDOMADAIRE
+// WEEKLY CHALLENGE - COMPOSANT DÉFI HEBDOMADAIRE
 // ============================================
 
 interface WeeklyChallengeProps {

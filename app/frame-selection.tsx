@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { ArrowLeft, Check, ImagePlus, ZoomIn, RotateCcw } from 'lucide-react-native';
+import { ArrowLeft, Check, ImagePlus, ZoomIn, RotateCcw, X } from 'lucide-react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '@/lib/ThemeContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
@@ -36,6 +36,16 @@ const FRAME_SIZE = (SCREEN_WIDTH - SPACING.lg * 2 - SPACING.md * 2) / 3;
 
 export const FRAME_STORAGE_KEY = '@yoroi_frame_shape';
 export const ACCESSORY_STORAGE_KEY = '@yoroi_frame_accessory';
+export const ACCESSORY_2_STORAGE_KEY = '@yoroi_frame_accessory_2';
+export const BORDER_COLOR_STORAGE_KEY = '@yoroi_frame_border_color';
+export const BORDER_THICKNESS_STORAGE_KEY = '@yoroi_frame_border_thickness';
+export const BORDER_EFFECT_STORAGE_KEY = '@yoroi_frame_border_effect';
+export const ACCESSORY_2_CHANGED_EVENT = 'FRAME_ACCESSORY_2_CHANGED';
+export const BORDER_COLOR_CHANGED_EVENT = 'FRAME_BORDER_COLOR_CHANGED';
+export const BORDER_THICKNESS_CHANGED_EVENT = 'FRAME_BORDER_THICKNESS_CHANGED';
+export const BORDER_EFFECT_CHANGED_EVENT = 'FRAME_BORDER_EFFECT_CHANGED';
+
+export type BorderEffect = 'none' | 'gold' | 'neon';
 
 // 30 formes - toutes avec assez d'aire pour une photo
 export type FrameShape =
@@ -68,7 +78,12 @@ export type FrameShape =
   | 'wide-barrel'
   | 'leaf-wide'
   | 'nonagon'
-  | 'super-ellipse';
+  | 'super-ellipse'
+  | 'star-6'
+  | 'sakura-bloom'
+  | 'speech-bubble'
+  | 'burst'
+  | 'scroll';
 
 // Accessoires decoratifs (rendus par-dessus la bordure, style badge notification)
 export type FrameAccessory =
@@ -79,7 +94,17 @@ export type FrameAccessory =
   | 'halo'
   | 'mini-star'
   | 'mini-heart'
-  | 'lightning';
+  | 'lightning'
+  | 'wings'
+  | 'horns'
+  | 'laurel'
+  | 'sakura'
+  | 'fire'
+  | 'moon-star'
+  | 'katana'
+  | 'ice'
+  | 'dragon'
+  | 'sun';
 
 interface FrameOption {
   id: FrameShape;
@@ -122,6 +147,11 @@ const FRAME_OPTIONS: FrameOption[] = [
   { id: 'leaf-wide', name: 'Feuille' },
   { id: 'nonagon', name: 'Nonagone' },
   { id: 'super-ellipse', name: 'Super Ellipse' },
+  { id: 'star-6', name: 'Etoile 6' },
+  { id: 'sakura-bloom', name: 'Sakura' },
+  { id: 'speech-bubble', name: 'Bulle' },
+  { id: 'burst', name: 'Explosion' },
+  { id: 'scroll', name: 'Parchemin' },
 ];
 
 const ACCESSORY_OPTIONS: AccessoryOption[] = [
@@ -133,6 +163,16 @@ const ACCESSORY_OPTIONS: AccessoryOption[] = [
   { id: 'mini-star', name: 'Etoile' },
   { id: 'mini-heart', name: 'Coeur' },
   { id: 'lightning', name: 'Eclair' },
+  { id: 'wings', name: 'Ailes' },
+  { id: 'horns', name: 'Cornes' },
+  { id: 'laurel', name: 'Laurier' },
+  { id: 'sakura', name: 'Sakura' },
+  { id: 'fire', name: 'Flammes' },
+  { id: 'moon-star', name: 'Lune' },
+  { id: 'katana', name: 'Katana' },
+  { id: 'ice', name: 'Cristaux' },
+  { id: 'dragon', name: 'Dragon' },
+  { id: 'sun', name: 'Soleil' },
 ];
 
 // ============================================
@@ -283,49 +323,34 @@ export function renderAccessorySvg(
     }
 
     case 'halo': {
-      // Aureole CENTREE EN HAUT - arc dore au-dessus de la tete
-      const haloW = frameSize * 0.35;
-      const haloH = frameSize * 0.12;
-      const haloCy = topCy + frameSize * 0.02;
+      // Aureole CENTREE EN HAUT - anneau complet dore brillant
+      const haloW = frameSize * 0.4;
+      const haloH = frameSize * 0.13;
+      const haloCx = topCx;
+      const haloCy = topCy + frameSize * 0.01;
+      const haloColor = '#FFD700';
+      const haloGlow = '#FFF176';
+      const sw = frameSize * 0.052; // epaisseur du trait
+      // Ellipse complete : deux demi-arcs (sweep=1 = clockwise)
+      const ellipse = `M ${haloCx + haloW} ${haloCy} A ${haloW} ${haloH} 0 1 1 ${haloCx - haloW} ${haloCy} A ${haloW} ${haloH} 0 1 1 ${haloCx + haloW} ${haloCy}`;
+      // Ombre decalee
+      const ellipseShadow = `M ${haloCx + haloW} ${haloCy + 3} A ${haloW} ${haloH} 0 1 1 ${haloCx - haloW} ${haloCy + 3} A ${haloW} ${haloH} 0 1 1 ${haloCx + haloW} ${haloCy + 3}`;
+      // Reflet brillant sur la partie superieure
+      const shine = `M ${haloCx - haloW * 0.5} ${haloCy - haloH * 0.55} A ${haloW * 0.5} ${haloH * 0.85} 0 0 1 ${haloCx + haloW * 0.5} ${haloCy - haloH * 0.55}`;
       return (
         <G>
-          {/* Ombre aureole */}
-          <Path
-            d={`M ${topCx - haloW} ${haloCy + 2}
-                A ${haloW} ${haloH} 0 1 1 ${topCx + haloW} ${haloCy + 2}`}
-            fill="none"
-            stroke="rgba(0,0,0,0.1)"
-            strokeWidth={frameSize * 0.045}
-            strokeLinecap="round"
-          />
-          {/* Aureole principale - anneau */}
-          <Path
-            d={`M ${topCx - haloW} ${haloCy}
-                A ${haloW} ${haloH} 0 1 1 ${topCx + haloW} ${haloCy}`}
-            fill="none"
-            stroke={accentColor}
-            strokeWidth={frameSize * 0.04}
-            strokeLinecap="round"
-            opacity={0.9}
-          />
-          {/* Bord lumineux exterieur */}
-          <Path
-            d={`M ${topCx - haloW + 2} ${haloCy - 1}
-                A ${haloW - 2} ${haloH - 1} 0 1 1 ${topCx + haloW - 2} ${haloCy - 1}`}
-            fill="none"
-            stroke="rgba(255,255,255,0.5)"
-            strokeWidth={frameSize * 0.012}
-            strokeLinecap="round"
-          />
-          {/* Bord lumineux interieur */}
-          <Path
-            d={`M ${topCx - haloW + 3} ${haloCy + 2}
-                A ${haloW - 3} ${haloH + 1} 0 1 1 ${topCx + haloW - 3} ${haloCy + 2}`}
-            fill="none"
-            stroke="rgba(255,255,255,0.3)"
-            strokeWidth={frameSize * 0.008}
-            strokeLinecap="round"
-          />
+          {/* Ombre */}
+          <Path d={ellipseShadow} fill="none" stroke="rgba(0,0,0,0.18)" strokeWidth={sw + 3} />
+          {/* Lueur externe large */}
+          <Path d={ellipse} fill="none" stroke={haloGlow} strokeWidth={sw * 2.4} opacity={0.3} />
+          {/* Lueur intermédiaire */}
+          <Path d={ellipse} fill="none" stroke={haloColor} strokeWidth={sw * 1.5} opacity={0.45} />
+          {/* Corps or principal */}
+          <Path d={ellipse} fill="none" stroke={haloColor} strokeWidth={sw} />
+          {/* Bordure interieure lumineuse */}
+          <Path d={ellipse} fill="none" stroke="#FFF9C4" strokeWidth={sw * 0.38} opacity={0.7} />
+          {/* Reflet blanc sur le dessus */}
+          <Path d={shine} fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={sw * 0.28} strokeLinecap="round" />
         </G>
       );
     }
@@ -412,6 +437,522 @@ export function renderAccessorySvg(
       );
     }
 
+    case 'wings': {
+      // Ailes de chaque COTE du cadre - gauche et droite
+      const wCy = frameSize * 0.6;   // position verticale (milieu-bas)
+      const wH = frameSize * 0.3;    // hauteur de l'aile
+      const wW = frameSize * 0.55;   // extension laterale
+
+      // Aile GAUCHE - s'etend vers la gauche depuis le bord gauche
+      const lCx = 0;
+      const lOuter = `M ${lCx} ${wCy}
+        C ${lCx - wW * 0.3} ${wCy - wH * 0.15},
+          ${lCx - wW * 0.82} ${wCy - wH * 0.62},
+          ${lCx - wW} ${wCy - wH * 0.88}
+        C ${lCx - wW * 1.04} ${wCy - wH},
+          ${lCx - wW * 0.86} ${wCy - wH * 0.98},
+          ${lCx - wW * 0.7} ${wCy - wH * 0.82}
+        C ${lCx - wW * 0.45} ${wCy - wH * 0.52},
+          ${lCx - frameSize * 0.1} ${wCy - wH * 0.2},
+          ${lCx} ${wCy} Z`;
+      const lVein = `M ${lCx - frameSize * 0.04} ${wCy - wH * 0.1}
+        C ${lCx - wW * 0.38} ${wCy - wH * 0.38},
+          ${lCx - wW * 0.72} ${wCy - wH * 0.62},
+          ${lCx - wW * 0.9} ${wCy - wH * 0.8}`;
+      const lVein2 = `M ${lCx - frameSize * 0.05} ${wCy - wH * 0.05}
+        C ${lCx - wW * 0.2} ${wCy - wH * 0.22},
+          ${lCx - wW * 0.44} ${wCy - wH * 0.36},
+          ${lCx - wW * 0.57} ${wCy - wH * 0.54}`;
+
+      // Aile DROITE - miroir de la gauche
+      const rCx = frameSize;
+      const rOuter = `M ${rCx} ${wCy}
+        C ${rCx + wW * 0.3} ${wCy - wH * 0.15},
+          ${rCx + wW * 0.82} ${wCy - wH * 0.62},
+          ${rCx + wW} ${wCy - wH * 0.88}
+        C ${rCx + wW * 1.04} ${wCy - wH},
+          ${rCx + wW * 0.86} ${wCy - wH * 0.98},
+          ${rCx + wW * 0.7} ${wCy - wH * 0.82}
+        C ${rCx + wW * 0.45} ${wCy - wH * 0.52},
+          ${rCx + frameSize * 0.1} ${wCy - wH * 0.2},
+          ${rCx} ${wCy} Z`;
+      const rVein = `M ${rCx + frameSize * 0.04} ${wCy - wH * 0.1}
+        C ${rCx + wW * 0.38} ${wCy - wH * 0.38},
+          ${rCx + wW * 0.72} ${wCy - wH * 0.62},
+          ${rCx + wW * 0.9} ${wCy - wH * 0.8}`;
+      const rVein2 = `M ${rCx + frameSize * 0.05} ${wCy - wH * 0.05}
+        C ${rCx + wW * 0.2} ${wCy - wH * 0.22},
+          ${rCx + wW * 0.44} ${wCy - wH * 0.36},
+          ${rCx + wW * 0.57} ${wCy - wH * 0.54}`;
+      return (
+        <G>
+          {/* Ombres */}
+          <Path d={lOuter} fill="rgba(0,0,0,0.1)" transform="translate(-2,3)" />
+          <Path d={rOuter} fill="rgba(0,0,0,0.1)" transform="translate(2,3)" />
+          {/* Ailes - blanc nacre */}
+          <Path d={lOuter} fill="rgba(255,255,255,0.97)" stroke="rgba(180,200,255,0.6)" strokeWidth={1.2} />
+          <Path d={rOuter} fill="rgba(255,255,255,0.97)" stroke="rgba(180,200,255,0.6)" strokeWidth={1.2} />
+          {/* Nervures */}
+          <Path d={lVein} fill="none" stroke="rgba(160,180,240,0.55)" strokeWidth={1.8} strokeLinecap="round" />
+          <Path d={lVein2} fill="none" stroke="rgba(160,180,240,0.4)" strokeWidth={1.2} strokeLinecap="round" />
+          <Path d={rVein} fill="none" stroke="rgba(160,180,240,0.55)" strokeWidth={1.8} strokeLinecap="round" />
+          <Path d={rVein2} fill="none" stroke="rgba(160,180,240,0.4)" strokeWidth={1.2} strokeLinecap="round" />
+          {/* Lueur */}
+          <Path d={lOuter} fill="none" stroke="rgba(200,220,255,0.35)" strokeWidth={3} />
+          <Path d={rOuter} fill="none" stroke="rgba(200,220,255,0.35)" strokeWidth={3} />
+        </G>
+      );
+    }
+
+    case 'horns': {
+      // Cornes de demon rouges - centrees en haut
+      const hCx = frameSize / 2;
+      const hCy = topCy + frameSize * 0.04;
+      const hornSpread = frameSize * 0.18;
+      const hornH = frameSize * 0.22;
+      const hornW = frameSize * 0.09;
+      // Corne gauche - courbe vers l'interieur en pointe
+      const lHorn = `M ${hCx - hornSpread - hornW * 0.5} ${hCy + hornH * 0.25}
+        C ${hCx - hornSpread - hornW * 0.6} ${hCy - hornH * 0.15},
+          ${hCx - hornSpread + hornW * 0.1} ${hCy - hornH * 0.75},
+          ${hCx - hornSpread + hornW * 0.45} ${hCy - hornH}
+        C ${hCx - hornSpread + hornW * 0.6} ${hCy - hornH * 0.75},
+          ${hCx - hornSpread + hornW * 0.5} ${hCy - hornH * 0.1},
+          ${hCx - hornSpread + hornW * 0.7} ${hCy + hornH * 0.25} Z`;
+      // Corne droite (miroir)
+      const rHorn = `M ${hCx + hornSpread + hornW * 0.5} ${hCy + hornH * 0.25}
+        C ${hCx + hornSpread + hornW * 0.6} ${hCy - hornH * 0.15},
+          ${hCx + hornSpread - hornW * 0.1} ${hCy - hornH * 0.75},
+          ${hCx + hornSpread - hornW * 0.45} ${hCy - hornH}
+        C ${hCx + hornSpread - hornW * 0.6} ${hCy - hornH * 0.75},
+          ${hCx + hornSpread - hornW * 0.5} ${hCy - hornH * 0.1},
+          ${hCx + hornSpread - hornW * 0.7} ${hCy + hornH * 0.25} Z`;
+      return (
+        <G>
+          {/* Ombres */}
+          <Path d={lHorn} fill="rgba(0,0,0,0.15)" transform="translate(2,2)" />
+          <Path d={rHorn} fill="rgba(0,0,0,0.15)" transform="translate(-2,2)" />
+          {/* Corps des cornes - degradé rouge sombre */}
+          <Path d={lHorn} fill="#C0392B" stroke="#8B0000" strokeWidth={1} strokeLinejoin="round" />
+          <Path d={rHorn} fill="#C0392B" stroke="#8B0000" strokeWidth={1} strokeLinejoin="round" />
+          {/* Reflet lateral gauche */}
+          <Path
+            d={`M ${hCx - hornSpread - hornW * 0.3} ${hCy + hornH * 0.15}
+              C ${hCx - hornSpread - hornW * 0.35} ${hCy - hornH * 0.1},
+                ${hCx - hornSpread + hornW * 0.05} ${hCy - hornH * 0.55},
+                ${hCx - hornSpread + hornW * 0.38} ${hCy - hornH * 0.88}`}
+            fill="none" stroke="rgba(255,100,80,0.55)" strokeWidth={2.5} strokeLinecap="round"
+          />
+          {/* Reflet lateral droit */}
+          <Path
+            d={`M ${hCx + hornSpread + hornW * 0.3} ${hCy + hornH * 0.15}
+              C ${hCx + hornSpread + hornW * 0.35} ${hCy - hornH * 0.1},
+                ${hCx + hornSpread - hornW * 0.05} ${hCy - hornH * 0.55},
+                ${hCx + hornSpread - hornW * 0.38} ${hCy - hornH * 0.88}`}
+            fill="none" stroke="rgba(255,100,80,0.55)" strokeWidth={2.5} strokeLinecap="round"
+          />
+        </G>
+      );
+    }
+
+    case 'laurel': {
+      // Couronne de laurier doree - centree en haut
+      const lCx = frameSize / 2;
+      const lCy = topCy + frameSize * 0.06;
+      const branchW = frameSize * 0.36;
+      const branchH = frameSize * 0.22;
+      const leafColor = '#4CAF50';
+      const leafDark = '#2E7D32';
+      const goldColor = '#FFD700';
+      // Genere une feuille de laurier ovale orientee
+      const makeLeaf = (cx: number, cy: number, angle: number, size: number) => {
+        const lw = size * 0.11;
+        const lh = size * 0.22;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        const tip = { x: cx + lh * cos, y: cy + lh * sin };
+        const base = { x: cx - lh * 0.4 * cos, y: cy - lh * 0.4 * sin };
+        const ctrl1 = { x: cx + lw * -sin + lh * 0.4 * cos, y: cy + lw * cos + lh * 0.4 * sin };
+        const ctrl2 = { x: cx - lw * -sin + lh * 0.4 * cos, y: cy - lw * cos + lh * 0.4 * sin };
+        return `M ${base.x} ${base.y} C ${ctrl1.x} ${ctrl1.y}, ${tip.x} ${tip.y}, ${tip.x} ${tip.y} C ${tip.x} ${tip.y}, ${ctrl2.x} ${ctrl2.y}, ${base.x} ${base.y} Z`;
+      };
+      // 6 feuilles de chaque cote en arc
+      const leaves: React.ReactNode[] = [];
+      const leafCount = 6;
+      for (let i = 0; i < leafCount; i++) {
+        const t = i / (leafCount - 1);
+        // Cote gauche - arc de haut en bas a gauche
+        const lx = lCx - branchW * (0.3 + t * 0.7);
+        const ly = lCy + branchH * (-0.5 + t * 0.9);
+        const leafAngle = Math.PI * 0.85 + t * Math.PI * 0.45;
+        const lSize = frameSize * (0.9 + i * 0.05);
+        // Cote droit - miroir
+        const rx = lCx + branchW * (0.3 + t * 0.7);
+        const ry = ly;
+        const rLeafAngle = Math.PI * 0.15 - t * Math.PI * 0.45;
+        leaves.push(
+          <Path key={`ll${i}`} d={makeLeaf(lx, ly, leafAngle, lSize)} fill={i % 2 === 0 ? leafColor : leafDark} stroke={leafDark} strokeWidth={0.5} />,
+          <Path key={`rl${i}`} d={makeLeaf(rx, ry, rLeafAngle, lSize)} fill={i % 2 === 0 ? leafColor : leafDark} stroke={leafDark} strokeWidth={0.5} />,
+        );
+      }
+      return (
+        <G>
+          {leaves}
+          {/* Ruban dore au centre */}
+          <Path
+            d={`M ${lCx - frameSize * 0.12} ${lCy + branchH * 0.4}
+              Q ${lCx} ${lCy + branchH * 0.28}, ${lCx + frameSize * 0.12} ${lCy + branchH * 0.4}`}
+            fill="none" stroke={goldColor} strokeWidth={frameSize * 0.035} strokeLinecap="round"
+          />
+          {/* Point central or */}
+          <Circle cx={lCx} cy={lCy + branchH * 0.28} r={frameSize * 0.035} fill={goldColor} stroke="#FFF" strokeWidth={1} />
+        </G>
+      );
+    }
+
+    case 'sakura': {
+      // Fleurs de cerisier roses - bord droit en haut
+      const skColor = '#F48FB1';
+      const skDark = '#E91E63';
+      const skCenter = '#FFEB3B';
+      // 3 fleurs a 5 petales disposees en grappe
+      const flowers = [
+        { cx: cx - frameScale * 0.05, cy: cy - frameScale * 0.08, r: frameScale * 0.22 },
+        { cx: cx + frameScale * 0.2, cy: cy + frameScale * 0.2, r: frameScale * 0.18 },
+        { cx: cx - frameScale * 0.18, cy: cy + frameScale * 0.22, r: frameScale * 0.16 },
+      ];
+      const petals: React.ReactNode[] = [];
+      flowers.forEach((f, fi) => {
+        for (let i = 0; i < 5; i++) {
+          const a = (Math.PI * 2 / 5) * i - Math.PI / 2;
+          petals.push(
+            <Path
+              key={`p${fi}_${i}`}
+              d={`M ${f.cx} ${f.cy}
+                C ${f.cx + f.r * 0.6 * Math.cos(a - 0.5)} ${f.cy + f.r * 0.6 * Math.sin(a - 0.5)},
+                  ${f.cx + f.r * 1.05 * Math.cos(a - 0.2)} ${f.cy + f.r * 1.05 * Math.sin(a - 0.2)},
+                  ${f.cx + f.r * Math.cos(a)} ${f.cy + f.r * Math.sin(a)}
+                C ${f.cx + f.r * 1.05 * Math.cos(a + 0.2)} ${f.cy + f.r * 1.05 * Math.sin(a + 0.2)},
+                  ${f.cx + f.r * 0.6 * Math.cos(a + 0.5)} ${f.cy + f.r * 0.6 * Math.sin(a + 0.5)},
+                  ${f.cx} ${f.cy} Z`}
+              fill={fi === 1 ? '#FCE4EC' : skColor}
+              stroke={skDark}
+              strokeWidth={0.7}
+              opacity={0.95}
+            />
+          );
+        }
+        petals.push(
+          <Circle key={`c${fi}`} cx={f.cx} cy={f.cy} r={f.r * 0.2} fill={skCenter} stroke="#F9A825" strokeWidth={0.5} />
+        );
+      });
+      return (
+        <G>
+          {/* Ombre globale */}
+          <Circle cx={cx + 1.5} cy={cy + 2} r={frameScale * 0.48} fill="rgba(0,0,0,0.08)" />
+          {petals}
+        </G>
+      );
+    }
+
+    case 'fire': {
+      // Flammes qui s'elevent depuis en dessous du cadre
+      const fCx = frameSize / 2;
+      const fCy = frameSize * 1.38;
+      const fH = frameSize * 0.42;
+      const fW = frameSize * 0.55;
+      // Flamme principale (orange vif)
+      const mainFlame = `M ${fCx - fW * 0.5} ${fCy}
+        C ${fCx - fW * 0.6} ${fCy - fH * 0.3},
+          ${fCx - fW * 0.35} ${fCy - fH * 0.5},
+          ${fCx} ${fCy - fH}
+        C ${fCx + fW * 0.35} ${fCy - fH * 0.5},
+          ${fCx + fW * 0.6} ${fCy - fH * 0.3},
+          ${fCx + fW * 0.5} ${fCy} Z`;
+      // Flamme gauche (rouge)
+      const lFlame = `M ${fCx - fW * 0.42} ${fCy}
+        C ${fCx - fW * 0.62} ${fCy - fH * 0.25},
+          ${fCx - fW * 0.55} ${fCy - fH * 0.55},
+          ${fCx - fW * 0.28} ${fCy - fH * 0.72}
+        C ${fCx - fW * 0.12} ${fCy - fH * 0.48},
+          ${fCx - fW * 0.18} ${fCy - fH * 0.22},
+          ${fCx - fW * 0.12} ${fCy} Z`;
+      // Flamme droite (rouge)
+      const rFlame = `M ${fCx + fW * 0.42} ${fCy}
+        C ${fCx + fW * 0.62} ${fCy - fH * 0.25},
+          ${fCx + fW * 0.55} ${fCy - fH * 0.55},
+          ${fCx + fW * 0.28} ${fCy - fH * 0.72}
+        C ${fCx + fW * 0.12} ${fCy - fH * 0.48},
+          ${fCx + fW * 0.18} ${fCy - fH * 0.22},
+          ${fCx + fW * 0.12} ${fCy} Z`;
+      // Coeur jaune de la flamme
+      const innerFlame = `M ${fCx - fW * 0.25} ${fCy}
+        C ${fCx - fW * 0.3} ${fCy - fH * 0.28},
+          ${fCx - fW * 0.15} ${fCy - fH * 0.55},
+          ${fCx} ${fCy - fH * 0.75}
+        C ${fCx + fW * 0.15} ${fCy - fH * 0.55},
+          ${fCx + fW * 0.3} ${fCy - fH * 0.28},
+          ${fCx + fW * 0.25} ${fCy} Z`;
+      // Centre blanc-jaune (tres chaud)
+      const coreFlame = `M ${fCx - fW * 0.1} ${fCy}
+        C ${fCx - fW * 0.12} ${fCy - fH * 0.22},
+          ${fCx - fW * 0.05} ${fCy - fH * 0.42},
+          ${fCx} ${fCy - fH * 0.52}
+        C ${fCx + fW * 0.05} ${fCy - fH * 0.42},
+          ${fCx + fW * 0.12} ${fCy - fH * 0.22},
+          ${fCx + fW * 0.1} ${fCy} Z`;
+      return (
+        <G>
+          {/* Lueur chaude en bas */}
+          <Path d={mainFlame} fill="rgba(255,80,0,0.18)" transform="translate(0,4) scale(1.05)" />
+          {/* Flammes exterieures rouges */}
+          <Path d={lFlame} fill="#EF5350" />
+          <Path d={rFlame} fill="#EF5350" />
+          {/* Flamme principale orange */}
+          <Path d={mainFlame} fill="#FF6F00" />
+          {/* Coeur jaune-orange */}
+          <Path d={innerFlame} fill="#FFAB00" />
+          {/* Centre chaud jaune clair */}
+          <Path d={coreFlame} fill="#FFE57F" />
+          {/* Etincelles */}
+          <Circle cx={fCx - fW * 0.22} cy={fCy - fH * 0.85} r={frameSize * 0.018} fill="#FFEE58" opacity={0.9} />
+          <Circle cx={fCx + fW * 0.18} cy={fCy - fH * 0.92} r={frameSize * 0.013} fill="#FFEE58" opacity={0.8} />
+          <Circle cx={fCx - fW * 0.05} cy={fCy - fH * 1.0} r={frameSize * 0.012} fill="#FFFFFF" opacity={0.85} />
+        </G>
+      );
+    }
+
+    case 'moon-star': {
+      // Croissant de lune argente + etoile - bord droit haut
+      const mR = frameScale * 0.38;
+      const mColor = '#E8EAF6';
+      const mStroke = '#9FA8DA';
+      // Croissant : grand cercle moins petit cercle decale
+      const mOuter = `M ${cx + mR} ${cy} A ${mR} ${mR} 0 1 1 ${cx + mR * 0.1} ${cy - mR * 0.98} A ${mR * 0.75} ${mR * 0.75} 0 1 0 ${cx + mR} ${cy} Z`;
+      // Petite etoile a 5 branches en haut a droite du croissant
+      const stCx = cx + mR * 0.55;
+      const stCy = cy - mR * 1.15;
+      const stOr = mR * 0.22;
+      const stIr = stOr * 0.4;
+      const stPts = Array.from({length:10},(_,i)=>{const r=i%2===0?stOr:stIr;const a=(Math.PI/5)*i-Math.PI/2;return `${stCx+r*Math.cos(a)},${stCy+r*Math.sin(a)}`;}).join(' ');
+      return (
+        <G>
+          <Path d={mOuter} fill="rgba(0,0,0,0.12)" transform="translate(2,2)" />
+          <Path d={mOuter} fill={mColor} stroke={mStroke} strokeWidth={1.5} />
+          {/* Reflet sur le croissant */}
+          <Path d={`M ${cx + mR * 0.6} ${cy - mR * 0.15} A ${mR * 0.35} ${mR * 0.35} 0 0 1 ${cx + mR * 0.55} ${cy + mR * 0.35}`} fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth={2.5} strokeLinecap="round" />
+          {/* Ombre etoile */}
+          <Polygon points={Array.from({length:10},(_,i)=>{const r=i%2===0?stOr:stIr;const a=(Math.PI/5)*i-Math.PI/2;return `${stCx+r*Math.cos(a)+1.5},${stCy+r*Math.sin(a)+1.5}`;}).join(' ')} fill="rgba(0,0,0,0.12)" />
+          {/* Etoile */}
+          <Polygon points={stPts} fill="#FFF9C4" stroke="#F9A825" strokeWidth={0.8} />
+        </G>
+      );
+    }
+
+    case 'katana': {
+      // Katana diagonal - bord droit haut (de bas-gauche vers haut-droit)
+      const kLen = frameScale * 0.88;
+      const kW = frameScale * 0.06;
+      const kCx = cx + frameScale * 0.05;
+      const kCy = cy - frameScale * 0.18;
+      const kAng = -Math.PI / 4; // 45 degres
+      const kCos = Math.cos(kAng), kSin = Math.sin(kAng);
+      // Lame (rectangle elong fin)
+      const blade = [
+        { x: kCx - kW * 0.3 * -kSin, y: kCy - kW * 0.3 * kCos }, // base gauche
+        { x: kCx + kW * 0.3 * -kSin, y: kCy + kW * 0.3 * kCos }, // base droite
+        { x: kCx + kLen * kCos + kW * 0.1 * -kSin, y: kCy + kLen * kSin + kW * 0.1 * kCos }, // pointe droite
+        { x: kCx + kLen * kCos - kW * 0.1 * -kSin, y: kCy + kLen * kSin - kW * 0.1 * kCos }, // pointe gauche
+      ];
+      const bladePts = blade.map(p => `${p.x},${p.y}`).join(' ');
+      // Garde (tsuba)
+      const gCx = kCx - kLen * 0.08 * kCos;
+      const gCy = kCy - kLen * 0.08 * kSin;
+      const gW = kLen * 0.14;
+      const guardPts = [
+        `${gCx + gW * -kSin},${gCy + gW * kCos}`,
+        `${gCx - gW * -kSin},${gCy - gW * kCos}`,
+        `${gCx - gW * 0.3 * -kSin - kW * 0.6 * kCos},${gCy - gW * 0.3 * kCos - kW * 0.6 * kSin}`,
+        `${gCx + gW * 0.3 * -kSin - kW * 0.6 * kCos},${gCy + gW * 0.3 * kCos - kW * 0.6 * kSin}`,
+      ].join(' ');
+      // Poignee (manche)
+      const hLen = kLen * 0.28;
+      const hx1 = kCx - kW * 0.28 * -kSin;
+      const hy1 = kCy + kW * 0.28 * kCos;
+      const hx2 = kCx + kW * 0.28 * -kSin;
+      const hy2 = kCy - kW * 0.28 * kCos;
+      const handlePts = [
+        `${hx1},${hy1}`,
+        `${hx2},${hy2}`,
+        `${hx2 - hLen * kCos},${hy2 - hLen * kSin}`,
+        `${hx1 - hLen * kCos},${hy1 - hLen * kSin}`,
+      ].join(' ');
+      return (
+        <G>
+          {/* Ombre */}
+          <Polygon points={bladePts} fill="rgba(0,0,0,0.15)" transform="translate(2,2)" />
+          {/* Lame - argent brillant */}
+          <Polygon points={bladePts} fill="#ECEFF1" stroke="#90A4AE" strokeWidth={0.8} />
+          {/* Fil tranchant (reflet) */}
+          <Path d={`M ${kCx + kLen * 0.05 * kCos} ${kCy + kLen * 0.05 * kSin} L ${kCx + kLen * 0.92 * kCos} ${kCy + kLen * 0.92 * kSin}`} stroke="rgba(255,255,255,0.8)" strokeWidth={1.5} strokeLinecap="round" />
+          {/* Garde or */}
+          <Polygon points={guardPts} fill="#FFD700" stroke="#F9A825" strokeWidth={1} />
+          {/* Manche noir */}
+          <Polygon points={handlePts} fill="#37474F" stroke="#263238" strokeWidth={1} />
+          {/* Enroulement manche */}
+          {[0.25, 0.5, 0.75].map((t, i) => (
+            <Path key={i} d={`M ${hx1 - t * hLen * kCos} ${hy1 - t * hLen * kSin} L ${hx2 - t * hLen * kCos} ${hy2 - t * hLen * kSin}`} stroke="#546E7A" strokeWidth={1.5} />
+          ))}
+        </G>
+      );
+    }
+
+    case 'ice': {
+      // Cristaux de glace - bord droit haut, 3 pics aceres
+      const iCx = cx;
+      const iCy = cy;
+      const iColor = '#B3E5FC';
+      const iStroke = '#4FC3F7';
+      const iGlow = '#E1F5FE';
+      // 3 cristaux en eventail
+      const crystals = [
+        { angle: -Math.PI / 2, len: frameScale * 0.55, w: frameScale * 0.1 },
+        { angle: -Math.PI / 2 - 0.55, len: frameScale * 0.42, w: frameScale * 0.08 },
+        { angle: -Math.PI / 2 + 0.55, len: frameScale * 0.42, w: frameScale * 0.08 },
+      ];
+      return (
+        <G>
+          {/* Lueur globale */}
+          <Circle cx={iCx + 1} cy={iCy + 1.5} r={frameScale * 0.45} fill="rgba(179,229,252,0.18)" />
+          {crystals.map((c, i) => {
+            const cos = Math.cos(c.angle), sin = Math.sin(c.angle);
+            const perpCos = Math.cos(c.angle + Math.PI/2), perpSin = Math.sin(c.angle + Math.PI/2);
+            const pts = [
+              `${iCx + c.w * perpCos},${iCy + c.w * perpSin}`,
+              `${iCx + c.len * cos},${iCy + c.len * sin}`,
+              `${iCx - c.w * perpCos},${iCy - c.w * perpSin}`,
+              `${iCx - c.len * 0.18 * cos},${iCy - c.len * 0.18 * sin}`,
+            ].join(' ');
+            // barres transversales
+            const mid1x = iCx + c.len * 0.4 * cos;
+            const mid1y = iCy + c.len * 0.4 * sin;
+            const mid2x = iCx + c.len * 0.7 * cos;
+            const mid2y = iCy + c.len * 0.7 * sin;
+            const bw = c.w * 1.1;
+            return (
+              <G key={i}>
+                <Polygon points={pts} fill="rgba(0,0,0,0.1)" transform="translate(1.5,1.5)" />
+                <Polygon points={pts} fill={iColor} stroke={iStroke} strokeWidth={0.8} />
+                {/* Reflet */}
+                <Path d={`M ${iCx + c.w * 0.4 * perpCos} ${iCy + c.w * 0.4 * perpSin} L ${iCx + c.len * 0.85 * cos} ${iCy + c.len * 0.85 * sin}`} fill="none" stroke={iGlow} strokeWidth={1.5} strokeLinecap="round" />
+                {/* Barres transversales */}
+                <Path d={`M ${mid1x + bw * perpCos} ${mid1y + bw * perpSin} L ${mid1x - bw * perpCos} ${mid1y - bw * perpSin}`} stroke={iStroke} strokeWidth={0.7} />
+                <Path d={`M ${mid2x + bw * 0.7 * perpCos} ${mid2y + bw * 0.7 * perpSin} L ${mid2x - bw * 0.7 * perpCos} ${mid2y - bw * 0.7 * perpSin}`} stroke={iStroke} strokeWidth={0.7} />
+              </G>
+            );
+          })}
+        </G>
+      );
+    }
+
+    case 'dragon': {
+      // Dragon stylise - bord droit haut (tete de dragon en silhouette)
+      const dCx = cx - frameScale * 0.02;
+      const dCy = cy;
+      const dS = frameScale * 0.5;
+      // Corps du dragon : S-curve stylisee
+      const bodyPath = `M ${dCx - dS * 0.3} ${dCy + dS * 0.55}
+        C ${dCx - dS * 0.4} ${dCy + dS * 0.2},
+          ${dCx + dS * 0.2} ${dCy + dS * 0.15},
+          ${dCx} ${dCy - dS * 0.1}
+        C ${dCx - dS * 0.15} ${dCy - dS * 0.35},
+          ${dCx + dS * 0.3} ${dCy - dS * 0.55},
+          ${dCx + dS * 0.2} ${dCy - dS * 0.8}`;
+      // Tete : pointe en haut-droit
+      const headPath = `M ${dCx + dS * 0.2} ${dCy - dS * 0.8}
+        C ${dCx + dS * 0.5} ${dCy - dS * 0.95},
+          ${dCx + dS * 0.55} ${dCy - dS * 0.7},
+          ${dCx + dS * 0.45} ${dCy - dS * 0.6}
+        C ${dCx + dS * 0.38} ${dCy - dS * 0.55},
+          ${dCx + dS * 0.25} ${dCy - dS * 0.6},
+          ${dCx + dS * 0.2} ${dCy - dS * 0.8} Z`;
+      // Aile de dragon
+      const wingPath = `M ${dCx - dS * 0.05} ${dCy + dS * 0.05}
+        C ${dCx - dS * 0.5} ${dCy - dS * 0.3},
+          ${dCx - dS * 0.55} ${dCy - dS * 0.2},
+          ${dCx - dS * 0.45} ${dCy}
+        C ${dCx - dS * 0.35} ${dCy + dS * 0.08},
+          ${dCx - dS * 0.15} ${dCy + dS * 0.08},
+          ${dCx - dS * 0.05} ${dCy + dS * 0.05} Z`;
+      // Queue
+      const tailPath = `M ${dCx - dS * 0.3} ${dCy + dS * 0.55}
+        C ${dCx - dS * 0.2} ${dCy + dS * 0.75},
+          ${dCx - dS * 0.05} ${dCy + dS * 0.82},
+          ${dCx + dS * 0.1} ${dCy + dS * 0.75}`;
+      const dColor = '#B71C1C';
+      const dDark = '#7F0000';
+      const dScale = '#EF5350';
+      return (
+        <G>
+          {/* Ombre */}
+          <Path d={bodyPath} fill="none" stroke="rgba(0,0,0,0.2)" strokeWidth={frameScale * 0.14} strokeLinecap="round" transform="translate(2,2)" />
+          {/* Aile */}
+          <Path d={wingPath} fill={dColor} stroke={dDark} strokeWidth={0.8} opacity={0.85} />
+          {/* Corps epais */}
+          <Path d={bodyPath} fill="none" stroke={dColor} strokeWidth={frameScale * 0.12} strokeLinecap="round" />
+          <Path d={bodyPath} fill="none" stroke={dScale} strokeWidth={frameScale * 0.05} strokeLinecap="round" opacity={0.5} />
+          {/* Tete */}
+          <Path d={headPath} fill={dColor} stroke={dDark} strokeWidth={0.8} />
+          {/* Oeil */}
+          <Circle cx={dCx + dS * 0.41} cy={dCy - dS * 0.73} r={frameScale * 0.03} fill="#FFD700" />
+          {/* Queue */}
+          <Path d={tailPath} fill="none" stroke={dColor} strokeWidth={frameScale * 0.08} strokeLinecap="round" />
+          {/* Corne */}
+          <Path d={`M ${dCx + dS * 0.3} ${dCy - dS * 0.85} L ${dCx + dS * 0.22} ${dCy - dS * 1.02}`} stroke={dDark} strokeWidth={frameScale * 0.05} strokeLinecap="round" />
+          {/* Flamme */}
+          <Path d={`M ${dCx + dS * 0.52} ${dCy - dS * 0.65} C ${dCx + dS * 0.7} ${dCy - dS * 0.55}, ${dCx + dS * 0.72} ${dCy - dS * 0.45}, ${dCx + dS * 0.62} ${dCy - dS * 0.4}`} fill="none" stroke="#FF6F00" strokeWidth={frameScale * 0.07} strokeLinecap="round" opacity={0.9} />
+          <Path d={`M ${dCx + dS * 0.52} ${dCy - dS * 0.65} C ${dCx + dS * 0.68} ${dCy - dS * 0.6}, ${dCx + dS * 0.68} ${dCy - dS * 0.5}, ${dCx + dS * 0.6} ${dCy - dS * 0.44}`} fill="none" stroke="#FFD700" strokeWidth={frameScale * 0.035} strokeLinecap="round" />
+        </G>
+      );
+    }
+
+    case 'sun': {
+      // Soleil rayonnant - bord droit haut
+      const sunR = frameScale * 0.22;
+      const rayLen = frameScale * 0.16;
+      const rayCount = 12;
+      const sunColor = '#FFD700';
+      const sunGlow = '#FFF176';
+      return (
+        <G>
+          {/* Ombre */}
+          <Circle cx={cx + 1.5} cy={cy + 2} r={sunR + rayLen + 2} fill="rgba(255,200,0,0.12)" />
+          {/* Rayons (longs et courts en alternance) */}
+          {Array.from({ length: rayCount }, (_, i) => {
+            const a = (Math.PI * 2 / rayCount) * i - Math.PI / 2;
+            const isLong = i % 2 === 0;
+            const innerR = sunR + frameScale * 0.05;
+            const outerR = sunR + (isLong ? rayLen : rayLen * 0.55);
+            return (
+              <Path
+                key={i}
+                d={`M ${cx + innerR * Math.cos(a)} ${cy + innerR * Math.sin(a)} L ${cx + outerR * Math.cos(a)} ${cy + outerR * Math.sin(a)}`}
+                stroke={isLong ? sunColor : '#FFCC02'}
+                strokeWidth={isLong ? frameScale * 0.055 : frameScale * 0.04}
+                strokeLinecap="round"
+              />
+            );
+          })}
+          {/* Lueur externe */}
+          <Circle cx={cx} cy={cy} r={sunR + frameScale * 0.04} fill={sunGlow} opacity={0.35} />
+          {/* Corps principal */}
+          <Circle cx={cx} cy={cy} r={sunR} fill={sunColor} />
+          {/* Reflet */}
+          <Circle cx={cx - sunR * 0.25} cy={cy - sunR * 0.28} r={sunR * 0.3} fill="rgba(255,255,255,0.4)" />
+        </G>
+      );
+    }
+
     default:
       return null;
   }
@@ -440,12 +981,35 @@ const AccessoryPreview: React.FC<{
     );
   }
 
-  // Pour la preview dans la grille, on centre l'accessoire
-  // en utilisant un viewBox decale pour compenser la position "bord droit"
+  // Viewbox adapte selon la position de l'accessoire
   const previewScale = 1.8;
   const vbSize = size * previewScale;
-  const offsetX = vbSize * 0.32;
-  const offsetY = -vbSize * 0.08;
+
+  // Accessories positionnes en haut centre
+  const topCenterAccs: FrameAccessory[] = ['crown', 'halo', 'horns', 'laurel'];
+  // Accessories positionnes en bas
+  const bottomAccs: FrameAccessory[] = ['fire'];
+  // Accessories positionnes sur les cotes
+  const sideAccs: FrameAccessory[] = ['wings'];
+
+  let offsetX: number;
+  let offsetY: number;
+  if (topCenterAccs.includes(accessory)) {
+    offsetX = vbSize * 0.05;
+    offsetY = -vbSize * 0.16;
+  } else if (bottomAccs.includes(accessory)) {
+    offsetX = vbSize * 0.05;
+    offsetY = vbSize * 0.75;
+  } else if (sideAccs.includes(accessory)) {
+    // Montrer l'aile droite (bord droit)
+    offsetX = vbSize * 0.52;
+    offsetY = vbSize * 0.3;
+  } else {
+    // top-right (flower, bow, star, heart, lightning, sakura)
+    offsetX = vbSize * 0.32;
+    offsetY = -vbSize * 0.08;
+  }
+
   return (
     <Svg width={size} height={size} viewBox={`${offsetX} ${offsetY} ${vbSize} ${vbSize}`}>
       {renderAccessorySvg(accessory, vbSize, accentColor)}
@@ -1042,6 +1606,97 @@ const FrameShapePreview: React.FC<{
         );
       }
 
+      case 'star-6': {
+        // Etoile 6 branches (hexagramme) - alternance 12 pointes
+        const s6Cx = size / 2, s6Cy = size / 2;
+        const s6Out = innerSize / 2 - 2;
+        const s6In = s6Out * 0.48;
+        const s6Pts = Array.from({ length: 12 }, (_, i) => {
+          const r = i % 2 === 0 ? s6Out : s6In;
+          const a = (Math.PI / 6) * i - Math.PI / 2;
+          return `${s6Cx + r * Math.cos(a)},${s6Cy + r * Math.sin(a)}`;
+        }).join(' ');
+        return <Polygon points={s6Pts} fill={fillColor} stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" />;
+      }
+
+      case 'sakura-bloom': {
+        // Fleur de cerisier - 5 petales arrondies
+        const skCx = size / 2, skCy = size / 2;
+        const skOut = innerSize / 2 - 2;
+        const skIn = skOut * 0.38;
+        const numP = 5, ptsPerPetal = 24;
+        const total = numP * ptsPerPetal;
+        const skPts = Array.from({ length: total }, (_, i) => {
+          const ang = (Math.PI * 2 / total) * i - Math.PI / 2;
+          const phase = (i % ptsPerPetal) / ptsPerPetal;
+          const r = skIn + (skOut - skIn) * Math.pow(Math.sin(phase * Math.PI), 1.6);
+          return `${skCx + r * Math.cos(ang)},${skCy + r * Math.sin(ang)}`;
+        }).join(' ');
+        return <Polygon points={skPts} fill={fillColor} stroke={color} strokeWidth={strokeWidth} />;
+      }
+
+      case 'speech-bubble': {
+        // Bulle de dialogue avec queue en bas a gauche
+        const sbP = 5;
+        const sbCr = (size - 2 * sbP) * 0.15;
+        const sbBH = (size - 2 * sbP) * 0.74; // hauteur bulle
+        const sbTailX = sbP + (size - 2 * sbP) * 0.28; // droite de la queue
+        return (
+          <Path
+            d={`M ${sbP + sbCr} ${sbP}
+                L ${size - sbP - sbCr} ${sbP}
+                Q ${size - sbP} ${sbP} ${size - sbP} ${sbP + sbCr}
+                L ${size - sbP} ${sbP + sbBH - sbCr}
+                Q ${size - sbP} ${sbP + sbBH} ${size - sbP - sbCr} ${sbP + sbBH}
+                L ${sbTailX} ${sbP + sbBH}
+                L ${sbP + (size - 2 * sbP) * 0.08} ${size - sbP}
+                L ${sbP} ${sbP + sbBH}
+                L ${sbP + sbCr} ${sbP + sbBH}
+                Q ${sbP} ${sbP + sbBH} ${sbP} ${sbP + sbBH - sbCr}
+                L ${sbP} ${sbP + sbCr}
+                Q ${sbP} ${sbP} ${sbP + sbCr} ${sbP} Z`}
+            fill={fillColor} stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round"
+          />
+        );
+      }
+
+      case 'burst': {
+        // Explosion/rafale - 18 pointes tres marquees
+        const buCx = size / 2, buCy = size / 2;
+        const buOut = innerSize / 2 - 2;
+        const buIn = buOut * 0.62;
+        const buN = 18;
+        const buPts = Array.from({ length: buN * 2 }, (_, i) => {
+          const r = i % 2 === 0 ? buOut : buIn;
+          const a = (Math.PI / buN) * i - Math.PI / 2;
+          return `${buCx + r * Math.cos(a)},${buCy + r * Math.sin(a)}`;
+        }).join(' ');
+        return <Polygon points={buPts} fill={fillColor} stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" />;
+      }
+
+      case 'scroll': {
+        // Parchemin - rectangle avec bords enroules en haut et bas
+        const scP = 5;
+        const scW = size - 2 * scP;
+        const scCH = scW * 0.74; // hauteur de la zone centrale
+        const scCY = (size - scCH) / 2;
+        const scCurl = scW * 0.11;
+        return (
+          <Path
+            d={`M ${scP} ${scCY + scCurl}
+                Q ${scP} ${scCY} ${scP + scCurl} ${scCY}
+                L ${size - scP - scCurl} ${scCY}
+                Q ${size - scP} ${scCY} ${size - scP} ${scCY + scCurl}
+                L ${size - scP} ${scCY + scCH - scCurl}
+                Q ${size - scP} ${scCY + scCH} ${size - scP - scCurl} ${scCY + scCH}
+                Q ${size / 2} ${scCY + scCH + scCurl * 0.7} ${scP + scCurl} ${scCY + scCH}
+                Q ${scP} ${scCY + scCH} ${scP} ${scCY + scCH - scCurl}
+                Z`}
+            fill={fillColor} stroke={color} strokeWidth={strokeWidth}
+          />
+        );
+      }
+
       default:
         return (
           <Circle
@@ -1247,32 +1902,100 @@ export function generateClipPath(shape: FrameShape, s: number, pad: number = 4):
       return `M ${pts[0]} ${pts.slice(1).map(p => `L ${p}`).join(' ')} Z`;
     }
 
+    case 'star-6': {
+      const cx = s/2, cy = s/2, outerR = inner/2, innerR = outerR * 0.48;
+      const pts = Array.from({length:12},(_,i)=>{const r=i%2===0?outerR:innerR;const a=(Math.PI/6)*i-Math.PI/2;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;});
+      return `M ${pts[0]} ${pts.slice(1).map(p=>`L ${p}`).join(' ')} Z`;
+    }
+    case 'sakura-bloom': {
+      const cx=s/2, cy=s/2, outerR=inner/2, innerR=outerR*0.38;
+      const numP=5, ppp=24, total=numP*ppp;
+      const pts = Array.from({length:total},(_,i)=>{const ang=(Math.PI*2/total)*i-Math.PI/2;const phase=(i%ppp)/ppp;const r=innerR+(outerR-innerR)*Math.pow(Math.sin(phase*Math.PI),1.6);return `${cx+r*Math.cos(ang)},${cy+r*Math.sin(ang)}`;});
+      return `M ${pts[0]} ${pts.slice(1).map(p=>`L ${p}`).join(' ')} Z`;
+    }
+    case 'speech-bubble': {
+      const sbP=pad, scr=(s-2*sbP)*0.15, bh=(s-2*sbP)*0.74, tX=sbP+(s-2*sbP)*0.28;
+      return `M ${sbP+scr} ${sbP} L ${s-sbP-scr} ${sbP} Q ${s-sbP} ${sbP} ${s-sbP} ${sbP+scr} L ${s-sbP} ${sbP+bh-scr} Q ${s-sbP} ${sbP+bh} ${s-sbP-scr} ${sbP+bh} L ${tX} ${sbP+bh} L ${sbP+(s-2*sbP)*0.08} ${s-sbP} L ${sbP} ${sbP+bh} L ${sbP+scr} ${sbP+bh} Q ${sbP} ${sbP+bh} ${sbP} ${sbP+bh-scr} L ${sbP} ${sbP+scr} Q ${sbP} ${sbP} ${sbP+scr} ${sbP} Z`;
+    }
+    case 'burst': {
+      const cx=s/2, cy=s/2, outerR=inner/2, innerR=outerR*0.62, buN=18;
+      const pts = Array.from({length:buN*2},(_,i)=>{const r=i%2===0?outerR:innerR;const a=(Math.PI/buN)*i-Math.PI/2;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;});
+      return `M ${pts[0]} ${pts.slice(1).map(p=>`L ${p}`).join(' ')} Z`;
+    }
+    case 'scroll': {
+      const scP=pad, scW=s-2*scP, scCH=scW*0.74, scCY=(s-scCH)/2, scCurl=scW*0.11;
+      return `M ${scP} ${scCY+scCurl} Q ${scP} ${scCY} ${scP+scCurl} ${scCY} L ${s-scP-scCurl} ${scCY} Q ${s-scP} ${scCY} ${s-scP} ${scCY+scCurl} L ${s-scP} ${scCY+scCH-scCurl} Q ${s-scP} ${scCY+scCH} ${s-scP-scCurl} ${scCY+scCH} Q ${s/2} ${scCY+scCH+scCurl*0.7} ${scP+scCurl} ${scCY+scCH} Q ${scP} ${scCY+scCH} ${scP} ${scCY+scCH-scCurl} Z`;
+    }
     default: return '';
   }
 }
 
 // ============================================
+// BORDER COLOR PALETTE
+// ============================================
+export const BORDER_COLORS = [
+  { id: 'none', label: 'Aucun', color: null as string | null },
+  { id: 'theme', label: 'Theme', color: null as string | null },
+  { id: 'white', label: 'Blanc', color: '#FFFFFF' },
+  { id: 'black', label: 'Noir', color: '#1A1A1A' },
+  { id: 'gold', label: 'Or', color: '#FFD700' },
+  { id: 'silver', label: 'Argent', color: '#C0C0C0' },
+  { id: 'rose', label: 'Rose', color: '#F06292' },
+  { id: 'red', label: 'Rouge', color: '#EF4444' },
+  { id: 'orange', label: 'Orange', color: '#F97316' },
+  { id: 'cyan', label: 'Cyan', color: '#06B6D4' },
+  { id: 'purple', label: 'Violet', color: '#8B5CF6' },
+  { id: 'green', label: 'Vert', color: '#10B981' },
+  { id: 'blue', label: 'Bleu', color: '#3B82F6' },
+];
+
+export const BORDER_THICKNESS_OPTIONS = [
+  { id: 'thin', label: 'Fine', value: 1.5 },
+  { id: 'normal', label: 'Normale', value: 2.5 },
+  { id: 'thick', label: 'Epaisse', value: 5 },
+];
+
+export const BORDER_EFFECT_OPTIONS = [
+  { id: 'none' as BorderEffect, label: 'Solide' },
+  { id: 'gold' as BorderEffect, label: 'Or brillant' },
+  { id: 'neon' as BorderEffect, label: 'Neon' },
+];
+
+// ============================================
 // PREVIEW SIZE
 // ============================================
 const PREVIEW_SIZE = 160;
+const TOUCH_ZONE = 280; // zone de touch plus grande que le cercle pour pinch/zoom confortable
 
 export default function FrameSelectionScreen() {
   const { colors, isDark } = useTheme();
   const [selectedFrame, setSelectedFrame] = useState<FrameShape>('circle');
   const [selectedAccessory, setSelectedAccessory] = useState<FrameAccessory>('none');
+  const [selectedAccessory2, setSelectedAccessory2] = useState<FrameAccessory>('none');
+  const [borderColorId, setBorderColorId] = useState('theme');
+  const [borderThicknessId, setBorderThicknessId] = useState('normal');
+  const [borderEffect, setBorderEffect] = useState<BorderEffect>('none');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoHistory, setPhotoHistory] = useState<string[]>([]);
   const [transform, setTransform] = useState<PhotoTransform>({ scale: 1, translateX: 0, translateY: 0 });
   const [scrollEnabled, setScrollEnabled] = useState(true);
 
-  // Pan gesture - utiliser une ref pour le transform courant
+  // Pan + Pinch gesture - utiliser des refs pour le transform courant
   const transformRef = useRef(transform);
   transformRef.current = transform;
   const hasPhotoRef = useRef(false);
   hasPhotoRef.current = !!photoUri;
   const panStart = useRef({ x: 0, y: 0 });
+  const pinchStart = useRef({ distance: 0, scale: 1 });
   const rafId = useRef<number | null>(null);
   const pendingPos = useRef<{ x: number; y: number } | null>(null);
+
+  const getTouchDistance = (touches: any[]): number => {
+    if (touches.length < 2) return 0;
+    const dx = touches[0].pageX - touches[1].pageX;
+    const dy = touches[0].pageY - touches[1].pageY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
 
   useEffect(() => {
     (async () => {
@@ -1281,6 +2004,18 @@ export default function FrameSelectionScreen() {
 
       const savedAccessory = await AsyncStorage.getItem(ACCESSORY_STORAGE_KEY);
       if (savedAccessory) setSelectedAccessory(savedAccessory as FrameAccessory);
+
+      const savedAcc2 = await AsyncStorage.getItem(ACCESSORY_2_STORAGE_KEY);
+      if (savedAcc2) setSelectedAccessory2(savedAcc2 as FrameAccessory);
+
+      const savedBorderColor = await AsyncStorage.getItem(BORDER_COLOR_STORAGE_KEY);
+      if (savedBorderColor) setBorderColorId(savedBorderColor);
+
+      const savedThickness = await AsyncStorage.getItem(BORDER_THICKNESS_STORAGE_KEY);
+      if (savedThickness) setBorderThicknessId(savedThickness);
+
+      const savedEffect = await AsyncStorage.getItem(BORDER_EFFECT_STORAGE_KEY);
+      if (savedEffect) setBorderEffect(savedEffect as BorderEffect);
 
       const profile = await getProfile();
       let history = await loadPhotoHistory();
@@ -1306,26 +2041,55 @@ export default function FrameSelectionScreen() {
       onStartShouldSetPanResponderCapture: () => hasPhotoRef.current,
       onMoveShouldSetPanResponder: () => hasPhotoRef.current,
       onMoveShouldSetPanResponderCapture: () => hasPhotoRef.current,
-      onPanResponderGrant: () => {
-        panStart.current.x = transformRef.current.translateX;
-        panStart.current.y = transformRef.current.translateY;
+      onPanResponderGrant: (evt) => {
+        const touches = evt.nativeEvent.touches;
+        if (touches.length >= 2) {
+          pinchStart.current = {
+            distance: getTouchDistance(touches),
+            scale: transformRef.current.scale,
+          };
+        } else {
+          panStart.current.x = transformRef.current.translateX;
+          panStart.current.y = transformRef.current.translateY;
+        }
         setScrollEnabled(false);
       },
-      onPanResponderMove: (_, gesture) => {
-        const curScale = transformRef.current.scale;
-        const maxOffset = PREVIEW_SIZE * (curScale - 1) / 2 + 10;
-        const newX = Math.max(-maxOffset, Math.min(maxOffset, panStart.current.x + gesture.dx));
-        const newY = Math.max(-maxOffset, Math.min(maxOffset, panStart.current.y + gesture.dy));
-        pendingPos.current = { x: newX, y: newY };
-        if (!rafId.current) {
-          rafId.current = requestAnimationFrame(() => {
-            const pos = pendingPos.current;
-            pendingPos.current = null;
-            rafId.current = null;
-            if (pos) {
-              setTransform(prev => ({ ...prev, translateX: pos.x, translateY: pos.y }));
-            }
-          });
+      onPanResponderMove: (evt, gesture) => {
+        const touches = evt.nativeEvent.touches;
+        if (touches.length >= 2) {
+          // Pinch to zoom
+          const dist = getTouchDistance(touches);
+          if (pinchStart.current.distance > 0) {
+            const ratio = dist / pinchStart.current.distance;
+            const newScale = Math.max(0.5, Math.min(4.0, pinchStart.current.scale * ratio));
+            const maxOffset = newScale >= 1
+              ? PREVIEW_SIZE * (newScale - 1) / 2 + 10
+              : PREVIEW_SIZE / 2;
+            setTransform(prev => ({
+              scale: newScale,
+              translateX: Math.max(-maxOffset, Math.min(maxOffset, prev.translateX)),
+              translateY: Math.max(-maxOffset, Math.min(maxOffset, prev.translateY)),
+            }));
+          }
+        } else {
+          // Single finger pan
+          const curScale = transformRef.current.scale;
+          const maxOffset = curScale >= 1
+            ? PREVIEW_SIZE * (curScale - 1) / 2 + 10
+            : PREVIEW_SIZE / 2;
+          const newX = Math.max(-maxOffset, Math.min(maxOffset, panStart.current.x + gesture.dx));
+          const newY = Math.max(-maxOffset, Math.min(maxOffset, panStart.current.y + gesture.dy));
+          pendingPos.current = { x: newX, y: newY };
+          if (!rafId.current) {
+            rafId.current = requestAnimationFrame(() => {
+              const pos = pendingPos.current;
+              pendingPos.current = null;
+              rafId.current = null;
+              if (pos) {
+                setTransform(prev => ({ ...prev, translateX: pos.x, translateY: pos.y }));
+              }
+            });
+          }
         }
       },
       onPanResponderRelease: () => {
@@ -1359,6 +2123,59 @@ export default function FrameSelectionScreen() {
       logger.error('Error saving accessory:', error);
     }
   };
+
+  const handleSelectAccessory2 = async (accId: FrameAccessory) => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    setSelectedAccessory2(accId);
+    try {
+      await AsyncStorage.setItem(ACCESSORY_2_STORAGE_KEY, accId);
+      DeviceEventEmitter.emit(ACCESSORY_2_CHANGED_EVENT, accId);
+    } catch (error) {
+      logger.error('Error saving accessory2:', error);
+    }
+  };
+
+  const handleSelectBorderColor = async (colorId: string) => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    setBorderColorId(colorId);
+    try {
+      await AsyncStorage.setItem(BORDER_COLOR_STORAGE_KEY, colorId);
+      DeviceEventEmitter.emit(BORDER_COLOR_CHANGED_EVENT, colorId);
+    } catch (error) {
+      logger.error('Error saving border color:', error);
+    }
+  };
+
+  const handleSelectBorderThickness = async (thicknessId: string) => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    setBorderThicknessId(thicknessId);
+    try {
+      await AsyncStorage.setItem(BORDER_THICKNESS_STORAGE_KEY, thicknessId);
+      DeviceEventEmitter.emit(BORDER_THICKNESS_CHANGED_EVENT, thicknessId);
+    } catch (error) {
+      logger.error('Error saving border thickness:', error);
+    }
+  };
+
+  const handleSelectBorderEffect = async (effect: BorderEffect) => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    setBorderEffect(effect);
+    try {
+      await AsyncStorage.setItem(BORDER_EFFECT_STORAGE_KEY, effect);
+      DeviceEventEmitter.emit(BORDER_EFFECT_CHANGED_EVENT, effect);
+    } catch (error) {
+      logger.error('Error saving border effect:', error);
+    }
+  };
+
+  // Calcule la couleur de bordure effective (theme ou personnalisee)
+  const effectiveBorderColor = (() => {
+    const found = BORDER_COLORS.find(c => c.id === borderColorId);
+    if (!found || !found.color) return colors.accent;
+    return found.color;
+  })();
+
+  const effectiveBorderThickness = borderColorId === 'none' ? 0 : (BORDER_THICKNESS_OPTIONS.find(t => t.id === borderThicknessId)?.value ?? 2.5);
 
   const handlePickPhoto = async () => {
     try {
@@ -1407,7 +2224,7 @@ export default function FrameSelectionScreen() {
   const handleZoomIn = () => {
     impactAsync(ImpactFeedbackStyle.Light);
     setTransform(prev => {
-      const newScale = Math.min(2.5, prev.scale + 0.2);
+      const newScale = Math.min(4.0, prev.scale + 0.2);
       const updated = { ...prev, scale: newScale };
       saveTransform(updated);
       return updated;
@@ -1417,8 +2234,8 @@ export default function FrameSelectionScreen() {
   const handleZoomOut = () => {
     impactAsync(ImpactFeedbackStyle.Light);
     setTransform(prev => {
-      const newScale = Math.max(1, prev.scale - 0.2);
-      const maxOffset = PREVIEW_SIZE * (newScale - 1) / 2;
+      const newScale = Math.max(0.5, prev.scale - 0.2);
+      const maxOffset = newScale >= 1 ? PREVIEW_SIZE * (newScale - 1) / 2 : PREVIEW_SIZE / 2;
       const updated = {
         scale: newScale,
         translateX: Math.max(-maxOffset, Math.min(maxOffset, prev.translateX)),
@@ -1444,15 +2261,27 @@ export default function FrameSelectionScreen() {
     const clipPath = generateClipPath(selectedFrame, s);
     const isCircle = !clipPath;
     const clipId = `preview-clip-${selectedFrame}`;
-    const overflow = s * 0.25; // marge pour debordement accessoire
+    const overflow = s * 0.6;
     const hasAcc = selectedAccessory !== 'none';
+    const hasAcc2 = selectedAccessory2 !== 'none';
+    const bColor = effectiveBorderColor;
+    const bWidth = effectiveBorderThickness;
+
+    // Couleur avec effet
+    const getBorderStroke = () => {
+      if (borderEffect === 'gold') return '#FFD700';
+      if (borderEffect === 'neon') return bColor;
+      return bColor;
+    };
+    const borderStroke = getBorderStroke();
+    const borderGlow = borderEffect === 'neon' ? bColor : borderEffect === 'gold' ? '#FFD700' : undefined;
 
     const imageSize = s * transform.scale;
     const imageX = (s - imageSize) / 2 + transform.translateX;
     const imageY = (s - imageSize) / 2 + transform.translateY;
 
-    // Overlay accessoire qui deborde du cadre
-    const accOverlay = hasAcc ? (
+    // Overlay accessoires (1 + 2) qui deborduent du cadre
+    const accOverlay = (hasAcc || hasAcc2) ? (
       <View
         style={{
           position: 'absolute',
@@ -1468,42 +2297,54 @@ export default function FrameSelectionScreen() {
           height={s + overflow * 2}
           viewBox={`${-overflow} ${-overflow} ${s + overflow * 2} ${s + overflow * 2}`}
         >
-          {renderAccessorySvg(selectedAccessory, s, colors.accent)}
+          {hasAcc && renderAccessorySvg(selectedAccessory, s, colors.accent)}
+          {hasAcc2 && renderAccessorySvg(selectedAccessory2, s, colors.accent)}
         </Svg>
       </View>
     ) : null;
 
     if (photoUri) {
       return (
-        <View style={{ width: s, height: s, overflow: 'visible' }} {...panResponder.panHandlers}>
-          <Svg width={s} height={s}>
-            <Defs>
-              <ClipPath id={clipId}>
-                {isCircle ? (
-                  <Circle cx={s/2} cy={s/2} r={s/2 - 4} />
-                ) : (
-                  <Path d={clipPath} />
-                )}
-              </ClipPath>
-            </Defs>
-            <SvgImage
-              key={photoUri}
-              href={{ uri: photoUri }}
-              x={imageX}
-              y={imageY}
-              width={imageSize}
-              height={imageSize}
-              clipPath={`url(#${clipId})`}
-              preserveAspectRatio="xMidYMid slice"
-            />
-            {/* Bordure */}
-            {isCircle ? (
-              <Circle cx={s/2} cy={s/2} r={s/2 - 4} fill="none" stroke={colors.accent} strokeWidth={3} />
-            ) : (
-              <Path d={clipPath} fill="none" stroke={colors.accent} strokeWidth={3} />
-            )}
-          </Svg>
-          {accOverlay}
+        <View
+          style={{ width: TOUCH_ZONE, height: TOUCH_ZONE, alignItems: 'center', justifyContent: 'center', overflow: 'visible' }}
+          {...panResponder.panHandlers}
+        >
+          <View style={{ width: s, height: s, overflow: 'visible' }}>
+            <Svg width={s} height={s}>
+              <Defs>
+                <ClipPath id={clipId}>
+                  {isCircle ? (
+                    <Circle cx={s/2} cy={s/2} r={s/2 - 4} />
+                  ) : (
+                    <Path d={clipPath} />
+                  )}
+                </ClipPath>
+              </Defs>
+              <SvgImage
+                key={photoUri}
+                href={{ uri: photoUri }}
+                x={imageX}
+                y={imageY}
+                width={imageSize}
+                height={imageSize}
+                clipPath={`url(#${clipId})`}
+                preserveAspectRatio="xMidYMid slice"
+              />
+              {/* Lueur neon si effet actif */}
+              {borderGlow && (
+                isCircle
+                  ? <Circle cx={s/2} cy={s/2} r={s/2 - 4} fill="none" stroke={borderGlow} strokeWidth={bWidth + 6} opacity={0.35} />
+                  : <Path d={clipPath} fill="none" stroke={borderGlow} strokeWidth={bWidth + 6} opacity={0.35} />
+              )}
+              {/* Bordure principale */}
+              {isCircle ? (
+                <Circle cx={s/2} cy={s/2} r={s/2 - 4} fill="none" stroke={borderStroke} strokeWidth={bWidth} />
+              ) : (
+                <Path d={clipPath} fill="none" stroke={borderStroke} strokeWidth={bWidth} />
+              )}
+            </Svg>
+            {accOverlay}
+          </View>
         </View>
       );
     }
@@ -1576,7 +2417,7 @@ export default function FrameSelectionScreen() {
   // Memoize la grille des accessoires
   const accessoriesGrid = useMemo(() => (
     <>
-      <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: SPACING.xl }]}>
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: SPACING.md }]}>
         Accessoires
       </Text>
       <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
@@ -1627,11 +2468,20 @@ export default function FrameSelectionScreen() {
   return (
     <ScreenWrapper>
       <ScrollView
+        stickyHeaderIndices={[0]}
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         scrollEnabled={scrollEnabled}
       >
+        {/* Mini apercu sticky — juste la photo centree, sobre */}
+        <View style={[styles.miniPreviewBar, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+          <View style={styles.miniPreviewWrapper}>
+            <View style={styles.miniPreviewInner}>
+              {renderLivePreview()}
+            </View>
+          </View>
+        </View>
         {/* Header */}
         <View style={styles.topSection}>
           <TouchableOpacity
@@ -1711,7 +2561,7 @@ export default function FrameSelectionScreen() {
           {/* Hint pour le drag */}
           {photoUri && (
             <Text style={[styles.hintText, { color: colors.textMuted }]}>
-              Glisse pour repositionner ta photo
+              Glisse ou pince (meme hors du cercle) pour ajuster
             </Text>
           )}
         </View>
@@ -1746,8 +2596,125 @@ export default function FrameSelectionScreen() {
           </View>
         )}
 
-        {/* Accessoires decoratifs */}
+        {/* BORDURE - Couleur */}
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: SPACING.xl }]}>
+          Couleur de bordure
+        </Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+          Personnalise la couleur de ton cadre
+        </Text>
+        <View style={styles.colorPalette}>
+          {BORDER_COLORS.map((bc) => {
+            const isSelected = borderColorId === bc.id;
+            if (bc.id === 'none') {
+              return (
+                <TouchableOpacity
+                  key={bc.id}
+                  style={[styles.colorSwatch, { backgroundColor: isDark ? '#333' : '#E5E5E5', borderWidth: isSelected ? 3 : 1.5, borderColor: isSelected ? colors.textPrimary : colors.border }]}
+                  onPress={() => handleSelectBorderColor(bc.id)}
+                  activeOpacity={0.75}
+                >
+                  <X size={16} color={colors.textMuted} strokeWidth={2.5} />
+                </TouchableOpacity>
+              );
+            }
+            const displayColor = bc.color ?? colors.accent;
+            return (
+              <TouchableOpacity
+                key={bc.id}
+                style={[styles.colorSwatch, { backgroundColor: displayColor, borderWidth: isSelected ? 3 : 1.5, borderColor: isSelected ? colors.textPrimary : 'transparent' }]}
+                onPress={() => handleSelectBorderColor(bc.id)}
+                activeOpacity={0.75}
+              >
+                {isSelected && <View style={styles.colorSwatchInner} />}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* BORDURE - Epaisseur */}
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: SPACING.lg }]}>
+          Epaisseur de bordure
+        </Text>
+        <View style={styles.thicknessRow}>
+          {BORDER_THICKNESS_OPTIONS.map((t) => {
+            const isSelected = borderThicknessId === t.id;
+            return (
+              <TouchableOpacity
+                key={t.id}
+                style={[styles.thicknessCard, { backgroundColor: colors.backgroundCard, borderColor: isSelected ? colors.accent : 'transparent', borderWidth: 2 }]}
+                onPress={() => handleSelectBorderThickness(t.id)}
+                activeOpacity={0.75}
+              >
+                <View style={[styles.thicknessLine, { height: t.value, backgroundColor: isSelected ? effectiveBorderColor : colors.textMuted }]} />
+                <Text style={[styles.thicknessLabel, { color: isSelected ? colors.accent : colors.textMuted }]}>{t.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* BORDURE - Effet */}
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: SPACING.lg }]}>
+          Effet de bordure
+        </Text>
+        <View style={styles.effectRow}>
+          {BORDER_EFFECT_OPTIONS.map((e) => {
+            const isSelected = borderEffect === e.id;
+            return (
+              <TouchableOpacity
+                key={e.id}
+                style={[styles.effectCard, { backgroundColor: colors.backgroundCard, borderColor: isSelected ? colors.accent : 'transparent', borderWidth: 2 }]}
+                onPress={() => handleSelectBorderEffect(e.id as BorderEffect)}
+                activeOpacity={0.75}
+              >
+                {e.id === 'gold' && <View style={[styles.effectDot, { backgroundColor: '#FFD700' }]} />}
+                {e.id === 'neon' && <View style={[styles.effectDot, { backgroundColor: effectiveBorderColor, shadowColor: effectiveBorderColor, shadowOpacity: 0.9, shadowRadius: 6, elevation: 6 }]} />}
+                {e.id === 'none' && <View style={[styles.effectDot, { backgroundColor: colors.textMuted }]} />}
+                <Text style={[styles.effectLabel, { color: isSelected ? colors.accent : colors.textPrimary }]}>{e.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Accessoires decoratifs - Slot 1 */}
         {accessoriesGrid}
+
+        {/* Accessoire 2 - combinaison */}
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: SPACING.md }]}>
+          2eme accessoire
+        </Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+          Combine deux accessoires a la fois
+        </Text>
+        <View style={styles.accessoryRow}>
+          {ACCESSORY_OPTIONS.map((acc) => {
+            const isSelected = selectedAccessory2 === acc.id;
+            return (
+              <TouchableOpacity
+                key={acc.id}
+                style={[styles.accessoryCard, { backgroundColor: colors.backgroundCard }, isSelected && { borderColor: '#F97316', borderWidth: 2 }]}
+                onPress={() => handleSelectAccessory2(acc.id)}
+                activeOpacity={0.7}
+              >
+                <AccessoryPreview
+                  accessory={acc.id}
+                  size={40}
+                  accentColor={isSelected ? '#F97316' : colors.textMuted}
+                  bgColor={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'}
+                  isSelected={isSelected}
+                />
+                <Text style={[styles.accessoryName, { color: isSelected ? '#F97316' : colors.textPrimary }]} numberOfLines={1}>
+                  {acc.name}
+                </Text>
+                {isSelected && (
+                  <View style={[styles.accessoryCheck, { backgroundColor: '#F97316' }]}>
+                    <Check size={10} color="#FFFFFF" strokeWidth={3} />
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
         {/* Grid of frames - memoize pour ne pas re-render pendant le drag */}
         {framesGrid}
@@ -1785,6 +2752,40 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 15,
   },
+  miniPreviewBar: {
+    alignItems: 'center',
+    paddingVertical: 14,
+    marginHorizontal: -SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    marginTop: -SPACING.lg,
+    paddingTop: SPACING.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginBottom: SPACING.lg,
+  },
+  miniPreviewWrapper: {
+    width: 88,
+    height: 88,
+    overflow: 'visible',
+  },
+  miniPreviewInner: {
+    position: 'absolute',
+    width: 160,
+    height: 160,
+    transform: [{ scale: 0.55 }],
+    left: -36,
+    top: -36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'visible',
+  },
+  miniPreviewName: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  miniPreviewSub: {
+    fontSize: 12,
+    marginTop: 2,
+  },
   previewContainer: {
     alignItems: 'center',
     padding: SPACING.xl,
@@ -1800,6 +2801,10 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   previewFrame: {
+    height: 220,
+    width: 220,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: SPACING.md,
     overflow: 'visible',
   },
@@ -1891,12 +2896,78 @@ const styles = StyleSheet.create({
     marginTop: -6,
   },
 
+  // Palette de couleurs
+  colorPalette: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: SPACING.md,
+  },
+  colorSwatch: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  colorSwatchInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+  },
+  // Epaisseur
+  thicknessRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  thicknessCard: {
+    flex: 1,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    alignItems: 'center',
+    gap: 8,
+  },
+  thicknessLine: {
+    width: '70%',
+    borderRadius: 4,
+  },
+  thicknessLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  // Effets
+  effectRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  effectCard: {
+    flex: 1,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    alignItems: 'center',
+    gap: 6,
+  },
+  effectDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+  },
+  effectLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
   // Accessoires
   accessoryRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: SPACING.sm,
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.sm,
+    alignContent: 'flex-start',
+    alignSelf: 'flex-start',
+    width: '100%',
   },
   accessoryCard: {
     width: (SCREEN_WIDTH - SPACING.lg * 2 - SPACING.sm * 3) / 4,

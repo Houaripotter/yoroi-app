@@ -419,7 +419,7 @@ export default function SportScreen() {
         </TouchableOpacity>
 
         {/* Subtitle */}
-        <Text style={styles.headerSubtitle}>Planifie tes entrainements</Text>
+        <Text style={styles.headerSubtitle}>Planifie tes entraînements</Text>
 
         {/* Horizontal Week ScrollView */}
         <View style={styles.weekContainer}>

@@ -302,11 +302,6 @@ export default function AvatarSelectionScreen() {
 
     const image = getAvatarImage(pack, state, undefined, selectedGender);
 
-    // DEBUG: Log image loading
-    if (!image) {
-      logger.warn(`[AvatarSelection] No image for ${pack}/${state}/${selectedGender}`);
-    }
-
     return (
       <TouchableOpacity
         key={`${pack}-${state}`}
@@ -639,12 +634,12 @@ export default function AvatarSelectionScreen() {
               <Ionicons name="close" size={28} color={colors.textSecondary} />
             </TouchableOpacity>
 
-            {/* Cercle blanc avec avatar agrandi */}
+            {/* Carte avatar agrandi */}
             <View style={styles.previewCircle}>
               <Image
                 source={previewImage || TEST_IMAGE}
                 style={styles.previewImage}
-                resizeMode="cover"
+                resizeMode="contain"
                 onError={(e) => logger.warn(`[AvatarSelection] Preview image error: ${e.nativeEvent.error}`)}
               />
             </View>
@@ -869,13 +864,14 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   previewCircle: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
+    width: 240,
+    height: 280,
+    borderRadius: 24,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -883,8 +879,8 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   previewImage: {
-    width: 180,
-    height: 180,
+    width: 220,
+    height: 260,
   },
   previewTitle: {
     fontSize: 24,

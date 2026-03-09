@@ -122,7 +122,7 @@ export default function WeightCutScreen() {
         tips: [
           'Maintenir les proteines (2g/kg)',
           'Reduire les glucides progressivement',
-          'Continuer l\'entrainement normal',
+          'Continuer l\'entraînement normal',
         ],
       });
     }

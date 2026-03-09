@@ -8,8 +8,8 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
-import { addTraining, updateTrainingDetails, getProfile } from './database';
-import type { Training } from './database';
+import { addTraining, updateTrainingDetails, getProfile, saveHealthDataBatch } from './database';
+import type { Training, HealthDataRecord } from './database';
 import { saveNotification } from './notificationHistoryService';
 
 // ============================================
@@ -77,7 +77,7 @@ export interface WorkoutDetails {
     elevationGain: number;
     avgHeartRate?: number;
   }>;
-  // Meteo
+  // Météo
   weatherTemp?: number;
   weatherHumidity?: number;
   weatherCondition?: string;
@@ -93,7 +93,7 @@ export interface WorkoutDetails {
   avgPaceSecondsPerKm?: number;
   durationMinutes?: number;
   isIndoor?: boolean;
-  // FC recuperation (post workout)
+  // FC récupération (post workout)
   recoveryHR?: { atEnd: number; after1Min?: number; after2Min?: number };
 }
 
@@ -192,6 +192,28 @@ export interface HealthData {
     maxHeartRate?: number;
     source?: string;
   }[];
+  bloodPressure?: {
+    systolic: number;            // mmHg
+    diastolic: number;           // mmHg
+    date: string;
+    source?: string;
+  };
+  bloodGlucose?: {
+    value: number;               // mmol/L
+    unit: 'mmol/L' | 'mg/dL';
+    date: string;
+    source?: string;
+  };
+  height?: {
+    value: number;               // cm
+    date: string;
+    source?: string;
+  };
+  floorsClimbed?: {
+    count: number;
+    date: string;
+    source?: string;
+  };
 }
 
 export interface HealthPermissions {
@@ -210,6 +232,11 @@ export interface HealthPermissions {
   bodyTemperature: boolean;
   bodyComposition: boolean;
   workouts: boolean;
+  bloodPressure: boolean;
+  bloodGlucose: boolean;
+  height: boolean;
+  floorsClimbed: boolean;
+  mindfulMinutes: boolean;
 }
 
 export interface SyncStatus {
@@ -542,6 +569,11 @@ class HealthConnectService {
       bodyTemperature: false,
       bodyComposition: false,
       workouts: false,
+      bloodPressure: false,
+      bloodGlucose: false,
+      height: false,
+      floorsClimbed: false,
+      mindfulMinutes: false,
     },
   };
 
@@ -655,6 +687,10 @@ class HealthConnectService {
         { accessType: 'read', recordType: 'RespiratoryRate' },
         { accessType: 'read', recordType: 'BodyTemperature' },
         { accessType: 'read', recordType: 'ExerciseSession' },
+        { accessType: 'read', recordType: 'BloodPressure' },
+        { accessType: 'read', recordType: 'BloodGlucose' },
+        { accessType: 'read', recordType: 'Height' },
+        { accessType: 'read', recordType: 'FloorsClimbed' },
       ];
 
       // Permissions à écrire
@@ -668,10 +704,22 @@ class HealthConnectService {
 
       const allPermissions = [...readPermissions, ...writePermissions];
 
-      await HC.requestPermission(allPermissions as any);
+      // Vérifier d'abord les permissions déjà accordées (si l'utilisateur a déjà tout autorisé)
+      let existingGranted = await HC.getGrantedPermissions().catch(() => []);
+      const existingTypes = new Set(existingGranted.map((p: any) => p.recordType));
 
-      // Vérifier les permissions réellement accordées
-      const grantedPermissions = await HC.getGrantedPermissions();
+      // Filtrer pour ne demander que les permissions pas encore accordées
+      const toRequest = allPermissions.filter((p: any) => !existingTypes.has(p.recordType));
+
+      if (toRequest.length > 0) {
+        // requestPermission peut planter si Health Connect n'est pas à jour ou permission non déclarée
+        await HC.requestPermission(toRequest as any).catch((e: any) => {
+          logger.warn('[HealthConnect Android] requestPermission erreur (certaines permissions ignorées):', e);
+        });
+      }
+
+      // Re-vérifier les permissions réellement accordées après la demande
+      const grantedPermissions = await HC.getGrantedPermissions().catch(() => existingGranted);
       const grantedTypes = new Set(grantedPermissions.map((p: any) => p.recordType));
 
       const permissions: HealthPermissions = {
@@ -690,6 +738,11 @@ class HealthConnectService {
         bodyTemperature: grantedTypes.has('BodyTemperature'),
         bodyComposition: grantedTypes.has('BodyFat') || grantedTypes.has('LeanBodyMass'),
         workouts: grantedTypes.has('ExerciseSession'),
+        bloodPressure: grantedTypes.has('BloodPressure'),
+        bloodGlucose: grantedTypes.has('BloodGlucose'),
+        height: grantedTypes.has('Height'),
+        floorsClimbed: grantedTypes.has('FloorsClimbed'),
+        mindfulMinutes: false, // Android Health Connect n'a pas d'équivalent aux sessions de pleine conscience Apple
       };
 
       logger.info('[HealthConnect Android] Permissions accordées:', permissions);
@@ -802,6 +855,11 @@ class HealthConnectService {
       bodyTemperature: false,
       bodyComposition: false,
       workouts: false,
+      bloodPressure: false,
+      bloodGlucose: false,
+      height: false,
+      floorsClimbed: false,
+      mindfulMinutes: false,
     };
     await this.saveSyncStatus();
   }
@@ -1073,7 +1131,7 @@ class HealthConnectService {
         const min = Math.min(...allBpm);
         const max = Math.max(...allBpm);
 
-        // Essayer de récupérer le resting HR (donnee reelle uniquement)
+        // Essayer de récupérer le resting HR (donnée reelle uniquement)
         let resting = 0;
         try {
           const restingRecords = await HC.readRecords('RestingHeartRate', {
@@ -1084,7 +1142,7 @@ class HealthConnectService {
             resting = latestResting.beatsPerMinute || 0;
           }
         } catch {
-          // Pas de donnee resting HR
+          // Pas de donnée resting HR
         }
 
         return {
@@ -1332,7 +1390,7 @@ class HealthConnectService {
   }
 
   // ============================================
-  // EXERCICE & ACTIVITE (stubs - iOS only)
+  // EXERCICE & ACTIVITÉ (stubs - iOS only)
   // ============================================
 
   async getTodayExerciseMinutes(): Promise<number | null> {
@@ -1355,6 +1413,26 @@ class HealthConnectService {
       standHours: null,
       goals: { move: 500, exercise: 30, stand: 12 },
     };
+  }
+
+  async getWeeklyActivityData(): Promise<Array<{
+    date: string;
+    calories: number;
+    exerciseMin: number;
+    standH: number;
+  }>> {
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      days.push({
+        date: d.toISOString().split('T')[0],
+        calories: 0,
+        exerciseMin: 0,
+        standH: 0,
+      });
+    }
+    return days;
   }
 
   // ============================================
@@ -1403,6 +1481,143 @@ class HealthConnectService {
   async getBodyComposition(): Promise<HealthData['bodyComposition'] | null> {
     if (!this.syncStatus.permissions.bodyComposition) return null;
     return this.getAndroidBodyComposition();
+  }
+
+  // ============================================
+  // LECTURE: PRESSION ARTÉRIELLE
+  // ============================================
+
+  private async getAndroidBloodPressure(): Promise<HealthData['bloodPressure'] | null> {
+    return this.queryHealthConnect(async () => {
+      const HC = getHealthConnect()!;
+      const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      const records = await HC.readRecords('BloodPressure', {
+        timeRangeFilter: this.createTimeRangeFilter(fromDate, new Date()),
+      });
+
+      if (records?.records && records.records.length > 0) {
+        const sorted = [...records.records].sort((a: any, b: any) =>
+          new Date(b.time).getTime() - new Date(a.time).getTime()
+        );
+        const latest = sorted[0] as any;
+        return {
+          systolic: Math.round(latest.systolic?.inMillimetersOfMercury || 0),
+          diastolic: Math.round(latest.diastolic?.inMillimetersOfMercury || 0),
+          date: new Date(latest.time).toISOString(),
+          source: normalizeSourceName(extractAndroidSourceName(latest)),
+        };
+      }
+      return null;
+    }, 'bloodPressure');
+  }
+
+  async getBloodPressure(): Promise<HealthData['bloodPressure'] | null> {
+    if (!this.syncStatus.permissions.bloodPressure) return null;
+    return this.getAndroidBloodPressure();
+  }
+
+  // ============================================
+  // LECTURE: GLYCÉMIE
+  // ============================================
+
+  private async getAndroidBloodGlucose(): Promise<HealthData['bloodGlucose'] | null> {
+    return this.queryHealthConnect(async () => {
+      const HC = getHealthConnect()!;
+      const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      const records = await HC.readRecords('BloodGlucose', {
+        timeRangeFilter: this.createTimeRangeFilter(fromDate, new Date()),
+      });
+
+      if (records?.records && records.records.length > 0) {
+        const sorted = [...records.records].sort((a: any, b: any) =>
+          new Date(b.time).getTime() - new Date(a.time).getTime()
+        );
+        const latest = sorted[0] as any;
+        return {
+          value: Math.round(latest.level?.inMillimolesPerLiter * 100) / 100,
+          unit: 'mmol/L',
+          date: new Date(latest.time).toISOString(),
+          source: normalizeSourceName(extractAndroidSourceName(latest)),
+        };
+      }
+      return null;
+    }, 'bloodGlucose');
+  }
+
+  async getBloodGlucose(): Promise<HealthData['bloodGlucose'] | null> {
+    if (!this.syncStatus.permissions.bloodGlucose) return null;
+    return this.getAndroidBloodGlucose();
+  }
+
+  // ============================================
+  // LECTURE: TAILLE
+  // ============================================
+
+  private async getAndroidHeight(): Promise<HealthData['height'] | null> {
+    return this.queryHealthConnect(async () => {
+      const HC = getHealthConnect()!;
+      const fromDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+
+      const records = await HC.readRecords('Height', {
+        timeRangeFilter: this.createTimeRangeFilter(fromDate, new Date()),
+      });
+
+      if (records?.records && records.records.length > 0) {
+        const sorted = [...records.records].sort((a: any, b: any) =>
+          new Date(b.time).getTime() - new Date(a.time).getTime()
+        );
+        const latest = sorted[0] as any;
+        return {
+          value: Math.round(latest.height?.inMeters * 100), // mètres → cm
+          date: new Date(latest.time).toISOString(),
+          source: normalizeSourceName(extractAndroidSourceName(latest)),
+        };
+      }
+      return null;
+    }, 'height');
+  }
+
+  async getHeight(): Promise<HealthData['height'] | null> {
+    if (!this.syncStatus.permissions.height) return null;
+    return this.getAndroidHeight();
+  }
+
+  // ============================================
+  // LECTURE: ÉTAGES MONTÉS
+  // ============================================
+
+  private async getAndroidFloorsClimbed(): Promise<HealthData['floorsClimbed'] | null> {
+    return this.queryHealthConnect(async () => {
+      const HC = getHealthConnect()!;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const records = await HC.readRecords('FloorsClimbed', {
+        timeRangeFilter: this.createTimeRangeFilter(today, new Date()),
+      });
+
+      if (records?.records && records.records.length > 0) {
+        const total = records.records.reduce((sum: number, r: any) => sum + (r.floors || 0), 0);
+        return {
+          count: Math.round(total),
+          date: today.toISOString(),
+          source: normalizeSourceName(extractAndroidSourceName(records.records[0])),
+        };
+      }
+      return null;
+    }, 'floorsClimbed');
+  }
+
+  async getFloorsClimbed(): Promise<HealthData['floorsClimbed'] | null> {
+    if (!this.syncStatus.permissions.floorsClimbed) return null;
+    return this.getAndroidFloorsClimbed();
+  }
+
+  async getMindfulMinutes(): Promise<null> {
+    // Android Health Connect n'a pas d'équivalent aux sessions de pleine conscience Apple
+    return null;
   }
 
   // ============================================
@@ -2190,7 +2405,7 @@ class HealthConnectService {
   /**
    * Recuperer les details enrichis d'un workout via son ID Health Connect.
    * Inclut: route GPS, FC detaillee, splits, elevation.
-   * Note: Health Connect ne stocke pas de meteo ni qualite de l'air.
+   * Note: Health Connect ne stocke pas de météo ni qualité de l'air.
    */
   async getWorkoutDetailsByUUID(workoutId: string): Promise<WorkoutDetails | null> {
     const HC = getHealthConnect();
@@ -2595,99 +2810,80 @@ class HealthConnectService {
       const available = await this.isAvailable();
       if (!available) {
         return {
-          weight: undefined,
-          steps: undefined,
-          sleep: undefined,
-          hydration: undefined,
-          heartRate: undefined,
-          heartRateVariability: undefined,
-          calories: undefined,
-          distance: undefined,
-          vo2Max: undefined,
-          oxygenSaturation: undefined,
-          respiratoryRate: undefined,
-          bodyTemperature: undefined,
-          bodyComposition: undefined,
-          workouts: undefined,
+          weight: undefined, steps: undefined, sleep: undefined, hydration: undefined,
+          heartRate: undefined, heartRateVariability: undefined, calories: undefined,
+          distance: undefined, vo2Max: undefined, oxygenSaturation: undefined,
+          respiratoryRate: undefined, bodyTemperature: undefined, bodyComposition: undefined,
+          workouts: undefined, bloodPressure: undefined, bloodGlucose: undefined,
+          height: undefined, floorsClimbed: undefined,
         };
       }
 
       const TIMEOUT_MS = 5000;
       const results = await Promise.allSettled([
-        this.withTimeout(this.getLatestWeight(), TIMEOUT_MS),
-        this.withTimeout(this.getTodaySteps(), TIMEOUT_MS),
-        this.withTimeout(this.getLastSleep(), TIMEOUT_MS),
-        this.withTimeout(this.getTodayHydration(), TIMEOUT_MS),
-        this.withTimeout(this.getTodayHeartRate(), TIMEOUT_MS),
-        this.withTimeout(this.getTodayHRV(), TIMEOUT_MS),
-        this.withTimeout(this.getTodayCalories(), TIMEOUT_MS),
-        this.withTimeout(this.getTodayDistance(), TIMEOUT_MS),
-        this.withTimeout(this.getVO2Max(), TIMEOUT_MS),
-        this.withTimeout(this.getOxygenSaturation(), TIMEOUT_MS),
-        this.withTimeout(this.getRespiratoryRate(), TIMEOUT_MS),
-        this.withTimeout(this.getBodyTemperature(), TIMEOUT_MS),
-        this.withTimeout(this.getBodyComposition(), TIMEOUT_MS),
-        this.withTimeout(this.getWorkouts(), TIMEOUT_MS),
+        this.withTimeout(this.getLatestWeight(), TIMEOUT_MS),           // 0
+        this.withTimeout(this.getTodaySteps(), TIMEOUT_MS),             // 1
+        this.withTimeout(this.getLastSleep(), TIMEOUT_MS),              // 2
+        this.withTimeout(this.getTodayHydration(), TIMEOUT_MS),         // 3
+        this.withTimeout(this.getTodayHeartRate(), TIMEOUT_MS),         // 4
+        this.withTimeout(this.getTodayHRV(), TIMEOUT_MS),               // 5
+        this.withTimeout(this.getTodayCalories(), TIMEOUT_MS),          // 6
+        this.withTimeout(this.getTodayDistance(), TIMEOUT_MS),          // 7
+        this.withTimeout(this.getVO2Max(), TIMEOUT_MS),                 // 8
+        this.withTimeout(this.getOxygenSaturation(), TIMEOUT_MS),       // 9
+        this.withTimeout(this.getRespiratoryRate(), TIMEOUT_MS),        // 10
+        this.withTimeout(this.getBodyTemperature(), TIMEOUT_MS),        // 11
+        this.withTimeout(this.getBodyComposition(), TIMEOUT_MS),        // 12
+        this.withTimeout(this.getWorkouts(), TIMEOUT_MS),               // 13
+        this.withTimeout(this.getBloodPressure(), TIMEOUT_MS),          // 14
+        this.withTimeout(this.getBloodGlucose(), TIMEOUT_MS),           // 15
+        this.withTimeout(this.getHeight(), TIMEOUT_MS),                 // 16
+        this.withTimeout(this.getFloorsClimbed(), TIMEOUT_MS),          // 17
       ]);
 
-      const weight = results[0].status === 'fulfilled' ? results[0].value : null;
-      const steps = results[1].status === 'fulfilled' ? results[1].value : null;
-      const sleep = results[2].status === 'fulfilled' ? results[2].value : null;
-      const hydration = results[3].status === 'fulfilled' ? results[3].value : null;
-      const heartRate = results[4].status === 'fulfilled' ? results[4].value : null;
-      const hrv = results[5].status === 'fulfilled' ? results[5].value : null;
-      const calories = results[6].status === 'fulfilled' ? results[6].value : null;
-      const distance = results[7].status === 'fulfilled' ? results[7].value : null;
-      const vo2Max = results[8].status === 'fulfilled' ? results[8].value : null;
-      const oxygenSaturation = results[9].status === 'fulfilled' ? results[9].value : null;
-      const respiratoryRate = results[10].status === 'fulfilled' ? results[10].value : null;
-      const bodyTemperature = results[11].status === 'fulfilled' ? results[11].value : null;
-      const bodyComposition = results[12].status === 'fulfilled' ? results[12].value : null;
-      const workouts = results[13].status === 'fulfilled' ? results[13].value : null;
+      const r = (i: number) => results[i].status === 'fulfilled' ? results[i].value : null;
 
       // Logger les échecs
-      results.forEach((r, i) => {
-        if (r.status === 'rejected') {
-          const dataTypes = ['weight', 'steps', 'sleep', 'hydration', 'heartRate', 'hrv',
-            'calories', 'distance', 'vo2max', 'oxygenSat', 'respRate',
-            'temperature', 'bodyComp', 'workouts'];
-          logger.warn(`[HealthConnect Android] Failed to fetch ${dataTypes[i]}:`, r.reason);
+      const dataTypes = ['weight', 'steps', 'sleep', 'hydration', 'heartRate', 'hrv',
+        'calories', 'distance', 'vo2max', 'oxygenSat', 'respRate',
+        'temperature', 'bodyComp', 'workouts', 'bloodPressure', 'bloodGlucose',
+        'height', 'floorsClimbed'];
+      results.forEach((res, i) => {
+        if (res.status === 'rejected') {
+          const _dataTypes = dataTypes; // trick pour éviter unused variable
+          logger.warn(`[HealthConnect Android] Failed to fetch ${_dataTypes[i]}:`, res.reason);
         }
       });
 
       return {
-        weight: weight ?? undefined,
-        steps: steps ?? undefined,
-        sleep: sleep ?? undefined,
-        hydration: hydration ?? undefined,
-        heartRate: heartRate ?? undefined,
-        heartRateVariability: hrv ?? undefined,
-        calories: calories ?? undefined,
-        distance: distance ?? undefined,
-        vo2Max: vo2Max ?? undefined,
-        oxygenSaturation: oxygenSaturation ?? undefined,
-        respiratoryRate: respiratoryRate ?? undefined,
-        bodyTemperature: bodyTemperature ?? undefined,
-        bodyComposition: bodyComposition ?? undefined,
-        workouts: workouts ?? undefined,
+        weight: r(0) ?? undefined,
+        steps: r(1) ?? undefined,
+        sleep: r(2) ?? undefined,
+        hydration: r(3) ?? undefined,
+        heartRate: r(4) ?? undefined,
+        heartRateVariability: r(5) ?? undefined,
+        calories: r(6) ?? undefined,
+        distance: r(7) ?? undefined,
+        vo2Max: r(8) ?? undefined,
+        oxygenSaturation: r(9) ?? undefined,
+        respiratoryRate: r(10) ?? undefined,
+        bodyTemperature: r(11) ?? undefined,
+        bodyComposition: r(12) ?? undefined,
+        workouts: r(13) ?? undefined,
+        bloodPressure: r(14) ?? undefined,
+        bloodGlucose: r(15) ?? undefined,
+        height: r(16) ?? undefined,
+        floorsClimbed: r(17) ?? undefined,
       };
     } catch (error) {
       logger.error('[HealthConnect Android] Critical error in getAllHealthData:', error);
       return {
-        weight: undefined,
-        steps: undefined,
-        sleep: undefined,
-        hydration: undefined,
-        heartRate: undefined,
-        heartRateVariability: undefined,
-        calories: undefined,
-        distance: undefined,
-        vo2Max: undefined,
-        oxygenSaturation: undefined,
-        respiratoryRate: undefined,
-        bodyTemperature: undefined,
-        bodyComposition: undefined,
-        workouts: undefined,
+        weight: undefined, steps: undefined, sleep: undefined, hydration: undefined,
+        heartRate: undefined, heartRateVariability: undefined, calories: undefined,
+        distance: undefined, vo2Max: undefined, oxygenSaturation: undefined,
+        respiratoryRate: undefined, bodyTemperature: undefined, bodyComposition: undefined,
+        workouts: undefined, bloodPressure: undefined, bloodGlucose: undefined,
+        height: undefined, floorsClimbed: undefined,
       };
     }
   }
@@ -2738,6 +2934,68 @@ class HealthConnectService {
       }
       if (data.hydration) {
         await AsyncStorage.setItem(STORAGE_KEYS.LAST_HYDRATION, JSON.stringify(data.hydration));
+      }
+
+      // ══════ DONNÉES DE SANTÉ → SQLite (health_data) ══════
+      const today = new Date().toISOString().split('T')[0];
+      const records: HealthDataRecord[] = [];
+
+      // ══════ PRESSION ARTÉRIELLE → SQLite ══════
+      if (data.bloodPressure && data.bloodPressure.systolic > 0) {
+        records.push({
+          date: today,
+          type: 'blood_pressure_systolic',
+          value: data.bloodPressure.systolic,
+          value2: data.bloodPressure.diastolic,
+          unit: 'mmHg',
+          source: data.bloodPressure.source || 'health_connect',
+        });
+        logger.info(`[HealthConnect Android] Pression artérielle: ${data.bloodPressure.systolic}/${data.bloodPressure.diastolic} mmHg`);
+      }
+
+      // ══════ GLYCÉMIE → SQLite ══════
+      if (data.bloodGlucose && data.bloodGlucose.value > 0) {
+        records.push({
+          date: today,
+          type: 'blood_glucose',
+          value: data.bloodGlucose.value,
+          unit: data.bloodGlucose.unit,
+          source: data.bloodGlucose.source || 'health_connect',
+        });
+        logger.info(`[HealthConnect Android] Glycémie: ${data.bloodGlucose.value} ${data.bloodGlucose.unit}`);
+      }
+
+      // ══════ TAILLE → SQLite ══════
+      if (data.height && data.height.value > 0) {
+        records.push({
+          date: today,
+          type: 'height',
+          value: data.height.value,
+          unit: 'cm',
+          source: data.height.source || 'health_connect',
+        });
+        logger.info(`[HealthConnect Android] Taille: ${data.height.value} cm`);
+      }
+
+      // ══════ ÉTAGES MONTÉS → SQLite ══════
+      if (data.floorsClimbed && data.floorsClimbed.count > 0) {
+        records.push({
+          date: today,
+          type: 'floors_climbed',
+          value: data.floorsClimbed.count,
+          unit: 'floors',
+          source: data.floorsClimbed.source || 'health_connect',
+        });
+        logger.info(`[HealthConnect Android] Étages montés: ${data.floorsClimbed.count}`);
+      }
+
+      if (records.length > 0) {
+        try {
+          await saveHealthDataBatch(records);
+          logger.info(`[HealthConnect Android] ${records.length} enregistrement(s) de santé sauvegardés dans SQLite`);
+        } catch (e) {
+          logger.warn('[HealthConnect Android] Erreur sauvegarde health data batch:', e);
+        }
       }
 
       // Import workouts dans SQLite (table trainings)
@@ -2858,7 +3116,7 @@ class HealthConnectService {
         : workout.source === 'xiaomi' ? 'Xiaomi'
         : '';
 
-      const title = `Bravo pour ta seance de ${sportLabel.toLowerCase()} !`;
+      const title = `Bravo pour ta séance de ${sportLabel.toLowerCase()} !`;
 
       const lines: string[] = [durationStr];
       if (workout.distance && workout.distance > 0) lines[0] += ` | ${workout.distance.toFixed(2)} km`;
@@ -2869,7 +3127,7 @@ class HealthConnectService {
         lines.push(hrStr);
       }
       if (sourceLabel) lines.push(`Via ${sourceLabel}`);
-      lines.push('Tape pour partager ta seance !');
+      lines.push('Tape pour partager ta séance !');
 
       await Notif.scheduleNotificationAsync({
         content: {
@@ -2926,7 +3184,7 @@ class HealthConnectService {
   /**
    * Observer les nouveaux workouts via polling
    * Health Connect (Android) ne supporte pas de push observer natif,
-   * on poll donc toutes les 2 minutes pour detecter les seances
+   * on poll donc toutes les 2 minutes pour detecter les séances
    * en provenance de Garmin, Fitbit, Samsung, Polar, Suunto, COROS, Withings, etc.
    */
   async setupWorkoutObserver(): Promise<void> {
@@ -3026,7 +3284,7 @@ class HealthConnectService {
             const Notif = await import('expo-notifications');
             await Notif.scheduleNotificationAsync({
               content: {
-                title: `Seance terminee !`,
+                title: `Séance terminee !`,
                 body: `${sportLabel} - ${durationMin} min. Partage ta perf !`,
                 data: { type: 'workout_completed' },
                 sound: 'default',
@@ -3034,7 +3292,7 @@ class HealthConnectService {
               trigger: null,
             });
             // Sauvegarder dans l'historique
-            saveNotification('Seance terminee !', `${sportLabel} - ${durationMin} min. Partage ta perf !`, 'workout_complete', { type: 'workout_completed' }).catch(() => {});
+            saveNotification('Séance terminee !', `${sportLabel} - ${durationMin} min. Partage ta perf !`, 'workout_complete', { type: 'workout_completed' }).catch(() => {});
           } catch {}
         }
 
@@ -3072,11 +3330,10 @@ class HealthConnectService {
    * Ouvre le Play Store pour installer Health Connect
    */
   async openHealthConnectPlayStore(): Promise<void> {
-    const { Linking } = require('react-native');
-    try {
-      await Linking.openURL('market://details?id=com.google.android.apps.healthdata');
-    } catch {
-      await Linking.openURL('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata');
+    const { safeOpenURL } = require('@/lib/security/validators');
+    const opened = await safeOpenURL('market://details?id=com.google.android.apps.healthdata');
+    if (!opened) {
+      await safeOpenURL('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata');
     }
   }
 }

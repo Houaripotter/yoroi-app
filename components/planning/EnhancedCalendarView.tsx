@@ -40,6 +40,9 @@ interface EnhancedCalendarViewProps {
   onMonthChange: (date: Date) => void;
   onDayPress: (day: Date) => void;
   selectedDate: Date | null;
+  onQuickAdd?: (date: Date) => void;
+  onToggleRest?: (date: Date) => void;
+  refreshKey?: number;
 }
 
 export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
@@ -49,6 +52,9 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
   onMonthChange,
   onDayPress,
   selectedDate,
+  onQuickAdd,
+  onToggleRest,
+  refreshKey,
 }) => {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -68,7 +74,7 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
     t('dates.sundayShort'),
   ];
 
-  // Charger les jours de repos pour le mois affiché
+  // Charger les jours de repos pour le mois affiché (+ quand refreshKey change)
   useEffect(() => {
     const loadRestDays = async () => {
       const monthRestDays = await getMonthRestDays(
@@ -78,7 +84,7 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
       setRestDays(monthRestDays);
     };
     loadRestDays();
-  }, [currentMonth]);
+  }, [currentMonth, refreshKey]);
 
   // Calendar logic
   const monthStart = startOfMonth(currentMonth);
@@ -302,20 +308,30 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
                       </View>
                     )}
 
-                    {/* Indicateur repos */}
+                    {/* Lune cliquable — toggle jour de repos */}
                     {isRest && (
-                      <Moon size={12} color="#8B5CF6" style={styles.restIcon} />
+                      <TouchableOpacity
+                        onPress={() => onToggleRest?.(day)}
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                        style={styles.restIconBtn}
+                      >
+                        <Moon size={13} color="#8B5CF6" />
+                      </TouchableOpacity>
                     )}
 
-                    {/* Bouton + pour ajouter (si vide et mois actuel) */}
-                    {!hasTraining && !isRest && isCurrentMonth && (
-                      <View style={styles.addDayButtonContainer}>
+                    {/* Bouton + cliquable pour ajouter directement (si vide et mois actuel) */}
+                    {!isRest && isCurrentMonth && (
+                      <TouchableOpacity
+                        onPress={() => onQuickAdd?.(day)}
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                        style={styles.addDayButtonContainer}
+                      >
                         <Plus
                           size={14}
-                          color={colors.textMuted}
-                          style={{ opacity: 0.3 }}
+                          color={hasTraining ? colors.accent : colors.textMuted}
+                          style={{ opacity: hasTraining ? 0.7 : 0.4 }}
                         />
-                      </View>
+                      </TouchableOpacity>
                     )}
                   </TouchableOpacity>
                 );
@@ -446,13 +462,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Rest Icon
-  restIcon: {
+  // Rest Icon (cliquable)
+  restIconBtn: {
     marginTop: 2,
+    padding: 2,
   },
 
-  // Add Button
+  // Add Button (cliquable)
   addDayButtonContainer: {
     marginTop: 2,
+    padding: 2,
   },
 });

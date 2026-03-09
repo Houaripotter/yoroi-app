@@ -35,7 +35,7 @@ export const RewardOverlay = React.forwardRef<
     try {
       // Charger le son
       const { sound } = await Audio.Sound.createAsync(
-        require('@/assets/sounds/pokemon-heartgold-soulsilver-ost-fanfare-badge-get-made-with-Voicemod.mp3')
+        require('@/assets/sounds/fanfare-badge.mp3')
       );
       soundRef.current = sound;
       

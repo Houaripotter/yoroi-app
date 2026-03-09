@@ -18,17 +18,18 @@ export const APP_CONFIG = {
   sku: 'yoroi2026',
 
   // === URLS ===
+  // URL de recherche Play Store tant que l'app n'a pas de lien direct
+  androidSearchUrl: 'https://play.google.com/store/search?q=Yoroi+Suivi+de+poids+%26+Sport&c=apps',
+
   getStoreUrl: () => {
     if (Platform.OS === 'ios') {
-      // Si pas d'ID App Store, utiliser le lien de recherche
       if (APP_CONFIG.appStoreId) {
         return `https://apps.apple.com/app/yoroi/id${APP_CONFIG.appStoreId}`;
       }
-      // Fallback: recherche par nom
       return 'https://apps.apple.com/app/yoroi';
     }
-    // Android
-    return `https://play.google.com/store/apps/details?id=${APP_CONFIG.bundleId.android}`;
+    // Android — redirige vers la recherche Play Store
+    return APP_CONFIG.androidSearchUrl;
   },
 
   getReviewUrl: () => {
@@ -38,14 +39,15 @@ export const APP_CONFIG = {
       }
       return 'https://apps.apple.com/app/yoroi';
     }
-    return `https://play.google.com/store/apps/details?id=${APP_CONFIG.bundleId.android}`;
+    // Android — redirige vers la recherche Play Store
+    return APP_CONFIG.androidSearchUrl;
   },
 
   // === APP GROUP (pour partage de données iOS) ===
   appGroup: 'group.com.yoroi.app',
 
   // === VERSION ===
-  version: '2.2.0',
+  version: '2.3.0',
 
   // === DEVELOPER INFO ===
   developer: {

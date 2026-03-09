@@ -529,7 +529,12 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
             try {
               // 1. Update waterIntake (ml, used by megaPack)
               const currentStr = await AsyncStorage.getItem('waterIntake');
-              const current = currentStr ? parseInt(currentStr) : 0;
+              let current = 0;
+              if (currentStr) {
+                const rawVal = parseFloat(currentStr);
+                // Si la valeur est < 20, elle est en litres (ancienne version) → convertir en ml
+                current = rawVal < 20 ? Math.round(rawVal * 1000) : Math.round(rawVal);
+              }
               const newTotalMl = Math.max(0, current + amount);
               await AsyncStorage.setItem('waterIntake', String(newTotalMl));
 
@@ -609,6 +614,10 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
             await AsyncStorage.setItem('currentWeight', String(weight));
             DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
             DeviceEventEmitter.emit('WEIGHT_UPDATED', { weight });
+            // Confirmer le poids à la Watch immédiatement (sans attendre le megaPack)
+            try {
+              await WatchConnectivity.sendWeightUpdate(weight);
+            } catch { /* non bloquant */ }
             showSyncBanner('Poids synchronise', 'success');
             logSync('handleWatchMessage - Poids ajoute depuis Watch', { weight });
           }
@@ -1008,7 +1017,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         getTrainings(7).catch(() => []),
       ]);
 
-      // 1b. Stats entrainements annuels pour complications Watch
+      // 1b. Stats entraînements annuels pour complications Watch
       let yearlyWorkouts = 0;
       let workoutYearGoal = 0;
       try {
@@ -1192,7 +1201,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         waterPercent: weightEntries?.[0]?.water_percent || 0,
         // Séances récentes (dashboard)
         recentWorkouts: (recentTrainings || []).slice(0, 3).map((t: any) => ({
-          type: t.sport || t.category || 'Entrainement',
+          type: t.sport || t.category || 'Entraînement',
           duration: t.duration_minutes || t.duration || 0,
           calories: t.calories || 0,
           date: t.date || '',

@@ -72,6 +72,7 @@ function getNotifIcon(type: string) {
     case 'sleep':
       return Moon;
     case 'achievement':
+    case 'gamification':
       return Trophy;
     case 'briefing':
     case 'smart_check':
@@ -110,6 +111,8 @@ function getNotifColor(type: string, accent: string): string {
       return '#7C4DFF';
     case 'achievement':
       return '#FFD700';
+    case 'gamification':
+      return accent;
     case 'briefing':
     case 'smart_check':
     case 'smart_missed':
@@ -271,7 +274,17 @@ export const NotificationBellPopup: React.FC<NotificationBellPopupProps> = ({
 
   const loadNotifications = useCallback(async () => {
     const data = await getNotifications();
-    setNotifications(data.slice(0, 8));
+    // Filtrer les notifications liées à la synchronisation Watch (techniques, pas utiles)
+    const filtered = data.filter(n => {
+      const type = (n.type || '').toLowerCase();
+      const title = (n.title || '').toLowerCase();
+      const body = (n.body || '').toLowerCase();
+      if (type === 'watch_sync' || type === 'watch') return false;
+      if (type === 'general' && (title.includes('watch') || title.includes('montre') || title.includes('synchronis'))) return false;
+      if ((title.includes('watch') || title.includes('montre')) && (body.includes('synchronis') || body.includes('connect'))) return false;
+      return true;
+    });
+    setNotifications(filtered.slice(0, 8));
   }, []);
 
   const openPopup = useCallback(async () => {
@@ -283,7 +296,7 @@ export const NotificationBellPopup: React.FC<NotificationBellPopupProps> = ({
       Animated.spring(scaleAnim, { toValue: 1, tension: 80, friction: 10, useNativeDriver: true }),
       Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
     ]).start();
-  }, [loadNotifications, fadeAnim, scaleAnim]);
+  }, [loadNotifications, refreshCount, fadeAnim, scaleAnim]);
 
   const closePopup = useCallback(() => {
     Animated.parallel([
@@ -458,7 +471,7 @@ export const NotificationBellPopup: React.FC<NotificationBellPopupProps> = ({
                         </Text>
                         <Text style={[styles.suggestionBody, { color: colors.textSecondary || colors.textMuted }]}>
                           {isFr
-                            ? 'Definissez vos entrainements recurrents et validez-les d\'un tap !'
+                            ? 'Definissez vos entraînements recurrents et validez-les d\'un tap !'
                             : 'Set up your recurring workouts and validate them with a tap!'}
                         </Text>
                       </View>

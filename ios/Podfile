@@ -60,13 +60,29 @@ target 'Yoroi' do
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
 
-    # Fix: expo-dev-launcher référence RCTPackagerConnection supprimé en RN 0.81+
-    installer.pods_project.targets.each do |target|
-      next unless target.name == "expo-dev-launcher"
-      files_to_remove = target.source_build_phase.files.select do |f|
-        f.file_ref&.path&.include?("RCTPackagerConnection")
+    # Fix: ReactNativeDependencies.xcframework (folly, glog, double-conversion)
+    # n'est pas ajouté automatiquement aux FRAMEWORK_SEARCH_PATHS / OTHER_LDFLAGS
+    rnd_framework_path = '"${PODS_ROOT}/ReactNativeDependencies/framework/packages/react-native"'
+    rnd_link_flag = '-framework "ReactNativeDependencies"'
+
+    installer.aggregate_targets.each do |aggregate_target|
+      aggregate_target.xcconfigs.each do |config_name, config_file|
+        # Ajouter le chemin de recherche
+        existing_search = config_file.attributes['FRAMEWORK_SEARCH_PATHS'] || '$(inherited)'
+        unless existing_search.include?('ReactNativeDependencies')
+          config_file.attributes['FRAMEWORK_SEARCH_PATHS'] = existing_search + " #{rnd_framework_path}"
+        end
+
+        # Ajouter le flag de link
+        existing_ldflags = config_file.attributes['OTHER_LDFLAGS'] || '$(inherited)'
+        unless existing_ldflags.include?('ReactNativeDependencies')
+          config_file.attributes['OTHER_LDFLAGS'] = existing_ldflags + " #{rnd_link_flag}"
+        end
+
+        # Sauvegarder le fichier xcconfig mis à jour
+        xcconfig_path = aggregate_target.xcconfig_path(config_name)
+        config_file.save_as(Pathname.new(xcconfig_path))
       end
-      files_to_remove.each(&:remove_from_project)
     end
   end
 end

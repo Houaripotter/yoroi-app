@@ -108,7 +108,7 @@ export default function ImportCSVScreen() {
       const parsed = parseUnifiedCSV(content);
 
       if (parsed.rows.length === 0) {
-        showPopup({ type: 'error', title: 'Fichier vide', message: 'Aucune donnee trouvee. Verifiez le format.' });
+        showPopup({ type: 'error', title: 'Fichier vide', message: 'Aucune donnée trouvee. Verifiez le format.' });
         setIsParsing(false);
         return;
       }
@@ -178,7 +178,7 @@ export default function ImportCSVScreen() {
       const parsed = parseCSVContent(content);
 
       if (parsed.rows.length === 0) {
-        showPopup({ type: 'error', title: 'Fichier vide', message: 'Aucune donnee trouvee.' });
+        showPopup({ type: 'error', title: 'Fichier vide', message: 'Aucune donnée trouvee.' });
         setIsParsing(false);
         return;
       }
@@ -284,17 +284,17 @@ export default function ImportCSVScreen() {
               <FileSpreadsheet size={22} color={colors.accent} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.purposeTitle, { color: colors.textPrimary }]}>
-                  Importe tes donnees depuis Excel
+                  Importe tes données depuis Excel
                 </Text>
                 <Text style={[styles.purposeText, { color: colors.textSecondary }]}>
-                  Un seul fichier CSV avec toutes tes donnees : poids, composition corporelle et mensurations. Remplis-le sur ton PC/Mac, puis importe-le ici.
+                  Un seul fichier CSV avec toutes tes données : poids, composition corporelle et mensurations. Remplis-le sur ton PC/Mac, puis importe-le ici.
                 </Text>
               </View>
             </View>
 
-            {/* Donnees incluses */}
+            {/* Données incluses */}
             <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-              DONNEES INCLUSES DANS LE MODELE
+              DONNÉES INCLUSES DANS LE MODELE
             </Text>
             <View style={styles.dataBadges}>
               {[
@@ -334,7 +334,7 @@ export default function ImportCSVScreen() {
               </View>
               <View style={styles.stepContent}>
                 <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-                  Remplis tes donnees
+                  Remplis tes données
                 </Text>
                 <Text style={[styles.stepDesc, { color: colors.textMuted }]}>
                   Une ligne par date (JJ/MM/AAAA ou AAAA-MM-JJ). Laisse vides les colonnes que tu n'as pas. Decimales avec "." ou "," les deux marchent.
@@ -403,7 +403,7 @@ export default function ImportCSVScreen() {
                   Import avance
                 </Text>
                 <Text style={[styles.advancedLinkDesc, { color: colors.textMuted }]}>
-                  Entrainements, sommeil, hydratation, humeur...
+                  Entraînements, sommeil, hydratation, humeur...
                 </Text>
               </View>
               <ChevronRight size={18} color={colors.textMuted} />
@@ -620,7 +620,7 @@ export default function ImportCSVScreen() {
                   Import multi-types
                 </Text>
                 <Text style={[styles.purposeText, { color: colors.textSecondary }]}>
-                  Un fichier CSV avec colonne TYPE pour importer entrainements, sommeil, hydratation, humeur en plus du poids et mensurations.
+                  Un fichier CSV avec colonne TYPE pour importer entraînements, sommeil, hydratation, humeur en plus du poids et mensurations.
                 </Text>
               </View>
             </View>
@@ -684,11 +684,11 @@ export default function ImportCSVScreen() {
                 const validInType = typeRows.filter(r => r.valid).length;
                 const invalidInType = typeRows.filter(r => !r.valid).length;
                 const ADV_COLORS: Record<CSVRowType, string> = {
-                  POIDS: '#14B8A6', ENTRAINEMENT: '#EF4444', MENSURATION: '#8B5CF6',
+                  POIDS: '#14B8A6', ENTRAÎNEMENT: '#EF4444', MENSURATION: '#8B5CF6',
                   SOMMEIL: '#6366F1', HYDRATATION: '#3B82F6', HUMEUR: '#EC4899',
                 };
                 const ADV_LABELS: Record<CSVRowType, string> = {
-                  POIDS: 'pesees', ENTRAINEMENT: 'entrainements', MENSURATION: 'mensurations',
+                  POIDS: 'pesees', ENTRAÎNEMENT: 'entraînements', MENSURATION: 'mensurations',
                   SOMMEIL: 'sommeil', HYDRATATION: 'hydratation', HUMEUR: 'humeur',
                 };
 

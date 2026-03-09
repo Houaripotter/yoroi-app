@@ -58,7 +58,7 @@ export default function TrashScreen() {
   const handleRestore = (item: TrashItem) => {
     showPopup(
       'Restaurer',
-      `Restaurer la seance ${item.club_name || getSportName(item.sport)} du ${format(new Date(item.date + 'T00:00:00'), 'd MMM yyyy', { locale: fr })} ?`,
+      `Restaurer la séance ${item.club_name || getSportName(item.sport)} du ${format(new Date(item.date + 'T00:00:00'), 'd MMM yyyy', { locale: fr })} ?`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -77,7 +77,7 @@ export default function TrashScreen() {
   const handlePermanentDelete = (item: TrashItem) => {
     showPopup(
       'Supprimer definitivement',
-      `Cette action est irreversible. Supprimer definitivement cette seance ?`,
+      `Cette action est irreversible. Supprimer definitivement cette séance ?`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -97,7 +97,7 @@ export default function TrashScreen() {
     if (items.length === 0) return;
     showPopup(
       'Vider la corbeille',
-      `Supprimer definitivement ${items.length} seance${items.length > 1 ? 's' : ''} ? Cette action est irreversible.`,
+      `Supprimer definitivement ${items.length} séance${items.length > 1 ? 's' : ''} ? Cette action est irreversible.`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -171,7 +171,7 @@ export default function TrashScreen() {
               Corbeille vide
             </Text>
             <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-              Les seances supprimees apparaitront ici
+              Les séances supprimees apparaitront ici
             </Text>
           </View>
         )}

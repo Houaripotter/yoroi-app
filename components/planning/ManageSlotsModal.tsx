@@ -325,7 +325,7 @@ export const ManageSlotsModal: React.FC<ManageSlotsModalProps> = ({
                 Aucun creneau
               </Text>
               <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                Ajoutez vos entrainements recurrents pour les valider chaque semaine d'un tap.
+                Ajoutez vos entraînements recurrents pour les valider chaque semaine d'un tap.
               </Text>
             </View>
           )}

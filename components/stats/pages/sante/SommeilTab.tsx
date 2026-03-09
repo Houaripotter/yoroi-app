@@ -140,7 +140,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
 
   return (
     <View>
-      {/* Hero - Grande duree */}
+      {/* Hero - Grande durée */}
       <TouchableOpacity
         style={[styles.heroCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}
         activeOpacity={0.75}
@@ -152,7 +152,10 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
               {avgHours > 0 ? formatSleepDuration(avgHours) : '--'}
             </Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>
-              Duree moyenne par nuit
+              Durée de sommeil effectif moy.
+            </Text>
+            <Text style={[styles.heroSubLabel, { color: colors.textMuted }]}>
+              Hors éveils · peut différer d'Apple Santé
             </Text>
             <View style={[styles.seeDetailRow]}>
               <Moon size={13} color={'#6366F1'} strokeWidth={2} />
@@ -224,7 +227,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
         );
       })()}
 
-      {/* Donnees pendant le sommeil */}
+      {/* Données pendant le sommeil */}
       {(sleepComparisonData.heartRate || sleepComparisonData.respiratoryRate || sleepComparisonData.wristTemperature) && (
         <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Pendant le sommeil</Text>
@@ -324,6 +327,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginTop: 4,
+  },
+  heroSubLabel: {
+    fontSize: 11,
+    fontWeight: '400',
+    marginTop: 3,
   },
   addButton: {
     width: 40,

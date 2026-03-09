@@ -1,8 +1,8 @@
 // ============================================
-// YOROI - DETAIL SEANCE (Workout Detail)
+// YOROI - DETAIL SÉANCE (Workout Detail)
 // ============================================
-// Affiche toutes les metriques d'une seance importee depuis Apple Health :
-// FC, zones cardiaques, allure, intermediaires, trace GPS, meteo
+// Affiche toutes les metriques d'une séance importee depuis Apple Health :
+// FC, zones cardiaques, allure, intermédiaires, trace GPS, météo
 // 2-phase loading: basic info instant, details async with retry
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
@@ -16,11 +16,11 @@ import {
   Animated,
   Platform,
   TouchableOpacity,
-  Linking,
 } from 'react-native';
-import Svg, { Rect } from 'react-native-svg';
+import Svg, { Rect, Line } from 'react-native-svg';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { getUserSettings } from '@/lib/storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Clock, MapPin, Flame, Heart, Timer, TrendingUp,
@@ -39,6 +39,7 @@ import type { WorkoutDetails, HeartRateSample } from '@/lib/healthConnect.ios';
 import { healthConnect } from '@/lib/healthConnect';
 import { getSportColor, getSportIcon, getSportName } from '@/lib/sports';
 import logger from '@/lib/security/logger';
+import { safeOpenURL } from '@/lib/security/validators';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MAX_RETRIES = 2;
@@ -81,11 +82,12 @@ function generateDemoDetails(training: Training): WorkoutDetails {
 
   // Zones FC
   const zones = [
-    { zone: 1, name: 'Z1 Recup', minBpm: 0, maxBpm: 120, durationSeconds: 0, color: '#94A3B8' },
-    { zone: 2, name: 'Z2 Endurance', minBpm: 120, maxBpm: 140, durationSeconds: 0, color: '#22C55E' },
-    { zone: 3, name: 'Z3 Tempo', minBpm: 140, maxBpm: 160, durationSeconds: 0, color: '#EAB308' },
-    { zone: 4, name: 'Z4 Seuil', minBpm: 160, maxBpm: 180, durationSeconds: 0, color: '#F97316' },
-    { zone: 5, name: 'Z5 Max', minBpm: 180, maxBpm: 250, durationSeconds: 0, color: '#EF4444' },
+    // Seuils Apple Fitness: 63/71/79/90% de FCmax (190 par défaut pour les données démo)
+    { zone: 1, name: 'Z1 Recup', minBpm: 0, maxBpm: 120, durationSeconds: 0, color: '#3B82F6' },
+    { zone: 2, name: 'Z2 Endurance', minBpm: 120, maxBpm: 135, durationSeconds: 0, color: '#22C55E' },
+    { zone: 3, name: 'Z3 Tempo', minBpm: 135, maxBpm: 150, durationSeconds: 0, color: '#EAB308' },
+    { zone: 4, name: 'Z4 Seuil', minBpm: 150, maxBpm: 171, durationSeconds: 0, color: '#F97316' },
+    { zone: 5, name: 'Z5 Max', minBpm: 171, maxBpm: 250, durationSeconds: 0, color: '#EF4444' },
   ];
   const intervalSec = (duration * 60) / sampleCount;
   for (const s of hrSamples) {
@@ -145,7 +147,7 @@ function generateDemoDetails(training: Training): WorkoutDetails {
     }
   }
 
-  // Route GPS demo pour TOUS les workouts (Apple Sante donne des coordonnees pour chaque seance)
+  // Route GPS demo pour TOUS les workouts (Apple Santé donne des coordonnees pour chaque séance)
   {
     const dist = (training.distance || 0) > 0 ? training.distance! : 2; // 2km par defaut si pas de distance
     const centerLat = 48.8566;
@@ -228,7 +230,7 @@ function formatDateHeader(date: string): string {
 // Noms lisibles pour les sources — masque les noms internes laids
 function getSourceDisplayName(source: string): string | null {
   const map: Record<string, string> = {
-    apple_watch: 'Apple Watch', apple_health: 'Apple Sante',
+    apple_watch: 'Apple Watch', apple_health: 'Apple Santé',
     iphone: 'iPhone', strava: 'Strava', garmin: 'Garmin',
     polar: 'Polar', whoop: 'Whoop', suunto: 'Suunto',
     coros: 'Coros', wahoo: 'Wahoo', samsung: 'Samsung',
@@ -343,15 +345,46 @@ export default function WorkoutDetailScreen() {
   const { colors, isDark, screenBackground } = useTheme();
   const { t } = useI18n();
   const params = useLocalSearchParams<{ id?: string }>();
+  const router = useRouter();
 
   const [training, setTraining] = useState<Training | null>(null);
   const [details, setDetails] = useState<WorkoutDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [userZones, setUserZones] = useState<{ z1max: number; z2max: number; z3max: number; z4max: number } | null>(null);
 
   useEffect(() => {
     loadData();
+    getUserSettings().then(s => {
+      if (s.heartRateZones) setUserZones(s.heartRateZones);
+    });
   }, []);
+
+  // Zones cardiaques: utiliser les zones perso si configurées, sinon celles de HealthKit
+  // DOIT être avant tout return conditionnel (règle des hooks)
+  const hrZones = useMemo(() => {
+    const hrSamples = details?.heartRateSamples;
+    if (userZones && hrSamples && hrSamples.length > 1) {
+      const zones = [
+        { zone: 1, name: 'Zone 1', minBpm: 0,              maxBpm: userZones.z1max, durationSeconds: 0, color: '#3B82F6' },
+        { zone: 2, name: 'Zone 2', minBpm: userZones.z1max, maxBpm: userZones.z2max, durationSeconds: 0, color: '#22C55E' },
+        { zone: 3, name: 'Zone 3', minBpm: userZones.z2max, maxBpm: userZones.z3max, durationSeconds: 0, color: '#EAB308' },
+        { zone: 4, name: 'Zone 4', minBpm: userZones.z3max, maxBpm: userZones.z4max, durationSeconds: 0, color: '#F97316' },
+        { zone: 5, name: 'Zone 5', minBpm: userZones.z4max, maxBpm: 250,              durationSeconds: 0, color: '#EF4444' },
+      ];
+      for (let i = 0; i < hrSamples.length - 1; i++) {
+        const bpm = hrSamples[i].bpm;
+        const gap = (new Date(hrSamples[i + 1].timestamp).getTime() - new Date(hrSamples[i].timestamp).getTime()) / 1000;
+        if (gap > 0 && gap < 300) {
+          for (const z of zones) {
+            if (bpm >= z.minBpm && bpm < z.maxBpm) { z.durationSeconds += gap; break; }
+          }
+        }
+      }
+      return zones;
+    }
+    return details?.heartRateZones;
+  }, [userZones, details?.heartRateSamples, details?.heartRateZones]);
 
   const loadData = async () => {
     try {
@@ -392,7 +425,7 @@ export default function WorkoutDetailScreen() {
             || cached.heartRateZones?.length > 0 || cached.weatherTemp != null;
           if (hasRichData && !isStaleCache) {
             setDetails(cached);
-            // Cache incomplet: GPS ou qualite d'air manquants -> re-fetch en background
+            // Cache incomplet: GPS ou qualité d'air manquants -> re-fetch en background
             const missingGPS = !cached.routePoints?.length;
             const missingAQI = cached.airQualityIndex == null;
             if (tr.healthkit_uuid && (missingGPS || missingAQI)) {
@@ -472,7 +505,7 @@ export default function WorkoutDetailScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.screenRoot, { backgroundColor: screenBackground }]}>
+      <View style={[styles.screenRoot, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
         <Header title="" showBack />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -483,11 +516,11 @@ export default function WorkoutDetailScreen() {
 
   if (!training) {
     return (
-      <View style={[styles.screenRoot, { backgroundColor: screenBackground }]}>
+      <View style={[styles.screenRoot, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
         <Header title="" showBack />
         <View style={styles.loadingContainer}>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            Seance introuvable
+            Séance introuvable
           </Text>
         </View>
       </View>
@@ -500,7 +533,6 @@ export default function WorkoutDetailScreen() {
   const sportName = getSportName(training.sport);
 
   const hrSamples = details?.heartRateSamples;
-  const hrZones = details?.heartRateZones;
   const splits = details?.splits;
   const route = details?.routePoints;
   const hasDetails = !!details;
@@ -515,11 +547,14 @@ export default function WorkoutDetailScreen() {
   const calories = details?.activeCalories ?? training.calories;
   const avgHR = details?.avgHeartRate ?? training.heart_rate;
 
+  // Fond neutre style Apple (groupedBackground) pour les sections
+  const groupedBg = isDark ? '#000000' : '#F2F2F7';
+
   return (
-    <View style={[styles.screenRoot, { backgroundColor: screenBackground }]}>
+    <View style={[styles.screenRoot, { backgroundColor: isDark ? colors.background : sportColor }]}>
       <Header title={formatDateHeader(training.date)} showBack />
       <ScrollView
-        style={styles.scroll}
+        style={[styles.scroll, { backgroundColor: groupedBg }]}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -556,7 +591,7 @@ export default function WorkoutDetailScreen() {
             <View style={styles.heroMetrics}>
               <View style={styles.heroMetricItem}>
                 <Text style={styles.heroMetricValue}>{formatDuration(duration)}</Text>
-                <Text style={styles.heroMetricLabel}>{t('workoutDetail.duration') || 'Duree'}</Text>
+                <Text style={styles.heroMetricLabel}>{t('workoutDetail.duration') || 'Durée'}</Text>
               </View>
               {(distance ?? 0) > 0 && (
                 <>
@@ -619,10 +654,10 @@ export default function WorkoutDetailScreen() {
         </Text>
         <AnimatedCard delay={80} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
           <View style={[styles.appleDetailsGrid, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
-            {/* Row 1: Duree + Distance */}
+            {/* Row 1: Durée + Distance */}
             <View style={styles.appleDetailsRow}>
               <View style={[styles.appleDetailCell, { borderRightWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]}>
-                <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Duree de l'exercice</Text>
+                <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Durée de l'exercice</Text>
                 <Text style={[styles.appleDetailValue, { color: '#22C55E' }]}>
                   {formatDurationApple(duration)}
                 </Text>
@@ -640,7 +675,7 @@ export default function WorkoutDetailScreen() {
             {/* Row 2: Cal actives + Cal totales */}
             <View style={styles.appleDetailsRow}>
               <View style={[styles.appleDetailCell, { borderRightWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]}>
-                <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Cal. en activite</Text>
+                <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Cal. en activité</Text>
                 <Text style={[styles.appleDetailValue, { color: '#F59E0B' }]}>
                   {(calories ?? 0) > 0 ? Math.round(calories || 0) : '-'}
                   <Text style={styles.appleDetailUnit}> CAL</Text>
@@ -740,7 +775,7 @@ export default function WorkoutDetailScreen() {
           </AnimatedCard>
         )}
 
-        {/* ═══ FREQUENCE CARDIAQUE ═══ */}
+        {/* ═══ FRÉQUENCE CARDIAQUE ═══ */}
         {hrSamples && hrSamples.length > 2 && (
           <>
           <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
@@ -763,6 +798,7 @@ export default function WorkoutDetailScreen() {
               durationMin={duration}
               isDark={isDark}
               textColor={colors.textMuted}
+              zones={hrZones}
             />
 
             {/* Min / Moy / Max */}
@@ -776,14 +812,41 @@ export default function WorkoutDetailScreen() {
         )}
 
         {/* ═══ ZONES CARDIAQUES ═══ */}
-        {hrZones && hrZones.length > 0 && (
+        {hrZones && hrZones.length > 0 ? (
           <AnimatedCard delay={240} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-            <Text style={[styles.sectionTitleInCard, { color: colors.text }]}>Zones cardiaques</Text>
+            <View style={styles.zonesTitleRow}>
+              <Text style={[styles.sectionTitleInCard, { color: colors.text }]}>Zones cardiaques</Text>
+              <TouchableOpacity onPress={() => router.push('/heart-zones-settings')} activeOpacity={0.7}>
+                <Text style={[styles.zonesEditLink, { color: userZones ? colors.textMuted : colors.primary }]}>
+                  {userZones ? 'Modifier' : 'Personnaliser'}
+                </Text>
+              </TouchableOpacity>
+            </View>
             <HeartRateZonesBar zones={hrZones} />
           </AnimatedCard>
-        )}
+        ) : hrSamples && hrSamples.length > 0 && !userZones ? (
+          /* Banneau de rappel si des données FC existent mais pas de zones configurées */
+          <AnimatedCard delay={240} style={[styles.card, { backgroundColor: isDark ? 'rgba(239,68,68,0.08)' : 'rgba(239,68,68,0.06)', borderWidth: 1.5, borderColor: 'rgba(239,68,68,0.2)' }]}>
+            <View style={styles.zonesReminderContent}>
+              <Heart size={28} color="#EF4444" />
+              <Text style={[styles.zonesReminderTitle, { color: colors.text }]}>
+                Configure tes zones cardiaques
+              </Text>
+              <Text style={[styles.zonesReminderSub, { color: colors.textMuted }]}>
+                Tes zones personnelles te permettront de voir exactement le temps passé dans chaque zone lors de tes séances.
+              </Text>
+              <TouchableOpacity
+                style={styles.zonesReminderBtn}
+                onPress={() => router.push('/heart-zones-settings')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.zonesReminderBtnText}>Configurer mes zones</Text>
+              </TouchableOpacity>
+            </View>
+          </AnimatedCard>
+        ) : null}
 
-        {/* ═══ RECUPERATION FC ═══ */}
+        {/* ═══ RÉCUPÉRATION FC ═══ */}
         {details?.recoveryHR && (
           <AnimatedCard delay={320} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
             <Text style={[styles.sectionTitleInCard, { color: colors.text }]}>Récupération FC</Text>
@@ -810,7 +873,7 @@ export default function WorkoutDetailScreen() {
           </AnimatedCard>
         )}
 
-        {/* ═══ INTERMEDIAIRES ═══ */}
+        {/* ═══ INTERMÉDIAIRES ═══ */}
         {splits && splits.length > 0 && (
           <>
           <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
@@ -819,7 +882,7 @@ export default function WorkoutDetailScreen() {
           <AnimatedCard delay={400} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
             <View style={[styles.splitHeaderRow, { borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
               <Text style={[styles.splitHeaderCell, styles.splitIdxCell, { color: colors.textMuted }]}></Text>
-              <Text style={[styles.splitHeaderCell, styles.splitTimeCell, { color: colors.textMuted }]}>Duree</Text>
+              <Text style={[styles.splitHeaderCell, styles.splitTimeCell, { color: colors.textMuted }]}>Durée</Text>
               <Text style={[styles.splitHeaderCell, styles.splitPaceCell, { color: colors.textMuted }]}>Rythme</Text>
               <Text style={[styles.splitHeaderCell, styles.splitElevCell, { color: colors.textMuted }]}>D+</Text>
               <Text style={[styles.splitHeaderCell, styles.splitHrCell, { color: colors.textMuted }]}>FC</Text>
@@ -837,7 +900,7 @@ export default function WorkoutDetailScreen() {
                   <Text style={[styles.splitCell, styles.splitIdxCell, { color: colors.textMuted }]}>
                     {split.index}
                   </Text>
-                  {/* Duree - jaune comme Apple */}
+                  {/* Durée - jaune comme Apple */}
                   <Text style={[styles.splitCell, styles.splitTimeCell, { color: '#F59E0B', fontWeight: '700' }]}>
                     {formatDurationSec(split.durationSeconds)}
                   </Text>
@@ -863,7 +926,7 @@ export default function WorkoutDetailScreen() {
           </>
         )}
 
-        {/* ═══ PLAN (GPS + METEO) ═══ */}
+        {/* ═══ PLAN (GPS + MÉTÉO) ═══ */}
         {route && route.length > 2 && (
           <>
           <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
@@ -903,8 +966,12 @@ export default function WorkoutDetailScreen() {
           </>
         )}
 
-        {/* ═══ LIEU D'ENTRAINEMENT (pin GPS, fallback sans tracé) ═══ */}
-        {!route?.length && (training.location_lat != null || details?.startLatitude != null) && (
+        {/* ═══ LIEU D'ENTRAÎNEMENT (pin GPS, fallback sans tracé) ═══ */}
+        {!route?.length && (() => {
+          const lat = training.location_lat ?? details?.startLatitude;
+          const lon = training.location_lon ?? details?.startLongitude;
+          return lat != null && lon != null && !isNaN(lat) && !isNaN(lon) && (lat !== 0 || lon !== 0);
+        })() && (
           <>
           <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
             Plan {'>'}
@@ -943,8 +1010,8 @@ export default function WorkoutDetailScreen() {
                 onPress={() => {
                   const lat = training.location_lat!;
                   const lon = training.location_lon!;
-                  const label = encodeURIComponent(training.location_name || 'Lieu d\'entrainement');
-                  Linking.openURL(`geo:${lat},${lon}?q=${lat},${lon}(${label})`);
+                  const label = encodeURIComponent(training.location_name || 'Lieu d\'entraînement');
+                  safeOpenURL(`geo:${lat},${lon}?q=${lat},${lon}(${label})`);
                 }}
                 style={{
                   borderRadius: 12,
@@ -984,6 +1051,26 @@ export default function WorkoutDetailScreen() {
                 </Text>
               </View>
             ) : null}
+          </AnimatedCard>
+          </>
+        )}
+
+        {/* ═══ GPS NON DISPO (placeholder) ═══ */}
+        {!route?.length && !(training.location_lat != null && training.location_lon != null && !isNaN(training.location_lat) && !isNaN(training.location_lon) && (training.location_lat !== 0 || training.location_lon !== 0)) && !details?.startLatitude && (
+          <>
+          <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
+            Plan {'>'}
+          </Text>
+          <AnimatedCard delay={480} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+            <View style={{ alignItems: 'center', paddingVertical: 16, gap: 8 }}>
+              <MapPin size={32} color={isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'} />
+              <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMuted, textAlign: 'center' }}>
+                Aucune donnée GPS pour cette séance
+              </Text>
+              <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', lineHeight: 18 }}>
+                Active la capture GPS lors de l'enregistrement pour voir ta trace ici.
+              </Text>
+            </View>
           </AnimatedCard>
           </>
         )}
@@ -1037,7 +1124,7 @@ export default function WorkoutDetailScreen() {
                     {details.airQualityIndex}
                   </Text>
                   <Text style={[styles.weatherLabel, { color: colors.textMuted }]}>
-                    {t('workoutDetail.airQuality') || 'Qualite de l\'air'}
+                    {t('workoutDetail.airQuality') || 'Qualité de l\'air'}
                   </Text>
                   {details.airQualityCategory && (
                     <Text style={[styles.airQualityBadge, {
@@ -1114,13 +1201,21 @@ export default function WorkoutDetailScreen() {
 
 const ZONE_COLORS = ['#3B82F6', '#22C55E', '#EAB308', '#F97316', '#EF4444'];
 
-function getZoneColor(bpm: number): string {
-  // Zones basees sur pourcentage FC max estimee (~190-200)
-  if (bpm < 120) return ZONE_COLORS[0]; // Z1 bleu
-  if (bpm < 140) return ZONE_COLORS[1]; // Z2 vert
-  if (bpm < 155) return ZONE_COLORS[2]; // Z3 jaune
-  if (bpm < 170) return ZONE_COLORS[3]; // Z4 orange
-  return ZONE_COLORS[4]; // Z5 rouge
+// Zones Apple Fitness (63/71/79/90% de FCmax).
+// Si les vraies zones de l'utilisateur sont passées, on les utilise directement.
+function getZoneColor(bpm: number, zones?: Array<{ minBpm: number; maxBpm: number; color: string }>): string {
+  if (zones && zones.length >= 5) {
+    for (const z of zones) {
+      if (bpm >= z.minBpm && bpm < z.maxBpm) return z.color;
+    }
+    return zones[zones.length - 1].color;
+  }
+  // Fallback seuils Apple (FCmax=190 → 120/135/150/171)
+  if (bpm < 120) return ZONE_COLORS[0];
+  if (bpm < 135) return ZONE_COLORS[1];
+  if (bpm < 150) return ZONE_COLORS[2];
+  if (bpm < 171) return ZONE_COLORS[3];
+  return ZONE_COLORS[4];
 }
 
 function addMinutesToTime(startTime: string | undefined, addMin: number): string {
@@ -1142,22 +1237,36 @@ const HRBarsChart: React.FC<{
   durationMin: number;
   isDark: boolean;
   textColor: string;
-}> = ({ samples, maxBpm, minBpm, startTime, durationMin, isDark, textColor }) => {
-  const chartWidth = SCREEN_WIDTH - 64; // padding
-  const chartHeight = 120;
-  const bpmPadding = 10;
+  zones?: Array<{ minBpm: number; maxBpm: number; color: string }>;
+}> = ({ samples, maxBpm, minBpm, startTime, durationMin, isDark, textColor, zones }) => {
+  const chartWidth = SCREEN_WIDTH - 64;
+  const chartHeight = 130;
+  const bpmPadding = 8;
   const effectiveMax = maxBpm + bpmPadding;
   const effectiveMin = Math.max(40, minBpm - bpmPadding);
   const bpmRange = effectiveMax - effectiveMin || 1;
 
-  const downsampled = useMemo(() => downsampleHR(samples, Math.min(samples.length, 120)), [samples]);
+  // Plus de barres pour une densité style Apple (jusqu'à 200)
+  const downsampled = useMemo(() => downsampleHR(samples, Math.min(samples.length, Math.floor(chartWidth / 2))), [samples, chartWidth]);
   const barCount = downsampled.length;
-  const barWidth = Math.max(1.5, (chartWidth / barCount) - 0.5);
-  const gap = (chartWidth - barWidth * barCount) / Math.max(barCount - 1, 1);
+  const totalBarWidth = chartWidth / barCount;
+  const barWidth = Math.max(1, totalBarWidth * 0.65);
+  const gap = totalBarWidth - barWidth;
 
-  // Time labels
+  // Ligne de moyenne
+  const avgBpm = Math.round(samples.reduce((s, v) => s + v.bpm, 0) / (samples.length || 1));
+  const avgY = chartHeight - Math.max(2, ((avgBpm - effectiveMin) / bpmRange) * chartHeight);
+
+  // Labels de temps
   const midTime = addMinutesToTime(startTime, durationMin / 2);
   const endTime = addMinutesToTime(startTime, durationMin);
+
+  // Lignes de grille horizontales (3 niveaux)
+  const gridBpms = [
+    Math.round(effectiveMin + bpmRange * 0.33),
+    Math.round(effectiveMin + bpmRange * 0.66),
+    effectiveMax,
+  ];
 
   return (
     <View style={styles.hrBarsContainer}>
@@ -1167,40 +1276,68 @@ const HRBarsChart: React.FC<{
       </View>
 
       {/* SVG Bars */}
-      <View style={[styles.hrBarsChart, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
+      <View style={[styles.hrBarsChart, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }]}>
         <Svg width={chartWidth} height={chartHeight}>
+          {/* Lignes de grille */}
+          {gridBpms.map((bpm, i) => {
+            const gy = chartHeight - ((bpm - effectiveMin) / bpmRange) * chartHeight;
+            return (
+              <Line
+                key={`grid-${i}`}
+                x1={0} y1={gy}
+                x2={chartWidth} y2={gy}
+                stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}
+                strokeWidth={1}
+              />
+            );
+          })}
+
+          {/* Barres FC colorées par zone */}
           {downsampled.map((s, i) => {
-            const height = Math.max(2, ((s.bpm - effectiveMin) / bpmRange) * chartHeight);
-            const x = i * (barWidth + gap);
-            const y = chartHeight - height;
+            const h = Math.max(3, ((s.bpm - effectiveMin) / bpmRange) * chartHeight);
+            const x = i * (barWidth + gap) + gap / 2;
+            const y = chartHeight - h;
             return (
               <Rect
                 key={i}
                 x={x}
                 y={y}
                 width={barWidth}
-                height={height}
-                rx={barWidth > 2 ? 1 : 0}
-                fill={getZoneColor(s.bpm)}
+                height={h}
+                rx={barWidth >= 2 ? 1 : 0}
+                fill={getZoneColor(s.bpm, zones)}
+                opacity={0.9}
               />
             );
           })}
+
+          {/* Ligne de moyenne (pointillée) */}
+          <Line
+            x1={0} y1={avgY}
+            x2={chartWidth} y2={avgY}
+            stroke="#EF4444"
+            strokeWidth={1}
+            strokeDasharray="4,3"
+            opacity={0.6}
+          />
         </Svg>
       </View>
 
-      {/* Min BPM + time labels */}
+      {/* Min BPM */}
       <View style={styles.hrBarsBottom}>
         <Text style={[styles.hrBarsMinMax, { color: textColor }]}>{minBpm}</Text>
       </View>
+
+      {/* Heures sur l'axe X */}
       <View style={styles.hrBarsTimeRow}>
         <Text style={[styles.hrBarsTime, { color: textColor }]}>{startTime || ''}</Text>
         <Text style={[styles.hrBarsTime, { color: textColor }]}>{midTime}</Text>
         <Text style={[styles.hrBarsTime, { color: textColor }]}>{endTime}</Text>
       </View>
 
-      {/* Moy label sous le graphe */}
+      {/* Moy. BPM */}
       <Text style={[styles.hrBarsAvgLabel, { color: '#EF4444' }]}>
-        Moy. de {Math.round((samples.reduce((s, v) => s + v.bpm, 0) / samples.length) || 0)} BPM
+        Moy. de {avgBpm} BPM
       </Text>
     </View>
   );
@@ -1313,7 +1450,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20, padding: 16, marginBottom: 12,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
+    shadowOpacity: 0.10, shadowRadius: 10, elevation: 4,
   },
 
   // Section header
@@ -1457,5 +1594,32 @@ const styles = StyleSheet.create({
   // Notes
   notesText: {
     fontSize: 15, fontWeight: '400', lineHeight: 22, marginTop: 4,
+  },
+
+  // Zones cardiaques
+  zonesTitleRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4,
+  },
+  zonesEditLink: {
+    fontSize: 13, fontWeight: '500',
+  },
+  zonesReminderContent: {
+    alignItems: 'center', paddingVertical: 16, paddingHorizontal: 8, gap: 10,
+  },
+  zonesReminderTitle: {
+    fontSize: 16, fontWeight: '700', textAlign: 'center',
+  },
+  zonesReminderSub: {
+    fontSize: 13, lineHeight: 18, textAlign: 'center',
+  },
+  zonesReminderBtn: {
+    marginTop: 4,
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  zonesReminderBtnText: {
+    color: '#FFF', fontSize: 14, fontWeight: '700',
   },
 });

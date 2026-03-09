@@ -260,14 +260,14 @@ const formatMinutesToTime = (minutes: number): string => {
 };
 
 /**
- * Calculer la duree entre deux dates en minutes
+ * Calculer la durée entre deux dates en minutes
  */
 const getDurationInMinutes = (start: Date, end: Date): number => {
   return Math.floor((end.getTime() - start.getTime()) / (1000 * 60));
 };
 
 /**
- * Formater une duree en heures et minutes
+ * Formater une durée en heures et minutes
  */
 export const formatDuration = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
@@ -532,7 +532,7 @@ export const getFastingStats = async (): Promise<FastingStats> => {
     const daysPassed = now.getDate();
     const thisMonthTarget = daysPassed; // Objectif = 1 jeune par jour passe
 
-    // Duree moyenne
+    // Durée moyenne
     const avgFastingDuration = totalCompleted > 0
       ? Math.round(totalMinutes / totalCompleted)
       : 0;

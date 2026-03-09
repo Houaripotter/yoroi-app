@@ -16,6 +16,8 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WatchConnectivity, isWatchModuleAvailable } from '@/lib/watchConnectivity.ios';
 import logger from '@/lib/security/logger';
+import { getTrainings } from '@/lib/database';
+import { getGlobalGoalStats } from '@/lib/trainingGoalsService';
 
 // ============================================
 // TYPES
@@ -405,6 +407,45 @@ class WatchSyncServiceClass {
       streak,
       streakTimestamp: Date.now(),
     });
+  }
+
+  /**
+   * Synchroniser les stats d'entraînements annuels vers la Watch
+   * - yearlyWorkouts : nb de jours uniques avec entraînement cette année
+   * - workoutYearGoal : objectif annuel perso (objectif hebdo × 52)
+   */
+  async syncWorkoutStats(): Promise<boolean> {
+    try {
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+
+      // Récupérer tous les entraînements de l'année
+      const trainings = await getTrainings(startOfYear.toISOString(), endOfYear.toISOString());
+
+      // Compter les jours uniques
+      const uniqueDays = new Set<string>();
+      for (const t of trainings) {
+        const dateKey = new Date(t.date).toISOString().split('T')[0];
+        uniqueDays.add(dateKey);
+      }
+      const yearlyWorkouts = uniqueDays.size;
+
+      // Récupérer l'objectif annuel (objectif hebdo × 52)
+      const globalStats = await getGlobalGoalStats();
+      const workoutYearGoal = globalStats.totalWeeklyTarget * 52;
+
+      logger.info('[WatchSync] syncWorkoutStats:', yearlyWorkouts, '/', workoutYearGoal);
+
+      return this.sendContext({
+        yearlyWorkouts,
+        workoutYearGoal,
+        workoutStatsTimestamp: Date.now(),
+      });
+    } catch (error) {
+      logger.error('[WatchSync] Erreur syncWorkoutStats:', error);
+      return false;
+    }
   }
 
   // ============================================

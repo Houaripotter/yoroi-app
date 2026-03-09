@@ -1,6 +1,6 @@
 // ============================================
-// YOROI - Section Defis (Home Screen)
-// 5 defis par onglet, rotation hebdo/mensuelle
+// YOROI - Section Défis (Home Screen)
+// 5 défis par onglet, rotation hebdo/mensuelle
 // Couleurs du theme, long press valider/devalider
 // Connecte au vrai systeme lib/quests.ts
 // ============================================
@@ -124,7 +124,7 @@ interface Props {
 }
 
 // ============================================
-// ROTATION : 5 defis parmi N
+// ROTATION : 5 défis parmi N
 // ============================================
 
 const getWeekNumber = (): number => {
@@ -238,7 +238,7 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
 
   const handleMonDojo = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Medium);
-    router.push('/gamification?tab=defis' as any);
+    router.push('/gamification?tab=défis' as any);
   }, []);
 
   // ============================================
@@ -275,7 +275,7 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <XCircle size={14} color={colors.textMuted} />
-                <Text style={[styles.cancelText, { color: colors.textMuted }]}>Annuler ce defi</Text>
+                <Text style={[styles.cancelText, { color: colors.textMuted }]}>Annuler ce défi</Text>
               </TouchableOpacity>
             </View>
             <View style={[styles.badgeCompleted, { backgroundColor: `${colors.accent}15` }]}>
@@ -359,7 +359,7 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Gamepad2 size={20} color={colors.textPrimary} strokeWidth={2} />
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Defis</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Défis</Text>
           <View style={[styles.xpHeaderBadge, { backgroundColor: `${colors.accentDark}25` }]}>
             <Zap size={12} color={colors.accent} fill={colors.accent} />
             <Text style={[styles.xpHeaderText, { color: colors.accent }]}>+{xpEarned} XP</Text>

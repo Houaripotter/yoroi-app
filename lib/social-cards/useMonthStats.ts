@@ -23,7 +23,7 @@ export interface MonthStats {
   monthName: string;
   activeDays: number;             // Ex: 18
   totalDays: number;              // 28-31 selon mois
-  totalTrainings: number;         // Nombre total d'entrainements
+  totalTrainings: number;         // Nombre total d'entraînements
   percentage: number;
   calendar: {               // Grille complète du mois
     day: number;                  // 1-31
@@ -32,7 +32,7 @@ export interface MonthStats {
     isWeekend: boolean;
     dayOfWeek: number;            // 0-6 (Dimanche = 0)
   }[];
-  // Entrainements par club
+  // Entraînements par club
   clubTrainings: ClubTrainingCount[];
   evolution: {
     weight?: { start: number; end: number; change: number };
@@ -244,7 +244,7 @@ export const useMonthStats = (
       // 4. MEILLEURE SEMAINE
       const bestWeek = findBestWeek(calendar);
 
-      // 5. COMPTAGE DES ENTRAINEMENTS PAR CLUB
+      // 5. COMPTAGE DES ENTRAÎNEMENTS PAR CLUB
       const clubCountsMap = new Map<string, ClubTrainingCount>();
 
       monthTrainings.forEach((t: Training) => {

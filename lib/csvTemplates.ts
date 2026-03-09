@@ -1,7 +1,7 @@
 // ============================================
 // TEMPLATE CSV UNIFIE v3.0
 // Un seul fichier avec poids + composition + mensurations
-// Une ligne = une date avec toutes les donnees
+// Une ligne = une date avec toutes les données
 //
 // COMPATIBILITE:
 //  - Accepte , et ; comme separateur
@@ -12,8 +12,8 @@
 //  - BOM UTF-8 géré
 // ============================================
 
-import { getWeights, getMeasurements, addWeight, addMeasurementRecord } from '@/lib/database';
-import { getAllBodyCompositions, addBodyComposition } from '@/lib/bodyComposition';
+import { getWeights, getMeasurements, addWeight, addMeasurementRecord, openDatabase } from '@/lib/database';
+import { getAllBodyCompositions } from '@/lib/bodyComposition';
 import {
   validateDate,
   validateWeight,
@@ -249,11 +249,26 @@ const HEADER_MAP: Record<string, string> = {
   'neck': 'neck',
   'Neck (cm)': 'neck',
 
+  // Colonnes v1 sans distinction G/D (mappe vers gauche par défaut)
+  'Bras (cm)': 'left_arm',
+  'Bras': 'left_arm',
+  'arm': 'left_arm',
+  'Arm (cm)': 'left_arm',
+  'Cuisse (cm)': 'left_thigh',
+  'Cuisse': 'left_thigh',
+  'thigh': 'left_thigh',
+  'Thigh (cm)': 'left_thigh',
+  'Mollet (cm)': 'left_calf',
+  'Mollet': 'left_calf',
+  'calf': 'left_calf',
+  'Calf (cm)': 'left_calf',
+
   // Note / Source
   'Note': 'note',
   'note': 'note',
   'Notes': 'note',
   'Commentaire': 'note',
+  'Remarque': 'note',
   'Source': 'source',
   'source': 'source',
 };
@@ -349,33 +364,47 @@ function parseCSVLine(line: string, sep: string): string[] {
  *   JJ.MM.AAAA (format allemand)
  */
 export function normalizeDate(raw: string): string | null {
-  const s = raw.trim();
+  const s = raw.trim().replace(/\s+/g, '');
 
   // AAAA-MM-JJ (ISO) — format natif, déjà bon
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
 
-  // AAAA/MM/JJ
-  const iso2 = s.match(/^(\d{4})\/(\d{2})\/(\d{2})$/);
-  if (iso2) return `${iso2[1]}-${iso2[2]}-${iso2[3]}`;
+  // AAAA/MM/JJ ou AAAA.MM.JJ
+  const iso2 = s.match(/^(\d{4})[\/\.](\d{1,2})[\/\.](\d{1,2})$/);
+  if (iso2) return `${iso2[1]}-${iso2[2].padStart(2,'0')}-${iso2[3].padStart(2,'0')}`;
 
-  // JJ/MM/AAAA (format français le plus courant)
+  // JJ/MM/AAAA ou JJ-MM-AAAA ou JJ.MM.AAAA (format français/européen)
   const fr = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
   if (fr) {
-    const day = fr[1].padStart(2, '0');
+    const day   = fr[1].padStart(2, '0');
     const month = fr[2].padStart(2, '0');
-    return `${fr[3]}-${month}-${day}`;
+    const year  = fr[3];
+    // Validation basique : jour <= 31, mois <= 12
+    if (parseInt(day) <= 31 && parseInt(month) <= 12) {
+      return `${year}-${month}-${day}`;
+    }
   }
 
-  // MM/DD/YYYY (format américain — ambigu, on teste si jour > 12)
+  // MM/DD/YYYY (format américain — ambigu, on détecte si premier > 12)
   const us = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (us) {
-    const first = parseInt(us[1]);
+    const first  = parseInt(us[1]);
     const second = parseInt(us[2]);
-    // Si le premier > 12 → c'est forcément JJ/MM/AAAA
-    if (first > 12) return `${us[3]}-${us[2].padStart(2,'0')}-${us[1].padStart(2,'0')}`;
-    // Sinon on suppose MM/DD/YYYY
-    return `${us[3]}-${us[1].padStart(2,'0')}-${us[2].padStart(2,'0')}`;
+    if (first > 12) {
+      // Premier chiffre > 12 → forcément JJ/MM/AAAA
+      return `${us[3]}-${us[2].padStart(2,'0')}-${us[1].padStart(2,'0')}`;
+    }
+    if (second > 12) {
+      // Deuxième > 12 → forcément MM/DD/YYYY
+      return `${us[3]}-${us[1].padStart(2,'0')}-${us[2].padStart(2,'0')}`;
+    }
+    // Ambiguïté : on suppose JJ/MM/AAAA (convention française)
+    return `${us[3]}-${us[2].padStart(2,'0')}-${us[1].padStart(2,'0')}`;
   }
+
+  // AAAAMMJJ (format compact sans séparateur)
+  const compact = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (compact) return `${compact[1]}-${compact[2]}-${compact[3]}`;
 
   return null;
 }
@@ -385,46 +414,20 @@ export function normalizeDate(raw: string): string | null {
 // ============================================
 
 export function generateUnifiedTemplate(): string {
-  const SEP = ';'; // Séparateur par défaut : ";" pour compatibilité Excel FR
-  const H = UNIFIED_HEADERS_V3.join(SEP);
+  const SEP = ';';
 
-  const lines: string[] = [
-    '# YOROI - Modele de donnees',
-    '# Version: 3.0',
-    '# Ce fichier s\'ouvre dans Excel, Google Sheets ou Numbers.',
-    '#',
-    '# INSTRUCTIONS :',
-    '#   - Une ligne = une date',
-    '#   - Date acceptee : JJ/MM/AAAA ou AAAA-MM-JJ',
-    '#   - Laisse vide les colonnes que tu n\'as pas',
-    '#   - Utilise le point OU la virgule pour les decimales (ex: 82.5 ou 82,5)',
-    '#   - Les lignes qui commencent par # sont ignorees',
-    '#',
-    '# COLONNES :',
-    '#   Poids        : ton poids en kg (ex: 82.5)',
-    '#   Masse grasse : % de graisse corporelle (ex: 18.2)',
-    '#   Masse muscu  : % de masse musculaire (ex: 42.1)',
-    '#   Eau          : % d\'eau corporelle (ex: 55.3)',
-    '#   Masse osseuse: en kg (ex: 3.2)',
-    '#   Graisse visc : indice de graisse viscerale (ex: 8)',
-    '#   Age metabol  : age metabolique estime (ex: 35)',
-    '#   Metabolisme  : metabolisme basal en kcal (ex: 1850)',
-    '#   Mensurations : tour en cm (ex: 78)',
-    '#',
-    H,
-    // Exemple 1 : tout rempli
-    ['15/01/2026','82.5','18.2','42.1','55.3','3.2','8','35','1850','102','78','82','97','36','37','58','59','38','39','120','38','Apres competition'].join(SEP),
-    // Exemple 2 : juste le poids
-    ['18/01/2026','81.8','','','','','','','','','','','','','','','','','','','','Jour de repos'].join(SEP),
-    // Exemple 3 : poids + mensurations
-    ['20/01/2026','82.0','','','','','','','','103','79','','98','37','38','','','','','','',''].join(SEP),
-    // Exemple 4 : juste les mensurations (pas de poids)
-    ['22/01/2026','','','','','','','','','104','78','83','97','','','','','','','','',''].join(SEP),
-    // Exemple 5 : composition complète
-    ['25/01/2026','81.2','17.8','43.5','56.0','3.3','7','34','1870','','','','','','','','','','','','','Bilan mensuel'].join(SEP),
-  ];
+  // Ligne d'en-tete
+  const header = UNIFIED_HEADERS_V3.join(SEP);
 
-  return lines.join('\n');
+  // Exemples — colonne Note indique clairement "SUPPRIMER CETTE LIGNE"
+  const ex1 = ['15/01/2025','82.5','18.2','42.1','55.3','3.2','8','35','1850','102','78','82','97','36','37','58','59','38','39','120','38','EXEMPLE - supprimer cette ligne'].join(SEP);
+  const ex2 = ['20/01/2025','81.8','','','','','','','','','','','','','','','','','','','','EXEMPLE - supprimer cette ligne'].join(SEP);
+  const ex3 = ['25/01/2025','80.0','17.5','44.0','56.0','3.3','7','34','1870','100','77','81','96','35','36','57','58','37','38','','','EXEMPLE - supprimer cette ligne'].join(SEP);
+
+  // Ligne vide pour que l'utilisateur commence a saisir ici
+  const emptyRow = ['JJ/MM/AAAA','','','','','','','','','','','','','','','','','','','','',''].join(SEP);
+
+  return [header, ex1, ex2, ex3, emptyRow].join('\n');
 }
 
 // ============================================
@@ -538,7 +541,7 @@ function validateUnifiedRow(data: Record<string, string>): { valid: boolean; err
   const dr = validateDate(date);
   if (!dr.valid) return { valid: false, error: dr.error };
 
-  // Au moins une donnee doit etre presente
+  // Au moins une donnée doit etre presente
   const weight = getOptionalFloat(data, 'weight');
   const hasMeas = MEASUREMENT_FIELDS.some(f => getOptionalFloat(data, f) !== undefined);
 
@@ -592,74 +595,176 @@ export async function importUnifiedRows(rows: SimpleParsedRow[]): Promise<Simple
   let compositionCount = 0;
   const importErrors: SimpleImportResult['errors'] = [];
 
+  // ── Pré-charger toutes les dates existantes (anti-doublons) ──────────────
+  const db = await openDatabase();
+
+  // Poids : Map date → id du premier enregistrement trouvé
+  const existingWeightRows = await db.getAllAsync<{ date: string; id: number }>(
+    'SELECT date, id FROM weights ORDER BY id ASC'
+  );
+  const weightIdByDate = new Map<string, number>();
+  for (const w of existingWeightRows) {
+    if (!weightIdByDate.has(w.date)) weightIdByDate.set(w.date, w.id);
+  }
+
+  // Mensurations : Map date → id
+  const existingMeasRows = await db.getAllAsync<{ date: string; id: number }>(
+    'SELECT date, id FROM measurements ORDER BY id ASC'
+  );
+  const measIdByDate = new Map<string, number>();
+  for (const m of existingMeasRows) {
+    if (!measIdByDate.has(m.date)) measIdByDate.set(m.date, m.id);
+  }
+
+  // Compositions : tableau complet chargé une fois, modifié en mémoire
+  const allCompositions = await getAllBodyCompositions();
+  const compIdxByDate = new Map<string, number>();
+  allCompositions.forEach((c: any, i: number) => {
+    if (!compIdxByDate.has(c.date)) compIdxByDate.set(c.date, i);
+  });
+
+  // ── Boucle sur les lignes valides ────────────────────────────────────────
   for (const row of valid) {
     try {
       const date = row.data['date'];
       const weight = getOptionalFloat(row.data, 'weight');
 
-      // 1. Sauvegarder le poids si present
+      // 1. Poids — UPDATE si la date existe déjà, INSERT sinon
       if (weight !== undefined) {
-        await addWeight({
-          date,
-          weight,
-          fat_percent: getOptionalFloat(row.data, 'fat_percent'),
-          muscle_percent: getOptionalFloat(row.data, 'muscle_percent'),
-          water_percent: getOptionalFloat(row.data, 'water_percent'),
-          bone_mass: getOptionalFloat(row.data, 'bone_mass'),
-          visceral_fat: getOptionalFloat(row.data, 'visceral_fat'),
-          metabolic_age: getOptionalFloat(row.data, 'metabolic_age'),
-          bmr: getOptionalFloat(row.data, 'bmr'),
-          note: getOptionalString(row.data, 'note'),
-          source: getOptionalString(row.data, 'source') || 'csv',
-        });
+        const existingId = weightIdByDate.get(date);
+        if (existingId !== undefined) {
+          // Mise à jour sans créer de doublon
+          await db.runAsync(
+            `UPDATE weights SET weight=?, fat_percent=?, muscle_percent=?, water_percent=?,
+             bone_mass=?, visceral_fat=?, metabolic_age=?, bmr=?, note=?, source='csv'
+             WHERE id=?`,
+            [
+              weight,
+              getOptionalFloat(row.data, 'fat_percent') ?? null,
+              getOptionalFloat(row.data, 'muscle_percent') ?? null,
+              getOptionalFloat(row.data, 'water_percent') ?? null,
+              getOptionalFloat(row.data, 'bone_mass') ?? null,
+              getOptionalFloat(row.data, 'visceral_fat') ?? null,
+              getOptionalFloat(row.data, 'metabolic_age') ?? null,
+              getOptionalFloat(row.data, 'bmr') ?? null,
+              getOptionalString(row.data, 'note') ?? null,
+              existingId,
+            ]
+          );
+        } else {
+          // Nouvelle date — insertion
+          const newId = await addWeight({
+            date,
+            weight,
+            fat_percent: getOptionalFloat(row.data, 'fat_percent'),
+            muscle_percent: getOptionalFloat(row.data, 'muscle_percent'),
+            water_percent: getOptionalFloat(row.data, 'water_percent'),
+            bone_mass: getOptionalFloat(row.data, 'bone_mass'),
+            visceral_fat: getOptionalFloat(row.data, 'visceral_fat'),
+            metabolic_age: getOptionalFloat(row.data, 'metabolic_age'),
+            bmr: getOptionalFloat(row.data, 'bmr'),
+            note: getOptionalString(row.data, 'note'),
+            source: 'csv',
+          });
+          weightIdByDate.set(date, newId); // évite doublon si même date répétée dans le CSV
+        }
         weightCount++;
       }
 
-      // 2. Sauvegarder les mensurations si presentes
+      // 2. Mensurations — UPDATE si la date existe, INSERT sinon
       if (row.hasMeasurements) {
-        await addMeasurementRecord({
-          date,
-          chest: getOptionalFloat(row.data, 'chest'),
-          waist: getOptionalFloat(row.data, 'waist'),
-          navel: getOptionalFloat(row.data, 'navel'),
-          hips: getOptionalFloat(row.data, 'hips'),
-          left_arm: getOptionalFloat(row.data, 'left_arm'),
-          right_arm: getOptionalFloat(row.data, 'right_arm'),
-          left_thigh: getOptionalFloat(row.data, 'left_thigh'),
-          right_thigh: getOptionalFloat(row.data, 'right_thigh'),
-          left_calf: getOptionalFloat(row.data, 'left_calf'),
-          right_calf: getOptionalFloat(row.data, 'right_calf'),
-          shoulders: getOptionalFloat(row.data, 'shoulders'),
-          neck: getOptionalFloat(row.data, 'neck'),
-        });
+        const existingMId = measIdByDate.get(date);
+        const vals = [
+          getOptionalFloat(row.data, 'chest') ?? null,
+          getOptionalFloat(row.data, 'waist') ?? null,
+          getOptionalFloat(row.data, 'navel') ?? null,
+          getOptionalFloat(row.data, 'hips') ?? null,
+          getOptionalFloat(row.data, 'left_arm') ?? null,
+          getOptionalFloat(row.data, 'right_arm') ?? null,
+          getOptionalFloat(row.data, 'left_thigh') ?? null,
+          getOptionalFloat(row.data, 'right_thigh') ?? null,
+          getOptionalFloat(row.data, 'left_calf') ?? null,
+          getOptionalFloat(row.data, 'right_calf') ?? null,
+          getOptionalFloat(row.data, 'shoulders') ?? null,
+          getOptionalFloat(row.data, 'neck') ?? null,
+        ];
+        if (existingMId !== undefined) {
+          await db.runAsync(
+            `UPDATE measurements SET chest=?,waist=?,navel=?,hips=?,left_arm=?,right_arm=?,
+             left_thigh=?,right_thigh=?,left_calf=?,right_calf=?,shoulders=?,neck=? WHERE id=?`,
+            [...vals, existingMId]
+          );
+        } else {
+          const newMId = await addMeasurementRecord({
+            date,
+            chest: vals[0] ?? undefined, waist: vals[1] ?? undefined,
+            navel: vals[2] ?? undefined, hips: vals[3] ?? undefined,
+            left_arm: vals[4] ?? undefined, right_arm: vals[5] ?? undefined,
+            left_thigh: vals[6] ?? undefined, right_thigh: vals[7] ?? undefined,
+            left_calf: vals[8] ?? undefined, right_calf: vals[9] ?? undefined,
+            shoulders: vals[10] ?? undefined, neck: vals[11] ?? undefined,
+          });
+          measIdByDate.set(date, newMId);
+        }
         measurementCount++;
       }
 
-      // 3. Sauvegarder la composition corporelle si complete
+      // 3. Composition corporelle — UPDATE en mémoire si date existe, INSERT sinon
       if (row.hasComposition) {
         const fat = getOptionalFloat(row.data, 'fat_percent')!;
         const muscle = getOptionalFloat(row.data, 'muscle_percent')!;
         const bone = getOptionalFloat(row.data, 'bone_mass')!;
         const visceral = getOptionalFloat(row.data, 'visceral_fat')!;
+        const existingIdx = compIdxByDate.get(date);
 
-        await addBodyComposition({
-          date,
-          weight: weight!,
-          bodyFatPercent: fat,
-          muscleMass: muscle,
-          waterPercent: getOptionalFloat(row.data, 'water_percent') ?? 0,
-          boneMass: bone,
-          visceralFat: visceral,
-          metabolicAge: getOptionalFloat(row.data, 'metabolic_age'),
-          bmr: getOptionalFloat(row.data, 'bmr'),
-          source: getOptionalString(row.data, 'source') || 'csv',
-        });
+        if (existingIdx !== undefined) {
+          // Mise à jour en mémoire (sauvegardé en bloc à la fin)
+          allCompositions[existingIdx] = {
+            ...allCompositions[existingIdx],
+            weight: weight ?? allCompositions[existingIdx].weight,
+            bodyFatPercent: fat,
+            muscleMass: muscle,
+            waterPercent: getOptionalFloat(row.data, 'water_percent') ?? allCompositions[existingIdx].waterPercent,
+            boneMass: bone,
+            visceralFat: visceral,
+            metabolicAge: getOptionalFloat(row.data, 'metabolic_age') ?? allCompositions[existingIdx].metabolicAge,
+            bmr: getOptionalFloat(row.data, 'bmr') ?? allCompositions[existingIdx].bmr,
+            source: 'csv',
+          };
+        } else {
+          // Nouvelle date
+          const newEntry = {
+            id: `bc_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            date,
+            weight: weight!,
+            bodyFatPercent: fat,
+            muscleMass: muscle,
+            waterPercent: getOptionalFloat(row.data, 'water_percent') ?? 0,
+            boneMass: bone,
+            visceralFat: visceral,
+            metabolicAge: getOptionalFloat(row.data, 'metabolic_age'),
+            bmr: getOptionalFloat(row.data, 'bmr'),
+            source: 'csv',
+          };
+          allCompositions.push(newEntry);
+          compIdxByDate.set(date, allCompositions.length - 1);
+        }
         compositionCount++;
       }
 
       success++;
     } catch (err: unknown) {
       importErrors.push({ line: row.lineNumber, error: err instanceof Error ? err.message : 'Erreur inconnue' });
+    }
+  }
+
+  // Sauvegarder les compositions en une seule opération (évite N écritures)
+  if (compositionCount > 0) {
+    try {
+      const secureStorage = (await import('@/lib/security/secureStorage')).default;
+      await secureStorage.setItem('@yoroi_body_composition', allCompositions);
+    } catch (err) {
+      logger.error('[CSV Import] Erreur sauvegarde compositions:', err);
     }
   }
 
@@ -676,7 +781,7 @@ export async function importUnifiedRows(rows: SimpleParsedRow[]): Promise<Simple
 }
 
 // ============================================
-// EXPORT - Toutes les donnees en CSV lisible
+// EXPORT - Toutes les données en CSV lisible
 // ============================================
 
 export async function exportUnifiedCSV(): Promise<string> {
@@ -710,7 +815,7 @@ export async function exportUnifiedCSV(): Promise<string> {
 
   const now = new Date().toLocaleDateString('fr-FR');
   const lines: string[] = [
-    `# YOROI - Export de donnees`,
+    `# YOROI - Export de données`,
     `# Date d'export : ${now}`,
     `# Format : ${dates.length} entree(s) — separateur ";" — decimales "."`,
     `# Compatible : Excel, Google Sheets, Numbers`,
@@ -806,7 +911,7 @@ export async function shareExportCSV(): Promise<boolean> {
 
     await Sharing.shareAsync(path, {
       mimeType: 'text/csv',
-      dialogTitle: 'Export Yoroi — Sauvegarde de tes donnees',
+      dialogTitle: 'Export Yoroi — Sauvegarde de tes données',
       UTI: 'public.comma-separated-values-text',
     });
     return true;

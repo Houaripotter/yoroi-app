@@ -16,7 +16,9 @@ import {
   Modal,
   Alert,
   RefreshControl,
+  DeviceEventEmitter,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { safeOpenURL } from '@/lib/security/validators';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useI18n } from '@/lib/I18nContext';
@@ -173,6 +175,7 @@ export default function PlanningScreen() {
   const [favoriteSports, setFavoriteSports] = useState<Set<string>>(new Set());
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const [expandedSports, setExpandedSports] = useState<Set<string>>(new Set());
+  const [visibleSportsCount, setVisibleSportsCount] = useState(8);
 
 
   // Clubs & Objectifs state
@@ -355,7 +358,7 @@ export default function PlanningScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      // Charger les donnees de base
+      // Charger les données de base
       const [trainingsData, clubsData, competitionsData] = await Promise.all([
         getTrainings(),
         getClubs(),
@@ -391,6 +394,8 @@ export default function PlanningScreen() {
     }
     await loadData();
     await loadSavedExternalEvents();
+    // Forcer le rechargement des jours de repos dans le calendrier
+    setCalendarRefreshKey(k => k + 1);
     setRefreshing(false);
   }, [loadData]);
 
@@ -399,6 +404,14 @@ export default function PlanningScreen() {
     loadData();
     loadSavedExternalEvents();
   }, []);
+
+  // Recharger instantanément quand une séance est ajoutée/modifiée depuis n'importe où
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
+      loadData();
+    });
+    return () => sub.remove();
+  }, [loadData]);
 
   // Recharger quand on revient d'un ajout/edition (sync calendrier + emploi du temps)
   const navigation = useNavigation();
@@ -441,7 +454,7 @@ export default function PlanningScreen() {
       setCatalogLoading(true);
       try {
         const [events, favStr] = await Promise.all([
-          getFilteredEvents({ upcomingOnly: true, limit: 500 }),
+          getFilteredEvents({ upcomingOnly: true, limit: 150 }),
           AsyncStorage.getItem(FAVORITE_SPORTS_KEY),
         ]);
         if (!cancelled) {
@@ -623,6 +636,11 @@ export default function PlanningScreen() {
     return { groups, sortedSports };
   }, [filteredCatalogEvents, favoriteSports]);
 
+  // Quand les filtres changent, reset la pagination des sports
+  useEffect(() => {
+    setVisibleSportsCount(8);
+  }, [catalogLocationFilter, catalogCategoryFilter, catalogSportFilter, catalogSearchQuery]);
+
   // Add external event to saved list
   const addExternalEventToSaved = useCallback(async (event: SportEvent) => {
     try {
@@ -780,12 +798,37 @@ export default function PlanningScreen() {
       .slice(0, 8);
   }, [workouts, currentMonth, clubs]);
 
-  // Handler: clic sur un jour du calendrier
+  // Clé pour forcer le rechargement des jours de repos dans EnhancedCalendarView
+  const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
+
+  // Handler: clic sur un jour du calendrier (ouvre le modal de détail)
   const handleDayPress = (day: Date) => {
     impactAsync(ImpactFeedbackStyle.Light);
     setSelectedDate(day);
     setShowDayModal(true);
   };
+
+  // Handler: bouton + directement sur la cellule calendrier (sans ouvrir le modal)
+  const handleQuickAdd = useCallback((day: Date) => {
+    if (isNavigatingToAdd) return;
+    impactAsync(ImpactFeedbackStyle.Medium);
+    setIsNavigatingToAdd(true);
+    hasNavigatedAway.current = true;
+    const dateStr = format(day, 'yyyy-MM-dd');
+    setTimeout(() => {
+      router.push(`/add-training?date=${dateStr}`);
+      setTimeout(() => setIsNavigatingToAdd(false), 1000);
+    }, 150);
+  }, [isNavigatingToAdd]);
+
+  // Handler: toggle lune (jour de repos) directement depuis la cellule calendrier
+  const handleToggleRestFromCalendar = useCallback(async (day: Date) => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    const dateStr = format(day, 'yyyy-MM-dd');
+    await toggleRestDay(dateStr);
+    // Forcer le rechargement des restDays dans EnhancedCalendarView
+    setCalendarRefreshKey(k => k + 1);
+  }, []);
 
   // Handler: ouvrir le flow d'ajout (même que le bouton +)
   const handleOpenAddModal = () => {
@@ -804,7 +847,7 @@ export default function PlanningScreen() {
     }, 300);
   };
 
-  // Handler: editer une seance
+  // Handler: editer une séance
   const handleEditSession = (session: Training) => {
     setShowDayModal(false);
     hasNavigatedAway.current = true;
@@ -858,15 +901,15 @@ export default function PlanningScreen() {
     return m > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${h}h`;
   };
 
-  // Handler: supprimer une seance et la mettre en corbeille
+  // Handler: supprimer une séance et la mettre en corbeille
   const handleDeleteSession = async (id: number) => {
     try {
       await deleteTraining(id);
       notificationAsync(NotificationFeedbackType.Success);
       await loadData();
     } catch (error) {
-      logger.error('Erreur suppression seance:', error);
-      showPopup('Erreur', 'Impossible de supprimer la seance');
+      logger.error('Erreur suppression séance:', error);
+      showPopup('Erreur', 'Impossible de supprimer la séance');
     }
   };
 
@@ -1110,7 +1153,7 @@ export default function PlanningScreen() {
         {/* Page Calendrier (avec clubs + emploi du temps intégrés) */}
         <View style={styles.page}>
           <ScrollView
-            style={styles.scrollView}
+            style={[styles.scrollView, !isDark && { backgroundColor: colors.background }]}
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
             refreshControl={
@@ -1181,6 +1224,9 @@ export default function PlanningScreen() {
               onMonthChange={setCurrentMonth}
               onDayPress={handleDayPress}
               selectedDate={selectedDate}
+              onQuickAdd={handleQuickAdd}
+              onToggleRest={handleToggleRestFromCalendar}
+              refreshKey={calendarRefreshKey}
             />
 
             {/* EMPLOI DU TEMPS DE LA SEMAINE (integre) */}
@@ -1199,10 +1245,10 @@ export default function PlanningScreen() {
           </ScrollView>
         </View>
 
-        {/* Page Seances */}
+        {/* Page Séances */}
         <View style={styles.page}>
           <ScrollView
-            style={styles.scrollView}
+            style={[styles.scrollView, !isDark && { backgroundColor: colors.background }]}
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
             refreshControl={
@@ -1214,7 +1260,7 @@ export default function PlanningScreen() {
               />
             }
           >
-            <PlanningSeancesContent workouts={workouts} />
+            <PlanningSeancesContent workouts={workouts} clubs={clubs} />
             <View style={{ height: 120 }} />
           </ScrollView>
         </View>
@@ -1222,7 +1268,7 @@ export default function PlanningScreen() {
         {/* Page Clubs */}
         <View style={styles.page}>
           <ScrollView
-            style={styles.scrollView}
+            style={[styles.scrollView, !isDark && { backgroundColor: colors.background }]}
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
             refreshControl={
@@ -1234,7 +1280,7 @@ export default function PlanningScreen() {
               />
             }
           >
-            <View style={{ backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12, alignSelf: 'flex-start', marginBottom: 4 }}>
+            <View style={{ backgroundColor: colors.backgroundCard, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12, alignSelf: 'flex-start', marginBottom: 4, borderWidth: isDark ? 0 : 1, borderColor: colors.border }}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('planning.clubs')}</Text>
             </View>
 
@@ -1390,7 +1436,7 @@ export default function PlanningScreen() {
                 <View style={[styles.totalStatsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
                   <View style={styles.totalStatItem}>
                     <Text style={[styles.totalStatValue, { color: colors.textPrimary }]}>{workouts.length}</Text>
-                    <Text style={[styles.totalStatLabel, { color: colors.textMuted }]}>total seances</Text>
+                    <Text style={[styles.totalStatLabel, { color: colors.textMuted }]}>total séances</Text>
                   </View>
                   <View style={[styles.totalStatDivider, { backgroundColor: colors.border }]} />
                   <View style={styles.totalStatItem}>
@@ -1421,7 +1467,7 @@ export default function PlanningScreen() {
         {/* Page Compétitions */}
         <View style={styles.page}>
           <ScrollView
-            style={styles.scrollView}
+            style={[styles.scrollView, !isDark && { backgroundColor: colors.background }]}
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
             refreshControl={
@@ -1520,7 +1566,7 @@ export default function PlanningScreen() {
             {eventsTabMode === 'my_events' && (
               <>
                 {/* Liste des RDV ajoutés */}
-                {savedExternalEvents.length > 0 ? (
+                {groupedEvents.futureEvents.length > 0 ? (
                   <>
                     {/* Grouper les événements par sport - OPTIMISÉ avec useMemo */}
                     {Object.keys(groupedEvents.groupedBySport).map(sportKey => {
@@ -1661,7 +1707,7 @@ export default function PlanningScreen() {
                 )}
 
                 {/* Espace en bas pour le bouton flottant */}
-                {savedExternalEvents.length > 0 && (
+                {groupedEvents.futureEvents.length > 0 && (
                   <View style={{ height: 80 }} />
                 )}
               </>
@@ -1699,9 +1745,9 @@ export default function PlanningScreen() {
                     activeOpacity={1}
                     onPress={() => setShowFiltersModal(false)}
                   >
-                    <TouchableOpacity
+                    <View
                       style={[styles.filterModalPanel, { backgroundColor: isDark ? '#1A1A1E' : '#FFFFFF' }]}
-                      activeOpacity={1}
+                      onStartShouldSetResponder={() => true}
                     >
                       <View style={[styles.filterModalHeader, { backgroundColor: colors.accent }]}>
                         <View style={styles.filterModalHeaderContent}>
@@ -1716,7 +1762,7 @@ export default function PlanningScreen() {
                         </TouchableOpacity>
                       </View>
 
-                      <ScrollView style={styles.filterModalContent} showsVerticalScrollIndicator={false}>
+                      <ScrollView style={styles.filterModalContent} showsVerticalScrollIndicator={false} nestedScrollEnabled={true}>
                         {/* Localisation - Cards design */}
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                           <MapPin size={14} color={colors.textMuted} />
@@ -2109,7 +2155,7 @@ export default function PlanningScreen() {
                           <Text style={styles.filterApplyBtnText}>Appliquer ({filteredCatalogEvents.length})</Text>
                         </TouchableOpacity>
                       </View>
-                    </TouchableOpacity>
+                    </View>
                   </TouchableOpacity>
                 </Modal>
 
@@ -2161,7 +2207,7 @@ export default function PlanningScreen() {
                       </TouchableOpacity>
                     )}
 
-                    {groupedCatalogEvents.sortedSports.map((sportTag, sportIndex) => {
+                    {groupedCatalogEvents.sortedSports.slice(0, visibleSportsCount).map((sportTag, sportIndex) => {
                       const events = groupedCatalogEvents.groups[sportTag];
                       const sport = getSportById(sportTag);
                       const sportInfo = sport ? {
@@ -2262,10 +2308,12 @@ export default function PlanningScreen() {
                                   {/* Sport color banner */}
                                   <View style={[styles.eventsCardBanner, { backgroundColor: sportInfo.color }]}>
                                     {event.image_logo_url && !failedImages.has(event.id) ? (
-                                      <Image
-                                        source={{ uri: event.image_logo_url }}
+                                      <ExpoImage
+                                        source={{ uri: event.image_logo_url, headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://google.com' } }}
                                         style={styles.eventsCardImage}
-                                        resizeMode="cover"
+                                        contentFit="cover"
+                                        cachePolicy="memory-disk"
+                                        transition={250}
                                         onError={() => setFailedImages(prev => new Set(prev).add(event.id))}
                                       />
                                     ) : (
@@ -2369,10 +2417,12 @@ export default function PlanningScreen() {
                                   >
                                     <View style={[styles.eventsCardBanner, { backgroundColor: sportInfo.color }]}>
                                       {event.image_logo_url && !failedImages.has(event.id) ? (
-                                        <Image
-                                          source={{ uri: event.image_logo_url }}
+                                        <ExpoImage
+                                          source={{ uri: event.image_logo_url, headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://google.com' } }}
                                           style={styles.eventsCardImage}
-                                          resizeMode="cover"
+                                          contentFit="cover"
+                                          cachePolicy="memory-disk"
+                                          transition={250}
                                           onError={() => setFailedImages(prev => new Set(prev).add(event.id))}
                                         />
                                       ) : (
@@ -2460,6 +2510,22 @@ export default function PlanningScreen() {
                         </View>
                       );
                     })}
+
+                    {/* Bouton "Voir plus de sports" */}
+                    {visibleSportsCount < groupedCatalogEvents.sortedSports.length && (
+                      <TouchableOpacity
+                        style={[styles.eventsSeeMoreBtn, { borderColor: colors.accent + '40', backgroundColor: colors.backgroundCard, marginHorizontal: 16, marginBottom: 8 }]}
+                        onPress={() => {
+                          impactAsync(ImpactFeedbackStyle.Light);
+                          setVisibleSportsCount(prev => prev + 8);
+                        }}
+                      >
+                        <Text style={[styles.eventsSeeMoreText, { color: colors.accent }]}>
+                          {`Voir ${Math.min(8, groupedCatalogEvents.sortedSports.length - visibleSportsCount)} sport${Math.min(8, groupedCatalogEvents.sortedSports.length - visibleSportsCount) > 1 ? 's' : ''} de plus`}
+                        </Text>
+                        <ChevronRight size={16} color={colors.accent} style={{ transform: [{ rotate: '90deg' }] }} />
+                      </TouchableOpacity>
+                    )}
                   </>
                 )}
               </>
@@ -2469,7 +2535,7 @@ export default function PlanningScreen() {
           </ScrollView>
 
           {/* Bouton flottant "+" pour ajouter un RDV */}
-          {eventsTabMode === 'my_events' && savedExternalEvents.length > 0 && (
+          {eventsTabMode === 'my_events' && groupedEvents.futureEvents.length > 0 && (
             <TouchableOpacity
               style={[styles.floatingAddButton, { backgroundColor: colors.accent }]}
               onPress={() => router.push('/add-competition')}
@@ -2538,7 +2604,7 @@ export default function PlanningScreen() {
                   {sessionsFilter?.name || ''}
                 </Text>
                 <Text style={[sessionsModalStyles.subtitle, { color: colors.textMuted }]}>
-                  {filteredModalSessions.length} seance{filteredModalSessions.length > 1 ? 's' : ''} ce mois
+                  {filteredModalSessions.length} séance{filteredModalSessions.length > 1 ? 's' : ''} ce mois
                   {filteredTotalDuration > 0 ? ` - ${formatDurationShort(filteredTotalDuration)}` : ''}
                 </Text>
               </View>
@@ -2631,7 +2697,7 @@ export default function PlanningScreen() {
               })}
               {filteredModalSessions.length === 0 && (
                 <Text style={[sessionsModalStyles.emptyText, { color: colors.textMuted }]}>
-                  Aucune seance ce mois
+                  Aucune séance ce mois
                 </Text>
               )}
             </ScrollView>

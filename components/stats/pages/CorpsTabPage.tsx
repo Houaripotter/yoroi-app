@@ -135,9 +135,11 @@ export const CorpsTabPage: React.FC = React.memo(() => {
 
       // --- User profile ---
       if (settings?.gender) setUserGender(settings.gender as 'male' | 'female');
-      if (settings?.weight_goal) {
-        setTargetWeight(settings.weight_goal);
-      }
+      // Objectif de poids : priorité à profile.target_weight (SQLite), fallback settings.weight_goal
+      const goalFromProfile = profile?.target_weight;
+      const goalFromSettings = settings?.weight_goal;
+      const resolvedGoal = (goalFromProfile && goalFromProfile > 0) ? goalFromProfile : (goalFromSettings ?? null);
+      if (resolvedGoal) setTargetWeight(resolvedGoal);
 
       // --- Poids ---
       setWeightData(data);
@@ -158,9 +160,6 @@ export const CorpsTabPage: React.FC = React.memo(() => {
       if (allWeights?.length > 0) {
         const filtered = allWeights.filter((w: any) => new Date(w.date) >= cutoffDate).reverse();
         setWeightHistory(filtered.map((w: any) => ({ date: w.date, value: w.weight })));
-        if (profile?.height_cm) {
-          const heightM = profile.height_cm / 100;
-        }
       }
 
       // --- Composition ---
@@ -317,83 +316,77 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         onPeriodChange={setSelectedPeriod}
       />
 
-      {/* Evolution du poids + Métriques clés dans le même corps */}
+      {/* Evolution du poids + Historique récent dans le même bloc */}
       <StatsSection>
         <WeightChartCard
-          data={weightData?.values || []}
+          data={weightData?.values ? [...weightData.values].reverse() : []}
           color="#3B82F6"
           unit=" kg"
           title={t('statsPages.weight.weightEvolution')}
+          targetWeight={targetWeight ?? undefined}
+          newestFirst={true}
+          onPressWeight={() => setSelectedMetric({ key: 'weight', label: t('statsPages.weight.currentWeight'), color: '#3B82F6', unit: 'kg', icon: <Scale size={18} color="#3B82F6" strokeWidth={2.5} />, source: 'weight' })}
+          onPressTarget={() => setSelectedMetric({ key: 'target', label: t('statsPages.weight.target'), color: '#10B981', unit: 'kg', icon: <Target size={18} color="#10B981" strokeWidth={2.5} />, source: 'weight' })}
         />
-        {/* Poids actuel + Objectif dans le même corps que le graphique */}
-        <View style={[styles.grid, { marginTop: 12 }]}>
-          <TouchableOpacity
-            style={styles.gridItem}
-            activeOpacity={0.7}
-            onPress={() => setSelectedMetric({ key: 'weight', label: t('statsPages.weight.currentWeight'), color: '#3B82F6', unit: 'kg', icon: <Scale size={18} color="#3B82F6" strokeWidth={2.5} />, source: 'weight' })}
-          >
-            <MetricCard label={t('statsPages.weight.currentWeight')} value={currentWeight || 0} unit="kg" icon={<Scale size={24} color="#3B82F6" strokeWidth={2.5} />} color="#3B82F6" trend={weightData?.trend} change={weightData ? `${weightData.changePercent >= 0 ? '+' : ''}${Number.isInteger(weightData.changePercent) ? weightData.changePercent : weightData.changePercent.toFixed(1)}%` : undefined} sparklineData={weightHistory.map(h => ({ value: h.value }))} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.gridItem}
-            activeOpacity={0.7}
-            onPress={() => setSelectedMetric({ key: 'target', label: t('statsPages.weight.target'), color: '#10B981', unit: 'kg', icon: <Target size={18} color="#10B981" strokeWidth={2.5} />, source: 'weight' })}
-          >
-            <MetricCard label={t('statsPages.weight.target')} value={targetWeight ?? 0} unit="kg" icon={<Target size={24} color="#10B981" strokeWidth={2.5} />} color="#10B981" sparklineData={[]} />
-          </TouchableOpacity>
-        </View>
-      </StatsSection>
 
-      {/* Historique récent — horizontal, le plus récent à GAUCHE */}
-      {allWeightsData.length > 0 && (
-        <StatsSection>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.historyScrollContent}
-          >
-            {allWeightsData.slice(0, 20).map((entry, index) => {
-              const prevEntry = allWeightsData[index + 1];
-              const change = prevEntry ? entry.weight - prevEntry.weight : 0;
-              const isFirst = index === 0;
-              return (
-                <TouchableOpacity
-                  key={entry.id || index}
-                  activeOpacity={0.7}
-                  onPress={() => setSelectedMetric({ key: 'weight', label: t('statsPages.weight.currentWeight'), color: '#3B82F6', unit: 'kg', icon: <Scale size={18} color="#3B82F6" strokeWidth={2.5} />, source: 'weight' })}
-                  style={[
-                    styles.historyCard,
-                    { backgroundColor: colors.backgroundCard, borderColor: isFirst ? '#3B82F6' : colors.border },
-                    isFirst && styles.historyCardRecent,
-                  ]}
-                >
-                  {isFirst && (
-                    <View style={styles.historyCardBadge}>
-                      <Text style={styles.historyCardBadgeText}>Récent</Text>
-                    </View>
-                  )}
-                  <Text style={[styles.historyCardDate, { color: colors.textMuted }]}>
-                    {format(new Date(entry.date), 'd MMM', { locale: fr })}
-                  </Text>
-                  <Text style={[styles.historyCardWeight, { color: isFirst ? '#3B82F6' : colors.textPrimary }]}>
-                    {entry.weight?.toFixed(1)} <Text style={styles.historyCardUnit}>kg</Text>
-                  </Text>
-                  {change !== 0 && (
-                    <Text style={[styles.historyCardChange, { color: change < 0 ? '#10B981' : '#EF4444' }]}>
-                      {change > 0 ? '+' : ''}{change.toFixed(1)} kg
+        {/* Historique récent — horizontal, le plus récent à GAUCHE — fusionné sous le graphique */}
+        {allWeightsData.length > 0 && (
+          <View>
+            <View style={styles.historyTitleRow}>
+              <View style={[styles.historyTitleDash, { backgroundColor: '#3B82F6' }]} />
+              <Text style={[styles.historyTitleText, { color: colors.textMuted }]}>
+                ENTRÉES ({allWeightsData.length})
+              </Text>
+              <View style={[styles.historyTitleDash, { backgroundColor: '#3B82F6' }]} />
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.historyScrollContent}
+            >
+              {allWeightsData.slice(0, 20).map((entry, index) => {
+                const prevEntry = allWeightsData[index + 1];
+                const change = prevEntry ? entry.weight - prevEntry.weight : 0;
+                const isFirst = index === 0;
+                return (
+                  <TouchableOpacity
+                    key={entry.id || index}
+                    activeOpacity={0.7}
+                    onPress={() => setSelectedMetric({ key: 'weight', label: t('statsPages.weight.currentWeight'), color: '#3B82F6', unit: 'kg', icon: <Scale size={18} color="#3B82F6" strokeWidth={2.5} />, source: 'weight' })}
+                    style={[
+                      styles.historyCard,
+                      { backgroundColor: colors.backgroundCard, borderColor: isFirst ? '#3B82F6' : colors.border },
+                      isFirst && styles.historyCardRecent,
+                    ]}
+                  >
+                    {isFirst && (
+                      <View style={styles.historyCardBadge}>
+                        <Text style={styles.historyCardBadgeText}>RECENT</Text>
+                      </View>
+                    )}
+                    <Text style={[styles.historyCardDate, { color: colors.textMuted }]}>
+                      {format(new Date(entry.date), 'd MMM yyyy', { locale: fr })}
                     </Text>
-                  )}
-                  {entry.fat_percent > 0 && (
-                    <Text style={[styles.historyCardExtra, { color: colors.textMuted }]}>
-                      G: {entry.fat_percent?.toFixed(1)}%
+                    <Text style={[styles.historyCardWeight, { color: isFirst ? '#3B82F6' : colors.textPrimary }]}>
+                      {entry.weight?.toFixed(1)} <Text style={styles.historyCardUnit}>kg</Text>
                     </Text>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </StatsSection>
-      )}
+                    {change !== 0 && (
+                      <Text style={[styles.historyCardChange, { color: change < 0 ? '#10B981' : '#EF4444' }]}>
+                        {change > 0 ? '+' : ''}{change.toFixed(1)} kg
+                      </Text>
+                    )}
+                    {entry.fat_percent > 0 && (
+                      <Text style={[styles.historyCardExtra, { color: colors.textMuted }]}>
+                        G: {entry.fat_percent?.toFixed(1)}%
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+      </StatsSection>
 
       {/* ========== IMC + Statistiques dans le même corps ========== */}
       {bmi != null && bmi > 0 && (
@@ -625,10 +618,10 @@ export const CorpsTabPage: React.FC = React.memo(() => {
           lines={[
             {
               label: 'Nombril',
-              color: '#F97316',
+              color: '#06B6D4',
               history: measurementHistory.navel,
               currentValue: latestMeasurement?.navel || 0,
-              onPress: () => setSelectedMetric({ key: 'navel', label: 'Nombril', color: '#F97316', unit: 'cm', icon: <Ruler size={18} color="#F97316" strokeWidth={2.5} />, source: 'measurement' }),
+              onPress: () => setSelectedMetric({ key: 'navel', label: 'Nombril', color: '#06B6D4', unit: 'cm', icon: <Ruler size={18} color="#06B6D4" strokeWidth={2.5} />, source: 'measurement' }),
             },
             {
               label: t('statsPages.measurements.hips'),
@@ -760,6 +753,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
+  },
+  // Titre historique
+  historyTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 16,
+    marginBottom: 10,
+  },
+  historyTitleDash: {
+    flex: 1,
+    height: 1.5,
+    borderRadius: 1,
+    opacity: 0.4,
+  },
+  historyTitleText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    textAlign: 'center',
   },
   // Historique horizontal
   historyScrollContent: {

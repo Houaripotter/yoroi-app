@@ -154,12 +154,15 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
   } = props;
 
   // Detect exercise type
-  const isForceExercise = selectedBenchmark?.category === 'force' &&
-    (selectedBenchmark?.unit === 'kg' || selectedBenchmark?.unit === 'lbs');
+  // Force + Musculation = toujours poids+reps (peu importe l'unité stockée en DB)
+  const isWeightExercise =
+    selectedBenchmark?.category === 'force' || selectedBenchmark?.category === 'musculation';
+  // Poids de corps pur (sans barre/haltères)
+  const isBodyweightExercise =
+    selectedBenchmark?.category === 'bodyweight' || selectedBenchmark?.category === 'street_workout';
   const isRunningExercise = ['running', 'trail'].includes(selectedBenchmark?.category || '');
   const isHyroxExercise = selectedBenchmark?.category === 'hyrox';
   const isCardioExercise = selectedBenchmark?.category === 'cardio';
-  const isMusculationExercise = selectedBenchmark?.category === 'musculation';
 
   // Calculate total time in seconds from H/M/S fields
   const getTotalTimeSeconds = () => {
@@ -203,11 +206,18 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
         >
           <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                {selectedBenchmark?.name}
-              </Text>
               <TouchableOpacity onPress={onClose} style={styles.modalCloseBtn}>
                 <X size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                {selectedBenchmark?.name}
+              </Text>
+              <TouchableOpacity
+                style={[styles.modalSaveTopBtn, { backgroundColor: selectedBenchmark?.color || colors.accent, opacity: isSubmitting ? 0.6 : 1 }]}
+                onPress={onSubmit}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.modalSaveTopText}>{isSubmitting ? '...' : 'Enregistrer'}</Text>
               </TouchableOpacity>
             </View>
 
@@ -342,34 +352,206 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
             )}
 
             {/* ============================================ */}
-            {/* FORCE Exercise Form (kg/lbs with reps) */}
+            {/* WEIGHT Exercise — Stepper pro poids + reps */}
             {/* ============================================ */}
-            {isForceExercise && (
+            {isWeightExercise && (
               <>
-                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Poids soulevé</Text>
-                <View style={[styles.inputRow, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-                  <TextInput
-                    style={[styles.input, { color: colors.textPrimary, flex: 1 }]}
-                    placeholder="100"
-                    placeholderTextColor={colors.textMuted}
-                    value={newEntryValue}
-                    onChangeText={(text) => setNewEntryValue(text.replace(',', '.'))}
-                    keyboardType="decimal-pad"
-                  />
-                  <Text style={[styles.unitText, { color: colors.textSecondary }]}>{selectedBenchmark?.unit}</Text>
+                {/* POIDS */}
+                <Text style={[styles.metricSectionLabel, { color: colors.textMuted }]}>POIDS SOULEVÉ</Text>
+                <View style={styles.stepperRow}>
+                  {/* Décrément rapide */}
+                  <TouchableOpacity
+                    style={[styles.stepBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                    onPress={() => {
+                      const v = parseFloat(newEntryValue) || 0;
+                      const next = Math.max(0, v - 5);
+                      setNewEntryValue(Number.isInteger(next) ? next.toString() : next.toFixed(1));
+                      impactAsync(ImpactFeedbackStyle.Light);
+                    }}
+                  >
+                    <Text style={[styles.stepBtnText, { color: colors.textSecondary }]}>−5</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.stepBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                    onPress={() => {
+                      const v = parseFloat(newEntryValue) || 0;
+                      const next = Math.max(0, v - 2.5);
+                      setNewEntryValue(Number.isInteger(next) ? next.toString() : next.toFixed(1));
+                      impactAsync(ImpactFeedbackStyle.Light);
+                    }}
+                  >
+                    <Text style={[styles.stepBtnText, { color: colors.textSecondary }]}>−2.5</Text>
+                  </TouchableOpacity>
+
+                  {/* Valeur centrale */}
+                  <View style={[styles.valueBox, { backgroundColor: colors.backgroundCard, borderColor: selectedBenchmark?.color || colors.accent }]}>
+                    <TextInput
+                      style={[styles.valueBoxInput, { color: colors.textPrimary }]}
+                      value={newEntryValue}
+                      onChangeText={(text) => setNewEntryValue(text.replace(',', '.'))}
+                      keyboardType="decimal-pad"
+                      placeholder="0"
+                      placeholderTextColor={colors.textMuted}
+                      textAlign="center"
+                    />
+                    <Text style={[styles.valueBoxUnit, { color: selectedBenchmark?.color || colors.accent }]}>kg</Text>
+                  </View>
+
+                  {/* Incrément rapide */}
+                  <TouchableOpacity
+                    style={[styles.stepBtn, { backgroundColor: colors.backgroundCard, borderColor: selectedBenchmark?.color || colors.accent }]}
+                    onPress={() => {
+                      const v = parseFloat(newEntryValue) || 0;
+                      const next = v + 2.5;
+                      setNewEntryValue(Number.isInteger(next) ? next.toString() : next.toFixed(1));
+                      impactAsync(ImpactFeedbackStyle.Medium);
+                    }}
+                  >
+                    <Text style={[styles.stepBtnText, { color: selectedBenchmark?.color || colors.accent }]}>+2.5</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.stepBtnAccent, { backgroundColor: selectedBenchmark?.color || colors.accent }]}
+                    onPress={() => {
+                      const v = parseFloat(newEntryValue) || 0;
+                      const next = v + 5;
+                      setNewEntryValue(Number.isInteger(next) ? next.toString() : next.toFixed(1));
+                      impactAsync(ImpactFeedbackStyle.Medium);
+                    }}
+                  >
+                    <Text style={[styles.stepBtnText, { color: '#FFF' }]}>+5</Text>
+                  </TouchableOpacity>
                 </View>
 
-                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Répétitions</Text>
-                <View style={[styles.inputRow, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-                  <TextInput
-                    style={[styles.input, { color: colors.textPrimary, flex: 1 }]}
-                    placeholder="10"
-                    placeholderTextColor={colors.textMuted}
-                    value={newEntryReps}
-                    onChangeText={setNewEntryReps}
-                    keyboardType="number-pad"
-                  />
-                  <Text style={[styles.unitText, { color: colors.textSecondary }]}>reps</Text>
+                {/* RÉPÉTITIONS */}
+                <Text style={[styles.metricSectionLabel, { color: colors.textMuted, marginTop: 20 }]}>RÉPÉTITIONS</Text>
+                <View style={styles.stepperRow}>
+                  <TouchableOpacity
+                    style={[styles.stepBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                    onPress={() => {
+                      const v = parseInt(newEntryReps) || 0;
+                      if (v > 5) { setNewEntryReps((v - 5).toString()); impactAsync(ImpactFeedbackStyle.Light); }
+                    }}
+                  >
+                    <Text style={[styles.stepBtnText, { color: colors.textSecondary }]}>−5</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.stepBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                    onPress={() => {
+                      const v = parseInt(newEntryReps) || 0;
+                      if (v > 1) { setNewEntryReps((v - 1).toString()); impactAsync(ImpactFeedbackStyle.Light); }
+                    }}
+                  >
+                    <Text style={[styles.stepBtnText, { color: colors.textSecondary }]}>−1</Text>
+                  </TouchableOpacity>
+
+                  <View style={[styles.valueBox, { backgroundColor: colors.backgroundCard, borderColor: selectedBenchmark?.color || colors.accent }]}>
+                    <TextInput
+                      style={[styles.valueBoxInput, { color: colors.textPrimary }]}
+                      value={newEntryReps}
+                      onChangeText={setNewEntryReps}
+                      keyboardType="number-pad"
+                      placeholder="0"
+                      placeholderTextColor={colors.textMuted}
+                      textAlign="center"
+                    />
+                    <Text style={[styles.valueBoxUnit, { color: selectedBenchmark?.color || colors.accent }]}>reps</Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.stepBtn, { backgroundColor: colors.backgroundCard, borderColor: selectedBenchmark?.color || colors.accent }]}
+                    onPress={() => {
+                      const v = parseInt(newEntryReps) || 0;
+                      setNewEntryReps((v + 1).toString());
+                      impactAsync(ImpactFeedbackStyle.Medium);
+                    }}
+                  >
+                    <Text style={[styles.stepBtnText, { color: selectedBenchmark?.color || colors.accent }]}>+1</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.stepBtnAccent, { backgroundColor: selectedBenchmark?.color || colors.accent }]}
+                    onPress={() => {
+                      const v = parseInt(newEntryReps) || 0;
+                      setNewEntryReps((v + 5).toString());
+                      impactAsync(ImpactFeedbackStyle.Medium);
+                    }}
+                  >
+                    <Text style={[styles.stepBtnText, { color: '#FFF' }]}>+5</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Résumé visuel */}
+                {!!newEntryValue && !!newEntryReps && (
+                  <View style={[styles.summaryBanner, { backgroundColor: (selectedBenchmark?.color || colors.accent) + '18', borderColor: (selectedBenchmark?.color || colors.accent) + '40' }]}>
+                    <Text style={[styles.summaryText, { color: selectedBenchmark?.color || colors.accent }]}>
+                      {newEntryValue} kg  ×  {newEntryReps} reps
+                    </Text>
+                    <Text style={[styles.summaryVolume, { color: colors.textMuted }]}>
+                      Volume : {(parseFloat(newEntryValue) * parseInt(newEntryReps)).toFixed(0)} kg
+                    </Text>
+                  </View>
+                )}
+              </>
+            )}
+
+            {/* ============================================ */}
+            {/* BODYWEIGHT — stepper reps uniquement */}
+            {/* ============================================ */}
+            {isBodyweightExercise && (
+              <>
+                <Text style={[styles.metricSectionLabel, { color: colors.textMuted }]}>RÉPÉTITIONS</Text>
+                <View style={styles.stepperRow}>
+                  <TouchableOpacity
+                    style={[styles.stepBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                    onPress={() => {
+                      const v = parseInt(newEntryValue) || 0;
+                      if (v > 5) { setNewEntryValue((v - 5).toString()); impactAsync(ImpactFeedbackStyle.Light); }
+                    }}
+                  >
+                    <Text style={[styles.stepBtnText, { color: colors.textSecondary }]}>−5</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.stepBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                    onPress={() => {
+                      const v = parseInt(newEntryValue) || 0;
+                      if (v > 1) { setNewEntryValue((v - 1).toString()); impactAsync(ImpactFeedbackStyle.Light); }
+                    }}
+                  >
+                    <Text style={[styles.stepBtnText, { color: colors.textSecondary }]}>−1</Text>
+                  </TouchableOpacity>
+
+                  <View style={[styles.valueBox, { backgroundColor: colors.backgroundCard, borderColor: selectedBenchmark?.color || colors.accent }]}>
+                    <TextInput
+                      style={[styles.valueBoxInput, { color: colors.textPrimary }]}
+                      value={newEntryValue}
+                      onChangeText={setNewEntryValue}
+                      keyboardType="number-pad"
+                      placeholder="0"
+                      placeholderTextColor={colors.textMuted}
+                      textAlign="center"
+                    />
+                    <Text style={[styles.valueBoxUnit, { color: selectedBenchmark?.color || colors.accent }]}>reps</Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.stepBtn, { backgroundColor: colors.backgroundCard, borderColor: selectedBenchmark?.color || colors.accent }]}
+                    onPress={() => {
+                      const v = parseInt(newEntryValue) || 0;
+                      setNewEntryValue((v + 1).toString());
+                      impactAsync(ImpactFeedbackStyle.Medium);
+                    }}
+                  >
+                    <Text style={[styles.stepBtnText, { color: selectedBenchmark?.color || colors.accent }]}>+1</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.stepBtnAccent, { backgroundColor: selectedBenchmark?.color || colors.accent }]}
+                    onPress={() => {
+                      const v = parseInt(newEntryValue) || 0;
+                      setNewEntryValue((v + 5).toString());
+                      impactAsync(ImpactFeedbackStyle.Medium);
+                    }}
+                  >
+                    <Text style={[styles.stepBtnText, { color: '#FFF' }]}>+5</Text>
+                  </TouchableOpacity>
                 </View>
               </>
             )}
@@ -528,9 +710,9 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
             )}
 
             {/* ============================================ */}
-            {/* DURATION & CALORIES (All non-force types) */}
+            {/* DURATION & CALORIES (cardio/running/hyrox only) */}
             {/* ============================================ */}
-            {!isForceExercise && (
+            {!isWeightExercise && !isBodyweightExercise && (
               <View style={styles.durationCaloriesRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Durée</Text>
@@ -644,14 +826,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24,
+    gap: 8,
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '700',
     flex: 1,
+    textAlign: 'center',
   },
   modalCloseBtn: {
     padding: 8,
+  },
+  modalSaveTopBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalSaveTopText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
   inputLabel: {
     fontSize: 13,
@@ -821,6 +1017,79 @@ const styles = StyleSheet.create({
   rpeButtonText: {
     fontSize: 14,
     fontWeight: '700',
+  },
+  metricSectionLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  stepperRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  stepBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 16,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 46,
+  },
+  stepBtnAccent: {
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 46,
+  },
+  stepBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  valueBox: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 18,
+    borderWidth: 2.5,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+  },
+  valueBoxInput: {
+    fontSize: 40,
+    fontWeight: '900',
+    textAlign: 'center',
+    width: '100%',
+    paddingVertical: 0,
+  },
+  valueBoxUnit: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginTop: 2,
+  },
+  summaryBanner: {
+    marginTop: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 2,
+  },
+  summaryText: {
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  summaryVolume: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   modalButton: {
     borderRadius: 16,

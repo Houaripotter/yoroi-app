@@ -1,10 +1,10 @@
 // ============================================
-// DEMO DATA SERVICE - Profil Hery
-// Genere des donnees realistes pour screenshots App Store
+// DEMO DATA SERVICE - Profil Henry
+// Genere des données realistes pour screenshots App Store
 //
-// SECURITE : backup automatique des vraies donnees avant injection
+// SECURITE : backup automatique des vraies données avant injection
 // + restauration complete quand on desactive le mode demo
-// Les donnees utilisateur ne sont JAMAIS perdues.
+// Les données utilisateur ne sont JAMAIS perdues.
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -209,7 +209,7 @@ export const restoreRealData = async (): Promise<boolean> => {
 // MAIN GENERATOR
 // ============================================
 
-export const generateHeryDemoData = async (): Promise<{
+export const generateHenryDemoData = async (): Promise<{
   workouts: number;
   weights: number;
   measurements: number;
@@ -245,7 +245,7 @@ export const generateHeryDemoData = async (): Promise<{
 
   // ========== 1. PROFILE ==========
   await saveProfile({
-    name: 'Heny',
+    name: 'Henry',
     height_cm: 178,
     target_weight: 80,
     start_weight: 87,
@@ -257,7 +257,7 @@ export const generateHeryDemoData = async (): Promise<{
   });
 
   await AsyncStorage.setItem('@yoroi_user_settings', JSON.stringify({
-    username: 'Heny',
+    username: 'Henry',
     height: 178,
     weight_unit: 'kg',
     measurement_unit: 'cm',
@@ -268,7 +268,7 @@ export const generateHeryDemoData = async (): Promise<{
     onboardingCompleted: true,
     citationStyle: 'warrior',
   }));
-  await AsyncStorage.setItem('@yoroi_user_name', 'Heny');
+  await AsyncStorage.setItem('@yoroi_user_name', 'Henry');
   await AsyncStorage.setItem('@yoroi_user_height', '178');
   await AsyncStorage.setItem('@yoroi_user_sport', 'jjb');
   await AsyncStorage.setItem('@yoroi_user_mode', 'fighter');
@@ -394,7 +394,7 @@ export const generateHeryDemoData = async (): Promise<{
         const duration = randInt(55, 75);
         const intensity = randInt(6, 9);
         await addTraining({
-          club_id: bfClubId, sport: 'musculation', session_type: 'entrainement',
+          club_id: bfClubId, sport: 'musculation', session_type: 'entraînement',
           date: dateStr, start_time: '12:00', duration_minutes: duration, intensity,
           muscles: JSON.stringify(MUSCU_MUSCLES[mg]), notes: mg,
           calories: Math.round(duration * rand(6, 10, 0)),
@@ -411,7 +411,7 @@ export const generateHeryDemoData = async (): Promise<{
       const duration = randInt(50, 65);
       const intensity = randInt(6, 8);
       await addTraining({
-        club_id: bfClubId, sport: 'musculation', session_type: 'entrainement',
+        club_id: bfClubId, sport: 'musculation', session_type: 'entraînement',
         date: dateStr, start_time: '15:00', duration_minutes: duration, intensity,
         muscles: JSON.stringify(MUSCU_MUSCLES[mg]), notes: mg,
         calories: Math.round(duration * rand(6, 10, 0)),
@@ -637,7 +637,7 @@ export const generateHeryDemoData = async (): Promise<{
   await AsyncStorage.setItem(DEMO_ACTIVE_KEY, 'true');
 
   const benchmarkCount = benchmarks.reduce((acc, b) => acc + b.entries.length, 0);
-  logger.info(`[DemoData] Hery profile generated: ${workoutCount} trainings, ${weightCount} weights, ${measurementCount} measurements, ${sleepCount} sleep, ${benchmarkCount} benchmark entries, ${skills.length} skills. Real data backed up.`);
+  logger.info(`[DemoData] Henry profile generated: ${workoutCount} trainings, ${weightCount} weights, ${measurementCount} measurements, ${sleepCount} sleep, ${benchmarkCount} benchmark entries, ${skills.length} skills. Real data backed up.`);
 
   return {
     workouts: workoutCount,

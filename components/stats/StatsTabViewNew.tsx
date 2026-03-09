@@ -13,18 +13,22 @@ import { DashboardPage } from './pages/DashboardPage';
 import { CorpsTabPage } from './pages/CorpsTabPage';
 import { TrainingTabPage } from './pages/TrainingTabPage';
 import { VitalitePage } from './pages/VitalitePage';
-import { Scale, Flame, Heart, LayoutDashboard } from 'lucide-react-native';
+import { Scale, Flame, Heart, LayoutDashboard, Moon, Footprints, Activity } from 'lucide-react-native';
+
+// Wrappers stables pour les 3 onglets santé séparés
+const SommeilPage = React.memo((props: any) => <VitalitePage {...props} forcedTab="sommeil" />);
+const PasPage = React.memo((props: any) => <VitalitePage {...props} forcedTab="pas" />);
+const SignesVitauxPage = React.memo((props: any) => <VitalitePage {...props} forcedTab="signes" />);
 import { ScrollProvider } from '@/lib/ScrollContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Memoized page wrapper - prevents re-render when currentPage changes in parent
-const PageWrapper = memo(({ pageId, component: PageComponent, onNavigateToTab, textMuted }: {
+const PageWrapper = memo(({ pageId, component: PageComponent, onNavigateToTab }: {
   pageId: string;
   component: React.FC<any>;
   onNavigateToTab: (tabId: string) => void;
-  textMuted: string;
 }) => {
   return (
     <View style={pageStyles.page} key={pageId}>
@@ -42,12 +46,14 @@ const pageStyles = StyleSheet.create({
   },
 });
 
-// Page definitions - 4 onglets consolidés
+// Page definitions - 6 onglets
 const PAGE_DEFS = [
   { id: 'dashboard', titleKey: 'Résumé', icon: LayoutDashboard, component: DashboardPage },
   { id: 'corps', titleKey: 'Corps', icon: Scale, component: CorpsTabPage },
   { id: 'training', titleKey: 'Training', icon: Flame, component: TrainingTabPage },
-  { id: 'sante', titleKey: 'stats.health', icon: Heart, component: VitalitePage },
+  { id: 'sommeil', titleKey: 'Sommeil', icon: Moon, component: SommeilPage },
+  { id: 'pas', titleKey: 'Pas', icon: Footprints, component: PasPage },
+  { id: 'signes', titleKey: 'Signes Vitaux', icon: Activity, component: SignesVitauxPage },
 ];
 
 interface StatsTabViewNewProps {
@@ -55,7 +61,7 @@ interface StatsTabViewNewProps {
 }
 
 export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) => {
-  const { colors, isDark, screenBackground, screenText, screenTextMuted } = useTheme();
+  const { colors, isDark, screenBackground, screenTextMuted } = useTheme();
   const { t } = useI18n();
 
   // Memoize pages to avoid new object references on every render
@@ -87,8 +93,8 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
   });
 
   // Calculer si tous les onglets rentrent dans l'écran
-  const tabWidth = 100;
-  const tabGap = 8;
+  const tabWidth = 44;
+  const tabGap = 12;
   const totalTabsWidth = (PAGES.length * (tabWidth + tabGap)) + 32;
   const allTabsFit = totalTabsWidth <= SCREEN_WIDTH;
 
@@ -144,11 +150,17 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
             {PAGES.map((page, index) => {
               const Icon = page.icon;
               const isActive = currentPage === index;
+              const activeColor = isDark ? colors.accent : '#FFFFFF';
+              const inactiveColor = screenTextMuted || (isDark ? colors.textMuted : 'rgba(255,255,255,0.7)');
               return (
                 <TouchableOpacity
                   key={page.id}
-                  style={[
-                    styles.tab,
+                  style={styles.tabWrapper}
+                  onPress={() => scrollToPage(index)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[
+                    styles.circleTab,
                     {
                       backgroundColor: isActive
                         ? (isDark ? colors.accent : '#FFFFFF')
@@ -156,18 +168,16 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
                       borderWidth: isActive ? 0 : 1,
                       borderColor: isActive ? 'transparent' : (isDark ? (colors.companion + '40') : 'rgba(255,255,255,0.3)'),
                     },
-                  ]}
-                  onPress={() => scrollToPage(index)}
-                  activeOpacity={0.7}
-                >
-                  <Icon
-                    size={14}
-                    color={isActive ? (isDark ? colors.textOnAccent : colors.accent) : (screenTextMuted || (isDark ? colors.textMuted : 'rgba(255,255,255,0.7)'))}
-                    strokeWidth={2.5}
-                  />
+                  ]}>
+                    <Icon
+                      size={18}
+                      color={isActive ? (isDark ? colors.textOnAccent : colors.accent) : inactiveColor}
+                      strokeWidth={2.5}
+                    />
+                  </View>
                   <Text style={[
                     styles.tabLabel,
-                    { color: isActive ? (isDark ? colors.textOnAccent : colors.accent) : (screenTextMuted || (isDark ? colors.textMuted : 'rgba(255,255,255,0.7)')) },
+                    { color: isActive ? (isDark ? colors.accent : '#FFFFFF') : inactiveColor },
                   ]}>
                     {page.title}
                   </Text>
@@ -192,7 +202,6 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
                   pageId={page.id}
                   component={page.component}
                   onNavigateToTab={handleNavigateToTab}
-                  textMuted={colors.textMuted}
                 />
               ) : (
                 <View style={[styles.pagerPage, { backgroundColor: colors.background }]} />
@@ -218,7 +227,7 @@ const styles = StyleSheet.create({
   },
   tabsContent: {
     paddingHorizontal: 16,
-    gap: 8,
+    gap: 12,
     alignItems: 'flex-start',
   },
   tabsContentCentered: {
@@ -226,17 +235,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexGrow: 1,
   },
-  tab: {
-    flexDirection: 'row',
+  tabWrapper: {
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    gap: 4,
+  },
+  circleTab: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabLabel: {
-    fontSize: 13,
+    fontSize: 9,
     fontWeight: '600',
+    letterSpacing: 0.2,
+    textAlign: 'center',
   },
   pager: {
     flex: 1,

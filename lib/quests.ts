@@ -866,7 +866,7 @@ export const checkAndUpdateQuests = async (): Promise<QuestId[]> => {
     // HealthKit non disponible, on ignore
   }
 
-  // Entrainement du jour
+  // Entraînement du jour
   const trainings = await getTrainings();
   const todayTraining = trainings.find(t => t.date === today);
   if (todayTraining) {
@@ -890,7 +890,7 @@ export const checkAndUpdateQuests = async (): Promise<QuestId[]> => {
     if (result.completed && result.xpEarned > 0) completedQuests.push('weekly_5_weighs');
   }
 
-  // 4 entrainements cette semaine
+  // 4 entraînements cette semaine
   const weekTrainings = trainings.filter(t => t.date >= weekStart);
   if (weekTrainings.length >= 1) {
     const result = await updateQuestProgress('weekly_4_trainings', weekTrainings.length);
@@ -907,7 +907,7 @@ export const checkAndUpdateQuests = async (): Promise<QuestId[]> => {
 
   // === MONTHLY QUESTS ===
 
-  // 20 entrainements ce mois
+  // 20 entraînements ce mois
   const monthStartStr = monthStart.toISOString().split('T')[0];
   const monthTrainings = trainings.filter(t => t.date >= monthStartStr);
   if (monthTrainings.length >= 1) {

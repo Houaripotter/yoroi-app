@@ -36,6 +36,9 @@ struct DashboardPage: View {
           // ── TIMER ACTION ──
           timerActionRow
 
+          // ── CARNET SHORTCUT ──
+          carnetShortcutRow
+
           // ── GOALS RINGS: Steps + Hydration + Calories ──
           goalsRingRow
 
@@ -187,6 +190,67 @@ struct DashboardPage: View {
     .buttonStyle(.plain)
   }
 
+  // MARK: - Carnet Shortcut
+  private var carnetShortcutRow: some View {
+    Button(action: { session.requestedTab = 5 }) {
+      HStack(spacing: 10) {
+        // Icône haltère avec fond coloré
+        ZStack {
+          RoundedRectangle(cornerRadius: 8)
+            .fill(purpleColor.opacity(0.18))
+            .frame(width: 38, height: 38)
+          Image(systemName: "dumbbell.fill")
+            .font(.system(size: 16))
+            .foregroundColor(purpleColor)
+        }
+
+        VStack(alignment: .leading, spacing: 2) {
+          Text("CARNET")
+            .font(.system(size: 8, weight: .heavy))
+            .foregroundColor(purpleColor)
+            .tracking(1)
+
+          // Ligne d'info : streak + PRs
+          let prCount = session.benchmarks.filter { $0.pr > 0 }.count
+          if session.streak > 0 || prCount > 0 {
+            HStack(spacing: 4) {
+              if session.streak > 0 {
+                HStack(spacing: 2) {
+                  Image(systemName: "flame.fill")
+                    .font(.system(size: 7))
+                    .foregroundColor(.orange)
+                  Text("\(session.streak)j")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundColor(session.textPrimary)
+                }
+              }
+              if prCount > 0 {
+                Text("\(prCount) PRs")
+                  .font(.system(size: 9, weight: .medium))
+                  .foregroundColor(session.textSecondary)
+              }
+            }
+          } else {
+            Text("Logger une séance")
+              .font(.system(size: 9))
+              .foregroundColor(session.textSecondary)
+          }
+        }
+
+        Spacer()
+
+        Image(systemName: "chevron.right")
+          .font(.system(size: 9))
+          .foregroundColor(session.textSecondary.opacity(0.5))
+      }
+      .padding(.horizontal, 10)
+      .padding(.vertical, 8)
+      .background(session.cardBg)
+      .cornerRadius(10)
+    }
+    .buttonStyle(.plain)
+  }
+
   // MARK: - Goals Rings (Steps + Hydration + Calories)
   private var goalsRingRow: some View {
     HStack(spacing: 8) {
@@ -213,47 +277,53 @@ struct DashboardPage: View {
       }
       .buttonStyle(.plain)
 
-      // Hydration ring
-      VStack(spacing: 3) {
-        ZStack {
-          Circle()
-            .fill(cyanColor.opacity(0.12))
-            .frame(width: 44, height: 44)
-          Circle()
-            .trim(from: 0, to: hydrationProgress)
-            .stroke(cyanColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-            .rotationEffect(.degrees(-90))
-            .frame(width: 44, height: 44)
-          Image(systemName: "drop.fill")
-            .font(.system(size: 13))
-            .foregroundColor(cyanColor)
+      // Hydration ring → navigate to Tab 2
+      Button(action: { session.requestedTab = 2 }) {
+        VStack(spacing: 3) {
+          ZStack {
+            Circle()
+              .fill(cyanColor.opacity(0.12))
+              .frame(width: 44, height: 44)
+            Circle()
+              .trim(from: 0, to: hydrationProgress)
+              .stroke(cyanColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+              .rotationEffect(.degrees(-90))
+              .frame(width: 44, height: 44)
+            Image(systemName: "drop.fill")
+              .font(.system(size: 13))
+              .foregroundColor(cyanColor)
+          }
+          Text(session.hydrationCurrent > 0
+            ? String(format: "%.1fL", Double(session.hydrationCurrent) / 1000.0)
+            : "--")
+            .font(.system(size: 8, weight: .semibold))
+            .foregroundColor(session.textSecondary)
         }
-        Text(session.hydrationCurrent > 0
-          ? String(format: "%.1fL", Double(session.hydrationCurrent) / 1000.0)
-          : "--")
-          .font(.system(size: 8, weight: .semibold))
-          .foregroundColor(session.textSecondary)
       }
+      .buttonStyle(.plain)
 
-      // Calories ring
-      VStack(spacing: 3) {
-        ZStack {
-          Circle()
-            .fill(orangeColor.opacity(0.12))
-            .frame(width: 44, height: 44)
-          Circle()
-            .trim(from: 0, to: caloriesProgress)
-            .stroke(orangeColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-            .rotationEffect(.degrees(-90))
-            .frame(width: 44, height: 44)
-          Image(systemName: "flame.fill")
-            .font(.system(size: 13))
-            .foregroundColor(orangeColor)
+      // Calories ring → navigate to Tab 4 (Séances)
+      Button(action: { session.requestedTab = 4 }) {
+        VStack(spacing: 3) {
+          ZStack {
+            Circle()
+              .fill(orangeColor.opacity(0.12))
+              .frame(width: 44, height: 44)
+            Circle()
+              .trim(from: 0, to: caloriesProgress)
+              .stroke(orangeColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+              .rotationEffect(.degrees(-90))
+              .frame(width: 44, height: 44)
+            Image(systemName: "flame.fill")
+              .font(.system(size: 13))
+              .foregroundColor(orangeColor)
+          }
+          Text(displayCalories > 0 ? "\(displayCalories)" : "--")
+            .font(.system(size: 8, weight: .semibold))
+            .foregroundColor(session.textSecondary)
         }
-        Text(displayCalories > 0 ? "\(displayCalories)" : "--")
-          .font(.system(size: 8, weight: .semibold))
-          .foregroundColor(session.textSecondary)
       }
+      .buttonStyle(.plain)
     }
     .padding(.vertical, 4)
   }
@@ -525,8 +595,12 @@ struct TimerDetailPage: View {
   @EnvironmentObject var session: WatchSessionManager
   @State private var selectedPreset: Int? = nil
   @State private var showCustom = false
+  @State private var customHours: Int = 0
   @State private var customMinutes: Int = 1
   @State private var customSeconds: Int = 30
+  // Digital Crown : 0 = heures, 1 = minutes, 2 = secondes
+  @State private var focusedField: Int = 1
+  @State private var crownValue: Double = 1
 
   // Extended presets (scrollable)
   private let presets: [(Int, String)] = [
@@ -814,81 +888,167 @@ struct TimerDetailPage: View {
 
   // MARK: - Custom Timer Sheet
   private var customTimerSheet: some View {
-    ScrollView {
-      VStack(spacing: 10) {
-        Text("PERSONNALISE")
-          .font(.system(size: 9, weight: .heavy))
-          .foregroundColor(session.accentColor)
-          .tracking(1.5)
+    VStack(spacing: 6) {
 
-        HStack(spacing: 4) {
-          VStack(spacing: 2) {
-            Button(action: { customMinutes = min(59, customMinutes + 1) }) {
-              Image(systemName: "chevron.up")
-                .font(.system(size: 10))
-                .foregroundColor(session.accentColor)
-            }.buttonStyle(.plain)
+      Text("PERSONNALISE")
+        .font(.system(size: 9, weight: .heavy))
+        .foregroundColor(session.accentColor)
+        .tracking(1.5)
+        .padding(.top, 4)
 
-            Text(String(format: "%02d", customMinutes))
-              .font(.system(size: 24, weight: .bold, design: .monospaced))
-              .foregroundColor(session.textPrimary)
-
-            Button(action: { customMinutes = max(0, customMinutes - 1) }) {
-              Image(systemName: "chevron.down")
-                .font(.system(size: 10))
-                .foregroundColor(session.accentColor)
-            }.buttonStyle(.plain)
-          }
-
-          Text(":")
-            .font(.system(size: 24, weight: .bold))
-            .foregroundColor(session.textSecondary)
-
-          VStack(spacing: 2) {
-            Button(action: { customSeconds = min(55, customSeconds + 5) }) {
-              Image(systemName: "chevron.up")
-                .font(.system(size: 10))
-                .foregroundColor(session.accentColor)
-            }.buttonStyle(.plain)
-
-            Text(String(format: "%02d", customSeconds))
-              .font(.system(size: 24, weight: .bold, design: .monospaced))
-              .foregroundColor(session.textPrimary)
-
-            Button(action: { customSeconds = max(0, customSeconds - 5) }) {
-              Image(systemName: "chevron.down")
-                .font(.system(size: 10))
-                .foregroundColor(session.accentColor)
-            }.buttonStyle(.plain)
-          }
-        }
-
-        Button(action: {
-          let total = customMinutes * 60 + customSeconds
-          guard total > 0 else { return }
-          selectedPreset = total
-          session.setTimer(seconds: total)
-          showCustom = false
-        }) {
-          Text("Valider")
-            .font(.system(size: 12, weight: .bold))
-            .foregroundColor(session.textOnAccent)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(session.accentColor)
-            .cornerRadius(10)
-        }
-        .buttonStyle(.plain)
+      // ── Labels H / M / S ──
+      HStack(spacing: 0) {
+        Text("H")
+          .frame(maxWidth: .infinity)
+          .font(.system(size: 9, weight: .semibold))
+          .foregroundColor(focusedField == 0 ? session.accentColor : session.textSecondary)
+        Text("M")
+          .frame(maxWidth: .infinity)
+          .font(.system(size: 9, weight: .semibold))
+          .foregroundColor(focusedField == 1 ? session.accentColor : session.textSecondary)
+        Text("S")
+          .frame(maxWidth: .infinity)
+          .font(.system(size: 9, weight: .semibold))
+          .foregroundColor(focusedField == 2 ? session.accentColor : session.textSecondary)
       }
       .padding(.horizontal, 8)
+
+      // ── Colonnes ──
+      HStack(spacing: 0) {
+        timeColumn(
+          value: $customHours,
+          range: 0...23,
+          step: 1,
+          isFocused: focusedField == 0
+        ) { focusedField = 0; crownValue = Double(customHours) }
+
+        Text(":")
+          .font(.system(size: 26, weight: .bold, design: .monospaced))
+          .foregroundColor(session.textSecondary.opacity(0.6))
+          .frame(width: 12)
+
+        timeColumn(
+          value: $customMinutes,
+          range: 0...59,
+          step: 1,
+          isFocused: focusedField == 1
+        ) { focusedField = 1; crownValue = Double(customMinutes) }
+
+        Text(":")
+          .font(.system(size: 26, weight: .bold, design: .monospaced))
+          .foregroundColor(session.textSecondary.opacity(0.6))
+          .frame(width: 12)
+
+        timeColumn(
+          value: $customSeconds,
+          range: 0...59,
+          step: 5,
+          isFocused: focusedField == 2
+        ) { focusedField = 2; crownValue = Double(customSeconds) }
+      }
+      .padding(.horizontal, 4)
+      // Digital Crown contrôle la colonne active
+      .digitalCrownRotation(
+        $crownValue,
+        from: 0,
+        through: focusedField == 0 ? 23 : 59,
+        by: focusedField == 2 ? 5 : 1,
+        sensitivity: .medium,
+        isContinuous: false,
+        isHapticFeedbackEnabled: true
+      )
+      .onChange(of: crownValue) {
+        let v = Int(crownValue.rounded())
+        switch focusedField {
+        case 0: customHours   = max(0, min(23, v))
+        case 1: customMinutes = max(0, min(59, v))
+        default: customSeconds = max(0, min(59, v))
+        }
+      }
+
+      // ── Bouton Valider ──
+      Button(action: {
+        let total = customHours * 3600 + customMinutes * 60 + customSeconds
+        guard total > 0 else { return }
+        selectedPreset = total
+        session.setTimer(seconds: total)
+        showCustom = false
+      }) {
+        Text("Valider")
+          .font(.system(size: 13, weight: .bold))
+          .foregroundColor(session.textOnAccent)
+          .frame(maxWidth: .infinity)
+          .padding(.vertical, 9)
+          .background(session.accentColor)
+          .cornerRadius(12)
+      }
+      .buttonStyle(.plain)
+      .padding(.horizontal, 8)
+      .padding(.bottom, 4)
     }
+  }
+
+  // ── Colonne réutilisable H / M / S ──
+  @ViewBuilder
+  private func timeColumn(
+    value: Binding<Int>,
+    range: ClosedRange<Int>,
+    step: Int,
+    isFocused: Bool,
+    onTap: @escaping () -> Void
+  ) -> some View {
+    VStack(spacing: 0) {
+      // Bouton +
+      Button(action: {
+        onTap()
+        let next = value.wrappedValue + step
+        value.wrappedValue = next > range.upperBound ? range.lowerBound : next
+        crownValue = Double(value.wrappedValue)
+      }) {
+        Image(systemName: "chevron.up")
+          .font(.system(size: 13, weight: .semibold))
+          .foregroundColor(isFocused ? session.accentColor : session.textSecondary)
+          .frame(width: 44, height: 32)
+          .background(isFocused ? session.accentColor.opacity(0.12) : Color.clear)
+          .clipShape(RoundedRectangle(cornerRadius: 8))
+      }
+      .buttonStyle(.plain)
+
+      // Valeur — tap pour sélectionner cette colonne
+      Button(action: onTap) {
+        Text(String(format: "%02d", value.wrappedValue))
+          .font(.system(size: 30, weight: .bold, design: .monospaced))
+          .foregroundColor(isFocused ? session.accentColor : session.textPrimary)
+          .frame(width: 44, height: 36)
+      }
+      .buttonStyle(.plain)
+
+      // Bouton -
+      Button(action: {
+        onTap()
+        let prev = value.wrappedValue - step
+        value.wrappedValue = prev < range.lowerBound ? range.upperBound : prev
+        crownValue = Double(value.wrappedValue)
+      }) {
+        Image(systemName: "chevron.down")
+          .font(.system(size: 13, weight: .semibold))
+          .foregroundColor(isFocused ? session.accentColor : session.textSecondary)
+          .frame(width: 44, height: 32)
+          .background(isFocused ? session.accentColor.opacity(0.12) : Color.clear)
+          .clipShape(RoundedRectangle(cornerRadius: 8))
+      }
+      .buttonStyle(.plain)
+    }
+    .frame(maxWidth: .infinity)
   }
 
   // MARK: - Helpers
 
   private func formatPresetLabel(_ seconds: Int) -> String {
-    let m = seconds / 60
+    let h = seconds / 3600
+    let m = (seconds % 3600) / 60
     let s = seconds % 60
+    if h > 0 { return "\(h)h\(String(format: "%02d", m))" }
     if m == 0 { return "\(s)s" }
     if s == 0 { return "\(m)min" }
     return "\(m):\(String(format: "%02d", s))"
@@ -1027,6 +1187,9 @@ struct ExerciseLibraryPage: View {
     case "Cardio": return "heart.fill"
     case "Combat": return "figure.martial.arts"
     case "Strongman": return "scalemass.fill"
+    case "Fessiers": return "figure.strengthtraining.traditional"
+    case "Ischios": return "figure.strengthtraining.traditional"
+    case "Mobilite": return "figure.flexibility"
     default: return "trophy.fill"
     }
   }
@@ -1038,7 +1201,10 @@ struct ExerciseLibraryPage: View {
     case "Epaules": return Color(red: 0.976, green: 0.451, blue: 0.086)
     case "Bras": return Color(red: 0.545, green: 0.361, blue: 0.965)
     case "Jambes": return Color(red: 0.063, green: 0.725, blue: 0.506)
+    case "Fessiers": return Color(red: 0.976, green: 0.341, blue: 0.573)
+    case "Ischios": return Color(red: 0.180, green: 0.800, blue: 0.443)
     case "Abdos": return Color(red: 0.925, green: 0.306, blue: 0.604)
+    case "Mobilite": return Color(red: 0.400, green: 0.780, blue: 0.820)
     case "Olympique": return Color(red: 0.831, green: 0.686, blue: 0.216)
     case "CrossFit": return Color(red: 0.961, green: 0.620, blue: 0.043)
     case "Hyrox": return Color(red: 0.976, green: 0.451, blue: 0.086)

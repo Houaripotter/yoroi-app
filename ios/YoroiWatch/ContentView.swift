@@ -28,8 +28,8 @@ struct ContentView: View {
         .tag(3)
         .containerBackground(session.bgColor, for: .tabView)
 
-      // Tab 4 : Réglages
-      SettingsPage()
+      // Tab 4 : Séances récentes
+      WorkoutPage()
         .tag(4)
         .containerBackground(session.bgColor, for: .tabView)
 
@@ -39,6 +39,16 @@ struct ContentView: View {
       }
       .tag(5)
       .containerBackground(session.bgColor, for: .tabView)
+
+      // Tab 6 : Compétition (rang, corps, PRs)
+      CompetitionPage()
+        .tag(6)
+        .containerBackground(session.bgColor, for: .tabView)
+
+      // Tab 7 : Réglages
+      SettingsPage()
+        .tag(7)
+        .containerBackground(session.bgColor, for: .tabView)
     }
     .tabViewStyle(.page)
     .onAppear {

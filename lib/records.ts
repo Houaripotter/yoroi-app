@@ -37,16 +37,16 @@ export interface PersonalRecords {
   lowestWaist: RecordEntry | null;
   totalWaistLoss: number;
 
-  // Entrainement
+  // Entraînement
   maxWeeklyWorkouts: RecordEntry | null;
   totalWorkouts: number;
   favoriteSport: { type: string; count: number } | null;
 
-  // Regularite
+  // Régularité
   bestMonthRegularity: RecordEntry | null;
   totalMeasurements: number;
 
-  // Energie
+  // Énergie
   bestEnergyStreak: RecordEntry | null;
 
   // Meta
@@ -133,7 +133,7 @@ const formatMonthYear = (monthKey: string): string => {
 // ============================================
 
 /**
- * Calculer tous les records a partir des donnees
+ * Calculer tous les records a partir des données
  */
 export const calculateAllRecords = async (): Promise<{
   records: PersonalRecords;
@@ -366,7 +366,7 @@ export const calculateAllRecords = async (): Promise<{
     }
   }
 
-  // === RECORDS ENTRAINEMENT ===
+  // === RECORDS ENTRAÎNEMENT ===
   if (workouts.length > 0) {
     // Max en 1 semaine
     const weeklyWorkouts: Map<string, { count: number; endDate: string }> = new Map();
@@ -404,7 +404,7 @@ export const calculateAllRecords = async (): Promise<{
           oldValue: previousRecords.maxWeeklyWorkouts.value,
           newValue: maxWeeklyWorkouts,
           date: maxWeeklyWorkoutsDate,
-          message: `Record ! ${maxWeeklyWorkouts} entrainements cette semaine`,
+          message: `Record ! ${maxWeeklyWorkouts} entraînements cette semaine`,
           emoji: '',
         });
       }
@@ -434,7 +434,7 @@ export const calculateAllRecords = async (): Promise<{
     }
   }
 
-  // === RECORDS REGULARITE ===
+  // === RECORDS RÉGULARITÉ ===
   const monthlyMeasurements: Map<string, { count: number; daysInMonth: number }> = new Map();
   sortedMeasurements.forEach(m => {
     const date = new Date(m.date);
@@ -466,10 +466,10 @@ export const calculateAllRecords = async (): Promise<{
     };
   }
 
-  // === RECORDS ENERGIE ===
+  // === RECORDS ÉNERGIE ===
   const energyMeasurements = sortedMeasurements.filter(m => m.energyLevel && m.energyLevel >= 4);
   if (energyMeasurements.length > 0) {
-    // Calculer la plus longue serie de jours haute energie
+    // Calculer la plus longue serie de jours haute énergie
     const energyDates = [...new Set(energyMeasurements.map(m => m.date.split('T')[0]))].sort();
     let maxEnergyStreak = 1;
     let tempEnergyStreak = 1;
@@ -599,9 +599,9 @@ export const generateRecordShareText = (type: RecordType, value: number): string
     maxMonthlyLoss: `Record du mois ! -${value.toFixed(1)} kg de perdus`,
     longestStreak: `Nouveau record de streak ! ${value} jours consecutifs`,
     lowestWaist: `Record tour de taille ! ${value} cm atteints 📏`,
-    maxWeeklyWorkouts: `${value} entrainements cette semaine ! Nouveau record`,
-    bestMonthRegularity: `${value}% de regularite ce mois-ci !`,
-    bestEnergyStreak: `${value} jours d'energie au top !`,
+    maxWeeklyWorkouts: `${value} entraînements cette semaine ! Nouveau record`,
+    bestMonthRegularity: `${value}% de régularité ce mois-ci !`,
+    bestEnergyStreak: `${value} jours d'énergie au top !`,
   };
   return texts[type] + '\n\n#Yoroi #Transformation #Record';
 };

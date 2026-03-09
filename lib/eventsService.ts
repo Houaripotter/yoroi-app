@@ -95,13 +95,13 @@ function clearCache(): void {
 // ============================================
 
 let isInitialized = false;
-// Version des donnees events - incrementer pour forcer un reimport
+// Version des données events - incrementer pour forcer un reimport
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const EVENTS_DATA_VERSION = 5;
 
 /**
  * Importe les evenements depuis le fichier JSON vers SQLite
- * Utilise un systeme de versioning pour forcer le reimport quand les donnees changent
+ * Utilise un systeme de versioning pour forcer le reimport quand les données changent
  */
 export async function importEventsFromJSON(): Promise<void> {
   try {
@@ -110,7 +110,7 @@ export async function importEventsFromJSON(): Promise<void> {
     // Table de metadata pour le versioning
     await db.runAsync('CREATE TABLE IF NOT EXISTS app_metadata (key TEXT PRIMARY KEY, value TEXT)');
 
-    // Verifier la version des donnees
+    // Verifier la version des données
     let needsImport = false;
     try {
       const versionRow = await db.getFirstAsync<{ value: string }>(
@@ -137,7 +137,7 @@ export async function importEventsFromJSON(): Promise<void> {
       needsImport = true;
     }
 
-    // Supprimer les anciennes donnees avant reimport
+    // Supprimer les anciennes données avant reimport
     await db.runAsync('DELETE FROM events_catalog');
 
     logger.info('Import des evenements depuis JSON...');

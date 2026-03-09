@@ -16,7 +16,7 @@ const _openDB = async (): Promise<SQLite.SQLiteDatabase> => {
   return db;
 };
 
-// Ouvrir la base de donnees (attend que l'init soit terminée)
+// Ouvrir la base de données (attend que l'init soit terminée)
 export const openDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   if (_initPromise) await _initPromise;
   return _openDB();
@@ -118,7 +118,7 @@ const _performInit = async () => {
     );
   `);
 
-  // Table Entrainements
+  // Table Entraînements
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS trainings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -542,6 +542,73 @@ const _performInit = async () => {
     );
   `);
 
+  // Table Corbeille (séances supprimées, conservées 30 jours)
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS trash_trainings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      original_id INTEGER,
+      club_id INTEGER,
+      sport TEXT,
+      session_type TEXT,
+      date TEXT,
+      start_time TEXT,
+      duration_minutes INTEGER,
+      notes TEXT,
+      muscles TEXT,
+      exercises TEXT,
+      technique_rating INTEGER,
+      distance REAL,
+      calories INTEGER,
+      intensity INTEGER,
+      rounds INTEGER,
+      round_duration INTEGER,
+      is_outdoor INTEGER DEFAULT 0,
+      pente REAL,
+      speed REAL,
+      resistance INTEGER,
+      watts INTEGER,
+      cadence INTEGER,
+      heart_rate INTEGER,
+      max_heart_rate INTEGER,
+      location_lat REAL,
+      location_lon REAL,
+      location_name TEXT,
+      combat_rounds TEXT,
+      created_at TEXT,
+      deleted_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Nettoyage auto : supprimer les éléments de plus de 30 jours
+  try {
+    await database.execAsync(
+      `DELETE FROM trash_trainings WHERE deleted_at < datetime('now', '-30 days')`
+    );
+  } catch (_e) { /* ignore */ }
+
+  // Migrations trash_trainings (colonnes ajoutées après la création initiale)
+  const trashMigrations = [
+    `ALTER TABLE trash_trainings ADD COLUMN heart_rate INTEGER`,
+    `ALTER TABLE trash_trainings ADD COLUMN max_heart_rate INTEGER`,
+    `ALTER TABLE trash_trainings ADD COLUMN location_lat REAL`,
+    `ALTER TABLE trash_trainings ADD COLUMN location_lon REAL`,
+    `ALTER TABLE trash_trainings ADD COLUMN location_name TEXT`,
+    `ALTER TABLE trash_trainings ADD COLUMN combat_rounds TEXT`,
+  ];
+  for (const sql of trashMigrations) {
+    try { await database.execAsync(sql); } catch (_e) { /* colonne existe déjà */ }
+  }
+
+  // Migrations clubs (colonnes ajoutées après la création initiale)
+  const clubsMigrations = [
+    `ALTER TABLE clubs ADD COLUMN logo_uri TEXT`,
+    `ALTER TABLE clubs ADD COLUMN color TEXT`,
+    `ALTER TABLE clubs ADD COLUMN sessions_per_week INTEGER`,
+  ];
+  for (const sql of clubsMigrations) {
+    try { await database.execAsync(sql); } catch (_e) { /* colonne existe déjà */ }
+  }
+
   // Initialiser le carnet d'entraînement
   await initTrainingJournalDB();
 
@@ -911,7 +978,7 @@ export const deleteWeight = async (id: number): Promise<void> => {
 };
 
 // ============================================
-// FONCTIONS CRUD - ENTRAINEMENTS
+// FONCTIONS CRUD - ENTRAÎNEMENTS
 // ============================================
 
 export const addTraining = async (data: Training): Promise<number> => {
@@ -1068,7 +1135,26 @@ export const getTrainingStats = async (): Promise<{ sport: string; count: number
 
 export const deleteTraining = async (id: number): Promise<void> => {
   const database = await openDatabase();
+
+  // Lire la séance avant de la supprimer
+  const row = await database.getFirstAsync<any>(
+    'SELECT * FROM trainings WHERE id = ?', [id]
+  );
+
+  // Supprimer de la table principale
   await database.runAsync('DELETE FROM trainings WHERE id = ?', [id]);
+
+  // Mettre en corbeille
+  if (row) {
+    try {
+      await database.runAsync(
+        `INSERT INTO trash_trainings (original_id, club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, heart_rate, max_heart_rate, location_lat, location_lon, location_name, combat_rounds, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [row.id, row.club_id ?? null, row.sport ?? null, row.session_type ?? null, row.date, row.start_time ?? null, row.duration_minutes ?? null, row.notes ?? null, row.muscles ?? null, row.exercises ?? null, row.technique_rating ?? null, row.is_outdoor ?? 0, row.distance ?? null, row.calories ?? null, row.intensity ?? null, row.rounds ?? null, row.round_duration ?? null, row.pente ?? null, row.speed ?? null, row.resistance ?? null, row.watts ?? null, row.cadence ?? null, row.heart_rate ?? null, row.max_heart_rate ?? null, row.location_lat ?? null, row.location_lon ?? null, row.location_name ?? null, row.combat_rounds ?? null, row.created_at ?? null]
+      );
+    } catch (e) {
+      logger.error('Erreur mise en corbeille:', e);
+    }
+  }
 };
 
 // ============================================
@@ -1720,7 +1806,7 @@ export const importData = async (jsonString: string): Promise<void> => {
     }
   }
 
-  // Importer les entrainements
+  // Importer les entraînements
   if (data.data.trainings) {
     for (const training of data.data.trainings) {
       await addTraining(training);
@@ -1868,7 +1954,7 @@ export const getNextCompetition = async (): Promise<Competition | null> => {
 };
 
 // ============================================
-// RESET COMPLET DE LA BASE DE DONNEES
+// RESET COMPLET DE LA BASE DE DONNÉES
 // ============================================
 
 export const resetDatabase = async (): Promise<void> => {
@@ -1953,7 +2039,7 @@ export const resetDatabaseKeepPhotos = async (): Promise<void> => {
 export interface HealthDataRecord {
   id?: number;
   date: string;
-  type: 'steps' | 'calories_active' | 'calories_basal' | 'heart_rate' | 'heart_rate_resting' | 'hrv' | 'sleep' | 'distance' | 'vo2max' | 'spo2' | 'respiratory_rate' | 'body_temp' | 'body_fat' | 'lean_mass';
+  type: 'steps' | 'calories_active' | 'calories_basal' | 'heart_rate' | 'heart_rate_resting' | 'hrv' | 'sleep' | 'distance' | 'vo2max' | 'spo2' | 'respiratory_rate' | 'body_temp' | 'body_fat' | 'lean_mass' | 'blood_pressure_systolic' | 'blood_glucose' | 'height' | 'floors_climbed' | 'mindful_minutes';
   value: number;
   value2?: number;
   value3?: number;
@@ -2060,7 +2146,7 @@ export interface DetectedSource {
 
 /**
  * Retourne les sources distinctes detectees dans les 30 derniers jours
- * avec la derniere date et le dernier type de donnee
+ * avec la derniere date et le dernier type de donnée
  */
 export const getDetectedSources = async (days: number = 30): Promise<DetectedSource[]> => {
   const database = await openDatabase();
@@ -2107,6 +2193,89 @@ export const deleteAllTrainings = async (): Promise<number> => {
   const countResult = await database.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM trainings');
   await database.runAsync('DELETE FROM trainings');
   return countResult?.count || 0;
+};
+
+// ============================================
+// CORBEILLE (TRASH)
+// ============================================
+
+export interface TrashItem {
+  id: number;
+  original_id: number;
+  club_id?: number;
+  sport: string;
+  session_type?: string;
+  date: string;
+  start_time?: string;
+  duration_minutes?: number;
+  notes?: string;
+  muscles?: string;
+  exercises?: string;
+  is_outdoor?: boolean;
+  deleted_at: string;
+  club_name?: string;
+  club_logo?: string;
+  club_color?: string;
+}
+
+export const getTrashItems = async (): Promise<TrashItem[]> => {
+  const database = await openDatabase();
+  try {
+    const results = await database.getAllAsync<TrashItem & { is_outdoor?: number }>(
+      `SELECT t.id, t.original_id, t.club_id, t.sport, t.session_type, t.date, t.start_time, t.duration_minutes, t.notes, t.is_outdoor, t.deleted_at, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
+       FROM trash_trainings t
+       LEFT JOIN clubs c ON t.club_id = c.id
+       ORDER BY t.deleted_at DESC`
+    );
+    return results.map(r => ({ ...r, is_outdoor: r.is_outdoor === 1 }));
+  } catch (e) {
+    logger.error('Erreur lecture corbeille:', e);
+    return [];
+  }
+};
+
+export const restoreFromTrash = async (trashId: number): Promise<void> => {
+  const database = await openDatabase();
+  const item = await database.getFirstAsync<any>(
+    'SELECT * FROM trash_trainings WHERE id = ?', [trashId]
+  );
+  if (!item) return;
+
+  await database.runAsync(
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, distance, calories, intensity, rounds, round_duration, is_outdoor, pente, speed, resistance, watts, cadence, heart_rate, max_heart_rate, location_lat, location_lon, location_name, combat_rounds, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [item.club_id, item.sport, item.session_type, item.date, item.start_time,
+     item.duration_minutes, item.notes, item.muscles, item.exercises,
+     item.technique_rating, item.distance, item.calories, item.intensity,
+     item.rounds, item.round_duration, item.is_outdoor ?? 0,
+     item.pente, item.speed, item.resistance, item.watts, item.cadence,
+     item.heart_rate ?? null, item.max_heart_rate ?? null,
+     item.location_lat ?? null, item.location_lon ?? null, item.location_name ?? null,
+     item.combat_rounds ?? null, item.created_at]
+  );
+  await database.runAsync('DELETE FROM trash_trainings WHERE id = ?', [trashId]);
+};
+
+export const permanentlyDeleteFromTrash = async (trashId: number): Promise<void> => {
+  const database = await openDatabase();
+  await database.runAsync('DELETE FROM trash_trainings WHERE id = ?', [trashId]);
+};
+
+export const emptyTrash = async (): Promise<void> => {
+  const database = await openDatabase();
+  await database.runAsync('DELETE FROM trash_trainings');
+};
+
+export const getTrashCount = async (): Promise<number> => {
+  const database = await openDatabase();
+  try {
+    const result = await database.getFirstAsync<{ count: number }>(
+      'SELECT COUNT(*) as count FROM trash_trainings'
+    );
+    return result?.count ?? 0;
+  } catch {
+    return 0;
+  }
 };
 
 export default {

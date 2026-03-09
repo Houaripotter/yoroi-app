@@ -43,17 +43,6 @@ export default function TransformationScreen() {
     try {
       const fetchedPhotos = await getPhotosFromStorage();
 
-      // DEBUG : Afficher les photos chargées
-      logger.info('Photos chargées:', fetchedPhotos.length);
-      fetchedPhotos.forEach((photo, index) => {
-        logger.info(`  Photo ${index + 1}:`, {
-          id: photo.id,
-          date: photo.date,
-          weight: photo.weight,
-          hasWeight: !!photo.weight,
-        });
-      });
-
       setPhotos(fetchedPhotos);
 
       // Auto-selectionner si assez de photos
@@ -278,13 +267,13 @@ export default function TransformationScreen() {
                   </View>
                 )}
 
-                {/* Duree */}
+                {/* Durée */}
                 {daysDifference !== null && (
                   <View style={[styles.statBox, { backgroundColor: colors.surface }]}>
                     <View style={styles.statIconRow}>
                       <Calendar size={20} color={colors.gold} />
                       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                        Duree
+                        Durée
                       </Text>
                     </View>
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>

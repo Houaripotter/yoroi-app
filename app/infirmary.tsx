@@ -54,7 +54,7 @@ export default function InfirmaryScreen() {
     const loadAndPlaySound = async () => {
       try {
         const { sound } = await Audio.Sound.createAsync(
-          require('@/assets/sounds/pokemon-recovery-made-with-Voicemod.mp3')
+          require('@/assets/sounds/recovery.mp3')
         );
         recoverySoundRef.current = sound;
         await sound.playAsync();

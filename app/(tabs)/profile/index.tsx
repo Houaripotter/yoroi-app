@@ -44,6 +44,7 @@ import {
   Swords,
   Image as ImageIcon,
 } from 'lucide-react-native';
+import { PhotoCropModal } from '@/components/PhotoCropModal';
 import {
   getProfile,
   saveProfile,
@@ -94,6 +95,7 @@ export default function ProfileTabScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [isPickingPhoto, setIsPickingPhoto] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [cropModalUri, setCropModalUri] = useState<string | null>(null);
 
   const calculateAge = (dateStr: string): number | null => {
     if (!dateStr) return null;
@@ -200,44 +202,49 @@ export default function ProfileTabScreen() {
     }
   };
 
-  const takeProfilePhoto = async (withEditing: boolean = false) => {
+  // Sauvegarde la photo recadrée (appelée par PhotoCropModal)
+  const savePickedPhoto = async (croppedUri: string) => {
+    setCropModalUri(null);
+    try {
+      const permanentUri = `${documentDirectory}profile_photo_${Date.now()}.jpg`;
+      await copyAsync({ from: croppedUri, to: permanentUri });
+      setProfilePhoto(permanentUri);
+      const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
+      if (profile?.profile_photo && profile.profile_photo.startsWith(documentDirectory || '')) {
+        deleteAsync(profile.profile_photo, { idempotent: true }).catch(() => {});
+      }
+      await saveProfile({
+        name: safeName,
+        height_cm: profile?.height_cm,
+        target_weight: profile?.target_weight,
+        start_weight: profile?.start_weight,
+        start_date: profile?.start_date,
+        avatar_gender: profile?.avatar_gender || 'homme',
+        profile_photo: permanentUri,
+      });
+      await loadData();
+      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+    } catch (error) {
+      logger.error('[Profile] Erreur sauvegarde photo:', error);
+    }
+  };
+
+  const takeProfilePhoto = async () => {
     if (isPickingPhoto) return;
     setIsPickingPhoto(true);
     try {
       const { status } = await requestCameraPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission refusee', 'Acces a la camera requis pour prendre une photo.');
-        setIsPickingPhoto(false);
         return;
       }
       const result = await launchCameraAsync({
         mediaTypes: ['images'],
-        allowsEditing: withEditing,
-        aspect: withEditing ? [1, 1] : undefined,
-        quality: 0.8,
+        allowsEditing: false,
+        quality: 0.9,
       });
       if (!result.canceled && result.assets?.[0]) {
-        // Copy to permanent path with unique name to bust image cache
-        const tempUri = result.assets[0].uri;
-        const permanentUri = `${documentDirectory}profile_photo_${Date.now()}.jpg`;
-        await copyAsync({ from: tempUri, to: permanentUri });
-        setProfilePhoto(permanentUri);
-        const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
-        // Delete old photo file if it exists
-        if (profile?.profile_photo && profile.profile_photo.startsWith(documentDirectory || '')) {
-          deleteAsync(profile.profile_photo, { idempotent: true }).catch(() => {});
-        }
-        await saveProfile({
-          name: safeName,
-          height_cm: profile?.height_cm,
-          target_weight: profile?.target_weight,
-          start_weight: profile?.start_weight,
-          start_date: profile?.start_date,
-          avatar_gender: profile?.avatar_gender || 'homme',
-          profile_photo: permanentUri,
-        });
-        await loadData();
-        DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+        setCropModalUri(result.assets[0].uri);
       }
     } catch (error) {
       logger.error('[Profile] Erreur prise de photo:', error);
@@ -246,45 +253,23 @@ export default function ProfileTabScreen() {
     }
   };
 
-  const pickProfilePhoto = async (withEditing: boolean = true) => {
+  const pickProfilePhoto = async () => {
     if (isPickingPhoto) return;
     setIsPickingPhoto(true);
     try {
       const { status } = await requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission refusee', 'Acces a la galerie requis.');
-        setIsPickingPhoto(false);
         return;
       }
       const result = await launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsEditing: withEditing,
-        aspect: withEditing ? [1, 1] : undefined,
-        quality: 0.8,
+        allowsEditing: false,
+        quality: 0.9,
         selectionLimit: 1,
       });
       if (!result.canceled && result.assets?.[0]) {
-        // Copy to permanent path with unique name to bust image cache
-        const tempUri = result.assets[0].uri;
-        const permanentUri = `${documentDirectory}profile_photo_${Date.now()}.jpg`;
-        await copyAsync({ from: tempUri, to: permanentUri });
-        setProfilePhoto(permanentUri);
-        const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
-        // Delete old photo file if it exists
-        if (profile?.profile_photo && profile.profile_photo.startsWith(documentDirectory || '')) {
-          deleteAsync(profile.profile_photo, { idempotent: true }).catch(() => {});
-        }
-        await saveProfile({
-          name: safeName,
-          height_cm: profile?.height_cm,
-          target_weight: profile?.target_weight,
-          start_weight: profile?.start_weight,
-          start_date: profile?.start_date,
-          avatar_gender: profile?.avatar_gender || 'homme',
-          profile_photo: permanentUri,
-        });
-        await loadData();
-        DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+        setCropModalUri(result.assets[0].uri);
       }
     } catch (error) {
       logger.error('[Profile] Erreur selection photo:', error);
@@ -301,12 +286,12 @@ export default function ProfileTabScreen() {
         {
           text: t('profile.takePhoto') || 'Prendre une photo',
           style: 'primary',
-          onPress: () => setTimeout(() => takeProfilePhoto(true), 500),
+          onPress: () => setTimeout(() => takeProfilePhoto(), 500),
         },
         {
           text: t('profile.chooseFromGallery') || 'Choisir depuis la galerie',
           style: 'default',
-          onPress: () => setTimeout(() => pickProfilePhoto(true), 500),
+          onPress: () => setTimeout(() => pickProfilePhoto(), 500),
         },
         { text: t('common.cancel') || 'Annuler', style: 'cancel' },
       ]
@@ -342,16 +327,29 @@ export default function ProfileTabScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: screenText }]}>{t('profile.title')}</Text>
-          <TouchableOpacity
-            style={[styles.editButton, { backgroundColor: colors.card, borderColor: colors.border }, isEditing && { borderColor: colors.error }]}
-            onPress={() => setIsEditing(!isEditing)}
-          >
-            {isEditing ? (
-              <X size={18} color={colors.error} />
-            ) : (
-              <Edit3 size={18} color={colors.accent} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {/* Bouton Enregistrer visible immédiatement quand on édite */}
+            {isEditing && (
+              <TouchableOpacity
+                style={[styles.saveTopBtn, { backgroundColor: colors.accent, opacity: isSaving ? 0.6 : 1 }]}
+                onPress={handleSave}
+                disabled={isSaving}
+              >
+                <Check size={16} color="#FFFFFF" strokeWidth={2.5} />
+                <Text style={styles.saveTopBtnText}>{isSaving ? '...' : 'Enregistrer'}</Text>
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.editButton, { backgroundColor: colors.card, borderColor: colors.border }, isEditing && { borderColor: colors.error }]}
+              onPress={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? (
+                <X size={18} color={colors.error} />
+              ) : (
+                <Edit3 size={18} color={colors.accent} />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Hero Card */}
@@ -368,10 +366,11 @@ export default function ProfileTabScreen() {
                     source={{ uri: profilePhoto }}
                     style={{ width: 100, height: 100, borderRadius: 50, borderWidth: 3, borderColor: colors.accent }}
                     resizeMode="cover"
+                    onError={() => setProfilePhoto(null)}
                   />
                 ) : (
-                  <View style={[styles.photoPlaceholder, { backgroundColor: colors.card, borderColor: colors.accent }]}>
-                    <User size={40} color={colors.textMuted} />
+                  <View style={[styles.photoPlaceholder, { backgroundColor: colors.backgroundCard, borderColor: colors.accent, borderWidth: 3 }]}>
+                    <User size={40} color={colors.accent} />
                   </View>
                 )}
                 <View style={[styles.cameraBtn, { backgroundColor: colors.accent }]}>
@@ -571,6 +570,13 @@ export default function ProfileTabScreen() {
 
       <PopupComponent />
 
+      <PhotoCropModal
+        visible={!!cropModalUri}
+        uri={cropModalUri}
+        onConfirm={savePickedPhoto}
+        onCancel={() => setCropModalUri(null)}
+        accentColor={colors.accent}
+      />
     </View>
   );
 }
@@ -592,6 +598,11 @@ const styles = StyleSheet.create({
     width: 40, height: 40, borderRadius: 12,
     borderWidth: 1, alignItems: 'center', justifyContent: 'center',
   },
+  saveTopBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12,
+  },
+  saveTopBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
 
   // Hero Card
   heroCard: { borderRadius: 24, overflow: 'hidden', marginBottom: 16, borderWidth: 1 },

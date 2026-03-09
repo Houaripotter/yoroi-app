@@ -111,7 +111,7 @@
     "bodyFat": "Masse grasse",
     "muscleMass": "Masse musculaire",
     "water": "Eau",
-    "hydration": "Hydration"
+    "hydration": "Hydratation"
   },
   "navigation": {
     "home": "Accueil",
@@ -296,25 +296,25 @@
     "privacyPolicy": "Politique de confidentialité"
   },
   "workoutDetail": {
-    "title": "Detail Seance",
-    "duration": "Duree",
+    "title": "Détail Séance",
+    "duration": "Durée",
     "activeCal": "Cal actives",
     "totalCal": "Cal totales",
     "pace": "Allure",
     "avgHR": "FC moy",
-    "heartRate": "Frequence cardiaque",
+    "heartRate": "Fréquence cardiaque",
     "heartRateZones": "Zones cardiaques",
-    "recovery": "Recuperation FC",
-    "splits": "Intermediaires",
+    "recovery": "Récupération FC",
+    "splits": "Intermédiaires",
     "route": "Parcours",
-    "weather": "Meteo",
-    "airQuality": "Qualite de l'air",
+    "weather": "Météo",
+    "airQuality": "Qualité de l'air",
     "conditions": "Conditions"
   },
   "sleepDetail": {
-    "title": "Detail Nuit",
+    "title": "Détail Nuit",
     "phases": "Phases de sommeil",
-    "efficiency": "Efficacite",
+    "efficiency": "Efficacité",
     "vitals": "Signes vitaux"
   },
   "sleepInput": {

@@ -113,7 +113,7 @@ export default function BackupStepScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 100 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 100 }]} showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: colors.background }}>
         
         {/* LOGO SYNC */}
         <View style={styles.iconContainer}>
@@ -124,7 +124,7 @@ export default function BackupStepScreen() {
         </View>
 
         <Text style={[styles.title, { color: colors.textPrimary }]}>
-          Protège tes données ☁️
+          Protège tes données
         </Text>
 
         <View style={[styles.warningBox, { backgroundColor: colors.error + '20', borderColor: colors.error }]}>
@@ -202,7 +202,7 @@ export default function BackupStepScreen() {
             </View>
 
             <Text style={[styles.reminderText, { color: colors.textMuted }]}>
-              💡 Pense à sauvegarder ce fichier dans ton cloud préféré (Google Drive, iCloud, Dropbox, etc.)
+              Pense à sauvegarder ce fichier dans ton cloud préféré (Google Drive, iCloud, Dropbox, etc.)
             </Text>
 
             <TouchableOpacity
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     right: 20,
-    backgroundColor: '#000',
+    backgroundColor: '#1A1A1A',
     borderRadius: 12,
     padding: 2,
   },

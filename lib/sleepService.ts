@@ -531,7 +531,7 @@ export const addSleepEntryFromHealthKit = async (entry: {
 };
 
 /**
- * Recupere les entrees de sommeil pour une date donnee
+ * Recupere les entrees de sommeil pour une date donnée
  */
 export const getSleepEntriesByDate = async (date: string): Promise<SleepEntry[]> => {
   try {

@@ -36,12 +36,14 @@ export const HealthKitConnectCard: React.FC<HealthKitConnectCardProps> = ({
 
       {/* Titre */}
       <Text style={[styles.title, { color: colors.textPrimary }]}>
-        Connecte-toi à l'app Santé
+        {Platform.OS === 'android' ? 'Connecte Health Connect' : "Connecte l'app Santé"}
       </Text>
 
       {/* Description */}
       <Text style={[styles.description, { color: colors.textSecondary }]}>
-        Synchronise automatiquement tes données de santé : fréquence cardiaque, sommeil, SpO2, température et plus encore.
+        {Platform.OS === 'android'
+          ? 'Synchronise automatiquement tes données depuis Health Connect (Google Fit, Samsung Health, Garmin, Fitbit, Polar, Suunto...)'
+          : 'Synchronise automatiquement tes données depuis Apple Santé (Apple Watch, Garmin, Fitbit, Polar, Suunto, Withings...)'}
       </Text>
 
       {/* Bouton */}
@@ -55,7 +57,9 @@ export const HealthKitConnectCard: React.FC<HealthKitConnectCardProps> = ({
           <ActivityIndicator size="small" color={colors.textOnAccent} />
         ) : (
           <>
-            <Text style={[styles.buttonText, { color: colors.textOnAccent }]}>Connecter l'app Santé</Text>
+            <Text style={[styles.buttonText, { color: colors.textOnAccent }]}>
+              {Platform.OS === 'android' ? 'Connecter Health Connect' : "Connecter l'app Santé"}
+            </Text>
             <ChevronRight size={20} color={colors.textOnAccent} strokeWidth={2.5} />
           </>
         )}

@@ -68,7 +68,7 @@ export const LEVELS: Level[] = [
 // Actions qui donnent des points (SIMPLE)
 export const POINTS_ACTIONS = {
   peser: 5,              // Se peser = +5 pts
-  entrainement: 20,      // Entrainement = +20 pts
+  entraînement: 20,      // Entraînement = +20 pts
   objectif_jour: 10,     // Completer objectif du jour = +10 pts
   photo: 15,             // Ajouter une photo = +15 pts
   hydration_complete: 10, // Objectif hydratation atteint = +10 pts
@@ -125,7 +125,7 @@ export const getLevelProgress = (points: number): {
   };
 };
 
-// Calculer les points totaux depuis les activites
+// Calculer les points totaux depuis les activités
 export const calculateTotalPoints = async (
   weightsCount: number,
   trainingsCount: number,
@@ -137,7 +137,7 @@ export const calculateTotalPoints = async (
 
   // Points de base
   total += weightsCount * POINTS_ACTIONS.peser;
-  total += trainingsCount * POINTS_ACTIONS.entrainement;
+  total += trainingsCount * POINTS_ACTIONS.entraînement;
   total += photosCount * POINTS_ACTIONS.photo;
   total += hydrationDaysComplete * POINTS_ACTIONS.hydration_complete;
 
@@ -167,6 +167,8 @@ export interface UnifiedPointsBreakdown {
   challengesXp: number;
   challengeServiceXp: number;
   healthBonus: number;
+  chestXp: number;
+  loginBonusXp: number;
   total: number;
 }
 
@@ -180,11 +182,16 @@ export const calculateAndStoreUnifiedPoints = async (
   streak: number,
 ): Promise<number> => {
   try {
-    // 1. Points d'activite (pesees, entrainements, streak)
-    const activityPoints =
+    // Bonus x1.5 XP le weekend (samedi=6, dimanche=0)
+    const day = new Date().getDay();
+    const weekendMultiplier = (day === 0 || day === 6) ? 1.5 : 1.0;
+
+    // 1. Points d'activité (pesees, entraînements, streak) avec bonus weekend
+    const baseActivityPoints =
       weightsCount * POINTS_ACTIONS.peser +
-      trainingsCount * POINTS_ACTIONS.entrainement +
+      trainingsCount * POINTS_ACTIONS.entraînement +
       (streak >= 100 ? POINTS_ACTIONS.streak_100 : streak >= 30 ? POINTS_ACTIONS.streak_30 : streak >= 7 ? POINTS_ACTIONS.streak_7 : 0);
+    const activityPoints = Math.round(baseActivityPoints * weekendMultiplier);
 
     // 2. XP quetes
     let questsXp = 0;
@@ -210,14 +217,28 @@ export const calculateAndStoreUnifiedPoints = async (
       if (xpData) challengeServiceXp = parseInt(xpData, 10) || 0;
     } catch { /* ignore */ }
 
-    // 5. Bonus sante (Phase 3)
+    // 5. Bonus santé (Phase 3)
     let healthBonus = 0;
     try {
       const bonusData = await AsyncStorage.getItem('@yoroi_health_daily_bonus');
       if (bonusData) healthBonus = parseInt(bonusData, 10) || 0;
     } catch { /* ignore */ }
 
-    const total = activityPoints + questsXp + challengesXp + challengeServiceXp + healthBonus;
+    // 6. XP coffres mysteres ouverts
+    let chestXp = 0;
+    try {
+      const chestData = await AsyncStorage.getItem('@yoroi_chest_xp_total');
+      if (chestData) chestXp = parseInt(chestData, 10) || 0;
+    } catch { /* ignore */ }
+
+    // 7. Bonus de connexion journaliers cumules
+    let loginBonusXp = 0;
+    try {
+      const loginData = await AsyncStorage.getItem('@yoroi_login_bonus_xp_total');
+      if (loginData) loginBonusXp = parseInt(loginData, 10) || 0;
+    } catch { /* ignore */ }
+
+    const total = activityPoints + questsXp + challengesXp + challengeServiceXp + healthBonus + chestXp + loginBonusXp;
 
     const breakdown: UnifiedPointsBreakdown = {
       activityPoints,
@@ -225,6 +246,8 @@ export const calculateAndStoreUnifiedPoints = async (
       challengesXp,
       challengeServiceXp,
       healthBonus,
+      chestXp,
+      loginBonusXp,
       total,
     };
 
@@ -264,6 +287,8 @@ export const getUnifiedPointsBreakdown = async (): Promise<UnifiedPointsBreakdow
     challengesXp: 0,
     challengeServiceXp: 0,
     healthBonus: 0,
+    chestXp: 0,
+    loginBonusXp: 0,
     total: 0,
   };
 };

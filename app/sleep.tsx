@@ -8,6 +8,8 @@ import {
   TextInput,
   Dimensions,
   Switch,
+  Modal,
+  RefreshControl,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
@@ -30,8 +32,8 @@ import {
   Calendar,
 } from 'lucide-react-native';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
-import { format, Locale } from 'date-fns';
-import { fr, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -45,7 +47,7 @@ import {
   SleepEntry,
   SleepStats,
 } from '@/lib/sleepService';
-import { notificationService } from '@/lib/notificationService';
+import { notificationService, requestNotificationPermissions } from '@/lib/notificationService';
 import HealthConnect from '@/lib/healthConnect';
 import logger from '@/lib/security/logger';
 
@@ -93,6 +95,7 @@ export default function SleepScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [bedtimeReminder, setBedtimeReminder] = useState('22:30');
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const [showScoreModal, setShowScoreModal] = useState(false);
 
   // Flag pour recharger après retour de sleep-input
   const needsReload = useRef(false);
@@ -131,6 +134,13 @@ export default function SleepScreen() {
     }
   }, []);
 
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
+
   // Charger une seule fois au montage
   useEffect(() => { loadData(); }, []);
 
@@ -161,11 +171,31 @@ export default function SleepScreen() {
     setNotificationsEnabled(value);
     impactAsync(ImpactFeedbackStyle.Light);
 
+    if (value) {
+      // Demander la permission si pas encore accordée
+      const granted = await requestNotificationPermissions();
+      if (!granted) {
+        setNotificationsEnabled(false);
+        showPopup(
+          'Permission requise',
+          'Active les notifications dans les réglages de ton iPhone pour recevoir les rappels sommeil.',
+          [{ text: 'OK', style: 'primary' }]
+        );
+        return;
+      }
+    }
+
     const settings = notificationService.getSettings();
+    // Si days est vide, activer tous les jours par défaut
+    const days = settings.sleep.days.length > 0
+      ? settings.sleep.days
+      : [0, 1, 2, 3, 4, 5, 6]; // tous les jours
+
     await notificationService.updateSettings({
       sleep: {
         ...settings.sleep,
         enabled: value,
+        days,
       },
     });
 
@@ -277,11 +307,22 @@ export default function SleepScreen() {
         <Moon size={24} color="#8B5CF6" />
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
+        }
+      >
 
         {/* Score de la dernière nuit */}
         {sleepScore !== null && (
-          <View style={[styles.scoreCard, { backgroundColor: nightCard }]}>
+          <TouchableOpacity
+            style={[styles.scoreCard, { backgroundColor: nightCard }]}
+            onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setShowScoreModal(true); }}
+            activeOpacity={0.85}
+          >
             <View style={styles.scoreRow}>
               <View style={styles.scoreLeft}>
                 <Text style={styles.scoreLabel}>DERNIERE NUIT</Text>
@@ -339,7 +380,12 @@ export default function SleepScreen() {
                 </View>
               );
             })()}
-          </View>
+            {/* Tap hint */}
+            <View style={styles.scoreTapHint}>
+              <Target size={11} color="#4A5568" />
+              <Text style={styles.scoreTapHintText}>Appuie pour le detail du score</Text>
+            </View>
+          </TouchableOpacity>
         )}
 
         {/* Carte principale */}
@@ -557,6 +603,146 @@ export default function SleepScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
       <PopupComponent />
+
+      {/* Modal score de sommeil - style Apple Health */}
+      <Modal
+        visible={showScoreModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowScoreModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.scoreModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowScoreModal(false)}
+        >
+          <TouchableOpacity
+            style={[styles.scoreModalSheet, { backgroundColor: '#131D36' }]}
+            activeOpacity={1}
+            onPress={() => {}}
+          >
+            {/* Handle */}
+            <View style={styles.scoreModalHandle} />
+
+            {/* Titre */}
+            <View style={styles.scoreModalHeader}>
+              <Moon size={22} color="#8B5CF6" />
+              <Text style={styles.scoreModalTitle}>Score de Sommeil</Text>
+            </View>
+
+            {sleepScore !== null && (
+              <>
+                {/* Score principal */}
+                <View style={styles.scoreModalBig}>
+                  <Text style={[styles.scoreModalBigValue, { color: getScoreColor(sleepScore) }]}>
+                    {sleepScore}
+                  </Text>
+                  <Text style={styles.scoreModalBigLabel}>/100</Text>
+                  <View style={[styles.scoreModalQualityChip, { backgroundColor: `${getScoreColor(sleepScore)}25` }]}>
+                    <Text style={[styles.scoreModalQualityText, { color: getScoreColor(sleepScore) }]}>
+                      {getScoreLabel(sleepScore)}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Barre globale */}
+                <View style={styles.scoreModalBarBg}>
+                  <View style={[styles.scoreModalBarFill, { width: `${sleepScore}%` as any, backgroundColor: getScoreColor(sleepScore) }]} />
+                </View>
+
+                {/* Détail des composantes */}
+                <Text style={styles.scoreModalSectionTitle}>Composantes du score</Text>
+
+                {/* Durée */}
+                <View style={styles.scoreModalItem}>
+                  <View style={styles.scoreModalItemLeft}>
+                    <Clock size={18} color="#8B5CF6" />
+                    <View>
+                      <Text style={styles.scoreModalItemLabel}>Durée (60%)</Text>
+                      <Text style={styles.scoreModalItemSub}>{formatSleepDuration(scoreDuration)} / objectif {formatSleepDuration(goal)}</Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.scoreModalItemScore, { color: '#8B5CF6' }]}>
+                    {Math.round(Math.min(scoreDuration / goal, 1) * 100 * 0.6)} pts
+                  </Text>
+                </View>
+                <View style={[styles.scoreModalMiniBarBg, { backgroundColor: '#1E2D4D' }]}>
+                  <View style={[styles.scoreModalMiniBarFill, { width: `${Math.min(scoreDuration / goal, 1) * 100}%` as any, backgroundColor: '#8B5CF6' }]} />
+                </View>
+
+                {/* Qualité */}
+                <View style={[styles.scoreModalItem, { marginTop: 12 }]}>
+                  <View style={styles.scoreModalItemLeft}>
+                    <Star size={18} color="#F59E0B" />
+                    <View>
+                      <Text style={styles.scoreModalItemLabel}>Qualité (40%)</Text>
+                      <Text style={styles.scoreModalItemSub}>{scoreQuality > 0 ? `${scoreQuality}/5 etoiles` : 'Non disponible'}</Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.scoreModalItemScore, { color: '#F59E0B' }]}>
+                    {scoreQuality > 0 ? Math.round((scoreQuality / 5) * 100 * 0.4) : 0} pts
+                  </Text>
+                </View>
+                {scoreQuality > 0 && (
+                  <View style={[styles.scoreModalMiniBarBg, { backgroundColor: '#1E2D4D' }]}>
+                    <View style={[styles.scoreModalMiniBarFill, { width: `${(scoreQuality / 5) * 100}%` as any, backgroundColor: '#F59E0B' }]} />
+                  </View>
+                )}
+
+                {/* Phases si disponibles */}
+                {scorePhases && (scorePhases.deep + scorePhases.rem + scorePhases.core) > 0 && (
+                  <>
+                    <Text style={[styles.scoreModalSectionTitle, { marginTop: 16 }]}>Phases (Apple Health)</Text>
+                    <View style={styles.scoreModalPhasesGrid}>
+                      {scorePhases.deep > 0 && (
+                        <View style={[styles.scoreModalPhaseItem, { backgroundColor: '#1E2D4D' }]}>
+                          <View style={[styles.scoreModalPhaseDot, { backgroundColor: '#1E40AF' }]} />
+                          <Text style={styles.scoreModalPhaseLabel}>Profond</Text>
+                          <Text style={[styles.scoreModalPhaseValue, { color: '#60A5FA' }]}>{Math.round(scorePhases.deep)}m</Text>
+                        </View>
+                      )}
+                      {scorePhases.rem > 0 && (
+                        <View style={[styles.scoreModalPhaseItem, { backgroundColor: '#1E2D4D' }]}>
+                          <View style={[styles.scoreModalPhaseDot, { backgroundColor: '#7C3AED' }]} />
+                          <Text style={styles.scoreModalPhaseLabel}>REM</Text>
+                          <Text style={[styles.scoreModalPhaseValue, { color: '#A78BFA' }]}>{Math.round(scorePhases.rem)}m</Text>
+                        </View>
+                      )}
+                      {scorePhases.core > 0 && (
+                        <View style={[styles.scoreModalPhaseItem, { backgroundColor: '#1E2D4D' }]}>
+                          <View style={[styles.scoreModalPhaseDot, { backgroundColor: '#60A5FA' }]} />
+                          <Text style={styles.scoreModalPhaseLabel}>Leger</Text>
+                          <Text style={[styles.scoreModalPhaseValue, { color: '#93C5FD' }]}>{Math.round(scorePhases.core)}m</Text>
+                        </View>
+                      )}
+                      {scorePhases.awake > 0 && (
+                        <View style={[styles.scoreModalPhaseItem, { backgroundColor: '#1E2D4D' }]}>
+                          <View style={[styles.scoreModalPhaseDot, { backgroundColor: '#FCA5A5' }]} />
+                          <Text style={styles.scoreModalPhaseLabel}>Eveille</Text>
+                          <Text style={[styles.scoreModalPhaseValue, { color: '#FCA5A5' }]}>{Math.round(scorePhases.awake)}m</Text>
+                        </View>
+                      )}
+                    </View>
+                  </>
+                )}
+
+                {/* Explication */}
+                <View style={[styles.scoreModalExplain, { backgroundColor: '#1E2D4D' }]}>
+                  <Text style={styles.scoreModalExplainText}>
+                    {sleepScore >= 80
+                      ? 'Excellent ! Ton sommeil est optimal. Continue sur cette lancée.'
+                      : sleepScore >= 60
+                      ? 'Bien. Tu peux améliorer ta durée ou qualité pour atteindre l\'excellence.'
+                      : sleepScore >= 40
+                      ? 'Passable. Essaie de dormir plus longtemps et d\'améliorer tes habitudes.'
+                      : 'Insuffisant. Ton corps manque de récupération. Priorise ton sommeil.'}
+                  </Text>
+                </View>
+              </>
+            )}
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -598,6 +784,38 @@ const styles = StyleSheet.create({
   scoreLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   scoreLegendDot: { width: 8, height: 8, borderRadius: 4 },
   scoreLegendText: { fontSize: 11, fontWeight: '600', color: '#7B8DB5' },
+
+  scoreTapHint: { flexDirection: 'row', alignItems: 'center', gap: 4, justifyContent: 'center', marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#1E2D4D' },
+  scoreTapHintText: { fontSize: 10, fontWeight: '600', color: '#4A5568' },
+
+  // Score modal
+  scoreModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  scoreModalSheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: 44 },
+  scoreModalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: '#2D3E5C', alignSelf: 'center', marginBottom: 20 },
+  scoreModalHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
+  scoreModalTitle: { fontSize: 18, fontWeight: '900', color: '#E8ECF4' },
+  scoreModalBig: { alignItems: 'center', marginBottom: 12 },
+  scoreModalBigValue: { fontSize: 72, fontWeight: '900', letterSpacing: -3, lineHeight: 76 },
+  scoreModalBigLabel: { fontSize: 20, fontWeight: '600', color: '#7B8DB5', marginTop: -4 },
+  scoreModalQualityChip: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, marginTop: 8 },
+  scoreModalQualityText: { fontSize: 13, fontWeight: '800' },
+  scoreModalBarBg: { height: 8, backgroundColor: '#1E2D4D', borderRadius: 4, overflow: 'hidden', marginBottom: 20 },
+  scoreModalBarFill: { height: '100%', borderRadius: 4 },
+  scoreModalSectionTitle: { fontSize: 11, fontWeight: '700', color: '#4A5568', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
+  scoreModalItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  scoreModalItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  scoreModalItemLabel: { fontSize: 14, fontWeight: '700', color: '#E8ECF4' },
+  scoreModalItemSub: { fontSize: 11, fontWeight: '500', color: '#7B8DB5', marginTop: 2 },
+  scoreModalItemScore: { fontSize: 16, fontWeight: '900' },
+  scoreModalMiniBarBg: { height: 5, borderRadius: 3, overflow: 'hidden', marginTop: 8 },
+  scoreModalMiniBarFill: { height: '100%', borderRadius: 3 },
+  scoreModalPhasesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+  scoreModalPhaseItem: { flex: 1, minWidth: '45%', padding: 10, borderRadius: 12, alignItems: 'center', gap: 4 },
+  scoreModalPhaseDot: { width: 8, height: 8, borderRadius: 4 },
+  scoreModalPhaseLabel: { fontSize: 10, fontWeight: '600', color: '#7B8DB5' },
+  scoreModalPhaseValue: { fontSize: 16, fontWeight: '900' },
+  scoreModalExplain: { padding: 14, borderRadius: 14, marginTop: 16 },
+  scoreModalExplainText: { fontSize: 13, fontWeight: '500', color: '#9AA8C7', lineHeight: 20 },
 
   // Main card
   mainCard: {

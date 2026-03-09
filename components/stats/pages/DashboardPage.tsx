@@ -32,7 +32,7 @@ import { StatsHeader, Period } from '../StatsHeader';
 import { logger } from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const COLUMN_WIDTH = (SCREEN_WIDTH - 44) / 2;
+const COLUMN_WIDTH = (SCREEN_WIDTH - 64) * 0.47 - 28; // ~47% card width minus padding
 
 const METRIC_ROUTES: Record<string, string> = {
   sleep: '/sleep',
@@ -69,7 +69,7 @@ const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady }: {
 
   return (
     <View
-      style={[styles.miniCard, { backgroundColor: colors.backgroundCard }]}
+      style={[styles.miniCard, { backgroundColor: isDark ? colors.backgroundCard : `${metric.color}08` }]}
     >
       <TouchableOpacity
         style={styles.cardHeader}
@@ -240,20 +240,20 @@ export const DashboardPage: React.FC = React.memo(() => {
       metricsList.push({ id: 'water_percent', metricKey: 'water_percent', theme: 'Corps', title: 'Eau', icon: <Waves size={16} color="#06B6D4" />, color: '#06B6D4', unit: '%', value: getLatestValue(weights, 'water_percent'), data: prepareLineData(weights, 'water_percent', '#06B6D4') });
 
       // --- 2. COMPOSITION ---
-      metricsList.push({ id: 'visceral_fat', metricKey: 'visceral_fat', theme: 'Composition', title: 'Gras Visc.', icon: <Target size={16} color="#F97316" />, color: '#F97316', unit: '', value: weights?.[0]?.visceral_fat || '--', data: prepareLineData(weights, 'visceral_fat', '#F97316') });
+      metricsList.push({ id: 'visceral_fat', metricKey: 'visceral_fat', theme: 'Composition', title: 'Gras Visc.', icon: <Target size={16} color="#EF4444" />, color: '#EF4444', unit: '', value: weights?.[0]?.visceral_fat || '--', data: prepareLineData(weights, 'visceral_fat', '#EF4444') });
       metricsList.push({ id: 'bone_mass', metricKey: 'bone_mass', theme: 'Composition', title: 'Os', icon: <Bone size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: 'kg', value: getLatestValue(weights, 'bone_mass'), data: prepareLineData(weights, 'bone_mass', '#8B5CF6') });
       metricsList.push({ id: 'bmr', metricKey: 'bmr', theme: 'Composition', title: 'BMR', icon: <Flame size={16} color="#F59E0B" />, color: '#F59E0B', unit: 'kcal', value: weights?.[0]?.bmr || '--', data: prepareLineData(weights, 'bmr', '#F59E0B') });
-      metricsList.push({ id: 'metabolic_age', metricKey: 'metabolic_age', theme: 'Composition', title: 'Âge Métab.', icon: <Calendar size={16} color="#EC4899" />, color: '#EC4899', unit: 'ans', value: weights?.[0]?.metabolic_age || '--', data: prepareLineData(weights, 'metabolic_age', '#EC4899') });
+      metricsList.push({ id: 'metabolic_age', metricKey: 'metabolic_age', theme: 'Composition', title: 'Âge Métab.', icon: <Calendar size={16} color="#06B6D4" />, color: '#06B6D4', unit: 'ans', value: weights?.[0]?.metabolic_age || '--', data: prepareLineData(weights, 'metabolic_age', '#06B6D4') });
 
       // --- 3. MENSURATIONS ---
       const mKeys = [
-        { key: 'waist', title: 'Taille', icon: <Ruler size={16} color="#F59E0B" /> },
-        { key: 'chest', title: 'Pecs', icon: <Ruler size={16} color="#F59E0B" /> },
-        { key: 'left_arm', title: 'Bras', icon: <Ruler size={16} color="#F59E0B" /> },
-        { key: 'left_thigh', title: 'Cuisse', icon: <Ruler size={16} color="#F59E0B" /> },
+        { key: 'waist', title: 'Taille', color: '#EF4444' },
+        { key: 'chest', title: 'Pecs', color: '#3B82F6' },
+        { key: 'left_arm', title: 'Bras', color: '#10B981' },
+        { key: 'left_thigh', title: 'Cuisse', color: '#8B5CF6' },
       ];
       mKeys.forEach(m => {
-        metricsList.push({ id: m.key, metricKey: m.key, theme: 'Mensures', title: m.title, icon: m.icon, color: '#F59E0B', unit: 'cm', value: getLatestValue(measurements, m.key), data: prepareLineData(measurements, m.key, '#F59E0B') });
+        metricsList.push({ id: m.key, metricKey: m.key, theme: 'Mensures', title: m.title, icon: <Ruler size={16} color={m.color} />, color: m.color, unit: 'cm', value: getLatestValue(measurements, m.key), data: prepareLineData(measurements, m.key, m.color) });
       });
 
       // --- 4. DISCIPLINE ---
@@ -269,8 +269,10 @@ export const DashboardPage: React.FC = React.memo(() => {
       // --- 5. SANTÉ ---
       metricsList.push({ id: 'vitality', metricKey: 'vitality', theme: 'Santé', title: 'Vitalité', icon: <Zap size={16} color="#F59E0B" />, color: '#F59E0B', unit: '/100', value: readiness?.score || '--', data: [] });
 
-      const sleepDuration = sleep?.weeklyData?.[0]?.duration ? formatDurationHM(sleep.weeklyData[0].duration) : '--';
-      metricsList.push({ id: 'sleep', metricKey: 'sleep', theme: 'Santé', title: 'Sommeil', icon: <Moon size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: '', value: sleepDuration, data: prepareLineData(sleep?.weeklyData || [], 'duration', '#8B5CF6').map(d => ({...d, value: d.value/60, dataPointText: formatDurationHM(d.value)})) });
+      const weeklyDataArr = sleep?.weeklyData || [];
+      const latestSleepEntry = weeklyDataArr[weeklyDataArr.length - 1];
+      const sleepDuration = latestSleepEntry?.duration ? formatDurationHM(latestSleepEntry.duration) : '--';
+      metricsList.push({ id: 'sleep', metricKey: 'sleep', theme: 'Santé', title: 'Sommeil', icon: <Moon size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: '', value: sleepDuration, data: prepareLineData(weeklyDataArr, 'duration', '#8B5CF6').map(d => ({...d, value: Math.round(d.value / 60 * 10) / 10, dataPointText: formatDurationHM(d.value)})) });
 
       setAllMetrics(metricsList);
     } catch (e) {
@@ -353,27 +355,37 @@ export const DashboardPage: React.FC = React.memo(() => {
       />
 
       <View style={styles.gridContainer}>
-      {groupedThemes.map(({ theme, metrics }) => {
+      {groupedThemes.map(({ theme, metrics }, sectionIdx) => {
         const firstColor = metrics[0]?.color || colors.accent;
         const lastColor = metrics[metrics.length - 1]?.color || firstColor;
         return (
-        <View key={theme} style={styles.themeSection}>
-          <View style={styles.themeTitleRow}>
-            <View style={[styles.themeTitleDash, { backgroundColor: firstColor }]} />
-            <Text style={[styles.themeTitleText, { color: colors.textPrimary }]}>{theme.toUpperCase()}</Text>
-            <View style={[styles.themeTitleDash, { backgroundColor: lastColor }]} />
-          </View>
-          <View style={styles.grid}>
-            {metrics.map(metric => (
-              <MiniCard
-                key={metric.id}
-                metric={metric}
-                colors={colors}
-                isDark={isDark}
-                onPress={handleMetricPress}
-                chartReady={mountedChartIds.has(metric.id)}
-              />
-            ))}
+        <View key={theme}>
+          {/* Séparateur couleur thème entre les sections */}
+          {sectionIdx > 0 && (
+            <View style={[styles.themeSeparator, { backgroundColor: colors.accent }]} />
+          )}
+          <View style={[styles.themeSection, {
+            backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+            borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+          }]}>
+            {/* Titre avec fond blanc intégré dans la carte */}
+            <View style={styles.themeTitleRow}>
+              <View style={[styles.themeTitleDash, { backgroundColor: firstColor }]} />
+              <Text style={[styles.themeTitleText, { color: colors.textPrimary }]}>{theme.toUpperCase()}</Text>
+              <View style={[styles.themeTitleDash, { backgroundColor: lastColor }]} />
+            </View>
+            <View style={styles.grid}>
+              {metrics.map(metric => (
+                <MiniCard
+                  key={metric.id}
+                  metric={metric}
+                  colors={colors}
+                  isDark={isDark}
+                  onPress={handleMetricPress}
+                  chartReady={mountedChartIds.has(metric.id)}
+                />
+              ))}
+            </View>
           </View>
         </View>
         );
@@ -414,14 +426,28 @@ const styles = StyleSheet.create({
   gridContainer: {
     paddingHorizontal: 16,
   },
+  themeSeparator: {
+    height: 3,
+    borderRadius: 2,
+    marginVertical: 12,
+    opacity: 0.5,
+  },
   themeSection: {
-    marginBottom: 24,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 3,
   },
   themeTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 12,
+    marginBottom: 14,
     paddingHorizontal: 4,
   },
   themeTitleDash: {
@@ -442,7 +468,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   miniCard: {
-    width: COLUMN_WIDTH,
+    width: '47%',
     borderRadius: 24,
     padding: 14,
     minHeight: 215,

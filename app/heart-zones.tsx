@@ -16,7 +16,7 @@ import { getUserSettings } from '@/lib/storage';
 import logger from '@/lib/security/logger';
 
 // ============================================
-// CALCULATEUR ZONES FREQUENCE CARDIAQUE
+// CALCULATEUR ZONES FRÉQUENCE CARDIAQUE
 // Methode Karvonen
 // ============================================
 
@@ -31,8 +31,8 @@ interface HeartRateZone {
 
 const ZONES: HeartRateZone[] = [
   {
-    name: 'Zone 1 - Recuperation',
-    description: 'Echauffement, recuperation active',
+    name: 'Zone 1 - Récupération',
+    description: 'Échauffement, récupération active',
     minPercent: 50,
     maxPercent: 60,
     color: '#3B82F6',
@@ -123,13 +123,13 @@ export default function HeartZonesScreen() {
         <View style={[styles.infoCard, { backgroundColor: colors.goldMuted }]}>
           <Heart size={24} color={colors.gold} />
           <Text style={[styles.infoText, { color: colors.gold }]}>
-            Methode Karvonen pour un entrainement optimal
+            Methode Karvonen pour un entraînement optimal
           </Text>
         </View>
 
         {/* Inputs */}
         <Card style={styles.inputCard}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tes donnees</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tes données</Text>
 
           {/* Age */}
           <View style={styles.inputRow}>
@@ -219,7 +219,7 @@ export default function HeartZonesScreen() {
         {isValid && (
           <Card style={styles.zonesCard}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Tes zones d'entrainement
+              Tes zones d'entraînement
             </Text>
 
             {ZONES.map((zone, index) => {

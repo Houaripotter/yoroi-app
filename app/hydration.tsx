@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   TextInput,
   Switch,
   DeviceEventEmitter,
+  RefreshControl,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { StatusBar } from 'expo-status-bar';
@@ -35,7 +36,7 @@ import {
   Moon as MoonIcon,
 } from 'lucide-react-native';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
-import { notificationService } from '@/lib/notificationService';
+import { notificationService, requestNotificationPermissions } from '@/lib/notificationService';
 import logger from '@/lib/security/logger';
 import AnimatedWaterBottle from '@/components/AnimatedWaterBottle';
 import { useWatch } from '@/lib/WatchConnectivityProvider';
@@ -86,6 +87,13 @@ export default function HydrationScreen() {
 
   // Animations
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
   useEffect(() => {
     loadData();
@@ -191,6 +199,9 @@ export default function HydrationScreen() {
       const amountMl = Math.round(amount * 1000);
       await AsyncStorage.setItem(`${HYDRATION_KEY}_${todayISO}`, amountMl.toString());
 
+      // Sync avec les défis (challengesService lit '@yoroi_daily_hydration' via quests.ts)
+      await AsyncStorage.setItem('@yoroi_daily_hydration', JSON.stringify({ date: todayISO, amount }));
+
       // Sync avec le megaPack Watch : clé 'waterIntake' utilisée par performSync()
       await AsyncStorage.setItem('waterIntake', amountMl.toString());
 
@@ -226,6 +237,21 @@ export default function HydrationScreen() {
 
       // Notifier le home screen instantanement (event leger)
       DeviceEventEmitter.emit('HYDRATION_AMOUNT_CHANGED', { amountMl: Math.round(amount * 1000) });
+
+      // Verifier si un défi est nouvellement complete
+      try {
+        const { syncAndGetNewlyCompleted } = await import('@/lib/challengesService');
+        const newChallenges = await syncAndGetNewlyCompleted();
+        if (newChallenges.length > 0) {
+          notificationAsync(NotificationFeedbackType.Success);
+          const names = newChallenges.map(c => `"${c.title}" (+${c.xp} XP)`).join('\n');
+          showPopup(
+            'Bravo, défi valide !',
+            `Ton hydratation a valide :\n${names}\n\nVa dans "Défis" pour reclamer tes XP !`,
+            [{ text: 'Super !', style: 'primary' }]
+          );
+        }
+      } catch { /* non bloquant */ }
     } catch (error) {
       logger.error('Erreur sauvegarde hydratation:', error);
     }
@@ -278,9 +304,21 @@ export default function HydrationScreen() {
   };
 
   const handleToggleNotifications = async (value: boolean) => {
-    setNotificationsEnabled(value);
     impactAsync(ImpactFeedbackStyle.Light);
 
+    if (value) {
+      const granted = await requestNotificationPermissions();
+      if (!granted) {
+        showPopup(
+          'Permission requise',
+          'Active les notifications dans les réglages de ton iPhone pour activer les rappels hydratation.',
+          [{ text: 'OK', style: 'primary' }]
+        );
+        return;
+      }
+    }
+
+    setNotificationsEnabled(value);
     const settings = notificationService.getSettings();
     await notificationService.updateSettings({
       hydration: {
@@ -359,6 +397,9 @@ export default function HydrationScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
+        }
       >
         {/* Grande bouteille animée */}
         <Animated.View style={[styles.bottleCard, { backgroundColor: colors.backgroundCard, transform: [{ scale: scaleAnim }] }]}>

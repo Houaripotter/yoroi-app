@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Share,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -203,7 +204,12 @@ export default function RecordsScreen() {
       <ScreenWrapper noPadding>
         <Header title={t('screens.records.title')} showBack />
 
-        <ScrollView contentContainerStyle={styles.emptyContainer}>
+        <ScrollView
+          contentContainerStyle={styles.emptyContainer}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.accent} colors={[colors.accent]} />
+          }
+        >
           <View style={styles.emptyContent}>
             <Trophy size={80} color={colors.textMuted} />
             <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
@@ -237,6 +243,9 @@ export default function RecordsScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.accent} colors={[colors.accent]} />
+        }
       >
         {/* HEADER */}
         <View style={styles.header}>
@@ -392,7 +401,7 @@ export default function RecordsScreen() {
           </RecordCard>
         )}
 
-        {/* SECTION ENTRAINEMENT */}
+        {/* SECTION ENTRAÎNEMENT */}
         {records && records.totalWorkouts && records.totalWorkouts > 0 && (
           <RecordCard
             icon={Dumbbell}
@@ -426,7 +435,7 @@ export default function RecordsScreen() {
           </RecordCard>
         )}
 
-        {/* SECTION REGULARITE */}
+        {/* SECTION RÉGULARITÉ */}
         <RecordCard
           icon={Calendar}
           iconColor="#3B82F6"
@@ -451,7 +460,7 @@ export default function RecordsScreen() {
           />
         </RecordCard>
 
-        {/* SECTION ENERGIE */}
+        {/* SECTION ÉNERGIE */}
         {records?.bestEnergyStreak && (
           <RecordCard
             icon={Zap}

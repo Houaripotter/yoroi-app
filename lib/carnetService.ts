@@ -1,5 +1,5 @@
 // ============================================
-// CARNET D'ENTRAINEMENT - SERVICE
+// CARNET D'ENTRAÎNEMENT - SERVICE
 // Gestion des Benchmarks (Stats) et Skills (Techniques)
 // Jargon FR/EN valide - Style salle et dojo
 // ============================================
@@ -609,13 +609,15 @@ export const formatValue = (value: number, unit: BenchmarkUnit): string => {
   }
 };
 
-// Format Force entry with weight × reps (e.g., "100 kg × 5")
+// Format Force entry with weight × reps (e.g., "100 kg × 5 REPS")
 export const formatForceEntry = (value: number, unit: BenchmarkUnit, reps?: number): string => {
-  const weightStr = unit === 'kg' || unit === 'lbs' ? `${value} ${unit}` : formatValue(value, unit);
-  if (reps && reps > 0) {
-    return `${weightStr} × ${reps}`;
+  if (unit === 'kg' || unit === 'lbs') {
+    if (reps && reps > 0) return `${value} ${unit} × ${reps} REPS`;
+    return `${value} ${unit}`;
   }
-  return weightStr;
+  // Pour les exercices au poids du corps (reps-unit)
+  if (reps && reps > 0) return `${value} × ${reps} REPS`;
+  return `${value} REPS`;
 };
 
 // ============================================

@@ -2,7 +2,7 @@
 // YOROI - NUTRITION RAPIDE
 // ============================================
 // Guide nutritionnel rapide pour combattants
-// Pre/Post entrainement, jour de combat
+// Pre/Post entraînement, jour de combat
 // Calculs basés sur des études scientifiques
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -13,7 +13,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Linking,
 } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -41,6 +40,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { getUserSettings } from '@/lib/storage';
 import { getAllMeasurements } from '@/lib/storage';
 import logger from '@/lib/security/logger';
+import { safeOpenURL } from '@/lib/security/validators';
 
 // ============================================
 // SOURCES SCIENTIFIQUES
@@ -99,10 +99,10 @@ interface PhaseData {
 const NUTRITION_PHASES: PhaseData[] = [
   {
     id: 'pre_training',
-    name: 'Pre-Entrainement',
+    name: 'Pre-Entraînement',
     icon: Zap,
     color: '#F59E0B',
-    description: 'Optimise ton energie avant la session',
+    description: 'Optimise ton énergie avant la session',
     meals: [
       {
         timing: '3-4h avant',
@@ -129,10 +129,10 @@ const NUTRITION_PHASES: PhaseData[] = [
   },
   {
     id: 'post_training',
-    name: 'Post-Entrainement',
+    name: 'Post-Entraînement',
     icon: Dumbbell,
     color: '#22C55E',
-    description: 'Maximise ta recuperation',
+    description: 'Maximise ta récupération',
     meals: [
       {
         timing: '0-30min apres',
@@ -143,10 +143,10 @@ const NUTRITION_PHASES: PhaseData[] = [
       },
       {
         timing: '1-2h apres',
-        title: 'Repas de recuperation',
+        title: 'Repas de récupération',
         foods: ['Poulet/Saumon', 'Riz/Patate douce', 'Legumes verts', 'Avocat'],
         macros: { protein: 40, carbs: 60, fat: 20 },
-        tips: ['Proteines de qualite', 'Glucides complexes', 'Graisses saines'],
+        tips: ['Proteines de qualité', 'Glucides complexes', 'Graisses saines'],
       },
     ],
   },
@@ -183,7 +183,7 @@ const NUTRITION_PHASES: PhaseData[] = [
         title: 'Dernier boost',
         foods: ['Gel ou datte', 'Cafe (optionnel)', 'Quelques gorgees d\'eau'],
         macros: { protein: 0, carbs: 25, fat: 0 },
-        tips: ['Energie immediate', 'Pas de nouveaute'],
+        tips: ['Énergie immediate', 'Pas de nouveaute'],
       },
     ],
   },
@@ -192,7 +192,7 @@ const NUTRITION_PHASES: PhaseData[] = [
     name: 'Jour de Repos',
     icon: Moon,
     color: '#8B5CF6',
-    description: 'Optimise ta recuperation',
+    description: 'Optimise ta récupération',
     meals: [
       {
         timing: 'Petit-dejeuner',
@@ -317,7 +317,7 @@ export default function QuickNutritionScreen() {
   }, [bodyWeight, bodyHeight, activityLevel]);
 
   const openSource = (url: string) => {
-    Linking.openURL(url).catch(err => logger.error('[QuickNutrition] Erreur ouverture URL:', err));
+    safeOpenURL(url);
   };
 
   const PhaseIcon = currentPhase.icon;

@@ -16,7 +16,7 @@ export default function Index() {
         // Verifier si l'utilisateur a complete l'onboarding
         const settings = await getUserSettings();
 
-        // Si les donnees AsyncStorage sont manquantes, verifier SQLite et synchroniser
+        // Si les données AsyncStorage sont manquantes, verifier SQLite et synchroniser
         if (!settings.username || !settings.gender) {
           try {
             const profile = await getProfile();
@@ -29,7 +29,7 @@ export default function Index() {
                 targetWeight: profile.target_weight,
                 onboardingCompleted: true,
               });
-              // Ne pas rediriger vers onboarding, les donnees sont maintenant synchronisees
+              // Ne pas rediriger vers onboarding, les données sont maintenant synchronisees
               setIsLoading(false);
               return;
             }

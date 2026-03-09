@@ -50,7 +50,6 @@ import {
   Award,
   Calendar,
   List,
-  Cloud,
   Watch,
   Swords,
 } from 'lucide-react-native';
@@ -93,6 +92,8 @@ import ratingService from '@/lib/ratingService';
 import { addHydration as addHydrationToQuests } from '@/lib/quests';
 import { getUnreadCount } from '@/lib/notificationHistoryService';
 import { NotificationBellPopup } from '@/components/NotificationBellPopup';
+import { PeerSyncBanner } from '@/components/PeerSyncBanner';
+import { runGamificationMessages } from '@/lib/gamificationMessagesService';
 
 // Mode Essentiel
 import { useViewMode } from '@/hooks/useViewMode';
@@ -135,7 +136,7 @@ const DEFAULT_HYDRATION_GOAL = 2500;
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, isDark, screenBackground } = useTheme();
+  const { colors, isDark, screenBackground, screenText, screenTextMuted } = useTheme();
   const { t } = useI18n();
   const params = useLocalSearchParams();
 
@@ -184,6 +185,9 @@ export default function HomeScreen() {
   // Badge notifications non lues
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
 
+  // Indicateur Watch sync discret
+  const [watchReachable, setWatchReachable] = useState(false);
+
   // Afficher la popup de notation après navigation depuis l'étape 4
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -198,6 +202,17 @@ export default function HomeScreen() {
       if (timer) clearTimeout(timer);
     };
   }, [params.showRating]);
+
+  // Indicateur Watch : écouter les changements de statut en temps réel
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    const initial = WatchSyncService.getStatus();
+    setWatchReachable(initial.isReachable);
+    const unsubscribe = WatchSyncService.onStatusChange((status) => {
+      setWatchReachable(status.isReachable);
+    });
+    return unsubscribe;
+  }, []);
 
   // Charger le compteur de notifications non lues au montage + ecouter les changements
   useEffect(() => {
@@ -343,6 +358,10 @@ export default function HomeScreen() {
   const [vo2Max, setVo2Max] = useState(0);
   const [exerciseMinutes, setExerciseMinutes] = useState<number | null>(null);
   const [standHours, setStandHours] = useState<number | null>(null);
+  const [moveGoal, setMoveGoal] = useState(500);
+  const [exerciseGoal, setExerciseGoal] = useState(30);
+  const [standGoal, setStandGoal] = useState(12);
+  const [weeklyActivityData, setWeeklyActivityData] = useState<Array<{ date: string; calories: number; exerciseMin: number; standH: number }>>([]);
   const [hkSleepHours, setHkSleepHours] = useState(0);
   const [lastSleepPhases, setLastSleepPhases] = useState<{ deep: number; rem: number; core: number; awake: number } | null>(null);
 
@@ -540,8 +559,8 @@ export default function HomeScreen() {
   }, [handleNavigate]);
 
   const handleNavigateHealthStats = useCallback(() => {
-    // CORRECTION: L'onglet s'appelle 'sante' dans StatsTabViewNew, pas 'vitalite'
-    handleNavigate('/stats?tab=sante');
+    // CORRECTION: L'onglet s'appelle 'santé' dans StatsTabViewNew, pas 'vitalite'
+    handleNavigate('/stats?tab=santé');
   }, [handleNavigate]);
 
   const handleNavigateAddWeight = useCallback(() => {
@@ -707,7 +726,7 @@ export default function HomeScreen() {
         const standData = results[9].status === 'fulfilled' ? results[9].value : null;
 
         if (stepsData?.count != null && stepsData.count > 0) setSteps(stepsData.count);
-        if (caloriesData?.active != null && caloriesData.active > 0) setCalories(Math.round(caloriesData.active));
+        if (caloriesData?.active != null && caloriesData.active > 0) setCalories(Math.round(caloriesData.active * 10) / 10);
         if (distData?.total != null && distData.total > 0) setDistance(distData.total);
         if (hrData) setHeartRate(hrData);
         if (spo2Data?.value != null && spo2Data.value > 0) setSpo2(spo2Data.value);
@@ -715,6 +734,22 @@ export default function HomeScreen() {
         if (vo2Data?.value != null && vo2Data.value > 0) setVo2Max(vo2Data.value);
         if (exerciseData != null && exerciseData > 0) setExerciseMinutes(exerciseData);
         if (standData != null && standData > 0) setStandHours(standData);
+
+        // Récupérer les objectifs et données hebdomadaires des anneaux Apple
+        try {
+          const [summary, weeklyData] = await Promise.allSettled([
+            HealthConnect.getTodayActivitySummary(),
+            HealthConnect.getWeeklyActivityData(),
+          ]);
+          if (summary.status === 'fulfilled' && summary.value?.goals) {
+            if (summary.value.goals.move > 0) setMoveGoal(summary.value.goals.move);
+            if (summary.value.goals.exercise > 0) setExerciseGoal(summary.value.goals.exercise);
+            if (summary.value.goals.stand > 0) setStandGoal(summary.value.goals.stand);
+          }
+          if (weeklyData.status === 'fulfilled' && weeklyData.value?.length > 0) {
+            setWeeklyActivityData(weeklyData.value);
+          }
+        } catch { /* non-bloquant */ }
         if (sleepHistory && sleepHistory.length > 0) {
           // Prendre la nuit la plus récente (triée ascending donc dernière)
           const last = sleepHistory[sleepHistory.length - 1];
@@ -725,17 +760,17 @@ export default function HomeScreen() {
           if (last.total > 0) setHkSleepHours(last.total / 60);
         }
       } catch (error) {
-        logger.info('Donnees activite non disponibles depuis Apple Health');
+        logger.info('Données activité non disponibles depuis Apple Health');
       }
 
-      // Bonus sante du jour (doit etre calcule AVANT les points unifies)
+      // Bonus santé du jour (doit etre calcule AVANT les points unifies)
       try {
         await calculateDailyHealthBonus();
       } catch {
         // Non-bloquant si HealthKit indisponible
       }
 
-      // Points unifies : agrege activite + quetes + challenges + sante
+      // Points unifies : agrege activité + quetes + challenges + santé
       const unifiedTotal = await calculateAndStoreUnifiedPoints(
         history.length,
         allTrainings.length,
@@ -743,6 +778,23 @@ export default function HomeScreen() {
       );
       setTotalPoints(unifiedTotal);
       loadHydration();
+
+      // Messages gamification dans la cloche (aucune notif systeme)
+      const todayStr = new Date().toISOString().split('T')[0];
+      const hasActivityToday = allTrainings.some((t: any) => t.date === todayStr);
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+      const weekStartStr = weekStart.toISOString().split('T')[0];
+      const trainingsThisWeek = allTrainings.filter((t: any) => t.date >= weekStartStr).length;
+      runGamificationMessages({
+        totalPoints: unifiedTotal,
+        streak: streakDays,
+        trainingsThisWeek,
+        hasActivityToday,
+      }).then(() => {
+        // Rafraichir le badge de la cloche apres injection des messages
+        getUnreadCount().then(setUnreadNotifCount).catch(() => {});
+      }).catch(() => {});
 
       // Calculer le score de readiness basé sur : sommeil, charge, hydratation, streak
       try {
@@ -825,7 +877,7 @@ export default function HomeScreen() {
     return () => sub.remove();
   }, [hydrationGoal, animateWater]);
 
-  // Auto-sync: synchroniser les donnees de sante, recalculer bonus + points
+  // Auto-sync: synchroniser les données de santé, recalculer bonus + points
   const performHealthSync = useCallback(async () => {
     try {
       await healthConnectService.initialize();
@@ -872,7 +924,7 @@ export default function HomeScreen() {
           if (freshSleep) setSleepStats(freshSleep);
           if (freshWeight) setLatestWeight({ weight: freshWeight.value, date: freshWeight.date, source: freshWeight.source } as any);
 
-          // Recalculer bonus sante + points unifies apres sync
+          // Recalculer bonus santé + points unifies apres sync
           await calculateDailyHealthBonus();
           const newTotal = await calculateAndStoreUnifiedPoints(
             freshHistory.length,
@@ -1215,9 +1267,15 @@ export default function HomeScreen() {
 
               {/* Texte (Centre) */}
               <View style={styles.headerText}>
-                <Text style={[styles.greeting, { color: colors.textMuted }]}>{getGreeting()}</Text>
+                <View style={styles.greetingRow}>
+                  <Text style={[styles.greeting, { color: screenTextMuted }]}>{getGreeting()}</Text>
+                  {/* Indicateur Watch discret */}
+                  {Platform.OS === 'ios' && (
+                    <View style={[styles.watchDot, { backgroundColor: watchReachable ? '#34C759' : '#8E8E93' }]} />
+                  )}
+                </View>
                 <View style={styles.userNameRow}>
-                  <Text style={[styles.userName, { color: colors.textPrimary }]}>{profile?.name || 'Champion'}</Text>
+                  <Text style={[styles.userName, { color: screenText }]}>{profile?.name || 'Champion'}</Text>
                   <ViewModeSwitch mode={mode} onToggle={toggleMode} />
                 </View>
               </View>
@@ -1250,34 +1308,10 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Citation motivante - Design épuré */}
-            {dailyQuote && (
-              <Animated.View
-                style={[
-                  { paddingHorizontal: 16, marginTop: 16 },
-                  { opacity: quoteFadeAnim, transform: [{ scale: quoteScaleAnim }] }
-                ]}
-              >
-                <View style={[styles.quoteCardClean, {
-                  backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
-                  borderColor: isDark ? `${colors.accent}20` : colors.secondary,
-                  shadowColor: isDark ? colors.accent : '#000',
-                }]}>
-                  <View style={[styles.quoteAccentBar, { backgroundColor: `${colors.accent}90` }]} />
-                  <View style={styles.quoteCleanContent}>
-                    <Text
-                      style={[styles.quoteCleanText, { color: isDark ? colors.textPrimary : '#1A1A2E' }]}
-                      numberOfLines={3}
-                    >
-                      «{'\u00A0'}{dailyQuote.text}{'\u00A0'}»
-                    </Text>
-                    <Text style={[styles.quoteCleanLabel, { color: colors.textMuted }]}>
-                      {t('home.quoteOfTheDay')}
-                    </Text>
-                  </View>
-                </View>
-              </Animated.View>
-            )}
+            {/* Citation du jour - affichée uniquement via notification push */}
+
+            {/* Sync pair-a-pair iPhone<->iPad (visible seulement si un appareil est pres) */}
+            <PeerSyncBanner />
 
             {/* Hint pour informer du switch de mode */}
             <ViewModeHint />
@@ -1435,6 +1469,10 @@ export default function HomeScreen() {
               vo2Max={vo2Max}
               exerciseMinutes={exerciseMinutes}
               standHours={standHours}
+              moveGoal={moveGoal}
+              exerciseGoal={exerciseGoal}
+              standGoal={standGoal}
+              weeklyData={weeklyActivityData}
             />
           </View>
         );
@@ -1461,7 +1499,7 @@ export default function HomeScreen() {
             >
               <BookOpen size={24} color="#F97316" />
               <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Carnet</Text>
-              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Entrainement</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Entraînement</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
@@ -1516,7 +1554,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         );
 
-      // Ligne 2: Energie, Savoir, Calculateurs
+      // Ligne 2: Énergie, Savoir, Calculateurs
       case 'tools_row_2':
         return (
           <View style={styles.batteryToolsRowSingle} key={sectionId}>
@@ -1547,7 +1585,7 @@ export default function HomeScreen() {
                   backgroundColor: batteryPercent >= 60 ? '#10B981' : batteryPercent >= 30 ? '#F59E0B' : '#EF4444'
                 }]} />
               </View>
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Energie</Text>
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Énergie</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
@@ -1589,7 +1627,7 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <Stethoscope size={24} color="#F87171" />
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Pros de Sante</Text>
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Pros de Santé</Text>
               <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Kines, Nutritionnistes</Text>
             </TouchableOpacity>
           </View>
@@ -2010,7 +2048,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerText: { flex: 1, marginHorizontal: 12 },
+  greetingRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   greeting: { fontSize: 14, fontWeight: '600' },
+  watchDot: { width: 6, height: 6, borderRadius: 3 },
   userNameRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   userName: { fontSize: 22, fontWeight: '900' },
 
@@ -2520,7 +2560,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Pile/Batterie horizontale allongée pour carte Energie
+  // Pile/Batterie horizontale allongée pour carte Énergie
   batteryHorizontal: {
     flexDirection: 'row',
     alignItems: 'center',

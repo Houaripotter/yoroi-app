@@ -407,7 +407,7 @@ export default function TimerScreen() {
     setTimerState('paused');
   };
 
-  // Resume timer
+  // Résumé timer
   const resumeTimer = () => {
     triggerHaptic('light');
     activateKeepAwakeAsync().catch(e => logger.error('KeepAwake error:', e));

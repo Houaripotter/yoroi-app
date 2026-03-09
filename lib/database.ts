@@ -16,7 +16,7 @@ const _openDB = async (): Promise<SQLite.SQLiteDatabase> => {
   return db;
 };
 
-// Ouvrir la base de donnees (attend que l'init soit terminée)
+// Ouvrir la base de données (attend que l'init soit terminée)
 export const openDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   if (_initPromise) await _initPromise;
   return _openDB();
@@ -119,7 +119,7 @@ const _performInit = async () => {
     );
   `);
 
-  // Table Entrainements
+  // Table Entraînements
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS trainings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -209,7 +209,7 @@ const _performInit = async () => {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN cadence INTEGER;`);
   } catch (e) { /* colonne existe déjà */ }
 
-  // Colonnes pour les details enrichis Apple Health (route GPS, meteo, FC, splits)
+  // Colonnes pour les details enrichis Apple Health (route GPS, météo, FC, splits)
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN healthkit_uuid TEXT;`);
   } catch (e) { /* colonne existe déjà */ }
@@ -250,7 +250,7 @@ const _performInit = async () => {
     await database.execAsync(`ALTER TABLE measurements ADD COLUMN navel REAL;`);
   } catch (e) { /* colonne existe déjà */ }
 
-  // Table Corbeille (trash) pour les seances supprimees
+  // Table Corbeille (trash) pour les séances supprimees
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS trash_trainings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -282,6 +282,19 @@ const _performInit = async () => {
       deleted_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // Migrations trash_trainings (colonnes ajoutées après la création initiale)
+  const trashMigrations = [
+    `ALTER TABLE trash_trainings ADD COLUMN heart_rate INTEGER`,
+    `ALTER TABLE trash_trainings ADD COLUMN max_heart_rate INTEGER`,
+    `ALTER TABLE trash_trainings ADD COLUMN location_lat REAL`,
+    `ALTER TABLE trash_trainings ADD COLUMN location_lon REAL`,
+    `ALTER TABLE trash_trainings ADD COLUMN location_name TEXT`,
+    `ALTER TABLE trash_trainings ADD COLUMN combat_rounds TEXT`,
+  ];
+  for (const sql of trashMigrations) {
+    try { await database.execAsync(sql); } catch (e) { /* colonne existe déjà */ }
+  }
 
   // Auto-clean trash older than 30 days
   try {
@@ -480,7 +493,7 @@ const _performInit = async () => {
     );
   `);
 
-  // Table des objectifs d'entrainement
+  // Table des objectifs d'entraînement
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS training_goals (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -710,9 +723,9 @@ export interface Training {
   combat_rounds?: CombatRound[];
   // Apple Health enriched data
   healthkit_uuid?: string;           // UUID HealthKit pour lazy-load des details
-  workout_details_json?: string;     // JSON complet (route GPS, FC, splits, meteo)
+  workout_details_json?: string;     // JSON complet (route GPS, FC, splits, météo)
   weekly_plan_id?: number;
-  // Lieu d'entrainement (GPS capture manuelle)
+  // Lieu d'entraînement (GPS capture manuelle)
   location_lat?: number;
   location_lon?: number;
   location_name?: string;
@@ -964,7 +977,7 @@ export const deleteWeight = async (id: number): Promise<void> => {
 };
 
 // ============================================
-// FONCTIONS CRUD - ENTRAINEMENTS
+// FONCTIONS CRUD - ENTRAÎNEMENTS
 // ============================================
 
 export const getTrainingById = async (id: number): Promise<Training | null> => {
@@ -1127,7 +1140,7 @@ export const getTrainingStats = async (): Promise<{ sport: string; count: number
   );
 };
 
-const TRASH_TABLE_SQL = `CREATE TABLE IF NOT EXISTS trash_trainings (id INTEGER PRIMARY KEY AUTOINCREMENT, original_id INTEGER, club_id INTEGER, sport TEXT, session_type TEXT, date TEXT, start_time TEXT, duration_minutes INTEGER, notes TEXT, muscles TEXT, exercises TEXT, technique_rating INTEGER, is_outdoor INTEGER DEFAULT 0, pente REAL, speed REAL, resistance INTEGER, watts INTEGER, cadence INTEGER, distance REAL, calories INTEGER, intensity INTEGER, rounds INTEGER, round_duration INTEGER, created_at TEXT, deleted_at TEXT DEFAULT CURRENT_TIMESTAMP)`;
+const TRASH_TABLE_SQL = `CREATE TABLE IF NOT EXISTS trash_trainings (id INTEGER PRIMARY KEY AUTOINCREMENT, original_id INTEGER, club_id INTEGER, sport TEXT, session_type TEXT, date TEXT, start_time TEXT, duration_minutes INTEGER, notes TEXT, muscles TEXT, exercises TEXT, technique_rating INTEGER, is_outdoor INTEGER DEFAULT 0, pente REAL, speed REAL, resistance INTEGER, watts INTEGER, cadence INTEGER, distance REAL, calories INTEGER, intensity INTEGER, rounds INTEGER, round_duration INTEGER, heart_rate INTEGER, max_heart_rate INTEGER, location_lat REAL, location_lon REAL, location_name TEXT, combat_rounds TEXT, created_at TEXT, deleted_at TEXT DEFAULT CURRENT_TIMESTAMP)`;
 
 let _trashTableReady = false;
 const ensureTrashTable = async (database: SQLite.SQLiteDatabase) => {
@@ -1139,7 +1152,7 @@ const ensureTrashTable = async (database: SQLite.SQLiteDatabase) => {
 export const deleteTraining = async (id: number): Promise<void> => {
   const database = await openDatabase();
 
-  // D'abord lire la seance
+  // D'abord lire la séance
   const row = await database.getFirstAsync<any>(
     'SELECT * FROM trainings WHERE id = ?', [id]
   );
@@ -1152,8 +1165,8 @@ export const deleteTraining = async (id: number): Promise<void> => {
     try {
       await ensureTrashTable(database);
       await database.runAsync(
-        `INSERT INTO trash_trainings (original_id, club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [row.id, row.club_id || null, row.sport || null, row.session_type || null, row.date, row.start_time || null, row.duration_minutes || null, row.notes || null, row.muscles || null, row.exercises || null, row.technique_rating || null, row.is_outdoor || 0, row.distance || null, row.calories || null, row.intensity || null, row.rounds || null, row.round_duration || null, row.pente || null, row.speed || null, row.resistance || null, row.watts || null, row.cadence || null, row.created_at || null]
+        `INSERT INTO trash_trainings (original_id, club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, heart_rate, max_heart_rate, location_lat, location_lon, location_name, combat_rounds, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [row.id, row.club_id || null, row.sport || null, row.session_type || null, row.date, row.start_time || null, row.duration_minutes || null, row.notes || null, row.muscles || null, row.exercises || null, row.technique_rating || null, row.is_outdoor || 0, row.distance || null, row.calories || null, row.intensity || null, row.rounds || null, row.round_duration || null, row.pente || null, row.speed || null, row.resistance || null, row.watts || null, row.cadence || null, row.heart_rate || null, row.max_heart_rate || null, row.location_lat || null, row.location_lon || null, row.location_name || null, row.combat_rounds || null, row.created_at || null]
       );
     } catch (e) {
       logger.error('Erreur mise en corbeille:', e);
@@ -1210,14 +1223,16 @@ export const restoreFromTrash = async (trashId: number): Promise<void> => {
   if (!item) return;
 
   await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, distance, calories, intensity, rounds, round_duration, is_outdoor, pente, speed, resistance, watts, cadence, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, distance, calories, intensity, rounds, round_duration, is_outdoor, pente, speed, resistance, watts, cadence, heart_rate, max_heart_rate, location_lat, location_lon, location_name, combat_rounds, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [item.club_id, item.sport, item.session_type, item.date, item.start_time,
      item.duration_minutes, item.notes, item.muscles, item.exercises,
      item.technique_rating, item.distance, item.calories, item.intensity,
      item.rounds, item.round_duration, item.is_outdoor || 0,
      item.pente, item.speed, item.resistance, item.watts, item.cadence,
-     item.created_at]
+     item.heart_rate || null, item.max_heart_rate || null,
+     item.location_lat || null, item.location_lon || null, item.location_name || null,
+     item.combat_rounds || null, item.created_at]
   );
   await database.runAsync('DELETE FROM trash_trainings WHERE id = ?', [trashId]);
 };
@@ -1917,7 +1932,7 @@ export const importData = async (jsonString: string): Promise<void> => {
     }
   }
 
-  // Importer les entrainements
+  // Importer les entraînements
   if (data.data.trainings) {
     for (const training of data.data.trainings) {
       await addTraining(training);
@@ -2068,7 +2083,7 @@ export const getNextCompetition = async (): Promise<Competition | null> => {
 };
 
 // ============================================
-// RESET COMPLET DE LA BASE DE DONNEES
+// RESET COMPLET DE LA BASE DE DONNÉES
 // ============================================
 
 export const resetDatabase = async (): Promise<void> => {
@@ -2149,7 +2164,7 @@ export const resetDatabaseKeepPhotos = async (): Promise<void> => {
 export interface HealthDataRecord {
   id?: number;
   date: string;
-  type: 'steps' | 'calories_active' | 'calories_basal' | 'heart_rate' | 'heart_rate_resting' | 'hrv' | 'sleep' | 'distance' | 'vo2max' | 'spo2' | 'respiratory_rate' | 'body_temp' | 'body_fat' | 'lean_mass';
+  type: 'steps' | 'calories_active' | 'calories_basal' | 'heart_rate' | 'heart_rate_resting' | 'hrv' | 'sleep' | 'distance' | 'vo2max' | 'spo2' | 'respiratory_rate' | 'body_temp' | 'body_fat' | 'lean_mass' | 'blood_pressure_systolic' | 'blood_glucose' | 'height' | 'floors_climbed' | 'mindful_minutes';
   value: number;
   value2?: number;
   value3?: number;

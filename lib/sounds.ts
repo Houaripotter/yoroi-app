@@ -53,12 +53,11 @@ class SoundManager {
       beep: require('../assets/sounds/beep.mp3'),
       tick: require('../assets/sounds/beep.mp3'), // Utilise beep pour le tick (countdown)
       victory: require('../assets/sounds/gong.mp3'), // Fallback au gong
-      levelup: require('../assets/sounds/pokemon-level-up-made-with-Voicemod.mp3'),
-      // Nouveaux sons
-      wizz: require('../assets/sounds/wizz-made-with-Voicemod.mp3'), // MSN notification
-      sonicring: require('../assets/sounds/sonic-ring-sound-effect-made-with-Voicemod.mp3'), // XP/badge gain
-      mariowin: require('../assets/sounds/super-mario-64-soundtrack-slider-made-with-Voicemod.mp3'), // Victoire
-      badgefanfare: require('../assets/sounds/pokemon-heartgold-soulsilver-ost-fanfare-badge-get-made-with-Voicemod.mp3'), // Badge unlock
+      levelup: require('../assets/sounds/level-up.mp3'),
+      wizz: require('../assets/sounds/wizz.mp3'),
+      sonicring: require('../assets/sounds/ring.mp3'),
+      mariowin: require('../assets/sounds/victory.mp3'),
+      badgefanfare: require('../assets/sounds/fanfare-badge.mp3'),
     };
 
     for (const [key, file] of Object.entries(soundFiles)) {
@@ -123,7 +122,7 @@ class SoundManager {
   }
 
   /**
-   * Joue le son de victoire (fin entrainement)
+   * Joue le son de victoire (fin entraînement)
    */
   async playVictory(): Promise<void> {
     await this.play('victory');

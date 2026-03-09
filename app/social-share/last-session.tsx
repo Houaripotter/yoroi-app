@@ -129,9 +129,28 @@ export default function LastSessionScreen() {
           }
           setLastTraining(currentTraining);
 
-          if (currentTraining && currentTraining.notes) {
-            const parsed = parseExercisesFromNotes(currentTraining.notes);
-            setOptionDetails(parsed);
+          if (currentTraining) {
+            // 1. Parser depuis les notes texte
+            let parsedOptions: any[] = [];
+            if (currentTraining.notes) {
+              parsedOptions = parseExercisesFromNotes(currentTraining.notes);
+            }
+
+            // 2. Si pas d'exercices dans les notes, utiliser les exercices structurés de la DB
+            if (parsedOptions.length === 0 && currentTraining.exercises && currentTraining.exercises.length > 0) {
+              parsedOptions = currentTraining.exercises.map(ex => ({
+                label: ex.name,
+                weight: ex.weight > 0 ? ex.weight.toString() : undefined,
+                reps: ex.reps > 0 ? ex.reps.toString() : undefined,
+                sets: ex.sets > 1 ? ex.sets.toString() : undefined,
+                distance: ex.distance ? ex.distance.toString() : undefined,
+                calories: ex.calories ? ex.calories.toString() : undefined,
+                pace: ex.pace || undefined,
+                stairs: ex.stairs ? ex.stairs.toString() : undefined,
+              }));
+            }
+
+            setOptionDetails(parsedOptions);
           }
         }
 
@@ -140,7 +159,7 @@ export default function LastSessionScreen() {
         if (currentTraining && currentTraining.club_id) {
           const club = clubs.find(c => c.id === currentTraining?.club_id);
           if (club) {
-            setYearlyObjective(club.sessions_per_week ? club.sessions_per_week * 52 : 150);
+            setYearlyObjective((club.sessions_per_week || 3) * 52);
           }
         } else {
           setYearlyObjective(365);

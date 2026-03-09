@@ -3,6 +3,7 @@ import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { getDocumentAsync } from 'expo-document-picker';
 import { captureRef } from 'react-native-view-shot';
 import { Platform, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   getAllMeasurements,
   getUserSettings,
@@ -14,7 +15,11 @@ import {
   saveUserSettings,
   saveHomeLayout,
   saveSelectedLogo,
+  saveHydrationSettings,
+  getMoods,
+  saveMood,
 } from './storage';
+import { getSleepEntries, getSleepGoal } from './sleepService';
 import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs, addClub, addMeasurementRecord, saveProfile } from './database';
 import { getAllBodyCompositions, addBodyComposition } from './bodyComposition';
 import { getUnlockedBadges, unlockBadge } from './badges';
@@ -87,9 +92,12 @@ export const exportDataToJSON = async (): Promise<boolean> => {
       selectedLogo,
       hydrationEntries,
       hydrationSettings,
+      sleepEntries,
+      sleepGoal,
+      moodEntries,
     ] = await Promise.all([
       getProfile(),
-      getWeights(1000), // Récupérer les 1000 dernières mesures
+      getWeights(), // Toutes les pesées (backup complet)
       getTrainings(),
       getAllBodyCompositions(),
       getClubs(),
@@ -101,6 +109,9 @@ export const exportDataToJSON = async (): Promise<boolean> => {
       getSelectedLogo(),
       getAllHydrationEntries(),
       getHydrationSettings(),
+      getSleepEntries(),
+      getSleepGoal(),
+      getMoods(),
     ]);
 
     // === CONVERTIR LES IMAGES EN BASE64 ===
@@ -143,7 +154,7 @@ export const exportDataToJSON = async (): Promise<boolean> => {
     logger.info(`${photosWithBase64.filter((p: any) => p.image_base64).length} photos converties`);
 
     const exportData = {
-      version: '4.0', // Version 4.0 avec images base64
+      version: '5.0', // Version 5.0 avec sommeil + humeur
       exportDate: new Date().toISOString(),
       appName: 'Yoroi',
       // Profil avec photo
@@ -163,6 +174,9 @@ export const exportDataToJSON = async (): Promise<boolean> => {
       selectedLogo,
       hydrationEntries,
       hydrationSettings,
+      sleepEntries,
+      sleepGoal,
+      moodEntries,
     };
 
     // Créer le fichier JSON
@@ -202,7 +216,7 @@ export const exportDataToJSON = async (): Promise<boolean> => {
  */
 export const exportDataToCSV = async (): Promise<boolean> => {
   try {
-    const weights = await getWeights(1000);
+    const weights = await getWeights();
 
     if (weights.length === 0) {
       Alert.alert('Info', 'Aucune donnée à exporter');
@@ -295,6 +309,9 @@ export const importDataFromJSON = async (): Promise<boolean> => {
         `• ${importedData.measurements?.length || 0} mensurations`,
         `• ${importedData.unlockedBadges?.length || 0} badges débloqués`,
         `• ${importedData.photos?.length || 0} photos${photosWithImages.length > 0 ? ` (${photosWithImages.length} images)` : ''}`,
+        importedData.sleepEntries?.length > 0 ? `• ${importedData.sleepEntries.length} nuits de sommeil` : null,
+        importedData.moodEntries?.length > 0 ? `• ${importedData.moodEntries.length} entrées d'humeur` : null,
+        importedData.hydrationEntries?.length > 0 ? `• ${importedData.hydrationEntries.length} entrées d'hydratation` : null,
         hasProfilePhoto ? '• Photo de profil' : null,
         importedData.userSettings ? '• Paramètres utilisateur' : null,
         importedData.homeLayout ? '• Layout de l\'accueil' : null,
@@ -415,7 +432,16 @@ export const importDataFromJSON = async (): Promise<boolean> => {
 
     // === IMPORTER LES CLUBS AVEC LOGOS ===
     if (importedData.clubs && Array.isArray(importedData.clubs)) {
+      // Charger les clubs existants pour éviter les doublons (même nom + sport)
+      const existingClubs = await getClubs();
+      const existingClubKeys = new Set(
+        existingClubs.map((c: any) => `${c.name}|${c.sport}`)
+      );
+
       for (const club of importedData.clubs) {
+        const key = `${club.name}|${club.sport}`;
+        if (existingClubKeys.has(key)) continue; // doublon, on saute
+
         try {
           const clubData = { ...club };
 
@@ -434,6 +460,7 @@ export const importDataFromJSON = async (): Promise<boolean> => {
           delete clubData.logo_base64;
 
           await addClub(clubData);
+          existingClubKeys.add(key); // évite doublon si le même backup liste 2x le même club
           importedCount++;
         } catch (error) {
           logger.error('Erreur import club:', error);
@@ -509,7 +536,111 @@ export const importDataFromJSON = async (): Promise<boolean> => {
       }
     }
 
-    const imageMsg = imagesRestored > 0 ? `\n\n${imagesRestored} image(s) restaurée(s) (photo de profil, logos de clubs)` : '';
+    // Importer les entrées de sommeil
+    if (importedData.sleepEntries && Array.isArray(importedData.sleepEntries)) {
+      try {
+        const existingRaw = await AsyncStorage.getItem('@yoroi_sleep_entries');
+        const existingEntries: any[] = existingRaw ? JSON.parse(existingRaw) : [];
+        const existingIds = new Set(existingEntries.map((e: any) => e.id));
+        const newEntries = importedData.sleepEntries.filter((e: any) => !existingIds.has(e.id));
+        if (newEntries.length > 0) {
+          const merged = [...existingEntries, ...newEntries];
+          await AsyncStorage.setItem('@yoroi_sleep_entries', JSON.stringify(merged));
+          importedCount += newEntries.length;
+        }
+      } catch (error) {
+        logger.error('Erreur import sommeil:', error);
+      }
+    }
+
+    // Importer l'objectif de sommeil
+    if (importedData.sleepGoal && typeof importedData.sleepGoal === 'number') {
+      try {
+        await AsyncStorage.setItem('@yoroi_sleep_goal', String(importedData.sleepGoal));
+        importedCount++;
+      } catch (error) {
+        logger.error('Erreur import objectif sommeil:', error);
+      }
+    }
+
+    // Importer les entrées d'humeur
+    if (importedData.moodEntries && Array.isArray(importedData.moodEntries)) {
+      try {
+        const existingMoods = await getMoods();
+        const existingDates = new Set(existingMoods.map((m: any) => m.date));
+        const newMoods = importedData.moodEntries.filter((m: any) => !existingDates.has(m.date));
+        for (const mood of newMoods) {
+          await saveMood(mood);
+        }
+        importedCount += newMoods.length;
+      } catch (error) {
+        logger.error('Erreur import humeur:', error);
+      }
+    }
+
+    // Importer les entrées d'hydratation
+    if (importedData.hydrationEntries && Array.isArray(importedData.hydrationEntries)) {
+      try {
+        const existingEntries = await getAllHydrationEntries();
+        const existingIds = new Set(existingEntries.map((e: any) => e.id));
+        const newEntries = importedData.hydrationEntries.filter((e: any) => !existingIds.has(e.id));
+        if (newEntries.length > 0) {
+          const merged = [...existingEntries, ...newEntries];
+          await AsyncStorage.setItem('@yoroi_hydration_log', JSON.stringify(merged));
+          importedCount += newEntries.length;
+        }
+      } catch (error) {
+        logger.error('Erreur import hydratation:', error);
+      }
+    }
+
+    // Importer les paramètres d'hydratation
+    if (importedData.hydrationSettings) {
+      try {
+        await saveHydrationSettings(importedData.hydrationSettings);
+        importedCount++;
+      } catch (error) {
+        logger.error('Erreur import paramètres hydratation:', error);
+      }
+    }
+
+    // Importer les photos de transformation
+    if (importedData.photos && Array.isArray(importedData.photos)) {
+      try {
+        const existingPhotos = await getPhotosFromStorage();
+        const existingIds = new Set(existingPhotos.map((p: any) => p.id));
+        const restoredPhotos: any[] = [...existingPhotos];
+
+        for (const photo of importedData.photos) {
+          if (existingIds.has(photo.id)) continue;
+
+          const photoData = { ...photo };
+          delete photoData.image_base64;
+
+          // Restaurer l'image base64 vers un fichier local
+          if (photo.image_base64) {
+            const ext = (photo.uri || 'photo.jpg').split('.').pop() || 'jpg';
+            const photoUri = await base64ToImage(
+              photo.image_base64,
+              `photo_${photo.id || Date.now()}.${ext}`
+            );
+            if (photoUri) {
+              photoData.uri = photoUri;
+              imagesRestored++;
+            }
+          }
+
+          restoredPhotos.push(photoData);
+        }
+
+        await AsyncStorage.setItem('@yoroi_photos', JSON.stringify(restoredPhotos));
+        importedCount++;
+      } catch (error) {
+        logger.error('Erreur import photos:', error);
+      }
+    }
+
+    const imageMsg = imagesRestored > 0 ? `\n\n${imagesRestored} image(s) restaurée(s) (photo de profil, logos de clubs, photos de transformation)` : '';
 
     Alert.alert(
       'Import réussi !',
@@ -997,7 +1128,7 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     logger.info('Début export CSV éditable...');
 
     const [weights, trainings, measurements, clubs] = await Promise.all([
-      getWeights(1000),
+      getWeights(), // Toutes les pesées
       getTrainings(),
       getAllMeasurements(),
       getClubs(),
@@ -1083,7 +1214,7 @@ export const exportEditableCSV = async (): Promise<boolean> => {
         appName: 'Yoroi',
         counts: {
           pesees: weights?.length || 0,
-          seances: trainings?.length || 0,
+          séances: trainings?.length || 0,
           mensurations: measurements?.length || 0,
           clubs: clubs?.length || 0,
         },

@@ -1,5 +1,5 @@
 // ============================================
-// YOROI - TYPES DE SEANCES PAR SPORT
+// YOROI - TYPES DE SÉANCES PAR SPORT
 // ============================================
 
 export interface SessionTypeConfig {

@@ -34,7 +34,7 @@ import {
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/lib/ThemeContext';
-import { notificationService, NotificationSettings } from '@/lib/notificationService';
+import { notificationService, NotificationSettings, requestNotificationPermissions } from '@/lib/notificationService';
 import {
   getCitationNotifSettings,
   setCitationNotifSettings,
@@ -70,7 +70,7 @@ interface NotifCardConfig {
   onTest?: () => void;
   testLabel?: string;
   details?: string[];
-  // Frequence optionnelle
+  // Fréquence optionnelle
   frequency?: number; // valeur actuelle (1, 2, 3...)
   frequencyOptions?: number[]; // options disponibles
   frequencyUnit?: string; // 'jour' | 'semaine'
@@ -156,11 +156,11 @@ function NotifCard({
             {config.description}
           </Text>
 
-          {/* Selecteur de frequence */}
+          {/* Selecteur de fréquence */}
           {config.frequencyOptions && config.onFrequencyChange && (
             <View style={styles.frequencySection}>
               <Text style={[styles.frequencyLabel, { color: colors.textSecondary }]}>
-                Frequence ({config.frequencyUnit === 'semaine' ? 'par semaine' : 'par jour'})
+                Fréquence ({config.frequencyUnit === 'semaine' ? 'par semaine' : 'par jour'})
               </Text>
               <View style={styles.frequencyRow}>
                 {config.frequencyOptions.map(val => {
@@ -237,7 +237,7 @@ export default function NotificationsScreen() {
   const [timerSettings, setTimerSettingsState] = useState<TimerNotifSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Frequences par type de notification
+  // Fréquences par type de notification
   const [frequencies, setFrequencies] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -245,7 +245,7 @@ export default function NotificationsScreen() {
   }, []);
 
   const loadSettings = async () => {
-    // Charger les frequences sauvegardees
+    // Charger les fréquences sauvegardees
     try {
       const savedFreqs = await AsyncStorage.getItem(FREQ_STORAGE_KEY);
       if (savedFreqs) {
@@ -275,6 +275,20 @@ export default function NotificationsScreen() {
 
   const updateMainSetting = useCallback(async (key: string, value: any) => {
     if (!settings) return;
+
+    // Si on active une notification, demander les permissions d'abord
+    if (value === true && key.includes('.enabled')) {
+      const granted = await requestNotificationPermissions();
+      if (!granted) {
+        showPopup(
+          'Permission requise',
+          'Active les notifications dans les réglages de ton iPhone pour activer cette fonctionnalité.',
+          [{ text: 'OK', style: 'primary' }]
+        );
+        return;
+      }
+    }
+
     const newSettings = { ...settings };
     if (key.includes('.')) {
       const [parent, child] = key.split('.');
@@ -288,7 +302,7 @@ export default function NotificationsScreen() {
     }
     setSettings(newSettings);
     await notificationService.updateSettings(newSettings);
-  }, [settings]);
+  }, [settings, showPopup]);
 
   const updateCitation = useCallback(async (key: keyof CitationNotifSettings, value: any) => {
     if (!citationSettings) return;
@@ -377,8 +391,8 @@ export default function NotificationsScreen() {
       icon: Timer,
       iconColor: '#EF4444',
       title: 'Repos termine',
-      subtitle: timerSettings.restFinished ? 'Actif pendant les seances' : 'Desactive',
-      description: 'Notification quand ton temps de repos est termine pendant un entrainement de musculation. Te previent de reprendre ta serie.',
+      subtitle: timerSettings.restFinished ? 'Actif pendant les séances' : 'Desactive',
+      description: 'Notification quand ton temps de repos est termine pendant un entraînement de musculation. Te previent de reprendre ta serie.',
       isEnabled: timerSettings.restFinished,
       onToggle: (v) => updateTimer('restFinished', v),
       details: [
@@ -394,7 +408,7 @@ export default function NotificationsScreen() {
       icon: Swords,
       iconColor: '#F97316',
       title: 'Round termine',
-      subtitle: timerSettings.roundFinished ? 'Actif pendant les seances' : 'Desactive',
+      subtitle: timerSettings.roundFinished ? 'Actif pendant les séances' : 'Desactive',
       description: 'Notification a chaque fin de round en mode combat, tabata, EMOM ou autres modes intervalles.',
       isEnabled: timerSettings.roundFinished,
       onToggle: (v) => updateTimer('roundFinished', v),
@@ -405,29 +419,29 @@ export default function NotificationsScreen() {
       ],
     },
 
-    // 4. Entrainement termine
+    // 4. Entraînement termine
     {
       id: 'timer_workout',
       icon: Trophy,
       iconColor: '#10B981',
-      title: 'Entrainement termine',
+      title: 'Entraînement termine',
       subtitle: timerSettings.workoutFinished ? 'Actif' : 'Desactive',
-      description: 'Notification de fin de seance complete. Te felicite et confirme que l\'entrainement est enregistre.',
+      description: 'Notification de fin de séance complete. Te felicite et confirme que l\'entraînement est enregistre.',
       isEnabled: timerSettings.workoutFinished,
       onToggle: (v) => updateTimer('workoutFinished', v),
       details: [
-        'Se declenche a la toute fin de seance',
-        'Adapte au type d\'entrainement',
+        'Se declenche a la toute fin de séance',
+        'Adapte au type d\'entraînement',
         'Muscu, combat, tabata, EMOM, AMRAP...',
       ],
     },
 
-    // 5. Rappel entrainement quotidien
+    // 5. Rappel entraînement quotidien
     {
       id: 'training',
       icon: Dumbbell,
       iconColor: '#8B5CF6',
-      title: 'Rappel entrainement',
+      title: 'Rappel entraînement',
       subtitle: settings.training.enabled ? `${frequencies.training || 1}x/sem - ${settings.training.time}` : 'Desactive',
       description: 'Rappel pour ne pas oublier de t\'entrainer. Choisis combien de fois par semaine tu veux etre rappele.',
       isEnabled: settings.training.enabled,
@@ -451,7 +465,7 @@ export default function NotificationsScreen() {
       iconColor: '#06B6D4',
       title: 'Rappels hydratation',
       subtitle: settings.hydration.enabled ? `${frequencies.hydration || 1}x par jour` : 'Desactive',
-      description: 'Rappels reguliers pour boire de l\'eau tout au long de la journee. L\'hydratation est essentielle pour la performance et la recuperation.',
+      description: 'Rappels reguliers pour boire de l\'eau tout au long de la journee. L\'hydratation est essentielle pour la performance et la récupération.',
       isEnabled: settings.hydration.enabled,
       onToggle: (v) => updateMainSetting('hydration.enabled', v),
       onTest: () => sendTest('hydration'),
@@ -500,7 +514,7 @@ export default function NotificationsScreen() {
       testLabel: 'Tester cette notification',
       details: [
         `Heure : ${settings.streak.time}`,
-        'Uniquement si pas d\'entrainement ce jour',
+        'Uniquement si pas d\'entraînement ce jour',
         'Protege ta serie de jours consecutifs',
       ],
     },
@@ -512,13 +526,13 @@ export default function NotificationsScreen() {
       iconColor: '#6366F1',
       title: 'Rappel sommeil',
       subtitle: settings.sleep.enabled ? `${settings.sleep.bedtimeReminder} - Heure du coucher` : 'Desactive',
-      description: 'Te rappelle d\'aller dormir a l\'heure que tu as choisie. Un bon sommeil est essentiel pour la recuperation musculaire et les performances.',
+      description: 'Te rappelle d\'aller dormir a l\'heure que tu as choisie. Un bon sommeil est essentiel pour la récupération musculaire et les performances.',
       isEnabled: settings.sleep.enabled,
       onToggle: (v) => updateMainSetting('sleep.enabled', v),
       details: [
         `Heure : ${settings.sleep.bedtimeReminder}`,
         'Te rappelle d\'eteindre les ecrans',
-        'Ameliore ta qualite de sommeil',
+        'Ameliore ta qualité de sommeil',
       ],
     },
 
@@ -529,7 +543,7 @@ export default function NotificationsScreen() {
       iconColor: '#F59E0B',
       title: 'Briefing matinal',
       subtitle: settings.briefing?.enabled ? `${frequencies.briefing || 1}x/jour - ${settings.briefing.time}` : 'Desactive',
-      description: 'Chaque matin, recois un resume personnalise : ton streak, ton poids, les entrainements prevus, et un message motivant pour la journee.',
+      description: 'Chaque matin, recois un résumé personnalise : ton streak, ton poids, les entraînements prevus, et un message motivant pour la journee.',
       isEnabled: settings.briefing?.enabled ?? false,
       onToggle: (v) => updateMainSetting('briefing.enabled', v),
       onTest: () => sendTest('briefing'),
@@ -575,7 +589,7 @@ export default function NotificationsScreen() {
       iconColor: '#8B5CF6',
       title: 'Dormir moins bete',
       subtitle: healthTipSettings.enabled ? `${frequencies.health_tips || 1}x/jour - ${healthTipSettings.time}` : 'Desactive',
-      description: 'Chaque soir, recois un conseil sante ou nutrition scientifiquement prouve. Apprends quelque chose d\'utile avant de dormir.',
+      description: 'Chaque soir, recois un conseil santé ou nutrition scientifiquement prouve. Apprends quelque chose d\'utile avant de dormir.',
       isEnabled: healthTipSettings.enabled,
       onToggle: (v) => updateHealthTip('enabled', v),
       frequency: frequencies.health_tips || 1,
@@ -596,7 +610,7 @@ export default function NotificationsScreen() {
       iconColor: '#6366F1',
       title: 'Rappels intelligents',
       subtitle: settings.smartReminders?.enabled ? 'Analyse de tes habitudes' : 'Desactive',
-      description: 'Analyse tes 60 derniers jours d\'entrainement pour t\'envoyer des rappels personnalises : jours habituels manques, suggestion de repos, frequence en baisse.',
+      description: 'Analyse tes 60 derniers jours d\'entraînement pour t\'envoyer des rappels personnalises : jours habituels manques, suggestion de repos, fréquence en baisse.',
       isEnabled: settings.smartReminders?.enabled ?? false,
       onToggle: (v) => updateMainSetting('smartReminders.enabled', v),
       onTest: () => sendTest('smart'),
@@ -604,8 +618,8 @@ export default function NotificationsScreen() {
       details: [
         'Alerte si tu manques un jour habituel',
         'Suggestion de repos apres 4+ jours consecutifs',
-        'Alerte si frequence en baisse',
-        'Analyse basee sur 60 jours de donnees',
+        'Alerte si fréquence en baisse',
+        'Analyse basee sur 60 jours de données',
       ],
     },
   ];
@@ -626,7 +640,7 @@ export default function NotificationsScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {/* Resume */}
+        {/* Résumé */}
         <View style={[styles.summaryBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }]}>
           <Text style={[styles.summaryText, { color: colors.textMuted }]}>
             {activeCount === 0
@@ -756,7 +770,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     flex: 1,
   },
-  // Frequence
+  // Fréquence
   frequencySection: {
     marginBottom: 12,
   },

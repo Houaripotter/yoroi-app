@@ -116,7 +116,7 @@ export default function FastingScreen() {
   const [ramadanFajr, setRamadanFajr] = useState('05:30');
   const [ramadanMaghrib, setRamadanMaghrib] = useState('18:45');
 
-  // Charger les donnees
+  // Charger les données
   const loadData = useCallback(async () => {
     try {
       const [state, fastingStats] = await Promise.all([
@@ -651,7 +651,7 @@ export default function FastingScreen() {
               />
 
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                Duree du jeûne (heures)
+                Durée du jeûne (heures)
               </Text>
               <TextInput
                 style={[styles.input, { backgroundColor: colors.cardHover, color: colors.textPrimary, borderColor: colors.border }]}
@@ -759,7 +759,7 @@ export default function FastingScreen() {
               <View style={[styles.ramadanDuration, { backgroundColor: colors.goldMuted }]}>
                 <Clock size={16} color={colors.gold} />
                 <Text style={[styles.ramadanDurationText, { color: colors.gold }]}>
-                  Duree du jeûne : ~{calculateDuration(ramadanFajr, ramadanMaghrib)}
+                  Durée du jeûne : ~{calculateDuration(ramadanFajr, ramadanMaghrib)}
                 </Text>
               </View>
 
@@ -781,7 +781,7 @@ export default function FastingScreen() {
   );
 }
 
-// Helper pour calculer la duree entre deux heures
+// Helper pour calculer la durée entre deux heures
 const calculateDuration = (start: string, end: string): string => {
   try {
     const [startH, startM] = start.split(':').map(Number);

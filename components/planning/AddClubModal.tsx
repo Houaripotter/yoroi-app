@@ -2,7 +2,7 @@
 // YOROI - MODAL D'AJOUT DE CLUB UTILISATEUR
 // ============================================
 // Permet d'ajouter un club avec objectif hebdomadaire obligatoire
-// Selecteur de sport identique a "Configuration de seance"
+// Selecteur de sport identique a "Configuration de séance"
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -379,7 +379,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
           </View>
 
           {/* ================================================ */}
-          {/* SPORT - Style "Configuration de seance"           */}
+          {/* SPORT - Style "Configuration de séance"           */}
           {/* ================================================ */}
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: colors.textSecondary }]}>
@@ -798,7 +798,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  // Category sections - style "Configuration de seance"
+  // Category sections - style "Configuration de séance"
   categorySection: {
     marginBottom: 12,
   },

@@ -2,10 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Yoroi utilise ta position pour enregistrer le lieu de tes seances d'entrainement.</string>
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Yoroi utilise ta position pour enregistrer le lieu de tes seances d'entrainement.</string>
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>
     <key>CFBundleDevelopmentRegion</key>
@@ -23,7 +19,7 @@
     <key>CFBundlePackageType</key>
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.2.0</string>
+    <string>2.3.0</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleURLTypes</key>
@@ -43,7 +39,7 @@
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>5</string>
+    <string>6</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSRequiresIPhoneOS</key>
@@ -55,26 +51,34 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>YOROI accède à votre calendrier pour vous rappeler vos séances d'entraînement planifiées.</string>
+    <key>NSCalendarsUsageDescription</key>
+    <string>YOROI accède à votre calendrier pour vous rappeler vos séances d'entraînement planifiées.</string>
     <key>NSCameraUsageDescription</key>
     <string>YOROI a besoin d'accéder à la caméra pour prendre une photo de profil.</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>YOROI utilise Face ID pour sécuriser l'accès à votre profil et vos données personnelles.</string>
     <key>NSHealthShareUsageDescription</key>
     <string>YOROI lit vos données de poids, composition corporelle, sommeil, pas, fréquence cardiaque et calories pour afficher vos statistiques de progression, calculer vos objectifs personnalisés et suivre votre évolution physique au fil du temps.</string>
     <key>NSHealthUpdateUsageDescription</key>
     <string>YOROI enregistre vos pesées quotidiennes, vos séances d'entraînement, vos données d'hydratation et de sommeil pour synchroniser automatiquement vos progrès entre tous vos appareils.</string>
-    <key>NSCalendarUsageDescription</key>
-    <string>YOROI a besoin d'accéder à votre calendrier pour programmer vos rappels d'entraînement.</string>
-    <key>NSCalendarsUsageDescription</key>
-    <string>YOROI a besoin d'accéder à votre calendrier pour programmer vos rappels d'entraînement.</string>
-    <key>NSCalendarsFullAccessUsageDescription</key>
-    <string>YOROI a besoin d'accéder à votre calendrier pour programmer vos rappels d'entraînement.</string>
-    <key>NSFaceIDUsageDescription</key>
-    <string>YOROI utilise Face ID pour sécuriser l'accès à vos données personnelles.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>YOROI utilise votre position GPS pour enregistrer le tracé et la distance de vos séances de course, vélo et activités en plein air.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>YOROI utilise votre position GPS pour enregistrer le tracé et la distance de vos séances de course, vélo et activités en plein air.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>YOROI utilise votre position GPS pour enregistrer le tracé et la distance de vos séances de course, vélo et activités en plein air.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>YOROI peut utiliser le microphone pour enregistrer des notes vocales liées à vos séances d'entraînement.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>YOROI a besoin d'enregistrer des photos dans votre galerie.</string>
-    <key>NSRemindersFullAccessUsageDescription</key>
-    <string>YOROI a besoin d'accéder à vos rappels pour créer des alertes d'entraînement.</string>
+    <string>YOROI enregistre vos photos de progression et vos cartes de partage social dans votre photothèque.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>YOROI a besoin d'accéder à vos photos pour définir votre photo de profil.</string>
+    <key>NSRemindersFullAccessUsageDescription</key>
+    <string>YOROI crée des rappels pour vos séances d'entraînement planifiées et vos objectifs fitness.</string>
+    <key>NSRemindersUsageDescription</key>
+    <string>YOROI utilise les rappels pour vos objectifs fitness.</string>
     <key>NSSupportsLiveActivities</key>
     <true/>
     <key>NSUserActivityTypes</key>

@@ -1,5 +1,5 @@
 // ============================================
-// YOROI - SYSTEME DE DEFIS HEBDOMADAIRES
+// YOROI - SYSTEME DE DÉFIS HEBDOMADAIRES
 // ============================================
 // Chaque lundi, un nouveau défi apparaît
 // L'utilisateur a jusqu'à dimanche pour le compléter
@@ -46,7 +46,7 @@ export interface ChallengeProgress {
 }
 
 // ═══════════════════════════════════════════════
-// DEFINITION DES DEFIS
+// DEFINITION DES DÉFIS
 // ═══════════════════════════════════════════════
 
 export const CHALLENGES: Record<ChallengeType, Challenge> = {
@@ -306,7 +306,7 @@ export const calculateChallengeProgress = async (challengeType: ChallengeType): 
 };
 
 // ═══════════════════════════════════════════════
-// GESTION DU DEFI HEBDOMADAIRE
+// GESTION DU DÉFI HEBDOMADAIRE
 // ═══════════════════════════════════════════════
 
 /**

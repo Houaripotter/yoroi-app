@@ -25,7 +25,7 @@ export const IMCCalculator = React.memo(function IMCCalculator({ visible, onClos
   };
 
   const getIMCCategory = (imc: number): { label: string; color: string; iconComponent: LucideIcon } => {
-    if (imc === 0) return { label: 'Entre tes donnees', color: colors.textMuted, iconComponent: AlertCircle };
+    if (imc === 0) return { label: 'Entre tes données', color: colors.textMuted, iconComponent: AlertCircle };
     if (imc < 18.5) return { label: 'Insuffisance ponderale', color: colors.info, iconComponent: AlertCircle };
     if (imc < 25) return { label: 'Normal', color: colors.success, iconComponent: Circle };
     if (imc < 30) return { label: 'Surpoids', color: colors.warning, iconComponent: AlertCircle };

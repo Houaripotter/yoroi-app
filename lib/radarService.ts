@@ -82,7 +82,7 @@ export const calculateRadarScores = async (period: 'week' | 'month' = 'week'): P
     const streak = streakStr ? parseInt(streakStr, 10) : 0;
 
     // Régularité : 21 jours = habitude formée (100%)
-    const regularite = Math.min((streak / 21) * 100, 100);
+    const régularité = Math.min((streak / 21) * 100, 100);
 
     // Constance : nombre de jours actifs sur les 28 derniers jours
     const last28Days = await db.getAllAsync<any>(
@@ -92,7 +92,7 @@ export const calculateRadarScores = async (period: 'week' | 'month' = 'week'): P
     const uniqueDays = new Set(last28Days.map(t => new Date(t.date).toDateString())).size;
     const constance = (uniqueDays / 28) * 100;
 
-    const mentalScore = (regularite * 0.6) + (constance * 0.4);
+    const mentalScore = (régularité * 0.6) + (constance * 0.4);
 
     return {
       force: Math.round(forceScore),
@@ -273,7 +273,7 @@ export const RADAR_REFERENCES = {
     source: "Body Composition in Sport - Journal of Sports Sciences, 2019",
     url: "https://pubmed.ncbi.nlm.nih.gov/31084472/",
   },
-  regularite: {
+  régularité: {
     title: "RÉGULARITÉ",
     description: "Basé sur ta constance dans les entraînements.",
     reference: "Il faut en moyenne 66 jours pour ancrer une habitude. La constance surpasse l'intensité pour les résultats à long terme.",

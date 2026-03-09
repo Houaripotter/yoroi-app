@@ -8,6 +8,7 @@ import {
   Modal,
   Animated,
   ListRenderItem,
+  RefreshControl,
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -150,7 +151,7 @@ const CategorySection: React.FC<CategorySectionProps> = memo(({
 const CATEGORIES: { key: BadgeCategory; title: string; IconComponent: React.ComponentType<any>; badges: Badge[] }[] = [
   { key: 'streak', title: 'STREAK', IconComponent: Flame, badges: STREAK_BADGES },
   { key: 'weight', title: 'POIDS', IconComponent: Scale, badges: WEIGHT_BADGES },
-  { key: 'training', title: 'ENTRAINEMENT', IconComponent: Dumbbell, badges: TRAINING_BADGES },
+  { key: 'training', title: 'ENTRAÎNEMENT', IconComponent: Dumbbell, badges: TRAINING_BADGES },
   { key: 'special', title: 'SPECIAUX', IconComponent: Star, badges: SPECIAL_BADGES },
   { key: 'time', title: 'TEMPS', IconComponent: Calendar, badges: TIME_BADGES },
 ];
@@ -178,6 +179,13 @@ export default function BadgesScreen() {
       logger.error('Erreur chargement badges:', error);
     }
   }, []);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadBadges();
+    setRefreshing(false);
+  }, [loadBadges]);
 
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadBadges(); }, []);
@@ -321,6 +329,9 @@ export default function BadgesScreen() {
         maxToRenderPerBatch={3}
         windowSize={5}
         initialNumToRender={3}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
+        }
       />
 
       {/* MODAL BADGE DETAIL */}

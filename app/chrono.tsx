@@ -21,6 +21,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { successHaptic } from '@/lib/haptics';
 import { timerNotifications } from '@/lib/timerNotifications';
 import logger from '@/lib/security/logger';
+import liveActivity from '@/lib/liveActivity';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -181,7 +182,7 @@ export default function ChronoScreen() {
       beepSoundRef.current = beepSound;
 
       const { sound: wizzSound } = await Audio.Sound.createAsync(
-        require('@/assets/sounds/wizz-made-with-Voicemod.mp3')
+        require('@/assets/sounds/wizz.mp3')
       );
       wizzSoundRef.current = wizzSound;
     } catch (error) {
@@ -258,6 +259,18 @@ export default function ChronoScreen() {
       Vibration.vibrate(200);
     } catch (error) {
       logger.info('Erreur beep:', error);
+    }
+  };
+
+  const playWizzOnce = async () => {
+    try {
+      if (wizzSoundRef.current) {
+        await wizzSoundRef.current.setPositionAsync(0);
+        await wizzSoundRef.current.setIsLoopingAsync(false);
+        await wizzSoundRef.current.playAsync();
+      }
+    } catch (error) {
+      logger.info('Erreur wizz once:', error);
     }
   };
 
@@ -429,11 +442,11 @@ export default function ChronoScreen() {
   };
 
   const startTimer = useCallback(() => {
-    // Son de démarrage: gong pour combat, beep pour les autres modes
+    // Son de démarrage: gong pour combat, wizz (une fois) pour les autres modes
     if (mode === 'combat') {
       playGong();
     } else {
-      playBeep();
+      playWizzOnce();
     }
     warned10secRef.current = false;
     lastMinuteRef.current = 0;
@@ -478,11 +491,41 @@ export default function ChronoScreen() {
         notificationDuration
       ).catch(e => logger.error('Notification error:', e));
     }
-  }, [mode, amrapDuration, reposDuration, timer.workDuration]);
+
+    // Démarrer la Live Activity (Dynamic Island)
+    const endTimestamp = (Date.now() / 1000) + notificationDuration;
+    const modeNames: Record<string, string> = {
+      combat: selectedPreset.name,
+      tabata: 'Tabata',
+      emom: `EMOM ${emomDuration}min`,
+      amrap: `AMRAP ${amrapDuration}min`,
+      repos: 'Repos',
+      custom: 'Custom',
+    };
+    liveActivity.start({
+      endTime: endTimestamp,
+      timeRemaining: notificationDuration,
+      isRunning: true,
+      mode,
+      phase: 'work',
+      currentRound: 1,
+      totalRounds: mode === 'emom' ? emomDuration : (mode === 'amrap' ? 1 : timer.totalRounds),
+      timerName: modeNames[mode] || mode.toUpperCase(),
+    });
+  }, [mode, amrapDuration, reposDuration, timer.workDuration, timer.totalRounds, selectedPreset, emomDuration]);
 
   const pauseTimer = () => {
     stopWizzLoop();
     timerNotifications.cancelNotification().catch(e => logger.error('Cancel notification error:', e));
+    // Mettre à jour le Dynamic Island en mode pause
+    liveActivity.update({
+      timeRemaining: timer.timeRemaining,
+      isRunning: false,
+      mode,
+      phase: timer.phase,
+      currentRound: mode === 'emom' ? timer.currentMinute : timer.currentRound,
+      totalRounds: timer.totalRounds,
+    });
     setTimer((prev) => ({ ...prev, isRunning: false }));
   };
 
@@ -493,6 +536,8 @@ export default function ChronoScreen() {
     }
     stopWizzLoop();
     timerNotifications.cancelNotification().catch(e => logger.error('Cancel notification error:', e));
+    // Arrêter la Live Activity
+    liveActivity.stop();
     initializeTimer(mode);
   };
 
@@ -682,6 +727,28 @@ export default function ChronoScreen() {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [timer.isRunning, mode]);
+
+  // Mettre à jour le Dynamic Island quand la phase ou le round change
+  useEffect(() => {
+    if (!timer.isRunning || timer.phase === 'idle') return;
+    const endTimestamp = (Date.now() / 1000) + timer.timeRemaining;
+    liveActivity.update({
+      endTime: endTimestamp,
+      timeRemaining: timer.timeRemaining,
+      isRunning: true,
+      mode,
+      phase: timer.phase,
+      currentRound: mode === 'emom' ? timer.currentMinute : timer.currentRound,
+      totalRounds: timer.totalRounds,
+    });
+  }, [timer.phase, timer.currentRound, timer.currentMinute]);
+
+  // Arrêter la Live Activity quand le timer se termine
+  useEffect(() => {
+    if (!timer.isRunning && timer.timeRemaining === 0) {
+      liveActivity.stop();
+    }
+  }, [timer.isRunning, timer.timeRemaining]);
 
   const getBackgroundColor = (): string => {
     const modeColors = MODE_COLORS[mode];

@@ -11,7 +11,7 @@ interface SlotSuggestion {
 }
 
 /**
- * Detecte les patterns d'entrainement et suggere des creneaux reguliers.
+ * Detecte les patterns d'entraînement et suggere des creneaux reguliers.
  * Retourne une suggestion si un meme sport est fait le meme jour >= 3 fois
  * sur les 4 dernieres semaines et qu'aucun creneau n'existe deja pour cette combinaison.
  */
@@ -82,7 +82,7 @@ export const detectSlotPatterns = async (): Promise<SlotSuggestion[]> => {
       avgTime = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
     }
 
-    // Calculer la duree moyenne
+    // Calculer la durée moyenne
     let avgDuration: number | undefined;
     if (pattern.durations.length > 0) {
       avgDuration = Math.round(

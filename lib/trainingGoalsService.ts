@@ -1,5 +1,5 @@
 // ============================================
-// YOROI - SERVICE DE GESTION DES OBJECTIFS D'ENTRAINEMENT
+// YOROI - SERVICE DE GESTION DES OBJECTIFS D'ENTRAÎNEMENT
 // ============================================
 // Permet de definir des objectifs personnalises par sport
 // avec calcul automatique semaine -> mois -> annee
@@ -99,7 +99,7 @@ export interface GlobalGoalStats {
 export const initTrainingGoalsDB = async () => {
   const database = await getDatabase();
 
-  // Table des objectifs d'entrainement
+  // Table des objectifs d'entraînement
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS training_goals (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -259,7 +259,7 @@ const getYearBounds = (): { start: string; end: string } => {
   };
 };
 
-// Compter les entrainements pour un sport dans une periode
+// Compter les entraînements pour un sport dans une periode
 const countTrainings = async (
   sportId: string,
   startDate: string,
@@ -284,7 +284,7 @@ export const getGoalProgress = async (goal: TrainingGoal): Promise<GoalProgress>
   const monthBounds = getMonthBounds();
   const yearBounds = getYearBounds();
 
-  // Compter les entrainements
+  // Compter les entraînements
   const weekCount = await countTrainings(goal.sport_id, weekBounds.start, weekBounds.end);
   const monthCount = await countTrainings(goal.sport_id, monthBounds.start, monthBounds.end);
   const yearCount = await countTrainings(goal.sport_id, yearBounds.start, yearBounds.end);

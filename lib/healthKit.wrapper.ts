@@ -6,18 +6,32 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { logger } from '@/lib/security/logger';
 
-// Détecter si on est dans Expo Go
-const isExpoGo = Constants.appOwnership === 'expo';
+// Détection Expo Go robuste : supporte SDK 50+ et anciennes versions
+// - executionEnvironment === 'storeClient' = Expo Go (SDK 46+)
+// - appOwnership === 'expo' = Expo Go (ancienne API)
+const execEnv: string = (Constants as any).executionEnvironment ?? '';
+const isExpoGo =
+  execEnv === 'storeClient' ||
+  Constants.appOwnership === 'expo';
 
 let HealthKit: any = null;
+let loadError: string | null = null;
 
-// Tenter d'importer HealthKit seulement si pas dans Expo Go
+// Tenter d'importer HealthKit seulement si pas dans Expo Go et sur iOS
 if (!isExpoGo && Platform.OS === 'ios') {
   try {
-    HealthKit = require('@kingstinct/react-native-healthkit').default;
-    logger.info('[HealthKit] Module chargé avec succès');
-  } catch (error) {
-    logger.warn('[HealthKit] Module non disponible (probablement Expo Go):', error);
+    const mod = require('@kingstinct/react-native-healthkit');
+    // Le module peut exporter .default ou directement l'objet
+    HealthKit = mod?.default ?? mod;
+    if (!HealthKit || typeof HealthKit.requestAuthorization !== 'function') {
+      loadError = 'Module structure invalide';
+      HealthKit = null;
+    } else {
+      logger.info('[HealthKit] Module chargé avec succès');
+    }
+  } catch (error: any) {
+    loadError = error?.message ?? 'Erreur inconnue';
+    logger.warn('[HealthKit] Module non disponible:', loadError);
   }
 }
 
@@ -30,7 +44,7 @@ const MockHealthKit = {
   queryWorkoutSamples: async () => [],
   queryStatistics: async () => ({ sumQuantity: 0 }),
   saveQuantitySample: async () => true,
-  saveCategorySample: async () => true, // Pour l'écriture du sommeil
+  saveCategorySample: async () => true,
   saveWorkoutSample: async () => true,
 };
 
@@ -49,7 +63,8 @@ export const healthKitDiagnostic = {
   isMock: HealthKit === null,
   platform: Platform.OS,
   moduleLoaded: HealthKit !== null,
+  loadError,
   moduleError: HealthKit === null && !isExpoGo && Platform.OS === 'ios'
-    ? 'HealthKit module failed to load on iOS native build'
+    ? `HealthKit module failed to load: ${loadError}`
     : null,
 };

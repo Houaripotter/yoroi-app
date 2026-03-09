@@ -20,6 +20,20 @@ interface RoutePoint {
   speed?: number;
 }
 
+// Couleur selon la vitesse normalisée (0=lent → 1=rapide)
+function getSpeedColor(ratio: number): string {
+  if (ratio > 0.8) return '#22C55E'; // vert - très rapide
+  if (ratio > 0.6) return '#84CC16'; // vert-jaune
+  if (ratio > 0.4) return '#EAB308'; // jaune
+  if (ratio > 0.2) return '#F97316'; // orange
+  return '#EF4444';                   // rouge - lent
+}
+
+interface ColoredSegment {
+  coords: { latitude: number; longitude: number }[];
+  color: string;
+}
+
 interface BoundingBox {
   minLat: number;
   maxLat: number;
@@ -50,10 +64,10 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapType, setMapType] = useState<'hybrid' | 'standard'>('hybrid');
 
-  // Calculer la region initiale depuis les points ou la bounding box
-  const { region, coordinates, startPoint, endPoint, distanceKm } = useMemo(() => {
+  // Calculer la region initiale + segments colorés par vitesse
+  const { region, coloredSegments, startPoint, endPoint, distanceKm, hasSpeedData } = useMemo(() => {
     if (!routePoints || routePoints.length < 2) {
-      return { region: null, coordinates: [], startPoint: null, endPoint: null, distanceKm: 0 };
+      return { region: null, coloredSegments: [], startPoint: null, endPoint: null, distanceKm: 0, hasSpeedData: false };
     }
 
     const coords = routePoints.map(p => ({
@@ -87,6 +101,53 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
     const latDelta = (bbox.maxLat - bbox.minLat) * 1.3 || 0.01;
     const lonDelta = (bbox.maxLon - bbox.minLon) * 1.3 || 0.01;
 
+    // --- Segments colorés par vitesse ---
+    const speeds = routePoints.map(p => (p.speed != null && p.speed >= 0) ? p.speed : -1);
+    const validSpeeds = speeds.filter(s => s >= 0);
+    const speedDataAvailable = validSpeeds.length > routePoints.length * 0.5;
+
+    let segments: ColoredSegment[] = [];
+
+    if (speedDataAvailable) {
+      const minSpeed = Math.min(...validSpeeds);
+      const maxSpeed = Math.max(...validSpeeds);
+      const speedRange = maxSpeed - minSpeed || 1;
+
+      // Regrouper points adjacents de même couleur pour limiter le nombre de Polyline
+      let currentColor = '';
+      let currentCoords: { latitude: number; longitude: number }[] = [];
+
+      for (let i = 0; i < routePoints.length; i++) {
+        const speed = speeds[i] >= 0 ? speeds[i] : (i > 0 && speeds[i - 1] >= 0 ? speeds[i - 1] : minSpeed);
+        const ratio = (speed - minSpeed) / speedRange;
+        const color = getSpeedColor(ratio);
+        const pt = { latitude: routePoints[i].latitude, longitude: routePoints[i].longitude };
+
+        if (color !== currentColor) {
+          if (currentCoords.length >= 2) segments.push({ coords: currentCoords, color: currentColor });
+          // Inclure le dernier point pour continuité
+          currentCoords = currentCoords.length > 0
+            ? [currentCoords[currentCoords.length - 1], pt]
+            : [pt];
+          currentColor = color;
+        } else {
+          currentCoords.push(pt);
+        }
+      }
+      if (currentCoords.length >= 2) segments.push({ coords: currentCoords, color: currentColor });
+    } else {
+      // Pas de données vitesse → gradient temporel en 5 bandes (style Apple)
+      const n = routePoints.length;
+      const bandSize = Math.ceil(n / 5);
+      const colors = ['#22C55E', '#84CC16', '#EAB308', '#F97316', '#EF4444'];
+      for (let b = 0; b < 5; b++) {
+        const start = b * bandSize;
+        const end = Math.min(start + bandSize + 1, n); // +1 pour continuité
+        const slice = coords.slice(start, end);
+        if (slice.length >= 2) segments.push({ coords: slice, color: colors[b] });
+      }
+    }
+
     return {
       region: {
         latitude: (bbox.minLat + bbox.maxLat) / 2,
@@ -94,14 +155,15 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
         latitudeDelta: Math.max(latDelta, 0.005),
         longitudeDelta: Math.max(lonDelta, 0.005),
       },
-      coordinates: coords,
+      coloredSegments: segments,
       startPoint: coords[0],
       endPoint: coords[coords.length - 1],
       distanceKm: totalDist,
+      hasSpeedData: speedDataAvailable,
     };
   }, [routePoints, boundingBox]);
 
-  if (!region || coordinates.length < 2) return null;
+  if (!region || coloredSegments.length < 1) return null;
 
   const handleRecenter = () => {
     const ref = isFullscreen ? fullscreenMapRef : mapRef;
@@ -131,13 +193,16 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
       loadingEnabled
       mapPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}
     >
-      <Polyline
-        coordinates={coordinates}
-        strokeColor={strokeColor}
-        strokeWidth={fullscreen ? strokeWidth + 1 : strokeWidth}
-        lineCap="round"
-        lineJoin="round"
-      />
+      {coloredSegments.map((seg, i) => (
+        <Polyline
+          key={i}
+          coordinates={seg.coords}
+          strokeColor={seg.color}
+          strokeWidth={fullscreen ? strokeWidth + 1 : strokeWidth}
+          lineCap="round"
+          lineJoin="round"
+        />
+      ))}
       {startPoint && (
         <Marker coordinate={startPoint} anchor={{ x: 0.5, y: 0.5 }}>
           <View style={styles.markerStart}>
@@ -190,6 +255,14 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
             </Text>
           </View>
         )}
+
+        {/* Legende vitesse en bas a droite */}
+        <View style={styles.speedLegend}>
+          {(['#22C55E', '#EAB308', '#F97316', '#EF4444'] as const).map((c, i) => (
+            <View key={i} style={[styles.speedLegendDot, { backgroundColor: c }]} />
+          ))}
+          <Text style={styles.speedLegendLabel}>{hasSpeedData ? 'Allure' : 'Temps'}</Text>
+        </View>
       </View>
 
       {/* Modal plein ecran */}
@@ -238,6 +311,13 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
             {distanceKm > 0 && (
               <Text style={styles.legendDistance}>{distanceKm.toFixed(2)} km</Text>
             )}
+            {/* Gradient allure */}
+            <View style={styles.fullscreenSpeedLegend}>
+              {(['#22C55E', '#84CC16', '#EAB308', '#F97316', '#EF4444'] as const).map((c, i) => (
+                <View key={i} style={[styles.speedLegendBar, { backgroundColor: c }]} />
+              ))}
+            </View>
+            <Text style={styles.legendText}>{hasSpeedData ? 'Rapide → Lent' : 'Debut → Fin'}</Text>
           </View>
         </View>
       </Modal>
@@ -366,6 +446,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     letterSpacing: -0.3,
+  },
+  // Legende vitesse inline
+  speedLegend: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  speedLegendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  speedLegendLabel: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: '600',
+    marginLeft: 2,
+  },
+  // Legende vitesse fullscreen
+  fullscreenSpeedLegend: {
+    flexDirection: 'row',
+    gap: 2,
+    alignItems: 'center',
+  },
+  speedLegendBar: {
+    width: 14,
+    height: 5,
+    borderRadius: 2,
   },
 });
 

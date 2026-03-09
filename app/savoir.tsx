@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -9,8 +9,10 @@ import {
   LayoutAnimation,
   UIManager,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { safeOpenURL } from '@/lib/security/validators';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '@/lib/ThemeContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
@@ -26,6 +28,8 @@ import {
   Activity,
   ChevronDown,
   ChevronUp,
+  CheckCircle2,
+  Circle,
   Scale,
   Wheat,
   Clock,
@@ -729,85 +733,33 @@ const getCategoryColor = (category: string) => {
   switch (category) {
     case 'Cardio':
     case 'Endurance':
-      return '#FF6B9D'; // Light Red/Pink
+      return '#EC4899'; // Pink vif
     case 'Nutrition':
-      return '#90EE90'; // Light Green
+      return '#10B981'; // Vert émeraude
     case 'Récupération':
-      return '#87CEEB'; // Light Blue (Sleep)
+      return '#3B82F6'; // Bleu
     case 'Métabolisme':
-      return '#DDA0DD'; // Light Purple
+      return '#8B5CF6'; // Violet
     case 'Activité':
-      return '#FFD700'; // Light Gold/Yellow
+      return '#F59E0B'; // Amber
     case 'Force':
-      return '#FF4500'; // Orange Red
+      return '#EF4444'; // Rouge
     case 'Supplémentation':
-      return '#32CD32'; // Lime Green
+      return '#22C55E'; // Vert clair
     case 'Performance':
-      return '#FF1493'; // Deep Pink
+      return '#F97316'; // Orange
     case 'Mobilité':
-      return '#00CED1'; // Dark Turquoise
+      return '#06B6D4'; // Cyan
     case 'Mental':
-      return '#8B5CF6'; // Purple
+      return '#A855F7'; // Violet clair (différent de Métabolisme)
     default:
-      return '#D3D3D3'; // Light Gray
+      return '#6B7280'; // Gris neutre
   }
 };
 
 const getCategoryHeaderColor = (category: string, isDark: boolean) => {
-  // En mode sombre, on utilise des versions plus foncées/transparentes
-  if (isDark) {
-    switch (category) {
-      case 'Cardio':
-      case 'Endurance':
-        return '#FF6B9D20'; // Pink with opacity
-      case 'Nutrition':
-        return '#90EE9020'; // Green with opacity
-      case 'Récupération':
-        return '#87CEEB20'; // Blue with opacity
-      case 'Métabolisme':
-        return '#DDA0DD20'; // Purple with opacity
-      case 'Activité':
-        return '#FFD70020'; // Yellow with opacity
-      case 'Force':
-        return '#FF450020'; // Orange with opacity
-      case 'Supplémentation':
-        return '#32CD3220'; // Lime with opacity
-      case 'Performance':
-        return '#FF149320'; // Pink with opacity
-      case 'Mobilité':
-        return '#00CED120'; // Turquoise with opacity
-      case 'Mental':
-        return '#8B5CF620'; // Purple with opacity
-      default:
-        return '#FFFFFF10'; // Gray with opacity
-    }
-  }
-  // Mode clair - couleurs originales
-  switch (category) {
-    case 'Cardio':
-    case 'Endurance':
-      return '#FFE4E1'; // Light Red/Pink background
-    case 'Nutrition':
-      return '#E8F5E9'; // Light Green background
-    case 'Récupération':
-      return '#E3F2FD'; // Light Blue background
-    case 'Métabolisme':
-      return '#F3E5F5'; // Light Purple background
-    case 'Activité':
-      return '#FFF9C4'; // Light Yellow background
-    case 'Force':
-      return '#FFE4CC'; // Light Orange background
-    case 'Supplémentation':
-      return '#E5FFE5'; // Light Lime Green background
-    case 'Performance':
-      return '#FFE4F2'; // Light Pink background
-    case 'Mobilité':
-      return '#E0F7FA'; // Light Turquoise background
-    case 'Mental':
-      return '#EDE9FE'; // Light Purple background
-    default:
-      return '#F5F5F5'; // Light Gray background
-  }
+  const color = getCategoryColor(category);
+  return isDark ? `${color}28` : `${color}18`;
 };
 
 const getDifficultyColor = (difficulty: 'Débutant' | 'Intermédiaire' | 'Avancé') => {
@@ -821,6 +773,10 @@ const getDifficultyColor = (difficulty: 'Débutant' | 'Intermédiaire' | 'Avanc�
   }
 };
 
+const SAVOIR_READ_ARTICLES_KEY = '@yoroi_savoir_read_articles';
+const SAVOIR_READ_PROTOCOLS_KEY = '@yoroi_savoir_read_protocols';
+const AUTO_READ_DELAY_MS = 8000; // 8 secondes
+
 type TabType = 'ARTICLES' | 'PROTOCOLES';
 
 export default function SavoirScreen() {
@@ -829,6 +785,70 @@ export default function SavoirScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('ARTICLES');
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [expandedProtocols, setExpandedProtocols] = useState<Set<string>>(new Set());
+  const [readArticles, setReadArticles] = useState<Set<string>>(new Set());
+  const [readProtocols, setReadProtocols] = useState<Set<string>>(new Set());
+  const readTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  // Charger les articles/protocoles lus depuis AsyncStorage
+  useEffect(() => {
+    Promise.all([
+      AsyncStorage.getItem(SAVOIR_READ_ARTICLES_KEY),
+      AsyncStorage.getItem(SAVOIR_READ_PROTOCOLS_KEY),
+    ]).then(([articles, protocols]) => {
+      if (articles) setReadArticles(new Set(JSON.parse(articles)));
+      if (protocols) setReadProtocols(new Set(JSON.parse(protocols)));
+    });
+    // Nettoyer les timers au démontage
+    return () => {
+      Object.values(readTimers.current).forEach(clearTimeout);
+    };
+  }, []);
+
+  // Nettoyer les timers auto-read quand on quitte l'écran
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        Object.values(readTimers.current).forEach(clearTimeout);
+        readTimers.current = {};
+      };
+    }, [])
+  );
+
+  const markArticleRead = useCallback((id: string) => {
+    setReadArticles(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      AsyncStorage.setItem(SAVOIR_READ_ARTICLES_KEY, JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
+  const markProtocolRead = useCallback((id: string) => {
+    setReadProtocols(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      AsyncStorage.setItem(SAVOIR_READ_PROTOCOLS_KEY, JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
+  const toggleReadArticle = useCallback((id: string) => {
+    setReadArticles(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      AsyncStorage.setItem(SAVOIR_READ_ARTICLES_KEY, JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
+  const toggleReadProtocol = useCallback((id: string) => {
+    setReadProtocols(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      AsyncStorage.setItem(SAVOIR_READ_PROTOCOLS_KEY, JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
 
   const toggleCard = (cardId: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -836,8 +856,20 @@ export default function SavoirScreen() {
       const newSet = new Set(prev);
       if (newSet.has(cardId)) {
         newSet.delete(cardId);
+        // Annuler le timer si on referme avant 8s
+        if (readTimers.current[cardId]) {
+          clearTimeout(readTimers.current[cardId]);
+          delete readTimers.current[cardId];
+        }
       } else {
         newSet.add(cardId);
+        // Démarrer le timer auto-read si pas encore lu
+        if (!readArticles.has(cardId)) {
+          readTimers.current[cardId] = setTimeout(() => {
+            markArticleRead(cardId);
+            delete readTimers.current[cardId];
+          }, AUTO_READ_DELAY_MS);
+        }
       }
       return newSet;
     });
@@ -849,8 +881,20 @@ export default function SavoirScreen() {
       const newSet = new Set(prev);
       if (newSet.has(protocolId)) {
         newSet.delete(protocolId);
+        // Annuler le timer si on referme avant 8s
+        if (readTimers.current[protocolId]) {
+          clearTimeout(readTimers.current[protocolId]);
+          delete readTimers.current[protocolId];
+        }
       } else {
         newSet.add(protocolId);
+        // Démarrer le timer auto-read si pas encore lu
+        if (!readProtocols.has(protocolId)) {
+          readTimers.current[protocolId] = setTimeout(() => {
+            markProtocolRead(protocolId);
+            delete readTimers.current[protocolId];
+          }, AUTO_READ_DELAY_MS);
+        }
       }
       return newSet;
     });
@@ -910,52 +954,92 @@ export default function SavoirScreen() {
         <>
         {/* BASE DE DONNÉES SCIENTIFIQUE */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionHeader, { color: themeColors.textMuted }]}>
-            {scienceData.length} ARTICLES SCIENTIFIQUES
-          </Text>
-          
+          <View style={[styles.sectionHeaderRow, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+            <Text style={[styles.sectionHeaderCount, { color: themeColors.accent }]}>
+              {scienceData.length}
+            </Text>
+            <Text style={[styles.sectionHeaderLabel, { color: themeColors.textMuted }]}>
+              ARTICLES SCIENTIFIQUES
+            </Text>
+            {readArticles.size > 0 && (
+              <View style={[styles.readBadgeHeader, { backgroundColor: '#10B98120' }]}>
+                <CheckCircle2 size={12} color="#10B981" strokeWidth={2.5} />
+                <Text style={[styles.readBadgeHeaderText, { color: '#10B981' }]}>
+                  {readArticles.size}/{scienceData.length} lus
+                </Text>
+              </View>
+            )}
+          </View>
+
           {/* Scientific Cards - Accordion */}
           <View style={styles.cardsContainer}>
           {scienceData.map((card) => {
             const categoryColor = getCategoryColor(card.category);
             const isExpanded = expandedCards.has(card.id);
-
             const headerBgColor = getCategoryHeaderColor(card.category, isDark);
 
+            const isRead = readArticles.has(card.id);
             return (
-              <View key={card.id} style={[styles.card, { backgroundColor: themeColors.card }]}>
+              <View key={card.id} style={[styles.card, {
+                backgroundColor: isDark ? themeColors.backgroundCard : '#FFFFFF',
+                borderLeftColor: isRead ? '#10B981' : categoryColor,
+                shadowColor: categoryColor,
+                opacity: isRead ? 0.85 : 1,
+              }]}>
                 {/* Header with Colored Background */}
-                <TouchableOpacity
-                  style={[styles.cardHeaderButton, { backgroundColor: headerBgColor }]}
-                  onPress={() => toggleCard(card.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.cardHeader}>
-                    <View style={[styles.cardIconContainer, { backgroundColor: themeColors.background }]}>
-                      {getIcon(card.icon, 24, categoryColor)}
+                <View style={[styles.cardHeaderButton, { backgroundColor: headerBgColor }]}>
+                  <TouchableOpacity
+                    style={styles.cardHeaderMain}
+                    onPress={() => toggleCard(card.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.cardHeader}>
+                      <View style={[styles.cardIconContainer, { backgroundColor: `${categoryColor}25` }]}>
+                        {getIcon(card.icon, 22, categoryColor)}
+                      </View>
+                      <View style={styles.cardHeaderText}>
+                        <Text style={[styles.cardCategory, { color: categoryColor }]}>
+                          {card.category}
+                        </Text>
+                        <Text style={[styles.cardTitle, { color: themeColors.textPrimary }]}>
+                          {card.title}
+                        </Text>
+                      </View>
                     </View>
-                    <View style={styles.cardHeaderText}>
-                      <Text style={[styles.cardCategory, { color: categoryColor }]}>
-                        {card.category}
-                      </Text>
-                      <Text style={[styles.cardTitle, { color: themeColors.textPrimary }]}>
-                        {card.title}
-                      </Text>
-                    </View>
+                  </TouchableOpacity>
+                  <View style={styles.cardHeaderActions}>
+                    <TouchableOpacity
+                      onPress={() => toggleReadArticle(card.id)}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      activeOpacity={0.7}
+                    >
+                      {isRead ? (
+                        <CheckCircle2 size={20} color="#10B981" strokeWidth={2.5} />
+                      ) : (
+                        <Circle size={20} color={isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)'} strokeWidth={2} />
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => toggleCard(card.id)} activeOpacity={0.7}>
+                      {isExpanded ? (
+                        <ChevronUp size={20} color={categoryColor} strokeWidth={2.5} />
+                      ) : (
+                        <ChevronDown size={20} color={categoryColor} strokeWidth={2.5} />
+                      )}
+                    </TouchableOpacity>
                   </View>
-                  {isExpanded ? (
-                    <ChevronUp size={20} color={categoryColor} strokeWidth={2.5} />
-                  ) : (
-                    <ChevronDown size={20} color={categoryColor} strokeWidth={2.5} />
-                  )}
-                </TouchableOpacity>
+                </View>
 
                 {/* Expanded Content */}
                 {isExpanded && (
-                  <View style={[styles.expandedContent, { backgroundColor: themeColors.card }]}>
+                  <View style={[styles.expandedContent, { backgroundColor: isDark ? themeColors.backgroundCard : '#FFFFFF' }]}>
+                    {/* Séparateur coloré */}
+                    <View style={[styles.expandedDivider, { backgroundColor: categoryColor }]} />
+
                     {/* C'est quoi ? */}
                     <View style={styles.sectionFirst}>
-                      <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>C'est quoi ?</Text>
+                      <View style={[styles.sectionLabelRow, { backgroundColor: `${categoryColor}15` }]}>
+                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>C'est quoi ?</Text>
+                      </View>
                       <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
                         {card.content.what}
                       </Text>
@@ -963,7 +1047,9 @@ export default function SavoirScreen() {
 
                     {/* Pourquoi ça marche ? */}
                     <View style={styles.section}>
-                      <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Pourquoi ça marche ?</Text>
+                      <View style={[styles.sectionLabelRow, { backgroundColor: `${categoryColor}15` }]}>
+                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Pourquoi ça marche ?</Text>
+                      </View>
                       <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
                         {card.content.why}
                       </Text>
@@ -971,7 +1057,9 @@ export default function SavoirScreen() {
 
                     {/* Comment l'appliquer ? */}
                     <View style={styles.section}>
-                      <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Comment l'appliquer ?</Text>
+                      <View style={[styles.sectionLabelRow, { backgroundColor: `${categoryColor}15` }]}>
+                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Comment l'appliquer ?</Text>
+                      </View>
                       <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
                         {card.content.how}
                       </Text>
@@ -979,7 +1067,7 @@ export default function SavoirScreen() {
 
                     {/* LA SOURCE */}
                     <TouchableOpacity
-                      style={[styles.sourceButton, { backgroundColor: `${categoryColor}15` }]}
+                      style={[styles.sourceButton, { backgroundColor: `${categoryColor}18`, borderColor: `${categoryColor}40` }]}
                       onPress={() => handleSourcePress(card.content.sourceUrl)}
                       activeOpacity={0.7}
                     >
@@ -1000,9 +1088,22 @@ export default function SavoirScreen() {
         <>
         {/* SECTION: PROTOCOLES D'ENTRAÎNEMENT */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionHeader, { color: themeColors.textMuted }]}>
-            {protocolData.length} PROTOCOLES D'ENTRAÎNEMENT
-          </Text>
+          <View style={[styles.sectionHeaderRow, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+            <Text style={[styles.sectionHeaderCount, { color: themeColors.accent }]}>
+              {protocolData.length}
+            </Text>
+            <Text style={[styles.sectionHeaderLabel, { color: themeColors.textMuted }]}>
+              PROTOCOLES D'ENTRAÎNEMENT
+            </Text>
+            {readProtocols.size > 0 && (
+              <View style={[styles.readBadgeHeader, { backgroundColor: '#10B98120' }]}>
+                <CheckCircle2 size={12} color="#10B981" strokeWidth={2.5} />
+                <Text style={[styles.readBadgeHeaderText, { color: '#10B981' }]}>
+                  {readProtocols.size}/{protocolData.length} lus
+                </Text>
+              </View>
+            )}
+          </View>
 
           {/* Protocol Cards - Accordion */}
           <View style={styles.cardsContainer}>
@@ -1012,47 +1113,74 @@ export default function SavoirScreen() {
             const headerBgColor = getCategoryHeaderColor(protocol.category, isDark);
             const difficultyColor = getDifficultyColor(protocol.difficulty);
 
+            const isRead = readProtocols.has(protocol.id);
             return (
-              <View key={protocol.id} style={[styles.card, { backgroundColor: themeColors.card }]}>
+              <View key={protocol.id} style={[styles.card, {
+                backgroundColor: isDark ? themeColors.backgroundCard : '#FFFFFF',
+                borderLeftColor: isRead ? '#10B981' : categoryColor,
+                shadowColor: categoryColor,
+                opacity: isRead ? 0.85 : 1,
+              }]}>
                 {/* Header with Colored Background */}
-                <TouchableOpacity
-                  style={[styles.cardHeaderButton, { backgroundColor: headerBgColor }]}
-                  onPress={() => toggleProtocol(protocol.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.cardHeader}>
-                    <View style={[styles.cardIconContainer, { backgroundColor: themeColors.background }]}>
-                      {getIcon(protocol.icon, 24, categoryColor)}
-                    </View>
-                    <View style={styles.cardHeaderText}>
-                      <View style={styles.protocolHeaderRow}>
-                        <Text style={[styles.cardCategory, { color: categoryColor }]}>
-                          {protocol.category}
-                        </Text>
-                        <View style={[styles.difficultyBadge, { backgroundColor: `${difficultyColor}20` }]}>
-                          <Text style={[styles.difficultyText, { color: difficultyColor }]}>
-                            {protocol.difficulty}
-                          </Text>
-                        </View>
+                <View style={[styles.cardHeaderButton, { backgroundColor: headerBgColor }]}>
+                  <TouchableOpacity
+                    style={styles.cardHeaderMain}
+                    onPress={() => toggleProtocol(protocol.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.cardHeader}>
+                      <View style={[styles.cardIconContainer, { backgroundColor: `${categoryColor}25` }]}>
+                        {getIcon(protocol.icon, 22, categoryColor)}
                       </View>
-                      <Text style={[styles.cardTitle, { color: themeColors.textPrimary }]}>
-                        {protocol.title}
-                      </Text>
+                      <View style={styles.cardHeaderText}>
+                        <View style={styles.protocolHeaderRow}>
+                          <Text style={[styles.cardCategory, { color: categoryColor }]}>
+                            {protocol.category}
+                          </Text>
+                          <View style={[styles.difficultyBadge, { backgroundColor: `${difficultyColor}25`, borderColor: `${difficultyColor}40` }]}>
+                            <Text style={[styles.difficultyText, { color: difficultyColor }]}>
+                              {protocol.difficulty}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={[styles.cardTitle, { color: themeColors.textPrimary }]}>
+                          {protocol.title}
+                        </Text>
+                      </View>
                     </View>
+                  </TouchableOpacity>
+                  <View style={styles.cardHeaderActions}>
+                    <TouchableOpacity
+                      onPress={() => toggleReadProtocol(protocol.id)}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      activeOpacity={0.7}
+                    >
+                      {isRead ? (
+                        <CheckCircle2 size={20} color="#10B981" strokeWidth={2.5} />
+                      ) : (
+                        <Circle size={20} color={isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)'} strokeWidth={2} />
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => toggleProtocol(protocol.id)} activeOpacity={0.7}>
+                      {isExpanded ? (
+                        <ChevronUp size={20} color={categoryColor} strokeWidth={2.5} />
+                      ) : (
+                        <ChevronDown size={20} color={categoryColor} strokeWidth={2.5} />
+                      )}
+                    </TouchableOpacity>
                   </View>
-                  {isExpanded ? (
-                    <ChevronUp size={20} color={categoryColor} strokeWidth={2.5} />
-                  ) : (
-                    <ChevronDown size={20} color={categoryColor} strokeWidth={2.5} />
-                  )}
-                </TouchableOpacity>
+                </View>
 
                 {/* Expanded Content */}
                 {isExpanded && (
-                  <View style={[styles.expandedContent, { backgroundColor: themeColors.card }]}>
+                  <View style={[styles.expandedContent, { backgroundColor: isDark ? themeColors.backgroundCard : '#FFFFFF' }]}>
+                    <View style={[styles.expandedDivider, { backgroundColor: categoryColor }]} />
+
                     {/* Objectif */}
                     <View style={styles.sectionFirst}>
-                      <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Objectif</Text>
+                      <View style={[styles.sectionLabelRow, { backgroundColor: `${categoryColor}15` }]}>
+                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Objectif</Text>
+                      </View>
                       <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
                         {protocol.content.objective}
                       </Text>
@@ -1060,7 +1188,9 @@ export default function SavoirScreen() {
 
                     {/* Durée */}
                     <View style={styles.section}>
-                      <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Durée</Text>
+                      <View style={[styles.sectionLabelRow, { backgroundColor: `${categoryColor}15` }]}>
+                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Durée</Text>
+                      </View>
                       <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
                         {protocol.content.duration}
                       </Text>
@@ -1068,9 +1198,11 @@ export default function SavoirScreen() {
 
                     {/* Protocole */}
                     <View style={styles.section}>
-                      <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Protocole</Text>
+                      <View style={[styles.sectionLabelRow, { backgroundColor: `${categoryColor}15` }]}>
+                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Protocole</Text>
+                      </View>
                       {protocol.content.protocol.map((step, index) => (
-                        <View key={index} style={styles.protocolStep}>
+                        <View key={index} style={[styles.protocolStep, { borderLeftColor: `${categoryColor}50` }]}>
                           <Text style={[styles.stepNumber, { color: categoryColor }]}>
                             {index + 1}.
                           </Text>
@@ -1083,14 +1215,16 @@ export default function SavoirScreen() {
 
                     {/* Fréquence */}
                     <View style={styles.section}>
-                      <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Fréquence</Text>
+                      <View style={[styles.sectionLabelRow, { backgroundColor: `${categoryColor}15` }]}>
+                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Fréquence</Text>
+                      </View>
                       <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
                         {protocol.content.frequency}
                       </Text>
                     </View>
 
                     {/* Notes */}
-                    <View style={[styles.notesBox, { backgroundColor: `${categoryColor}10`, borderColor: `${categoryColor}30` }]}>
+                    <View style={[styles.notesBox, { backgroundColor: `${categoryColor}12`, borderColor: `${categoryColor}35`, borderLeftColor: categoryColor }]}>
                       <Text style={[styles.notesText, { color: themeColors.textSecondary }]}>
                         {protocol.content.notes}
                       </Text>
@@ -1105,9 +1239,11 @@ export default function SavoirScreen() {
 
         {/* PROTOCOLES AVEC CHECKBOXES */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionHeader, { color: themeColors.textMuted }]}>
-            PROTOCOLES AVEC CHECKLIST
-          </Text>
+          <View style={[styles.sectionHeaderRow, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+            <Text style={[styles.sectionHeaderLabel, { color: themeColors.textMuted }]}>
+              PROTOCOLES AVEC CHECKLIST
+            </Text>
+          </View>
           {LAB_PROTOCOLS.map((protocol) => (
             <ProtocolChecklist
               key={protocol.id}
@@ -1122,9 +1258,11 @@ export default function SavoirScreen() {
 
         {/* ÉCHELLE D'HYDRATATION */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionHeader, { color: themeColors.textMuted }]}>
-            INDICATEUR D'HYDRATATION
-          </Text>
+          <View style={[styles.sectionHeaderRow, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+            <Text style={[styles.sectionHeaderLabel, { color: themeColors.textMuted }]}>
+              INDICATEUR D'HYDRATATION
+            </Text>
+          </View>
           <HydrationScale />
         </View>
         </>
@@ -1189,33 +1327,74 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 0.2,
   },
+  // Section header redesigné
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  sectionHeaderCount: {
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  sectionHeaderLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+  },
   cardsContainer: {
     gap: 12,
   },
   card: {
-    borderRadius: 28,
+    borderRadius: 18,
     padding: 0,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    marginBottom: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
     shadowRadius: 12,
-    elevation: 3,
+    elevation: 4,
     overflow: 'hidden',
+    borderLeftWidth: 4,
   },
   cardHeaderButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    padding: 16,
+    gap: 10,
+  },
+  cardHeaderMain: {
+    flex: 1,
+  },
+  cardHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 16,
     flex: 1,
+  },
+  readBadgeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+    marginLeft: 'auto',
+  },
+  readBadgeHeaderText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   cardIconContainer: {
     width: 48,
@@ -1246,27 +1425,40 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     lineHeight: 24,
   },
+  expandedDivider: {
+    height: 2,
+    marginHorizontal: 20,
+    marginBottom: 18,
+    borderRadius: 1,
+    opacity: 0.6,
+  },
   expandedContent: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingHorizontal: 16,
+    paddingTop: 0,
     paddingBottom: 20,
-    // backgroundColor sera appliqué inline avec themeColors.card
+  },
+  sectionLabelRow: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    marginBottom: 10,
+    alignSelf: 'flex-start',
   },
   sectionFirst: {
     marginTop: 0,
   },
   section: {
-    marginTop: 24,
+    marginTop: 18,
   },
   cardSectionHeader: {
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-    marginBottom: 12,
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   sectionBody: {
-    fontSize: 15,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 22,
     letterSpacing: 0.1,
     fontWeight: '500',
   },
@@ -1274,10 +1466,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderRadius: 12,
-    marginTop: 20,
+    marginTop: 18,
+    borderWidth: 1,
   },
   sourceButtonText: {
     fontSize: 13,
@@ -1381,6 +1574,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
+    borderWidth: 1,
   },
   difficultyText: {
     fontSize: 9,
@@ -1390,8 +1584,11 @@ const styles = StyleSheet.create({
   },
   protocolStep: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: 10,
     gap: 10,
+    paddingLeft: 10,
+    borderLeftWidth: 2,
+    paddingVertical: 2,
   },
   stepNumber: {
     fontSize: 15,
@@ -1408,14 +1605,16 @@ const styles = StyleSheet.create({
   },
   notesBox: {
     borderRadius: 12,
-    padding: 16,
-    marginTop: 20,
+    padding: 14,
+    marginTop: 16,
     borderWidth: 1,
+    borderLeftWidth: 3,
   },
   notesText: {
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 13,
+    lineHeight: 20,
     letterSpacing: 0.1,
     fontWeight: '600',
+    fontStyle: 'italic',
   },
 });

@@ -82,7 +82,7 @@ export const BMRCalculator = React.memo(function BMRCalculator({ visible, onClos
               <Text style={[styles.resultValue, { color: colors.gold }]}>{Math.round(bmr)}</Text>
               <Text style={[styles.resultUnit, { color: colors.gold }]}>kcal/jour</Text>
               <Text style={[styles.resultExplain, { color: colors.textMuted }]}>
-                C'est l'energie que ton corps depense au repos, juste pour fonctionner (respirer, digerer, etc.)
+                C'est l'énergie que ton corps depense au repos, juste pour fonctionner (respirer, digerer, etc.)
               </Text>
             </View>
           )}

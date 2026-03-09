@@ -15,7 +15,7 @@ export default function StatsScreen() {
   const { colors, screenBackground } = useTheme();
   const params = useLocalSearchParams<{ tab?: string }>();
 
-  const validTabs: StatsTab[] = ['dashboard', 'corps', 'training', 'sante'];
+  const validTabs: StatsTab[] = ['dashboard', 'corps', 'training', 'santé'];
 
   const validatedTab: StatsTab | undefined = React.useMemo(() => {
     if (params?.tab && validTabs.includes(params.tab as StatsTab)) {

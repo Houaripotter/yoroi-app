@@ -80,7 +80,7 @@ export default function WatchPreviewScreen() {
   const pages: WatchPage[] = ['dashboard', 'weight', 'hydration', 'sleep', 'settings'];
   const pageIndex = pages.indexOf(currentPage);
 
-  // Donnees reelles
+  // Données reelles
   const [weight, setWeight] = useState(0);
   const [targetWeight, setTargetWeight] = useState(0);
   const [hydration, setHydration] = useState(0);
@@ -202,7 +202,7 @@ export default function WatchPreviewScreen() {
       {/* Health section label */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 4 }}>
         <Heart size={8} color="#EC4899" fill="#EC4899" />
-        <Text style={{ fontSize: 7, fontWeight: '800', color: '#8E8E93', letterSpacing: 1 }}>SANTE</Text>
+        <Text style={{ fontSize: 7, fontWeight: '800', color: '#8E8E93', letterSpacing: 1 }}>SANTÉ</Text>
       </View>
 
       {/* Health grid 2x2 */}
@@ -424,7 +424,7 @@ export default function WatchPreviewScreen() {
           ) : (
             <AlertTriangle size={12} color="#EF4444" />
           )}
-          <Text style={watchStyles.sleepMetricLabel}>Qualite</Text>
+          <Text style={watchStyles.sleepMetricLabel}>Qualité</Text>
           <Text style={[watchStyles.sleepMetricValue, { color: qualityPct >= 80 ? GREEN : qualityPct >= 60 ? '#F59E0B' : '#EF4444' }]}>
             {qualityPct > 0 ? `${qualityPct}%` : '--'}
           </Text>

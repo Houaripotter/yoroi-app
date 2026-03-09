@@ -68,7 +68,7 @@ export const TDEECalculator = React.memo(function TDEECalculator({ visible, onCl
             );
           })}
 
-          <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Niveau d'activite</Text>
+          <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Niveau d'activité</Text>
           {(Object.keys(ACTIVITY_MULTIPLIERS) as ActivityLevel[]).map((level) => (
             <TouchableOpacity key={level} style={[styles.activityItem, { backgroundColor: activityLevel === level ? colors.goldMuted : colors.cardHover }]} onPress={() => setActivityLevel(level)}>
               <Text style={{ color: activityLevel === level ? colors.gold : colors.textPrimary, fontWeight: '600' }}>{ACTIVITY_MULTIPLIERS[level].label}</Text>

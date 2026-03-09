@@ -52,7 +52,7 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({
 
   const loadHealthData = async () => {
     try {
-      // Mode screenshot: donnees de demo
+      // Mode screenshot: données de demo
       if (screenshotMode) {
         const generatedData: DayData[] = [];
         for (let i = days - 1; i >= 0; i--) {
@@ -69,19 +69,19 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({
         return;
       }
 
-      // Mode reel: utiliser les donnees de sleep et HRV passees en props
+      // Mode reel: utiliser les données de sleep et HRV passees en props
       if (sleepHistory.length === 0 && hrvHistory.length === 0) {
         setData([]);
         return;
       }
 
-      // Creer un map date -> donnees pour les 7 derniers jours
+      // Creer un map date -> données pour les 7 derniers jours
       const last7Days: string[] = [];
       for (let i = days - 1; i >= 0; i--) {
         last7Days.push(format(subDays(new Date(), i), 'yyyy-MM-dd'));
       }
 
-      // Indexer les donnees par date
+      // Indexer les données par date
       const sleepByDate: Record<string, number> = {};
       sleepHistory.forEach(s => { sleepByDate[s.date] = s.value; });
 
@@ -108,7 +108,7 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({
 
       setData(chartData);
     } catch (error) {
-      logger.error('Erreur chargement donnees sante:', error);
+      logger.error('Erreur chargement données santé:', error);
     }
   };
 

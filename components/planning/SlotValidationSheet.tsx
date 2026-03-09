@@ -152,7 +152,7 @@ export const SlotValidationSheet: React.FC<SlotValidationSheetProps> = ({
                 <Text style={[styles.injuryWarningText, { color: colors.textSecondary }]}>
                   {relevantInjuries[0].fit_for_duty === 'unfit'
                     ? 'Repos recommande'
-                    : 'Entrainement adapte recommande'}
+                    : 'Entraînement adapte recommande'}
                 </Text>
               </View>
             </View>
@@ -202,10 +202,10 @@ export const SlotValidationSheet: React.FC<SlotValidationSheetProps> = ({
                 <Check size={22} color={colors.success} />
                 <View style={styles.actionContent}>
                   <Text style={[styles.actionTitle, { color: colors.success }]}>
-                    Valider la seance
+                    Valider la séance
                   </Text>
                   <Text style={[styles.actionSubtitle, { color: colors.textMuted }]}>
-                    Enregistrer un entrainement
+                    Enregistrer un entraînement
                   </Text>
                 </View>
               </TouchableOpacity>

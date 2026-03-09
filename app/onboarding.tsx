@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,9 +15,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Audio } from 'expo-av';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { router } from 'expo-router';
+import { PhotoCropModal } from '@/components/PhotoCropModal';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
   launchImageLibraryAsync,
   launchCameraAsync,
@@ -43,19 +44,21 @@ import {
   ChevronLeft,
   Check,
   Info,
+  X,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { saveProfile } from '@/lib/database';
 import { saveUserSettings } from '@/lib/storage';
+import { healthConnect } from '@/lib/healthConnect';
 import { setUserMode, setUserSport, setUserWeightCategory } from '@/lib/fighterModeService';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 import { validators } from '@/lib/security/validators';
 import { logger } from '@/lib/security/logger';
-import { getSportIcon, getSportName, getSportColor } from '@/lib/sports';
+import { SPORTS, getSportColor } from '@/lib/sports';
 import { getWeightCategories } from '@/lib/fighterMode';
-import type { Sport as FighterSport, UserMode, WeightCategory } from '@/lib/fighterMode';
+import type { UserMode, WeightCategory } from '@/lib/fighterMode';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
@@ -99,20 +102,20 @@ const FEATURES: Feature[] = [
       'Dashboard personnalise avec tes metriques cles',
       'Suivi du poids et composition corporelle',
       'Graphiques d\'evolution (semaine, mois, annee)',
-      'Signes vitaux : frequence cardiaque, sommeil, pas',
-      'Analyse detaillee de tes seances',
+      'Signes vitaux : fréquence cardiaque, sommeil, pas',
+      'Analyse detaillee de tes séances',
     ],
   },
   {
     icon: CalendarDays,
     title: 'Planning & Carnet',
-    desc: 'Organise tes entrainements',
+    desc: 'Organise tes entraînements',
     color: '#FF9500',
     details: [
-      'Calendrier de tes entrainements',
-      'Journal de training detaille par seance',
+      'Calendrier de tes entraînements',
+      'Journal de training detaille par séance',
       'Historique complet de toutes tes sessions',
-      'Suivi de la charge d\'entrainement',
+      'Suivi de la charge d\'entraînement',
     ],
   },
   {
@@ -133,20 +136,20 @@ const FEATURES: Feature[] = [
     desc: 'Tout pour t\'entrainer',
     color: '#AF52DE',
     details: [
-      'Charge d\'entrainement et recuperation',
-      'Import/Export CSV de tes donnees',
+      'Charge d\'entraînement et récupération',
+      'Import/Export CSV de tes données',
       'Systeme de gamification et badges',
       'Tutoriels et guides integres',
     ],
   },
   {
     icon: HeartHandshake,
-    title: 'Sante Connectee',
-    desc: 'Synchronise tes donnees',
+    title: 'Santé Connectee',
+    desc: 'Synchronise tes données',
     color: '#30D158',
     details: [
-      'Integration Apple Sante / Health Connect',
-      'Donnees automatiques (FC, sommeil, pas)',
+      'Integration Apple Santé / Health Connect',
+      'Données automatiques (FC, sommeil, pas)',
       'Suivi du sommeil detaille',
       'Apple Watch compatible',
     ],
@@ -154,72 +157,73 @@ const FEATURES: Feature[] = [
   {
     icon: Shield,
     title: '100% Prive',
-    desc: 'Tes donnees restent chez toi',
+    desc: 'Tes données restent chez toi',
     color: C.gold,
     details: [
       'Aucun cloud - tout reste sur ton telephone',
       'Aucun tracking ni publicite',
-      'Export securise de tes donnees',
+      'Export securise de tes données',
       'Pas de compte requis',
     ],
   },
 ];
 
 // ============================================
-// SECTIONS DE SPORTS (avec icones)
+// CATÉGORIES DE SPORTS (même ordre que add-training)
 // ============================================
-interface SportSection {
-  title: string;
-  icon: string;
-  sports: FighterSport[];
-}
+const SPORT_CATEGORIES = ['cardio', 'fitness', 'combat_grappling', 'combat_striking', 'danse', 'collectif', 'raquettes', 'aquatique', 'glisse', 'nature', 'precision', 'autre'] as const;
 
-const SPORT_SECTIONS: SportSection[] = [
-  {
-    title: 'Sports de Combat',
-    icon: 'sword-cross',
-    sports: ['jjb', 'mma', 'boxe', 'muay_thai', 'judo', 'karate', 'taekwondo', 'krav_maga'],
-  },
-  {
-    title: 'Fitness & Force',
-    icon: 'dumbbell',
-    sports: ['musculation', 'crossfit', 'hyrox', 'hiit', 'calisthenics'],
-  },
-  {
-    title: 'Endurance',
-    icon: 'run',
-    sports: ['running', 'cyclisme', 'natation', 'triathlon', 'trail'],
-  },
-  {
-    title: 'Sports Collectifs',
-    icon: 'soccer',
-    sports: ['football', 'basket', 'handball', 'rugby', 'volleyball'],
-  },
-  {
-    title: 'Raquettes',
-    icon: 'tennis',
-    sports: ['tennis', 'padel', 'badminton', 'squash', 'ping_pong'],
-  },
-  {
-    title: 'Bien-etre',
-    icon: 'yoga',
-    sports: ['yoga', 'pilates', 'danse'],
-  },
-  {
-    title: 'Glisse & Plein Air',
-    icon: 'ski',
-    sports: ['surf', 'ski', 'snowboard', 'skate', 'escalade'],
-  },
-  {
-    title: 'Autres',
-    icon: 'trophy',
-    sports: ['golf', 'equitation', 'randonnee', 'marche_nordique', 'autre'],
-  },
-];
+const SPORT_CATEGORY_LABELS: Record<string, string> = {
+  cardio: 'Cardio',
+  fitness: 'Musculation & Fitness',
+  combat_grappling: 'Combat (Grappling)',
+  combat_striking: 'Combat (Pieds-Poings)',
+  danse: 'Danse',
+  collectif: 'Sports Collectifs',
+  raquettes: 'Raquettes',
+  glisse: 'Sports de Glisse',
+  nature: 'Sports Nature',
+  aquatique: 'Sports Aquatiques',
+  precision: 'Précision & Adresse',
+  autre: 'Autres',
+};
+
+const SPORT_CATEGORY_ICONS: Record<string, string> = {
+  cardio: 'run-fast',
+  fitness: 'dumbbell',
+  combat_grappling: 'kabaddi',
+  combat_striking: 'boxing-glove',
+  danse: 'dance-ballroom',
+  collectif: 'soccer',
+  raquettes: 'tennis',
+  glisse: 'snowboard',
+  nature: 'hiking',
+  aquatique: 'swim',
+  precision: 'bow-arrow',
+  autre: 'dots-horizontal',
+};
+
+const SPORT_CATEGORY_COLORS: Record<string, string> = {
+  cardio: '#10B981',
+  fitness: '#8B5CF6',
+  combat_grappling: '#3B82F6',
+  combat_striking: '#EF4444',
+  danse: '#EC4899',
+  collectif: '#F59E0B',
+  raquettes: '#06B6D4',
+  glisse: '#0EA5E9',
+  nature: '#22C55E',
+  aquatique: '#0284C7',
+  precision: '#B45309',
+  autre: '#6B7280',
+};
 
 export default function OnboardingScreen() {
   const { showPopup, PopupComponent } = useCustomPopup();
   const { isProcessing, executeOnce } = usePreventDoubleClick({ delay: 1000 });
+  const params = useLocalSearchParams<{ preview?: string; page?: string }>();
+  const isPreview = params.preview === 'true';
+  const insets = useSafeAreaInsets();
 
   // Musique d'ambiance
   const musicRef = useRef<Audio.Sound | null>(null);
@@ -235,7 +239,7 @@ export default function OnboardingScreen() {
           playThroughEarpieceAndroid: false,
         });
         const { sound } = await Audio.Sound.createAsync(
-          require('../assets/sounds/ombording.mp3'),
+          require('../assets/sounds/intro.mp3'),
           { shouldPlay: true, isLooping: true, volume: 0.3 }
         );
         if (mounted) { musicRef.current = sound; } else { await sound.unloadAsync(); }
@@ -267,14 +271,19 @@ export default function OnboardingScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [goal, setGoal] = useState<'lose' | 'maintain' | 'gain' | null>(null);
   const [mode, setMode] = useState<UserMode | null>(null);
-  const [selectedSport, setSelectedSport] = useState<FighterSport | null>(null);
+  const [selectedSport, setSelectedSport] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [cropModalUri, setCropModalUri] = useState<string | null>(null);
 
-  // Sport sections expanded
-  const [expandedSections, setExpandedSections] = useState<number[]>([]);
+  // Catégories de sports ouvertes
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
-  const weightCategories: WeightCategory[] = selectedSport ? getWeightCategories(selectedSport) : [];
+  // Page 4 - Apple Santé
+  const [isConnectingHealth, setIsConnectingHealth] = useState(false);
+  const [healthConnected, setHealthConnected] = useState(false);
+
+  const weightCategories: WeightCategory[] = selectedSport ? getWeightCategories(selectedSport as any) : [];
   const sportHasCategories = weightCategories.length > 0 && selectedSport !== 'autre';
 
   const goToPage = (page: number) => {
@@ -292,8 +301,8 @@ export default function OnboardingScreen() {
     return age;
   };
 
-  const canComplete = (): boolean => {
-    if (!userName.trim() || userName.trim().length < 2) return false;
+  const canComplete = useMemo((): boolean => {
+    if (!validators.username(userName.trim()).valid) return false;
     if (!gender) return false;
     if (!heightCm || !validators.height(parseFloat(heightCm)).valid) return false;
     if (!targetWeight || !validators.weight(parseFloat(targetWeight)).valid) return false;
@@ -303,20 +312,20 @@ export default function OnboardingScreen() {
     if (!mode) return false;
     if (mode === 'competiteur' && !selectedSport) return false;
     return true;
-  };
+  }, [userName, gender, heightCm, targetWeight, birthDate, goal, mode, selectedSport]);
 
   const pickFromGallery = async () => {
     const { status } = await requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') { showPopup('Permission requise', 'Autorise l\'acces a ta galerie.'); return; }
-    const result = await launchImageLibraryAsync({ quality: 0.7, allowsEditing: true, aspect: [1, 1] });
-    if (!result.canceled && result.assets[0]) setProfilePhoto(result.assets[0].uri);
+    const result = await launchImageLibraryAsync({ quality: 0.9, allowsEditing: false });
+    if (!result.canceled && result.assets[0]) setCropModalUri(result.assets[0].uri);
   };
 
   const takePhoto = async () => {
     const { status } = await requestCameraPermissionsAsync();
     if (status !== 'granted') { showPopup('Permission requise', 'Autorise l\'acces a ta camera.'); return; }
-    const result = await launchCameraAsync({ quality: 0.7, allowsEditing: true, aspect: [1, 1] });
-    if (!result.canceled && result.assets[0]) setProfilePhoto(result.assets[0].uri);
+    const result = await launchCameraAsync({ quality: 0.9, allowsEditing: false });
+    if (!result.canceled && result.assets[0]) setCropModalUri(result.assets[0].uri);
   };
 
   const handleDateChange = (_: any, d?: Date) => {
@@ -335,11 +344,11 @@ export default function OnboardingScreen() {
     }
   };
 
-  const toggleSportSection = (index: number) => {
-    setExpandedSections((prev) =>
-      prev.includes(index)
-        ? prev.filter((i) => i !== index)
-        : [...prev, index]
+  const toggleSportCategory = (category: string) => {
+    setExpandedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
     );
   };
 
@@ -366,17 +375,17 @@ export default function OnboardingScreen() {
         height: parseFloat(heightCm), targetWeight: parseFloat(targetWeight), goal: goal!, onboardingCompleted: true,
       });
       await setUserMode(mode!);
-      if (mode === 'competiteur' && selectedSport) await setUserSport(selectedSport);
+      if (mode === 'competiteur' && selectedSport) await setUserSport(selectedSport as any);
       if (selectedCategory) await setUserWeightCategory(selectedCategory);
       await AsyncStorage.setItem(LEGAL_ACCEPTED_KEY, 'true');
-      await AsyncStorage.setItem('yoroi_onboarding_done', 'true');
+      if (!isPreview) await AsyncStorage.setItem('yoroi_onboarding_done', 'true');
       logger.info('Onboarding completed', { step: 'all' });
-      if (musicRef.current) {
-        await musicRef.current.stopAsync().catch(() => {});
-        await musicRef.current.unloadAsync().catch(() => {});
-        musicRef.current = null;
+      // Aller vers la page Apple Santé (page 3) avant d'entrer dans l'app
+      if (isPreview) {
+        router.replace('/(tabs)');
+      } else {
+        goToPage(3);
       }
-      router.replace('/(tabs)');
     } catch (error) {
       logger.error('Onboarding save failed', error);
       showPopup('Erreur', 'Une erreur est survenue. Reessaie.');
@@ -680,7 +689,7 @@ export default function OnboardingScreen() {
             <TouchableOpacity
               key={m.id}
               style={[s.modeCard, mode === m.id && { borderColor: m.color, backgroundColor: m.color + '12' }]}
-              onPress={() => { setMode(m.id); if (m.id !== mode) { setSelectedSport(null); setSelectedCategory(null); setExpandedSections([]); } }}
+              onPress={() => { setMode(m.id); if (m.id !== mode) { setSelectedSport(null); setSelectedCategory(null); setExpandedCategories([]); } }}
             >
               <m.Icon size={28} color={mode === m.id ? m.color : C.textSub} />
               <Text style={[s.modeLabel, mode === m.id && { color: m.color }]}>{m.label}</Text>
@@ -697,29 +706,34 @@ export default function OnboardingScreen() {
             <Text style={s.label}>Ton sport principal</Text>
             <Text style={s.labelHint}>Selectionne une categorie puis ton sport</Text>
 
-            {SPORT_SECTIONS.map((section, sIndex) => {
-              const isExpanded = expandedSections.includes(sIndex);
-              const hasSelectedSport = section.sports.includes(selectedSport as FighterSport);
+            {SPORT_CATEGORIES.map((category) => {
+              const sportsInCategory = SPORTS.filter((s2) => s2.category === category);
+              if (sportsInCategory.length === 0) return null;
+              const isExpanded = expandedCategories.includes(category);
+              const hasSelectedSport = sportsInCategory.some((s2) => s2.id === selectedSport);
+              const catColor = SPORT_CATEGORY_COLORS[category];
+              const catIcon = SPORT_CATEGORY_ICONS[category];
+              const catLabel = SPORT_CATEGORY_LABELS[category];
 
               return (
-                <View key={sIndex} style={s.sectionWrap}>
+                <View key={category} style={s.sectionWrap}>
                   {/* Header de section */}
                   <TouchableOpacity
                     style={[
                       s.sectionHeader,
                       hasSelectedSport && { borderColor: C.gold, borderWidth: 1.5, backgroundColor: C.goldLight },
                     ]}
-                    onPress={() => toggleSportSection(sIndex)}
+                    onPress={() => toggleSportCategory(category)}
                     activeOpacity={0.7}
                   >
                     <View style={s.sectionHeaderLeft}>
                       <MaterialCommunityIcons
-                        name={section.icon as any}
+                        name={catIcon as any}
                         size={20}
-                        color={hasSelectedSport ? C.gold : C.textSub}
+                        color={hasSelectedSport ? C.gold : catColor}
                       />
                       <Text style={[s.sectionTitle, hasSelectedSport && { color: C.gold }]}>
-                        {section.title}
+                        {catLabel}
                       </Text>
                       {hasSelectedSport && (
                         <View style={s.sectionBadge}>
@@ -735,26 +749,26 @@ export default function OnboardingScreen() {
                   {/* Sports de la section */}
                   {isExpanded && (
                     <View style={s.sectionContent}>
-                      {section.sports.map((sportId) => {
-                        const sel = selectedSport === sportId;
-                        const sc = getSportColor(sportId);
+                      {sportsInCategory.map((sport) => {
+                        const sel = selectedSport === sport.id;
+                        const sc = sport.color || getSportColor(sport.id);
                         return (
                           <TouchableOpacity
-                            key={sportId}
+                            key={sport.id}
                             style={[
                               s.sportCard,
                               sel && { borderColor: sc, backgroundColor: sc + '15' },
                             ]}
-                            onPress={() => { setSelectedSport(sportId); setSelectedCategory(null); }}
+                            onPress={() => { setSelectedSport(sport.id); setSelectedCategory(null); }}
                             activeOpacity={0.7}
                           >
                             <MaterialCommunityIcons
-                              name={getSportIcon(sportId) as any}
+                              name={sport.icon as any}
                               size={22}
                               color={sel ? sc : C.textSub}
                             />
                             <Text style={[s.sportCardText, sel && { color: sc, fontWeight: '700' }]}>
-                              {getSportName(sportId)}
+                              {sport.name}
                             </Text>
                             {sel && (
                               <View style={[s.sportCheck, { backgroundColor: sc }]}>
@@ -774,7 +788,7 @@ export default function OnboardingScreen() {
             {selectedSport && sportHasCategories && (
               <>
                 <Text style={[s.label, { marginTop: 20 }]}>
-                  Categorie de poids - {getSportName(selectedSport)}
+                  Categorie de poids - {SPORTS.find((s2) => s2.id === selectedSport)?.name ?? selectedSport}
                 </Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
                   <View style={s.catRow}>
@@ -804,7 +818,7 @@ export default function OnboardingScreen() {
               <View style={s.noCategories}>
                 <Info size={16} color={C.textMuted} />
                 <Text style={s.noCategoriesText}>
-                  {getSportName(selectedSport)} n'a pas de categories de poids officielles
+                  {SPORTS.find((s2) => s2.id === selectedSport)?.name ?? selectedSport} n'a pas de categories de poids officielles
                 </Text>
               </View>
             )}
@@ -817,15 +831,15 @@ export default function OnboardingScreen() {
       {/* Bouton fixe */}
       <View style={s.bottomBar}>
         <TouchableOpacity
-          style={[s.goldBtn, !canComplete() && s.disabledBtn]}
-          disabled={!canComplete() || isProcessing}
+          style={[s.goldBtn, !canComplete && s.disabledBtn]}
+          disabled={!canComplete || isProcessing}
           onPress={() => executeOnce(handleComplete)}
           activeOpacity={0.8}
         >
           {isProcessing ? (
             <ActivityIndicator color={C.white} />
           ) : (
-            <Text style={[s.goldBtnText, !canComplete() && s.disabledBtnText]}>Commencer l'aventure</Text>
+            <Text style={[s.goldBtnText, !canComplete && s.disabledBtnText]}>Commencer l'aventure</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -833,17 +847,152 @@ export default function OnboardingScreen() {
   );
 
   // =============================================
+  // PAGE 4 - Apple Santé / Health Connect
+  // =============================================
+
+  const finishOnboarding = async () => {
+    if (musicRef.current) {
+      await musicRef.current.stopAsync().catch(() => {});
+      await musicRef.current.unloadAsync().catch(() => {});
+      musicRef.current = null;
+    }
+    router.replace('/(tabs)');
+  };
+
+  const handleHealthConnect = async () => {
+    setIsConnectingHealth(true);
+    try {
+      await healthConnect.initialize();
+      const connected = await healthConnect.connect();
+      if (connected) {
+        await AsyncStorage.setItem('@yoroi_healthkit_asked', 'true');
+        await healthConnect.setupWorkoutObserver().catch(() => {});
+        setHealthConnected(true);
+        // Lancer l'import complet en arriere-plan sans bloquer la navigation
+        healthConnect.importFullHistory().catch(() => {});
+        setTimeout(() => finishOnboarding(), 1200);
+      } else {
+        showPopup(
+          'Permissions requises',
+          'Va dans Reglages iOS > Santé > Partage de données > YOROI pour autoriser l\'acces.',
+          [{ text: 'OK', style: 'primary' }]
+        );
+      }
+    } catch (e) {
+      logger.error('Health connect onboarding error', e);
+    } finally {
+      setIsConnectingHealth(false);
+    }
+  };
+
+  const renderPageHealth = () => (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 }}>
+      {/* Icone */}
+      <View style={[s.healthIconCircle, healthConnected && { backgroundColor: '#D1FAE5' }]}>
+        {healthConnected ? (
+          <Check size={48} color="#10B981" strokeWidth={3} />
+        ) : (
+          <Heart size={48} color={C.goldDark} strokeWidth={2} fill={C.goldLight} />
+        )}
+      </View>
+
+      {/* Titre */}
+      <Text style={s.healthTitle}>
+        {healthConnected ? 'Connecte !' : 'Connecte Apple\u00A0Sante'}
+      </Text>
+
+      {/* Sous-titre */}
+      <Text style={s.healthSubtitle}>
+        {healthConnected
+          ? 'Tes données de santé sont maintenant synchronisees avec YOROI.'
+          : 'YOROI lit tes données pour un suivi complet de ta forme physique.'}
+      </Text>
+
+      {/* Liste des données */}
+      {!healthConnected && (
+        <View style={s.healthDataList}>
+          {[
+            { icon: 'heart-pulse', label: 'Fréquence cardiaque & SpO2' },
+            { icon: 'shoe-print', label: 'Pas, distance & calories' },
+            { icon: 'moon-waning-crescent', label: 'Sommeil & récupération' },
+            { icon: 'scale-bathroom', label: 'Poids & composition corporelle' },
+            { icon: 'run', label: 'Séances & entraînements' },
+          ].map((item, i) => (
+            <View key={i} style={s.healthDataRow}>
+              <MaterialCommunityIcons name={item.icon as any} size={18} color={C.goldDark} />
+              <Text style={s.healthDataLabel}>{item.label}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Bouton principal */}
+      {!healthConnected && (
+        <TouchableOpacity
+          style={[s.goldBtn, { width: '100%', marginTop: 28 }]}
+          onPress={handleHealthConnect}
+          disabled={isConnectingHealth}
+          activeOpacity={0.8}
+        >
+          {isConnectingHealth ? (
+            <ActivityIndicator color={C.white} />
+          ) : (
+            <Text style={s.goldBtnText}>Connecter Apple Santé</Text>
+          )}
+        </TouchableOpacity>
+      )}
+
+      {/* Bouton passer */}
+      {!healthConnected && (
+        <TouchableOpacity
+          onPress={finishOnboarding}
+          style={{ marginTop: 18, padding: 8 }}
+          activeOpacity={0.6}
+        >
+          <Text style={s.healthSkip}>Passer pour l'instant</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Note confidentialite */}
+      {!healthConnected && (
+        <Text style={s.healthNote}>
+          Tes données restent privees et stockees uniquement sur ton appareil.
+        </Text>
+      )}
+    </View>
+  );
+
+  // =============================================
   return (
     <View style={s.root}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
       <SafeAreaView style={{ flex: 1 }}>
+        {/* Bouton fermer en mode preview — positionné sous la barre de statut */}
+        {isPreview && (
+          <TouchableOpacity
+            style={[s.previewCloseBtn, { top: insets.top + 10 }]}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+          >
+            <View style={s.previewCloseBtnInner}>
+              <X size={20} color={C.text} strokeWidth={2.5} />
+            </View>
+          </TouchableOpacity>
+        )}
         <Animated.View style={[{ flex: 1 }, { opacity: fadeAnim }]}>
           {currentPage === 0 && renderPage1()}
           {currentPage === 1 && renderPage2()}
           {currentPage === 2 && renderPage3()}
+          {currentPage === 3 && renderPageHealth()}
         </Animated.View>
       </SafeAreaView>
       <PopupComponent />
+      <PhotoCropModal
+        visible={!!cropModalUri}
+        uri={cropModalUri}
+        onConfirm={(croppedUri) => { setProfilePhoto(croppedUri); setCropModalUri(null); }}
+        onCancel={() => setCropModalUri(null)}
+      />
     </View>
   );
 }
@@ -853,6 +1002,84 @@ export default function OnboardingScreen() {
 // =============================================
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
+  previewCloseBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 16,
+    zIndex: 999,
+  },
+  previewCloseBtnInner: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // ========= PAGE 4 - Apple Santé =========
+  healthIconCircle: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    backgroundColor: C.goldLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    shadowColor: C.gold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  healthTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: C.text,
+    textAlign: 'center',
+    marginBottom: 10,
+    letterSpacing: -0.5,
+  },
+  healthSubtitle: {
+    fontSize: 14,
+    color: C.textSub,
+    textAlign: 'center',
+    lineHeight: 21,
+    marginBottom: 20,
+    paddingHorizontal: 8,
+  },
+  healthDataList: {
+    alignSelf: 'stretch',
+    backgroundColor: C.bgCard,
+    borderRadius: 14,
+    padding: 14,
+    gap: 10,
+  },
+  healthDataRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  healthDataLabel: {
+    fontSize: 13,
+    color: C.text,
+    fontWeight: '500',
+  },
+  healthSkip: {
+    fontSize: 13,
+    color: C.textMuted,
+    textDecorationLine: 'underline',
+    fontWeight: '500',
+  },
+  healthNote: {
+    marginTop: 20,
+    fontSize: 11,
+    color: C.textMuted,
+    textAlign: 'center',
+    lineHeight: 16,
+    fontStyle: 'italic',
+    paddingHorizontal: 16,
+  },
 
   // ========= PAGE 1 - Bienvenue =========
   p1Wrap: {

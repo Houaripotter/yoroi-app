@@ -2,8 +2,8 @@
 // YOROI - DETAIL NUIT DE SOMMEIL
 // ============================================
 // Affiche toutes les metriques d'une nuit :
-// Phases, efficacite, FC, respiratoire, temperature
-// Style Apple Health avec toutes les donnees
+// Phases, efficacité, FC, respiratoire, temperature
+// Style Apple Health avec toutes les données
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -144,7 +144,7 @@ export default function SleepDetailScreen() {
         return;
       }
 
-      // 2. Essayer les donnees de demo/screenshot depuis AsyncStorage
+      // 2. Essayer les données de demo/screenshot depuis AsyncStorage
       try {
         const sleepHistoryRaw = await AsyncStorage.getItem('@yoroi_sleep_history');
         if (sleepHistoryRaw) {
@@ -194,11 +194,18 @@ export default function SleepDetailScreen() {
       if (Array.isArray(hkHistory) && hkHistory.length > 0) {
         const match = hkHistory.find((s: any) => normalizeDate(s.date) === target) as any;
         if (match) {
+          const toLocalHHMM = (iso: string): string => {
+            if (!iso) return '';
+            try {
+              const d = new Date(iso);
+              return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+            } catch { return ''; }
+          };
           setEntry({
             id: `hk_${target}`,
             date: match.date,
-            bedTime: match.startTime || '',
-            wakeTime: match.endTime || '',
+            bedTime: toLocalHHMM(match.startTime),
+            wakeTime: toLocalHHMM(match.endTime),
             duration: match.total || match.duration || 0,
             quality: Math.min(5, Math.round(((match.total || 0) / 480) * 5)),
             phases: {
@@ -281,7 +288,7 @@ export default function SleepDetailScreen() {
   if (loading) {
     return (
       <ScreenWrapper>
-        <Header title={t('sleepDetail.title') || 'Detail Nuit'} showBack />
+        <Header title={t('sleepDetail.title') || 'Détail Nuit'} showBack />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={'#8B5CF6'} />
         </View>
@@ -292,10 +299,10 @@ export default function SleepDetailScreen() {
   if (!entry) {
     return (
       <ScreenWrapper>
-        <Header title={t('sleepDetail.title') || 'Detail Nuit'} showBack />
+        <Header title={t('sleepDetail.title') || 'Détail Nuit'} showBack />
         <View style={styles.loadingContainer}>
           <Text style={[styles.emptyText, { color: nightMuted }]}>
-            Aucune donnee pour cette nuit
+            Aucune donnée pour cette nuit
           </Text>
         </View>
       </ScreenWrapper>
@@ -328,7 +335,7 @@ export default function SleepDetailScreen() {
 
   return (
     <ScreenWrapper noPadding containerStyle={{ backgroundColor: nightBg }}>
-      <Header title={t('sleepDetail.title') || 'Detail Nuit'} showBack />
+      <Header title={t('sleepDetail.title') || 'Détail Nuit'} showBack />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -367,7 +374,7 @@ export default function SleepDetailScreen() {
           </View>
         </View>
 
-        {/* CARTE 2 - HORAIRES & DUREE */}
+        {/* CARTE 2 - HORAIRES & DURÉE */}
         <View style={[styles.card, { backgroundColor: nightCard }]}>
           <View style={styles.timesRow}>
             <TimeBlock
@@ -455,7 +462,7 @@ export default function SleepDetailScreen() {
               <PhaseItem
                 label="Eveils"
                 minutes={entry.phases.awake}
-                total={entry.duration}
+                total={entry.duration + (entry.phases.awake || 0)}
                 color={PHASE_COLORS.awake}
                 textColor={nightText}
                 mutedColor={nightMuted}
@@ -470,24 +477,28 @@ export default function SleepDetailScreen() {
             Valeurs
           </Text>
           <View style={[styles.valuesGrid, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
-            {/* Row 1: Duree sommeil + Temps au lit */}
+            {/* Row 1: Durée sommeil + Temps au lit */}
             <View style={styles.valuesRow}>
               <ValueCell
-                label="Duree de sommeil"
+                label="Sommeil effectif"
                 value={formatDurationShort(entry.duration)}
+                sub="Sans les éveils"
+                subColor="#7B8DB5"
                 color="#5856D6"
                 isDark={isDark}
               />
               <ValueCell
                 label="Temps au lit"
                 value={formatDurationShort(inBedMinutes)}
+                sub="Affiché par Apple Santé"
+                subColor="#7B8DB5"
                 color="#60A5FA"
                 isDark={isDark}
                 hasBorder
               />
             </View>
             <View style={[styles.valuesSep, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
-            {/* Row 2: Objectif + Efficacite */}
+            {/* Row 2: Objectif + Efficacité */}
             <View style={styles.valuesRow}>
               <ValueCell
                 label="Objectif sommeil"
@@ -498,7 +509,7 @@ export default function SleepDetailScreen() {
                 isDark={isDark}
               />
               <ValueCell
-                label="Efficacite"
+                label="Efficacité"
                 value={efficiency != null ? `${efficiency}%` : '-'}
                 color={efficiency != null ? getEfficiencyColor(efficiency) : nightMuted}
                 isDark={isDark}
@@ -538,7 +549,7 @@ export default function SleepDetailScreen() {
               {entry.sleepHeartRate && (
                 <VitalCardApple
                   icon={<Heart size={20} color="#EF4444" />}
-                  label="Frequence cardiaque"
+                  label="Fréquence cardiaque"
                   mainValue={`${entry.sleepHeartRate.avg}`}
                   mainUnit="bpm"
                   mainLabel="Moyenne"
@@ -555,7 +566,7 @@ export default function SleepDetailScreen() {
               {entry.respiratoryRate && (
                 <VitalCardApple
                   icon={<Wind size={20} color="#06B6D4" />}
-                  label="Frequence respiratoire"
+                  label="Fréquence respiratoire"
                   mainValue={typeof entry.respiratoryRate === 'object' && 'avg' in entry.respiratoryRate
                     ? `${(entry.respiratoryRate as any).avg}`
                     : `${entry.respiratoryRate.min}-${entry.respiratoryRate.max}`}

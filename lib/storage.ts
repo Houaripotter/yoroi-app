@@ -208,7 +208,7 @@ export interface Measurement {
   id: string;
   date: string;
   weight: number;
-  // Niveau d'energie (1-5)
+  // Niveau d'énergie (1-5)
   energyLevel?: number;
   // Composition en % (les deux formats pour compatibilite)
   body_fat?: number;
@@ -298,6 +298,13 @@ export interface UserSettings {
   citationStyle?: 'motivation' | 'discipline' | 'mental' | 'warrior' | 'perseverance' | 'all';
   // Avatar utilisateur
   avatarUri?: string;
+  // Zones cardiaques personnelles (seuils en BPM)
+  heartRateZones?: {
+    z1max: number; // seuil Z1/Z2
+    z2max: number; // seuil Z2/Z3
+    z3max: number; // seuil Z3/Z4
+    z4max: number; // seuil Z4/Z5
+  };
 }
 
 export interface UserBadge {
@@ -1224,7 +1231,7 @@ export const resetAllData = async (): Promise<boolean> => {
   }
 };
 
-// Reset des donnees uniquement (conserve les photos)
+// Reset des données uniquement (conserve les photos)
 export const resetDataOnly = async (): Promise<boolean> => {
   try {
     // Reset SQLite sans toucher a la table photos

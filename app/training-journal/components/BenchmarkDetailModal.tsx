@@ -21,7 +21,7 @@ import {
   Modal,
   SafeAreaView,
 } from 'react-native';
-import { ChevronLeft, X, Plus, Trash2 } from 'lucide-react-native';
+import { ChevronLeft, X, Plus, Trash2, Timer, MapPin, Zap, Flame, TrendingUp, Wind } from 'lucide-react-native';
 import {
   Benchmark,
   BenchmarkEntry,
@@ -29,6 +29,8 @@ import {
   getBenchmarkPR,
   formatValue,
   formatForceEntry,
+  formatTime,
+  calculatePace,
 } from '@/lib/carnetService';
 import { getRelativeDate } from '../utils/dateHelpers';
 import { renderIcon } from '../utils/iconMap';
@@ -61,6 +63,25 @@ export default React.memo(function BenchmarkDetailModal({
   const entries = [...benchmark.entries].sort((a, b) =>
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
+
+  const isRunningCategory = ['running', 'trail', 'hyrox', 'cardio'].includes(benchmark.category);
+  const isForceCategory = ['force', 'musculation', 'bodyweight', 'street_workout'].includes(benchmark.category);
+
+  const formatEntryMain = (entry: BenchmarkEntry): string => {
+    if (isForceCategory) return formatForceEntry(entry.value, benchmark.unit, entry.reps);
+    return formatValue(entry.value, benchmark.unit);
+  };
+
+  const getEntryPace = (entry: BenchmarkEntry): string | null => {
+    if (!isRunningCategory) return null;
+    if (entry.pace) return entry.pace;
+    const dist = entry.distance ?? (benchmark.unit === 'km' ? entry.value : null);
+    if (dist && dist > 0) {
+      const timeS = benchmark.unit === 'time' ? entry.value : (entry.duration ? entry.duration * 60 : null);
+      if (timeS) return calculatePace(timeS, dist);
+    }
+    return null;
+  };
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen">
@@ -101,8 +122,30 @@ export default React.memo(function BenchmarkDetailModal({
             <View style={styles.prCardInfo}>
               <Text style={[styles.prCardLabel, { color: colors.textMuted }]}>Record Personnel</Text>
               <Text style={[styles.prCardValue, { color: benchmark.color }]}>
-                {pr ? formatValue(pr.value, benchmark.unit) : '--'}
+                {pr ? formatEntryMain(pr) : '--'}
               </Text>
+              {pr && isRunningCategory && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                  {pr.distance && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                      <MapPin size={11} color={colors.textMuted} />
+                      <Text style={{ color: colors.textMuted, fontSize: 11 }}>{pr.distance} km</Text>
+                    </View>
+                  )}
+                  {getEntryPace(pr) && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                      <TrendingUp size={11} color={colors.textMuted} />
+                      <Text style={{ color: colors.textMuted, fontSize: 11 }}>{getEntryPace(pr)} /km</Text>
+                    </View>
+                  )}
+                  {pr.calories && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                      <Flame size={11} color={colors.textMuted} />
+                      <Text style={{ color: colors.textMuted, fontSize: 11 }}>{pr.calories} kcal</Text>
+                    </View>
+                  )}
+                </View>
+              )}
               {pr && (
                 <Text style={[styles.prCardDate, { color: colors.textMuted }]}>
                   {new Date(pr.date).toLocaleDateString(locale)}
@@ -179,8 +222,10 @@ export default React.memo(function BenchmarkDetailModal({
           <View style={[styles.historyCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
             <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>Historique</Text>
             {entries.map((entry: BenchmarkEntry, index: number) => {
-              const isForce = benchmark.category === 'force' && (benchmark.unit === 'kg' || benchmark.unit === 'lbs');
               const isPR = pr && entry.id === pr.id;
+              const pace = getEntryPace(entry);
+              const distKm = entry.distance ?? (benchmark.unit === 'km' ? entry.value : null);
+              const timeS = isRunningCategory && benchmark.unit === 'time' ? entry.value : null;
               return (
                 <View
                   key={entry.id}
@@ -194,16 +239,84 @@ export default React.memo(function BenchmarkDetailModal({
                     index < entries.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
                   ]}
                 >
-                  <View style={styles.historyEntryLeft}>
-                    <Text style={[styles.historyEntryValue, { color: colors.textPrimary }]}>
-                      {isForce
-                        ? formatForceEntry(entry.value, benchmark.unit, entry.reps)
-                        : formatValue(entry.value, benchmark.unit)}
-                    </Text>
-                    {isPR && (
-                      <View style={[styles.prBadge, { backgroundColor: benchmark.color }]}>
-                        <Text style={styles.prBadgeText}>PR</Text>
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.historyEntryLeft}>
+                      <Text style={[styles.historyEntryValue, { color: colors.textPrimary }]}>
+                        {formatEntryMain(entry)}
+                      </Text>
+                      {isPR && (
+                        <View style={[styles.prBadge, { backgroundColor: benchmark.color }]}>
+                          <Text style={styles.prBadgeText}>PR</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Running details — Strava style */}
+                    {isRunningCategory && (
+                      <View style={styles.runningDetails}>
+                        {distKm && (
+                          <View style={styles.runningMetric}>
+                            <MapPin size={11} color={benchmark.color} />
+                            <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{distKm} km</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>Distance</Text>
+                          </View>
+                        )}
+                        {timeS && (
+                          <View style={styles.runningMetric}>
+                            <Timer size={11} color={benchmark.color} />
+                            <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{formatTime(timeS)}</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>Chrono</Text>
+                          </View>
+                        )}
+                        {pace && (
+                          <View style={styles.runningMetric}>
+                            <TrendingUp size={11} color={benchmark.color} />
+                            <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{pace}</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>Allure/km</Text>
+                          </View>
+                        )}
+                        {entry.speed && (
+                          <View style={styles.runningMetric}>
+                            <Wind size={11} color={benchmark.color} />
+                            <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{entry.speed} km/h</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>Vitesse</Text>
+                          </View>
+                        )}
+                        {entry.calories && (
+                          <View style={styles.runningMetric}>
+                            <Flame size={11} color={benchmark.color} />
+                            <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{entry.calories}</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>kcal</Text>
+                          </View>
+                        )}
+                        {entry.incline && (
+                          <View style={styles.runningMetric}>
+                            <Zap size={11} color={benchmark.color} />
+                            <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{entry.incline}%</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>Pente</Text>
+                          </View>
+                        )}
+                        {entry.watts && (
+                          <View style={styles.runningMetric}>
+                            <Zap size={11} color={benchmark.color} />
+                            <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{entry.watts} W</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>Watts</Text>
+                          </View>
+                        )}
+                        {entry.rpe && (
+                          <View style={styles.runningMetric}>
+                            <Flame size={11} color="#F59E0B" />
+                            <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{entry.rpe}/10</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>RPE</Text>
+                          </View>
+                        )}
                       </View>
+                    )}
+
+                    {entry.notes && (
+                      <Text style={[styles.historyEntryNotes, { color: colors.textMuted }]} numberOfLines={2}>
+                        {entry.notes}
+                      </Text>
                     )}
                   </View>
                   <Text style={[styles.historyEntryDate, { color: colors.textMuted }]}>
@@ -344,7 +457,7 @@ const styles = StyleSheet.create({
   historyEntry: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
@@ -352,10 +465,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginBottom: 4,
   },
   historyEntryValue: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  historyEntryNotes: {
+    fontSize: 12,
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  runningDetails: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 6,
+    marginBottom: 2,
+  },
+  runningMetric: {
+    alignItems: 'center',
+    gap: 2,
+    minWidth: 56,
+  },
+  runningMetricValue: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  runningMetricLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   prBadge: {
     paddingHorizontal: 8,
@@ -368,6 +508,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   historyEntryDate: {
-    fontSize: 13,
+    fontSize: 12,
+    marginLeft: 8,
+    marginTop: 2,
+    flexShrink: 0,
   },
 });

@@ -1,10 +1,10 @@
 // ============================================
-// SANTE PAGE - Sommeil, Seances, Signes Vitaux, Pas
-// Navigation par sous-onglets, style Apple Sante
+// SANTÉ PAGE - Sommeil, Séances, Signes Vitaux, Pas
+// Navigation par sous-onglets, style Apple Santé
 // ============================================
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, RefreshControl, InteractionManager } from 'react-native';
+import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, RefreshControl, Linking, AppState, AppStateStatus, Alert, Platform } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { useScrollContext } from '@/lib/ScrollContext';
@@ -12,6 +12,7 @@ import { StatsHeader, Period } from '../StatsHeader';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { HealthKitConnectCard } from '../HealthKitConnectCard';
 import { healthConnect } from '@/lib/healthConnect';
+import { isHealthKitAvailable } from '@/lib/healthKit.wrapper';
 import { getTrainings, Training } from '@/lib/database';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Moon, Flame, Heart, Footprints } from 'lucide-react-native';
@@ -19,29 +20,44 @@ import { SLEEP_DURATION_RANGES, HRV_RANGES, RESTING_HEART_RATE_RANGES } from '@/
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { logger } from '@/lib/security/logger';
+import { safeOpenURL } from '@/lib/security/validators';
 
 import { SommeilTab } from './sante/SommeilTab';
 import { SeancesTab } from './sante/SeancesTab';
 import { SignesVitauxTab } from './sante/SignesVitauxTab';
 import { PasTab } from './sante/PasTab';
 
-type SanteTab = 'sommeil' | 'seances' | 'signes' | 'pas';
+export type SanteTab = 'sommeil' | 'seances' | 'signes' | 'pas';
 
 const TAB_CONFIG: { key: SanteTab; label: string; Icon: React.FC<any>; iconColor: string; activeColor: string }[] = [
   { key: 'sommeil', label: 'Sommeil', Icon: Moon, iconColor: '#6366F1', activeColor: '#6366F1' },
-  { key: 'seances', label: 'Seances', Icon: Flame, iconColor: '#F97316', activeColor: '#F97316' },
+  { key: 'seances', label: 'Séances', Icon: Flame, iconColor: '#F97316', activeColor: '#F97316' },
   { key: 'signes', label: 'Signes Vitaux', Icon: Heart, iconColor: '#EC4899', activeColor: '#EC4899' },
   { key: 'pas', label: 'Pas', Icon: Footprints, iconColor: '#10B981', activeColor: '#10B981' },
 ];
 
-export const VitalitePage: React.FC = React.memo(() => {
+interface VitalitePageProps {
+  forcedTab?: SanteTab;
+  onNavigateToTab?: (tab: string) => void;
+}
+
+export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab }) => {
   const { colors, isDark, screenBackground } = useTheme();
   const { t } = useI18n();
   const { handleScroll: onScrollContext } = useScrollContext();
   const dateLocale = fr;
 
-  const [activeTab, setActiveTab] = useState<SanteTab>('sommeil');
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('tout');
+  const [activeTab, setActiveTab] = useState<SanteTab>(forcedTab || 'sommeil');
+
+  const pageTitle = forcedTab === 'sommeil' ? 'Sommeil'
+    : forcedTab === 'pas' ? 'Pas'
+    : forcedTab === 'signes' ? 'Signes Vitaux'
+    : 'Santé';
+  const pageDesc = forcedTab === 'sommeil' ? 'Analyse de tes nuits'
+    : forcedTab === 'pas' ? 'Activité quotidienne'
+    : forcedTab === 'signes' ? 'FC, VRC, SpO2...'
+    : 'Synchronise avec ton app Santé';
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const [isHealthKitConnected, setIsHealthKitConnected] = useState(false);
   const [healthData, setHealthData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -93,16 +109,13 @@ export const VitalitePage: React.FC = React.memo(() => {
   const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const handle = InteractionManager.runAfterInteractions(() => {
-      checkHealthKitConnection();
-    });
-    return () => handle.cancel();
+    checkHealthKitConnection();
   }, []);
 
   // Compteur pour annuler les chargements perimés
   const loadIdRef = useRef(0);
 
-  // Quand on change d'onglet ou de periode, charger les donnees de cet onglet
+  // Quand on change d'onglet ou de periode, charger les données de cet onglet
   // Ne pas recharger si deja charge (performance)
   useEffect(() => {
     if (!loading && !loadedTabs.has(activeTab)) {
@@ -114,7 +127,7 @@ export const VitalitePage: React.FC = React.memo(() => {
     }
   }, [activeTab, selectedPeriod]);
 
-  // Invalider les tabs chargees ET vider les donnees quand la periode change
+  // Invalider les tabs chargees ET vider les données quand la periode change
   useEffect(() => {
     setLoadedTabs(new Set());
     setVitalHistory({ sleep: [], heartRate: [], hrv: [], steps: [], calories: [], distance: [], exerciseMinutes: [], standHours: [], spo2: [], respiratoryRate: [] });
@@ -125,34 +138,67 @@ export const VitalitePage: React.FC = React.memo(() => {
 
   const checkHealthKitConnection = async () => {
     try {
-      const status = healthConnect.getSyncStatus();
-      if (status.isConnected) {
+      const syncStatus = healthConnect.getSyncStatus();
+      let isConnected = syncStatus.isConnected;
+
+      const { failureReason } = syncStatus;
+      const isDefinitiveFailure =
+        failureReason === 'MODULE_NOT_LOADED' ||
+        (failureReason === 'DEVICE_NOT_SUPPORTED' && !isHealthKitAvailable);
+      const shouldRetry =
+        !isConnected &&
+        !isDefinitiveFailure &&
+        isHealthKitAvailable;
+
+      if (shouldRetry) {
+        try {
+          logger.info('[Santé] Tentative reconnexion silencieuse...');
+          const success = await healthConnect.connect();
+          if (success) {
+            isConnected = true;
+            logger.info('[Santé] Reconnexion silencieuse réussie');
+          }
+        } catch (reconnectErr) {
+          logger.warn('[Santé] Reconnexion silencieuse échouée:', reconnectErr);
+        }
+      }
+
+      if (isConnected) {
         // Sync HealthKit trainings (non-destructif)
         try {
           const synced = await AsyncStorage.getItem('@yoroi_trainings_cleaned_v4');
-          if (!synced) {
+          const existingTrainings = await getTrainings();
+          if (!synced || existingTrainings.length === 0) {
+            if (existingTrainings.length === 0) {
+              await AsyncStorage.removeItem('@yoroi_imported_workouts');
+            }
             try {
               await healthConnect.syncAll();
-              logger.info('[Sante] Sync HealthKit termine');
+              logger.info('[Santé] Sync HealthKit termine');
             } catch (syncErr) {
-              logger.warn('[Sante] syncAll echoue:', syncErr);
+              logger.warn('[Santé] syncAll echoue:', syncErr);
             }
-            await AsyncStorage.setItem('@yoroi_trainings_cleaned_v4', 'true');
+            const afterSync = await getTrainings();
+            if (afterSync.length === 0) {
+              await healthConnect.disconnect();
+              await AsyncStorage.removeItem('@yoroi_imported_workouts');
+            } else {
+              await AsyncStorage.setItem('@yoroi_trainings_cleaned_v4', 'true');
+            }
           }
         } catch (cleanupErr) {
-          logger.warn('[Sante] Sync error:', cleanupErr);
+          logger.warn('[Santé] Sync error:', cleanupErr);
         }
-        // Marquer comme connecte et charger les donnees
+        // Marquer comme connecte et charger les données en parallèle
         setIsHealthKitConnected(true);
-        // loadHealthData gere son propre setLoading(true/false)
-        await loadHealthData();
+        // Lancer loadHealthData et loadTabData en parallèle (pas besoin d'attendre l'un pour l'autre)
+        loadHealthData();
+        loadTabData(activeTab);
       } else {
         // Pas connecte, on arrete le loading
         setLoading(false);
-        // Charger les seances locales meme sans HealthKit
-        if (activeTab === 'seances') {
-          loadTabData('seances');
-        }
+        // Charger les séances locales meme sans HealthKit
+        loadTabData('seances');
       }
     } catch (error) {
       logger.error('Error checking HealthKit:', error);
@@ -160,16 +206,16 @@ export const VitalitePage: React.FC = React.memo(() => {
     }
   };
 
-  // Phase 1: Charger les donnees de base (rapide) - affichage instantane
+  // Phase 1: Charger les données de base (rapide) - affichage instantane
   const loadHealthData = async () => {
     setLoading(true);
     try {
-      // Timeout de 8s pour les donnees de base (doivent etre rapides)
+      // Timeout de 5s pour les données de base (doivent etre rapides)
       const timeoutPromise = new Promise<PromiseSettledResult<any>[]>((resolve) =>
         setTimeout(() => {
-          logger.warn('[Sante] Timeout sur loadHealthData (8s)');
+          logger.warn('[Santé] Timeout sur loadHealthData (5s)');
           resolve(Array(10).fill({ status: 'rejected', reason: 'timeout' }));
-        }, 8000)
+        }, 5000)
       );
 
       const results = await Promise.race([
@@ -207,8 +253,6 @@ export const VitalitePage: React.FC = React.memo(() => {
       logger.error('Error loading base health data:', error);
     } finally {
       setLoading(false);
-      // Charger l'onglet actif apres les donnees de base
-      loadTabData(activeTab);
     }
   };
 
@@ -217,18 +261,18 @@ export const VitalitePage: React.FC = React.memo(() => {
     return Promise.race([
       promise,
       new Promise<T>((resolve) => setTimeout(() => {
-        logger.warn(`[Sante] Timeout apres ${ms}ms`);
+        logger.warn(`[Santé] Timeout apres ${ms}ms`);
         resolve(fallback);
       }, ms)),
     ]);
   };
 
-  // Phase 2: Charger les donnees de l'onglet actif seulement (lazy)
+  // Phase 2: Charger les données de l'onglet actif seulement (lazy)
   const loadTabData = async (tab: SanteTab) => {
-    const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, '1a': 365, '2a': 730, 'tout': 1825 };
+    const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, '1a': 365, '2a': 730, 'tout': 3650 };
     const days = daysMap[selectedPeriod] || 30;
     // Timeout plus long pour les grandes periodes
-    const timeoutMs = days > 180 ? 15000 : 10000;
+    const timeoutMs = days > 180 ? 10000 : 6000;
     const currentLoadId = ++loadIdRef.current;
 
     setTabLoading(true);
@@ -277,7 +321,8 @@ export const VitalitePage: React.FC = React.memo(() => {
         }
 
         case 'seances': {
-          const trainingData = await getTrainings(days);
+          // Quand periode = 'tout', pas de limite (tout l'historique)
+          const trainingData = selectedPeriod === 'tout' ? await getTrainings() : await getTrainings(days);
           setTrainings(Array.isArray(trainingData) ? trainingData : []);
           break;
         }
@@ -352,7 +397,7 @@ export const VitalitePage: React.FC = React.memo(() => {
         setLoadedTabs(prev => new Set(prev).add(tab));
       }
     } catch (error) {
-      logger.warn(`[Sante] Error loading ${tab} data:`, error);
+      logger.warn(`[Santé] Error loading ${tab} data:`, error);
     } finally {
       if (currentLoadId === loadIdRef.current) {
         setTabLoading(false);
@@ -364,10 +409,42 @@ export const VitalitePage: React.FC = React.memo(() => {
     setRefreshing(true);
     try {
       setLoadedTabs(new Set());
+      // Si déjà connecté : forcer un syncAll pour importer les nouvelles séances
+      // (Garmin, Apple Watch, Fitbit, Polar, Suunto, Samsung...) depuis la dernière connexion
+      if (isHealthKitConnected) {
+        try {
+          await healthConnect.syncAll();
+        } catch (syncErr) {
+          logger.warn('[Refresh] syncAll échoué:', syncErr);
+        }
+      }
       await checkHealthKitConnection();
     } finally {
       setRefreshing(false);
     }
+  }, [isHealthKitConnected]);
+
+  // Listener AppState : quand l'app revient au premier plan (après Réglages), re-tenter la connexion
+  const retryAfterSettingsRef = useRef(false);
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async (nextState: AppStateStatus) => {
+      if (nextState === 'active' && retryAfterSettingsRef.current) {
+        retryAfterSettingsRef.current = false;
+        setConnecting(true);
+        try {
+          const success = await healthConnect.connect();
+          if (success) {
+            setIsHealthKitConnected(true);
+            await loadHealthData();
+          }
+        } catch (err) {
+          logger.warn('[Santé] Re-tentative après Réglages échouée:', err);
+        } finally {
+          setConnecting(false);
+        }
+      }
+    });
+    return () => subscription.remove();
   }, []);
 
   const handleConnectHealthKit = async () => {
@@ -376,7 +453,77 @@ export const VitalitePage: React.FC = React.memo(() => {
       const success = await healthConnect.connect();
       if (success) {
         setIsHealthKitConnected(true);
+        setLoadedTabs(new Set()); // Forcer rechargement de tous les onglets
+        // Importer les séances HealthKit après connexion (reset fingerprints pour tout importer)
+        await AsyncStorage.removeItem('@yoroi_imported_workouts');
+        try {
+          await healthConnect.syncAll();
+          logger.info('[Santé] syncAll apres connexion termine');
+        } catch (syncErr) {
+          logger.warn('[Santé] syncAll apres connexion echoue:', syncErr);
+        }
+        await AsyncStorage.setItem('@yoroi_trainings_cleaned_v4', 'true');
         await loadHealthData();
+      } else {
+        const { failureReason } = healthConnect.getSyncStatus();
+        if (failureReason === 'HEALTH_CONNECT_NOT_INSTALLED') {
+          // Android : Health Connect pas installé
+          Alert.alert(
+            'Health Connect requis',
+            'L\'app Health Connect de Google doit être installée pour synchroniser tes données. Elle est gratuite sur le Play Store.',
+            [
+              { text: 'Annuler', style: 'cancel' },
+              {
+                text: 'Installer',
+                onPress: () => safeOpenURL('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata'),
+              },
+            ]
+          );
+        } else if (failureReason === 'MODULE_NOT_LOADED') {
+          Alert.alert(
+            'Build natif requis',
+            'Apple Santé nécessite un build natif de l\'app (pas Expo Go). Lance l\'app via Xcode ou un build de production.',
+            [{ text: 'OK' }]
+          );
+        } else if (failureReason === 'DEVICE_NOT_SUPPORTED') {
+          const msg = Platform.OS === 'android'
+            ? 'Health Connect n\'est pas disponible sur cet appareil (Android 9+ requis).'
+            : 'Apple Santé n\'est pas disponible sur cet appareil. Assure-toi d\'utiliser un iPhone (pas un simulateur).';
+          Alert.alert('Non disponible', msg, [{ text: 'OK' }]);
+        } else {
+          // USER_DENIED ou UNKNOWN
+          if (Platform.OS === 'android') {
+            Alert.alert(
+              'Activer les permissions',
+              'Va dans Réglages > Applis > Yoroi > Permissions, ou ouvre Health Connect et autorise Yoroi à lire tes données.',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'Ouvrir Réglages',
+                  onPress: () => {
+                    retryAfterSettingsRef.current = true;
+                    Linking.openSettings();
+                  },
+                },
+              ]
+            );
+          } else {
+            Alert.alert(
+              'Activer les permissions',
+              'Va dans Réglages > Santé > Partage des données > Yoroi et active les données souhaitées (Activité, Sommeil, Fréquence cardiaque...)',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'Ouvrir Réglages',
+                  onPress: () => {
+                    retryAfterSettingsRef.current = true;
+                    Linking.openSettings();
+                  },
+                },
+              ]
+            );
+          }
+        }
       }
     } catch (error) {
       logger.error('Error connecting HealthKit:', error);
@@ -431,8 +578,8 @@ export const VitalitePage: React.FC = React.memo(() => {
     return (
       <View style={[styles.container, { backgroundColor: screenBackground }]}>
         <StatsHeader
-          title="Sante"
-          description="Synchronise avec ton app Sante"
+          title={pageTitle}
+          description={pageDesc}
           selectedPeriod={selectedPeriod}
           onPeriodChange={setSelectedPeriod}
         />
@@ -464,55 +611,57 @@ export const VitalitePage: React.FC = React.memo(() => {
       }
     >
       <StatsHeader
-        title="Sante"
-        description="Synchronise avec ton app Sante"
+        title={pageTitle}
+        description={pageDesc}
         selectedPeriod={selectedPeriod}
         onPeriodChange={setSelectedPeriod}
       />
 
-      {/* Barre de sous-onglets - style colore */}
-      <View style={styles.tabBarContainer}>
-        <View style={[styles.tabBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF' }]}>
-          {TAB_CONFIG.map(({ key, label, Icon, iconColor, activeColor }) => {
-            const isActive = activeTab === key;
-            return (
-              <TouchableOpacity
-                key={key}
-                style={[
-                  styles.tabPill,
-                  isActive
-                    ? {
-                        backgroundColor: activeColor,
-                        shadowColor: activeColor,
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 8,
-                        elevation: 4,
-                      }
-                    : {
-                        backgroundColor: isDark ? 'transparent' : 'transparent',
-                      },
-                ]}
-                onPress={() => setActiveTab(key)}
-                activeOpacity={0.7}
-              >
-                <Icon
-                  size={15}
-                  color={isActive ? '#FFFFFF' : (isDark ? colors.textMuted : iconColor)}
-                  strokeWidth={2.5}
-                />
-                <Text style={[
-                  styles.tabPillText,
-                  { color: isActive ? '#FFFFFF' : (isDark ? colors.textMuted : iconColor) },
-                  isActive && { fontWeight: '700' },
-                ]}>
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+      {/* Barre de sous-onglets - masquée si forcedTab */}
+      {!forcedTab && (
+        <View style={styles.tabBarContainer}>
+          <View style={[styles.tabBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF' }]}>
+            {TAB_CONFIG.map(({ key, label, Icon, iconColor, activeColor }) => {
+              const isActive = activeTab === key;
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={[
+                    styles.tabPill,
+                    isActive
+                      ? {
+                          backgroundColor: activeColor,
+                          shadowColor: activeColor,
+                          shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: 0.3,
+                          shadowRadius: 8,
+                          elevation: 4,
+                        }
+                      : {
+                          backgroundColor: isDark ? 'transparent' : 'transparent',
+                        },
+                  ]}
+                  onPress={() => setActiveTab(key)}
+                  activeOpacity={0.7}
+                >
+                  <Icon
+                    size={15}
+                    color={isActive ? '#FFFFFF' : (isDark ? colors.textMuted : iconColor)}
+                    strokeWidth={2.5}
+                  />
+                  <Text style={[
+                    styles.tabPillText,
+                    { color: isActive ? '#FFFFFF' : (isDark ? colors.textMuted : iconColor) },
+                    isActive && { fontWeight: '700' },
+                  ]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Contenu de l'onglet actif */}
       <View style={styles.tabContent}>

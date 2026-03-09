@@ -9,10 +9,10 @@ let soundCache: { [key: string]: Audio.Sound } = {};
 
 // Mapping statique des fichiers sons (requis par React Native bundler)
 const SOUND_FILES: { [key: string]: any } = {
-  'pokemon_badge': require('../assets/sounds/pokemon-heartgold-soulsilver-ost-fanfare-badge-get-made-with-Voicemod.mp3'),
-  'pokemon_level_up': require('../assets/sounds/pokemon-level-up-made-with-Voicemod.mp3'),
-  'pokemon_recovery': require('../assets/sounds/pokemon-recovery-made-with-Voicemod.mp3'),
-  'sonic_ring': require('../assets/sounds/sonic-ring-sound-effect-made-with-Voicemod.mp3'),
+  'fanfare_badge': require('../assets/sounds/fanfare-badge.mp3'),
+  'level_up': require('../assets/sounds/level-up.mp3'),
+  'recovery': require('../assets/sounds/recovery.mp3'),
+  'ring': require('../assets/sounds/ring.mp3'),
   'beep': require('../assets/sounds/beep.mp3'),
   'gong': require('../assets/sounds/gong.mp3'),
 };
@@ -66,7 +66,7 @@ const loadSound = async (soundName: string): Promise<Audio.Sound | null> => {
 /**
  * Joue un son
  */
-export const playSound = async (soundName: 'pokemon_badge' | 'pokemon_level_up' | 'pokemon_recovery' | 'sonic_ring' | 'beep' | 'gong', volume: number = 0.7) => {
+export const playSound = async (soundName: 'fanfare_badge' | 'level_up' | 'recovery' | 'ring' | 'beep' | 'gong', volume: number = 0.7) => {
   try {
     const sound = await loadSound(soundName);
     if (!sound) {
@@ -86,24 +86,24 @@ export const playSound = async (soundName: 'pokemon_badge' | 'pokemon_level_up' 
 };
 
 /**
- * Joue le son de validation d'une séance (Pokemon Badge!)
+ * Joue le son de validation d'une séance
  */
 export const playWorkoutCompleteSound = async () => {
-  await playSound('pokemon_badge', 0.8);
+  await playSound('fanfare_badge', 0.8);
 };
 
 /**
  * Joue le son de passage de niveau
  */
 export const playLevelUpSound = async () => {
-  await playSound('pokemon_level_up', 0.9);
+  await playSound('level_up', 0.9);
 };
 
 /**
  * Joue le son de succès (enregistrement mesure, etc.)
  */
 export const playSuccessSound = async () => {
-  await playSound('sonic_ring', 0.6);
+  await playSound('ring', 0.6);
 };
 
 /**
@@ -142,9 +142,9 @@ export const prepareSounds = async () => {
   try {
     await initSoundManager();
     // Précharger les sons en arrière-plan
-    loadSound('pokemon_badge').catch(() => {});
-    loadSound('pokemon_level_up').catch(() => {});
-    loadSound('sonic_ring').catch(() => {});
+    loadSound('fanfare_badge').catch(() => {});
+    loadSound('level_up').catch(() => {});
+    loadSound('ring').catch(() => {});
     loadSound('gong').catch(() => {});
     loadSound('beep').catch(() => {});
   } catch (error) {

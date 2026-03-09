@@ -22,10 +22,10 @@ import { useAvatar } from '@/lib/AvatarContext';
 import { LinearGradient } from 'expo-linear-gradient';
 // actionGridCustomizationService removed - tools moved to Menu tab
 import { getUserSettings } from '@/lib/storage';
-// getTrainings import supprime - calories et donnees sante viennent d'Apple Health
+// getTrainings import supprime - calories et données santé viennent d'Apple Health
 import Svg, { Path, Circle as SvgCircle, Rect as SvgRect, Defs, ClipPath, G, Image as SvgImage, LinearGradient as SvgLinearGradient, Stop, Ellipse, Line, Text as SvgText } from 'react-native-svg';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { RankCitationCard } from '@/components/home/RankCitationCard';
+import { HomeHeroSection } from '@/components/home/HomeHeroSection';
 import { FramedProfilePhoto } from '@/components/FramedProfilePhoto';
 import { logger } from '@/lib/security/logger';
 import HomeChallengesSection from '@/components/home/HomeChallengesSection';
@@ -33,7 +33,6 @@ import { NotificationBellPopup } from '@/components/NotificationBellPopup';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const IS_SMALL_SCREEN = SCREEN_WIDTH < 375; // iPhone SE, petits téléphones
-const IS_VERY_SMALL_SCREEN = SCREEN_WIDTH < 350; // Très petits téléphones
 const CARD_PADDING = 12; // Padding horizontal pour réduire la largeur des cartes
 
 // Composant VRAI Octogone (8 côtés) avec angles super arrondis
@@ -1050,7 +1049,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // ── Donnees Apple Sante pour la carte Forme ──
+  // ── Données Apple Santé pour la carte Forme ──
   const [healthData, setHealthData] = useState<{
     heartRate: { min: number; max: number; resting: number | null } | null;
     oxygen: number | null;
@@ -1059,6 +1058,23 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
     standHours: number | null;
     distance: number | null;
   }>({ heartRate: null, oxygen: null, respiratory: null, exerciseMinutes: null, standHours: null, distance: null });
+
+  // ── Animation lueur profil (streak) ──
+  const profileGlowAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (streak < 7) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(profileGlowAnim, { toValue: 1, duration: 1800, useNativeDriver: true }),
+        Animated.timing(profileGlowAnim, { toValue: 0, duration: 1800, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [streak]);
+  const profileGlowOpacity = profileGlowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.85] });
+  const profileGlowScale = profileGlowAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] });
+  const profileGlowColor = streak >= 30 ? '#FFD700' : streak >= 14 ? '#F97316' : '#10B981';
 
   // ── Animations Sommeil ──
   const sleepMoonFloat = useRef(new Animated.Value(0)).current;
@@ -1081,7 +1097,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
   // Calories viennent directement d'Apple Health via la prop `calories`
 
-  // Charger les donnees Apple Sante pour la carte Forme (directement depuis HealthKit)
+  // Charger les données Apple Santé pour la carte Forme (directement depuis HealthKit)
   useEffect(() => {
     const loadHealthData = async () => {
       try {
@@ -1112,7 +1128,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           distance: dist,
         });
       } catch (error) {
-        logger.error('[Forme] Erreur chargement donnees sante:', error);
+        logger.error('[Forme] Erreur chargement données santé:', error);
       }
     };
     loadHealthData();
@@ -1370,7 +1386,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   const navToSettings = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/settings'); }, []);
   const navToStatsWeight = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/stats?tab=poids' as any); }, []);
   const navToStatsBody = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/stats?tab=corps' as any); }, []);
-  const navToStatsSante = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante' } } as any); }, []);
+  const navToStatsSante = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé' } } as any); }, []);
   const navToBodyComposition = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/body-composition'); }, []);
   const navToSleepInput = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/sleep-input'); }, []);
   const navToGoals = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/goals'); }, []);
@@ -1399,19 +1415,32 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         {/* Row principale - Bien alignée aux bords */}
         <View style={styles.headerRowClean}>
 
-          {/* GAUCHE - Photo de profil (forme selectionnee) */}
+          {/* GAUCHE - Photo de profil avec lueur selon le streak */}
           <TouchableOpacity
             onPress={navToProfile}
             activeOpacity={0.8}
             style={styles.leftSection}
           >
-            <FramedProfilePhoto
-              uri={profilePhoto}
-              size={70}
-              borderColor="transparent"
-              borderWidth={0}
-              placeholderIconSize={34}
-            />
+            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+              {streak >= 7 && (
+                <Animated.View style={{
+                  position: 'absolute',
+                  width: 86,
+                  height: 86,
+                  borderRadius: 43,
+                  backgroundColor: profileGlowColor,
+                  opacity: profileGlowOpacity,
+                  transform: [{ scale: profileGlowScale }],
+                }} />
+              )}
+              <FramedProfilePhoto
+                uri={profilePhoto}
+                size={70}
+                borderColor="transparent"
+                borderWidth={0}
+                placeholderIconSize={34}
+              />
+            </View>
           </TouchableOpacity>
 
           {/* CENTRE - Texte */}
@@ -1450,8 +1479,13 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
         </View>
 
-        {/* CARTE RANG & CITATION - Premium Design */}
-        <RankCitationCard streak={streak} totalPoints={totalPoints} dailyQuote={dailyQuote} avatarUri={avatarImageUri} />
+        {/* RANG + GHOST + DÉFIS - Section groupée réductible */}
+        <HomeHeroSection
+          streak={streak}
+          totalPoints={totalPoints}
+          dailyQuote={dailyQuote}
+          avatarUri={avatarImageUri}
+        />
       </View>
 
       {/* REPORT 2x2 - Poids, Hydratation, Sommeil, Charge */}
@@ -1937,7 +1971,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         {/* ═══ SOMMEIL - 3 pages swipeable ═══ */}
         {(() => {
           const CARD_W = H_CARD_PAGE_W;
-          const sleepStatus = sleepHours === 0 ? { text: 'Aucune donnee', color: '#9CA3AF' } : sleepHours >= 7 ? { text: 'Excellent', color: '#10B981' } : sleepHours >= 5 ? { text: 'Correct', color: '#F59E0B' } : { text: 'Insuffisant', color: '#EF4444' };
+          const sleepStatus = sleepHours === 0 ? { text: 'Aucune donnée', color: '#9CA3AF' } : sleepHours >= 7 ? { text: 'Excellent', color: '#10B981' } : sleepHours >= 5 ? { text: 'Correct', color: '#F59E0B' } : { text: 'Insuffisant', color: '#EF4444' };
           const sleepQuality = sleepGoal > 0 ? Math.min(Math.round((sleepHours / sleepGoal) * 100), 100) : 0;
           const sleepMinutes = Math.round((sleepHours % 1) * 60);
           const sleepH = Math.floor(sleepHours);
@@ -1968,7 +2002,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={(e) => { setSommeilPage(Math.round(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width)); }} scrollEventThrottle={16}>
 
               {/* ── Page 1: Ciel nuit bleu marine + Valeur ── */}
-              <TouchableOpacity activeOpacity={0.8} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante' } } as any); }} style={{ width: CARD_W, paddingBottom: 6 }}>
+              <TouchableOpacity activeOpacity={0.8} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé' } } as any); }} style={{ width: CARD_W, paddingBottom: 6 }}>
                 <View style={{ height: 100, justifyContent: 'center', alignItems: 'center', position: 'relative', marginTop: 2 }}>
                   {/* Fond ciel bleu marine - pleine largeur */}
                   <LinearGradient colors={[NIGHT_DEEP, NIGHT, '#1E3A5F']} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 10, borderRadius: 0 }} />
@@ -2128,79 +2162,93 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               </View>
             </View>
             <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={(e) => { setChargePage(Math.round(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width)); }} scrollEventThrottle={200}>
-              {/* ── Page 1: Donnees Sante (Pas, FC, SpO2, Resp, Kcal, Distance) ── */}
+              {/* ── Page 1: Données Santé (Pas, FC, SpO2, Resp, Kcal, Distance) ── */}
               <View style={{ width: CARD_W, paddingHorizontal: 12, paddingVertical: 4, justifyContent: 'center' }}>
                 <View style={{ gap: 6 }}>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante', section: 'pas' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'pas' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Footprints size={16} color="#3B82F6" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#3B82F6' }}>{steps > 0 ? steps.toLocaleString('fr-FR') : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>pas</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante', section: 'signesVitaux' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Heart size={16} color="#EC4899" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#EC4899' }}>{healthData.heartRate ? `${healthData.heartRate.min}-${healthData.heartRate.max}` : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>bpm</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante', section: 'signesVitaux' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Droplet size={16} color="#0EA5E9" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#0EA5E9' }}>{healthData.oxygen != null ? `${healthData.oxygen}%` : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>SpO2</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante', section: 'signesVitaux' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Wind size={16} color="#8B5CF6" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#8B5CF6' }}>{healthData.respiratory != null ? `${healthData.respiratory}` : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>resp/min</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante', section: 'calories' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'calories' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Flame size={16} color="#F97316" />
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#F97316' }}>{calories > 0 ? calories.toLocaleString('fr-FR') : '--'}</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#F97316' }}>{calories > 0 ? (calories % 1 === 0 ? calories.toString() : calories.toFixed(1)) : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>kcal</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante', section: 'pas' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'pas' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <MaterialCommunityIcons name="map-marker-distance" size={16} color="#06B6D4" />
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#06B6D4' }}>{healthData.distance != null ? `${healthData.distance.toFixed(1)}` : '--'}</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#06B6D4' }}>{healthData.distance != null ? `${healthData.distance.toFixed(2)}` : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>km</Text>
                     </View>
                   </TouchableOpacity>
                 </View>
               </View>
 
-              {/* ── Page 2: Suite donnees (Exercice, Debout, FC repos, Sommeil) ── */}
+              {/* ── Page 2: Suite données (Exercice, Debout, FC repos, Sommeil) ── */}
               <View style={{ width: CARD_W, paddingHorizontal: 12, paddingVertical: 4, justifyContent: 'center' }}>
                 <View style={{ gap: 8 }}>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante', section: 'pas' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'pas' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Activity size={16} color="#10B981" />
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#10B981' }}>{healthData.exerciseMinutes != null ? `${healthData.exerciseMinutes}` : '--'}</Text>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>min exercice</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#10B981' }}>
+                        {healthData.exerciseMinutes != null
+                          ? healthData.exerciseMinutes >= 60
+                            ? `${Math.floor(healthData.exerciseMinutes / 60)}h${healthData.exerciseMinutes % 60 > 0 ? String(healthData.exerciseMinutes % 60).padStart(2, '0') : ''}`
+                            : `${healthData.exerciseMinutes}`
+                          : '--'}
+                      </Text>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>
+                        {healthData.exerciseMinutes != null && healthData.exerciseMinutes >= 60 ? 'exercice' : 'min exercice'}
+                      </Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante', section: 'pas' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'pas' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <MaterialCommunityIcons name="human-greeting-variant" size={16} color="#0A84FF" />
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#0A84FF' }}>{healthData.standHours != null ? `${healthData.standHours}` : '--'}</Text>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>h debout</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#0A84FF' }}>
+                        {healthData.standHours != null
+                          ? healthData.standHours >= 1
+                            ? `${Math.floor(healthData.standHours)}h${Math.round((healthData.standHours % 1) * 60) > 0 ? String(Math.round((healthData.standHours % 1) * 60)).padStart(2, '0') + 'min' : ''}`
+                            : `${Math.round(healthData.standHours * 60)}min`
+                          : '--'}
+                      </Text>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>debout</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante', section: 'signesVitaux' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Heart size={16} color="#EF4444" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#EF4444' }}>{healthData.heartRate?.resting ?? '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>bpm repos</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'sante', section: 'sommeil' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'sommeil' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Moon size={16} color="#6366F1" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#6366F1' }}>{sleepHours > 0 ? `${Math.floor(sleepHours)}h${Math.round((sleepHours % 1) * 60) > 0 ? Math.round((sleepHours % 1) * 60).toString().padStart(2, '0') : ''}` : '--'}</Text>
@@ -2281,10 +2329,11 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
       {/* PAS / KCAL / SÉRIE et OUTILS supprimés - déplacés dans onglet Menu */}
 
-      {/* DEFIS DU JOUR - Quetes avec XP */}
+      {/* DÉFIS DU JOUR - Quetes avec XP */}
       <View style={{ marginBottom: 16, marginTop: 0 }}>
         <HomeChallengesSection />
       </View>
+
 
     </ScrollView>
   );

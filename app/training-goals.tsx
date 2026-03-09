@@ -2,7 +2,7 @@
 // YOROI - MES OBJECTIFS (Refonte complete)
 // ============================================
 // Tab 1: Objectifs polyvalents avec sablier anime
-// Tab 2: Objectifs d'entrainement (existant preserve)
+// Tab 2: Objectifs d'entraînement (existant preserve)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -163,7 +163,7 @@ export default function TrainingGoalsScreen() {
       setProgressList(progressData);
       setGlobalStats(statsData);
     } catch (error) {
-      logger.error('Erreur chargement objectifs entrainement:', error);
+      logger.error('Erreur chargement objectifs entraînement:', error);
     }
   }, []);
 
@@ -368,7 +368,7 @@ export default function TrainingGoalsScreen() {
               { color: activeTab === 'training' ? colors.textOnAccent : colors.textMuted },
             ]}
           >
-            Entrainement
+            Entraînement
           </Text>
         </TouchableOpacity>
       </View>
@@ -794,7 +794,7 @@ export default function TrainingGoalsScreen() {
           ) : (
             <>
               {/* ============================================ */}
-              {/* TAB ENTRAINEMENT (existant preserve)          */}
+              {/* TAB ENTRAÎNEMENT (existant preserve)          */}
               {/* ============================================ */}
 
               {/* Stats globales */}
@@ -830,7 +830,7 @@ export default function TrainingGoalsScreen() {
                 </View>
               )}
 
-              {/* Liste des objectifs entrainement */}
+              {/* Liste des objectifs entraînement */}
               {progressList.length > 0 && (
                 <View style={styles.section}>
                   <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Objectifs actifs</Text>
@@ -1029,7 +1029,7 @@ export default function TrainingGoalsScreen() {
                 )}
               </View>
 
-              {/* Message si aucun objectif entrainement */}
+              {/* Message si aucun objectif entraînement */}
               {progressList.length === 0 && !showSportSelector && (
                 <View style={styles.emptyState}>
                   <Target size={48} color={colors.textMuted} />
@@ -1037,7 +1037,7 @@ export default function TrainingGoalsScreen() {
                     Aucun objectif defini
                   </Text>
                   <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                    Definis tes objectifs d'entrainement par sport pour suivre ta progression et rester motive !
+                    Definis tes objectifs d'entraînement par sport pour suivre ta progression et rester motive !
                   </Text>
                 </View>
               )}

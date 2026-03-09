@@ -14,7 +14,7 @@ const TIMER_NOTIF_SETTINGS_KEY = '@yoroi_timer_notification_settings';
 export interface TimerNotifSettings {
   restFinished: boolean;    // "Repos terminé ! Go go go !"
   roundFinished: boolean;   // "Round terminé"
-  workoutFinished: boolean; // "Entrainement terminé"
+  workoutFinished: boolean; // "Entraînement terminé"
 }
 
 const DEFAULT_SETTINGS: TimerNotifSettings = {
@@ -217,7 +217,7 @@ class TimerNotificationsService {
     if (!this.settings.workoutFinished) return;
 
     const titles: Record<string, string> = {
-      musculation: 'Entrainement terminé !',
+      musculation: 'Entraînement terminé !',
       combat: 'Combat terminé !',
       tabata: 'Tabata terminé !',
       emom: 'EMOM terminé !',
@@ -226,7 +226,7 @@ class TimerNotificationsService {
     };
 
     await this.scheduleTimerFinishedNotification(
-      titles[mode] || 'Entrainement terminé !',
+      titles[mode] || 'Entraînement terminé !',
       'Excellent travail !',
       0
     );

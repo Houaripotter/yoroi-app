@@ -71,18 +71,19 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
     return () => sub.remove();
   }, []);
 
-  // Fond = couleur du thème, texte noir
+  // Fond = couleur du thème, texte adapté (blanc si accent foncé, noir si clair)
   const pillBg = colors.accent;
-  const activeColor = '#000000';
-  const inactiveColor = 'rgba(0,0,0,0.40)';
+  const pillIsDark = isColorDark(pillBg);
+  const activeColor = pillIsDark ? '#FFFFFF' : '#000000';
+  const inactiveColor = pillIsDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)';
 
-  // Bouton + : blanc pour contraster avec la pilule colorée
-  const plusBg = '#FFFFFF';
-  const plusBgDark = '#F0F0F0';
-  const plusIcon = '#000000';
+  // Bouton + : contraste avec la pilule
+  const plusBg = pillIsDark ? '#FFFFFF' : '#000000';
+  const plusBgDark = pillIsDark ? '#F0F0F0' : '#1A1A1A';
+  const plusIcon = pillIsDark ? '#000000' : '#FFFFFF';
 
   // Contour pilule
-  const pillBorder = 'rgba(0,0,0,0.12)';
+  const pillBorder = pillIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
 
   const handlePlusPress = () => {
     impactAsync(ImpactFeedbackStyle.Heavy);
@@ -139,7 +140,7 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
         {isFocused && (
           <View style={[
             styles.activeBackground,
-            { backgroundColor: 'rgba(0,0,0,0.12)' },
+            { backgroundColor: pillIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)' },
           ]} />
         )}
         <IconComp

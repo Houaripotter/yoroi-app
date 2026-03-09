@@ -40,7 +40,7 @@ import { getUserSettings, getLatestMeasurement } from '@/lib/storage';
 import logger from '@/lib/security/logger';
 
 // ============================================
-// ECRAN CALCULATEURS FITNESS/SANTE
+// ECRAN CALCULATEURS FITNESS/SANTÉ
 // 100% OFFLINE - Formules mathematiques
 // ============================================
 
@@ -67,7 +67,7 @@ interface CalculatorItem {
   route?: string;
 }
 
-// Constantes des coefficients d'activite
+// Constantes des coefficients d'activité
 const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, { label: string; value: number; desc: string }> = {
   sedentary: { label: 'Sedentaire', value: 1.2, desc: 'Peu ou pas d\'exercice' },
   light: { label: 'Legerement actif', value: 1.375, desc: '1-3 jours/semaine' },
@@ -230,7 +230,7 @@ const GenderToggleComponent = ({ gender, onSelect, colors }: {
 export default function CalculatorsScreen() {
   const { colors } = useTheme();
 
-  // Donnees utilisateur - VIDES par defaut (string state for TextInput)
+  // Données utilisateur - VIDES par defaut (string state for TextInput)
   const [weightStr, setWeightStr] = useState('');
   const [heightStr, setHeightStr] = useState('');
   const [ageStr, setAgeStr] = useState('');
@@ -297,7 +297,7 @@ export default function CalculatorsScreen() {
         setGoal('maintain');
       }
     } catch (error) {
-      logger.info('Erreur chargement donnees:', error);
+      logger.info('Erreur chargement données:', error);
     }
   };
 
@@ -452,7 +452,7 @@ export default function CalculatorsScreen() {
 
     if (ratio >= standards.elite) return { level: 'Elite', color: '#FFD700', iconComponent: Crown };
     if (ratio >= standards.advanced) return { level: 'Avance', color: colors.success, iconComponent: Dumbbell };
-    if (ratio >= standards.intermediate) return { level: 'Intermediaire', color: colors.info, iconComponent: TrendingUp };
+    if (ratio >= standards.intermediate) return { level: 'Intermédiaire', color: colors.info, iconComponent: TrendingUp };
     return { level: 'Debutant', color: colors.textMuted, iconComponent: Circle };
   }, [calculateOneRM, userData.weight, selectedExercise, colors]);
 
@@ -503,7 +503,7 @@ export default function CalculatorsScreen() {
     {
       id: 'heart',
       title: 'Zones Cardio',
-      subtitle: 'Frequence cardiaque',
+      subtitle: 'Fréquence cardiaque',
       icon: <Heart size={24} color="#EF4444" />,
       color: '#EF4444',
       route: '/heart-zones',
@@ -554,15 +554,15 @@ export default function CalculatorsScreen() {
         <View style={[styles.infoCard, { backgroundColor: colors.goldMuted }]}>
           <Calculator size={24} color={colors.gold} />
           <Text style={[styles.infoText, { color: colors.gold }]}>
-            Tous tes calculs fitness/sante en un seul endroit
+            Tous tes calculs fitness/santé en un seul endroit
           </Text>
         </View>
 
-        {/* Donnees actuelles - Masquee si vide */}
+        {/* Données actuelles - Masquee si vide */}
         {(userData.weight > 0 || userData.height > 0 || userData.age > 0) && (
           <Card style={styles.userDataCard}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Tes donnees
+              Tes données
             </Text>
             <View style={styles.userDataRow}>
               <View style={styles.userDataItem}>
@@ -798,7 +798,7 @@ export default function CalculatorsScreen() {
             <Text style={[styles.resultUnit, { color: colors.gold }]}>kcal/jour</Text>
 
             <Text style={[styles.resultExplain, { color: colors.textMuted }]}>
-              C'est l'energie que ton corps depense au repos, juste pour fonctionner (respirer, digerer, etc.)
+              C'est l'énergie que ton corps depense au repos, juste pour fonctionner (respirer, digerer, etc.)
             </Text>
           </View>
         )}
@@ -847,7 +847,7 @@ export default function CalculatorsScreen() {
           isInteger
         />
 
-        <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Niveau d'activite</Text>
+        <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Niveau d'activité</Text>
         <View style={styles.activityList}>
           {(Object.keys(ACTIVITY_MULTIPLIERS) as ActivityLevel[]).map((level) => (
             <TouchableOpacity

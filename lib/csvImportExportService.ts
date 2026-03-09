@@ -30,9 +30,9 @@ import logger from '@/lib/security/logger';
 // TYPES
 // ============================================
 
-export type CSVRowType = 'POIDS' | 'ENTRAINEMENT' | 'MENSURATION' | 'SOMMEIL' | 'HYDRATATION' | 'HUMEUR';
+export type CSVRowType = 'POIDS' | 'ENTRAÎNEMENT' | 'MENSURATION' | 'SOMMEIL' | 'HYDRATATION' | 'HUMEUR';
 
-export const CSV_ROW_TYPES: CSVRowType[] = ['POIDS', 'ENTRAINEMENT', 'MENSURATION', 'SOMMEIL', 'HYDRATATION', 'HUMEUR'];
+export const CSV_ROW_TYPES: CSVRowType[] = ['POIDS', 'ENTRAÎNEMENT', 'MENSURATION', 'SOMMEIL', 'HYDRATATION', 'HUMEUR'];
 
 export interface ParsedCSVRow {
   lineNumber: number;
@@ -64,7 +64,7 @@ const CSV_HEADERS = [
   // Poids / composition
   'weight', 'fat_percent', 'muscle_percent', 'water_percent', 'bone_mass',
   'visceral_fat', 'metabolic_age', 'bmr', 'note', 'source',
-  // Entrainement
+  // Entraînement
   'sport', 'start_time', 'duration_minutes', 'intensity', 'calories',
   'distance', 'rounds', 'round_duration', 'muscles', 'technique_rating',
   'is_outdoor', 'pente', 'speed', 'resistance', 'watts', 'cadence', 'notes',
@@ -89,7 +89,7 @@ export function generateCSVTemplate(): string {
   // Comment header
   lines.push('# YOROI - Modele Import CSV');
   lines.push('# Remplissez les lignes ci-dessous puis importez dans l\'app');
-  lines.push('# TYPE = POIDS | ENTRAINEMENT | MENSURATION | SOMMEIL | HYDRATATION | HUMEUR');
+  lines.push('# TYPE = POIDS | ENTRAÎNEMENT | MENSURATION | SOMMEIL | HYDRATATION | HUMEUR');
   lines.push('# Laissez vides les colonnes non pertinentes pour votre type');
   lines.push('# Dates au format YYYY-MM-DD, heures au format HH:MM');
   lines.push('#');
@@ -101,9 +101,9 @@ export function generateCSVTemplate(): string {
   lines.push('POIDS,2025-01-15,82.5,18.2,42.1,55.3,3.2,8,35,1850,Apres competition,csv,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,');
   lines.push('POIDS,2025-01-20,81.8,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,');
 
-  // Examples - ENTRAINEMENT
-  lines.push('ENTRAINEMENT,2025-01-15,,,,,,,,,,jjb,18:30,90,8,650,,5,5,dos|epaules,,0,,,,,Bonne seance,,,,,,,,,,,,,,,,');
-  lines.push('ENTRAINEMENT,2025-01-16,,,,,,,,,,running,07:00,45,6,380,8.5,,,,,,1,,12,,,Footing matinal,,,,,,,,,,,,,,,,');
+  // Examples - ENTRAÎNEMENT
+  lines.push('ENTRAÎNEMENT,2025-01-15,,,,,,,,,,jjb,18:30,90,8,650,,5,5,dos|epaules,,0,,,,,Bonne séance,,,,,,,,,,,,,,,,');
+  lines.push('ENTRAÎNEMENT,2025-01-16,,,,,,,,,,running,07:00,45,6,380,8.5,,,,,,1,,12,,,Footing matinal,,,,,,,,,,,,,,,,');
 
   // Examples - MENSURATION
   lines.push('MENSURATION,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,102,78,82,97,36,37,58,59,38,39,120,38,,,,,,');
@@ -224,7 +224,7 @@ export function parseCSVContent(content: string): CSVParseResult {
   // Group by type
   const byType: Record<CSVRowType, ParsedCSVRow[]> = {
     POIDS: [],
-    ENTRAINEMENT: [],
+    ENTRAÎNEMENT: [],
     MENSURATION: [],
     SOMMEIL: [],
     HYDRATATION: [],
@@ -296,7 +296,7 @@ export function validateRow(type: CSVRowType, data: Record<string, string>): Row
   switch (type) {
     case 'POIDS':
       return validatePoidsRow(data, errors);
-    case 'ENTRAINEMENT':
+    case 'ENTRAÎNEMENT':
       return validateEntrainementRow(data, errors);
     case 'MENSURATION':
       return validateMensurationRow(data, errors);
@@ -427,7 +427,7 @@ function validateSommeilRow(data: Record<string, string>, errors: string[]): Row
 
   const quality = getOptionalFloat(data, 'quality');
   if (quality !== undefined) {
-    const r = validateNumber(quality, 1, 5, 'Qualite sommeil');
+    const r = validateNumber(quality, 1, 5, 'Qualité sommeil');
     if (!r.valid) errors.push(r.error!);
   }
 
@@ -451,9 +451,9 @@ function validateHumeurRow(data: Record<string, string>, errors: string[]): RowV
   if (!mood) return { valid: false, error: 'Humeur (mood) manquante' };
 
   const energy = getOptionalFloat(data, 'energy');
-  if (energy === undefined) return { valid: false, error: 'Energie (energy) manquante' };
+  if (energy === undefined) return { valid: false, error: 'Énergie (energy) manquante' };
 
-  const r = validateNumber(energy, 1, 5, 'Energie');
+  const r = validateNumber(energy, 1, 5, 'Énergie');
   if (!r.valid) return { valid: false, error: r.error };
 
   return { valid: true };
@@ -474,7 +474,7 @@ export async function importParsedRows(rows: ParsedCSVRow[]): Promise<CSVImportR
         case 'POIDS':
           await importPoidsRow(row.data);
           break;
-        case 'ENTRAINEMENT':
+        case 'ENTRAÎNEMENT':
           await importEntrainementRow(row.data);
           break;
         case 'MENSURATION':

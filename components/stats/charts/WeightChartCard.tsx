@@ -25,6 +25,10 @@ interface WeightChartCardProps {
   color?: string;
   unit?: string;
   title?: string;
+  targetWeight?: number;
+  newestFirst?: boolean;
+  onPressWeight?: () => void;
+  onPressTarget?: () => void;
 }
 
 const CHART_HEIGHT = 220;
@@ -57,6 +61,10 @@ export const WeightChartCard: React.FC<WeightChartCardProps> = ({
   color = '#3B82F6',
   unit = ' kg',
   title = 'Évolution du poids',
+  targetWeight,
+  newestFirst = false,
+  onPressWeight,
+  onPressTarget,
 }) => {
   const { colors, isDark } = useTheme();
   const { language } = useI18n();
@@ -78,19 +86,22 @@ export const WeightChartCard: React.FC<WeightChartCardProps> = ({
     const minVal = Math.min(...vals);
     const maxVal = Math.max(...vals);
     const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
-    const current = vals[vals.length - 1];
+    // Si newestFirst, le plus récent est à l'index 0, sinon à la fin
+    const currentIdx = newestFirst ? 0 : vals.length - 1;
+    const current = vals[currentIdx];
     const minIdx = vals.indexOf(minVal);
     const maxIdx = vals.indexOf(maxVal);
-    const currentIdx = vals.length - 1;
     const avgIdx = vals.reduce(
       (best, v, i) => Math.abs(v - avg) < Math.abs(vals[best] - avg) ? i : best, 0,
     );
     const trend = vals.length >= 2
-      ? vals[currentIdx] > vals[currentIdx - 1] ? 'up'
-      : vals[currentIdx] < vals[currentIdx - 1] ? 'down' : 'stable'
+      ? newestFirst
+        ? vals[0] > vals[1] ? 'up' : vals[0] < vals[1] ? 'down' : 'stable'
+        : vals[currentIdx] > vals[currentIdx - 1] ? 'up'
+        : vals[currentIdx] < vals[currentIdx - 1] ? 'down' : 'stable'
       : 'stable';
     return { minVal, maxVal, avg, current, minIdx, maxIdx, currentIdx, avgIdx, trend };
-  }, [data, hasData]);
+  }, [data, hasData, newestFirst]);
 
   // ─── Données SVG ──────────────────────────
   const chartData = useMemo(() => {
@@ -140,12 +151,16 @@ export const WeightChartCard: React.FC<WeightChartCardProps> = ({
     return { svgWidth, pts, line, area, yLabels, xLabels, maxXLabels, plotBottom };
   }, [hasData, cardWidth, data, dateLocale, isScrollable]);
 
-  // ─── Auto-scroll vers la droite (récent) ──
+  // ─── Auto-scroll : droite (récent à droite) ou gauche (récent à gauche) ──
   const handleContentSizeChange = useCallback((contentWidth: number) => {
     if (isScrollable && scrollRef.current && contentWidth > cardWidth - 32) {
-      scrollRef.current.scrollToEnd({ animated: false });
+      if (newestFirst) {
+        scrollRef.current.scrollTo({ x: 0, animated: false });
+      } else {
+        scrollRef.current.scrollToEnd({ animated: false });
+      }
     }
-  }, [isScrollable, cardWidth]);
+  }, [isScrollable, cardWidth, newestFirst]);
 
   // ─── Scroll vers un point précis ──────────
   const scrollToIndex = useCallback((idx: number) => {
@@ -355,9 +370,11 @@ export const WeightChartCard: React.FC<WeightChartCardProps> = ({
                 );
               })()}
 
-              {/* Étiquette du dernier point si pas déjà sélectionné */}
-              {highlightIdx !== chartData.pts.length - 1 && chartData.pts.length > 0 && (() => {
-                const lp = chartData.pts[chartData.pts.length - 1];
+              {/* Étiquette du point le plus récent si pas déjà sélectionné */}
+              {(() => {
+                const recentIdx = newestFirst ? 0 : chartData.pts.length - 1;
+                if (highlightIdx === recentIdx || chartData.pts.length === 0) return null;
+                const lp = chartData.pts[recentIdx];
                 return (
                   <G>
                     <Rect x={lp.x - 20} y={lp.y - 24} width={40} height={16} rx={6} ry={6} fill={color} opacity={0.9} />
@@ -373,11 +390,60 @@ export const WeightChartCard: React.FC<WeightChartCardProps> = ({
           {isScrollable && (
             <View style={styles.hintBar}>
               <Text style={[styles.hintText, { color: colors.textMuted }]}>
-                Defiler pour voir plus · Recent a droite
+                {newestFirst ? 'Defiler pour voir plus · Recent a gauche' : 'Defiler pour voir plus · Recent a droite'}
               </Text>
             </View>
           )}
         </View>
+      )}
+
+      {/* ── Poids actuel + Objectif ── */}
+      {metrics && (targetWeight ?? 0) > 0 && (
+        <>
+          <View style={[styles.bottomSeparator, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]} />
+          <View style={styles.bottomMetricsRow}>
+            <TouchableOpacity
+              style={[styles.bottomMetricCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : `${color}08`, borderColor: `${color}20` }]}
+              activeOpacity={onPressWeight ? 0.7 : 1}
+              onPress={onPressWeight}
+              disabled={!onPressWeight}
+            >
+              <View style={styles.bottomMetricHeader}>
+                <View style={[styles.bottomMetricDot, { backgroundColor: color }]} />
+                <Text style={[styles.bottomMetricLabel, { color: colors.textSecondary }]}>Actuel</Text>
+                {metrics.trend === 'up' && <TrendingUp size={12} color="#EF4444" strokeWidth={2.5} />}
+                {metrics.trend === 'down' && <TrendingDown size={12} color="#10B981" strokeWidth={2.5} />}
+                {metrics.trend === 'stable' && <Minus size={12} color={colors.textMuted} strokeWidth={2.5} />}
+              </View>
+              <Text style={[styles.bottomMetricValue, { color: colors.textPrimary }]}>
+                {smartFmt(metrics.current)}
+                <Text style={[styles.bottomMetricUnit, { color: colors.textSecondary }]}>{unit}</Text>
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.bottomMetricCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#10B98108', borderColor: '#10B98120' }]}
+              activeOpacity={onPressTarget ? 0.7 : 1}
+              onPress={onPressTarget}
+              disabled={!onPressTarget}
+            >
+              <View style={styles.bottomMetricHeader}>
+                <View style={[styles.bottomMetricDot, { backgroundColor: '#10B981' }]} />
+                <Text style={[styles.bottomMetricLabel, { color: colors.textSecondary }]}>Objectif</Text>
+              </View>
+              <Text style={[styles.bottomMetricValue, { color: colors.textPrimary }]}>
+                {smartFmt(targetWeight!)}
+                <Text style={[styles.bottomMetricUnit, { color: colors.textSecondary }]}>{unit}</Text>
+              </Text>
+              <View style={[styles.bottomProgressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
+                <View style={[styles.bottomProgressFill, {
+                  width: `${Math.min(100, (targetWeight! / Math.max(metrics.current, targetWeight!)) * 100)}%`,
+                  backgroundColor: '#10B981',
+                }]} />
+              </View>
+            </TouchableOpacity>
+          </View>
+        </>
       )}
 
       {!hasData && (
@@ -494,5 +560,56 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  // Bottom metric cards (Actuel + Objectif)
+  bottomSeparator: {
+    height: 1,
+    marginVertical: 14,
+    borderRadius: 0.5,
+  },
+  bottomMetricsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  bottomMetricCard: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    gap: 6,
+  },
+  bottomMetricHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  bottomMetricDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  bottomMetricLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    flex: 1,
+  },
+  bottomMetricValue: {
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  bottomMetricUnit: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  bottomProgressTrack: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginTop: 4,
+  },
+  bottomProgressFill: {
+    height: '100%',
+    borderRadius: 3,
   },
 });

@@ -269,7 +269,7 @@ export default function ProfileScreen() {
         getUnlockedBadges(),
       ]);
 
-      // Points unifies (inclut quetes, challenges, bonus sante)
+      // Points unifies (inclut quetes, challenges, bonus santé)
       const points = await calculateAndStoreUnifiedPoints(weightsHistory?.length || 0, allTrainings?.length || 0, streakDays);
       setTotalPoints(points);
       setUnlockedBadgesCount(badges?.length || 0);

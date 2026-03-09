@@ -75,8 +75,8 @@ export function DayDetailModal({
   const handleDelete = (session: Training) => {
     const club = getClub(session.club_id);
     showPopup(
-      'Supprimer la seance',
-      `Supprimer ${club?.name || session.sport}${session.start_time ? ` a ${session.start_time}` : ''} ?\n\nLa seance sera deplacee dans la corbeille.`,
+      'Supprimer la séance',
+      `Supprimer ${club?.name || session.sport}${session.start_time ? ` a ${session.start_time}` : ''} ?\n\nLa séance sera deplacee dans la corbeille.`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -126,7 +126,7 @@ export function DayDetailModal({
             activeOpacity={0.8}
           >
             <Plus size={20} color="#FFFFFF" />
-            <Text style={styles.addButtonText}>Ajouter une seance</Text>
+            <Text style={styles.addButtonText}>Ajouter une séance</Text>
           </TouchableOpacity>
 
           {/* Creneaux prevus */}
@@ -190,7 +190,7 @@ export function DayDetailModal({
             );
           })()}
 
-          {/* Liste des seances */}
+          {/* Liste des séances */}
           <ScrollView
             style={styles.sessionsList}
             showsVerticalScrollIndicator={false}
@@ -200,7 +200,7 @@ export function DayDetailModal({
               <View style={styles.emptyState}>
                 <Calendar size={48} color={colors.textMuted} strokeWidth={1.5} />
                 <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                  Aucune seance ce jour
+                  Aucune séance ce jour
                 </Text>
                 <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
                   Clique sur le bouton ci-dessus pour ajouter
@@ -211,7 +211,7 @@ export function DayDetailModal({
                 <View style={styles.sessionsHeader}>
                   <View style={[styles.sessionsDivider, { backgroundColor: colors.border }]} />
                   <Text style={[styles.sessionsLabel, { color: colors.textMuted }]}>
-                    Seances du jour
+                    Séances du jour
                   </Text>
                   <View style={[styles.sessionsDivider, { backgroundColor: colors.border }]} />
                 </View>

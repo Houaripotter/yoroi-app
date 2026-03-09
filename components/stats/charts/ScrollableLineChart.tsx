@@ -43,7 +43,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
   const lineColor = color || colors.accent;
   const dateLocale = fr;
 
-  // Calculer les donnees du graphique
+  // Calculer les données du graphique
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return null;
 
@@ -337,7 +337,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
         style={styles.scrollView}
         onContentSizeChange={(contentWidth) => {
           if (scrollViewRef.current && contentWidth > SCREEN_WIDTH - 40) {
-            scrollViewRef.current.scrollToEnd({ animated: false });
+            scrollViewRef.current.scrollTo({ x: 0, animated: false });
           }
         }}
       >
@@ -351,7 +351,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
         <View style={[styles.hintContainer, { backgroundColor: `${lineColor}10` }]}>
           <Ionicons name="swap-horizontal-outline" size={13} color={lineColor} />
           <Text style={[styles.hintText, { color: lineColor }]}>
-            D{'\u00E9'}filer {'\u2022'} Appuyer pour agrandir
+            D{'\u00E9'}filer {'\u2022'} R{'\u00E9'}cent {'\u00E0'} gauche {'\u2022'} Appuyer pour agrandir
           </Text>
         </View>
       )}

@@ -140,7 +140,7 @@ export default function ExportDataScreen() {
       }
     } catch (error) {
       logger.error('Erreur export CSV:', error);
-      showPopup('Erreur', 'Impossible d\'exporter les donnees', [
+      showPopup('Erreur', 'Impossible d\'exporter les données', [
         { text: 'OK', style: 'primary' }
       ]);
     } finally {

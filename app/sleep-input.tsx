@@ -128,11 +128,22 @@ export default function SleepInputScreen() {
       }
 
       notificationAsync(NotificationFeedbackType.Success);
+
+      // Verifier si un défi est nouvellement complete
+      let challengeMsg = '';
+      try {
+        const { syncAndGetNewlyCompleted } = await import('@/lib/challengesService');
+        const newChallenges = await syncAndGetNewlyCompleted();
+        if (newChallenges.length > 0) {
+          challengeMsg = '\n\n' + newChallenges.map(c => `Défi valide : "${c.title}" (+${c.xp} XP) !`).join('\n');
+        }
+      } catch { /* non bloquant */ }
+
       showPopup(
         t('sleepInput.sleepSaved'),
-        `${formatDuration(duration)} - ${format(selectedDate, 'EEEE d MMMM', { locale: dateLocale })}`,
+        `${formatDuration(duration)} - ${format(selectedDate, 'EEEE d MMMM', { locale: dateLocale })}${challengeMsg}`,
         [{
-          text: 'OK',
+          text: challengeMsg ? 'Super !' : 'OK',
           style: 'primary',
           onPress: () => router.back(),
         }]

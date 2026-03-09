@@ -102,7 +102,7 @@ export default function HistoryScreen() {
     try {
       const [measurements, allTrainings] = await Promise.all([
         getAllMeasurements(),
-        getTrainings(), // SQLite: inclut Apple Health + seances manuelles
+        getTrainings(), // SQLite: inclut Apple Health + séances manuelles
       ]);
 
       if (cancelledRef.current) return;
@@ -329,10 +329,10 @@ export default function HistoryScreen() {
 
         {/* Summary Card - Always Visible */}
         <View style={[styles.summaryCard, { backgroundColor: themeColors.card }]}>
-          <Text style={[styles.summaryTitle, { color: themeColors.textPrimary }]}>Resume du mois</Text>
+          <Text style={[styles.summaryTitle, { color: themeColors.textPrimary }]}>Résumé du mois</Text>
           <View style={styles.summaryContent}>
             <View style={styles.summaryTotal}>
-              <Text style={[styles.summaryTotalLabel, { color: themeColors.textSecondary }]}>Total Entrainements</Text>
+              <Text style={[styles.summaryTotalLabel, { color: themeColors.textSecondary }]}>Total Entraînements</Text>
               <Text style={[styles.summaryTotalNumber, { color: themeColors.textPrimary }]}>
                 {trainings.filter(t => {
                   const d = new Date(t.date);
@@ -708,8 +708,6 @@ export default function HistoryScreen() {
                     <View style={styles.multiLineChartContainer}>
                       {allMeasurementsChartData.map((item, index) => {
                         if (item.data.length < 2) return null;
-                        const dataLengths = allMeasurementsChartData.map(d => d.data.length);
-                        const maxDataLength = dataLengths.length > 0 ? Math.max(...dataLengths) : 0;
                         return (
                           <View
                             key={item.metric.key}

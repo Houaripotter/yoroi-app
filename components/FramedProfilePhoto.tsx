@@ -13,10 +13,21 @@ import {
   FRAME_SHAPE_CHANGED_EVENT,
   ACCESSORY_STORAGE_KEY,
   FRAME_ACCESSORY_CHANGED_EVENT,
+  ACCESSORY_2_STORAGE_KEY,
+  ACCESSORY_2_CHANGED_EVENT,
+  BORDER_COLOR_STORAGE_KEY,
+  BORDER_COLOR_CHANGED_EVENT,
+  BORDER_THICKNESS_STORAGE_KEY,
+  BORDER_THICKNESS_CHANGED_EVENT,
+  BORDER_EFFECT_STORAGE_KEY,
+  BORDER_EFFECT_CHANGED_EVENT,
+  BORDER_COLORS,
+  BORDER_THICKNESS_OPTIONS,
   generateClipPath,
   renderAccessorySvg,
   type FrameShape,
   type FrameAccessory,
+  type BorderEffect,
   type PhotoTransform,
 } from '@/app/frame-selection';
 import { useTheme } from '@/lib/ThemeContext';
@@ -41,7 +52,19 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
   const { isDark, colors } = useTheme();
   const [frameShape, setFrameShape] = useState<FrameShape>('circle');
   const [accessory, setAccessory] = useState<FrameAccessory>('none');
+  const [accessory2, setAccessory2] = useState<FrameAccessory>('none');
+  const [borderColorId, setBorderColorId] = useState('theme');
+  const [borderThicknessId, setBorderThicknessId] = useState('normal');
+  const [borderEffect, setBorderEffect] = useState<BorderEffect>('none');
   const [transform, setTransform] = useState<PhotoTransform>({ scale: 1, translateX: 0, translateY: 0 });
+
+  // Calcul couleur et epaisseur effectives
+  const resolvedBorderColor = (() => {
+    const found = BORDER_COLORS.find(c => c.id === borderColorId);
+    if (!found || !found.color) return borderColor; // fallback = prop
+    return found.color;
+  })();
+  const resolvedBorderWidth = BORDER_THICKNESS_OPTIONS.find(t => t.id === borderThicknessId)?.value ?? bw;
 
   useEffect(() => {
     AsyncStorage.getItem(FRAME_STORAGE_KEY).then(saved => {
@@ -49,6 +72,18 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
     });
     AsyncStorage.getItem(ACCESSORY_STORAGE_KEY).then(saved => {
       if (saved) setAccessory(saved as FrameAccessory);
+    });
+    AsyncStorage.getItem(ACCESSORY_2_STORAGE_KEY).then(saved => {
+      if (saved) setAccessory2(saved as FrameAccessory);
+    });
+    AsyncStorage.getItem(BORDER_COLOR_STORAGE_KEY).then(saved => {
+      if (saved) setBorderColorId(saved);
+    });
+    AsyncStorage.getItem(BORDER_THICKNESS_STORAGE_KEY).then(saved => {
+      if (saved) setBorderThicknessId(saved);
+    });
+    AsyncStorage.getItem(BORDER_EFFECT_STORAGE_KEY).then(saved => {
+      if (saved) setBorderEffect(saved as BorderEffect);
     });
     AsyncStorage.getItem(PHOTO_TRANSFORM_KEY).then(raw => {
       if (raw) {
@@ -62,9 +97,25 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
     const sub2 = DeviceEventEmitter.addListener(FRAME_ACCESSORY_CHANGED_EVENT, (acc: FrameAccessory) => {
       setAccessory(acc);
     });
+    const sub3 = DeviceEventEmitter.addListener(ACCESSORY_2_CHANGED_EVENT, (acc: FrameAccessory) => {
+      setAccessory2(acc);
+    });
+    const sub4 = DeviceEventEmitter.addListener(BORDER_COLOR_CHANGED_EVENT, (cid: string) => {
+      setBorderColorId(cid);
+    });
+    const sub5 = DeviceEventEmitter.addListener(BORDER_THICKNESS_CHANGED_EVENT, (tid: string) => {
+      setBorderThicknessId(tid);
+    });
+    const sub6 = DeviceEventEmitter.addListener(BORDER_EFFECT_CHANGED_EVENT, (ef: BorderEffect) => {
+      setBorderEffect(ef);
+    });
     return () => {
       sub1.remove();
       sub2.remove();
+      sub3.remove();
+      sub4.remove();
+      sub5.remove();
+      sub6.remove();
     };
   }, []);
 
@@ -78,11 +129,14 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
   const isCircle = !clipPath;
 
   // L'accessoire deborde : on utilise un overlay SVG positionne en absolu
-  // avec overflow visible et un padding pour le debordement
-  const overflow = size * 0.25; // marge pour le debordement de l'accessoire
+  const overflow = size * 0.6;
   const hasAccessory = accessory !== 'none';
+  const hasAccessory2 = accessory2 !== 'none';
+  // Couleur de bordure effective avec effet
+  const effectBorderColor = borderEffect === 'gold' ? '#FFD700' : resolvedBorderColor;
+  const glowColor = (borderEffect === 'neon' || borderEffect === 'gold') ? effectBorderColor : null;
 
-  const accessoryOverlay = hasAccessory ? (
+  const accessoryOverlay = (hasAccessory || hasAccessory2) ? (
     <View
       style={{
         position: 'absolute',
@@ -90,7 +144,6 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
         left: -overflow,
         width: size + overflow * 2,
         height: size + overflow * 2,
-        // overflow visible pour que l'accessoire deborde
       }}
       pointerEvents="none"
     >
@@ -99,7 +152,8 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
         height={size + overflow * 2}
         viewBox={`${-overflow} ${-overflow} ${size + overflow * 2} ${size + overflow * 2}`}
       >
-        {renderAccessorySvg(accessory, size, colors.accent)}
+        {hasAccessory && renderAccessorySvg(accessory, size, colors.accent)}
+        {hasAccessory2 && renderAccessorySvg(accessory2, size, colors.accent)}
       </Svg>
     </View>
   ) : null;
@@ -111,7 +165,7 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
         <View style={{ width: size, height: size, overflow: 'visible' }}>
           <View style={[{
             width: size, height: size, borderRadius: size / 2,
-            overflow: 'hidden', backgroundColor: '#FFFFFF', borderWidth: bw, borderColor,
+            overflow: 'hidden', backgroundColor: '#FFFFFF', borderWidth: resolvedBorderWidth, borderColor: effectBorderColor,
           }]}>
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
               <Ionicons name="person" size={placeholderIconSize} color={isDark ? '#666' : '#999'} />
@@ -129,7 +183,7 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
         <Svg width={size} height={size}>
           <Defs>
             <ClipPath id={clipId}>
-              <Circle cx={size/2} cy={size/2} r={size/2 - bw} />
+              <Circle cx={size/2} cy={size/2} r={size/2 - resolvedBorderWidth} />
             </ClipPath>
           </Defs>
           <SvgImage
@@ -139,7 +193,8 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
             clipPath={`url(#${clipId})`}
             preserveAspectRatio="xMidYMid slice"
           />
-          <Circle cx={size/2} cy={size/2} r={size/2 - bw/2} fill="none" stroke={borderColor} strokeWidth={bw} />
+          {glowColor && <Circle cx={size/2} cy={size/2} r={size/2 - resolvedBorderWidth/2} fill="none" stroke={glowColor} strokeWidth={resolvedBorderWidth + 5} opacity={0.35} />}
+          <Circle cx={size/2} cy={size/2} r={size/2 - resolvedBorderWidth/2} fill="none" stroke={effectBorderColor} strokeWidth={resolvedBorderWidth} />
         </Svg>
         {accessoryOverlay}
       </View>
@@ -171,8 +226,10 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
           <Path d={clipPath} fill="#FFFFFF" />
         )}
 
+        {/* Lueur si effet actif */}
+        {glowColor && <Path d={clipPath} fill="none" stroke={glowColor} strokeWidth={resolvedBorderWidth + 5} opacity={0.35} />}
         {/* Bordure */}
-        <Path d={clipPath} fill="none" stroke={borderColor} strokeWidth={bw} />
+        <Path d={clipPath} fill="none" stroke={effectBorderColor} strokeWidth={resolvedBorderWidth} />
       </Svg>
 
       {/* Placeholder icon over SVG when no photo */}
