@@ -17,13 +17,25 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.0.0</string>
+	<string>2.3.0</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>7</string>
+	<key>CLKComplicationFamilies</key>
+	<array>
+		<string>CLKComplicationFamilyGraphicCircular</string>
+		<string>CLKComplicationFamilyGraphicCorner</string>
+		<string>CLKComplicationFamilyGraphicRectangular</string>
+		<string>CLKComplicationFamilyUtilitarianSmall</string>
+		<string>CLKComplicationFamilyModularSmall</string>
+	</array>
+	<key>CLKComplicationPrincipalClass</key>
+	<string>$(PRODUCT_MODULE_NAME).ComplicationController</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Yoroi utilise vos donnees de sante (frequence cardiaque, SpO2, frequence respiratoire, FC au repos, pas, calories, distance, sommeil) pour afficher des donnees en temps reel sur le cadran de votre Apple Watch.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Yoroi enregistre vos entrainements dans Apple Sante.</string>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>Yoroi utilise les notifications pour sonner quand ton timer est terminé, même en veille.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UISupportedInterfaceOrientations</key>
@@ -33,23 +45,11 @@
 	</array>
 	<key>WKApplication</key>
 	<true/>
-	<key>WKCompanionAppBundleIdentifier</key>
-	<string>com.houari.yoroi</string>
-	<key>NSUserNotificationUsageDescription</key>
-	<string>Yoroi utilise les notifications pour sonner quand ton timer est terminé, même en veille.</string>
 	<key>WKBackgroundModes</key>
 	<array>
 		<string>self-care</string>
 	</array>
-	<key>CLKComplicationPrincipalClass</key>
-	<string>$(PRODUCT_MODULE_NAME).ComplicationController</string>
-	<key>CLKComplicationFamilies</key>
-	<array>
-		<string>CLKComplicationFamilyGraphicCircular</string>
-		<string>CLKComplicationFamilyGraphicCorner</string>
-		<string>CLKComplicationFamilyGraphicRectangular</string>
-		<string>CLKComplicationFamilyUtilitarianSmall</string>
-		<string>CLKComplicationFamilyModularSmall</string>
-	</array>
+	<key>WKCompanionAppBundleIdentifier</key>
+	<string>com.houari.yoroi</string>
 </dict>
 </plist>

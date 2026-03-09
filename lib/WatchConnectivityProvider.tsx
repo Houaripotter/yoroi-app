@@ -23,6 +23,7 @@ import { Platform, AppState, AppStateStatus, DeviceEventEmitter } from 'react-na
 import { WatchConnectivity } from '@/lib/watchConnectivity.ios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '@/lib/security/logger';
+import secureStorage from '@/lib/security/secureStorage';
 import { addWeight, getProfile, getTrainings } from '@/lib/database';
 import { getBenchmarks, addBenchmarkEntry, getOrCreateBenchmarkFromWatch, importWatchExercisesToPhone, getBenchmarkPR, getBenchmarkLast, syncCarnetToWatch } from '@/lib/carnetService';
 import { getGlobalGoalStats } from '@/lib/trainingGoalsService';
@@ -474,7 +475,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
               date: new Date().toISOString().split('T')[0],
               source: 'apple',
             });
-            await AsyncStorage.setItem('currentWeight', String(weight));
+            await secureStorage.setItem('@yoroi_current_weight', String(weight));
             logSync('handleWatchMessage - Poids sauvegardé', { weight });
           } else {
             logSync('handleWatchMessage - Poids invalide', { weight });
@@ -528,15 +529,15 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           if (Math.abs(amount) > 0 && Math.abs(amount) <= 2000) {
             try {
               // 1. Update waterIntake (ml, used by megaPack)
-              const currentStr = await AsyncStorage.getItem('waterIntake');
+              const currentStr = await secureStorage.getItem('@yoroi_water_intake');
               let current = 0;
               if (currentStr) {
-                const rawVal = parseFloat(currentStr);
+                const rawVal = parseFloat(String(currentStr));
                 // Si la valeur est < 20, elle est en litres (ancienne version) → convertir en ml
                 current = rawVal < 20 ? Math.round(rawVal * 1000) : Math.round(rawVal);
               }
               const newTotalMl = Math.max(0, current + amount);
-              await AsyncStorage.setItem('waterIntake', String(newTotalMl));
+              await secureStorage.setItem('@yoroi_water_intake', String(newTotalMl));
 
               // 2. Update hydration screen key (liters, JSON format)
               const today = new Date().toDateString();
@@ -611,7 +612,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
               date: new Date().toISOString().split('T')[0],
               source: 'apple',
             });
-            await AsyncStorage.setItem('currentWeight', String(weight));
+            await secureStorage.setItem('@yoroi_current_weight', String(weight));
             DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
             DeviceEventEmitter.emit('WEIGHT_UPDATED', { weight });
             // Confirmer le poids à la Watch immédiatement (sans attendre le megaPack)
@@ -691,7 +692,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         AsyncStorage.getItem('@yoroi_avatar_config'),
         AsyncStorage.getItem('@yoroi_level'),
         AsyncStorage.getItem('@yoroi_rank'),
-        AsyncStorage.getItem('waterIntake'),
+        secureStorage.getItem('@yoroi_water_intake'),
         AsyncStorage.getItem('yoroi_theme_color_v5'),
         AsyncStorage.getItem('yoroi_theme_mode_v5'),
       ]);
@@ -997,8 +998,8 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       const { getWeights, getTrainings } = require('@/lib/database');
       const [profile, weight, waterIntake, streak, avatarConfig, level, rank, benchmarksList, savedThemeColor, savedStepsGoal, savedHydrationGoal, sleepStatsData, sleepGoalData, todaySleep, savedThemeMode, savedSettings, savedTimerPreset, weightEntries, recentTrainings] = await Promise.all([
         getProfile(),
-        AsyncStorage.getItem('currentWeight'),
-        AsyncStorage.getItem('waterIntake'),
+        secureStorage.getItem('@yoroi_current_weight'),
+        secureStorage.getItem('@yoroi_water_intake'),
         AsyncStorage.getItem('streak'),
         AsyncStorage.getItem('@yoroi_avatar_config'),
         AsyncStorage.getItem('@yoroi_level'),

@@ -33,8 +33,8 @@ import {
   formatSleepDuration,
   SleepEntry,
 } from '@/lib/sleepService';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
+import secureStorage from '@/lib/security/secureStorage';
 
 
 
@@ -84,7 +84,7 @@ export default function SleepHistoryScreen() {
             try {
               const updated = entries.filter(e => e.id !== entry.id);
               setEntries(updated);
-              await AsyncStorage.setItem('@yoroi_sleep_entries', JSON.stringify(updated));
+              await secureStorage.setItem('@yoroi_sleep_entries', updated);
             } catch (error) {
               logger.error('Error deleting sleep entry:', error);
             }

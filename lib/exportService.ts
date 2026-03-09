@@ -4,6 +4,7 @@ import { getDocumentAsync } from 'expo-document-picker';
 import { captureRef } from 'react-native-view-shot';
 import { Platform, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import secureStorage from './security/secureStorage';
 import {
   getAllMeasurements,
   getUserSettings,
@@ -24,6 +25,37 @@ import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs,
 import { getAllBodyCompositions, addBodyComposition } from './bodyComposition';
 import { getUnlockedBadges, unlockBadge } from './badges';
 import logger from '@/lib/security/logger';
+import { validate, VALIDATION_RULES } from './validation';
+
+// ============================================
+// HELPERS IMPORT SÉCURISÉ
+// ============================================
+
+/**
+ * Sanitise un objet avant insertion en base :
+ * - Champs numériques hors plage → null (on ne perd pas le record, on neutralise le champ)
+ * - Champs texte trop longs → tronqués
+ * - Types incorrects → null
+ */
+function sanitizeImportRecord<T extends Record<string, any>>(record: T): T {
+  const sanitized: any = {};
+  for (const [key, value] of Object.entries(record)) {
+    const rule = VALIDATION_RULES[key];
+    if (!rule) {
+      // Champ inconnu : tronquer si string très longue, sinon passer tel quel
+      if (typeof value === 'string' && value.length > 2000) {
+        sanitized[key] = value.slice(0, 2000);
+      } else {
+        sanitized[key] = value;
+      }
+      continue;
+    }
+    const result = validate(key, value);
+    // Si valide → valeur nettoyée ; si invalide → null (champ facultatif neutralisé)
+    sanitized[key] = result.valid ? result.value : null;
+  }
+  return sanitized as T;
+}
 
 // ============================================
 // CONFIGURATION
@@ -369,8 +401,14 @@ export const importDataFromJSON = async (): Promise<boolean> => {
 
     // Importer les poids
     if (importedData.weights && Array.isArray(importedData.weights)) {
-      for (const weight of importedData.weights) {
+      for (const raw of importedData.weights) {
         try {
+          const weight = sanitizeImportRecord(raw);
+          // weight.weight est requis — si null après sanitize, on saute le record
+          if (weight.weight == null || isNaN(Number(weight.weight))) {
+            logger.warn('Import poids ignoré (valeur invalide):', raw.weight);
+            continue;
+          }
           await addWeight({
             weight: weight.weight,
             date: weight.date,
@@ -391,7 +429,8 @@ export const importDataFromJSON = async (): Promise<boolean> => {
 
     // Importer les entraînements (COMPLET avec tous les champs)
     if (importedData.trainings && Array.isArray(importedData.trainings)) {
-      for (const training of importedData.trainings) {
+      for (const raw of importedData.trainings) {
+        const training = sanitizeImportRecord(raw);
         try {
           await addTraining({
             club_id: training.club_id,
@@ -426,9 +465,9 @@ export const importDataFromJSON = async (): Promise<boolean> => {
 
     // Importer les compositions corporelles
     if (importedData.bodyCompositions && Array.isArray(importedData.bodyCompositions)) {
-      for (const comp of importedData.bodyCompositions) {
+      for (const raw of importedData.bodyCompositions) {
         try {
-          await addBodyComposition(comp);
+          await addBodyComposition(sanitizeImportRecord(raw));
           importedCount++;
         } catch (error) {
           logger.error('Erreur import composition:', error);
@@ -476,22 +515,23 @@ export const importDataFromJSON = async (): Promise<boolean> => {
 
     // Importer les mensurations
     if (importedData.measurements && Array.isArray(importedData.measurements)) {
-      for (const measurement of importedData.measurements) {
+      for (const raw of importedData.measurements) {
         try {
+          const m = sanitizeImportRecord(raw);
           await addMeasurementRecord({
-            chest: measurement.chest,
-            waist: measurement.waist,
-            navel: measurement.navel,
-            hips: measurement.hips,
-            left_arm: measurement.left_arm,
-            right_arm: measurement.right_arm,
-            left_thigh: measurement.left_thigh,
-            right_thigh: measurement.right_thigh,
-            left_calf: measurement.left_calf,
-            right_calf: measurement.right_calf,
-            shoulders: measurement.shoulders,
-            neck: measurement.neck,
-            date: measurement.date,
+            chest: m.chest,
+            waist: m.waist,
+            navel: m.navel,
+            hips: m.hips,
+            left_arm: m.left_arm,
+            right_arm: m.right_arm,
+            left_thigh: m.left_thigh,
+            right_thigh: m.right_thigh,
+            left_calf: m.left_calf,
+            right_calf: m.right_calf,
+            shoulders: m.shoulders,
+            neck: m.neck,
+            date: m.date,
           });
           importedCount++;
         } catch (error) {
@@ -545,13 +585,12 @@ export const importDataFromJSON = async (): Promise<boolean> => {
     // Importer les entrées de sommeil
     if (importedData.sleepEntries && Array.isArray(importedData.sleepEntries)) {
       try {
-        const existingRaw = await AsyncStorage.getItem('@yoroi_sleep_entries');
-        const existingEntries: any[] = existingRaw ? JSON.parse(existingRaw) : [];
+        const existingEntries: any[] = (await secureStorage.getItem('@yoroi_sleep_entries')) ?? [];
         const existingIds = new Set(existingEntries.map((e: any) => e.id));
         const newEntries = importedData.sleepEntries.filter((e: any) => !existingIds.has(e.id));
         if (newEntries.length > 0) {
           const merged = [...existingEntries, ...newEntries];
-          await AsyncStorage.setItem('@yoroi_sleep_entries', JSON.stringify(merged));
+          await secureStorage.setItem('@yoroi_sleep_entries', merged);
           importedCount += newEntries.length;
         }
       } catch (error) {
@@ -639,7 +678,7 @@ export const importDataFromJSON = async (): Promise<boolean> => {
           restoredPhotos.push(photoData);
         }
 
-        await AsyncStorage.setItem('@yoroi_photos', JSON.stringify(restoredPhotos));
+        await secureStorage.setItem('@yoroi_photos', restoredPhotos);
         importedCount++;
       } catch (error) {
         logger.error('Erreur import photos:', error);

@@ -36,22 +36,25 @@ const DEMO_BACKUP_ASYNC_KEY = '@yoroi_demo_backup_async';
 
 // All AsyncStorage keys that the demo modifies
 // These will be backed up and restored
+// Clés SecureStore touchées par la démo (backup/restore via secureStorage)
+const DEMO_SECURE_KEYS = [
+  '@yoroi_current_weight',
+  '@yoroi_target_weight',
+  '@yoroi_sleep_entries',
+];
+
 const DEMO_ASYNC_KEYS = [
   '@yoroi_user_settings',
-  '@yoroi_user_name',
   '@yoroi_user_height',
   '@yoroi_user_sport',
   '@yoroi_user_mode',
   '@yoroi_gender',
   '@yoroi_belt',
-  '@yoroi_current_weight',
   '@yoroi_start_weight',
-  '@yoroi_target_weight',
   '@yoroi_first_use_date',
   '@yoroi_user_clubs',
   '@yoroi_favorite_sports',
   '@yoroi_training_loads',
-  '@yoroi_sleep_entries',
   '@yoroi_sleep_goal',
   '@yoroi_sleep_longest_streak',
   '@yoroi_resting_heart_rate',
@@ -147,7 +150,12 @@ const backupRealData = async (): Promise<void> => {
   for (const key of DEMO_ASYNC_KEYS) {
     asyncBackup[key] = await AsyncStorage.getItem(key);
   }
-  await AsyncStorage.setItem(DEMO_BACKUP_ASYNC_KEY, JSON.stringify(asyncBackup));
+  // Backup SecureStore keys
+  const secureBackup: Record<string, any> = {};
+  for (const key of DEMO_SECURE_KEYS) {
+    secureBackup[key] = await secureStorage.getItem(key);
+  }
+  await AsyncStorage.setItem(DEMO_BACKUP_ASYNC_KEY, JSON.stringify({ async: asyncBackup, secure: secureBackup }));
 
   logger.info('[DemoData] Backup complete.');
 };
@@ -176,10 +184,14 @@ export const restoreRealData = async (): Promise<boolean> => {
       logger.info('[DemoData] SQLite data restored.');
     }
 
-    // 3. Restore AsyncStorage keys from backup
+    // 3. Restore AsyncStorage + SecureStore keys from backup
     const asyncBackupStr = await AsyncStorage.getItem(DEMO_BACKUP_ASYNC_KEY);
     if (asyncBackupStr) {
-      const asyncBackup: Record<string, string | null> = JSON.parse(asyncBackupStr);
+      const parsed = JSON.parse(asyncBackupStr);
+      // Support both old flat format and new { async, secure } format
+      const asyncBackup: Record<string, string | null> = parsed.async ?? parsed;
+      const secureBackup: Record<string, any> = parsed.secure ?? {};
+
       for (const key of DEMO_ASYNC_KEYS) {
         const value = asyncBackup[key];
         if (value !== null && value !== undefined) {
@@ -188,7 +200,17 @@ export const restoreRealData = async (): Promise<boolean> => {
           await AsyncStorage.removeItem(key);
         }
       }
-      logger.info('[DemoData] AsyncStorage data restored.');
+
+      for (const key of DEMO_SECURE_KEYS) {
+        const value = secureBackup[key];
+        if (value !== null && value !== undefined) {
+          await secureStorage.setItem(key, value);
+        } else {
+          await secureStorage.removeItem(key);
+        }
+      }
+
+      logger.info('[DemoData] AsyncStorage + SecureStore data restored.');
     }
 
     // 4. Clean up backup keys and flag
@@ -269,7 +291,6 @@ export const generateHenryDemoData = async (): Promise<{
     onboardingCompleted: true,
     citationStyle: 'warrior',
   }));
-  await AsyncStorage.setItem('@yoroi_user_name', 'Henry');
   await AsyncStorage.setItem('@yoroi_user_height', '178');
   await AsyncStorage.setItem('@yoroi_user_sport', 'jjb');
   await AsyncStorage.setItem('@yoroi_user_mode', 'fighter');
@@ -518,7 +539,7 @@ export const generateHenryDemoData = async (): Promise<{
     current = addDays(current, 1);
   }
 
-  await AsyncStorage.setItem('@yoroi_sleep_entries', JSON.stringify(sleepEntries));
+  await secureStorage.setItem('@yoroi_sleep_entries', sleepEntries);
   await AsyncStorage.setItem('@yoroi_sleep_goal', '480');
   await AsyncStorage.setItem('@yoroi_sleep_longest_streak', '21');
 

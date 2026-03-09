@@ -1359,10 +1359,14 @@ export const resetDataOnly = async (): Promise<boolean> => {
 const DATA_RETENTION_KEY = '@yoroi_data_retention';
 
 const RETAINABLE_KEYS = [
-  '@yoroi_measurements',
   '@yoroi_workouts',
-  '@yoroi_sleep_entries',
   '@yoroi_hydration_log',
+];
+
+// Clés hébergées dans SecureStore soumises à la même politique de rétention
+const RETAINABLE_SECURE_KEYS = [
+  '@yoroi_measurements',
+  '@yoroi_sleep_entries',
   '@yoroi_mood_log',
   '@yoroi_injuries',
 ];
@@ -1394,8 +1398,8 @@ export const applyDataRetention = async (): Promise<void> => {
 
         const filtered = data.filter((entry: any) => {
           const entryDate = entry.date || entry.timestamp || entry.createdAt;
-          if (!entryDate) return true; // keep entries without dates
-          return entryDate >= cutoffISO.slice(0, 10); // Compare YYYY-MM-DD
+          if (!entryDate) return true;
+          return entryDate >= cutoffISO.slice(0, 10);
         });
 
         if (filtered.length < data.length) {
@@ -1404,6 +1408,26 @@ export const applyDataRetention = async (): Promise<void> => {
         }
       } catch (e) {
         logger.warn(`Data retention: failed to clean ${key}`, e);
+      }
+    }
+
+    for (const key of RETAINABLE_SECURE_KEYS) {
+      try {
+        const data: any[] | null = await secureStorage.getItem(key);
+        if (!Array.isArray(data)) continue;
+
+        const filtered = data.filter((entry: any) => {
+          const entryDate = entry.date || entry.timestamp || entry.createdAt;
+          if (!entryDate) return true;
+          return entryDate >= cutoffISO.slice(0, 10);
+        });
+
+        if (filtered.length < data.length) {
+          await secureStorage.setItem(key, filtered);
+          logger.info(`Data retention: cleaned ${data.length - filtered.length} old entries from ${key} (secure)`);
+        }
+      } catch (e) {
+        logger.warn(`Data retention: failed to clean ${key} (secure)`, e);
       }
     }
   } catch (error) {

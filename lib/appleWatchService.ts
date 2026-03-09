@@ -229,18 +229,15 @@ class AppleWatchService {
     const keys = [
       `hydration_${today}`,
       '@yoroi_hydration_goal',
-      '@yoroi_sleep_entries',
       '@yoroi_steps_goal',
-      '@yoroi_user_name',
       '@yoroi_avatar_config',
-      '@yoroi_profile_photo_base64',
-      '@yoroi_user_level',
-      '@yoroi_user_rank',
     ];
-    const [results, currentWeightRaw, targetWeightRaw] = await Promise.all([
+    const [results, currentWeightRaw, targetWeightRaw, sleepEntriesRaw, userSettings] = await Promise.all([
       AsyncStorage.multiGet(keys),
       secureStorage.getItem('@yoroi_current_weight'),
       secureStorage.getItem('@yoroi_target_weight'),
+      secureStorage.getItem('@yoroi_sleep_entries'),
+      secureStorage.getItem('@yoroi_user_settings'),
     ]);
     const values: Record<string, string | null> = {};
     results.forEach(([key, val]) => { values[key] = val; });
@@ -251,7 +248,6 @@ class AppleWatchService {
     const targetWeight = parseFloat(targetWeightRaw ?? '0');
 
     // Sommeil (dernière nuit) - uniquement depuis les vraies données
-    const sleepEntriesStr = values['@yoroi_sleep_entries'];
     let sleepData = {
       duration: 0,
       quality: 0,
@@ -259,30 +255,23 @@ class AppleWatchService {
       wakeTime: '',
     };
 
-    if (sleepEntriesStr) {
-      try {
-        const sleepEntries = JSON.parse(sleepEntriesStr);
-        if (sleepEntries.length > 0) {
-          const lastSleep = sleepEntries[0];
-          sleepData = {
-            duration: lastSleep.duration || 0,
-            quality: lastSleep.quality || 0,
-            bedTime: lastSleep.bedTime || '',
-            wakeTime: lastSleep.wakeTime || '',
-          };
-        }
-      } catch (e) {
-        // Ignore parse errors
-      }
+    if (Array.isArray(sleepEntriesRaw) && sleepEntriesRaw.length > 0) {
+      const lastSleep = sleepEntriesRaw[0];
+      sleepData = {
+        duration: lastSleep.duration || 0,
+        quality: lastSleep.quality || 0,
+        bedTime: lastSleep.bedTime || '',
+        wakeTime: lastSleep.wakeTime || '',
+      };
     }
 
     const stepsGoal = parseInt(values['@yoroi_steps_goal'] || '8000');
-    const userName = values['@yoroi_user_name'] || undefined;
+    const userName = (userSettings as any)?.name || undefined;
     const avatarConfigStr = values['@yoroi_avatar_config'];
     const avatarConfig = avatarConfigStr ? JSON.parse(avatarConfigStr) : undefined;
-    const profilePhotoBase64 = values['@yoroi_profile_photo_base64'] || undefined;
-    const level = parseInt(values['@yoroi_user_level'] || '1');
-    const rank = values['@yoroi_user_rank'] || undefined;
+    const profilePhotoBase64 = undefined; // géré par WatchConnectivityProvider via compression à la volée
+    const level = 1; // calculé dynamiquement côté Watch depuis XP
+    const rank = undefined; // calculé dynamiquement côté Watch depuis XP
 
     return {
       // Santé
