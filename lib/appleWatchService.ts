@@ -7,6 +7,7 @@ import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import logger from './security/logger';
+import secureStorage from './security/secureStorage';
 import { addWeight } from './database';
 import { syncCarnetToWatch } from './carnetService';
 
@@ -228,8 +229,6 @@ class AppleWatchService {
     const keys = [
       `hydration_${today}`,
       '@yoroi_hydration_goal',
-      '@yoroi_current_weight',
-      '@yoroi_target_weight',
       '@yoroi_sleep_entries',
       '@yoroi_steps_goal',
       '@yoroi_user_name',
@@ -238,14 +237,18 @@ class AppleWatchService {
       '@yoroi_user_level',
       '@yoroi_user_rank',
     ];
-    const results = await AsyncStorage.multiGet(keys);
+    const [results, currentWeightRaw, targetWeightRaw] = await Promise.all([
+      AsyncStorage.multiGet(keys),
+      secureStorage.getItem('@yoroi_current_weight'),
+      secureStorage.getItem('@yoroi_target_weight'),
+    ]);
     const values: Record<string, string | null> = {};
     results.forEach(([key, val]) => { values[key] = val; });
 
     const hydrationCurrent = parseInt(values[`hydration_${today}`] || '0');
     const hydrationGoal = parseInt(values['@yoroi_hydration_goal'] || '3000');
-    const currentWeight = parseFloat(values['@yoroi_current_weight'] || '0');
-    const targetWeight = parseFloat(values['@yoroi_target_weight'] || '0');
+    const currentWeight = parseFloat(currentWeightRaw ?? '0');
+    const targetWeight = parseFloat(targetWeightRaw ?? '0');
 
     // Sommeil (dernière nuit) - uniquement depuis les vraies données
     const sleepEntriesStr = values['@yoroi_sleep_entries'];
@@ -407,7 +410,7 @@ class AppleWatchService {
       });
 
       // Aussi mettre a jour le cache AsyncStorage pour acces rapide
-      await AsyncStorage.setItem('@yoroi_current_weight', weight.toString());
+      await secureStorage.setItem('@yoroi_current_weight', weight.toString());
       await AsyncStorage.setItem(LAST_WEIGHT_KEY, now.toString());
 
       logger.info(`Poids sauvegarde dans la DB: ${weight}kg`);

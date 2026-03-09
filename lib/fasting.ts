@@ -11,10 +11,59 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
+import secureStorage from '@/lib/security/secureStorage';
 
 // ============================================
 // CLES DE STOCKAGE
 // ============================================
+
+// ============================================
+// SECURE STORAGE — migration one-shot pour FASTING_HISTORY
+// ============================================
+
+let fastingMigrationDone = false;
+
+const migrateFastingToSecureStorage = async (): Promise<void> => {
+  if (fastingMigrationDone) return;
+  try {
+    const secureData = await secureStorage.getItem('@yoroi_fasting_history');
+    if (secureData && Array.isArray(secureData) && secureData.length > 0) {
+      fastingMigrationDone = true;
+      return;
+    }
+    const oldData = await AsyncStorage.getItem('@yoroi_fasting_history');
+    if (oldData) {
+      const parsed = JSON.parse(oldData);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        await secureStorage.setItem('@yoroi_fasting_history', parsed);
+        await AsyncStorage.removeItem('@yoroi_fasting_history');
+        logger.info('[Fasting] Migration historique jeûne vers SecureStorage réussie');
+      }
+    }
+  } catch (error) {
+    logger.error('[Fasting] Erreur migration historique jeûne:', error);
+  }
+  fastingMigrationDone = true;
+};
+
+const getSecureFastingHistory = async (): Promise<FastingSession[]> => {
+  try {
+    await migrateFastingToSecureStorage();
+    const data = await secureStorage.getItem('@yoroi_fasting_history');
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    logger.error('Erreur lecture sécurisée historique jeûne:', error);
+    return [];
+  }
+};
+
+const saveSecureFastingHistory = async (sessions: FastingSession[]): Promise<void> => {
+  try {
+    await secureStorage.setItem('@yoroi_fasting_history', sessions);
+  } catch (error) {
+    logger.error('Erreur sauvegarde sécurisée historique jeûne:', error);
+  }
+};
 
 const STORAGE_KEYS = {
   ACTIVE_MODE: '@yoroi_fasting_active_mode',
@@ -304,8 +353,8 @@ export const getFastingMode = (id: string): FastingMode | undefined => {
 export const getFastingState = async (): Promise<FastingState> => {
   try {
     const [modeId, startTimeStr] = await Promise.all([
-      AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_MODE),
-      AsyncStorage.getItem(STORAGE_KEYS.FASTING_START),
+      secureStorage.getItem(STORAGE_KEYS.ACTIVE_MODE),
+      secureStorage.getItem(STORAGE_KEYS.FASTING_START),
     ]);
 
     if (!modeId || !startTimeStr) {
@@ -406,8 +455,8 @@ export const startFasting = async (
     const startTime = customStartTime || new Date();
 
     await Promise.all([
-      AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_MODE, modeId),
-      AsyncStorage.setItem(STORAGE_KEYS.FASTING_START, startTime.toISOString()),
+      secureStorage.setItem(STORAGE_KEYS.ACTIVE_MODE, modeId),
+      secureStorage.setItem(STORAGE_KEYS.FASTING_START, startTime.toISOString()),
     ]);
 
     logger.info('Jeune demarre:', modeId);
@@ -453,8 +502,8 @@ export const stopFasting = async (completed: boolean = false): Promise<boolean> 
 
     // Reset
     await Promise.all([
-      AsyncStorage.removeItem(STORAGE_KEYS.ACTIVE_MODE),
-      AsyncStorage.removeItem(STORAGE_KEYS.FASTING_START),
+      secureStorage.removeItem(STORAGE_KEYS.ACTIVE_MODE),
+      secureStorage.removeItem(STORAGE_KEYS.FASTING_START),
     ]);
 
     logger.info('Jeune arrete, complete:', completed);
@@ -485,7 +534,7 @@ const addFastingSession = async (session: FastingSession): Promise<void> => {
     history.unshift(session);
     // Garder les 365 dernieres sessions
     const trimmed = history.slice(0, 365);
-    await AsyncStorage.setItem(STORAGE_KEYS.FASTING_HISTORY, JSON.stringify(trimmed));
+    await saveSecureFastingHistory(trimmed);
   } catch (error) {
     logger.error('Erreur addFastingSession:', error);
   }
@@ -495,13 +544,7 @@ const addFastingSession = async (session: FastingSession): Promise<void> => {
  * Obtenir l'historique des jeunes
  */
 export const getFastingHistory = async (): Promise<FastingSession[]> => {
-  try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.FASTING_HISTORY);
-    return data ? JSON.parse(data) : [];
-  } catch (error) {
-    logger.error('Erreur getFastingHistory:', error);
-    return [];
-  }
+  return await getSecureFastingHistory();
 };
 
 /**
@@ -642,8 +685,7 @@ const updateFastingStreak = async (completed: boolean): Promise<void> => {
  */
 export const getCustomFastingSettings = async (): Promise<CustomFastingSettings | null> => {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.CUSTOM_SETTINGS);
-    return data ? JSON.parse(data) : null;
+    return await secureStorage.getItem(STORAGE_KEYS.CUSTOM_SETTINGS);
   } catch (error) {
     return null;
   }
@@ -654,8 +696,7 @@ export const getCustomFastingSettings = async (): Promise<CustomFastingSettings 
  */
 export const saveCustomFastingSettings = async (settings: CustomFastingSettings): Promise<boolean> => {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.CUSTOM_SETTINGS, JSON.stringify(settings));
-    return true;
+    return await secureStorage.setItem(STORAGE_KEYS.CUSTOM_SETTINGS, settings);
   } catch (error) {
     logger.error('Erreur saveCustomFastingSettings:', error);
     return false;
@@ -671,8 +712,7 @@ export const saveCustomFastingSettings = async (settings: CustomFastingSettings)
  */
 export const getRamadanSettings = async (): Promise<RamadanSettings | null> => {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.RAMADAN_SETTINGS);
-    return data ? JSON.parse(data) : null;
+    return await secureStorage.getItem(STORAGE_KEYS.RAMADAN_SETTINGS);
   } catch (error) {
     return null;
   }
@@ -683,8 +723,7 @@ export const getRamadanSettings = async (): Promise<RamadanSettings | null> => {
  */
 export const saveRamadanSettings = async (settings: RamadanSettings): Promise<boolean> => {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.RAMADAN_SETTINGS, JSON.stringify(settings));
-    return true;
+    return await secureStorage.setItem(STORAGE_KEYS.RAMADAN_SETTINGS, settings);
   } catch (error) {
     logger.error('Erreur saveRamadanSettings:', error);
     return false;

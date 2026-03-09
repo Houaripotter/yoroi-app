@@ -43,6 +43,7 @@ import { setUserSport } from '@/lib/fighterModeService';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import { sportHasWeightCategories } from '@/lib/weightCategories';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import secureStorage from '@/lib/security/secureStorage';
 import logger from '@/lib/security/logger';
 
 type IconType = 'swords' | 'trophy' | 'award' | 'mountain' | 'footprints' | 'bike' | 'waves' | 'volleyball' | 'dumbbell' | 'zap' | 'heart' | 'flame' | 'activity' | 'wind' | 'snowflake' | 'music' | 'flag' | 'sparkles';
@@ -233,7 +234,7 @@ export default function SportSelectionScreen() {
       if (sportHasWeightCategories(selectedSport)) {
         // Charger le genre et poids actuel pour suggérer une catégorie
         const gender = (await AsyncStorage.getItem('@yoroi_gender')) as 'male' | 'female' || 'male';
-        const currentWeight = await AsyncStorage.getItem('@yoroi_current_weight');
+        const currentWeight = await secureStorage.getItem('@yoroi_current_weight');
 
         router.replace({
           pathname: '/weight-category-selection',

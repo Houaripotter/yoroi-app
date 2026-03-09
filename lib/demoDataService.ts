@@ -9,6 +9,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from './security/logger';
+import secureStorage from './security/secureStorage';
 import {
   saveProfile,
   addClub,
@@ -274,9 +275,9 @@ export const generateHenryDemoData = async (): Promise<{
   await AsyncStorage.setItem('@yoroi_user_mode', 'fighter');
   await AsyncStorage.setItem('@yoroi_gender', 'male');
   await AsyncStorage.setItem('@yoroi_belt', 'bleue');
-  await AsyncStorage.setItem('@yoroi_current_weight', '83.2');
+  await secureStorage.setItem('@yoroi_current_weight', '83.2');
   await AsyncStorage.setItem('@yoroi_start_weight', '87');
-  await AsyncStorage.setItem('@yoroi_target_weight', '80');
+  await secureStorage.setItem('@yoroi_target_weight', '80');
   await AsyncStorage.setItem('@yoroi_first_use_date', startDate.toISOString());
 
   // ========== 2. CLUBS ==========

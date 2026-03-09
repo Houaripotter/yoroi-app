@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format, subDays, differenceInMinutes, parseISO, startOfWeek, endOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
+import secureStorage from '@/lib/security/secureStorage';
 
 // ============================================
 // TYPES
@@ -63,6 +64,54 @@ const STORAGE_KEYS = {
 const DEFAULT_SLEEP_GOAL = 480; // 8h par defaut
 
 // ============================================
+// SECURE STORAGE — migration one-shot
+// ============================================
+
+let sleepMigrationDone = false;
+
+const migrateSleepToSecureStorage = async (): Promise<void> => {
+  if (sleepMigrationDone) return;
+  try {
+    const secureData = await secureStorage.getItem(STORAGE_KEYS.SLEEP_ENTRIES);
+    if (secureData && Array.isArray(secureData) && secureData.length > 0) {
+      sleepMigrationDone = true;
+      return;
+    }
+    const oldData = await AsyncStorage.getItem(STORAGE_KEYS.SLEEP_ENTRIES);
+    if (oldData) {
+      const parsed = JSON.parse(oldData);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        await secureStorage.setItem(STORAGE_KEYS.SLEEP_ENTRIES, parsed);
+        await AsyncStorage.removeItem(STORAGE_KEYS.SLEEP_ENTRIES);
+        logger.info('[SleepService] Migration sommeil vers SecureStorage réussie');
+      }
+    }
+  } catch (error) {
+    logger.error('[SleepService] Erreur migration sommeil:', error);
+  }
+  sleepMigrationDone = true;
+};
+
+const getSecureSleepEntries = async (): Promise<SleepEntry[]> => {
+  try {
+    await migrateSleepToSecureStorage();
+    const data = await secureStorage.getItem(STORAGE_KEYS.SLEEP_ENTRIES);
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    logger.error('Erreur lecture sécurisée sommeil:', error);
+    return [];
+  }
+};
+
+const saveSecureSleepEntries = async (entries: SleepEntry[]): Promise<void> => {
+  try {
+    await secureStorage.setItem(STORAGE_KEYS.SLEEP_ENTRIES, entries);
+  } catch (error) {
+    logger.error('Erreur sauvegarde sécurisée sommeil:', error);
+  }
+};
+
+// ============================================
 // FONCTIONS
 // ============================================
 
@@ -94,13 +143,7 @@ export const setSleepGoal = async (minutes: number): Promise<void> => {
  * Récupère toutes les entrées de sommeil
  */
 export const getSleepEntries = async (): Promise<SleepEntry[]> => {
-  try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.SLEEP_ENTRIES);
-    return data ? JSON.parse(data) : [];
-  } catch (error) {
-    logger.error('Erreur lecture sommeil:', error);
-    return [];
-  }
+  return await getSecureSleepEntries();
 };
 
 /**
@@ -177,7 +220,7 @@ export const addSleepEntry = async (
       entries.unshift(newEntry);
     }
 
-    await AsyncStorage.setItem(STORAGE_KEYS.SLEEP_ENTRIES, JSON.stringify(entries));
+    await saveSecureSleepEntries(entries);
     return newEntry;
   } catch (error) {
     logger.error('Erreur ajout sommeil:', error);
@@ -522,7 +565,7 @@ export const addSleepEntryFromHealthKit = async (entry: {
       entries.unshift(newEntry);
     }
 
-    await AsyncStorage.setItem(STORAGE_KEYS.SLEEP_ENTRIES, JSON.stringify(entries));
+    await saveSecureSleepEntries(entries);
     return newEntry;
   } catch (error) {
     logger.error('Erreur ajout sommeil HealthKit:', error);

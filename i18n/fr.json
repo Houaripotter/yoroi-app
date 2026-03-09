@@ -275,7 +275,8 @@
       "photos": "Photos de progression",
       "injuries": "Blessures",
       "mood": "Humeur",
-      "badges": "Badges & Gamification"
+      "badges": "Badges & Gamification",
+      "fasting": "Historique de jeûne"
     },
     "entries": "{{count}} entrées",
     "deleteTitle": "Suppression",

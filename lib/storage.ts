@@ -415,6 +415,7 @@ const saveData = async <T>(key: string, data: T[]): Promise<boolean> => {
 // ============================================
 
 let measurementsMigrationDone = false;
+let photosMigrationDone = false;
 
 /**
  * Migre les mesures de AsyncStorage vers SecureStorage (une seule fois)
@@ -476,6 +477,64 @@ const saveSecureMeasurements = async (data: Measurement[]): Promise<boolean> => 
   } catch (error) {
     logger.warn(`ERREUR CRITIQUE - Sauvegarde stockage sécurisé mesures:`, error);
     logger.error(`Erreur secureStorage.setItem (measurements):`, error);
+    return false;
+  }
+};
+
+// ============================================
+// SECURE STORAGE HELPERS FOR PHOTOS
+// ============================================
+
+/**
+ * Migre les métadonnées photos de AsyncStorage vers SecureStorage (une seule fois)
+ * Note : les fichiers images restent sur disque (file_uri), seules les métadonnées migrent
+ */
+const migratePhotosToSecureStorage = async (): Promise<void> => {
+  if (photosMigrationDone) return;
+
+  try {
+    const secureData = await secureStorage.getItem(STORAGE_KEYS.PHOTOS);
+    if (secureData && Array.isArray(secureData) && secureData.length > 0) {
+      photosMigrationDone = true;
+      return;
+    }
+
+    const oldData = await AsyncStorage.getItem(STORAGE_KEYS.PHOTOS);
+    if (oldData) {
+      const parsed = JSON.parse(oldData);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Nettoyer les éventuels base64 résiduels avant migration
+        const clean = parsed.map(({ base64, ...rest }: Photo & { base64?: string }) => rest);
+        await secureStorage.setItem(STORAGE_KEYS.PHOTOS, clean);
+        await AsyncStorage.removeItem(STORAGE_KEYS.PHOTOS);
+        logger.info('[Storage] Migration photos vers SecureStorage réussie');
+      }
+    }
+  } catch (error) {
+    logger.error('[Storage] Erreur migration photos:', error);
+  }
+
+  photosMigrationDone = true;
+};
+
+const getSecurePhotos = async (): Promise<Photo[]> => {
+  try {
+    await migratePhotosToSecureStorage();
+    const data = await secureStorage.getItem(STORAGE_KEYS.PHOTOS);
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    logger.warn('ERREUR CRITIQUE - Lecture stockage sécurisé photos:', error);
+    logger.error('Erreur secureStorage.getItem (photos):', error);
+    return [];
+  }
+};
+
+const saveSecurePhotos = async (data: Photo[]): Promise<boolean> => {
+  try {
+    return await secureStorage.setItem(STORAGE_KEYS.PHOTOS, data);
+  } catch (error) {
+    logger.warn('ERREUR CRITIQUE - Sauvegarde stockage sécurisé photos:', error);
+    logger.error('Erreur secureStorage.setItem (photos):', error);
     return false;
   }
 };
@@ -632,9 +691,9 @@ export const savePhotoToStorage = async (
       created_at: new Date().toISOString(),
     };
 
-    const photos = await getData<Photo>(STORAGE_KEYS.PHOTOS);
+    const photos = await getSecurePhotos();
     photos.push(newPhoto);
-    await saveData(STORAGE_KEYS.PHOTOS, photos);
+    await saveSecurePhotos(photos);
 
     return newPhoto;
   } catch (error: unknown) {
@@ -645,12 +704,12 @@ export const savePhotoToStorage = async (
 };
 
 export const getPhotosFromStorage = async (): Promise<Photo[]> => {
-  const photos = await getData<Photo>(STORAGE_KEYS.PHOTOS);
+  const photos = await getSecurePhotos();
   return photos.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 };
 
 export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
-  const photos = await getData<Photo>(STORAGE_KEYS.PHOTOS);
+  const photos = await getSecurePhotos();
   const photoToDelete = photos.find(p => p.id === id);
 
   if (!photoToDelete) {
@@ -670,12 +729,12 @@ export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
   }
 
   const filteredPhotos = photos.filter(p => p.id !== id);
-  await saveData(STORAGE_KEYS.PHOTOS, filteredPhotos);
+  await saveSecurePhotos(filteredPhotos);
   return true;
 };
 
 export const deleteAllPhotos = async (): Promise<boolean> => {
-  const photos = await getData<Photo>(STORAGE_KEYS.PHOTOS);
+  const photos = await getSecurePhotos();
 
   // Supprimer les fichiers physiques
   if (Platform.OS !== 'web') {
@@ -693,7 +752,7 @@ export const deleteAllPhotos = async (): Promise<boolean> => {
     }
   }
 
-  return await saveData(STORAGE_KEYS.PHOTOS, []);
+  return await saveSecurePhotos([]);
 };
 
 /**
@@ -703,11 +762,11 @@ export const deleteAllPhotos = async (): Promise<boolean> => {
  */
 export const migratePhotosRemoveBase64 = async (): Promise<void> => {
   try {
-    const photos = await getPhotosFromStorage();
+    const photos = await getSecurePhotos();
     if (photos.length > 0) {
       // Supprimer le champ base64 de chaque photo
       const cleanedPhotos = photos.map(({ base64, ...rest }: Photo & { base64?: string }) => rest);
-      await AsyncStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(cleanedPhotos));
+      await saveSecurePhotos(cleanedPhotos);
       logger.info(`Migration: base64 supprimé de ${photos.length} photos`);
     }
   } catch (error) {

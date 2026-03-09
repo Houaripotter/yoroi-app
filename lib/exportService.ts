@@ -26,6 +26,12 @@ import { getUnlockedBadges, unlockBadge } from './badges';
 import logger from '@/lib/security/logger';
 
 // ============================================
+// CONFIGURATION
+// ============================================
+
+const EXPORT_VERSION = '5.0'; // Version 5.0 avec sommeil + humeur
+
+// ============================================
 // UTILITAIRES IMAGES
 // ============================================
 
@@ -154,7 +160,7 @@ export const exportDataToJSON = async (): Promise<boolean> => {
     logger.info(`${photosWithBase64.filter((p: any) => p.image_base64).length} photos converties`);
 
     const exportData = {
-      version: '5.0', // Version 5.0 avec sommeil + humeur
+      version: EXPORT_VERSION,
       exportDate: new Date().toISOString(),
       appName: 'Yoroi',
       // Profil avec photo

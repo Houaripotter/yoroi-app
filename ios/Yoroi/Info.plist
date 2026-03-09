@@ -15,7 +15,7 @@
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>$(PRODUCT_NAME)</string>
+    <string>Yoroi</string>
     <key>CFBundlePackageType</key>
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <key>CFBundleShortVersionString</key>
@@ -69,8 +69,7 @@
     <string>YOROI utilise votre position GPS pour enregistrer le tracé et la distance de vos séances de course, vélo et activités en plein air.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>YOROI utilise votre position GPS pour enregistrer le tracé et la distance de vos séances de course, vélo et activités en plein air.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>YOROI peut utiliser le microphone pour enregistrer des notes vocales liées à vos séances d'entraînement.</string>
+
     <key>NSPhotoLibraryAddUsageDescription</key>
     <string>YOROI enregistre vos photos de progression et vos cartes de partage social dans votre photothèque.</string>
     <key>NSPhotoLibraryUsageDescription</key>

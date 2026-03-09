@@ -29,6 +29,7 @@ import {
   Heart,
   Smile,
   Trophy,
+  Timer,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -41,6 +42,7 @@ import {
 } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '@/lib/security/logger';
+import secureStorage from '@/lib/security/secureStorage';
 
 // ============================================
 // CONSTANTES
@@ -56,14 +58,15 @@ const RETENTION_OPTIONS = [
 ] as const;
 
 const DATA_CATEGORIES = [
-  { id: 'weights', key: '@yoroi_measurements', icon: Scale },
-  { id: 'workouts', key: '@yoroi_workouts', icon: Dumbbell },
-  { id: 'sleep', key: '@yoroi_sleep_entries', icon: Moon },
-  { id: 'hydration', key: '@yoroi_hydration_log', icon: Droplet },
-  { id: 'photos', key: '@yoroi_photos', icon: Camera },
-  { id: 'injuries', key: '@yoroi_injuries', icon: Heart },
-  { id: 'mood', key: '@yoroi_mood_log', icon: Smile },
-  { id: 'badges', key: '@yoroi_user_badges', icon: Trophy },
+  { id: 'weights',   key: '@yoroi_measurements',  icon: Scale,    secure: true  },
+  { id: 'workouts',  key: '@yoroi_workouts',       icon: Dumbbell, secure: false },
+  { id: 'sleep',     key: '@yoroi_sleep_entries',  icon: Moon,     secure: true  },
+  { id: 'hydration', key: '@yoroi_hydration_log',  icon: Droplet,  secure: false },
+  { id: 'photos',    key: '@yoroi_photos',          icon: Camera,   secure: true  },
+  { id: 'injuries',  key: '@yoroi_injuries',        icon: Heart,    secure: true  },
+  { id: 'mood',      key: '@yoroi_mood_log',        icon: Smile,    secure: true  },
+  { id: 'badges',    key: '@yoroi_user_badges',     icon: Trophy,   secure: false },
+  { id: 'fasting',   key: '@yoroi_fasting_history', icon: Timer,    secure: true  },
 ] as const;
 
 // ============================================
@@ -101,13 +104,14 @@ export default function PrivacyDataScreen() {
       const counts: Record<string, number> = {};
       for (const category of DATA_CATEGORIES) {
         try {
-          const raw = await AsyncStorage.getItem(category.key);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            counts[category.id] = Array.isArray(parsed) ? parsed.length : 0;
+          let data: any = null;
+          if (category.secure) {
+            data = await secureStorage.getItem(category.key);
           } else {
-            counts[category.id] = 0;
+            const raw = await AsyncStorage.getItem(category.key);
+            data = raw ? JSON.parse(raw) : null;
           }
+          counts[category.id] = Array.isArray(data) ? data.length : 0;
         } catch {
           counts[category.id] = 0;
         }
@@ -145,7 +149,12 @@ export default function PrivacyDataScreen() {
           onPress: async () => {
             setIsSaving(true);
             try {
-              await AsyncStorage.removeItem(categoryKey);
+              const cat = DATA_CATEGORIES.find(c => c.id === categoryId);
+              if (cat?.secure) {
+                await secureStorage.removeItem(categoryKey);
+              } else {
+                await AsyncStorage.removeItem(categoryKey);
+              }
               await notificationAsync(NotificationFeedbackType.Success);
               setCategoryCounts(prev => ({ ...prev, [categoryId]: 0 }));
               logger.info('Category deleted:', categoryId);
