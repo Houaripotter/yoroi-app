@@ -524,6 +524,14 @@ export default function AddScreen() {
       // Notifier la home pour refresh instantane des points/quetes
       DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
 
+      // Mettre à jour le widget poids
+      if (weight && weight > 0) {
+        try {
+          const { updateWidgetWeight } = await import('@/lib/widgetData');
+          await updateWidgetWeight(weight);
+        } catch { /* non bloquant */ }
+      }
+
       // Verifier si des défis sont nouvellement completes
       try {
         const newChallenges = await syncAndGetNewlyCompleted();
@@ -1311,7 +1319,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.sm,
   },
 
   // Header
@@ -1342,7 +1350,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    marginHorizontal: SPACING.lg,
+    marginHorizontal: SPACING.sm,
     marginBottom: SPACING.sm,
     borderRadius: RADIUS.lg,
     borderWidth: 1,

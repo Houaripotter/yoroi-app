@@ -45,6 +45,7 @@ import {
   Check,
   Info,
   X,
+  Heart,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { saveProfile } from '@/lib/database';
@@ -388,7 +389,8 @@ export default function OnboardingScreen() {
       }
     } catch (error) {
       logger.error('Onboarding save failed', error);
-      showPopup('Erreur', 'Une erreur est survenue. Reessaie.');
+      const msg = error instanceof Error ? error.message : String(error);
+      showPopup('Erreur', `Erreur: ${msg}`);
     }
   };
 
@@ -874,7 +876,9 @@ export default function OnboardingScreen() {
       } else {
         showPopup(
           'Permissions requises',
-          'Va dans Reglages iOS > Santé > Partage de données > YOROI pour autoriser l\'acces.',
+          Platform.OS === 'android'
+            ? 'Va dans Paramètres > Health Connect > Applications > YOROI pour autoriser l\'accès.'
+            : 'Va dans Réglages > Santé > Partage de données > YOROI pour autoriser l\'accès.',
           [{ text: 'OK', style: 'primary' }]
         );
       }
@@ -898,7 +902,7 @@ export default function OnboardingScreen() {
 
       {/* Titre */}
       <Text style={s.healthTitle}>
-        {healthConnected ? 'Connecte !' : 'Connecte Apple\u00A0Sante'}
+        {healthConnected ? 'Connecté !' : Platform.OS === 'android' ? 'Connecte Health Connect' : 'Connecte Apple\u00A0Santé'}
       </Text>
 
       {/* Sous-titre */}
@@ -937,7 +941,7 @@ export default function OnboardingScreen() {
           {isConnectingHealth ? (
             <ActivityIndicator color={C.white} />
           ) : (
-            <Text style={s.goldBtnText}>Connecter Apple Santé</Text>
+            <Text style={s.goldBtnText}>{Platform.OS === 'android' ? 'Connecter Health Connect' : 'Connecter Apple Santé'}</Text>
           )}
         </TouchableOpacity>
       )}

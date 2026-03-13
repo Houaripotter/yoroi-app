@@ -48,7 +48,6 @@ import { CheckCircle, AlertCircle,
   Stethoscope,
   Layers,
   Trash2,
-  Castle,
   Search,
   RefreshCw,
   Table,
@@ -89,15 +88,14 @@ const TOOL_SECTIONS: ToolSection[] = [
     title: 'ENTRAÎNEMENT',
     items: [
       { id: 'add-training', label: 'Ajouter une séance', sublabel: 'Enregistrer un entraînement', Icon: Dumbbell, route: '/add-training', iconColor: '#EF4444' },
-      { id: 'training-journal', label: "Carnet d'entraînement", sublabel: 'Historique de toutes tes séances', Icon: BookOpen, route: '/training-journal', iconColor: '#F97316' },
-      { id: 'history', label: 'Historique séances', sublabel: 'Recherche et filtres avances', Icon: History, route: '/history', iconColor: '#6366F1' },
-      { id: 'activity-history', label: 'Séances detaillees', sublabel: 'FC, allure, GPS, zones cardiaques', Icon: Activity, route: '/activity-history', iconColor: '#10B981' },
+      { id: 'training-journal', label: "Carnet d'entraînement", sublabel: 'Records et PR par exercice', Icon: BookOpen, route: '/training-journal', iconColor: '#F97316' },
+      { id: 'history', label: 'Mes séances', sublabel: 'Toutes tes séances — GPS, FC, calories', Icon: Activity, route: '/history', iconColor: '#10B981' },
+      { id: 'activity-history', label: 'Activité quotidienne', sublabel: 'Pas et calories du jour', Icon: History, route: '/activity-history', iconColor: '#6366F1' },
       { id: 'training-goals', label: 'Objectifs sportifs', sublabel: 'Definir et suivre tes objectifs', Icon: Target, route: '/training-goals', iconColor: '#10B981' },
       { id: 'records', label: 'Records personnels', sublabel: 'Tes meilleures performances', Icon: Trophy, route: '/records', iconColor: '#EF4444' },
       { id: 'sport', label: 'Mes sports', sublabel: 'Gerer tes disciplines', Icon: Swords, route: '/sport', iconColor: '#EC4899' },
       { id: 'slots', label: 'Creneaux reguliers', sublabel: 'Gerer tes entraînements recurrents', Icon: RefreshCw, route: '/slots', iconColor: '#6366F1' },
       { id: 'timer', label: 'Timer', sublabel: 'Chrono, rounds, HIIT, Tabata', Icon: Timer, route: '/timer', iconColor: '#4ECDC4' },
-      { id: 'schedule', label: 'Emploi du temps', sublabel: 'Programme de la semaine', Icon: Clock, route: '/(tabs)/planning', iconColor: '#3B82F6' },
     ],
   },
   {
@@ -147,7 +145,6 @@ const TOOL_SECTIONS: ToolSection[] = [
   {
     title: 'PROGRESSION & GAMIFICATION',
     items: [
-      { id: 'dojo', label: 'Mon Dojo', sublabel: 'XP, badges, avatars, rang', Icon: Castle, route: '/gamification', iconColor: '#8B5CF6' },
       { id: 'gamification', label: 'Progression', sublabel: 'XP, niveaux, rang', Icon: Sparkles, route: '/gamification', iconColor: '#F59E0B' },
       { id: 'badges', label: 'Badges', sublabel: 'Succes debloques', Icon: Award, route: '/badges', iconColor: '#EC4899' },
       { id: 'challenges', label: 'Défis', sublabel: 'Quotidiens et hebdomadaires', Icon: Target, route: '/challenges', iconColor: '#10B981' },
@@ -156,11 +153,9 @@ const TOOL_SECTIONS: ToolSection[] = [
   {
     title: 'HISTORIQUES & COURBES',
     items: [
-      { id: 'activity-history-2', label: 'Activité quotidienne', sublabel: 'Pas, calories brulees', Icon: Activity, route: '/activity-history', iconColor: '#10B981' },
       { id: 'sleep-history', label: 'Historique sommeil', sublabel: 'Courbes et tendances', Icon: Moon, route: '/sleep-history', iconColor: '#6366F1' },
       { id: 'composition-detail', label: 'Courbes composition', sublabel: 'Evolution gras, muscle, eau', Icon: Layers, route: '/composition-detail', iconColor: '#4ECDC4' },
       { id: 'measurements-detail', label: 'Courbes mensurations', sublabel: 'Evolution des mesures', Icon: Ruler, route: '/measurements-detail', iconColor: '#8B5CF6' },
-      { id: 'energy-recovery', label: 'Charge & récupération', sublabel: 'Suivi de la forme', Icon: Zap, route: '/energy', iconColor: '#F59E0B' },
     ],
   },
   {
@@ -537,7 +532,7 @@ export default function MoreScreen() {
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <Wrench size={28} color={isDark ? colors.accent : '#FFFFFF'} strokeWidth={2} />
-            <Text style={[styles.title, { color: '#FFFFFF' }]}>Outils</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Outils</Text>
           </View>
         </View>
 

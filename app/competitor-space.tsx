@@ -17,6 +17,7 @@ import {
   TrendingDown,
   Droplet,
   Trophy,
+  BarChart2,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -80,6 +81,15 @@ const COMPETITOR_ITEMS: MenuItem[] = [
     iconColor: '#3B82F6',
     iconBg: '#3B82F620',
     route: '/hydration',
+  },
+  {
+    id: 'combat-analytics',
+    label: 'Analyse de combat',
+    sublabel: 'Partenaires, techniques, soumissions',
+    icon: BarChart2,
+    iconColor: '#8B5CF6',
+    iconBg: '#8B5CF620',
+    route: '/combat-analytics',
   },
 ];
 

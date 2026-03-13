@@ -3,56 +3,86 @@ import WatchKit
 import UserNotifications
 
 // ──────────────────────────────────────────────
-// Vue plein écran affichée sur la montre verrouillée
-// quand une notification d'alarme YOROI arrive
+// Vue plein écran affichée sur la montre quand le timer sonne
 // ──────────────────────────────────────────────
 
 struct TimerAlarmNotificationView: View {
 
-  @EnvironmentObject var session: WatchSessionManager
+  @ObservedObject var session: WatchSessionManager = .shared
 
-  // Pulsation de l'icône
-  @State private var pulse = false
+  @State private var flash = false      // fond rouge ↔ noir alterné
+  @State private var iconScale: CGFloat = 1.0
+  @State private var textOpacity: Double = 1.0
 
   var body: some View {
     ZStack {
-      Color.black.ignoresSafeArea()
+      // Fond clignotant rouge ↔ noir
+      (flash ? Color(red: 0.85, green: 0.06, blue: 0.06) : Color.black)
+        .ignoresSafeArea()
+        .animation(.easeInOut(duration: 0.25), value: flash)
 
-      VStack(spacing: 10) {
+      VStack(spacing: 8) {
 
-        // Icône pulsante
-        Image(systemName: "timer")
-          .font(.system(size: 36, weight: .bold))
-          .foregroundColor(session.accentColor)
-          .scaleEffect(pulse ? 1.15 : 1.0)
-          .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: pulse)
-          .onAppear { pulse = true }
+        // Icône timer pulsante
+        ZStack {
+          Circle()
+            .fill(Color.white.opacity(flash ? 0.25 : 0.08))
+            .frame(width: 60, height: 60)
+          Image(systemName: "timer")
+            .font(.system(size: 30, weight: .black))
+            .foregroundColor(.white)
+        }
+        .scaleEffect(iconScale)
 
-        Text("Timer terminé !")
-          .font(.system(size: 18, weight: .bold))
+        // Texte principal
+        Text("TIMER")
+          .font(.system(size: 22, weight: .black))
           .foregroundColor(.white)
-          .multilineTextAlignment(.center)
+          .tracking(3)
+          .opacity(textOpacity)
 
-        Text("Reprends ta séance")
-          .font(.system(size: 13, weight: .medium))
-          .foregroundColor(.gray)
-          .multilineTextAlignment(.center)
+        Text("TERMINÉ !")
+          .font(.system(size: 16, weight: .heavy))
+          .foregroundColor(flash ? .white : Color(red: 1, green: 0.4, blue: 0.4))
+          .tracking(1)
 
-        // Bouton STOP visible directement depuis la notification
+        // Bouton STOP
         Button {
           session.stopAlarm()
         } label: {
-          Text("Arrêter")
-            .font(.system(size: 14, weight: .semibold))
+          Text("ARRÊTER")
+            .font(.system(size: 13, weight: .black))
+            .tracking(1)
             .foregroundColor(.black)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 8)
-            .background(session.accentColor)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 9)
+            .background(Color.white)
             .clipShape(Capsule())
         }
         .buttonStyle(.plain)
+        .padding(.top, 2)
       }
-      .padding()
+    }
+    .onAppear {
+      startFlashing()
+      startIconPulse()
+    }
+  }
+
+  private func startFlashing() {
+    // Clignotement fond rouge toutes les 0.4s
+    withAnimation(Animation.easeInOut(duration: 0.4).repeatForever(autoreverses: true)) {
+      flash = true
+    }
+    // Opacité du texte clignote aussi
+    withAnimation(Animation.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+      textOpacity = 0.5
+    }
+  }
+
+  private func startIconPulse() {
+    withAnimation(Animation.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
+      iconScale = 1.25
     }
   }
 }
@@ -64,10 +94,20 @@ struct TimerAlarmNotificationView: View {
 class TimerAlarmNotificationController: WKUserNotificationHostingController<TimerAlarmNotificationView> {
   override var body: TimerAlarmNotificationView {
     TimerAlarmNotificationView()
-      .environmentObject(WatchSessionManager.shared)
   }
 
   override func didReceive(_ notification: UNNotification) {
-    // Pas de traitement supplémentaire nécessaire
+    // Marquer l'alarme comme active (même si l'app n'était pas en foreground)
+    let session = WatchSessionManager.shared
+    session.timerAlarmRinging = true
+
+    // Haptics immédiats à la réception
+    WKInterfaceDevice.current().play(.notification)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+      WKInterfaceDevice.current().play(.notification)
+    }
+
+    // Son wizz en boucle
+    session.startAlarmAudio()
   }
 }

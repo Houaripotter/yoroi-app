@@ -15,7 +15,11 @@ import {
   Platform,
   ActivityIndicator,
   Linking,
+  NativeModules,
+  Alert,
 } from 'react-native';
+import { getNativeWorkouts, requestWorkoutReadAuthNative } from '@/lib/yoroiHealthKit';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -421,7 +425,12 @@ export default function ConnectedDevicesScreen() {
     setIsImporting(true);
     setImportProgress('Démarrage...');
     try {
-      await AsyncStorage.removeItem('@yoroi_full_history_imported');
+      // Réinitialiser tous les flags pour forcer un import complet propre
+      await AsyncStorage.multiRemove([
+        '@yoroi_full_history_imported',
+        '@yoroi_import_version',
+        '@yoroi_imported_workouts',
+      ]);
       const result = await healthConnect.importFullHistory((step, current, total) => {
         setImportProgress(`${step} (${current}/${total})`);
       });
@@ -574,8 +583,8 @@ export default function ConnectedDevicesScreen() {
               onPress={handleConnect}
               disabled={isConnecting}
             >
-              <Heart size={18} color="#FFFFFF" />
-              <Text style={styles.connectBtnText}>
+              <Heart size={18} color={colors.textOnAccent} />
+              <Text style={[styles.connectBtnText, { color: colors.textOnAccent }]}>
                 {isConnecting ? 'Connexion...' : `Connecter a ${providerName}`}
               </Text>
             </TouchableOpacity>
@@ -597,6 +606,83 @@ export default function ConnectedDevicesScreen() {
                     <Text style={[styles.importBtnText, { color: colors.accent }]}>Importer tout l'historique</Text>
                   </>
                 )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.importBtn, { borderColor: '#6366F1', marginTop: 6 }]}
+                onPress={async () => {
+                  if (isDiagnosing) return;
+                  impactAsync(ImpactFeedbackStyle.Medium);
+                  setIsDiagnosing(true);
+                  try {
+                    // === ÉTAPE 0 : Re-demander permission lecture via Swift natif (bypass Nitro) ===
+                    const authResult = await requestWorkoutReadAuthNative();
+
+                    // === ÉTAPE 1 : Diagnostic complet ===
+                    const diag = await healthConnect.diagnoseWorkouts();
+                    const lines: string[] = [];
+
+                    // Résultat de la re-demande de permission
+                    lines.push('=== PERMISSION LECTURE ===');
+                    if (authResult.startsWith('error:')) {
+                      lines.push(`Auth native : ${authResult.replace('error:', '')}`);
+                    } else {
+                      const parts = Object.fromEntries(authResult.split('|').map(p => {
+                        const idx = p.indexOf(':');
+                        return [p.slice(0, idx), p.slice(idx + 1)];
+                      }));
+                      const count = parts['count'] ?? '?';
+                      const sources = parts['sources'] ?? '';
+                      lines.push(`Workouts visibles apres auth : ${count}`);
+                      if (sources) lines.push(`Sources : ${sources || 'aucune'}`);
+                    }
+                    lines.push('');
+
+                    lines.push('=== MODULE NATIF SWIFT ===');
+                    const nm = diag.nativeModuleTest;
+                    lines.push(`Disponible: ${nm !== -2 ? 'OUI' : 'NON'}`);
+                    lines.push(`Seances trouvees (365j): ${nm >= 0 ? nm : 'erreur'}`);
+                    lines.push('');
+
+                    lines.push('=== HEALTHKIT NITRO ===');
+                    lines.push(`Permission workout: ${diag.authStatus ?? '?'}`);
+                    lines.push(`queryWorkoutSamples: ${diag.rawApiTest}`);
+                    lines.push(`withAnchor: ${diag.anchorApiTest}`);
+                    lines.push(`HK 365j: ${diag.healthkit30d}`);
+                    lines.push('');
+
+                    lines.push('=== BASE YOROI ===');
+                    lines.push(`Total seances: ${diag.dbCount} (HK: ${diag.dbFromHealthkit})`);
+
+                    if (diag.error) lines.push(`\nErreur: ${diag.error}`);
+
+                    const nativeCount = typeof nm === 'number' ? nm : -1;
+                    const hasWorkouts = nativeCount > 0 || diag.rawApiTest > 0 || diag.anchorApiTest > 0 || diag.healthkit30d > 0;
+                    const buttons: any[] = [{ text: 'Fermer', style: 'cancel' }];
+                    if (hasWorkouts) {
+                      buttons.push({ text: 'Importer maintenant', style: 'primary', onPress: async () => {
+                        await AsyncStorage.multiRemove(['@yoroi_imported_workouts', '@yoroi_full_history_imported']);
+                        healthConnect.importFullHistory().catch(() => {});
+                      }});
+                    } else {
+                      buttons.push({ text: 'Ouvrir Reglages Sante', style: 'primary', onPress: () => Linking.openURL('app-settings:').catch(() => {}) });
+                    }
+                    showPopup('Diagnostic seances', lines.join('\n'), buttons);
+                  } catch (e: any) {
+                    showPopup('Erreur', String(e?.message || e), [{ text: 'OK', style: 'primary' }]);
+                  } finally {
+                    setIsDiagnosing(false);
+                  }
+                }}
+                disabled={isDiagnosing}
+              >
+                {isDiagnosing ? (
+                  <ActivityIndicator size="small" color="#6366F1" />
+                ) : (
+                  <Zap size={14} color="#6366F1" />
+                )}
+                <Text style={[styles.importBtnText, { color: '#6366F1' }]}>
+                  {isDiagnosing ? 'Diagnostic en cours...' : 'Diagnostiquer mes seances'}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.disconnectBtn, { borderColor: colors.border }]}

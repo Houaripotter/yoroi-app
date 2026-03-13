@@ -1,16 +1,131 @@
 import { View, Text, StyleSheet, TouchableOpacity, Animated, DeviceEventEmitter } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { Home, BarChart2, Plus, Calendar, Wrench, User, Settings, BookOpen } from 'lucide-react-native';
+import { Home, BarChart2, Plus, Calendar, Wrench, Settings, BookOpen } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { getTabOrder, getLeftTabs, getRightTabs, TAB_ORDER_CHANGED_EVENT } from '@/lib/tabOrderService';
 import type { TabItem } from '@/lib/tabOrderService';
 import { useResponsive } from '@/constants/responsive';
 
 export const DEMO_CHANGED_EVENT = 'YOROI_DEMO_CHANGED';
+
+// ============================================
+// IMPORT PROGRESS BANNER
+// ============================================
+function ImportProgressBanner() {
+  const [visible, setVisible] = useState(false);
+  const [stepLabel, setStepLabel] = useState('');
+  const [current, setCurrent] = useState(0);
+  const [total, setTotal] = useState(7);
+  const slideAnim = useRef(new Animated.Value(-60)).current;
+  const { colors } = useTheme();
+
+  const show = useCallback(() => {
+    setVisible(true);
+    Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, speed: 20, bounciness: 4 }).start();
+  }, [slideAnim]);
+
+  const hide = useCallback(() => {
+    Animated.timing(slideAnim, { toValue: -60, duration: 300, useNativeDriver: true }).start(() => {
+      setVisible(false);
+      setCurrent(0);
+      setStepLabel('');
+    });
+  }, [slideAnim]);
+
+  useEffect(() => {
+    const subs = [
+      DeviceEventEmitter.addListener('YOROI_IMPORT_START', () => {
+        setCurrent(0); setStepLabel('Démarrage...'); setTotal(7);
+        show();
+      }),
+      DeviceEventEmitter.addListener('YOROI_IMPORT_PROGRESS', (data: { step: string; current: number; total: number }) => {
+        setStepLabel(data.step); setCurrent(data.current); setTotal(data.total);
+      }),
+      DeviceEventEmitter.addListener('YOROI_IMPORT_DONE', () => {
+        setStepLabel('Import terminé !'); setCurrent(7);
+        setTimeout(hide, 1800);
+      }),
+    ];
+    return () => subs.forEach(s => s.remove());
+  }, [show, hide]);
+
+  if (!visible) return null;
+
+  const progress = total > 0 ? current / total : 0;
+
+  return (
+    <Animated.View style={[bannerStyles.wrap, { transform: [{ translateY: slideAnim }] }]}>
+      <View style={[bannerStyles.bar, { backgroundColor: colors.cardBackground || '#1A1A2E' }]}>
+        <View style={bannerStyles.row}>
+          <View style={bannerStyles.dot} />
+          <Text style={bannerStyles.label} numberOfLines={1}>
+            Import santé — {stepLabel}
+          </Text>
+          <Text style={bannerStyles.counter}>{current}/{total}</Text>
+        </View>
+        <View style={bannerStyles.trackBg}>
+          <Animated.View style={[bannerStyles.trackFill, { width: `${Math.round(progress * 100)}%` }]} />
+        </View>
+      </View>
+    </Animated.View>
+  );
+}
+
+const bannerStyles = StyleSheet.create({
+  wrap: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0,
+    zIndex: 999,
+    paddingHorizontal: 12,
+    paddingTop: 52,
+  },
+  bar: {
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  dot: {
+    width: 7, height: 7, borderRadius: 4,
+    backgroundColor: '#3B82F6',
+    marginRight: 8,
+  },
+  label: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#3B82F6',
+  },
+  counter: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'rgba(59,130,246,0.6)',
+  },
+  trackBg: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(59,130,246,0.15)',
+    overflow: 'hidden',
+  },
+  trackFill: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#3B82F6',
+  },
+});
 
 const isColorDark = (hex: string): boolean => {
   const h = hex.replace('#', '');
@@ -27,7 +142,6 @@ const ROUTE_ICONS: Record<string, any> = {
   carnet: BookOpen,
   planning: Calendar,
   more: Wrench,
-  profile: User,
   settings: Settings,
 };
 
@@ -38,7 +152,6 @@ const ROUTE_LABELS: Record<string, string> = {
   carnet: 'Carnet',
   planning: 'Planning',
   more: 'Outils',
-  profile: 'Profil',
   settings: 'Reglages',
 };
 
@@ -106,8 +219,8 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
   });
 
   // Ordre: 3 gauche | + | 3 droite (equilibre)
-  const leftNames = tabOrder ? getLeftTabs(tabOrder).map(t => t.id).filter(id => id !== 'profile') : ['index', 'stats', 'carnet'];
-  const rightNames = tabOrder ? getRightTabs(tabOrder).map(t => t.id).filter(id => id !== 'profile') : ['planning', 'more', 'settings'];
+  const leftNames = tabOrder ? getLeftTabs(tabOrder).map(t => t.id) : ['index', 'stats', 'carnet'];
+  const rightNames = tabOrder ? getRightTabs(tabOrder).map(t => t.id) : ['planning', 'more', 'settings'];
 
   const leftRoutes = leftNames
     .map(name => state.routes.find(r => r.name === name))
@@ -230,20 +343,22 @@ export default function TabLayout() {
   }, []);
 
   return (
-    <Tabs
-      key={tabsKey}
-      tabBar={(props) => <FloatingPillTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
-    >
-      <Tabs.Screen name="index" options={{ title: '' }} />
-      <Tabs.Screen name="stats" options={{ title: '' }} />
-      <Tabs.Screen name="carnet" options={{ title: '' }} />
-      <Tabs.Screen name="planning" options={{ title: '' }} />
-      <Tabs.Screen name="add" options={{ title: '' }} />
-      <Tabs.Screen name="more" options={{ title: '' }} />
-      <Tabs.Screen name="profile" options={{ title: '' }} />
-      <Tabs.Screen name="settings" options={{ title: '' }} />
-    </Tabs>
+    <View style={{ flex: 1 }}>
+      <Tabs
+        key={tabsKey}
+        tabBar={(props) => <FloatingPillTabBar {...props} />}
+        screenOptions={{ headerShown: false }}
+      >
+        <Tabs.Screen name="index" options={{ title: '' }} />
+        <Tabs.Screen name="stats" options={{ title: '' }} />
+        <Tabs.Screen name="carnet" options={{ title: '' }} />
+        <Tabs.Screen name="planning" options={{ title: '' }} />
+        <Tabs.Screen name="add" options={{ title: '' }} />
+        <Tabs.Screen name="more" options={{ title: '' }} />
+        <Tabs.Screen name="settings" options={{ title: '' }} />
+      </Tabs>
+      <ImportProgressBanner />
+    </View>
   );
 }
 

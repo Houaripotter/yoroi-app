@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
-  ActivityIndicator,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 
@@ -30,6 +29,7 @@ import {
   Sun,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
+import { SamuraiLoader } from '@/components/SamuraiLoader';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
@@ -322,7 +322,7 @@ export default function FastingScreen() {
       <ScreenWrapper noPadding>
         <Header title="Mode Jeûne" showBack />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.gold} />
+          <SamuraiLoader />
         </View>
       </ScreenWrapper>
     );

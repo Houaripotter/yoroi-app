@@ -4,9 +4,10 @@
 // ============================================
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, RefreshControl, InteractionManager } from 'react-native';
+import { ScrollView, View, StyleSheet, TouchableOpacity, Text, RefreshControl, InteractionManager, DeviceEventEmitter } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
+import { SamuraiCircleLoader } from '@/components/SamuraiLoader';
 import { formatDurationHM } from '@/lib/formatDuration';
 import { useScrollContext } from '@/lib/ScrollContext';
 import { StatsHeader, Period } from '../StatsHeader';
@@ -19,10 +20,14 @@ import { StrainGauge } from '../advanced/StrainGauge';
 import { PerformanceRadar } from '@/components/PerformanceRadar';
 import { aggregateTrainingData } from '@/lib/statsAggregation';
 import { getTrainings } from '@/lib/database';
+import { getSportById } from '@/lib/sports';
 import { Flame, Target, Calendar, Award, Timer } from 'lucide-react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { logger } from '@/lib/security/logger';
+import { ImportProgressBanner } from '@/components/ImportProgressBanner';
 
 export const TrainingTabPage: React.FC = React.memo(() => {
   const { colors, isDark, screenBackground } = useTheme();
@@ -47,7 +52,14 @@ export const TrainingTabPage: React.FC = React.memo(() => {
   const [trainingData, setTrainingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
   const [allTrainingsData, setAllTrainingsData] = useState<any[]>([]);
+
+  const [showLoader, setShowLoader] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setShowLoader(false), 7000);
+    return () => clearTimeout(t);
+  }, []);
 
   const [selectedMetric, setSelectedMetric] = useState<{
     key: string;
@@ -72,6 +84,14 @@ export const TrainingTabPage: React.FC = React.memo(() => {
     } else {
       loadData();
     }
+  }, [selectedPeriod]);
+
+  // Recharger quand Apple Health importe de nouvelles séances
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
+      loadData();
+    });
+    return () => sub.remove();
   }, [selectedPeriod]);
 
   const handleRefresh = useCallback(async () => {
@@ -152,21 +172,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
     }
   }, [selectedMetric, allTrainingsData, dateLocale]);
 
-  if (loading) {
-    return (
-      <View style={[styles.container, { backgroundColor: screenBackground }]}>
-        <StatsHeader
-          title={t('statsPages.discipline.title')}
-          description="Discipline, charge et performance"
-          selectedPeriod={selectedPeriod}
-          onPeriodChange={setSelectedPeriod}
-        />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-        </View>
-      </View>
-    );
-  }
+  if (showLoader) return <SamuraiCircleLoader duration={7000} bgColor={screenBackground} />;
 
   return (
     <ScrollView
@@ -192,6 +198,8 @@ export const TrainingTabPage: React.FC = React.memo(() => {
         selectedPeriod={selectedPeriod}
         onPeriodChange={setSelectedPeriod}
       />
+
+      <ImportProgressBanner />
 
       {/* ========== VOLUME + SÉANCES RÉCENTES dans la même carte ========== */}
       <StatsSection>
@@ -225,42 +233,45 @@ export const TrainingTabPage: React.FC = React.memo(() => {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.historyScrollContent}
               >
-                {allTrainingsData.slice(0, 20).map((entry, index) => {
-                  const prevEntry = allTrainingsData[index + 1];
-                  const durationChange = prevEntry && prevEntry.duration ? entry.duration - prevEntry.duration : 0;
+                {allTrainingsData.map((entry, index) => {
                   const isFirst = index === 0;
+                  const sportInfo = getSportById(entry.sport);
+                  const sportColor = sportInfo?.color || '#10B981';
+                  const sportIcon = sportInfo?.icon || 'trophy';
                   const intensityZone = entry.intensity ? getIntensityStatus(entry.intensity) : null;
                   return (
                     <TouchableOpacity
                       key={entry.id || index}
                       activeOpacity={0.7}
-                      onPress={() => setSelectedMetric({ key: 'duration', label: t('statsPages.discipline.duration'), color: '#10B981', unit: 'min', icon: <Timer size={18} color="#10B981" strokeWidth={2.5} /> })}
+                      onPress={() => entry.id && router.push({ pathname: '/workout-detail', params: { id: entry.id.toString() } })}
                       style={[
                         styles.historyCard,
-                        { backgroundColor: isDark ? colors.backgroundCard : `${isFirst ? '#10B981' : '#6366F1'}08`, borderColor: isFirst ? '#10B981' : colors.border },
+                        { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderColor: isFirst ? sportColor : colors.border },
                         isFirst && styles.historyCardRecent,
                       ]}
                     >
-                      {isFirst && (
-                        <View style={[styles.historyCardBadge, { backgroundColor: '#10B98120' }]}>
-                          <Text style={[styles.historyCardBadgeText, { color: '#10B981' }]}>RECENT</Text>
-                        </View>
-                      )}
+                      {/* Sport icon + name */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                        <MaterialCommunityIcons name={sportIcon as any} size={16} color={sportColor} />
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: sportColor, textTransform: 'uppercase', letterSpacing: 0.5 }} numberOfLines={1}>
+                          {sportInfo?.label || entry.sport}
+                        </Text>
+                      </View>
                       <Text style={[styles.historyCardDate, { color: colors.textMuted }]}>
                         {format(new Date(entry.date), 'd MMM yyyy', { locale: fr })}
                       </Text>
                       {entry.duration > 0 && (
-                        <Text style={[styles.historyCardMain, { color: isFirst ? '#10B981' : colors.textPrimary }]}>
+                        <Text style={[styles.historyCardMain, { color: isFirst ? sportColor : colors.textPrimary }]}>
                           {entry.duration}<Text style={styles.historyCardUnit}> min</Text>
                         </Text>
                       )}
-                      {durationChange !== 0 && entry.duration > 0 && (
-                        <Text style={[styles.historyCardChange, { color: durationChange > 0 ? '#10B981' : '#EF4444' }]}>
-                          {durationChange > 0 ? '+' : ''}{durationChange} min
+                      {entry.calories > 0 && (
+                        <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2 }}>
+                          {entry.calories} kcal
                         </Text>
                       )}
                       {intensityZone && entry.intensity > 0 && (
-                        <View style={[styles.historyCardBadge, { backgroundColor: `${intensityZone.color}20` }]}>
+                        <View style={[styles.historyCardBadge, { backgroundColor: `${intensityZone.color}20`, marginTop: 4 }]}>
                           <Text style={[styles.historyCardBadgeText, { color: intensityZone.color }]}>
                             RPE {entry.intensity}/10
                           </Text>

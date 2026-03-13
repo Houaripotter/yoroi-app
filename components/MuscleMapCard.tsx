@@ -3,10 +3,11 @@
 // Affiche les muscles travaillés selon le sport
 // ============================================
 
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Svg, { Ellipse, Rect, Circle, G, Path } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
+import { updateTraining } from '@/lib/database';
 
 // ─── Types ───────────────────────────────────
 type MuscleId =
@@ -19,12 +20,40 @@ type MuscleId =
 
 type Activation = 'primary' | 'secondary' | 'inactive';
 
+// Tous les muscles disponibles (pour la sélection individuelle)
+const ALL_MUSCLES: Array<{ id: MuscleId; label: string }> = [
+  // Avant
+  { id: 'pectoraux',    label: 'Pectoraux' },
+  { id: 'deltoide_ant', label: 'Épaules' },
+  { id: 'biceps',       label: 'Biceps' },
+  { id: 'avant_bras',   label: 'Avant-bras' },
+  { id: 'abdominaux',   label: 'Abdominaux' },
+  { id: 'obliques',     label: 'Obliques' },
+  { id: 'quadriceps',   label: 'Quadriceps' },
+  { id: 'tibialis',     label: 'Tibialis' },
+  { id: 'flechisseurs', label: 'Fléchisseurs' },
+  // Arrière
+  { id: 'trapeze',         label: 'Trapèzes' },
+  { id: 'dorsaux',         label: 'Dorsaux' },
+  { id: 'deltoide_post',   label: 'Épaules arr.' },
+  { id: 'triceps',         label: 'Triceps' },
+  { id: 'lombaires',       label: 'Lombaires' },
+  { id: 'fessiers',        label: 'Fessiers' },
+  { id: 'ischio_jambiers', label: 'Ischio-jamb.' },
+  { id: 'mollets',         label: 'Mollets' },
+];
+
+
 interface MuscleMapCardProps {
   sport: string;
   sportName?: string;
   sportColor?: string;
   /** Muscles saisis manuellement (ex: "pectoraux,biceps,abdominaux") — prioritaire sur le sport */
   customMuscles?: string;
+  /** ID de la séance pour sauvegarder le choix */
+  trainingId?: number;
+  /** Callback quand les muscles sont mis à jour */
+  onMusclesUpdated?: (muscles: string) => void;
 }
 
 // ─── Couleurs ────────────────────────────────
@@ -251,42 +280,80 @@ const BACK_LABELS: Array<{ id: MuscleId; label: string }> = [
 ];
 
 // ─── Main Component ───────────────────────────
-export const MuscleMapCard: React.FC<MuscleMapCardProps> = ({ sport, sportName, sportColor, customMuscles }) => {
+export const MuscleMapCard: React.FC<MuscleMapCardProps> = ({
+  sport, sportName, sportColor, customMuscles, trainingId, onMusclesUpdated,
+}) => {
   const { colors, isDark } = useTheme();
-  const muscles = useMemo(() => {
-    // Si des muscles spécifiques ont été saisis, on les utilise en priorité
+
+  // Initialiser depuis customMuscles DB, sinon depuis le mapping automatique du sport
+  const [selected, setSelected] = useState<Set<MuscleId>>(() => {
     if (customMuscles && customMuscles.trim().length > 0) {
-      const ids = customMuscles.split(',').map(s => s.trim()).filter(Boolean) as MuscleId[];
-      return {
-        primary: new Set(ids),
-        secondary: new Set<MuscleId>(),
-      };
+      return new Set(customMuscles.split(',').map(s => s.trim()).filter(Boolean) as MuscleId[]);
     }
-    return getMuscles(sport);
-  }, [sport, customMuscles]);
+    // Pré-remplir avec le mapping automatique du sport
+    const auto = getMuscles(sport);
+    return new Set([...auto.primary, ...auto.secondary]);
+  });
+
+  const muscles = useMemo(() => ({
+    primary: selected,
+    secondary: new Set<MuscleId>(),
+  }), [selected]);
+
+  const toggleMuscle = async (id: MuscleId) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      const muscleStr = [...next].join(',');
+      onMusclesUpdated?.(muscleStr);
+      if (trainingId) {
+        updateTraining(trainingId, { muscles: muscleStr }).catch(() => {});
+      }
+      return next;
+    });
+  };
 
   const bodyBg = isDark ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.09)';
   const cardBg = isDark ? colors.backgroundCard : '#FFFFFF';
 
   const activeFront = FRONT_LABELS.filter(({ id }) => muscles.primary.has(id) || muscles.secondary.has(id));
   const activeBack  = BACK_LABELS.filter(({ id })  => muscles.primary.has(id) || muscles.secondary.has(id));
-  const totalPrimary = muscles.primary.size;
-  const totalSecondary = muscles.secondary.size;
 
   return (
     <View style={[styles.card, { backgroundColor: cardBg }]}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Muscles travaillés</Text>
-        <View style={styles.counters}>
-          <View style={[styles.badge, { backgroundColor: C_PRIMARY + '20' }]}>
-            <View style={[styles.dot, { backgroundColor: C_PRIMARY }]} />
-            <Text style={[styles.badgeText, { color: C_PRIMARY }]}>{totalPrimary} principaux</Text>
-          </View>
-          <View style={[styles.badge, { backgroundColor: C_SECONDARY + '20' }]}>
-            <View style={[styles.dot, { backgroundColor: C_SECONDARY }]} />
-            <Text style={[styles.badgeText, { color: C_SECONDARY }]}>{totalSecondary} secondaires</Text>
-          </View>
+      </View>
+
+      {/* Sélecteur individuel multi-choix — tous les sports */}
+      <View style={[presetStyles.wrap, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)' }]}>
+        <Text style={[presetStyles.hint, { color: colors.textMuted }]}>
+          Muscles travaillés{selected.size > 0 ? ` · ${selected.size} sélectionné${selected.size > 1 ? 's' : ''}` : ' — appuie pour sélectionner'}
+        </Text>
+        <View style={presetStyles.grid}>
+          {ALL_MUSCLES.map(m => {
+            const active = selected.has(m.id);
+            return (
+              <TouchableOpacity
+                key={m.id}
+                onPress={() => toggleMuscle(m.id)}
+                activeOpacity={0.7}
+                style={[
+                  presetStyles.chip,
+                  {
+                    backgroundColor: active ? '#3B82F6' : isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                    borderColor: active ? '#3B82F6' : isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                  },
+                ]}
+              >
+                <Text style={[presetStyles.chipText, { color: active ? '#fff' : colors.textSecondary }]}>
+                  {m.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
@@ -323,6 +390,36 @@ export const MuscleMapCard: React.FC<MuscleMapCardProps> = ({ sport, sportName, 
     </View>
   );
 };
+
+const presetStyles = StyleSheet.create({
+  wrap: {
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  hint: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 10,
+    letterSpacing: 0.1,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+});
 
 const styles = StyleSheet.create({
   card: {

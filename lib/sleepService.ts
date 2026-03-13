@@ -64,50 +64,66 @@ const STORAGE_KEYS = {
 const DEFAULT_SLEEP_GOAL = 480; // 8h par defaut
 
 // ============================================
-// SECURE STORAGE — migration one-shot
+// ASYNC STORAGE — les entrées de sommeil ne sont pas des données sensibles
+// (expo-secure-store a une limite de 2048 octets par valeur, insuffisant pour
+//  stocker un historique de nuits)
+// Migration inverse : si des données sont coincées dans SecureStore, on les récupère
 // ============================================
 
 let sleepMigrationDone = false;
 
-const migrateSleepToSecureStorage = async (): Promise<void> => {
+const MIGRATION_DONE_KEY = '@yoroi_sleep_migrated_to_async';
+
+const migrateFromSecureToAsync = async (): Promise<void> => {
   if (sleepMigrationDone) return;
+  sleepMigrationDone = true;
   try {
+    // Migration déjà faite
+    const migrated = await AsyncStorage.getItem(MIGRATION_DONE_KEY);
+    if (migrated) return;
+
+    // Récupérer les données éventuellement coincées dans SecureStore
     const secureData = await secureStorage.getItem(STORAGE_KEYS.SLEEP_ENTRIES);
     if (secureData && Array.isArray(secureData) && secureData.length > 0) {
-      sleepMigrationDone = true;
-      return;
-    }
-    const oldData = await AsyncStorage.getItem(STORAGE_KEYS.SLEEP_ENTRIES);
-    if (oldData) {
-      const parsed = JSON.parse(oldData);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        await secureStorage.setItem(STORAGE_KEYS.SLEEP_ENTRIES, parsed);
-        await AsyncStorage.removeItem(STORAGE_KEYS.SLEEP_ENTRIES);
-        logger.info('[SleepService] Migration sommeil vers SecureStorage réussie');
+      // Fusionner avec les données AsyncStorage existantes (si présentes)
+      const asyncRaw = await AsyncStorage.getItem(STORAGE_KEYS.SLEEP_ENTRIES);
+      const asyncEntries: SleepEntry[] = asyncRaw ? JSON.parse(asyncRaw) : [];
+      const merged = [...asyncEntries];
+      for (const e of secureData) {
+        if (!merged.find(x => x.id === e.id)) merged.push(e);
       }
+      await AsyncStorage.setItem(STORAGE_KEYS.SLEEP_ENTRIES, JSON.stringify(merged));
+      await secureStorage.removeItem(STORAGE_KEYS.SLEEP_ENTRIES);
+      logger.info(`[SleepService] Migration SecureStore → AsyncStorage: ${secureData.length} nuits récupérées`);
     }
+
+    // Reset le flag de synchro HealthKit pour forcer un re-import propre
+    await AsyncStorage.removeItem('@yoroi_sleep_history_synced');
+    await AsyncStorage.setItem(MIGRATION_DONE_KEY, 'true');
+    logger.info('[SleepService] Migration vers AsyncStorage terminée, re-sync HealthKit programmé');
   } catch (error) {
     logger.error('[SleepService] Erreur migration sommeil:', error);
   }
-  sleepMigrationDone = true;
 };
 
 const getSecureSleepEntries = async (): Promise<SleepEntry[]> => {
   try {
-    await migrateSleepToSecureStorage();
-    const data = await secureStorage.getItem(STORAGE_KEYS.SLEEP_ENTRIES);
-    return Array.isArray(data) ? data : [];
+    await migrateFromSecureToAsync();
+    const data = await AsyncStorage.getItem(STORAGE_KEYS.SLEEP_ENTRIES);
+    if (!data) return [];
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
-    logger.error('Erreur lecture sécurisée sommeil:', error);
+    logger.error('Erreur lecture sommeil:', error);
     return [];
   }
 };
 
 const saveSecureSleepEntries = async (entries: SleepEntry[]): Promise<void> => {
   try {
-    await secureStorage.setItem(STORAGE_KEYS.SLEEP_ENTRIES, entries);
+    await AsyncStorage.setItem(STORAGE_KEYS.SLEEP_ENTRIES, JSON.stringify(entries));
   } catch (error) {
-    logger.error('Erreur sauvegarde sécurisée sommeil:', error);
+    logger.error('Erreur sauvegarde sommeil:', error);
   }
 };
 

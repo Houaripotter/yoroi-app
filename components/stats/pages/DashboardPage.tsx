@@ -193,7 +193,7 @@ export const DashboardPage: React.FC = React.memo(() => {
   }, [allMetrics, mountedChartCount]);
 
   const loadAllData = useCallback(async (period: Period = '30j') => {
-    const daysMap: Record<Period, number> = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, 'tout': 1095 };
+    const daysMap: Record<Period, number> = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, 'tout': 3650 };
     const days = daysMap[period] || 30;
 
     try {
@@ -325,11 +325,7 @@ export const DashboardPage: React.FC = React.memo(() => {
   }, [selectedMetric]);
 
   if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.accent} />
-      </View>
-    );
+    return null;
   }
 
   return (
@@ -424,7 +420,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   gridContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
   },
   themeSeparator: {
     height: 3,

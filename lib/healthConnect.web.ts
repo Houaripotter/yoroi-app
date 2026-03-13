@@ -133,6 +133,27 @@ class HealthConnectServiceStub {
     if (minutes < 480) return 'good';
     return 'excellent';
   }
+
+  async canReadWorkouts(): Promise<{ accessible: boolean; count: number }> {
+    return { accessible: false, count: 0 };
+  }
+
+  async requestWorkoutPermissions(): Promise<void> {}
+
+  async diagnoseWorkouts(): Promise<any> {
+    return { moduleLoaded: false, isConnected: false, healthkit30d: 0, healthkitAll: 0, activityTypes: [], dbCount: 0, dbFromHealthkit: 0, cacheSize: 0, error: 'Non disponible sur web', rawApiTest: -1, rawApiError: null, anchorApiTest: -1, anchorApiError: null, nativeModuleTest: -1, authStatus: null, nativeDiag: null };
+  }
+
+  async importFullHistory(): Promise<any> {
+    return { weights: 0, sleep: 0, steps: 0, calories: 0, heartRate: 0, distance: 0, workouts: 0, healthkitFound: 0, insertErrors: 0 };
+  }
+
+  async getStepsHistory(_days: number = 0): Promise<Array<{ date: string; value: number }>> { return []; }
+  async getCaloriesHistory(_days: number = 0): Promise<Array<{ date: string; value: number }>> { return []; }
+  async getDistanceHistory(_days: number = 0): Promise<Array<{ date: string; value: number }>> { return []; }
+  async getExerciseMinutesHistory(_days: number = 0): Promise<Array<{ date: string; value: number }>> { return []; }
+  async getStandHoursHistory(_days: number = 0): Promise<Array<{ date: string; value: number }>> { return []; }
+  async getSleepHistory(_days: number = 0): Promise<any[]> { return []; }
 }
 
 export const healthConnect = new HealthConnectServiceStub();

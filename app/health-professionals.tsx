@@ -71,10 +71,10 @@ export default function HealthProfessionalsScreen() {
           </TouchableOpacity>
           <View style={styles.headerText}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Professionnels de Santé
+              Pros de Santé
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              Kinés, nutritionnistes, ostéopathes et médecins du sport
+              Des pros que je connais et recommande
             </Text>
           </View>
         </View>
@@ -252,10 +252,10 @@ export default function HealthProfessionalsScreen() {
         <View style={[styles.becomePartner, { backgroundColor: colors.backgroundCard }]}>
           <Text style={styles.becomePartnerIcon}></Text>
           <Text style={[styles.becomePartnerTitle, { color: colors.textPrimary }]}>
-            Tu es professionnel de santé ?
+            Tu veux être dans la sélection ?
           </Text>
           <Text style={[styles.becomePartnerText, { color: colors.textMuted }]}>
-            Rejoins le réseau YOROI et sois visible auprès de notre communauté de guerriers !
+            Contacte-moi sur Instagram, je serai ravi de te mettre en avant.
           </Text>
           <TouchableOpacity
             style={[styles.becomePartnerButton, { backgroundColor: colors.accent }]}
@@ -271,8 +271,7 @@ export default function HealthProfessionalsScreen() {
 
         {/* Disclaimer */}
         <Text style={[styles.disclaimer, { color: colors.textMuted }]}>
-          Les professionnels listés sont indépendants. YOROI ne garantit pas leurs services.
-          Vérifiez toujours les qualifications avant de vous engager.
+          Sélection personnelle et subjective. Ces pros ne sont pas liés contractuellement à YOROI.
         </Text>
 
         <View style={{ height: 100 }} />
@@ -449,7 +448,7 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, color
         {professional.featured && (
           <View style={[styles.featuredBadge, { backgroundColor: colors.accent }]}>
             <Star size={10} color={colors.textOnAccent} />
-            <Text style={[styles.featuredText, { color: colors.textOnAccent }]}>Recommandé</Text>
+            <Text style={[styles.featuredText, { color: colors.textOnAccent }]}>Coup de coeur</Text>
           </View>
         )}
       </View>

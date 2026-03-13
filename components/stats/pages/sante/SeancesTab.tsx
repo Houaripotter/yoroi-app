@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList } from 'react-native';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, RefreshControl, DeviceEventEmitter } from 'react-native';
+import { SamuraiCircleLoader } from '@/components/SamuraiLoader';
 import { useTheme } from '@/lib/ThemeContext';
-import { Training } from '@/lib/database';
+import { getTrainings, Training } from '@/lib/database';
 import { getSportIcon, getSportName, getSportColor } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Dumbbell, ArrowDown, ArrowUp } from 'lucide-react-native';
@@ -9,8 +10,11 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { router } from 'expo-router';
 
+// Accepte toujours les trainings depuis le parent (rétrocompatibilité)
+// mais charge aussi les siennes si le parent ne donne rien
 interface SeancesTabProps {
-  trainings: Training[];
+  trainings?: Training[];
+  period?: string; // '7j' | '30j' | '90j' | '6m' | '1a' | '2a' | 'tout'
 }
 
 const formatDuration = (minutes: number): string => {
@@ -37,14 +41,70 @@ const estimateCalories = (sport: string, durationMin: number): number => {
   return Math.round(durationMin * rate);
 };
 
+const PERIOD_DAYS: Record<string, number | undefined> = {
+  '7j': 7, '30j': 30, '90j': 90, '6m': 180, '1a': 365, '2a': 730, 'tout': undefined,
+};
+
 type SortOrder = 'recent' | 'oldest';
 
-export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: rawTrainings }) => {
-  const { colors, isDark } = useTheme();
+export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: propTrainings, period = '1a' }) => {
+  const { colors, isDark, screenBackground } = useTheme();
+
+  const sectionBg = isDark ? colors.accent + '10' : colors.accent + '08';
+  const cardBg = isDark ? '#242430' : '#FFFFFF';
+  const cardBorder = isDark ? colors.accent + '30' : colors.border;
+
   const [selectedSport, setSelectedSport] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<SortOrder>('recent');
 
-  const trainings = Array.isArray(rawTrainings) ? rawTrainings : [];
+  // Loader 7 secondes
+  const [showLoader, setShowLoader] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setShowLoader(false), 7000);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Données locales (chargées directement depuis la DB)
+  const [localTrainings, setLocalTrainings] = useState<Training[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadData = useCallback(async () => {
+    try {
+      const days = PERIOD_DAYS[period];
+      const data = await getTrainings(days);
+      setLocalTrainings(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setLocalTrainings([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [period]);
+
+  useEffect(() => {
+    setLoading(true);
+    loadData();
+  }, [period]);
+
+  // Recharger quand un import HealthKit est terminé
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_IMPORT_DONE', () => {
+      loadData();
+    });
+    return () => sub.remove();
+  }, [loadData]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+  }, [loadData]);
+
+  // Si le parent passe des données non vides, on les utilise — sinon on utilise les données locales
+  const trainings = useMemo(() => {
+    if (Array.isArray(propTrainings) && propTrainings.length > 0) return propTrainings;
+    return localTrainings;
+  }, [propTrainings, localTrainings]);
 
   const uniqueSports = useMemo(
     () => [...new Set(trainings.map(t => t.sport).filter(Boolean))],
@@ -118,7 +178,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
 
     return (
       <TouchableOpacity
-        style={[styles.sessionCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}
+        style={[styles.sessionCard, { backgroundColor: cardBg, borderWidth: 1, borderColor: cardBorder }]}
         activeOpacity={0.7}
         onPress={() => {
           if (training.id != null) {
@@ -183,136 +243,167 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: ra
     );
   }, [isDark, colors]);
 
+  if (showLoader) {
+    return <SamuraiCircleLoader duration={7000} bgColor={screenBackground} />;
+  }
+
   if (trainings.length === 0) {
     return (
-      <View style={[styles.emptyCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
-        <Dumbbell size={40} color={colors.textMuted} strokeWidth={1.5} />
-        <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-          Aucune séance sur cette periode
+      <View style={[styles.emptyCard, { backgroundColor: cardBg, borderWidth: 1, borderColor: '#EF4444' }]}>
+        <Dumbbell size={40} color="#EF4444" strokeWidth={1.5} />
+        <Text style={[styles.emptyText, { color: '#EF4444', fontWeight: '700' }]}>
+          0 séance dans la base de données
+        </Text>
+        <Text style={[styles.emptySubText, { color: colors.textMuted, textAlign: 'center', lineHeight: 20 }]}>
+          L'import depuis Apple Santé n'a pas encore fonctionné.{'\n'}
+          Va dans Planning {'>'} Séances {'>'} appuie sur{'\n'}
+          "Importer mes séances Apple Santé"
+        </Text>
+        <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 12, textAlign: 'center', lineHeight: 16 }}>
+          Assure-toi que dans Réglages {'>'} Santé {'>'} Accès aux données {'>'} Yoroi{'\n'}
+          "Entraînements" est bien activé
         </Text>
       </View>
     );
   }
 
   return (
-    <View>
-      {/* Pills de filtre par sport */}
-      {uniqueSports.length > 1 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterScroll}
-          contentContainerStyle={styles.filterContent}
-        >
-          <TouchableOpacity
-            style={[
-              styles.filterPill,
-              {
-                backgroundColor: selectedSport === 'all'
-                  ? colors.accent
-                  : (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.88)'),
-              },
-            ]}
-            onPress={() => setSelectedSport('all')}
-            activeOpacity={0.7}
-          >
-            <Text style={[
-              styles.filterPillText,
-              { color: selectedSport === 'all' ? colors.textOnAccent : (isDark ? colors.textSecondary : '#1C1C1E') },
-            ]}>
-              Tous ({trainings.length})
-            </Text>
-          </TouchableOpacity>
-
-          {uniqueSports.map((sport) => {
-            const isActive = selectedSport === sport;
-            const sportColor = getSportColor(sport);
-            const sportIcon = getSportIcon(sport);
-            const sportName = getSportName(sport);
-            const count = sportCounts[sport] || 0;
-
-            return (
+    <FlatList
+      data={filteredTrainings}
+      renderItem={renderSession}
+      keyExtractor={(item, index) => item.id?.toString() || `session-${index}`}
+      scrollEnabled={false}
+      style={{ backgroundColor: sectionBg, borderRadius: 16 }}
+      initialNumToRender={15}
+      maxToRenderPerBatch={10}
+      windowSize={5}
+      removeClippedSubviews={true}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={colors.accent}
+          colors={[colors.accent]}
+        />
+      }
+      ListHeaderComponent={
+        <View>
+          {/* Pills de filtre par sport */}
+          {uniqueSports.length > 1 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.filterScroll}
+              contentContainerStyle={styles.filterContent}
+            >
               <TouchableOpacity
-                key={sport}
                 style={[
                   styles.filterPill,
                   {
-                    backgroundColor: isActive
-                      ? sportColor
+                    backgroundColor: selectedSport === 'all'
+                      ? colors.accent
                       : (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.88)'),
                   },
                 ]}
-                onPress={() => setSelectedSport(sport)}
+                onPress={() => setSelectedSport('all')}
                 activeOpacity={0.7}
               >
-                <MaterialCommunityIcons
-                  name={sportIcon as any}
-                  size={14}
-                  color={isActive ? '#FFFFFF' : (isDark ? sportColor : sportColor)}
-                />
                 <Text style={[
                   styles.filterPillText,
-                  { color: isActive ? '#FFFFFF' : (isDark ? colors.textSecondary : '#1C1C1E') },
+                  { color: selectedSport === 'all' ? colors.textOnAccent : (isDark ? colors.textSecondary : '#1C1C1E') },
                 ]}>
-                  {sportName} ({count})
+                  Tous ({trainings.length})
                 </Text>
               </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      )}
 
-      {/* Tri + Résumé */}
-      <View style={styles.sortAndSummary}>
-        <TouchableOpacity
-          style={[styles.sortButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.12)' : colors.accent + '30', borderWidth: 1 }]}
-          onPress={() => setSortOrder(prev => prev === 'recent' ? 'oldest' : 'recent')}
-          activeOpacity={0.7}
-        >
-          {sortOrder === 'recent' ? (
-            <ArrowDown size={14} color={colors.accent} strokeWidth={2.5} />
-          ) : (
-            <ArrowUp size={14} color={colors.accent} strokeWidth={2.5} />
+              {uniqueSports.map((sport) => {
+                const isActive = selectedSport === sport;
+                const sportColor = getSportColor(sport);
+                const sportIcon = getSportIcon(sport);
+                const sportName = getSportName(sport);
+                const count = sportCounts[sport] || 0;
+
+                return (
+                  <TouchableOpacity
+                    key={sport}
+                    style={[
+                      styles.filterPill,
+                      {
+                        backgroundColor: isActive
+                          ? sportColor
+                          : (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.88)'),
+                      },
+                    ]}
+                    onPress={() => setSelectedSport(sport)}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialCommunityIcons
+                      name={sportIcon as any}
+                      size={14}
+                      color={isActive ? '#FFFFFF' : sportColor}
+                    />
+                    <Text style={[
+                      styles.filterPillText,
+                      { color: isActive ? '#FFFFFF' : (isDark ? colors.textSecondary : '#1C1C1E') },
+                    ]}>
+                      {sportName} ({count})
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           )}
-          <Text style={[styles.sortText, { color: colors.accent }]}>
-            {sortOrder === 'recent' ? 'Récent' : 'Ancien'}
-          </Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* Résumé en haut */}
-      <View style={styles.summaryRow}>
-        {summaryItems.map((item, i) => (
-          <View
-            key={i}
-            style={[styles.summaryCard, {
-              backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
-              borderTopWidth: 3,
-              borderTopColor: item.color,
-            }]}
-          >
-            <Text style={[styles.summaryValue, { color: item.color }]}>{item.value}</Text>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{item.label}</Text>
+          {/* Tri + Résumé */}
+          <View style={styles.sortAndSummary}>
+            <TouchableOpacity
+              style={[styles.sortButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF', borderColor: isDark ? 'rgba(255,255,255,0.12)' : colors.accent + '30', borderWidth: 1 }]}
+              onPress={() => setSortOrder(prev => prev === 'recent' ? 'oldest' : 'recent')}
+              activeOpacity={0.7}
+            >
+              {sortOrder === 'recent' ? (
+                <ArrowDown size={14} color={colors.accent} strokeWidth={2.5} />
+              ) : (
+                <ArrowUp size={14} color={colors.accent} strokeWidth={2.5} />
+              )}
+              <Text style={[styles.sortText, { color: colors.accent }]}>
+                {sortOrder === 'recent' ? 'Récent' : 'Ancien'}
+              </Text>
+            </TouchableOpacity>
           </View>
-        ))}
-      </View>
 
-      {/* Liste virtualisee des séances */}
-      <FlatList
-        data={filteredTrainings}
-        renderItem={renderSession}
-        keyExtractor={(item, index) => item.id?.toString() || `session-${index}`}
-        scrollEnabled={false}
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
-        windowSize={5}
-        removeClippedSubviews={true}
-      />
-    </View>
+          {/* Résumé en haut */}
+          <View style={styles.summaryRow}>
+            {summaryItems.map((item, i) => (
+              <View
+                key={i}
+                style={[styles.summaryCard, {
+                  backgroundColor: cardBg,
+                  borderTopWidth: 3,
+                  borderTopColor: item.color,
+                }]}
+              >
+                <Text style={[styles.summaryValue, { color: item.color }]}>{item.value}</Text>
+                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{item.label}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      }
+    />
   );
 });
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    paddingVertical: 60,
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
   filterScroll: {
     marginBottom: 12,
   },
@@ -458,7 +549,13 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '600',
     textAlign: 'center',
+  },
+  emptySubText: {
+    fontSize: 13,
+    fontWeight: '400',
+    textAlign: 'center',
+    opacity: 0.7,
   },
 });

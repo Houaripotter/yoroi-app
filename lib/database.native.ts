@@ -16,9 +16,12 @@ const _openDB = async (): Promise<SQLite.SQLiteDatabase> => {
   return db;
 };
 
-// Ouvrir la base de données (attend que l'init soit terminée)
+// Ouvrir la base de données (s'assure que l'init est faite, même si initDatabase() n'a pas encore été appelé)
 export const openDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
-  if (_initPromise) await _initPromise;
+  if (!_initPromise) {
+    _initPromise = _performInit();
+  }
+  await _initPromise;
   return _openDB();
 };
 
@@ -1082,6 +1085,24 @@ export const getTrainings = async (days?: number): Promise<Training[]> => {
     }
     return { ...r, exercises, combat_rounds };
   });
+};
+
+export const getTrainingsCount = async (): Promise<{ total: number; fromHealthkit: number; manual: number }> => {
+  const database = await openDatabase();
+  const row = await database.getFirstAsync<{ total: number; fromHealthkit: number }>(
+    `SELECT COUNT(*) as total, SUM(CASE WHEN healthkit_uuid IS NOT NULL THEN 1 ELSE 0 END) as fromHealthkit FROM trainings`
+  );
+  const total = row?.total ?? 0;
+  const fromHealthkit = row?.fromHealthkit ?? 0;
+  return { total, fromHealthkit, manual: total - fromHealthkit };
+};
+
+export const getExistingHealthkitUUIDs = async (): Promise<Set<string>> => {
+  const database = await openDatabase();
+  const rows = await database.getAllAsync<{ healthkit_uuid: string }>(
+    `SELECT healthkit_uuid FROM trainings WHERE healthkit_uuid IS NOT NULL`
+  );
+  return new Set(rows.map(r => r.healthkit_uuid));
 };
 
 export const getTrainingsByMonth = async (year: number, month: number): Promise<Training[]> => {

@@ -133,9 +133,11 @@ export const useWeekSchedule = () => {
           const session: SessionDetail = {
             id: workout.id,
             clubId: workout.club_id,
-            clubName: club?.name || 'Club inconnu',
-            clubColor: club?.color || '#6B7280',
-            clubLogo: club?.logo_uri,
+            // Priorité : données joinées depuis la DB (toujours présentes si club_id est set)
+            // Fallback : recherche manuelle dans le tableau clubs
+            clubName: workout.club_name || club?.name || 'Club inconnu',
+            clubColor: workout.club_color || club?.color || '#6B7280',
+            clubLogo: workout.club_logo || club?.logo_uri,
             startTime: workout.start_time || '12:00',
             duration: workout.duration_minutes || 60,
             sessionTypes,

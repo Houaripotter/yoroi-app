@@ -56,10 +56,10 @@ struct ContentView: View {
     }
     // Deep link depuis une complication : navigation automatique vers le bon onglet
     .onChange(of: session.requestedTab) {
-      guard session.requestedTab > 0 else { return }
+      guard session.requestedTab >= 0 else { return }
       withAnimation { selectedTab = session.requestedTab }
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        session.requestedTab = 0
+        session.requestedTab = -1
       }
     }
   }

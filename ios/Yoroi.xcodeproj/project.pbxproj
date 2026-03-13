@@ -26,6 +26,8 @@
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		BGTASK01OBJBUILDF000001 /* BackgroundTaskModule.m in Sources */ = {isa = PBXBuildFile; fileRef = BGTASK01OBJFILEREF000001 /* BackgroundTaskModule.m */; };
 		BGTASK01SWFBUILDF000001 /* BackgroundTaskModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = BGTASK01SWFFILEREF000001 /* BackgroundTaskModule.swift */; };
+		YOROIHK01OBJBUILDF000001 /* YoroiHealthKitModule.m in Sources */ = {isa = PBXBuildFile; fileRef = YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */; };
+		YOROIHK01SWFBUILDF000001 /* YoroiHealthKitModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */; };
 		CARNETPAGE001BUILDF00001 /* CarnetPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CARNETPAGE001FILEREF0001 /* CarnetPage.swift */; };
 		COMPETPAGE01BUILDF000001 /* CompetitionPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = COMPETPAGE01FILEREF000001 /* CompetitionPage.swift */; };
 		COMPLICCNTRL01BUILDF0001 /* ComplicationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = COMPLICCNTRL01FILEREF0001 /* ComplicationController.swift */; };
@@ -47,6 +49,11 @@
 		TORCH001SWFBUILDF000001 /* TorchModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = TORCH001SWFFILEREF00001 /* TorchModule.swift */; };
 		WATCHUTILS001BUILDF00001 /* WatchUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = WATCHUTILS001FILEREF00001 /* WatchUtils.swift */; };
 		WIZZ50UND0001F1LEREF0001 /* wizz-made-with-Voicemod.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */; };
+		WIZZM4IN0001BUILDF000001 /* wizz.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZM4IN0001F1LEREF0001 /* wizz.mp3 */; };
+		WIZZW4TCH001BUILDF000001 /* wizz.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZW4TCH001F1LEREF0001 /* wizz.mp3 */; };
+		WGTDATASWF001BUILDF00001 /* WidgetDataModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = WGTDATASWF001F1LEREF0001 /* WidgetDataModule.swift */; };
+		WGTDATAOBJ001BUILDF00001 /* WidgetDataModule.m in Sources */ = {isa = PBXBuildFile; fileRef = WGTDATAOBJ001F1LEREF0001 /* WidgetDataModule.m */; };
+		WIDGETKIT001FRAMBUILDF001 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = WIDGETKIT001FRAMFILEREF001 /* WidgetKit.framework */; };
 		WORKOUTPAG01BUILDF000001 /* WorkoutPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */; };
 /* End PBXBuildFile section */
 
@@ -102,6 +109,8 @@
 		BDA7F51DE3199FA753FF4521 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BGTASK01OBJFILEREF000001 /* BackgroundTaskModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BackgroundTaskModule.m; path = Yoroi/BackgroundTaskModule.m; sourceTree = "<group>"; };
 		BGTASK01SWFFILEREF000001 /* BackgroundTaskModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BackgroundTaskModule.swift; path = Yoroi/BackgroundTaskModule.swift; sourceTree = "<group>"; };
+		YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = YoroiHealthKitModule.m; path = Yoroi/YoroiHealthKitModule.m; sourceTree = "<group>"; };
+		YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = YoroiHealthKitModule.swift; path = Yoroi/YoroiHealthKitModule.swift; sourceTree = "<group>"; };
 		C60C9F16AACE99230853813A /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/WatchConnectivity.framework; sourceTree = DEVELOPER_DIR; };
 		CARNETPAGE001FILEREF0001 /* CarnetPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CarnetPage.swift; sourceTree = "<group>"; };
 		COMPETPAGE01FILEREF000001 /* CompetitionPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompetitionPage.swift; sourceTree = "<group>"; };
@@ -121,6 +130,11 @@
 		TORCH001SWFFILEREF00001 /* TorchModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TorchModule.swift; path = Yoroi/TorchModule.swift; sourceTree = "<group>"; };
 		WATCHUTILS001FILEREF00001 /* WatchUtils.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchUtils.swift; sourceTree = "<group>"; };
 		WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "wizz-made-with-Voicemod.mp3"; sourceTree = "<group>"; };
+		WIZZM4IN0001F1LEREF0001 /* wizz.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = "wizz.mp3"; path = "Yoroi/wizz.mp3"; sourceTree = "<group>"; };
+		WIZZW4TCH001F1LEREF0001 /* wizz.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = "wizz.mp3"; path = "YoroiWatch/wizz.mp3"; sourceTree = "<group>"; };
+		WGTDATASWF001F1LEREF0001 /* WidgetDataModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WidgetDataModule.swift; path = Yoroi/WidgetDataModule.swift; sourceTree = "<group>"; };
+		WGTDATAOBJ001F1LEREF0001 /* WidgetDataModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = WidgetDataModule.m; path = Yoroi/WidgetDataModule.m; sourceTree = "<group>"; };
+		WIDGETKIT001FRAMFILEREF001 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutPage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -131,6 +145,7 @@
 			files = (
 				74AF98F55BC435F00568F69F /* WatchConnectivity.framework in Frameworks */,
 				9D55373C46EA8EAA5B91D0F2 /* libPods-Yoroi.a in Frameworks */,
+				WIDGETKIT001FRAMBUILDF001 /* WidgetKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -165,6 +180,8 @@
 				TORCH001OBJFILEREF000001 /* TorchModule.m */,
 				BGTASK01SWFFILEREF000001 /* BackgroundTaskModule.swift */,
 				BGTASK01OBJFILEREF000001 /* BackgroundTaskModule.m */,
+				YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */,
+				YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */,
 				A1B2C3D400000010 /* TimerAttributes.swift */,
 				A1B2C3D400000020 /* YoroiLiveActivityManager.swift */,
 				A1B2C3D400000030 /* YoroiLiveActivityManager.m */,
@@ -376,7 +393,8 @@
 		83CBB9F71A601CBA00E9B192 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1130;
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1250;
@@ -411,6 +429,7 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				0A5D19028469480DB02D69A3 /* PrivacyInfo.xcprivacy in Resources */,
+				WIZZM4IN0001BUILDF000001 /* wizz.mp3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -421,6 +440,7 @@
 				D33204A0A2246F4E1F69529F /* Assets.xcassets in Resources */,
 				927D6FC93B28CD31C24811AF /* PrivacyInfo.xcprivacy in Resources */,
 				WIZZ50UND0001F1LEREF0001 /* wizz-made-with-Voicemod.mp3 in Resources */,
+				WIZZW4TCH001BUILDF000001 /* wizz.mp3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -587,6 +607,10 @@
 				TORCH001OBJBUILDF000001 /* TorchModule.m in Sources */,
 				BGTASK01SWFBUILDF000001 /* BackgroundTaskModule.swift in Sources */,
 				BGTASK01OBJBUILDF000001 /* BackgroundTaskModule.m in Sources */,
+				YOROIHK01SWFBUILDF000001 /* YoroiHealthKitModule.swift in Sources */,
+				YOROIHK01OBJBUILDF000001 /* YoroiHealthKitModule.m in Sources */,
+				WGTDATASWF001BUILDF00001 /* WidgetDataModule.swift in Sources */,
+				WGTDATAOBJ001BUILDF00001 /* WidgetDataModule.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -633,7 +657,6 @@
 				CODE_SIGN_ENTITLEMENTS = Yoroi/Yoroi.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 7;
-				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -672,7 +695,6 @@
 				CODE_SIGN_ENTITLEMENTS = Yoroi/Yoroi.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 7;
-				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				INFOPLIST_FILE = Yoroi/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -703,7 +725,6 @@
 				CODE_SIGN_ENTITLEMENTS = YoroiWatch/YoroiWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 7;
-				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = YoroiWatch/Info.plist;
 				MARKETING_VERSION = 2.3.0;
@@ -736,7 +757,6 @@
 				CODE_SIGN_ENTITLEMENTS = YoroiWatch/YoroiWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 7;
-				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = YoroiWatch/Info.plist;
 				MARKETING_VERSION = 2.3.0;
@@ -784,6 +804,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -791,8 +812,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
+				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -818,6 +841,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
 				USE_HERMES = true;
@@ -848,6 +872,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -855,8 +880,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
+				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -874,6 +901,8 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
 				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;

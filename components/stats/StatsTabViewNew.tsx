@@ -13,9 +13,10 @@ import { DashboardPage } from './pages/DashboardPage';
 import { CorpsTabPage } from './pages/CorpsTabPage';
 import { TrainingTabPage } from './pages/TrainingTabPage';
 import { VitalitePage } from './pages/VitalitePage';
-import { Scale, Flame, Heart, LayoutDashboard, Moon, Footprints, Activity } from 'lucide-react-native';
+import { Scale, Flame, LayoutDashboard, Moon, Footprints, Activity, Dumbbell } from 'lucide-react-native';
 
-// Wrappers stables pour les 3 onglets santé séparés
+// Wrappers stables pour les onglets santé et séances
+const SeancesPage = React.memo((props: any) => <VitalitePage {...props} forcedTab="seances" />);
 const SommeilPage = React.memo((props: any) => <VitalitePage {...props} forcedTab="sommeil" />);
 const PasPage = React.memo((props: any) => <VitalitePage {...props} forcedTab="pas" />);
 const SignesVitauxPage = React.memo((props: any) => <VitalitePage {...props} forcedTab="signes" />);
@@ -46,14 +47,15 @@ const pageStyles = StyleSheet.create({
   },
 });
 
-// Page definitions - 6 onglets
+// Page definitions - 7 onglets
 const PAGE_DEFS = [
-  { id: 'dashboard', titleKey: 'Résumé', icon: LayoutDashboard, component: DashboardPage },
-  { id: 'corps', titleKey: 'Corps', icon: Scale, component: CorpsTabPage },
-  { id: 'training', titleKey: 'Training', icon: Flame, component: TrainingTabPage },
-  { id: 'sommeil', titleKey: 'Sommeil', icon: Moon, component: SommeilPage },
-  { id: 'pas', titleKey: 'Pas', icon: Footprints, component: PasPage },
-  { id: 'signes', titleKey: 'Signes Vitaux', icon: Activity, component: SignesVitauxPage },
+  { id: 'dashboard', titleKey: 'Résumé',       icon: LayoutDashboard, component: DashboardPage },
+  { id: 'seances',   titleKey: 'Séances',      icon: Dumbbell,        component: SeancesPage },
+  { id: 'corps',     titleKey: 'Corps',        icon: Scale,           component: CorpsTabPage },
+  { id: 'training',  titleKey: 'Training',     icon: Flame,           component: TrainingTabPage },
+  { id: 'sommeil',   titleKey: 'Sommeil',      icon: Moon,            component: SommeilPage },
+  { id: 'pas',       titleKey: 'Pas',          icon: Footprints,      component: PasPage },
+  { id: 'signes',    titleKey: 'Signes Vitaux', icon: Activity,       component: SignesVitauxPage },
 ];
 
 interface StatsTabViewNewProps {

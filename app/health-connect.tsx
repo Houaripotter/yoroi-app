@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
   Platform,
   Linking,
   Alert,
@@ -44,6 +45,7 @@ import {
   SyncStatus,
 } from '@/lib/healthConnect';
 import { useWatch } from '@/lib/WatchConnectivityProvider';
+import { requestWorkoutReadAuthNative } from '@/lib/yoroiHealthKit';
 
 export default function HealthConnectScreen() {
   const insets = useSafeAreaInsets();
@@ -55,6 +57,9 @@ export default function HealthConnectScreen() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState('');
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
 
   useEffect(() => {
     loadStatus();
@@ -93,6 +98,10 @@ export default function HealthConnectScreen() {
       const status = healthConnect.getSyncStatus();
 
       if (success) {
+        // Marquer comme connecté et lancer l'import complet en arrière-plan
+        await AsyncStorage.setItem('@yoroi_healthkit_asked', 'true');
+        await healthConnect.setupWorkoutObserver().catch(() => {});
+        healthConnect.importFullHistory().catch(err => logger.error('[HealthConnect UI] Erreur import historique:', err));
         showPopup(
           'Connecté !',
           `YOROI est maintenant connecté à ${healthConnect.getProviderName()}. Tes données seront synchronisées automatiquement.`,
@@ -296,24 +305,332 @@ export default function HealthConnectScreen() {
           )}
         </View>
 
+        {/* Bouton Réimporter toutes les séances */}
+        {isConnected && (
+          <TouchableOpacity
+            style={[styles.watchSyncBtn, { backgroundColor: colors.card, borderColor: isImporting ? colors.accent : '#10B981', borderWidth: 2, opacity: isImporting ? 0.7 : 1 }]}
+            disabled={isImporting}
+            onPress={async () => {
+              if (isImporting) return;
+              lightHaptic();
+              setIsImporting(true);
+              setImportProgress('Démarrage...');
+              try {
+                // Vider le cache de fingerprints pour forcer la vraie réimportation
+                await AsyncStorage.removeItem('@yoroi_imported_workouts');
+                await AsyncStorage.removeItem('@yoroi_full_history_imported');
+                const result = await healthConnect.importFullHistory((step, current, total) => {
+                  setImportProgress(`${step} (${current}/${total})`);
+                });
+                setImportProgress('');
+                if (result.healthkitFound === 0) {
+                  // HealthKit n'a trouvé aucune séance — probablement permissions manquantes
+                  showPopup(
+                    'Aucune séance trouvée',
+                    'Apple Santé n\'a retourné aucune séance.\n\nCause la plus fréquente : la permission "Entraînements" n\'est pas activée pour Yoroi.\n\nVa dans Réglages > Santé > Accès aux données et app > Yoroi et active "Entraînements".',
+                    [
+                      { text: 'Annuler', style: 'cancel' },
+                      { text: 'Ouvrir Réglages', onPress: () => Linking.openURL('app-settings:').catch(() => {}), style: 'primary' },
+                    ]
+                  );
+                } else if (result.workouts === 0 && result.insertErrors > 0) {
+                  // HealthKit a trouvé des séances mais toutes ont planté à l'insertion
+                  showPopup(
+                    'Erreur d\'importation',
+                    `Apple Santé a trouvé ${result.healthkitFound} séance${result.healthkitFound > 1 ? 's' : ''} mais aucune n'a pu être sauvegardée (${result.insertErrors} erreur${result.insertErrors > 1 ? 's' : ''}).\n\nEssaie de redémarrer l'app et réimporte à nouveau.`,
+                    [{ text: 'OK', style: 'primary' }]
+                  );
+                } else if (result.workouts === 0 && result.healthkitFound > 0) {
+                  // Toutes les séances sont déjà importées
+                  showPopup(
+                    'Déjà à jour',
+                    `Apple Santé a trouvé ${result.healthkitFound} séance${result.healthkitFound > 1 ? 's' : ''}, toutes déjà présentes dans YOROI.`,
+                    [{ text: 'OK', style: 'primary' }]
+                  );
+                } else {
+                  showPopup(
+                    'Import terminé !',
+                    `${result.workouts} séance${result.workouts > 1 ? 's' : ''} importée${result.workouts > 1 ? 's' : ''} depuis Apple Santé (${result.healthkitFound} trouvée${result.healthkitFound > 1 ? 's' : ''} au total).`,
+                    [{ text: 'Super !', style: 'primary' }]
+                  );
+                }
+              } catch {
+                setImportProgress('');
+                showPopup('Erreur', 'Impossible d\'importer les séances. Vérifie ta connexion Apple Santé.', [{ text: 'OK', style: 'primary' }]);
+              } finally {
+                setIsImporting(false);
+              }
+            }}
+          >
+            <View style={[styles.watchIconCircle, { backgroundColor: '#10B98120' }]}>
+              <Activity size={20} color="#10B981" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.watchSyncTitle, { color: colors.textPrimary }]}>
+                {isImporting ? importProgress || 'Import en cours...' : 'Réimporter toutes mes séances'}
+              </Text>
+              <Text style={[styles.watchSyncSub, { color: colors.textMuted }]}>
+                {isImporting ? 'Patiente, ça peut prendre quelques minutes...' : 'Importe tout l\'historique depuis Apple Santé'}
+              </Text>
+            </View>
+            {isImporting
+              ? <ActivityIndicator size="small" color="#10B981" />
+              : <RefreshCw size={18} color="#10B981" />
+            }
+          </TouchableOpacity>
+        )}
+
+        {/* Bouton Diagnostic séances */}
+        {isConnected && (
+          <TouchableOpacity
+            style={[styles.watchSyncBtn, { backgroundColor: colors.card, borderColor: '#6366F1', borderWidth: 2, opacity: isDiagnosing ? 0.7 : 1 }]}
+            disabled={isDiagnosing}
+            onPress={async () => {
+              if (isDiagnosing) return;
+              lightHaptic();
+              setIsDiagnosing(true);
+              try {
+                // === ÉTAPE 0 : Re-demander permission lecture workouts via Swift natif ===
+                // Contourne Nitro v13 qui n'enregistre pas correctement la permission READ
+                const authResult = await requestWorkoutReadAuthNative();
+
+                const diag = await healthConnect.diagnoseWorkouts();
+                const lines: string[] = [];
+
+                // Afficher le résultat de la re-demande de permission
+                lines.push('--- PERMISSION LECTURE (Swift natif) ---');
+                if (authResult.startsWith('error:')) {
+                  lines.push(`Auth native : ${authResult}`);
+                } else {
+                  // Format: "count:N|sources:X,Y|authStatus:Z"
+                  const parts = Object.fromEntries(authResult.split('|').map(p => p.split(':')));
+                  const count = parts['count'] ?? '?';
+                  const sources = parts['sources'] ?? '';
+                  const status = parts['authStatus'] ?? '?';
+                  lines.push(`Auth OS : ${status === '2' ? 'write=authorized' : status === '1' ? 'DENIED' : 'notDetermined'}`);
+                  lines.push(`Workouts lisibles apres auth : ${count}`);
+                  if (sources && sources !== count) {
+                    lines.push(`Sources visibles : ${sources || 'aucune'}`);
+                  }
+                  if (count === '0') {
+                    lines.push('=> Seances Apple Watch NON accessibles meme apres re-auth');
+                    lines.push('=> Voir details ci-dessous');
+                  } else if (sources && !sources.toLowerCase().includes('yoroi') || (sources && sources.includes(','))) {
+                    lines.push('=> Seances multi-sources visibles — permissions OK !');
+                  }
+                }
+                lines.push('');
+
+                // === MODULE NATIF SWIFT ===
+                lines.push('--- MODULE NATIF SWIFT ---');
+                if (diag.nativeModuleTest === -1) {
+                  lines.push('getWorkoutsAsJSON : non teste');
+                } else if (diag.nativeModuleTest === -2) {
+                  lines.push('getWorkoutsAsJSON : ERREUR / module absent');
+                } else {
+                  lines.push(`getWorkoutsAsJSON : OK — ${diag.nativeModuleTest} seance(s) 365j`);
+                }
+
+                // 3 tests Gemini (nativeDiag)
+                const nd = (diag as any).nativeDiag;
+                if (nd) {
+                  const authMap: Record<number, string> = { 0: 'notDetermined', 1: 'denied', 2: 'authorized' };
+                  lines.push(`Auth OS (Swift) : ${authMap[nd.authStatus] ?? nd.authStatus}`);
+
+                  // Test A — sources
+                  if (nd.sourceError) {
+                    lines.push(`TEST A sources : ERREUR ${nd.sourceError}`);
+                  } else if (nd.sources?.length === 0) {
+                    lines.push('TEST A sources : VIDE');
+                  } else {
+                    lines.push(`TEST A sources : ${nd.sources?.join(', ')}`);
+                  }
+
+                  // Test B — nuclear
+                  if (nd.nuclearError) {
+                    lines.push(`TEST B nuclear : ERREUR ${nd.nuclearError}`);
+                  } else {
+                    lines.push(`TEST B nuclear (nil pred) : ${nd.nuclearTest?.count ?? 0} workout(s)`);
+                    if (nd.nuclearTest?.found) {
+                      lines.push(`  => source: ${nd.nuclearTest.sourceName || '?'}`);
+                    }
+                  }
+
+                  // Test C — predicate 365j
+                  if (nd.predicateError) {
+                    lines.push(`TEST C predicate : ERREUR ${nd.predicateError}`);
+                  } else {
+                    lines.push(`TEST C predicate 365j : ${nd.predicateTest?.count ?? 0} workout(s)`);
+                    if (nd.predicateFrom) {
+                      const fromStr = new Date(nd.predicateFrom * 1000).toLocaleDateString();
+                      lines.push(`  => from: ${fromStr}`);
+                    }
+                  }
+
+                  // Test D — séances hors-Yoroi (Apple Watch, Fitness...)
+                  if (nd.externalError) {
+                    lines.push(`TEST D hors-Yoroi : ERREUR ${nd.externalError}`);
+                  } else if (nd.externalTest !== undefined) {
+                    lines.push(`TEST D hors-Yoroi : ${nd.externalTest?.count ?? 0} workout(s)`);
+                    if (nd.externalTest?.found) {
+                      lines.push(`  => ${nd.externalTest.sourceName} (${nd.externalTest.sourceBundle})`);
+                    }
+                  }
+
+                  // === INTERPRETATION AUTOMATIQUE ===
+                  const sources: string[] = nd.sources ?? [];
+                  const nuclearCount: number = nd.nuclearTest?.count ?? 0;
+                  const externalCount: number = nd.externalTest?.count ?? 0;
+
+                  if (nuclearCount > 0 && externalCount === 0) {
+                    lines.push('');
+                    lines.push('CAUSE CONFIRMEE :');
+                    lines.push('iOS 26 restreint la lecture aux seances de Yoroi uniquement.');
+                    lines.push('Les seances Apple Watch / Fitness ne sont pas accessibles.');
+                    lines.push('=> Bug iOS 26 beta OU permission cross-app bloquee.');
+                  } else if (nuclearCount > 0 && nd.predicateTest?.count === 0) {
+                    lines.push('');
+                    lines.push('BUG DETECTE : workouts trouves SANS date mais 0 avec date');
+                    lines.push('=> Probleme de conversion timestamps');
+                  } else if (nuclearCount === 0 && sources.length > 0) {
+                    lines.push('');
+                    lines.push('Sources connues mais 0 workout accessible');
+                    lines.push('=> Permission OS refusee au niveau systeme');
+                  } else if (nuclearCount === 0 && sources.length === 0) {
+                    lines.push('');
+                    lines.push('0 workout et 0 source detectee');
+                    lines.push('=> Active "Entrainements" dans Reglages > Sante > Yoroi');
+                  } else if (externalCount > 0) {
+                    lines.push('');
+                    lines.push('Seances externes VISIBLES — les permissions sont OK.');
+                    lines.push('Le probleme vient du mapping/import JS.');
+                  }
+                } else if (diag.nativeModuleTest !== -2) {
+                  lines.push('(diagnostic approfondi non disponible — rebuild requis)');
+                }
+                lines.push('');
+
+                // === HEALTHKIT NITRO (v13) ===
+                lines.push('--- HEALTHKIT NITRO v13 ---');
+                lines.push(`Module : ${diag.moduleLoaded ? 'charge' : 'NON CHARGE'}`);
+                lines.push(`Connexion : ${diag.isConnected ? 'oui' : 'non'}`);
+                if (diag.authStatus) {
+                  lines.push(`Permission workout : ${diag.authStatus}`);
+                }
+                if (diag.rawApiTest === -2) {
+                  lines.push(`queryWorkoutSamples : ERREUR — ${diag.rawApiError}`);
+                } else if (diag.rawApiTest >= 0) {
+                  lines.push(`queryWorkoutSamples (10) : ${diag.rawApiTest} retournee(s)`);
+                }
+                if (diag.anchorApiTest === -2) {
+                  lines.push(`withAnchor : ERREUR — ${diag.anchorApiError}`);
+                } else if (diag.anchorApiTest >= 0) {
+                  lines.push(`withAnchor (10) : ${diag.anchorApiTest} retournee(s)`);
+                }
+                if (diag.healthkit30d >= 0) {
+                  lines.push(`getIOSWorkouts 365j : ${diag.healthkit30d} seances`);
+                }
+                if (diag.activityTypes.length > 0) {
+                  lines.push(`Types : ${diag.activityTypes.join(', ')}`);
+                }
+                lines.push('');
+
+                // === BASE YOROI ===
+                lines.push('--- BASE YOROI ---');
+                lines.push(`Seances en base : ${diag.dbCount} (dont ${diag.dbFromHealthkit} venant d'Apple Sante)`);
+                lines.push(`Cache fingerprints : ${diag.cacheSize} entrees`);
+
+                const hasWorkouts = diag.nativeModuleTest > 0 || diag.healthkit30d > 0 || diag.rawApiTest > 0 || diag.anchorApiTest > 0;
+                if (diag.moduleLoaded && !hasWorkouts) {
+                  lines.push('');
+                  lines.push('CAUSE PROBABLE : La permission "Entrainements" n\'est pas activee pour Yoroi dans Apple Sante.');
+                  lines.push('Appuie sur "Ouvrir Reglages" pour l\'activer.');
+                }
+                if (diag.error) lines.push(`\nErreur : ${diag.error}`);
+
+                const msg = lines.join('\n');
+                const canImport = hasWorkouts;
+                const buttons: any[] = [{ text: 'Fermer', style: 'cancel' }];
+                if (!hasWorkouts && (diag.moduleLoaded || diag.nativeModuleTest >= 0)) {
+                  buttons.push({
+                    text: 'Ouvrir Reglages',
+                    style: 'primary',
+                    onPress: () => {
+                      Linking.openURL('App-Prefs:Privacy&path=HEALTH').catch(() =>
+                        Linking.openURL('app-settings:')
+                      );
+                    },
+                  });
+                }
+                if (canImport) {
+                  buttons.push({
+                    text: 'Importer maintenant',
+                    style: 'primary',
+                    onPress: async () => {
+                      await AsyncStorage.removeItem('@yoroi_imported_workouts');
+                      await AsyncStorage.removeItem('@yoroi_full_history_imported');
+                      healthConnect.importFullHistory().catch(() => {});
+                    },
+                  });
+                }
+                showPopup('Diagnostic seances', msg, buttons);
+              } catch (e: any) {
+                showPopup('Erreur diagnostic', String(e?.message || e), [{ text: 'OK', style: 'primary' }]);
+              } finally {
+                setIsDiagnosing(false);
+              }
+            }}
+          >
+            <View style={[styles.watchIconCircle, { backgroundColor: '#6366F120' }]}>
+              <Zap size={20} color="#6366F1" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.watchSyncTitle, { color: colors.textPrimary }]}>
+                {isDiagnosing ? 'Diagnostic en cours...' : 'Diagnostiquer mes séances'}
+              </Text>
+              <Text style={[styles.watchSyncSub, { color: colors.textMuted }]}>
+                Comprendre pourquoi les séances ne s'importent pas
+              </Text>
+            </View>
+            {isDiagnosing
+              ? <ActivityIndicator size="small" color="#6366F1" />
+              : <Activity size={18} color="#6366F1" />
+            }
+          </TouchableOpacity>
+        )}
+
         {/* Sync Apple Watch - NOUVEAU BOUTON MANUEL */}
         {Platform.OS === 'ios' && (
-          <TouchableOpacity 
-            style={[styles.watchSyncBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+          <TouchableOpacity
+            style={[styles.watchSyncBtn, { backgroundColor: colors.card, borderColor: colors.border, opacity: isSyncing ? 0.6 : 1 }]}
+            disabled={isSyncing}
             onPress={async () => {
+              if (isSyncing) return;
               lightHaptic();
-              await syncAllData();
-              showPopup('Synchronisation', 'Données envoyées vers l\'Apple Watch !', [{ text: 'OK', style: 'primary' }]);
+              setIsSyncing(true);
+              try {
+                await syncAllData();
+                showPopup('Synchronisation', 'Données envoyées vers l\'Apple Watch !', [{ text: 'Super !', style: 'primary' }]);
+              } catch {
+                showPopup('Erreur', 'Impossible de synchroniser. Vérifie que ta montre est connectée.', [{ text: 'OK', style: 'primary' }]);
+              } finally {
+                setIsSyncing(false);
+              }
             }}
           >
             <View style={[styles.watchIconCircle, { backgroundColor: colors.accent + '20' }]}>
               <Watch size={20} color={colors.accent} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.watchSyncTitle, { color: colors.textPrimary }]}>Synchroniser ma montre</Text>
+              <Text style={[styles.watchSyncTitle, { color: colors.textPrimary }]}>
+                {isSyncing ? 'Synchronisation...' : 'Synchroniser ma montre'}
+              </Text>
               <Text style={[styles.watchSyncSub, { color: colors.textMuted }]}>Force l'envoi de ton avatar et profil</Text>
             </View>
-            <RefreshCw size={18} color={colors.textMuted} />
+            {isSyncing
+              ? <ActivityIndicator size="small" color={colors.accent} />
+              : <RefreshCw size={18} color={colors.textMuted} />
+            }
           </TouchableOpacity>
         )}
 
@@ -327,8 +644,8 @@ export default function HealthConnectScreen() {
             onPress={handleConnect}
             disabled={isConnecting}
           >
-            <Heart size={20} color="#FFFFFF" />
-            <Text style={styles.connectBtnText}>
+            <Heart size={20} color={colors.textOnAccent} />
+            <Text style={[styles.connectBtnText, { color: colors.textOnAccent }]}>
               {isConnecting ? 'Connexion...' : `Connecter à ${providerName}`}
             </Text>
           </TouchableOpacity>
@@ -405,7 +722,7 @@ export default function HealthConnectScreen() {
               {instructions.map((instruction, index) => (
                 <View key={index} style={styles.instructionRow}>
                   <View style={[styles.instructionNumber, { backgroundColor: colors.accent }]}>
-                    <Text style={styles.instructionNumberText}>{index + 1}</Text>
+                    <Text style={[styles.instructionNumberText, { color: colors.textOnAccent }]}>{index + 1}</Text>
                   </View>
                   <Text style={[styles.instructionText, { color: colors.textSecondary }]}>
                     {instruction.substring(3)}
@@ -577,7 +894,7 @@ export default function HealthConnectScreen() {
             >
               <View style={styles.watchBrandHeader}>
                 <View style={[styles.watchBrandDot, { backgroundColor: watch.color }]}>
-                  <Text style={styles.watchBrandEmoji}>{watch.emoji}</Text>
+                  <Text style={[styles.watchBrandEmoji, { color: colors.textOnAccent }]}>{watch.emoji}</Text>
                 </View>
                 <Text style={[styles.watchBrandName, { color: colors.textPrimary }]}>
                   {watch.brand}

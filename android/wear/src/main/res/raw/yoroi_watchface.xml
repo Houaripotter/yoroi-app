@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  YOROI Watch Face
+  Cadran analogique/digital avec 4 slots de complications
+  Compatible Wear OS 4 (API 33+) via Watch Face Format
+-->
+<WatchFace width="450" height="450">
+
+  <Metadata>
+    <Key name="PREVIEW_TIME" value="10:10:00" />
+    <Key name="CLOCK_TYPE" value="ANALOG" />
+    <Key name="COMPOSITE_ROTATION" value="ROTATION_SOURCE_HAND_SECONDS" />
+  </Metadata>
+
+  <UserConfigurations>
+    <!-- Style : Foncé ou Clair -->
+    <UserStyleSetting
+      id="colorStyle"
+      icon="@drawable/ic_launcher_foreground"
+      displayName="@string/watchface_style_label"
+      defaultValue="gold">
+      <ListOption id="gold"    displayName="@string/watchface_style_gold" />
+      <ListOption id="silver"  displayName="@string/watchface_style_silver" />
+      <ListOption id="red"     displayName="@string/watchface_style_red" />
+    </UserStyleSetting>
+  </UserConfigurations>
+
+  <Scene backgroundColor="#ff000000">
+
+    <!-- ════════════════════════════════════════ -->
+    <!-- FOND : cercle de luxe + marqueurs heure -->
+    <!-- ════════════════════════════════════════ -->
+
+    <!-- Cercle extérieur -->
+    <Arc
+      centerX="225" centerY="225"
+      width="440" height="440"
+      startAngle="0" endAngle="360"
+      strokeWidth="2"
+      color="#ffD4AF37"
+      alpha="180" />
+
+    <!-- Cercle intérieur subtil -->
+    <Arc
+      centerX="225" centerY="225"
+      width="380" height="380"
+      startAngle="0" endAngle="360"
+      strokeWidth="1"
+      color="#ffD4AF37"
+      alpha="60" />
+
+    <!-- Marqueurs des 12 heures (trait principal) -->
+    <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225"
+      angle="0">
+      <Rectangle x="222" y="16" width="6" height="24" color="#ffD4AF37" alpha="255" />
+    </PartDraw>
+    <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225"
+      angle="30">
+      <Rectangle x="223" y="20" width="4" height="14" color="#ffAAAAAA" alpha="180" />
+    </PartDraw>
+    <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225"
+      angle="60">
+      <Rectangle x="223" y="20" width="4" height="14" color="#ffAAAAAA" alpha="180" />
+    </PartDraw>
+    <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225"
+      angle="90">
+      <Rectangle x="222" y="16" width="6" height="24" color="#ffD4AF37" alpha="255" />
+    </PartDraw>
+    <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225"
+      angle="120">
+      <Rectangle x="223" y="20" width="4" height="14" color="#ffAAAAAA" alpha="180" />
+    </PartDraw>
+    <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225"
+      angle="150">
+      <Rectangle x="223" y="20" width="4" height="14" color="#ffAAAAAA" alpha="180" />
+    </PartDraw>
+    <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225"
+      angle="180">
+      <Rectangle x="222" y="16" width="6" height="24" color="#ffD4AF37" alpha="255" />
+    </PartDraw>
+    <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225"
+      angle="210">
+      <Rectangle x="223" y="20" width="4" height="14" color="#ffAAAAAA" alpha="180" />
+    </PartDraw>
+    <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225"
+      angle="240">
+      <Rectangle x="223" y="20" width="4" height="14" color="#ffAAAAAA" alpha="180" />
+    </PartDraw>
+    <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225"
+      angle="270">
+      <Rectangle x="222" y="16" width="6" height="24" color="#ffD4AF37" alpha="255" />
+    </PartDraw>
+    <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225"
+      angle="300">
+      <Rectangle x="223" y="20" width="4" height="14" color="#ffAAAAAA" alpha="180" />
+    </PartDraw>
+    <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225"
+      angle="330">
+      <Rectangle x="223" y="20" width="4" height="14" color="#ffAAAAAA" alpha="180" />
+    </PartDraw>
+
+    <!-- ════════════════════════════════════════ -->
+    <!-- LOGO YOROI (centre haut)                 -->
+    <!-- ════════════════════════════════════════ -->
+
+    <Text
+      x="225" y="148"
+      width="200" height="30"
+      pivotX="0.5" pivotY="0.5"
+      textColor="#ffD4AF37"
+      textSize="18"
+      fontStyle="BOLD"
+      align="CENTER">
+      YOROI
+    </Text>
+
+    <!-- ════════════════════════════════════════ -->
+    <!-- DATE                                     -->
+    <!-- ════════════════════════════════════════ -->
+
+    <Text
+      x="225" y="310"
+      width="160" height="28"
+      pivotX="0.5" pivotY="0.5"
+      textColor="#ffAAAAAA"
+      textSize="14"
+      align="CENTER">
+      <Template>%s</Template>
+      <Parameter expression="[DATE]" />
+    </Text>
+
+    <!-- ════════════════════════════════════════ -->
+    <!-- COMPLICATIONS (4 emplacements)           -->
+    <!-- ════════════════════════════════════════ -->
+
+    <!-- HAUT : Fréquence cardiaque -->
+    <ComplicationSlot
+      slotId="0"
+      x="225" y="88"
+      width="80" height="80"
+      pivotX="0.5" pivotY="0.5"
+      supportedTypes="RANGED_VALUE SHORT_TEXT LONG_TEXT"
+      defaultProviderPolicy="SYSTEM_PROVIDER"
+      defaultSystemProvider="WATCH_BATTERY"
+      systemDataSourceFallbackDefaultType="SHORT_TEXT"
+      isCustomizable="true">
+      <BoundingOval x="225" y="88" width="72" height="72" />
+      <DefaultProviderPolicy
+        defaultProviderPackage="com.houari.yoroi.wear"
+        defaultProviderClass="com.houari.yoroi.wear.complications.HeartRateComplication"
+        defaultProviderType="SHORT_TEXT" />
+    </ComplicationSlot>
+
+    <!-- GAUCHE : Pas du jour -->
+    <ComplicationSlot
+      slotId="1"
+      x="88" y="225"
+      width="80" height="80"
+      pivotX="0.5" pivotY="0.5"
+      supportedTypes="RANGED_VALUE SHORT_TEXT LONG_TEXT"
+      isCustomizable="true">
+      <BoundingOval x="88" y="225" width="72" height="72" />
+      <DefaultProviderPolicy
+        defaultProviderPackage="com.houari.yoroi.wear"
+        defaultProviderClass="com.houari.yoroi.wear.complications.StepsComplication"
+        defaultProviderType="SHORT_TEXT" />
+    </ComplicationSlot>
+
+    <!-- DROITE : Hydratation -->
+    <ComplicationSlot
+      slotId="2"
+      x="362" y="225"
+      width="80" height="80"
+      pivotX="0.5" pivotY="0.5"
+      supportedTypes="RANGED_VALUE SHORT_TEXT LONG_TEXT"
+      isCustomizable="true">
+      <BoundingOval x="362" y="225" width="72" height="72" />
+      <DefaultProviderPolicy
+        defaultProviderPackage="com.houari.yoroi.wear"
+        defaultProviderClass="com.houari.yoroi.wear.complications.HydrationComplication"
+        defaultProviderType="SHORT_TEXT" />
+    </ComplicationSlot>
+
+    <!-- BAS : Série entraînement -->
+    <ComplicationSlot
+      slotId="3"
+      x="225" y="362"
+      width="80" height="80"
+      pivotX="0.5" pivotY="0.5"
+      supportedTypes="SHORT_TEXT LONG_TEXT RANGED_VALUE"
+      isCustomizable="true">
+      <BoundingOval x="225" y="362" width="72" height="72" />
+      <DefaultProviderPolicy
+        defaultProviderPackage="com.houari.yoroi.wear"
+        defaultProviderClass="com.houari.yoroi.wear.complications.StreakComplication"
+        defaultProviderType="SHORT_TEXT" />
+    </ComplicationSlot>
+
+    <!-- ════════════════════════════════════════ -->
+    <!-- AIGUILLES                                -->
+    <!-- ════════════════════════════════════════ -->
+
+    <!-- Aiguille des heures -->
+    <PartAnimatedImage
+      x="0" y="0" width="450" height="450"
+      pivotX="225" pivotY="225"
+      renderMode="SOURCE">
+      <Gyro
+        scaleX="1" scaleY="1"
+        direction="CLOCKWISE"
+        pivotX="225" pivotY="225">
+        <Transform target="ROTATION_DEGREES">
+          <Binding expression="[HOUR_0_11] * 30 + [MINUTE] * 0.5" />
+        </Transform>
+      </Gyro>
+      <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225">
+        <!-- Corps de l'aiguille heure -->
+        <RoundRectangle x="221" y="105" width="8" height="130"
+          rx="4" ry="4" color="#ffFFFFFF" alpha="255" />
+        <!-- Contrepoids -->
+        <RoundRectangle x="221" y="237" width="8" height="40"
+          rx="4" ry="4" color="#ffD4AF37" alpha="255" />
+      </PartDraw>
+    </PartAnimatedImage>
+
+    <!-- Aiguille des minutes -->
+    <PartAnimatedImage
+      x="0" y="0" width="450" height="450"
+      pivotX="225" pivotY="225"
+      renderMode="SOURCE">
+      <Gyro
+        scaleX="1" scaleY="1"
+        direction="CLOCKWISE"
+        pivotX="225" pivotY="225">
+        <Transform target="ROTATION_DEGREES">
+          <Binding expression="[MINUTE] * 6" />
+        </Transform>
+      </Gyro>
+      <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225">
+        <!-- Corps de l'aiguille minutes -->
+        <RoundRectangle x="222" y="72" width="6" height="165"
+          rx="3" ry="3" color="#ffFFFFFF" alpha="255" />
+        <!-- Contrepoids -->
+        <RoundRectangle x="222" y="239" width="6" height="30"
+          rx="3" ry="3" color="#ffD4AF37" alpha="200" />
+      </PartDraw>
+    </PartAnimatedImage>
+
+    <!-- Aiguille des secondes -->
+    <PartAnimatedImage
+      x="0" y="0" width="450" height="450"
+      pivotX="225" pivotY="225"
+      renderMode="SOURCE">
+      <Gyro
+        scaleX="1" scaleY="1"
+        direction="CLOCKWISE"
+        pivotX="225" pivotY="225">
+        <Transform target="ROTATION_DEGREES">
+          <Binding expression="[SECOND] * 6" />
+        </Transform>
+      </Gyro>
+      <PartDraw x="0" y="0" width="450" height="450" pivotX="225" pivotY="225">
+        <!-- Aiguille secondes fine -->
+        <Rectangle x="224" y="58" width="2" height="185"
+          color="#ffD4AF37" alpha="255" />
+        <!-- Contrepoids secondes -->
+        <Rectangle x="224" y="245" width="2" height="45"
+          color="#ffD4AF37" alpha="255" />
+      </PartDraw>
+    </PartAnimatedImage>
+
+    <!-- Centre pivot -->
+    <Arc
+      centerX="225" centerY="225"
+      width="20" height="20"
+      startAngle="0" endAngle="360"
+      strokeWidth="10"
+      color="#ffD4AF37"
+      alpha="255" />
+    <Arc
+      centerX="225" centerY="225"
+      width="8" height="8"
+      startAngle="0" endAngle="360"
+      strokeWidth="4"
+      color="#ff000000"
+      alpha="255" />
+
+  </Scene>
+
+</WatchFace>

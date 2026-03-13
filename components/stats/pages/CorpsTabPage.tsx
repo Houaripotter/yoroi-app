@@ -4,9 +4,10 @@
 // ============================================
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, RefreshControl, InteractionManager } from 'react-native';
+import { ScrollView, View, StyleSheet, TouchableOpacity, Text, RefreshControl, InteractionManager } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
+import { SamuraiCircleLoader } from '@/components/SamuraiLoader';
 import { useScrollContext } from '@/lib/ScrollContext';
 import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
@@ -42,6 +43,12 @@ export const CorpsTabPage: React.FC = React.memo(() => {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const [showLoader, setShowLoader] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setShowLoader(false), 7000);
+    return () => clearTimeout(t);
+  }, []);
 
   // --- Poids state ---
   const [weightData, setWeightData] = useState<any>(null);
@@ -274,21 +281,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
     return undefined;
   };
 
-  if (loading) {
-    return (
-      <View style={[styles.container, { backgroundColor: screenBackground }]}>
-        <StatsHeader
-          title={t('statsPages.weight.title')}
-          description="Poids, composition et mensurations"
-          selectedPeriod={selectedPeriod}
-          onPeriodChange={setSelectedPeriod}
-        />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-        </View>
-      </View>
-    );
-  }
+  if (showLoader) return <SamuraiCircleLoader duration={7000} bgColor={screenBackground} />;
 
   return (
     <ScrollView
@@ -344,7 +337,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.historyScrollContent}
             >
-              {allWeightsData.slice(0, 20).map((entry, index) => {
+              {allWeightsData.map((entry, index) => {
                 const prevEntry = allWeightsData[index + 1];
                 const change = prevEntry ? entry.weight - prevEntry.weight : 0;
                 const isFirst = index === 0;

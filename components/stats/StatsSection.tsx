@@ -46,8 +46,8 @@ export const StatsSection: React.FC<StatsSectionProps> = React.memo(({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    marginBottom: 24, // Spacing entre sections (au lieu de serré)
+    paddingHorizontal: 8,
+    marginBottom: 24,
   },
   header: {
     marginBottom: 16,

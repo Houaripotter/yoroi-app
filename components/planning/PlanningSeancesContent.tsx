@@ -3,26 +3,35 @@
 // ============================================
 // Liste des séances avec filtre sport, navigation mois, résumé complet
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Animated,
+  DeviceEventEmitter,
+  Platform,
+  Linking,
+  ActivityIndicator,
 } from 'react-native';
+import { ImportProgressBanner } from '@/components/ImportProgressBanner';
+import SamuraiLoader from '@/components/SamuraiLoader';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Training, Club } from '@/lib/database';
 import { getSportIcon, getSportName, getSportColor } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ChevronLeft, ChevronRight, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Dumbbell, ChevronDown, ChevronUp, AlertCircle, RefreshCw, ShieldAlert } from 'lucide-react-native';
 import { useDevMode } from '@/lib/DevModeContext';
 import { format, parseISO, isSameMonth, addMonths, subMonths } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { router } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { WorkoutMapRoute } from '@/components/WorkoutMapRoute';
+import { healthConnect } from '@/lib/healthConnect';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface PlanningSeancesContentProps {
   workouts: Training[];
@@ -210,6 +219,69 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
   const [selectedSport, setSelectedSport] = useState<string>('all');
   const [showAllMonths, setShowAllMonths] = useState(true);
   const [expandedGPS, setExpandedGPS] = useState<Set<number>>(new Set());
+  const [isImporting, setIsImporting] = useState(false);
+  const [importStep, setImportStep] = useState('');
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+  const [diagStatus, setDiagStatus] = useState<'idle' | 'checking' | 'ok' | 'no_permission' | 'no_workouts'>('idle');
+  const [isReRequestingPerms, setIsReRequestingPerms] = useState(false);
+  const [isForceImporting, setIsForceImporting] = useState(false);
+  // Guard pour éviter de relancer le diagnostic en boucle
+  const diagRanRef = useRef(false);
+
+  useEffect(() => {
+    const subs = [
+      DeviceEventEmitter.addListener('YOROI_IMPORT_START', () => { setIsImporting(true); setImportStep(''); setDiagStatus('idle'); }),
+      DeviceEventEmitter.addListener('YOROI_IMPORT_PROGRESS', (d: { step: string }) => setImportStep(d.step)),
+      DeviceEventEmitter.addListener('YOROI_IMPORT_DONE', () => { setIsImporting(false); setImportStep(''); }),
+      DeviceEventEmitter.addListener('YOROI_WORKOUTS_PERMISSION_NEEDED', () => {
+        setIsImporting(false);
+        setDiagStatus('no_permission');
+      }),
+    ];
+    return () => subs.forEach(s => s.remove());
+  }, []);
+
+  // Diagnostic permissions : s'active UNE SEULE FOIS si liste vide après 2s
+  useEffect(() => {
+    if (workouts.length > 0 || isImporting) {
+      setDiagStatus('idle');
+      return;
+    }
+    // Guard : ne lancer le diagnostic auto qu'une seule fois par session
+    if (diagRanRef.current) return;
+    if (Platform.OS !== 'ios') return;
+    const timer = setTimeout(async () => {
+      diagRanRef.current = true;
+      setDiagStatus('checking');
+      try {
+        const { accessible, count } = await healthConnect.canReadWorkouts();
+        if (!accessible || count === 0) {
+          setDiagStatus('idle');
+        } else {
+          setDiagStatus('ok');
+          healthConnect.importFullHistory().catch(() => setDiagStatus('idle'));
+          // Timeout de sécurité : retour idle après 60s même si l'import ne répond pas
+          setTimeout(() => setDiagStatus(prev => prev === 'ok' ? 'idle' : prev), 60000);
+        }
+      } catch {
+        setDiagStatus('idle');
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [workouts.length, isImporting]);
+
+  // Animation shimmer pour les skeletons
+  useEffect(() => {
+    if (!isImporting) return;
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(shimmerAnim, { toValue: 0, duration: 900, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [isImporting, shimmerAnim]);
 
   const toggleGPS = (id: number) => {
     impactAsync(ImpactFeedbackStyle.Light);
@@ -275,6 +347,9 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
 
   return (
     <View style={styles.container}>
+
+      {/* ── BARRE DE PROGRESSION IMPORT ── */}
+      <ImportProgressBanner />
 
       {/* ── HEADER MOIS ── */}
       <View style={styles.monthHeader}>
@@ -387,11 +462,256 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
         )}
       </View>
 
+      {/* ── SKELETON IMPORT ── */}
+      {filteredWorkouts.length === 0 && isImporting && (
+        <View style={{ gap: 10 }}>
+          {[0, 1, 2].map(i => {
+            const opacity = shimmerAnim.interpolate({ inputRange: [0, 1], outputRange: [0.35 + i * 0.08, 0.75 + i * 0.05] });
+            return (
+              <Animated.View key={i} style={[skeletonStyles.card, { backgroundColor: cardBg, opacity }]}>
+                <View style={skeletonStyles.row}>
+                  <View style={[skeletonStyles.dot, { backgroundColor: colors.textMuted }]} />
+                  <View style={{ flex: 1, gap: 6 }}>
+                    <View style={[skeletonStyles.line, { width: '55%', backgroundColor: colors.textMuted }]} />
+                    <View style={[skeletonStyles.line, { width: '35%', backgroundColor: colors.textMuted, opacity: 0.5 }]} />
+                  </View>
+                  <View style={[skeletonStyles.badge, { backgroundColor: colors.textMuted }]} />
+                </View>
+                <View style={[skeletonStyles.divider, { backgroundColor: colors.textMuted }]} />
+                <View style={skeletonStyles.stats}>
+                  {[0, 1, 2].map(j => (
+                    <View key={j} style={[skeletonStyles.stat, { backgroundColor: colors.textMuted }]} />
+                  ))}
+                </View>
+              </Animated.View>
+            );
+          })}
+          <Text style={{ textAlign: 'center', color: colors.textMuted, fontSize: 12, marginTop: 4 }}>
+            {importStep ? `Import en cours : ${importStep}...` : 'Importation de ton historique en cours...'}
+          </Text>
+        </View>
+      )}
+
       {/* ── ÉTAT VIDE ── */}
-      {filteredWorkouts.length === 0 && (
+      {filteredWorkouts.length === 0 && !isImporting && (
         <View style={[styles.emptyCard, { backgroundColor: cardBg }]}>
-          <Dumbbell size={38} color={colors.textMuted} strokeWidth={1.5} />
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('planning.noSessions')}</Text>
+
+          {/* Diagnostic en cours */}
+          {diagStatus === 'checking' && (
+            <SamuraiLoader message="Vérification Apple Santé..." size={120} />
+          )}
+
+          {/* Permissions refusées ou inaccessibles */}
+          {diagStatus === 'no_permission' && (
+            <>
+              <ShieldAlert size={38} color="#F59E0B" strokeWidth={1.5} />
+              <Text style={[styles.emptyText, { color: colors.textPrimary, fontWeight: '700', marginTop: 12 }]}>
+                Accès aux séances bloqué
+              </Text>
+              <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center', marginTop: 6, lineHeight: 20, paddingHorizontal: 8 }}>
+                Va dans :{'\n'}
+                <Text style={{ color: colors.textPrimary, fontWeight: '600' }}>
+                  Réglages {'>'} Santé {'>'} Accès aux données{'\n'}{'>'} Yoroi {'>'} active "Entraînements"
+                </Text>
+                {'\n\n'}Puis reviens ici et appuie sur "Importer".
+              </Text>
+              <View style={{ marginTop: 16, gap: 10, width: '100%', alignItems: 'center' }}>
+                <TouchableOpacity
+                  onPress={async () => {
+                    setIsReRequestingPerms(true);
+                    await healthConnect.requestWorkoutPermissions();
+                    setIsReRequestingPerms(false);
+                    setDiagStatus('checking');
+                    // Re-vérifier après la demande
+                    setTimeout(async () => {
+                      const { accessible, count } = await healthConnect.canReadWorkouts();
+                      if (accessible && count > 0) {
+                        setDiagStatus('ok');
+                        healthConnect.importFullHistory().catch(() => {});
+                      } else if (accessible) {
+                        setDiagStatus('no_workouts');
+                      } else {
+                        setDiagStatus('no_permission');
+                      }
+                    }, 1000);
+                  }}
+                  disabled={isReRequestingPerms}
+                  style={{
+                    paddingHorizontal: 20,
+                    paddingVertical: 11,
+                    borderRadius: 20,
+                    backgroundColor: colors.accent + '18',
+                    borderWidth: 1,
+                    borderColor: colors.accent + '50',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                  activeOpacity={0.7}
+                >
+                  {isReRequestingPerms
+                    ? <ActivityIndicator size="small" color={colors.accent} />
+                    : <RefreshCw size={14} color={colors.accent} />
+                  }
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: colors.accent }}>
+                    Demander les permissions
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => Linking.openURL('x-apple-health://').catch(() => Linking.openSettings())}
+                  style={{
+                    paddingHorizontal: 20,
+                    paddingVertical: 11,
+                    borderRadius: 20,
+                    backgroundColor: 'rgba(212,175,55,0.10)',
+                    borderWidth: 1,
+                    borderColor: 'rgba(212,175,55,0.30)',
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#D4AF37' }}>
+                    Ouvrir Reglages Sante
+                  </Text>
+                </TouchableOpacity>
+                <Text style={{ fontSize: 11, color: colors.textMuted, textAlign: 'center', paddingHorizontal: 16, lineHeight: 16 }}>
+                  Dans Reglages {'>'} Sante {'>'} Acces aux donnees {'>'} YOROI{'\n'}
+                  Active "Entraînements" puis reviens ici
+                </Text>
+              </View>
+            </>
+          )}
+
+          {/* Permissions ok, import en cours ou déclenché */}
+          {diagStatus === 'ok' && (
+            <SamuraiLoader message="Import des séances en cours..." size={120} />
+          )}
+
+          {/* Permissions ok mais aucun workout dans HealthKit */}
+          {diagStatus === 'no_workouts' && (
+            <>
+              <Dumbbell size={38} color={colors.textMuted} strokeWidth={1.5} />
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                {t('planning.noSessions')}
+              </Text>
+              <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', marginTop: 6 }}>
+                Apple Santé est connecte mais aucune seance n'a ete enregistree.
+              </Text>
+            </>
+          )}
+
+          {/* État initial (avant diagnostic) */}
+          {diagStatus === 'idle' && (
+            <>
+              <Dumbbell size={38} color={colors.textMuted} strokeWidth={1.5} />
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                Aucune séance
+              </Text>
+              <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center', marginTop: 4, lineHeight: 19, paddingHorizontal: 16 }}>
+                Tes séances Apple Santé n'ont pas encore été importées.
+              </Text>
+              <TouchableOpacity
+                onPress={async () => {
+                  setIsForceImporting(true);
+                  setDiagStatus('idle');
+                  try {
+                    // Effacer les flags d'import pour forcer la réimportation propre
+                    await AsyncStorage.multiRemove([
+                      '@yoroi_full_history_imported',
+                      '@yoroi_import_version',
+                      '@yoroi_imported_workouts',
+                    ]);
+                    // L'import émet YOROI_IMPORT_START → isImporting = true automatiquement
+                    healthConnect.importFullHistory().catch(() => {});
+                  } catch {
+                    // ignore
+                  } finally {
+                    setIsForceImporting(false);
+                  }
+                }}
+                disabled={isForceImporting}
+                style={{
+                  marginTop: 20,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  paddingHorizontal: 24,
+                  paddingVertical: 13,
+                  borderRadius: 24,
+                  backgroundColor: colors.accent,
+                }}
+                activeOpacity={0.75}
+              >
+                {isForceImporting
+                  ? <ActivityIndicator size="small" color={colors.textOnAccent} />
+                  : <RefreshCw size={16} color={colors.textOnAccent} />
+                }
+                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textOnAccent }}>
+                  {isForceImporting ? 'Importation...' : 'Importer mes séances Apple Santé'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={async () => {
+                  try {
+                    // Force la re-demande de permission entraînements puis teste immédiatement
+                    await healthConnect.requestWorkoutPermissions();
+                    await new Promise(r => setTimeout(r, 500));
+                    const diag = await healthConnect.diagnoseWorkouts();
+                    const count = diag.rawApiTest >= 0 ? diag.rawApiTest : (diag.healthkit30d || diag.healthkitAll || 0);
+                    if (count > 0) {
+                      alert(`Permissions OK ! ${count} séance(s) trouvée(s). Appuie sur "Importer" maintenant.`);
+                    } else {
+                      alert('Toujours 0 séance. Va dans Réglages > Santé > Accès aux données et app > Yoroi et vérifie que "Entraînements" est bien activé en LECTURE (pas seulement en écriture).');
+                    }
+                  } catch (e: any) {
+                    alert(`Erreur : ${e?.message || e}`);
+                  }
+                }}
+                style={{ marginTop: 12, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, borderWidth: 1.5, borderColor: '#10B981' }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#10B981' }}>
+                  Redemander l'accès aux entraînements
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => Linking.openURL('app-settings:').catch(() => Linking.openSettings())}
+                style={{ marginTop: 8, paddingVertical: 8 }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ fontSize: 12, color: colors.textMuted, textDecorationLine: 'underline' }}>
+                  Ouvrir les réglages Yoroi
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={async () => {
+                  try {
+                    const diag = await healthConnect.diagnoseWorkouts();
+                    const lines: string[] = [];
+                    if (diag.rawApiTest === -2) {
+                      lines.push(`ERREUR HealthKit : ${diag.rawApiError}`);
+                    } else {
+                      lines.push(`HealthKit retourne : ${diag.rawApiTest} seance(s) (test direct)`);
+                      lines.push(`HealthKit 365j : ${diag.healthkit30d} seance(s)`);
+                      lines.push(`HealthKit tout : ${diag.healthkitAll >= 0 ? diag.healthkitAll : 'timeout'} seance(s)`);
+                    }
+                    lines.push(`Base YOROI : ${diag.dbCount} seances`);
+                    if (diag.error) lines.push(`Erreur : ${diag.error}`);
+                    if (!diag.moduleLoaded) lines.push('HealthKit non disponible (simulateur ?)');
+                    alert(lines.join('\n'));
+                  } catch (e: any) {
+                    alert(`Erreur diagnostic : ${e?.message || e}`);
+                  }
+                }}
+                style={{ marginTop: 8, paddingVertical: 8 }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ fontSize: 12, color: '#6366F1', textDecorationLine: 'underline' }}>
+                  Diagnostiquer (voir les erreurs HealthKit)
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+
           {isDevMode && (
             <TouchableOpacity
               onPress={() => router.push('/workout-detail?demo=1' as any)}
@@ -407,7 +727,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
               activeOpacity={0.7}
             >
               <Text style={{ fontSize: 13, fontWeight: '700', color: '#6366F1' }}>
-                Voir une séance exemple
+                Voir une seance exemple
               </Text>
             </TouchableOpacity>
           )}
@@ -865,6 +1185,39 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
     </View>
   );
 };
+
+const skeletonStyles = StyleSheet.create({
+  card: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 2,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  dot: {
+    width: 36, height: 36, borderRadius: 18, opacity: 0.2,
+  },
+  line: {
+    height: 10, borderRadius: 5, opacity: 0.2,
+  },
+  badge: {
+    width: 48, height: 22, borderRadius: 11, opacity: 0.15,
+  },
+  divider: {
+    height: 1, opacity: 0.1, marginBottom: 12,
+  },
+  stats: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  stat: {
+    flex: 1, height: 32, borderRadius: 8, opacity: 0.12,
+  },
+});
 
 const styles = StyleSheet.create({
   container: {

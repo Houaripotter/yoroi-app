@@ -190,7 +190,7 @@ export const CLUBS: Club[] = [
     bio: 'Le club de référence à Marseille pour le MMA et le Striking. Une structure d\'élite pour progresser.',
     instagram: '@marseillefightclub',
     imageUrl: require('@/assets/partenaires/clubs/marseille-fight-club.jpg'),
-    featured: true,
+    featured: false,
   },
   {
     id: 'team-sorel',
@@ -203,7 +203,7 @@ export const CLUBS: Club[] = [
     bio: 'Club emblématique de Marseille dirigé par Yvan Sorel. Une équipe soudée qui pratique le JJB, le Grappling et le MMA. Un esprit de famille et une ambiance de guerriers.',
     instagram: '@teamsorel',
     imageUrl: require('@/assets/partenaires/clubs/teamsorel.jpg'),
-    featured: true,
+    featured: false,
   },
 ];
 

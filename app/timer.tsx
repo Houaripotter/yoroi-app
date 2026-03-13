@@ -698,22 +698,20 @@ export default function TimerScreen() {
           }
 
           if (prev <= 1) {
-            // Temps ecoule - gong UNIQUEMENT pour combat, beep pour tout le reste
-            if (mode === 'combat') {
-              soundManager.playGong();
-            } else {
-              soundManager.playBeep();
-            }
+            // Temps ecoule - son wizz immédiat pour toutes les transitions
+            soundManager.playWizz();
             triggerHaptic('heavy');
             Vibration.vibrate([0, 500, 200, 500, 200, 500]);
-            // Flash + libération tâche arrière-plan
             flashService.alarm();
-            backgroundTaskService.end();
+            // Annuler la notification planifiée : le son JS gère l'alarme en premier plan
+            // (évite le double son système en plus du wizz personnalisé)
+            timerNotifications.cancelNotification().catch(() => {});
 
             // Logique selon le mode
             switch (mode) {
               case 'musculation':
                 // Fin du repos - pret pour la prochaine serie
+                backgroundTaskService.end();
                 setTimerState('finished');
                 // Afficher modal si tracking activé
                 if (trackRepsWeight) {
@@ -734,8 +732,12 @@ export default function TimerScreen() {
                   if (currentRound < totalRounds) {
                     setCurrentRound(r => r + 1);
                     setIsInRest(false);
+                    // Reprendre la tâche arrière-plan et planifier la notif pour ce round
+                    backgroundTaskService.begin();
+                    timerNotifications.scheduleTimerEndNotification('combat', roundDuration).catch(() => {});
                     return roundDuration;
                   } else {
+                    backgroundTaskService.end();
                     setTimerState('finished');
                     soundManager.playVictory();
                     return 0;
@@ -744,8 +746,12 @@ export default function TimerScreen() {
                   // Fin du round
                   if (currentRound < totalRounds) {
                     setIsInRest(true);
+                    // Reprendre la tâche arrière-plan et planifier la notif pour ce repos
+                    backgroundTaskService.begin();
+                    timerNotifications.scheduleTimerEndNotification('combat', restDuration).catch(() => {});
                     return restDuration;
                   } else {
+                    backgroundTaskService.end();
                     setTimerState('finished');
                     soundManager.playVictory();
                     return 0;
@@ -759,10 +765,14 @@ export default function TimerScreen() {
                   setTabataCurrentRound(1);
                   setTabataIsRestBetweenSets(false);
                   setTabataIsWork(true);
+                  backgroundTaskService.begin();
+                  timerNotifications.scheduleTimerEndNotification('tabata', tabataWork).catch(() => {});
                   return tabataWork;
                 } else if (tabataIsWork) {
                   // Fin du travail, debut du repos
                   setTabataIsWork(false);
+                  backgroundTaskService.begin();
+                  timerNotifications.scheduleTimerEndNotification('tabata', tabataRest).catch(() => {});
                   return tabataRest;
                 } else {
                   // Fin du repos
@@ -770,13 +780,18 @@ export default function TimerScreen() {
                     // Prochain round dans ce set
                     setTabataCurrentRound(r => r + 1);
                     setTabataIsWork(true);
+                    backgroundTaskService.begin();
+                    timerNotifications.scheduleTimerEndNotification('tabata', tabataWork).catch(() => {});
                     return tabataWork;
                   } else if (tabataCurrentSet < tabataSets) {
                     // Fin du set, debut du repos entre sets
                     setTabataIsRestBetweenSets(true);
+                    backgroundTaskService.begin();
+                    timerNotifications.scheduleTimerEndNotification('tabata', tabataRestBetweenSets).catch(() => {});
                     return tabataRestBetweenSets;
                   } else {
                     // Tous les sets termines
+                    backgroundTaskService.end();
                     setTimerState('finished');
                     soundManager.playVictory();
                     return 0;
@@ -786,8 +801,11 @@ export default function TimerScreen() {
               case 'emom':
                 if (emomCurrentMinute < emomDuration) {
                   setEmomCurrentMinute(m => m + 1);
+                  backgroundTaskService.begin();
+                  timerNotifications.scheduleTimerEndNotification('emom', 60).catch(() => {});
                   return 60;
                 } else {
+                  backgroundTaskService.end();
                   setTimerState('finished');
                   soundManager.playVictory();
                   return 0;
@@ -795,6 +813,7 @@ export default function TimerScreen() {
 
               case 'amrap':
                 // AMRAP: compte à rebours jusqu'au time cap
+                backgroundTaskService.end();
                 setTimerState('finished');
                 soundManager.playVictory();
                 return 0;
@@ -803,6 +822,7 @@ export default function TimerScreen() {
               // car il compte vers le HAUT, pas vers le BAS
             }
 
+            backgroundTaskService.end();
             return 0;
           }
 

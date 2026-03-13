@@ -31,9 +31,9 @@ interface MultiLineComparisonCardProps {
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CHART_HEIGHT = 220;
 const FULLSCREEN_HEIGHT = SCREEN_HEIGHT * 0.55;
-const PAD_TOP = 30;
+const PAD_TOP = 46;
 const PAD_BOTTOM = 35;
-const PAD_LEFT = 45;
+const PAD_LEFT = 50;
 const PAD_RIGHT = 16;
 const POINT_WIDTH = 70;
 
@@ -183,30 +183,48 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
             const step = Math.ceil(data.xLabels.length / data.maxXLabels);
             if (i % step !== 0 && i !== data.xLabels.length - 1) return null;
           }
-          return <SvgText key={`xl-${i}`} x={xl.x} y={height - 6} textAnchor="middle" fontSize={9} fontWeight="600" fill={textMuted}>{xl.label}</SvgText>;
+          const isFirst = i === 0; const isLast = i === data.xLabels.length - 1;
+          return <SvgText key={`xl-${i}`} x={isFirst ? xl.x + 2 : isLast ? xl.x - 2 : xl.x} y={height - 6} textAnchor={isFirst ? 'start' : isLast ? 'end' : 'middle'} fontSize={9} fontWeight="600" fill={textMuted}>{xl.label}</SvgText>;
         })}
 
+        {/* Aires + courbes en premier (sous les labels) */}
         {data.lineData.map((ld, lineIdx) => (
-          <G key={`line-${lineIdx}`}>
+          <G key={`curves-${lineIdx}`}>
             {ld.area && <Path d={ld.area} fill={`url(#multiGrad-${lineIdx}${isFullscreen ? '-fs' : ''})`} />}
             {ld.line && <Path d={ld.line} fill="none" stroke={ld.color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />}
-            {ld.pts.map((pt, idx) => (
-              <G key={`p-${lineIdx}-${idx}`}>
-                <SvgCircle cx={pt.x} cy={pt.y} r={5} fill={ld.color} opacity={0.12} />
-                <SvgCircle cx={pt.x} cy={pt.y} r={3.5} fill={isDark ? colors.backgroundCard : '#FFFFFF'} stroke={ld.color} strokeWidth={2} />
-              </G>
-            ))}
-            {ld.pts.length > 0 && (() => {
-              const lp = ld.pts[0];
-              return (
-                <G>
-                  <Rect x={lp.x - 20} y={lp.y - 24} width={40} height={16} rx={6} ry={6} fill={ld.color} opacity={0.9} />
-                  <SvgText x={lp.x} y={lp.y - 13} textAnchor="middle" fontSize={9} fontWeight="800" fill="#FFFFFF">{smartFormat(lp.value)}</SvgText>
-                </G>
-              );
-            })()}
           </G>
         ))}
+
+        {/* Valeurs sur tous les points */}
+        {data.lineData.map((ld, lineIdx) =>
+          ld.pts.map((pt, idx) => {
+            const total = ld.pts.length;
+            const isFirst = idx === 0; const isLast = idx === total - 1;
+            const anchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
+            const lx = isFirst ? pt.x + 2 : isLast ? pt.x - 2 : pt.x;
+            const label = smartFormat(pt.value);
+            const w = label.length * 6 + 10;
+            const labelY = Math.max(pt.y - 20, 4);
+            const rx = anchor === 'start' ? lx : anchor === 'end' ? lx - w : lx - w / 2;
+            return (
+              <G key={`vl-${lineIdx}-${idx}`}>
+                <Rect x={rx} y={labelY - 11} width={w} height={14} rx={4} ry={4}
+                  fill={isDark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.92)'} stroke={ld.color} strokeWidth={0.7} />
+                <SvgText x={lx} y={labelY} textAnchor={anchor} fontSize={8.5} fontWeight="800" fill={isDark ? '#FFFFFF' : '#1a1a1a'}>{label}</SvgText>
+              </G>
+            );
+          })
+        )}
+
+        {/* Points par-dessus les labels */}
+        {data.lineData.map((ld, lineIdx) =>
+          ld.pts.map((pt, idx) => (
+            <G key={`p-${lineIdx}-${idx}`}>
+              <SvgCircle cx={pt.x} cy={pt.y} r={5} fill={ld.color} opacity={0.12} />
+              <SvgCircle cx={pt.x} cy={pt.y} r={3.5} fill={isDark ? colors.backgroundCard : '#FFFFFF'} stroke={ld.color} strokeWidth={2} />
+            </G>
+          ))
+        )}
       </Svg>
     );
   };

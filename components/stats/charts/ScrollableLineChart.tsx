@@ -7,7 +7,7 @@ import React, { useRef, useMemo, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, Modal, TouchableOpacity, Pressable } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import Svg, { Path, Defs, LinearGradient, Stop, Circle, Line, Text as SvgText, G } from 'react-native-svg';
+import Svg, { Path, Defs, LinearGradient, Stop, Circle, Line, Text as SvgText, G, Rect } from 'react-native-svg';
 import { format, parseISO, Locale } from 'date-fns';
 import { fr, es, de, it, pt, ru, ar, zhCN } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
@@ -58,9 +58,9 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
     const yRange = yMax - yMin;
 
     const POINT_WIDTH = compact ? 60 : 85;
-    const chartWidth = Math.max(SCREEN_WIDTH - 40, data.length * POINT_WIDTH);
+    const chartWidth = Math.max(SCREEN_WIDTH - 16, data.length * POINT_WIDTH);
     const chartHeight = compact ? 140 : height;
-    const paddingTop = compact ? 40 : 55;
+    const paddingTop = compact ? 48 : 60;
     const paddingBottom = 45;
     const paddingLeft = 60;
     const paddingRight = 30;
@@ -121,9 +121,9 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
     const yRange = yMax - yMin;
 
     const POINT_WIDTH = 100;
-    const chartWidth = Math.max(SCREEN_WIDTH - 60, data.length * POINT_WIDTH);
+    const chartWidth = Math.max(SCREEN_WIDTH - 16, data.length * POINT_WIDTH);
     const chartHeight = SCREEN_HEIGHT * 0.6;
-    const paddingTop = 60;
+    const paddingTop = 70;
     const paddingBottom = 60;
     const paddingLeft = 65;
     const paddingRight = 30;
@@ -247,20 +247,23 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
 
         {/* Points et valeurs */}
         {chartInfo.points.map((point, index) => {
-          // Décaler les labels proches de l'axe Y vers la droite
-          const nearLeftEdge = point.x < chartInfo.paddingLeft + 30;
-          const valueAnchor = nearLeftEdge ? 'start' : 'middle';
-          const valueX = nearLeftEdge ? point.x + 8 : point.x;
+          const totalPts = chartInfo.points.length;
+          const isFirst = index === 0;
+          const isLast = index === totalPts - 1;
 
-          // Anti-chevauchement vertical: décaler si le point précédent est trop proche
-          let valueY = Math.max(point.y - (isFullscreenMode ? 16 : (compact ? 10 : 13)), 16);
-          if (index > 0) {
-            const prevPoint = chartInfo.points[index - 1];
-            const prevValueY = Math.max(prevPoint.y - (isFullscreenMode ? 16 : (compact ? 10 : 13)), 16);
-            if (Math.abs(valueY - prevValueY) < 14 && Math.abs(point.x - prevPoint.x) < 60) {
-              valueY = valueY - 20;
-            }
-          }
+          // Ancre adaptée pour éviter le débordement sur les bords
+          const dateAnchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
+          const dateX = isFirst ? point.x + 2 : isLast ? point.x - 2 : point.x;
+
+          // Valeur : toujours au-dessus du point, clampée pour rester dans le SVG
+          const offset = isFullscreenMode ? 18 : (compact ? 14 : 16);
+          const valueY = Math.max(point.y - offset, 8);
+          const valueAnchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
+          const valueX = isFirst ? point.x + 2 : isLast ? point.x - 2 : point.x;
+
+          const valueLabel = `${Number.isInteger(point.value) ? Math.round(point.value) : point.value.toFixed(1).replace(/\.0$/, '')}${unit ? ` ${unit}` : ''}`;
+          const labelW = valueLabel.length * (isFullscreenMode ? 7.5 : 6) + 10;
+          const rectX = valueAnchor === 'start' ? valueX : valueAnchor === 'end' ? valueX - labelW : valueX - labelW / 2;
 
           return (
           <G key={`point-${index}`}>
@@ -289,6 +292,18 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
               fill={lineColor}
             />
 
+            {/* Fond de la valeur pour lisibilité garantie */}
+            <Rect
+              x={rectX}
+              y={valueY - (isFullscreenMode ? 14 : 11)}
+              width={labelW}
+              height={isFullscreenMode ? 17 : 13}
+              rx={4}
+              ry={4}
+              fill={isDark ? 'rgba(0,0,0,0.62)' : 'rgba(255,255,255,0.90)'}
+              stroke={lineColor}
+              strokeWidth={0.6}
+            />
             {/* Valeur au-dessus */}
             <SvgText
               x={valueX}
@@ -297,19 +312,18 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
               fontSize={fontSize.value}
               fontWeight="800"
               textAnchor={valueAnchor}
-              opacity={0.9}
             >
-              {Number.isInteger(point.value) ? Math.round(point.value) : point.value.toFixed(1).replace(/\.0$/, '')}{unit ? ` ${unit}` : ''}
+              {valueLabel}
             </SvgText>
 
             {/* Date */}
             <SvgText
-              x={point.x}
+              x={dateX}
               y={chartInfo.chartHeight - (isFullscreenMode ? 15 : 10)}
               fill={lineColor}
               fontSize={fontSize.date}
               fontWeight="700"
-              textAnchor="middle"
+              textAnchor={dateAnchor}
               opacity={0.8}
             >
               {chartInfo.labels[index]}

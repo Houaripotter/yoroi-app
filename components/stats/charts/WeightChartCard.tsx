@@ -32,9 +32,9 @@ interface WeightChartCardProps {
 }
 
 const CHART_HEIGHT = 220;
-const PAD_TOP = 30;
+const PAD_TOP = 46;
 const PAD_BOTTOM = 35;
-const PAD_LEFT = 48;
+const PAD_LEFT = 52;
 const PAD_RIGHT = 16;
 const POINT_WIDTH = 70;
 
@@ -317,9 +317,12 @@ export const WeightChartCard: React.FC<WeightChartCardProps> = ({
                   const step = Math.ceil(chartData.xLabels.length / chartData.maxXLabels);
                   if (i % step !== 0 && i !== chartData.xLabels.length - 1) return null;
                 }
+                const isFirst = i === 0;
+                const isLast = i === chartData.xLabels.length - 1;
+                const anchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
                 return (
                   <SvgText key={`xl-${i}`} x={xl.x} y={CHART_HEIGHT - 6}
-                    textAnchor="middle" fontSize={9} fontWeight="600" fill={textMuted}>
+                    textAnchor={anchor} fontSize={9} fontWeight="600" fill={textMuted}>
                     {xl.label}
                   </SvgText>
                 );
@@ -340,6 +343,31 @@ export const WeightChartCard: React.FC<WeightChartCardProps> = ({
                   stroke={hlColor} strokeWidth={1.5} strokeDasharray="4,4" opacity={0.55}
                 />
               )}
+
+              {/* Valeurs sur tous les points */}
+              {chartData.pts.map((pt, idx) => {
+                const isHL = idx === highlightIdx;
+                if (isHL) return null; // le point sélectionné a déjà son propre label ci-dessous
+                const label = smartFmt(pt.value);
+                const w = label.length * 6 + 10;
+                const labelY = Math.max(pt.y - 22, 4);
+                const isFirst = idx === 0;
+                const isLast = idx === chartData.pts.length - 1;
+                const anchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
+                const labelX = isFirst ? pt.x + 2 : isLast ? pt.x - 2 : pt.x;
+                const rectX = anchor === 'start' ? labelX : anchor === 'end' ? labelX - w : labelX - w / 2;
+                return (
+                  <G key={`vl-${idx}`}>
+                    <Rect x={rectX} y={labelY - 11} width={w} height={14} rx={4} ry={4}
+                      fill={isDark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.92)'}
+                      stroke={color} strokeWidth={0.7} />
+                    <SvgText x={labelX} y={labelY} textAnchor={anchor} fontSize={8.5} fontWeight="800"
+                      fill={isDark ? '#FFFFFF' : '#1a1a1a'}>
+                      {label}
+                    </SvgText>
+                  </G>
+                );
+              })}
 
               {/* Points */}
               {chartData.pts.map((pt, idx) => {

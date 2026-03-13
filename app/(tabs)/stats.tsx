@@ -12,10 +12,10 @@ import { StatsTabViewNew } from '@/components/stats/StatsTabViewNew';
 type StatsTab = 'dashboard' | 'corps' | 'training' | 'sante';
 
 export default function StatsScreen() {
-  const { colors, screenBackground } = useTheme();
+  const { screenBackground } = useTheme();
   const params = useLocalSearchParams<{ tab?: string }>();
 
-  const validTabs: StatsTab[] = ['dashboard', 'corps', 'training', 'santé'];
+  const validTabs: StatsTab[] = ['dashboard', 'corps', 'training', 'sante'];
 
   const validatedTab: StatsTab | undefined = React.useMemo(() => {
     if (params?.tab && validTabs.includes(params.tab as StatsTab)) {

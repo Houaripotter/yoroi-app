@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Yoroi</string>
+    <string name="watchface_name">Yoroi</string>
+    <string name="watchface_style_label">Style</string>
+    <string name="watchface_style_gold">Or</string>
+    <string name="watchface_style_silver">Argent</string>
+    <string name="watchface_style_red">Rouge</string>
+    <string name="tile_dashboard_description">Poids, serie d\'entrainement et rang Yoroi</string>
+    <string name="tile_hydration_description">Suivi de l\'hydratation quotidienne</string>
+    <string name="tile_training_description">Pas, calories, distance et serie</string>
 </resources>

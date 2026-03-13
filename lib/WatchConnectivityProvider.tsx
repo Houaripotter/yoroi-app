@@ -528,14 +528,32 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           const amount = typeof msg.amount === 'number' ? msg.amount : parseInt(msg.amount);
           if (Math.abs(amount) > 0 && Math.abs(amount) <= 2000) {
             try {
-              // 1. Update waterIntake (ml, used by megaPack)
-              const currentStr = await secureStorage.getItem('@yoroi_water_intake');
-              let current = 0;
-              if (currentStr) {
-                const rawVal = parseFloat(String(currentStr));
-                // Si la valeur est < 20, elle est en litres (ancienne version) → convertir en ml
-                current = rawVal < 20 ? Math.round(rawVal * 1000) : Math.round(rawVal);
+              // 1. Lire le total actuel depuis TOUTES les sources et prendre le MAX
+              // (le téléphone sauvegarde dans AsyncStorage, pas dans secureStorage)
+              const todayISO = new Date().toISOString().split('T')[0];
+              const [currentSecureStr, currentTodayMlStr, currentHydrationStr] = await Promise.all([
+                secureStorage.getItem('@yoroi_water_intake'),
+                AsyncStorage.getItem(`@yoroi_hydration_today_${todayISO}`),
+                AsyncStorage.getItem('@yoroi_hydration_today'),
+              ]);
+
+              let fromSecure = 0;
+              if (currentSecureStr) {
+                const v = parseFloat(String(currentSecureStr));
+                fromSecure = v < 20 ? Math.round(v * 1000) : Math.round(v);
               }
+              const fromTodayMl = currentTodayMlStr ? parseInt(currentTodayMlStr) || 0 : 0;
+              let fromHydrationKey = 0;
+              if (currentHydrationStr) {
+                try {
+                  const parsed = JSON.parse(currentHydrationStr);
+                  const today = new Date().toDateString();
+                  if (parsed.date === today && parsed.amount) {
+                    fromHydrationKey = Math.round(parsed.amount * 1000);
+                  }
+                } catch { /* ignore */ }
+              }
+              const current = Math.max(fromSecure, fromTodayMl, fromHydrationKey);
               const newTotalMl = Math.max(0, current + amount);
               await secureStorage.setItem('@yoroi_water_intake', String(newTotalMl));
 
@@ -545,7 +563,6 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
               await AsyncStorage.setItem('@yoroi_hydration_today', JSON.stringify({ date: today, amount: newTotalL }));
 
               // 3. Update date-based key for home screen (ml)
-              const todayISO = new Date().toISOString().split('T')[0];
               await AsyncStorage.setItem(`@yoroi_hydration_today_${todayISO}`, String(newTotalMl));
 
               // 4. Update hydration log for badges
@@ -664,6 +681,12 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           WatchConnectivity.sendMessageToWatch({ pong: true, timestamp: Date.now(), appVersion: APP_VERSION }).catch(() => {});
           logSync('handleWatchMessage - Pong envoyé');
         }
+
+        // Watch demande une sync complète (ex: page hydratation ouverte)
+        if (msg.action === 'syncRequest') {
+          logSync('handleWatchMessage - syncRequest reçu → sync immédiate');
+          performSync().catch(() => {});
+        }
       }
 
       // Nettoyer queue après succès
@@ -688,14 +711,17 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       logSync('syncProfileToWatch - Début');
 
       const profile = await getProfile();
-      const [avatarConfig, level, rank, waterIntake, profileThemeColor, profileThemeMode] = await Promise.all([
+      const todayISOProfile = new Date().toISOString().split('T')[0];
+      const [avatarConfig, level, rank, waterIntakeSecureP, waterIntakeTodayP, profileThemeColor, profileThemeMode] = await Promise.all([
         AsyncStorage.getItem('@yoroi_avatar_config'),
         AsyncStorage.getItem('@yoroi_level'),
         AsyncStorage.getItem('@yoroi_rank'),
         secureStorage.getItem('@yoroi_water_intake'),
+        AsyncStorage.getItem(`@yoroi_hydration_today_${todayISOProfile}`),
         AsyncStorage.getItem('yoroi_theme_color_v5'),
         AsyncStorage.getItem('yoroi_theme_mode_v5'),
       ]);
+      const waterIntake = String(Math.max(parseFloat(waterIntakeSecureP || '0'), parseInt(waterIntakeTodayP || '0')));
 
       // Theme colors - send full theme to Watch
       const profileThemeEntry = themeColors.find(t => t.id === (profileThemeColor || 'ocean'));
@@ -981,6 +1007,41 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     }
   };
 
+  // ── Helpers pour la bibliothèque d'exercices (iPhone → Watch) ──
+  const toWatchMuscleGroup = (muscle: string): string => {
+    const map: Record<string, string> = {
+      'PECTORAUX': 'Pectoraux', 'DOS': 'Dos', 'ÉPAULES': 'Epaules', 'EPAULES': 'Epaules',
+      'BRAS': 'Bras', 'BICEPS': 'Bras', 'TRICEPS': 'Bras', 'AVANT-BRAS': 'Bras',
+      'JAMBES': 'Jambes', 'QUADRICEPS': 'Jambes', 'CUISSES': 'Jambes',
+      'FESSIERS': 'Fessiers', 'ISCHIOS': 'Ischios', 'MOLLETS': 'Jambes',
+      'ABDOS': 'Abdos', 'LOMBAIRES': 'Abdos', 'CORE': 'Abdos',
+      'RUNNING': 'Running', 'TRAIL': 'Running',
+      'CARDIO': 'Cardio', 'TAPIS': 'Cardio', 'VÉLO': 'Cardio', 'VELO': 'Cardio',
+      'RAMEUR': 'Cardio', 'ELLIPTIQUE': 'Cardio', 'SKIERG': 'Cardio',
+      'ASSAULT BIKE': 'Cardio', 'ESCALIER': 'Cardio', 'CORDE': 'Cardio',
+      'COMBAT': 'Combat', 'BOXE': 'Combat', 'MMA': 'Combat', 'BJJ': 'Combat',
+      'STRONGMAN': 'Strongman', 'HYROX': 'Hyrox',
+      'CROSSFIT': 'CrossFit', 'HALTEROPHILIE': 'Olympique',
+      'HALTÉROPHILIE': 'Olympique', 'MOBILITÉ': 'Mobilite', 'MOBILITE': 'Mobilite',
+      'STRETCHING': 'Mobilite', 'YOGA': 'Mobilite',
+    };
+    const key = muscle.toUpperCase().trim();
+    return map[key] || (muscle.charAt(0).toUpperCase() + muscle.slice(1).toLowerCase());
+  };
+  const toWatchCategory = (category: string): string => {
+    const map: Record<string, string> = {
+      'musculation': 'Musculation', 'cardio': 'Cardio', 'combat': 'Combat',
+      'running': 'Running', 'trail': 'Running', 'hyrox': 'Hyrox',
+      'crossfit': 'CrossFit', 'halterophilie': 'Olympique', 'haltérophilie': 'Olympique',
+      'strongman': 'Strongman', 'mobility': 'Mobilite', 'mobilite': 'Mobilite',
+      'mobilité': 'Mobilite', 'sport': 'Cardio',
+    };
+    return map[category.toLowerCase().trim()] || (category.charAt(0).toUpperCase() + category.slice(1));
+  };
+  const toWatchUnit = (unit: string): string => {
+    switch (unit) { case 'time': return 'min'; case 'km': return 'km'; case 'meters': return 'm'; default: return 'reps'; }
+  };
+
   // Fonction interne de sync
   const performSync = useCallback(async () => {
     if (!isAvailable || Platform.OS !== 'ios') return;
@@ -996,10 +1057,12 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       // 1. Récupérer données
       const { getSleepStats, getSleepGoal, getTodaySleep } = require('@/lib/sleepService');
       const { getWeights, getTrainings } = require('@/lib/database');
-      const [profile, weight, waterIntake, streak, avatarConfig, level, rank, benchmarksList, savedThemeColor, savedStepsGoal, savedHydrationGoal, sleepStatsData, sleepGoalData, todaySleep, savedThemeMode, savedSettings, savedTimerPreset, weightEntries, recentTrainings] = await Promise.all([
+      const todayISOForHydration = new Date().toISOString().split('T')[0];
+      const [profile, weight, waterIntakeSecure, waterIntakeToday, streak, avatarConfig, level, rank, benchmarksList, savedThemeColor, savedStepsGoal, savedHydrationGoal, sleepStatsData, sleepGoalData, todaySleep, savedThemeMode, savedSettings, savedTimerPreset, weightEntries, recentTrainings] = await Promise.all([
         getProfile(),
         secureStorage.getItem('@yoroi_current_weight'),
         secureStorage.getItem('@yoroi_water_intake'),
+        AsyncStorage.getItem(`@yoroi_hydration_today_${todayISOForHydration}`),
         AsyncStorage.getItem('streak'),
         AsyncStorage.getItem('@yoroi_avatar_config'),
         AsyncStorage.getItem('@yoroi_level'),
@@ -1024,7 +1087,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       try {
         const currentYear = new Date().getFullYear();
         const { getTrainings: getAllTrainings } = require('@/lib/database');
-        const allTrainings: any[] = await getAllTrainings().catch(() => []);
+        const allTrainings: any[] = await getAllTrainings(365).catch(() => []);
         const uniqueDays = new Set<string>();
         for (const t of allTrainings) {
           const dateStr = t.date ? String(t.date).split('T')[0] : '';
@@ -1175,9 +1238,9 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         targetWeight: profile?.target_weight || undefined,
         startWeight: profile?.start_weight || undefined,
         height: profile?.height_cm || undefined,
-        // Hydration
-        wi: parseFloat(waterIntake || '0'),
-        hydrationCurrent: Math.round(parseFloat(waterIntake || '0')),
+        // Hydration — prend la source la plus à jour (SecureStorage Watch↔iPhone vs AsyncStorage app)
+        wi: Math.max(parseFloat(waterIntakeSecure || '0'), parseFloat(waterIntakeToday || '0')),
+        hydrationCurrent: Math.max(Math.round(parseFloat(waterIntakeSecure || '0')), parseInt(waterIntakeToday || '0')),
         hydrationWeekly: hydrationWeeklyData.length > 0 ? hydrationWeeklyData : undefined,
         // Profile
         un: profile?.name || undefined,
@@ -1296,7 +1359,29 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       setSyncStatus('success');
 
       logSync('performSync - Succès', { duration: `${duration}ms` });
-      showSyncBanner('✅ Montre synchronisée', 'success');
+      showSyncBanner('Montre synchronisée', 'success');
+
+      // Envoyer la bibliothèque d'exercices une fois par jour (background, pas de limite de taille)
+      try {
+        const exSyncKey = '@yoroi_exercises_sent_to_watch_date';
+        const todayStr = new Date().toISOString().split('T')[0];
+        const lastSent = await AsyncStorage.getItem(exSyncKey);
+        if (lastSent !== todayStr) {
+          const { EXERCISE_LIBRARY } = require('@/constants/exerciseLibrary');
+          const exerciseLibrary = (EXERCISE_LIBRARY as any[]).map((e: any, idx: number) => ({
+            id: `ex_${idx}`,
+            n: e.name,
+            mg: toWatchMuscleGroup(e.muscle || ''),
+            c: toWatchCategory(e.category || ''),
+            u: toWatchUnit(e.unit || 'reps'),
+          }));
+          await WatchConnectivity.transferUserInfo({ exerciseLibrary });
+          await AsyncStorage.setItem(exSyncKey, todayStr);
+          logSync('performSync - Bibliotheque exercices envoyee', { count: exerciseLibrary.length });
+        }
+      } catch (exErr) {
+        logSync('performSync - Erreur envoi exercices (non bloquant)', exErr);
+      }
 
     } catch (e) {
       const duration = Date.now() - startTime;
@@ -1332,14 +1417,16 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
 
   // ─── Sync automatique iPhone → Watch quand les données changent ───
   // Chaque fois que l'iPhone modifie une donnée (poids, hydratation, sommeil...),
-  // YOROI_DATA_CHANGED est émis → megaPack poussé immédiatement à la montre.
+  // YOROI_DATA_CHANGED est émis → megaPack poussé via updateApplicationContext (fonctionne
+  // même quand la Watch n'est pas en foreground) + sendMessage si reachable.
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
     const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
-      if (isReachable) syncAllData();
+      // Toujours syncer — updateApplicationContext fonctionne en arrière-plan Watch
+      syncAllData();
     });
     return () => sub.remove();
-  }, [isReachable, syncAllData]);
+  }, [syncAllData]);
 
   // Context value
   const contextValue = useMemo(() => ({

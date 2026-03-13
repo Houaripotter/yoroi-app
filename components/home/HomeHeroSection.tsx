@@ -11,9 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { getCurrentRank } from '@/lib/ranks';
-import { RankCitationCard } from '@/components/home/RankCitationCard';
-import { GhostLeaderboardCard } from '@/components/home/GhostLeaderboardCard';
-import { HomeChallengesWidget } from '@/components/home/HomeChallengesWidget';
+import { HomeHeroCard } from '@/components/home/HomeHeroCard';
 import { getDailyQuestsProgress } from '@/lib/quests';
 
 const HERO_COLLAPSED_KEY = '@yoroi_hero_collapsed';
@@ -107,17 +105,12 @@ export function HomeHeroSection({ streak, totalPoints, dailyQuote, avatarUri }: 
 
   // ── VUE ÉTENDUE ──────────────────────────────────────────────────────────────
   return (
-    <View>
-      <RankCitationCard
-        streak={streak}
-        totalPoints={totalPoints}
-        dailyQuote={dailyQuote}
-        avatarUri={avatarUri}
-      />
-      <GhostLeaderboardCard />
-      {/* Le carré "réduire" est dans le footer du widget, à gauche du lien Dojo */}
-      <HomeChallengesWidget onCollapse={toggle} />
-    </View>
+    <HomeHeroCard
+      streak={streak}
+      totalPoints={totalPoints}
+      avatarUri={avatarUri}
+      onCollapse={toggle}
+    />
   );
 }
 

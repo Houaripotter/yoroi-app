@@ -24,6 +24,7 @@ import {
   Star,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
+import { SamuraiLoader } from '@/components/SamuraiLoader';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
@@ -185,10 +186,7 @@ export default function RecordsScreen() {
       <ScreenWrapper noPadding>
         <Header title={t('screens.records.title')} showBack />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.gold} />
-          <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-            {t('screens.records.calculating')}
-          </Text>
+          <SamuraiLoader message={t('screens.records.calculating')} />
         </View>
       </ScreenWrapper>
     );

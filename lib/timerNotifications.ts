@@ -136,7 +136,7 @@ class TimerNotificationsService {
         content: {
           title,
           body,
-          sound: 'default',
+          sound: Platform.OS === 'ios' ? 'wizz.mp3' : 'default',
           priority: Notifications.AndroidNotificationPriority.MAX,
           vibrate: [0, 400, 200, 400, 200, 400],
           data: { type: 'timer_finished' },

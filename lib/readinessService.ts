@@ -13,11 +13,15 @@ export interface ReadinessScore {
     charge: { score: number; impact: 'positive' | 'neutral' | 'negative' };
     hydration: { score: number; impact: 'positive' | 'neutral' | 'negative' };
     streak: { score: number; impact: 'positive' | 'neutral' | 'negative' };
+    heartRate?: { score: number; impact: 'positive' | 'neutral' | 'negative' };
+    hrv?: { score: number; impact: 'positive' | 'neutral' | 'negative' };
   };
   recommendation: 'go' | 'caution' | 'rest';
 }
 
 const HYDRATION_KEY = '@yoroi_hydration';
+const RESTING_HR_KEY = '@yoroi_health_last_resting_hr';
+const HRV_KEY = '@yoroi_health_last_hrv';
 
 /**
  * Récupère l'hydratation du jour
@@ -39,11 +43,15 @@ export const calculateReadinessScore = async (
   streakDays: number = 0
 ): Promise<ReadinessScore> => {
   try {
-    const [sleepStats, loadStats, hydration] = await Promise.all([
+    const [sleepStats, loadStats, hydration, restingHRRaw, hrvRaw] = await Promise.all([
       getSleepStats(),
       getWeeklyLoadStats(),
       getTodayHydration(),
+      AsyncStorage.getItem(RESTING_HR_KEY),
+      AsyncStorage.getItem(HRV_KEY),
     ]);
+    const restingHR = restingHRRaw ? parseFloat(restingHRRaw) : 0;
+    const hrv = hrvRaw ? parseFloat(hrvRaw) : 0;
 
     // Détection pas de données : Si tout est vide, score = 0
     const hasSleepData = sleepStats && sleepStats.lastNightDuration > 0;
@@ -89,24 +97,78 @@ export const calculateReadinessScore = async (
       chargeScore >= 60 ? 'positive' : chargeScore >= 40 ? 'neutral' : 'negative';
 
     // Score Hydratation (0-100)
+    // Si pas de donnée hydratation (ni HealthKit ni saisie manuelle) → score neutre 50
+    // pour ne pas pénaliser les utilisateurs qui ne loguent pas l'eau
     const hydrationTarget = 2500; // ml
-    const hydrationRatio = Math.min(1, hydration / hydrationTarget);
-    const hydrationScore = hydrationRatio * 100;
-    const hydrationImpact: 'positive' | 'neutral' | 'negative' = 
-      hydrationScore >= 80 ? 'positive' : hydrationScore >= 50 ? 'neutral' : 'negative';
+    const hydrationScore = hasHydrationData
+      ? Math.min(1, hydration / hydrationTarget) * 100
+      : 50; // neutre si aucune donnée
+    const hydrationImpact: 'positive' | 'neutral' | 'negative' =
+      !hasHydrationData ? 'neutral'
+      : hydrationScore >= 80 ? 'positive'
+      : hydrationScore >= 50 ? 'neutral'
+      : 'negative';
 
     // Score Streak (0-100)
     const streakScore = Math.min(100, streakDays * 5);
-    const streakImpact: 'positive' | 'neutral' | 'negative' = 
+    const streakImpact: 'positive' | 'neutral' | 'negative' =
       streakDays >= 7 ? 'positive' : streakDays >= 3 ? 'neutral' : 'negative';
 
-    // Score global (moyenne pondérée)
-    const globalScore = Math.round(
-      sleepScore * 0.35 +
-      chargeScore * 0.30 +
-      hydrationScore * 0.20 +
-      streakScore * 0.15
-    );
+    // Score FC au repos (0-100) — FC basse = meilleure récupération
+    // FC normale au repos : 60-100 bpm. < 60 (athlète) = très bon, > 80 = stress/fatigue
+    let hrScore = 50; // neutre si pas de donnée
+    let hrImpact: 'positive' | 'neutral' | 'negative' = 'neutral';
+    if (restingHR > 0) {
+      if (restingHR < 55) { hrScore = 100; hrImpact = 'positive'; }
+      else if (restingHR < 65) { hrScore = 85; hrImpact = 'positive'; }
+      else if (restingHR < 75) { hrScore = 65; hrImpact = 'neutral'; }
+      else if (restingHR < 85) { hrScore = 45; hrImpact = 'neutral'; }
+      else { hrScore = 20; hrImpact = 'negative'; }
+    }
+
+    // Score HRV (0-100) — HRV élevée = meilleure récupération
+    // HRV normale : 20-100 ms selon l'âge/forme. > 60 ms = bon, < 25 ms = fatigue
+    let hrvScore = 50; // neutre si pas de donnée
+    let hrvImpact: 'positive' | 'neutral' | 'negative' = 'neutral';
+    if (hrv > 0) {
+      if (hrv >= 80) { hrvScore = 100; hrvImpact = 'positive'; }
+      else if (hrv >= 60) { hrvScore = 85; hrvImpact = 'positive'; }
+      else if (hrv >= 40) { hrvScore = 65; hrvImpact = 'neutral'; }
+      else if (hrv >= 25) { hrvScore = 40; hrvImpact = 'neutral'; }
+      else { hrvScore = 15; hrvImpact = 'negative'; }
+    }
+
+    // Score global (moyenne pondérée) — avec ou sans données biometriques
+    const hasHRData = restingHR > 0;
+    const hasHRVData = hrv > 0;
+    let globalScore: number;
+    if (hasHRData && hasHRVData) {
+      // Avec FC repos + HRV : poids réduits sur sommeil/charge pour faire de la place
+      globalScore = Math.round(
+        sleepScore * 0.28 +
+        chargeScore * 0.22 +
+        hydrationScore * 0.15 +
+        streakScore * 0.10 +
+        hrScore * 0.13 +
+        hrvScore * 0.12
+      );
+    } else if (hasHRData || hasHRVData) {
+      const bioScore = hasHRData ? hrScore : hrvScore;
+      globalScore = Math.round(
+        sleepScore * 0.31 +
+        chargeScore * 0.26 +
+        hydrationScore * 0.18 +
+        streakScore * 0.12 +
+        bioScore * 0.13
+      );
+    } else {
+      globalScore = Math.round(
+        sleepScore * 0.35 +
+        chargeScore * 0.30 +
+        hydrationScore * 0.20 +
+        streakScore * 0.15
+      );
+    }
 
     // Déterminer le niveau
     let level: ReadinessScore['level'];
@@ -144,6 +206,8 @@ export const calculateReadinessScore = async (
         charge: { score: Math.round(chargeScore), impact: chargeImpact },
         hydration: { score: Math.round(hydrationScore), impact: hydrationImpact },
         streak: { score: Math.round(streakScore), impact: streakImpact },
+        ...(restingHR > 0 && { heartRate: { score: Math.round(hrScore), impact: hrImpact } }),
+        ...(hrv > 0 && { hrv: { score: Math.round(hrvScore), impact: hrvImpact } }),
       },
       recommendation,
     };

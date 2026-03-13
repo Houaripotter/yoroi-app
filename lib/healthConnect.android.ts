@@ -5,7 +5,7 @@
 // Parité complète avec iOS HealthKit
 // ============================================
 
-import { Platform } from 'react-native';
+import { Platform, DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import { addTraining, updateTrainingDetails, getProfile, saveHealthDataBatch } from './database';
@@ -1744,6 +1744,23 @@ class HealthConnectService {
     return this.getAndroidWorkouts();
   }
 
+  async canReadWorkouts(): Promise<{ accessible: boolean; count: number }> {
+    if (!this.syncStatus.permissions.workouts) return { accessible: false, count: 0 };
+    try {
+      const result = await this.getAndroidWorkouts();
+      if (!result) return { accessible: false, count: 0 };
+      return { accessible: true, count: result.length };
+    } catch {
+      return { accessible: false, count: 0 };
+    }
+  }
+
+  async requestWorkoutPermissions(): Promise<void> {
+    try {
+      await this.connect();
+    } catch { /* silencieux */ }
+  }
+
   // ============================================
   // HISTORIQUES
   // ============================================
@@ -3015,7 +3032,8 @@ class HealthConnectService {
           try {
             const sportKey = workout.activityType;
             const sportLabel = ANDROID_SPORT_LABELS[sportKey] || sportKey;
-            const trainingDate = new Date(workout.startDate).toISOString().split('T')[0];
+            const _da0 = new Date(workout.startDate);
+            const trainingDate = `${_da0.getFullYear()}-${String(_da0.getMonth() + 1).padStart(2, '0')}-${String(_da0.getDate()).padStart(2, '0')}`;
             const startTime = new Date(workout.startDate).toTimeString().slice(0, 5);
 
             const noteParts: string[] = [];
@@ -3061,6 +3079,7 @@ class HealthConnectService {
           const fingerprintsArray = Array.from(importedFingerprints).slice(-5000);
           await AsyncStorage.setItem('@yoroi_imported_workouts', JSON.stringify(fingerprintsArray));
           logger.info(`[HealthConnect Android] ${workoutsSaved} workouts sauvegardes dans SQLite`);
+          DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
         }
       }
 
@@ -3255,7 +3274,7 @@ class HealthConnectService {
 
         const sportKey = ANDROID_EXERCISE_TYPE_NAMES[s.exerciseType] || 'autre';
         const sportLabel = ANDROID_SPORT_LABELS[sportKey] || sportKey;
-        const trainingDate = startTime.toISOString().split('T')[0];
+        const trainingDate = `${startTime.getFullYear()}-${String(startTime.getMonth() + 1).padStart(2, '0')}-${String(startTime.getDate()).padStart(2, '0')}`;
         const startTimeStr = startTime.toTimeString().slice(0, 5);
         const source = normalizeSourceName(extractAndroidSourceName(s));
 

@@ -250,16 +250,25 @@ export const WatchConnectivity = {
 
   /**
    * Envoie les données de poids à la Watch
+   * 1. updateApplicationContext (fond, livraison rapide même Watch en arrière-plan)
+   * 2. sendMessage en plus si Watch reachable (instantané si app Watch en foreground)
    */
   sendWeightUpdate: async (weight: number, date: Date = new Date()): Promise<void> => {
+    const payload = {
+      weightUpdate: {
+        weight,
+        date: date.toISOString(),
+        timestamp: Date.now(),
+      },
+    };
     try {
-      await WatchConnectivity.updateApplicationContext({
-        weightUpdate: {
-          weight,
-          date: date.toISOString(),
-          timestamp: Date.now(),
-        },
-      });
+      // updateApplicationContext en premier — livraison background rapide
+      await WatchConnectivity.updateApplicationContext(payload);
+      // sendMessage en parallèle si Watch reachable → instantané
+      const reachable = await WatchConnectivity.isWatchReachable();
+      if (reachable) {
+        WatchConnectivity.sendMessageToWatch(payload).catch(() => {});
+      }
       if (__DEV__) logger.info('Weight update sent to Watch:', weight);
     } catch (error) {
       logger.error('Error sending weight to Watch:', error);
@@ -269,7 +278,8 @@ export const WatchConnectivity = {
 
   /**
    * Envoie les données d'hydratation à la Watch
-   * Essaie sendMessage (immédiat) si la Watch est joignable, sinon updateApplicationContext (background)
+   * 1. updateApplicationContext (fond, livraison rapide même Watch en arrière-plan)
+   * 2. sendMessage en plus si Watch reachable (instantané si app Watch en foreground)
    */
   sendHydrationUpdate: async (waterIntake: number, date: Date = new Date()): Promise<void> => {
     const payload = {
@@ -280,21 +290,17 @@ export const WatchConnectivity = {
       },
     };
     try {
+      // updateApplicationContext en premier — livraison background rapide
+      await WatchConnectivity.updateApplicationContext(payload);
+      // sendMessage en parallèle si Watch reachable → instantané
       const reachable = await WatchConnectivity.isWatchReachable();
       if (reachable) {
-        await WatchConnectivity.sendMessageToWatch(payload);
-      } else {
-        await WatchConnectivity.updateApplicationContext(payload);
+        WatchConnectivity.sendMessageToWatch(payload).catch(() => {});
       }
       if (__DEV__) logger.info('Hydration update sent to Watch:', waterIntake);
     } catch (error) {
-      // Fallback: si sendMessage échoue (Watch pas joignable), utiliser le contexte
-      try {
-        await WatchConnectivity.updateApplicationContext(payload);
-      } catch (e2) {
-        logger.error('Error sending hydration to Watch:', e2);
-        throw e2;
-      }
+      logger.error('Error sending hydration to Watch:', error);
+      throw error;
     }
   },
 

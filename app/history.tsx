@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
-  ActivityIndicator,
   Dimensions,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,7 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { LineChart, BarChart } from 'react-native-gifted-charts';
-import { Calendar, Dna , ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
+import { Calendar, Dna, ChevronLeft, ChevronRight, Plus, List, MapPin, Flame, Clock, Heart } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getAllMeasurements, Measurement } from '@/lib/storage';
 import { router } from 'expo-router';
@@ -24,6 +24,7 @@ import { Header } from '@/components/ui/Header';
 import logger from '@/lib/security/logger';
 import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 import { useDevMode } from '@/lib/DevModeContext';
+import { SamuraiLoader } from '@/components/SamuraiLoader';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -88,7 +89,7 @@ export default function HistoryScreen() {
     t('dates.may'), t('dates.june'), t('dates.july'), t('dates.august'),
     t('dates.september'), t('dates.october'), t('dates.november'), t('dates.december')
   ], [t]);
-  const [viewMode, setViewMode] = useState<'calendar' | 'stats'>('calendar');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar' | 'stats'>('list');
   const [selectedComposition, setSelectedComposition] = useState<CompositionMetric>('weight');
   const [selectedMeasurement, setSelectedMeasurement] = useState<MeasurementMetric>('waist');
   const [records, setRecords] = useState<Measurement[]>([]);
@@ -96,6 +97,8 @@ export default function HistoryScreen() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState<'7' | '30' | '90' | 'all'>('all');
+  const [dayModalTrainings, setDayModalTrainings] = useState<Training[]>([]);
+  const [dayModalVisible, setDayModalVisible] = useState(false);
   const { isProcessing, executeOnce } = usePreventDoubleClick({ delay: 500 });
   const cancelledRef = useRef(false);
 
@@ -163,10 +166,14 @@ export default function HistoryScreen() {
     executeOnce(async () => {
       const dateString = date.toISOString().split('T')[0];
       const dayTrainings = trainings.filter(t => t.date === dateString);
-      if (dayTrainings.length > 0 && dayTrainings[0].id) {
+      if (dayTrainings.length === 0) {
+        router.push({ pathname: '/add-training', params: { date: dateString } });
+      } else if (dayTrainings.length === 1 && dayTrainings[0].id) {
         router.push({ pathname: '/workout-detail', params: { id: dayTrainings[0].id.toString() } });
       } else {
-        router.push({ pathname: '/add-training', params: { date: dateString } });
+        // Plusieurs séances ce jour → afficher un modal de sélection
+        setDayModalTrainings(dayTrainings);
+        setDayModalVisible(true);
       }
     });
   };
@@ -314,13 +321,13 @@ export default function HistoryScreen() {
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: themeColors.background }]}>
-        <ActivityIndicator size="large" color={themeColors.gold} />
-        <Text style={[styles.loadingText, { color: themeColors.textSecondary }]}>Chargement de l'historique...</Text>
+        <SamuraiLoader message="Chargement de l'historique..." />
       </View>
     );
   }
 
   return (
+    <>
     <ScreenWrapper noPadding>
       <Header
         title="Historique"
@@ -396,38 +403,133 @@ export default function HistoryScreen() {
         {/* Segmented Control */}
         <View style={[styles.segmentedControl, { backgroundColor: themeColors.card }]}>
           <TouchableOpacity
-            style={[
-              styles.segmentButton,
-              viewMode === 'calendar' && { backgroundColor: themeColors.gold },
-            ]}
+            style={[styles.segmentButton, viewMode === 'list' && { backgroundColor: themeColors.gold }]}
+            onPress={() => setViewMode('list')}
+            activeOpacity={0.7}
+          >
+            <List size={18} color={viewMode === 'list' ? themeColors.background : themeColors.textPrimary} strokeWidth={2.5} />
+            <Text style={[styles.segmentButtonText, { color: viewMode === 'list' ? themeColors.background : themeColors.textPrimary }]}>
+              Séances
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.segmentButton, viewMode === 'calendar' && { backgroundColor: themeColors.gold }]}
             onPress={() => setViewMode('calendar')}
             activeOpacity={0.7}
           >
             <Calendar size={18} color={viewMode === 'calendar' ? themeColors.background : themeColors.textPrimary} strokeWidth={2.5} />
-            <Text style={[
-              styles.segmentButtonText,
-              { color: viewMode === 'calendar' ? themeColors.background : themeColors.textPrimary }
-            ]}>
-              Discipline
+            <Text style={[styles.segmentButtonText, { color: viewMode === 'calendar' ? themeColors.background : themeColors.textPrimary }]}>
+              Calendrier
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[
-              styles.segmentButton,
-              viewMode === 'stats' && { backgroundColor: themeColors.gold },
-            ]}
+            style={[styles.segmentButton, viewMode === 'stats' && { backgroundColor: themeColors.gold }]}
             onPress={() => setViewMode('stats')}
             activeOpacity={0.7}
           >
             <Dna size={18} color={viewMode === 'stats' ? themeColors.background : themeColors.textPrimary} strokeWidth={2.5} />
-            <Text style={[
-              styles.segmentButtonText,
-              { color: viewMode === 'stats' ? themeColors.background : themeColors.textPrimary }
-            ]}>
+            <Text style={[styles.segmentButtonText, { color: viewMode === 'stats' ? themeColors.background : themeColors.textPrimary }]}>
               Évolution
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* View 0 : Liste complète de toutes les séances */}
+        {viewMode === 'list' && (
+          <View style={{ gap: 10 }}>
+            {trainings.length === 0 ? (
+              <View style={[styles.calendarCard, { backgroundColor: themeColors.card, alignItems: 'center', paddingVertical: 40 }]}>
+                <List size={40} color={themeColors.textSecondary} strokeWidth={1.5} />
+                <Text style={{ color: themeColors.textPrimary, fontSize: 16, fontWeight: '700', marginTop: 12 }}>Aucune séance enregistrée</Text>
+                <Text style={{ color: themeColors.textSecondary, fontSize: 13, marginTop: 6, textAlign: 'center' }}>Ajoute ta première séance depuis le menu +</Text>
+              </View>
+            ) : (
+              trainings.map((t, i) => {
+                const sportInfo = getSportById(t.sport);
+                const sportColor = sportInfo?.color || themeColors.gold;
+                const sportIcon = sportInfo?.icon || 'trophy';
+                const hasGPS = !!(t.location_lat || t.workout_details_json || t.healthkit_uuid);
+                return (
+                  <TouchableOpacity
+                    key={t.id || i}
+                    activeOpacity={0.75}
+                    onPress={() => t.id && router.push({ pathname: '/workout-detail', params: { id: t.id.toString() } })}
+                    style={{ backgroundColor: themeColors.card, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 14, borderLeftWidth: 3, borderLeftColor: sportColor }}
+                  >
+                    {/* Icône sport */}
+                    <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: `${sportColor}20`, alignItems: 'center', justifyContent: 'center' }}>
+                      <MaterialCommunityIcons name={sportIcon as any} size={24} color={sportColor} />
+                    </View>
+                    {/* Infos */}
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={{ fontSize: 15, fontWeight: '800', color: themeColors.textPrimary }} numberOfLines={1}>
+                          {sportInfo?.label || t.sport}
+                        </Text>
+                        {hasGPS && <MapPin size={12} color={themeColors.textSecondary} strokeWidth={2} />}
+                      </View>
+                      <Text style={{ fontSize: 12, color: themeColors.textSecondary, marginTop: 2 }}>
+                        {new Date(t.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                        {t.start_time ? ` · ${t.start_time.slice(0, 5)}` : ''}
+                      </Text>
+                      <View style={{ flexDirection: 'row', gap: 12, marginTop: 6 }}>
+                        {(t.duration || t.duration_minutes) ? (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <Clock size={12} color={themeColors.textSecondary} strokeWidth={2} />
+                            <Text style={{ fontSize: 12, color: themeColors.textSecondary }}>{t.duration || t.duration_minutes} min</Text>
+                          </View>
+                        ) : null}
+                        {t.distance ? (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <MapPin size={12} color={themeColors.textSecondary} strokeWidth={2} />
+                            <Text style={{ fontSize: 12, color: themeColors.textSecondary }}>{t.distance.toFixed(1)} km</Text>
+                          </View>
+                        ) : null}
+                        {t.calories ? (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <Flame size={12} color={themeColors.textSecondary} strokeWidth={2} />
+                            <Text style={{ fontSize: 12, color: themeColors.textSecondary }}>{t.calories} kcal</Text>
+                          </View>
+                        ) : null}
+                        {t.heart_rate ? (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <Heart size={12} color="#EF4444" strokeWidth={2} />
+                            <Text style={{ fontSize: 12, color: themeColors.textSecondary }}>{t.heart_rate} bpm</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      {/* Résumé exercices (muscu) */}
+                      {(() => {
+                        const exs = Array.isArray(t.exercises) ? t.exercises : (() => { try { return t.exercises ? JSON.parse(t.exercises as any) : []; } catch { return []; } })();
+                        if (exs.length > 0) {
+                          const summary = exs.slice(0, 3).map((e: any) => `${e.name}${e.sets ? ` ×${e.sets}` : ''}`).join(' · ');
+                          return (
+                            <Text style={{ fontSize: 11, color: sportColor, marginTop: 4, fontWeight: '600' }} numberOfLines={1}>
+                              {summary}{exs.length > 3 ? ` +${exs.length - 3}` : ''}
+                            </Text>
+                          );
+                        }
+                        // Résumé combat (thème + rounds)
+                        const parts: string[] = [];
+                        if (t.technical_theme) parts.push(t.technical_theme);
+                        if ((t.rounds ?? 0) > 0) parts.push(`${t.rounds} round${(t.rounds ?? 0) > 1 ? 's' : ''}`);
+                        if (parts.length > 0) {
+                          return (
+                            <Text style={{ fontSize: 11, color: sportColor, marginTop: 4, fontWeight: '600' }} numberOfLines={1}>
+                              {parts.join(' · ')}
+                            </Text>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </View>
+                    <ChevronRight size={18} color={themeColors.textSecondary} strokeWidth={2} />
+                  </TouchableOpacity>
+                );
+              })
+            )}
+          </View>
+        )}
 
         {/* View A: Discipline (Calendar) */}
         {viewMode === 'calendar' && (
@@ -780,6 +882,58 @@ export default function HistoryScreen() {
         <View style={styles.bottomSpacer} />
       </ScrollView>
     </ScreenWrapper>
+      {/* Modal sélection séance quand plusieurs dans la même journée */}
+      <Modal
+        visible={dayModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setDayModalVisible(false)}
+      >
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ backgroundColor: themeColors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 40 }}>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: themeColors.textPrimary, marginBottom: 16, textAlign: 'center' }}>
+              {dayModalTrainings.length} séances ce jour
+            </Text>
+            {dayModalTrainings.map((t, i) => {
+              const sportInfo = getSportById(t.sport);
+              const sportColor = sportInfo?.color || themeColors.gold;
+              const sportIcon = sportInfo?.icon || 'trophy';
+              return (
+                <TouchableOpacity
+                  key={t.id || i}
+                  onPress={() => {
+                    setDayModalVisible(false);
+                    if (t.id) router.push({ pathname: '/workout-detail', params: { id: t.id.toString() } });
+                  }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, borderBottomWidth: i < dayModalTrainings.length - 1 ? 1 : 0, borderBottomColor: themeColors.border }}
+                  activeOpacity={0.7}
+                >
+                  <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: `${sportColor}20`, alignItems: 'center', justifyContent: 'center' }}>
+                    <MaterialCommunityIcons name={sportIcon as any} size={22} color={sportColor} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: themeColors.textPrimary }}>{sportInfo?.label || t.sport}</Text>
+                    <Text style={{ fontSize: 12, color: themeColors.textSecondary, marginTop: 2 }}>
+                      {t.duration || t.duration_minutes || 0} min
+                      {t.start_time ? ` · ${t.start_time.slice(0, 5)}` : ''}
+                      {t.calories ? ` · ${t.calories} kcal` : ''}
+                    </Text>
+                  </View>
+                  <ChevronRight size={18} color={themeColors.textSecondary} />
+                </TouchableOpacity>
+              );
+            })}
+            <TouchableOpacity
+              onPress={() => setDayModalVisible(false)}
+              style={{ marginTop: 16, paddingVertical: 12, alignItems: 'center', borderRadius: 12, backgroundColor: themeColors.cardHover }}
+              activeOpacity={0.7}
+            >
+              <Text style={{ fontSize: 14, fontWeight: '600', color: themeColors.textSecondary }}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 

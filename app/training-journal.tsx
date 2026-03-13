@@ -78,6 +78,7 @@ import { renderIcon } from './training-journal/utils/iconMap';
 import { getRelativeDate } from './training-journal/utils/dateHelpers';
 import AddEntryModal from './training-journal/components/AddEntryModal';
 import BenchmarkDetailModal from './training-journal/components/BenchmarkDetailModal';
+import SparringTab from './training-journal/components/SparringTab';
 import SkillDetailModal from './training-journal/components/SkillDetailModal';
 import TrashModal from './training-journal/components/TrashModal';
 import AddBenchmarkModal from './training-journal/components/AddBenchmarkModal';
@@ -238,7 +239,7 @@ export default function TrainingJournalScreen() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Tab state for Records/Techniques
-  const [activeTab, setActiveTab] = useState<'records' | 'techniques'>('records');
+  const [activeTab, setActiveTab] = useState<'records' | 'techniques' | 'combat'>('records');
 
   // New selection states for records (Mirroring Watch app)
   const [isSportPickerVisible, setIsSportPickerVisible] = useState(false);
@@ -1475,12 +1476,57 @@ export default function TrainingJournalScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBackground, paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: isDark ? colors.border : 'rgba(255,255,255,0.2)' }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ChevronLeft size={28} color={isDark ? colors.textPrimary : '#FFFFFF'} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>Carnet d'Entraînement</Text>
+      {/* Tab Selector — identique à Planning/Stats */}
+      <View style={[styles.tabContainer, { backgroundColor: screenBackground }]}>
+        <View style={styles.tabsRow}>
+          {([
+            { id: 'records',    label: 'Records',   Icon: Dumbbell, count: benchmarksWithEntries.length },
+            { id: 'techniques', label: 'Techniques', Icon: BookOpen, count: skills.length },
+            { id: 'combat',     label: 'Sparring',   Icon: Swords,  count: null },
+          ] as const).map(({ id, label, Icon, count }) => {
+            const isActive = activeTab === id;
+            return (
+              <TouchableOpacity
+                key={id}
+                style={styles.circleTabWrapper}
+                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setActiveTab(id as any); }}
+                activeOpacity={0.7}
+              >
+                <View style={[
+                  styles.circleTab,
+                  {
+                    backgroundColor: isActive
+                      ? (isDark ? colors.accent : '#FFFFFF')
+                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)'),
+                    borderWidth: isActive ? 0 : 1,
+                    borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.3)',
+                  },
+                ]}>
+                  <Icon
+                    size={18}
+                    color={isActive
+                      ? (isDark ? '#FFFFFF' : colors.accent)
+                      : 'rgba(255,255,255,0.75)'}
+                    strokeWidth={2.5}
+                  />
+                  {count !== null && count > 0 && (
+                    <View style={styles.circleBadge}>
+                      <Text style={styles.circleBadgeText}>{count > 99 ? '99+' : count}</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={[
+                  styles.circleTabLabel,
+                  { color: isActive ? (isDark ? colors.accent : '#FFFFFF') : 'rgba(255,255,255,0.7)', fontWeight: isActive ? '700' : '500' },
+                ]}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Petit bouton poubelle */}
         <TouchableOpacity
           onPress={() => {
             if (isModalProcessing) return;
@@ -1489,159 +1535,96 @@ export default function TrainingJournalScreen() {
               setShowTrashModal(true);
             });
           }}
-          style={[styles.trashButton, {
-            backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.25)',
-            borderWidth: 1,
-            borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)',
+          style={[styles.trashIconBtn, {
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            borderColor: 'rgba(255,255,255,0.35)',
           }]}
           disabled={isModalProcessing}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Trash2 size={18} color={isDark ? colors.textPrimary : '#FFFFFF'} />
+          <Trash2 size={15} color="#FFFFFF" strokeWidth={2.5} />
           {trashCount > 0 && (
-            <View style={{
-              position: 'absolute',
-              top: -5,
-              right: -5,
-              backgroundColor: '#EF4444',
-              borderRadius: 10,
-              minWidth: 18,
-              height: 18,
-              paddingHorizontal: 4,
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderWidth: 1.5,
-              borderColor: isDark ? colors.background : colors.accent,
-            }}>
-              <Text style={{ color: '#FFF', fontSize: 10, fontWeight: '800' }}>
-                {trashCount}
-              </Text>
+            <View style={styles.trashBadge}>
+              <Text style={styles.trashBadgeText}>{trashCount > 9 ? '9+' : trashCount}</Text>
             </View>
           )}
         </TouchableOpacity>
       </View>
 
-      {/* Tab Selector - Records / Techniques */}
-      <View style={[styles.tabContainer, {
-        backgroundColor: isDark ? colors.background : '#FFFFFF',
-        borderBottomColor: isDark ? colors.border : colors.border,
-      }]}>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === 'records' && { borderBottomColor: isDark ? '#EF4444' : colors.accent, borderBottomWidth: 3 }
-          ]}
-          onPress={() => {
-            impactAsync(ImpactFeedbackStyle.Light);
-            setActiveTab('records');
-          }}
-          activeOpacity={0.7}
-        >
-          <Dumbbell size={18} color={activeTab === 'records' ? (isDark ? '#EF4444' : colors.accent) : colors.textMuted} strokeWidth={2.5} />
-          <Text style={[
-            styles.tabText,
-            { color: activeTab === 'records' ? (isDark ? '#EF4444' : colors.accent) : colors.textMuted }
-          ]}>
-            Records
-          </Text>
-          <View style={[styles.tabBadge, { backgroundColor: activeTab === 'records' ? (isDark ? '#EF4444' : colors.accent) : (colors.textMuted + '25') }]}>
-            <Text style={[styles.tabBadgeText, { color: activeTab === 'records' ? '#FFFFFF' : colors.textMuted }]}>
-              {benchmarksWithEntries.length}
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === 'techniques' && { borderBottomColor: isDark ? '#8B5CF6' : '#8B5CF6', borderBottomWidth: 3 }
-          ]}
-          onPress={() => {
-            impactAsync(ImpactFeedbackStyle.Light);
-            setActiveTab('techniques');
-          }}
-          activeOpacity={0.7}
-        >
-          <BookOpen size={18} color={activeTab === 'techniques' ? '#8B5CF6' : colors.textMuted} strokeWidth={2.5} />
-          <Text style={[
-            styles.tabText,
-            { color: activeTab === 'techniques' ? '#8B5CF6' : colors.textMuted }
-          ]}>
-            Techniques
-          </Text>
-          <View style={[styles.tabBadge, { backgroundColor: activeTab === 'techniques' ? '#8B5CF6' : (colors.textMuted + '25') }]}>
-            <Text style={[styles.tabBadgeText, { color: activeTab === 'techniques' ? '#FFFFFF' : colors.textMuted }]}>
-              {skills.length}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
       {/* Info Banner supprimé - nettoyage disponible dans Menu */}
 
-      {/* Search Bar */}
-      <View style={[styles.searchContainer, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}>
-        <View style={[styles.searchBar, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-          <Search size={20} color={colors.textMuted} />
-          <TextInput
-            style={[styles.searchInput, { color: colors.textPrimary }]}
-            placeholder="Rechercher un exercice..."
-            placeholderTextColor={colors.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            maxLength={100}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <X size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+      {/* Onglet Sparring — contenu inline, pas de recherche ni filtres */}
+      {activeTab === 'combat' && <SparringTab />}
 
-      {/* TASK 2: Global Filters - Force renamed to Musculation */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={[styles.globalFilterScroll, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}
-        contentContainerStyle={styles.globalFilterContent}
-      >
-        {[
-          { key: 'all' as GlobalFilter, label: 'Tout', iconName: 'bar-chart', color: colors.accent, textOnColor: '#FFFFFF' },
-          { key: 'musculation' as GlobalFilter, label: 'Musculation', iconName: 'dumbbell', color: '#EF4444', textOnColor: '#FFFFFF' },
-          { key: 'running' as GlobalFilter, label: 'Running', iconName: 'footprints', color: '#3B82F6', textOnColor: '#FFFFFF' },
-          { key: 'jjb' as GlobalFilter, label: 'JJB', iconName: 'swords', color: '#06B6D4', textOnColor: '#FFFFFF' },
-          { key: 'boxe' as GlobalFilter, label: 'Boxe', iconName: 'zap', color: '#F59E0B', textOnColor: '#FFFFFF' },
-          { key: 'lutte' as GlobalFilter, label: 'Lutte', iconName: 'users', color: '#8B5CF6', textOnColor: '#FFFFFF' },
-          { key: 'grappling' as GlobalFilter, label: 'Grappling', iconName: 'shield', color: '#10B981', textOnColor: '#FFFFFF' },
-          { key: 'autre' as GlobalFilter, label: 'Autre', iconName: 'target', color: '#6B7280', textOnColor: '#FFFFFF' },
-        ].map(filter => {
-          const isSelected = globalFilter === filter.key;
-          return (
-            <TouchableOpacity
-              key={filter.key}
-              style={[
-                styles.globalFilterChip,
-                {
-                  backgroundColor: isSelected ? filter.color : colors.backgroundCard,
-                  borderColor: isSelected ? filter.color : colors.border,
-                }
-              ]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                setGlobalFilter(filter.key);
-              }}
-            >
-              {renderIcon(filter.iconName, 16, isSelected ? filter.textOnColor : filter.color)}
-              <Text style={[
-                styles.globalFilterText,
-                { color: isSelected ? filter.textOnColor : filter.color }
-              ]}>
-                {filter.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      {/* Search Bar + Filtres — masqués en mode Sparring */}
+      {activeTab !== 'combat' && (
+        <>
+          <View style={[styles.searchContainer, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}>
+            <View style={[styles.searchBar, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+              <Search size={20} color={colors.textMuted} />
+              <TextInput
+                style={[styles.searchInput, { color: colors.textPrimary }]}
+                placeholder="Rechercher un exercice..."
+                placeholderTextColor={colors.textMuted}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                maxLength={100}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <X size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {/* TASK 2: Global Filters - Force renamed to Musculation */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={[styles.globalFilterScroll, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}
+            contentContainerStyle={styles.globalFilterContent}
+          >
+            {[
+              { key: 'all' as GlobalFilter, label: 'Tout', iconName: 'bar-chart', color: colors.accent, textOnColor: '#FFFFFF' },
+              { key: 'musculation' as GlobalFilter, label: 'Musculation', iconName: 'dumbbell', color: '#EF4444', textOnColor: '#FFFFFF' },
+              { key: 'running' as GlobalFilter, label: 'Running', iconName: 'footprints', color: '#3B82F6', textOnColor: '#FFFFFF' },
+              { key: 'jjb' as GlobalFilter, label: 'JJB', iconName: 'swords', color: '#06B6D4', textOnColor: '#FFFFFF' },
+              { key: 'boxe' as GlobalFilter, label: 'Boxe', iconName: 'zap', color: '#F59E0B', textOnColor: '#FFFFFF' },
+              { key: 'lutte' as GlobalFilter, label: 'Lutte', iconName: 'users', color: '#8B5CF6', textOnColor: '#FFFFFF' },
+              { key: 'grappling' as GlobalFilter, label: 'Grappling', iconName: 'shield', color: '#10B981', textOnColor: '#FFFFFF' },
+              { key: 'autre' as GlobalFilter, label: 'Autre', iconName: 'target', color: '#6B7280', textOnColor: '#FFFFFF' },
+            ].map(filter => {
+              const isSelected = globalFilter === filter.key;
+              return (
+                <TouchableOpacity
+                  key={filter.key}
+                  style={[
+                    styles.globalFilterChip,
+                    {
+                      backgroundColor: isSelected ? filter.color : colors.backgroundCard,
+                      borderColor: isSelected ? filter.color : colors.border,
+                    }
+                  ]}
+                  onPress={() => {
+                    impactAsync(ImpactFeedbackStyle.Light);
+                    setGlobalFilter(filter.key);
+                  }}
+                >
+                  {renderIcon(filter.iconName, 16, isSelected ? filter.textOnColor : filter.color)}
+                  <Text style={[
+                    styles.globalFilterText,
+                    { color: isSelected ? filter.textOnColor : filter.color }
+                  ]}>
+                    {filter.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </>
+      )}
 
       {/* Légende des icônes — visible uniquement sur l'onglet Records */}
       {activeTab === 'records' && (
@@ -1668,7 +1651,7 @@ export default function TrainingJournalScreen() {
         </View>
       )}
 
-      <ScrollView
+      {activeTab !== 'combat' && <ScrollView
         style={[styles.content, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -1897,7 +1880,7 @@ export default function TrainingJournalScreen() {
         )}
 
         <View style={{ height: 120 }} />
-      </ScrollView>
+      </ScrollView>}
 
       {/* FAB */}
       <TouchableOpacity
@@ -2092,17 +2075,20 @@ export default function TrainingJournalScreen() {
             </View>
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
               {([
-                { name: 'Musculation', label: 'MUSCULATION', icon: 'dumbbell', color: '#EF4444', hasMuscleGroups: true },
-                { name: 'Hyrox', label: 'HYROX', icon: 'flame', color: '#D97706', hasMuscleGroups: false },
-                { name: 'CrossFit', label: 'CROSSFIT', icon: 'flame', color: '#F59E0B', hasMuscleGroups: false },
-                { name: 'Running', label: 'RUNNING', icon: 'timer', color: '#3B82F6', hasMuscleGroups: false },
-                { name: 'Cardio', label: 'CARDIO APPAREILS', icon: 'timer', color: '#06B6D4', hasMuscleGroups: false },
-                { name: 'Combat', label: 'COMBAT / MMA', icon: 'swords', color: '#8B5CF6', hasMuscleGroups: false },
-                { name: 'Strongman', label: 'STRONGMAN', icon: 'dumbbell', color: '#B91C1C', hasMuscleGroups: false },
-                { name: 'Olympique', label: 'HALTÉROPHILIE', icon: 'dumbbell', color: '#DC2626', hasMuscleGroups: false },
-                { name: 'Street Workout', label: 'STREET WORKOUT', icon: 'dumbbell', color: '#F59E0B', hasMuscleGroups: false },
+                { name: 'Musculation',    label: 'MUSCULATION',     icon: 'dumbbell', color: '#EF4444', hasMuscleGroups: true,  groups: ['Pectoraux','Dos','Epaules','Bras','Jambes','Abdos','Machines'] },
+                { name: 'Hyrox',          label: 'HYROX',           icon: 'flame',    color: '#D97706', hasMuscleGroups: false, groups: ['Hyrox'] },
+                { name: 'CrossFit',       label: 'CROSSFIT',        icon: 'flame',    color: '#F59E0B', hasMuscleGroups: false, groups: ['CrossFit'] },
+                { name: 'Running',        label: 'RUNNING',         icon: 'timer',    color: '#3B82F6', hasMuscleGroups: false, groups: ['Running'] },
+                { name: 'Cardio',         label: 'CARDIO APPAREILS',icon: 'timer',    color: '#06B6D4', hasMuscleGroups: false, groups: ['Cardio'] },
+                { name: 'Combat',         label: 'COMBAT / MMA',    icon: 'swords',   color: '#8B5CF6', hasMuscleGroups: false, groups: ['Combat'] },
+                { name: 'Strongman',      label: 'STRONGMAN',       icon: 'dumbbell', color: '#B91C1C', hasMuscleGroups: false, groups: ['Strongman'] },
+                { name: 'Olympique',      label: 'HALTÉROPHILIE',   icon: 'dumbbell', color: '#DC2626', hasMuscleGroups: false, groups: ['Olympique'] },
+                { name: 'Street Workout', label: 'STREET WORKOUT',  icon: 'dumbbell', color: '#F59E0B', hasMuscleGroups: false, groups: ['Street Workout'] },
               ] as const).map((sport) => {
                 const IconComponent = sport.icon === 'flame' ? Flame : sport.icon === 'timer' ? Timer : sport.icon === 'swords' ? Swords : Dumbbell;
+                const exCount = WATCH_EXERCISE_TEMPLATES.filter(t =>
+                  (sport.groups as readonly string[]).some(g => t.muscleGroup?.toLowerCase() === g.toLowerCase())
+                ).length;
                 return (
                   <TouchableOpacity
                     key={sport.name}
@@ -2121,7 +2107,12 @@ export default function TrainingJournalScreen() {
                     <View style={[styles.muscleIcon, { backgroundColor: sport.color + '20' }]}>
                       <IconComponent size={20} color={sport.color} />
                     </View>
-                    <Text style={[styles.muscleText, { color: colors.textPrimary }]}>{sport.label}</Text>
+                    <Text style={[styles.muscleText, { color: colors.textPrimary, flex: 1 }]}>{sport.label}</Text>
+                    {exCount > 0 && (
+                      <View style={[styles.exCountBadge, { backgroundColor: sport.color + '18' }]}>
+                        <Text style={[styles.exCountText, { color: sport.color }]}>{exCount}</Text>
+                      </View>
+                    )}
                     <ChevronRight size={20} color={colors.textMuted} />
                   </TouchableOpacity>
                 );
@@ -2248,26 +2239,87 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  // Tab styles
+  // Tab styles — identique Planning/Stats
   tabContainer: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
+    paddingTop: 10,
+    paddingBottom: 10,
+    position: 'relative',
   },
+  tabsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    gap: 28,
+    paddingHorizontal: 50,
+  },
+  trashIconBtn: {
+    position: 'absolute',
+    top: 14,
+    right: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  trashBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#EF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 2,
+  },
+  trashBadgeText: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#FFF',
+  },
+  circleTabWrapper: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  circleTab: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  circleBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  circleBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  circleTabLabel: {
+    fontSize: 9,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    textAlign: 'center',
+  },
+  // Anciens styles conservés pour compatibilité
   tabButton: {
     flex: 1,
     flexDirection: 'row',
@@ -2773,16 +2825,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '600',
-  },
-
-  // Trash Button (Header)
-  trashButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
   },
 
   // Trash Modal
@@ -3679,6 +3721,16 @@ const styles = StyleSheet.create({
   muscleText: {
     flex: 1,
     fontSize: 16,
+    fontWeight: '700',
+  },
+  exCountBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginRight: 6,
+  },
+  exCountText: {
+    fontSize: 12,
     fontWeight: '700',
   },
   exerciseItem: {

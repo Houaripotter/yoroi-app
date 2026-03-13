@@ -42,6 +42,22 @@ android {
 }
 
 dependencies {
+    // Wear OS Tiles
+    implementation "androidx.wear.tiles:tiles:1.4.1"
+    implementation "androidx.wear.tiles:tiles-material:1.4.1"
+    implementation "androidx.wear.protolayout:protolayout:1.2.1"
+    implementation "androidx.wear.protolayout:protolayout-material:1.2.1"
+    implementation "com.google.guava:guava:33.3.1-android"
+
+    // Wear OS Complications (équivalent Apple Watch complications)
+    implementation "androidx.wear.watchface:watchface-complications-data-source:1.2.1"
+    implementation "androidx.wear.watchface:watchface-complications-data-source-ktx:1.2.1"
+
+    // Wear OS Watch Face (cadran personnalisé)
+    implementation "androidx.wear.watchface:watchface:1.2.1"
+    implementation "androidx.wear.watchface:watchface-client:1.2.1"
+    implementation "androidx.wear.watchface:watchface-complications-rendering:1.2.1"
+
     // WearOS
     implementation "androidx.wear.compose:compose-material3:1.0.0-alpha24"
     implementation "androidx.wear.compose:compose-foundation:1.4.0"

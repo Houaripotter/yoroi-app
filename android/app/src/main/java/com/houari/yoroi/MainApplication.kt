@@ -5,6 +5,7 @@ import android.content.res.Configuration
 
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
+import com.houari.yoroi.widget.WidgetDataPackage
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
@@ -24,6 +25,7 @@ class MainApplication : Application(), ReactApplication {
         override fun getPackages(): List<ReactPackage> =
             PackageList(this).packages.apply {
               add(WearSyncPackage())
+              add(WidgetDataPackage())
             }
 
           override fun getJSMainModuleName(): String = ".expo/.virtual-metro-entry"

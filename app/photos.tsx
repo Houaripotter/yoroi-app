@@ -31,6 +31,7 @@ import { Header } from '@/components/ui/Header';
 // 🔒 SÉCURITÉ: Protection contre les screenshots
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import logger from '@/lib/security/logger';
+import { SamuraiLoader } from '@/components/SamuraiLoader';
 
 const PRIVACY_CHALLENGE_KEY = '@yoroi_privacy_challenge_shown';
 
@@ -257,8 +258,7 @@ export default function PhotosScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.centered, { backgroundColor: themeColors.background }]}>
-        <ActivityIndicator size="large" color={themeColors.primary} />
-        <Text style={[styles.loadingText, { color: themeColors.textSecondary }]}>Chargement des photos...</Text>
+        <SamuraiLoader message="Chargement des photos..." />
       </View>
     );
   }

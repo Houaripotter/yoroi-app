@@ -1,5 +1,4 @@
 import SwiftUI
-import WatchKit
 
 // ============================================================
 // COLORS (static fallbacks - dynamic accent from session.accentColor)
@@ -23,37 +22,22 @@ struct DashboardPage: View {
   @EnvironmentObject var session: WatchSessionManager
   @State private var showTimer = false
   @State private var showSteps = false
-  @State private var isRefreshing = false
 
   var body: some View {
     NavigationView {
       ScrollView {
-        VStack(spacing: 10) {
-
-          // ── PROFILE HEADER ──
+        VStack(spacing: 8) {
           profileHeader
-
-          // ── TIMER ACTION ──
-          timerActionRow
-
-          // ── CARNET SHORTCUT ──
-          carnetShortcutRow
-
-          // ── POIDS ──
-          weightMiniRow
-
-          // ── GOALS RINGS: Steps + Hydration + Calories ──
-          goalsRingRow
-
-          // ── HEALTH METRICS GRID ──
-          healthMetricsGrid
-
-          // ── RECENT SESSIONS ──
+          vitauxRow
+          activiteRow
+          secondaryRow
+          quickActionsSection
           if !session.recentWorkouts.isEmpty {
             recentSessions
           }
         }
-        .padding(.horizontal, 2)
+        .padding(.horizontal, 4)
+        .padding(.top, 2)
       }
       .refreshable {
         session.requestSync()
@@ -61,549 +45,271 @@ struct DashboardPage: View {
         try? await Task.sleep(nanoseconds: 1_500_000_000)
       }
     }
-    .sheet(isPresented: $showTimer) {
-      TimerDetailPage()
-    }
-    .sheet(isPresented: $showSteps) {
-      StepsDetailPage(steps: session.localSteps)
-    }
-    .onAppear {
-      session.fetchAllHealthData()
-    }
+    .sheet(isPresented: $showTimer) { TimerDetailPage() }
+    .sheet(isPresented: $showSteps) { StepsDetailPage(steps: session.localSteps) }
+    .onAppear { session.fetchAllHealthData() }
   }
 
-  // MARK: - Profile Header
+  // MARK: - Header compact
   private var profileHeader: some View {
     HStack(spacing: 8) {
-      // Profile photo circle
       ZStack {
         Circle()
-          .fill(
-            LinearGradient(
-              colors: [session.accentColor, session.accentColor.opacity(0.6)],
-              startPoint: .topLeading,
-              endPoint: .bottomTrailing
-            )
-          )
-          .frame(width: 36, height: 36)
-
-        if let imgData = session.profileImageData,
-           let uiImage = UIImage(data: imgData) {
+          .fill(LinearGradient(
+            colors: [session.accentColor, session.accentColor.opacity(0.5)],
+            startPoint: .topLeading, endPoint: .bottomTrailing
+          ))
+          .frame(width: 32, height: 32)
+        if let imgData = session.profileImageData, let uiImage = UIImage(data: imgData) {
           Image(uiImage: uiImage)
-            .resizable()
-            .scaledToFill()
-            .frame(width: 32, height: 32)
+            .resizable().scaledToFill()
+            .frame(width: 28, height: 28)
             .clipShape(Circle())
         } else {
           Text(initials)
-            .font(.system(size: 13, weight: .bold))
+            .font(.system(size: 11, weight: .bold))
             .foregroundColor(session.textOnAccent)
         }
       }
-
-      VStack(alignment: .leading, spacing: 1) {
+      VStack(alignment: .leading, spacing: 0) {
         Text(session.userName.isEmpty ? "Yoroi" : session.userName)
-          .font(.system(size: 13, weight: .bold))
+          .font(.system(size: 12, weight: .bold))
           .foregroundColor(session.textPrimary)
           .lineLimit(1)
-        HStack(spacing: 3) {
-          Text("Niveau \(session.level)")
-            .font(.system(size: 8, weight: .semibold))
-            .foregroundColor(session.accentColor)
-          if !session.rank.isEmpty {
-            Text(session.rank)
-              .font(.system(size: 7, weight: .medium))
-              .foregroundColor(session.textSecondary)
-              .lineLimit(1)
-          }
-        }
+        Text(session.rank.isEmpty ? "Niveau \(session.level)" : session.rank)
+          .font(.system(size: 8, weight: .semibold))
+          .foregroundColor(session.accentColor)
+          .lineLimit(1)
       }
-
       Spacer()
-
-      // Connection dot
+      if session.streak > 0 {
+        HStack(spacing: 2) {
+          Image(systemName: "flame.fill").font(.system(size: 8)).foregroundColor(orangeColor)
+          Text("\(session.streak)j").font(.system(size: 9, weight: .bold)).foregroundColor(orangeColor)
+        }
+        .padding(.horizontal, 5).padding(.vertical, 2)
+        .background(orangeColor.opacity(0.12))
+        .cornerRadius(7)
+      }
       Circle()
         .fill(session.isConnected ? greenColor : redColor)
-        .frame(width: 6, height: 6)
+        .frame(width: 5, height: 5)
     }
-    .padding(.horizontal, 4)
-    .padding(.top, 2)
+    .padding(.horizontal, 2)
   }
 
   private var initials: String {
     let parts = session.userName.split(separator: " ")
-    if parts.count >= 2 {
-      return "\(parts[0].prefix(1))\(parts[1].prefix(1))".uppercased()
-    }
+    if parts.count >= 2 { return "\(parts[0].prefix(1))\(parts[1].prefix(1))".uppercased() }
     return String(session.userName.prefix(2)).uppercased()
   }
 
-  // MARK: - Timer Action Row
-  private var timerActionRow: some View {
-    Button(action: { showTimer = true }) {
-      HStack(spacing: 10) {
-        ZStack {
-          Circle()
-            .fill(session.accentColor.opacity(0.15))
-            .frame(width: 38, height: 38)
-
-          if session.timerIsRunning {
-            Circle()
-              .trim(from: 0, to: timerProgress)
-              .stroke(session.accentColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-              .rotationEffect(.degrees(-90))
-              .frame(width: 38, height: 38)
-          }
-
-          Image(systemName: session.timerAlarmRinging ? "bell.fill" : (session.timerIsRunning ? "pause.fill" : "timer"))
-            .font(.system(size: 15))
-            .foregroundColor(session.timerAlarmRinging ? redColor : session.accentColor)
-        }
-
-        VStack(alignment: .leading, spacing: 1) {
-          Text("MINUTEUR")
-            .font(.system(size: 8, weight: .heavy))
-            .foregroundColor(session.accentColor)
-            .tracking(1)
-          Text(session.timerAlarmRinging
-            ? "Termine !"
-            : (session.timerIsRunning
-              ? session.formattedTime(session.timerRemainingSeconds)
-              : "Appuyer pour demarrer"))
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundColor(session.timerAlarmRinging ? redColor : (session.timerIsRunning ? session.textPrimary : session.textSecondary))
-        }
-
-        Spacer()
-
-        Image(systemName: "chevron.right")
-          .font(.system(size: 9))
-          .foregroundColor(session.textSecondary.opacity(0.5))
-      }
-      .padding(.horizontal, 10)
-      .padding(.vertical, 8)
-      .background(session.cardBg)
-      .cornerRadius(10)
-    }
-    .buttonStyle(.plain)
-  }
-
-  // MARK: - Carnet Shortcut
-  private var carnetShortcutRow: some View {
-    Button(action: { session.requestedTab = 5 }) {
-      HStack(spacing: 10) {
-        // Icône haltère avec fond coloré
-        ZStack {
-          RoundedRectangle(cornerRadius: 8)
-            .fill(purpleColor.opacity(0.18))
-            .frame(width: 38, height: 38)
-          Image(systemName: "dumbbell.fill")
-            .font(.system(size: 16))
-            .foregroundColor(purpleColor)
-        }
-
-        VStack(alignment: .leading, spacing: 2) {
-          Text("CARNET")
-            .font(.system(size: 8, weight: .heavy))
-            .foregroundColor(purpleColor)
-            .tracking(1)
-
-          // Ligne d'info : streak + PRs
-          let prCount = session.benchmarks.filter { $0.pr > 0 }.count
-          if session.streak > 0 || prCount > 0 {
-            HStack(spacing: 4) {
-              if session.streak > 0 {
-                HStack(spacing: 2) {
-                  Image(systemName: "flame.fill")
-                    .font(.system(size: 7))
-                    .foregroundColor(.orange)
-                  Text("\(session.streak)j")
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(session.textPrimary)
-                }
-              }
-              if prCount > 0 {
-                Text("\(prCount) PRs")
-                  .font(.system(size: 9, weight: .medium))
-                  .foregroundColor(session.textSecondary)
-              }
-            }
-          } else {
-            Text("Logger une séance")
-              .font(.system(size: 9))
-              .foregroundColor(session.textSecondary)
-          }
-        }
-
-        Spacer()
-
-        Image(systemName: "chevron.right")
-          .font(.system(size: 9))
-          .foregroundColor(session.textSecondary.opacity(0.5))
-      }
-      .padding(.horizontal, 10)
-      .padding(.vertical, 8)
-      .background(session.cardBg)
-      .cornerRadius(10)
-    }
-    .buttonStyle(.plain)
-  }
-
-  // MARK: - Weight Mini Row
-  private var weightMiniRow: some View {
-    Button(action: { session.requestedTab = 1 }) {
-      HStack(spacing: 10) {
-        ZStack {
-          RoundedRectangle(cornerRadius: 8)
-            .fill(session.accentColor.opacity(0.15))
-            .frame(width: 38, height: 38)
-          Image(systemName: "scalemass.fill")
-            .font(.system(size: 16))
-            .foregroundColor(session.accentColor)
-        }
-
-        VStack(alignment: .leading, spacing: 2) {
-          Text("POIDS")
-            .font(.system(size: 8, weight: .heavy))
-            .foregroundColor(session.accentColor)
-            .tracking(1)
-
-          HStack(spacing: 4) {
-            if session.currentWeight > 0 {
-              Text(String(format: "%.1f kg", session.currentWeight))
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(session.textPrimary)
-
-              if let delta = session.weightTrendDelta {
-                let neutral = abs(delta) < 0.1
-                let isUp = delta > 0
-                HStack(spacing: 2) {
-                  Image(systemName: neutral ? "minus" : (isUp ? "arrow.up" : "arrow.down"))
-                    .font(.system(size: 8, weight: .bold))
-                  if !neutral {
-                    Text(String(format: "%.1f", abs(delta)))
-                      .font(.system(size: 9, weight: .semibold))
-                  }
-                }
-                .foregroundColor(neutral ? session.textSecondary : (isUp ? .red : .green))
-              }
-            } else {
-              Text("Non mesuré")
-                .font(.system(size: 9))
-                .foregroundColor(session.textSecondary)
-            }
-          }
-        }
-
-        Spacer()
-
-        Image(systemName: "chevron.right")
-          .font(.system(size: 9))
-          .foregroundColor(session.textSecondary.opacity(0.5))
-      }
-      .padding(.horizontal, 10)
-      .padding(.vertical, 8)
-      .background(session.cardBg)
-      .cornerRadius(10)
-    }
-    .buttonStyle(.plain)
-  }
-
-  // MARK: - Goals Rings (Steps + Hydration + Calories)
-  private var goalsRingRow: some View {
-    HStack(spacing: 8) {
-      // Steps ring
-      Button(action: { showSteps = true }) {
-        VStack(spacing: 3) {
-          ZStack {
-            Circle()
-              .fill(greenColor.opacity(0.12))
-              .frame(width: 44, height: 44)
-            Circle()
-              .trim(from: 0, to: stepsProgress)
-              .stroke(greenColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-              .rotationEffect(.degrees(-90))
-              .frame(width: 44, height: 44)
-            Image(systemName: "figure.walk")
-              .font(.system(size: 13))
-              .foregroundColor(greenColor)
-          }
-          Text(displaySteps > 0 ? "\(displaySteps)" : "--")
-            .font(.system(size: 8, weight: .semibold))
-            .foregroundColor(session.textSecondary)
-        }
-      }
-      .buttonStyle(.plain)
-
-      // Hydration ring → navigate to Tab 2
-      Button(action: { session.requestedTab = 2 }) {
-        VStack(spacing: 3) {
-          ZStack {
-            Circle()
-              .fill(cyanColor.opacity(0.12))
-              .frame(width: 44, height: 44)
-            Circle()
-              .trim(from: 0, to: hydrationProgress)
-              .stroke(cyanColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-              .rotationEffect(.degrees(-90))
-              .frame(width: 44, height: 44)
-            Image(systemName: "drop.fill")
-              .font(.system(size: 13))
-              .foregroundColor(cyanColor)
-          }
-          Text(session.hydrationCurrent > 0
-            ? String(format: "%.1fL", Double(session.hydrationCurrent) / 1000.0)
-            : "--")
-            .font(.system(size: 8, weight: .semibold))
-            .foregroundColor(session.textSecondary)
-        }
-      }
-      .buttonStyle(.plain)
-
-      // Calories ring → navigate to Tab 4 (Séances)
-      Button(action: { session.requestedTab = 4 }) {
-        VStack(spacing: 3) {
-          ZStack {
-            Circle()
-              .fill(orangeColor.opacity(0.12))
-              .frame(width: 44, height: 44)
-            Circle()
-              .trim(from: 0, to: caloriesProgress)
-              .stroke(orangeColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-              .rotationEffect(.degrees(-90))
-              .frame(width: 44, height: 44)
-            Image(systemName: "flame.fill")
-              .font(.system(size: 13))
-              .foregroundColor(orangeColor)
-          }
-          Text(displayCalories > 0 ? "\(displayCalories)" : "--")
-            .font(.system(size: 8, weight: .semibold))
-            .foregroundColor(session.textSecondary)
-        }
-      }
-      .buttonStyle(.plain)
-    }
-    .padding(.vertical, 4)
-  }
-
-  private var timerProgress: Double {
-    guard session.timerTotalSeconds > 0 else { return 0 }
-    return Double(session.timerRemainingSeconds) / Double(session.timerTotalSeconds)
-  }
-
-  private var stepsProgress: Double {
-    let goal = max(1, session.stepsGoal)
-    return min(1.0, Double(displaySteps) / Double(goal))
-  }
-
-  private var hydrationProgress: Double {
-    return min(1.0, Double(session.hydrationCurrent) / 2500.0)
-  }
-
-  private var caloriesProgress: Double {
-    return min(1.0, Double(displayCalories) / 500.0)
-  }
-
-  // MARK: - Health Metrics Grid
-  private var healthMetricsGrid: some View {
-    VStack(spacing: 4) {
-      HStack {
-        Image(systemName: "heart.fill")
-          .font(.system(size: 8))
-          .foregroundColor(pinkColor)
-        Text("SANTE")
-          .font(.system(size: 7, weight: .heavy))
-          .foregroundColor(session.textSecondary)
-          .tracking(1)
-        Spacer()
-      }
-      .padding(.horizontal, 4)
-
-      VStack(spacing: 4) {
-        HStack(spacing: 4) {
-          HealthMiniCard(
-            icon: "heart.fill",
-            color: pinkColor,
-            value: displayHeartRate > 0 ? "\(displayHeartRate)" : "--",
-            unit: "BPM",
-            label: "FC",
-            cardBg: session.cardBg,
-            textPrimary: session.textPrimary,
-            textSecondary: session.textSecondary
-          )
-          HealthMiniCard(
-            icon: "drop.fill",
-            color: cyanColor,
-            value: displaySpo2 > 0 ? "\(displaySpo2)" : "--",
-            unit: "%",
-            label: "SpO2",
-            cardBg: session.cardBg,
-            textPrimary: session.textPrimary,
-            textSecondary: session.textSecondary
-          )
-        }
-        HStack(spacing: 4) {
-          HealthMiniCard(
-            icon: "flame.fill",
-            color: orangeColor,
-            value: displayCalories > 0 ? "\(displayCalories)" : "--",
-            unit: "kcal",
-            label: "Actives",
-            cardBg: session.cardBg,
-            textPrimary: session.textPrimary,
-            textSecondary: session.textSecondary
-          )
-          HealthMiniCard(
-            icon: "figure.walk",
-            color: blueColor,
-            value: displayDistance > 0 ? String(format: "%.1f", displayDistance) : "--",
-            unit: "km",
-            label: "Distance",
-            cardBg: session.cardBg,
-            textPrimary: session.textPrimary,
-            textSecondary: session.textSecondary
-          )
-        }
-        HStack(spacing: 4) {
-          HealthMiniCard(
-            icon: "figure.walk",
-            color: greenColor,
-            value: displaySteps > 0 ? "\(displaySteps)" : "--",
-            unit: "pas",
-            label: "Pas",
-            cardBg: session.cardBg,
-            textPrimary: session.textPrimary,
-            textSecondary: session.textSecondary
-          )
-          HealthMiniCard(
-            icon: "drop.fill",
-            color: cyanColor,
-            value: session.hydrationCurrent > 0 ? String(format: "%.1f", Double(session.hydrationCurrent) / 1000.0) : "--",
-            unit: "L",
-            label: "Eau",
-            cardBg: session.cardBg,
-            textPrimary: session.textPrimary,
-            textSecondary: session.textSecondary
-          )
-        }
-        HStack(spacing: 4) {
-          HealthMiniCard(
-            icon: "figure.run",
-            color: greenColor,
-            value: displayExerciseMinutes > 0 ? "\(displayExerciseMinutes)" : "--",
-            unit: "min",
-            label: "Exercice",
-            cardBg: session.cardBg,
-            textPrimary: session.textPrimary,
-            textSecondary: session.textSecondary
-          )
-          HealthMiniCard(
-            icon: "figure.stand",
-            color: blueColor,
-            value: displayStandHours > 0 ? "\(displayStandHours)" : "--",
-            unit: "h",
-            label: "Debout",
-            cardBg: session.cardBg,
-            textPrimary: session.textPrimary,
-            textSecondary: session.textSecondary
-          )
-        }
-      }
-    }
-  }
-
-  // Prefer Watch HealthKit data, fallback to iPhone sync
-  private var displayHeartRate: Int {
-    session.localHeartRate > 0 ? session.localHeartRate : session.heartRate
-  }
-  private var displaySteps: Int {
-    session.localSteps > 0 ? session.localSteps : 0
-  }
-  private var displayCalories: Int {
-    session.localActiveCalories > 0 ? session.localActiveCalories : session.activeCalories
-  }
-  private var displayDistance: Double {
-    session.localDistance > 0 ? session.localDistance : session.distance
-  }
-  private var displaySpo2: Int {
-    session.localSpo2 > 0 ? session.localSpo2 : session.spo2
-  }
-  private var displayExerciseMinutes: Int {
-    session.localExerciseMinutes > 0 ? session.localExerciseMinutes : session.exerciseMinutes
-  }
-  private var displayStandHours: Int {
-    session.localStandHours > 0 ? session.localStandHours : session.standHours
-  }
-
-  // MARK: - Streak Banner
-  private var streakBanner: some View {
+  // MARK: - Vitaux héros : FC + SpO2
+  private var vitauxRow: some View {
     HStack(spacing: 6) {
-      Image(systemName: "flame.fill")
-        .font(.system(size: 12))
-        .foregroundColor(orangeColor)
-      Text("\(session.streak)")
-        .font(.system(size: 16, weight: .black))
-        .foregroundColor(session.textPrimary)
-      Text("jours")
-        .font(.system(size: 9, weight: .semibold))
-        .foregroundColor(session.textSecondary)
-      Spacer()
-      HStack(spacing: 2) {
-        ForEach(0..<7, id: \.self) { i in
-          Circle()
-            .fill(i < min(session.streak, 7) ? orangeColor : session.dividerColor)
-            .frame(width: 4, height: 4)
-        }
-      }
+      vitalCard(
+        value: displayHeartRate > 0 ? "\(displayHeartRate)" : "--",
+        unit: "BPM", label: "FC", icon: "heart.fill",
+        gradient: [Color(red: 0.80, green: 0.12, blue: 0.18), Color(red: 0.45, green: 0.04, blue: 0.08)]
+      )
+      vitalCard(
+        value: displaySpo2 > 0 ? "\(displaySpo2)" : "--",
+        unit: "%", label: "SpO2", icon: "lungs.fill",
+        gradient: [Color(red: 0.22, green: 0.44, blue: 0.95), Color(red: 0.12, green: 0.20, blue: 0.60)]
+      )
     }
-    .padding(.horizontal, 8)
-    .padding(.vertical, 6)
-    .background(orangeColor.opacity(0.1))
-    .cornerRadius(10)
-    .padding(.horizontal, 2)
   }
 
-  // MARK: - Recent Sessions
+  private func vitalCard(value: String, unit: String, label: String, icon: String, gradient: [Color]) -> some View {
+    VStack(alignment: .leading, spacing: 5) {
+      HStack(spacing: 4) {
+        Image(systemName: icon).font(.system(size: 9)).foregroundColor(.white.opacity(0.75))
+        Text(label).font(.system(size: 8, weight: .semibold)).foregroundColor(.white.opacity(0.75))
+      }
+      HStack(alignment: .lastTextBaseline, spacing: 3) {
+        Text(value)
+          .font(.system(size: 24, weight: .black))
+          .foregroundColor(.white)
+          .minimumScaleFactor(0.6)
+          .lineLimit(1)
+        Text(unit)
+          .font(.system(size: 9, weight: .bold))
+          .foregroundColor(.white.opacity(0.65))
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.horizontal, 10).padding(.vertical, 10)
+    .background(LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing))
+    .cornerRadius(13)
+  }
+
+  // MARK: - Anneaux d'activité (Pas + Eau + Calories)
+  private var activiteRow: some View {
+    HStack(spacing: 0) {
+      ringButton(icon: "figure.walk", progress: stepsProgress,
+        value: displaySteps > 0 ? formatSteps(displaySteps) : "--",
+        color: greenColor, action: { showSteps = true })
+      ringButton(icon: "drop.fill", progress: hydrationProgress,
+        value: session.hydrationCurrent > 0 ? String(format: "%.1fL", Double(session.hydrationCurrent)/1000) : "--",
+        color: cyanColor, action: { session.requestedTab = 2 })
+      ringButton(icon: "flame.fill", progress: caloriesProgress,
+        value: displayCalories > 0 ? "\(displayCalories)" : "--",
+        color: orangeColor, action: { session.requestedTab = 4 })
+    }
+    .padding(.vertical, 2)
+  }
+
+  private func ringButton(icon: String, progress: Double, value: String, color: Color, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+      VStack(spacing: 4) {
+        ZStack {
+          Circle().stroke(color.opacity(0.15), lineWidth: 4)
+          Circle()
+            .trim(from: 0, to: progress)
+            .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+            .rotationEffect(.degrees(-90))
+          Image(systemName: icon).font(.system(size: 12)).foregroundColor(color)
+        }
+        .frame(width: 44, height: 44)
+        Text(value)
+          .font(.system(size: 8, weight: .semibold))
+          .foregroundColor(session.textSecondary)
+          .lineLimit(1).minimumScaleFactor(0.7)
+      }
+    }
+    .buttonStyle(.plain)
+    .frame(maxWidth: .infinity)
+  }
+
+  // MARK: - Métriques secondaires (FR + Exercice + Debout)
+  private var secondaryRow: some View {
+    HStack(spacing: 4) {
+      compactStat(icon: "wind",
+        value: displayRespiratory > 0 ? "\(displayRespiratory)" : "--",
+        unit: "rpm", color: greenColor)
+      compactStat(icon: "figure.run",
+        value: displayExerciseMinutes > 0 ? "\(displayExerciseMinutes)" : "--",
+        unit: "min", color: purpleColor)
+      compactStat(icon: "figure.stand",
+        value: displayStandHours > 0 ? "\(displayStandHours)" : "--",
+        unit: "h", color: blueColor)
+    }
+  }
+
+  private func compactStat(icon: String, value: String, unit: String, color: Color) -> some View {
+    VStack(spacing: 3) {
+      Image(systemName: icon).font(.system(size: 10)).foregroundColor(color)
+      Text(value)
+        .font(.system(size: 14, weight: .black))
+        .foregroundColor(session.textPrimary)
+        .minimumScaleFactor(0.7).lineLimit(1)
+      Text(unit).font(.system(size: 7)).foregroundColor(session.textSecondary)
+    }
+    .frame(maxWidth: .infinity)
+    .padding(.vertical, 8)
+    .background(session.cardBg)
+    .cornerRadius(10)
+  }
+
+  // MARK: - Actions rapides (Minuteur + Carnet)
+  private var quickActionsSection: some View {
+    VStack(spacing: 4) {
+      Button(action: { showTimer = true }) {
+        HStack(spacing: 8) {
+          ZStack {
+            Circle().fill(session.accentColor.opacity(0.15)).frame(width: 30, height: 30)
+            if session.timerIsRunning {
+              Circle()
+                .trim(from: 0, to: timerProgress)
+                .stroke(session.accentColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .frame(width: 30, height: 30)
+            }
+            Image(systemName: session.timerIsRunning ? "pause.fill" : "timer")
+              .font(.system(size: 12)).foregroundColor(session.accentColor)
+          }
+          VStack(alignment: .leading, spacing: 1) {
+            Text("MINUTEUR").font(.system(size: 7, weight: .heavy)).foregroundColor(session.accentColor).tracking(0.5)
+            Text(session.timerIsRunning
+              ? session.formattedTime(session.timerRemainingSeconds)
+              : "Appuyer pour démarrer")
+              .font(.system(size: 9)).foregroundColor(session.textSecondary).lineLimit(1)
+          }
+          Spacer()
+          Image(systemName: "chevron.right").font(.system(size: 8)).foregroundColor(session.textSecondary.opacity(0.4))
+        }
+        .padding(.horizontal, 8).padding(.vertical, 7)
+        .background(session.cardBg).cornerRadius(10)
+      }
+      .buttonStyle(.plain)
+
+      Button(action: { session.requestedTab = 5 }) {
+        HStack(spacing: 8) {
+          ZStack {
+            RoundedRectangle(cornerRadius: 7).fill(purpleColor.opacity(0.15)).frame(width: 30, height: 30)
+            Image(systemName: "dumbbell.fill").font(.system(size: 12)).foregroundColor(purpleColor)
+          }
+          VStack(alignment: .leading, spacing: 1) {
+            Text("CARNET").font(.system(size: 7, weight: .heavy)).foregroundColor(purpleColor).tracking(0.5)
+            let prCount = session.benchmarks.filter { $0.pr > 0 }.count
+            Text(session.streak > 0 ? "\(session.streak)j de suite · \(prCount) PRs" : "Logger une séance")
+              .font(.system(size: 9)).foregroundColor(session.textSecondary).lineLimit(1)
+          }
+          Spacer()
+          Image(systemName: "chevron.right").font(.system(size: 8)).foregroundColor(session.textSecondary.opacity(0.4))
+        }
+        .padding(.horizontal, 8).padding(.vertical, 7)
+        .background(session.cardBg).cornerRadius(10)
+      }
+      .buttonStyle(.plain)
+    }
+  }
+
+  // MARK: - Séances récentes
   private var recentSessions: some View {
     VStack(alignment: .leading, spacing: 4) {
       HStack {
-        Image(systemName: "clock.fill")
-          .font(.system(size: 8))
-          .foregroundColor(session.accentColor)
-        Text("RECENTS")
-          .font(.system(size: 7, weight: .heavy))
-          .foregroundColor(session.textSecondary)
-          .tracking(1)
+        Image(systemName: "clock.fill").font(.system(size: 7)).foregroundColor(session.accentColor)
+        Text("RÉCENTS").font(.system(size: 7, weight: .heavy)).foregroundColor(session.textSecondary).tracking(1)
         Spacer()
       }
-      .padding(.horizontal, 4)
-
+      .padding(.horizontal, 2)
       ForEach(session.recentWorkouts.prefix(2)) { workout in
         HStack(spacing: 6) {
-          Image(systemName: workout.icon)
-            .font(.system(size: 10))
-            .foregroundColor(session.accentColor)
-            .frame(width: 20, height: 20)
-            .background(session.accentColor.opacity(0.12))
-            .cornerRadius(5)
+          Image(systemName: workout.icon).font(.system(size: 9)).foregroundColor(session.accentColor)
+            .frame(width: 18, height: 18).background(session.accentColor.opacity(0.12)).cornerRadius(5)
           Text(workout.type.capitalized)
-            .font(.system(size: 9, weight: .semibold))
-            .foregroundColor(session.textPrimary)
-            .lineLimit(1)
+            .font(.system(size: 9, weight: .semibold)).foregroundColor(session.textPrimary).lineLimit(1)
           Spacer()
-          Text(workout.formattedDuration)
-            .font(.system(size: 8))
-            .foregroundColor(session.textSecondary)
+          Text(workout.formattedDuration).font(.system(size: 8)).foregroundColor(session.textSecondary)
         }
         .padding(.horizontal, 4)
       }
     }
   }
 
+  // MARK: - Computed helpers
+  private var displayHeartRate: Int { session.localHeartRate > 0 ? session.localHeartRate : session.heartRate }
+  private var displaySteps: Int { session.localSteps > 0 ? session.localSteps : 0 }
+  private var displayCalories: Int { session.localActiveCalories > 0 ? session.localActiveCalories : session.activeCalories }
+  private var displayDistance: Double { session.localDistance > 0 ? session.localDistance : session.distance }
+  private var displaySpo2: Int { session.localSpo2 > 0 ? session.localSpo2 : session.spo2 }
+  private var displayRespiratory: Int { session.localRespiratoryRate > 0 ? session.localRespiratoryRate : session.respiratoryRate }
+  private var displayExerciseMinutes: Int { session.localExerciseMinutes > 0 ? session.localExerciseMinutes : session.exerciseMinutes }
+  private var displayStandHours: Int { session.localStandHours > 0 ? session.localStandHours : session.standHours }
+
+  private var timerProgress: Double {
+    guard session.timerTotalSeconds > 0 else { return 0 }
+    return Double(session.timerRemainingSeconds) / Double(session.timerTotalSeconds)
+  }
+  private var stepsProgress: Double { min(1.0, Double(displaySteps) / Double(max(1, session.stepsGoal))) }
+  private var hydrationProgress: Double { min(1.0, Double(session.hydrationCurrent) / Double(max(1, session.hydrationGoal))) }
+  private var caloriesProgress: Double { min(1.0, Double(displayCalories) / 500.0) }
+  private func formatSteps(_ n: Int) -> String { n >= 1000 ? String(format: "%.1fk", Double(n)/1000) : "\(n)" }
+
 }
 
-// MARK: - Health Mini Card
-
+// HealthMiniCard kept for backward compatibility (unused in dashboard)
 struct HealthMiniCard: View {
   let icon: String
   let color: Color
@@ -622,29 +328,19 @@ struct HealthMiniCard: View {
         .frame(width: 22, height: 22)
         .background(color.opacity(0.15))
         .clipShape(Circle())
-
       VStack(alignment: .leading, spacing: 0) {
         HStack(spacing: 2) {
-          Text(value)
-            .font(.system(size: 13, weight: .bold))
-            .foregroundColor(textPrimary)
-          Text(unit)
-            .font(.system(size: 7, weight: .medium))
-            .foregroundColor(textSecondary)
+          Text(value).font(.system(size: 13, weight: .bold)).foregroundColor(textPrimary)
+          Text(unit).font(.system(size: 7, weight: .medium)).foregroundColor(textSecondary)
         }
-        Text(label)
-          .font(.system(size: 7))
-          .foregroundColor(textSecondary)
+        Text(label).font(.system(size: 7)).foregroundColor(textSecondary)
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(.horizontal, 6)
-    .padding(.vertical, 6)
-    .background(cardBg)
-    .cornerRadius(8)
+    .padding(.horizontal, 6).padding(.vertical, 6)
+    .background(cardBg).cornerRadius(8)
   }
 }
-
 // ============================================================
 // TIMER DETAIL PAGE - Horizontal scrollable presets, full screen on tap
 // ============================================================
@@ -659,6 +355,10 @@ struct TimerDetailPage: View {
   // Digital Crown : 0 = heures, 1 = minutes, 2 = secondes
   @State private var focusedField: Int = 1
   @State private var crownValue: Double = 1
+  // Alarm flash states
+  @State private var alarmFlash = false
+  @State private var alarmIconScale: CGFloat = 1.0
+  @State private var alarmTextOpacity: Double = 1.0
 
   // Extended presets (scrollable)
   private let presets: [(Int, String)] = [
@@ -896,55 +596,63 @@ struct TimerDetailPage: View {
 
   // MARK: - Alarm Overlay (looping sound + vibration)
   private var alarmOverlay: some View {
-    VStack(spacing: 12) {
-      Spacer()
+    ZStack {
+      // Fond clignotant rouge ↔ noir
+      (alarmFlash ? Color(red: 0.85, green: 0.06, blue: 0.06) : Color.black)
+        .ignoresSafeArea()
 
-      // Pulsing ring
-      ZStack {
-        Circle()
-          .fill(redColor.opacity(0.25))
-          .frame(width: 120, height: 120)
-
-        Circle()
-          .stroke(redColor, lineWidth: 4)
-          .frame(width: 100, height: 100)
-
-        Image(systemName: "bell.fill")
-          .font(.system(size: 32))
-          .foregroundColor(redColor)
-      }
-
-      Text("TERMINE !")
-        .font(.system(size: 14, weight: .heavy))
-        .foregroundColor(.white)
-        .tracking(1)
-
-      // Big stop button
-      Button(action: {
-        session.stopAlarm()
-        session.resetTimer()
-        selectedPreset = nil
-      }) {
-        HStack(spacing: 6) {
-          Image(systemName: "stop.fill")
-            .font(.system(size: 16))
-          Text("STOP")
-            .font(.system(size: 14, weight: .heavy))
-            .tracking(0.5)
+      VStack(spacing: 8) {
+        // Icône pulsante
+        ZStack {
+          Circle()
+            .fill(Color.white.opacity(alarmFlash ? 0.25 : 0.08))
+            .frame(width: 60, height: 60)
+          Image(systemName: "timer")
+            .font(.system(size: 30, weight: .black))
+            .foregroundColor(.white)
         }
-        .foregroundColor(.white)
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(redColor)
-        .cornerRadius(14)
-      }
-      .buttonStyle(.plain)
-      .padding(.horizontal, 16)
+        .scaleEffect(alarmIconScale)
 
-      Spacer()
+        Text("TIMER")
+          .font(.system(size: 22, weight: .black))
+          .foregroundColor(.white)
+          .tracking(3)
+          .opacity(alarmTextOpacity)
+
+        Text("TERMINÉ !")
+          .font(.system(size: 16, weight: .heavy))
+          .foregroundColor(alarmFlash ? .white : Color(red: 1, green: 0.4, blue: 0.4))
+          .tracking(1)
+
+        Button(action: {
+          session.stopAlarm()
+          session.resetTimer()
+          selectedPreset = nil
+        }) {
+          Text("ARRÊTER")
+            .font(.system(size: 13, weight: .black))
+            .tracking(1)
+            .foregroundColor(.black)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 9)
+            .background(Color.white)
+            .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 2)
+      }
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.black)
+    .onAppear {
+      withAnimation(Animation.easeInOut(duration: 0.4).repeatForever(autoreverses: true)) {
+        alarmFlash = true
+      }
+      withAnimation(Animation.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
+        alarmIconScale = 1.25
+      }
+      withAnimation(Animation.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+        alarmTextOpacity = 0.5
+      }
+    }
   }
 
   // MARK: - Custom Timer Sheet

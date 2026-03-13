@@ -33,9 +33,9 @@ interface DualComparisonCardProps {
 
 const CHART_HEIGHT = 220;
 const FULLSCREEN_HEIGHT = Dimensions.get('window').height * 0.55;
-const PAD_TOP = 30;
+const PAD_TOP = 46;
 const PAD_BOTTOM = 35;
-const PAD_LEFT = 45;
+const PAD_LEFT = 50;
 const PAD_RIGHT = 16;
 const POINT_WIDTH = 70;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -283,12 +283,37 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
                   const step = Math.ceil(chartData.xLabels.length / chartData.maxXLabels);
                   if (i % step !== 0 && i !== chartData.xLabels.length - 1) return null;
                 }
-                return <SvgText key={`xl-${i}`} x={xl.x} y={CHART_HEIGHT - 6} textAnchor="middle" fontSize={9} fontWeight="600" fill={textMuted}>{xl.label}</SvgText>;
+                const isFirst = i === 0;
+                const isLast = i === chartData.xLabels.length - 1;
+                return <SvgText key={`xl-${i}`} x={isFirst ? xl.x + 2 : isLast ? xl.x - 2 : xl.x} y={CHART_HEIGHT - 6} textAnchor={isFirst ? 'start' : isLast ? 'end' : 'middle'} fontSize={9} fontWeight="600" fill={textMuted}>{xl.label}</SvgText>;
               })}
 
-              {/* LEFT */}
+              {/* LEFT aire + courbe */}
               {chartData.leftArea && <Path d={chartData.leftArea} fill="url(#dualGrad-left)" />}
               {chartData.leftLine && <Path d={chartData.leftLine} fill="none" stroke={leftColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />}
+              {/* RIGHT aire + courbe */}
+              {chartData.rightArea && <Path d={chartData.rightArea} fill="url(#dualGrad-right)" />}
+              {chartData.rightLine && <Path d={chartData.rightLine} fill="none" stroke={rightColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />}
+
+              {/* Valeurs LEFT sur tous les points */}
+              {chartData.leftPts.map((pt, idx) => {
+                const total = chartData.leftPts.length;
+                const isFirst = idx === 0; const isLast = idx === total - 1;
+                const anchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
+                const lx = isFirst ? pt.x + 2 : isLast ? pt.x - 2 : pt.x;
+                const label = smartFormat(pt.value);
+                const w = label.length * 6 + 10;
+                const labelY = Math.max(pt.y - 20, 4);
+                const rx = anchor === 'start' ? lx : anchor === 'end' ? lx - w : lx - w / 2;
+                return (
+                  <G key={`lvl-${idx}`}>
+                    <Rect x={rx} y={labelY - 11} width={w} height={14} rx={4} ry={4}
+                      fill={isDark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.92)'} stroke={leftColor} strokeWidth={0.7} />
+                    <SvgText x={lx} y={labelY} textAnchor={anchor} fontSize={8.5} fontWeight="800" fill={isDark ? '#FFFFFF' : '#1a1a1a'}>{label}</SvgText>
+                  </G>
+                );
+              })}
+              {/* Points LEFT */}
               {chartData.leftPts.map((pt, idx) => (
                 <G key={`lp-${idx}`}>
                   <SvgCircle cx={pt.x} cy={pt.y} r={5} fill={leftColor} opacity={0.12} />
@@ -296,35 +321,31 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
                 </G>
               ))}
 
-              {/* RIGHT */}
-              {chartData.rightArea && <Path d={chartData.rightArea} fill="url(#dualGrad-right)" />}
-              {chartData.rightLine && <Path d={chartData.rightLine} fill="none" stroke={rightColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />}
+              {/* Valeurs RIGHT sur tous les points */}
+              {chartData.rightPts.map((pt, idx) => {
+                const total = chartData.rightPts.length;
+                const isFirst = idx === 0; const isLast = idx === total - 1;
+                const anchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
+                const lx = isFirst ? pt.x + 2 : isLast ? pt.x - 2 : pt.x;
+                const label = smartFormat(pt.value);
+                const w = label.length * 6 + 10;
+                const labelY = Math.max(pt.y - 20, 4);
+                const rx = anchor === 'start' ? lx : anchor === 'end' ? lx - w : lx - w / 2;
+                return (
+                  <G key={`rvl-${idx}`}>
+                    <Rect x={rx} y={labelY - 11} width={w} height={14} rx={4} ry={4}
+                      fill={isDark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.92)'} stroke={rightColor} strokeWidth={0.7} />
+                    <SvgText x={lx} y={labelY} textAnchor={anchor} fontSize={8.5} fontWeight="800" fill={isDark ? '#FFFFFF' : '#1a1a1a'}>{label}</SvgText>
+                  </G>
+                );
+              })}
+              {/* Points RIGHT */}
               {chartData.rightPts.map((pt, idx) => (
                 <G key={`rp-${idx}`}>
                   <SvgCircle cx={pt.x} cy={pt.y} r={5} fill={rightColor} opacity={0.12} />
                   <SvgCircle cx={pt.x} cy={pt.y} r={3.5} fill={isDark ? colors.backgroundCard : '#FFFFFF'} stroke={rightColor} strokeWidth={2} />
                 </G>
               ))}
-
-              {/* Value labels */}
-              {chartData.leftPts.length > 0 && (() => {
-                const lp = chartData.leftPts[0];
-                return (
-                  <G>
-                    <Rect x={lp.x - 20} y={lp.y - 24} width={40} height={16} rx={6} ry={6} fill={leftColor} opacity={0.9} />
-                    <SvgText x={lp.x} y={lp.y - 13} textAnchor="middle" fontSize={9} fontWeight="800" fill="#FFFFFF">{smartFormat(lp.value)}</SvgText>
-                  </G>
-                );
-              })()}
-              {chartData.rightPts.length > 0 && (() => {
-                const rp = chartData.rightPts[0];
-                return (
-                  <G>
-                    <Rect x={rp.x - 20} y={rp.y - 24} width={40} height={16} rx={6} ry={6} fill={rightColor} opacity={0.9} />
-                    <SvgText x={rp.x} y={rp.y - 13} textAnchor="middle" fontSize={9} fontWeight="800" fill="#FFFFFF">{smartFormat(rp.value)}</SvgText>
-                  </G>
-                );
-              })()}
             </Svg>
           </ScrollView>
 
@@ -339,7 +360,7 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
               <Text style={[styles.legendLabel, { color: colors.textSecondary }]}>{rightLabel}</Text>
             </View>
           </View>
-          {isScrollable && (
+          {chartData?.activeIsScrollable && (
             <View style={styles.hintBar}>
               <Text style={[styles.hintText, { color: colors.textMuted }]}>Defiler pour voir plus · Recent a gauche</Text>
             </View>
@@ -409,14 +430,33 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
                   ))}
                   {fsData.leftArea && <Path d={fsData.leftArea} fill="url(#dualGrad-left-fs)" />}
                   {fsData.leftLine && <Path d={fsData.leftLine} fill="none" stroke={leftColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />}
+                  {fsData.rightArea && <Path d={fsData.rightArea} fill="url(#dualGrad-right-fs)" />}
+                  {fsData.rightLine && <Path d={fsData.rightLine} fill="none" stroke={rightColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />}
+                  {[{ pts: fsData.leftPts, color: leftColor, prefix: 'fslvl' }, { pts: fsData.rightPts, color: rightColor, prefix: 'fsrvl' }].map(({ pts, color, prefix }) =>
+                    pts.map((pt, idx) => {
+                      const total = pts.length;
+                      const isFirst = idx === 0; const isLast = idx === total - 1;
+                      const anchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
+                      const lx = isFirst ? pt.x + 2 : isLast ? pt.x - 2 : pt.x;
+                      const label = smartFormat(pt.value);
+                      const w = label.length * 6.5 + 10;
+                      const labelY = Math.max(pt.y - 20, 4);
+                      const rx = anchor === 'start' ? lx : anchor === 'end' ? lx - w : lx - w / 2;
+                      return (
+                        <G key={`${prefix}-${idx}`}>
+                          <Rect x={rx} y={labelY - 11} width={w} height={14} rx={4} ry={4}
+                            fill={isDark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.92)'} stroke={color} strokeWidth={0.7} />
+                          <SvgText x={lx} y={labelY} textAnchor={anchor} fontSize={9} fontWeight="800" fill={isDark ? '#FFFFFF' : '#1a1a1a'}>{label}</SvgText>
+                        </G>
+                      );
+                    })
+                  )}
                   {fsData.leftPts.map((pt, idx) => (
                     <G key={`fslp-${idx}`}>
                       <SvgCircle cx={pt.x} cy={pt.y} r={5} fill={leftColor} opacity={0.12} />
                       <SvgCircle cx={pt.x} cy={pt.y} r={3.5} fill={isDark ? colors.backgroundCard : '#FFFFFF'} stroke={leftColor} strokeWidth={2} />
                     </G>
                   ))}
-                  {fsData.rightArea && <Path d={fsData.rightArea} fill="url(#dualGrad-right-fs)" />}
-                  {fsData.rightLine && <Path d={fsData.rightLine} fill="none" stroke={rightColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />}
                   {fsData.rightPts.map((pt, idx) => (
                     <G key={`fsrp-${idx}`}>
                       <SvgCircle cx={pt.x} cy={pt.y} r={5} fill={rightColor} opacity={0.12} />

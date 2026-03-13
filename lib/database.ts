@@ -227,6 +227,10 @@ const _performInit = async () => {
   } catch (e) { /* colonne existe déjà */ }
 
   try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN min_heart_rate INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN source TEXT;`);
   } catch (e) { /* colonne existe déjà */ }
 
@@ -684,6 +688,8 @@ export interface CombatRound {
   partner?: string;
   result?: 'win' | 'loss' | 'draw';
   method?: string;
+  methodsGiven?: string[];   // Finitions / soumissions données (liste)
+  methodsTaken?: string[];   // Finitions / soumissions reçues (liste)
   submissionsGiven?: number;
   submissionsTaken?: number;
   notes?: string;
@@ -707,6 +713,7 @@ export interface Training {
   distance?: number; // Distance en km
   calories?: number; // Calories brûlées
   heart_rate?: number; // Rythme cardiaque moyen
+  min_heart_rate?: number; // Rythme cardiaque min
   max_heart_rate?: number; // Rythme cardiaque max
   source?: string; // Source (apple_watch, garmin, samsung, manual, etc.)
   rounds?: number; // Nombre de rounds
@@ -1010,7 +1017,7 @@ export const updateTraining = async (id: number, data: Partial<Training>): Promi
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const combatRoundsJson = data.combat_rounds ? JSON.stringify(data.combat_rounds) : null;
   await database.runAsync(
-    `UPDATE trainings SET club_id = ?, sport = ?, session_type = ?, date = ?, start_time = ?, duration_minutes = ?, notes = ?, muscles = ?, exercises = ?, technique_rating = ?, is_outdoor = ?, distance = ?, calories = ?, intensity = ?, rounds = ?, round_duration = ?, pente = ?, speed = ?, resistance = ?, watts = ?, cadence = ?, heart_rate = ?, max_heart_rate = ?, source = ?, combat_rounds = ?, location_lat = ?, location_lon = ?, location_name = ?
+    `UPDATE trainings SET club_id = ?, sport = ?, session_type = ?, date = ?, start_time = ?, duration_minutes = ?, notes = ?, muscles = ?, exercises = ?, technique_rating = ?, is_outdoor = ?, distance = ?, calories = ?, intensity = ?, rounds = ?, round_duration = ?, pente = ?, speed = ?, resistance = ?, watts = ?, cadence = ?, heart_rate = ?, min_heart_rate = ?, max_heart_rate = ?, source = ?, combat_rounds = ?, location_lat = ?, location_lon = ?, location_name = ?
      WHERE id = ?`,
     [data.club_id || null, data.sport || null, data.session_type || null, data.date || null,
      data.start_time || null, data.duration_minutes || null,
@@ -1018,7 +1025,7 @@ export const updateTraining = async (id: number, data: Partial<Training>): Promi
      data.is_outdoor ? 1 : 0, data.distance || null, data.calories || null,
      data.intensity || null, data.rounds || null, data.round_duration || null,
      data.pente || null, data.speed || null, data.resistance || null, data.watts || null, data.cadence || null,
-     data.heart_rate || null, data.max_heart_rate || null, data.source || null, combatRoundsJson,
+     data.heart_rate || null, data.min_heart_rate || null, data.max_heart_rate || null, data.source || null, combatRoundsJson,
      data.location_lat || null, data.location_lon || null, data.location_name || null, id]
   );
 };
@@ -1028,8 +1035,8 @@ export const addTraining = async (data: Training): Promise<number> => {
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const combatRoundsJson = data.combat_rounds ? JSON.stringify(data.combat_rounds) : null;
   const result = await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, healthkit_uuid, workout_details_json, heart_rate, max_heart_rate, source, combat_rounds, weekly_plan_id, location_lat, location_lon, location_name)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, healthkit_uuid, workout_details_json, heart_rate, min_heart_rate, max_heart_rate, source, combat_rounds, weekly_plan_id, location_lat, location_lon, location_name)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.club_id || null, data.sport, data.session_type || null, data.date,
      data.start_time || null, data.duration_minutes || null,
      data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null,
@@ -1037,7 +1044,7 @@ export const addTraining = async (data: Training): Promise<number> => {
      data.intensity || null, data.rounds || null, data.round_duration || null,
      data.pente || null, data.speed || null, data.resistance || null, data.watts || null, data.cadence || null,
      data.healthkit_uuid || null, data.workout_details_json || null, data.heart_rate || null,
-     data.max_heart_rate || null, data.source || null, combatRoundsJson, data.weekly_plan_id || null,
+     data.min_heart_rate || null, data.max_heart_rate || null, data.source || null, combatRoundsJson, data.weekly_plan_id || null,
      data.location_lat || null, data.location_lon || null, data.location_name || null]
   );
   if (!result?.lastInsertRowId) {
@@ -1080,6 +1087,24 @@ export const getTrainings = async (days?: number): Promise<Training[]> => {
       cadence: r.cadence
     };
   });
+};
+
+export const getTrainingsCount = async (): Promise<{ total: number; fromHealthkit: number; manual: number }> => {
+  const database = await openDatabase();
+  const row = await database.getFirstAsync<{ total: number; fromHealthkit: number }>(
+    `SELECT COUNT(*) as total, SUM(CASE WHEN healthkit_uuid IS NOT NULL THEN 1 ELSE 0 END) as fromHealthkit FROM trainings`
+  );
+  const total = row?.total ?? 0;
+  const fromHealthkit = row?.fromHealthkit ?? 0;
+  return { total, fromHealthkit, manual: total - fromHealthkit };
+};
+
+export const getExistingHealthkitUUIDs = async (): Promise<Set<string>> => {
+  const database = await openDatabase();
+  const rows = await database.getAllAsync<{ healthkit_uuid: string }>(
+    `SELECT healthkit_uuid FROM trainings WHERE healthkit_uuid IS NOT NULL`
+  );
+  return new Set(rows.map(r => r.healthkit_uuid));
 };
 
 export const getTrainingsByMonth = async (year: number, month: number): Promise<Training[]> => {

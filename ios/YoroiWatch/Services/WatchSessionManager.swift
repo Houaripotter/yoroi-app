@@ -100,16 +100,70 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     didSet { UserDefaults.standard.set(stepsGoal, forKey: "yoroi_stepsGoal"); reloadComplications() }
   }
   // Données santé reçues de l'iPhone (fallback si HealthKit local indisponible)
-  @Published var heartRate: Int = 0
-  @Published var heartRateMin: Int = 0
-  @Published var heartRateMax: Int = 0
-  @Published var restingHeartRate: Int = 0
-  @Published var spo2: Int = 0
-  @Published var respiratoryRate: Int = 0
-  @Published var activeCalories: Int = 0
+  @Published var heartRate: Int = 0 {
+    didSet {
+      if localHeartRate == 0 {
+        UserDefaults.standard.set(heartRate, forKey: "yoroi_heartRate")
+        reloadComplications()
+      }
+    }
+  }
+  @Published var heartRateMin: Int = 0 {
+    didSet {
+      if localHeartRateMin == 0 {
+        UserDefaults.standard.set(heartRateMin, forKey: "yoroi_heartRateMin")
+      }
+    }
+  }
+  @Published var heartRateMax: Int = 0 {
+    didSet {
+      if localHeartRateMax == 0 {
+        UserDefaults.standard.set(heartRateMax, forKey: "yoroi_heartRateMax")
+      }
+    }
+  }
+  @Published var restingHeartRate: Int = 0 {
+    didSet {
+      if localRestingHR == 0 {
+        UserDefaults.standard.set(restingHeartRate, forKey: "yoroi_restingHR")
+        reloadComplications()
+      }
+    }
+  }
+  @Published var spo2: Int = 0 {
+    didSet {
+      if localSpo2 == 0 {
+        UserDefaults.standard.set(spo2, forKey: "yoroi_spo2")
+        reloadComplications()
+      }
+    }
+  }
+  @Published var respiratoryRate: Int = 0 {
+    didSet {
+      if localRespiratoryRate == 0 {
+        UserDefaults.standard.set(respiratoryRate, forKey: "yoroi_respiratoryRate")
+        reloadComplications()
+      }
+    }
+  }
+  @Published var activeCalories: Int = 0 {
+    didSet {
+      if localActiveCalories == 0 {
+        UserDefaults.standard.set(activeCalories, forKey: "yoroi_calories")
+        reloadComplications()
+      }
+    }
+  }
   @Published var exerciseMinutes: Int = 0
   @Published var standHours: Int = 0
-  @Published var distance: Double = 0.0
+  @Published var distance: Double = 0.0 {
+    didSet {
+      if localDistance == 0.0 {
+        UserDefaults.standard.set(distance, forKey: "yoroi_distance")
+        reloadComplications()
+      }
+    }
+  }
 
   // MARK: - Profile
   @Published var userName: String = ""
@@ -142,7 +196,8 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   @Published var recentWorkouts: [WorkoutEntry] = []
 
   // MARK: - Navigation (deep link depuis complications)
-  @Published var requestedTab: Int = 0
+  // -1 = aucun deep link en cours ; >= 0 = onglet cible
+  @Published var requestedTab: Int = -1
 
   // MARK: - Connection
   @Published var isConnected: Bool = false
@@ -512,8 +567,12 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     timerRemainingSeconds = timerTotalSeconds
   }
 
-  // MARK: - Notifications locales (vibration + son en veille)
+  // MARK: - Notifications locales
 
+  /// Planifie TOUTES les notifications dès le départ du timer :
+  /// - 1 notification à l'heure exacte de fin
+  /// - 40 répétitions toutes les 15s (= 10 minutes d'alarme)
+  /// Ainsi même si l'app ne tourne pas en background, les notifications arrivent.
   private func scheduleTimerNotification(fireDate: Date, seconds: Int) {
     let center = UNUserNotificationCenter.current()
     center.removeAllPendingNotificationRequests()
@@ -521,34 +580,65 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
       guard granted else { return }
 
-      let content = UNMutableNotificationContent()
-      content.title             = "Timer YOROI"
-      content.body              = "Ton timer est terminé !"
-      content.sound             = UNNotificationSound.defaultCritical
-      if #available(watchOS 8.0, *) {
-        content.interruptionLevel = .timeSensitive
-      }
+      let wizzSound = UNNotificationSound(named: UNNotificationSoundName("wizz.mp3"))
 
+      // — Notification principale à la fin exacte du timer
+      let main = UNMutableNotificationContent()
+      main.title              = "TIMER TERMINÉ"
+      main.body               = "Appuie pour arrêter l'alarme"
+      main.sound              = wizzSound
+      main.categoryIdentifier = "yoroi.timer.alarm"
+      if #available(watchOS 8.0, *) { main.interruptionLevel = .timeSensitive }
       let delay = max(1, seconds)
-      let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Double(delay), repeats: false)
-      let request = UNNotificationRequest(identifier: "yoroi.timer.end", content: content, trigger: trigger)
-      center.add(request)
+      center.add(UNNotificationRequest(
+        identifier: "yoroi.timer.end",
+        content: main,
+        trigger: UNTimeIntervalNotificationTrigger(timeInterval: Double(delay), repeats: false)
+      ))
+
+      // — 40 répétitions toutes les 15s après la fin = 10 minutes d'alarme en boucle
+      for i in 1...40 {
+        let rep = UNMutableNotificationContent()
+        rep.title              = "TIMER TERMINÉ"
+        rep.body               = "Appuie pour arrêter l'alarme"
+        rep.sound              = wizzSound
+        rep.categoryIdentifier = "yoroi.timer.alarm"
+        if #available(watchOS 8.0, *) { rep.interruptionLevel = .timeSensitive }
+        center.add(UNNotificationRequest(
+          identifier: "yoroi.timer.repeat.\(i)",
+          content: rep,
+          trigger: UNTimeIntervalNotificationTrigger(
+            timeInterval: Double(delay) + Double(i * 15),
+            repeats: false
+          )
+        ))
+      }
     }
   }
 
   private func cancelTimerNotification() {
-    UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["yoroi.timer.end"])
+    var ids = ["yoroi.timer.end"]
+    ids += (1...40).map { "yoroi.timer.repeat.\($0)" }
+    UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
   }
 
-  // MARK: - Alarm (looping sound + vibration until stopped)
+  // MARK: - Alarm (son wizz illimité + haptics)
 
   private func startAlarm() {
     timerAlarmRinging = true
+
+    // Session étendue pour garder le son en vie
+    startExtendedSession()
+
+    // Son wizz en boucle illimitée
     playWizzSoundLooping()
-    // Première vibration immédiate
+
+    // Double tap immédiat + haptic toutes les 1.2s
     WKInterfaceDevice.current().play(.notification)
-    // Vibrations répétées — mode .common pour rester actif même si le RunLoop bascule
-    let ht = Timer(timeInterval: 1.5, repeats: true) { [weak self] _ in
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+      WKInterfaceDevice.current().play(.notification)
+    }
+    let ht = Timer(timeInterval: 1.2, repeats: true) { [weak self] _ in
       DispatchQueue.main.async {
         guard let self = self, self.timerAlarmRinging else { return }
         WKInterfaceDevice.current().play(.notification)
@@ -556,76 +646,23 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     }
     RunLoop.main.add(ht, forMode: .common)
     hapticTimer = ht
-    // Notifications toutes les 15s pendant 15 min
-    scheduleAlarmRepeatNotifications()
-    // Background refresh dans 12 min pour replanifier → boucle infinie
-    scheduleAlarmBackgroundRefresh()
-    // Notifier l'iPhone que le timer est terminé (notification locale iPhone)
+
     sendAction("timerFinished")
   }
 
   func stopAlarm() {
     timerAlarmRinging = false
-    // Stop looping sound
     audioPlayer?.stop()
     audioPlayer = nil
-    // Stop haptic loop
     hapticTimer?.invalidate()
     hapticTimer = nil
-    // Cancel repeat alarm notifications
-    cancelAlarmRepeatNotifications()
-    // Now stop extended session
+    UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
     stopExtendedSession()
-  }
-
-  /// Planifie des notifications toutes les 15s pendant 15 min — puis un background refresh replanifie
-  private func scheduleAlarmRepeatNotifications() {
-    let center = UNUserNotificationCenter.current()
-    // Nettoyer les anciennes
-    let oldIds = (1...60).map { "yoroi.alarm.repeat.\($0)" }
-    center.removePendingNotificationRequests(withIdentifiers: oldIds)
-
-    center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-      guard granted else { return }
-      for i in 1...60 {
-        let content = UNMutableNotificationContent()
-        content.title = "Timer YOROI"
-        content.body  = "Ouvre l'app pour arrêter !"
-        content.sound = .defaultCritical
-        content.categoryIdentifier = "yoroi.timer.alarm"
-        if #available(watchOS 8.0, *) {
-          content.interruptionLevel = .timeSensitive
-        }
-        // 15s entre chaque notification → 60 × 15 = 15 minutes
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Double(i * 15), repeats: false)
-        let request = UNNotificationRequest(identifier: "yoroi.alarm.repeat.\(i)", content: content, trigger: trigger)
-        center.add(request)
-      }
-    }
-  }
-
-  private func cancelAlarmRepeatNotifications() {
-    let ids = (1...60).map { "yoroi.alarm.repeat.\($0)" }
-    UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
-  }
-
-  // MARK: - Background refresh (replanifie l'alarme avant épuisement des notifications)
-
-  func scheduleAlarmBackgroundRefresh() {
-    // Se déclenche dans 12 min (avant que les 15 min de notifications se terminent)
-    let fireDate = Date().addingTimeInterval(12 * 60)
-    WKExtension.shared().scheduleBackgroundRefresh(
-      withPreferredDate: fireDate,
-      userInfo: "yoroi.alarm.refresh" as NSString
-    ) { _ in }
   }
 
   /// Appelé par le background task handler dans YoroiWatchApp
   func handleAlarmBackgroundRefresh() {
     guard timerAlarmRinging else { return }
-    // Replanifier un nouveau lot de 60 notifications + vibration + nouveau refresh
-    scheduleAlarmRepeatNotifications()
-    scheduleAlarmBackgroundRefresh()
     WKInterfaceDevice.current().play(.notification)
   }
 
@@ -648,26 +685,31 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
   // MARK: - Wizz Sound (looping)
 
-  private func playWizzSoundLooping() {
-    // Configure audio session for playback (keeps audio alive in background)
-    do {
-      let audioSession = AVAudioSession.sharedInstance()
-      try audioSession.setCategory(.playback, mode: .default, options: [])
-      try audioSession.setActive(true)
-    } catch {
-      // audio session error ignored
-    }
+  /// Appelable depuis le contrôleur de notification (app en background)
+  func startAlarmAudio() {
+    playWizzSoundLooping()
+  }
 
-    // Try to play the bundled wizz sound in loop
-    if let url = Bundle.main.url(forResource: "wizz-made-with-Voicemod", withExtension: "mp3") {
-      do {
-        audioPlayer = try AVAudioPlayer(contentsOf: url)
-        audioPlayer?.numberOfLoops = -1  // Loop forever until stopped
-        audioPlayer?.volume = 1.0
-        audioPlayer?.play()
-      } catch {
-        // sound error ignored
-      }
+  private func playWizzSoundLooping() {
+    // Activer la catégorie .playback pour permettre l'audio en arrière-plan
+    // sur watchOS avec une session étendue active
+    let audioSession = AVAudioSession.sharedInstance()
+    try? audioSession.setCategory(.playback, mode: .default)
+    try? audioSession.setActive(true)
+
+    guard let url = Bundle.main.url(forResource: "wizz", withExtension: "mp3") else {
+      WKInterfaceDevice.current().play(.notification)
+      return
+    }
+    do {
+      audioPlayer = try AVAudioPlayer(contentsOf: url)
+      audioPlayer?.numberOfLoops = -1
+      audioPlayer?.volume = 1.0
+      audioPlayer?.prepareToPlay()
+      audioPlayer?.play()
+    } catch {
+      // Fallback vibration si le fichier son ne se charge pas
+      WKInterfaceDevice.current().play(.notification)
     }
   }
 
@@ -1051,6 +1093,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         UserDefaults.standard.set(top.pr, forKey: "yoroi_carnet_lastPR")
         UserDefaults.standard.set(top.unit, forKey: "yoroi_carnet_lastUnit")
       }
+      reloadComplications()
     }
 
     // Recent workouts
@@ -1126,294 +1169,326 @@ struct ExerciseTemplate: Identifiable {
   static let library: [ExerciseTemplate] = [
 
     // ═══════════════════════════════════════
-    // PECTORAUX (14 exercices)
+    // PECTORAUX (20)
     // ═══════════════════════════════════════
-    ExerciseTemplate(id: "dc", name: "Developpe couche", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "di", name: "Developpe incline", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "dd", name: "Developpe decline", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "dc_halt", name: "Developpe couche halteres", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "di_halt", name: "Developpe incline halteres", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "dips_pec", name: "Dips pectoraux", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "ecarte", name: "Ecarte halteres", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "ecarte_inc", name: "Ecarte incline", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "pec_deck", name: "Pec deck (butterfly)", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "cable_cross", name: "Cable crossover", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "pompes", name: "Pompes", muscleGroup: "Pectoraux", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "pompes_dia", name: "Pompes diamant", muscleGroup: "Pectoraux", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "pullover", name: "Pullover", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "smith_bench", name: "Smith machine couche", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "bench-press", name: "Développé Couché (Barre)", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "incline-bench-press", name: "Développé Incliné (Barre)", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "decline-bench-press", name: "Développé Décliné (Barre)", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "dumbbell-bench-press", name: "Développé Haltères", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "incline-dumbbell-press", name: "Développé Haltères Incliné", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "decline-dumbbell-press", name: "Développé Haltères Décliné", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "chest-fly", name: "Ecarté Couché (Haltères)", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "incline-fly", name: "Ecarté Incliné (Haltères)", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "cable-crossover", name: "Croisé Câble Haut", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "cable-crossover-low", name: "Croisé Câble Bas", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "cable-crossover-mid", name: "Croisé Câble Milieu", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "chest-press-machine-pec", name: "Chest Press Machine", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "pec-deck", name: "Pec Deck (Butterfly)", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "dips-chest", name: "Dips (Focus Pectoraux)", muscleGroup: "Pectoraux", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "weighted-push-up", name: "Pompes Lestées", muscleGroup: "Pectoraux", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "pullover-dumbbell", name: "Pull-Over Haltère", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "floor-press", name: "Développé Sol (Floor Press)", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "svend-press", name: "Compression Pecto (Svend Press)", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "landmine-press-chest", name: "Landmine Press", muscleGroup: "Pectoraux", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "push-up-standard", name: "Pompes (Poids de Corps)", muscleGroup: "Pectoraux", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
 
     // ═══════════════════════════════════════
-    // DOS (16 exercices)
+    // DOS (22)
     // ═══════════════════════════════════════
-    ExerciseTemplate(id: "tractions", name: "Tractions", muscleGroup: "Dos", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "tractions_l", name: "Tractions lestees", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "tractions_s", name: "Tractions supination", muscleGroup: "Dos", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "rowing_barre", name: "Rowing barre", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "rowing_halt", name: "Rowing haltere", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "rowing_t", name: "Rowing T-bar", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "tirage_vert", name: "Tirage vertical", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "tirage_hor", name: "Tirage horizontal", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "tirage_serr", name: "Tirage prise serree", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "sdt", name: "Souleve de terre", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "sdt_roum", name: "Souleve de terre roumain", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "sdt_sumo", name: "Souleve de terre sumo", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "good_morning", name: "Good morning", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "pulldown", name: "Pulldown", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "meadow_row", name: "Meadows row", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "hyper_ext", name: "Hyperextension", muscleGroup: "Dos", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "deadlift", name: "Soulevé de Terre", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "deadlift-romanian", name: "Deadlift Roumain", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "deadlift-sumo", name: "Deadlift Sumo", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "pull-up", name: "Tractions Pronation", muscleGroup: "Dos", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "pull-up-supination", name: "Tractions Supination", muscleGroup: "Dos", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "pull-up-wide", name: "Tractions Larges", muscleGroup: "Dos", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "pull-up-neutral", name: "Tractions Prises Neutres", muscleGroup: "Dos", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "lat-pulldown", name: "Tirage Poulie Haute", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "lat-pulldown-close", name: "Tirage Serré V-Bar", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "lat-pulldown-neck", name: "Tirage Nuque", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "lat-pulldown-unilateral", name: "Tirage Unilatéral", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "barbell-row", name: "Rowing Barre", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "pendlay-row", name: "Rowing Pendlay", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "dumbbell-row", name: "Rowing Haltère (One Arm)", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "seated-cable-row", name: "Rowing Câble Assis", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "t-bar-row", name: "Rowing T-Bar", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "seal-row", name: "Rowing Plat-Ventre (Seal Row)", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "chest-supported-row", name: "Rowing Soutenu (Banc)", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "low-row-machine-dos", name: "Low Row Machine", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "face-pull", name: "Tirage Visage (Face Pull)", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "hyperextensions", name: "Hyperextensions", muscleGroup: "Dos", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "good-morning", name: "Inclinaison Barre (Good Morning)", muscleGroup: "Dos", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
 
     // ═══════════════════════════════════════
-    // EPAULES (14 exercices)
+    // EPAULES (16)
     // ═══════════════════════════════════════
-    ExerciseTemplate(id: "dev_mil", name: "Developpe militaire", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "dev_halt", name: "Developpe halteres assis", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "arnold", name: "Arnold press", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "elev_lat", name: "Elevations laterales", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "elev_lat_c", name: "Elevations laterales cable", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "elev_front", name: "Elevations frontales", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "oiseau", name: "Oiseau (rear delt fly)", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "oiseau_mach", name: "Reverse pec deck", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "face_pull", name: "Face pull", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "shrug", name: "Shrugs halteres", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "shrug_bar", name: "Shrugs barre", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "upright_row", name: "Rowing menton", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "push_press", name: "Push press", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "landmine_pr", name: "Landmine press", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "military-press", name: "Développé Militaire (Barre)", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "dumbbell-shoulder-press", name: "Développé Haltères Assis", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "dumbbell-shoulder-press-stand", name: "Développé Haltères Debout", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "arnold-press", name: "Arnold Press", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "lateral-raise", name: "Elévations Latérales", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "cable-lateral-raise", name: "Elévations Latérales Câble", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "lateral-raise-machine", name: "Elévations Latérales Machine", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "front-raise", name: "Elévations Frontales", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "rear-delt-fly", name: "Oiseau (Deltoïdes Postérieurs)", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "rear-delt-machine", name: "Oiseau Machine", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "upright-row", name: "Rowing Menton", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "shoulder-press-machine", name: "Développé Epaules Machine", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "bradford-press", name: "Bradford Press", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "w-raise", name: "W-Raise (YTW)", muscleGroup: "Epaules", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "band-pull-apart", name: "Ecartement Elastique (Band Pull-Apart)", muscleGroup: "Epaules", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "pike-push-up", name: "Pompes Pike", muscleGroup: "Epaules", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
 
     // ═══════════════════════════════════════
-    // BRAS (16 exercices)
+    // BRAS (18)
     // ═══════════════════════════════════════
-    ExerciseTemplate(id: "curl_bic", name: "Curl biceps barre", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "curl_halt", name: "Curl halteres", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "curl_mart", name: "Curl marteau", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "curl_ez", name: "Curl barre EZ", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "curl_inc", name: "Curl incline", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "curl_conc", name: "Curl concentration", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "curl_larry", name: "Larry Scott curl", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "curl_cable", name: "Curl cable", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "ext_tri", name: "Extension triceps poulie", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "ext_tri_co", name: "Extension triceps corde", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "dips_tri", name: "Dips triceps", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "skull", name: "Skull crusher", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "kickback", name: "Kickback triceps", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "ext_over", name: "Extension overhead", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "barre_front", name: "Barre au front", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "curl_avant", name: "Curl avant-bras", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "barbell-curl", name: "Curl Barre", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "dumbbell-curl", name: "Curl Haltères", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "hammer-curl", name: "Curl Marteau", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "preacher-curl", name: "Curl Pupitre (Larry Scott)", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "concentration-curl", name: "Curl Concentré", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "cable-curl", name: "Curl Câble Bas", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "incline-curl", name: "Curl Incliné (Haltères)", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "spider-curl", name: "Curl Araignée (Spider Curl)", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "reverse-curl", name: "Curl Inversé (Pronation)", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "tricep-pushdown", name: "Extension Triceps Poulie", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "tricep-pushdown-rope", name: "Extension Triceps Corde", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "skull-crusher", name: "Barre au Front (Skull Crusher)", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "close-grip-bench-press", name: "Développé Serré (Triceps)", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "overhead-tricep-extension", name: "Extension Triceps Nuque", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "dips-triceps", name: "Dips (Focus Triceps)", muscleGroup: "Bras", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "tricep-kickback", name: "Kickback Triceps", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "wrist-curl", name: "Curl Poignets", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "curl-21s", name: "21s Biceps", muscleGroup: "Bras", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
 
     // ═══════════════════════════════════════
-    // JAMBES (18 exercices)
+    // JAMBES (20)
     // ═══════════════════════════════════════
-    ExerciseTemplate(id: "squat", name: "Squat barre", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "squat_front", name: "Front squat", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "squat_gob", name: "Goblet squat", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "squat_bulg", name: "Bulgarian split squat", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "squat_sumo", name: "Squat sumo", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "presse", name: "Presse a cuisses", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "presse_45", name: "Presse 45 degres", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "hack_squat", name: "Hack squat", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "fentes", name: "Fentes", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "fentes_mar", name: "Fentes marchees", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "leg_ext", name: "Leg extension", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "leg_curl", name: "Leg curl", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "leg_curl_d", name: "Leg curl debout", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "hip_thrust", name: "Hip thrust", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "hip_abd", name: "Hip abduction machine", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "hip_add", name: "Hip adduction machine", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "mollets", name: "Mollets debout", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "mollets_a", name: "Mollets assis", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "squat", name: "Squat (Barre)", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "front-squat", name: "Squat Avant", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "hack-squat", name: "Hack Squat (Machine)", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "goblet-squat", name: "Squat Coupe (Goblet Squat)", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "box-squat", name: "Squat sur Boîte (Box Squat)", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "bulgarian-split-squat", name: "Squat Bulgare", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "leg-press", name: "Presse à Cuisses", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "lunges", name: "Fentes Avant", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "reverse-lunges", name: "Fentes Arrière", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "walking-lunges", name: "Fentes Marchées", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "leg-extension", name: "Leg Extension", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "leg-curl", name: "Leg Curl Allongé", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "leg-curl-seated", name: "Leg Curl Assis", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "standing-calf-raise", name: "Mollets Debout", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "seated-calf-raise", name: "Mollets Assis", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "hip-thrust", name: "Poussée de Hanche (Hip Thrust)", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "glute-kickback", name: "Glute Kickback Câble", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "hip-abductor", name: "Abducteur Machine", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "hip-adductor", name: "Adducteur Machine", muscleGroup: "Jambes", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "nordic-curl", name: "Curl Nordique (Ischio)", muscleGroup: "Jambes", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
 
     // ═══════════════════════════════════════
-    // ABDOS (10 exercices)
+    // ABDOS (14)
     // ═══════════════════════════════════════
     ExerciseTemplate(id: "crunch", name: "Crunch", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
-    ExerciseTemplate(id: "crunch_cable", name: "Crunch cable", muscleGroup: "Abdos", category: "Musculation", unit: "kg", icon: "figure.core.training"),
-    ExerciseTemplate(id: "planche", name: "Gainage planche", muscleGroup: "Abdos", category: "Musculation", unit: "time", icon: "figure.core.training"),
-    ExerciseTemplate(id: "planche_lat", name: "Gainage lateral", muscleGroup: "Abdos", category: "Musculation", unit: "time", icon: "figure.core.training"),
-    ExerciseTemplate(id: "releve_j", name: "Releve de jambes", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
-    ExerciseTemplate(id: "releve_j_s", name: "Releve de jambes suspendu", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
-    ExerciseTemplate(id: "russian", name: "Russian twist", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
-    ExerciseTemplate(id: "ab_wheel", name: "Ab wheel rollout", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
-    ExerciseTemplate(id: "dragon_flag", name: "Dragon flag", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
-    ExerciseTemplate(id: "sit_up", name: "Sit-up", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
+    ExerciseTemplate(id: "crunch-decline", name: "Crunch Décliné", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
+    ExerciseTemplate(id: "sit-up", name: "Sit-Up", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
+    ExerciseTemplate(id: "plank", name: "Gainage (Planche)", muscleGroup: "Abdos", category: "Musculation", unit: "time", icon: "figure.core.training"),
+    ExerciseTemplate(id: "side-plank", name: "Gainage Latéral", muscleGroup: "Abdos", category: "Musculation", unit: "time", icon: "figure.core.training"),
+    ExerciseTemplate(id: "ab-wheel", name: "Roue Abdominale", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
+    ExerciseTemplate(id: "hanging-leg-raise", name: "Relevé de Jambes Suspendu", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
+    ExerciseTemplate(id: "hanging-knee-raise", name: "Relevé de Genoux Suspendu", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
+    ExerciseTemplate(id: "russian-twist", name: "Rotation Russe", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
+    ExerciseTemplate(id: "cable-crunch", name: "Crunch Câble", muscleGroup: "Abdos", category: "Musculation", unit: "kg", icon: "figure.core.training"),
+    ExerciseTemplate(id: "bicycle-crunch", name: "Crunch Vélo", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
+    ExerciseTemplate(id: "dragon-flag", name: "Dragon Flag", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
+    ExerciseTemplate(id: "pallof-press", name: "Pallof Press", muscleGroup: "Abdos", category: "Musculation", unit: "kg", icon: "figure.core.training"),
+    ExerciseTemplate(id: "dead-bug", name: "Gainage Sol (Dead Bug)", muscleGroup: "Abdos", category: "Musculation", unit: "reps", icon: "figure.core.training"),
 
     // ═══════════════════════════════════════
-    // HALTEROPHILIE / OLYMPIQUE (10 exercices)
+    // MACHINES (12)
     // ═══════════════════════════════════════
-    ExerciseTemplate(id: "clean", name: "Clean (epauler)", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "clean_jerk", name: "Clean & Jerk", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "snatch", name: "Snatch (arrache)", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "power_clean", name: "Power clean", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "power_snatch", name: "Power snatch", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "hang_clean", name: "Hang clean", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "hang_snatch", name: "Hang snatch", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "jerk", name: "Jerk (epauler-jeter)", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "thruster", name: "Thruster", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "overhead_sq", name: "Overhead squat", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "chest-press-machine", name: "Presse Pectoraux Machine", muscleGroup: "Machines", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "shoulder-press-machine-m", name: "Développé Epaules Machine", muscleGroup: "Machines", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "lat-pulldown-machine", name: "Tirage Dorsal Machine", muscleGroup: "Machines", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "low-row-machine", name: "Rowing Bas Machine", muscleGroup: "Machines", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "leg-press-machine", name: "Presse Jambes Machine", muscleGroup: "Machines", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "leg-extension-machine", name: "Leg Extension Machine", muscleGroup: "Machines", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "leg-curl-machine", name: "Leg Curl Machine", muscleGroup: "Machines", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "hip-abductor-m", name: "Abducteur Machine", muscleGroup: "Machines", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "hip-adductor-m", name: "Adducteur Machine", muscleGroup: "Machines", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "back-extension-machine", name: "Extension Lombaires", muscleGroup: "Machines", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "curl-machine", name: "Curl Biceps Machine", muscleGroup: "Machines", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "tricep-machine", name: "Extension Triceps Machine", muscleGroup: "Machines", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
 
     // ═══════════════════════════════════════
-    // CROSSFIT (20 exercices)
+    // OLYMPIQUE (12)
     // ═══════════════════════════════════════
-    ExerciseTemplate(id: "cf_fran", name: "Fran (21-15-9)", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
-    ExerciseTemplate(id: "cf_grace", name: "Grace (30 C&J)", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
-    ExerciseTemplate(id: "cf_isabel", name: "Isabel (30 Snatch)", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
-    ExerciseTemplate(id: "cf_helen", name: "Helen", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
-    ExerciseTemplate(id: "cf_diane", name: "Diane", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
-    ExerciseTemplate(id: "cf_jackie", name: "Jackie", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
-    ExerciseTemplate(id: "cf_murph", name: "Murph", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
-    ExerciseTemplate(id: "cf_cindy", name: "Cindy (AMRAP 20)", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "flame.fill"),
-    ExerciseTemplate(id: "cf_burpee", name: "Burpees", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.jumprope"),
-    ExerciseTemplate(id: "cf_box_jump", name: "Box jumps", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.jumprope"),
-    ExerciseTemplate(id: "cf_du", name: "Double unders", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.jumprope"),
-    ExerciseTemplate(id: "cf_mu", name: "Muscle-ups", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "cf_ring_mu", name: "Ring muscle-ups", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "cf_hspu", name: "Handstand push-ups", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "cf_t2b", name: "Toes to bar", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "cf_kbs", name: "Kettlebell swing", muscleGroup: "CrossFit", category: "CrossFit", unit: "kg", icon: "figure.strengthtraining.functional"),
-    ExerciseTemplate(id: "cf_kb_snatch", name: "Kettlebell snatch", muscleGroup: "CrossFit", category: "CrossFit", unit: "kg", icon: "figure.strengthtraining.functional"),
-    ExerciseTemplate(id: "cf_wall_walk", name: "Wall walks", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "cf_pistol", name: "Pistol squat", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "cf_rope_climb", name: "Rope climb", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "snatch", name: "Arraché", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "clean-and-jerk", name: "Epaulé-Jeté", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "power-clean", name: "Power Clean", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "hang-clean", name: "Hang Clean", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "hang-snatch", name: "Hang Snatch", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "power-snatch", name: "Power Snatch", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "push-press", name: "Push Press", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "push-jerk", name: "Push Jerk", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "split-jerk", name: "Split Jerk", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "clean-pull", name: "Tirage Epaulé", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "block-clean", name: "Clean sur Blocs", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "snatch-squat", name: "Squat Arraché", muscleGroup: "Olympique", category: "Halterophilie", unit: "kg", icon: "scalemass.fill"),
 
     // ═══════════════════════════════════════
-    // HYROX (12 exercices)
+    // STRONGMAN (12)
     // ═══════════════════════════════════════
-    ExerciseTemplate(id: "hyrox_full", name: "HYROX complet", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "flame.fill"),
-    ExerciseTemplate(id: "skierg", name: "SkiErg 1000m", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.skiing.downhill"),
-    ExerciseTemplate(id: "sled_push", name: "Sled Push 50m", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.strengthtraining.functional"),
-    ExerciseTemplate(id: "sled_pull", name: "Sled Pull 50m", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.strengthtraining.functional"),
-    ExerciseTemplate(id: "burpee_bj", name: "Burpee Broad Jump 80m", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.jumprope"),
-    ExerciseTemplate(id: "hyrox_row", name: "Rowing 1000m", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.rower"),
-    ExerciseTemplate(id: "farmers", name: "Farmers Carry 200m", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.strengthtraining.functional"),
-    ExerciseTemplate(id: "sandbag", name: "Sandbag Lunges 100m", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.strengthtraining.functional"),
-    ExerciseTemplate(id: "wall_ball", name: "Wall Balls 100x", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.strengthtraining.functional"),
-    ExerciseTemplate(id: "hyrox_run", name: "HYROX Run 1km", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.run"),
-    ExerciseTemplate(id: "hyrox_pro", name: "HYROX Pro complet", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "flame.fill"),
-    ExerciseTemplate(id: "hyrox_doubles", name: "HYROX Doubles", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "atlas-stone", name: "Pierre d\'Atlas (Atlas Stone)", muscleGroup: "Strongman", category: "Strongman", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "tire-flip", name: "Retournement de Pneu (Tire Flip)", muscleGroup: "Strongman", category: "Strongman", unit: "reps", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "farmers-walk", name: "Marche du Fermier (Farmers Walk)", muscleGroup: "Strongman", category: "Strongman", unit: "kg", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "log-press", name: "Développé à la Bûche (Log Press)", muscleGroup: "Strongman", category: "Strongman", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "yoke-walk", name: "Marche au Joug (Yoke Walk)", muscleGroup: "Strongman", category: "Strongman", unit: "kg", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "keg-toss", name: "Lancer de Tonneau", muscleGroup: "Strongman", category: "Strongman", unit: "kg", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "axle-deadlift", name: "Deadlift Axle", muscleGroup: "Strongman", category: "Strongman", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "conan-wheel", name: "Roue de Conan", muscleGroup: "Strongman", category: "Strongman", unit: "kg", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "sandbag-carry", name: "Portée Sac de Sable", muscleGroup: "Strongman", category: "Strongman", unit: "kg", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "viking-press", name: "Viking Press", muscleGroup: "Strongman", category: "Strongman", unit: "kg", icon: "scalemass.fill"),
+    ExerciseTemplate(id: "arm-over-arm-pull", name: "Tirage Bras-sur-Bras", muscleGroup: "Strongman", category: "Strongman", unit: "time", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "car-deadlift", name: "Deadlift Voiture", muscleGroup: "Strongman", category: "Strongman", unit: "kg", icon: "scalemass.fill"),
 
     // ═══════════════════════════════════════
-    // RUNNING (12 exercices)
+    // CROSSFIT WODs (20)
     // ═══════════════════════════════════════
-    ExerciseTemplate(id: "run_400", name: "400m", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
-    ExerciseTemplate(id: "run_800", name: "800m", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
-    ExerciseTemplate(id: "run_1k", name: "1 km", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
-    ExerciseTemplate(id: "run_1500", name: "1500m", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
-    ExerciseTemplate(id: "run_3k", name: "3 km", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
-    ExerciseTemplate(id: "run_5k", name: "5 km", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
-    ExerciseTemplate(id: "run_10k", name: "10 km", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
-    ExerciseTemplate(id: "run_15k", name: "15 km", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
-    ExerciseTemplate(id: "run_semi", name: "Semi-marathon", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
-    ExerciseTemplate(id: "run_mara", name: "Marathon", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
-    ExerciseTemplate(id: "run_ultra", name: "Ultra-trail", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
-    ExerciseTemplate(id: "run_cooper", name: "Test Cooper 12min", muscleGroup: "Running", category: "Running", unit: "km", icon: "figure.run"),
+    ExerciseTemplate(id: "murph", name: "Murph", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "fran", name: "Fran", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "cindy", name: "Cindy", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "flame.fill"),
+    ExerciseTemplate(id: "grace", name: "Grace", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "helen", name: "Helen", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "annie", name: "Annie", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "karen", name: "Karen", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "jackie", name: "Jackie", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "diane", name: "Diane", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "elizabeth", name: "Elizabeth", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "amanda", name: "Amanda", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "isabel", name: "Isabel", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "mary", name: "Mary", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "flame.fill"),
+    ExerciseTemplate(id: "linda", name: "Linda", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "flame.fill"),
+    ExerciseTemplate(id: "chelsea", name: "Chelsea", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "flame.fill"),
+    ExerciseTemplate(id: "barbara", name: "Barbara", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "nancy", name: "Nancy", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "kelly", name: "Kelly", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "eva", name: "Eva", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "filthy-fifty", name: "Filthy Fifty", muscleGroup: "CrossFit", category: "CrossFit", unit: "time", icon: "flame.fill"),
+    // CrossFit Mouvements (20)
+    ExerciseTemplate(id: "thruster", name: "Thruster (Squat + Développé)", muscleGroup: "CrossFit", category: "CrossFit", unit: "kg", icon: "flame.fill"),
+    ExerciseTemplate(id: "wall-ball", name: "Lancer au Mur (Wall Ball)", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "flame.fill"),
+    ExerciseTemplate(id: "box-jump", name: "Saut sur Boîte (Box Jump)", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.jumprope"),
+    ExerciseTemplate(id: "double-under", name: "Double Saut Corde (Double Under)", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.jumprope"),
+    ExerciseTemplate(id: "toes-to-bar", name: "Pieds à la Barre (Toes to Bar)", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "kipping-pull-up", name: "Traction Kipping", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "butterfly-pull-up", name: "Traction Papillon (Butterfly)", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "muscle-up", name: "Muscle Up Barre", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "ring-muscle-up", name: "Muscle Up Anneaux", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "handstand-push-up", name: "Pompes en Equilibre (HSPU)", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "handstand-walk", name: "Marche sur les Mains", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "rope-climb", name: "Corde Lisse", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "burpee", name: "Burpee", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.jumprope"),
+    ExerciseTemplate(id: "kettlebell-swing", name: "Kettlebell Swing Russe", muscleGroup: "CrossFit", category: "CrossFit", unit: "kg", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "american-kb-swing", name: "Balancé KB Américain", muscleGroup: "CrossFit", category: "CrossFit", unit: "kg", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "goblet-squat-kb", name: "Squat Coupe Kettlebell", muscleGroup: "CrossFit", category: "CrossFit", unit: "kg", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "devil-press", name: "Devil Press (Sol + Développé)", muscleGroup: "CrossFit", category: "CrossFit", unit: "kg", icon: "flame.fill"),
+    ExerciseTemplate(id: "dumbbell-snatch", name: "Arraché Haltère", muscleGroup: "CrossFit", category: "CrossFit", unit: "kg", icon: "flame.fill"),
+    ExerciseTemplate(id: "single-leg-deadlift", name: "Deadlift Unijambiste", muscleGroup: "CrossFit", category: "CrossFit", unit: "kg", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "assault-bike-cal", name: "Vélo Air (Calories)", muscleGroup: "CrossFit", category: "CrossFit", unit: "reps", icon: "figure.outdoor.cycle"),
 
     // ═══════════════════════════════════════
-    // CARDIO / MACHINES (14 exercices)
+    // HYROX (12)
     // ═══════════════════════════════════════
-    ExerciseTemplate(id: "rameur_500", name: "Rameur 500m", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.rower"),
-    ExerciseTemplate(id: "rameur_1k", name: "Rameur 1000m", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.rower"),
-    ExerciseTemplate(id: "rameur_2k", name: "Rameur 2000m", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.rower"),
-    ExerciseTemplate(id: "rameur_5k", name: "Rameur 5000m", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.rower"),
-    ExerciseTemplate(id: "assault", name: "Assault Bike (cal)", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.outdoor.cycle"),
-    ExerciseTemplate(id: "echo_bike", name: "Echo Bike (cal)", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.outdoor.cycle"),
-    ExerciseTemplate(id: "velo_int", name: "Velo interieur", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.outdoor.cycle"),
-    ExerciseTemplate(id: "skierg_gen", name: "SkiErg", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.skiing.downhill"),
-    ExerciseTemplate(id: "elliptique", name: "Elliptique", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.elliptical"),
-    ExerciseTemplate(id: "stairmaster", name: "Stairmaster", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.stair.stepper"),
-    ExerciseTemplate(id: "corde", name: "Corde a sauter", muscleGroup: "Cardio", category: "Cardio", unit: "reps", icon: "figure.jumprope"),
-    ExerciseTemplate(id: "battle_rope", name: "Battle ropes", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.strengthtraining.functional"),
-    ExerciseTemplate(id: "tapis", name: "Tapis de course", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.run"),
-    ExerciseTemplate(id: "natation", name: "Natation", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.pool.swim"),
+    ExerciseTemplate(id: "hyrox-sled-push", name: "Poussée Traîneau (Sled Push)", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "hyrox-sled-pull", name: "Tirage Traîneau (Sled Pull)", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "hyrox-skierg", name: "SkiErg 1000m", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.skiing.downhill"),
+    ExerciseTemplate(id: "hyrox-row", name: "Rameur 1000m", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.rower"),
+    ExerciseTemplate(id: "hyrox-farmers-carry", name: "Portée de Fermier (Farmers Carry)", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "hyrox-sandbag-lunges", name: "Fentes Sac de Sable", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "hyrox-wall-balls", name: "Lancers au Mur 100 reps", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "hyrox-burpees", name: "Burpees Grand Saut", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.jumprope"),
+    ExerciseTemplate(id: "hyrox-run-1k", name: "Run 1km (entre stations)", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "hyrox-full", name: "Hyrox Complet", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "hyrox-simulator", name: "Hyrox Simul. 4 Stations", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "flame.fill"),
+    ExerciseTemplate(id: "hyrox-open", name: "Hyrox Open (Solo)", muscleGroup: "Hyrox", category: "Hyrox", unit: "time", icon: "flame.fill"),
 
     // ═══════════════════════════════════════
-    // COMBAT / MARTIAL ARTS (10 exercices)
+    // RUNNING (15)
     // ═══════════════════════════════════════
-    ExerciseTemplate(id: "sac_round", name: "Sac de frappe (rounds)", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
-    ExerciseTemplate(id: "sparring", name: "Sparring", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
-    ExerciseTemplate(id: "shadow", name: "Shadow boxing", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
-    ExerciseTemplate(id: "pads", name: "Pattes d'ours", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
-    ExerciseTemplate(id: "randori", name: "Randori (judo/jjb)", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
-    ExerciseTemplate(id: "rolling", name: "Rolling (jjb)", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
-    ExerciseTemplate(id: "combat_cond", name: "Conditioning combat", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
-    ExerciseTemplate(id: "kata", name: "Kata", muscleGroup: "Combat", category: "Combat", unit: "reps", icon: "figure.martial.arts"),
-    ExerciseTemplate(id: "clinch", name: "Clinch work", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
-    ExerciseTemplate(id: "takedown", name: "Takedown drill", muscleGroup: "Combat", category: "Combat", unit: "reps", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "run-100m", name: "100m", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "run-200m", name: "200m", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "run-400m", name: "400m", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "run-800m", name: "800m", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "run-1500m", name: "1500m", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "run-3k", name: "3km", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "run-5k", name: "5km", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "run-10k", name: "10km", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "run-15k", name: "15km", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "half-marathon", name: "Semi-Marathon (21km)", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "marathon", name: "Marathon (42km)", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "vma-interval", name: "Fractionné VMA", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "tempo-run", name: "Allure au Seuil", muscleGroup: "Running", category: "Running", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "long-run", name: "Sortie Longue", muscleGroup: "Running", category: "Running", unit: "km", icon: "figure.run"),
+    ExerciseTemplate(id: "trail-run", name: "Trail", muscleGroup: "Running", category: "Running", unit: "km", icon: "figure.run"),
 
     // ═══════════════════════════════════════
-    // STRONGMAN (8 exercices)
+    // CARDIO (14)
     // ═══════════════════════════════════════
-    ExerciseTemplate(id: "atlas_stone", name: "Atlas stones", muscleGroup: "Strongman", category: "Strongman", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "log_press", name: "Log press", muscleGroup: "Strongman", category: "Strongman", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "yoke_walk", name: "Yoke walk", muscleGroup: "Strongman", category: "Strongman", unit: "kg", icon: "figure.strengthtraining.functional"),
-    ExerciseTemplate(id: "tire_flip", name: "Tire flip", muscleGroup: "Strongman", category: "Strongman", unit: "reps", icon: "figure.strengthtraining.functional"),
-    ExerciseTemplate(id: "axle_press", name: "Axle press", muscleGroup: "Strongman", category: "Strongman", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "car_deadlift", name: "Car deadlift", muscleGroup: "Strongman", category: "Strongman", unit: "reps", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "sandbag_carry", name: "Sandbag carry", muscleGroup: "Strongman", category: "Strongman", unit: "time", icon: "figure.strengthtraining.functional"),
-    ExerciseTemplate(id: "keg_toss", name: "Keg toss", muscleGroup: "Strongman", category: "Strongman", unit: "reps", icon: "figure.strengthtraining.functional"),
+    ExerciseTemplate(id: "bike-ergometer", name: "Vélo Ergomètre", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.outdoor.cycle"),
+    ExerciseTemplate(id: "spinning", name: "Spinning / Biking", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.outdoor.cycle"),
+    ExerciseTemplate(id: "assault-bike", name: "Assault Bike (AirBike)", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.outdoor.cycle"),
+    ExerciseTemplate(id: "ski-erg", name: "SkiErg Technogym", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.skiing.downhill"),
+    ExerciseTemplate(id: "rowing-machine", name: "Rameur Concept2", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.rower"),
+    ExerciseTemplate(id: "treadmill", name: "Tapis Roulant", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.run"),
+    ExerciseTemplate(id: "treadmill-incline", name: "Tapis Incliné (Marche)", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.walk"),
+    ExerciseTemplate(id: "elliptical", name: "Elliptique / Vario", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.elliptical"),
+    ExerciseTemplate(id: "stairmaster", name: "Stepper / Stairmaster", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.stair.stepper"),
+    ExerciseTemplate(id: "jump-rope", name: "Corde à Sauter", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.jumprope"),
+    ExerciseTemplate(id: "cycling", name: "Cyclisme (Vélo de Route)", muscleGroup: "Cardio", category: "Cardio", unit: "km", icon: "figure.outdoor.cycle"),
+    ExerciseTemplate(id: "swimming", name: "Natation", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.pool.swim"),
+    ExerciseTemplate(id: "swimming-50m", name: "Nage 50m", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "figure.pool.swim"),
+    ExerciseTemplate(id: "hiit-session", name: "Séance HIIT (Fractionné Intensif)", muscleGroup: "Cardio", category: "Cardio", unit: "time", icon: "flame.fill"),
 
     // ═══════════════════════════════════════
-    // FESSIERS (18 exercices)
+    // COMBAT (15)
     // ═══════════════════════════════════════
-    ExerciseTemplate(id: "hip_thrust_b", name: "Hip thrust barre", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "hip_thrust_h", name: "Hip thrust haltere", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "hip_thrust_m", name: "Hip thrust machine", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "glute_bridge", name: "Glute bridge", muscleGroup: "Fessiers", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "glute_bridge_u", name: "Glute bridge unilateral", muscleGroup: "Fessiers", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "kickback_c", name: "Cable kickback", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "abduction", name: "Abduction hanche", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "abduction_m", name: "Machine abduction", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "fentes_l", name: "Fentes laterales", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "step_up", name: "Step up (boite)", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "rdl_uni", name: "RDL unilateral", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "donkey_kick", name: "Donkey kick", muscleGroup: "Fessiers", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "quadruped_ext", name: "Extension quadrupedie", muscleGroup: "Fessiers", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "sumo_squat", name: "Squat sumo leste", muscleGroup: "Fessiers", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "pistol_glute", name: "Pistol squat", muscleGroup: "Fessiers", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "monster_walk", name: "Monster walk elastique", muscleGroup: "Fessiers", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.functional"),
-    ExerciseTemplate(id: "clamshell", name: "Clamshell", muscleGroup: "Fessiers", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "squat_wall", name: "Squat isometrique (mur)", muscleGroup: "Fessiers", category: "Musculation", unit: "time", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "bjj-gi", name: "BJJ Kimono", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "bjj-nogi", name: "BJJ No-Gi / Grappling", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "boxing", name: "Boxe Anglaise", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "muay-thai", name: "Muay Thai", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "savate", name: "Savate / Boxe Française", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "kickboxing", name: "Kickboxing / K-1", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "wrestling", name: "Lutte (Wrestling)", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "judo", name: "Judo", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "mma", name: "MMA", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "sparring", name: "Sparring (Assaut Libre)", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "padwork", name: "Travail aux Pattes", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "bag-work", name: "Sac de Frappe", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "shadow-boxing", name: "Boxe à l\'Ombre (Shadow Boxing)", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "catch-wrestling", name: "Lutte avec Soumissions (Catch)", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
+    ExerciseTemplate(id: "competition", name: "Compétition", muscleGroup: "Combat", category: "Combat", unit: "time", icon: "figure.martial.arts"),
 
     // ═══════════════════════════════════════
-    // ISCHIOS & MOLLETS (16 exercices)
+    // STREET WORKOUT (15)
     // ═══════════════════════════════════════
-    ExerciseTemplate(id: "nordic_curl", name: "Nordic curl", muscleGroup: "Ischios", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "leg_curl_c", name: "Leg curl couche", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "leg_curl_s", name: "Leg curl assis", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "rdl_isch", name: "Soulevé de terre roumain", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "rdl_halt", name: "RDL halteres", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "scalemass.fill"),
-    ExerciseTemplate(id: "good_morn", name: "Good morning", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "pull_thr", name: "Cable pull through", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "glute_ham", name: "Glute ham raise", muscleGroup: "Ischios", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "inertie_isch", name: "Curl ischio elastique", muscleGroup: "Ischios", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "mollets_d", name: "Mollets debout machine", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "mollets_as", name: "Mollets assis machine", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "mollets_uni", name: "Mollets unilateral", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "mollets_donkey", name: "Donkey calf raise", muscleGroup: "Ischios", category: "Musculation", unit: "kg", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "mollets_saut", name: "Jump rope mollets", muscleGroup: "Ischios", category: "Musculation", unit: "time", icon: "figure.jumprope"),
-    ExerciseTemplate(id: "tibialis", name: "Tibialis raise", muscleGroup: "Ischios", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "ankle_circle", name: "Cercles chevilles", muscleGroup: "Ischios", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-
-    // ═══════════════════════════════════════
-    // MOBILITE & GAINAGE (14 exercices)
-    // ═══════════════════════════════════════
-    ExerciseTemplate(id: "planche", name: "Planche", muscleGroup: "Mobilite", category: "Musculation", unit: "time", icon: "figure.core.training"),
-    ExerciseTemplate(id: "planche_lat", name: "Planche laterale", muscleGroup: "Mobilite", category: "Musculation", unit: "time", icon: "figure.core.training"),
-    ExerciseTemplate(id: "planche_dyn", name: "Planche dynamique", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.core.training"),
-    ExerciseTemplate(id: "hollow_body", name: "Hollow body hold", muscleGroup: "Mobilite", category: "Musculation", unit: "time", icon: "figure.core.training"),
-    ExerciseTemplate(id: "dead_bug", name: "Dead bug", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.core.training"),
-    ExerciseTemplate(id: "bird_dog", name: "Bird dog", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.core.training"),
-    ExerciseTemplate(id: "hip_90_90", name: "Hip 90/90 stretch", muscleGroup: "Mobilite", category: "Musculation", unit: "time", icon: "figure.flexibility"),
-    ExerciseTemplate(id: "pigeon_pose", name: "Pigeon pose", muscleGroup: "Mobilite", category: "Musculation", unit: "time", icon: "figure.flexibility"),
-    ExerciseTemplate(id: "jefferson_curl", name: "Jefferson curl", muscleGroup: "Mobilite", category: "Musculation", unit: "kg", icon: "figure.flexibility"),
-    ExerciseTemplate(id: "cossack_squat", name: "Cossack squat", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.strengthtraining.traditional"),
-    ExerciseTemplate(id: "world_greatest", name: "World's greatest stretch", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.flexibility"),
-    ExerciseTemplate(id: "cat_cow", name: "Cat cow", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.flexibility"),
-    ExerciseTemplate(id: "thoracic_rot", name: "Rotation thoracique", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.flexibility"),
-    ExerciseTemplate(id: "ankle_mob", name: "Mobilite cheville", muscleGroup: "Mobilite", category: "Musculation", unit: "reps", icon: "figure.flexibility"),
+    ExerciseTemplate(id: "street-pull-up", name: "Tractions Max", muscleGroup: "Street Workout", category: "Street Workout", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "street-pull-up-wide", name: "Tractions Larges", muscleGroup: "Street Workout", category: "Street Workout", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "street-dips", name: "Dips Barres Parallèles", muscleGroup: "Street Workout", category: "Street Workout", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "push-up-max", name: "Pompes Max en 1 set", muscleGroup: "Street Workout", category: "Street Workout", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "muscle-up-bar", name: "Muscle Up Barre (Max)", muscleGroup: "Street Workout", category: "Street Workout", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "muscle-up-rings", name: "Muscle Up Anneaux", muscleGroup: "Street Workout", category: "Street Workout", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "front-lever", name: "Levier Avant (Front Lever)", muscleGroup: "Street Workout", category: "Street Workout", unit: "time", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "back-lever", name: "Levier Arrière (Back Lever)", muscleGroup: "Street Workout", category: "Street Workout", unit: "time", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "planche", name: "Planche Tenue", muscleGroup: "Street Workout", category: "Street Workout", unit: "time", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "tuck-planche", name: "Planche Regroupée (Tuck Planche)", muscleGroup: "Street Workout", category: "Street Workout", unit: "time", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "human-flag", name: "Drapeau (Human Flag)", muscleGroup: "Street Workout", category: "Street Workout", unit: "time", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "l-sit", name: "L-Sit sur Barres", muscleGroup: "Street Workout", category: "Street Workout", unit: "time", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "pistol-squat", name: "Squat Unijambiste (Max)", muscleGroup: "Street Workout", category: "Street Workout", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "skin-the-cat", name: "Tour de Barre (Skin the Cat)", muscleGroup: "Street Workout", category: "Street Workout", unit: "reps", icon: "figure.strengthtraining.traditional"),
+    ExerciseTemplate(id: "dead-hang", name: "Dead Hang (Suspension)", muscleGroup: "Street Workout", category: "Street Workout", unit: "time", icon: "figure.strengthtraining.traditional"),
   ]
 
   static var muscleGroups: [String] {
-    let order = ["Pectoraux", "Dos", "Epaules", "Bras", "Jambes", "Fessiers", "Ischios", "Abdos", "Mobilite", "Olympique", "CrossFit", "Hyrox", "Running", "Cardio", "Combat", "Strongman"]
+    let order = ["Pectoraux", "Dos", "Epaules", "Bras", "Jambes", "Abdos", "Machines", "Olympique", "Strongman", "CrossFit", "Hyrox", "Running", "Cardio", "Combat", "Street Workout"]
     return order
   }
 

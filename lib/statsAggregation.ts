@@ -203,6 +203,7 @@ export const aggregateTrainingData = async (period: Period): Promise<{
   count: number;
   totalDuration: number;
   averageIntensity: number;
+  averageDuration: number;
   weeklyLoad?: number;
 } | null> => {
   try {
@@ -216,6 +217,10 @@ export const aggregateTrainingData = async (period: Period): Promise<{
     const averageIntensity = intensities.length > 0
       ? intensities.reduce((sum, i) => sum + i, 0) / intensities.length
       : 0;
+    const durations = trainings.filter(t => t.duration && t.duration > 0).map(t => t.duration!);
+    const averageDuration = durations.length > 0
+      ? durations.reduce((sum, d) => sum + d, 0) / durations.length
+      : 0;
 
     // Charge hebdomadaire (si période >= 7j)
     let weeklyLoad;
@@ -228,6 +233,7 @@ export const aggregateTrainingData = async (period: Period): Promise<{
       count: trainings.length,
       totalDuration,
       averageIntensity,
+      averageDuration,
       weeklyLoad,
     };
   } catch (error) {

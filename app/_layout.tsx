@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, Text, AppState, AppStateStatus, LogBox, Platform } from 'react-native';
+import { View, AppState, AppStateStatus, LogBox, Platform } from 'react-native';
+import { SamuraiSplash } from '@/components/SamuraiLoader';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
@@ -15,7 +16,6 @@ import DevCodeModal from '@/components/DevCodeModal';
 import { initDatabase } from '@/lib/database';
 import { applyDataRetention, getSelectedLogo } from '@/lib/storage';
 import { autoImportCompetitionsOnFirstLaunch } from '@/lib/importCompetitionsService';
-import { forceReimportEvents } from '@/lib/eventsService';
 import { notificationService } from '@/lib/notificationService';
 import { saveNotification } from '@/lib/notificationHistoryService';
 import { migrateAvatarSystem } from '@/lib/avatarMigration';
@@ -175,13 +175,9 @@ function RootLayoutContent() {
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
 
-        <Stack.Screen name="sport-selection" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
-        <Stack.Screen name="weight-category-selection" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
-        <Stack.Screen name="setup" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
         {/* Écrans standard */}
         <Stack.Screen name="profile" options={{ presentation: 'card' }} />
         <Stack.Screen name="photos" options={{ presentation: 'card' }} />
-        <Stack.Screen name="appearance" options={{ presentation: 'card' }} />
         <Stack.Screen name="timer" options={{ presentation: 'card' }} />
         <Stack.Screen name="calculators" options={{ presentation: 'card' }} />
         <Stack.Screen name="fasting" options={{ presentation: 'card' }} />
@@ -189,7 +185,6 @@ function RootLayoutContent() {
         <Stack.Screen name="nutrition-plan" options={{ presentation: 'card' }} />
         <Stack.Screen name="share-hub" options={{ presentation: 'card' }} />
         <Stack.Screen name="partners" options={{ presentation: 'card' }} />
-        <Stack.Screen name="clubs" options={{ presentation: 'card' }} />
         <Stack.Screen name="add-measurement" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="entry" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="savoir" options={{ presentation: 'card' }} />
@@ -198,12 +193,10 @@ function RootLayoutContent() {
         <Stack.Screen name="body-status" options={{ presentation: 'card' }} />
         <Stack.Screen name="body-composition" options={{ presentation: 'card' }} />
 
-        <Stack.Screen name="calculator" options={{ presentation: 'card' }} />
         <Stack.Screen name="badges" options={{ presentation: 'card' }} />
         <Stack.Screen name="records" options={{ presentation: 'card' }} />
         <Stack.Screen name="infirmary" options={{ presentation: 'card' }} />
         <Stack.Screen name="injury-detail" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="social-card" options={{ presentation: 'modal', animation: 'fade' }} />
         <Stack.Screen name="competitions" options={{ presentation: 'card' }} />
         <Stack.Screen name="add-competition" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="competition-detail" options={{ presentation: 'card' }} />
@@ -220,7 +213,6 @@ function RootLayoutContent() {
         <Stack.Screen name="charge" options={{ presentation: 'card' }} />
         <Stack.Screen name="avatar-selection" options={{ presentation: 'card' }} />
 
-        <Stack.Screen name="screenshot-mode" options={{ presentation: 'card' }} />
         {/* Écrans détails & suivi */}
         <Stack.Screen name="activity-detail" options={{ presentation: 'card' }} />
         <Stack.Screen name="activity-history" options={{ presentation: 'card' }} />
@@ -252,31 +244,24 @@ function RootLayoutContent() {
         <Stack.Screen name="privacy-data" options={{ presentation: 'card' }} />
         <Stack.Screen name="notifications" options={{ presentation: 'card' }} />
         <Stack.Screen name="notification-center" options={{ presentation: 'card' }} />
-        <Stack.Screen name="watch-preview" options={{ presentation: 'card' }} />
         <Stack.Screen name="connected-devices" options={{ presentation: 'card' }} />
 
         <Stack.Screen name="themes" options={{ presentation: 'card' }} />
         <Stack.Screen name="logo-selection" options={{ presentation: 'card' }} />
         <Stack.Screen name="export-data" options={{ presentation: 'card' }} />
         <Stack.Screen name="companion" options={{ presentation: 'card' }} />
-        <Stack.Screen name="legal" options={{ presentation: 'card' }} />
         <Stack.Screen name="ideas" options={{ presentation: 'card' }} />
         <Stack.Screen name="citations" options={{ presentation: 'card' }} />
         <Stack.Screen name="heart-zones" options={{ presentation: 'card' }} />
         <Stack.Screen name="mat-time" options={{ presentation: 'card' }} />
         <Stack.Screen name="sleep-history" options={{ presentation: 'card' }} />
-        <Stack.Screen name="nutritionists" options={{ presentation: 'card' }} />
         <Stack.Screen name="injury-evaluation" options={{ presentation: 'card' }} />
         <Stack.Screen name="scientific-sources" options={{ presentation: 'card' }} />
         {/* Écrans compétition & social */}
         <Stack.Screen name="competitor-space" options={{ presentation: 'card' }} />
         <Stack.Screen name="cut-mode" options={{ presentation: 'card' }} />
         <Stack.Screen name="weight-cut" options={{ presentation: 'card' }} />
-        <Stack.Screen name="leaderboard" options={{ presentation: 'card' }} />
         <Stack.Screen name="fighter-card" options={{ presentation: 'card' }} />
-        <Stack.Screen name="share-card" options={{ presentation: 'modal', animation: 'fade' }} />
-        <Stack.Screen name="event-detail" options={{ presentation: 'card' }} />
-        <Stack.Screen name="events" options={{ presentation: 'card' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
@@ -287,7 +272,7 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   useFrameworkReady();
-  const [isReady, setIsReady] = useState(true); // AFFICHAGE IMMÉDIAT - démarrer à true
+  const [isReady, setIsReady] = useState(true); // Affichage immédiat
 
   useEffect(() => {
     // ⏳ TOUTES les initialisations en arrière-plan (sans bloquer l'affichage)
@@ -299,8 +284,8 @@ export default function RootLayout() {
         try {
           await initDatabase();
           logger.info('Base de données initialisee');
-          await forceReimportEvents();
-          logger.info('Catalogue événements reimporté avec succès');
+          // Rafraîchir les widgets avec les données actuelles
+          import('@/lib/widgetData').then(({ refreshWidgetsFromDB }) => refreshWidgetsFromDB()).catch(() => {});
         } catch (err) {
           logger.error('Erreur init database ou import événements:', err);
         }
@@ -341,36 +326,25 @@ export default function RootLayout() {
             .catch(err => logger.error('Erreur PeerSync:', err)),
         ]);
 
-        // HealthKit: demander permission au premier lancement (iOS uniquement)
+        // HealthKit: connexion et import (iOS uniquement)
+        // NOTE: la DEMANDE de permissions est gérée par l'onboarding (renderPageHealth).
+        // Ici on se reconnecte seulement si l'onboarding est déjà terminé.
         if (Platform.OS === 'ios') {
           try {
             const hasAsked = await AsyncStorage.getItem('@yoroi_healthkit_asked');
-            if (!hasAsked) {
-              // Delai de 2s pour ne pas surcharger l'utilisateur au lancement
-              await new Promise(resolve => setTimeout(resolve, 2000));
+            if (hasAsked) {
+              // Onboarding déjà complété : se reconnecter et reprendre l'observer
               await healthConnect.initialize();
               const connected = await healthConnect.connect();
               if (connected) {
-                logger.info('[HealthKit] Permission accordee au premier lancement');
                 await healthConnect.setupWorkoutObserver();
-                await AsyncStorage.setItem('@yoroi_healthkit_asked', 'true');
-                // Import complet de tout l'historique en arriere-plan
+                // Toujours relancer l'import en arrière-plan au démarrage.
+                // La déduplication par UUID dans importFullHistory empêche les doublons.
+                // Pas de flag de version : si DB vide ou pas, l'import tourne et synchronise.
                 healthConnect.importFullHistory().catch(err => logger.error('Erreur import historique:', err));
               }
-              // Si connect() a echoue (module indispo ou permissions refusees), ne pas marquer
-              // => la popup reapparaitra au prochain lancement
-            } else {
-              await healthConnect.initialize();
-              const connected = await healthConnect.connect();
-              if (connected) {
-                await healthConnect.setupWorkoutObserver();
-                // Import complet si pas encore fait (utilisateurs existants)
-                const alreadyImported = await AsyncStorage.getItem('@yoroi_full_history_imported');
-                if (!alreadyImported) {
-                  healthConnect.importFullHistory().catch(err => logger.error('Erreur import historique:', err));
-                }
-              }
             }
+            // Si hasAsked est null = premier lancement, l'onboarding gère la demande
           } catch (err) {
             logger.error('Erreur init HealthKit:', err);
           }
@@ -384,6 +358,8 @@ export default function RootLayout() {
             if (connected) {
               await healthConnect.setupWorkoutObserver();
               logger.info('[HealthConnect] Observer workout Android actif');
+              // Toujours relancer l'import (déduplication UUID empêche les doublons)
+              healthConnect.importFullHistory().catch(err => logger.error('Erreur import historique Android:', err));
             }
           } catch (err) {
             logger.error('Erreur init Health Connect:', err);
@@ -400,21 +376,8 @@ export default function RootLayout() {
 
   if (!isReady) {
     return (
-      <View style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: LOADING_COLORS.background,
-      }}>
-        <ActivityIndicator size="large" color={LOADING_COLORS.gold} />
-        <Text style={{
-          marginTop: 16,
-          fontSize: 16,
-          color: LOADING_COLORS.textSecondary,
-          fontWeight: '600',
-        }}>
-          Chargement de Yoroi...
-        </Text>
+      <View style={{ flex: 1, backgroundColor: LOADING_COLORS.background }}>
+        <SamuraiSplash isDark={true} message="Chargement de Yoroi..." size={260} />
       </View>
     );
   }

@@ -21,8 +21,7 @@ export default function MoreLayout() {
       <Stack.Screen name="profile" />
       <Stack.Screen name="photos" />
       <Stack.Screen name="settings" />
-      <Stack.Screen name="appearance" />
-      <Stack.Screen name="timer" />
+<Stack.Screen name="timer" />
       <Stack.Screen name="calculators" />
       <Stack.Screen name="fasting" />
       <Stack.Screen name="nutrition-plan" />
@@ -33,7 +32,6 @@ export default function MoreLayout() {
       <Stack.Screen name="badges" />
       <Stack.Screen name="gamification" />
       <Stack.Screen name="avatar-selection" />
-      <Stack.Screen name="screenshot-mode" />
     </Stack>
   );
 }

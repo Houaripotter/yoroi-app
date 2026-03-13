@@ -99,10 +99,10 @@ export default function PartnersScreen() {
           </TouchableOpacity>
           <View style={styles.headerText}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Partenaires YOROI
+              Sélection YOROI
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              Coachs et clubs recommandés
+              Des coachs et clubs que je recommande
             </Text>
           </View>
         </View>
@@ -176,10 +176,10 @@ export default function PartnersScreen() {
         {/* Devenir Partenaire */}
         <View style={[styles.becomePartner, { backgroundColor: colors.backgroundCard }]}>
           <Text style={[styles.becomePartnerTitle, { color: colors.textPrimary }]}>
-            Tu es coach ou tu gères un club ?
+            Tu veux être dans la sélection ?
           </Text>
           <Text style={[styles.becomePartnerText, { color: colors.textMuted }]}>
-            Rejoins le réseau YOROI et sois visible auprès de notre communauté de guerriers !
+            Contacte-moi sur Instagram, je serai ravi de te mettre en avant.
           </Text>
           <TouchableOpacity
             style={[styles.becomePartnerButton, { backgroundColor: colors.accent }]}
@@ -195,8 +195,7 @@ export default function PartnersScreen() {
 
         {/* Disclaimer */}
         <Text style={[styles.disclaimer, { color: colors.textMuted }]}>
-          Les partenaires listés sont des professionnels indépendants. YOROI ne garantit pas leurs
-          services. Vérifiez toujours les qualifications avant de vous engager.
+          Sélection personnelle et subjective. Ces pros ne sont pas liés contractuellement à YOROI.
         </Text>
 
         <View style={{ height: 100 }} />
@@ -502,7 +501,7 @@ const CoachCard: React.FC<CoachCardProps> = ({ coach, colors, isDark, onPress })
         {coach.featured && (
           <View style={[styles.featuredBadge, { backgroundColor: colors.accent }]}>
             <Star size={10} color={colors.textOnAccent} />
-            <Text style={[styles.featuredText, { color: colors.textOnAccent }]}>Recommandé</Text>
+            <Text style={[styles.featuredText, { color: colors.textOnAccent }]}>Coup de coeur</Text>
           </View>
         )}
       </View>
@@ -579,7 +578,7 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, colors, isDark, onPress }) =>
         {club.featured && (
           <View style={[styles.featuredBadge, { backgroundColor: colors.accent }]}>
             <Star size={10} color={colors.textOnAccent} />
-            <Text style={[styles.featuredText, { color: colors.textOnAccent }]}>Recommandé</Text>
+            <Text style={[styles.featuredText, { color: colors.textOnAccent }]}>Coup de coeur</Text>
           </View>
         )}
       </View>

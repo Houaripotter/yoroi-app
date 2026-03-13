@@ -42,8 +42,8 @@ class BackgroundTaskModule: NSObject {
   }
 
   /// Durée restante accordée par iOS (en secondes), 0 si pas de tâche active
-  @objc func remainingTime(_ resolve: RCTPromiseResolveBlock,
-                            reject: RCTPromiseRejectBlock) {
+  @objc func remainingTime(_ resolve: @escaping RCTPromiseResolveBlock,
+                            reject: @escaping RCTPromiseRejectBlock) {
     DispatchQueue.main.async {
       let remaining = UIApplication.shared.backgroundTimeRemaining
       resolve(remaining.isInfinite ? -1 : remaining)

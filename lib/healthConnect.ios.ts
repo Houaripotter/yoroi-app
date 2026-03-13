@@ -4,14 +4,16 @@
 // Intégration Apple Health uniquement
 // ============================================
 
-import { Platform } from 'react-native';
+import { Platform, DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Demo data removed - DEMO_MODE is disabled for production
 import logger from '@/lib/security/logger';
-import { saveHealthDataBatch, saveHealthData, addWeight, addTraining, updateTrainingDetails } from './database';
+import { getNativeWorkouts, runNativeDiagnostic, NativeDiagnosticResult, requestAllHealthPermissionsNative, getTodayActivityRingsNative } from './yoroiHealthKit';
+import { saveHealthDataBatch, saveHealthData, addWeight, addTraining, updateTrainingDetails, getExistingHealthkitUUIDs, getTrainingsCount } from './database';
 import type { HealthDataRecord, Training } from './database';
 import { addSleepEntryFromHealthKit } from './sleepService';
 import { saveNotification } from './notificationHistoryService';
+import { getEffectiveHRZones, calcZoneDurations } from './hrZones';
 
 // ============================================
 // MODE DÉMO - Active les fausses données
@@ -403,6 +405,8 @@ const STORAGE_KEYS = {
   LAST_STEPS: '@yoroi_health_last_steps',
   LAST_SLEEP: '@yoroi_health_last_sleep',
   LAST_HYDRATION: '@yoroi_health_last_hydration',
+  LAST_RESTING_HR: '@yoroi_health_last_resting_hr',
+  LAST_HRV: '@yoroi_health_last_hrv',
 };
 
 // ============================================
@@ -942,6 +946,8 @@ class HealthConnectService {
       'HKQuantityTypeIdentifierHeight',
       'HKQuantityTypeIdentifierFlightsClimbed',
       'HKCategoryTypeIdentifierMindfulSession',
+      // Température poignet sommeil (Apple Watch Series 8+)
+      'HKQuantityTypeIdentifierAppleSleepingWristTemperature',
     ];
 
     const toShare = [
@@ -1006,6 +1012,8 @@ class HealthConnectService {
         'HKQuantityTypeIdentifierFlightsClimbed',
         // Pleine conscience
         'HKCategoryTypeIdentifierMindfulSession',
+        // Température poignet sommeil (Apple Watch Series 8+)
+        'HKQuantityTypeIdentifierAppleSleepingWristTemperature',
       ];
 
       const toShare = [
@@ -1035,7 +1043,7 @@ class HealthConnectService {
         respiratoryRate: await this.testPermission('HKQuantityTypeIdentifierRespiratoryRate'),
         bodyTemperature: await this.testPermission('HKQuantityTypeIdentifierBodyTemperature'),
         bodyComposition: await this.testPermission('HKQuantityTypeIdentifierBodyFatPercentage'),
-        workouts: false, // Workout read permission is tested separately
+        workouts: await this.testWorkoutPermission(),
         bloodPressure: await this.testPermission('HKQuantityTypeIdentifierBloodPressureSystolic'),
         bloodGlucose: await this.testPermission('HKQuantityTypeIdentifierBloodGlucose'),
         height: await this.testPermission('HKQuantityTypeIdentifierHeight'),
@@ -1048,6 +1056,25 @@ class HealthConnectService {
     } catch (error) {
       logger.error('Erreur demande permissions iOS:', error);
       return this.syncStatus.permissions;
+    }
+  }
+
+  /**
+   * Tester si la permission de lecture des workouts est accordée
+   */
+  private async testWorkoutPermission(): Promise<boolean> {
+    if (!HealthKit) return false;
+    try {
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      await HealthKit.queryWorkoutSamples({
+        filter: { date: { startDate: weekAgo, endDate: now } },
+        limit: 1,
+      });
+      return true;
+    } catch (error) {
+      if (this.isHealthKitAuthError(error)) return false;
+      return true; // Autres erreurs = probablement pas un problème de permission
     }
   }
 
@@ -1133,22 +1160,19 @@ class HealthConnectService {
         return false;
       }
 
-      // Demander les permissions (ouvre le popup iOS)
-      // NOTE: Sur iOS, requestAuthorization() TOUJOURS réussit - Apple ne révèle jamais
-      // si l'utilisateur a accordé ou refusé (règle de confidentialité iOS).
-      // On ne PEUT PAS tester les permissions juste après car HealthKit peut retourner
-      // "code 4 = not determined" pendant quelques instants (race condition post-popup).
-      // Solution: connexion réussie dès que requestAuthorization ne plante pas.
-      // Les lectures retourneront vide si l'utilisateur n'a accordé aucune permission.
-      try {
-        await this.requestIOSPermissionsSimple();
-        logger.info('[HealthConnect] requestAuthorization réussi');
-      } catch (permError) {
-        // Sur iOS, requestAuthorization peut échouer techniquement (identifier inconnu, conflit)
-        // mais les permissions ont peut-être déjà été accordées lors d'une session précédente.
-        // On continue quand même si HealthKit est disponible — les reads retourneront vide
-        // si les permissions n'ont vraiment pas été accordées.
-        logger.warn('[HealthConnect] requestAuthorization a lancé une exception, on continue quand même:', permError);
+      // Demander les permissions via Swift natif (bypass Nitro v13 qui échoue sur iOS 26)
+      // requestAllHealthPermissionsNative() demande TOUS les types santé directement via HKHealthStore
+      const nativePermResult = await requestAllHealthPermissionsNative().catch(() => 'error:native failed');
+      logger.info('[HealthConnect] requestAllHealthPermissionsNative:', nativePermResult);
+
+      // Fallback Nitro si le module natif n'est pas encore disponible (premier build sans rebuild)
+      if (nativePermResult.startsWith('error:module absent')) {
+        try {
+          await this.requestIOSPermissionsSimple();
+          logger.info('[HealthConnect] requestAuthorization Nitro réussi (fallback)');
+        } catch (permError) {
+          logger.warn('[HealthConnect] requestAuthorization Nitro a échoué (fallback):', permError);
+        }
       }
 
       logger.info('[HealthConnect] Marquage comme connecté');
@@ -1864,34 +1888,46 @@ class HealthConnectService {
   // EXERCICE & ACTIVITÉ (Anneaux Apple)
   // ============================================
 
+  // Cache partagé pour éviter deux appels HKActivitySummaryQuery dans la même session
+  private _activityRingsCache: { exerciseMinutes: number | null; standHours: number | null; activeCalories: number | null } | null = null;
+
+  private async getActivityRings() {
+    if (this._activityRingsCache) return this._activityRingsCache;
+    const rings = await getTodayActivityRingsNative();
+    this._activityRingsCache = rings ?? { exerciseMinutes: null, standHours: null, activeCalories: null };
+    return this._activityRingsCache;
+  }
+
   async getTodayExerciseMinutes(): Promise<number | null> {
+    const rings = await this.getActivityRings();
+    if (rings.exerciseMinutes !== null) return rings.exerciseMinutes;
+
+    // Fallback Nitro (cas où Swift module absent)
     return this.queryHealthKit(async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const queryOptions = this.createQueryOptions(today, new Date());
       if (!queryOptions) return null;
-
       const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierAppleExerciseTime', queryOptions);
       if (samples && samples.length > 0) {
-        const total = samples.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0);
-        return Math.round(total);
+        return Math.round(samples.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0));
       }
       return null;
     }, 'exerciseMinutes');
   }
 
   async getTodayStandHours(): Promise<number | null> {
+    const rings = await this.getActivityRings();
+    if (rings.standHours !== null) return rings.standHours;
+
+    // Fallback Nitro
     return this.queryHealthKit(async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const queryOptions = this.createQueryOptions(today, new Date());
       if (!queryOptions) return null;
-
       const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierAppleStandHour', queryOptions);
-      if (samples && samples.length > 0) {
-        // Each sample = 1 hour stood
-        return samples.length;
-      }
+      if (samples && samples.length > 0) return samples.length;
       return null;
     }, 'standHours');
   }
@@ -2212,6 +2248,39 @@ class HealthConnectService {
     return this.getIOSBloodGlucose();
   }
 
+  async getBloodGlucoseHistory(days: number = 0): Promise<Array<{ date: string; value: number; unit: string }>> {
+    if (!HealthKit) return [];
+    try {
+      const fromDate = days > 0
+        ? (() => { const d = new Date(); d.setDate(d.getDate() - days); d.setHours(0, 0, 0, 0); return d; })()
+        : new Date(2000, 0, 1);
+
+      const queryOptions = this.createQueryOptions(fromDate, new Date(), { ascending: true, limit: 0 });
+      if (!queryOptions) return [];
+
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBloodGlucose', queryOptions);
+      if (!samples || samples.length === 0) return [];
+
+      // Grouper par jour, moyenne par jour
+      const byDay: { [key: string]: number[] } = {};
+      samples.forEach((s: any) => {
+        const date = new Date(s.startDate).toISOString().split('T')[0];
+        if (!byDay[date]) byDay[date] = [];
+        // HealthKit retourne mmol/L, convertir en mg/dL (* 18.0182)
+        byDay[date].push(s.quantity * 18.0182);
+      });
+
+      return Object.keys(byDay).sort().map(date => ({
+        date,
+        value: parseFloat((byDay[date].reduce((a, b) => a + b, 0) / byDay[date].length).toFixed(0)),
+        unit: 'mg/dL',
+      }));
+    } catch (error) {
+      logger.error('Erreur lecture historique glycémie:', error);
+    }
+    return [];
+  }
+
   // ============================================
   // TAILLE
   // ============================================
@@ -2317,46 +2386,321 @@ class HealthConnectService {
     return Math.abs(hash).toString(36).substring(0, 16);
   }
 
+  // Extrait la valeur numérique d'un champ qui peut être un nombre OU un objet Quantity v13 {quantity, unit}
+  private extractQuantityValue(raw: any): number | undefined {
+    if (raw == null) return undefined;
+    if (typeof raw === 'number' && isFinite(raw)) return raw;
+    // Objet Quantity v13 : { quantity: number, unit: string }
+    if (typeof raw === 'object' && typeof raw.quantity === 'number' && isFinite(raw.quantity)) return raw.quantity;
+    return undefined;
+  }
+
+  // Mappe un tableau de WorkoutProxy bruts en objets normalisés Yoroi
+  // Appelle getStatistic('heartRate') sur chaque WorkoutProxy pour obtenir FC moy/max
+  private async mapRawWorkouts(rawWorkouts: any[]): Promise<any[]> {
+    const mapped: any[] = [];
+    for (const workout of rawWorkouts) {
+      try {
+        const startRaw = workout.startDate;
+        const endRaw = workout.endDate;
+        const startDate = startRaw instanceof Date ? startRaw : new Date(String(startRaw));
+        const endDate = endRaw instanceof Date ? endRaw : new Date(String(endRaw));
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          logger.warn('[HealthKit] Workout avec dates invalides, ignoré');
+          continue;
+        }
+        const startStr = startDate.toISOString();
+        const endStr = endDate.toISOString();
+        const activityType = workout.workoutActivityType ?? workout.workoutActivity ?? 'Unknown';
+        const uuid = workout.uuid ?? workout.id;
+        const fingerprint = `${startStr}_${endStr}_${activityType}`;
+        const deterministicId = uuid || `workout_${this.simpleHash(fingerprint)}`;
+
+        const durationMs = endDate.getTime() - startDate.getTime();
+        const durationMin = Math.max(0, Math.round(durationMs / 60000));
+
+        // En v13 Nitro, totalDistance et totalEnergyBurned sont des Quantity {quantity, unit}
+        // La distance est en MÈTRES, on convertit en km
+        const distanceMeters = this.extractQuantityValue(workout.totalDistance ?? workout.distance);
+        const caloriesKcal = this.extractQuantityValue(workout.totalEnergyBurned ?? workout.calories);
+
+        // FC : averageHeartRate/maxHeartRate ne sont PAS des propriétés directes de HKWorkout.
+        // Il faut appeler getStatistic('heartRate') sur le WorkoutProxy Nitro.
+        let hrAvg: number | undefined;
+        let hrMax: number | undefined;
+        try {
+          if (typeof workout.getStatistic === 'function') {
+            const hrStat = await workout.getStatistic('heartRate', 'count/min');
+            if (hrStat) {
+              const avg = this.extractQuantityValue(hrStat.averageQuantity);
+              const max = this.extractQuantityValue(hrStat.maximumQuantity);
+              if (avg != null && avg > 0) hrAvg = Math.round(avg);
+              if (max != null && max > 0) hrMax = Math.round(max);
+            }
+          }
+        } catch (_hrErr) {
+          // getStatistic peut échouer si la FC n'était pas enregistrée pour cette séance
+        }
+
+        mapped.push({
+          id: deterministicId,
+          hkUUID: uuid || undefined,
+          activityType: String(activityType),
+          startDate: startStr,
+          endDate: endStr,
+          duration: durationMin,
+          distance: distanceMeters != null ? Math.round(distanceMeters / 1000 * 10) / 10 : undefined,
+          calories: caloriesKcal != null ? Math.round(caloriesKcal) : undefined,
+          averageHeartRate: hrAvg,
+          maxHeartRate: hrMax,
+          source: workout.sourceRevision?.source?.name || undefined,
+        });
+      } catch (mapErr) {
+        logger.warn('[HealthKit] Erreur mapping workout individuel:', mapErr);
+      }
+    }
+    return mapped;
+  }
+
   private async getIOSWorkouts(days?: number): Promise<HealthData['workouts'] | null> {
     return this.queryHealthKit(async () => {
-      // Sans limite de jours = tout l'historique Apple Health
-      const fromDate = days
-        ? new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-        : new Date(2000, 0, 1); // Depuis l'an 2000 = tout l'historique
-      const samples = await HealthKit.queryWorkoutSamples({
-        filter: { date: { startDate: fromDate, endDate: new Date() } },
-        limit: 0, // 0 = pas de limite, on prend tout
-        ascending: false,
-      });
-
-      if (samples && samples.length > 0) {
-        return samples.map((workout: any) => {
-          // Generer un ID deterministe base sur les données du workout pour eviter les doublons
-          const workoutFingerprint = `${workout.startDate}_${workout.endDate}_${workout.workoutActivityType || 'unknown'}`;
-          // UTILISER simpleHash AU LIEU DE Buffer
-          const deterministicId = workout.uuid || workout.id || `workout_${this.simpleHash(workoutFingerprint)}`;
-
-          return {
-            id: deterministicId,
-            hkUUID: workout.uuid || undefined, // UUID brut HealthKit (pour getWorkoutDetailsByUUID)
-            activityType: workout.workoutActivityType || 'Unknown',
-            startDate: workout.startDate,
-            endDate: workout.endDate,
-            duration: Math.round((new Date(workout.endDate).getTime() - new Date(workout.startDate).getTime()) / 60000),
-            distance: workout.totalDistance ? Math.round(workout.totalDistance / 1000 * 10) / 10 : undefined,
-            calories: workout.totalEnergyBurned ? Math.round(workout.totalEnergyBurned) : undefined,
-            averageHeartRate: workout.averageHeartRate ? Math.round(workout.averageHeartRate) : undefined,
-            maxHeartRate: workout.maxHeartRate ? Math.round(workout.maxHeartRate) : undefined,
-            source: workout.sourceRevision?.source?.name || undefined,
-          };
-        });
+      // limit: 0 = HKObjectQueryNoLimit (tous les workouts)
+      let filter: any;
+      if (days) {
+        const fromDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+        filter = { date: { startDate: fromDate, endDate: new Date() } };
       }
-      return null;
+
+      // === MÉTHODE 1: queryWorkoutSamples ===
+      let rawWorkouts: any[] = [];
+      try {
+        const opts: any = { limit: 0 };
+        if (filter) opts.filter = filter;
+        const samples = await HealthKit.queryWorkoutSamples(opts);
+        if (samples) rawWorkouts = samples;
+        console.log('[getIOSWorkouts] M1 queryWorkoutSamples →', rawWorkouts.length, 'workout(s)');
+      } catch (e: any) {
+        console.log('[getIOSWorkouts] M1 erreur:', e?.message);
+      }
+
+      // === MÉTHODE 2: queryWorkoutSamplesWithAnchor (fallback si méthode 1 retourne 0) ===
+      if (rawWorkouts.length === 0) {
+        try {
+          const opts: any = { limit: 0 };
+          if (filter) opts.filter = filter;
+          const anchorResult = await HealthKit.queryWorkoutSamplesWithAnchor(opts);
+          if (anchorResult?.workouts?.length > 0) {
+            rawWorkouts = anchorResult.workouts;
+            console.log('[getIOSWorkouts] M2 queryWorkoutSamplesWithAnchor →', rawWorkouts.length, 'workout(s)');
+          } else {
+            console.log('[getIOSWorkouts] M2 → 0 workout(s)');
+          }
+        } catch (e: any) {
+          console.log('[getIOSWorkouts] M2 erreur:', e?.message);
+        }
+      }
+
+      // === MÉTHODE 3: Module natif Swift direct (contournement total du bridge Nitro) ===
+      if (rawWorkouts.length === 0) {
+        try {
+          const daysParam = days ?? 0;
+          console.log('[getIOSWorkouts] M3 module Swift natif, days=' + daysParam);
+          const nativeWorkouts = await getNativeWorkouts(daysParam);
+          console.log('[getIOSWorkouts] M3 résultat:', nativeWorkouts.length, 'workout(s)');
+          if (nativeWorkouts.length > 0) {
+            rawWorkouts = nativeWorkouts.map(w => ({
+              uuid: w.uuid,
+              startDate: new Date(w.startDate),  // timestamp ms → Date
+              endDate: new Date(w.endDate),
+              workoutActivityType: w.workoutActivityType,
+              totalDistance: w.totalDistance > 0 ? { quantity: w.totalDistance, unit: 'm' } : undefined,
+              totalEnergyBurned: w.totalEnergyBurned > 0 ? { quantity: w.totalEnergyBurned, unit: 'kcal' } : undefined,
+              sourceRevision: { source: { name: w.sourceName } },
+            }));
+          }
+        } catch (e: any) {
+          console.log('[getIOSWorkouts] M3 erreur:', e?.message);
+        }
+      }
+
+      if (rawWorkouts.length === 0) {
+        console.log('[getIOSWorkouts] TOUTES LES MÉTHODES ont retourné 0 workout');
+        return null;
+      }
+
+      const mapped = await this.mapRawWorkouts(rawWorkouts);
+      console.log('[getIOSWorkouts] ', mapped.length, 'workout(s) mappés avec succès');
+      return mapped.length > 0 ? mapped : null;
     }, 'workouts');
   }
 
   async getWorkouts(): Promise<HealthData['workouts'] | null> {
     return this.getIOSWorkouts();
+  }
+
+  /**
+   * Vérifie si les permissions Entraînements sont accordées dans Apple Santé.
+   * Tente de lire 1 séance récente avec un timeout court (5s).
+   * Retourne { accessible: true, count: N } ou { accessible: false, count: 0 }
+   */
+  async canReadWorkouts(): Promise<{ accessible: boolean; count: number }> {
+    try {
+      // Utiliser 365 jours pour couvrir les utilisateurs dont le dernier workout
+      // date de plus d'un mois (évite les faux-négatifs de permission)
+      const result = await this.withTimeout(this.getIOSWorkouts(365), 8000);
+      if (!result) return { accessible: false, count: 0 };
+      return { accessible: true, count: (result as any[]).length };
+    } catch {
+      return { accessible: false, count: 0 };
+    }
+  }
+
+  /**
+   * Diagnostic complet : teste le module, les permissions, et retourne ce que HealthKit voit.
+   */
+  async diagnoseWorkouts(): Promise<{
+    moduleLoaded: boolean;
+    isConnected: boolean;
+    healthkit30d: number;
+    healthkitAll: number;
+    activityTypes: string[];
+    dbCount: number;
+    dbFromHealthkit: number;
+    cacheSize: number;
+    error: string | null;
+    rawApiTest: number;
+    rawApiError: string | null;
+    anchorApiTest: number;
+    anchorApiError: string | null;
+    nativeModuleTest: number;
+    authStatus: string | null;
+    nativeDiag: NativeDiagnosticResult | null;  // résultat 3 tests Gemini
+  }> {
+    const diag = {
+      moduleLoaded: isHealthKitAvailable,
+      isConnected: this.syncStatus.isConnected,
+      healthkit30d: 0,
+      healthkitAll: 0,
+      activityTypes: [] as string[],
+      dbCount: 0,
+      dbFromHealthkit: 0,
+      cacheSize: 0,
+      error: null as string | null,
+      rawApiTest: -1,
+      rawApiError: null as string | null,
+      anchorApiTest: -1,
+      anchorApiError: null as string | null,
+      nativeModuleTest: -1,
+      authStatus: null as string | null,
+      nativeDiag: null as NativeDiagnosticResult | null,
+    };
+
+    // Compter les séances en base
+    try {
+      const counts = await getTrainingsCount();
+      diag.dbCount = counts.total;
+      diag.dbFromHealthkit = counts.fromHealthkit;
+    } catch (e: any) { diag.error = `DB: ${e?.message}`; }
+
+    // Tester le cache AsyncStorage
+    try {
+      const cached = await AsyncStorage.getItem('@yoroi_imported_workouts');
+      diag.cacheSize = cached ? JSON.parse(cached).length : 0;
+    } catch {}
+
+    if (!isHealthKitAvailable) return diag;
+
+    // === VÉRIFIER LE STATUT DE PERMISSION POUR LES ENTRAÎNEMENTS ===
+    try {
+      const status = await HealthKit.authorizationStatusFor('HKWorkoutTypeIdentifier');
+      // 0 = notDetermined, 1 = sharingDenied, 2 = sharingAuthorized
+      const statusMap: Record<number, string> = { 0: 'notDetermined', 1: 'sharingDenied', 2: 'sharingAuthorized' };
+      diag.authStatus = statusMap[status as number] ?? String(status);
+    } catch (e: any) {
+      diag.authStatus = `erreur: ${e?.message}`;
+    }
+
+    // === TEST DIRECT DE L'API queryWorkoutSamples ===
+    try {
+      const rawSamples = await Promise.race([
+        HealthKit.queryWorkoutSamples({ limit: 10 }),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout 8s')), 8000)),
+      ]) as any[];
+      diag.rawApiTest = rawSamples?.length ?? 0;
+    } catch (e: any) {
+      diag.rawApiTest = -2; // -2 = erreur
+      diag.rawApiError = e?.message ?? String(e);
+    }
+
+    // === TEST AVEC queryWorkoutSamplesWithAnchor (API alternative, sans sort descriptor) ===
+    try {
+      const anchorResult = await Promise.race([
+        HealthKit.queryWorkoutSamplesWithAnchor({ limit: 10 }),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout 8s')), 8000)),
+      ]) as any;
+      diag.anchorApiTest = anchorResult?.workouts?.length ?? 0;
+    } catch (e: any) {
+      diag.anchorApiTest = -2;
+      diag.anchorApiError = e?.message ?? String(e);
+    }
+
+    // === TEST MODULE NATIF SWIFT (contournement total Nitro, String JSON) ===
+    try {
+      const nativeResult = await Promise.race([
+        getNativeWorkouts(365),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout 10s')), 10000)),
+      ]);
+      diag.nativeModuleTest = nativeResult.length;
+    } catch (e: any) {
+      diag.nativeModuleTest = -2;
+    }
+
+    // === DIAGNOSTIC APPROFONDI SWIFT (3 tests Gemini) ===
+    // Test A : HKSourceQuery (sources enregistrées)
+    // Test B : requête nucléaire sans predicate (OS bloque-t-il tout ?)
+    // Test C : requête avec predicate 365j (bug timestamps ?)
+    try {
+      diag.nativeDiag = await Promise.race([
+        runNativeDiagnostic(),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout 15s')), 15000)),
+      ]);
+    } catch (e: any) {
+      console.log('[HealthConnect] runNativeDiagnostic timeout/erreur:', e?.message);
+    }
+
+    // Tester HealthKit 365 jours (le user peut avoir son dernier workout à > 30 jours)
+    try {
+      const r365 = await this.withTimeout(this.getIOSWorkouts(365), 10000);
+      diag.healthkit30d = r365 ? r365.length : 0; // champ réutilisé pour 365j
+      if (r365 && r365.length > 0) {
+        const types = [...new Set(r365.map(w => String(w.activityType)))].slice(0, 10);
+        diag.activityTypes = types.map(t => {
+          const mapped = mapWorkoutType(t);
+          return `${mapped} (${t})`;
+        });
+      }
+    } catch (e: any) { diag.error = `HK365j: ${e?.message}`; }
+
+    // Tester HealthKit tout l'historique (timeout 30s)
+    try {
+      const rAll = await this.withTimeout(this.getIOSWorkouts(), 30000);
+      diag.healthkitAll = rAll ? rAll.length : 0;
+    } catch (e: any) {
+      diag.healthkitAll = -1; // timeout ou erreur
+      if (!diag.error) diag.error = `HKAll: ${e?.message}`;
+    }
+
+    return diag;
+  }
+
+  /**
+   * Re-demande les permissions HealthKit (utile si l'utilisateur les avait refusées).
+   * Sur iOS, cela rouvre le dialogue de permissions Apple Santé.
+   */
+  async requestWorkoutPermissions(): Promise<void> {
+    try {
+      await this.requestIOSPermissionsSimple();
+    } catch { /* iOS peut ignorer silencieusement */ }
   }
 
   /**
@@ -2388,7 +2732,6 @@ class HealthConnectService {
             samples = await HealthKit.queryWorkoutSamples({
               filter: { date: { startDate: dayStart, endDate: dayEnd } },
               limit: 50,
-              ascending: false,
             }) || [];
             logger.info(`[HealthKit] Query jour exact (${dayStart.toISOString().split('T')[0]}): ${samples.length} workouts`);
           } catch (e) {
@@ -2407,7 +2750,6 @@ class HealthConnectService {
             samples = await HealthKit.queryWorkoutSamples({
               filter: { date: { startDate: weekStart, endDate: weekEnd } },
               limit: 100,
-              ascending: false,
             }) || [];
             logger.info(`[HealthKit] Query semaine: ${samples.length} workouts`);
           } catch (e) {
@@ -2422,7 +2764,6 @@ class HealthConnectService {
           samples = await HealthKit.queryWorkoutSamples({
             filter: { date: { startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), endDate: new Date() } },
             limit: 500,
-            ascending: false,
           }) || [];
           logger.info(`[HealthKit] Query 90j fallback: ${samples.length} workouts`);
         } catch (e) {
@@ -2730,7 +3071,7 @@ class HealthConnectService {
             }
 
             details.heartRateZones = zones;
-            details.cacheVersion = 4; // v4: permissions distance complètes + élévation fallback + sports aquatiques/neige
+            details.cacheVersion = 5; // v5: AQI Open-Meteo + FC getStatistic
 
             // Recalculer splits avec avgHeartRate par split si on a des GPS locations
             if (allGpsLocations.length > 0 && details.distanceKm && details.distanceKm > 0.5) {
@@ -2784,11 +3125,45 @@ class HealthConnectService {
         logger.warn('[HealthKit] Erreur Recovery HR:', recoveryErr);
       }
 
+      // Qualité de l'air via Open-Meteo (gratuit, sans clé) si pas dans metadata HK
+      // Nécessite une localisation GPS (outdoor uniquement)
+      if (details.airQualityIndex == null && details.startLatitude != null && details.startLongitude != null) {
+        try {
+          const workoutDate = new Date(workout.startDate);
+          const dateStr = workoutDate.toISOString().split('T')[0];
+          const hour = workoutDate.getHours();
+          const lat = details.startLatitude.toFixed(4);
+          const lon = details.startLongitude.toFixed(4);
+          const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=us_aqi&start_date=${dateStr}&end_date=${dateStr}&timezone=auto`;
+          const aqiRes = await Promise.race([
+            fetch(aqiUrl),
+            new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000)),
+          ]) as Response;
+          if (aqiRes.ok) {
+            const aqiData = await aqiRes.json();
+            const aqiValue = aqiData?.hourly?.us_aqi?.[hour];
+            if (aqiValue != null && aqiValue >= 0) {
+              details.airQualityIndex = aqiValue;
+              if (aqiValue <= 50) details.airQualityCategory = 'Bon';
+              else if (aqiValue <= 100) details.airQualityCategory = 'Modere';
+              else if (aqiValue <= 150) details.airQualityCategory = 'Mauvais pour groupes sensibles';
+              else if (aqiValue <= 200) details.airQualityCategory = 'Mauvais';
+              else if (aqiValue <= 300) details.airQualityCategory = 'Tres mauvais';
+              else details.airQualityCategory = 'Dangereux';
+              logger.info('[HealthKit] AQI Open-Meteo:', aqiValue, details.airQualityCategory);
+            }
+          }
+        } catch (aqiErr) {
+          logger.warn('[HealthKit] Erreur fetch AQI Open-Meteo:', aqiErr);
+        }
+      }
+
       logger.info('[HealthKit] WorkoutDetails charge:', {
         hasRoute: !!details.routePoints?.length,
         hasHR: !!details.heartRateSamples?.length,
         hasSplits: !!details.splits?.length,
         hasMeteo: !!details.weatherTemp,
+        hasAQI: details.airQualityIndex != null,
         hasRecoveryHR: !!details.recoveryHR,
       });
 
@@ -2878,6 +3253,17 @@ class HealthConnectService {
           if (toStore.heartRateSamples && toStore.heartRateSamples.length > 500) {
             const step = Math.ceil(toStore.heartRateSamples.length / 500);
             toStore.heartRateSamples = toStore.heartRateSamples.filter((_, i) => i % step === 0);
+          }
+
+          // Recalculer les zones HR avec les zones perso de l'utilisateur (ou défaut par âge)
+          if (toStore.heartRateSamples && toStore.heartRateSamples.length > 1) {
+            try {
+              const effectiveZones = await getEffectiveHRZones();
+              const computedZones = calcZoneDurations(toStore.heartRateSamples, effectiveZones);
+              toStore.heartRateZones = computedZones;
+            } catch {
+              // Non bloquant : garder les zones HealthKit si calcul échoue
+            }
           }
 
           const json = JSON.stringify(toStore);
@@ -3173,7 +3559,7 @@ class HealthConnectService {
 
       logger.info('[HealthKit] getWeightHistory: depuis', fromDate.toISOString());
 
-      const queryOptions = this.createQueryOptions(fromDate, new Date(), { ascending: true, limit: 0 });
+      const queryOptions = this.createQueryOptions(fromDate, new Date(), { ascending: true, limit: 5000 });
       if (!queryOptions) return [];
       const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyMass', queryOptions);
 
@@ -3221,7 +3607,7 @@ class HealthConnectService {
 
       logger.info('[HealthKit] getSleepHistory: depuis', fromDate.toISOString());
 
-      const sleepHistoryOptions = this.createQueryOptions(fromDate, new Date(), { limit: 0 });
+      const sleepHistoryOptions = this.createQueryOptions(fromDate, new Date(), { limit: 5000 });
       if (!sleepHistoryOptions) {
         logger.error('[HealthKit] getSleepHistory: Impossible de créer les options de requête');
         return [];
@@ -3252,9 +3638,20 @@ class HealthConnectService {
         } } = {};
 
         samplesToUse.forEach((s: any) => {
-          const date = new Date(s.endDate).toISOString().split('T')[0];
+          // Ignorer les échantillons InBed (value=0) :
+          // ce sont des "temps au lit" pas des phases de sommeil réelles.
+          // Ils peuvent commencer à 16h00 et fausser complètement l'heure de coucher.
+          if (s.value === 0) return;
+
           const duration = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000;
           if (duration <= 0) return;
+
+          // Groupement par nuit : décaler de -12h pour que toutes les phases d'une même nuit
+          // (ex: 22h36 → 8h01) tombent dans le même bucket même si elles traversent minuit local.
+          // Avant: phase se terminant à 23h30 → "3 mars", phase à 00h30 → "4 mars" → nuit coupée.
+          // Après: phase à 23h30 - 12h = 11h30 → "3 mars", phase à 00h30 - 12h = 12h30 → "3 mars".
+          const endLocal = new Date(new Date(s.endDate).getTime() - 12 * 60 * 60 * 1000);
+          const date = `${endLocal.getFullYear()}-${String(endLocal.getMonth() + 1).padStart(2, '0')}-${String(endLocal.getDate()).padStart(2, '0')}`;
 
           if (!sleepByDate[date]) {
             sleepByDate[date] = {
@@ -3266,6 +3663,7 @@ class HealthConnectService {
           }
 
           // Tracker min startTime et max endTime pour heure coucher/reveil
+          // (uniquement sur les vraies phases, InBed déjà exclus plus haut)
           if (new Date(s.startDate) < new Date(sleepByDate[date].startTime)) {
             sleepByDate[date].startTime = s.startDate;
           }
@@ -3343,6 +3741,8 @@ class HealthConnectService {
     heartRate?: { min: number; max: number; avg: number };
     respiratoryRate?: { min: number; max: number; avg: number };
     wristTemperature?: { value: number };
+    heartRateHistory?: { date: string; value: number }[];
+    respiratoryRateHistory?: { date: string; value: number }[];
   }> {
     if (!HealthKit) return {};
 
@@ -3355,6 +3755,8 @@ class HealthConnectService {
         heartRate?: { min: number; max: number; avg: number };
         respiratoryRate?: { min: number; max: number; avg: number };
         wristTemperature?: { value: number };
+        heartRateHistory?: { date: string; value: number }[];
+        respiratoryRateHistory?: { date: string; value: number }[];
       } = {};
 
       // FC pendant le sommeil (entre 22h et 8h)
@@ -3377,6 +3779,23 @@ class HealthConnectService {
                   avg: Math.round(bpms.reduce((a: number, b: number) => a + b, 0) / bpms.length),
                 };
               }
+              // Historique par nuit : FC moy par date (on attribue à la date du matin = lendemain si après minuit)
+              const byDate: { [date: string]: number[] } = {};
+              for (const s of sleepHR) {
+                const bpm = s.quantity || 0;
+                if (bpm < 30 || bpm > 200) continue;
+                const d = new Date(s.startDate);
+                // Si heure >= 22h, c'est la nuit du lendemain → date = demain
+                const date = d.getHours() >= 22
+                  ? new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString().split('T')[0]
+                  : d.toISOString().split('T')[0];
+                if (!byDate[date]) byDate[date] = [];
+                byDate[date].push(bpm);
+              }
+              result.heartRateHistory = Object.keys(byDate).sort().map(date => ({
+                date,
+                value: Math.round(byDate[date].reduce((a, b) => a + b, 0) / byDate[date].length),
+              }));
             }
           }
         }
@@ -3396,6 +3815,20 @@ class HealthConnectService {
                 avg: Math.round(rates.reduce((a: number, b: number) => a + b, 0) / rates.length * 10) / 10,
               };
             }
+            // Historique par nuit
+            const byDateRR: { [date: string]: number[] } = {};
+            for (const s of rrSamples) {
+              const rr = s.quantity || 0;
+              if (rr < 5 || rr > 50) continue;
+              const d = new Date(s.startDate);
+              const date = d.toISOString().split('T')[0];
+              if (!byDateRR[date]) byDateRR[date] = [];
+              byDateRR[date].push(rr);
+            }
+            result.respiratoryRateHistory = Object.keys(byDateRR).sort().map(date => ({
+              date,
+              value: Math.round(byDateRR[date].reduce((a, b) => a + b, 0) / byDateRR[date].length * 10) / 10,
+            }));
           }
         }
       } catch (e) { /* RR may not be available */ }
@@ -3524,13 +3957,15 @@ class HealthConnectService {
 
     try {
       // Methode 1: queryStatisticsForQuantity par jour (dedoublonne par Apple)
-      // Seulement si days > 0 (sinon boucle de milliers d'itérations = trop lent)
-      if (!isRunningInExpoGo && days > 0) {
+      // LIMITE à 365 jours max : au-delà, 1 appel async par jour = trop lent (3650 jours = ~5 min).
+      // Pour les grandes périodes (TOUT), on tombe directement sur le fallback bulk query.
+      const loopDays = Math.min(days, 365);
+      if (!isRunningInExpoGo && loopDays > 0) {
         try {
           const HK = require('@kingstinct/react-native-healthkit');
           if (typeof HK.queryStatisticsForQuantity === 'function') {
             const results: Array<{ date: string; value: number }> = [];
-            for (let i = 0; i < days; i++) {
+            for (let i = 0; i < loopDays; i++) {
               const dayStart = new Date();
               dayStart.setDate(dayStart.getDate() - i);
               dayStart.setHours(0, 0, 0, 0);
@@ -3592,12 +4027,13 @@ class HealthConnectService {
   async getDistanceHistory(days: number = 0): Promise<Array<{ date: string; value: number }>> {
     if (!HealthKit) return [];
     try {
-      if (!isRunningInExpoGo && days > 0) {
+      const loopDays = Math.min(days, 365);
+      if (!isRunningInExpoGo && loopDays > 0) {
         try {
           const HK = require('@kingstinct/react-native-healthkit');
           if (typeof HK.queryStatisticsForQuantity === 'function') {
             const results: Array<{ date: string; value: number }> = [];
-            for (let i = 0; i < days; i++) {
+            for (let i = 0; i < loopDays; i++) {
               const dayStart = new Date();
               dayStart.setDate(dayStart.getDate() - i);
               dayStart.setHours(0, 0, 0, 0);
@@ -3641,12 +4077,13 @@ class HealthConnectService {
   async getExerciseMinutesHistory(days: number = 0): Promise<Array<{ date: string; value: number }>> {
     if (!HealthKit) return [];
     try {
-      if (!isRunningInExpoGo && days > 0) {
+      const loopDays = Math.min(days, 365);
+      if (!isRunningInExpoGo && loopDays > 0) {
         try {
           const HK = require('@kingstinct/react-native-healthkit');
           if (typeof HK.queryStatisticsForQuantity === 'function') {
             const results: Array<{ date: string; value: number }> = [];
-            for (let i = 0; i < days; i++) {
+            for (let i = 0; i < loopDays; i++) {
               const dayStart = new Date();
               dayStart.setDate(dayStart.getDate() - i);
               dayStart.setHours(0, 0, 0, 0);
@@ -3757,7 +4194,7 @@ class HealthConnectService {
         this.withTimeout(this.getRespiratoryRate(), TIMEOUT_MS),        // 10
         this.withTimeout(this.getBodyTemperature(), TIMEOUT_MS),        // 11
         this.withTimeout(this.getBodyComposition(), TIMEOUT_MS),        // 12
-        this.withTimeout(this.getWorkouts(), 30000),                    // 13
+        this.withTimeout(this.getWorkouts(), 120000),                   // 13 — 2 min pour les grandes bibliothèques
         this.withTimeout(this.getBloodPressure(), TIMEOUT_MS),          // 14
         this.withTimeout(this.getBloodGlucose(), TIMEOUT_MS),           // 15
         this.withTimeout(this.getHeight(), TIMEOUT_MS),                 // 16
@@ -4328,7 +4765,7 @@ class HealthConnectService {
             const workoutLabel = getWorkoutLabel(workout.activityType);
             const noteParts: string[] = [];
             if (workout.duration > 0) noteParts.push(`${Math.round(workout.duration)} min`);
-            if (workout.distance && workout.distance > 0) noteParts.push(`${(workout.distance / 1000).toFixed(2)} km`);
+            if (workout.distance && workout.distance > 0) noteParts.push(`${workout.distance.toFixed(2)} km`);
             if (workout.calories && workout.calories > 0) noteParts.push(`${Math.round(workout.calories)} kcal`);
             if (workout.averageHeartRate && workout.averageHeartRate > 0) noteParts.push(`${Math.round(workout.averageHeartRate)} bpm`);
             const noteText = noteParts.length > 0 ? `${workoutLabel} (${noteParts.join(', ')})` : workoutLabel;
@@ -4339,7 +4776,7 @@ class HealthConnectService {
               date: trainingDate,
               start_time: startTime,
               duration_minutes: workout.duration,
-              distance: workout.distance ? parseFloat((workout.distance / 1000).toFixed(2)) : undefined,
+              distance: workout.distance ? parseFloat(workout.distance.toFixed(2)) : undefined,
               calories: workout.calories,
               heart_rate: workout.averageHeartRate,
               max_heart_rate: workout.maxHeartRate,
@@ -4373,6 +4810,7 @@ class HealthConnectService {
         if (workoutsSaved > 0) {
           savedCount += workoutsSaved;
           logger.info(`[syncAll] ${workoutsSaved} workouts importes depuis Apple Health`);
+          DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
         }
 
         // Charger les details enrichis par batch de 3 pour eviter de surcharger le device
@@ -4413,16 +4851,20 @@ class HealthConnectService {
         }
       }
 
-      // ══════ IMPORT HISTORIQUE SOMMEIL (au premier sync) ══════
+      // ══════ IMPORT HISTORIQUE SOMMEIL ══════
       try {
         const hasSyncedSleepHistory = await AsyncStorage.getItem('@yoroi_sleep_history_synced');
-        if (!hasSyncedSleepHistory && data.sleep) {
-          // Import 30 jours d'historique sommeil dans sleepService
+        if (!hasSyncedSleepHistory) {
+          // Import historique complet au premier démarrage
           const imported = await this.syncSleepHistory(730);
           if (imported > 0) {
             await AsyncStorage.setItem('@yoroi_sleep_history_synced', 'true');
             logger.info(`[syncAll] Historique sommeil importe: ${imported} nuits`);
           }
+        } else {
+          // Toujours resynchroniser les 14 derniers jours pour avoir les nuits récentes
+          await this.syncSleepHistory(14);
+          logger.info('[syncAll] Sync sommeil 14 jours effectue');
         }
       } catch (e) {
         logger.warn('[syncAll] Erreur import historique sommeil:', e);
@@ -4440,6 +4882,15 @@ class HealthConnectService {
       }
       if (data.hydration) {
         await AsyncStorage.setItem(STORAGE_KEYS.LAST_HYDRATION, JSON.stringify(data.hydration));
+        // Synchroniser aussi vers la clé utilisée par readinessService (@yoroi_hydration_YYYY-MM-DD)
+        const todayKey = `@yoroi_hydration_${new Date().toISOString().split('T')[0]}`;
+        await AsyncStorage.setItem(todayKey, String(data.hydration.amount));
+      }
+      if (data.heartRate && data.heartRate.resting > 0) {
+        await AsyncStorage.setItem(STORAGE_KEYS.LAST_RESTING_HR, String(data.heartRate.resting));
+      }
+      if (data.heartRateVariability && data.heartRateVariability.value > 0) {
+        await AsyncStorage.setItem(STORAGE_KEYS.LAST_HRV, String(data.heartRateVariability.value));
       }
 
       this.syncStatus.lastSync = new Date().toISOString();
@@ -4486,17 +4937,20 @@ class HealthConnectService {
 
   async importFullHistory(
     onProgress?: (step: string, current: number, total: number) => void
-  ): Promise<{ weights: number; sleep: number; steps: number; calories: number; heartRate: number; distance: number; workouts: number }> {
+  ): Promise<{ weights: number; sleep: number; steps: number; calories: number; heartRate: number; distance: number; workouts: number; healthkitFound: number; insertErrors: number }> {
 
-    const result = { weights: 0, sleep: 0, steps: 0, calories: 0, heartRate: 0, distance: 0, workouts: 0 };
+    const result = { weights: 0, sleep: 0, steps: 0, calories: 0, heartRate: 0, distance: 0, workouts: 0, healthkitFound: 0, insertErrors: 0 };
     const TOTAL_STEPS = 7;
     let stepIndex = 0;
 
     const progress = (label: string) => {
       stepIndex++;
       onProgress?.(label, stepIndex, TOTAL_STEPS);
+      DeviceEventEmitter.emit('YOROI_IMPORT_PROGRESS', { step: label, current: stepIndex, total: TOTAL_STEPS });
       logger.info(`[importFullHistory] ${label} (${stepIndex}/${TOTAL_STEPS})`);
     };
+
+    DeviceEventEmitter.emit('YOROI_IMPORT_START');
 
     try {
 
@@ -4581,34 +5035,100 @@ class HealthConnectService {
         logger.info(`[importFullHistory] Jours de distance importés: ${result.distance}`);
       } catch (e) { logger.warn('[importFullHistory] Erreur distance:', e); }
 
-      // ══════ 7. SÉANCES — toutes depuis l'an 2000 (via syncAll) ══════
+      // ══════ 7. SÉANCES — toutes depuis l'an 2000 ══════
       progress('Séances');
+      let workoutsReturned = false;
       try {
-        const data = await this.getAllHealthData();
-        if (data.workouts && data.workouts.length > 0) {
-          for (const workout of data.workouts) {
+        // Appel direct avec timeout long (5 min) pour les grandes bibliothèques
+        const workouts = await this.withTimeout(this.getWorkouts(), 300000);
+        if (workouts && workouts.length > 0) {
+          workoutsReturned = true;
+          result.healthkitFound = workouts.length;
+          logger.info(`[importFullHistory] HealthKit a retourné ${workouts.length} séances`);
+
+          // Dédup fiable par UUID HealthKit (évite les doublons après un re-import forcé)
+          let existingUUIDs: Set<string> = new Set();
+          try {
+            existingUUIDs = await getExistingHealthkitUUIDs();
+          } catch {}
+          // Fingerprints pour les séances sans UUID
+          let importedFingerprints: Set<string> = new Set();
+          try {
+            const saved = await AsyncStorage.getItem('@yoroi_imported_workouts');
+            if (saved) importedFingerprints = new Set(JSON.parse(saved));
+          } catch {}
+
+          for (const workout of workouts) {
+            const uuid = (workout as any).hkUUID || workout.id;
+            // Ignorer si déjà en base par UUID
+            if (uuid && existingUUIDs.has(uuid)) continue;
+            const fingerprint = `${workout.startDate}_${workout.activityType}_${workout.duration}`;
+            if (importedFingerprints.has(fingerprint)) continue;
+
             try {
-              await addTraining({
-                date: workout.startDate.split('T')[0],
-                sport: (workout.activityType || 'autre').toLowerCase(),
-                duration: workout.duration || 0,
-                distance: workout.distance,
+              const sport = mapWorkoutType(workout.activityType);
+              const trainingDate = new Date(workout.startDate).toISOString().split('T')[0];
+              const startTime = new Date(workout.startDate).toTimeString().slice(0, 5);
+              const workoutLabel = getWorkoutLabel(workout.activityType);
+              const noteParts: string[] = [];
+              if (workout.duration > 0) noteParts.push(`${Math.round(workout.duration)} min`);
+              if (workout.distance && workout.distance > 0) noteParts.push(`${workout.distance.toFixed(2)} km`);
+              if (workout.calories && workout.calories > 0) noteParts.push(`${Math.round(workout.calories)} kcal`);
+              if (workout.averageHeartRate && workout.averageHeartRate > 0) noteParts.push(`${Math.round(workout.averageHeartRate)} bpm`);
+              const noteText = noteParts.length > 0 ? `${workoutLabel} (${noteParts.join(', ')})` : workoutLabel;
+
+              const training: Training = {
+                sport,
+                session_type: workoutLabel,
+                date: trainingDate,
+                start_time: startTime,
+                duration_minutes: workout.duration,
+                distance: workout.distance ? parseFloat(workout.distance.toFixed(2)) : undefined,
                 calories: workout.calories,
-                notes: workout.source ? `Import Apple Santé — ${workout.source}` : 'Import Apple Santé',
-                source: 'apple_health',
-              } as any);
+                heart_rate: workout.averageHeartRate,
+                max_heart_rate: workout.maxHeartRate,
+                source: workout.source ? normalizeSourceName(workout.source) : undefined,
+                notes: noteText,
+                healthkit_uuid: uuid || undefined,
+              };
+
+              await addTraining(training);
+              importedFingerprints.add(fingerprint);
+              if (uuid) existingUUIDs.add(uuid);
               result.workouts++;
-            } catch { /* doublon, on ignore */ }
+            } catch (insertErr) {
+              result.insertErrors++;
+              logger.warn('[importFullHistory] Erreur insertion séance:', insertErr);
+            }
           }
-          logger.info(`[importFullHistory] Séances importées: ${result.workouts}/${data.workouts.length}`);
+
+          // Sauvegarder les fingerprints (garder les 20000 derniers)
+          const fingerprintsArray = Array.from(importedFingerprints).slice(-20000);
+          await AsyncStorage.setItem('@yoroi_imported_workouts', JSON.stringify(fingerprintsArray));
+          logger.info(`[importFullHistory] Séances importées: ${result.workouts}/${workouts.length}, erreurs: ${result.insertErrors}`);
+          DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+        } else {
+          // HealthKit a retourné null ou tableau vide → permissions refusées ou aucune séance
+          result.healthkitFound = 0;
+          logger.warn('[importFullHistory] HealthKit a retourné 0 séances - permissions refusées ou aucune séance enregistrée');
+          DeviceEventEmitter.emit('YOROI_WORKOUTS_PERMISSION_NEEDED');
         }
       } catch (e) { logger.warn('[importFullHistory] Erreur séances:', e); }
 
       await AsyncStorage.setItem('@yoroi_full_history_imported', 'true');
+      // Toujours sauvegarder la version pour éviter les re-imports infinis
+      await AsyncStorage.setItem('@yoroi_import_version', '3');
       logger.info('[importFullHistory] Import complet terminé', result);
+
+      // Notifier tous les écrans : import terminé + données changées
+      DeviceEventEmitter.emit('YOROI_IMPORT_DONE', result);
+      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
 
     } catch (e) {
       logger.error('[importFullHistory] Erreur critique:', e);
+      // Toujours notifier pour débloquer les spinners dans l'UI
+      DeviceEventEmitter.emit('YOROI_IMPORT_DONE', result);
+      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
     }
 
     return result;
@@ -4681,7 +5201,7 @@ class HealthConnectService {
       date: trainingDate,
       start_time: startTime,
       duration_minutes: workout.duration,
-      distance: workout.distance ? parseFloat((workout.distance / 1000).toFixed(2)) : undefined,
+      distance: workout.distance ? parseFloat(workout.distance.toFixed(2)) : undefined,
       calories: workout.calories,
       heart_rate: workout.averageHeartRate,
       max_heart_rate: workout.maxHeartRate,
@@ -4798,7 +5318,7 @@ class HealthConnectService {
     if (this._isProcessingWorkouts) return;
     this._isProcessingWorkouts = true;
     try {
-      const recentWorkouts = await this.getIOSWorkouts(1);
+      const recentWorkouts = await this.getIOSWorkouts(7);
       if (!recentWorkouts || recentWorkouts.length === 0) return;
 
       // Charger les fingerprints pour eviter les doublons
@@ -4990,7 +5510,15 @@ class HealthConnectService {
         if (night.total < 30) continue; // Ignorer les nuits trop courtes
 
         // Estimer bedTime/wakeTime depuis la date et la durée
-        const qualityNum = night.deep > 60 ? 5 : night.deep > 30 ? 4 : night.total > 360 ? 3 : 2;
+        // Score qualité basé sur durée + pourcentage sommeil profond+REM (approche Apple Santé)
+        const deepRem = night.deep + night.rem;
+        const deepRemPct = night.total > 0 ? (deepRem / night.total) * 100 : 0;
+        let qualityNum: number;
+        if (night.total >= 420 && deepRemPct >= 25) qualityNum = 5;      // 7h+ avec 25%+ profond/REM
+        else if (night.total >= 360 && deepRemPct >= 18) qualityNum = 4; // 6h+ avec 18%+
+        else if (night.total >= 300 && (deepRemPct >= 12 || night.total >= 390)) qualityNum = 3; // 5h+ ou 6h30
+        else if (night.total >= 240) qualityNum = 2;                      // 4h+
+        else qualityNum = 1;                                               // < 4h
         const totalHours = Math.floor(night.total / 60);
         const bedHour = 24 - Math.min(totalHours, 10); // Estimation: coucher = minuit - durée
         const wakeHour = bedHour + totalHours;

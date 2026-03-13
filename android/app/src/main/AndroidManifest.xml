@@ -61,5 +61,40 @@
         <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
       </intent-filter>
     </activity>
+    <!-- Widget Dashboard -->
+    <receiver
+        android:name=".widget.YoroiDashboardWidget"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_dashboard_info" />
+    </receiver>
+
+    <!-- Widget Hydratation -->
+    <receiver
+        android:name=".widget.YoroiHydrationWidget"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_hydration_info" />
+    </receiver>
+
+    <!-- Widget Streak -->
+    <receiver
+        android:name=".widget.YoroiStreakWidget"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_streak_info" />
+    </receiver>
   </application>
 </manifest>

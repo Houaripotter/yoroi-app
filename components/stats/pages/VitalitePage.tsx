@@ -52,12 +52,14 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
   const pageTitle = forcedTab === 'sommeil' ? 'Sommeil'
     : forcedTab === 'pas' ? 'Pas'
     : forcedTab === 'signes' ? 'Signes Vitaux'
+    : forcedTab === 'seances' ? 'Séances'
     : 'Santé';
   const pageDesc = forcedTab === 'sommeil' ? 'Analyse de tes nuits'
     : forcedTab === 'pas' ? 'Activité quotidienne'
     : forcedTab === 'signes' ? 'FC, VRC, SpO2...'
+    : forcedTab === 'seances' ? 'Tout ton historique d\'entraînement'
     : 'Synchronise avec ton app Santé';
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('tout');
   const [isHealthKitConnected, setIsHealthKitConnected] = useState(false);
   const [healthData, setHealthData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -85,7 +87,9 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
     spo2: any[];
     respiratoryRate: any[];
     vo2max: any[];
-  }>({ sleep: [], heartRate: [], hrv: [], steps: [], calories: [], distance: [], exerciseMinutes: [], standHours: [], spo2: [], respiratoryRate: [], vo2max: [] });
+    bodyTemperature: any[];
+    bloodGlucose: any[];
+  }>({ sleep: [], heartRate: [], hrv: [], steps: [], calories: [], distance: [], exerciseMinutes: [], standHours: [], spo2: [], respiratoryRate: [], vo2max: [], bodyTemperature: [], bloodGlucose: [] });
 
   const [sleepPhasesData, setSleepPhasesData] = useState<{
     avgAwake: number; avgRem: number; avgCore: number; avgDeep: number;
@@ -96,6 +100,8 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
     heartRate?: { min: number; max: number; avg: number };
     respiratoryRate?: { min: number; max: number; avg: number };
     wristTemperature?: { value: number };
+    heartRateHistory?: { date: string; value: number }[];
+    respiratoryRateHistory?: { date: string; value: number }[];
   }>({});
 
   const [trainings, setTrainings] = useState<Training[]>([]);
@@ -115,6 +121,7 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
   const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    // Toujours vérifier la connexion HealthKit pour permettre la sync
     checkHealthKitConnection();
   }, []);
 
@@ -136,7 +143,7 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
   // Invalider les tabs chargees ET vider les données quand la periode change
   useEffect(() => {
     setLoadedTabs(new Set());
-    setVitalHistory({ sleep: [], heartRate: [], hrv: [], steps: [], calories: [], distance: [], exerciseMinutes: [], standHours: [], spo2: [], respiratoryRate: [], vo2max: [] });
+    setVitalHistory({ sleep: [], heartRate: [], hrv: [], steps: [], calories: [], distance: [], exerciseMinutes: [], standHours: [], spo2: [], respiratoryRate: [], vo2max: [], bodyTemperature: [], bloodGlucose: [] });
     setRawSleepHistory([]);
     setTrainings([]);
     setSleepPhasesData({ avgAwake: 0, avgRem: 0, avgCore: 0, avgDeep: 0, totalSleepMin: 0, nightsCount: 0 });
@@ -172,25 +179,21 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
       if (isConnected) {
         // Sync HealthKit trainings (non-destructif)
         try {
-          const synced = await AsyncStorage.getItem('@yoroi_trainings_cleaned_v4');
+          const syncedVersion = await AsyncStorage.getItem('@yoroi_trainings_synced_v5');
           const existingTrainings = await getTrainings();
-          if (!synced || existingTrainings.length === 0) {
-            if (existingTrainings.length === 0) {
-              await AsyncStorage.removeItem('@yoroi_imported_workouts');
-            }
+          
+          // Sync if never done, if DB empty, or if we are on the seances tab
+          const needsSync = !syncedVersion || existingTrainings.length === 0 || activeTab === 'seances';
+          
+          if (needsSync) {
             try {
               await healthConnect.syncAll();
               logger.info('[Santé] Sync HealthKit termine');
+              if (activeTab === 'seances') await loadTabData('seances');
             } catch (syncErr) {
               logger.warn('[Santé] syncAll echoue:', syncErr);
             }
-            const afterSync = await getTrainings();
-            if (afterSync.length === 0) {
-              await healthConnect.disconnect();
-              await AsyncStorage.removeItem('@yoroi_imported_workouts');
-            } else {
-              await AsyncStorage.setItem('@yoroi_trainings_cleaned_v4', 'true');
-            }
+            await AsyncStorage.setItem('@yoroi_trainings_synced_v5', 'true');
           }
         } catch (cleanupErr) {
           logger.warn('[Santé] Sync error:', cleanupErr);
@@ -302,9 +305,10 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
   // Phase 2: Charger les données de l'onglet actif seulement (lazy)
   const loadTabData = async (tab: SanteTab) => {
     const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, '1a': 365, '2a': 730, 'tout': 3650 };
-    const days = daysMap[selectedPeriod] || 30;
-    // Timeout plus long pour les grandes periodes
-    const timeoutMs = days > 180 ? 10000 : 6000;
+    const days = selectedPeriod in daysMap ? daysMap[selectedPeriod] : 30;
+    // Pour TOUT: les fonctions "loop" sont cappées à 365 jours (bulk query pour le reste).
+    // Bulk queries HealthKit : ~2-5s. Augmenter le timeout pour laisser le temps.
+    const timeoutMs = days > 730 ? 60000 : days > 180 ? 15000 : 8000;
     const currentLoadId = ++loadIdRef.current;
 
     setTabLoading(true);
@@ -353,6 +357,10 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
         }
 
         case 'seances': {
+          // Déclencher une sync en arrière-plan pour l'onglet Séances
+          if (isHealthKitConnected) {
+            healthConnect.syncAll().catch(err => logger.warn('[Vitalite] Sync auto echoue:', err));
+          }
           // Quand periode = 'tout', pas de limite (tout l'historique)
           const trainingData = selectedPeriod === 'tout' ? await getTrainings() : await getTrainings(days);
           setTrainings(Array.isArray(trainingData) ? trainingData : []);
@@ -360,16 +368,18 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
         }
 
         case 'signes': {
-          const [heartRateHistory, hrvHistory, spo2History, respRateHistory, vo2maxHistory] = await withTimeout(
+          const [heartRateHistory, hrvHistory, spo2History, respRateHistory, vo2maxHistory, bodyTempHistory, bloodGlucoseHistory] = await withTimeout(
             Promise.all([
-              healthConnect.getRestingHRHistory?.(days) || [],
-              healthConnect.getHRVHistory?.(days) || [],
+              (healthConnect.getHeartRateHistory?.(days) ?? Promise.resolve([])).catch(() => []),
+              (healthConnect.getHRVHistory?.(days) ?? Promise.resolve([])).catch(() => []),
               (healthConnect.getOxygenSaturationHistory?.(days) ?? Promise.resolve([])).catch(() => []),
               (healthConnect.getRespiratoryRateHistory?.(days) ?? Promise.resolve([])).catch(() => []),
               (healthConnect.getVO2MaxHistory?.(days) ?? Promise.resolve([])).catch(() => []),
+              (healthConnect.getBodyTemperatureHistory?.(days) ?? Promise.resolve([])).catch(() => []),
+              (healthConnect.getBloodGlucoseHistory?.(days) ?? Promise.resolve([])).catch(() => []),
             ]),
             timeoutMs,
-            [[], [], [], [], []]
+            [[], [], [], [], [], [], []]
           );
 
           // HRV baseline
@@ -381,7 +391,7 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
           setVitalHistory(prev => ({
             ...prev,
             heartRate: Array.isArray(heartRateHistory) ? heartRateHistory.map((h: any) => ({
-              date: h.date, value: h.resting || h.value || 0,
+              date: h.date, value: h.value || h.resting || 0,
             })).reverse() : [],
             hrv: Array.isArray(hrvHistory) ? hrvHistory.map((h: any) => ({
               date: h.date, value: h.value || 0,
@@ -394,6 +404,12 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
             })).reverse() : [],
             vo2max: Array.isArray(vo2maxHistory) ? vo2maxHistory.map((v: any) => ({
               date: v.date, value: v.value || 0,
+            })).reverse() : [],
+            bodyTemperature: Array.isArray(bodyTempHistory) ? bodyTempHistory.map((t: any) => ({
+              date: t.date, value: t.value || 0,
+            })).reverse() : [],
+            bloodGlucose: Array.isArray(bloodGlucoseHistory) ? bloodGlucoseHistory.map((g: any) => ({
+              date: g.date, value: g.value || 0,
             })).reverse() : [],
           }));
           break;
@@ -449,20 +465,24 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
     setRefreshing(true);
     try {
       setLoadedTabs(new Set());
-      // Si déjà connecté : forcer un syncAll pour importer les nouvelles séances
-      // (Garmin, Apple Watch, Fitbit, Polar, Suunto, Samsung...) depuis la dernière connexion
-      if (isHealthKitConnected) {
-        try {
-          await healthConnect.syncAll();
-        } catch (syncErr) {
-          logger.warn('[Refresh] syncAll échoué:', syncErr);
+      if (forcedTab === 'seances') {
+        // Séances : recharger directement, pas besoin de HealthKit
+        setTrainings([]);
+        await loadTabData('seances');
+      } else {
+        if (isHealthKitConnected) {
+          try {
+            await healthConnect.syncAll();
+          } catch (syncErr) {
+            logger.warn('[Refresh] syncAll échoué:', syncErr);
+          }
         }
+        await checkHealthKitConnection();
       }
-      await checkHealthKitConnection();
     } finally {
       setRefreshing(false);
     }
-  }, [isHealthKitConnected]);
+  }, [isHealthKitConnected, forcedTab]);
 
   // Listener AppState : quand l'app revient au premier plan (après Réglages), re-tenter la connexion
   const retryAfterSettingsRef = useRef(false);
@@ -613,23 +633,6 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
     }
   };
 
-  // Loading state
-  if (loading) {
-    return (
-      <View style={[styles.container, { backgroundColor: screenBackground }]}>
-        <StatsHeader
-          title={pageTitle}
-          description={pageDesc}
-          selectedPeriod={selectedPeriod}
-          onPeriodChange={setSelectedPeriod}
-        />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-        </View>
-      </View>
-    );
-  }
-
   // Current steps/calories for PasTab - utilise todaySteps/todayCalories (meme API que l'accueil)
   const currentSteps = todaySteps;
   const currentCalories = Math.round(todayCalories);
@@ -727,7 +730,7 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
         )}
 
         {activeTab === 'seances' && (
-          <SeancesTab trainings={trainings} />
+          <SeancesTab period={selectedPeriod} />
         )}
 
         {activeTab === 'signes' && !isHealthKitConnected && (
@@ -748,6 +751,8 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
             spo2History={vitalHistory.spo2}
             respiratoryRateHistory={vitalHistory.respiratoryRate}
             vo2maxHistory={vitalHistory.vo2max}
+            bodyTemperatureHistory={vitalHistory.bodyTemperature}
+            bloodGlucoseHistory={vitalHistory.bloodGlucose}
             onMetricPress={setSelectedMetric}
           />
         )}
@@ -816,7 +821,7 @@ const styles = StyleSheet.create({
     paddingTop: 100,
   },
   tabBarContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     marginBottom: 20,
   },
   tabBar: {
@@ -845,6 +850,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   tabContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
   },
 });

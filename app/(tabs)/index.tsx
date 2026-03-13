@@ -12,10 +12,10 @@ import {
   Alert,
   Platform,
   Modal,
-  ActivityIndicator,
   DeviceEventEmitter,
   AppState,
   AppStateStatus,
+  NativeModules,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -93,34 +93,25 @@ import { addHydration as addHydrationToQuests } from '@/lib/quests';
 import { getUnreadCount } from '@/lib/notificationHistoryService';
 import { NotificationBellPopup } from '@/components/NotificationBellPopup';
 import { PeerSyncBanner } from '@/components/PeerSyncBanner';
+import { WatchStatusBanner } from '@/components/WatchStatusBanner';
 import { runGamificationMessages } from '@/lib/gamificationMessagesService';
 
 // Mode Essentiel
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewModeSwitch } from '@/components/home/ViewModeSwitch';
 import { ViewModeHint } from '@/components/home/ViewModeHint';
-import { HomeEssentielContent } from '@/components/home/HomeEssentielContent';
-import CompactObjectiveSwitch from '@/components/home/CompactObjectiveSwitch';
-import { EssentielWeightCard } from '@/components/home/essentiel/EssentielWeightCard';
 import { EssentielActivityCard } from '@/components/home/essentiel/EssentielActivityCard';
-import { EssentielWeekSummary } from '@/components/home/essentiel/EssentielWeekSummary';
 import { HomeTabView } from '@/components/home/HomeTabView';
 import HomeChallengesSection from '@/components/home/HomeChallengesSection';
 
 // Composants animés premium
-import AnimatedAvatar from '@/components/AnimatedAvatar';
 import AnimatedCounter from '@/components/AnimatedCounter';
-import AnimatedProgressBar from '@/components/AnimatedProgressBar';
 import { AnimatedCard } from '@/components/AnimatedCard';
-import AnimatedRing from '@/components/AnimatedRing';
-import { AnimatedBattery } from '@/components/AnimatedBattery';
-import AnimatedWaterBottle from '@/components/AnimatedWaterBottle';
-import AnimatedSleepWave from '@/components/AnimatedSleepWave';
 import AnimatedRank from '@/components/AnimatedRank';
 
 // Services
-import { getSleepStats, getSleepAdvice, formatSleepDuration, SleepStats, getSleepGoal } from '@/lib/sleepService';
-import { getWeeklyLoadStats, formatLoad, getRiskColor, WeeklyLoadStats } from '@/lib/trainingLoadService';
+import { getSleepStats, SleepStats, getSleepGoal } from '@/lib/sleepService';
+import { getWeeklyLoadStats, WeeklyLoadStats } from '@/lib/trainingLoadService';
 import { getDailyChallenges, ActiveChallenge } from '@/lib/challengesService';
 import { getHomeCustomization, isSectionVisible as checkSectionVisible, HomeSection } from '@/lib/homeCustomizationService';
 import logger from '@/lib/security/logger';
@@ -177,7 +168,6 @@ export default function HomeScreen() {
 
   // Protection anti-spam navigation
   const [isNavigating, setIsNavigating] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Pop-up de notation
   const [showRatingPopup, setShowRatingPopup] = useState(false);
@@ -204,14 +194,31 @@ export default function HomeScreen() {
   }, [params.showRating]);
 
   // Indicateur Watch : écouter les changements de statut en temps réel
+  const [watchAvailable, setWatchAvailable] = useState(false);
   useEffect(() => {
-    if (Platform.OS !== 'ios') return;
-    const initial = WatchSyncService.getStatus();
-    setWatchReachable(initial.isReachable);
-    const unsubscribe = WatchSyncService.onStatusChange((status) => {
-      setWatchReachable(status.isReachable);
-    });
-    return unsubscribe;
+    if (Platform.OS === 'ios') {
+      const initial = WatchSyncService.getStatus();
+      setWatchReachable(initial.isReachable);
+      setWatchAvailable(initial.isAvailable);
+      const unsubscribe = WatchSyncService.onStatusChange((status) => {
+        setWatchReachable(status.isReachable);
+        setWatchAvailable(status.isAvailable);
+      });
+      return unsubscribe;
+    } else if (Platform.OS === 'android') {
+      // Android Wear OS : vérifier via WearSyncModule
+      const checkAndroid = () => {
+        NativeModules.WearSyncModule?.isWearConnected?.()
+          .then((connected: boolean) => {
+            setWatchReachable(connected);
+            setWatchAvailable(connected);
+          })
+          .catch(() => {});
+      };
+      checkAndroid();
+      const timer = setInterval(checkAndroid, 30000);
+      return () => clearInterval(timer);
+    }
   }, []);
 
   // Charger le compteur de notifications non lues au montage + ecouter les changements
@@ -659,7 +666,6 @@ export default function HomeScreen() {
   // Chargement des données
   const cancelledRef = useRef(false);
   const loadData = useCallback(async () => {
-    setIsLoading(true);
     try {
       const [profileData, weight, history, streakDays, quote, allTrainings, sleep, load, challenges, event, sections] = await Promise.all([
         getProfile(),
@@ -821,8 +827,6 @@ export default function HomeScreen() {
       });
     } catch (error) {
       logger.error('Erreur:', error);
-    } finally {
-      setIsLoading(false);
     }
   }, [loadHydration]);
 
@@ -1269,10 +1273,7 @@ export default function HomeScreen() {
               <View style={styles.headerText}>
                 <View style={styles.greetingRow}>
                   <Text style={[styles.greeting, { color: screenTextMuted }]}>{getGreeting()}</Text>
-                  {/* Indicateur Watch discret */}
-                  {Platform.OS === 'ios' && (
-                    <View style={[styles.watchDot, { backgroundColor: watchReachable ? '#34C759' : '#8E8E93' }]} />
-                  )}
+                  {/* watchDot supprimé — remplacé par WatchStatusBanner sous le header */}
                 </View>
                 <View style={styles.userNameRow}>
                   <Text style={[styles.userName, { color: screenText }]}>{profile?.name || 'Champion'}</Text>
@@ -1312,6 +1313,9 @@ export default function HomeScreen() {
 
             {/* Sync pair-a-pair iPhone<->iPad (visible seulement si un appareil est pres) */}
             <PeerSyncBanner />
+
+            {/* Statut montre connectée */}
+            <WatchStatusBanner />
 
             {/* Hint pour informer du switch de mode */}
             <ViewModeHint />
@@ -1368,7 +1372,7 @@ export default function HomeScreen() {
             <View style={styles.threeCardsRow}>
               <TouchableOpacity onPress={handleNavigateSleep} activeOpacity={0.9} style={styles.compactCard}>
                 <SleepLottieCard
-                  hours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : hkSleepHours}
+                  hours={hkSleepHours > 0 ? hkSleepHours : (sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0)}
                   quality={sleepStats?.lastNightQuality ? (sleepStats.lastNightQuality / 5) * 100 : 0}
                   debt={sleepStats?.sleepDebtHours || 0}
                   goal={sleepGoal / 60}
@@ -1831,15 +1835,6 @@ export default function HomeScreen() {
     return 'moderate';
   }, [loadStats]);
 
-  // Afficher loading pendant le chargement initial
-  if (isLoading) {
-    return (
-      <View style={[styles.screen, { backgroundColor: screenBackground, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
-      </View>
-    );
-  }
-
   return (
     <ErrorBoundary>
       <View style={[styles.screen, { backgroundColor: screenBackground }]}>
@@ -1922,6 +1917,8 @@ const styles = StyleSheet.create({
 
   // Header - Design Simple & Élégant
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  watchIconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', marginRight: 4, position: 'relative' },
+  watchStatusDot: { position: 'absolute', bottom: 6, right: 6, width: 7, height: 7, borderRadius: 3.5, borderWidth: 1.5, borderColor: '#FFFFFF' },
   headerIconBtn: {
     width: 40,
     height: 40,
@@ -2050,7 +2047,7 @@ const styles = StyleSheet.create({
   headerText: { flex: 1, marginHorizontal: 12 },
   greetingRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   greeting: { fontSize: 14, fontWeight: '600' },
-  watchDot: { width: 6, height: 6, borderRadius: 3 },
+
   userNameRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   userName: { fontSize: 22, fontWeight: '900' },
 

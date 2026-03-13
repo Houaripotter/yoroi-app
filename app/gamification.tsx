@@ -317,7 +317,12 @@ export default function DojoScreen() {
   const [trainedToday, setTrainedToday] = useState(false);
 
   // Tab initial depuis les params URL (défis quand on vient de QuestsCard)
-  const initialTab = (tab === 'defis' || tab === 'badges' || tab === 'rangs' || tab === 'historique') ? tab : 'rangs';
+  const initialTab: 'rangs' | 'badges' | 'défis' | 'historique' =
+    tab === 'défis' ? 'défis'
+    : tab === 'badges' ? 'badges'
+    : tab === 'rangs' ? 'rangs'
+    : tab === 'historique' ? 'historique'
+    : 'rangs';
   const [selectedTab, setSelectedTab] = useState<'rangs' | 'badges' | 'défis' | 'historique'>(initialTab);
 
   // Animations
@@ -783,7 +788,7 @@ export default function DojoScreen() {
         {[
           { key: 'rangs', icon: Trophy, label: t('gamification.ranks'), color: '#F59E0B' },
           { key: 'badges', icon: Award, label: t('gamification.badges'), color: '#8B5CF6' },
-          { key: 'defis', icon: Target, label: t('gamification.challenges') || 'Défis', color: '#10B981' },
+          { key: 'défis', icon: Target, label: t('gamification.challenges') || 'Défis', color: '#10B981' },
           { key: 'historique', icon: Clock, label: t('gamification.timeline'), color: '#3B82F6' },
         ].map((tab) => {
           const isActive = selectedTab === tab.key;
@@ -1282,7 +1287,7 @@ export default function DojoScreen() {
         {/* ═══════════════════════════════════════ */}
         {/* TAB: DÉFIS - Nouveau design avec onglets */}
         {/* ═══════════════════════════════════════ */}
-        {selectedTab === 'defis' && (
+        {selectedTab === 'défis' && (
           <View>
             {/* ── Carte explicative ── */}
             <View style={[styles.defisExplainCard, { backgroundColor: isDark ? 'rgba(255,215,0,0.07)' : 'rgba(255,215,0,0.12)', borderColor: 'rgba(255,215,0,0.3)' }]}>

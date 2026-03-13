@@ -157,3 +157,32 @@ NE PAS ajouter de code de restauration de scroll - ça cause des bugs visuels.
 ## Résumé
 
 > **Règle d'or** : `useEffect` pour charger les données, `useFocusEffect` uniquement pour les effets secondaires qui nécessitent un cleanup au blur.
+
+---
+
+## HealthKit — Problèmes connus et solutions
+
+### Pourquoi les données Apple Health ne s'affichaient pas
+
+**Cause racine** : `@kingstinct/react-native-healthkit` v13 (Nitro Modules) échoue silencieusement à enregistrer les permissions de **LECTURE** HealthKit sur iOS 26+. La méthode `HealthKit.requestAuthorization({ toRead, toShare })` ne lance pas d'erreur mais iOS n'accorde pas les permissions. Résultat : l'app ne lit que ses propres données.
+
+**Solution appliquée** : Module Swift natif `YoroiHealthKitModule` (`ios/Yoroi/YoroiHealthKitModule.swift`) qui appelle `HKHealthStore().requestAuthorization` directement, en bypassant Nitro :
+- `requestWorkoutReadAuth` — workouts + routes GPS seulement
+- `requestAllHealthPermissions` — TOUS les types santé (27 types : poids, pas, FC, sommeil, calories, VO2max...)
+- `connect()` dans `healthConnect.ios.ts` appelle `requestAllHealthPermissionsNative()` en premier
+
+**NE JAMAIS revenir à Nitro seul pour les permissions** — utiliser toujours le module Swift natif.
+
+### Reset complet des données (pour tests)
+
+Si l'onboarding ne s'affiche pas après suppression de l'app :
+1. Supprimer l'app de l'iPhone
+2. `Réglages` > `Santé` > `Accès aux données et appareils` > `Yoroi` > **Supprimer toutes les données**
+3. Xcode : `Product` > `Clean Build Folder` (Shift+Cmd+K)
+4. Build & Run
+
+Raison : `app/index.tsx` vérifie SQLite si AsyncStorage est vide — si un profil existe en DB, il saute l'onboarding. Clean Build Folder efface le cache y compris la DB.
+
+### FC (fréquence cardiaque) dans les séances
+
+`averageHeartRate` et `maxHeartRate` ne sont PAS des propriétés directes de `HKWorkout`. Il faut appeler `workout.getStatistic('heartRate', 'count/min')` sur le `WorkoutProxy` Nitro. Implémenté dans `mapRawWorkouts()` dans `healthConnect.ios.ts`.

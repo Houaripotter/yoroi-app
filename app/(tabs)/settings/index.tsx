@@ -13,7 +13,6 @@ import {
   Modal,
   TextInput,
   Platform,
-  ActivityIndicator,
   DeviceEventEmitter,
   Linking,
 } from 'react-native';
@@ -49,16 +48,18 @@ import {
   Eye,
   LucideIcon,
   Table,
+  CheckCircle,
+  Smartphone,
+  BookOpen,
+  Syringe,
+  BarChart3,
+  Database,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { CheckCircle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { safeOpenURL } from '@/lib/security/validators';
-// Demo data removed - all data comes from Apple Health / Health Connect
-import { Smartphone, BookOpen, Syringe, BarChart3, Database } from 'lucide-react-native';
 import { exportDataToJSON, importDataFromJSON, exportEditableCSV, importEditableCSV, exportEmptyTemplate } from '@/lib/exportService';
 import * as FileSystem from 'expo-file-system';
 import { generateProgressPDF } from '@/lib/pdfExport';
@@ -66,7 +67,7 @@ import { resetAllData, resetDataOnly } from '@/lib/storage';
 import { resetDatabase } from '@/lib/database';
 import logger from '@/lib/security/logger';
 import { generateHenryDemoData, restoreRealData, isDemoDataActive } from '@/lib/demoDataService';
-import { notificationService } from '@/lib/notificationService';
+import { SamuraiLoader } from '@/components/SamuraiLoader';
 
 // ============================================
 // SECTION DATA
@@ -166,7 +167,6 @@ export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark, screenBackground } = useTheme();
-  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   // Search
@@ -303,9 +303,11 @@ export default function SettingsScreen() {
                 '@yoroi_journal_screenshot_mode',
                 '@yoroi_surgeon_mode',
                 '@yoroi_mock_stats_mode',
-                '@yoroi_imported_workouts',      // fingerprints Apple Health
-                '@yoroi_healthkit_asked',         // flag premier lancement HealthKit
-                '@yoroi_competitions_auto_imported', // compétitions auto-importées
+                '@yoroi_imported_workouts',           // fingerprints Apple Health
+                '@yoroi_healthkit_asked',              // flag premier lancement HealthKit
+                '@yoroi_competitions_auto_imported',  // compétitions auto-importées
+                '@yoroi_import_version',              // version import (doit être réinitialisée pour forcer le re-import)
+                '@yoroi_full_history_imported',       // flag import historique complet
               ]);
               setIsDemoActive(false);
               setIsGlobalScreenshotMode(false);
@@ -765,8 +767,7 @@ export default function SettingsScreen() {
       {isGenerating && (
         <View style={styles.loadingOverlay}>
           <View style={[styles.loadingCard, { backgroundColor: colors.card }]}>
-            <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={[styles.loadingText, { color: colors.textPrimary }]}>Chargement en cours...</Text>
+            <SamuraiLoader message="Chargement en cours..." />
           </View>
         </View>
       )}
@@ -1112,11 +1113,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
   },
-  loadingText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-
   // Sections
   sectionContainer: {
     marginBottom: 16,

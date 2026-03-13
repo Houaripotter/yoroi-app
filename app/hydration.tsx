@@ -40,6 +40,8 @@ import { notificationService, requestNotificationPermissions } from '@/lib/notif
 import logger from '@/lib/security/logger';
 import AnimatedWaterBottle from '@/components/AnimatedWaterBottle';
 import { useWatch } from '@/lib/WatchConnectivityProvider';
+import { saveDietaryWaterNative } from '@/lib/yoroiHealthKit';
+import secureStorage from '@/lib/security/secureStorage';
 
 const { width: screenWidth } = Dimensions.get('window');
 const HYDRATION_KEY = '@yoroi_hydration_today';
@@ -89,28 +91,6 @@ export default function HydrationScreen() {
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
   const [refreshing, setRefreshing] = useState(false);
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadData();
-    setRefreshing(false);
-  }, [loadData]);
-
-  useEffect(() => {
-    loadData();
-
-    // Animation d'entrée
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      damping: 12,
-      useNativeDriver: true,
-    }).start();
-
-    // Refresh when Watch updates hydration
-    const sub = DeviceEventEmitter.addListener('HYDRATION_AMOUNT_CHANGED', () => {
-      loadData();
-    });
-    return () => sub.remove();
-  }, []);
 
   const loadData = async () => {
     try {
@@ -189,6 +169,29 @@ export default function HydrationScreen() {
     }
   };
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, []);
+
+  useEffect(() => {
+    loadData();
+
+    // Animation d'entrée
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      damping: 12,
+      useNativeDriver: true,
+    }).start();
+
+    // Refresh when Watch updates hydration
+    const sub = DeviceEventEmitter.addListener('HYDRATION_AMOUNT_CHANGED', () => {
+      loadData();
+    });
+    return () => sub.remove();
+  }, []);
+
   const saveAmount = async (amount: number) => {
     try {
       const today = new Date().toDateString();
@@ -204,6 +207,9 @@ export default function HydrationScreen() {
 
       // Sync avec le megaPack Watch : clé 'waterIntake' utilisée par performSync()
       await AsyncStorage.setItem('waterIntake', amountMl.toString());
+
+      // Sync secureStorage pour que la montre lise le bon total quand elle ajoute de l'eau
+      await secureStorage.setItem('@yoroi_water_intake', amountMl.toString());
 
       // Sync avec le système de badges (storage.ts hydration log)
       try {
@@ -235,8 +241,13 @@ export default function HydrationScreen() {
         logger.info(`✅ Hydratation synchronisée avec Watch: ${waterIntakeMl}ml`);
       }
 
+      // Écrire dans Apple Health (fire-and-forget, non bloquant)
+      saveDietaryWaterNative(amountMl).catch(() => {});
+
       // Notifier le home screen instantanement (event leger)
       DeviceEventEmitter.emit('HYDRATION_AMOUNT_CHANGED', { amountMl: Math.round(amount * 1000) });
+      // Déclencher un resync MegaPack Watch (met à jour @yoroi_water_intake + envoie à la Watch)
+      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
 
       // Verifier si un défi est nouvellement complete
       try {
@@ -251,6 +262,14 @@ export default function HydrationScreen() {
             [{ text: 'Super !', style: 'primary' }]
           );
         }
+      } catch { /* non bloquant */ }
+
+      // Mettre à jour les widgets avec la nouvelle hydratation
+      try {
+        const { updateWidgetWater } = await import('@/lib/widgetData');
+        const cups = Math.round(amount / 0.25);
+        const goalCups = Math.round(goal / 0.25);
+        await updateWidgetWater(cups, goalCups);
       } catch { /* non bloquant */ }
     } catch (error) {
       logger.error('Erreur sauvegarde hydratation:', error);
@@ -425,8 +444,8 @@ export default function HydrationScreen() {
           {/* Indicateur succès */}
           {percentage >= 100 && (
             <View style={styles.successBadge}>
-              <Check size={20} color="#FFFFFF" />
-              <Text style={styles.successText}>{t('hydration.goalReached')}</Text>
+              <Check size={20} color={colors.textOnAccent} />
+              <Text style={[styles.successText, { color: colors.textOnAccent }]}>{t('hydration.goalReached')}</Text>
             </View>
           )}
 
@@ -505,7 +524,7 @@ export default function HydrationScreen() {
               <View style={[styles.addButtonIcon, { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
                 <Droplets size={18} color="#FFFFFF" strokeWidth={2.5} />
               </View>
-              <Text style={[styles.addButtonLabel, { color: '#FFFFFF' }]}>+500ml</Text>
+              <Text style={[styles.addButtonLabel, { color: colors.textOnAccent }]}>+500ml</Text>
             </TouchableOpacity>
           </View>
 
@@ -571,8 +590,8 @@ export default function HydrationScreen() {
               style={[styles.saveButton, { backgroundColor: '#0EA5E9' }]}
               onPress={() => saveGoal(parseFloat(goalInput))}
             >
-              <Check size={18} color="#FFFFFF" />
-              <Text style={styles.saveButtonText}>{t('common.save')}</Text>
+              <Check size={18} color={colors.textOnAccent} />
+              <Text style={[styles.saveButtonText, { color: colors.textOnAccent }]}>{t('common.save')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -741,7 +760,7 @@ export default function HydrationScreen() {
                       disabled={isSaving}
                       style={[styles.notificationSaveBtn, { backgroundColor: '#0EA5E9' }]}
                     >
-                      <Text style={styles.notificationSaveText}>{t('common.save')}</Text>
+                      <Text style={[styles.notificationSaveText, { color: colors.textOnAccent }]}>{t('common.save')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>

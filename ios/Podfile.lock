@@ -2165,7 +2165,7 @@ PODS:
     - React-utils (= 0.81.5)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.81.5)
-  - ReactNativeHealthkit (13.1.0):
+  - ReactNativeHealthkit (13.3.0):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -3032,7 +3032,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 7d4593f7591f002d137fe40cef3f6c11f13c88cc
   ReactCommon: 08810150b1206cc44aecf5f6ae19af32f29151a8
   ReactNativeDependencies: 71ce9c28beb282aa720ea7b46980fff9669f428a
-  ReactNativeHealthkit: fe3501ad0e85d6955265cab1e44223965993f6a6
+  ReactNativeHealthkit: 5496e3352217e82209f75c894a6de195db03a228
   RNCAsyncStorage: 3a4f5e2777dae1688b781a487923a08569e27fe4
   RNDateTimePicker: be0e44bcb9ed0607c7c5f47dbedd88cf091f6791
   RNGestureHandler: 2914750df066d89bf9d8f48a10ad5f0051108ac3

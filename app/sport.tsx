@@ -6,7 +6,6 @@ import {
   View,
   Image,
   ScrollView,
-  ActivityIndicator,
   TextInput,
   Modal,
   Platform,
@@ -29,6 +28,7 @@ import { RewardOverlay } from '@/components/RewardOverlay';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import logger from '@/lib/security/logger';
+import { SamuraiLoader } from '@/components/SamuraiLoader';
 
 interface RoutineBlock {
   time: string;
@@ -386,7 +386,7 @@ export default function SportScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: '#E8EDF2', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#2563EB" />
+        <SamuraiLoader />
       </View>
     );
   }

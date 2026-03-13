@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Redirect } from "expo-router";
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getUserSettings, saveUserSettings } from "@/lib/storage";
 import { getProfile } from "@/lib/database";
@@ -51,11 +51,7 @@ export default function Index() {
   }, []);
 
   if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F8FAFB" }}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
+    return <View style={{ flex: 1, backgroundColor: "#0D0D0F" }} />;
   }
 
   if (needsOnboarding) {

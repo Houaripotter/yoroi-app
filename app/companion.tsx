@@ -37,6 +37,7 @@ import { getAllBodyCompositions, deleteBodyComposition, BodyComposition } from '
 import { shareExportCSV } from '@/lib/csvTemplates';
 import { useCustomPopup } from '@/components/CustomPopup';
 import logger from '@/lib/security/logger';
+import { SamuraiLoader } from '@/components/SamuraiLoader';
 import { LineChart } from 'react-native-gifted-charts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -483,8 +484,6 @@ export default function CompanionScreen() {
             yAxisColor={colors.border}
             xAxisColor={colors.border}
             noOfSections={4}
-            adjustToWidth
-            isAnimated
           />
         </View>
 
@@ -527,8 +526,6 @@ export default function CompanionScreen() {
               yAxisColor={colors.border}
               xAxisColor={colors.border}
               noOfSections={4}
-              adjustToWidth
-              isAnimated
             />
           </View>
         )}
@@ -628,7 +625,7 @@ export default function CompanionScreen() {
       {/* Contenu */}
       {loading ? (
         <View style={styles.loader}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <SamuraiLoader />
         </View>
       ) : rows.length === 0 ? (
         <View style={styles.empty}>

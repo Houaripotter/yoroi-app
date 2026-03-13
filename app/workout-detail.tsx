@@ -12,7 +12,6 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
-  ActivityIndicator,
   Animated,
   Platform,
   TouchableOpacity,
@@ -22,24 +21,25 @@ import Svg, { Rect, Line } from 'react-native-svg';
 import { MuscleMapCard } from '@/components/MuscleMapCard';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { getUserSettings } from '@/lib/storage';
+import { getEffectiveHRZones, calcZoneDurations, HRZoneThresholds } from '@/lib/hrZones';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Clock, MapPin, Flame, Heart, Timer, TrendingUp,
   Mountain, Thermometer, Droplets, Zap, Activity,
-  Wind, ArrowUp, ArrowDown, Maximize2, X,
+  Wind, ArrowUp, ArrowDown, Maximize2, X, Star, Users, Edit3,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Header } from '@/components/ui/Header';
+import { SamuraiLoader } from '@/components/SamuraiLoader';
 import { HeartRateZonesBar } from '@/components/stats/HeartRateZonesBar';
 import { WorkoutMapRoute } from '@/components/WorkoutMapRoute';
-import { getTrainingById as _getTrainingById, updateTrainingDetails, getTrainings } from '@/lib/database';
-import type { Training } from '@/lib/database';
+import { getTrainingById as _getTrainingById, updateTrainingDetails, updateTraining, getTrainings } from '@/lib/database';
+import type { Training, CombatRound, Exercise } from '@/lib/database';
 import type { WorkoutDetails, HeartRateSample } from '@/lib/healthConnect.ios';
 import { healthConnect } from '@/lib/healthConnect';
-import { getSportColor, getSportIcon, getSportName } from '@/lib/sports';
+import { getSportColor, getSportIcon, getSportName, SPORTS } from '@/lib/sports';
 import logger from '@/lib/security/logger';
 import { safeOpenURL } from '@/lib/security/validators';
 
@@ -111,10 +111,6 @@ function generateDemoDetails(training: Training): WorkoutDetails {
     activeCalories: training.calories || Math.round(duration * 8.5),
     totalCalories: Math.round((training.calories || duration * 8.5) * 1.15),
     isIndoor: !isCardio,
-    weatherTemp: 15,
-    weatherHumidity: 72,
-    airQualityIndex: 2,
-    airQualityCategory: 'Bon',
     recoveryHR: {
       atEnd: maxHR - 5,
       after1Min: maxHR - 25,
@@ -149,30 +145,7 @@ function generateDemoDetails(training: Training): WorkoutDetails {
     }
   }
 
-  // Route GPS demo pour TOUS les workouts (Apple Santé donne des coordonnees pour chaque séance)
-  {
-    const dist = (training.distance || 0) > 0 ? training.distance! : 2; // 2km par defaut si pas de distance
-    const centerLat = 48.8566;
-    const centerLon = 2.3522;
-    const radius = 0.003 + 0.003 * dist;
-    details.routePoints = [];
-    const pointCount = Math.min(200, Math.round(dist * 30));
-    for (let i = 0; i < pointCount; i++) {
-      const angle = (i / pointCount) * 2 * Math.PI;
-      const wobble = 1 + (Math.sin(angle * 3) * 0.15) + (Math.random() * 0.05);
-      details.routePoints.push({
-        latitude: centerLat + Math.cos(angle) * radius * wobble,
-        longitude: centerLon + Math.sin(angle) * radius * wobble * 1.5,
-        altitude: 35 + Math.sin(angle * 2) * 10,
-      });
-    }
-    const lats = details.routePoints.map(p => p.latitude);
-    const lons = details.routePoints.map(p => p.longitude);
-    details.routeBoundingBox = {
-      minLat: Math.min(...lats), maxLat: Math.max(...lats),
-      minLon: Math.min(...lons), maxLon: Math.max(...lons),
-    };
-  }
+  // Pas de route GPS simulée — on n'affiche la carte que si les vraies données HealthKit sont disponibles
 
   return details;
 }
@@ -353,12 +326,10 @@ export default function WorkoutDetailScreen() {
   const [details, setDetails] = useState<WorkoutDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
-  const [userZones, setUserZones] = useState<{ z1max: number; z2max: number; z3max: number; z4max: number } | null>(null);
+  const [userZones, setUserZones] = useState<HRZoneThresholds | null>(null);
 
   useEffect(() => {
-    getUserSettings().then(s => {
-      if (s.heartRateZones) setUserZones(s.heartRateZones);
-    });
+    getEffectiveHRZones().then(zones => setUserZones(zones));
     if (params.demo === '1') {
       loadDemoData();
     } else {
@@ -366,31 +337,32 @@ export default function WorkoutDetailScreen() {
     }
   }, []);
 
-  // Zones cardiaques: utiliser les zones perso si configurées, sinon celles de HealthKit
-  // DOIT être avant tout return conditionnel (règle des hooks)
+  // Zones cardiaques : utiliser les zones effectives (perso > âge > défaut)
+  // Si samples HR disponibles → calculer le temps par zone
+  // Sinon → fallback sur les zones retournées par HealthKit
   const hrZones = useMemo(() => {
     const hrSamples = details?.heartRateSamples;
     if (userZones && hrSamples && hrSamples.length > 1) {
-      const zones = [
-        { zone: 1, name: 'Zone 1', minBpm: 0,              maxBpm: userZones.z1max, durationSeconds: 0, color: '#3B82F6' },
-        { zone: 2, name: 'Zone 2', minBpm: userZones.z1max, maxBpm: userZones.z2max, durationSeconds: 0, color: '#22C55E' },
-        { zone: 3, name: 'Zone 3', minBpm: userZones.z2max, maxBpm: userZones.z3max, durationSeconds: 0, color: '#EAB308' },
-        { zone: 4, name: 'Zone 4', minBpm: userZones.z3max, maxBpm: userZones.z4max, durationSeconds: 0, color: '#F97316' },
-        { zone: 5, name: 'Zone 5', minBpm: userZones.z4max, maxBpm: 250,              durationSeconds: 0, color: '#EF4444' },
-      ];
-      for (let i = 0; i < hrSamples.length - 1; i++) {
-        const bpm = hrSamples[i].bpm;
-        const gap = (new Date(hrSamples[i + 1].timestamp).getTime() - new Date(hrSamples[i].timestamp).getTime()) / 1000;
-        if (gap > 0 && gap < 300) {
-          for (const z of zones) {
-            if (bpm >= z.minBpm && bpm < z.maxBpm) { z.durationSeconds += gap; break; }
-          }
-        }
-      }
-      return zones;
+      return calcZoneDurations(hrSamples, userZones);
     }
     return details?.heartRateZones;
   }, [userZones, details?.heartRateSamples, details?.heartRateZones]);
+
+  // Parser les combat_rounds (stockés en JSON dans la DB, non parsés par getTrainingById)
+  const combatRounds: CombatRound[] = useMemo(() => {
+    const raw = training?.combat_rounds;
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+    try { return JSON.parse(raw as unknown as string); } catch { return []; }
+  }, [training?.combat_rounds]);
+
+  // Parser les exercises si pas encore parsés
+  const exercisesList: Exercise[] = useMemo(() => {
+    const raw = training?.exercises;
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+    try { return JSON.parse(raw as unknown as string); } catch { return []; }
+  }, [training?.exercises]);
 
   const loadDemoData = () => {
     const demoTraining: Training = {
@@ -453,7 +425,7 @@ export default function WorkoutDetailScreen() {
         try {
           const cached = JSON.parse(tr.workout_details_json);
           // v4: invalider les anciens caches (v3: HKMaximumHeartRate metadata, v4: distance complète + élévation fallback)
-          const isStaleCache = (cached.cacheVersion ?? 1) < 4;
+          const isStaleCache = (cached.cacheVersion ?? 1) < 5;
           // Verifier que le cache a du contenu utile (pas juste durationMinutes)
           const hasRichData = cached.heartRateSamples?.length > 0 || cached.routePoints?.length > 0
             || cached.heartRateZones?.length > 0 || cached.weatherTemp != null;
@@ -528,11 +500,17 @@ export default function WorkoutDetailScreen() {
         }
       }
     }
-    // HealthKit n'a rien retourné - ne pas afficher de données inventées
-    if (__DEV__ && trainingRecord) {
-      // En dev/simulateur uniquement : données de prévisualisation UI
-      logger.info('[WorkoutDetail] HealthKit vide (simulateur), données demo pour preview UI');
-      setDetails(generateDemoDetails(trainingRecord));
+    // HealthKit n'a rien retourné → générer un résumé depuis les données de la séance en DB
+    if (trainingRecord) {
+      logger.info('[WorkoutDetail] HealthKit vide, génération résumé depuis données DB');
+      const fallbackDetails = generateDemoDetails(trainingRecord);
+      // Supprimer le GPS fictif (ne montrer que les vraies données GPS si dispo)
+      fallbackDetails.routePoints = undefined;
+      fallbackDetails.routeBoundingBox = undefined;
+      fallbackDetails.startLatitude = undefined;
+      fallbackDetails.startLongitude = undefined;
+      fallbackDetails.splits = undefined;
+      setDetails(fallbackDetails);
     }
     setDetailsLoading(false);
   }, []);
@@ -542,7 +520,7 @@ export default function WorkoutDetailScreen() {
       <View style={[styles.screenRoot, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
         <Header title="" showBack />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <SamuraiLoader />
         </View>
       </View>
     );
@@ -586,7 +564,24 @@ export default function WorkoutDetailScreen() {
 
   return (
     <View style={[styles.screenRoot, { backgroundColor: isDark ? colors.background : sportColor }]}>
-      <Header title={formatDateHeader(training.date)} showBack />
+      <Header
+        title={formatDateHeader(training.date)}
+        showBack
+        rightElement={(() => {
+          const sportObj = SPORTS.find(s => s.id === training.sport);
+          if (!sportObj || (sportObj.category !== 'combat_striking' && sportObj.category !== 'combat_grappling')) return undefined;
+          return (
+            <TouchableOpacity
+              onPress={() => router.push({ pathname: '/add-combat-session', params: { sport: training.sport, editId: String(training.id) } } as any)}
+              style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: sportColor + '20', justifyContent: 'center', alignItems: 'center' }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              activeOpacity={0.7}
+            >
+              <Edit3 size={16} color={sportColor} strokeWidth={2.5} />
+            </TouchableOpacity>
+          );
+        })()}
+      />
       <ScrollView
         style={[styles.scroll, { backgroundColor: groupedBg }]}
         contentContainerStyle={styles.scrollContent}
@@ -810,8 +805,231 @@ export default function WorkoutDetailScreen() {
               sportName={getSportName(training.sport)}
               sportColor={getSportColor(training.sport)}
               customMuscles={training.muscles || undefined}
+              trainingId={training.id}
+              onMusclesUpdated={(muscles) => setTraining(prev => prev ? { ...prev, muscles } : prev)}
             />
           </AnimatedCard>
+        )}
+
+        {/* ═══ THÈME TECHNIQUE + NOTE TECHNIQUE ═══ */}
+        {(training.technical_theme || (training.technique_rating != null && (training.technique_rating || 0) > 0)) && (
+          <AnimatedCard delay={145} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+            <Text style={[styles.sectionTitleInCard, { color: colors.text }]}>Technique</Text>
+            {training.technical_theme ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                <Zap size={16} color={sportColor} />
+                <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text, flex: 1 }}>
+                  {training.technical_theme}
+                </Text>
+              </View>
+            ) : null}
+            {(training.technique_rating != null && (training.technique_rating || 0) > 0) ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 10 }}>
+                <Text style={{ fontSize: 13, color: colors.textMuted, marginRight: 4 }}>Maîtrise :</Text>
+                {[1,2,3,4,5].map(i => (
+                  <Star
+                    key={i}
+                    size={18}
+                    color="#F59E0B"
+                    fill={i <= (training.technique_rating || 0) ? '#F59E0B' : 'transparent'}
+                  />
+                ))}
+              </View>
+            ) : null}
+          </AnimatedCard>
+        )}
+
+        {/* ═══ ROUNDS ═══ */}
+        {((training.rounds ?? 0) > 0 || (training.round_duration ?? 0) > 0) && (
+          <AnimatedCard delay={150} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+            <Text style={[styles.sectionTitleInCard, { color: colors.text }]}>Rounds</Text>
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
+              {(training.rounds ?? 0) > 0 && (
+                <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 10, padding: 12, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 26, fontWeight: '800', color: sportColor }}>{training.rounds}</Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>Rounds</Text>
+                </View>
+              )}
+              {(training.round_duration ?? 0) > 0 && (
+                <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 10, padding: 12, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 26, fontWeight: '800', color: sportColor }}>{training.round_duration}'</Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>Par round</Text>
+                </View>
+              )}
+              {(training.rounds ?? 0) > 0 && (training.round_duration ?? 0) > 0 && (
+                <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 10, padding: 12, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 26, fontWeight: '800', color: colors.text }}>
+                    {(training.rounds || 0) * (training.round_duration || 0)}'
+                  </Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>Total sparring</Text>
+                </View>
+              )}
+            </View>
+          </AnimatedCard>
+        )}
+
+        {/* ═══ ROUNDS DE COMBAT ═══ */}
+        {combatRounds.length > 0 && (
+          <>
+          <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
+            Rounds de combat {'>'}
+          </Text>
+          <AnimatedCard delay={155} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+            {combatRounds.map((round, idx) => {
+              const resultColor = round.result === 'win' ? '#22C55E' : round.result === 'loss' ? '#EF4444' : '#F59E0B';
+              const resultLabel = round.result === 'win' ? 'Victoire' : round.result === 'loss' ? 'Défaite' : round.result === 'draw' ? 'Match nul' : null;
+              return (
+                <View key={idx} style={[
+                  { paddingVertical: 12 },
+                  idx < combatRounds.length - 1 ? { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' } : undefined,
+                ]}>
+                  {/* En-tête round */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: sportColor, alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ fontSize: 13, fontWeight: '800', color: '#FFF' }}>{round.number || idx + 1}</Text>
+                      </View>
+                      {round.partner ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Users size={13} color={colors.textMuted} />
+                          <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{round.partner}</Text>
+                        </View>
+                      ) : (
+                        <Text style={{ fontSize: 13, color: colors.textMuted }}>Round {round.number || idx + 1}</Text>
+                      )}
+                    </View>
+                    {resultLabel && (
+                      <View style={{ backgroundColor: `${resultColor}20`, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20 }}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: resultColor }}>{resultLabel}</Text>
+                      </View>
+                    )}
+                  </View>
+                  {/* Soumissions */}
+                  {((round.submissionsGiven ?? 0) > 0 || (round.submissionsTaken ?? 0) > 0) && (
+                    <View style={{ flexDirection: 'row', gap: 10, marginBottom: 6 }}>
+                      {(round.submissionsGiven ?? 0) > 0 && (
+                        <View style={{ backgroundColor: isDark ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.1)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
+                          <Text style={{ fontSize: 12, color: '#22C55E', fontWeight: '600' }}>
+                            {round.submissionsGiven} soumission{(round.submissionsGiven || 0) > 1 ? 's' : ''} placée{(round.submissionsGiven || 0) > 1 ? 's' : ''}
+                          </Text>
+                        </View>
+                      )}
+                      {(round.submissionsTaken ?? 0) > 0 && (
+                        <View style={{ backgroundColor: isDark ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.1)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
+                          <Text style={{ fontSize: 12, color: '#EF4444', fontWeight: '600' }}>
+                            {round.submissionsTaken} prise{(round.submissionsTaken || 0) > 1 ? 's' : ''}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  )}
+                  {/* Méthode (champ legacy simple) */}
+                  {round.method && !(round.methodsGiven?.length) && !(round.methodsTaken?.length) ? (
+                    <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
+                      Finition : <Text style={{ color: colors.text, fontWeight: '600' }}>{round.method}</Text>
+                    </Text>
+                  ) : null}
+                  {/* Finitions données (multi-select) */}
+                  {(round.methodsGiven?.length ?? 0) > 0 && (
+                    <View style={{ marginBottom: 6 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: '#16A34A', marginBottom: 4 }}>
+                        Finitions données
+                      </Text>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                        {round.methodsGiven!.map((m, i) => (
+                          <View key={i} style={{ backgroundColor: isDark ? 'rgba(22,163,74,0.15)' : 'rgba(22,163,74,0.1)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
+                            <Text style={{ fontSize: 12, color: '#16A34A', fontWeight: '600' }}>{m}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                  {/* Finitions reçues (multi-select) */}
+                  {(round.methodsTaken?.length ?? 0) > 0 && (
+                    <View style={{ marginBottom: 6 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: '#DC2626', marginBottom: 4 }}>
+                        Finitions reçues
+                      </Text>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                        {round.methodsTaken!.map((m, i) => (
+                          <View key={i} style={{ backgroundColor: isDark ? 'rgba(220,38,38,0.15)' : 'rgba(220,38,38,0.1)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
+                            <Text style={{ fontSize: 12, color: '#DC2626', fontWeight: '600' }}>{m}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                  {/* Notes du round */}
+                  {round.notes ? (
+                    <Text style={{ fontSize: 13, color: colors.textSecondary, lineHeight: 18, marginTop: 4 }}>
+                      {round.notes}
+                    </Text>
+                  ) : null}
+                </View>
+              );
+            })}
+          </AnimatedCard>
+          </>
+        )}
+
+        {/* ═══ EXERCICES (MUSCULATION) ═══ */}
+        {exercisesList.length > 0 && (
+          <>
+          <Text style={[styles.appleSectionTitle, { color: colors.text }]}>
+            Exercices {'>'}
+          </Text>
+          <AnimatedCard delay={155} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+            {exercisesList.map((ex, idx) => (
+              <View key={idx} style={[
+                { paddingVertical: 12 },
+                idx < exercisesList.length - 1 ? { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' } : undefined,
+              ]}>
+                {/* Nom + groupe musculaire */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text, flex: 1 }}>{ex.name}</Text>
+                  {ex.muscle_group ? (
+                    <View style={{ backgroundColor: `${sportColor}20`, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: sportColor }}>{ex.muscle_group}</Text>
+                    </View>
+                  ) : null}
+                </View>
+                {/* Métriques: séries × reps × poids */}
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  {(ex.sets ?? 0) > 0 && (
+                    <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: sportColor }}>{ex.sets}</Text>
+                      <Text style={{ fontSize: 11, color: colors.textMuted }}>séries</Text>
+                    </View>
+                  )}
+                  {(ex.reps ?? 0) > 0 && (
+                    <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text }}>{ex.reps}</Text>
+                      <Text style={{ fontSize: 11, color: colors.textMuted }}>reps</Text>
+                    </View>
+                  )}
+                  {(ex.weight ?? 0) > 0 && (
+                    <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#F59E0B' }}>{ex.weight} kg</Text>
+                      <Text style={{ fontSize: 11, color: colors.textMuted }}>poids</Text>
+                    </View>
+                  )}
+                  {ex.distance != null && ex.distance > 0 && (
+                    <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#3B82F6' }}>{ex.distance} km</Text>
+                      <Text style={{ fontSize: 11, color: colors.textMuted }}>distance</Text>
+                    </View>
+                  )}
+                  {ex.duration != null && ex.duration > 0 && (
+                    <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#22C55E' }}>{ex.duration} min</Text>
+                      <Text style={{ fontSize: 11, color: colors.textMuted }}>durée</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            ))}
+          </AnimatedCard>
+          </>
         )}
 
         {/* ═══ LOADING DETAILS SKELETON ═══ */}

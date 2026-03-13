@@ -1,5 +1,5 @@
 // ============================================
-// DEMO DATA SERVICE - Profil Henry
+// DEMO DATA SERVICE - Profil Heny
 // Genere des données realistes pour screenshots App Store
 //
 // SECURITE : backup automatique des vraies données avant injection
@@ -24,7 +24,10 @@ import {
   exportAllData,
   importData,
   resetDatabase,
+  addInjury,
 } from './database';
+import { addCombat } from './fighterModeService';
+import { setGoal } from './trainingGoalsService';
 
 // ============================================
 // BACKUP / RESTORE KEYS
@@ -41,6 +44,7 @@ const DEMO_SECURE_KEYS = [
   '@yoroi_current_weight',
   '@yoroi_target_weight',
   '@yoroi_sleep_entries',
+  '@yoroi_mood_log',
 ];
 
 const DEMO_ASYNC_KEYS = [
@@ -75,6 +79,20 @@ const DEMO_ASYNC_KEYS = [
   '@yoroi_current_streak',
   '@yoroi_best_streak',
   '@yoroi_current_charge',
+  '@yoroi_unlocked_badges',
+  '@yoroi_badge_unlock_dates',
+  '@yoroi_quests_state',
+  '@yoroi_avatar_config',
+  '@yoroi_weekly_challenge',
+  '@yoroi_completed_challenges',
+  '@yoroi_challenge_xp',
+  '@yoroi_challenge_last_daily_reset',
+  '@yoroi_challenge_last_weekly_reset',
+  '@yoroi_challenge_last_monthly_reset',
+  '@yoroi_personal_records',
+  '@yoroi_health_daily_bonus',
+  '@yoroi_health_bonus_history',
+  '@yoroi_competitor_profile',
 ];
 
 // ============================================
@@ -268,7 +286,7 @@ export const generateHenryDemoData = async (): Promise<{
 
   // ========== 1. PROFILE ==========
   await saveProfile({
-    name: 'Henry',
+    name: 'Heny',
     height_cm: 178,
     target_weight: 80,
     start_weight: 87,
@@ -280,7 +298,7 @@ export const generateHenryDemoData = async (): Promise<{
   });
 
   await AsyncStorage.setItem('@yoroi_user_settings', JSON.stringify({
-    username: 'Henry',
+    username: 'Heny',
     height: 178,
     weight_unit: 'kg',
     measurement_unit: 'cm',
@@ -649,17 +667,242 @@ export const generateHenryDemoData = async (): Promise<{
   await AsyncStorage.setItem('yoroi_skills_v2', JSON.stringify(skills));
 
   // ========== 13. GAMIFICATION ==========
-  await AsyncStorage.setItem('@yoroi_unified_total_points', '850');
-  await AsyncStorage.setItem('@yoroi_unified_breakdown', JSON.stringify({ activityPoints: 450, questsXp: 150, challengesXp: 120, challengeServiceXp: 80, healthBonus: 50, total: 850 }));
-  await AsyncStorage.setItem('@yoroi_current_streak', '12');
+  await AsyncStorage.setItem('@yoroi_unified_total_points', '1220');
+  await AsyncStorage.setItem('@yoroi_unified_breakdown', JSON.stringify({ activityPoints: 580, questsXp: 240, challengesXp: 180, challengeServiceXp: 120, healthBonus: 100, total: 1220 }));
+  await AsyncStorage.setItem('@yoroi_current_streak', '23');
   await AsyncStorage.setItem('@yoroi_best_streak', '28');
   await AsyncStorage.setItem('@yoroi_current_charge', '78');
+
+  // ========== 14. BADGES ==========
+  const daysAgo = (d: number) => new Date(now.getTime() - d * 86400000).toISOString();
+  const unlockedBadges = [
+    'first_flame',
+    'fortnight_warrior',
+    'first_training',
+    'beginner',
+    'committed',
+    'regular',
+    'warrior',
+    'veteran',
+    'first_step',
+    'first_kilo',
+    'first_three',
+    'launched',
+    'team_yoroi_member',
+    'analyst',
+  ];
+  const badgeUnlockDates: Record<string, string> = {
+    first_flame:       daysAgo(180),
+    fortnight_warrior: daysAgo(150),
+    first_training:    daysAgo(180),
+    beginner:          daysAgo(160),
+    committed:         daysAgo(120),
+    regular:           daysAgo(90),
+    warrior:           daysAgo(60),
+    veteran:           daysAgo(30),
+    first_step:        daysAgo(175),
+    first_kilo:        daysAgo(140),
+    first_three:       daysAgo(100),
+    launched:          daysAgo(50),
+    team_yoroi_member: daysAgo(180),
+    analyst:           daysAgo(20),
+  };
+  await AsyncStorage.setItem('@yoroi_unlocked_badges', JSON.stringify(unlockedBadges));
+  await AsyncStorage.setItem('@yoroi_badge_unlock_dates', JSON.stringify(badgeUnlockDates));
+
+  // ========== 15. QUETES ==========
+  const questsState = {
+    daily: [
+      { id: 'daily_train', title: 'Séance du jour', description: 'Compléter une séance d\'entraînement', xpReward: 30, target: 1, progress: 1, completed: true, type: 'daily' },
+      { id: 'daily_hydration', title: 'Hydratation', description: 'Boire 2L d\'eau', xpReward: 15, target: 8, progress: 8, completed: true, type: 'daily' },
+      { id: 'daily_steps', title: 'Objectif pas', description: 'Atteindre 8000 pas', xpReward: 20, target: 8000, progress: 8000, completed: true, type: 'daily' },
+      { id: 'daily_sleep', title: 'Sommeil récupérateur', description: 'Dormir 7h ou plus', xpReward: 25, target: 7, progress: 7, completed: true, type: 'daily' },
+      { id: 'daily_log', title: 'Journal du guerrier', description: 'Enregistrer une donnée de santé', xpReward: 10, target: 1, progress: 0, completed: false, type: 'daily' },
+    ],
+    weekly: [
+      { id: 'weekly_sessions', title: 'Semaine active', description: '4 séances cette semaine', xpReward: 80, target: 4, progress: 3, completed: false, type: 'weekly' },
+      { id: 'weekly_weight', title: 'Suivi du poids', description: 'Peser 3 fois cette semaine', xpReward: 40, target: 3, progress: 3, completed: true, type: 'weekly' },
+      { id: 'weekly_bjj', title: 'Tapis de BJJ', description: '2 séances de BJJ', xpReward: 60, target: 2, progress: 2, completed: true, type: 'weekly' },
+      { id: 'weekly_cardio', title: 'Cardio warrior', description: '1 séance cardio de 30min', xpReward: 50, target: 1, progress: 1, completed: true, type: 'weekly' },
+      { id: 'weekly_streak', title: 'Sans relâche', description: 'Maintenir la série 7 jours', xpReward: 100, target: 7, progress: 5, completed: false, type: 'weekly' },
+    ],
+    monthly: [
+      { id: 'monthly_sessions', title: 'Mois de guerrier', description: '16 séances ce mois', xpReward: 200, target: 16, progress: 14, completed: false, type: 'monthly' },
+      { id: 'monthly_weight_loss', title: 'Perte de poids', description: 'Perdre 1kg ce mois', xpReward: 150, target: 1, progress: 1, completed: true, type: 'monthly' },
+      { id: 'monthly_new_record', title: 'Record brisé', description: 'Battre un record personnel', xpReward: 120, target: 1, progress: 1, completed: true, type: 'monthly' },
+      { id: 'monthly_consistency', title: 'Consistance', description: '20 jours actifs ce mois', xpReward: 180, target: 20, progress: 16, completed: false, type: 'monthly' },
+      { id: 'monthly_scan', title: 'Analyse complète', description: 'Remplir toutes les métriques santé', xpReward: 100, target: 5, progress: 3, completed: false, type: 'monthly' },
+    ],
+    lastReset: { daily: daysAgo(0), weekly: daysAgo(2), monthly: daysAgo(10) },
+  };
+  await AsyncStorage.setItem('@yoroi_quests_state', JSON.stringify(questsState));
+
+  // ========== 16. BLESSURES ==========
+  await addInjury({ zone_id: 'shoulder_r', zone_view: 'front', pain_type: 'tendinite', cause: 'Surcharge en développé couché', eva_score: 3, notes: 'Douleur à la rotation externe, amélioration progressive', date: daysAgo(45), status: 'healing', fit_for_duty: 'restricted' });
+  await addInjury({ zone_id: 'wrist_r', zone_view: 'front', pain_type: 'entorse', cause: 'Chute en sparring BJJ', eva_score: 2, notes: 'Légère instabilité, port de strapping recommandé', date: daysAgo(30), status: 'healing', fit_for_duty: 'restricted' });
+  await addInjury({ zone_id: 'knee_l', zone_view: 'front', pain_type: 'entorse', cause: 'Shoot raté lors d\'un tournoi', eva_score: 5, notes: 'IRM en attente, éviter les shoots et takedowns', date: daysAgo(18), status: 'active', fit_for_duty: 'unfit' });
+  await addInjury({ zone_id: 'spine_lower', zone_view: 'back', pain_type: 'lumbago', cause: 'Soulevé de terre charge excessive', eva_score: 4, notes: 'Séances kiné 2x/semaine, étirements quotidiens', date: daysAgo(60), status: 'healing', fit_for_duty: 'restricted' });
+  await addInjury({ zone_id: 'hamstring_l', zone_view: 'back', pain_type: 'contracture', cause: 'Echauffement insuffisant', eva_score: 0, notes: 'Totalement rétabli, reprise progressive validée', date: daysAgo(90), status: 'healed', fit_for_duty: 'operational' });
+
+  // ========== 17. AVATAR ==========
+  await AsyncStorage.setItem('@yoroi_avatar_config', JSON.stringify({
+    pack: 'bjj',
+    packType: 'character',
+    gender: 'male',
+    level: 3,
+    state: 'strong',
+  }));
+
+  // ========== 18. CHALLENGES ==========
+  const challengeMonday = new Date(now);
+  const challengeDayOfWeek = challengeMonday.getDay();
+  const challengeDiffToMonday = challengeDayOfWeek === 0 ? -6 : 1 - challengeDayOfWeek;
+  challengeMonday.setDate(challengeMonday.getDate() + challengeDiffToMonday);
+  challengeMonday.setHours(0, 0, 0, 0);
+  const challengeSunday = new Date(challengeMonday);
+  challengeSunday.setDate(challengeSunday.getDate() + 6);
+  challengeSunday.setHours(23, 59, 59, 999);
+
+  await AsyncStorage.setItem('@yoroi_weekly_challenge', JSON.stringify({
+    challenge: { id: 'warrior', name: 'Athlète', nameJp: '戦士', description: '4 entraînements cette semaine', target: 4, xpReward: 150, icon: '', color: '#EF4444' },
+    weekStart: challengeMonday.toISOString(),
+    weekEnd: challengeSunday.toISOString(),
+    progress: 3,
+    completed: false,
+    xpClaimed: false,
+  }));
+
+  const makePastChallenge = (
+    id: string, name: string, nameJp: string, desc: string,
+    target: number, xp: number, color: string, weeksAgo: number
+  ) => {
+    const mon = new Date(now);
+    mon.setDate(mon.getDate() - weeksAgo * 7 + challengeDiffToMonday);
+    mon.setHours(0, 0, 0, 0);
+    const sun = new Date(mon); sun.setDate(sun.getDate() + 6); sun.setHours(23, 59, 59, 999);
+    const completedAt = new Date(sun); completedAt.setHours(20, 0, 0, 0);
+    return {
+      challenge: { id, name, nameJp, description: desc, target, xpReward: xp, icon: '', color },
+      weekStart: mon.toISOString(),
+      weekEnd: sun.toISOString(),
+      progress: target,
+      completed: true,
+      completedAt: completedAt.toISOString(),
+      xpClaimed: true,
+    };
+  };
+
+  const completedChallenges = [
+    makePastChallenge('regularity', 'Régularité', '規則性', '5 pesées cette semaine', 5, 100, '#3B82F6', 1),
+    makePastChallenge('warrior', 'Athlète', '戦士', '4 entraînements cette semaine', 4, 150, '#EF4444', 2),
+    makePastChallenge('complete', 'Complet', '完全', 'Pesée + mensurations + entraînement', 3, 200, '#8B5CF6', 3),
+    makePastChallenge('streak', 'Série', '連続', '7 jours de suite', 7, 250, '#F59E0B', 4),
+    makePastChallenge('warrior', 'Athlète', '戦士', '4 entraînements cette semaine', 4, 150, '#EF4444', 5),
+    makePastChallenge('regularity', 'Régularité', '規則性', '5 pesées cette semaine', 5, 100, '#3B82F6', 6),
+    makePastChallenge('complete', 'Complet', '完全', 'Pesée + mensurations + entraînement', 3, 200, '#8B5CF6', 7),
+    makePastChallenge('photo', 'Photo', '写真', '1 photo de transformation', 1, 50, '#10B981', 8),
+  ];
+  await AsyncStorage.setItem('@yoroi_completed_challenges', JSON.stringify(completedChallenges));
+  await AsyncStorage.setItem('@yoroi_challenge_xp', '1250');
+  await AsyncStorage.setItem('@yoroi_challenge_last_daily_reset', daysAgo(0));
+  await AsyncStorage.setItem('@yoroi_challenge_last_weekly_reset', challengeMonday.toISOString());
+  await AsyncStorage.setItem('@yoroi_challenge_last_monthly_reset', daysAgo(10));
+
+  // ========== 19. COMBATS BJJ ==========
+  const combatsData = [
+    { date: fmtDate(addDays(now, -5)),  resultat: 'victoire', methode: 'soumission', technique: 'Triangle',           round: 2, temps: '3:42', adversaire_nom: 'Lucas Fernandez',  adversaire_club: 'Alliance BJJ',          poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Belle entrée en triangle depuis la garde ouverte' },
+    { date: fmtDate(addDays(now, -12)), resultat: 'victoire', methode: 'soumission', technique: 'Kimura',             round: 1, temps: '1:58', adversaire_nom: 'Rayan Benali',     adversaire_club: 'Gracie Barra Lyon',     poids_pesee: 82.0, poids_jour_j: 82.5, notes: 'Kimura depuis la garde fermée, bonne pression' },
+    { date: fmtDate(addDays(now, -19)), resultat: 'defaite',  methode: 'points',     technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Marco Costa',      adversaire_club: 'Checkmat Paris',        poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Perdu aux points 8-4, à retravailler la garde' },
+    { date: fmtDate(addDays(now, -26)), resultat: 'victoire', methode: 'soumission', technique: 'Rear Naked Choke',   round: 2, temps: '4:15', adversaire_nom: 'Sofiane Hadj',     adversaire_club: 'Team Nogueira',         poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Pris le dos depuis la demi-garde' },
+    { date: fmtDate(addDays(now, -33)), resultat: 'victoire', methode: 'points',     technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Ahmed Touati',     adversaire_club: 'Metamoris France',      poids_pesee: 81.5, poids_jour_j: 82.0, notes: 'Victoire aux points 12-2, bonne gestion' },
+    { date: fmtDate(addDays(now, -45)), resultat: 'nul',      methode: 'decision',   technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Pierre Moreau',    adversaire_club: 'Gracie Barra Paris',    poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Match très serré, tout dans la garde' },
+    { date: fmtDate(addDays(now, -60)), resultat: 'victoire', methode: 'soumission', technique: 'Armbar',             round: 1, temps: '2:30', adversaire_nom: 'Yoann Petit',      adversaire_club: 'Basic-Fit BJJ',         poids_pesee: 82.0, poids_jour_j: 81.5, notes: 'Armbar depuis la garde montée' },
+    { date: fmtDate(addDays(now, -75)), resultat: 'defaite',  methode: 'soumission', technique: 'Heel Hook',          round: 2, temps: '3:10', adversaire_nom: 'Mateus Silva',     adversaire_club: 'Atos Paris',            poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Heel hook inattendu, mieux défendre les jambes' },
+    { date: fmtDate(addDays(now, -90)), resultat: 'victoire', methode: 'soumission', technique: 'Guillotine',         round: 1, temps: '1:22', adversaire_nom: 'Thomas Blanc',     adversaire_club: 'Tristar Paris',         poids_pesee: 81.5, poids_jour_j: 82.0, notes: 'Guillotine parfaite sur le takedown adverse' },
+    { date: fmtDate(addDays(now, -110)),resultat: 'victoire', methode: 'points',     technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Karim Hadjadj',    adversaire_club: 'Lotus Club',            poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Bonne gestion, passage en side control dominant' },
+    { date: fmtDate(addDays(now, -130)),resultat: 'defaite',  methode: 'points',     technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Julien Vasseur',   adversaire_club: 'Carlson Gracie Paris',  poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Perdu de justesse 4-6' },
+    { date: fmtDate(addDays(now, -150)),resultat: 'victoire', methode: 'soumission', technique: 'Cross Collar Choke', round: 2, temps: '4:48', adversaire_nom: 'Nassim Boucharel', adversaire_club: 'Ribeiro Jiu-Jitsu',     poids_pesee: 82.5, poids_jour_j: 82.5, notes: 'Étranglement depuis la montée, bien travaillé' },
+  ];
+  for (const combat of combatsData) {
+    try { await addCombat(combat as any); } catch { /* table déjà initialisée */ }
+  }
+
+  // ========== 20. OBJECTIFS ENTRAINEMENT ==========
+  try {
+    await setGoal('jjb', 3);
+    await setGoal('musculation', 2);
+    await setGoal('running', 1);
+  } catch { /* ignore si déjà défini */ }
+
+  // ========== 21. RECORDS PERSONNELS ==========
+  const personalRecords = {
+    lowestWeight:         { value: 81.2, date: fmtDate(addDays(now, -7)),   label: 'Plus bas poids' },
+    startingWeight:       { value: 87.5, date: fmtDate(addDays(now, -180)), label: 'Poids de départ' },
+    maxWeeklyLoss:        { value: 1.8,  date: fmtDate(addDays(now, -60)),  label: 'Perte semaine max' },
+    maxMonthlyLoss:       { value: 2.5,  date: fmtDate(addDays(now, -90)),  label: 'Perte mois max' },
+    totalWeightLoss:      6.3,
+    longestStreak:        { value: 28, date: fmtDate(addDays(now, -30)),    label: 'Meilleure série' },
+    currentStreak:        23,
+    lowestWaist:          { value: 83, date: fmtDate(addDays(now, -14)),    label: 'Tour de taille min' },
+    totalWaistLoss:       5,
+    maxWeeklyWorkouts:    { value: 6, date: fmtDate(addDays(now, -45)),     label: 'Séances max/semaine' },
+    totalWorkouts:        187,
+    favoriteSport:        { type: 'jjb', count: 112 },
+    bestMonthRegularity:  { value: 92, date: fmtDate(addDays(now, -60)),   label: 'Meilleure régularité' },
+    totalMeasurements:    42,
+    bestEnergyStreak:     { value: 14, date: fmtDate(addDays(now, -20)),   label: 'Série énergie haute' },
+    lastUpdated:          now.toISOString(),
+  };
+  await AsyncStorage.setItem('@yoroi_personal_records', JSON.stringify(personalRecords));
+
+  // ========== 22. MOOD / ENERGIE ==========
+  const moodTypes = ['motivated', 'energized', 'focused', 'tired', 'motivated', 'stressed', 'motivated', 'energized', 'calm', 'focused'];
+  const energyPattern = [4, 4, 3, 4, 5, 2, 4, 4, 3, 4, 4, 5, 3, 4, 4, 2, 4, 4, 5, 4, 3, 4, 4, 4, 5, 4, 3, 4, 4, 4];
+  const moodEntries = Array.from({ length: 30 }, (_, i) => {
+    const entryDate = addDays(now, -i);
+    return {
+      id: `demo-mood-${i}`,
+      date: fmtDate(entryDate),
+      mood: moodTypes[i % moodTypes.length],
+      energy: energyPattern[i] ?? 4,
+      timestamp: new Date(entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate(), 8, 30).toISOString(),
+    };
+  });
+  await secureStorage.setItem('@yoroi_mood_log', moodEntries);
+
+  // ========== 23. BONUS SANTE ==========
+  const healthBonusEntries = Array.from({ length: 60 }, (_, i) => {
+    const hasSteps   = i % 4 !== 3;
+    const hasSleep   = i % 5 !== 4;
+    const hasCalories = i % 3 !== 2;
+    return {
+      date: fmtDate(addDays(now, -i)),
+      stepsBonus:    hasSteps    ? 10 : 0,
+      sleepBonus:    hasSleep    ? 10 : 0,
+      caloriesBonus: hasCalories ? 5  : 0,
+      total:         (hasSteps ? 10 : 0) + (hasSleep ? 10 : 0) + (hasCalories ? 5 : 0),
+    };
+  });
+  const healthBonusTotal = healthBonusEntries.reduce((sum, e) => sum + e.total, 0);
+  await AsyncStorage.setItem('@yoroi_health_daily_bonus', String(healthBonusTotal));
+  await AsyncStorage.setItem('@yoroi_health_bonus_history', JSON.stringify({
+    entries: healthBonusEntries,
+    cumulativeTotal: healthBonusTotal,
+  }));
+
+  // ========== 24. PROFIL COMPETITEUR ==========
+  await AsyncStorage.setItem('@yoroi_competitor_profile', JSON.stringify({
+    gender: 'male',
+    category: 'medium-heavy',
+    belt: 'blue',
+    currentWeight: 82.0,
+  }));
 
   // ======= STEP 3: MARK DEMO AS ACTIVE =======
   await AsyncStorage.setItem(DEMO_ACTIVE_KEY, 'true');
 
   const benchmarkCount = benchmarks.reduce((acc, b) => acc + b.entries.length, 0);
-  logger.info(`[DemoData] Henry profile generated: ${workoutCount} trainings, ${weightCount} weights, ${measurementCount} measurements, ${sleepCount} sleep, ${benchmarkCount} benchmark entries, ${skills.length} skills. Real data backed up.`);
+  logger.info(`[DemoData] Heny profile generated: ${workoutCount} trainings, ${weightCount} weights, ${measurementCount} measurements, ${sleepCount} sleep, ${benchmarkCount} benchmarks, ${skills.length} skills, ${unlockedBadges.length} badges, 5 injuries, ${combatsData.length} combats, 8 challenges completed, 30 mood entries. Real data backed up.`);
 
   return {
     workouts: workoutCount,
