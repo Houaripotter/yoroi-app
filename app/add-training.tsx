@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,8 +11,8 @@ import {
   ActivityIndicator,
   Modal,
   Keyboard,
-  Dimensions,
   KeyboardAvoidingView,
+  useWindowDimensions,
   DeviceEventEmitter,
 } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
@@ -77,10 +77,6 @@ import * as Location from 'expo-location';
 import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
 import { SPORT_OPTIONS, DEFAULT_OPTIONS, SportOption } from '@/constants/sportOptions';
 
-// Constantes statiques pour les styles (StyleSheet ne peut pas utiliser de hooks)
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const IS_SMALL_SCREEN = SCREEN_WIDTH < 375;
-
 // Constants for non-theme values
 const FONT_SIZE = TYPOGRAPHY.size;
 
@@ -93,6 +89,9 @@ const LAST_DURATION_KEY = 'yoroi_last_duration';
 const FAVORITES_KEY = 'yoroi_favorite_sports';
 
 export default function AddTrainingScreen() {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const IS_SMALL_SCREEN = SCREEN_WIDTH < 375;
+  const styles = useMemo(() => createStyles(IS_SMALL_SCREEN), [IS_SMALL_SCREEN]);
   const insets = useSafeAreaInsets();
   const { colors, isDark, screenText } = useTheme();
   const { avatarImage: contextAvatar } = useAvatar();
@@ -600,9 +599,13 @@ export default function AddTrainingScreen() {
       setLocationLoading(true);
       const encoded = encodeURIComponent(query.trim());
       const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=5&addressdetails=1`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
       const res = await fetch(url, {
         headers: { 'User-Agent': 'YoroiApp/1.0' },
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
       if (!res.ok) throw new Error('Nominatim error');
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -4012,7 +4015,7 @@ export default function AddTrainingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (IS_SMALL_SCREEN: boolean) => StyleSheet.create({
   scrollView: {
     flex: 1,
   },

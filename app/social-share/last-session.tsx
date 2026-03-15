@@ -4,14 +4,14 @@
 // Partage de la dernière séance d'entraînement
 // Style identique aux cartes hebdo/mensuel/annuel
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Dimensions,
+  useWindowDimensions,
   ScrollView,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -42,16 +42,17 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { SessionCard } from '@/components/social-cards/SessionCard';
 import { parseExercisesFromNotes } from '@/lib/exerciseParser';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - 40;
-const CARD_HEIGHT_PORTRAIT = CARD_WIDTH * (16 / 9);  // Portrait 9:16
-const CARD_HEIGHT_LANDSCAPE = CARD_WIDTH * (9 / 16); // Paysage 16:9
 const GOLD_COLOR = '#D4AF37';
 
 export default function LastSessionScreen() {
   const { colors, isDark } = useTheme();
   const { avatarImage: contextAvatar } = useAvatar();
   const insets = useSafeAreaInsets();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const CARD_WIDTH = SCREEN_WIDTH - 40;
+  const CARD_HEIGHT_PORTRAIT = CARD_WIDTH * (16 / 9);
+  const CARD_HEIGHT_LANDSCAPE = CARD_WIDTH * (9 / 16);
+  const styles = useMemo(() => createStyles(CARD_WIDTH), [CARD_WIDTH]);
   const params = useLocalSearchParams<{ id?: string }>();
   const cardRef = useRef<View>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -522,7 +523,7 @@ export default function LastSessionScreen() {
 // STYLES
 // ============================================
 
-const styles = StyleSheet.create({
+const createStyles = (CARD_WIDTH: number) => StyleSheet.create({
   container: {
     flex: 1,
   },

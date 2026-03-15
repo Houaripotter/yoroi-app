@@ -7,14 +7,12 @@
 // - Code plus maintenable
 // - Conversion des styles inline en useMemo pour réduire les re-allocations
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Training } from '@/lib/database';
 import { getClubLogoSource, getSportName } from '@/lib/sports';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const DEFAULT_WIDTH = SCREEN_WIDTH - 40;
 const GOLD_COLOR = '#D4AF37';
 
 // Constantes de layout
@@ -76,14 +74,15 @@ interface SessionCardProps {
 
 export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
   ({
-    training, backgroundImage, backgroundType = 'black', keepPhotoClear = false, width = DEFAULT_WIDTH,
+    training, backgroundImage, backgroundType = 'black', keepPhotoClear = false, width: widthProp,
     userAvatar, profilePhoto, userName, rank, userLevel, options,
     showYearlyCount = true,
     yearlyCount = 0, yearlyObjective = 365,
     showGoalProgress = true,
     disableInternalScroll = false
   }, ref) => {
-    
+    const { width: screenWidth } = useWindowDimensions();
+    const width = widthProp ?? (screenWidth - 40);
     const CARD_HEIGHT = width * (16 / 9);
     const dateObj = training.date ? new Date(training.date) : new Date();
     const formattedDate = dateObj.toLocaleDateString('fr-FR', {

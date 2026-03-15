@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   Modal,
   TextInput,
   RefreshControl,
@@ -745,8 +744,6 @@ export default function MoreScreen() {
 // ============================================
 // STYLES
 // ============================================
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   screen: {

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView , Dimensions } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Weight } from '@/lib/database';
 import { format } from 'date-fns';
@@ -9,17 +9,10 @@ import { Droplets, Dumbbell, Bone, Flame, Calendar, TrendingUp, TrendingDown, Ta
 import { StatsDetailModal } from './StatsDetailModal';
 import { getHistoryDays, getChartDataPoints, isIPad } from '@/constants/responsive';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-// Largeur des cartes statistiques - 2 colonnes sur iPhone, 4 colonnes sur iPad
+// Colonnes et gaps constants
 const STATS_COLUMNS = isIPad() ? 4 : 2;
 const STATS_GAP = 12;
-const CARD_PADDING_H = 16; // Padding horizontal du container
-// Largeur disponible après padding
-const AVAILABLE_WIDTH = SCREEN_WIDTH - (CARD_PADDING_H * 2);
-// Largeur de chaque carte = (largeur disponible - gaps entre colonnes) / nombre de colonnes
-const STATS_CARD_WIDTH = (AVAILABLE_WIDTH - (STATS_GAP * (STATS_COLUMNS - 1))) / STATS_COLUMNS;
-// Largeur du sparkline = largeur carte - padding (14*2) + margin négatif (6*2)
-const SPARKLINE_WIDTH = STATS_CARD_WIDTH - 28 + 12;
+const CARD_PADDING_H = 16;
 
 interface CompositionStatsProps {
   data: Weight[];
@@ -27,6 +20,11 @@ interface CompositionStatsProps {
 
 export const CompositionStats: React.FC<CompositionStatsProps> = ({ data }) => {
   const { colors } = useTheme();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const AVAILABLE_WIDTH = SCREEN_WIDTH - (CARD_PADDING_H * 2);
+  const STATS_CARD_WIDTH = (AVAILABLE_WIDTH - (STATS_GAP * (STATS_COLUMNS - 1))) / STATS_COLUMNS;
+  const SPARKLINE_WIDTH = STATS_CARD_WIDTH - 28 + 12;
+  const styles = useMemo(() => createStyles(STATS_CARD_WIDTH), [STATS_CARD_WIDTH]);
   const [selectedMetric, setSelectedMetric] = useState<{
     key: string;
     label: string;
@@ -309,7 +307,7 @@ export const CompositionStats: React.FC<CompositionStatsProps> = ({ data }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (STATS_CARD_WIDTH: number) => StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: CARD_PADDING_H,

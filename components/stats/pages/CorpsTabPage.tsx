@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { ScrollView, View, StyleSheet, TouchableOpacity, Text, RefreshControl, InteractionManager } from 'react-native';
+import { ScrollView, View, StyleSheet, TouchableOpacity, Text, RefreshControl, InteractionManager, unstable_batchedUpdates } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { SamuraiCircleLoader } from '@/components/SamuraiLoader';
@@ -140,65 +140,71 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         getMeasurements(),
       ]);
 
-      // --- User profile ---
-      if (settings?.gender) setUserGender(settings.gender as 'male' | 'female');
-      // Objectif de poids : priorité à profile.target_weight (SQLite), fallback settings.weight_goal
+      // Tout calculer avant les setState
       const goalFromProfile = profile?.target_weight;
       const goalFromSettings = settings?.weight_goal;
       const resolvedGoal = (goalFromProfile && goalFromProfile > 0) ? goalFromProfile : (goalFromSettings ?? null);
-      if (resolvedGoal) setTargetWeight(resolvedGoal);
 
-      // --- Poids ---
-      setWeightData(data);
-      if (allWeights?.length > 0) setAllWeightsData(allWeights);
+      let bmiVal: number | null = null;
+      let heightCmVal: number | null = null;
       if (data?.values != null && data.values.length > 0 && profile?.height_cm) {
         const latestW = data!.values[data!.values.length - 1].value;
         const heightM = profile.height_cm / 100;
-        setBmi(latestW / (heightM * heightM));
-        setHeightCm(profile.height_cm);
+        bmiVal = latestW / (heightM * heightM);
+        heightCmVal = profile.height_cm;
       }
 
-      // Period filter
       const now = new Date();
       const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, '1a': 365, '2a': 730, 'tout': 3650 };
       const days = daysMap[selectedPeriod] || 30;
       const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
+      let weightHistoryVal: any[] = [];
+      let compositionHistoryVal: any = null;
+      let compositionAdvancedHistoryVal: any = null;
       if (allWeights?.length > 0) {
         const filtered = allWeights.filter((w: any) => new Date(w.date) >= cutoffDate).reverse();
-        setWeightHistory(filtered.map((w: any) => ({ date: w.date, value: w.weight })));
-      }
-
-      // --- Composition ---
-      setLatestWeight(latest);
-      if (allWeights?.length > 0) {
-        const filtered = allWeights.filter((w: any) => new Date(w.date) >= cutoffDate);
-        setCompositionHistory({
+        weightHistoryVal = filtered.map((w: any) => ({ date: w.date, value: w.weight }));
+        compositionHistoryVal = {
           bodyFat: filtered.filter((w: any) => w.fat_percent > 0).map((w: any) => ({ date: w.date, value: w.fat_percent })).reverse(),
           muscle: filtered.filter((w: any) => w.muscle_percent > 0).map((w: any) => ({ date: w.date, value: w.muscle_percent })).reverse(),
           water: filtered.filter((w: any) => w.water_percent > 0).map((w: any) => ({ date: w.date, value: w.water_percent })).reverse(),
-        });
-        setCompositionAdvancedHistory({
+        };
+        compositionAdvancedHistoryVal = {
           bone: filtered.filter((w: any) => w.bone_mass > 0).map((w: any) => ({ date: w.date, value: w.bone_mass })).reverse(),
           visceral: filtered.filter((w: any) => w.visceral_fat > 0).map((w: any) => ({ date: w.date, value: w.visceral_fat })).reverse(),
           bmr: filtered.filter((w: any) => w.bmr > 0).map((w: any) => ({ date: w.date, value: w.bmr })).reverse(),
           metabolicAge: filtered.filter((w: any) => w.metabolic_age > 0).map((w: any) => ({ date: w.date, value: w.metabolic_age })).reverse(),
-        });
+        };
       }
 
-      // --- Mensurations ---
-      const measurement = allMeasurements?.[0] || null;
-      setLatestMeasurement(measurement);
+      let measurementHistoryVal: any = null;
       if (allMeasurements?.length > 0) {
-        setAllMeasurementsData(allMeasurements);
         const filteredM = allMeasurements.filter((m: any) => new Date(m.date) >= cutoffDate).reverse();
         const fields = ['chest', 'waist', 'navel', 'hips', 'shoulders', 'left_arm', 'right_arm', 'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'neck'];
         const history: any = {};
         fields.forEach(field => {
           history[field] = filteredM.filter((m: any) => m[field] && m[field] > 0).map((m: any) => ({ date: m.date, value: m[field] }));
         });
-        setMeasurementHistory(history);
+        measurementHistoryVal = history;
       }
+
+      // Un seul re-render pour tout mettre à jour
+      unstable_batchedUpdates(() => {
+        if (settings?.gender) setUserGender(settings.gender as 'male' | 'female');
+        if (resolvedGoal) setTargetWeight(resolvedGoal);
+        setWeightData(data);
+        if (allWeights?.length > 0) setAllWeightsData(allWeights);
+        if (bmiVal !== null) setBmi(bmiVal);
+        if (heightCmVal !== null) setHeightCm(heightCmVal);
+        if (weightHistoryVal.length > 0) setWeightHistory(weightHistoryVal);
+        setLatestWeight(latest);
+        if (compositionHistoryVal) setCompositionHistory(compositionHistoryVal);
+        if (compositionAdvancedHistoryVal) setCompositionAdvancedHistory(compositionAdvancedHistoryVal);
+        setLatestMeasurement(allMeasurements?.[0] || null);
+        if (allMeasurements?.length > 0) setAllMeasurementsData(allMeasurements);
+        if (measurementHistoryVal) setMeasurementHistory(measurementHistoryVal);
+      });
     } catch (error) {
       logger.error('Error loading corps data:', error);
     } finally {
@@ -252,6 +258,59 @@ export const CorpsTabPage: React.FC = React.memo(() => {
 
     return [];
   }, [selectedMetric, allWeightsData, allMeasurementsData, heightCm, dateLocale]);
+
+  // --- Calculs jauge BMI (memoizés car trigonométrie coûteuse) ---
+  const bmiGaugeData = useMemo(() => {
+    if (bmi == null || bmi <= 0) return null;
+
+    let bmiLabel = '';
+    let bmiColor = '#22C55E';
+    if (bmi < 16) { bmiLabel = 'Denutrition'; bmiColor = '#DC2626'; }
+    else if (bmi < 18.5) { bmiLabel = 'Maigreur'; bmiColor = '#F97316'; }
+    else if (bmi < 25) { bmiLabel = 'Normal'; bmiColor = '#22C55E'; }
+    else if (bmi < 30) { bmiLabel = 'Surpoids'; bmiColor = '#F97316'; }
+    else if (bmi < 35) { bmiLabel = 'Obesite I'; bmiColor = '#EF4444'; }
+    else if (bmi < 40) { bmiLabel = 'Obesite II'; bmiColor = '#DC2626'; }
+    else { bmiLabel = 'Obesite III'; bmiColor = '#991B1B'; }
+
+    const GW = 200;
+    const GH = 120;
+    const gcx = GW / 2;
+    const gcy = GH - 2;
+    const gr = 65;
+    const gsw = 16;
+    const BMI_MIN = 15;
+    const BMI_MAX = 40;
+    const clampedBmi = Math.max(BMI_MIN, Math.min(BMI_MAX, bmi));
+    const bmiProgress = (clampedBmi - BMI_MIN) / (BMI_MAX - BMI_MIN);
+
+    const toArc = (v: number) => Math.max(0, Math.min(1, (v - BMI_MIN) / (BMI_MAX - BMI_MIN)));
+    const bmiSegs = [
+      { from: toArc(BMI_MIN), to: toArc(18.5), color: '#F97316' },
+      { from: toArc(18.5), to: toArc(25), color: '#22C55E' },
+      { from: toArc(25), to: toArc(30), color: '#F97316' },
+      { from: toArc(30), to: toArc(BMI_MAX), color: '#EF4444' },
+    ];
+    const makeBmiArc = (p1: number, p2: number) => {
+      const a1 = Math.PI * (1 - p1), a2 = Math.PI * (1 - p2);
+      return `M ${gcx + gr * Math.cos(a1)} ${gcy - gr * Math.sin(a1)} A ${gr} ${gr} 0 0 1 ${gcx + gr * Math.cos(a2)} ${gcy - gr * Math.sin(a2)}`;
+    };
+
+    const labelR = gr + gsw / 2 + 16;
+    const bmiLabelsArr = [15, 18, 25, 30, 35, 40];
+    const labelPositions = bmiLabelsArr.map(v => {
+      const p = (v - BMI_MIN) / (BMI_MAX - BMI_MIN);
+      const a = Math.PI * (1 - p);
+      return { v, x: gcx + labelR * Math.cos(a), y: gcy - labelR * Math.sin(a) };
+    });
+
+    const needleAngle = Math.PI * (1 - bmiProgress);
+    const nLen = gr + gsw / 2;
+    const nx = gcx + nLen * Math.cos(needleAngle);
+    const ny = gcy - nLen * Math.sin(needleAngle);
+
+    return { bmiLabel, bmiColor, GW, GH, gcx, gcy, gr, gsw, bmiSegs, makeBmiArc, labelPositions, nx, ny };
+  }, [bmi]);
 
   // --- Ranges ---
   const bodyFatRange = getBodyFatRange(userGender);
@@ -389,60 +448,14 @@ export const CorpsTabPage: React.FC = React.memo(() => {
             onPress={() => setSelectedMetric({ key: 'bmi', label: t('stats.bmi'), color: bmiStatus?.color || '#6366F1', unit: '', icon: <Scale size={18} color={bmiStatus?.color || '#6366F1'} strokeWidth={2.5} />, source: 'weight' })}
             style={[styles.bmiGaugeCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
           >
-            {(() => {
-              let bmiLabel = '';
-              let bmiColor = '#22C55E';
-              if (bmi < 16) { bmiLabel = 'Denutrition'; bmiColor = '#DC2626'; }
-              else if (bmi < 18.5) { bmiLabel = 'Maigreur'; bmiColor = '#F97316'; }
-              else if (bmi < 25) { bmiLabel = 'Normal'; bmiColor = '#22C55E'; }
-              else if (bmi < 30) { bmiLabel = 'Surpoids'; bmiColor = '#F97316'; }
-              else if (bmi < 35) { bmiLabel = 'Obesite I'; bmiColor = '#EF4444'; }
-              else if (bmi < 40) { bmiLabel = 'Obesite II'; bmiColor = '#DC2626'; }
-              else { bmiLabel = 'Obesite III'; bmiColor = '#991B1B'; }
-
-              const GW = 200;
-              const GH = 120;
-              const gcx = GW / 2;
-              const gcy = GH - 2;
-              const gr = 65;
-              const gsw = 16;
-              const BMI_MIN = 15;
-              const BMI_MAX = 40;
-              const clampedBmi = Math.max(BMI_MIN, Math.min(BMI_MAX, bmi));
-              const bmiProgress = (clampedBmi - BMI_MIN) / (BMI_MAX - BMI_MIN);
-
-              const toArc = (v: number) => Math.max(0, Math.min(1, (v - BMI_MIN) / (BMI_MAX - BMI_MIN)));
-              const bmiSegs = [
-                { from: toArc(BMI_MIN), to: toArc(18.5), color: '#F97316' },
-                { from: toArc(18.5), to: toArc(25), color: '#22C55E' },
-                { from: toArc(25), to: toArc(30), color: '#F97316' },
-                { from: toArc(30), to: toArc(BMI_MAX), color: '#EF4444' },
-              ];
-              const makeBmiArc = (p1: number, p2: number) => {
-                const a1 = Math.PI * (1 - p1), a2 = Math.PI * (1 - p2);
-                return `M ${gcx + gr * Math.cos(a1)} ${gcy - gr * Math.sin(a1)} A ${gr} ${gr} 0 0 1 ${gcx + gr * Math.cos(a2)} ${gcy - gr * Math.sin(a2)}`;
-              };
-
-              const labelR = gr + gsw / 2 + 16;
-              const bmiLabelsArr = [15, 18, 25, 30, 35, 40];
-              const labelPositions = bmiLabelsArr.map(v => {
-                const p = (v - BMI_MIN) / (BMI_MAX - BMI_MIN);
-                const a = Math.PI * (1 - p);
-                return { v, x: gcx + labelR * Math.cos(a), y: gcy - labelR * Math.sin(a) };
-              });
-
-              const needleAngle = Math.PI * (1 - bmiProgress);
-              const nLen = gr + gsw / 2;
-              const nx = gcx + nLen * Math.cos(needleAngle);
-              const ny = gcy - nLen * Math.sin(needleAngle);
-
+            {bmiGaugeData && (() => {
+              const { bmiLabel, bmiColor, GW, GH, gcx, gcy, gr, gsw, bmiSegs, makeBmiArc, labelPositions, nx, ny } = bmiGaugeData;
               const cats = [
                 { label: 'Maigreur', color: '#F97316' },
                 { label: 'Normal', color: '#22C55E' },
                 { label: 'Surpoids', color: '#F97316' },
                 { label: 'Obesite', color: '#EF4444' },
               ];
-
               return (
                 <View style={{ alignItems: 'center', paddingVertical: 12 }}>
                   <View style={{ width: GW, height: GH, overflow: 'visible' }}>
@@ -459,7 +472,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
                     </Svg>
                   </View>
                   <Text style={{ fontSize: 32, fontWeight: '900', color: colors.textPrimary, textAlign: 'center', letterSpacing: -1, marginTop: 4 }}>
-                    {bmi.toFixed(1)}
+                    {bmi!.toFixed(1)}
                   </Text>
                   <Text style={{ fontSize: 14, fontWeight: '800', color: bmiColor, textAlign: 'center', marginTop: 2 }}>{bmiLabel}</Text>
                   <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>

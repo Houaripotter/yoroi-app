@@ -10,7 +10,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Dimensions,
   ScrollView,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -38,8 +37,6 @@ import { getProfile, calculateStreak } from '@/lib/database';
 import { useAvatar } from '@/lib/AvatarContext';
 import { getCurrentRank, rankToLevel } from '@/lib/ranks';
 import { getUnifiedPoints } from '@/lib/gamification';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ============================================
 // COMPOSANT PRINCIPAL

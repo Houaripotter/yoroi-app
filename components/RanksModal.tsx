@@ -10,7 +10,6 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
   Animated,
 } from 'react-native';
 import {
@@ -274,8 +273,6 @@ export const RanksModal: React.FC<RanksModalProps> = ({
     </Modal>
   );
 };
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   overlay: {

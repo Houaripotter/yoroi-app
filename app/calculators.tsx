@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -43,8 +42,6 @@ import logger from '@/lib/security/logger';
 // ECRAN CALCULATEURS FITNESS/SANTÉ
 // 100% OFFLINE - Formules mathematiques
 // ============================================
-
-const { width: screenWidth } = Dimensions.get('window');
 
 // Types
 type Gender = 'male' | 'female';

@@ -11,7 +11,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Dimensions,
+  useWindowDimensions,
   Animated,
   Platform,
   TouchableOpacity,
@@ -43,7 +43,6 @@ import { getSportColor, getSportIcon, getSportName, SPORTS } from '@/lib/sports'
 import logger from '@/lib/security/logger';
 import { safeOpenURL } from '@/lib/security/validators';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1500;
 
@@ -596,7 +595,7 @@ export default function WorkoutDetailScreen() {
                 <MaterialCommunityIcons name={sportIconName as any} size={32} color={sportColor} />
               </View>
               <View style={styles.heroTitleBlock}>
-                <Text style={styles.heroSportName} numberOfLines={1}>
+                <Text style={[styles.heroSportName, { color: colors.textOnAccent }]} numberOfLines={1}>
                   {(() => {
                     const base = training.session_type || sportName;
                     if (!details?.isIndoor) return base;
@@ -619,14 +618,14 @@ export default function WorkoutDetailScreen() {
             {/* Big metrics row */}
             <View style={styles.heroMetrics}>
               <View style={styles.heroMetricItem}>
-                <Text style={styles.heroMetricValue}>{formatDuration(duration)}</Text>
+                <Text style={[styles.heroMetricValue, { color: colors.textOnAccent }]}>{formatDuration(duration)}</Text>
                 <Text style={styles.heroMetricLabel}>{t('workoutDetail.duration') || 'Durée'}</Text>
               </View>
               {(distance ?? 0) > 0 && (
                 <>
                   <View style={styles.heroMetricDivider} />
                   <View style={styles.heroMetricItem}>
-                    <Text style={styles.heroMetricValue}>{typeof distance === 'number' ? distance.toFixed(1) : distance}</Text>
+                    <Text style={[styles.heroMetricValue, { color: colors.textOnAccent }]}>{typeof distance === 'number' ? distance.toFixed(1) : distance}</Text>
                     <Text style={styles.heroMetricLabel}>km</Text>
                   </View>
                 </>
@@ -635,7 +634,7 @@ export default function WorkoutDetailScreen() {
                 <>
                   <View style={styles.heroMetricDivider} />
                   <View style={styles.heroMetricItem}>
-                    <Text style={styles.heroMetricValue}>{Math.round(calories || 0)}</Text>
+                    <Text style={[styles.heroMetricValue, { color: colors.textOnAccent }]}>{Math.round(calories || 0)}</Text>
                     <Text style={styles.heroMetricLabel}>kcal</Text>
                   </View>
                 </>
@@ -644,7 +643,7 @@ export default function WorkoutDetailScreen() {
                 <>
                   <View style={styles.heroMetricDivider} />
                   <View style={styles.heroMetricItem}>
-                    <Text style={styles.heroMetricValue}>{avgHR}</Text>
+                    <Text style={[styles.heroMetricValue, { color: colors.textOnAccent }]}>{avgHR}</Text>
                     <Text style={styles.heroMetricLabel}>bpm</Text>
                   </View>
                 </>
@@ -656,13 +655,13 @@ export default function WorkoutDetailScreen() {
               {details?.isIndoor === false && (
                 <View style={styles.heroBadge}>
                   <MapPin size={12} color="#FFFFFF" />
-                  <Text style={styles.heroBadgeText}>Outdoor</Text>
+                  <Text style={[styles.heroBadgeText, { color: colors.textOnAccent }]}>Outdoor</Text>
                 </View>
               )}
               {training.source && training.source !== 'manual' && getSourceDisplayName(training.source) && (
                 <View style={styles.heroBadge}>
                   <Heart size={12} color="#FFFFFF" />
-                  <Text style={styles.heroBadgeText}>
+                  <Text style={[styles.heroBadgeText, { color: colors.textOnAccent }]}>
                     {getSourceDisplayName(training.source)}
                   </Text>
                 </View>
@@ -670,7 +669,7 @@ export default function WorkoutDetailScreen() {
               {details?.elevationAscended != null && details.elevationAscended > 0 && (
                 <View style={styles.heroBadge}>
                   <ArrowUp size={12} color="#FFFFFF" />
-                  <Text style={styles.heroBadgeText}>{details.elevationAscended}m</Text>
+                  <Text style={[styles.heroBadgeText, { color: colors.textOnAccent }]}>{details.elevationAscended}m</Text>
                 </View>
               )}
             </View>
@@ -1434,7 +1433,7 @@ const MapPinView: React.FC<{
       showsTraffic={false}
       showsBuildings
       showsIndoors={false}
-      showsPointsOfInterest={false}
+      showsPointsOfInterests={false}
       toolbarEnabled={false}
       loadingEnabled
       {...(Platform.OS === 'ios' ? { userInterfaceStyle: isDark ? 'dark' : 'light' } : {})}
@@ -1551,6 +1550,7 @@ const HRBarsChart: React.FC<{
   textColor: string;
   zones?: Array<{ minBpm: number; maxBpm: number; color: string }>;
 }> = ({ samples, maxBpm, minBpm, startTime, durationMin, isDark, textColor, zones }) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const chartWidth = SCREEN_WIDTH - 64;
   const chartHeight = 130;
   const bpmPadding = 8;

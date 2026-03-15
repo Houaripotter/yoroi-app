@@ -3,7 +3,7 @@
 // ============================================
 
 import React, { useState, useEffect, useRef, useMemo, memo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, Animated, FlatList, Easing, Switch, DeviceEventEmitter, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useWindowDimensions, Animated, FlatList, Easing, Switch, DeviceEventEmitter, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
@@ -31,8 +31,6 @@ import { logger } from '@/lib/security/logger';
 import HomeChallengesSection from '@/components/home/HomeChallengesSection';
 import { NotificationBellPopup } from '@/components/NotificationBellPopup';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const IS_SMALL_SCREEN = SCREEN_WIDTH < 375; // iPhone SE, petits téléphones
 const CARD_PADDING = 12; // Padding horizontal pour réduire la largeur des cartes
 
 // Composant VRAI Octogone (8 côtés) avec angles super arrondis
@@ -430,10 +428,7 @@ interface Page1MonitoringProps {
 // ═══════════════════════════════════════════════
 // HYDRATION GRID CARD - 3 Pages Swipeables
 // ═══════════════════════════════════════════════
-const H_CARD_W = (SCREEN_WIDTH - CARD_PADDING * 2 - 12) / 2;
 const CARD_BORDER_W = 1.5; // borderWidth en mode clair
-const H_CARD_PAGE_W = H_CARD_W - CARD_BORDER_W * 2; // largeur intérieure pour pages ScrollView
-const H_CARD_INNER = H_CARD_W - 28; // contenu intérieur (padding 14*2)
 const H_BOTTLE_W = 55;
 const H_BOTTLE_H = 82;
 const HYDRATION_HISTORY_KEY = '@yoroi_hydration_history';
@@ -448,6 +443,11 @@ interface HydrationGridCardProps {
 }
 
 const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, isDark }: HydrationGridCardProps) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const H_CARD_W = (SCREEN_WIDTH - CARD_PADDING * 2 - 12) / 2;
+  const H_CARD_PAGE_W = H_CARD_W - CARD_BORDER_W * 2;
+  const H_CARD_INNER = H_CARD_W - 28;
+  const hStyles = useMemo(() => createHStyles(H_CARD_W), [H_CARD_W]);
   const cardBg = isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF';
   const TOTAL_PAGES = 3;
 
@@ -863,8 +863,8 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
               </TouchableOpacity>
             </View>
             <TouchableOpacity style={[hStyles.saveBtn, { backgroundColor: goalSaved ? '#10B981' : '#06B6D4' }]} onPress={handleSaveGoal}>
-              <Check size={14} color="#FFF" strokeWidth={3} />
-              <Text style={hStyles.saveBtnText}>{goalSaved ? 'Enregistré !' : 'Enregistrer'}</Text>
+              <Check size={14} color={colors.textOnAccent} strokeWidth={3} />
+              <Text style={[hStyles.saveBtnText, { color: colors.textOnAccent }]}>{goalSaved ? 'Enregistré !' : 'Enregistrer'}</Text>
             </TouchableOpacity>
 
             <View style={hStyles.notifSection}>
@@ -914,7 +914,7 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
   );
 });
 
-const hStyles = StyleSheet.create({
+const createHStyles = (H_CARD_W: number) => StyleSheet.create({
   card: {
     width: H_CARD_W,
     borderRadius: 16,
@@ -1037,6 +1037,11 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   unreadNotifCount = 0,
   onNotifCountChange,
 }) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const IS_SMALL_SCREEN = SCREEN_WIDTH < 375;
+  const H_CARD_W = (SCREEN_WIDTH - CARD_PADDING * 2 - 12) / 2;
+  const H_CARD_PAGE_W = H_CARD_W - CARD_BORDER_W * 2;
+  const styles = useMemo(() => createStyles(IS_SMALL_SCREEN, SCREEN_WIDTH), [IS_SMALL_SCREEN, SCREEN_WIDTH]);
   const { colors, isDark, themeColor } = useTheme();
   const { t, locale } = useI18n();
   const { avatarImage: contextAvatarImage } = useAvatar();
@@ -1445,10 +1450,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
           {/* CENTRE - Texte */}
           <View style={styles.centerSection}>
-            <Text style={[styles.greetingClean, { color: '#FFFFFF' }]}>
+            <Text style={[styles.greetingClean, { color: colors.textOnAccent }]}>
               {getGreeting()}
             </Text>
-            <Text style={[styles.nameClean, { color: '#FFFFFF' }]}>
+            <Text style={[styles.nameClean, { color: colors.textOnAccent }]}>
               {userName}
             </Text>
           </View>
@@ -2342,7 +2347,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 // Export avec memo pour optimiser les re-renders
 export const Page1Monitoring = memo(Page1MonitoringComponent);
 
-const styles = StyleSheet.create({
+const createStyles = (IS_SMALL_SCREEN: boolean, SCREEN_WIDTH: number) => StyleSheet.create({
   container: {
     flex: 1,
   },

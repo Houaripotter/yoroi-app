@@ -1,12 +1,8 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions, Animated, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { TrendingDown, TrendingUp, Target, Dumbbell, Apple, Droplet } from 'lucide-react-native';
 import { scale, scaleModerate, getGridColumns } from '@/constants/responsive';
-
-const { width: screenWidth } = Dimensions.get('window');
-const columns = getGridColumns();
-const CARD_SIZE = (screenWidth - 32 - 8 * (columns - 1)) / columns;
 
 interface WeightLottieCardProps {
   weight?: number;
@@ -29,6 +25,10 @@ export const WeightLottieCard = React.memo<WeightLottieCardProps>(({
   waterPercent,
   onPress
 }) => {
+  const { width: screenWidth } = useWindowDimensions();
+  const columns = getGridColumns();
+  const CARD_SIZE = (screenWidth - 32 - 8 * (columns - 1)) / columns;
+  const styles = useMemo(() => createStyles(CARD_SIZE), [CARD_SIZE]);
   const { colors, isDark } = useTheme();
 
   // Animation
@@ -199,7 +199,7 @@ export const WeightLottieCard = React.memo<WeightLottieCardProps>(({
   );
 });
 
-const styles = StyleSheet.create({
+const createStyles = (CARD_SIZE: number) => StyleSheet.create({
   card: {
     width: CARD_SIZE,
     height: CARD_SIZE,

@@ -99,8 +99,15 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
     return { grade: 'D', label: 'Insuffisant', color: '#EF4444', score: final };
   }, [sleepPhasesData]);
 
-  const safeSleepHistory = Array.isArray(sleepHistory) ? sleepHistory : [];
-  const safeSleepHistory_ = Array.isArray(rawSleepHistory) ? rawSleepHistory : [];
+  // Stabiliser les références des arrays pour éviter les recalculs inutiles des useMemo dépendants
+  const safeSleepHistory = useMemo(
+    () => (Array.isArray(sleepHistory) ? sleepHistory : []),
+    [sleepHistory]
+  );
+  const safeSleepHistory_ = useMemo(
+    () => (Array.isArray(rawSleepHistory) ? rawSleepHistory : []),
+    [rawSleepHistory]
+  );
 
   // Nuits filtrées (pas les siestes)
   const sortedNights = useMemo(() =>
@@ -165,58 +172,68 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
     return [];
   }, [selectedMetric, durationHistory, phaseHistories]);
 
-  // ── Gauge score sommeil — variables précalculées (pas de composant interne)
-  const gaugeGW = 200, gaugeGH = 120;
-  const gaugeGcx = gaugeGW / 2, gaugeGcy = gaugeGH - 2;
-  const gaugeGr = 65, gaugeGsw = 16;
-  const gaugeProgress = sleepScore ? Math.max(0, Math.min(100, sleepScore.score)) / 100 : 0;
-  const gaugeSegs = [
-    { from: 0, to: 0.5, color: '#EF4444' },
-    { from: 0.5, to: 0.7, color: '#F59E0B' },
-    { from: 0.7, to: 0.85, color: '#3B82F6' },
-    { from: 0.85, to: 1, color: '#22C55E' },
-  ];
-  const gaugeMakeArc = (p1: number, p2: number) => {
-    const a1 = Math.PI * (1 - p1), a2 = Math.PI * (1 - p2);
-    return `M ${gaugeGcx + gaugeGr * Math.cos(a1)} ${gaugeGcy - gaugeGr * Math.sin(a1)} A ${gaugeGr} ${gaugeGr} 0 0 1 ${gaugeGcx + gaugeGr * Math.cos(a2)} ${gaugeGcy - gaugeGr * Math.sin(a2)}`;
-  };
-  const gaugeNeedleAngle = Math.PI * (1 - gaugeProgress);
-  const gaugeNLen = gaugeGr + gaugeGsw / 2;
-  const gaugeNx = gaugeGcx + gaugeNLen * Math.cos(gaugeNeedleAngle);
-  const gaugeNy = gaugeGcy - gaugeNLen * Math.sin(gaugeNeedleAngle);
-  const gaugeLabels = [{ v: 'D', p: 0.15 }, { v: 'C', p: 0.45 }, { v: 'B', p: 0.72 }, { v: 'A', p: 0.92 }];
-  const gaugeExplanation = sleepScore
-    ? sleepScore.grade === 'A'
-      ? { text: 'Ton sommeil est optimal. Durée et phases idéales. Continue ainsi !', tips: [] as string[] }
-      : sleepScore.grade === 'B'
-      ? {
-          text: 'Bon sommeil, quelques axes d\'amélioration possibles.',
-          tips: [
-            avgHours < 7 ? 'Vise 7-9h de sommeil par nuit' : null,
-            sleepPhasesData.avgDeep < 60 ? 'Ton sommeil profond est un peu court — évite les écrans 1h avant de dormir' : null,
-            sleepPhasesData.avgRem < 90 ? 'Peu de sommeil REM — essaie de te coucher plus tôt' : null,
-          ].filter(Boolean) as string[],
-        }
-      : sleepScore.grade === 'C'
-      ? {
-          text: 'Ton sommeil est insuffisant. Voici ce que tu peux améliorer :',
-          tips: [
-            avgHours < 6 ? 'Tu dors trop peu — vise au minimum 7h par nuit' : null,
-            'Couche-toi et lève-toi à des heures fixes chaque jour',
-            'Évite la caféine après 14h et l\'alcool le soir',
-            'Maintiens ta chambre fraîche (18-20°C) et sombre',
-          ].filter(Boolean) as string[],
-        }
-      : {
-          text: 'Ton sommeil est sérieusement déficient. Priorité absolue :',
-          tips: [
-            'Tu dors bien moins que les 7h recommandées',
-            'Consulte un médecin si ce manque de sommeil dure depuis plusieurs semaines',
-            'Évite les somnifères sans avis médical',
-            'Commence par une routine de coucher fixe chaque soir',
-          ] as string[],
-        }
-    : null;
+  // ── Gauge score sommeil — variables précalculées et memoizées (trigonométrie)
+  const gaugeData = useMemo(() => {
+    const gaugeGW = 200, gaugeGH = 120;
+    const gaugeGcx = gaugeGW / 2, gaugeGcy = gaugeGH - 2;
+    const gaugeGr = 65, gaugeGsw = 16;
+    const gaugeProgress = sleepScore ? Math.max(0, Math.min(100, sleepScore.score)) / 100 : 0;
+    const gaugeSegs = [
+      { from: 0, to: 0.5, color: '#EF4444' },
+      { from: 0.5, to: 0.7, color: '#F59E0B' },
+      { from: 0.7, to: 0.85, color: '#3B82F6' },
+      { from: 0.85, to: 1, color: '#22C55E' },
+    ];
+    const gaugeMakeArc = (p1: number, p2: number) => {
+      const a1 = Math.PI * (1 - p1), a2 = Math.PI * (1 - p2);
+      return `M ${gaugeGcx + gaugeGr * Math.cos(a1)} ${gaugeGcy - gaugeGr * Math.sin(a1)} A ${gaugeGr} ${gaugeGr} 0 0 1 ${gaugeGcx + gaugeGr * Math.cos(a2)} ${gaugeGcy - gaugeGr * Math.sin(a2)}`;
+    };
+    const gaugeNeedleAngle = Math.PI * (1 - gaugeProgress);
+    const gaugeNLen = gaugeGr + gaugeGsw / 2;
+    const gaugeNx = gaugeGcx + gaugeNLen * Math.cos(gaugeNeedleAngle);
+    const gaugeNy = gaugeGcy - gaugeNLen * Math.sin(gaugeNeedleAngle);
+    const gaugeLabels = [{ v: 'D', p: 0.15 }, { v: 'C', p: 0.45 }, { v: 'B', p: 0.72 }, { v: 'A', p: 0.92 }];
+    return { gaugeGW, gaugeGH, gaugeGcx, gaugeGcy, gaugeGr, gaugeGsw, gaugeSegs, gaugeMakeArc, gaugeNx, gaugeNy, gaugeLabels };
+  }, [sleepScore]);
+
+  const { gaugeGW, gaugeGH, gaugeGcx, gaugeGcy, gaugeGr, gaugeGsw, gaugeSegs, gaugeMakeArc, gaugeNx, gaugeNy, gaugeLabels } = gaugeData;
+
+  const gaugeExplanation = useMemo(() => {
+    if (!sleepScore) return null;
+    if (sleepScore.grade === 'A') {
+      return { text: 'Ton sommeil est optimal. Durée et phases idéales. Continue ainsi !', tips: [] as string[] };
+    }
+    if (sleepScore.grade === 'B') {
+      return {
+        text: 'Bon sommeil, quelques axes d\'amélioration possibles.',
+        tips: [
+          avgHours < 7 ? 'Vise 7-9h de sommeil par nuit' : null,
+          sleepPhasesData.avgDeep < 60 ? 'Ton sommeil profond est un peu court — évite les écrans 1h avant de dormir' : null,
+          sleepPhasesData.avgRem < 90 ? 'Peu de sommeil REM — essaie de te coucher plus tôt' : null,
+        ].filter(Boolean) as string[],
+      };
+    }
+    if (sleepScore.grade === 'C') {
+      return {
+        text: 'Ton sommeil est insuffisant. Voici ce que tu peux améliorer :',
+        tips: [
+          avgHours < 6 ? 'Tu dors trop peu — vise au minimum 7h par nuit' : null,
+          'Couche-toi et lève-toi à des heures fixes chaque jour',
+          'Évite la caféine après 14h et l\'alcool le soir',
+          'Maintiens ta chambre fraîche (18-20°C) et sombre',
+        ].filter(Boolean) as string[],
+      };
+    }
+    return {
+      text: 'Ton sommeil est sérieusement déficient. Priorité absolue :',
+      tips: [
+        'Tu dors bien moins que les 7h recommandées',
+        'Consulte un médecin si ce manque de sommeil dure depuis plusieurs semaines',
+        'Évite les somnifères sans avis médical',
+        'Commence par une routine de coucher fixe chaque soir',
+      ] as string[],
+    };
+  }, [sleepScore, avgHours, sleepPhasesData.avgDeep, sleepPhasesData.avgRem]);
 
   // Fond légèrement teinté de la couleur accent (entre les cartes)
   const sectionBg = isDark

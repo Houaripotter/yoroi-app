@@ -3,14 +3,14 @@
 // ============================================
 // Graphiques de mensurations corporelles (tour de taille, bras, etc.)
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,8 +24,6 @@ import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { BlurView } from 'expo-blur';
 import logger from '@/lib/security/logger';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type Period = '30d' | '90d' | '6m' | 'all';
 type MeasurementType = 'waist' | 'chest' | 'arms' | 'thighs' | 'hips';
@@ -50,6 +48,8 @@ export default function MeasurementsDetailScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { locale } = useI18n();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
 
   // 🔒 SÉCURITÉ: Protection contre les screenshots
   const { isProtected, isBlurred, screenshotDetected } = useSensitiveScreen();
@@ -355,7 +355,7 @@ export default function MeasurementsDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (SCREEN_WIDTH: number) => StyleSheet.create({
   screen: {
     flex: 1,
   },

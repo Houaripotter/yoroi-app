@@ -7,7 +7,6 @@ import {
   Vibration,
   Platform,
   ScrollView,
-  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,8 +51,6 @@ import logger from '@/lib/security/logger';
 // Mode Combat : rounds avec repos (JJB, MMA, Boxe, etc.)
 // Mode Tabata : HIIT 20/10
 // Mode EMOM : Every Minute On the Minute
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type TimerMode = 'musculation' | 'combat' | 'tabata' | 'emom' | 'amrap' | 'fortime';
 type TimerState = 'idle' | 'running' | 'paused' | 'rest' | 'finished';
@@ -703,9 +700,7 @@ export default function TimerScreen() {
             triggerHaptic('heavy');
             Vibration.vibrate([0, 500, 200, 500, 200, 500]);
             flashService.alarm();
-            // Annuler la notification planifiée : le son JS gère l'alarme en premier plan
-            // (évite le double son système en plus du wizz personnalisé)
-            timerNotifications.cancelNotification().catch(() => {});
+            // La notification planifiée joue wizz.mp3 au bon moment — ne pas annuler
 
             // Logique selon le mode
             switch (mode) {

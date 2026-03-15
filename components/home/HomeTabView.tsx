@@ -2,8 +2,8 @@
 // YOROI - HOME TAB VIEW (iOS Style Horizontal Navigation)
 // ============================================
 
-import React, { useRef, useState, useEffect, memo } from 'react';
-import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text, Modal, Animated, SafeAreaView } from 'react-native';
+import React, { useRef, useState, useEffect, memo, useMemo } from 'react';
+import { View, ScrollView, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text, Modal, Animated, SafeAreaView, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,8 +13,6 @@ import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-nativ
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Page1Monitoring } from './pages/Page1Monitoring';
 import { logger } from '@/lib/security/logger';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const PAGE_ORDER_KEY = '@yoroi_home_page_order';
 
@@ -127,6 +125,8 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
   unreadNotifCount = 0,
   onNotifCountChange,
 }) => {
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(SCREEN_WIDTH, SCREEN_HEIGHT), [SCREEN_WIDTH, SCREEN_HEIGHT]);
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -431,7 +431,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
   );
 });
 
-const styles = StyleSheet.create({
+const createStyles = (SCREEN_WIDTH: number, SCREEN_HEIGHT: number) => StyleSheet.create({
   container: {
     flex: 1,
     overflow: 'visible',

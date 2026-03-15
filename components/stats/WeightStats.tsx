@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions, ScrollView } from 'react-native';
 import { Weight as WeightIcon, Target, ArrowDown, ArrowUp, Maximize2 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Weight } from '@/lib/database';
@@ -10,23 +10,17 @@ import { SparklineChart } from '../charts/SparklineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { getHistoryDays, scale, isIPad } from '@/constants/responsive';
 
-const { width } = Dimensions.get('window');
 // iPhone garde le padding original de 16, iPad utilise scale(8)
 const CONTAINER_PADDING = isIPad() ? scale(8) : 16;
 const CHART_HEIGHT = scale(240);
-const PADDING_LEFT = scale(70); // Largement augmenté pour éviter le chevauchement avec les labels Y
+const PADDING_LEFT = scale(70);
 const PADDING_RIGHT = scale(25);
-const PADDING_TOP = scale(40); // Augmenté pour les badges de valeurs
+const PADDING_TOP = scale(40);
 const PADDING_BOTTOM = scale(40);
 
 // Largeur des cartes statistiques - 2 colonnes sur iPhone, 4 colonnes sur iPad
 const STATS_COLUMNS = isIPad() ? 4 : 2;
-const STATS_GAP = 12; // Gap fixe pour tous les appareils
-// Largeur carte = (largeur totale - padding container - gaps entre colonnes) / nombre colonnes
-// Pour 2 colonnes: 1 gap de 12px entre elles
-const STATS_CARD_WIDTH = (width - CONTAINER_PADDING * 2 - STATS_GAP * (STATS_COLUMNS - 1)) / STATS_COLUMNS;
-// Largeur du sparkline = largeur carte - padding (14*2) + margin négatif (6*2)
-const SPARKLINE_WIDTH = STATS_CARD_WIDTH - 28 + 12;
+const STATS_GAP = 12;
 
 interface WeightStatsProps {
   data: Weight[];
@@ -36,6 +30,10 @@ type Period = '7j' | '30j' | '90j' | 'all';
 
 export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
   const { colors, isDark } = useTheme();
+  const { width } = useWindowDimensions();
+  const STATS_CARD_WIDTH = (width - CONTAINER_PADDING * 2 - STATS_GAP * (STATS_COLUMNS - 1)) / STATS_COLUMNS;
+  const SPARKLINE_WIDTH = STATS_CARD_WIDTH - 28 + 12;
+  const styles = useMemo(() => createStyles(STATS_CARD_WIDTH), [STATS_CARD_WIDTH]);
   const [period, setPeriod] = useState<Period>('30j');
   const [selectedPoint, setSelectedPoint] = useState<{
     index: number;
@@ -682,7 +680,7 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (STATS_CARD_WIDTH: number) => StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: CONTAINER_PADDING,

@@ -2858,7 +2858,7 @@ class HealthConnectService {
         this.withTimeout(this.getFloorsClimbed(), TIMEOUT_MS),          // 17
       ]);
 
-      const r = (i: number) => results[i].status === 'fulfilled' ? results[i].value : null;
+      const r = (i: number): any => results[i].status === 'fulfilled' ? results[i].value : null;
 
       // Logger les échecs
       const dataTypes = ['weight', 'steps', 'sleep', 'hydration', 'heartRate', 'hrv',

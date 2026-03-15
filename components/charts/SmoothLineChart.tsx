@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { Path, Circle, Line, Defs, LinearGradient, Stop, G, Text as SvgText } from 'react-native-svg';
 
 interface DataPoint {
@@ -44,7 +44,7 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
   spacing = 50,
   rulesColor = 'rgba(100,100,100,0.15)',
 }) => {
-  const screenWidth = Dimensions.get('window').width;
+  const { width: screenWidth } = useWindowDimensions();
   const chartWidth = propWidth ?? (screenWidth - 60);
   const padding = { top: 20, right: 10, bottom: 30, left: 40 };
   const innerWidth = chartWidth - padding.left - padding.right;

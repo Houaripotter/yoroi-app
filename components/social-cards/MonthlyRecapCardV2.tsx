@@ -1,5 +1,5 @@
 import React, { forwardRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { MonthStats } from '@/lib/social-cards/useMonthStats';
@@ -10,8 +10,6 @@ import { SocialCardFooter } from './SocialCardBranding';
 // Optimisé avec useMemo pour réduire les re-allocations
 // ============================================
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - 40;
 const GOLD_COLOR = '#D4AF37';
 
 // Hauteurs fixes calculées sur ratio 16:9 pour éviter les débordements
@@ -40,7 +38,8 @@ export const MonthlyRecapCardV2 = React.memo(forwardRef<View, MonthlyRecapCardV2
     stats, format, backgroundImage, backgroundType = 'black', weeklyGoal = 4, isLandscape = false,
     username, userAvatar, profilePhoto, rank, userLevel
   }, ref) => {
-
+    const { width: screenWidth } = useWindowDimensions();
+    const CARD_WIDTH = screenWidth - 40;
     const isStories = format === 'stories';
     const cardHeight = isStories ? CARD_WIDTH * (16 / 9) : CARD_WIDTH;
     const keepPhotoClear = !!backgroundImage;

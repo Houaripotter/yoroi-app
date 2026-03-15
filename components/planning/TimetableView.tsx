@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Image,
   Modal,
-  Dimensions,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useTheme } from '@/lib/ThemeContext';
@@ -20,8 +19,6 @@ import { format, addDays, startOfWeek, endOfWeek, getWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
 import { Training, Club } from '@/lib/database';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const DAYS_SHORT = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
 
@@ -367,7 +364,7 @@ export const TimetableView: React.FC<TimetableViewProps> = memo(({
                                 )}
                                 {sessions.length > 4 && (
                                   <View style={[styles.sessionCountBadge, { backgroundColor: colors.accent }]}>
-                                    <Text style={styles.sessionCountText}>
+                                    <Text style={[styles.sessionCountText, { color: colors.textOnAccent }]}>
                                       +{sessions.length - 4}
                                     </Text>
                                   </View>
@@ -759,7 +756,7 @@ export const TimetableView: React.FC<TimetableViewProps> = memo(({
                   style={[styles.detailCloseBtn, { backgroundColor: colors.accent }]}
                   onPress={() => setShowSessionDetail(false)}
                 >
-                  <Text style={styles.detailCloseBtnText}>Fermer</Text>
+                  <Text style={[styles.detailCloseBtnText, { color: colors.textOnAccent }]}>Fermer</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -794,7 +791,7 @@ export const TimetableView: React.FC<TimetableViewProps> = memo(({
                 }}
               >
                 <Plus size={24} color="#FFFFFF" />
-                <Text style={styles.addMenuButtonText}>Ajouter entraînement</Text>
+                <Text style={[styles.addMenuButtonText, { color: colors.textOnAccent }]}>Ajouter entraînement</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -807,8 +804,8 @@ export const TimetableView: React.FC<TimetableViewProps> = memo(({
                   }
                 }}
               >
-                <Moon size={24} color="#000000" fill="#000000" />
-                <Text style={[styles.addMenuButtonText, { color: '#000000' }]}>Marquer repos</Text>
+                <Moon size={24} color={colors.textPrimary} fill={colors.textPrimary} />
+                <Text style={[styles.addMenuButtonText, { color: colors.textPrimary }]}>Marquer repos</Text>
               </TouchableOpacity>
             </View>
 
@@ -912,7 +909,7 @@ export const TimetableView: React.FC<TimetableViewProps> = memo(({
                   }}
                 >
                   <Plus size={20} color="#000000" />
-                  <Text style={styles.addSessionButtonText}>Ajouter une séance</Text>
+                  <Text style={[styles.addSessionButtonText, { color: colors.textOnAccent }]}>Ajouter une séance</Text>
                 </TouchableOpacity>
               </>
             )}

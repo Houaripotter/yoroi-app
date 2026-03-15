@@ -1,17 +1,17 @@
-import Expo
-import React
-import ReactAppDependencyProvider
+internal import Expo
+internal import React
+internal import ReactAppDependencyProvider
 import UserNotifications
 import AVFoundation
 
 @UIApplicationMain
-public class AppDelegate: ExpoAppDelegate {
+class AppDelegate: ExpoAppDelegate {
   var window: UIWindow?
 
   var reactNativeDelegate: ExpoReactNativeFactoryDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
 
-  public override func application(
+  override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
@@ -21,7 +21,6 @@ public class AppDelegate: ExpoAppDelegate {
 
     reactNativeDelegate = delegate
     reactNativeFactory = factory
-    bindReactNativeFactory(factory)
 
 #if os(iOS) || os(tvOS)
     window = UIWindow(frame: UIScreen.main.bounds)
@@ -38,7 +37,7 @@ public class AppDelegate: ExpoAppDelegate {
   }
 
   // Linking API
-  public override func application(
+  override func application(
     _ app: UIApplication,
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
@@ -47,7 +46,7 @@ public class AppDelegate: ExpoAppDelegate {
   }
 
   // Universal Links
-  public override func application(
+  override func application(
     _ application: UIApplication,
     continue userActivity: NSUserActivity,
     restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
@@ -61,7 +60,7 @@ public class AppDelegate: ExpoAppDelegate {
 extension AppDelegate: UNUserNotificationCenterDelegate {
 
   /// Appelé quand une notification arrive PENDANT que l'app est au premier plan
-  public func userNotificationCenter(
+  func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification,
     withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
@@ -74,7 +73,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
   }
 
   /// Appelé quand l'utilisateur tape sur la notification (app en veille/fond)
-  public func userNotificationCenter(
+  func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     didReceive response: UNNotificationResponse,
     withCompletionHandler completionHandler: @escaping () -> Void

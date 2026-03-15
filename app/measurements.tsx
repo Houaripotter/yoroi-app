@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   StatusBar,
-  Dimensions,
+  useWindowDimensions,
   Keyboard,
   RefreshControl,
 } from 'react-native';
@@ -38,8 +38,6 @@ import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { BlurView } from 'expo-blur';
 import logger from '@/lib/security/logger';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CHART_WIDTH = SCREEN_WIDTH - 80;
 const CHART_HEIGHT = 120;
 
 // ============================================
@@ -50,7 +48,7 @@ const CHART_HEIGHT = 120;
 const MiniChart = ({
   data,
   color,
-  width = CHART_WIDTH,
+  width,
   height = CHART_HEIGHT,
 }: {
   data: number[];
@@ -58,10 +56,12 @@ const MiniChart = ({
   width?: number;
   height?: number;
 }) => {
+  const { width: screenWidth } = useWindowDimensions();
+  const resolvedWidth = width ?? (screenWidth - 80);
   if (data.length < 2) return null;
 
   const padding = 10;
-  const chartWidth = width - padding * 2;
+  const chartWidth = resolvedWidth - padding * 2;
   const chartHeight = height - padding * 2;
 
   const minValue = Math.min(...data) * 0.95;
@@ -87,7 +87,7 @@ const MiniChart = ({
   const areaD = `${pathD} L ${points[points.length - 1].x} ${height - padding} L ${padding} ${height - padding} Z`;
 
   return (
-    <Svg width={width} height={height}>
+    <Svg width={resolvedWidth} height={height}>
       <Defs>
         <SvgGradient id={`gradient-${color}`} x1="0%" y1="0%" x2="0%" y2="100%">
           <Stop offset="0%" stopColor={color} stopOpacity={0.3} />

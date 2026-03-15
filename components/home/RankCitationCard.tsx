@@ -13,7 +13,7 @@ import {
   Animated,
   Easing,
   ScrollView,
-  Dimensions,
+  useWindowDimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
@@ -32,7 +32,6 @@ const LEVEL_MAP: Record<string, number> = {
 };
 
 const PAGES = 4;
-const SCREEN_W = Dimensions.get('window').width;
 
 interface RankCitationCardProps {
   streak: number;
@@ -43,6 +42,7 @@ interface RankCitationCardProps {
 
 const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, totalPoints, dailyQuote, avatarUri }) => {
   const { t } = useI18n();
+  const { width: SCREEN_W } = useWindowDimensions();
   const { colors, isDark } = useTheme();
 
   const rawRank = useMemo(() => getCurrentRank(totalPoints), [totalPoints]);

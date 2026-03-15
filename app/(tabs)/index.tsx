@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   Image,
   Animated,
   Share,
@@ -116,7 +115,6 @@ import { getDailyChallenges, ActiveChallenge } from '@/lib/challengesService';
 import { getHomeCustomization, isSectionVisible as checkSectionVisible, HomeSection } from '@/lib/homeCustomizationService';
 import logger from '@/lib/security/logger';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HYDRATION_KEY = '@yoroi_hydration_today';
 const HYDRATION_GOAL_KEY = '@yoroi_hydration_goal';
 const DEFAULT_HYDRATION_GOAL = 2500;
@@ -1304,7 +1302,7 @@ export default function HomeScreen() {
                 </View>
                 {/* Badge niveau discret */}
                 <View style={[styles.levelBadgeSmall, { backgroundColor: colors.accent }]}>
-                  <Text style={styles.levelBadgeText}>{rankLevel}</Text>
+                  <Text style={[styles.levelBadgeText, { color: colors.textOnAccent }]}>{rankLevel}</Text>
                 </View>
               </TouchableOpacity>
             </View>

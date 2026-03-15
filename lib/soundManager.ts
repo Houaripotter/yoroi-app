@@ -1,11 +1,12 @@
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import type { AudioPlayer } from 'expo-audio';
 import logger from '@/lib/security/logger';
 
 // ============================================
 // SOUND DESIGN - SoundManager
 // ============================================
 
-let soundCache: { [key: string]: Audio.Sound } = {};
+let soundCache: { [key: string]: AudioPlayer } = {};
 
 // Mapping statique des fichiers sons (requis par React Native bundler)
 const SOUND_FILES: { [key: string]: any } = {
@@ -22,10 +23,9 @@ const SOUND_FILES: { [key: string]: any } = {
  */
 export const initSoundManager = async () => {
   try {
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
+    await setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: false,
     });
     logger.info('SoundManager initialisé');
   } catch (error) {
@@ -36,27 +36,21 @@ export const initSoundManager = async () => {
 /**
  * Charge un son dans le cache
  */
-const loadSound = async (soundName: string): Promise<Audio.Sound | null> => {
+const loadSound = (soundName: string): AudioPlayer | null => {
   try {
-    // Si déjà chargé, retourner le son existant
     if (soundCache[soundName]) {
       return soundCache[soundName];
     }
 
-    // Vérifier si le fichier son existe dans le mapping
     const soundModule = SOUND_FILES[soundName];
     if (!soundModule) {
       logger.info(`Fichier son ${soundName}.mp3 non trouvé (sera ajouté plus tard)`);
       return null;
     }
 
-    const { sound } = await Audio.Sound.createAsync(
-      soundModule,
-      { shouldPlay: false }
-    );
-
-    soundCache[soundName] = sound;
-    return sound;
+    const player = createAudioPlayer(soundModule);
+    soundCache[soundName] = player;
+    return player;
   } catch (error) {
     logger.error(`Erreur chargement son ${soundName}:`, error);
     return null;
@@ -68,16 +62,15 @@ const loadSound = async (soundName: string): Promise<Audio.Sound | null> => {
  */
 export const playSound = async (soundName: 'fanfare_badge' | 'level_up' | 'recovery' | 'ring' | 'beep' | 'gong', volume: number = 0.7) => {
   try {
-    const sound = await loadSound(soundName);
-    if (!sound) {
+    const player = loadSound(soundName);
+    if (!player) {
       logger.warn(`Son ${soundName} non disponible`);
       return;
     }
 
-    // Réinitialiser la position si le son est déjà en cours
-    await sound.setPositionAsync(0);
-    await sound.setVolumeAsync(volume);
-    await sound.playAsync();
+    await player.seekTo(0);
+    player.volume = volume;
+    player.play();
 
     logger.info(`Son ${soundName} joué`);
   } catch (error) {
@@ -123,10 +116,10 @@ export const playBeepSound = async () => {
 /**
  * Libère les ressources audio
  */
-export const cleanupSounds = async () => {
+export const cleanupSounds = () => {
   try {
-    for (const [name, sound] of Object.entries(soundCache)) {
-      await sound.unloadAsync();
+    for (const [name, player] of Object.entries(soundCache)) {
+      player.remove();
       delete soundCache[name];
     }
     logger.info('Sons libérés');
@@ -142,11 +135,11 @@ export const prepareSounds = async () => {
   try {
     await initSoundManager();
     // Précharger les sons en arrière-plan
-    loadSound('fanfare_badge').catch(() => {});
-    loadSound('level_up').catch(() => {});
-    loadSound('ring').catch(() => {});
-    loadSound('gong').catch(() => {});
-    loadSound('beep').catch(() => {});
+    loadSound('fanfare_badge');
+    loadSound('level_up');
+    loadSound('ring');
+    loadSound('gong');
+    loadSound('beep');
   } catch (error) {
     logger.error('Erreur préparation sons:', error);
   }

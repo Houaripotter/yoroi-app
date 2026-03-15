@@ -10,8 +10,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   Image,
+  useWindowDimensions,
   PanResponder,
   DeviceEventEmitter,
 } from 'react-native';
@@ -30,9 +30,6 @@ import { logger } from '@/lib/security/logger';
 
 export const FRAME_SHAPE_CHANGED_EVENT = 'FRAME_SHAPE_CHANGED';
 export const FRAME_ACCESSORY_CHANGED_EVENT = 'FRAME_ACCESSORY_CHANGED';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const FRAME_SIZE = (SCREEN_WIDTH - SPACING.lg * 2 - SPACING.md * 2) / 3;
 
 export const FRAME_STORAGE_KEY = '@yoroi_frame_shape';
 export const ACCESSORY_STORAGE_KEY = '@yoroi_frame_accessory';
@@ -1968,6 +1965,9 @@ const PREVIEW_SIZE = 160;
 const TOUCH_ZONE = 280; // zone de touch plus grande que le cercle pour pinch/zoom confortable
 
 export default function FrameSelectionScreen() {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const FRAME_SIZE = (SCREEN_WIDTH - SPACING.lg * 2 - SPACING.md * 2) / 3;
+  const styles = useMemo(() => createStyles(SCREEN_WIDTH, FRAME_SIZE), [SCREEN_WIDTH, FRAME_SIZE]);
   const { colors, isDark } = useTheme();
   const [selectedFrame, setSelectedFrame] = useState<FrameShape>('circle');
   const [selectedAccessory, setSelectedAccessory] = useState<FrameAccessory>('none');
@@ -2725,7 +2725,7 @@ export default function FrameSelectionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (SCREEN_WIDTH: number, FRAME_SIZE: number) => StyleSheet.create({
   container: {
     flex: 1,
   },

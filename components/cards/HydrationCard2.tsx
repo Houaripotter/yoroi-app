@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated, Easing, Modal } from 'react-native';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Modal, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Droplets, Minus, Settings, Trophy } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -8,11 +8,6 @@ import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 
 import { getGridColumns } from '@/constants/responsive';
 import logger from '@/lib/security/logger';
-
-const { width: screenWidth } = Dimensions.get('window');
-// paddingHorizontal 16*2 = 32, gaps entre cartes = 8 * (colonnes - 1)
-const columns = getGridColumns(); // 2 sur iPhone, 3 sur iPad
-const CARD_SIZE = (screenWidth - 32 - 8 * (columns - 1)) / columns;
 
 interface HydrationCard2Props {
   currentMl?: number; // En millilitres maintenant
@@ -25,6 +20,10 @@ export const HydrationCard2 = React.memo<HydrationCard2Props>(({
   goalMl = 2500,
   onAddMl
 }) => {
+  const { width: screenWidth } = useWindowDimensions();
+  const columns = getGridColumns();
+  const CARD_SIZE = (screenWidth - 32 - 8 * (columns - 1)) / columns;
+  const styles = useMemo(() => createStyles(CARD_SIZE), [CARD_SIZE]);
   logger.info('🔵 HYDRATION CARD 2 LOADED WITH:', { currentMl, goalMl, hasOnAddMl: !!onAddMl });
   const { colors } = useTheme();
   const goalInLiters = goalMl / 1000;
@@ -404,7 +403,7 @@ export const HydrationCard2 = React.memo<HydrationCard2Props>(({
   );
 });
 
-const styles = StyleSheet.create({
+const createStyles = (CARD_SIZE: number) => StyleSheet.create({
   card: {
     width: CARD_SIZE,
     height: CARD_SIZE,

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   Animated,
   RefreshControl,
 } from 'react-native';
@@ -32,7 +31,6 @@ import { getSleepStats, formatSleepDuration, SleepStats } from '@/lib/sleepServi
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HYDRATION_KEY = '@yoroi_hydration_today';
 const HYDRATION_GOAL = 2500;
 

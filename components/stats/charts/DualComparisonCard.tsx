@@ -6,7 +6,7 @@
 // ============================================
 
 import React, { useState, useMemo, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent, ScrollView, Dimensions, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent, ScrollView, useWindowDimensions, Modal } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import Svg, { Path, Circle as SvgCircle, Line, Text as SvgText, Defs, LinearGradient, Stop, G, Rect } from 'react-native-svg';
 import { ArrowLeftRight, TrendingUp, TrendingDown, Minus, Maximize2, X } from 'lucide-react-native';
@@ -32,13 +32,11 @@ interface DualComparisonCardProps {
 }
 
 const CHART_HEIGHT = 220;
-const FULLSCREEN_HEIGHT = Dimensions.get('window').height * 0.55;
 const PAD_TOP = 46;
 const PAD_BOTTOM = 35;
 const PAD_LEFT = 50;
 const PAD_RIGHT = 16;
 const POINT_WIDTH = 70;
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const smartFormat = (v: number): string => {
   if (Number.isInteger(v)) return String(v);
@@ -76,6 +74,8 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { language } = useI18n();
+  const { width: SCREEN_WIDTH, height: screenHeight } = useWindowDimensions();
+  const FULLSCREEN_HEIGHT = screenHeight * 0.55;
   const dateLocale = fr;
   const [cardWidth, setCardWidth] = useState(0);
   const scrollRef = useRef<ScrollView>(null);

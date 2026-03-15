@@ -14,7 +14,7 @@ import {
   Modal,
   TextInput,
   Alert,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -41,8 +41,6 @@ import { SamuraiLoader } from '@/components/SamuraiLoader';
 import { LineChart } from 'react-native-gifted-charts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ============================================
 // TYPES
@@ -201,6 +199,7 @@ type TabType = 'table' | 'charts';
 export default function CompanionScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [rows, setRows] = useState<MergedRow[]>([]);
@@ -258,7 +257,7 @@ export default function CompanionScreen() {
       'Supprimer cette entrée',
       `${isoToFr(row.date)} — Cette action est irréversible.`,
       [
-        { text: 'Annuler', style: 'secondary' },
+        { text: 'Annuler', style: 'cancel' },
         {
           text: 'Supprimer',
           style: 'destructive',

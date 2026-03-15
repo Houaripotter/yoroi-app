@@ -300,10 +300,15 @@ export interface UserSettings {
   avatarUri?: string;
   // Zones cardiaques personnelles (seuils en BPM)
   heartRateZones?: {
+    z1min?: number;
     z1max: number; // seuil Z1/Z2
+    z2min?: number;
     z2max: number; // seuil Z2/Z3
+    z3min?: number;
     z3max: number; // seuil Z3/Z4
+    z4min?: number;
     z4max: number; // seuil Z4/Z5
+    z5min?: number;
   };
 }
 

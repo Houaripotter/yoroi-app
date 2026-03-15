@@ -30,6 +30,7 @@ import {
   Smile,
   Trophy,
   Timer,
+  Globe,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -258,6 +259,21 @@ export default function PrivacyDataScreen() {
             <Text style={styles.offlineTitle}>{t('privacy.offlineTitle')}</Text>
             <Text style={styles.offlineDescription}>
               {t('privacy.offlineDescription')}
+            </Text>
+          </View>
+        </View>
+
+        {/* Section: OpenStreetMap notice */}
+        <View style={styles.sectionContainer}>
+          <View style={[styles.offlineCard, { borderColor: 'rgba(99,102,241,0.2)' }]}>
+            <View style={[styles.offlineIconContainer, { backgroundColor: 'rgba(99,102,241,0.1)' }]}>
+              <Globe size={28} color="#6366F1" />
+            </View>
+            <Text style={[styles.offlineTitle, { color: '#6366F1' }]}>
+              Autocomplétion des lieux
+            </Text>
+            <Text style={styles.offlineDescription}>
+              Quand tu saisis un lieu d'entraînement, une requête est envoyée à OpenStreetMap (Nominatim) pour suggérer des adresses. Cette donnée n'est pas stockée sur un serveur et n'est utilisée que pour l'autocomplétion. Aucune information personnelle n'est transmise.
             </Text>
           </View>
         </View>

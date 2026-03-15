@@ -146,7 +146,7 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
         identifier: "yoroi.timer",
         displayName: "Timer YOROI",
         supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall],
-        userInfo: ["tabIndex": Tab.dashboard] as [AnyHashable: Any]
+        userInfo: ["tabIndex": Tab.dashboard, "openTimer": true] as [AnyHashable: Any]
       ),
       CLKComplicationDescriptor(
         identifier: "yoroi.carnet",
@@ -577,7 +577,7 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
           valueColor:    UIColor(red: 1.00, green: 0.25, blue: 0.25, alpha: 1),
           arcStartColor: UIColor(red: 0.70, green: 0.04, blue: 0.04, alpha: 1),
           arcEndColor:   UIColor(red: 1.00, green: 0.35, blue: 0.35, alpha: 1),
-          iconColor:     UIColor(red: 1.00, green: 0.18, blue: 0.18, alpha: 1))))
+          iconColor:     UIColor(red: 1.00, green: 0.18, blue: 0.18, alpha: 1)))
       return t
 
     case .graphicCorner:
@@ -634,7 +634,7 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
           valueColor:    UIColor(red: 0.45, green: 0.75, blue: 1.00, alpha: 1),
           arcStartColor: UIColor(red: 0.04, green: 0.18, blue: 0.65, alpha: 1),
           arcEndColor:   UIColor(red: 0.20, green: 0.65, blue: 1.00, alpha: 1),
-          iconColor:     UIColor(red: 0.30, green: 0.65, blue: 1.00, alpha: 1))))
+          iconColor:     UIColor(red: 0.30, green: 0.65, blue: 1.00, alpha: 1)))
       return t
 
     case .graphicCorner:
@@ -1191,7 +1191,7 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
           valueColor:    UIColor(red: 0.35, green: 0.95, blue: 0.50, alpha: 1),
           arcStartColor: UIColor(red: 0.04, green: 0.38, blue: 0.22, alpha: 1),
           arcEndColor:   UIColor(red: 0.30, green: 0.88, blue: 0.35, alpha: 1),
-          iconColor:     UIColor(red: 0.25, green: 0.90, blue: 0.40, alpha: 1))))
+          iconColor:     UIColor(red: 0.25, green: 0.90, blue: 0.40, alpha: 1)))
       return t
 
     case .graphicCorner:

@@ -18,7 +18,7 @@ import {
   NativeModules,
   Alert,
 } from 'react-native';
-import { getNativeWorkouts, requestWorkoutReadAuthNative } from '@/lib/yoroiHealthKit';
+import { requestWorkoutReadAuthNative } from '@/lib/yoroiHealthKit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
@@ -719,7 +719,7 @@ export default function ConnectedDevicesScreen() {
                     ]}
                   >
                     <View style={[styles.sourceBadge, { backgroundColor: display.color }]}>
-                      <Text style={styles.sourceBadgeText}>{display.emoji}</Text>
+                      <Text style={[styles.sourceBadgeText, { color: colors.textOnAccent }]}>{display.emoji}</Text>
                     </View>
                     <View style={styles.sourceInfo}>
                       <Text style={[styles.sourceName, { color: colors.textPrimary }]}>
@@ -771,7 +771,7 @@ export default function ConnectedDevicesScreen() {
             >
               <View style={styles.brandHeader}>
                 <View style={[styles.brandDot, { backgroundColor: brand.color }]}>
-                  <Text style={styles.brandDotText}>{brand.emoji}</Text>
+                  <Text style={[styles.brandDotText, { color: colors.textOnAccent }]}>{brand.emoji}</Text>
                 </View>
                 <View style={styles.brandInfo}>
                   <Text style={[styles.brandName, { color: colors.textPrimary }]}>
@@ -803,7 +803,7 @@ export default function ConnectedDevicesScreen() {
                   {steps.map((step, stepIndex) => (
                     <View key={stepIndex} style={styles.stepRow}>
                       <View style={[styles.stepNumber, { backgroundColor: brand.color }]}>
-                        <Text style={styles.stepNumberText}>{stepIndex + 1}</Text>
+                        <Text style={[styles.stepNumberText, { color: colors.textOnAccent }]}>{stepIndex + 1}</Text>
                       </View>
                       <Text style={[styles.stepText, { color: colors.textSecondary }]}>
                         {step}
@@ -829,11 +829,11 @@ export default function ConnectedDevicesScreen() {
             activeOpacity={0.7}
           >
             {isDiagnosing ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={colors.textOnAccent} />
             ) : (
-              <Search size={18} color="#FFFFFF" />
+              <Search size={18} color={colors.textOnAccent} />
             )}
-            <Text style={styles.diagBtnText}>
+            <Text style={[styles.diagBtnText, { color: colors.textOnAccent }]}>
               {isDiagnosing ? 'Verification...' : 'Verifier la connexion'}
             </Text>
           </TouchableOpacity>

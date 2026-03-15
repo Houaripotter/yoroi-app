@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Calendar, TrendingDown, TrendingUp, Award } from 'lucide-react-native';
 import { MonthStats } from '@/lib/social-cards/useMonthStats';
@@ -8,9 +8,6 @@ import { ThemeColors } from '@/lib/ThemeContext';
 // ============================================
 // MONTHLY RECAP CARD - Récap mensuel avec calendrier
 // ============================================
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - 40;
 
 export interface MonthlyRecapCardProps {
   stats: MonthStats;
@@ -21,6 +18,8 @@ export interface MonthlyRecapCardProps {
 
 export const MonthlyRecapCard = React.memo(forwardRef<View, MonthlyRecapCardProps>(
   ({ stats, format, colors, username }, ref) => {
+    const { width: screenWidth } = useWindowDimensions();
+    const CARD_WIDTH = screenWidth - 40;
     const isStories = format === 'stories';
 
     // Dimensions adaptées au format

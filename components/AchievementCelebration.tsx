@@ -3,22 +3,20 @@
 // ============================================
 // Animation plein écran quand un achievement est débloqué
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Modal,
-  Dimensions,
   Animated,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { Sparkles, Star, Gift } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface AchievementCelebrationProps {
   visible: boolean;
@@ -31,8 +29,11 @@ interface AchievementCelebrationProps {
   onClose: () => void;
 }
 
+const confettiStyle = { position: 'absolute' as const, width: 10, height: 10, borderRadius: 2 };
+
 // Composant Confetti
 const Confetti: React.FC<{ color: string; delay: number }> = ({ color, delay }) => {
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
   const translateY = useRef(new Animated.Value(-50)).current;
   const translateX = useRef(new Animated.Value(Math.random() * SCREEN_WIDTH)).current;
   const rotate = useRef(new Animated.Value(0)).current;
@@ -71,7 +72,7 @@ const Confetti: React.FC<{ color: string; delay: number }> = ({ color, delay }) 
   return (
     <Animated.View
       style={[
-        styles.confetti,
+        confettiStyle,
         {
           backgroundColor: color,
           transform: [
@@ -96,6 +97,8 @@ export const AchievementCelebration: React.FC<AchievementCelebrationProps> = ({
   type,
   onClose,
 }) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
   const { colors } = useTheme();
 
   const scaleAnim = useRef(new Animated.Value(0)).current;
@@ -250,7 +253,7 @@ export const AchievementCelebration: React.FC<AchievementCelebrationProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (SCREEN_WIDTH: number) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'center',

@@ -225,7 +225,15 @@
   },
   "planning": {
     "noSessions": "Aucune séance planifiée",
-    "sessions": "séances"
+    "sessions": "séances",
+    "calendar": "Calendrier",
+    "calendarDescription": "Vue calendrier mensuelle",
+    "seances": "Séances",
+    "seancesDescription": "Mes séances d'entraînement",
+    "clubs": "Clubs",
+    "clubsDescription": "Mes clubs et salles",
+    "events": "Prochain RDV",
+    "eventsDescription": "Compétitions & événements"
   },
   "privacy": {
     "deleteAll": "Tout supprimer",

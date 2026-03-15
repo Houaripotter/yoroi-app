@@ -14,8 +14,8 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
-  Dimensions,
   Modal,
+  useWindowDimensions,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -45,9 +45,6 @@ import logger from '@/lib/security/logger';
 
 // Test direct image import pour debug
 const TEST_IMAGE = require('@/assets/avatars/samurai/samurai_neutral.png');
-
-const { width } = Dimensions.get('window');
-const AVATAR_SIZE = (width - 80) / 5; // 5 avatars par ligne
 
 // Les 5 états pour les packs de personnages
 const AVATAR_STATES: AvatarState[] = ['down', 'tired', 'neutral', 'strong', 'legendary'];
@@ -80,6 +77,8 @@ interface PackWithStatus {
 // ============================================================================
 
 export default function AvatarSelectionScreen() {
+  const { width } = useWindowDimensions();
+  const AVATAR_SIZE = (width - 80) / 5;
   const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [selectedGender, setSelectedGender] = useState<AvatarGender>('male');

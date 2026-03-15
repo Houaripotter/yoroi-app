@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
   StatusBar,
   Platform,
   KeyboardAvoidingView,
@@ -59,8 +58,6 @@ import HealthConnect from '@/lib/healthConnect';
 import { useWatch } from '@/lib/WatchConnectivityProvider';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ============================================
 // ECRAN AJOUTER - DESIGN UNIFIE

@@ -5,7 +5,7 @@
 // Vibrates, plays sound, shows logo
 // ============================================
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,16 +13,15 @@ import {
   Modal,
   TouchableOpacity,
   Vibration,
-  Dimensions,
   Image,
   Animated,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { soundManager } from '@/lib/sounds';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const LOGO_SIZE = 180;
 
 interface TimerAlarmOverlayProps {
@@ -38,6 +37,8 @@ export const TimerAlarmOverlay: React.FC<TimerAlarmOverlayProps> = ({
   message = 'TIMER TERMINÉ',
   subMessage = 'C\'est parti !',
 }) => {
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(SCREEN_WIDTH, SCREEN_HEIGHT), [SCREEN_WIDTH, SCREEN_HEIGHT]);
   const insets = useSafeAreaInsets();
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
@@ -228,7 +229,7 @@ export const TimerAlarmOverlay: React.FC<TimerAlarmOverlayProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (SCREEN_WIDTH: number, SCREEN_HEIGHT: number) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',

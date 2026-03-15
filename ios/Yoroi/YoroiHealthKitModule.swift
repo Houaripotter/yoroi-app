@@ -5,6 +5,7 @@
 
 import Foundation
 import HealthKit
+internal import React
 
 @objc(YoroiHealthKitModule)
 class YoroiHealthKitModule: NSObject {

@@ -1,15 +1,13 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import {
   Modal,
   View,
   Image,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { X } from 'lucide-react-native';
-
-const { width, height } = Dimensions.get('window');
 
 interface LogoViewerProps {
   visible: boolean;
@@ -17,6 +15,8 @@ interface LogoViewerProps {
 }
 
 export const LogoViewer: React.FC<LogoViewerProps> = memo(({ visible, onClose }) => {
+  const { width, height } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(width, height), [width, height]);
   return (
     <Modal
       visible={visible}
@@ -39,7 +39,7 @@ export const LogoViewer: React.FC<LogoViewerProps> = memo(({ visible, onClose })
   );
 });
 
-const styles = StyleSheet.create({
+const createStyles = (width: number, height: number) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.95)',

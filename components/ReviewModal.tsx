@@ -4,16 +4,16 @@
 // Popup personnalisee pour demander une note App Store
 // Design premium avec logo et texte explicatif
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Modal,
   TouchableOpacity,
-  Dimensions,
   Image,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@/lib/ThemeContext';
@@ -25,7 +25,6 @@ import logger from '@/lib/security/logger';
 import { safeOpenURL } from '@/lib/security/validators';
 import APP_CONFIG from '@/lib/appConfig';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const REVIEW_ASKED_KEY = 'yoroi_review_asked';
 
 interface ReviewModalProps {
@@ -34,6 +33,8 @@ interface ReviewModalProps {
 }
 
 export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
   const { colors, isDark } = useTheme();
 
   // Option 1: Laisser un avis - ouvre le store review et marque comme fait
@@ -193,7 +194,7 @@ export const useReviewModal = () => {
 // STYLES
 // ============================================
 
-const styles = StyleSheet.create({
+const createStyles = (SCREEN_WIDTH: number) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'center',

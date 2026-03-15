@@ -254,7 +254,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                         <MaterialCommunityIcons name={sportIcon as any} size={16} color={sportColor} />
                         <Text style={{ fontSize: 11, fontWeight: '700', color: sportColor, textTransform: 'uppercase', letterSpacing: 0.5 }} numberOfLines={1}>
-                          {sportInfo?.label || entry.sport}
+                          {sportInfo?.name || entry.sport}
                         </Text>
                       </View>
                       <Text style={[styles.historyCardDate, { color: colors.textMuted }]}>

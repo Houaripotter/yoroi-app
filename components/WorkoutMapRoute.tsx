@@ -188,7 +188,7 @@ export const WorkoutMapRoute: React.FC<WorkoutMapRouteProps> = ({
       showsTraffic={false}
       showsBuildings={true}
       showsIndoors={false}
-      showsPointsOfInterest={false}
+      showsPointsOfInterests={false}
       toolbarEnabled={false}
       loadingEnabled
       mapPadding={{ top: 20, right: 20, bottom: 20, left: 20 }}

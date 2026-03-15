@@ -10,7 +10,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Dimensions,
   ScrollView,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -39,11 +38,9 @@ import { useAvatar } from '@/lib/AvatarContext';
 import { getCurrentRank } from '@/lib/ranks';
 import { getUnifiedPoints } from '@/lib/gamification';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-// ============================================ 
-// COMPOSANT PRINCIPAL 
-// ============================================ 
+// ============================================
+// COMPOSANT PRINCIPAL
+// ============================================
 
 export default function YearCounterV2Screen() {
   const { colors } = useTheme();

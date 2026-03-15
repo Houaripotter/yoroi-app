@@ -4,15 +4,15 @@
 // Carte de stats style Yoroi pour partager sur Instagram
 // Design premium avec stats et infos combattant
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   Platform,
+  useWindowDimensions,
   Share,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -49,10 +49,6 @@ import logger from '@/lib/security/logger';
 // TYPES
 // ============================================
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - 40;
-const CARD_HEIGHT = CARD_WIDTH * 1.6; // Ratio Instagram story friendly
-
 interface FighterStats {
   name: string;
   nickname?: string;
@@ -76,6 +72,9 @@ interface FighterStats {
 // ============================================
 
 export default function FighterCardScreen() {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const CARD_WIDTH = SCREEN_WIDTH - 40;
+  const styles = useMemo(() => createStyles(CARD_WIDTH), [CARD_WIDTH]);
   const { colors, isDark, gradients } = useTheme();
   const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -490,7 +489,7 @@ export default function FighterCardScreen() {
 // STYLES
 // ============================================
 
-const styles = StyleSheet.create({
+const createStyles = (CARD_WIDTH: number) => StyleSheet.create({
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

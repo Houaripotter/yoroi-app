@@ -3,20 +3,18 @@
 // ============================================
 // Popup personnalisee pour remplacer Alert.alert
 
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Modal,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@/lib/ThemeContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export interface PopupButton {
   text: string;
@@ -41,6 +39,8 @@ export const CustomPopup: React.FC<CustomPopupProps> = memo(({
   onClose,
   icon,
 }) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
   const { colors, isDark } = useTheme();
 
   const handleButtonPress = (button: PopupButton) => {
@@ -222,7 +222,7 @@ export const useCustomPopup = () => {
 // STYLES
 // ============================================
 
-const styles = StyleSheet.create({
+const createStyles = (SCREEN_WIDTH: number) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'center',

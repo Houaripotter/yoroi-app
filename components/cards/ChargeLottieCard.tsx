@@ -1,13 +1,8 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Activity, Zap } from 'lucide-react-native';
 import { getGridColumns } from '@/constants/responsive';
-
-const { width: screenWidth } = Dimensions.get('window');
-// paddingHorizontal 16*2 = 32, gaps entre cartes = 8 * (colonnes - 1)
-const columns = getGridColumns(); // 2 sur iPhone, 3 sur iPad
-const CARD_SIZE = (screenWidth - 32 - 8 * (columns - 1)) / columns;
 
 type RiskLevel = 'safe' | 'moderate' | 'high' | 'danger' | 'leger' | 'modere' | 'optimal' | 'eleve';
 
@@ -80,6 +75,10 @@ export const ChargeLottieCard = React.memo<ChargeLottieCardProps>(({
   maxLoad = 2000,
   sessions = 0
 }) => {
+  const { width: screenWidth } = useWindowDimensions();
+  const columns = getGridColumns();
+  const CARD_SIZE = (screenWidth - 32 - 8 * (columns - 1)) / columns;
+  const styles = useMemo(() => createStyles(CARD_SIZE), [CARD_SIZE]);
   const { colors } = useTheme();
   
   // Animations
@@ -262,7 +261,7 @@ export const ChargeLottieCard = React.memo<ChargeLottieCardProps>(({
   );
 });
 
-const styles = StyleSheet.create({
+const createStyles = (CARD_SIZE: number) => StyleSheet.create({
   card: {
     width: CARD_SIZE,
     height: CARD_SIZE,

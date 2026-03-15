@@ -3,7 +3,7 @@
 // Apparaît après 3 actions positives (poids, séance)
 // ============================================
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,8 +11,8 @@ import {
   Modal,
   TouchableOpacity,
   Animated,
-  Dimensions,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';
 import { APP_CONFIG } from '@/lib/appConfig';
@@ -24,8 +24,6 @@ import { BlurView } from 'expo-blur';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { requestReview, isAvailableAsync } from 'expo-store-review';
 import { router } from 'expo-router';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface RatingPopupProps {
   visible: boolean;
@@ -40,6 +38,8 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
   onRated,
   actionType = 'general',
 }) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
 
@@ -284,7 +284,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (SCREEN_WIDTH: number) => StyleSheet.create({
   blurContainer: {
     flex: 1,
     justifyContent: 'center',

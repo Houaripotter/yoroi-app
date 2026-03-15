@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Flame, Calendar, Target, Dumbbell } from 'lucide-react-native';
 import { YearStats } from '@/lib/social-cards/useYearStats';
@@ -8,9 +8,6 @@ import { ThemeColors } from '@/lib/ThemeContext';
 // ============================================
 // YEAR COUNTER CARD - Le fameux X/365
 // ============================================
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - 40;
 
 export interface YearCounterCardProps {
   stats: YearStats;
@@ -21,6 +18,8 @@ export interface YearCounterCardProps {
 
 export const YearCounterCard = React.memo(forwardRef<View, YearCounterCardProps>(
   ({ stats, format, colors, username }, ref) => {
+    const { width: screenWidth } = useWindowDimensions();
+    const CARD_WIDTH = screenWidth - 40;
     const isStories = format === 'stories';
 
     // Dimensions adaptées au format

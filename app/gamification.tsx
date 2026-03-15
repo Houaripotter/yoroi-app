@@ -11,7 +11,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Animated,
-  Dimensions,
   Modal,
   Pressable,
   Image,
@@ -86,7 +85,6 @@ import {
   QuestProgress,
 } from '@/lib/quests';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const DEFAULT_AVATAR_IMAGE = require('@/assets/avatars/samurai/samurai_neutral.png');
 
 // Rotation pour n'afficher que 5 défis (identique a HomeChallengesSection)
@@ -671,7 +669,7 @@ export default function DojoScreen() {
             <ChevronLeft size={28} color="#FFFFFF" />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>{t('gamification.dojo')}</Text>
+            <Text style={[styles.headerTitle, { color: colors.textOnAccent }]}>{t('gamification.dojo')}</Text>
             <Text style={styles.headerSubtitle}>殿堂 - {t('gamification.yourJourney')}</Text>
           </View>
           <View style={{ width: 44 }} />
@@ -706,7 +704,7 @@ export default function DojoScreen() {
               <Zap size={16} color="#FFD700" fill="#FFD700" />
               <Text style={styles.levelBigNumber}>{totalPoints}</Text>
             </View>
-            <Text style={styles.rankNameHero}>{currentRank.name}</Text>
+            <Text style={[styles.rankNameHero, { color: colors.textOnAccent }]}>{currentRank.name}</Text>
             <Text style={styles.rankNameJpHero}>{currentRank.nameJp}</Text>
           </Animated.View>
 
@@ -716,7 +714,7 @@ export default function DojoScreen() {
               <View style={styles.quickStatIcon}>
                 <Flame size={20} color="#F97316" />
               </View>
-              <Text style={styles.quickStatValue}>{streak}</Text>
+              <Text style={[styles.quickStatValue, { color: colors.textOnAccent }]}>{streak}</Text>
               <Text style={styles.quickStatLabel}>{t('common.days')}</Text>
             </View>
 
@@ -726,7 +724,7 @@ export default function DojoScreen() {
               <View style={styles.quickStatIcon}>
                 <Zap size={20} color="#FFD700" />
               </View>
-              <Text style={styles.quickStatValue}>{totalPoints}</Text>
+              <Text style={[styles.quickStatValue, { color: colors.textOnAccent }]}>{totalPoints}</Text>
               <Text style={styles.quickStatLabel}>XP</Text>
             </View>
 
@@ -736,7 +734,7 @@ export default function DojoScreen() {
               <View style={styles.quickStatIcon}>
                 <Medal size={20} color="#10B981" />
               </View>
-              <Text style={styles.quickStatValue}>{unlockedBadges.length}</Text>
+              <Text style={[styles.quickStatValue, { color: colors.textOnAccent }]}>{unlockedBadges.length}</Text>
               <Text style={styles.quickStatLabel}>{t('gamification.badges').toLowerCase()}</Text>
             </View>
           </View>
@@ -836,7 +834,7 @@ export default function DojoScreen() {
               />
               <View style={styles.levelCardHeader}>
                 <View style={[styles.levelBadge, { backgroundColor: currentRank.color }]}>
-                  <Text style={styles.levelBadgeText}>{currentRank.name}</Text>
+                  <Text style={[styles.levelBadgeText, { color: colors.textOnAccent }]}>{currentRank.name}</Text>
                 </View>
                 <View style={styles.levelInfo}>
                   <Text style={[styles.levelName, { color: colors.textPrimary }]}>{currentRank.name}</Text>
@@ -1063,7 +1061,7 @@ export default function DojoScreen() {
                         </Text>
                         {isCurrent && (
                           <View style={[styles.currentTag, { backgroundColor: rank.color }]}>
-                            <Text style={styles.currentTagText}>ACTUEL</Text>
+                            <Text style={[styles.currentTagText, { color: colors.textOnAccent }]}>ACTUEL</Text>
                           </View>
                         )}
                       </View>
@@ -1239,7 +1237,7 @@ export default function DojoScreen() {
                       ]}>
                         {isClose && (
                           <View style={[styles.closeBadge, { backgroundColor: badge.color }]}>
-                            <Text style={styles.closeBadgeText}>{t('gamification.close')}</Text>
+                            <Text style={[styles.closeBadgeText, { color: colors.textOnAccent }]}>{t('gamification.close')}</Text>
                           </View>
                         )}
 
@@ -1474,8 +1472,8 @@ export default function DojoScreen() {
                         })}
                       </View>
                       <View style={[styles.previewXpBadge, { backgroundColor: '#FFD700' }]}>
-                        <Zap size={14} color="#000" fill="#000" />
-                        <Text style={styles.previewXpText}>+{previewQuest.xp} XP</Text>
+                        <Zap size={14} color={colors.textPrimary} fill={colors.textPrimary} />
+                        <Text style={[styles.previewXpText, { color: colors.textPrimary }]}>+{previewQuest.xp} XP</Text>
                       </View>
                     </View>
 
@@ -1586,8 +1584,8 @@ export default function DojoScreen() {
                     end={{ x: 1, y: 0 }}
                     style={styles.emptyStateButtonGradient}
                   >
-                    <Play size={18} color="#FFFFFF" />
-                    <Text style={styles.emptyStateButtonText}>{t('gamification.viewBadges')}</Text>
+                    <Play size={18} color={colors.textOnAccent} />
+                    <Text style={[styles.emptyStateButtonText, { color: colors.textOnAccent }]}>{t('gamification.viewBadges')}</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>

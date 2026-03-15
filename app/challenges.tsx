@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   Modal,
   TextInput,
   KeyboardAvoidingView,
@@ -58,8 +57,6 @@ import { addHydration } from '@/lib/quests';
 import { addSleepEntry } from '@/lib/sleepService';
 import { ChallengeConfetti } from '@/components/ChallengeConfetti';
 import logger from '@/lib/security/logger';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ChallengesScreen() {
   const insets = useSafeAreaInsets();

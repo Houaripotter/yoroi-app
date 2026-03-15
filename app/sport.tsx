@@ -10,7 +10,7 @@ import {
   Modal,
   Platform,
   KeyboardAvoidingView,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,6 +37,8 @@ interface RoutineBlock {
 }
 
 export default function SportScreen() {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
   const router = useRouter();
   const { colors: themeColors } = useTheme();
   const { t } = useI18n();
@@ -427,7 +429,7 @@ export default function SportScreen() {
             horizontal
             showsHorizontalScrollIndicator={false}
             pagingEnabled={false}
-            snapToInterval={Dimensions.get('window').width * 0.85}
+            snapToInterval={SCREEN_WIDTH * 0.85}
             decelerationRate="fast"
             contentContainerStyle={styles.weekHorizontalContent}
           >
@@ -760,7 +762,7 @@ export default function SportScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (SCREEN_WIDTH: number) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#E8EDF2',
@@ -810,7 +812,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   dayCardHorizontal: {
-    width: Dimensions.get('window').width * 0.85,
+    width: SCREEN_WIDTH * 0.85,
     borderRadius: 20,
     padding: 16,
     shadowColor: '#000',

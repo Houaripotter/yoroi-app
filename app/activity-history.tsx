@@ -10,7 +10,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
   RefreshControl,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -25,14 +25,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 type Period = '7d' | '30d' | '90d';
 type Tab = 'steps' | 'calories';
 
 export default function ActivityHistoryScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const { t, locale } = useI18n();
   const params = useLocalSearchParams<{ tab?: string }>();
 

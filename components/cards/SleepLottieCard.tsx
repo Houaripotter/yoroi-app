@@ -1,16 +1,11 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Animated, Easing, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef, useMemo } from 'react';
+import { View, Text, StyleSheet, Animated, Easing, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { formatHoursHM } from '@/lib/formatDuration';
 import { Moon, Clock, AlertTriangle, CheckCircle } from 'lucide-react-native';
 import Svg, { Path, Circle, Ellipse } from 'react-native-svg';
 import { router } from 'expo-router';
 import { getGridColumns } from '@/constants/responsive';
-
-const { width: screenWidth } = Dimensions.get('window');
-// paddingHorizontal 16*2 = 32, gaps entre cartes = 8 * (colonnes - 1)
-const columns = getGridColumns(); // 2 sur iPhone, 3 sur iPad
-const CARD_SIZE = (screenWidth - 32 - 8 * (columns - 1)) / columns;
 
 interface SleepLottieCardProps {
   hours?: number;
@@ -27,6 +22,10 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
   goal,
   phases,
 }) => {
+  const { width: screenWidth } = useWindowDimensions();
+  const columns = getGridColumns();
+  const CARD_SIZE = (screenWidth - 32 - 8 * (columns - 1)) / columns;
+  const styles = useMemo(() => createStyles(CARD_SIZE), [CARD_SIZE]);
   const { colors, isDark } = useTheme();
   
   // Animations
@@ -407,7 +406,7 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
   );
 });
 
-const styles = StyleSheet.create({
+const createStyles = (CARD_SIZE: number) => StyleSheet.create({
   card: {
     width: CARD_SIZE,
     height: CARD_SIZE,

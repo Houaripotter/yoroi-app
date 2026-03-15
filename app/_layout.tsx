@@ -113,7 +113,6 @@ function RootLayoutContent() {
     // Deep link: quand l'utilisateur tape sur une notification (background/killed)
     const workoutNotifSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
       const { title, body, data } = response.notification.request.content;
-      const actionId = response.actionIdentifier;
 
       // Sauvegarder dans la cloche (notifications reçues en background puis tapées)
       if (title) {
@@ -121,12 +120,11 @@ function RootLayoutContent() {
         saveNotification(title, body ?? '', type, data as Record<string, any> | undefined).catch(() => {});
       }
 
-      if (data?.type === 'workout_complete' && data?.workoutId) {
-        if (actionId === 'share') {
-          router.push(`/social-share/last-session?workoutId=${data.workoutId}` as any);
-        } else {
-          router.push(`/social-share/last-session?workoutId=${data.workoutId}` as any);
-        }
+      // Navigation universelle : workoutId en priorité, sinon screen générique
+      if (data?.workoutId) {
+        setTimeout(() => router.push(`/social-share/last-session?workoutId=${data.workoutId}` as any), 500);
+      } else if (data?.screen) {
+        setTimeout(() => router.push(`/${data.screen}` as any), 500);
       }
     });
 

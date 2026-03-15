@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,12 +27,12 @@ import {
 import { getWeeklyLoad, getRiskLevel, formatLoad } from '@/lib/trainingLoadService';
 import logger from '@/lib/security/logger';
 
-const { width: screenWidth } = Dimensions.get('window');
-const IS_SMALL_SCREEN = screenWidth < 375; // iPhone SE, petits téléphones
-
 export default function ChargeScreen() {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
+  const { width: screenWidth } = useWindowDimensions();
+  const IS_SMALL_SCREEN = screenWidth < 375;
+  const styles = useMemo(() => createStyles(IS_SMALL_SCREEN), [IS_SMALL_SCREEN]);
   const insets = useSafeAreaInsets();
 
   const [weeklyLoad, setWeeklyLoad] = useState(0);
@@ -253,7 +253,7 @@ export default function ChargeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (IS_SMALL_SCREEN: boolean) => StyleSheet.create({
   container: {
     flex: 1,
   },

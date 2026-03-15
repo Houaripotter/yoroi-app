@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,10 @@ import {
   Platform,
   ActivityIndicator,
   RefreshControl,
-  Dimensions,
   Modal,
   TextInput,
   KeyboardAvoidingView,
+  useWindowDimensions,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useWatch } from '@/lib/WatchConnectivityProvider';
@@ -36,6 +36,9 @@ import { SamuraiLoader } from '@/components/SamuraiLoader';
 const PRIVACY_CHALLENGE_KEY = '@yoroi_privacy_challenge_shown';
 
 export default function PhotosScreen() {
+  const { width: screenWidth } = useWindowDimensions();
+  const photoSize = (screenWidth - 64) / 3;
+  const styles = useMemo(() => createStyles(photoSize), [photoSize]);
   const { colors: themeColors, isDark } = useTheme();
   const { locale } = useI18n();
 
@@ -773,15 +776,12 @@ export default function PhotosScreen() {
   );
 }
 
-const screenWidth = Dimensions.get('window').width;
-const photoSize = (screenWidth - 64) / 3;
-
 // Constantes non-thématiques
 const SPACING = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 };
 const RADIUS = { md: 12, lg: 16, xl: 20, xxl: 24, full: 9999 };
 const FONT_SIZE = { xs: 10, sm: 12, md: 14, lg: 16, xl: 18, xxl: 22, display: 28 };
 
-const styles = StyleSheet.create({
+const createStyles = (photoSize: number) => StyleSheet.create({
   container: {
     flex: 1,
   },

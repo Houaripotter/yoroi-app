@@ -8,15 +8,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { Flame, Calendar } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { format, subDays, startOfWeek, addDays, isToday } from 'date-fns';
 import { getTrainings } from '@/lib/database';
 import logger from '@/lib/security/logger';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface StreakCalendarProps {
   weeks?: number;
@@ -33,6 +31,7 @@ export const StreakCalendar: React.FC<StreakCalendarProps> = ({
   weeks = 12,
   onDayPress,
 }) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const { colors } = useTheme();
   const [trainingDays, setTrainingDays] = useState<Record<string, number>>({});
   const [currentMonth, setCurrentMonth] = useState(new Date());

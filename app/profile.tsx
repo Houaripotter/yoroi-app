@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   StatusBar,
-  Dimensions,
   Image,
   Pressable,
   Keyboard,
@@ -59,8 +58,6 @@ import { useI18n } from '@/lib/I18nContext';
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { BlurView } from 'expo-blur';
 import logger from '@/lib/security/logger';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ============================================
 // PROFIL - DESIGN V5 VIBRANT & ADDICTIVE

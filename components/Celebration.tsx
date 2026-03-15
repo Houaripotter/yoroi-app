@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,11 @@ import {
   Animated,
   Easing,
   TouchableOpacity,
-  Dimensions,
   Modal,
+  useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ConfettiCannon from 'react-native-confetti-cannon';
-import { Audio } from 'expo-av';
 import { useTheme } from '@/lib/ThemeContext';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import logger from '@/lib/security/logger';
@@ -19,8 +18,6 @@ import logger from '@/lib/security/logger';
 // ============================================
 // CELEBRATION - ANIMATIONS DE VICTOIRE
 // ============================================
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export type CelebrationType =
   | 'goal_reached'      // Objectif de poids atteint
@@ -91,10 +88,12 @@ export const Celebration: React.FC<CelebrationProps> = ({
   autoClose = true,
   autoCloseDelay = 4000,
 }) => {
+  const { width: screenWidth } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(screenWidth), [screenWidth]);
   const { colors } = useTheme();
   const config = CELEBRATION_CONFIG[type];
   const confettiRef = useRef<any>(null);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [sound, setSound] = useState<any>(null);
 
   // Animations
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -107,38 +106,8 @@ export const Celebration: React.FC<CelebrationProps> = ({
   const xpScale = useRef(new Animated.Value(0.5)).current;
   const shimmerAnim = useRef(new Animated.Value(0)).current;
 
-  // Jouer le son selon le type de célébration
-  const playSound = async () => {
-    try {
-      let soundFile;
-
-      // Sélectionner le son approprié selon le type
-      switch (type) {
-        case 'rank_up':
-          soundFile = require('@/assets/sounds/level-up.mp3');
-          break;
-        case 'challenge_complete':
-          soundFile = require('@/assets/sounds/ring.mp3');
-          break;
-        case 'goal_reached':
-        case 'streak_record':
-          soundFile = require('@/assets/sounds/victory.mp3');
-          break;
-        case 'milestone':
-          soundFile = require('@/assets/sounds/fanfare-badge.mp3');
-          break;
-        default:
-          soundFile = require('@/assets/sounds/gong.mp3');
-      }
-
-      const { sound: audioSound } = await Audio.Sound.createAsync(soundFile);
-      setSound(audioSound);
-      await audioSound.playAsync();
-    } catch (error) {
-      // Son non disponible, continuer sans
-      logger.info('Son non disponible:', error);
-    }
-  };
+  // Son désactivé (expo-av non installé)
+  const playSound = async () => {};
 
   // Nettoyer le son
   useEffect(() => {
@@ -428,7 +397,7 @@ export const Celebration: React.FC<CelebrationProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (screenWidth: number) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',

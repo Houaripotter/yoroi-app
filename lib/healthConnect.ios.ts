@@ -3627,9 +3627,64 @@ class HealthConnectService {
 
         logger.info('[HealthKit] getSleepHistory: bruts=', samples.length, ', filtres=', filteredSamples.length);
 
-        const samplesToUse = filteredSamples;
+        // ── ÉTAPE 1 : grouper par (date, source) pour éviter le double-comptage ──
+        // Problème : Apple Watch + iPhone peuvent tous deux enregistrer Core/Deep/REM
+        // pour la MÊME fenêtre temporelle. Si on somme tout, les chiffres doublent.
+        // Apple Santé résout ça en n'affichant qu'une source. On fait pareil.
+        type SourceBucket = {
+          deep: number; rem: number; core: number; awake: number;
+          hasDetailedPhases: boolean; asleepMinutes: number;
+          startTime: string; endTime: string;
+        };
+        const byDateAndSource: { [date: string]: { [source: string]: SourceBucket } } = {};
 
-        // Grouper par date - prendre les données brutes d'Apple Santé
+        const isAppleWatch = (s: any): boolean => {
+          const deviceName = (s.device?.name || '').toLowerCase();
+          const bundleId = (s.sourceRevision?.source?.bundleIdentifier || '').toLowerCase();
+          const sourceName = (s.sourceRevision?.source?.name || '').toLowerCase();
+          return deviceName.includes('apple watch') ||
+                 bundleId.includes('com.apple.health') && (sourceName.includes('watch') || deviceName.includes('watch')) ||
+                 sourceName === 'apple watch';
+        };
+
+        filteredSamples.forEach((s: any) => {
+          if (s.value === 0) return; // Ignorer InBed
+          const duration = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000;
+          if (duration <= 0) return;
+
+          // Groupement par nuit : -12h pour regrouper les phases traversant minuit
+          const endLocal = new Date(new Date(s.endDate).getTime() - 12 * 60 * 60 * 1000);
+          const date = `${endLocal.getFullYear()}-${String(endLocal.getMonth() + 1).padStart(2, '0')}-${String(endLocal.getDate()).padStart(2, '0')}`;
+
+          // Clé source : favoriser "Apple Watch" comme source canonique
+          const sourceKey = isAppleWatch(s)
+            ? '__apple_watch__'
+            : (s.sourceRevision?.source?.bundleIdentifier || s.sourceRevision?.source?.name || 'unknown');
+
+          if (!byDateAndSource[date]) byDateAndSource[date] = {};
+          if (!byDateAndSource[date][sourceKey]) {
+            byDateAndSource[date][sourceKey] = {
+              deep: 0, rem: 0, core: 0, awake: 0,
+              hasDetailedPhases: false, asleepMinutes: 0,
+              startTime: s.startDate, endTime: s.endDate,
+            };
+          }
+          const bucket = byDateAndSource[date][sourceKey];
+
+          if (new Date(s.startDate) < new Date(bucket.startTime)) bucket.startTime = s.startDate;
+          if (new Date(s.endDate) > new Date(bucket.endTime)) bucket.endTime = s.endDate;
+
+          switch (s.value) {
+            case 1: bucket.asleepMinutes += duration; break;
+            case 2: bucket.awake += duration; break;
+            case 3: bucket.core += duration; bucket.hasDetailedPhases = true; break;
+            case 4: bucket.deep += duration; bucket.hasDetailedPhases = true; break;
+            case 5: bucket.rem += duration; bucket.hasDetailedPhases = true; break;
+          }
+        });
+
+        // ── ÉTAPE 2 : pour chaque nuit, choisir la MEILLEURE source unique ──
+        // Priorité : Apple Watch > source avec le plus de phases détaillées > asleepMinutes
         const sleepByDate: { [key: string]: {
           deep: number; rem: number; core: number; awake: number; total: number;
           hasDetailedPhases: boolean; asleepMinutes: number;
@@ -3637,65 +3692,54 @@ class HealthConnectService {
           sources: Set<string>;
         } } = {};
 
-        samplesToUse.forEach((s: any) => {
-          // Ignorer les échantillons InBed (value=0) :
-          // ce sont des "temps au lit" pas des phases de sommeil réelles.
-          // Ils peuvent commencer à 16h00 et fausser complètement l'heure de coucher.
-          if (s.value === 0) return;
+        for (const date of Object.keys(byDateAndSource)) {
+          const sourcesMap = byDateAndSource[date];
+          const sourceKeys = Object.keys(sourcesMap);
 
-          const duration = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000;
-          if (duration <= 0) return;
-
-          // Groupement par nuit : décaler de -12h pour que toutes les phases d'une même nuit
-          // (ex: 22h36 → 8h01) tombent dans le même bucket même si elles traversent minuit local.
-          // Avant: phase se terminant à 23h30 → "3 mars", phase à 00h30 → "4 mars" → nuit coupée.
-          // Après: phase à 23h30 - 12h = 11h30 → "3 mars", phase à 00h30 - 12h = 12h30 → "3 mars".
-          const endLocal = new Date(new Date(s.endDate).getTime() - 12 * 60 * 60 * 1000);
-          const date = `${endLocal.getFullYear()}-${String(endLocal.getMonth() + 1).padStart(2, '0')}-${String(endLocal.getDate()).padStart(2, '0')}`;
-
-          if (!sleepByDate[date]) {
-            sleepByDate[date] = {
-              deep: 0, rem: 0, core: 0, awake: 0, total: 0,
-              hasDetailedPhases: false, asleepMinutes: 0,
-              startTime: s.startDate, endTime: s.endDate,
-              sources: new Set(),
-            };
+          // Choisir la meilleure source
+          let bestKey = sourceKeys[0];
+          if (sourceKeys.includes('__apple_watch__')) {
+            // Apple Watch en priorité absolue
+            bestKey = '__apple_watch__';
+          } else {
+            // Sinon : la source avec le plus de phases détaillées (core+deep+rem total)
+            let bestPhases = -1;
+            for (const k of sourceKeys) {
+              const b = sourcesMap[k];
+              const phases = b.core + b.deep + b.rem;
+              if (b.hasDetailedPhases && phases > bestPhases) {
+                bestPhases = phases;
+                bestKey = k;
+              }
+            }
+            // Si aucune source n'a de phases détaillées, prendre celle avec le plus d'asleepMinutes
+            if (bestPhases === -1) {
+              let bestAsleep = -1;
+              for (const k of sourceKeys) {
+                if (sourcesMap[k].asleepMinutes > bestAsleep) {
+                  bestAsleep = sourcesMap[k].asleepMinutes;
+                  bestKey = k;
+                }
+              }
+            }
           }
 
-          // Tracker min startTime et max endTime pour heure coucher/reveil
-          // (uniquement sur les vraies phases, InBed déjà exclus plus haut)
-          if (new Date(s.startDate) < new Date(sleepByDate[date].startTime)) {
-            sleepByDate[date].startTime = s.startDate;
-          }
-          if (new Date(s.endDate) > new Date(sleepByDate[date].endTime)) {
-            sleepByDate[date].endTime = s.endDate;
-          }
+          const best = sourcesMap[bestKey];
+          sleepByDate[date] = {
+            deep: best.deep,
+            rem: best.rem,
+            core: best.core,
+            awake: best.awake,
+            total: 0,
+            hasDetailedPhases: best.hasDetailedPhases,
+            asleepMinutes: best.asleepMinutes,
+            startTime: best.startTime,
+            endTime: best.endTime,
+            sources: new Set([bestKey]),
+          };
 
-          // Tracker la source
-          const source = s.sourceRevision?.source?.name || s.device?.name || 'Unknown';
-          sleepByDate[date].sources.add(source);
-
-          switch (s.value) {
-            case 1: // Asleep (total global - sera ignore si phases detaillees existent)
-              sleepByDate[date].asleepMinutes += duration;
-              break;
-            case 2:
-              sleepByDate[date].awake += duration;
-              break;
-            case 3: // Core
-              sleepByDate[date].core += duration;
-              sleepByDate[date].hasDetailedPhases = true;
-              break;
-            case 4: // Deep
-              sleepByDate[date].deep += duration;
-              sleepByDate[date].hasDetailedPhases = true;
-              break;
-            case 5: // REM
-              sleepByDate[date].rem += duration;
-              sleepByDate[date].hasDetailedPhases = true;
-              break;
-          }
-        });
+          logger.info(`[HealthKit] Sommeil ${date}: source choisie="${bestKey}", phases=${best.hasDetailedPhases}, core=${Math.round(best.core)}m, deep=${Math.round(best.deep)}m, rem=${Math.round(best.rem)}m`);
+        }
 
         // Calculer le total en evitant le double comptage
         Object.values(sleepByDate).forEach(day => {
@@ -4202,7 +4246,7 @@ class HealthConnectService {
         this.withTimeout(this.getMindfulMinutes(), TIMEOUT_MS),         // 18
       ]);
 
-      const r = (i: number) => results[i].status === 'fulfilled' ? results[i].value : null;
+      const r = (i: number): any => results[i].status === 'fulfilled' ? results[i].value : null;
 
       // Logger les échecs pour debugging (sans crasher)
       const dataTypes = ['weight', 'steps', 'sleep', 'hydration', 'heartRate', 'hrv',
@@ -4852,14 +4896,16 @@ class HealthConnectService {
       }
 
       // ══════ IMPORT HISTORIQUE SOMMEIL ══════
+      // v2 : déduplication par source (Apple Watch prioritaire) pour éviter double-comptage
+      const SLEEP_SYNC_VERSION = 'v2';
       try {
         const hasSyncedSleepHistory = await AsyncStorage.getItem('@yoroi_sleep_history_synced');
-        if (!hasSyncedSleepHistory) {
-          // Import historique complet au premier démarrage
+        if (!hasSyncedSleepHistory || hasSyncedSleepHistory !== SLEEP_SYNC_VERSION) {
+          // Import historique complet (premier démarrage ou mise à jour de l'algorithme)
           const imported = await this.syncSleepHistory(730);
           if (imported > 0) {
-            await AsyncStorage.setItem('@yoroi_sleep_history_synced', 'true');
-            logger.info(`[syncAll] Historique sommeil importe: ${imported} nuits`);
+            await AsyncStorage.setItem('@yoroi_sleep_history_synced', SLEEP_SYNC_VERSION);
+            logger.info(`[syncAll] Historique sommeil importe (${SLEEP_SYNC_VERSION}): ${imported} nuits`);
           }
         } else {
           // Toujours resynchroniser les 14 derniers jours pour avoir les nuits récentes

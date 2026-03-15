@@ -6,7 +6,6 @@ import {
   Modal,
   TouchableOpacity,
   Animated,
-  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
@@ -16,7 +15,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
 import logger from '@/lib/security/logger';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const POPUP_KEY = '@yoroi_battery_popup_shown';
 
 interface BatteryReadyPopupProps {

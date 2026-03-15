@@ -5,7 +5,7 @@
 // + suggestion pulsante si aucun creneau regulier
 // ============================================
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,10 +13,10 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
-  Dimensions,
   Animated,
   Easing,
   DeviceEventEmitter,
+  useWindowDimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -50,8 +50,6 @@ import {
 } from '@/lib/notificationHistoryService';
 import { getWeeklyPlan } from '@/lib/database';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const SLOTS_SUGGESTION_DISMISSED_KEY = '@yoroi_slots_suggestion_dismissed';
 
@@ -155,6 +153,21 @@ function formatTimeAgo(timestamp: number, locale: string): string {
 // PULSING ICON COMPONENT
 // ============================================
 
+const pulsingStyles = StyleSheet.create({
+  pulsingContainer: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pulsingGlow: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
+});
+
 const PulsingIcon: React.FC<{ color: string }> = ({ color }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0.3)).current;
@@ -197,10 +210,10 @@ const PulsingIcon: React.FC<{ color: string }> = ({ color }) => {
   }, []);
 
   return (
-    <View style={styles.pulsingContainer}>
+    <View style={pulsingStyles.pulsingContainer}>
       <Animated.View
         style={[
-          styles.pulsingGlow,
+          pulsingStyles.pulsingGlow,
           {
             backgroundColor: color,
             opacity: glowAnim,
@@ -234,6 +247,9 @@ export const NotificationBellPopup: React.FC<NotificationBellPopupProps> = ({
   onCountChange,
   variant = 'themed',
 }) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const POPUP_WIDTH = Math.min(SCREEN_WIDTH - 32, 380);
+  const styles = useMemo(() => createStyles(POPUP_WIDTH), [POPUP_WIDTH]);
   const { colors, isDark } = useTheme();
   const { locale } = useI18n();
   const isFr = locale.startsWith('fr');
@@ -575,10 +591,9 @@ export const NotificationBellPopup: React.FC<NotificationBellPopupProps> = ({
 // STYLES
 // ============================================
 
-const POPUP_WIDTH = Math.min(SCREEN_WIDTH - 32, 380);
 const MAX_LIST_HEIGHT = 340;
 
-const styles = StyleSheet.create({
+const createStyles = (POPUP_WIDTH: number) => StyleSheet.create({
   bellBtn: {
     width: 40,
     height: 40,

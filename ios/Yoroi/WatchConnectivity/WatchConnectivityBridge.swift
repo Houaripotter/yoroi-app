@@ -1,6 +1,6 @@
 import Foundation
 import WatchConnectivity
-import React
+internal import React
 
 @objc(WatchConnectivityBridge)
 class WatchConnectivityBridge: RCTEventEmitter, WCSessionDelegate {

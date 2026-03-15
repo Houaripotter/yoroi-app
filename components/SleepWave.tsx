@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Dimensions, Animated } from 'react-native';
+import { View, StyleSheet, useWindowDimensions, Animated } from 'react-native';
 import Svg, { Path, Defs, LinearGradient, Stop, Text as SvgText, G } from 'react-native-svg';
 
 // Note: Removed AnimatedG as SVG G elements don't support style animations directly
@@ -16,9 +16,11 @@ export const SleepWave: React.FC<SleepWaveProps> = ({
   duration,
   goal,
   debtHours,
-  width = Dimensions.get('window').width / 2 - 20,
+  width: widthProp,
   height = 120,
 }) => {
+  const { width: screenWidth } = useWindowDimensions();
+  const width = widthProp ?? (screenWidth / 2 - 20);
   const isCritical = debtHours > 5;
   const isModerate = debtHours > 2;
 

@@ -48,6 +48,14 @@ struct DashboardPage: View {
     .sheet(isPresented: $showTimer) { TimerDetailPage() }
     .sheet(isPresented: $showSteps) { StepsDetailPage(steps: session.localSteps) }
     .onAppear { session.fetchAllHealthData() }
+    .onChange(of: session.wantsTimer) {
+      if session.wantsTimer {
+        showTimer = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+          session.wantsTimer = false
+        }
+      }
+    }
   }
 
   // MARK: - Header compact

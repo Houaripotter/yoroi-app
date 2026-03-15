@@ -2,14 +2,12 @@
 // WEEKLY RECAP CARD - Style SessionCard
 // ============================================
 import React from 'react';
-import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { WeekStats } from '@/lib/social-cards/useWeekStats';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const DEFAULT_WIDTH = SCREEN_WIDTH - 40;
 const GOLD_COLOR = '#D4AF37';
 
 const PHOTO_SECTION_HEIGHT = '60%';
@@ -33,10 +31,11 @@ interface WeeklyRecapCardProps {
 
 export const WeeklyRecapCard = React.memo(React.forwardRef<View, WeeklyRecapCardProps>(
   ({
-    stats, backgroundImage, backgroundType = 'black', keepPhotoClear = false, width = DEFAULT_WIDTH,
+    stats, backgroundImage, backgroundType = 'black', keepPhotoClear = false, width: widthProp,
     userAvatar, profilePhoto, userName, rank, userLevel
   }, ref) => {
-
+    const { width: screenWidth } = useWindowDimensions();
+    const width = widthProp ?? (screenWidth - 40);
     const CARD_HEIGHT = width * (16 / 9);
 
     // Formater la date de la semaine

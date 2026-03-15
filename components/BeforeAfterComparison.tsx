@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, memo } from 'react';
+import { useState, useRef, useCallback, memo, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,10 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
   Animated,
   PanResponder,
   Share,
+  useWindowDimensions,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { X, ArrowRight, ChevronLeft, ChevronRight, Columns, SlidersHorizontal, Share2, TrendingDown, Calendar, Trophy, Zap } from 'lucide-react-native';
@@ -39,9 +39,6 @@ interface BeforeAfterComparisonProps {
   photos: ProgressPhoto[];
 }
 
-const { width: screenWidth } = Dimensions.get('window');
-const SLIDER_WIDTH = screenWidth - 40;
-
 const getImageSource = (photo: ProgressPhoto) => {
   const uri = photo.file_uri || photo.photo_url || '';
   if (uri.startsWith('file://') || uri.startsWith('http://') || uri.startsWith('https://') || uri.startsWith('data:')) {
@@ -59,10 +56,19 @@ interface PhotoCardProps {
   cardBgColor: string;
   textSecondaryColor: string;
   goldColor: string;
+  cardWidth: number;
   onPress: (photo: ProgressPhoto) => void;
 }
 
-const PhotoCard = memo(({ photo, locale, cardBgColor, textSecondaryColor, goldColor, onPress }: PhotoCardProps) => {
+const photoCardStaticStyles = StyleSheet.create({
+  selectionImage: { width: '100%', height: 180 },
+  selectionWeightBadge: { position: 'absolute', top: 12, left: 12, backgroundColor: '#10B981', borderRadius: 10, padding: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 3 },
+  selectionInfo: { padding: 14, gap: 6 },
+  selectionDate: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  selectionWeight: { fontSize: 18, fontWeight: '900', letterSpacing: -0.3 },
+});
+
+const PhotoCard = memo(({ photo, locale, cardBgColor, textSecondaryColor, goldColor, cardWidth, onPress }: PhotoCardProps) => {
   const formattedDate = new Date(photo.date).toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',
@@ -72,26 +78,26 @@ const PhotoCard = memo(({ photo, locale, cardBgColor, textSecondaryColor, goldCo
 
   return (
     <TouchableOpacity
-      style={[styles.selectionCard, { backgroundColor: cardBgColor }]}
+      style={[{ width: cardWidth, borderRadius: 20, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 }, { backgroundColor: cardBgColor }]}
       onPress={handlePress}
       activeOpacity={0.7}
     >
       <Image
         source={getImageSource(photo)}
-        style={styles.selectionImage}
+        style={photoCardStaticStyles.selectionImage}
         resizeMode="cover"
       />
       {photo.weight && (
-        <View style={styles.selectionWeightBadge}>
+        <View style={photoCardStaticStyles.selectionWeightBadge}>
           <TrendingDown size={12} color="#FFFFFF" strokeWidth={3} />
         </View>
       )}
-      <View style={[styles.selectionInfo, { backgroundColor: cardBgColor }]}>
-        <Text style={[styles.selectionDate, { color: textSecondaryColor }]}>
+      <View style={[photoCardStaticStyles.selectionInfo, { backgroundColor: cardBgColor }]}>
+        <Text style={[photoCardStaticStyles.selectionDate, { color: textSecondaryColor }]}>
           {formattedDate}
         </Text>
         {photo.weight && (
-          <Text style={[styles.selectionWeight, { color: goldColor }]}>
+          <Text style={[photoCardStaticStyles.selectionWeight, { color: goldColor }]}>
             {photo.weight.toFixed(1)} kg
           </Text>
         )}
@@ -101,6 +107,10 @@ const PhotoCard = memo(({ photo, locale, cardBgColor, textSecondaryColor, goldCo
 });
 
 export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterComparisonProps) {
+  const { width: screenWidth } = useWindowDimensions();
+  const SLIDER_WIDTH = screenWidth - 40;
+  const selectionPhotoSize = (screenWidth - 64) / 2;
+  const styles = useMemo(() => createStyles(SLIDER_WIDTH, selectionPhotoSize), [SLIDER_WIDTH, selectionPhotoSize]);
   const { colors, isDark } = useTheme();
   const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -638,6 +648,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                       cardBgColor={colors.card}
                       textSecondaryColor={colors.textSecondary}
                       goldColor={colors.gold}
+                      cardWidth={selectionPhotoSize}
                       onPress={handlePhotoPress}
                     />
                   ))}
@@ -651,9 +662,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
   );
 }
 
-const selectionPhotoSize = (screenWidth - 64) / 2;
-
-const styles = StyleSheet.create({
+const createStyles = (SLIDER_WIDTH: number, selectionPhotoSize: number) => StyleSheet.create({
   container: {
     flex: 1,
   },

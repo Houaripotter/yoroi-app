@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Training } from '@/lib/database';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
@@ -12,7 +12,6 @@ import { StatsDetailModal } from '../StatsDetailModal';
 
 import { scale, isIPad } from '@/constants/responsive';
 
-const { width } = Dimensions.get('window');
 // iPhone garde 16, iPad utilise scale(8)
 const CONTAINER_PADDING = isIPad() ? scale(8) : 16;
 const CHART_HEIGHT = scale(200);
@@ -29,6 +28,7 @@ type Period = '7j' | '30j' | '90j' | 'year';
 
 export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
   const { colors, isDark } = useTheme();
+  const { width } = useWindowDimensions();
   const [period, setPeriod] = useState<Period>('30j');
   const [selectedPoint, setSelectedPoint] = useState<{
     index: number;

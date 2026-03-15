@@ -6,6 +6,7 @@
 
 import Foundation
 import WidgetKit
+internal import React
 
 @objc(WidgetDataModule)
 class WidgetDataModule: NSObject {

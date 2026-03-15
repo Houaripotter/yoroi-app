@@ -12,7 +12,6 @@ import {
   StyleSheet,
   Animated,
   Easing,
-  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -35,8 +34,6 @@ import {
   type Quest,
   type QuestProgress,
 } from '@/lib/quests';
-
-const SCREEN_W = Dimensions.get('window').width;
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 

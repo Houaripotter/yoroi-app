@@ -10,7 +10,6 @@ import {
   StyleSheet,
   Animated,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,7 +17,6 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 
 const VIEW_MODE_HINT_SHOWN_KEY = '@yoroi_view_mode_hint_shown';
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface ViewModeHintProps {
   onDismiss?: () => void;

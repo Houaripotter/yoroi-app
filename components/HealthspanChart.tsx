@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import Svg, { Path, Line, Circle, G, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { router } from 'expo-router';
 import { ChevronRight, Moon, Activity, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
@@ -8,8 +8,6 @@ import { useI18n } from '@/lib/I18nContext';
 import { format, subDays, Locale } from 'date-fns';
 import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface DayData {
   date: string;
@@ -30,6 +28,7 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({
   sleepHistory = [],
   hrvHistory = [],
 }) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const { colors, isDark } = useTheme();
   const { t, language } = useI18n();
   const [data, setData] = useState<DayData[]>([]);

@@ -4,9 +4,9 @@ import {
   Text,
   StyleSheet,
   Image,
-  Dimensions,
   TouchableOpacity,
   Share,
+  useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight, Share2 } from 'lucide-react-native';
@@ -31,8 +31,6 @@ import Animated, {
 // BEFORE/AFTER SLIDER - ULTRA FLUIDE
 // ============================================
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 interface PhotoData {
   uri: string;
   date: string;
@@ -56,6 +54,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
   showShareButton = true,
   style,
 }) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const { colors } = useTheme();
   const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();

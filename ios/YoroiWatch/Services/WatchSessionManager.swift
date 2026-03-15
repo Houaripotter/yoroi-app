@@ -198,6 +198,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   // MARK: - Navigation (deep link depuis complications)
   // -1 = aucun deep link en cours ; >= 0 = onglet cible
   @Published var requestedTab: Int = -1
+  @Published var wantsTimer: Bool = false
 
   // MARK: - Connection
   @Published var isConnected: Bool = false
@@ -580,7 +581,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
       guard granted else { return }
 
-      let wizzSound = UNNotificationSound(named: UNNotificationSoundName("wizz.mp3"))
+      let wizzSound = UNNotificationSound.default
 
       // — Notification principale à la fin exacte du timer
       let main = UNMutableNotificationContent()

@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
+  useWindowDimensions,
   Animated,
   Image,
   TextInput,
@@ -14,7 +15,6 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
 } from 'react-native';
-import { Audio } from 'expo-av';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { PhotoCropModal } from '@/components/PhotoCropModal';
@@ -61,8 +61,6 @@ import { SPORTS, getSportColor } from '@/lib/sports';
 import { getWeightCategories } from '@/lib/fighterMode';
 import type { UserMode, WeightCategory } from '@/lib/fighterMode';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const { width } = Dimensions.get('window');
 
 const LEGAL_ACCEPTED_KEY = '@yoroi_legal_accepted';
 
@@ -220,38 +218,14 @@ const SPORT_CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function OnboardingScreen() {
+  const { width } = useWindowDimensions();
+  const s = useMemo(() => createStyles(width), [width]);
   const { showPopup, PopupComponent } = useCustomPopup();
   const { isProcessing, executeOnce } = usePreventDoubleClick({ delay: 1000 });
   const params = useLocalSearchParams<{ preview?: string; page?: string }>();
   const isPreview = params.preview === 'true';
   const insets = useSafeAreaInsets();
 
-  // Musique d'ambiance
-  const musicRef = useRef<Audio.Sound | null>(null);
-  useEffect(() => {
-    let mounted = true;
-    const startMusic = async () => {
-      try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: false,
-          staysActiveInBackground: false,
-          shouldDuckAndroid: true,
-          playThroughEarpieceAndroid: false,
-        });
-        const { sound } = await Audio.Sound.createAsync(
-          require('../assets/sounds/intro.mp3'),
-          { shouldPlay: true, isLooping: true, volume: 0.3 }
-        );
-        if (mounted) { musicRef.current = sound; } else { await sound.unloadAsync(); }
-      } catch (error) { logger.error('Onboarding music failed', error); }
-    };
-    startMusic();
-    return () => {
-      mounted = false;
-      musicRef.current?.stopAsync().then(() => musicRef.current?.unloadAsync()).catch(() => {});
-    };
-  }, []);
 
   // Navigation
   const [currentPage, setCurrentPage] = useState(0);
@@ -283,6 +257,26 @@ export default function OnboardingScreen() {
   // Page 4 - Apple Santé
   const [isConnectingHealth, setIsConnectingHealth] = useState(false);
   const [healthConnected, setHealthConnected] = useState(false);
+
+  // Musique d'intro en fond
+  const introPlayer = useAudioPlayer(require('@/assets/sounds/intro.mp3'));
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        await setAudioModeAsync({ playsInSilentModeIOS: true });
+        if (active) {
+          introPlayer.loop = true;
+          introPlayer.volume = 0.5;
+          introPlayer.play();
+        }
+      } catch {}
+    })();
+    return () => {
+      active = false;
+      try { introPlayer.pause(); } catch {}
+    };
+  }, []);
 
   const weightCategories: WeightCategory[] = selectedSport ? getWeightCategories(selectedSport as any) : [];
   const sportHasCategories = weightCategories.length > 0 && selectedSport !== 'autre';
@@ -853,11 +847,7 @@ export default function OnboardingScreen() {
   // =============================================
 
   const finishOnboarding = async () => {
-    if (musicRef.current) {
-      await musicRef.current.stopAsync().catch(() => {});
-      await musicRef.current.unloadAsync().catch(() => {});
-      musicRef.current = null;
-    }
+    try { introPlayer.pause(); } catch {}
     router.replace('/(tabs)');
   };
 
@@ -1004,7 +994,7 @@ export default function OnboardingScreen() {
 // =============================================
 // STYLES
 // =============================================
-const s = StyleSheet.create({
+const createStyles = (width: number) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   previewCloseBtn: {
     position: 'absolute',

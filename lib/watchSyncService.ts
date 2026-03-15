@@ -420,8 +420,9 @@ class WatchSyncServiceClass {
       const startOfYear = new Date(now.getFullYear(), 0, 1);
       const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
 
-      // Récupérer tous les entraînements de l'année
-      const trainings = await getTrainings(startOfYear.toISOString(), endOfYear.toISOString());
+      // Récupérer tous les entraînements de l'année (365 derniers jours)
+      const allTrainings = await getTrainings(365);
+      const trainings = allTrainings.filter(t => new Date(t.date) >= startOfYear && new Date(t.date) <= endOfYear);
 
       // Compter les jours uniques
       const uniqueDays = new Set<string>();

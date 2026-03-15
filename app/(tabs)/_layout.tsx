@@ -59,7 +59,7 @@ function ImportProgressBanner() {
 
   return (
     <Animated.View style={[bannerStyles.wrap, { transform: [{ translateY: slideAnim }] }]}>
-      <View style={[bannerStyles.bar, { backgroundColor: colors.cardBackground || '#1A1A2E' }]}>
+      <View style={[bannerStyles.bar, { backgroundColor: colors.backgroundCard || '#1A1A2E' }]}>
         <View style={bannerStyles.row}>
           <View style={bannerStyles.dot} />
           <Text style={bannerStyles.label} numberOfLines={1}>

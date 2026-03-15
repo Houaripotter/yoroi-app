@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,11 +31,11 @@ import { addTraining } from '@/lib/database';
 import { SPORTS, getSportById, getSportName } from '@/lib/sports';
 import logger from '@/lib/security/logger';
 
-const { width: screenWidth } = Dimensions.get('window');
-
 export default function ImportWorkoutsScreen() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(screenWidth), [screenWidth]);
   const { showPopup, PopupComponent } = useCustomPopup();
   const { t } = useI18n();
 
@@ -496,7 +496,7 @@ export default function ImportWorkoutsScreen() {
 // STYLES
 // ============================================
 
-const styles = StyleSheet.create({
+const createStyles = (screenWidth: number) => StyleSheet.create({
   container: {
     flex: 1,
   },

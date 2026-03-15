@@ -4,10 +4,8 @@
 // ============================================
 
 import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import LottieView from 'lottie-react-native';
-
-const SCREEN_W = Dimensions.get('window').width;
 
 // ============================================
 // SamuraiCircleLoader — cercle blanc centré

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Ruler, TrendingDown, TrendingUp, Maximize2 } from 'lucide-react-native';
@@ -7,13 +7,9 @@ import { SparklineChart } from '../charts/SparklineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { scale, isIPad, getHistoryDays } from '@/constants/responsive';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const STATS_COLUMNS = isIPad() ? 4 : 2;
 const STATS_GAP = 12;
 const CONTAINER_PADDING = isIPad() ? scale(8) : 16;
-const STATS_CARD_WIDTH = (SCREEN_WIDTH - CONTAINER_PADDING * 2 - STATS_GAP * (STATS_COLUMNS - 1)) / STATS_COLUMNS;
-// Largeur du sparkline = largeur carte - padding (14*2) + margin négatif (6*2)
-const SPARKLINE_WIDTH = STATS_CARD_WIDTH - 28 + 12;
 
 interface MeasurementsStatsProps {
   data: any[];
@@ -22,6 +18,10 @@ interface MeasurementsStatsProps {
 export const MeasurementsStats: React.FC<MeasurementsStatsProps> = ({ data }) => {
   const { colors } = useTheme();
   const { locale } = useI18n();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const STATS_CARD_WIDTH = (SCREEN_WIDTH - CONTAINER_PADDING * 2 - STATS_GAP * (STATS_COLUMNS - 1)) / STATS_COLUMNS;
+  const SPARKLINE_WIDTH = STATS_CARD_WIDTH - 28 + 12;
+  const styles = useMemo(() => createStyles(STATS_CARD_WIDTH), [STATS_CARD_WIDTH]);
   const [selectedMeasurement, setSelectedMeasurement] = useState<{
     id: string;
     label: string;
@@ -186,7 +186,7 @@ export const MeasurementsStats: React.FC<MeasurementsStatsProps> = ({ data }) =>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (STATS_CARD_WIDTH: number) => StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: isIPad() ? 0 : 16,

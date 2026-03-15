@@ -12,7 +12,6 @@ import {
   ScrollView,
   TextInput,
   Modal,
-  Dimensions,
   Animated,
   PanResponder,
   DeviceEventEmitter,
@@ -86,8 +85,6 @@ import AddSkillModal from './training-journal/components/AddSkillModal';
 import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 import { logger } from '@/lib/security/logger';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 // ============================================
 // SWIPEABLE ROW — swipe gauche pour révéler Supprimer
 // ============================================
@@ -98,6 +95,7 @@ const SwipeableCard = React.memo(function SwipeableCard({
   onDelete: () => void;
   children: React.ReactNode;
 }) {
+  const { colors: swipeColors } = useTheme();
   const translateX = useRef(new Animated.Value(0)).current;
   const isOpen = useRef(false);
 
@@ -138,8 +136,8 @@ const SwipeableCard = React.memo(function SwipeableCard({
           onPress={() => { close(); onDelete(); }}
           activeOpacity={0.8}
         >
-          <Trash2 size={20} color="#FFFFFF" />
-          <Text style={swipeStyles.deleteText}>Supprimer</Text>
+          <Trash2 size={20} color={swipeColors.textOnAccent} />
+          <Text style={[swipeStyles.deleteText, { color: swipeColors.textOnAccent }]}>Supprimer</Text>
         </TouchableOpacity>
       </View>
       {/* Carte qui glisse */}
@@ -1213,7 +1211,7 @@ export default function TrainingJournalScreen() {
             </Text>
             {isPR && (
               <View style={[styles.compactPRBadge, { backgroundColor: benchmark.color }]}>
-                <Text style={styles.compactPRText}>PR</Text>
+                <Text style={[styles.compactPRText, { color: colors.textOnAccent }]}>PR</Text>
               </View>
             )}
             {!isPR && trendUp && (
@@ -1447,8 +1445,8 @@ export default function TrainingJournalScreen() {
               setIsSportPickerVisible(true);
             }}
           >
-            <Dumbbell size={22} color="#FFFFFF" />
-            <Text style={styles.fabMenuText}>Mon Record</Text>
+            <Dumbbell size={22} color={colors.textOnAccent} />
+            <Text style={[styles.fabMenuText, { color: colors.textOnAccent }]}>Mon Record</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -1462,8 +1460,8 @@ export default function TrainingJournalScreen() {
             }}
             disabled={isModalProcessing}
           >
-            <BookOpen size={22} color="#FFFFFF" />
-            <Text style={styles.fabMenuText}>Technique (Savoir)</Text>
+            <BookOpen size={22} color={colors.textOnAccent} />
+            <Text style={[styles.fabMenuText, { color: colors.textOnAccent }]}>Technique (Savoir)</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -1639,7 +1637,7 @@ export default function TrainingJournalScreen() {
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendPRBadge, { backgroundColor: '#EF4444' }]}>
-              <Text style={styles.legendPRText}>PR</Text>
+              <Text style={[styles.legendPRText, { color: colors.textOnAccent }]}>PR</Text>
             </View>
             <Text style={[styles.legendText, { color: colors.textMuted }]}>Record perso</Text>
           </View>
@@ -1840,8 +1838,8 @@ export default function TrainingJournalScreen() {
                     Ajoute les techniques que tu veux maîtriser et suivre
                   </Text>
                   <View style={[styles.emptyActionButton, { backgroundColor: '#8B5CF6', marginTop: 12 }]}>
-                    <Plus size={18} color="#FFFFFF" strokeWidth={2.5} />
-                    <Text style={{ color: '#FFFFFF', fontWeight: '600', marginLeft: 6 }}>
+                    <Plus size={18} color={colors.textOnAccent} strokeWidth={2.5} />
+                    <Text style={{ color: colors.textOnAccent, fontWeight: '600', marginLeft: 6 }}>
                       Ajouter ma première technique
                     </Text>
                   </View>
@@ -2058,8 +2056,8 @@ export default function TrainingJournalScreen() {
             }
           ]}
         >
-          <Check size={18} color="#FFFFFF" strokeWidth={3} />
-          <Text style={styles.toastText}>{toastMessage}</Text>
+          <Check size={18} color={colors.textOnAccent} strokeWidth={3} />
+          <Text style={[styles.toastText, { color: colors.textOnAccent }]}>{toastMessage}</Text>
         </Animated.View>
       )}
 

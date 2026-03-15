@@ -72,17 +72,9 @@ const calculateChangePercent = (values: number[]): number => {
 export const aggregateWeightData = async (period: Period): Promise<AggregatedStats | null> => {
   try {
     const days = getPeriodDays(period);
-    const weights = await getWeights();
+    const filtered = await getWeights(days);
 
-    if (!weights || weights.length === 0) return null;
-
-    // Filtrer par période
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - days);
-
-    const filtered = weights.filter(w => new Date(w.date) >= cutoffDate);
-
-    if (filtered.length === 0) return null;
+    if (!filtered || filtered.length === 0) return null;
 
     // Trier par date
     filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -117,17 +109,9 @@ export const aggregateCompositionData = async (period: Period): Promise<{
 } | null> => {
   try {
     const days = getPeriodDays(period);
-    const weights = await getWeights();
+    const filtered = await getWeights(days);
 
-    if (!weights || weights.length === 0) return null;
-
-    // Filtrer par période
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - days);
-
-    const filtered = weights.filter(w => new Date(w.date) >= cutoffDate);
-
-    if (filtered.length === 0) return null;
+    if (!filtered || filtered.length === 0) return null;
 
     // Trier par date
     filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -249,17 +233,9 @@ export const aggregateTrainingData = async (period: Period): Promise<{
 export const aggregateMeasurementData = async (period: Period, field: string): Promise<AggregatedStats | null> => {
   try {
     const days = getPeriodDays(period);
-    const measurements = await getMeasurements();
+    const filtered = await getMeasurements(days);
 
-    if (!measurements || measurements.length === 0) return null;
-
-    // Filtrer par période
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - days);
-
-    const filtered = measurements.filter(m => new Date(m.date) >= cutoffDate);
-
-    if (filtered.length === 0) return null;
+    if (!filtered || filtered.length === 0) return null;
 
     // Filtrer les mesures qui ont la valeur du champ demandé
     const withValue = filtered.filter(m => {

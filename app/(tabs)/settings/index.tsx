@@ -61,7 +61,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { safeOpenURL } from '@/lib/security/validators';
 import { exportDataToJSON, importDataFromJSON, exportEditableCSV, importEditableCSV, exportEmptyTemplate } from '@/lib/exportService';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { generateProgressPDF } from '@/lib/pdfExport';
 import { resetAllData, resetDataOnly } from '@/lib/storage';
 import { resetDatabase } from '@/lib/database';

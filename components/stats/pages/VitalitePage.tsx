@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, RefreshControl, Linking, AppState, AppStateStatus, Alert, Platform } from 'react-native';
+import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, RefreshControl, Linking, AppState, AppStateStatus, Alert, Platform, InteractionManager, unstable_batchedUpdates } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { useScrollContext } from '@/lib/ScrollContext';
@@ -121,32 +121,49 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
   const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    // Toujours vérifier la connexion HealthKit pour permettre la sync
-    checkHealthKitConnection();
+    // Attendre la fin des animations avant de charger les données lourdes
+    const handle = InteractionManager.runAfterInteractions(() => {
+      checkHealthKitConnection();
+    });
+    return () => handle.cancel();
   }, []);
 
   // Compteur pour annuler les chargements perimés
   const loadIdRef = useRef(0);
 
+  // Debounce pour éviter les appels multiples lors du changement de période
+  const periodDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Quand on change d'onglet ou de periode, charger les données de cet onglet
   // Ne pas recharger si deja charge (performance)
+  // Debounce 300ms pour éviter les appels en rafale lors du changement de période
   useEffect(() => {
-    if (!loading && !loadedTabs.has(activeTab)) {
-      if (activeTab === 'seances') {
-        loadTabData(activeTab);
-      } else if (isHealthKitConnected) {
-        loadTabData(activeTab);
-      }
+    if (periodDebounceRef.current) {
+      clearTimeout(periodDebounceRef.current);
     }
+    periodDebounceRef.current = setTimeout(() => {
+      if (!loading && !loadedTabs.has(activeTab)) {
+        if (activeTab === 'seances') {
+          loadTabData(activeTab);
+        } else if (isHealthKitConnected) {
+          loadTabData(activeTab);
+        }
+      }
+    }, 300);
+    return () => {
+      if (periodDebounceRef.current) {
+        clearTimeout(periodDebounceRef.current);
+      }
+    };
   }, [activeTab, selectedPeriod]);
 
-  // Invalider les tabs chargees ET vider les données quand la periode change
+  // Invalider les tabs chargees quand la periode change (sans vider l'UI)
+  // On vide loadedTabs pour forcer un rechargement lazy à la prochaine visite de chaque tab
+  // Mais on NE VIDE PAS les données existantes pour eviter un flash blanc
   useEffect(() => {
     setLoadedTabs(new Set());
-    setVitalHistory({ sleep: [], heartRate: [], hrv: [], steps: [], calories: [], distance: [], exerciseMinutes: [], standHours: [], spo2: [], respiratoryRate: [], vo2max: [], bodyTemperature: [], bloodGlucose: [] });
-    setRawSleepHistory([]);
-    setTrainings([]);
-    setSleepPhasesData({ avgAwake: 0, avgRem: 0, avgCore: 0, avgDeep: 0, totalSleepMin: 0, nightsCount: 0 });
+    // Incrémenter loadIdRef pour annuler tout chargement en cours
+    loadIdRef.current++;
   }, [selectedPeriod]);
 
   const checkHealthKitConnection = async () => {
@@ -258,32 +275,31 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
       const vo2max = (results as any)[10]?.status === 'fulfilled' ? (results as any)[10].value : null;
       const bloodPressure = (results as any)[11]?.status === 'fulfilled' ? (results as any)[11].value : null;
 
-      setHealthData({ sleep, heartRate, hrv, oxygenSaturation, respiratoryRate, vo2max, bloodPressure });
-      setTodaySteps((results[5] as any).status === 'fulfilled' ? (results[5] as any).value?.count || 0 : 0);
-      setTodayCalories((results[6] as any).status === 'fulfilled' ? (results[6] as any).value?.active || 0 : 0);
-      // Distance en km
       const distData = results[7]?.status === 'fulfilled' ? (results[7] as any).value : null;
       const dist = distData?.walking ? (distData.walking + (distData.running || 0)) : (typeof distData === 'number' ? distData : 0);
-      setTodayDistance(dist);
-      setTodayExerciseMinutes(results[8]?.status === 'fulfilled' ? ((results[8] as any).value || 0) : 0);
-      setTodayStandHours(results[9]?.status === 'fulfilled' ? ((results[9] as any).value || 0) : 0);
-      setTodayFloors((results as any)[12]?.status === 'fulfilled' ? ((results as any)[12].value || 0) : 0);
       const mindfulData = (results as any)[13]?.status === 'fulfilled' ? (results as any)[13].value : null;
-      setTodayMindfulMinutes(mindfulData?.minutes || 0);
       const hydrationData = (results as any)[14]?.status === 'fulfilled' ? (results as any)[14].value : null;
-      setTodayHydration(hydrationData?.amount || 0);
       const bodyTempData = (results as any)[15]?.status === 'fulfilled' ? (results as any)[15].value : null;
-      setTodayBodyTemp(bodyTempData?.value || 0);
       const bloodGlucoseData = (results as any)[16]?.status === 'fulfilled' ? (results as any)[16].value : null;
-      setTodayBloodGlucose(bloodGlucoseData?.value || 0);
-      // Ajouter bodyTemperature et bloodGlucose dans healthData pour les tabs
-      if (bodyTempData || bloodGlucoseData) {
-        setHealthData((prev: any) => prev ? {
-          ...prev,
+
+      // Batch tous les setState en un seul re-render
+      unstable_batchedUpdates(() => {
+        setHealthData({
+          sleep, heartRate, hrv, oxygenSaturation, respiratoryRate, vo2max, bloodPressure,
           bodyTemperature: bodyTempData,
           bloodGlucose: bloodGlucoseData,
-        } : prev);
-      }
+        });
+        setTodaySteps((results[5] as any).status === 'fulfilled' ? (results[5] as any).value?.count || 0 : 0);
+        setTodayCalories((results[6] as any).status === 'fulfilled' ? (results[6] as any).value?.active || 0 : 0);
+        setTodayDistance(dist);
+        setTodayExerciseMinutes(results[8]?.status === 'fulfilled' ? ((results[8] as any).value || 0) : 0);
+        setTodayStandHours(results[9]?.status === 'fulfilled' ? ((results[9] as any).value || 0) : 0);
+        setTodayFloors((results as any)[12]?.status === 'fulfilled' ? ((results as any)[12].value || 0) : 0);
+        setTodayMindfulMinutes(mindfulData?.minutes || 0);
+        setTodayHydration(hydrationData?.amount || 0);
+        setTodayBodyTemp(bodyTempData?.value || 0);
+        setTodayBloodGlucose(bloodGlucoseData?.value || 0);
+      });
     } catch (error) {
       logger.error('Error loading base health data:', error);
     } finally {
@@ -526,7 +542,7 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
         await loadHealthData();
       } else {
         const { failureReason } = healthConnect.getSyncStatus();
-        if (failureReason === 'HEALTH_CONNECT_NOT_INSTALLED') {
+        if ((failureReason as string) === 'HEALTH_CONNECT_NOT_INSTALLED') {
           // Android : Health Connect pas installé
           Alert.alert(
             'Health Connect requis',

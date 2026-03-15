@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   StatusBar,
-  Dimensions,
   RefreshControl,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -37,8 +36,6 @@ import { successHaptic } from '@/lib/haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS, GRADIENTS, BODY_COMP_COLORS } from '@/constants/design';
 import logger from '@/lib/security/logger';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ============================================
 // COMPOSITION CORPORELLE - IMPÉDANCEMÈTRE

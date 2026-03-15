@@ -1,6 +1,6 @@
 import Foundation
 import ActivityKit
-import React
+internal import React
 
 @objc(YoroiLiveActivityManager)
 class YoroiLiveActivityManager: NSObject {

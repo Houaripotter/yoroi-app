@@ -10,7 +10,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   Animated,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -27,8 +26,6 @@ import {
   RadarEvolution,
   RadarInsight,
 } from '@/lib/radarService';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function RadarPerformanceScreen() {
   const insets = useSafeAreaInsets();

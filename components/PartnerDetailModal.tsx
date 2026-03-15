@@ -12,8 +12,8 @@ import {
   ScrollView,
   Animated,
   Easing,
-  Dimensions,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';
 import { 
@@ -34,8 +34,6 @@ import {
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
-
-const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export interface PartnerLink {
   type: 'instagram' | 'youtube' | 'website' | 'doctolib' | 'phone' | 'email';
@@ -124,8 +122,9 @@ export const PartnerDetailModal: React.FC<PartnerDetailModalProps> = ({
   partner,
   onClose,
 }) => {
+  const { height: SCREEN_HEIGHT } = useWindowDimensions();
   const { colors } = useTheme();
-  
+
   // Animations
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;

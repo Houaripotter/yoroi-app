@@ -5,7 +5,7 @@
 // ============================================
 
 import React, { useState, useMemo, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent, ScrollView, Dimensions, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent, ScrollView, useWindowDimensions, Modal } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import Svg, { Path, Circle as SvgCircle, Line, Text as SvgText, Defs, LinearGradient, Stop, G, Rect } from 'react-native-svg';
 import { ArrowLeftRight, TrendingUp, TrendingDown, Minus, Maximize2, X } from 'lucide-react-native';
@@ -28,9 +28,7 @@ interface MultiLineComparisonCardProps {
   unit: string;
 }
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CHART_HEIGHT = 220;
-const FULLSCREEN_HEIGHT = SCREEN_HEIGHT * 0.55;
 const PAD_TOP = 46;
 const PAD_BOTTOM = 35;
 const PAD_LEFT = 50;
@@ -62,6 +60,8 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
 }) => {
   const { colors, isDark } = useTheme();
   const { language } = useI18n();
+  const { width: SCREEN_WIDTH, height: screenHeight } = useWindowDimensions();
+  const FULLSCREEN_HEIGHT = screenHeight * 0.55;
   const dateLocale = fr;
   const [cardWidth, setCardWidth] = useState(0);
   const [activeLines, setActiveLines] = useState<Set<number>>(() => new Set(lines.map((_, i) => i)));

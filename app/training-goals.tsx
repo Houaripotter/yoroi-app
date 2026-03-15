@@ -13,7 +13,6 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
-  Dimensions,
   KeyboardAvoidingView,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -69,8 +68,6 @@ import {
   TrainingGoal,
 } from '@/lib/trainingGoalsService';
 import { logger } from '@/lib/security/logger';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Icone par type d'objectif
 const TypeIcon = ({ type, size, color }: { type: ObjectiveType; size: number; color: string }) => {

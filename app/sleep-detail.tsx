@@ -9,7 +9,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
 import { useLocalSearchParams } from 'expo-router';
@@ -27,8 +27,6 @@ import type { SleepEntry } from '@/lib/sleepService';
 import { healthConnect } from '@/lib/healthConnect';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ============================================
 // COULEURS FIXES (fond blanc, texte sombre)
@@ -608,6 +606,7 @@ const SleepPhasesTimeline: React.FC<{
   bedTime: string;
   wakeTime: string;
 }> = ({ phases, bedTime, wakeTime }) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const chartWidth = SCREEN_WIDTH - 80;
   const chartHeight = 80;
   const totalMin = phases.deep + phases.rem + phases.core + phases.awake;

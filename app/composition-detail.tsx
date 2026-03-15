@@ -6,8 +6,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, {
@@ -38,7 +38,6 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_HEIGHT = 250;
 
 // Périodes disponibles
@@ -126,6 +125,7 @@ const METRICS = [
 ];
 
 export default function CompositionDetailScreen() {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const { colors } = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams<{ metric?: string }>();

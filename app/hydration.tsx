@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   Animated,
   TextInput,
   Switch,
@@ -43,7 +42,6 @@ import { useWatch } from '@/lib/WatchConnectivityProvider';
 import { saveDietaryWaterNative } from '@/lib/yoroiHealthKit';
 import secureStorage from '@/lib/security/secureStorage';
 
-const { width: screenWidth } = Dimensions.get('window');
 const HYDRATION_KEY = '@yoroi_hydration_today';
 const HYDRATION_GOAL_KEY = '@yoroi_hydration_goal';
 const HYDRATION_HISTORY_KEY = '@yoroi_hydration_history';

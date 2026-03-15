@@ -385,7 +385,7 @@ class NotificationService {
         content: {
           title: message.title,
           body: message.body,
-          data: { type: 'training' },
+          data: { type: 'training', screen: 'add-training' },
           sound: true,
         },
         trigger: {
@@ -419,7 +419,7 @@ class NotificationService {
           content: {
             title: message.title,
             body: `${message.body} (${slot.amount}ml recommandés)`,
-            data: { type: 'hydration', slot: name, amount: slot.amount },
+            data: { type: 'hydration', screen: 'hydration', slot: name, amount: slot.amount },
             sound: true,
           },
           trigger: {
@@ -441,7 +441,7 @@ class NotificationService {
           content: {
             title: message.title,
             body: message.body,
-            data: { type: 'hydration' },
+            data: { type: 'hydration', screen: 'hydration' },
             sound: true,
           },
           trigger: {
@@ -469,7 +469,7 @@ class NotificationService {
         content: {
           title: message.title,
           body: message.body,
-          data: { type: 'weighing' },
+          data: { type: 'weighing', screen: 'body-composition' },
           sound: true,
         },
         trigger: {
@@ -492,7 +492,7 @@ class NotificationService {
       content: {
         title: message.title,
         body: message.body,
-        data: { type: 'streak' },
+        data: { type: 'streak', screen: 'add-training' },
         sound: true,
       },
       trigger: {
@@ -518,7 +518,7 @@ class NotificationService {
         content: {
           title: message.title,
           body: message.body,
-          data: { type: 'sleep' },
+          data: { type: 'sleep', screen: 'sleep' },
           sound: true,
         },
         trigger: {
@@ -877,7 +877,7 @@ class NotificationService {
         await this.sendInstantNotification(
           message.title.replace('{days}', patterns.consecutiveDays.toString()),
           message.body.replace('{days}', patterns.consecutiveDays.toString()),
-          { type: 'smart_rest' }
+          { type: 'smart_rest', screen: 'history' }
         );
         return;
       }
@@ -896,7 +896,7 @@ class NotificationService {
             message.body
               .replace('{usual}', expectedThisWeek.toString())
               .replace('{current}', patterns.currentWeekCount.toString()),
-            { type: 'smart_frequency' }
+            { type: 'smart_frequency', screen: 'add-training' }
           );
         }
       }
@@ -958,7 +958,7 @@ class NotificationService {
   }
 
   async sendCongratulation(message: string): Promise<void> {
-    await this.sendInstantNotification('Félicitations !', message, { type: 'achievement' }, true);
+    await this.sendInstantNotification('Félicitations !', message, { type: 'achievement', screen: 'gamification' }, true);
   }
 
   async sendWeeklyCardReminder(): Promise<void> {

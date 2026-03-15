@@ -26,8 +26,6 @@
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		BGTASK01OBJBUILDF000001 /* BackgroundTaskModule.m in Sources */ = {isa = PBXBuildFile; fileRef = BGTASK01OBJFILEREF000001 /* BackgroundTaskModule.m */; };
 		BGTASK01SWFBUILDF000001 /* BackgroundTaskModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = BGTASK01SWFFILEREF000001 /* BackgroundTaskModule.swift */; };
-		YOROIHK01OBJBUILDF000001 /* YoroiHealthKitModule.m in Sources */ = {isa = PBXBuildFile; fileRef = YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */; };
-		YOROIHK01SWFBUILDF000001 /* YoroiHealthKitModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */; };
 		CARNETPAGE001BUILDF00001 /* CarnetPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CARNETPAGE001FILEREF0001 /* CarnetPage.swift */; };
 		COMPETPAGE01BUILDF000001 /* CompetitionPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = COMPETPAGE01FILEREF000001 /* CompetitionPage.swift */; };
 		COMPLICCNTRL01BUILDF0001 /* ComplicationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = COMPLICCNTRL01FILEREF0001 /* ComplicationController.swift */; };
@@ -48,13 +46,15 @@
 		TORCH001OBJBUILDF000001 /* TorchModule.m in Sources */ = {isa = PBXBuildFile; fileRef = TORCH001OBJFILEREF000001 /* TorchModule.m */; };
 		TORCH001SWFBUILDF000001 /* TorchModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = TORCH001SWFFILEREF00001 /* TorchModule.swift */; };
 		WATCHUTILS001BUILDF00001 /* WatchUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = WATCHUTILS001FILEREF00001 /* WatchUtils.swift */; };
+		WGTDATAOBJ001BUILDF00001 /* WidgetDataModule.m in Sources */ = {isa = PBXBuildFile; fileRef = WGTDATAOBJ001F1LEREF0001 /* WidgetDataModule.m */; };
+		WGTDATASWF001BUILDF00001 /* WidgetDataModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = WGTDATASWF001F1LEREF0001 /* WidgetDataModule.swift */; };
+		WIDGETKIT001FRAMBUILDF001 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = WIDGETKIT001FRAMFILEREF001 /* WidgetKit.framework */; };
 		WIZZ50UND0001F1LEREF0001 /* wizz-made-with-Voicemod.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */; };
 		WIZZM4IN0001BUILDF000001 /* wizz.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZM4IN0001F1LEREF0001 /* wizz.mp3 */; };
 		WIZZW4TCH001BUILDF000001 /* wizz.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZW4TCH001F1LEREF0001 /* wizz.mp3 */; };
-		WGTDATASWF001BUILDF00001 /* WidgetDataModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = WGTDATASWF001F1LEREF0001 /* WidgetDataModule.swift */; };
-		WGTDATAOBJ001BUILDF00001 /* WidgetDataModule.m in Sources */ = {isa = PBXBuildFile; fileRef = WGTDATAOBJ001F1LEREF0001 /* WidgetDataModule.m */; };
-		WIDGETKIT001FRAMBUILDF001 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = WIDGETKIT001FRAMFILEREF001 /* WidgetKit.framework */; };
 		WORKOUTPAG01BUILDF000001 /* WorkoutPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */; };
+		YOROIHK01OBJBUILDF000001 /* YoroiHealthKitModule.m in Sources */ = {isa = PBXBuildFile; fileRef = YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */; };
+		YOROIHK01SWFBUILDF000001 /* YoroiHealthKitModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -109,8 +109,6 @@
 		BDA7F51DE3199FA753FF4521 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BGTASK01OBJFILEREF000001 /* BackgroundTaskModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BackgroundTaskModule.m; path = Yoroi/BackgroundTaskModule.m; sourceTree = "<group>"; };
 		BGTASK01SWFFILEREF000001 /* BackgroundTaskModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BackgroundTaskModule.swift; path = Yoroi/BackgroundTaskModule.swift; sourceTree = "<group>"; };
-		YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = YoroiHealthKitModule.m; path = Yoroi/YoroiHealthKitModule.m; sourceTree = "<group>"; };
-		YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = YoroiHealthKitModule.swift; path = Yoroi/YoroiHealthKitModule.swift; sourceTree = "<group>"; };
 		C60C9F16AACE99230853813A /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/WatchConnectivity.framework; sourceTree = DEVELOPER_DIR; };
 		CARNETPAGE001FILEREF0001 /* CarnetPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CarnetPage.swift; sourceTree = "<group>"; };
 		COMPETPAGE01FILEREF000001 /* CompetitionPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompetitionPage.swift; sourceTree = "<group>"; };
@@ -129,13 +127,15 @@
 		TORCH001OBJFILEREF000001 /* TorchModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = TorchModule.m; path = Yoroi/TorchModule.m; sourceTree = "<group>"; };
 		TORCH001SWFFILEREF00001 /* TorchModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TorchModule.swift; path = Yoroi/TorchModule.swift; sourceTree = "<group>"; };
 		WATCHUTILS001FILEREF00001 /* WatchUtils.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchUtils.swift; sourceTree = "<group>"; };
-		WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "wizz-made-with-Voicemod.mp3"; sourceTree = "<group>"; };
-		WIZZM4IN0001F1LEREF0001 /* wizz.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = "wizz.mp3"; path = "Yoroi/wizz.mp3"; sourceTree = "<group>"; };
-		WIZZW4TCH001F1LEREF0001 /* wizz.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = "wizz.mp3"; path = "YoroiWatch/wizz.mp3"; sourceTree = "<group>"; };
-		WGTDATASWF001F1LEREF0001 /* WidgetDataModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WidgetDataModule.swift; path = Yoroi/WidgetDataModule.swift; sourceTree = "<group>"; };
 		WGTDATAOBJ001F1LEREF0001 /* WidgetDataModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = WidgetDataModule.m; path = Yoroi/WidgetDataModule.m; sourceTree = "<group>"; };
+		WGTDATASWF001F1LEREF0001 /* WidgetDataModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WidgetDataModule.swift; path = Yoroi/WidgetDataModule.swift; sourceTree = "<group>"; };
 		WIDGETKIT001FRAMFILEREF001 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "wizz-made-with-Voicemod.mp3"; sourceTree = "<group>"; };
+		WIZZM4IN0001F1LEREF0001 /* wizz.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = wizz.mp3; path = Yoroi/wizz.mp3; sourceTree = "<group>"; };
+		WIZZW4TCH001F1LEREF0001 /* wizz.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = wizz.mp3; path = YoroiWatch/wizz.mp3; sourceTree = "<group>"; };
 		WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutPage.swift; sourceTree = "<group>"; };
+		YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = YoroiHealthKitModule.m; path = Yoroi/YoroiHealthKitModule.m; sourceTree = "<group>"; };
+		YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = YoroiHealthKitModule.swift; path = Yoroi/YoroiHealthKitModule.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -474,44 +474,48 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXNotifications/ExpoNotifications_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoDevice/ExpoDevice_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoLocalization/ExpoLocalization_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoMediaLibrary/ExpoMediaLibrary_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoNotifications/ExpoNotifications_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSystemUI/ExpoSystemUI_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RCT-Folly/RCT-Folly_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/boost/boost_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/glog/glog_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/lottie-ios/LottiePrivacyInfo.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/lottie-react-native/Lottie_React_Native_Privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/react-native-maps/ReactNativeMapsPrivacy.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoNotifications_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoDevice_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoLocalization_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoMediaLibrary_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoNotifications_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoSystemUI_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RCT-Folly_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/boost_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/glog_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/LottiePrivacyInfo.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Lottie_React_Native_Privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ReactNativeMapsPrivacy.bundle",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -571,15 +575,11 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yoroi/Pods-Yoroi-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermesvm.framework/hermesvm",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermesvm.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -600,8 +600,7 @@
 				A1B2C3D400000003 /* YoroiLiveActivityManager.m in Sources */,
 				D6D98440C02A34740C0F71DA /* WatchConnectivityBridge.swift in Sources */,
 				E11C770F9EC353BDED32219F /* WatchConnectivityBridge.m in Sources */,
-				RCTPKGCNSTUB0BUILDF00001 /* RCTPackagerConnectionStub.m in Sources */,
-				MULTIPEER01BUILDF00001 /* MultipeerBridge.swift in Sources */,
+					MULTIPEER01BUILDF00001 /* MultipeerBridge.swift in Sources */,
 				MULTIPEER02BUILDF00001 /* MultipeerBridge.m in Sources */,
 				TORCH001SWFBUILDF000001 /* TorchModule.swift in Sources */,
 				TORCH001OBJBUILDF000001 /* TorchModule.m in Sources */,
@@ -658,6 +657,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 7;
 				ENABLE_BITCODE = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"FB_SONARKIT_ENABLED=1",
@@ -695,6 +695,7 @@
 				CODE_SIGN_ENTITLEMENTS = Yoroi/Yoroi.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 7;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				INFOPLIST_FILE = Yoroi/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -740,6 +741,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -772,6 +774,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -839,6 +842,8 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CPLUSPLUSFLAGS = "$(inherited)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -899,6 +904,8 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CPLUSPLUSFLAGS = "$(inherited)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

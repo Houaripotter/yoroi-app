@@ -11,7 +11,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,8 +32,6 @@ import logger from '@/lib/security/logger';
 // ============================================
 // TYPES
 // ============================================
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface MatTimeStats {
   totalMinutes: number;

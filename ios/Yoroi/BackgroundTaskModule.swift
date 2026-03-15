@@ -5,6 +5,7 @@
 
 import UIKit
 import Foundation
+internal import React
 
 @objc(BackgroundTaskModule)
 class BackgroundTaskModule: NSObject {

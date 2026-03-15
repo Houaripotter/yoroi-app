@@ -3,7 +3,7 @@
 // Photo-First UX + Asset-Based Footer + Re-Share Support
 // ============================================
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,9 @@ import {
   TouchableOpacity,
   Modal,
   Image,
-  Dimensions,
   ActivityIndicator,
   ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
@@ -40,10 +40,6 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { calculatePace, formatDuration, formatDistance, formatValue, BenchmarkEntry } from '@/lib/carnetService';
 import { LinearGradient } from 'expo-linear-gradient';
 import { logger } from '@/lib/security/logger';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - 48;
-const CARD_HEIGHT = CARD_WIDTH * 1.4; // Taller for new footer
 
 export interface VictorySessionData {
   exerciseName: string;
@@ -82,6 +78,10 @@ export default function VictoryShareModal({
   sessionData,
   clubName = '',
 }: VictoryShareModalProps) {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const CARD_WIDTH = SCREEN_WIDTH - 48;
+  const CARD_HEIGHT = CARD_WIDTH * 1.4;
+  const styles = useMemo(() => createStyles(CARD_WIDTH, CARD_HEIGHT), [CARD_WIDTH, CARD_HEIGHT]);
   const { colors } = useTheme();
   const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -901,7 +901,7 @@ export const createVictoryFromEntry = (
   };
 };
 
-const styles = StyleSheet.create({
+const createStyles = (CARD_WIDTH: number, CARD_HEIGHT: number) => StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 60,

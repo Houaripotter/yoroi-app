@@ -8,7 +8,7 @@
 import Foundation
 import MultipeerConnectivity
 import UIKit
-import React
+internal import React
 
 @objc(MultipeerBridge)
 class MultipeerBridge: RCTEventEmitter {

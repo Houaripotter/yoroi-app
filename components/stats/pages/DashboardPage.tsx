@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, ActivityIndicator, TouchableOpacity, InteractionManager, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, useWindowDimensions, ActivityIndicator, TouchableOpacity, InteractionManager, RefreshControl } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { formatDurationHM } from '@/lib/formatDuration';
 import { LineChart } from 'react-native-gifted-charts';
@@ -31,9 +31,6 @@ import { StatsDetailModal } from '../StatsDetailModal';
 import { StatsHeader, Period } from '../StatsHeader';
 import { logger } from '@/lib/security/logger';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const COLUMN_WIDTH = (SCREEN_WIDTH - 64) * 0.47 - 28; // ~47% card width minus padding
-
 const METRIC_ROUTES: Record<string, string> = {
   sleep: '/sleep',
 };
@@ -44,12 +41,13 @@ const INITIAL_CHARTS = 4;
 const CHARTS_PER_BATCH = 4;
 
 // Carte individuelle memo-isee avec lazy chart rendering
-const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady }: {
+const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady, columnWidth }: {
   metric: any;
   colors: any;
   isDark: boolean;
   onPress: (m: any) => void;
   chartReady: boolean;
+  columnWidth: number;
 }) => {
   const hasData = metric.data && metric.data.length > 0;
 
@@ -100,7 +98,7 @@ const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady }: {
             <LineChart
               data={metric.data}
               height={85}
-              width={COLUMN_WIDTH}
+              width={columnWidth}
               initialSpacing={15}
               spacing={85}
               hideRules
@@ -150,6 +148,8 @@ const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady }: {
 
 export const DashboardPage: React.FC = React.memo(() => {
   const { colors, isDark, screenBackground } = useTheme();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const COLUMN_WIDTH = (SCREEN_WIDTH - 64) * 0.47 - 28;
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
@@ -166,15 +166,18 @@ export const DashboardPage: React.FC = React.memo(() => {
     const totalWithData = allMetrics.filter(m => m.data && m.data.length > 0).length;
     if (mountedChartCount >= totalWithData) return;
 
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const handle = InteractionManager.runAfterInteractions(() => {
       // Use setTimeout to give the UI thread breathing room between batches
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setMountedChartCount(prev => Math.min(prev + CHARTS_PER_BATCH, totalWithData));
       }, 150);
-      return () => clearTimeout(timer);
     });
 
-    return () => handle.cancel();
+    return () => {
+      handle.cancel();
+      if (timer !== null) clearTimeout(timer);
+    };
   }, [loading, allMetrics, mountedChartCount]);
 
   // Build a Set of metric IDs that should have their chart mounted
@@ -379,6 +382,7 @@ export const DashboardPage: React.FC = React.memo(() => {
                   isDark={isDark}
                   onPress={handleMetricPress}
                   chartReady={mountedChartIds.has(metric.id)}
+                  columnWidth={COLUMN_WIDTH}
                 />
               ))}
             </View>

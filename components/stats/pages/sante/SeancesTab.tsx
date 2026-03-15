@@ -120,25 +120,30 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
     });
   }, [trainings, selectedSport, sortOrder]);
 
-  const totalSessions = filteredTrainings.length;
-  const totalMinutes = filteredTrainings.reduce((sum, t) => sum + (t.duration_minutes || t.duration || 0), 0);
-  const totalCalories = filteredTrainings.reduce((sum, t) => {
-    const cal = t.calories || 0;
-    if (cal > 0) return sum + cal;
-    const dur = t.duration_minutes || t.duration || 0;
-    return sum + (dur > 0 ? estimateCalories(t.sport, dur) : 0);
-  }, 0);
+  const aggregates = useMemo(() => {
+    const totalSessions = filteredTrainings.length;
+    const totalMinutes = filteredTrainings.reduce((sum, t) => sum + (t.duration_minutes || t.duration || 0), 0);
+    const totalCalories = filteredTrainings.reduce((sum, t) => {
+      const cal = t.calories || 0;
+      if (cal > 0) return sum + cal;
+      const dur = t.duration_minutes || t.duration || 0;
+      return sum + (dur > 0 ? estimateCalories(t.sport, dur) : 0);
+    }, 0);
+    return { totalSessions, totalMinutes, totalCalories };
+  }, [filteredTrainings]);
+
+  const { totalSessions, totalMinutes, totalCalories } = aggregates;
 
   const formatCalories = (cal: number): string => {
     if (cal >= 1000) return `${(cal / 1000).toFixed(1).replace('.', ',')}k`;
     return cal.toLocaleString('fr-FR');
   };
 
-  const summaryItems = [
+  const summaryItems = useMemo(() => [
     { value: totalSessions.toString(), label: 'séances', color: colors.accent },
     { value: formatDurationCompact(totalMinutes), label: 'total', color: '#F97316' },
     { value: totalCalories > 0 ? formatCalories(totalCalories) : '--', label: 'kcal', color: '#EF4444' },
-  ];
+  ], [totalSessions, totalMinutes, totalCalories, colors.accent]);
 
   const sportCounts = useMemo(() => {
     const counts: Record<string, number> = {};

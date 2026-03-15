@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,14 +6,12 @@ import {
   Modal,
   TouchableOpacity,
   Animated,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { X, ZoomIn, ZoomOut } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import AvatarDisplay from '@/components/AvatarDisplay';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface AvatarViewerModalProps {
   visible: boolean;
@@ -24,6 +22,8 @@ export const AvatarViewerModal: React.FC<AvatarViewerModalProps> = ({
   visible,
   onClose,
 }) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
   const { colors } = useTheme();
   const [isZoomed, setIsZoomed] = useState(true); // Démarrer en mode zoomé
   const scaleAnim = useRef(new Animated.Value(3.5)).current; // Démarrer à 3.5x
@@ -141,7 +141,7 @@ export const AvatarViewerModal: React.FC<AvatarViewerModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (SCREEN_WIDTH: number) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.9)',

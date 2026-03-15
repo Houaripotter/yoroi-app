@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, StyleSheet, Modal } from 'react-native';
 import LottieView from 'lottie-react-native';
-import { Audio } from 'expo-av';
 import logger from '@/lib/security/logger';
 
 interface RewardOverlayProps {
@@ -14,7 +13,7 @@ export const RewardOverlay = React.forwardRef<
 >(({ onComplete }, ref) => {
   const [visible, setVisible] = useState(false);
   const animationRef = useRef<LottieView>(null);
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const soundRef = useRef<any>(null);
 
   // Exposer la méthode trigger via ref
   React.useImperativeHandle(ref, () => ({
@@ -32,27 +31,7 @@ export const RewardOverlay = React.forwardRef<
   }));
 
   const playSuccessSound = async () => {
-    try {
-      // Charger le son
-      const { sound } = await Audio.Sound.createAsync(
-        require('@/assets/sounds/fanfare-badge.mp3')
-      );
-      soundRef.current = sound;
-      
-      // Jouer le son
-      await sound.playAsync();
-      
-      // Nettoyer après la lecture
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          sound.unloadAsync();
-          soundRef.current = null;
-        }
-      });
-    } catch (error) {
-      // Le fichier son n'existe pas ou erreur de chargement - on continue sans son
-      logger.info('Son de succès non disponible:', error);
-    }
+    // Son désactivé (expo-av non installé)
   };
 
   // Gérer la fin de l'animation

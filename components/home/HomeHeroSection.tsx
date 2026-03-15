@@ -5,7 +5,7 @@
 // ============================================
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ChevronDown, Flame, Trophy, Zap } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -15,7 +15,6 @@ import { HomeHeroCard } from '@/components/home/HomeHeroCard';
 import { getDailyQuestsProgress } from '@/lib/quests';
 
 const HERO_COLLAPSED_KEY = '@yoroi_hero_collapsed';
-const SCREEN_W = Dimensions.get('window').width;
 
 interface Props {
   streak: number;

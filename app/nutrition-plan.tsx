@@ -9,7 +9,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   TextInput,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -29,8 +28,6 @@ import {
 } from '@/lib/nutrition';
 import { SPACING } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function NutritionPlanScreen() {
   const insets = useSafeAreaInsets();

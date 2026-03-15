@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
@@ -25,12 +25,12 @@ import logger from '@/lib/security/logger';
 // ============================================
 // Ecran dedie pour visualiser sa progression
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 export default function TransformationScreen() {
   const { colors } = useTheme();
   const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedBefore, setSelectedBefore] = useState<Photo | null>(null);
@@ -493,9 +493,9 @@ export default function TransformationScreen() {
   );
 }
 
-const photoCardWidth = (SCREEN_WIDTH - 60) / 2;
-
-const styles = StyleSheet.create({
+const createStyles = (SCREEN_WIDTH: number) => {
+  const photoCardWidth = (SCREEN_WIDTH - 60) / 2;
+  return StyleSheet.create({
   scrollView: {
     flex: 1,
   },
@@ -826,3 +826,4 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 });
+}

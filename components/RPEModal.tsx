@@ -6,14 +6,11 @@ import {
   Modal,
   TouchableOpacity,
   Animated,
-  Dimensions,
 } from 'react-native';
 import { X, Check, AlertTriangle, Flame, Zap, Target } from 'lucide-react-native';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { calculateSessionLoad } from '@/lib/trainingLoadService';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface RPEModalProps {
   visible: boolean;

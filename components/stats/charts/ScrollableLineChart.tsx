@@ -4,15 +4,13 @@
 // ============================================
 
 import React, { useRef, useMemo, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Modal, TouchableOpacity, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, useWindowDimensions, Modal, TouchableOpacity, Pressable } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle, Line, Text as SvgText, G, Rect } from 'react-native-svg';
 import { format, parseISO, Locale } from 'date-fns';
 import { fr, es, de, it, pt, ru, ar, zhCN } from 'date-fns/locale';
 import { Ionicons } from '@expo/vector-icons';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface ScrollableLineChartProps {
   data: { date?: string; value: number }[];
@@ -36,6 +34,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
   onPress,
 }) => {
   const { colors, isDark } = useTheme();
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
   const { t } = useI18n();
   const scrollViewRef = useRef<ScrollView>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);

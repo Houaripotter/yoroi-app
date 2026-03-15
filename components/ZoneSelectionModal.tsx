@@ -13,7 +13,7 @@ import {
   ScrollView,
   Animated,
   Easing,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import {
   X,
@@ -32,8 +32,6 @@ import {
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export interface Zone {
   id: string;
@@ -81,8 +79,9 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({
   onSelect,
   onClose,
 }) => {
+  const { height: SCREEN_HEIGHT } = useWindowDimensions();
   const { colors } = useTheme();
-  
+
   // Animations
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;

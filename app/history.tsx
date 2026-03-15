@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
-  Dimensions,
+  useWindowDimensions,
   Modal,
   ScrollView,
   StyleSheet,
@@ -25,8 +25,6 @@ import logger from '@/lib/security/logger';
 import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 import { useDevMode } from '@/lib/DevModeContext';
 import { SamuraiLoader } from '@/components/SamuraiLoader';
-
-const { width: screenWidth } = Dimensions.get('window');
 
 // Constants for layout (non-theme values)
 const RADIUS = { sm: 12, md: 16, lg: 20, xl: 24, xxl: 28 };
@@ -82,6 +80,8 @@ export default function HistoryScreen() {
   const { colors: themeColors } = useTheme();
   const { t, formatDate, locale } = useI18n();
   const { isDevMode } = useDevMode();
+  const { width: screenWidth } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(screenWidth), [screenWidth]);
 
   // Mois traduits dynamiquement
   const MONTHS = useMemo(() => [
@@ -464,7 +464,7 @@ export default function HistoryScreen() {
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <Text style={{ fontSize: 15, fontWeight: '800', color: themeColors.textPrimary }} numberOfLines={1}>
-                          {sportInfo?.label || t.sport}
+                          {sportInfo?.name || t.sport}
                         </Text>
                         {hasGPS && <MapPin size={12} color={themeColors.textSecondary} strokeWidth={2} />}
                       </View>
@@ -912,7 +912,7 @@ export default function HistoryScreen() {
                     <MaterialCommunityIcons name={sportIcon as any} size={22} color={sportColor} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: themeColors.textPrimary }}>{sportInfo?.label || t.sport}</Text>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: themeColors.textPrimary }}>{sportInfo?.name || t.sport}</Text>
                     <Text style={{ fontSize: 12, color: themeColors.textSecondary, marginTop: 2 }}>
                       {t.duration || t.duration_minutes || 0} min
                       {t.start_time ? ` · ${t.start_time.slice(0, 5)}` : ''}
@@ -937,7 +937,7 @@ export default function HistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (screenWidth: number) => StyleSheet.create({
   container: {
     flex: 1,
   },

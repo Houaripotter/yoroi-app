@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Modal,
   View,
@@ -8,18 +8,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   Text,
-  Dimensions,
   ActivityIndicator,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import * as ImageManipulator from 'expo-image-manipulator';
 import Svg, { Rect, Circle, Defs, Mask } from 'react-native-svg';
 import { Check, X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react-native';
-
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-const CIRCLE_SIZE = Math.min(SCREEN_W - 40, 320);
-const CIRCLE_CX = SCREEN_W / 2;
-const CIRCLE_CY = SCREEN_H / 2;
 
 interface Props {
   visible: boolean;
@@ -36,6 +31,11 @@ export const PhotoCropModal: React.FC<Props> = ({
   onCancel,
   accentColor = '#007AFF',
 }) => {
+  const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
+  const CIRCLE_SIZE = Math.min(SCREEN_W - 40, 320);
+  const CIRCLE_CX = SCREEN_W / 2;
+  const CIRCLE_CY = SCREEN_H / 2;
+  const styles = useMemo(() => createStyles(SCREEN_H), [SCREEN_H]);
   const [imageNaturalSize, setImageNaturalSize] = useState<{ w: number; h: number } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -349,7 +349,7 @@ export const PhotoCropModal: React.FC<Props> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (SCREEN_H: number) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',

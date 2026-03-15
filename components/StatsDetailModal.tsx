@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,20 +6,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { X } from 'lucide-react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const IS_SMALL_SCREEN = SCREEN_WIDTH < 375 || SCREEN_HEIGHT < 700;
-const CHART_HEIGHT = IS_SMALL_SCREEN ? 250 : 300; // Plus petit sur petits écrans
-const PADDING_LEFT = IS_SMALL_SCREEN ? 50 : 60;
-const PADDING_RIGHT = IS_SMALL_SCREEN ? 20 : 30;
-const PADDING_TOP = IS_SMALL_SCREEN ? 40 : 50;
-const PADDING_BOTTOM = IS_SMALL_SCREEN ? 50 : 60;
-const MIN_POINT_SPACING = IS_SMALL_SCREEN ? 60 : 80; // Espace minimum entre chaque point
 
 interface DataPoint {
   value: number;
@@ -50,6 +41,15 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
   unit,
   icon,
 }) => {
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
+  const IS_SMALL_SCREEN = SCREEN_WIDTH < 375 || SCREEN_HEIGHT < 700;
+  const CHART_HEIGHT = IS_SMALL_SCREEN ? 250 : 300;
+  const PADDING_LEFT = IS_SMALL_SCREEN ? 50 : 60;
+  const PADDING_RIGHT = IS_SMALL_SCREEN ? 20 : 30;
+  const PADDING_TOP = IS_SMALL_SCREEN ? 40 : 50;
+  const PADDING_BOTTOM = IS_SMALL_SCREEN ? 50 : 60;
+  const MIN_POINT_SPACING = IS_SMALL_SCREEN ? 60 : 80;
+  const styles = useMemo(() => createStyles(IS_SMALL_SCREEN, SCREEN_WIDTH, SCREEN_HEIGHT), [IS_SMALL_SCREEN, SCREEN_WIDTH, SCREEN_HEIGHT]);
   const { colors, isDark } = useTheme();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
 
@@ -361,7 +361,11 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (IS_SMALL_SCREEN: boolean, SCREEN_WIDTH: number, SCREEN_HEIGHT: number) => {
+  const CHART_HEIGHT = IS_SMALL_SCREEN ? 250 : 300;
+  const PADDING_TOP = IS_SMALL_SCREEN ? 40 : 50;
+  const PADDING_BOTTOM = IS_SMALL_SCREEN ? 50 : 60;
+  return StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -546,4 +550,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-});
+  });
+};

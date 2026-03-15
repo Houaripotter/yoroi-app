@@ -2,7 +2,7 @@
 // YOROI MEDIC - SUIVI BLESSURES
 // ============================================
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,6 @@ import { router } from 'expo-router';
 
 import { ArrowLeft, TrendingDown, Shield } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { Audio } from 'expo-av';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import { BodyMap, BodyZone as BodyMapZone, INITIAL_DATA } from '@/components/BodyMap';
@@ -45,30 +44,6 @@ export default function InfirmaryScreen() {
   const [showZoneModal, setShowZoneModal] = useState(false);
   const [overlappingZones, setOverlappingZones] = useState<Zone[]>([]);
   const [currentView, setCurrentView] = useState<'front' | 'back'>('front');
-
-  // Son Pokemon recovery
-  const recoverySoundRef = useRef<Audio.Sound | null>(null);
-
-  // Charger et jouer le son Pokemon recovery à l'entrée
-  useEffect(() => {
-    const loadAndPlaySound = async () => {
-      try {
-        const { sound } = await Audio.Sound.createAsync(
-          require('@/assets/sounds/recovery.mp3')
-        );
-        recoverySoundRef.current = sound;
-        await sound.playAsync();
-      } catch (error) {
-        logger.info('[Infirmary] Son recovery non disponible:', error);
-      }
-    };
-
-    loadAndPlaySound();
-
-    return () => {
-      recoverySoundRef.current?.unloadAsync();
-    };
-  }, []);
 
   // Charger les données et vérifier le mode créateur
   const loadData = async () => {

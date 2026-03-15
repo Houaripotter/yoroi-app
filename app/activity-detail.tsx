@@ -3,14 +3,14 @@
 // ============================================
 // Graphiques d'activité (volume, fréquence, types d'entraînements)
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -23,13 +23,13 @@ import { getTrainings, Training } from '@/lib/database';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 type Period = '7d' | '30d' | '90d' | 'all';
 
 export default function ActivityDetailScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
   const [period, setPeriod] = useState<Period>('30d');
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [loading, setLoading] = useState(true);
@@ -339,7 +339,7 @@ function getWeekKey(date: Date): string {
   return `S${weekNumber.toString().padStart(2, '0')}`;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (SCREEN_WIDTH: number) => StyleSheet.create({
   screen: {
     flex: 1,
   },

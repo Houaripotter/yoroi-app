@@ -1,11 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { SPACING, RADIUS } from '@/constants/design';
 import { Target, TrendingDown, TrendingUp, Maximize2 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_HEIGHT = 200;
 const PADDING_LEFT = 45;
 const PADDING_RIGHT = 20;
@@ -21,6 +20,7 @@ interface WeightTrendChartProps {
 }
 
 export function WeightTrendChart({ data, goal, colors, period, onPress }: WeightTrendChartProps) {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const { isDark } = useTheme();
 
   if (!data || data.length === 0) {

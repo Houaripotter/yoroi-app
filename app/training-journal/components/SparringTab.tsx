@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   RefreshControl,
-  Dimensions,
+  useWindowDimensions,
   Modal,
   TextInput,
   KeyboardAvoidingView,
@@ -29,7 +29,6 @@ import {
 import { BarChart } from 'react-native-gifted-charts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
 const WEEKLY_GOAL_KEY = '@sparring_weekly_goal';
 
 // ============================================
@@ -173,6 +172,7 @@ interface SparringTabProps {
 
 export default function SparringTab({ refreshTrigger }: SparringTabProps) {
   const { colors, isDark, screenBackground } = useTheme();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

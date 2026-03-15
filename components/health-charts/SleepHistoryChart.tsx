@@ -1,11 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { SPACING, RADIUS } from '@/constants/design';
 import { Maximize2 } from 'lucide-react-native';
 import { formatDurationHM } from '@/lib/formatDuration';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface SleepHistoryChartProps {
   data: {

@@ -9,7 +9,6 @@ import {
   Linking,
   KeyboardAvoidingView,
   Platform,
-  Dimensions,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { safeOpenURL } from '@/lib/security/validators';
@@ -34,9 +33,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, FONT, SHADOWS, TIFFANY } from '@/constants/appTheme';
 import { MotiView, AnimatePresence } from 'moti';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-// ============================================ 
+// ============================================
 // BOÎTE À IDÉES (HURNE)
 // ============================================ 
 

@@ -16,7 +16,6 @@ import {
   Keyboard,
   Modal,
   FlatList,
-  Dimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -63,8 +62,6 @@ import {
   CombatRound,
 } from '@/lib/database';
 import { SPORTS, getSportName } from '@/lib/sports';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ============================================
 // SPORTS DE COMBAT
