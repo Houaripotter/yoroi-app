@@ -17,8 +17,10 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { getTrainings } from '@/lib/database';
 import type { Training, CombatRound } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
@@ -172,6 +174,7 @@ interface SparringTabProps {
 
 export default function SparringTab({ refreshTrigger }: SparringTabProps) {
   const { colors, isDark, screenBackground } = useTheme();
+  const { t } = useI18n();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [loading, setLoading] = useState(true);
@@ -200,6 +203,12 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
   };
 
   useEffect(() => { load(); }, [refreshTrigger]);
+
+  // Recharger quand les données changent (ex: nouvel entraînement ajouté)
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => load(true));
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     AsyncStorage.getItem(WEEKLY_GOAL_KEY).then(v => {
@@ -465,7 +474,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               onPress={() => setSelectedSport(null)}
             >
               <Text style={[styles.sportPillText, { color: selectedSport === null ? '#FFF' : colors.textMuted }]}>
-                Tous
+                {t('sparring.filterAll')}
               </Text>
             </TouchableOpacity>
             {combatSports.map(sport => (
@@ -488,9 +497,9 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
         {/* ── VIDE ── */}
         {isEmpty && (
           <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>Pas encore de données</Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('sparring.noData')}</Text>
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              Ajoute des séances avec des partenaires de sparring ou des thèmes techniques pour voir tes statistiques ici.
+              {t('sparring.noDataMessage')}
             </Text>
           </View>
         )}
@@ -512,24 +521,24 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
             {/* Rounds */}
             <View style={[styles.overviewBox, { backgroundColor: '#8B5CF620' }]}>
               <Text style={[styles.overviewValue, { color: '#8B5CF6' }]}>{totals.rounds}</Text>
-              <Text style={[styles.overviewLabel, { color: '#8B5CF6' }]}>Rounds</Text>
+              <Text style={[styles.overviewLabel, { color: '#8B5CF6' }]}>{t('sparring.rounds')}</Text>
             </View>
             {/* Partenaires */}
             <View style={[styles.overviewBox, { backgroundColor: `${accent}20` }]}>
               <Text style={[styles.overviewValue, { color: accent }]}>{totals.partners}</Text>
-              <Text style={[styles.overviewLabel, { color: accent }]}>Partenaires</Text>
+              <Text style={[styles.overviewLabel, { color: accent }]}>{t('sparring.partners')}</Text>
             </View>
             {/* Techniques */}
             <View style={[styles.overviewBox, { backgroundColor: '#F59E0B20' }]}>
               <Text style={[styles.overviewValue, { color: '#F59E0B' }]}>{totals.techniques}</Text>
-              <Text style={[styles.overviewLabel, { color: '#F59E0B' }]}>Techniques</Text>
+              <Text style={[styles.overviewLabel, { color: '#F59E0B' }]}>{t('sparring.techniques')}</Text>
             </View>
             {/* Win rate */}
             <View style={[styles.overviewBox, { backgroundColor: '#22C55E20' }]}>
               <Text style={[styles.overviewValue, { color: '#22C55E' }]}>
                 {totals.winRate !== null ? `${totals.winRate}%` : '--'}
               </Text>
-              <Text style={[styles.overviewLabel, { color: '#22C55E' }]}>Win rate</Text>
+              <Text style={[styles.overviewLabel, { color: '#22C55E' }]}>{t('sparring.winRate')}</Text>
             </View>
           </View>
         )}
@@ -538,7 +547,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
         {!isEmpty && (
           <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
             <View style={styles.sectionHead}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Objectif semaine</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('sparring.weeklyGoal')}</Text>
               <TouchableOpacity
                 onPress={() => { setGoalInput(String(weeklyGoal)); setShowGoalEditor(true); }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -554,18 +563,18 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                   {thisWeekRounds}
                 </Text>
                 <Text style={{ fontSize: 15, fontWeight: '500', color: colors.textMuted }}>
-                  / {weeklyGoal} rounds
+                  / {weeklyGoal} {t('sparring.roundsUnit')}
                 </Text>
               </View>
               {goalReached ? (
                 <View style={[styles.goalBadge, { backgroundColor: '#22C55E18' }]}>
                   <CheckCircle size={13} color="#22C55E" />
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#22C55E' }}>Objectif atteint!</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#22C55E' }}>{t('sparring.goalReached')}</Text>
                 </View>
               ) : (
                 <View style={[styles.goalBadge, { backgroundColor: '#F59E0B14' }]}>
                   <Text style={{ fontSize: 12, fontWeight: '600', color: '#F59E0B' }}>
-                    {weeklyGoal - thisWeekRounds} restants
+                    {weeklyGoal - thisWeekRounds} {t('sparring.remaining')}
                   </Text>
                 </View>
               )}
@@ -586,7 +595,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={{ fontSize: 10, color: colors.textMuted }}>0</Text>
                 <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>
-                  objectif : {weeklyGoal}
+                  {t('sparring.goal')} : {weeklyGoal}
                 </Text>
               </View>
             </View>
@@ -597,7 +606,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
         {recentSessions.length > 0 && (
           <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
             <View style={styles.sectionHead}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Séances récentes</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('sparring.recentSessions')}</Text>
               <View style={[styles.countBadge, { backgroundColor: `${accent}18` }]}>
                 <Text style={[styles.countBadgeText, { color: accent }]}>{recentSessions.length}</Text>
               </View>
@@ -632,7 +641,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                       {s.roundsCount > 0 && (
                         <View style={[styles.roundsBadge, { backgroundColor: '#8B5CF620' }]}>
                           <Text style={{ fontSize: 11, fontWeight: '700', color: '#8B5CF6' }}>
-                            {s.roundsCount} round{s.roundsCount > 1 ? 's' : ''}
+                            {s.roundsCount} {s.roundsCount > 1 ? t('sparring.roundsPlural') : t('sparring.roundSingular')}
                           </Text>
                         </View>
                       )}
@@ -673,15 +682,15 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
         {weeklyBars.length > 0 && (
           <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
             <View style={styles.sectionHead}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Rounds par semaine</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('sparring.roundsPerWeek')}</Text>
             </View>
             {weeklyBars.length < 3 ? (
               <View style={{ paddingVertical: 20, alignItems: 'center', gap: 6 }}>
                 <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center' }}>
-                  Pas encore assez de données
+                  {t('sparring.notEnoughData')}
                 </Text>
                 <Text style={{ fontSize: 11, color: colors.textMuted, textAlign: 'center', opacity: 0.7 }}>
-                  Continue pour voir l'évolution sur plusieurs semaines
+                  {t('sparring.continueWeeks')}
                 </Text>
               </View>
             ) : (
@@ -708,8 +717,8 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                   />
                 </View>
                 <Text style={{ fontSize: 11, color: colors.textMuted, textAlign: 'center', marginTop: 4 }}>
-                  Dernières {weeklyBars.length} semaines actives{'  '}
-                  <Text style={{ color: '#F59E0B' }}>— objectif {weeklyGoal}</Text>
+                  {t('sparring.lastWeeks', { count: weeklyBars.length })}{'  '}
+                  <Text style={{ color: '#F59E0B' }}>— {t('sparring.goal')} {weeklyGoal}</Text>
                 </Text>
               </>
             )}
@@ -720,7 +729,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
         {monthlyWinRate.length > 0 && (
           <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
             <View style={styles.sectionHead}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Win rate mensuel</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('sparring.monthlyWinRate')}</Text>
               <View style={[styles.countBadge, { backgroundColor: '#22C55E18' }]}>
                 <Text style={[styles.countBadgeText, { color: '#22C55E' }]}>
                   {monthlyWinRate[monthlyWinRate.length - 1]?.value ?? 0}%
@@ -730,10 +739,10 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
             {monthlyWinRate.length < 3 ? (
               <View style={{ paddingVertical: 20, alignItems: 'center', gap: 6 }}>
                 <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center' }}>
-                  Pas encore assez de données
+                  {t('sparring.notEnoughData')}
                 </Text>
                 <Text style={{ fontSize: 11, color: colors.textMuted, textAlign: 'center', opacity: 0.7 }}>
-                  Continue pour voir l'évolution sur plusieurs mois
+                  {t('sparring.continueMonths')}
                 </Text>
               </View>
             ) : (
@@ -768,15 +777,15 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
             <View style={{ flexDirection: 'row', gap: 12, justifyContent: 'center', marginTop: 8 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#22C55E' }} />
-                <Text style={{ fontSize: 10, color: colors.textMuted }}>60%+ Dominant</Text>
+                <Text style={{ fontSize: 10, color: colors.textMuted }}>{t('sparring.dominant')}</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#F59E0B' }} />
-                <Text style={{ fontSize: 10, color: colors.textMuted }}>40-60% Équilibré</Text>
+                <Text style={{ fontSize: 10, color: colors.textMuted }}>{t('sparring.balanced')}</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444' }} />
-                <Text style={{ fontSize: 10, color: colors.textMuted }}>{'<'}40% À travailler</Text>
+                <Text style={{ fontSize: 10, color: colors.textMuted }}>{t('sparring.needsWork')}</Text>
               </View>
             </View>
           </View>
@@ -786,7 +795,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
         {partnerStats.length > 0 && (
           <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
             <View style={styles.sectionHead}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Partenaires de sparring</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('sparring.sparringPartners')}</Text>
               <View style={[styles.countBadge, { backgroundColor: `${accent}18` }]}>
                 <Text style={[styles.countBadgeText, { color: accent }]}>{partnerStats.length}</Text>
               </View>
@@ -848,7 +857,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                         </View>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                           <Text style={{ fontSize: 12, fontWeight: '700', color: '#8B5CF6' }}>
-                            {p.totalRounds} round{p.totalRounds > 1 ? 's' : ''}
+                            {p.totalRounds} {p.totalRounds > 1 ? t('sparring.roundsPlural') : t('sparring.roundSingular')}
                           </Text>
                           <ChevronRight size={13} color={colors.textMuted} />
                         </View>
@@ -882,7 +891,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
 
                       {p.lastSession && (
                         <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                          Dernière séance : {formatDateShort(p.lastSession)}
+                          {t('sparring.lastSession')} : {formatDateShort(p.lastSession)}
                         </Text>
                       )}
                     </View>
@@ -897,15 +906,15 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
         {techniqueStats.length > 0 && (
           <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
             <View style={styles.sectionHead}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Techniques travaillées</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('sparring.techniques')}</Text>
               <View style={[styles.countBadge, { backgroundColor: '#F59E0B18' }]}>
                 <Text style={[styles.countBadgeText, { color: '#F59E0B' }]}>{techniqueStats.length}</Text>
               </View>
             </View>
 
             <View style={{ gap: 10, marginTop: 4 }}>
-              {techniqueStats.slice(0, 10).map((t, idx) => (
-                <View key={t.name} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+              {techniqueStats.slice(0, 10).map((tech, idx) => (
+                <View key={tech.name} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
                   <View style={[styles.techBadge, {
                     backgroundColor: idx === 0 ? '#F59E0B' : idx === 1 ? '#94A3B8' : idx === 2 ? '#CD7C32' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)'),
                   }]}>
@@ -913,15 +922,15 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                   </View>
                   <View style={{ flex: 1, gap: 4 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={[styles.techName, { color: colors.text }]} numberOfLines={1}>{t.name}</Text>
-                      <Text style={[styles.techCount, { color: '#F59E0B' }]}>{t.count}x</Text>
+                      <Text style={[styles.techName, { color: colors.text }]} numberOfLines={1}>{tech.name}</Text>
+                      <Text style={[styles.techCount, { color: '#F59E0B' }]}>{tech.count}x</Text>
                     </View>
                     <View style={[styles.track, { backgroundColor: trackBg }]}>
-                      <View style={[styles.fill, { width: `${(t.count / maxTech) * 100}%` as any, backgroundColor: '#F59E0B' }]} />
+                      <View style={[styles.fill, { width: `${(tech.count / maxTech) * 100}%` as any, backgroundColor: '#F59E0B' }]} />
                     </View>
-                    {t.lastSession && (
+                    {tech.lastSession && (
                       <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                        Dernière fois : {formatDateShort(t.lastSession)}
+                        {t('sparring.lastTime')} : {formatDateShort(tech.lastSession)}
                       </Text>
                     )}
                   </View>
@@ -935,7 +944,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
         {submissionStats.length > 0 && (
           <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
             <View style={styles.sectionHead}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Finitions</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('sparring.submissions')}</Text>
               <View style={[styles.countBadge, { backgroundColor: '#EC489918' }]}>
                 <Text style={[styles.countBadgeText, { color: '#EC4899' }]}>{submissionStats.length}</Text>
               </View>
@@ -952,13 +961,13 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                     {s.given > 0 && (
                       <View style={[styles.subPill, { backgroundColor: '#22C55E18' }]}>
                         <Text style={{ fontSize: 13, fontWeight: '800', color: '#22C55E' }}>{s.given}</Text>
-                        <Text style={{ fontSize: 10, color: '#22C55E' }}>placée{s.given > 1 ? 's' : ''}</Text>
+                        <Text style={{ fontSize: 10, color: '#22C55E' }}>{s.given > 1 ? t('sparring.submittedPlural') : t('sparring.submittedSingular')}</Text>
                       </View>
                     )}
                     {s.taken > 0 && (
                       <View style={[styles.subPill, { backgroundColor: '#EF444418' }]}>
                         <Text style={{ fontSize: 13, fontWeight: '800', color: '#EF4444' }}>{s.taken}</Text>
-                        <Text style={{ fontSize: 10, color: '#EF4444' }}>prise{s.taken > 1 ? 's' : ''}</Text>
+                        <Text style={{ fontSize: 10, color: '#EF4444' }}>{s.taken > 1 ? t('sparring.takenPlural') : t('sparring.takenSingular')}</Text>
                       </View>
                     )}
                   </View>
@@ -981,9 +990,9 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           style={styles.modalOverlay}
         >
           <View style={[styles.goalModal, { backgroundColor: cardBg }]}>
-            <Text style={[styles.goalModalTitle, { color: colors.text }]}>Objectif hebdomadaire</Text>
+            <Text style={[styles.goalModalTitle, { color: colors.text }]}>{t('sparring.weeklyGoal')}</Text>
             <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 16, textAlign: 'center' }}>
-              Nombre de rounds de sparring par semaine
+              {t('sparring.goalDescription')}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 20 }}>
               <TouchableOpacity
@@ -1010,13 +1019,13 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                 style={[styles.goalCancelBtn, { borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)' }]}
                 onPress={() => setShowGoalEditor(false)}
               >
-                <Text style={{ color: colors.textMuted, fontWeight: '600' }}>Annuler</Text>
+                <Text style={{ color: colors.textMuted, fontWeight: '600' }}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.goalSaveBtn, { backgroundColor: accent }]}
                 onPress={saveGoal}
               >
-                <Text style={{ color: '#FFF', fontWeight: '700' }}>Enregistrer</Text>
+                <Text style={{ color: '#FFF', fontWeight: '700' }}>{t('common.save')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1048,6 +1057,7 @@ interface PartnerDetailModalProps {
 }
 
 function PartnerDetailModal({ partner, onClose, colors, isDark }: PartnerDetailModalProps) {
+  const { t } = useI18n();
   const winRate = (partner.wins + partner.losses) > 0
     ? Math.round((partner.wins / (partner.wins + partner.losses)) * 100)
     : null;
@@ -1083,7 +1093,7 @@ function PartnerDetailModal({ partner, onClose, colors, isDark }: PartnerDetailM
             <View style={{ flex: 1 }}>
               <Text style={[styles.partnerModalName, { color: colors.text }]}>{partner.name}</Text>
               <Text style={{ fontSize: 13, color: colors.textMuted }}>
-                {partner.sessions.length} séance{partner.sessions.length > 1 ? 's' : ''}
+                {partner.sessions.length} {partner.sessions.length > 1 ? t('sparring.sessionsPlural') : t('sparring.sessionSingular')}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -1093,16 +1103,16 @@ function PartnerDetailModal({ partner, onClose, colors, isDark }: PartnerDetailM
 
           {/* Stats globales */}
           <View style={[styles.partnerStatsRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderRadius: 12 }]}>
-            <MiniStat value={partner.totalRounds} label="Rounds" color="#8B5CF6" />
-            <MiniStat value={partner.wins} label="Victoires" color="#22C55E" />
-            <MiniStat value={partner.losses} label="Défaites" color="#EF4444" />
-            {winRate !== null && <MiniStat value={`${winRate}%`} label="Win rate" color={winRate >= 60 ? '#22C55E' : winRate >= 40 ? '#F59E0B' : '#EF4444'} />}
+            <MiniStat value={partner.totalRounds} label={t('sparring.rounds')} color="#8B5CF6" />
+            <MiniStat value={partner.wins} label={t('sparring.victories')} color="#22C55E" />
+            <MiniStat value={partner.losses} label={t('sparring.defeats')} color="#EF4444" />
+            {winRate !== null && <MiniStat value={`${winRate}%`} label={t('sparring.winRate')} color={winRate >= 60 ? '#22C55E' : winRate >= 40 ? '#F59E0B' : '#EF4444'} />}
           </View>
 
           {/* Top finitions */}
           {topSubs.length > 0 && (
             <View style={{ marginBottom: 12 }}>
-              <Text style={[styles.partnerSectionLabel, { color: colors.textMuted }]}>FINITIONS</Text>
+              <Text style={[styles.partnerSectionLabel, { color: colors.textMuted }]}>{t('sparring.submissionsTitle')}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
                 {topSubs.map((sub, i) => (
                   <View key={i} style={[styles.subChip, {
@@ -1116,9 +1126,9 @@ function PartnerDetailModal({ partner, onClose, colors, isDark }: PartnerDetailM
                       {sub.name}
                     </Text>
                     <Text style={{ fontSize: 10, color: colors.textMuted }}>
-                      {sub.given > 0 ? `${sub.given} placée${sub.given > 1 ? 's' : ''}` : ''}
+                      {sub.given > 0 ? `${sub.given} ${sub.given > 1 ? t('sparring.submittedPlural') : t('sparring.submittedSingular')}` : ''}
                       {sub.given > 0 && sub.taken > 0 ? '  ·  ' : ''}
-                      {sub.taken > 0 ? `${sub.taken} prise${sub.taken > 1 ? 's' : ''}` : ''}
+                      {sub.taken > 0 ? `${sub.taken} ${sub.taken > 1 ? t('sparring.takenPlural') : t('sparring.takenSingular')}` : ''}
                     </Text>
                   </View>
                 ))}
@@ -1127,7 +1137,7 @@ function PartnerDetailModal({ partner, onClose, colors, isDark }: PartnerDetailM
           )}
 
           {/* Historique des séances */}
-          <Text style={[styles.partnerSectionLabel, { color: colors.textMuted, marginBottom: 8 }]}>HISTORIQUE</Text>
+          <Text style={[styles.partnerSectionLabel, { color: colors.textMuted, marginBottom: 8 }]}>{t('sparring.history')}</Text>
           <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
             {partner.sessions.map((session, sIdx) => (
               <View key={sIdx} style={[styles.sessionBlock, {
@@ -1165,7 +1175,7 @@ function PartnerDetailModal({ partner, onClose, colors, isDark }: PartnerDetailM
                           </Text>
                         </View>
                         <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>
-                          Round {r.number ?? rIdx + 1}
+                          {t('sparring.roundLabel', { num: r.number ?? rIdx + 1 })}
                         </Text>
                       </View>
                       {/* Finitions données */}
@@ -1366,7 +1376,7 @@ function PodiumSection({ partners, accent, colors, isDark, onSelect }: PodiumSec
         })}
       </View>
 
-      <Text style={[styles.podiumHint, { color: colors.textMuted }]}>Appuie pour voir le détail</Text>
+      <Text style={[styles.podiumHint, { color: colors.textMuted }]}>{t('sparring.podiumHint')}</Text>
     </View>
   );
 }

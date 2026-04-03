@@ -66,7 +66,7 @@ import { generateProgressPDF } from '@/lib/pdfExport';
 import { resetAllData, resetDataOnly } from '@/lib/storage';
 import { resetDatabase } from '@/lib/database';
 import logger from '@/lib/security/logger';
-import { generateHenryDemoData, restoreRealData, isDemoDataActive } from '@/lib/demoDataService';
+import { generateHenyDemoData, restoreRealData, isDemoDataActive } from '@/lib/demoDataService';
 import { SamuraiLoader } from '@/components/SamuraiLoader';
 
 // ============================================
@@ -593,7 +593,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             setIsGenerating(true);
             try {
-              const result = await generateHenryDemoData();
+              const result = await generateHenyDemoData();
               setIsDemoActive(true);
               setIsGenerating(false);
               DeviceEventEmitter.emit('YOROI_DEMO_CHANGED');
