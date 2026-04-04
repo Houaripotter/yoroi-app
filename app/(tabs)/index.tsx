@@ -339,6 +339,11 @@ export default function HomeScreen() {
   const [hydration, setHydration] = useState(0);
   const [hydrationGoal, setHydrationGoal] = useState(DEFAULT_HYDRATION_GOAL);
   const waterAnim = useRef(new Animated.Value(0)).current;
+  // Refs pour éviter les closures stales dans les listeners DeviceEventEmitter
+  const hydrationRef = useRef(0);
+  const hydrationGoalRef = useRef(DEFAULT_HYDRATION_GOAL);
+  useEffect(() => { hydrationRef.current = hydration; }, [hydration]);
+  useEffect(() => { hydrationGoalRef.current = hydrationGoal; }, [hydrationGoal]);
 
   // Nouveaux états
   const [sleepStats, setSleepStats] = useState<SleepStats | null>(null);
@@ -511,8 +516,8 @@ export default function HomeScreen() {
     if (isNavigating) return;
     setIsNavigating(true);
     router.push(route as any);
-    const t = setTimeout(() => setIsNavigating(false), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setIsNavigating(false), 1000);
+    return () => clearTimeout(timer);
   }, [isNavigating]);
 
   // Handlers de navigation mémorisés pour éviter les callbacks inline
@@ -845,6 +850,7 @@ export default function HomeScreen() {
   }, [loadData]);
 
   // Listener léger pour le changement d'objectif hydratation (instantané, pas de reload complet)
+  // Fix: utiliser hydrationRef.current pour éviter les closures stales et recréations du listener
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('HYDRATION_GOAL_CHANGED', async (data?: { goalLiters?: number }) => {
       try {
@@ -852,7 +858,7 @@ export default function HomeScreen() {
           // Mise à jour directe depuis l'event (le plus rapide)
           const goalMl = Math.round(data.goalLiters * 1000);
           setHydrationGoal(goalMl);
-          animateWater(hydration, goalMl);
+          animateWater(hydrationRef.current, goalMl);
         } else {
           // Fallback: relire depuis AsyncStorage
           const goalStored = await AsyncStorage.getItem(HYDRATION_GOAL_KEY);
@@ -860,24 +866,25 @@ export default function HomeScreen() {
             const parsed = parseFloat(goalStored);
             const goalMl = parsed < 20 ? Math.round(parsed * 1000) : parsed;
             setHydrationGoal(goalMl);
-            animateWater(hydration, goalMl);
+            animateWater(hydrationRef.current, goalMl);
           }
         }
       } catch {}
     });
     return () => sub.remove();
-  }, [hydration, animateWater]);
+  }, [animateWater]); // animateWater est stable → listener créé une seule fois
 
   // Listener léger pour la quantité d'eau changée depuis l'écran hydratation
+  // Fix: utiliser hydrationGoalRef.current pour éviter les closures stales
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('HYDRATION_AMOUNT_CHANGED', (data?: { amountMl?: number }) => {
       if (data?.amountMl != null) {
         setHydration(data.amountMl);
-        animateWater(data.amountMl, hydrationGoal);
+        animateWater(data.amountMl, hydrationGoalRef.current);
       }
     });
     return () => sub.remove();
-  }, [hydrationGoal, animateWater]);
+  }, [animateWater]); // animateWater est stable → listener créé une seule fois
 
   // Auto-sync: synchroniser les données de santé, recalculer bonus + points
   const performHealthSync = useCallback(async () => {
@@ -1274,7 +1281,7 @@ export default function HomeScreen() {
                   {/* watchDot supprimé — remplacé par WatchStatusBanner sous le header */}
                 </View>
                 <View style={styles.userNameRow}>
-                  <Text style={[styles.userName, { color: screenText }]}>{profile?.name || 'Champion'}</Text>
+                  <Text style={[styles.userName, { color: screenText }]}>{profile?.name || t('index.defaultName')}</Text>
                   <ViewModeSwitch mode={mode} onToggle={toggleMode} />
                 </View>
               </View>
@@ -1327,7 +1334,7 @@ export default function HomeScreen() {
               <MaterialCommunityIcons name="walk" size={14} color="#3B82F6" />
               <View style={styles.statTextColumn}>
                 <AnimatedCounter value={steps} style={[styles.statValueCompactHorizontal, { color: '#3B82F6' }]} duration={800} />
-                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>pas</Text>
+                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>{t('index.steps')}</Text>
               </View>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateGamification}>
@@ -1336,21 +1343,21 @@ export default function HomeScreen() {
               </Animated.View>
               <View style={styles.statTextColumn}>
                 <AnimatedCounter value={streak} style={[styles.statValueCompactHorizontal, { color: '#F97316' }]} duration={800} />
-                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>jours</Text>
+                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>{t('index.days')}</Text>
               </View>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateGamification}>
               <Zap size={14} color={isDark ? colors.accent : '#000000'} />
               <View style={styles.statTextColumn}>
                 <AnimatedCounter value={rankLevel} style={[styles.statValueCompactHorizontal, { color: isDark ? colors.accent : '#000000' }]} duration={800} />
-                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>niveau</Text>
+                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>{t('index.level')}</Text>
               </View>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateGamification}>
               <Trophy size={14} color={displayRankColor} />
               <View style={styles.statTextColumn}>
                 <AnimatedRank rank={displayRankName?.split(' ')[0] ?? ''} color={displayRankColor} style={styles.statValueCompactHorizontal} delay={300} />
-                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>rang</Text>
+                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>{t('gamification.rank')}</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -1398,7 +1405,7 @@ export default function HomeScreen() {
               activeOpacity={0.8}
             >
               <BookOpen size={20} color="#F97316" strokeWidth={2} />
-              <Text style={[styles.quickToolText, { color: colors.textPrimary }]}>Carnet</Text>
+              <Text style={[styles.quickToolText, { color: colors.textPrimary }]}>{t('index.journalTitle')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -1410,7 +1417,7 @@ export default function HomeScreen() {
                 <View style={[styles.crossVerticalIconSmall, { backgroundColor: '#EF4444' }]} />
                 <View style={[styles.crossHorizontalIconSmall, { backgroundColor: '#EF4444' }]} />
               </View>
-              <Text style={[styles.quickToolText, { color: colors.textPrimary }]}>Blessures</Text>
+              <Text style={[styles.quickToolText, { color: colors.textPrimary }]}>{t('index.injuries')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -1419,7 +1426,7 @@ export default function HomeScreen() {
               activeOpacity={0.8}
             >
               <Award size={20} color="#8B5CF6" strokeWidth={2} />
-              <Text style={[styles.quickToolText, { color: colors.textPrimary }]}>Objectifs</Text>
+              <Text style={[styles.quickToolText, { color: colors.textPrimary }]}>{t('index.objective')}</Text>
             </TouchableOpacity>
           </View>
         );
@@ -1500,8 +1507,8 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <BookOpen size={24} color="#F97316" />
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Carnet</Text>
-              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Entraînement</Text>
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('index.journalTitle')}</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.journalSubtitle')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
@@ -1509,8 +1516,8 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <Timer size={24} color={colors.accentText} />
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Timer</Text>
-              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Round/Repos</Text>
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('index.timer')}</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.timerSubtitle')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
@@ -1518,8 +1525,8 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <Calendar size={24} color="#3B82F6" />
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Calendrier</Text>
-              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Planning</Text>
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('planning.calendar')}</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('planning.title')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
@@ -1527,8 +1534,8 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <List size={24} color="#8B5CF6" />
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Planning</Text>
-              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Sportif</Text>
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('planning.title')}</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.sportPlanningSubtitle')}</Text>
             </TouchableOpacity>
           </View>
         );
@@ -1549,8 +1556,8 @@ export default function HomeScreen() {
               </View>
             </View>
             <View style={styles.blessuresTextContainer}>
-              <Text style={[styles.blessuresTitle, { color: colors.textPrimary }]}>Blessures</Text>
-              <Text style={[styles.blessuresSubtitle, { color: colors.textMuted }]}>Suivez vos blessures</Text>
+              <Text style={[styles.blessuresTitle, { color: colors.textPrimary }]}>{t('index.injuries')}</Text>
+              <Text style={[styles.blessuresSubtitle, { color: colors.textMuted }]}>{t('index.injuriesSubtitle')}</Text>
             </View>
             <ChevronRight size={24} color={colors.textMuted} />
           </TouchableOpacity>
@@ -1587,7 +1594,7 @@ export default function HomeScreen() {
                   backgroundColor: batteryPercent >= 60 ? '#10B981' : batteryPercent >= 30 ? '#F59E0B' : '#EF4444'
                 }]} />
               </View>
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Énergie</Text>
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('index.energy')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
@@ -1595,8 +1602,8 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <FlaskConical size={24} color="#8B5CF6" />
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Savoir</Text>
-              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Culture G</Text>
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('index.knowledge')}</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.generalKnowledge')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
@@ -1604,8 +1611,8 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <Calculator size={24} color="#F59E0B" />
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Calculs</Text>
-              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>IMC, BMR...</Text>
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('index.calculators')}</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.calculatorsSubtitle')}</Text>
             </TouchableOpacity>
           </View>
         );
@@ -1620,8 +1627,8 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <Swords size={24} color="#818CF8" />
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Coachs & Clubs</Text>
-              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Partenaires</Text>
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('index.partners')}</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.partnersSubtitle')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, flex: 1, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
@@ -1629,8 +1636,8 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <Stethoscope size={24} color="#F87171" />
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Pros de Santé</Text>
-              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Kines, Nutritionnistes</Text>
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('index.healthProfessionals')}</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.healthProfessionalsSubtitle')}</Text>
             </TouchableOpacity>
           </View>
         );
@@ -1663,7 +1670,7 @@ export default function HomeScreen() {
                   <Trophy size={24} color={isCompetitorMode ? colors.accent : colors.textMuted} />
                 )}
                 <Text style={[styles.toolCardTitleSmall, { color: isCompetitorMode ? (isDark ? colors.accent : colors.textPrimary) : colors.textPrimary }]}>
-                  Objectif
+                  {t('index.objective')}
                 </Text>
                 {/* Mini Switch */}
                 <View style={[styles.miniSwitch, { backgroundColor: isCompetitorMode ? colors.accent : colors.border }]}>
@@ -1688,8 +1695,8 @@ export default function HomeScreen() {
                 activeOpacity={0.85}
               >
                 <Clock size={24} color="#F97316" />
-                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Jeûne</Text>
-                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Intermittent</Text>
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('fasting.title')}</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.intermittent')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
@@ -1697,8 +1704,8 @@ export default function HomeScreen() {
                 activeOpacity={0.85}
               >
                 <Camera size={24} color="#10B981" />
-                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Photo</Text>
-                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Avant/Apres</Text>
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('photos.title')}</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.beforeAfter')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -1711,8 +1718,8 @@ export default function HomeScreen() {
                   activeOpacity={0.85}
                 >
                   <TrendingDown size={24} color="#EF4444" />
-                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Mode Cut</Text>
-                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Perte poids</Text>
+                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('index.cutMode')}</Text>
+                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.weightLoss')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
@@ -1720,8 +1727,8 @@ export default function HomeScreen() {
                   activeOpacity={0.85}
                 >
                   <Medal size={24} color="#F59E0B" />
-                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Palmares</Text>
-                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Resultats</Text>
+                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('palmares.title')}</Text>
+                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.results')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
@@ -1729,8 +1736,8 @@ export default function HomeScreen() {
                   activeOpacity={0.85}
                 >
                   <Droplets size={24} color="#06B6D4" />
-                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Hydratation</Text>
-                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Suivi eau</Text>
+                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('hydration.title')}</Text>
+                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.waterTracking')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
@@ -1738,8 +1745,8 @@ export default function HomeScreen() {
                   activeOpacity={0.85}
                 >
                   <Scale size={24} color="#8B5CF6" />
-                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Pesee</Text>
-                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Composition</Text>
+                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('index.weighing')}</Text>
+                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.composition')}</Text>
                 </TouchableOpacity>
               </View>
             )}
