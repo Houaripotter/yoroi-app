@@ -195,7 +195,10 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
   const textMuted = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)';
 
   return (
-    <View
+    <TouchableOpacity
+      activeOpacity={0.97}
+      onPress={() => hasData && setFullscreen(true)}
+      disabled={!hasData}
       style={[styles.container, {
         backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
         borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
@@ -514,7 +517,7 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
           <Text style={[styles.progressPercent, { color: rightColor }]}>{rightBarWidth.toFixed(0)}%</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

@@ -233,7 +233,10 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
   const lastColor = lines[lines.length - 1]?.color || firstColor;
 
   return (
-    <View
+    <TouchableOpacity
+      activeOpacity={0.97}
+      onPress={() => hasData && setFullscreen(true)}
+      disabled={!hasData}
       style={[styles.container, {
         backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
         borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
@@ -387,7 +390,7 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
           </ScrollView>
         </View>
       </Modal>
-    </View>
+    </TouchableOpacity>
   );
 };
 

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, useWindowDimensions, ActivityIndicator, TouchableOpacity, InteractionManager, RefreshControl } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, useWindowDimensions, ActivityIndicator, TouchableOpacity, InteractionManager, RefreshControl, DeviceEventEmitter } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { formatDurationHM } from '@/lib/formatDuration';
 import { LineChart } from 'react-native-gifted-charts';
@@ -66,13 +66,13 @@ const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady, colu
   }, [metric, onPress]);
 
   return (
-    <View
+    <TouchableOpacity
+      activeOpacity={0.95}
+      onPress={handlePress}
       style={[styles.miniCard, { backgroundColor: isDark ? colors.backgroundCard : `${metric.color}08` }]}
     >
-      <TouchableOpacity
+      <View
         style={styles.cardHeader}
-        onPress={handlePress}
-        activeOpacity={0.7}
       >
         <View style={[styles.iconBox, { backgroundColor: metric.color + '15' }]}>
           {metric.icon}
@@ -80,9 +80,9 @@ const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady, colu
         <Text style={[styles.themeLabel, { color: colors.textMuted }]}>{metric.theme}</Text>
         <View style={{ flex: 1 }} />
         <Maximize2 size={12} color={colors.textMuted} />
-      </TouchableOpacity>
+      </View>
 
-      <TouchableOpacity onPress={handlePress} activeOpacity={0.7}>
+      <View>
         <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>{metric.title}</Text>
         <View style={styles.valueRow}>
           <Text style={[styles.cardValue, { color: hasData ? colors.textPrimary : colors.textMuted }]}>
@@ -90,7 +90,7 @@ const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady, colu
           </Text>
           <Text style={[styles.cardUnit, { color: colors.textMuted }]}>{metric.unit}</Text>
         </View>
-      </TouchableOpacity>
+      </View>
 
       <View style={styles.miniChartWrapper}>
         {hasData ? (
@@ -142,7 +142,7 @@ const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady, colu
           </TouchableOpacity>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 });
 
@@ -291,6 +291,12 @@ export const DashboardPage: React.FC = React.memo(() => {
     });
     return () => handle.cancel();
   }, [selectedPeriod]);
+
+  // Recharger si des données changent ailleurs dans l'app
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => loadAllData(selectedPeriod));
+    return () => sub.remove();
+  }, [selectedPeriod, loadAllData]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
