@@ -14,6 +14,9 @@ android/build/
 android/.gradle/
 android/.idea/
 
+# ios pods (déjà dans ios/.gitignore mais on le répète ici pour accélérer git status)
+ios/Pods/
+
 # native
 *.orig.*
 *.jks
