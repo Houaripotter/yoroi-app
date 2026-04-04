@@ -122,7 +122,7 @@ function RootLayoutContent() {
 
       // Navigation universelle : workoutId en priorité, sinon screen générique
       if (data?.workoutId) {
-        setTimeout(() => router.push(`/social-share/last-session?workoutId=${data.workoutId}` as any), 500);
+        setTimeout(() => router.push(`/social-share/last-session?id=${data.workoutId}` as any), 500);
       } else if (data?.screen) {
         setTimeout(() => router.push(`/${data.screen}` as any), 500);
       }
@@ -349,15 +349,21 @@ export default function RootLayout() {
         }
 
         // Android: Health Connect - demarrer l'observer workout
+        // NOTE: on vérifie @yoroi_healthkit_asked (même clé qu'iOS) pour ne se connecter
+        // qu'après l'onboarding. Sans ce check, connect() demande les permissions Health
+        // Connect dès le premier lancement, ce qui cause un crash sur Android.
         if (Platform.OS === 'android') {
           try {
-            await healthConnect.initialize();
-            const connected = await healthConnect.connect();
-            if (connected) {
-              await healthConnect.setupWorkoutObserver();
-              logger.info('[HealthConnect] Observer workout Android actif');
-              // Toujours relancer l'import (déduplication UUID empêche les doublons)
-              healthConnect.importFullHistory().catch(err => logger.error('Erreur import historique Android:', err));
+            const hasAsked = await AsyncStorage.getItem('@yoroi_healthkit_asked');
+            if (hasAsked) {
+              await healthConnect.initialize();
+              const connected = await healthConnect.connect();
+              if (connected) {
+                await healthConnect.setupWorkoutObserver();
+                logger.info('[HealthConnect] Observer workout Android actif');
+                // Toujours relancer l'import (déduplication UUID empêche les doublons)
+                healthConnect.importFullHistory().catch(err => logger.error('Erreur import historique Android:', err));
+              }
             }
           } catch (err) {
             logger.error('Erreur init Health Connect:', err);

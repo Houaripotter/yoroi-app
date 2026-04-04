@@ -848,6 +848,9 @@ export default function OnboardingScreen() {
 
   const finishOnboarding = async () => {
     try { introPlayer.pause(); } catch {}
+    // Marquer l'onboarding comme terminé pour que le reconnect Health Connect
+    // fonctionne au prochain démarrage (même si l'utilisateur a passé l'étape)
+    await AsyncStorage.setItem('@yoroi_healthkit_asked', 'true').catch(() => {});
     router.replace('/(tabs)');
   };
 
