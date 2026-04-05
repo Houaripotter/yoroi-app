@@ -37,6 +37,7 @@ import { WorkoutSummaryModal } from '@/components/WorkoutSummaryModal';
 import { RPEModal } from '@/components/RPEModal';
 import { TimerAlarmOverlay } from '@/components/TimerAlarmOverlay';
 import { roninModeService, RONIN_THEME } from '@/lib/roninMode';
+import { useI18n } from '@/lib/I18nContext';
 import { saveTrainingLoad } from '@/lib/trainingLoadService';
 import { useLiveActivity } from '@/lib/hooks/useLiveActivity';
 import { timerNotifications } from '@/lib/timerNotifications';
@@ -153,6 +154,7 @@ const EMOM_PRESETS = [10, 15, 20, 30]; // minutes
 export default function TimerScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
 
   // Dynamic Island
   const { startActivity, stopActivity, updateActivity, isAvailable: isIslandAvailable } = useLiveActivity();
@@ -237,6 +239,12 @@ export default function TimerScreen() {
 
   // Refs
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Timer précision — basé sur timestamp réel pour éviter le drift de setInterval
+  const endTimestampRef = useRef<number>(0);
+  const lastCountdownRef = useRef<number>(-1);
+  const phaseEndedRef = useRef<boolean>(false);
+  const forTimeStartRef = useRef<number>(0);
+  const lastForTimeElapsedRef = useRef<number>(-1);
 
   // Initialiser le SoundManager
   useEffect(() => {
@@ -367,9 +375,16 @@ export default function TimerScreen() {
         case 'fortime':
           initialTime = 0; // FOR TIME compte vers le haut
           setForTimeElapsed(0);
+          forTimeStartRef.current = Date.now();
+          lastForTimeElapsedRef.current = -1;
           break;
       }
       setTimeRemaining(initialTime);
+      if (mode !== 'fortime' && initialTime > 0) {
+        endTimestampRef.current = Date.now() + initialTime * 1000;
+        lastCountdownRef.current = -1;
+        phaseEndedRef.current = false;
+      }
 
       // Jouer le son de debut - gong pour combat, beep pour le reste (sans bloquer)
       if (mode === 'combat') {
@@ -384,8 +399,9 @@ export default function TimerScreen() {
       }
 
       // PLANIFIER NOTIFICATION QUAND TIMER TERMINE (pour arriere-plan)
+      // Utiliser endTimestampRef.current (timestamp absolu) pour une précision exacte
       if (mode !== 'fortime' && initialTime > 0) {
-        timerNotifications.scheduleTimerEndNotification(mode, initialTime)
+        timerNotifications.scheduleTimerEndNotification(mode, endTimestampRef.current)
           .catch(e => logger.error('Notification error:', e));
       }
 
@@ -415,9 +431,16 @@ export default function TimerScreen() {
     triggerHaptic('light');
     activateKeepAwakeAsync().catch(e => logger.error('KeepAwake error:', e));
     backgroundTaskService.begin();
-    if (mode !== 'fortime' && timeRemaining > 0) {
-      timerNotifications.scheduleTimerEndNotification(mode, timeRemaining)
+    if (mode === 'fortime') {
+      forTimeStartRef.current = Date.now() - timeRemaining * 1000;
+      lastForTimeElapsedRef.current = -1;
+      phaseEndedRef.current = false;
+    } else if (timeRemaining > 0) {
+      timerNotifications.scheduleTimerEndNotification(mode, endTimestampRef.current)
         .catch(e => logger.error('Notification error:', e));
+      endTimestampRef.current = Date.now() + timeRemaining * 1000;
+      lastCountdownRef.current = -1;
+      phaseEndedRef.current = false;
     }
     setTimerState('running');
   };
@@ -590,10 +613,14 @@ export default function TimerScreen() {
           if (currentRound < totalRounds) {
             setCurrentRound(r => r + 1);
             setIsInRest(false);
+            endTimestampRef.current = Date.now() + roundDuration * 1000;
+            lastCountdownRef.current = -1;
+            phaseEndedRef.current = false;
             setTimeRemaining(roundDuration);
             await soundManager.playGong();
           } else {
             // C'etait le dernier repos
+            phaseEndedRef.current = true;
             setTimerState('finished');
             await soundManager.playVictory();
             setTimeRemaining(0);
@@ -602,10 +629,14 @@ export default function TimerScreen() {
           // Sauter le round actuel, aller au repos
           if (currentRound < totalRounds) {
             setIsInRest(true);
+            endTimestampRef.current = Date.now() + restDuration * 1000;
+            lastCountdownRef.current = -1;
+            phaseEndedRef.current = false;
             setTimeRemaining(restDuration);
             await soundManager.playGong();
           } else {
             // C'etait le dernier round
+            phaseEndedRef.current = true;
             setTimerState('finished');
             await soundManager.playVictory();
             setTimeRemaining(0);
@@ -617,14 +648,21 @@ export default function TimerScreen() {
         if (tabataIsWork) {
           // Sauter le travail, aller au repos
           setTabataIsWork(false);
+          endTimestampRef.current = Date.now() + tabataRest * 1000;
+          lastCountdownRef.current = -1;
+          phaseEndedRef.current = false;
           setTimeRemaining(tabataRest);
         } else {
           // Sauter le repos, aller au prochain round
           if (tabataCurrentRound < tabataRounds) {
             setTabataCurrentRound(r => r + 1);
             setTabataIsWork(true);
+            endTimestampRef.current = Date.now() + tabataWork * 1000;
+            lastCountdownRef.current = -1;
+            phaseEndedRef.current = false;
             setTimeRemaining(tabataWork);
           } else {
+            phaseEndedRef.current = true;
             setTimerState('finished');
             await soundManager.playVictory();
             setTimeRemaining(0);
@@ -637,9 +675,13 @@ export default function TimerScreen() {
         // Sauter a la minute suivante
         if (emomCurrentMinute < emomDuration) {
           setEmomCurrentMinute(m => m + 1);
+          endTimestampRef.current = Date.now() + 60 * 1000;
+          lastCountdownRef.current = -1;
+          phaseEndedRef.current = false;
           setTimeRemaining(60);
-          await soundManager.playBeep(); // Beep pour EMOM
+          await soundManager.playBeep();
         } else {
+          phaseEndedRef.current = true;
           setTimerState('finished');
           await soundManager.playVictory();
           setTimeRemaining(0);
@@ -648,182 +690,200 @@ export default function TimerScreen() {
 
       case 'musculation':
         // Pour muscu, skip termine juste le repos
+        phaseEndedRef.current = true;
         setTimerState('finished');
         setTimeRemaining(0);
-        await soundManager.playBeep(); // Beep pour muscu
+        await soundManager.playBeep();
         break;
     }
   };
 
-  // Timer logic
+  // Timer logic — précision basée sur timestamp réel (évite le drift de setInterval)
   useEffect(() => {
     if (timerState === 'running') {
-      intervalRef.current = setInterval(async () => {
-        // FOR TIME compte vers le HAUT
-        if (mode === 'fortime') {
-          setTimeRemaining((prev) => {
-            const newTime = prev + 1;
-            setForTimeElapsed(newTime);
+      phaseEndedRef.current = false;
+      lastCountdownRef.current = -1;
+      lastForTimeElapsedRef.current = -1;
 
-            // Vérifier le time cap
-            if (newTime >= forTimeCap) {
-              soundManager.playBeep(); // Beep pour FOR TIME
+      intervalRef.current = setInterval(() => {
+
+        // FOR TIME : compte vers le HAUT via timestamp réel
+        if (mode === 'fortime') {
+          const elapsed = Math.floor((Date.now() - forTimeStartRef.current) / 1000);
+          if (elapsed !== lastForTimeElapsedRef.current) {
+            lastForTimeElapsedRef.current = elapsed;
+            setTimeRemaining(elapsed);
+            setForTimeElapsed(elapsed);
+            if (elapsed >= forTimeCap && !phaseEndedRef.current) {
+              phaseEndedRef.current = true;
+              soundManager.playBeep().catch(() => {});
               triggerHaptic('heavy');
               Vibration.vibrate([0, 500, 200, 500]);
               setTimerState('finished');
-              return newTime;
             }
-
-            return newTime;
-          });
+          }
           return;
         }
 
-        // Tous les autres modes comptent vers le BAS
-        setTimeRemaining((prev) => {
-          // Countdown 3-2-1 vocal/sonore pour les 3 dernieres secondes
-          if (prev === 4 || prev === 3 || prev === 2) {
-            soundManager.playFinalCountdown(prev - 1);
-            // Vibration forte pour 3-2-1
+        // Tous les autres modes : décompte précis basé sur timestamp réel
+        const realRemaining = Math.max(0, Math.ceil((endTimestampRef.current - Date.now()) / 1000));
+
+        // Sons countdown — joués une seule fois par seconde
+        if (realRemaining !== lastCountdownRef.current) {
+          if (realRemaining === 3 || realRemaining === 2 || realRemaining === 1) {
+            lastCountdownRef.current = realRemaining;
+            soundManager.playFinalCountdown(realRemaining);
             triggerHaptic('heavy');
             Vibration.vibrate(300);
-          }
-          // Countdown sonore pour les 10 dernieres secondes (mais pas 3-2-1)
-          else if (prev <= 11 && prev > 4) {
-            soundManager.playCountdownTick(prev - 1);
+          } else if (realRemaining <= 10 && realRemaining > 3) {
+            lastCountdownRef.current = realRemaining;
+            soundManager.playCountdownTick(realRemaining);
             triggerHaptic('light');
           }
+        }
 
-          if (prev <= 1) {
-            // Temps ecoule - son wizz immédiat pour toutes les transitions
-            soundManager.playWizz();
-            triggerHaptic('heavy');
-            Vibration.vibrate([0, 500, 200, 500, 200, 500]);
-            flashService.alarm();
-            // La notification planifiée joue wizz.mp3 au bon moment — ne pas annuler
+        if (realRemaining <= 0) {
+          // Garde anti double-déclenchement
+          if (phaseEndedRef.current) return;
+          phaseEndedRef.current = true;
 
-            // Logique selon le mode
-            switch (mode) {
-              case 'musculation':
-                // Fin du repos - pret pour la prochaine serie
-                backgroundTaskService.end();
-                setTimerState('finished');
-                // Afficher modal si tracking activé
-                if (trackRepsWeight) {
-                  setShowRepsWeightModal(true);
-                } else {
-                  // Enregistrer la série dans l'historique sans reps/poids
-                  setSeriesHistory(prev => [...prev, {
-                    seriesNumber: seriesCount,
-                    timestamp: new Date(),
-                    restDuration: musculationRest,
-                  }]);
-                }
-                return 0;
+          // Son de fin + vibrations
+          soundManager.playWizz();
+          triggerHaptic('heavy');
+          Vibration.vibrate([0, 500, 200, 500, 200, 500]);
+          flashService.alarm();
 
-              case 'combat':
-                if (isInRest) {
-                  // Fin du repos, debut du prochain round
-                  if (currentRound < totalRounds) {
-                    setCurrentRound(r => r + 1);
-                    setIsInRest(false);
-                    // Reprendre la tâche arrière-plan et planifier la notif pour ce round
-                    backgroundTaskService.begin();
-                    timerNotifications.scheduleTimerEndNotification('combat', roundDuration).catch(() => {});
-                    return roundDuration;
-                  } else {
-                    backgroundTaskService.end();
-                    setTimerState('finished');
-                    soundManager.playVictory();
-                    return 0;
-                  }
-                } else {
-                  // Fin du round
-                  if (currentRound < totalRounds) {
-                    setIsInRest(true);
-                    // Reprendre la tâche arrière-plan et planifier la notif pour ce repos
-                    backgroundTaskService.begin();
-                    timerNotifications.scheduleTimerEndNotification('combat', restDuration).catch(() => {});
-                    return restDuration;
-                  } else {
-                    backgroundTaskService.end();
-                    setTimerState('finished');
-                    soundManager.playVictory();
-                    return 0;
-                  }
-                }
+          switch (mode) {
+            case 'musculation':
+              backgroundTaskService.end();
+              setTimerState('finished');
+              setTimeRemaining(0);
+              if (trackRepsWeight) {
+                setShowRepsWeightModal(true);
+              } else {
+                setSeriesHistory(prev => [...prev, {
+                  seriesNumber: seriesCount,
+                  timestamp: new Date(),
+                  restDuration: musculationRest,
+                }]);
+              }
+              break;
 
-              case 'tabata':
-                if (tabataIsRestBetweenSets) {
-                  // Fin du repos entre sets, commencer le prochain set
-                  setTabataCurrentSet(s => s + 1);
-                  setTabataCurrentRound(1);
-                  setTabataIsRestBetweenSets(false);
-                  setTabataIsWork(true);
+            case 'combat':
+              if (isInRest) {
+                if (currentRound < totalRounds) {
+                  setCurrentRound(r => r + 1);
+                  setIsInRest(false);
                   backgroundTaskService.begin();
-                  timerNotifications.scheduleTimerEndNotification('tabata', tabataWork).catch(() => {});
-                  return tabataWork;
-                } else if (tabataIsWork) {
-                  // Fin du travail, debut du repos
-                  setTabataIsWork(false);
-                  backgroundTaskService.begin();
-                  timerNotifications.scheduleTimerEndNotification('tabata', tabataRest).catch(() => {});
-                  return tabataRest;
-                } else {
-                  // Fin du repos
-                  if (tabataCurrentRound < tabataRounds) {
-                    // Prochain round dans ce set
-                    setTabataCurrentRound(r => r + 1);
-                    setTabataIsWork(true);
-                    backgroundTaskService.begin();
-                    timerNotifications.scheduleTimerEndNotification('tabata', tabataWork).catch(() => {});
-                    return tabataWork;
-                  } else if (tabataCurrentSet < tabataSets) {
-                    // Fin du set, debut du repos entre sets
-                    setTabataIsRestBetweenSets(true);
-                    backgroundTaskService.begin();
-                    timerNotifications.scheduleTimerEndNotification('tabata', tabataRestBetweenSets).catch(() => {});
-                    return tabataRestBetweenSets;
-                  } else {
-                    // Tous les sets termines
-                    backgroundTaskService.end();
-                    setTimerState('finished');
-                    soundManager.playVictory();
-                    return 0;
-                  }
-                }
-
-              case 'emom':
-                if (emomCurrentMinute < emomDuration) {
-                  setEmomCurrentMinute(m => m + 1);
-                  backgroundTaskService.begin();
-                  timerNotifications.scheduleTimerEndNotification('emom', 60).catch(() => {});
-                  return 60;
+                  timerNotifications.scheduleTimerEndNotification('combat', endTimestampRef.current).catch(() => {});
+                  endTimestampRef.current = Date.now() + roundDuration * 1000;
+                  lastCountdownRef.current = -1;
+                  phaseEndedRef.current = false;
+                  setTimeRemaining(roundDuration);
                 } else {
                   backgroundTaskService.end();
                   setTimerState('finished');
+                  setTimeRemaining(0);
                   soundManager.playVictory();
-                  return 0;
                 }
+              } else {
+                if (currentRound < totalRounds) {
+                  setIsInRest(true);
+                  backgroundTaskService.begin();
+                  timerNotifications.scheduleTimerEndNotification('combat', endTimestampRef.current).catch(() => {});
+                  endTimestampRef.current = Date.now() + restDuration * 1000;
+                  lastCountdownRef.current = -1;
+                  phaseEndedRef.current = false;
+                  setTimeRemaining(restDuration);
+                } else {
+                  backgroundTaskService.end();
+                  setTimerState('finished');
+                  setTimeRemaining(0);
+                  soundManager.playVictory();
+                }
+              }
+              break;
 
-              case 'amrap':
-                // AMRAP: compte à rebours jusqu'au time cap
+            case 'tabata':
+              if (tabataIsRestBetweenSets) {
+                setTabataCurrentSet(s => s + 1);
+                setTabataCurrentRound(1);
+                setTabataIsRestBetweenSets(false);
+                setTabataIsWork(true);
+                backgroundTaskService.begin();
+                timerNotifications.scheduleTimerEndNotification('tabata', endTimestampRef.current).catch(() => {});
+                endTimestampRef.current = Date.now() + tabataWork * 1000;
+                lastCountdownRef.current = -1;
+                phaseEndedRef.current = false;
+                setTimeRemaining(tabataWork);
+              } else if (tabataIsWork) {
+                setTabataIsWork(false);
+                backgroundTaskService.begin();
+                timerNotifications.scheduleTimerEndNotification('tabata', endTimestampRef.current).catch(() => {});
+                endTimestampRef.current = Date.now() + tabataRest * 1000;
+                lastCountdownRef.current = -1;
+                phaseEndedRef.current = false;
+                setTimeRemaining(tabataRest);
+              } else {
+                if (tabataCurrentRound < tabataRounds) {
+                  setTabataCurrentRound(r => r + 1);
+                  setTabataIsWork(true);
+                  backgroundTaskService.begin();
+                  timerNotifications.scheduleTimerEndNotification('tabata', endTimestampRef.current).catch(() => {});
+                  endTimestampRef.current = Date.now() + tabataWork * 1000;
+                  lastCountdownRef.current = -1;
+                  phaseEndedRef.current = false;
+                  setTimeRemaining(tabataWork);
+                } else if (tabataCurrentSet < tabataSets) {
+                  setTabataIsRestBetweenSets(true);
+                  backgroundTaskService.begin();
+                  timerNotifications.scheduleTimerEndNotification('tabata', endTimestampRef.current).catch(() => {});
+                  endTimestampRef.current = Date.now() + tabataRestBetweenSets * 1000;
+                  lastCountdownRef.current = -1;
+                  phaseEndedRef.current = false;
+                  setTimeRemaining(tabataRestBetweenSets);
+                } else {
+                  backgroundTaskService.end();
+                  setTimerState('finished');
+                  setTimeRemaining(0);
+                  soundManager.playVictory();
+                }
+              }
+              break;
+
+            case 'emom':
+              if (emomCurrentMinute < emomDuration) {
+                setEmomCurrentMinute(m => m + 1);
+                backgroundTaskService.begin();
+                timerNotifications.scheduleTimerEndNotification('emom', endTimestampRef.current).catch(() => {});
+                endTimestampRef.current = Date.now() + 60 * 1000;
+                lastCountdownRef.current = -1;
+                phaseEndedRef.current = false;
+                setTimeRemaining(60);
+              } else {
                 backgroundTaskService.end();
                 setTimerState('finished');
+                setTimeRemaining(0);
                 soundManager.playVictory();
-                return 0;
+              }
+              break;
 
-              // Note: 'fortime' est géré séparément plus haut (ligne 576)
-              // car il compte vers le HAUT, pas vers le BAS
-            }
+            case 'amrap':
+              backgroundTaskService.end();
+              setTimerState('finished');
+              setTimeRemaining(0);
+              soundManager.playVictory();
+              break;
 
-            backgroundTaskService.end();
-            return 0;
+            default:
+              backgroundTaskService.end();
+              setTimeRemaining(0);
+              break;
           }
-
-          return prev - 1;
-        });
-      }, 1000);
+        } else {
+          setTimeRemaining(realRemaining);
+        }
+      }, 250);
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -837,7 +897,9 @@ export default function TimerScreen() {
     };
   }, [timerState, mode, isInRest, currentRound, totalRounds, roundDuration, restDuration,
       tabataIsWork, tabataCurrentRound, tabataRounds, tabataWork, tabataRest,
-      emomCurrentMinute, emomDuration]);
+      tabataIsRestBetweenSets, tabataCurrentSet, tabataSets, tabataRestBetweenSets,
+      emomCurrentMinute, emomDuration,
+      forTimeCap, trackRepsWeight, musculationRest, seriesCount]);
 
   // Calculate progress
   const totalTime = getCurrentTotalTime();
@@ -962,7 +1024,7 @@ export default function TimerScreen() {
       case 'musculation':
         return (
           <View style={[styles.settingsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-            <Text style={[styles.settingsTitle, { color: colors.textPrimary }]}>Temps de repos</Text>
+            <Text style={[styles.settingsTitle, { color: colors.textPrimary }]}>{t('timer.restTime')}</Text>
 
             {/* Presets */}
             <View style={styles.presetsGrid}>
@@ -1000,7 +1062,7 @@ export default function TimerScreen() {
 
             {/* Custom */}
             <View style={styles.customRow}>
-              <Text style={[styles.customLabel, { color: colors.textSecondary }]}>Personnalise</Text>
+              <Text style={[styles.customLabel, { color: colors.textSecondary }]}>{t('timer.custom')}</Text>
               <View style={styles.customControls}>
                 <TouchableOpacity
                   style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
@@ -1076,7 +1138,7 @@ export default function TimerScreen() {
             {/* Réglages personnalisables - disponibles pour tous les presets */}
             <View style={styles.customSettings}>
               <View style={styles.settingRow}>
-                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>Durée round</Text>
+                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>{t('timer.roundDuration')}</Text>
                 <View style={styles.settingControls}>
                   <TouchableOpacity
                     style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
@@ -1105,7 +1167,7 @@ export default function TimerScreen() {
               </View>
 
               <View style={styles.settingRow}>
-                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>Rounds</Text>
+                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>{t('timer.rounds')}</Text>
                 <View style={styles.settingControls}>
                   <TouchableOpacity
                     style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
@@ -1124,7 +1186,7 @@ export default function TimerScreen() {
               </View>
 
               <View style={styles.settingRow}>
-                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>Repos</Text>
+                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>{t('timer.rest')}</Text>
                 <View style={styles.settingControls}>
                   <TouchableOpacity
                     style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
@@ -1191,7 +1253,7 @@ export default function TimerScreen() {
             {/* Configuration personnalisée */}
             <View style={[styles.customSettings, { marginTop: SPACING.lg }]}>
               <View style={styles.settingRow}>
-                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>Travail (s)</Text>
+                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>{t('timer.work')}</Text>
                 <View style={styles.settingControls}>
                   <TouchableOpacity
                     style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
@@ -1210,7 +1272,7 @@ export default function TimerScreen() {
               </View>
 
               <View style={styles.settingRow}>
-                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>Repos (s)</Text>
+                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>{t('timer.restS')}</Text>
                 <View style={styles.settingControls}>
                   <TouchableOpacity
                     style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
@@ -1229,7 +1291,7 @@ export default function TimerScreen() {
               </View>
 
               <View style={styles.settingRow}>
-                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>Rounds</Text>
+                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>{t('timer.rounds')}</Text>
                 <View style={styles.settingControls}>
                   <TouchableOpacity
                     style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
@@ -1248,7 +1310,7 @@ export default function TimerScreen() {
               </View>
 
               <View style={styles.settingRow}>
-                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>Sets</Text>
+                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>{t('timer.sets')}</Text>
                 <View style={styles.settingControls}>
                   <TouchableOpacity
                     style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
@@ -1268,7 +1330,7 @@ export default function TimerScreen() {
 
               {tabataSets > 1 && (
                 <View style={styles.settingRow}>
-                  <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>Repos sets</Text>
+                  <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>{t('timer.restBetweenSets')}</Text>
                   <View style={styles.settingControls}>
                     <TouchableOpacity
                       style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
@@ -1331,7 +1393,7 @@ export default function TimerScreen() {
             {emomExercises.length > 0 && (
               <View style={[styles.exercisesListContainer, { marginTop: SPACING.lg }]}>
                 <Text style={[styles.exercisesListTitle, { color: colors.textSecondary }]}>
-                  Exercices (affichés chaque minute)
+                  {t('timer.exercises')}
                 </Text>
                 {emomExercises.map((exercise, index) => (
                   <View key={index} style={[styles.exerciseItem, { backgroundColor: colors.backgroundElevated }]}>
@@ -1355,7 +1417,7 @@ export default function TimerScreen() {
 
             {/* Durée */}
             <View style={styles.settingRow}>
-              <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>Durée</Text>
+              <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>{t('timer.duration')}</Text>
               <View style={styles.settingControls}>
                 <TouchableOpacity
                   style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
@@ -1377,7 +1439,7 @@ export default function TimerScreen() {
             {amrapExercises.length > 0 && (
               <View style={[styles.exercisesListContainer, { marginTop: SPACING.lg }]}>
                 <Text style={[styles.exercisesListTitle, { color: colors.textSecondary }]}>
-                  Circuit (répéter autant que possible)
+                  {t('timer.circuit')}
                 </Text>
                 {amrapExercises.map((exercise, index) => (
                   <View key={index} style={[styles.exerciseItem, { backgroundColor: colors.backgroundElevated }]}>
@@ -1396,12 +1458,12 @@ export default function TimerScreen() {
           <View style={[styles.settingsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
             <Text style={[styles.settingsTitle, { color: colors.textPrimary }]}>FOR TIME</Text>
             <Text style={[styles.settingsSubtitle, { color: colors.textMuted }]}>
-              Chronomètre qui monte - appuie sur Stop quand tu as fini
+              {t('timer.forTimeDesc')}
             </Text>
 
             {/* Time cap */}
             <View style={styles.settingRow}>
-              <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>Time Cap</Text>
+              <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>{t('timer.timeCap')}</Text>
               <View style={styles.settingControls}>
                 <TouchableOpacity
                   style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
@@ -1441,28 +1503,28 @@ export default function TimerScreen() {
 
   // Get current status text
   const getStatusText = () => {
-    if (timerState === 'finished') return 'TERMINE !';
+    if (timerState === 'finished') return t('timer.statusFinished');
 
     switch (mode) {
       case 'musculation':
-        return 'REPOS';
+        return t('timer.statusRest');
       case 'combat':
-        return isInRest ? 'REPOS' : `ROUND ${currentRound}/${totalRounds}`;
+        return isInRest ? t('timer.statusRest') : `ROUND ${currentRound}/${totalRounds}`;
       case 'tabata':
         if (tabataIsRestBetweenSets) {
-          return `REPOS SET ${tabataCurrentSet}/${tabataSets}`;
+          return `${t('timer.statusRest')} SET ${tabataCurrentSet}/${tabataSets}`;
         }
         const setInfo = tabataSets > 1 ? ` - SET ${tabataCurrentSet}/${tabataSets}` : '';
         return tabataIsWork
           ? `TRAVAIL ${tabataCurrentRound}/${tabataRounds}${setInfo}`
-          : `REPOS ${tabataCurrentRound}/${tabataRounds}${setInfo}`;
+          : `${t('timer.statusRest')} ${tabataCurrentRound}/${tabataRounds}${setInfo}`;
       case 'emom':
         const currentExercise = emomExercises.length > 0 ? emomExercises[(emomCurrentMinute - 1) % emomExercises.length] : '';
         return currentExercise || `MINUTE ${emomCurrentMinute}/${emomDuration}`;
       case 'amrap':
         return `ROUNDS: ${amrapRoundsCompleted}`;
       case 'fortime':
-        return timerState === 'idle' ? 'PRET' : 'EN COURS';
+        return timerState === 'idle' ? t('timer.statusReady') : t('timer.statusInProgress');
     }
   };
 
@@ -1477,7 +1539,7 @@ export default function TimerScreen() {
           <ChevronLeft size={24} color={isRoninMode ? RONIN_THEME.text : colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isRoninMode ? RONIN_THEME.text : colors.textPrimary }]}>
-          {isRoninMode ? 'MODE RONIN' : 'Minuteur'}
+          {isRoninMode ? t('timer.roninMode') : t('timer.title')}
         </Text>
         <TouchableOpacity
           onPress={async () => {
@@ -1518,20 +1580,20 @@ export default function TimerScreen() {
               <Circle
                 cx={110}
                 cy={110}
-                r={98}
-                stroke={`${statusColor}18`}
-                strokeWidth={10}
+                r={95}
+                stroke={`${statusColor}28`}
+                strokeWidth={15}
                 fill="transparent"
               />
               <Circle
                 cx={110}
                 cy={110}
-                r={98}
+                r={95}
                 stroke={statusColor}
-                strokeWidth={10}
+                strokeWidth={15}
                 fill="transparent"
-                strokeDasharray={2 * Math.PI * 98}
-                strokeDashoffset={2 * Math.PI * 98 * (1 - progress / 100)}
+                strokeDasharray={2 * Math.PI * 95}
+                strokeDashoffset={2 * Math.PI * 95 * (1 - progress / 100)}
                 strokeLinecap="round"
                 transform="rotate(-90 110 110)"
               />
@@ -1628,7 +1690,7 @@ export default function TimerScreen() {
         {/* AMRAP Round Counter */}
         {mode === 'amrap' && timerState === 'running' && (
           <View style={[styles.amrapCounter, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-            <Text style={[styles.amrapLabel, { color: colors.textMuted }]}>ROUNDS COMPLETES</Text>
+            <Text style={[styles.amrapLabel, { color: colors.textMuted }]}>{t('timer.roundsCompleted')}</Text>
             <Text style={[styles.amrapCount, { color: isDark ? colors.accent : '#000000', fontWeight: '800' }]}>{amrapRoundsCompleted}</Text>
             <TouchableOpacity
               style={[styles.amrapButton, { backgroundColor: colors.accent }]}
@@ -1638,7 +1700,7 @@ export default function TimerScreen() {
                 triggerHaptic('medium');
               }}
             >
-              <Text style={[styles.amrapButtonText, { color: colors.textOnGold }]}>✓ Round Completé</Text>
+              <Text style={[styles.amrapButtonText, { color: colors.textOnGold }]}>{t('timer.roundCompleted')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -1646,7 +1708,7 @@ export default function TimerScreen() {
         {/* FOR TIME - Finish Button */}
         {mode === 'fortime' && timerState === 'running' && (
           <View style={[styles.forTimeFinish, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-            <Text style={[styles.forTimeLabel, { color: colors.textMuted }]}>APPUIE QUAND TU AS FINI</Text>
+            <Text style={[styles.forTimeLabel, { color: colors.textMuted }]}>{t('timer.pressWhenDone')}</Text>
             <TouchableOpacity
               style={[styles.forTimeButton, { backgroundColor: '#10B981' }]}
               onPress={async () => {
@@ -1663,7 +1725,7 @@ export default function TimerScreen() {
         {/* Series Counter (Musculation only) */}
         {mode === 'musculation' && (
           <View style={[styles.seriesCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-            <Text style={[styles.seriesLabel, { color: colors.textMuted }]}>SERIES COMPLETEES</Text>
+            <Text style={[styles.seriesLabel, { color: colors.textMuted }]}>{t('timer.seriesCompleted')}</Text>
             <Text style={[styles.seriesCount, { color: isDark ? colors.accent : '#000000', fontWeight: '800' }]}>{seriesCount}</Text>
 
             {seriesHistory.length > 0 && (
@@ -1672,7 +1734,7 @@ export default function TimerScreen() {
                   <View key={index} style={[styles.seriesHistoryItem, { borderBottomColor: colors.border }]}>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.seriesHistoryNumber, { color: colors.textPrimary }]}>
-                        Série {serie.seriesNumber}
+                        {t('timer.serie').replace('{{n}}', String(serie.seriesNumber))}
                       </Text>
                       {(serie.reps || serie.weight) && (
                         <Text style={[styles.seriesHistoryReps, { color: isDark ? colors.accent : '#000000', fontWeight: '600' }]}>
@@ -1684,13 +1746,13 @@ export default function TimerScreen() {
                       {serie.timestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                     </Text>
                     <Text style={[styles.seriesHistoryRest, { color: colors.textMuted }]}>
-                      {formatTime(serie.restDuration)} repos
+                      {t('timer.rest_short').replace('{{time}}', formatTime(serie.restDuration))}
                     </Text>
                   </View>
                 ))}
                 {seriesHistory.length > 5 && (
                   <Text style={[styles.seriesHistoryMore, { color: colors.textMuted }]}>
-                    +{seriesHistory.length - 5} autres
+                    {t('timer.more').replace('{{n}}', String(seriesHistory.length - 5))}
                   </Text>
                 )}
               </View>
@@ -1705,12 +1767,12 @@ export default function TimerScreen() {
               }}
             >
               <Text style={[styles.trackToggleText, { color: trackRepsWeight ? colors.textOnGold : colors.textMuted }]}>
-                {trackRepsWeight ? '✓ Tracker reps/poids' : 'Tracker reps/poids'}
+                {trackRepsWeight ? t('timer.trackRepsWeightActive') : t('timer.trackRepsWeight')}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={resetSeriesCount}>
-              <Text style={[styles.seriesReset, { color: colors.textMuted }]}>Reinitialiser</Text>
+              <Text style={[styles.seriesReset, { color: colors.textMuted }]}>{t('timer.reinitialize')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -1727,7 +1789,7 @@ export default function TimerScreen() {
             >
               <Play size={28} color={colors.textOnGold} fill={colors.textOnGold} />
               <Text style={[styles.mainBtnText, { color: colors.textOnGold }]}>
-                {mode === 'musculation' ? 'SERIE TERMINEE' : 'DEMARRER'}
+                {mode === 'musculation' ? t('timer.serieFinished') : t('timer.start')}
               </Text>
             </TouchableOpacity>
           )}
@@ -1786,12 +1848,12 @@ export default function TimerScreen() {
               {mode === 'musculation' ? (
                 <>
                   <Play size={28} color={colors.textOnGold} fill={colors.textOnGold} />
-                  <Text style={[styles.mainBtnText, { color: colors.textOnGold }]}>PROCHAINE SERIE</Text>
+                  <Text style={[styles.mainBtnText, { color: colors.textOnGold }]}>{t('timer.nextSerie')}</Text>
                 </>
               ) : (
                 <>
                   <RotateCcw size={24} color={colors.textOnGold} />
-                  <Text style={[styles.mainBtnText, { color: colors.textOnGold }]}>RECOMMENCER</Text>
+                  <Text style={[styles.mainBtnText, { color: colors.textOnGold }]}>{t('timer.restart')}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -1831,8 +1893,8 @@ export default function TimerScreen() {
       <TimerAlarmOverlay
         visible={showAlarmOverlay}
         onDismiss={handleDismissAlarm}
-        message={mode === 'musculation' ? 'REPOS TERMINÉ' : 'TIMER TERMINÉ'}
-        subMessage={mode === 'musculation' ? 'Prochaine série !' : 'Excellent travail !'}
+        message={mode === 'musculation' ? t('timer.restEnded') : t('timer.timerEnded')}
+        subMessage={mode === 'musculation' ? t('timer.nextSerieMsg') : t('timer.excellentWork')}
       />
     </View>
   );
@@ -1928,7 +1990,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   timeText: {
-    fontSize: 54,
+    fontSize: 66,
     fontWeight: '200',
     fontVariant: ['tabular-nums'],
     letterSpacing: 1,

@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { requestReview } from 'expo-store-review';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -36,6 +37,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
 
   // Option 1: Laisser un avis - ouvre le store review et marque comme fait
   const handleReview = async () => {
@@ -80,11 +82,13 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <BlurView
-          intensity={isDark ? 40 : 20}
-          tint={isDark ? 'dark' : 'light'}
-          style={StyleSheet.absoluteFill}
-        />
+        {Platform.OS === 'ios' && (
+          <BlurView
+            intensity={isDark ? 40 : 20}
+            tint={isDark ? 'dark' : 'light'}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
         <View style={styles.centeredView}>
           <View style={[styles.container, { backgroundColor: colors.card }]}>
             {/* Accent bar gold */}
@@ -103,18 +107,18 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
 
               {/* Titre */}
               <Text style={[styles.title, { color: colors.textPrimary }]}>
-                Tu aimes Yoroi ?
+                {t('review.title')}
               </Text>
 
               {/* Message explicatif */}
               <Text style={[styles.message, { color: colors.textSecondary }]}>
                 {Platform.OS === 'android'
-                  ? "Si l'app t'aide au quotidien, ta note sur le Play Store permet a Yoroi d'apparaitre dans les recherches et d'atteindre plus de sportifs."
-                  : "Si l'app t'aide au quotidien, ta note sur l'App Store permet a Yoroi d'apparaitre dans les recherches et d'atteindre plus de sportifs."}
+                  ? t('review.messageAndroid')
+                  : t('review.messageIos')}
               </Text>
 
               <Text style={[styles.messageSecondary, { color: colors.textMuted }]}>
-                C'est grace a toi que la famille Yoroi grandit. Merci pour ton soutien !
+                {t('review.familyMessage')}
               </Text>
 
               {/* Etoiles decoratives */}
@@ -134,7 +138,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
                 activeOpacity={0.8}
               >
                 <Star size={18} color="#FFFFFF" fill="#FFFFFF" />
-                <Text style={styles.buttonPrimaryText}>Laisser un avis</Text>
+                <Text style={styles.buttonPrimaryText}>{t('review.rateButton')}</Text>
               </TouchableOpacity>
 
               {/* Bouton secondaire: C'est deja fait */}
@@ -145,7 +149,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
               >
                 <Check size={16} color={colors.textSecondary} strokeWidth={2.5} />
                 <Text style={[styles.buttonSecondaryText, { color: colors.textSecondary }]}>
-                  C'est deja fait
+                  {t('review.alreadyDone')}
                 </Text>
               </TouchableOpacity>
 
@@ -157,7 +161,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
               >
                 <Clock size={14} color={colors.textMuted} />
                 <Text style={[styles.buttonTertiaryText, { color: colors.textMuted }]}>
-                  Plus tard
+                  {t('review.later')}
                 </Text>
               </TouchableOpacity>
             </View>

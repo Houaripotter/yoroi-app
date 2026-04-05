@@ -45,7 +45,7 @@ interface EnhancedCalendarViewProps {
   refreshKey?: number;
 }
 
-export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
+export const EnhancedCalendarView = React.memo(function EnhancedCalendarView({
   currentMonth,
   workouts,
   clubs,
@@ -55,7 +55,7 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
   onQuickAdd,
   onToggleRest,
   refreshKey,
-}) => {
+}: EnhancedCalendarViewProps) {
   const { colors } = useTheme();
   const { t } = useI18n();
   const [restDays, setRestDays] = useState<Set<string>>(new Set());
@@ -64,7 +64,7 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
   const dateLocale = fr;
 
   // Jours de la semaine traduits
-  const weekDays = [
+  const weekDays = useMemo(() => [
     t('dates.mondayShort'),
     t('dates.tuesdayShort'),
     t('dates.wednesdayShort'),
@@ -72,7 +72,7 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
     t('dates.fridayShort'),
     t('dates.saturdayShort'),
     t('dates.sundayShort'),
-  ];
+  ], [t]);
 
   // Charger les jours de repos pour le mois affiché (+ quand refreshKey change)
   useEffect(() => {
@@ -86,12 +86,14 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
     loadRestDays();
   }, [currentMonth, refreshKey]);
 
-  // Calendar logic
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
-  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  // Calendar logic — memoïsé pour éviter le recalcul à chaque re-render parent
+  const calendarDays = useMemo(() => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+    return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  }, [currentMonth]);
 
   // Grouper par semaines
   const weeks = useMemo(() => {
@@ -160,6 +162,8 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
         style={styles.calendarScrollContainer}
         contentContainerStyle={styles.calendarContent}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={32}
+        removeClippedSubviews={false}
       >
         <View
           style={[
@@ -342,7 +346,7 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
       </ScrollView>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

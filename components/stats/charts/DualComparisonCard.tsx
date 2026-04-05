@@ -83,10 +83,6 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
   const [showLeft, setShowLeft] = useState(true);
   const [showRight, setShowRight] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
-  // État différé pour le calcul SVG (séparé de l'état visuel des chips)
-  const [chartShowLeft, setChartShowLeft] = useState(true);
-  const [chartShowRight, setChartShowRight] = useState(true);
-  const chartUpdateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleLayout = (e: LayoutChangeEvent) => {
     setCardWidth(e.nativeEvent.layout.width);
@@ -94,17 +90,11 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
 
   const toggleLeft = () => {
     if (showLeft && !showRight) return;
-    const next = !showLeft;
-    setShowLeft(next); // mise à jour immédiate du chip
-    if (chartUpdateTimer.current) clearTimeout(chartUpdateTimer.current);
-    chartUpdateTimer.current = setTimeout(() => setChartShowLeft(next), 50);
+    setShowLeft(prev => !prev);
   };
   const toggleRight = () => {
     if (showRight && !showLeft) return;
-    const next = !showRight;
-    setShowRight(next);
-    if (chartUpdateTimer.current) clearTimeout(chartUpdateTimer.current);
-    chartUpdateTimer.current = setTimeout(() => setChartShowRight(next), 50);
+    setShowRight(prev => !prev);
   };
 
   const hasData = (leftHistory.length >= 1) || (rightHistory.length >= 1);
@@ -112,8 +102,8 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
   const delta = Math.abs(leftValue - rightValue);
 
   const computeChart = useCallback((containerWidth: number, chartHeight: number) => {
-    const activeLeft = chartShowLeft && leftHistory.length >= 1;
-    const activeRight = chartShowRight && rightHistory.length >= 1;
+    const activeLeft = showLeft && leftHistory.length >= 1;
+    const activeRight = showRight && rightHistory.length >= 1;
     if ((!activeLeft && !activeRight) || containerWidth === 0) return null;
 
     const activeMaxLen = Math.max(
@@ -175,7 +165,7 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
     });
 
     return { svgWidth, leftPts, rightPts, leftLine, rightLine, leftArea, rightArea, yLabels, xLabels, maxXLabels, plotBottom, chartHeight, activeIsScrollable };
-  }, [chartShowLeft, chartShowRight, leftHistory, rightHistory, dateLocale]);
+  }, [showLeft, showRight, leftHistory, rightHistory, dateLocale]);
 
   const chartData = useMemo(() => computeChart(cardWidth, CHART_HEIGHT), [computeChart, cardWidth]);
 

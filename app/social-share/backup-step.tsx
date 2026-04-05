@@ -24,6 +24,7 @@ import {
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { exportDataToJSON } from '@/lib/exportService';
 import { successHaptic } from '@/lib/haptics';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -33,6 +34,7 @@ import { logger } from '@/lib/security/logger';
 
 export default function BackupStepScreen() {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const [isExporting, setIsExporting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -48,11 +50,11 @@ export default function BackupStepScreen() {
     } catch (error) {
       logger.error('Erreur export:', error);
       Alert.alert(
-        'Erreur de sauvegarde',
-        'Impossible d\'exporter tes données. Vérifie que tu as autorisé l\'accès à tes photos et réessaye.',
+        t('backupStep.errorTitle'),
+        t('backupStep.errorMsg'),
         [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Réessayer', onPress: handleExport },
+          { text: t('backupStep.cancel'), style: 'cancel' },
+          { text: t('backupStep.retry'), onPress: handleExport },
         ]
       );
     } finally {
@@ -96,7 +98,7 @@ export default function BackupStepScreen() {
         zIndex: 999
       }}>
         <View style={{ paddingBottom: 10, paddingTop: 5, alignItems: 'center' }}>
-          <Text style={{ fontSize: 13, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 4 SUR 4</Text>
+          <Text style={{ fontSize: 13, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, letterSpacing: 3, marginBottom: 8 }}>{t('backupStep.stepTitle')}</Text>
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
             {/* Etapes Passées (Gold) */}
             <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent }} />
@@ -109,7 +111,7 @@ export default function BackupStepScreen() {
             {/* Etape 4 (Actuelle - Big Gold) */}
             <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.5, shadowRadius: 5 }} />
           </View>
-          <Text style={{ fontSize: 18, fontWeight: '900', color: colors.textPrimary, marginTop: 4, letterSpacing: 1 }}>SÉCURISATION</Text>
+          <Text style={{ fontSize: 18, fontWeight: '900', color: colors.textPrimary, marginTop: 4, letterSpacing: 1 }}>{t('backupStep.stepName')}</Text>
         </View>
       </View>
 
@@ -124,31 +126,31 @@ export default function BackupStepScreen() {
         </View>
 
         <Text style={[styles.title, { color: colors.textPrimary }]}>
-          Protège tes données
+          {t('backupStep.title')}
         </Text>
 
         <View style={[styles.warningBox, { backgroundColor: colors.error + '20', borderColor: colors.error }]}>
           <Text style={[styles.warningText, { color: colors.error }]}>
-            Attention : YOROI fonctionne sans serveur pour respecter ta vie privée. Tes données sont uniquement sur cet appareil.
+            {t('backupStep.warning')}
           </Text>
         </View>
 
         <View style={[styles.instructionCard, { backgroundColor: colors.backgroundCard, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }]}>
-          <Text style={[styles.instructionTitle, { color: isDark ? colors.accent : colors.textPrimary }]}>MARCHE A SUIVRE :</Text>
+          <Text style={[styles.instructionTitle, { color: isDark ? colors.accent : colors.textPrimary }]}>{t('backupStep.instructionTitle')}</Text>
 
           <View style={styles.stepRow}>
             <FolderPlus size={20} color={colors.accent} />
-            <Text style={[styles.stepText, { color: colors.textPrimary }]}>Crée un dossier <Text style={{fontWeight: '900'}}>"Yoroi_Backup"</Text> dans ton espace de stockage cloud.</Text>
+            <Text style={[styles.stepText, { color: colors.textPrimary }]}>{t('backupStep.step1')}</Text>
           </View>
 
           <View style={styles.stepRow}>
             <Download size={20} color={colors.accent} />
-            <Text style={[styles.stepText, { color: colors.textPrimary }]}>Clique sur le bouton ci-dessous pour générer ton fichier de sauvegarde.</Text>
+            <Text style={[styles.stepText, { color: colors.textPrimary }]}>{t('backupStep.step2')}</Text>
           </View>
 
           <View style={styles.stepRow}>
             <Cloud size={20} color={colors.accent} />
-            <Text style={[styles.stepText, { color: colors.textPrimary }]}>Enregistre ce fichier dans ton cloud pour ne jamais rien perdre.</Text>
+            <Text style={[styles.stepText, { color: colors.textPrimary }]}>{t('backupStep.step3')}</Text>
           </View>
         </View>
 
@@ -159,7 +161,7 @@ export default function BackupStepScreen() {
         >
           <Download size={24} color="#FFFFFF" />
           <Text style={styles.exportBtnText}>
-            {isExporting ? 'GÉNÉRATION...' : 'GÉNÉRER MA SAUVEGARDE'}
+            {isExporting ? t('backupStep.generating') : t('backupStep.generate')}
           </Text>
         </TouchableOpacity>
 
@@ -167,7 +169,7 @@ export default function BackupStepScreen() {
           style={styles.finishBtn}
           onPress={handleFinish}
         >
-          <Text style={[styles.finishBtnText, { color: '#6B7280' }]}>TERMINER LE PARCOURS</Text>
+          <Text style={[styles.finishBtnText, { color: '#6B7280' }]}>{t('backupStep.finish')}</Text>
           <ArrowRight size={18} color="#6B7280" />
         </TouchableOpacity>
 
@@ -187,22 +189,22 @@ export default function BackupStepScreen() {
             </View>
 
             <Text style={[styles.successTitle, { color: colors.textPrimary }]}>
-              Bravo !
+              {t('backupStep.successTitle')}
             </Text>
 
             <Text style={[styles.successMessage, { color: colors.textSecondary }]}>
-              Ta sauvegarde a été générée avec succès !
+              {t('backupStep.successMsg')}
             </Text>
 
             <View style={[styles.protectionBox, { backgroundColor: colors.accent + '15', borderColor: colors.accent }]}>
               <Shield size={20} color={colors.accent} />
               <Text style={[styles.protectionText, { color: colors.textPrimary }]}>
-                Tes données sont maintenant protégées en cas de perte, vol ou changement d'appareil.
+                {t('backupStep.protectionMsg')}
               </Text>
             </View>
 
             <Text style={[styles.reminderText, { color: colors.textMuted }]}>
-              Pense à sauvegarder ce fichier dans ton cloud préféré (Google Drive, iCloud, Dropbox, etc.)
+              {t('backupStep.reminderMsg')}
             </Text>
 
             <TouchableOpacity
@@ -213,7 +215,7 @@ export default function BackupStepScreen() {
               }}
             >
               <Text style={[styles.okButtonText, { color: colors.textOnAccent }]}>
-                PARFAIT !
+                {t('backupStep.ok')}
               </Text>
             </TouchableOpacity>
           </View>

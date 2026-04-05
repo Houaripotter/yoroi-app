@@ -250,7 +250,7 @@ export const restoreRealData = async (): Promise<boolean> => {
 // MAIN GENERATOR
 // ============================================
 
-export const generateHenryDemoData = async (): Promise<{
+export const generateHenyDemoData = async (): Promise<{
   workouts: number;
   weights: number;
   measurements: number;
@@ -275,8 +275,8 @@ export const generateHenryDemoData = async (): Promise<{
   }
 
   // ======= STEP 2: INJECT DEMO DATA =======
-  const startDate = new Date(2026, 2, 1);
-  const endDate = new Date(2026, 11, 31);
+  const startDate = new Date(2026, 0, 1);    // 1er janvier 2026
+  const endDate = new Date(2027, 0, 31);     // 31 janvier 2027
   const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
   let workoutCount = 0;
@@ -492,7 +492,7 @@ export const generateHenryDemoData = async (): Promise<{
 
   // ========== 6. MENSURATIONS ==========
   for (let m = 0; m < 10; m++) {
-    const monthDate = new Date(2026, 2 + m, 1);
+    const monthDate = new Date(2027, m, 1);
     while (monthDate.getDay() !== 1) monthDate.setDate(monthDate.getDate() + 1);
     const progress = m / 9;
     await addMeasurementRecord({

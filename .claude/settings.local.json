@@ -99,9 +99,12 @@
       "Bash(do echo '=== $\\(basename $f\\) ===')",
       "Bash(timeout 120 npx expo export:*)",
       "Bash(eas submit:*)",
-      "Bash(open:*)"
+      "Bash(open:*)",
+      "Bash(sleep:*)",
+      "Read(//private/tmp/**)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "defaultMode": "bypassPermissions"
   }
 }

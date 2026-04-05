@@ -26,4 +26,8 @@ RCT_EXTERN_METHOD(saveDietaryWater:(double)amountMl
 RCT_EXTERN_METHOD(getHeartZonesData:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(getWorkoutEffortScore:(NSString *)workoutUUID
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 @end

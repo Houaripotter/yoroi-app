@@ -8,6 +8,9 @@ import {
   TextInput,
   StatusBar,
   RefreshControl,
+  DeviceEventEmitter,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter } from 'expo-router';
@@ -36,6 +39,7 @@ import { successHaptic } from '@/lib/haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS, GRADIENTS, BODY_COMP_COLORS } from '@/constants/design';
 import logger from '@/lib/security/logger';
+import { useI18n } from '@/lib/I18nContext';
 
 // ============================================
 // COMPOSITION CORPORELLE - IMPÉDANCEMÈTRE
@@ -214,6 +218,7 @@ export default function BodyCompositionScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   // Form state
@@ -262,6 +267,12 @@ export default function BodyCompositionScreen() {
 
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadData(); }, []);
+
+  // Listener DeviceEventEmitter pour rafraîchissement des données
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadData);
+    return () => sub.remove();
+  }, []);
 
   const handleSave = async () => {
     const weightVal = parseFloat((weight || '').replace(',', '.'));
@@ -329,6 +340,10 @@ export default function BodyCompositionScreen() {
   const musclePercent = weightNum > 0 ? (muscleNum / weightNum) * 100 : 0;
 
   return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
@@ -337,6 +352,7 @@ export default function BodyCompositionScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
         }
@@ -488,6 +504,7 @@ export default function BodyCompositionScreen() {
       </ScrollView>
       <PopupComponent />
     </View>
+    </KeyboardAvoidingView>
   );
 }
 

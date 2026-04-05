@@ -14,6 +14,7 @@ import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
 import { getUserSettings } from '@/lib/storage';
 import logger from '@/lib/security/logger';
+import { useI18n } from '@/lib/I18nContext';
 
 // ============================================
 // CALCULATEUR ZONES FRÉQUENCE CARDIAQUE
@@ -29,51 +30,17 @@ interface HeartRateZone {
   emoji: string;
 }
 
-const ZONES: HeartRateZone[] = [
-  {
-    name: 'Zone 1 - Récupération',
-    description: 'Échauffement, récupération active',
-    minPercent: 50,
-    maxPercent: 60,
-    color: '#3B82F6',
-    emoji: '💙',
-  },
-  {
-    name: 'Zone 2 - Endurance',
-    description: 'Brulage de graisses, endurance de base',
-    minPercent: 60,
-    maxPercent: 70,
-    color: '#22C55E',
-    emoji: '',
-  },
-  {
-    name: 'Zone 3 - Aerobie',
-    description: 'Amelioration cardio-vasculaire',
-    minPercent: 70,
-    maxPercent: 80,
-    color: '#EAB308',
-    emoji: '💛',
-  },
-  {
-    name: 'Zone 4 - Seuil',
-    description: 'Seuil anaerobique, performance',
-    minPercent: 80,
-    maxPercent: 90,
-    color: '#F97316',
-    emoji: '🧡',
-  },
-  {
-    name: 'Zone 5 - Anaerobique',
-    description: 'Effort maximal, sprints',
-    minPercent: 90,
-    maxPercent: 100,
-    color: '#EF4444',
-    emoji: '',
-  },
+const ZONES_STATIC = [
+  { nameKey: 'zone1Name', descKey: 'zone1Desc', minPercent: 50, maxPercent: 60, color: '#3B82F6' },
+  { nameKey: 'zone2Name', descKey: 'zone2Desc', minPercent: 60, maxPercent: 70, color: '#22C55E' },
+  { nameKey: 'zone3Name', descKey: 'zone3Desc', minPercent: 70, maxPercent: 80, color: '#EAB308' },
+  { nameKey: 'zone4Name', descKey: 'zone4Desc', minPercent: 80, maxPercent: 90, color: '#F97316' },
+  { nameKey: 'zone5Name', descKey: 'zone5Desc', minPercent: 90, maxPercent: 100, color: '#EF4444' },
 ];
 
 export default function HeartZonesScreen() {
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [age, setAge] = useState('');
   const [restingHR, setRestingHR] = useState('70');
@@ -113,7 +80,7 @@ export default function HeartZonesScreen() {
 
   return (
     <ScreenWrapper>
-      <Header title="Zones FC" showBack />
+      <Header title={t('heartZones.title')} showBack />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -123,34 +90,34 @@ export default function HeartZonesScreen() {
         <View style={[styles.infoCard, { backgroundColor: colors.goldMuted }]}>
           <Heart size={24} color={colors.gold} />
           <Text style={[styles.infoText, { color: colors.gold }]}>
-            Methode Karvonen pour un entraînement optimal
+            {t('heartZones.karvonenInfo')}
           </Text>
         </View>
 
         {/* Inputs */}
         <Card style={styles.inputCard}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tes données</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('heartZones.yourData')}</Text>
 
           {/* Age */}
           <View style={styles.inputRow}>
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Age *</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('heartZones.age')}</Text>
             <View style={[styles.inputContainer, { backgroundColor: colors.cardHover }]}>
               <TextInput
                 style={[styles.input, { color: colors.textPrimary }]}
                 value={age}
                 onChangeText={(text) => setAge(formatInputValue(text))}
-                placeholder="30"
+                placeholder={t('heartZones.agePlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 keyboardType="number-pad"
                 maxLength={3}
               />
-              <Text style={[styles.inputUnit, { color: colors.textMuted }]}>ans</Text>
+              <Text style={[styles.inputUnit, { color: colors.textMuted }]}>{t('heartZones.ageUnit')}</Text>
             </View>
           </View>
 
           {/* FC Repos */}
           <View style={styles.inputRow}>
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>FC au repos</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('heartZones.restingHR')}</Text>
             <View style={[styles.inputContainer, { backgroundColor: colors.cardHover }]}>
               <TextInput
                 style={[styles.input, { color: colors.textPrimary }]}
@@ -179,14 +146,14 @@ export default function HeartZonesScreen() {
               {useCustomMax && <Text style={styles.checkmark}>✓</Text>}
             </View>
             <Text style={[styles.toggleLabel, { color: colors.textSecondary }]}>
-              J'ai une FC max personnalisee
+              {t('heartZones.customMaxToggle')}
             </Text>
           </TouchableOpacity>
 
           {/* FC Max Custom */}
           {useCustomMax && (
             <View style={styles.inputRow}>
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>FC max</Text>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('heartZones.maxHR')}</Text>
               <View style={[styles.inputContainer, { backgroundColor: colors.cardHover }]}>
                 <TextInput
                   style={[styles.input, { color: colors.textPrimary }]}
@@ -206,7 +173,7 @@ export default function HeartZonesScreen() {
           {!useCustomMax && isValid && (
             <View style={[styles.calculatedRow, { backgroundColor: colors.cardHover }]}>
               <Text style={[styles.calculatedLabel, { color: colors.textSecondary }]}>
-                FC max theorique (220 - age)
+                {t('heartZones.theoreticalMax')}
               </Text>
               <Text style={[styles.calculatedValue, { color: colors.gold }]}>
                 {calculatedMaxHR} bpm
@@ -219,10 +186,10 @@ export default function HeartZonesScreen() {
         {isValid && (
           <Card style={styles.zonesCard}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Tes zones d'entraînement
+              {t('heartZones.trainingZones')}
             </Text>
 
-            {ZONES.map((zone, index) => {
+            {ZONES_STATIC.map((zone, index) => {
               const minBpm = calculateZoneHR(zone.minPercent);
               const maxBpm = calculateZoneHR(zone.maxPercent);
 
@@ -232,13 +199,12 @@ export default function HeartZonesScreen() {
                   style={[styles.zoneRow, { borderLeftColor: zone.color }]}
                 >
                   <View style={styles.zoneHeader}>
-                    <Text style={styles.zoneEmoji}>{zone.emoji}</Text>
                     <View style={styles.zoneInfo}>
                       <Text style={[styles.zoneName, { color: colors.textPrimary }]}>
-                        {zone.name}
+                        {t(`heartZones.${zone.nameKey}`)}
                       </Text>
                       <Text style={[styles.zoneDesc, { color: colors.textSecondary }]}>
-                        {zone.description}
+                        {t(`heartZones.${zone.descKey}`)}
                       </Text>
                     </View>
                     <Text style={[styles.zonePercent, { color: colors.textMuted }]}>
@@ -261,13 +227,13 @@ export default function HeartZonesScreen() {
           <Info size={18} color={colors.textSecondary} />
           <View style={styles.formulaContent}>
             <Text style={[styles.formulaTitle, { color: colors.textPrimary }]}>
-              Formule Karvonen
+              {t('heartZones.karvonenFormula')}
             </Text>
             <Text style={[styles.formulaText, { color: colors.textSecondary }]}>
-              FC cible = FC repos + (FC max - FC repos) x % intensite
+              {t('heartZones.karvonenEquation')}
             </Text>
             <Text style={[styles.formulaTip, { color: colors.textMuted }]}>
-              Plus precise que la simple formule 220 - age
+              {t('heartZones.karvonenTip')}
             </Text>
           </View>
         </View>

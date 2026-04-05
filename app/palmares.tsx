@@ -10,6 +10,7 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  DeviceEventEmitter,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -34,7 +35,7 @@ type FilterType = 'all' | 'victoire' | 'defaite' | 'nul';
 
 export default function PalmaresScreen() {
   const { colors } = useTheme();
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const [combats, setCombats] = useState<Combat[]>([]);
   const [filteredCombats, setFilteredCombats] = useState<Combat[]>([]);
   const [filter, setFilter] = useState<FilterType>('all');
@@ -42,6 +43,11 @@ export default function PalmaresScreen() {
 
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadCombats(); }, []);
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadCombats);
+    return () => sub.remove();
+  }, []);
 
   const loadCombats = async () => {
     try {
@@ -89,7 +95,7 @@ export default function PalmaresScreen() {
 
   return (
     <ScreenWrapper>
-      <Header title="Mon Palmarès" showBack />
+      <Header title={t('palmares.title')} showBack />
 
       <ScrollView
         style={styles.scrollView}
@@ -104,7 +110,7 @@ export default function PalmaresScreen() {
           <View style={styles.recordHeader}>
             <Trophy size={32} color={colors.accentText} />
             <Text style={[styles.recordTitle, { color: colors.textPrimary }]}>
-              Bilan Global
+              {t('palmares.recordTitle')}
             </Text>
           </View>
 
@@ -118,7 +124,7 @@ export default function PalmaresScreen() {
                 {record.victoires}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                Victoires
+                {t('palmares.stats.victories')}
               </Text>
             </View>
 
@@ -131,7 +137,7 @@ export default function PalmaresScreen() {
                 {record.defaites}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                Défaites
+                {t('palmares.stats.defeats')}
               </Text>
             </View>
 
@@ -149,7 +155,7 @@ export default function PalmaresScreen() {
                 {record.nuls}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                Nuls
+                {t('palmares.stats.draws')}
               </Text>
             </View>
           </View>
@@ -166,7 +172,7 @@ export default function PalmaresScreen() {
                 />
               </View>
               <Text style={[styles.winRateText, { color: colors.textMuted }]}>
-                {winRate.toFixed(1)}% de victoires
+                {t('palmares.winRate', { rate: winRate.toFixed(1) })}
               </Text>
             </View>
           )}
@@ -192,7 +198,7 @@ export default function PalmaresScreen() {
                 { color: filter === 'all' ? '#FFFFFF' : colors.textPrimary },
               ]}
             >
-              Tous ({combats.length})
+              {t('palmares.filter.all', { count: combats.length })}
             </Text>
           </TouchableOpacity>
 
@@ -214,7 +220,7 @@ export default function PalmaresScreen() {
                 { color: filter === 'victoire' ? '#FFFFFF' : colors.textPrimary },
               ]}
             >
-              Victoires ({record.victoires})
+              {t('palmares.filter.victories', { count: record.victoires })}
             </Text>
           </TouchableOpacity>
 
@@ -236,7 +242,7 @@ export default function PalmaresScreen() {
                 { color: filter === 'defaite' ? '#FFFFFF' : colors.textPrimary },
               ]}
             >
-              Défaites ({record.defaites})
+              {t('palmares.filter.defeats', { count: record.defaites })}
             </Text>
           </TouchableOpacity>
         </View>
@@ -265,7 +271,7 @@ export default function PalmaresScreen() {
                 <View style={styles.fightHeader}>
                   <View style={styles.fightHeaderLeft}>
                     <Text style={[styles.fightNumber, { color: colors.textMuted }]}>
-                      Combat #{filteredCombats.length - index}
+                      {t('palmares.fight.number', { num: filteredCombats.length - index })}
                     </Text>
                     <View style={styles.fightDate}>
                       <Calendar size={14} color={colors.textMuted} />
@@ -306,10 +312,10 @@ export default function PalmaresScreen() {
                       ]}
                     >
                       {combat.resultat === 'victoire'
-                        ? 'Victoire'
+                        ? t('palmares.result.victory')
                         : combat.resultat === 'defaite'
-                        ? 'Défaite'
-                        : 'Nul'}
+                        ? t('palmares.result.defeat')
+                        : t('palmares.result.draw')}
                     </Text>
                   </View>
                 </View>
@@ -350,17 +356,17 @@ export default function PalmaresScreen() {
               <Trophy size={64} color={colors.textMuted} />
               <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
                 {filter === 'all'
-                  ? 'Aucun combat'
+                  ? t('palmares.empty.title.all')
                   : filter === 'victoire'
-                  ? 'Aucune victoire'
+                  ? t('palmares.empty.title.victories')
                   : filter === 'defaite'
-                  ? 'Aucune défaite'
-                  : 'Aucun match nul'}
+                  ? t('palmares.empty.title.defeats')
+                  : t('palmares.empty.title.draws')}
               </Text>
               <Text style={[styles.emptyText, { color: colors.textMuted, marginBottom: SPACING.xl }]}>
                 {filter === 'all'
-                  ? 'Ajoute ton premier combat pour commencer ton palmarès'
-                  : 'Aucun combat trouvé avec ce filtre'}
+                  ? t('palmares.empty.description.all')
+                  : t('palmares.empty.description.filtered')}
               </Text>
               {filter === 'all' && (
                 <TouchableOpacity
@@ -368,7 +374,7 @@ export default function PalmaresScreen() {
                   onPress={handleAddCombat}
                 >
                   <Plus size={20} color="#FFF" />
-                  <Text style={styles.emptyStateButtonText}>Enregistrer mon premier combat</Text>
+                  <Text style={styles.emptyStateButtonText}>{t('palmares.empty.button')}</Text>
                 </TouchableOpacity>
               )}
             </View>

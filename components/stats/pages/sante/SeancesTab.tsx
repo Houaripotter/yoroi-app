@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, RefreshControl, DeviceEventEmitter } from 'react-native';
-import { SamuraiCircleLoader } from '@/components/SamuraiLoader';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { getTrainings, Training } from '@/lib/database';
 import { getSportIcon, getSportName, getSportColor } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -49,6 +49,7 @@ type SortOrder = 'recent' | 'oldest';
 
 export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: propTrainings, period = '1a' }) => {
   const { colors, isDark, screenBackground } = useTheme();
+  const { t } = useI18n();
 
   const sectionBg = isDark ? colors.accent + '10' : colors.accent + '08';
   const cardBg = isDark ? '#242430' : '#FFFFFF';
@@ -56,13 +57,6 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
 
   const [selectedSport, setSelectedSport] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<SortOrder>('recent');
-
-  // Loader 7 secondes
-  const [showLoader, setShowLoader] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setShowLoader(false), 7000);
-    return () => clearTimeout(t);
-  }, []);
 
   // Données locales (chargées directement depuis la DB)
   const [localTrainings, setLocalTrainings] = useState<Training[]>([]);
@@ -87,12 +81,18 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
     loadData();
   }, [period]);
 
-  // Recharger quand un import HealthKit est terminé
+  // Recharger quand un import HealthKit est terminé ou quand les données changent
   useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('YOROI_IMPORT_DONE', () => {
+    const sub1 = DeviceEventEmitter.addListener('YOROI_IMPORT_DONE', () => {
       loadData();
     });
-    return () => sub.remove();
+    const sub2 = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
+      loadData();
+    });
+    return () => {
+      sub1.remove();
+      sub2.remove();
+    };
   }, [loadData]);
 
   const handleRefresh = useCallback(async () => {
@@ -140,10 +140,10 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
   };
 
   const summaryItems = useMemo(() => [
-    { value: totalSessions.toString(), label: 'séances', color: colors.accent },
-    { value: formatDurationCompact(totalMinutes), label: 'total', color: '#F97316' },
-    { value: totalCalories > 0 ? formatCalories(totalCalories) : '--', label: 'kcal', color: '#EF4444' },
-  ], [totalSessions, totalMinutes, totalCalories, colors.accent]);
+    { value: totalSessions.toString(), label: t('seances.sessions'), color: colors.accent },
+    { value: formatDurationCompact(totalMinutes), label: t('seances.total'), color: '#F97316' },
+    { value: totalCalories > 0 ? formatCalories(totalCalories) : '--', label: t('seances.kcal'), color: '#EF4444' },
+  ], [totalSessions, totalMinutes, totalCalories, colors.accent, t]);
 
   const sportCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -248,25 +248,18 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
     );
   }, [isDark, colors]);
 
-  if (showLoader) {
-    return <SamuraiCircleLoader duration={7000} bgColor={screenBackground} />;
-  }
-
   if (trainings.length === 0) {
     return (
       <View style={[styles.emptyCard, { backgroundColor: cardBg, borderWidth: 1, borderColor: '#EF4444' }]}>
         <Dumbbell size={40} color="#EF4444" strokeWidth={1.5} />
         <Text style={[styles.emptyText, { color: '#EF4444', fontWeight: '700' }]}>
-          0 séance dans la base de données
+          {t('seances.emptyTitle')}
         </Text>
         <Text style={[styles.emptySubText, { color: colors.textMuted, textAlign: 'center', lineHeight: 20 }]}>
-          L'import depuis Apple Santé n'a pas encore fonctionné.{'\n'}
-          Va dans Planning {'>'} Séances {'>'} appuie sur{'\n'}
-          "Importer mes séances Apple Santé"
+          {t('seances.emptyMessage')}
         </Text>
         <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 12, textAlign: 'center', lineHeight: 16 }}>
-          Assure-toi que dans Réglages {'>'} Santé {'>'} Accès aux données {'>'} Yoroi{'\n'}
-          "Entraînements" est bien activé
+          {t('seances.emptySettings')}
         </Text>
       </View>
     );
@@ -317,7 +310,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
                   styles.filterPillText,
                   { color: selectedSport === 'all' ? colors.textOnAccent : (isDark ? colors.textSecondary : '#1C1C1E') },
                 ]}>
-                  Tous ({trainings.length})
+                  {t('seances.all', { count: trainings.length })}
                 </Text>
               </TouchableOpacity>
 
@@ -372,7 +365,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
                 <ArrowUp size={14} color={colors.accent} strokeWidth={2.5} />
               )}
               <Text style={[styles.sortText, { color: colors.accent }]}>
-                {sortOrder === 'recent' ? 'Récent' : 'Ancien'}
+                {sortOrder === 'recent' ? t('seances.recent') : t('seances.oldest')}
               </Text>
             </TouchableOpacity>
           </View>

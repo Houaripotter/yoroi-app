@@ -13,6 +13,7 @@ import {
   Animated,
   Image,
   useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';
 import { APP_CONFIG } from '@/lib/appConfig';
@@ -154,11 +155,14 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
       animationType="none"
       onRequestClose={onClose}
     >
-      <BlurView
-        intensity={isDark ? 40 : 20}
-        style={styles.blurContainer}
-        tint={isDark ? 'dark' : 'light'}
-      >
+      <View style={[styles.blurContainer, Platform.OS !== 'ios' && { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
+        {Platform.OS === 'ios' && (
+          <BlurView
+            intensity={isDark ? 40 : 20}
+            style={StyleSheet.absoluteFill}
+            tint={isDark ? 'dark' : 'light'}
+          />
+        )}
         <TouchableOpacity
           style={styles.backdrop}
           activeOpacity={1}
@@ -279,7 +283,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
             {t('rating.thankYou') || 'Merci du fond du coeur !'}
           </Text>
         </Animated.View>
-      </BlurView>
+      </View>
     </Modal>
   );
 };

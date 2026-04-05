@@ -10,7 +10,10 @@ interface ProgressRingProps {
 
 export function ProgressRing({ current, goal, size = 200 }: ProgressRingProps) {
   const { colors } = useTheme();
-  const progress = Math.min(Math.max((goal - current) / (goal - 90) * 100, 0), 100);
+  // Formule corrigée : progression de 0% (poids de départ ~90) vers 100% (objectif atteint)
+  // (90 - current) / (90 - goal) : 0% au départ, 100% à l'objectif
+  const safeGoal = goal !== 90 ? goal : goal - 0.001; // éviter division par zéro si goal=90
+  const progress = Math.min(Math.max((90 - current) / (90 - safeGoal) * 100, 0), 100);
 
   const strokeWidth = 16;
   const radius = (size - strokeWidth) / 2;

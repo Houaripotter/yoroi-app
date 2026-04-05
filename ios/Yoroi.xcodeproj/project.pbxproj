@@ -41,7 +41,6 @@
 		FF32897EE0BEC2AECA52ABBF /* YoroiWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0F210D88915A040CE036D6 /* YoroiWatchApp.swift */; };
 		MULTIPEER01BUILDF00001 /* MultipeerBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = MULTIPEER01FILEREF00001 /* MultipeerBridge.swift */; };
 		MULTIPEER02BUILDF00001 /* MultipeerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = MULTIPEER02FILEREF00001 /* MultipeerBridge.m */; };
-		RCTPKGCNSTUB0BUILDF00001 /* RCTPackagerConnectionStub.m in Sources */ = {isa = PBXBuildFile; fileRef = RCTPKGCNSTUB0FILEREF0001 /* RCTPackagerConnectionStub.m */; };
 		TIMERALRMVW1BUILDF000001 /* TimerAlarmNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIMERALRMVW1FILEREF000001 /* TimerAlarmNotificationView.swift */; };
 		TORCH001OBJBUILDF000001 /* TorchModule.m in Sources */ = {isa = PBXBuildFile; fileRef = TORCH001OBJFILEREF000001 /* TorchModule.m */; };
 		TORCH001SWFBUILDF000001 /* TorchModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = TORCH001SWFFILEREF00001 /* TorchModule.swift */; };
@@ -283,6 +282,7 @@
 				CA290EBA03C5E814675705EA /* ExpoModulesProviders */,
 				4FE4F2E74120D82686D88DAD /* YoroiWatch */,
 				0F9D029879076AFF1316972A /* Pods */,
+				9799841B2F812CD0008F5652 /* Recovered References */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -296,6 +296,18 @@
 				6865ED75B31A3E0530F4354A /* YoroiWatch.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		9799841B2F812CD0008F5652 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				WGTDATASWF001F1LEREF0001 /* WidgetDataModule.swift */,
+				WGTDATAOBJ001F1LEREF0001 /* WidgetDataModule.m */,
+				WIDGETKIT001FRAMFILEREF001 /* WidgetKit.framework */,
+				WIZZM4IN0001F1LEREF0001 /* wizz.mp3 */,
+				WIZZW4TCH001F1LEREF0001 /* wizz.mp3 */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 		A73150D781D16EF168B0A900 /* Services */ = {
@@ -398,6 +410,22 @@
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1250;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.HealthKit = {
+								enabled = 1;
+							};
+							com.apple.Push = {
+								enabled = 1;
+							};
+							com.apple.TimeSensitiveNotifications = {
+								enabled = 1;
+							};
+						};
+					};
+					F147DC6C7AC4E0D7FE4AA024 = {
+						DevelopmentTeam = VATB5W22UD;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -600,7 +628,7 @@
 				A1B2C3D400000003 /* YoroiLiveActivityManager.m in Sources */,
 				D6D98440C02A34740C0F71DA /* WatchConnectivityBridge.swift in Sources */,
 				E11C770F9EC353BDED32219F /* WatchConnectivityBridge.m in Sources */,
-					MULTIPEER01BUILDF00001 /* MultipeerBridge.swift in Sources */,
+				MULTIPEER01BUILDF00001 /* MultipeerBridge.swift in Sources */,
 				MULTIPEER02BUILDF00001 /* MultipeerBridge.m in Sources */,
 				TORCH001SWFBUILDF000001 /* TorchModule.swift in Sources */,
 				TORCH001OBJBUILDF000001 /* TorchModule.m in Sources */,
@@ -654,8 +682,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Yoroi/Yoroi.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 7;
+				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_BITCODE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -693,8 +723,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Yoroi/Yoroi.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 7;
+				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				INFOPLIST_FILE = Yoroi/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -724,8 +756,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = YoroiWatch/YoroiWatch.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 7;
+				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = YoroiWatch/Info.plist;
 				MARKETING_VERSION = 2.3.0;
@@ -757,8 +791,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = YoroiWatch/YoroiWatch.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 7;
+				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = YoroiWatch/Info.plist;
 				MARKETING_VERSION = 2.3.0;

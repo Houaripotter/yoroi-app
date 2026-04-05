@@ -57,7 +57,7 @@ export const YearCounterCardV2 = React.memo(forwardRef<View, YearCounterCardV2Pr
     const profileSource = profilePhoto ? { uri: profilePhoto } : null;
 
     // Calculer objectif annuel
-    const yearlyGoal = stats.yearlyGoal || weeklyGoal * 52;
+    const yearlyGoal = (stats.yearlyGoal && stats.yearlyGoal > 0) ? stats.yearlyGoal : (weeklyGoal > 0 ? weeklyGoal * 52 : 208);
     const progressPercent = Math.min((stats.totalDays / yearlyGoal) * 100, 100);
 
     // Memoized styles

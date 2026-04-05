@@ -23,6 +23,11 @@ import {
   Moon,
   Sun,
   ArrowRight,
+  Calendar,
+  MapPin,
+  BarChart2,
+  Building2,
+  Target,
 } from 'lucide-react-native';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
@@ -41,11 +46,13 @@ import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SessionCard } from '@/components/social-cards/SessionCard';
 import { parseExercisesFromNotes } from '@/lib/exerciseParser';
+import { useI18n } from '@/lib/I18nContext';
 
 const GOLD_COLOR = '#D4AF37';
 
 export default function LastSessionScreen() {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const { avatarImage: contextAvatar } = useAvatar();
   const insets = useSafeAreaInsets();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
@@ -140,15 +147,32 @@ export default function LastSessionScreen() {
             // 2. Si pas d'exercices dans les notes, utiliser les exercices structurés de la DB
             if (parsedOptions.length === 0 && currentTraining.exercises && currentTraining.exercises.length > 0) {
               parsedOptions = currentTraining.exercises.map(ex => ({
-                label: ex.name,
-                weight: ex.weight > 0 ? ex.weight.toString() : undefined,
-                reps: ex.reps > 0 ? ex.reps.toString() : undefined,
-                sets: ex.sets > 1 ? ex.sets.toString() : undefined,
+                label: ex.name ?? 'Exercice',
+                weight: (ex.weight ?? 0) > 0 ? ex.weight.toString() : undefined,
+                reps: (ex.reps ?? 0) > 0 ? ex.reps.toString() : undefined,
+                sets: (ex.sets ?? 0) > 1 ? ex.sets.toString() : undefined,
                 distance: ex.distance ? ex.distance.toString() : undefined,
                 calories: ex.calories ? ex.calories.toString() : undefined,
                 pace: ex.pace || undefined,
                 stairs: ex.stairs ? ex.stairs.toString() : undefined,
               }));
+            }
+
+            // 3. Pour les sports de combat : parser les combat_rounds si aucun exercice
+            if (parsedOptions.length === 0 && (currentTraining as any).combat_rounds) {
+              try {
+                const rawRounds = (currentTraining as any).combat_rounds;
+                const rounds = typeof rawRounds === 'string' ? JSON.parse(rawRounds) : rawRounds;
+                if (Array.isArray(rounds) && rounds.length > 0) {
+                  parsedOptions = rounds.map((r: any) => {
+                    const label = r.partner ? `Round ${r.number} vs ${r.partner}` : `Round ${r.number}`;
+                    const result = r.result ? (r.result === 'win' ? 'Victoire' : r.result === 'loss' ? 'Défaite' : 'Nul') : undefined;
+                    return { label, duration: r.duration?.toString(), pace: result };
+                  });
+                }
+              } catch {
+                // combat_rounds malformé — ignorer
+              }
             }
 
             setOptionDetails(parsedOptions);
@@ -276,11 +300,22 @@ export default function LastSessionScreen() {
         quality: 1,
       });
 
-      if (await isAvailableAsync()) {
+      const available = await isAvailableAsync();
+      if (available) {
         await shareAsync(uri, {
           mimeType: 'image/png',
-          dialogTitle: 'Partager ma séance',
+          dialogTitle: `${t('socialShare.share')} ma séance`,
         });
+      } else {
+        // Sharing not available — save to gallery instead
+        const { status } = await requestPermissionsAsync();
+        if (status === 'granted') {
+          await saveToLibraryAsync(uri);
+          notificationAsync(NotificationFeedbackType.Success);
+          showPopup('Image sauvegardée !', 'Le partage n\'est pas disponible. La carte a été sauvegardée dans ta galerie.', [{ text: 'OK', style: 'primary' }]);
+        } else {
+          showPopup('Partage indisponible', 'Le partage n\'est pas disponible sur cet appareil.', [{ text: 'OK', style: 'primary' }]);
+        }
       }
     } catch (error) {
       logger.error('Error sharing:', error);
@@ -330,7 +365,7 @@ export default function LastSessionScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            Chargement...
+            {t('socialShare.loading')}
           </Text>
         </View>
       </ScreenWrapper>
@@ -343,16 +378,16 @@ export default function LastSessionScreen() {
         <View style={styles.emptyContainer}>
           <Dumbbell size={48} color={colors.textMuted} />
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-            Aucune séance
+            {t('socialShare.noSessionTitle')}
           </Text>
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            Ajoute une séance pour pouvoir la partager !
+            {t('socialShare.noSession')}
           </Text>
           <TouchableOpacity
             style={[styles.addButton, { backgroundColor: colors.accent }]}
             onPress={() => router.push('/add-training')}
           >
-            <Text style={[styles.addButtonText, { color: colors.textOnGold }]}>Ajouter une séance</Text>
+            <Text style={[styles.addButtonText, { color: colors.textOnGold }]}>{t('socialShare.addSession')}</Text>
           </TouchableOpacity>
         </View>
       </ScreenWrapper>
@@ -363,12 +398,11 @@ export default function LastSessionScreen() {
     <ScreenWrapper noPadding noContainer>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         
-        {/* HEADER ÉTAPE 3 - SOMMET ABSOLU */}
-        <View style={{ 
-          backgroundColor: '#F2F2F7', 
-          borderBottomWidth: 1, 
+        {/* HEADER ÉTAPE 3 */}
+        <View style={{
+          backgroundColor: '#F2F2F7',
+          borderBottomWidth: 1,
           borderBottomColor: colors.border,
-          zIndex: 999
         }}>
           <View style={{ paddingBottom: 10, paddingTop: 5 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 }}>
@@ -463,7 +497,64 @@ export default function LastSessionScreen() {
             </View>
           </View>
 
-          {/* 2. APERÇU DE LA CARTE (Format Story 9:16) */}
+          {/* 2. PERSONNALISATION — Toggles d'affichage */}
+          <View style={{ marginBottom: 20 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800', letterSpacing: 1.5, marginBottom: 10 }}>
+              PERSONNALISER
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {([
+                { key: 'showDate',         label: 'Date',      Icon: Calendar  },
+                { key: 'showClub',         label: 'Club',      Icon: Building2 },
+                { key: 'showLieu',         label: 'Lieu',      Icon: MapPin    },
+                { key: 'showYearlyCount',  label: 'Objectif',  Icon: Target    },
+                { key: 'showExercises',    label: 'Exercices', Icon: Dumbbell  },
+                { key: 'showStats',        label: 'Stats',     Icon: BarChart2 },
+              ] as { key: string; label: string; Icon: any }[]).map(({ key, label, Icon }) => {
+                const isOn = {
+                  showDate: showDate,
+                  showClub: showClub,
+                  showLieu: showLieu,
+                  showYearlyCount: showYearlyCount,
+                  showExercises: showExercises,
+                  showStats: showStats,
+                }[key] ?? true;
+                const toggle = {
+                  showDate: () => setShowDate(v => !v),
+                  showClub: () => setShowClub(v => !v),
+                  showLieu: () => setShowLieu(v => !v),
+                  showYearlyCount: () => setShowYearlyCount(v => !v),
+                  showExercises: () => setShowExercises(v => !v),
+                  showStats: () => setShowStats(v => !v),
+                }[key];
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    onPress={() => { impactAsync(ImpactFeedbackStyle.Light); toggle?.(); }}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      paddingHorizontal: 12,
+                      paddingVertical: 7,
+                      borderRadius: 20,
+                      backgroundColor: isOn ? colors.accent : colors.backgroundElevated,
+                      borderWidth: 1,
+                      borderColor: isOn ? colors.accent : colors.border,
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Icon size={13} color={isOn ? colors.textOnAccent : colors.textMuted} strokeWidth={2.5} />
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: isOn ? colors.textOnAccent : colors.textSecondary }}>
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* 3. APERÇU DE LA CARTE (Format Story 9:16) */}
           <View style={styles.cardContainer}>
             <SessionCard
               ref={cardRef}
@@ -501,14 +592,14 @@ export default function LastSessionScreen() {
           <View style={{ gap: 15, marginTop: 20 }}>
             <TouchableOpacity style={[styles.shareBtn, { backgroundColor: colors.accent, paddingVertical: 20 }]} onPress={shareCard}>
               <Share2 size={24} color={colors.textOnAccent} />
-              <Text style={[styles.shareBtnText, { fontSize: 18, color: colors.textOnAccent }]}>PARTAGER SUR LES RÉSEAUX</Text>
+              <Text style={[styles.shareBtnText, { fontSize: 18, color: colors.textOnAccent }]}>{t('socialShare.shareTitle')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={[styles.shareBtn, { backgroundColor: colors.backgroundElevated, paddingVertical: 18, borderWidth: 1, borderColor: colors.border }]} 
               onPress={() => router.push('/social-share/backup-step')}
             >
-              <Text style={[styles.shareBtnText, { color: colors.textPrimary }]}>ÉTAPE SUIVANTE : SAUVEGARDE</Text>
+              <Text style={[styles.shareBtnText, { color: colors.textPrimary }]}>{t('socialShare.nextStep')}</Text>
               <ArrowRight size={20} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>

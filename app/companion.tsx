@@ -37,7 +37,6 @@ import { getAllBodyCompositions, deleteBodyComposition, BodyComposition } from '
 import { shareExportCSV } from '@/lib/csvTemplates';
 import { useCustomPopup } from '@/components/CustomPopup';
 import logger from '@/lib/security/logger';
-import { SamuraiLoader } from '@/components/SamuraiLoader';
 import { LineChart } from 'react-native-gifted-charts';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -246,6 +245,12 @@ export default function CompanionScreen() {
   }, []);
 
   useEffect(() => { loadData(); }, []);
+
+  // Masquer le loader après 2 secondes maximum
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(t);
+  }, []);
 
   // ----------------------------------------
   // Suppression d'une ligne
@@ -624,7 +629,7 @@ export default function CompanionScreen() {
       {/* Contenu */}
       {loading ? (
         <View style={styles.loader}>
-          <SamuraiLoader />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : rows.length === 0 ? (
         <View style={styles.empty}>

@@ -11,17 +11,17 @@ struct YoroiWatchApp: App {
     WindowGroup {
       ContentView()
         .environmentObject(sessionManager)
-    }
-    // Deep link depuis une complication : doit être au niveau Scene, pas View
-    .onContinueUserActivity("com.apple.clockkit.complication") { activity in
-      guard let info = activity.userInfo as? [String: Any],
-            let tabIndex = info["tabIndex"] as? Int else { return }
-      sessionManager.requestedTab = tabIndex
-      if info["openTimer"] as? Bool == true {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-          sessionManager.wantsTimer = true
+        // Deep link depuis une complication
+        .onContinueUserActivity("com.apple.clockkit.complication") { activity in
+          guard let info = activity.userInfo as? [String: Any],
+                let tabIndex = info["tabIndex"] as? Int else { return }
+          sessionManager.requestedTab = tabIndex
+          if info["openTimer"] as? Bool == true {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+              sessionManager.wantsTimer = true
+            }
+          }
         }
-      }
     }
     .onChange(of: scenePhase) {
       if scenePhase == .active {
@@ -30,11 +30,12 @@ struct YoroiWatchApp: App {
       }
     }
     // ── Background refresh : replanifie l'alarme à l'infini ──
-    .backgroundTask(.appRefresh("yoroi.alarm.refresh")) {
-      // Si l'alarme sonne encore, replanifier un nouveau lot de notifications
-      // et programmer le prochain refresh dans 12 min → boucle infinie jusqu'au STOP
-      if sessionManager.timerAlarmRinging {
-        sessionManager.handleAlarmBackgroundRefresh()
+    .backgroundTask(.appRefresh("yoroi.alarm.refresh")) { (_: Void) in
+      let manager = WatchSessionManager.shared
+      await MainActor.run {
+        if manager.timerAlarmRinging {
+          manager.handleAlarmBackgroundRefresh()
+        }
       }
     }
 

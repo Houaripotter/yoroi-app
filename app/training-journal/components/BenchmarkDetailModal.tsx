@@ -120,7 +120,7 @@ export default React.memo(function BenchmarkDetailModal({
               {renderIcon(benchmark.iconName || BENCHMARK_CATEGORIES[benchmark.category].iconName, 40, benchmark.color)}
             </View>
             <View style={styles.prCardInfo}>
-              <Text style={[styles.prCardLabel, { color: colors.textMuted }]}>Record Personnel</Text>
+              <Text style={[styles.prCardLabel, { color: colors.textMuted }]}>{t('benchmark.personalRecord')}</Text>
               <Text style={[styles.prCardValue, { color: benchmark.color }]}>
                 {pr ? formatEntryMain(pr) : '--'}
               </Text>
@@ -174,7 +174,7 @@ export default React.memo(function BenchmarkDetailModal({
                 const isPositive = pct >= 0;
                 return (
                   <View style={styles.chartHeader}>
-                    <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>Progression</Text>
+                    <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>{t('benchmark.progression')}</Text>
                     <View style={[styles.chartPctBadge, { backgroundColor: isPositive ? '#10B98120' : '#EF444420' }]}>
                       <Text style={[styles.chartPctText, { color: isPositive ? '#10B981' : '#EF4444' }]}>
                         {isPositive ? '+' : ''}{pct.toFixed(1)}%
@@ -213,14 +213,14 @@ export default React.memo(function BenchmarkDetailModal({
                 })}
               </View>
               <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-                {entries.length} entrée{entries.length > 1 ? 's' : ''} · barre brillante = PR
+                {t('benchmark.chartSubtitle', { count: entries.length })}
               </Text>
             </View>
           )}
 
           {/* Entry History */}
           <View style={[styles.historyCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-            <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>Historique</Text>
+            <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>{t('benchmark.history')}</Text>
             {entries.map((entry: BenchmarkEntry, index: number) => {
               const isPR = pr && entry.id === pr.id;
               const pace = getEntryPace(entry);
@@ -258,56 +258,56 @@ export default React.memo(function BenchmarkDetailModal({
                           <View style={styles.runningMetric}>
                             <MapPin size={11} color={benchmark.color} />
                             <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{distKm} km</Text>
-                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>Distance</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>{t('benchmark.distance')}</Text>
                           </View>
                         )}
                         {timeS && (
                           <View style={styles.runningMetric}>
                             <Timer size={11} color={benchmark.color} />
                             <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{formatTime(timeS)}</Text>
-                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>Chrono</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>{t('benchmark.time')}</Text>
                           </View>
                         )}
                         {pace && (
                           <View style={styles.runningMetric}>
                             <TrendingUp size={11} color={benchmark.color} />
                             <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{pace}</Text>
-                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>Allure/km</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>{t('benchmark.pace')}</Text>
                           </View>
                         )}
                         {entry.speed && (
                           <View style={styles.runningMetric}>
                             <Wind size={11} color={benchmark.color} />
                             <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{entry.speed} km/h</Text>
-                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>Vitesse</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>{t('benchmark.speed')}</Text>
                           </View>
                         )}
                         {entry.calories && (
                           <View style={styles.runningMetric}>
                             <Flame size={11} color={benchmark.color} />
                             <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{entry.calories}</Text>
-                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>kcal</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>{t('benchmark.kcal')}</Text>
                           </View>
                         )}
                         {entry.incline && (
                           <View style={styles.runningMetric}>
                             <Zap size={11} color={benchmark.color} />
                             <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{entry.incline}%</Text>
-                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>Pente</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>{t('benchmark.incline')}</Text>
                           </View>
                         )}
                         {entry.watts && (
                           <View style={styles.runningMetric}>
                             <Zap size={11} color={benchmark.color} />
                             <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{entry.watts} W</Text>
-                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>Watts</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>{t('benchmark.watts')}</Text>
                           </View>
                         )}
                         {entry.rpe && (
                           <View style={styles.runningMetric}>
                             <Flame size={11} color="#F59E0B" />
                             <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{entry.rpe}/10</Text>
-                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>RPE</Text>
+                            <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>{t('benchmark.rpe')}</Text>
                           </View>
                         )}
                       </View>

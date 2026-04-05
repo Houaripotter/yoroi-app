@@ -853,7 +853,7 @@ export const getBenchmarkPR = (benchmark: Benchmark): BenchmarkEntry | null => {
 
 export const getBenchmarkLast = (benchmark: Benchmark): BenchmarkEntry | null => {
   if (benchmark.entries.length === 0) return null;
-  return benchmark.entries.sort((a, b) =>
+  return [...benchmark.entries].sort((a, b) =>
     new Date(b.date).getTime() - new Date(a.date).getTime()
   )[0];
 };

@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon, Line, Circle, Text as SvgText, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { ArrowLeft, TrendingUp, TrendingDown, Minus, Moon, Droplet, Flame, Target, Lightbulb, Dumbbell, Heart, Brain, Trophy, GraduationCap, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import {
   calculateRadarScores,
   calculateRadarEvolution,
@@ -30,6 +31,7 @@ import {
 export default function RadarPerformanceScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const [scores, setScores] = useState<RadarScores>({ force: 0, cardio: 0, technique: 0, souplesse: 0, mental: 0 });
   const [evolution, setEvolution] = useState<RadarEvolution | null>(null);
   const [insight, setInsight] = useState<RadarInsight | null>(null);
@@ -172,20 +174,20 @@ export default function RadarPerformanceScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Performance</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('radarPerformance.title')}</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Score global */}
         <View style={[styles.scoreCard, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.scoreLabel, { color: colors.textMuted }]}>Score Global</Text>
+          <Text style={[styles.scoreLabel, { color: colors.textMuted }]}>{t('radarPerformance.globalScore')}</Text>
           <Text style={[styles.scoreValue, { color: isDark ? colors.accent : colors.textPrimary }]}>{avgScore}%</Text>
           {evolution && evolution.average !== 0 && (
             <View style={[styles.evolutionBadge, { backgroundColor: trendColor + '15' }]}>
               <TrendIcon size={14} color={trendColor} />
               <Text style={[styles.evolutionText, { color: trendColor }]}>
-                {evolution.average > 0 ? '+' : ''}{evolution.average}% vs sem.
+                {evolution.average > 0 ? '+' : ''}{evolution.average}{t('radarPerformance.vsWeek')}
               </Text>
             </View>
           )}
@@ -196,12 +198,12 @@ export default function RadarPerformanceScreen() {
           <View style={styles.howItWorksHeader}>
             <Lightbulb size={20} color={colors.accent} />
             <Text style={[styles.howItWorksTitle, { color: colors.textPrimary }]}>
-              Comment c'est calculé ?
+              {t('radarPerformance.howCalculated')}
             </Text>
           </View>
 
           <Text style={[styles.howItWorksIntro, { color: colors.textSecondary }]}>
-            Ton radar est calculé automatiquement à partir de tes données dans l'app :
+            {t('radarPerformance.howIntro')}
           </Text>
 
           <View style={styles.howItWorksList}>
@@ -210,7 +212,7 @@ export default function RadarPerformanceScreen() {
                 <Flame size={14} color="#EF4444" />
               </View>
               <Text style={[styles.howItWorksText, { color: colors.textSecondary }]}>
-                <Text style={{ fontWeight: '700', color: colors.textPrimary }}>Force</Text> : % de tes séances qui sont des entraînements de force (musculation, crossfit, etc.)
+                <Text style={{ fontWeight: '700', color: colors.textPrimary }}>{t('radarPerformance.axisForce')}</Text>{t('radarPerformance.forceDesc')}
               </Text>
             </View>
 
@@ -219,7 +221,7 @@ export default function RadarPerformanceScreen() {
                 <Heart size={14} color="#3B82F6" />
               </View>
               <Text style={[styles.howItWorksText, { color: colors.textSecondary }]}>
-                <Text style={{ fontWeight: '700', color: colors.textPrimary }}>Cardio</Text> : % de tes séances qui sont des entraînements cardio (running, boxe, etc.)
+                <Text style={{ fontWeight: '700', color: colors.textPrimary }}>{t('radarPerformance.axisCardio')}</Text>{t('radarPerformance.cardioDesc')}
               </Text>
             </View>
 
@@ -228,7 +230,7 @@ export default function RadarPerformanceScreen() {
                 <Target size={14} color="#8B5CF6" />
               </View>
               <Text style={[styles.howItWorksText, { color: colors.textSecondary }]}>
-                <Text style={{ fontWeight: '700', color: colors.textPrimary }}>Souplesse</Text> : % de tes séances qui sont du yoga, stretching ou mobilité
+                <Text style={{ fontWeight: '700', color: colors.textPrimary }}>{t('radarPerformance.axisSouplesse')}</Text>{t('radarPerformance.souplesseDesc')}
               </Text>
             </View>
 
@@ -237,7 +239,7 @@ export default function RadarPerformanceScreen() {
                 <Brain size={14} color="#10B981" />
               </View>
               <Text style={[styles.howItWorksText, { color: colors.textSecondary }]}>
-                <Text style={{ fontWeight: '700', color: colors.textPrimary }}>Mental</Text> : Ta régularité et constance d'entraînement (streak sur 21 jours)
+                <Text style={{ fontWeight: '700', color: colors.textPrimary }}>{t('radarPerformance.axisMental')}</Text>{t('radarPerformance.mentalDesc')}
               </Text>
             </View>
 
@@ -246,14 +248,14 @@ export default function RadarPerformanceScreen() {
                 <Trophy size={14} color="#F59E0B" />
               </View>
               <Text style={[styles.howItWorksText, { color: colors.textSecondary }]}>
-                <Text style={{ fontWeight: '700', color: colors.textPrimary }}>Technique</Text> : Moyenne de tes auto-évaluations techniques après chaque séance
+                <Text style={{ fontWeight: '700', color: colors.textPrimary }}>{t('radarPerformance.axisTechnique')}</Text>{t('radarPerformance.techniqueDesc')}
               </Text>
             </View>
           </View>
 
           <View style={[styles.howItWorksFooter, { backgroundColor: colors.backgroundElevated }]}>
             <Text style={[styles.howItWorksFooterText, { color: colors.textMuted }]}>
-              Pas besoin d'Apple Watch ! Toutes ces données peuvent être enregistrées manuellement dans l'app.
+              {t('radarPerformance.noWatch')}
             </Text>
           </View>
         </View>
@@ -387,7 +389,7 @@ export default function RadarPerformanceScreen() {
 
         {/* Détails par axe */}
         <View style={styles.detailsSection}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Détails</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('radarPerformance.details')}</Text>
 
           {axes.map((axis, i) => {
             const value = scores[axis.key as keyof RadarScores] || 0;
@@ -439,10 +441,10 @@ export default function RadarPerformanceScreen() {
             </View>
             <View style={styles.scientificContent}>
               <Text style={[styles.scientificTitle, { color: colors.textPrimary }]}>
-                Revues Scientifiques
+                {t('radarPerformance.scientificReviews')}
               </Text>
               <Text style={[styles.scientificDesc, { color: colors.textMuted }]}>
-                Voir toutes les sources et références
+                {t('radarPerformance.scientificDesc')}
               </Text>
             </View>
           </View>

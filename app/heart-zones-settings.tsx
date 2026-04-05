@@ -28,7 +28,7 @@ const ZONE_COLORS = ['#3B82F6', '#22C55E', '#EAB308', '#F97316', '#EF4444'] as c
 const ZONE_NAMES  = ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5'] as const;
 const ZONE_LABELS = ['Récupération', 'Endurance', 'Tempo', 'Seuil', 'Max'] as const;
 
-type CalcMode = 'manual' | 'karvonen';
+type CalcMode = 'manual' | 'fcmax';
 
 export default function HeartZonesSettingsScreen() {
   const router = useRouter();
@@ -54,9 +54,8 @@ export default function HeartZonesSettingsScreen() {
   // Mode de calcul
   const [calcMode, setCalcMode] = useState<CalcMode>('manual');
 
-  // Karvonen : FCmax + FC repos
+  // Calcul depuis FCmax (formule Apple : 63/71/79/90%)
   const [fcmax, setFcmax] = useState('');
-  const [fcrepos, setFcrepos] = useState('');
 
   useEffect(() => {
     getEffectiveHRZones().then(effective => {
@@ -74,30 +73,24 @@ export default function HeartZonesSettingsScreen() {
     });
   }, []);
 
-  // Calcul Karvonen : méthode Apple Santé (50/60/70/80% de réserve)
-  const handleKarvonenCalc = () => {
+  // Calcul depuis FCmax : formule Apple Fitness (63/71/79/90% de FCmax)
+  const handleFcmaxCalc = () => {
     const max = parseInt(fcmax);
-    const repos = parseInt(fcrepos);
-    if (!max || !repos || max <= repos || max > 230 || repos < 30) return;
-    const reserve = max - repos;
-    const nz1max = Math.round(repos + reserve * 0.50);
-    const nz2max = Math.round(repos + reserve * 0.60);
-    const nz3max = Math.round(repos + reserve * 0.70);
-    const nz4max = Math.round(repos + reserve * 0.80);
-    setZ1min(String(repos));
-    setZ1max(String(nz1max));
-    setZ2min(String(nz1max));
-    setZ2max(String(nz2max));
-    setZ3min(String(nz2max));
-    setZ3max(String(nz3max));
-    setZ4min(String(nz3max));
-    setZ4max(String(nz4max));
-    setZ5min(String(nz4max));
+    if (!max || max < 100 || max > 230) return;
+    const zones = calcZonesFromMaxHR(max);
+    setZ1min('0');
+    setZ1max(String(zones.z1max));
+    setZ2min(String(zones.z1max));
+    setZ2max(String(zones.z2max));
+    setZ3min(String(zones.z2max));
+    setZ3max(String(zones.z3max));
+    setZ4min(String(zones.z3max));
+    setZ4max(String(zones.z4max));
+    setZ5min(String(zones.z4max));
     setCalcMode('manual');
   };
 
-  const karvonenReady =
-    parseInt(fcmax) > 100 && parseInt(fcrepos) >= 30 && parseInt(fcmax) > parseInt(fcrepos);
+  const fcmaxReady = parseInt(fcmax) >= 100 && parseInt(fcmax) <= 230;
 
   // Importer FC repos + FC max depuis Apple Santé → calculer zones identiques
   const handleImportFromApple = async () => {
@@ -112,10 +105,10 @@ export default function HeartZonesSettingsScreen() {
       const fcr  = data.restingHR > 0 ? data.restingHR : 60;
       const fmax = data.maxHR > 0 ? data.maxHR : 0;
       if (fmax < 100) {
-        setImportResult('FC max introuvable. Utilise le calcul Karvonen manuellement.');
+        setImportResult('FC max introuvable. Entre ta FC max manuellement via "Depuis ma FC max".');
         return;
       }
-      const zones = calcZonesFromMaxHR(fmax, fcr);
+      const zones = calcZonesFromMaxHR(fmax);
       setZ1min(String(fcr));
       setZ1max(String(zones.z1max));
       setZ2min(String(zones.z1max));
@@ -125,7 +118,7 @@ export default function HeartZonesSettingsScreen() {
       setZ4min(String(zones.z3max));
       setZ4max(String(zones.z4max));
       setZ5min(String(zones.z4max));
-      setImportResult(`FC repos ${fcr} bpm · FC max ${fmax} bpm — vérifie dans Apple Santé et ajuste si besoin !`);
+      setImportResult(`FC max ${fmax} bpm importée — zones identiques à Apple Watch. Ajuste si tu as personnalisé tes zones.`);
       setCalcMode('manual');
     } catch {
       setImportResult('Erreur lors de la lecture Apple Santé.');
@@ -208,7 +201,7 @@ export default function HeartZonesSettingsScreen() {
               <Heart size={15} color="#F59E0B" />
               <Text style={[styles.bannerText, { color: colors.textMuted }]}>
                 {effectiveSource === 'age'
-                  ? 'Zones calculées d\'après ton âge (Karvonen). '
+                  ? 'Zones calculées depuis ta FC max (formule Apple). '
                   : 'Zones par défaut. '}
                 <Text style={{ fontWeight: '700', color: colors.text }}>Personnalise ci-dessous.</Text>
               </Text>
@@ -237,22 +230,22 @@ export default function HeartZonesSettingsScreen() {
                 )}
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 14, fontWeight: '700', color: '#FF2D55' }}>
-                    {importing ? 'Lecture en cours...' : 'Calculer depuis Apple Santé'}
+                    {importing ? 'Lecture en cours...' : 'Importer ma FC max depuis Apple Santé'}
                   </Text>
                   <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 1 }}>
-                    Lit ta FC repos + FC max · bonne approximation, à vérifier
+                    Lit ta FC max réelle · calcule les zones comme Apple Watch
                   </Text>
                 </View>
               </TouchableOpacity>
 
               {importResult && (
                 <View style={[styles.importResult, {
-                  backgroundColor: importResult.includes('!')
+                  backgroundColor: importResult.includes('bpm')
                     ? (isDark ? 'rgba(34,197,94,0.10)' : 'rgba(34,197,94,0.07)')
                     : (isDark ? 'rgba(239,68,68,0.10)' : 'rgba(239,68,68,0.07)'),
-                  borderColor: importResult.includes('!') ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)',
+                  borderColor: importResult.includes('bpm') ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)',
                 }]}>
-                  <Text style={{ fontSize: 12, color: importResult.includes('!') ? '#22C55E' : '#EF4444', fontWeight: '600' }}>
+                  <Text style={{ fontSize: 12, color: importResult.includes('bpm') ? '#22C55E' : '#EF4444', fontWeight: '600' }}>
                     {importResult}
                   </Text>
                 </View>
@@ -263,7 +256,7 @@ export default function HeartZonesSettingsScreen() {
           {/* Sélecteur de méthode */}
           <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>MÉTHODE DE CALCUL</Text>
           <View style={[styles.modeRow, { backgroundColor: cardBg }]}>
-            {(['manual', 'karvonen'] as CalcMode[]).map(mode => (
+            {(['manual', 'fcmax'] as CalcMode[]).map(mode => (
               <TouchableOpacity
                 key={mode}
                 style={[styles.modeBtn, calcMode === mode && { backgroundColor: mode === 'manual' ? '#EF4444' : '#3B82F6' }]}
@@ -271,63 +264,76 @@ export default function HeartZonesSettingsScreen() {
                 activeOpacity={0.8}
               >
                 <Text style={[styles.modeBtnText, { color: calcMode === mode ? '#FFF' : colors.textMuted }]}>
-                  {mode === 'manual' ? 'Mes valeurs' : 'Calcul Karvonen'}
+                  {mode === 'manual' ? 'Mes valeurs' : 'Depuis ma FC max'}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          {/* Karvonen */}
-          {calcMode === 'karvonen' && (
+          {/* Calcul depuis FCmax */}
+          {calcMode === 'fcmax' && (
             <>
               <View style={[styles.card, { backgroundColor: cardBg }]}>
-                {[
-                  { label: 'FC max', hint: 'ton maximum absolu', value: fcmax, set: setFcmax, placeholder: '190' },
-                  { label: 'FC repos', hint: 'le matin au réveil', value: fcrepos, set: setFcrepos, placeholder: '55' },
-                ].map((item, i) => (
-                  <View key={i} style={[styles.row, i === 0 && { borderBottomWidth: 1, borderBottomColor: divider }]}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.rowLabel, { color: colors.text }]}>{item.label}</Text>
-                      <Text style={[styles.rowHint, { color: colors.textMuted }]}>{item.hint}</Text>
-                    </View>
-                    <TextInput
-                      style={[styles.input, { backgroundColor: inputBg, color: colors.text, borderColor: inputBorder }]}
-                      value={item.value}
-                      onChangeText={item.set}
-                      keyboardType="number-pad"
-                      placeholder={item.placeholder}
-                      placeholderTextColor={colors.textMuted}
-                      maxLength={3}
-                    />
-                    <Text style={[styles.unit, { color: colors.textMuted }]}>BPM</Text>
+                <View style={[styles.row]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.rowLabel, { color: colors.text }]}>FC max</Text>
+                    <Text style={[styles.rowHint, { color: colors.textMuted }]}>ton maximum absolu en BPM</Text>
                   </View>
-                ))}
+                  <TextInput
+                    style={[styles.input, { backgroundColor: inputBg, color: colors.text, borderColor: inputBorder }]}
+                    value={fcmax}
+                    onChangeText={setFcmax}
+                    keyboardType="number-pad"
+                    placeholder="190"
+                    placeholderTextColor={colors.textMuted}
+                    maxLength={3}
+                  />
+                  <Text style={[styles.unit, { color: colors.textMuted }]}>BPM</Text>
+                </View>
               </View>
 
-              {karvonenReady && (
+              {/* Aperçu des zones (formule Apple) */}
+              {fcmaxReady && (
                 <View style={[styles.karvonenPreview, { backgroundColor: isDark ? 'rgba(59,130,246,0.08)' : 'rgba(59,130,246,0.06)', borderColor: 'rgba(59,130,246,0.2)' }]}>
-                  <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 4 }}>
-                    Réserve FC = {parseInt(fcmax)} − {parseInt(fcrepos)} = {parseInt(fcmax) - parseInt(fcrepos)} bpm
+                  <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 6 }}>
+                    Formule Apple Watch — FC max : {parseInt(fcmax)} bpm
                   </Text>
-                  {[0.50, 0.60, 0.70, 0.80].map((pct, i) => {
-                    const val = Math.round(parseInt(fcrepos) + (parseInt(fcmax) - parseInt(fcrepos)) * pct);
+                  {[
+                    { pct: 0.63, label: 'Z1 Récupération' },
+                    { pct: 0.71, label: 'Z2 Endurance' },
+                    { pct: 0.79, label: 'Z3 Tempo' },
+                    { pct: 0.90, label: 'Z4 Seuil' },
+                  ].map(({ pct, label }, i) => {
+                    const prev = i === 0 ? 0 : Math.round(parseInt(fcmax) * [0.63, 0.71, 0.79][i - 1]);
+                    const val = Math.round(parseInt(fcmax) * pct);
                     return (
                       <Text key={i} style={{ fontSize: 12, color: ZONE_COLORS[i], fontWeight: '600' }}>
-                        Z{i + 1} max : {val} BPM ({Math.round(pct * 100)}% réserve)
+                        {label} : {prev} – {val} BPM
                       </Text>
                     );
                   })}
+                  <Text style={{ fontSize: 12, color: ZONE_COLORS[4], fontWeight: '600' }}>
+                    Z5 Max : {Math.round(parseInt(fcmax) * 0.90)}+ BPM
+                  </Text>
                 </View>
               )}
 
+              <View style={[styles.infoCard, { backgroundColor: isDark ? 'rgba(59,130,246,0.06)' : 'rgba(59,130,246,0.04)', borderColor: 'rgba(59,130,246,0.16)', marginTop: 0 }]}>
+                <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>
+                  <Text style={{ fontWeight: '700', color: colors.text }}>Où trouver ta FC max ?{'\n'}</Text>
+                  App <Text style={{ fontWeight: '700', color: colors.text }}>Watch</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Ma montre</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Exercice</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Zones de FC</Text> → la valeur FC max affichée en haut.{'\n\n'}
+                  Ou dans <Text style={{ fontWeight: '700', color: colors.text }}>Apple Santé</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Parcourir</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Cœur</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Fréquence cardiaque</Text> → cherche ton record de FC pendant un effort intense.
+                </Text>
+              </View>
+
               <TouchableOpacity
-                style={[styles.calcBtn, { backgroundColor: karvonenReady ? '#3B82F6' : inputBg }]}
-                onPress={handleKarvonenCalc}
-                disabled={!karvonenReady}
+                style={[styles.calcBtn, { backgroundColor: fcmaxReady ? '#3B82F6' : inputBg }]}
+                onPress={handleFcmaxCalc}
+                disabled={!fcmaxReady}
                 activeOpacity={0.8}
               >
-                <Calculator size={18} color={karvonenReady ? '#FFF' : colors.textMuted} />
-                <Text style={{ fontSize: 15, fontWeight: '700', color: karvonenReady ? '#FFF' : colors.textMuted }}>
+                <Calculator size={18} color={fcmaxReady ? '#FFF' : colors.textMuted} />
+                <Text style={{ fontSize: 15, fontWeight: '700', color: fcmaxReady ? '#FFF' : colors.textMuted }}>
                   Appliquer ces zones
                 </Text>
               </TouchableOpacity>
@@ -396,7 +402,13 @@ export default function HeartZonesSettingsScreen() {
             {/* iPhone / Apple Watch */}
             <Text style={[styles.infoSection, { color: colors.text }]}>iPhone · Apple Watch</Text>
             <Text style={[styles.infoText, { color: colors.textMuted }]}>
-              Ouvre <Text style={{ fontWeight: '700', color: colors.text }}>l'app Watch</Text> sur ton iPhone → onglet <Text style={{ fontWeight: '700', color: colors.text }}>Ma montre</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Exercice</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Zones de fréquence cardiaque</Text> → passe en <Text style={{ fontWeight: '700', color: colors.text }}>Manuel</Text> → édite chaque zone.
+              1. Ouvre <Text style={{ fontWeight: '700', color: colors.text }}>l'app Watch</Text> sur ton iPhone{'\n'}
+              2. Onglet <Text style={{ fontWeight: '700', color: colors.text }}>Ma montre</Text> (en bas à gauche){'\n'}
+              3. Fais défiler jusqu'à <Text style={{ fontWeight: '700', color: colors.text }}>Exercice</Text>{'\n'}
+              4. Tout en bas : <Text style={{ fontWeight: '700', color: colors.text }}>Zones de fréquence cardiaque</Text>{'\n'}
+              5. Sélectionne <Text style={{ fontWeight: '700', color: colors.text }}>Manuelle</Text>{'\n'}
+              6. Note les valeurs de chaque zone (ex : Zone 1 {'<'}119, Zone 2 : 120–135…){'\n'}
+              7. Reviens ici et entre ces valeurs dans "Mes valeurs"
             </Text>
 
             <View style={[styles.infoDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]} />

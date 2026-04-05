@@ -1314,7 +1314,7 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     }
 
     // 5. Valeur centrée (légèrement vers le haut)
-    let fontSize: CGFloat = value.count > 3 ? 11 : (value.count == 3 ? 13 : 15)
+    let fontSize: CGFloat = value.count >= 5 ? 11 : (value.count == 4 ? 13 : (value.count == 3 ? 16 : 19))
     let valueAttrs: [NSAttributedString.Key: Any] = [
       .font: UIFont.systemFont(ofSize: fontSize, weight: .bold),
       .foregroundColor: valueColor,

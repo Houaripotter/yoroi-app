@@ -14,6 +14,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { Trophy, User, Weight, Award, ChevronRight, Check } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
+import { useI18n } from '@/lib/I18nContext';
 
 const COMPETITOR_PROFILE_KEY = '@yoroi_competitor_profile';
 
@@ -60,6 +61,7 @@ interface CompetitorProfile {
 
 export default function CompetitorProfileScreen() {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [profile, setProfile] = useState<CompetitorProfile>({
     gender: null,
@@ -117,14 +119,14 @@ export default function CompetitorProfileScreen() {
   const handleWeightSave = () => {
     const weight = parseFloat(weightInput);
     if (isNaN(weight) || weight <= 0) {
-      showPopup('Erreur', 'Entre un poids valide', [
+      showPopup(t('competitorProfile.errorTitle'), t('competitorProfile.invalidWeight'), [
         { text: 'OK', style: 'primary' }
       ]);
       return;
     }
     const updated = { ...profile, currentWeight: weight };
     saveProfile(updated);
-    showPopup('Succès', 'Poids enregistré !', [
+    showPopup(t('competitorProfile.successTitle'), t('competitorProfile.weightSaved'), [
       { text: 'OK', style: 'primary' }
     ]);
   };
@@ -148,10 +150,10 @@ export default function CompetitorProfileScreen() {
         <View style={[styles.header, { backgroundColor: colors.backgroundCard }]}>
           <Trophy size={32} color="#F59E0B" />
           <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Profil Compétiteur
+            {t('competitorProfile.title')}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            Configure ton profil pour les compétitions
+            {t('competitorProfile.subtitle')}
           </Text>
         </View>
 
@@ -160,7 +162,7 @@ export default function CompetitorProfileScreen() {
           <View style={styles.sectionHeader}>
             <User size={20} color={colors.accentText} />
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              1. Genre
+              {t('competitorProfile.section1')}
             </Text>
           </View>
 
@@ -181,7 +183,7 @@ export default function CompetitorProfileScreen() {
                 </View>
               )}
               <Text style={[styles.genderText, { color: profile.gender === 'male' ? colors.accent : colors.textPrimary }]}>
-                Homme
+                {t('competitorProfile.male')}
               </Text>
             </TouchableOpacity>
 
@@ -201,7 +203,7 @@ export default function CompetitorProfileScreen() {
                 </View>
               )}
               <Text style={[styles.genderText, { color: profile.gender === 'female' ? colors.accent : colors.textPrimary }]}>
-                Femme
+                {t('competitorProfile.female')}
               </Text>
             </TouchableOpacity>
           </View>

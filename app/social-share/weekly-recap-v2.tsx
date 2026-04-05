@@ -37,6 +37,7 @@ import { getProfile, calculateStreak } from '@/lib/database';
 import { useAvatar } from '@/lib/AvatarContext';
 import { getCurrentRank, rankToLevel } from '@/lib/ranks';
 import { getUnifiedPoints } from '@/lib/gamification';
+import { useI18n } from '@/lib/I18nContext';
 
 // ============================================
 // COMPOSANT PRINCIPAL
@@ -44,6 +45,7 @@ import { getUnifiedPoints } from '@/lib/gamification';
 
 export default function WeeklyRecapV2Screen() {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { avatarImage: contextAvatar } = useAvatar();
   const cardRef = useRef<View>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -103,7 +105,7 @@ export default function WeeklyRecapV2Screen() {
     try {
       const { status } = await requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        showPopup('Permission refusée', 'Autorise l\'accès à la caméra pour prendre une photo.', [{ text: 'OK', style: 'primary' }]);
+        showPopup(t('socialShare.permissionDeniedTitle'), t('socialShare.permissionDeniedCamera'), [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -123,7 +125,7 @@ export default function WeeklyRecapV2Screen() {
       }
     } catch (error) {
       logger.error('Erreur photo:', error);
-      showPopup('Erreur', 'Impossible de prendre la photo', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('socialShare.errorTitle'), t('socialShare.errorPhoto'), [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -131,7 +133,7 @@ export default function WeeklyRecapV2Screen() {
     try {
       const { status } = await requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        showPopup('Permission refusée', 'Autorise l\'accès à tes photos pour ajouter une image.', [{ text: 'OK', style: 'primary' }]);
+        showPopup(t('socialShare.permissionDeniedTitle'), t('socialShare.permissionDeniedGallery'), [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -151,7 +153,7 @@ export default function WeeklyRecapV2Screen() {
       }
     } catch (error) {
       logger.error('Erreur galerie:', error);
-      showPopup('Erreur', 'Impossible de choisir l\'image', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('socialShare.errorTitle'), t('socialShare.errorGallery'), [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -171,15 +173,25 @@ export default function WeeklyRecapV2Screen() {
         quality: 1,
       });
 
-      if (await isAvailableAsync()) {
+      const available = await isAvailableAsync();
+      if (available) {
         await shareAsync(uri, {
           mimeType: 'image/png',
-          dialogTitle: 'Partager ma semaine',
+          dialogTitle: t('socialShare.shareWeekDialog'),
         });
+      } else {
+        const { status } = await requestPermissionsAsync();
+        if (status === 'granted') {
+          await saveToLibraryAsync(uri);
+          notificationAsync(NotificationFeedbackType.Success);
+          showPopup(t('socialShare.imageSaved'), t('socialShare.imageSavedMsg'), [{ text: 'OK', style: 'primary' }]);
+        } else {
+          showPopup(t('socialShare.shareUnavailable'), t('socialShare.shareUnavailableMsg'), [{ text: 'OK', style: 'primary' }]);
+        }
       }
     } catch (error) {
       logger.error('Error sharing:', error);
-      showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('socialShare.errorTitle'), t('socialShare.errorShare'), [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsLoading(false);
     }
@@ -194,7 +206,7 @@ export default function WeeklyRecapV2Screen() {
     try {
       const { status } = await requestPermissionsAsync();
       if (status !== 'granted') {
-        showPopup('Permission requise', 'Autorise l\'accès à ta galerie pour sauvegarder l\'image.', [{ text: 'OK', style: 'primary' }]);
+        showPopup(t('socialShare.permissionRequired'), t('socialShare.permissionGallery'), [{ text: 'OK', style: 'primary' }]);
         setIsLoading(false);
         return;
       }
@@ -206,10 +218,10 @@ export default function WeeklyRecapV2Screen() {
 
       await saveToLibraryAsync(uri);
       notificationAsync(NotificationFeedbackType.Success);
-      showPopup('Sauvegardé', 'Ta carte a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('socialShare.saved'), t('socialShare.savedMsg'), [{ text: 'OK', style: 'primary' }]);
     } catch (error) {
       logger.error('Error saving:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('socialShare.errorTitle'), t('socialShare.errorSave'), [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsLoading(false);
     }
@@ -232,7 +244,7 @@ export default function WeeklyRecapV2Screen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            Chargement des stats...
+            {t('socialShare.loadingStats')}
           </Text>
         </View>
       </ScreenWrapper>
@@ -244,16 +256,16 @@ export default function WeeklyRecapV2Screen() {
       <ScreenWrapper>
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-            Aucune donnée cette semaine
+            {t('socialShare.noDataThisWeek')}
           </Text>
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            Commence à t'entraîner pour générer ta carte !
+            {t('socialShare.startTraining')}
           </Text>
           <TouchableOpacity
             style={[styles.addButton, { backgroundColor: colors.accent }]}
             onPress={() => router.push('/add-training')}
           >
-            <Text style={[styles.addButtonText, { color: colors.textOnGold }]}>Ajouter un entraînement</Text>
+            <Text style={[styles.addButtonText, { color: colors.textOnGold }]}>{t('socialShare.addTraining')}</Text>
           </TouchableOpacity>
         </View>
       </ScreenWrapper>
@@ -271,7 +283,7 @@ export default function WeeklyRecapV2Screen() {
           <View style={styles.headerCenter}>
             <Calendar size={20} color={colors.accent} />
             <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-              Récap Hebdo
+              {t('socialShare.weeklyTitle')}
             </Text>
           </View>
           <View style={{ width: 40 }} />
@@ -304,9 +316,9 @@ export default function WeeklyRecapV2Screen() {
         <View style={styles.templateRow}>
           <Text style={[styles.templateLabel, { color: colors.textMuted }]}>Style:</Text>
           {([
-            { key: 'photo', label: 'Photo' },
-            { key: 'dark', label: 'Sombre' },
-            { key: 'light', label: 'Clair' },
+            { key: 'photo', label: t('socialShare.stylePhoto') },
+            { key: 'dark', label: t('socialShare.styleDark') },
+            { key: 'light', label: t('socialShare.styleLight') },
           ] as const).map(({ key, label }) => (
             <TouchableOpacity
               key={key}
@@ -342,7 +354,7 @@ export default function WeeklyRecapV2Screen() {
         {selectedTemplate === 'photo' && !backgroundImage && (
           <View style={styles.photoPickerContainer}>
             <Text style={[styles.photoPickerTitle, { color: colors.textPrimary }]}>
-              Ajoute ta photo
+              {t('socialShare.addYourPhoto')}
             </Text>
             <View style={styles.photoPickerButtons}>
               <TouchableOpacity
@@ -350,14 +362,14 @@ export default function WeeklyRecapV2Screen() {
                 onPress={takePhoto}
               >
                 <Camera size={20} color={colors.textOnAccent} />
-                <Text style={[styles.photoPickerBtnText, { color: colors.textOnAccent }]}>Photo</Text>
+                <Text style={[styles.photoPickerBtnText, { color: colors.textOnAccent }]}>{t('socialShare.photo')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.photoPickerBtn, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}
                 onPress={pickImage}
               >
                 <ImageIcon size={20} color={colors.textPrimary} />
-                <Text style={[styles.photoPickerBtnText, { color: colors.textPrimary }]}>Galerie</Text>
+                <Text style={[styles.photoPickerBtnText, { color: colors.textPrimary }]}>{t('socialShare.gallery')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -369,14 +381,14 @@ export default function WeeklyRecapV2Screen() {
               onPress={pickImage}
             >
               <ImageIcon size={18} color={colors.textPrimary} />
-              <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Changer</Text>
+              <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>{t('socialShare.change')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
               onPress={takePhoto}
             >
               <Camera size={18} color={colors.textPrimary} />
-              <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Nouvelle</Text>
+              <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>{t('socialShare.newPhoto')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -393,7 +405,7 @@ export default function WeeklyRecapV2Screen() {
             ) : (
               <>
                 <Share2 size={20} color="#FFFFFF" />
-                <Text style={styles.shareBtnText}>Partager</Text>
+                <Text style={styles.shareBtnText}>{t('socialShare.share')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -408,7 +420,7 @@ export default function WeeklyRecapV2Screen() {
 
           {/* Close Button */}
           <TouchableOpacity style={styles.skipBtn} onPress={() => router.back()}>
-            <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
+            <Text style={[styles.skipText, { color: colors.textMuted }]}>{t('socialShare.close')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>

@@ -330,7 +330,7 @@ export default function HealthConnectScreen() {
                     'Apple Santé n\'a retourné aucune séance.\n\nCause la plus fréquente : la permission "Entraînements" n\'est pas activée pour Yoroi.\n\nVa dans Réglages > Santé > Accès aux données et app > Yoroi et active "Entraînements".',
                     [
                       { text: 'Annuler', style: 'cancel' },
-                      { text: 'Ouvrir Réglages', onPress: () => Linking.openURL('app-settings:').catch(() => {}), style: 'primary' },
+                      { text: 'Ouvrir Réglages', onPress: () => safeOpenURL('app-settings:'), style: 'primary' },
                     ]
                   );
                 } else if (result.workouts === 0 && result.insertErrors > 0) {
@@ -555,11 +555,7 @@ export default function HealthConnectScreen() {
                   buttons.push({
                     text: 'Ouvrir Reglages',
                     style: 'primary',
-                    onPress: () => {
-                      Linking.openURL('App-Prefs:Privacy&path=HEALTH').catch(() =>
-                        Linking.openURL('app-settings:')
-                      );
-                    },
+                    onPress: () => safeOpenURL('App-Prefs:Privacy&path=HEALTH'),
                   });
                 }
                 if (canImport) {

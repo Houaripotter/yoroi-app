@@ -687,8 +687,6 @@ class HealthConnectService {
         { accessType: 'read', recordType: 'RespiratoryRate' },
         { accessType: 'read', recordType: 'BodyTemperature' },
         { accessType: 'read', recordType: 'ExerciseSession' },
-        { accessType: 'read', recordType: 'BloodPressure' },
-        { accessType: 'read', recordType: 'BloodGlucose' },
         { accessType: 'read', recordType: 'Height' },
         { accessType: 'read', recordType: 'FloorsClimbed' },
       ];
@@ -738,8 +736,8 @@ class HealthConnectService {
         bodyTemperature: grantedTypes.has('BodyTemperature'),
         bodyComposition: grantedTypes.has('BodyFat') || grantedTypes.has('LeanBodyMass'),
         workouts: grantedTypes.has('ExerciseSession'),
-        bloodPressure: grantedTypes.has('BloodPressure'),
-        bloodGlucose: grantedTypes.has('BloodGlucose'),
+        bloodPressure: false,
+        bloodGlucose: false,
         height: grantedTypes.has('Height'),
         floorsClimbed: grantedTypes.has('FloorsClimbed'),
         mindfulMinutes: false, // Android Health Connect n'a pas d'équivalent aux sessions de pleine conscience Apple
@@ -3305,13 +3303,17 @@ class HealthConnectService {
               content: {
                 title: `Séance terminee !`,
                 body: `${sportLabel} - ${durationMin} min. Partage ta perf !`,
-                data: { type: 'workout_completed' },
+                data: {
+                  type: 'workout_completed',
+                  workoutId: trainingId?.toString(),
+                  screen: 'social-share/last-session',
+                },
                 sound: 'default',
               },
               trigger: null,
             });
             // Sauvegarder dans l'historique
-            saveNotification('Séance terminee !', `${sportLabel} - ${durationMin} min. Partage ta perf !`, 'workout_complete', { type: 'workout_completed' }).catch(() => {});
+            saveNotification('Séance terminee !', `${sportLabel} - ${durationMin} min. Partage ta perf !`, 'workout_complete', { type: 'workout_completed', workoutId: trainingId?.toString(), screen: 'social-share/last-session' }).catch(() => {});
           } catch {}
         }
 

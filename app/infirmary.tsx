@@ -9,6 +9,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  DeviceEventEmitter,
 } from 'react-native';
 import { router } from 'expo-router';
 
@@ -31,11 +32,13 @@ import {
   getEVAColor,
 } from '@/lib/infirmaryService';
 import logger from '@/lib/security/logger';
+import { useI18n } from '@/lib/I18nContext';
 
 
 
 export default function InfirmaryScreen() {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
 
   const [injuries, setInjuries] = useState<Injury[]>([]);
   const [fitForDutyStatus, setFitForDutyStatus] = useState<any>(null);
@@ -65,6 +68,12 @@ export default function InfirmaryScreen() {
 
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadData(); }, []);
+
+  // Écouter les changements de données (ex: ajout d'une blessure depuis injury-evaluation)
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadData);
+    return () => sub.remove();
+  }, []);
 
   // Détecter les zones rectangulaires qui se chevauchent ET sont proches
   const getOverlappingZones = (zone: BodyMapZone, view: 'front' | 'back'): BodyMapZone[] => {
@@ -143,7 +152,7 @@ export default function InfirmaryScreen() {
       // Blessure existante, aller directement à l'écran de détail pour la modifier
       router.push(`/injury-detail?id=${existingInjury.id}`);
     } else {
-      // Nouvelle blessure, aller à l'écran d'évaluation
+      // {t('infirmary.newInjury')}, aller à l'écran d'évaluation
       router.push(
         `/injury-evaluation?zoneId=${zoneId}&zoneView=${view}&zoneName=${encodeURIComponent(zoneName)}`
       );
@@ -192,10 +201,10 @@ export default function InfirmaryScreen() {
             </View>
             <View style={styles.headerText}>
               <Text style={[styles.title, { color: colors.textPrimary }]}>
-                Journal des Blessures
+                {t('infirmary.title')}
               </Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                Carnet de suivi personnel
+                {t('infirmary.personalLog')}
               </Text>
             </View>
           </View>
@@ -231,7 +240,7 @@ export default function InfirmaryScreen() {
                 {stats.activeInjuries}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                Actives
+                {t('infirmary.active')}
               </Text>
             </View>
             <View style={styles.statItem}>
@@ -239,7 +248,7 @@ export default function InfirmaryScreen() {
                 {stats.healedInjuries}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                Guéries
+                {t('infirmary.healed')}
               </Text>
             </View>
             <View style={styles.statItem}>
@@ -247,7 +256,7 @@ export default function InfirmaryScreen() {
                 {stats.averageRecoveryDays}j
               </Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                Récup. moy.
+                {t('infirmary.avgRecovery')}
               </Text>
             </View>
           </View>
@@ -260,7 +269,7 @@ export default function InfirmaryScreen() {
         {injuries.length > 0 && (
           <View style={styles.injuriesList}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Blessures actives
+              {t('infirmary.activeInjuries')}
             </Text>
 
             {injuries.map((injury) => (
@@ -280,7 +289,7 @@ export default function InfirmaryScreen() {
                   <View
                     style={[
                       styles.evaBadge,
-                      { backgroundColor: getEVAColor(injury.eva_score) },
+                      { backgroundColor: getEVAColor(injury.eva_score ?? 0) },
                     ]}
                   >
                     <Text style={styles.evaBadgeText}>
@@ -307,10 +316,10 @@ export default function InfirmaryScreen() {
               <Shield size={32} color={colors.success} strokeWidth={2} />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-              Aucune blessure
+              {t('infirmary.noInjuries')}
             </Text>
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              Touchez une zone du corps pour signaler une blessure
+              {t('infirmary.touchBody')}
             </Text>
           </View>
         )}
@@ -318,7 +327,7 @@ export default function InfirmaryScreen() {
         {/* Disclaimer médical */}
         <View style={[styles.disclaimerContainer, { backgroundColor: colors.backgroundCard }]}>
           <Text style={[styles.disclaimerText, { color: colors.textSecondary }]}>
-            Ce journal est un outil de suivi personnel et ne remplace pas un avis médical.
+            {t('infirmary.disclaimer')}
           </Text>
         </View>
       </ScrollView>

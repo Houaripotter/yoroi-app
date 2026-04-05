@@ -13,11 +13,10 @@ import {
   Animated,
   DeviceEventEmitter,
   Platform,
-  Linking,
   ActivityIndicator,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { ImportProgressBanner } from '@/components/ImportProgressBanner';
-import SamuraiLoader from '@/components/SamuraiLoader';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Training, Club } from '@/lib/database';
@@ -498,7 +497,10 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
 
           {/* Diagnostic en cours */}
           {diagStatus === 'checking' && (
-            <SamuraiLoader message="Vérification Apple Santé..." size={120} />
+            <View style={{ paddingVertical: 32, alignItems: 'center', gap: 12 }}>
+              <ActivityIndicator size="large" color="#6366F1" />
+              <Text style={{ fontSize: 13, color: '#6366F1', fontWeight: '600' }}>Vérification Apple Santé...</Text>
+            </View>
           )}
 
           {/* Permissions refusées ou inaccessibles */}
@@ -558,7 +560,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => Linking.openURL('x-apple-health://').catch(() => Linking.openSettings())}
+                  onPress={() => safeOpenURL('x-apple-health://')}
                   style={{
                     paddingHorizontal: 20,
                     paddingVertical: 11,
@@ -583,7 +585,10 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
 
           {/* Permissions ok, import en cours ou déclenché */}
           {diagStatus === 'ok' && (
-            <SamuraiLoader message="Import des séances en cours..." size={120} />
+            <View style={{ paddingVertical: 32, alignItems: 'center', gap: 12 }}>
+              <ActivityIndicator size="large" color="#6366F1" />
+              <Text style={{ fontSize: 13, color: '#6366F1', fontWeight: '600' }}>Import des séances en cours...</Text>
+            </View>
           )}
 
           {/* Permissions ok mais aucun workout dans HealthKit */}
@@ -674,7 +679,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => Linking.openURL('app-settings:').catch(() => Linking.openSettings())}
+                onPress={() => safeOpenURL('app-settings:')}
                 style={{ marginTop: 8, paddingVertical: 8 }}
                 activeOpacity={0.7}
               >

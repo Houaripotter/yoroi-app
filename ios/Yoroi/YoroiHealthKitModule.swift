@@ -631,6 +631,23 @@ class YoroiHealthKitModule: NSObject {
       if let wristTempType = HKObjectType.quantityType(forIdentifier: .appleSleepingWristTemperature) {
         readTypes.insert(wristTempType)
       }
+      // Cadence de course (pas/min) — iOS 16+
+      if let runCadType = HKObjectType.quantityType(forIdentifier: .runningCadence) {
+        readTypes.insert(runCadType)
+      }
+    }
+
+    // Cadence vélo (tours/min) — iOS 17+
+    if #available(iOS 17.0, *) {
+      if let cycleCadType = HKObjectType.quantityType(forIdentifier: .cyclingCadence) {
+        readTypes.insert(cycleCadType)
+      }
+      if let cycleSpeedType = HKObjectType.quantityType(forIdentifier: .cyclingSpeed) {
+        readTypes.insert(cycleSpeedType)
+      }
+      if let cyclePowerType = HKObjectType.quantityType(forIdentifier: .cyclingPower) {
+        readTypes.insert(cyclePowerType)
+      }
     }
 
     NSLog("[YoroiHK] requestAllHealthPermissions — \(readTypes.count) types à demander")
@@ -743,5 +760,78 @@ class YoroiHealthKitModule: NSObject {
         resolve("{\"restingHR\":0,\"maxHR\":0,\"source\":\"error\"}")
       }
     }
+  }
+
+  // ============================================================
+  // MÉTHODE 6 — Effort perçu d'un workout (watchOS 10+ / iOS 17+)
+  // Lit HKMetadataKeyWorkoutEffortScore depuis le workout,
+  // puis interroge HKQuantityTypeIdentifier workoutEffortScore (iOS 17+).
+  // Retourne un Int 1-10 ou -1 si non disponible.
+  // ============================================================
+  @objc func getWorkoutEffortScore(
+    _ workoutUUID: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard HKHealthStore.isHealthDataAvailable() else { resolve(-1); return }
+    guard let uuid = UUID(uuidString: workoutUUID) else { resolve(-1); return }
+
+    let workoutPredicate = HKQuery.predicateForObject(with: uuid)
+    let workoutQuery = HKSampleQuery(
+      sampleType: HKObjectType.workoutType(),
+      predicate: workoutPredicate,
+      limit: 1,
+      sortDescriptors: nil
+    ) { [weak self] _, samples, _ in
+      guard let self = self, let workout = samples?.first as? HKWorkout else {
+        resolve(-1); return
+      }
+
+      // 1. Clé metadata directe (watchOS 10 / iOS 17+)
+      if #available(iOS 17.0, *) {
+        if let num = workout.metadata?[HKMetadataKeyWorkoutEffortScore] as? NSNumber {
+          let v = num.intValue
+          if v >= 1 && v <= 10 { resolve(v); return }
+        }
+      }
+      // Fallback clé string
+      for key in ["HKMetadataKeyWorkoutEffortScore", "HKWorkoutEffortScore"] {
+        if let num = workout.metadata?[key] as? NSNumber {
+          let v = num.intValue
+          if v >= 1 && v <= 10 { resolve(v); return }
+        }
+      }
+
+      // 2. Query HKQuantityType workoutEffortScore (iOS 17+)
+      if #available(iOS 17.0, *) {
+        let effortId = HKQuantityTypeIdentifier(rawValue: "HKQuantityTypeIdentifierWorkoutEffortScore")
+        guard let effortType = HKQuantityType.quantityType(forIdentifier: effortId) else {
+          resolve(-1); return
+        }
+        // Buffer de +10 min après le workout (l'effort est saisi après la fin)
+        let datePred = HKQuery.predicateForSamples(
+          withStart: workout.startDate,
+          end: Date(timeInterval: 600, since: workout.endDate),
+          options: []
+        )
+        let effortQuery = HKSampleQuery(
+          sampleType: effortType,
+          predicate: datePred,
+          limit: 1,
+          sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]
+        ) { _, effortSamples, _ in
+          if let s = effortSamples?.first as? HKQuantitySample {
+            let v = Int(s.quantity.doubleValue(for: HKUnit.count()))
+            resolve(v >= 1 && v <= 10 ? v : -1)
+          } else {
+            resolve(-1)
+          }
+        }
+        self.healthStore.execute(effortQuery)
+      } else {
+        resolve(-1)
+      }
+    }
+    healthStore.execute(workoutQuery)
   }
 }

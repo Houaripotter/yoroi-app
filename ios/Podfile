@@ -60,6 +60,16 @@ target 'Yoroi' do
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
 
+    # Fix: fmt/glog incompatible avec Clang 16 (Xcode 16+) — désactiver consteval
+    installer.pods_project.targets.each do |target|
+      if ['fmt', 'glog'].include?(target.name)
+        target.build_configurations.each do |config|
+          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+          config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -DFMT_USE_CONSTEVAL=0'
+        end
+      end
+    end
+
     # Fix: RCTDevMenuConfiguration forward declaration manquante dans EXReactRootViewFactory.h
     factory_header = "#{installer.sandbox.root}/Headers/Public/Expo/Expo/EXReactRootViewFactory.h"
     if File.exist?(factory_header)

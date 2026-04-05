@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   Platform,
   Image,
+  ActivityIndicator,
+  DeviceEventEmitter,
 } from 'react-native';
 import { LineChart, BarChart } from 'react-native-gifted-charts';
 import { Calendar, Dna, ChevronLeft, ChevronRight, Plus, List, MapPin, Flame, Clock, Heart } from 'lucide-react-native';
@@ -21,10 +23,13 @@ import { getTrainings, Training } from '@/lib/database';
 import { getSportById } from '@/lib/sports';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 import { useDevMode } from '@/lib/DevModeContext';
-import { SamuraiLoader } from '@/components/SamuraiLoader';
+
+const HISTORY_CACHE_KEY = '@yoroi_history_cache_v1';
+const HISTORY_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 // Constants for layout (non-theme values)
 const RADIUS = { sm: 12, md: 16, lg: 20, xl: 24, xxl: 28 };
@@ -102,9 +107,26 @@ export default function HistoryScreen() {
   const { isProcessing, executeOnce } = usePreventDoubleClick({ delay: 500 });
   const cancelledRef = useRef(false);
 
-  const fetchHistoryRecords = useCallback(async () => {
+  const fetchHistoryRecords = useCallback(async (bypassCache = false) => {
     setLoading(true);
     try {
+      // Cache instantané — afficher les données précédentes pendant le rechargement
+      if (!bypassCache) {
+        try {
+          const cached = await AsyncStorage.getItem(HISTORY_CACHE_KEY);
+          if (cached) {
+            const { ts, data } = JSON.parse(cached);
+            if (Date.now() - ts < HISTORY_CACHE_TTL) {
+              if (!cancelledRef.current) {
+                setTrainings(data.trainings || []);
+                setRecords(data.measurements || []);
+                setLoading(false);
+              }
+            }
+          }
+        } catch { /* cache corrompu */ }
+      }
+
       const [measurements, allTrainings] = await Promise.all([
         getAllMeasurements(),
         getTrainings(), // SQLite: inclut Apple Health + séances manuelles
@@ -113,6 +135,14 @@ export default function HistoryScreen() {
       if (cancelledRef.current) return;
       setTrainings(allTrainings);
       setRecords(measurements);
+
+      // Sauvegarder en cache
+      try {
+        await AsyncStorage.setItem(HISTORY_CACHE_KEY, JSON.stringify({
+          ts: Date.now(),
+          data: { trainings: allTrainings, measurements },
+        }));
+      } catch { /* non-bloquant */ }
     } catch (error) {
       logger.error('Erreur chargement historique:', error);
       if (!cancelledRef.current) setRecords([]);
@@ -125,6 +155,21 @@ export default function HistoryScreen() {
     cancelledRef.current = false;
     fetchHistoryRecords();
     return () => { cancelledRef.current = true; };
+  }, []);
+
+  // Masquer le loader après 2 secondes maximum
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Listener DeviceEventEmitter pour rafraîchissement des données (bypass cache)
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
+      AsyncStorage.removeItem(HISTORY_CACHE_KEY).catch(() => {});
+      fetchHistoryRecords(true);
+    });
+    return () => sub.remove();
   }, []);
 
   // Calendrier mensuel
@@ -321,7 +366,7 @@ export default function HistoryScreen() {
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: themeColors.background }]}>
-        <SamuraiLoader message="Chargement de l'historique..." />
+        <ActivityIndicator size="large" color={themeColors.accent} />
       </View>
     );
   }

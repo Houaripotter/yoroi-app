@@ -157,7 +157,7 @@ describe('gamification', () => {
 
     it('calculates training entries correctly', async () => {
       const total = await calculateTotalPoints(0, 5, 0, 0, 0);
-      expect(total).toBe(5 * POINTS_ACTIONS.entrainement);
+      expect(total).toBe(5 * POINTS_ACTIONS.entraînement);
     });
 
     it('calculates photo entries correctly', async () => {
@@ -194,7 +194,7 @@ describe('gamification', () => {
       const total = await calculateTotalPoints(2, 3, 1, 7, 2);
       const expected =
         2 * POINTS_ACTIONS.peser +
-        3 * POINTS_ACTIONS.entrainement +
+        3 * POINTS_ACTIONS.entraînement +
         1 * POINTS_ACTIONS.photo +
         2 * POINTS_ACTIONS.hydration_complete +
         POINTS_ACTIONS.streak_7;

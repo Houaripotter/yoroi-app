@@ -11,6 +11,7 @@ import {
   Pressable,
   Keyboard,
   DeviceEventEmitter,
+  Platform,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter } from 'expo-router';
@@ -38,6 +39,7 @@ import {
   User,
   Sparkles,
   Flame,
+  Globe,
 } from 'lucide-react-native';
 import {
   getProfile,
@@ -53,7 +55,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '@/constants/design';
 import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
+import { useI18n, SUPPORTED_LANGUAGES } from '@/lib/I18nContext';
 // 🔒 SÉCURITÉ: Protection contre les screenshots
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { BlurView } from 'expo-blur';
@@ -184,7 +186,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const { t } = useI18n();
+  const { t, language, setLanguage } = useI18n();
 
   // 🔒 SÉCURITÉ: Protection contre les screenshots
   const { isBlurred, screenshotDetected } = useSensitiveScreen();
@@ -277,6 +279,11 @@ export default function ProfileScreen() {
 
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadData);
+    return () => sub.remove();
+  }, [loadData]);
 
   const rank = getCurrentRank(totalPoints);
 
@@ -666,7 +673,7 @@ export default function ProfileScreen() {
                   />
                 </View>
                 <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: colors?.textMuted ?? '#6B7280' }]}>Date de naissance</Text>
+                  <Text style={[styles.inputLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.birthDate')}</Text>
                   <TextInput
                     style={[styles.input, { backgroundColor: colors?.backgroundElevated ?? '#242429', color: colors?.textPrimary ?? '#FFFFFF', borderColor: colors?.border ?? '#333333' }]}
                     value={birthDate}
@@ -678,7 +685,7 @@ export default function ProfileScreen() {
                   />
                   {calculatedAge && (
                     <Text style={{ fontSize: 11, color: colors?.textMuted ?? '#6B7280', marginTop: 4 }}>
-                      → {calculatedAge} ans
+                      → {t('profile.yearsOld', { age: calculatedAge })}
                     </Text>
                   )}
                 </View>
@@ -712,7 +719,7 @@ export default function ProfileScreen() {
               </View>
 
               {/* Weight Goal Selector */}
-              <Text style={[styles.inputLabel, { color: colors?.textMuted ?? '#6B7280' }]}>Mon objectif</Text>
+              <Text style={[styles.inputLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.myGoal')}</Text>
               <View style={styles.goalSelector}>
                 <TouchableOpacity
                   style={[
@@ -723,7 +730,7 @@ export default function ProfileScreen() {
                   onPress={() => setWeightGoal('lose')}
                 >
                   <TrendingDown size={20} color={weightGoal === 'lose' ? colors?.success ?? '#10B981' : colors?.textMuted ?? '#6B7280'} />
-                  <Text style={[styles.goalOptionText, { color: weightGoal === 'lose' ? colors?.success ?? '#10B981' : colors?.textPrimary ?? '#FFFFFF' }]}>Perte</Text>
+                  <Text style={[styles.goalOptionText, { color: weightGoal === 'lose' ? colors?.success ?? '#10B981' : colors?.textPrimary ?? '#FFFFFF' }]}>{t('profile.lose')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -734,7 +741,7 @@ export default function ProfileScreen() {
                   onPress={() => setWeightGoal('maintain')}
                 >
                   <Minus size={20} color={weightGoal === 'maintain' ? colors?.info ?? '#3B82F6' : colors?.textMuted ?? '#6B7280'} />
-                  <Text style={[styles.goalOptionText, { color: weightGoal === 'maintain' ? colors?.info ?? '#3B82F6' : colors?.textPrimary ?? '#FFFFFF' }]}>Maintien</Text>
+                  <Text style={[styles.goalOptionText, { color: weightGoal === 'maintain' ? colors?.info ?? '#3B82F6' : colors?.textPrimary ?? '#FFFFFF' }]}>{t('profile.maintain')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -745,7 +752,7 @@ export default function ProfileScreen() {
                   onPress={() => setWeightGoal('gain')}
                 >
                   <TrendingUp size={20} color={weightGoal === 'gain' ? colors?.warning ?? '#F59E0B' : colors?.textMuted ?? '#6B7280'} />
-                  <Text style={[styles.goalOptionText, { color: weightGoal === 'gain' ? colors?.warning ?? '#F59E0B' : colors?.textPrimary ?? '#FFFFFF' }]}>Prise</Text>
+                  <Text style={[styles.goalOptionText, { color: weightGoal === 'gain' ? colors?.warning ?? '#F59E0B' : colors?.textPrimary ?? '#FFFFFF' }]}>{t('profile.gain')}</Text>
                 </TouchableOpacity>
               </View>
 
@@ -818,6 +825,60 @@ export default function ProfileScreen() {
         </View>
 
 
+        {/* Language Selector Card */}
+        <View style={[styles.infoCard, { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: colors?.border ?? '#333333', marginBottom: 16 }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10 }}>
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors?.accentMuted ?? 'rgba(10,186,181,0.1)', alignItems: 'center', justifyContent: 'center' }}>
+              <Globe size={18} color={colors?.accent ?? '#0ABAB5'} strokeWidth={2.5} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.sectionTitle, { color: colors?.textPrimary ?? '#FFFFFF', marginBottom: 2 }]}>{t('settings.language')}</Text>
+              <Text style={{ fontSize: 12, color: colors?.textMuted ?? '#6B7280' }}>{t('settings.languageDescription')}</Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {SUPPORTED_LANGUAGES.map((lang) => {
+              const isSelected = language === lang.code;
+              return (
+                <TouchableOpacity
+                  key={lang.code}
+                  onPress={async () => {
+                    await setLanguage(lang.code);
+                    const langKeyMap: Record<string, string> = { fr: 'settings.french', en: 'settings.english', ja: 'settings.japanese' };
+                    const langName = t(langKeyMap[lang.code] ?? 'settings.french');
+                    showPopup(t('settings.languageChanged'), t('settings.languageChangedMessage', { language: langName }));
+                  }}
+                  style={{
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    paddingVertical: 12,
+                    paddingHorizontal: 16,
+                    borderRadius: 12,
+                    borderWidth: isSelected ? 2 : 1,
+                    borderColor: isSelected ? (colors?.accent ?? '#0ABAB5') : (colors?.border ?? '#333333'),
+                    backgroundColor: isSelected ? (colors?.accentMuted ?? 'rgba(10,186,181,0.1)') : (colors?.backgroundElevated ?? '#242429'),
+                  }}
+                >
+                  <Text style={{ fontSize: 20 }}>{lang.flag}</Text>
+                  <Text style={{
+                    fontSize: 15,
+                    fontWeight: isSelected ? '700' : '500',
+                    color: isSelected ? (colors?.accent ?? '#0ABAB5') : (colors?.textPrimary ?? '#FFFFFF'),
+                  }}>
+                    {lang.nativeName}
+                  </Text>
+                  {isSelected && (
+                    <Check size={16} color={colors?.accent ?? '#0ABAB5'} strokeWidth={2.5} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
         {/* Motivational Quote */}
         <View style={[styles.quoteCard, { borderColor: colors?.accentMuted ?? 'rgba(10,186,181,0.1)' }]}>
           <LinearGradient
@@ -836,7 +897,7 @@ export default function ProfileScreen() {
       </ScrollView>
 
       {/* 🔒 SÉCURITÉ: Flou quand l'app est en background */}
-      {isBlurred && (
+      {isBlurred && Platform.OS === 'ios' && (
         <BlurView
           style={StyleSheet.absoluteFill}
           intensity={100}

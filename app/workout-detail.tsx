@@ -16,6 +16,7 @@ import {
   Platform,
   TouchableOpacity,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import Svg, { Rect, Line } from 'react-native-svg';
 import { MuscleMapCard } from '@/components/MuscleMapCard';
@@ -32,7 +33,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Header } from '@/components/ui/Header';
-import { SamuraiLoader } from '@/components/SamuraiLoader';
 import { HeartRateZonesBar } from '@/components/stats/HeartRateZonesBar';
 import { WorkoutMapRoute } from '@/components/WorkoutMapRoute';
 import { getTrainingById as _getTrainingById, updateTrainingDetails, updateTraining, getTrainings } from '@/lib/database';
@@ -334,17 +334,30 @@ export default function WorkoutDetailScreen() {
     } else {
       loadData();
     }
+    const maxLoader = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(maxLoader);
   }, []);
 
-  // Zones cardiaques : utiliser les zones effectives (perso > âge > défaut)
-  // Si samples HR disponibles → calculer le temps par zone
-  // Sinon → fallback sur les zones retournées par HealthKit
+  // Zones cardiaques
+  // Priorité :
+  //   1. Zones custom configurées → recalcul précis avec les samples
+  //   2. Zones HealthKit (calcul fait avec HKMaximumHeartRate réel de la montre) — le plus précis sans config
+  //   3. Dernier recours : estimation depuis âge/défaut
   const hrZones = useMemo(() => {
     const hrSamples = details?.heartRateSamples;
+    // 1. Zones perso configurées + samples → calcul précis
+    if (userZones?.source === 'custom' && hrSamples && hrSamples.length > 1) {
+      return calcZoneDurations(hrSamples, userZones);
+    }
+    // 2. Zones HealthKit (FCmax réel Apple Watch) → toujours correct
+    if (details?.heartRateZones && details.heartRateZones.length > 0) {
+      return details.heartRateZones;
+    }
+    // 3. Fallback estimé
     if (userZones && hrSamples && hrSamples.length > 1) {
       return calcZoneDurations(hrSamples, userZones);
     }
-    return details?.heartRateZones;
+    return null;
   }, [userZones, details?.heartRateSamples, details?.heartRateZones]);
 
   // Parser les combat_rounds (stockés en JSON dans la DB, non parsés par getTrainingById)
@@ -423,8 +436,8 @@ export default function WorkoutDetailScreen() {
       if (tr.workout_details_json) {
         try {
           const cached = JSON.parse(tr.workout_details_json);
-          // v4: invalider les anciens caches (v3: HKMaximumHeartRate metadata, v4: distance complète + élévation fallback)
-          const isStaleCache = (cached.cacheVersion ?? 1) < 5;
+          // v6: laps depuis workout events + distance fallback indoor
+          const isStaleCache = (cached.cacheVersion ?? 1) < 7;
           // Verifier que le cache a du contenu utile (pas juste durationMinutes)
           const hasRichData = cached.heartRateSamples?.length > 0 || cached.routePoints?.length > 0
             || cached.heartRateZones?.length > 0 || cached.weatherTemp != null;
@@ -519,7 +532,7 @@ export default function WorkoutDetailScreen() {
       <View style={[styles.screenRoot, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
         <Header title="" showBack />
         <View style={styles.loadingContainer}>
-          <SamuraiLoader />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       </View>
     );
@@ -554,9 +567,35 @@ export default function WorkoutDetailScreen() {
     : -1;
 
   const duration = training.duration_minutes || details?.durationMinutes || 0;
-  const distance = details?.distanceKm ?? training.distance;
+  // Si details.distanceKm = 0 (stats HealthKit vides), utiliser training.distance comme fallback
+  const distance = (details?.distanceKm && details.distanceKm > 0)
+    ? details.distanceKm
+    : (training.distance && training.distance > 0 ? training.distance : null);
+  // Allure : depuis HealthKit si dispo, sinon calculer depuis distance/durée
+  const effectivePace = (details?.avgPaceSecondsPerKm && details.avgPaceSecondsPerKm > 0)
+    ? details.avgPaceSecondsPerKm
+    : (distance && distance > 0 && duration > 0 ? Math.round((duration * 60) / distance) : null);
   const calories = details?.activeCalories ?? training.calories;
   const avgHR = details?.avgHeartRate ?? training.heart_rate;
+
+  // Sport type detection (pour adapter l'affichage du grid)
+  const SPEED_SPORT_IDS = ['cycling', 'velo', 'rameur', 'spinning', 'natation', 'triathlon', 'kayak', 'ski_alpin'];
+  const sportIds = training.sport ? training.sport.split(',').map(x => x.trim()) : [];
+  const isSpeedSport = SPEED_SPORT_IDS.some(id => sportIds.includes(id));
+
+  // Vitesse en km/h (depuis HealthKit, ou calculée depuis distance/durée)
+  const effectiveSpeed: number | null =
+    (details?.avgSpeedKmh && details.avgSpeedKmh > 0) ? details.avgSpeedKmh
+    : (training.speed && training.speed > 0) ? training.speed
+    : (distance && distance > 0 && duration > 0) ? Math.round(distance / (duration / 60) * 10) / 10
+    : null;
+
+  // Cadence (HealthKit en priorité, puis training.cadence)
+  const effectiveCadence: number | null =
+    (details?.cadence && details.cadence > 0) ? details.cadence
+    : (training.cadence && training.cadence > 0) ? training.cadence
+    : null;
+  const cadenceUnit = isSpeedSport ? 'RPM' : 'SPM';
 
   // Fond neutre style Apple (groupedBackground) pour les sections
   const groupedBg = isDark ? '#000000' : '#F2F2F7';
@@ -682,25 +721,26 @@ export default function WorkoutDetailScreen() {
         </Text>
         <AnimatedCard delay={80} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
           <View style={[styles.appleDetailsGrid, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
-            {/* Row 1: Durée + Distance */}
+            {/* Row 1: Durée (toujours) + Distance (si disponible) */}
             <View style={styles.appleDetailsRow}>
-              <View style={[styles.appleDetailCell, { borderRightWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]}>
+              <View style={[styles.appleDetailCell, (distance ?? 0) > 0 ? { borderRightWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' } : {}]}>
                 <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Durée de l'exercice</Text>
                 <Text style={[styles.appleDetailValue, { color: '#22C55E' }]}>
                   {formatDurationApple(duration)}
                 </Text>
               </View>
-              <View style={styles.appleDetailCell}>
-                <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Distance</Text>
-                <Text style={[styles.appleDetailValue, { color: '#3B82F6' }]}>
-                  {(distance ?? 0) > 0 ? `${typeof distance === 'number' ? distance.toFixed(2).replace('.', ',') : distance}` : '-'}
-                  <Text style={styles.appleDetailUnit}> KM</Text>
-                </Text>
-              </View>
+              {(distance ?? 0) > 0 && (
+                <View style={styles.appleDetailCell}>
+                  <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Distance</Text>
+                  <Text style={[styles.appleDetailValue, { color: '#3B82F6' }]}>
+                    {typeof distance === 'number' ? distance.toFixed(2).replace('.', ',') : distance}
+                    <Text style={styles.appleDetailUnit}> KM</Text>
+                  </Text>
+                </View>
+              )}
             </View>
-            {/* Separator */}
-            <View style={[styles.appleDetailsSep, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
             {/* Row 2: Cal actives + Cal totales */}
+            <View style={[styles.appleDetailsSep, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
             <View style={styles.appleDetailsRow}>
               <View style={[styles.appleDetailCell, { borderRightWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]}>
                 <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Cal. en activité</Text>
@@ -717,39 +757,57 @@ export default function WorkoutDetailScreen() {
                 </Text>
               </View>
             </View>
-            {/* Separator */}
-            <View style={[styles.appleDetailsSep, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
-            {/* Row 3: Rythme moy + FC moy */}
-            <View style={styles.appleDetailsRow}>
-              <View style={[styles.appleDetailCell, { borderRightWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]}>
-                <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Rythme moyen</Text>
-                <Text style={[styles.appleDetailValue, { color: '#22C55E' }]}>
-                  {formatPace(details?.avgPaceSecondsPerKm || 0)}
-                  <Text style={styles.appleDetailUnit}> /KM</Text>
-                </Text>
-              </View>
-              <View style={styles.appleDetailCell}>
-                <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Freq. cardiaque moy.</Text>
-                <Text style={[styles.appleDetailValue, { color: '#EF4444' }]}>
-                  {(avgHR ?? 0) > 0 ? avgHR : '-'}
-                  <Text style={styles.appleDetailUnit}> BPM</Text>
-                </Text>
-              </View>
-            </View>
-            {/* Row 4: Elevation + FC max (si dispo) */}
-            {(details?.elevationAscended != null || details?.maxHeartRate) && (
+            {/* Row 3: Vitesse/Rythme + FC moy
+                - Sports vélo/natation/rameur → Vitesse moy. en km/h
+                - Sports course/marche/randonnée → Rythme en min/km
+                - Sports sans distance (muscu, combat) → FC seule en pleine largeur */}
+            {(isSpeedSport ? (effectiveSpeed ?? 0) > 0 : (effectivePace ?? 0) > 0) || (avgHR ?? 0) > 0 ? (
+              <>
+                <View style={[styles.appleDetailsSep, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
+                <View style={styles.appleDetailsRow}>
+                  {isSpeedSport && (effectiveSpeed ?? 0) > 0 ? (
+                    <View style={[styles.appleDetailCell, { borderRightWidth: (avgHR ?? 0) > 0 ? 1 : 0, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]}>
+                      <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Vitesse moy.</Text>
+                      <Text style={[styles.appleDetailValue, { color: '#22C55E' }]}>
+                        {effectiveSpeed?.toFixed(1).replace('.', ',')}
+                        <Text style={styles.appleDetailUnit}> KM/H</Text>
+                      </Text>
+                    </View>
+                  ) : !isSpeedSport && (effectivePace ?? 0) > 0 ? (
+                    <View style={[styles.appleDetailCell, { borderRightWidth: (avgHR ?? 0) > 0 ? 1 : 0, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]}>
+                      <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Rythme moyen</Text>
+                      <Text style={[styles.appleDetailValue, { color: '#22C55E' }]}>
+                        {formatPace(effectivePace || 0)}
+                        <Text style={styles.appleDetailUnit}> /KM</Text>
+                      </Text>
+                    </View>
+                  ) : null}
+                  {(avgHR ?? 0) > 0 && (
+                    <View style={styles.appleDetailCell}>
+                      <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Fréq. cardiaque moy.</Text>
+                      <Text style={[styles.appleDetailValue, { color: '#EF4444' }]}>
+                        {avgHR}
+                        <Text style={styles.appleDetailUnit}> BPM</Text>
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </>
+            ) : null}
+            {/* Row 4: Dénivelé + FC max (si dispo) */}
+            {(details?.elevationAscended != null || (details?.maxHeartRate ?? training.max_heart_rate)) && (
               <>
                 <View style={[styles.appleDetailsSep, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
                 <View style={styles.appleDetailsRow}>
                   <View style={[styles.appleDetailCell, { borderRightWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]}>
-                    <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Denivele positif</Text>
+                    <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Dénivelé positif</Text>
                     <Text style={[styles.appleDetailValue, { color: '#22C55E' }]}>
                       {details?.elevationAscended != null ? `${details.elevationAscended}` : '-'}
                       <Text style={styles.appleDetailUnit}> M</Text>
                     </Text>
                   </View>
                   <View style={styles.appleDetailCell}>
-                    <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Freq. cardiaque max</Text>
+                    <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Fréq. cardiaque max</Text>
                     <Text style={[styles.appleDetailValue, { color: '#EF4444' }]}>
                       {details?.maxHeartRate || training.max_heart_rate || '-'}
                       <Text style={styles.appleDetailUnit}> BPM</Text>
@@ -758,57 +816,75 @@ export default function WorkoutDetailScreen() {
                 </View>
               </>
             )}
-            {/* Row 5: Cadence + Vitesse (si dispo) */}
-            {((training.cadence ?? 0) > 0 || (training.speed ?? 0) > 0 || (training.watts ?? 0) > 0) && (
-              <>
-                <View style={[styles.appleDetailsSep, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
-                <View style={styles.appleDetailsRow}>
-                  {(training.cadence ?? 0) > 0 ? (
-                    <View style={[styles.appleDetailCell, { borderRightWidth: (training.speed ?? 0) > 0 || (training.watts ?? 0) > 0 ? 1 : 0, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]}>
-                      <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Cadence</Text>
-                      <Text style={[styles.appleDetailValue, { color: '#8B5CF6' }]}>
-                        {training.cadence}
-                        <Text style={styles.appleDetailUnit}> SPM</Text>
-                      </Text>
-                    </View>
-                  ) : null}
-                  {(training.watts ?? 0) > 0 ? (
-                    <View style={[styles.appleDetailCell, { borderRightWidth: (training.speed ?? 0) > 0 ? 1 : 0, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]}>
-                      <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Puissance</Text>
-                      <Text style={[styles.appleDetailValue, { color: '#F59E0B' }]}>
-                        {training.watts}
-                        <Text style={styles.appleDetailUnit}> W</Text>
-                      </Text>
-                    </View>
-                  ) : null}
-                  {(training.speed ?? 0) > 0 ? (
-                    <View style={styles.appleDetailCell}>
-                      <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Vitesse moy.</Text>
-                      <Text style={[styles.appleDetailValue, { color: '#3B82F6' }]}>
-                        {typeof training.speed === 'number' ? training.speed.toFixed(1).replace('.', ',') : training.speed}
-                        <Text style={styles.appleDetailUnit}> KM/H</Text>
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-              </>
-            )}
+            {/* Row 5: Cadence (HealthKit ou manual) + Puissance (HealthKit ou manual) + Vitesse manuelle */}
+            {(() => {
+              const effectiveWatts = (details?.avgPowerWatts && details.avgPowerWatts > 0)
+                ? details.avgPowerWatts
+                : (training.watts ?? 0) > 0 ? training.watts : null;
+              const showCadence = effectiveCadence != null;
+              const showWatts = effectiveWatts != null;
+              const showSpeed = !isSpeedSport && (training.speed ?? 0) > 0;
+              if (!showCadence && !showWatts && !showSpeed) return null;
+              const cellCount = [showCadence, showWatts, showSpeed].filter(Boolean).length;
+              return (
+                <>
+                  <View style={[styles.appleDetailsSep, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
+                  <View style={styles.appleDetailsRow}>
+                    {showCadence ? (
+                      <View style={[styles.appleDetailCell, { borderRightWidth: cellCount > 1 ? 1 : 0, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]}>
+                        <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Cadence</Text>
+                        <Text style={[styles.appleDetailValue, { color: '#8B5CF6' }]}>
+                          {effectiveCadence}
+                          <Text style={styles.appleDetailUnit}> {cadenceUnit}</Text>
+                        </Text>
+                      </View>
+                    ) : null}
+                    {showWatts ? (
+                      <View style={[styles.appleDetailCell, { borderRightWidth: showSpeed ? 1 : 0, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]}>
+                        <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Puissance</Text>
+                        <Text style={[styles.appleDetailValue, { color: '#F59E0B' }]}>
+                          {effectiveWatts}
+                          <Text style={styles.appleDetailUnit}> W</Text>
+                        </Text>
+                      </View>
+                    ) : null}
+                    {showSpeed ? (
+                      <View style={styles.appleDetailCell}>
+                        <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Vitesse moy.</Text>
+                        <Text style={[styles.appleDetailValue, { color: '#3B82F6' }]}>
+                          {typeof training.speed === 'number' ? training.speed.toFixed(1).replace('.', ',') : training.speed}
+                          <Text style={styles.appleDetailUnit}> KM/H</Text>
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </>
+              );
+            })()}
           </View>
         </AnimatedCard>
 
         {/* ═══ CARTE MUSCULAIRE ═══ */}
-        {training.sport && (
-          <AnimatedCard delay={140}>
-            <MuscleMapCard
-              sport={training.sport}
-              sportName={getSportName(training.sport)}
-              sportColor={getSportColor(training.sport)}
-              customMuscles={training.muscles || undefined}
-              trainingId={training.id}
-              onMusclesUpdated={(muscles) => setTraining(prev => prev ? { ...prev, muscles } : prev)}
-            />
-          </AnimatedCard>
-        )}
+        {(() => {
+          if (!training.sport) return null;
+          // Masquer pour les sports cardio/nature (pas de ciblage musculaire spécifique)
+          // sauf si l'utilisateur a défini des muscles personnalisés
+          const CARDIO_CATEGORIES = ['cardio', 'nature', 'aquatique', 'glisse', 'danse', 'raquettes', 'precision'];
+          const sportObj = SPORTS.find(s => training.sport?.split(',').map(x => x.trim()).includes(s.id));
+          if (sportObj && CARDIO_CATEGORIES.includes(sportObj.category) && !training.muscles) return null;
+          return (
+            <AnimatedCard delay={140}>
+              <MuscleMapCard
+                sport={training.sport}
+                sportName={getSportName(training.sport)}
+                sportColor={getSportColor(training.sport)}
+                customMuscles={training.muscles || undefined}
+                trainingId={training.id}
+                onMusclesUpdated={(muscles) => setTraining(prev => prev ? { ...prev, muscles } : prev)}
+              />
+            </AnimatedCard>
+          );
+        })()}
 
         {/* ═══ THÈME TECHNIQUE + NOTE TECHNIQUE ═══ */}
         {(training.technical_theme || (training.technique_rating != null && (training.technique_rating || 0) > 0)) && (
@@ -958,6 +1034,22 @@ export default function WorkoutDetailScreen() {
                       </View>
                     </View>
                   )}
+                  {/* Points du round */}
+                  {((round.pointsFor ?? 0) > 0 || (round.pointsAgainst ?? 0) > 0) && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <View style={{ backgroundColor: isDark ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.1)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
+                        <Text style={{ fontSize: 13, color: '#22C55E', fontWeight: '700' }}>
+                          {round.pointsFor ?? 0} pts
+                        </Text>
+                      </View>
+                      <Text style={{ fontSize: 13, color: colors.textMuted }}>–</Text>
+                      <View style={{ backgroundColor: isDark ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.1)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
+                        <Text style={{ fontSize: 13, color: '#EF4444', fontWeight: '700' }}>
+                          {round.pointsAgainst ?? 0} pts
+                        </Text>
+                      </View>
+                    </View>
+                  )}
                   {/* Notes du round */}
                   {round.notes ? (
                     <Text style={{ fontSize: 13, color: colors.textSecondary, lineHeight: 18, marginTop: 4 }}>
@@ -992,39 +1084,75 @@ export default function WorkoutDetailScreen() {
                     </View>
                   ) : null}
                 </View>
-                {/* Métriques: séries × reps × poids */}
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                  {(ex.sets ?? 0) > 0 && (
-                    <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' }}>
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: sportColor }}>{ex.sets}</Text>
-                      <Text style={{ fontSize: 11, color: colors.textMuted }}>séries</Text>
-                    </View>
-                  )}
-                  {(ex.reps ?? 0) > 0 && (
-                    <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' }}>
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text }}>{ex.reps}</Text>
-                      <Text style={{ fontSize: 11, color: colors.textMuted }}>reps</Text>
-                    </View>
-                  )}
-                  {(ex.weight ?? 0) > 0 && (
-                    <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' }}>
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#F59E0B' }}>{ex.weight} kg</Text>
-                      <Text style={{ fontSize: 11, color: colors.textMuted }}>poids</Text>
-                    </View>
-                  )}
-                  {ex.distance != null && ex.distance > 0 && (
-                    <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' }}>
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#3B82F6' }}>{ex.distance} km</Text>
-                      <Text style={{ fontSize: 11, color: colors.textMuted }}>distance</Text>
-                    </View>
-                  )}
-                  {ex.duration != null && ex.duration > 0 && (
-                    <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' }}>
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#22C55E' }}>{ex.duration} min</Text>
-                      <Text style={{ fontSize: 11, color: colors.textMuted }}>durée</Text>
-                    </View>
-                  )}
-                </View>
+                {/* Séries détaillées (multi-set) */}
+                {ex.setsData && ex.setsData.length > 0 ? (
+                  <View style={{ gap: 4 }}>
+                    {ex.setsData.map((set, si) => {
+                      const orm = set.weight > 0 && set.reps > 0
+                        ? Math.round(set.weight * (1 + set.reps / 30))
+                        : null;
+                      return (
+                        <View key={si} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted, width: 24, textAlign: 'right' }}>S{si + 1}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 }}>
+                            <Text style={{ fontSize: 15, fontWeight: '800', color: '#F59E0B' }}>{set.weight} kg</Text>
+                            <Text style={{ fontSize: 13, color: colors.textMuted }}>×</Text>
+                            <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text }}>{set.reps}</Text>
+                          </View>
+                          {orm != null && (
+                            <Text style={{ fontSize: 11, color: colors.textMuted }}>≈ {orm} kg 1RM</Text>
+                          )}
+                        </View>
+                      );
+                    })}
+                    {/* Volume total */}
+                    {ex.setsData.length > 1 && (() => {
+                      const totalVol = ex.setsData!.reduce((acc, s) => acc + (s.weight * s.reps), 0);
+                      return totalVol > 0 ? (
+                        <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>
+                          Volume total : {totalVol} kg
+                        </Text>
+                      ) : null;
+                    })()}
+                  </View>
+                ) : (
+                  /* Affichage classique si pas de setsData */
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {(ex.sets ?? 0) > 0 && (
+                      <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 16, fontWeight: '800', color: sportColor }}>{ex.sets}</Text>
+                        <Text style={{ fontSize: 11, color: colors.textMuted }}>séries</Text>
+                      </View>
+                    )}
+                    {(ex.reps ?? 0) > 0 && (
+                      <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text }}>{ex.reps}</Text>
+                        <Text style={{ fontSize: 11, color: colors.textMuted }}>reps</Text>
+                      </View>
+                    )}
+                    {(ex.weight ?? 0) > 0 && (
+                      <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 16, fontWeight: '800', color: '#F59E0B' }}>{ex.weight} kg</Text>
+                        <Text style={{ fontSize: 11, color: colors.textMuted }}>poids</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+                {ex.distance != null && ex.distance > 0 && (
+                  <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center', alignSelf: 'flex-start', marginTop: 4 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '800', color: '#3B82F6' }}>{ex.distance} km</Text>
+                    <Text style={{ fontSize: 11, color: colors.textMuted }}>distance</Text>
+                  </View>
+                )}
+                {ex.duration != null && ex.duration > 0 && (
+                  <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center', alignSelf: 'flex-start', marginTop: 4 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '800', color: '#22C55E' }}>{ex.duration} min</Text>
+                    <Text style={{ fontSize: 11, color: colors.textMuted }}>durée</Text>
+                  </View>
+                )}
+                {ex.notes ? (
+                  <Text style={{ fontSize: 12, color: colors.textMuted, fontStyle: 'italic', marginTop: 4 }}>{ex.notes}</Text>
+                ) : null}
               </View>
             ))}
           </AnimatedCard>
@@ -1061,7 +1189,7 @@ export default function WorkoutDetailScreen() {
               durationMin={duration}
               isDark={isDark}
               textColor={colors.textMuted}
-              zones={hrZones}
+              zones={hrZones ?? undefined}
             />
 
             {/* Min / Moy / Max */}
@@ -1080,15 +1208,49 @@ export default function WorkoutDetailScreen() {
             <View style={styles.zonesTitleRow}>
               <Text style={[styles.sectionTitleInCard, { color: colors.text }]}>Zones cardiaques</Text>
               <TouchableOpacity onPress={() => router.push('/heart-zones-settings')} activeOpacity={0.7}>
-                <Text style={[styles.zonesEditLink, { color: userZones ? colors.textMuted : colors.primary }]}>
-                  {userZones ? 'Modifier' : 'Personnaliser'}
+                <Text style={[styles.zonesEditLink, { color: userZones?.source === 'custom' ? colors.textMuted : colors.primary }]}>
+                  {userZones?.source === 'custom' ? 'Modifier' : 'Personnaliser'}
                 </Text>
               </TouchableOpacity>
             </View>
             <HeartRateZonesBar zones={hrZones} />
+
+            {/* Bannière d'invitation si zones pas encore personnalisées manuellement */}
+            {userZones?.source !== 'custom' && (
+              <TouchableOpacity
+                onPress={() => router.push('/heart-zones-settings')}
+                activeOpacity={0.85}
+                style={{
+                  marginTop: 12,
+                  backgroundColor: isDark ? 'rgba(239,68,68,0.10)' : 'rgba(239,68,68,0.07)',
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: 'rgba(239,68,68,0.25)',
+                  padding: 12,
+                  gap: 4,
+                }}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#EF4444' }}>
+                  Ces zones sont estimées automatiquement
+                </Text>
+                <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 17 }}>
+                  Pour qu'elles correspondent exactement à ton Apple Watch :{'\n'}
+                  <Text style={{ fontWeight: '700', color: colors.text }}>App Watch</Text>
+                  {' → '}
+                  <Text style={{ fontWeight: '700', color: colors.text }}>Ma montre</Text>
+                  {' → '}
+                  <Text style={{ fontWeight: '700', color: colors.text }}>Exercice</Text>
+                  {' → '}
+                  <Text style={{ fontWeight: '700', color: colors.text }}>Zones de fréquence cardiaque</Text>
+                </Text>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: '#EF4444', marginTop: 2 }}>
+                  Configurer mes zones →
+                </Text>
+              </TouchableOpacity>
+            )}
           </AnimatedCard>
-        ) : hrSamples && hrSamples.length > 0 && !userZones ? (
-          /* Banneau de rappel si des données FC existent mais pas de zones configurées */
+        ) : hrSamples && hrSamples.length > 0 && userZones?.source !== 'custom' ? (
+          /* Bannière si données FC existent mais aucune zone calculée */
           <AnimatedCard delay={240} style={[styles.card, { backgroundColor: isDark ? 'rgba(239,68,68,0.08)' : 'rgba(239,68,68,0.06)', borderWidth: 1.5, borderColor: 'rgba(239,68,68,0.2)' }]}>
             <View style={styles.zonesReminderContent}>
               <Heart size={28} color="#EF4444" />
@@ -1096,7 +1258,8 @@ export default function WorkoutDetailScreen() {
                 Configure tes zones cardiaques
               </Text>
               <Text style={[styles.zonesReminderSub, { color: colors.textMuted }]}>
-                Tes zones personnelles te permettront de voir exactement le temps passé dans chaque zone lors de tes séances.
+                Tes zones personnelles te permettront de voir exactement le temps passé dans chaque zone lors de tes séances.{'\n\n'}
+                <Text style={{ fontWeight: '700', color: colors.text }}>App Watch → Ma montre → Exercice → Zones de fréquence cardiaque</Text>
               </Text>
               <TouchableOpacity
                 style={styles.zonesReminderBtn}
@@ -1133,6 +1296,43 @@ export default function WorkoutDetailScreen() {
                 />
               )}
             </View>
+          </AnimatedCard>
+        )}
+
+        {/* ═══ VO2 MAX ═══ */}
+        {details?.vo2Max != null && details.vo2Max > 0 && (
+          <AnimatedCard delay={340} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View>
+                <Text style={[styles.sectionTitleInCard, { color: colors.text }]}>VO₂ Max</Text>
+                <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>
+                  Capacité cardiovasculaire (Apple Watch)
+                </Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={{ fontSize: 36, fontWeight: '800', color: '#3B82F6' }}>
+                  {details.vo2Max.toFixed(1)}
+                </Text>
+                <Text style={{ fontSize: 12, color: colors.textMuted }}>ml/kg/min</Text>
+              </View>
+            </View>
+            {/* Indicateur de niveau */}
+            {(() => {
+              const v = details.vo2Max!;
+              const level = v < 30 ? { label: 'Faible', color: '#EF4444' }
+                : v < 38 ? { label: 'Moyen', color: '#F97316' }
+                : v < 46 ? { label: 'Bon', color: '#F59E0B' }
+                : v < 54 ? { label: 'Très bon', color: '#22C55E' }
+                : { label: 'Excellent', color: '#10B981' };
+              return (
+                <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <View style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+                    <View style={{ height: '100%', width: `${Math.min(100, ((v - 20) / 45) * 100)}%`, borderRadius: 3, backgroundColor: level.color }} />
+                  </View>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: level.color }}>{level.label}</Text>
+                </View>
+              );
+            })()}
           </AnimatedCard>
         )}
 
@@ -1288,7 +1488,7 @@ export default function WorkoutDetailScreen() {
                   <Text style={[styles.weatherValue, { color: colors.text }]}>
                     {details.weatherTemp}°C
                   </Text>
-                  <Text style={[styles.weatherLabel, { color: colors.textMuted }]}>Temperature</Text>
+                  <Text style={[styles.weatherLabel, { color: colors.textMuted }]}>Température</Text>
                 </View>
               )}
               {details?.weatherHumidity != null && (
@@ -1297,7 +1497,7 @@ export default function WorkoutDetailScreen() {
                   <Text style={[styles.weatherValue, { color: colors.text }]}>
                     {details.weatherHumidity}%
                   </Text>
-                  <Text style={[styles.weatherLabel, { color: colors.textMuted }]}>Humidite</Text>
+                  <Text style={[styles.weatherLabel, { color: colors.textMuted }]}>Humidité</Text>
                 </View>
               )}
               {details?.weatherCondition && (
@@ -1341,14 +1541,25 @@ export default function WorkoutDetailScreen() {
 
         {/* === EFFORT PERCU (RPE) + NOTES === */}
         {(() => {
+          // Effort : priorité à l'effort Apple Watch (details), sinon RPE manuel
+          const effectiveIntensity = (details?.effortScore && details.effortScore > 0)
+            ? details.effortScore
+            : (training.intensity ?? 0);
           // Filtrer les notes auto-generees (ex: "marche (33min)", "running (45min)")
           const rawNotes = training.notes?.trim() || '';
           const isAutoNote = /^[a-zA-ZÀ-ÿ\s]+\(\d+\s*min\)$/i.test(rawNotes);
           const hasRealNotes = rawNotes.length > 0 && !isAutoNote;
-          if ((training.intensity ?? 0) <= 0 && !hasRealNotes) return null;
+          if (effectiveIntensity <= 0 && !hasRealNotes) return null;
+          const effortLabel = effectiveIntensity <= 2 ? 'Très léger'
+            : effectiveIntensity <= 3 ? 'Léger'
+            : effectiveIntensity <= 4 ? 'Facile'
+            : effectiveIntensity <= 6 ? 'Modéré'
+            : effectiveIntensity <= 7 ? 'Intense'
+            : effectiveIntensity <= 8 ? 'Très intense'
+            : 'Extrême';
           return (
           <AnimatedCard delay={640} style={[styles.card, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}>
-            {(training.intensity ?? 0) > 0 && (
+            {effectiveIntensity > 0 && (
               <>
                 <Text style={[styles.sectionTitleInCard, { color: colors.text }]}>
                   Effort
@@ -1356,20 +1567,23 @@ export default function WorkoutDetailScreen() {
                 <View style={styles.rpeContainer}>
                   <View style={[styles.rpeBarBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
                     <View style={[styles.rpeBarFill, {
-                      width: `${(training.intensity || 0) * 10}%`,
-                      backgroundColor: (training.intensity || 0) <= 3 ? '#22C55E'
-                        : (training.intensity || 0) <= 6 ? '#F59E0B'
-                        : (training.intensity || 0) <= 8 ? '#F97316' : '#EF4444',
+                      width: `${effectiveIntensity * 10}%`,
+                      backgroundColor: effectiveIntensity <= 3 ? '#22C55E'
+                        : effectiveIntensity <= 6 ? '#F59E0B'
+                        : effectiveIntensity <= 8 ? '#F97316' : '#EF4444',
                     }]} />
                   </View>
                   <Text style={[styles.rpeValue, {
-                    color: (training.intensity || 0) <= 3 ? '#22C55E'
-                      : (training.intensity || 0) <= 6 ? '#F59E0B'
-                      : (training.intensity || 0) <= 8 ? '#F97316' : '#EF4444',
+                    color: effectiveIntensity <= 3 ? '#22C55E'
+                      : effectiveIntensity <= 6 ? '#F59E0B'
+                      : effectiveIntensity <= 8 ? '#F97316' : '#EF4444',
                   }]}>
-                    {training.intensity}/10
+                    {effectiveIntensity}/10
                   </Text>
                 </View>
+                <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 4 }}>
+                  {effortLabel}
+                </Text>
               </>
             )}
             {hasRealNotes && (

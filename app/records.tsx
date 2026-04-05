@@ -8,6 +8,7 @@ import {
   Share,
   ActivityIndicator,
   RefreshControl,
+  DeviceEventEmitter,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -24,7 +25,6 @@ import {
   Star,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { SamuraiLoader } from '@/components/SamuraiLoader';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
@@ -40,7 +40,11 @@ import {
 } from '@/lib/records';
 import { successHaptic } from '@/lib/haptics';
 import { playSuccessSound } from '@/lib/soundManager';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
+
+const RECORDS_CACHE_KEY = '@yoroi_records_cache_v1';
+const RECORDS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 // ============================================
 // PAGE MES RECORDS PERSONNELS
@@ -56,11 +60,34 @@ export default function RecordsScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Charger les records
-  const loadRecords = useCallback(async (showCelebration = false) => {
+  const loadRecords = useCallback(async (showCelebration = false, bypassCache = false) => {
     try {
+      // Cache instantané : afficher les données précédentes pendant le recalcul
+      if (!bypassCache) {
+        try {
+          const cached = await AsyncStorage.getItem(RECORDS_CACHE_KEY);
+          if (cached) {
+            const { ts, data } = JSON.parse(cached);
+            if (Date.now() - ts < RECORDS_CACHE_TTL) {
+              setRecords(data.records);
+              setNewRecords(data.newRecords || []);
+              setIsLoading(false);
+            }
+          }
+        } catch { /* cache corrompu */ }
+      }
+
       const result = await calculateAllRecords();
       setRecords(result.records);
       setNewRecords(result.newRecords);
+
+      // Sauvegarder en cache
+      try {
+        await AsyncStorage.setItem(RECORDS_CACHE_KEY, JSON.stringify({
+          ts: Date.now(),
+          data: { records: result.records, newRecords: result.newRecords },
+        }));
+      } catch { /* non-bloquant */ }
 
       // Celebrer les nouveaux records
       if (showCelebration && result.newRecords.length > 0) {
@@ -78,10 +105,26 @@ export default function RecordsScreen() {
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadRecords(true); }, []);
 
-  // Rafraichir manuellement
+  // Masquer le loader après 2 secondes maximum
+  useEffect(() => {
+    const t = setTimeout(() => setIsLoading(false), 2000);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Listener DeviceEventEmitter pour rafraîchissement des données (bypass cache)
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
+      AsyncStorage.removeItem(RECORDS_CACHE_KEY).catch(() => {});
+      loadRecords(false, true);
+    });
+    return () => sub.remove();
+  }, []);
+
+  // Rafraichir manuellement (bypass cache)
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await loadRecords(true);
+    await AsyncStorage.removeItem(RECORDS_CACHE_KEY).catch(() => {});
+    await loadRecords(true, true);
   };
 
   // Partager un record
@@ -186,7 +229,7 @@ export default function RecordsScreen() {
       <ScreenWrapper noPadding>
         <Header title={t('screens.records.title')} showBack />
         <View style={styles.loadingContainer}>
-          <SamuraiLoader message={t('screens.records.calculating')} />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       </ScreenWrapper>
     );

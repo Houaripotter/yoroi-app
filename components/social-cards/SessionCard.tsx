@@ -15,10 +15,10 @@ import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
 
 const GOLD_COLOR = '#D4AF37';
 
-// Constantes de layout
-const PHOTO_SECTION_HEIGHT = '65%';
-const STATS_SECTION_HEIGHT = '23%';
-const FOOTER_SECTION_HEIGHT = '12%';
+// Constantes de layout — utiliser flex comme les autres cartes V2 (proportions exactes)
+const PHOTO_SECTION_FLEX = 6.5;   // 65%
+const STATS_SECTION_FLEX = 2.3;   // 23%
+const FOOTER_SECTION_FLEX = 1.2;  // 12%
 const PROFILE_SIZE = 50;
 const AVATAR_SIZE = 50;
 const CLUB_LOGO_SIZE = 18;
@@ -77,6 +77,11 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
     training, backgroundImage, backgroundType = 'black', keepPhotoClear = false, width: widthProp,
     userAvatar, profilePhoto, userName, rank, userLevel, options,
     showYearlyCount = true,
+    showDate = true,
+    showClub = true,
+    showLieu = true,
+    showExercises = true,
+    showStats = true,
     yearlyCount = 0, yearlyObjective = 365,
     showGoalProgress = true,
     disableInternalScroll = false
@@ -92,7 +97,9 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
       year: 'numeric'
     }).toUpperCase();
 
-    const sportNameStr = training.sport?.split(',').map(s => getSportName(s)).join(' + ') || 'SÉANCE';
+    const sportNameStr = training.sport
+      ? training.sport.split(',').filter(Boolean).map(s => getSportName(s.trim()) ?? s.trim()).join(' + ')
+      : 'SÉANCE';
     const clubLogoSource = training.club_logo ? getClubLogoSource(training.club_logo) : null;
     
     // Calcul Progression sur l'Objectif Personnel
@@ -207,31 +214,36 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
               ? ['rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)']
               : ['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.85)']}
             style={styles.photoGradient}
+            pointerEvents="none"
           >
             {/* DATE EN HAUT AU MILIEU */}
-            <View style={dateTopContainerStyle}>
-              {keepPhotoClear ? (
-                <View style={dateBackdropStyle}>
-                  <Text style={[styles.dateText, dateColorStyle]}>{formattedDate}</Text>
-                </View>
-              ) : (
-                <Text style={styles.dateText}>{formattedDate}</Text>
-              )}
-            </View>
+            {showDate && (
+              <View style={dateTopContainerStyle}>
+                {keepPhotoClear ? (
+                  <View style={dateBackdropStyle}>
+                    <Text style={[styles.dateText, dateColorStyle]}>{formattedDate}</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.dateText}>{formattedDate}</Text>
+                )}
+              </View>
+            )}
 
           </LinearGradient>
 
           {/* INFOS BAS DE PHOTO */}
           <View style={styles.photoBottomInfo}>
-            <View style={styles.clubRow}>
-              {clubLogoSource && (
-                <View style={styles.clubLogoBox}>
-                  <Image source={clubLogoSource} style={styles.clubLogo} resizeMode="contain" />
-                </View>
-              )}
-              <Text style={styles.clubName}>{training.club_name?.toUpperCase() || 'SÉANCE INDIVIDUELLE'}</Text>
-            </View>
-            {training.location_name ? (
+            {showClub && (
+              <View style={styles.clubRow}>
+                {clubLogoSource && (
+                  <View style={styles.clubLogoBox}>
+                    <Image source={clubLogoSource} style={styles.clubLogo} resizeMode="contain" />
+                  </View>
+                )}
+                <Text style={styles.clubName}>{training.club_name?.toUpperCase() || 'SÉANCE INDIVIDUELLE'}</Text>
+              </View>
+            )}
+            {showLieu && training.location_name ? (
               <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, fontWeight: '700', letterSpacing: 1, marginTop: 1 }}>
                 {training.location_name.toUpperCase()}
               </Text>
@@ -244,7 +256,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
         <View style={styles.statsSection}>
 
           {/* CHIFFRES CLÉS & PROGRESSION */}
-          {showYearlyCount && (
+          {showStats && showYearlyCount && (
             <View style={styles.progressContainer}>
               <View style={styles.progressRow}>
                 <View style={styles.progressLeft}>
@@ -290,7 +302,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
             </View>
           )}
 
-          <View style={styles.detailsSection}>
+          {showExercises && <View style={styles.detailsSection}>
             <View style={styles.detailsHeader}>
               <View style={[styles.detailsDivider, detailsDividerGoldStyle]} />
               <Text style={styles.detailsLabel}>DÉTAILS DE LA SÉANCE</Text>
@@ -329,7 +341,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
                           </View>
                         )}
                         <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                          <Text style={[styles.exerciseLabel, exerciseLabelStyle]} numberOfLines={1}>{opt.label.toUpperCase()}</Text>
+                          <Text style={[styles.exerciseLabel, exerciseLabelStyle]} numberOfLines={1}>{(opt.label ?? '').toUpperCase()}</Text>
                           <View style={styles.exerciseStats}>
                             {opt.weight && renderStyledStat(opt.weight, 'KG')}
                             {opt.reps && (
@@ -502,7 +514,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
                 )}
               </View>
             </ExercisesWrapper>
-          </View>
+          </View>}
         </View>
 
         {/* 3. FOOTER */}
@@ -520,7 +532,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   photoSection: {
-    height: PHOTO_SECTION_HEIGHT,
+    flex: PHOTO_SECTION_FLEX,
     width: '100%',
     backgroundColor: '#111',
   },
@@ -639,7 +651,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   statsSection: {
-    flex: 1,
+    flex: STATS_SECTION_FLEX,
     paddingHorizontal: 20,
     justifyContent: 'center',
     gap: 10,
@@ -774,7 +786,7 @@ const styles = StyleSheet.create({
     gap: 0,
   },
   footerSection: {
-    height: FOOTER_SECTION_HEIGHT,
+    flex: FOOTER_SECTION_FLEX,
     borderTopWidth: 1,
     paddingHorizontal: 20,
     justifyContent: 'center',

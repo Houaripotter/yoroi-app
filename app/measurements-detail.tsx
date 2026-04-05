@@ -11,6 +11,7 @@ import {
   ScrollView,
   TouchableOpacity,
   useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -344,7 +345,7 @@ export default function MeasurementsDetailScreen() {
       </ScrollView>
 
       {/* 🔒 SÉCURITÉ: Flou quand l'app est en background */}
-      {isBlurred && (
+      {isBlurred && Platform.OS === 'ios' && (
         <BlurView
           style={StyleSheet.absoluteFill}
           intensity={100}

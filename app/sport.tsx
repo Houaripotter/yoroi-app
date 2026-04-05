@@ -11,6 +11,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   useWindowDimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -28,7 +29,6 @@ import { RewardOverlay } from '@/components/RewardOverlay';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import logger from '@/lib/security/logger';
-import { SamuraiLoader } from '@/components/SamuraiLoader';
 
 interface RoutineBlock {
   time: string;
@@ -166,6 +166,12 @@ export default function SportScreen() {
 
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadData(); }, []);
+
+  // Masquer le loader après 2 secondes maximum
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(t);
+  }, []);
 
   // Calcul du résumé hebdomadaire (doit être avant le return conditionnel)
   const weeklySummary = useMemo(() => {
@@ -388,7 +394,7 @@ export default function SportScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: '#E8EDF2', justifyContent: 'center', alignItems: 'center' }}>
-        <SamuraiLoader />
+        <ActivityIndicator size="large" color={themeColors.accent} />
       </View>
     );
   }

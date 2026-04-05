@@ -554,6 +554,11 @@ const _performInit = async () => {
   await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_health_date ON health_data(date);`);
   await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_health_type ON health_data(type);`);
 
+  // Index sur trainings pour améliorer les performances des requêtes fréquentes
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_trainings_date ON trainings(date);`);
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_trainings_sport ON trainings(sport);`);
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_trainings_club_id ON trainings(club_id);`);
+
   // Migration: Ajouter label sur weekly_plan
   try {
     await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN label TEXT;`);
@@ -670,6 +675,12 @@ export interface Club {
   created_at?: string;
 }
 
+export interface ExerciseSet {
+  weight: number;
+  reps: number;
+  type?: 'normal' | 'warmup' | 'dropset' | 'superset';
+}
+
 export interface Exercise {
   name: string;
   sets: number;
@@ -681,6 +692,8 @@ export interface Exercise {
   calories?: number;
   pace?: string;
   stairs?: number;
+  setsData?: ExerciseSet[]; // Séries détaillées (poids/reps par série)
+  notes?: string;           // Notes libres pour cet exercice
 }
 
 export interface CombatRound {
@@ -692,6 +705,8 @@ export interface CombatRound {
   methodsTaken?: string[];   // Finitions / soumissions reçues (liste)
   submissionsGiven?: number;
   submissionsTaken?: number;
+  pointsFor?: number;        // Points marqués dans ce round
+  pointsAgainst?: number;    // Points concédés dans ce round
   notes?: string;
 }
 
@@ -1066,7 +1081,7 @@ export const getTrainings = async (days?: number): Promise<Training[]> => {
        LEFT JOIN clubs c ON t.club_id = c.id
        ORDER BY t.date DESC, t.start_time ASC`;
 
-  const results = await database.getAllAsync<Training & { exercises?: string; is_outdoor?: number }>(query, days ? [`-${days} days`] : []);
+  const results = await database.getAllAsync<Training & { exercises?: string; combat_rounds?: string; is_outdoor?: number }>(query, days ? [`-${days} days`] : []);
   return results.map(r => {
     let exercises;
     if (r.exercises) {
@@ -1076,9 +1091,18 @@ export const getTrainings = async (days?: number): Promise<Training[]> => {
         exercises = undefined;
       }
     }
-    return { 
-      ...r, 
-      exercises, 
+    let combat_rounds;
+    if (r.combat_rounds) {
+      try {
+        combat_rounds = JSON.parse(r.combat_rounds as string);
+      } catch {
+        combat_rounds = undefined;
+      }
+    }
+    return {
+      ...r,
+      exercises,
+      combat_rounds,
       is_outdoor: r.is_outdoor === 1,
       pente: r.pente,
       speed: r.speed,
@@ -1109,7 +1133,7 @@ export const getExistingHealthkitUUIDs = async (): Promise<Set<string>> => {
 
 export const getTrainingsByMonth = async (year: number, month: number): Promise<Training[]> => {
   const database = await openDatabase();
-  const results = await database.getAllAsync<Training & { exercises?: string; is_outdoor?: number }>(
+  const results = await database.getAllAsync<Training & { exercises?: string; combat_rounds?: string; is_outdoor?: number }>(
     `SELECT t.*, t.duration_minutes as duration, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
      FROM trainings t
      LEFT JOIN clubs c ON t.club_id = c.id
@@ -1126,9 +1150,18 @@ export const getTrainingsByMonth = async (year: number, month: number): Promise<
         exercises = undefined;
       }
     }
-    return { 
-      ...r, 
-      exercises, 
+    let combat_rounds;
+    if (r.combat_rounds) {
+      try {
+        combat_rounds = JSON.parse(r.combat_rounds as string);
+      } catch {
+        combat_rounds = undefined;
+      }
+    }
+    return {
+      ...r,
+      exercises,
+      combat_rounds,
       is_outdoor: r.is_outdoor === 1,
       pente: r.pente,
       speed: r.speed,
@@ -1182,10 +1215,7 @@ export const deleteTraining = async (id: number): Promise<void> => {
     'SELECT * FROM trainings WHERE id = ?', [id]
   );
 
-  // Supprimer de trainings
-  await database.runAsync('DELETE FROM trainings WHERE id = ?', [id]);
-
-  // Sauvegarder dans la corbeille (apres suppression pour ne pas bloquer)
+  // Sauvegarder dans la corbeille AVANT de supprimer (évite la perte de données)
   if (row) {
     try {
       await ensureTrashTable(database);
@@ -1195,8 +1225,12 @@ export const deleteTraining = async (id: number): Promise<void> => {
       );
     } catch (e) {
       logger.error('Erreur mise en corbeille:', e);
+      // Ne pas bloquer la suppression si la mise en corbeille échoue
     }
   }
+
+  // Supprimer de trainings (après la mise en corbeille)
+  await database.runAsync('DELETE FROM trainings WHERE id = ?', [id]);
 };
 
 // ============================================

@@ -13,6 +13,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   useWindowDimensions,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useWatch } from '@/lib/WatchConnectivityProvider';
@@ -31,7 +32,6 @@ import { Header } from '@/components/ui/Header';
 // 🔒 SÉCURITÉ: Protection contre les screenshots
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import logger from '@/lib/security/logger';
-import { SamuraiLoader } from '@/components/SamuraiLoader';
 
 const PRIVACY_CHALLENGE_KEY = '@yoroi_privacy_challenge_shown';
 
@@ -40,7 +40,7 @@ export default function PhotosScreen() {
   const photoSize = (screenWidth - 64) / 3;
   const styles = useMemo(() => createStyles(photoSize), [photoSize]);
   const { colors: themeColors, isDark } = useTheme();
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
 
   // 🔒 SÉCURITÉ: Protection contre les screenshots
   const { isProtected, isBlurred: isScreenshotBlurred, screenshotDetected } = useSensitiveScreen();
@@ -92,14 +92,14 @@ export default function PhotosScreen() {
 
   const handleDeletePhoto = useCallback((id: string) => {
     showPopup(
-      'Supprimer la photo',
-      'Es-tu sur de vouloir supprimer cette photo ?',
+      t('photos.deletePhotoTitle'),
+      t('photos.deletePhotoConfirm'),
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: () => doDeletePhoto(id) },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.delete'), style: 'destructive', onPress: () => doDeletePhoto(id) },
       ]
     );
-  }, [showPopup, doDeletePhoto]);
+  }, [showPopup, doDeletePhoto, t]);
 
   // Vérifier si le Privacy Challenge a déjà été montré
   const checkPrivacyChallenge = useCallback(async () => {
@@ -123,6 +123,18 @@ export default function PhotosScreen() {
     checkPrivacyChallenge();
   }, []);
 
+  // Masquer le loader après 2 secondes maximum
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Listener pour les changements de données YOROI
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', fetchPhotos);
+    return () => sub.remove();
+  }, []);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchPhotos();
@@ -134,8 +146,8 @@ export default function PhotosScreen() {
 
     if (cameraStatus.status !== 'granted' || mediaStatus.status !== 'granted') {
       showPopup(
-        'Permissions requises',
-        'J\'ai besoin d\'accéder à ta caméra et ta galerie pour cette fonctionnalité.'
+        t('photos.permissionsRequired'),
+        t('photos.permissionsMessage')
       );
       return false;
     }
@@ -240,19 +252,19 @@ export default function PhotosScreen() {
 
   const showPhotoOptions = () => {
     showPopup(
-      'Ajouter une photo',
-      'Choisissez une option',
+      t('photos.addPhotoTitle'),
+      t('photos.chooseOption'),
       [
-        { text: 'Camera', style: 'primary', onPress: takePhoto },
-        { text: 'Galerie', style: 'default', onPress: pickImage },
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('photos.camera'), style: 'primary', onPress: takePhoto },
+        { text: t('photos.gallery'), style: 'default', onPress: pickImage },
+        { text: t('common.cancel'), style: 'cancel' },
       ]
     );
   };
 
   const openComparison = () => {
     if (photos.length < 2) {
-      showPopup('Pas assez de photos', 'Ajoute au moins 2 photos pour utiliser la comparaison');
+      showPopup(t('photos.notEnoughPhotos'), t('photos.need2Photos'));
       return;
     }
     setComparisonVisible(true);
@@ -261,7 +273,7 @@ export default function PhotosScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.centered, { backgroundColor: themeColors.background }]}>
-        <SamuraiLoader message="Chargement des photos..." />
+        <ActivityIndicator size="large" color={themeColors.accent} />
       </View>
     );
   }
@@ -269,7 +281,7 @@ export default function PhotosScreen() {
   return (
     <ScreenWrapper noPadding>
       <Header
-        title="Photos de Progression"
+        title={t('photos.title')}
         showBack
         rightElement={
           photos.length >= 2 ? (
@@ -280,7 +292,7 @@ export default function PhotosScreen() {
             >
               <GitCompare size={18} color={themeColors.background} strokeWidth={2.5} />
               <Text style={[styles.compareButtonText, { color: themeColors.background }]}>
-                Comparer
+                {t('photos.compare')}
               </Text>
             </TouchableOpacity>
           ) : null
@@ -291,7 +303,7 @@ export default function PhotosScreen() {
       {screenshotDetected && (
         <View style={styles.screenshotWarning}>
           <Text style={styles.screenshotWarningText}>
-            Screenshot détecté - Tes photos sont sensibles
+            {t('photos.screenshotDetected')}
           </Text>
         </View>
       )}
@@ -316,10 +328,10 @@ export default function PhotosScreen() {
           </View>
           <View style={styles.securityTextContainer}>
             <Text style={[styles.securityTitle, { color: isDark ? '#4ADE80' : '#27AE60' }]}>
-              Coffre-fort 100% Local
+              {t('photos.secureVault')}
             </Text>
             <Text style={[styles.securityText, { color: isDark ? '#86EFAC' : '#1E8449' }]}>
-              Toutes tes photos restent sur ton appareil. Jamais dans le cloud. Jamais.
+              {t('photos.secureVaultDesc')}
             </Text>
           </View>
         </View>
@@ -328,10 +340,10 @@ export default function PhotosScreen() {
         {photos.length > 0 && (
           <View style={[styles.statsCard, { backgroundColor: themeColors.card }]}>
             <View style={styles.statsHeader}>
-              <Text style={[styles.statsTitle, { color: themeColors.textPrimary }]}>Progression</Text>
+              <Text style={[styles.statsTitle, { color: themeColors.textPrimary }]}>{t('photos.progression')}</Text>
               <View style={[styles.photoCountBadge, { backgroundColor: themeColors.gold + '20' }]}>
                 <Text style={[styles.photoCountBadgeText, { color: themeColors.gold }]}>
-                  {photos.length} photo{photos.length > 1 ? 's' : ''}
+                  {photos.length} {t('photos.photo', { count: photos.length })}
                 </Text>
               </View>
             </View>
@@ -348,13 +360,13 @@ export default function PhotosScreen() {
                     const lastDate = new Date(photos[0].date);
                     const diffTime = Math.abs(lastDate.getTime() - firstDate.getTime());
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if (diffDays === 0) return 'Aujourd\'hui';
-                    if (diffDays < 7) return `${diffDays} jours`;
-                    if (diffDays < 30) return `${Math.floor(diffDays / 7)} semaines`;
-                    return `${Math.floor(diffDays / 30)} mois`;
+                    if (diffDays === 0) return t('common.today');
+                    if (diffDays < 7) return `${diffDays} ${t('photos.days')}`;
+                    if (diffDays < 30) return `${Math.floor(diffDays / 7)} ${t('photos.weeks')}`;
+                    return `${Math.floor(diffDays / 30)} ${t('photos.months')}`;
                   })()}
                 </Text>
-                <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Suivi</Text>
+                <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>{t('photos.tracking')}</Text>
               </View>
 
               {/* Weight Progress */}
@@ -377,7 +389,7 @@ export default function PhotosScreen() {
                       <Text style={[styles.statValue, { color: weightDiff <= 0 ? '#10B981' : '#EF4444' }]}>
                         {weightDiff > 0 ? '+' : ''}{weightDiff.toFixed(1)} kg
                       </Text>
-                      <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Évolution</Text>
+                      <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>{t('photos.evolution')}</Text>
                     </View>
                   );
                 }
@@ -389,7 +401,7 @@ export default function PhotosScreen() {
                     <Text style={[styles.statValue, { color: themeColors.textPrimary }]}>
                       {photosWithWeight.length}
                     </Text>
-                    <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Avec poids</Text>
+                    <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>{t('photos.withWeight')}</Text>
                   </View>
                 );
               })()}
@@ -401,13 +413,13 @@ export default function PhotosScreen() {
                 </View>
                 <Text style={[styles.statValue, { color: themeColors.textPrimary }]}>
                   {(() => {
-                    if (photos.length >= 50) return 'Légende';
-                    if (photos.length >= 25) return 'Expert';
-                    if (photos.length >= 10) return 'Motivé';
-                    return 'Débutant';
+                    if (photos.length >= 50) return t('photos.legend');
+                    if (photos.length >= 25) return t('photos.expert');
+                    if (photos.length >= 10) return t('photos.motivated');
+                    return t('photos.beginner');
                   })()}
                 </Text>
-                <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Niveau</Text>
+                <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>{t('photos.level')}</Text>
               </View>
             </View>
           </View>
@@ -427,7 +439,7 @@ export default function PhotosScreen() {
             ) : (
               <>
                 <Camera size={28} color="#FFFFFF" strokeWidth={2.5} />
-                <Text style={styles.actionButtonText}>Caméra</Text>
+                <Text style={styles.actionButtonText}>{t('photos.camera')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -444,7 +456,7 @@ export default function PhotosScreen() {
             ) : (
               <>
                 <ImageIcon size={28} color="#FFFFFF" strokeWidth={2.5} />
-                <Text style={styles.actionButtonText}>Galerie</Text>
+                <Text style={styles.actionButtonText}>{t('photos.gallery')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -460,12 +472,12 @@ export default function PhotosScreen() {
             {isBlurred ? (
               <>
                 <Eye size={20} color="#FFFFFF" strokeWidth={2.5} />
-                <Text style={styles.blurButtonText}>Afficher</Text>
+                <Text style={styles.blurButtonText}>{t('photos.show')}</Text>
               </>
             ) : (
               <>
                 <EyeOff size={20} color={themeColors.textSecondary} strokeWidth={2.5} />
-                <Text style={[styles.blurButtonText, { color: themeColors.textSecondary }]}>Flouter</Text>
+                <Text style={[styles.blurButtonText, { color: themeColors.textSecondary }]}>{t('photos.blur')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -478,10 +490,10 @@ export default function PhotosScreen() {
               <Camera size={56} color={themeColors.accent} strokeWidth={2.5} />
             </View>
             <Text style={[styles.emptyStateTitle, { color: themeColors.textPrimary }]}>
-              Commence Ton Voyage
+              {t('photos.startJourney')}
             </Text>
             <Text style={[styles.emptyStateSubtitle, { color: themeColors.textSecondary }]}>
-              Capture ta transformation physique et deviens une légende
+              {t('photos.captureTransformation')}
             </Text>
 
             {/* Benefits Grid */}
@@ -491,10 +503,10 @@ export default function PhotosScreen() {
                   <TrendingDown size={24} color="#10B981" strokeWidth={2.5} />
                 </View>
                 <Text style={[styles.benefitTitle, { color: themeColors.textPrimary }]}>
-                  Suivi Poids
+                  {t('photos.weightTracking')}
                 </Text>
                 <Text style={[styles.benefitText, { color: themeColors.textSecondary }]}>
-                  Visualise ton évolution dans le temps
+                  {t('photos.visualizeEvolution')}
                 </Text>
               </View>
 
@@ -503,10 +515,10 @@ export default function PhotosScreen() {
                   <Calendar size={24} color={themeColors.accent} strokeWidth={2.5} />
                 </View>
                 <Text style={[styles.benefitTitle, { color: themeColors.textPrimary }]}>
-                  Timeline
+                  {t('photos.timeline')}
                 </Text>
                 <Text style={[styles.benefitText, { color: themeColors.textSecondary }]}>
-                  Chronologie complète de ta progression
+                  {t('photos.completeTimeline')}
                 </Text>
               </View>
 
@@ -515,10 +527,10 @@ export default function PhotosScreen() {
                   <Award size={24} color={themeColors.gold} strokeWidth={2.5} />
                 </View>
                 <Text style={[styles.benefitTitle, { color: themeColors.textPrimary }]}>
-                  Achievements
+                  {t('photos.achievements')}
                 </Text>
                 <Text style={[styles.benefitText, { color: themeColors.textSecondary }]}>
-                  Débloque des jalons de progression
+                  {t('photos.unlockMilestones')}
                 </Text>
               </View>
 
@@ -527,17 +539,17 @@ export default function PhotosScreen() {
                   <Shield size={24} color="#27AE60" strokeWidth={2.5} />
                 </View>
                 <Text style={[styles.benefitTitle, { color: themeColors.textPrimary }]}>
-                  100% Privé
+                  {t('photos.private')}
                 </Text>
                 <Text style={[styles.benefitText, { color: themeColors.textSecondary }]}>
-                  Tes photos ne quittent jamais ton appareil
+                  {t('photos.neverLeaveDevice')}
                 </Text>
               </View>
             </View>
 
             <View style={styles.emptyStateCTA}>
               <Text style={[styles.emptyStateCTAText, { color: themeColors.textMuted }]}>
-                Appuie sur les boutons ci-dessus pour commencer
+                {t('photos.pressButtonsBelow')}
               </Text>
             </View>
           </View>
@@ -628,17 +640,17 @@ export default function PhotosScreen() {
           <View style={[styles.modalContent, { backgroundColor: themeColors.surface }]}>
             <View style={styles.modalHeader}>
               <Shield size={32} color="#27AE60" strokeWidth={2.5} />
-              <Text style={[styles.modalTitle, { color: themeColors.textPrimary }]}>Test de Confiance</Text>
+              <Text style={[styles.modalTitle, { color: themeColors.textPrimary }]}>{t('photos.trustTest')}</Text>
             </View>
             <Text style={[styles.modalText, { color: themeColors.textSecondary }]}>
-              Passe en mode avion et essaie d'ajouter une photo. Tu verras que ça marche, car tout reste sur ton téléphone. Aucune donnée ne part dans le cloud.
+              {t('photos.trustTestDesc')}
             </Text>
             <TouchableOpacity
               style={[styles.modalButton, { backgroundColor: themeColors.primary }]}
               onPress={() => setPrivacyModalVisible(false)}
               activeOpacity={0.8}
             >
-              <Text style={styles.modalButtonText}>Compris</Text>
+              <Text style={styles.modalButtonText}>{t('photos.understood')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -657,7 +669,7 @@ export default function PhotosScreen() {
         >
           <View style={[styles.modalContent, { backgroundColor: themeColors.card }]}>
             <Text style={[styles.modalTitle, { color: themeColors.textPrimary }]}>
-              Poids de la photo
+              {t('photos.photoWeight')}
             </Text>
 
             {/* Toggle selection */}
@@ -684,7 +696,7 @@ export default function PhotosScreen() {
                   {useCurrentWeight && <View style={[styles.weightToggleRadioInner, { backgroundColor: themeColors.primary }]} />}
                 </View>
                 <Text style={[styles.weightToggleText, { color: useCurrentWeight ? themeColors.primary : themeColors.textSecondary }]}>
-                  Utiliser mon poids actuel
+                  {t('photos.useCurrentWeight')}
                 </Text>
               </TouchableOpacity>
 
@@ -707,7 +719,7 @@ export default function PhotosScreen() {
                   {!useCurrentWeight && <View style={[styles.weightToggleRadioInner, { backgroundColor: themeColors.primary }]} />}
                 </View>
                 <Text style={[styles.weightToggleText, { color: !useCurrentWeight ? themeColors.primary : themeColors.textSecondary }]}>
-                  Entrer manuellement
+                  {t('photos.enterManually')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -720,7 +732,7 @@ export default function PhotosScreen() {
                 borderColor: weightInput ? themeColors.gold : themeColors.border,
                 opacity: useCurrentWeight ? 0.5 : 1,
               }]}
-              placeholder={useCurrentWeight ? `Poids actuel: ${weightInput || '--'} kg` : "Ex: 75.5"}
+              placeholder={useCurrentWeight ? `${t('photos.currentWeight')}: ${weightInput || '--'} kg` : "Ex: 75.5"}
               placeholderTextColor={themeColors.textMuted}
               value={weightInput}
               onChangeText={(text) => {
@@ -744,7 +756,7 @@ export default function PhotosScreen() {
                 activeOpacity={0.8}
               >
                 <Text style={[styles.modalButtonTextSecondary, { color: themeColors.textSecondary }]}>
-                  Annuler
+                  {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
 
@@ -754,7 +766,7 @@ export default function PhotosScreen() {
                 activeOpacity={0.8}
               >
                 <Text style={[styles.modalButtonText, { color: themeColors.background }]}>
-                  Enregistrer
+                  {t('common.save')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -763,7 +775,7 @@ export default function PhotosScreen() {
       </Modal>
 
       {/* 🔒 SÉCURITÉ: Flou quand l'app est en background */}
-      {isScreenshotBlurred && (
+      {isScreenshotBlurred && Platform.OS === 'ios' && (
         <BlurView
           style={StyleSheet.absoluteFill}
           intensity={100}

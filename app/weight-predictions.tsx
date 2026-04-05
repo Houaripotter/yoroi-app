@@ -105,7 +105,7 @@ export default function WeightPredictionsScreen() {
             <Text style={[styles.targetText, { color: colors.textSecondary }]}>
               {t('weightPredictions.targetMessage', {
                 targetWeight: targetWeight,
-                weeks: Math.ceil((currentWeight - targetWeight) / weeklyLoss)
+                weeks: weeklyLoss > 0 ? Math.ceil((currentWeight - targetWeight) / weeklyLoss) : Infinity
               })}
             </Text>
           </View>

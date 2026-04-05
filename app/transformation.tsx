@@ -8,6 +8,7 @@ import {
   Image,
   ActivityIndicator,
   useWindowDimensions,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
@@ -27,7 +28,7 @@ import logger from '@/lib/security/logger';
 
 export default function TransformationScreen() {
   const { colors } = useTheme();
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
@@ -64,6 +65,12 @@ export default function TransformationScreen() {
 
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadPhotos(); }, []);
+
+  // Listener pour les changements de données YOROI
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadPhotos);
+    return () => sub.remove();
+  }, []);
 
   // Formater la date
   const formatDate = (dateString: string) => {
@@ -105,7 +112,7 @@ export default function TransformationScreen() {
         setSelectedAfter(photo);
         setStep('compare');
       } else {
-        showPopup('Photo identique', 'Choisis une photo differente pour la comparaison', [{ text: 'OK', style: 'primary' }]);
+        showPopup(t('transformation.identicalPhoto'), t('transformation.chooseAnotherPhoto'), [{ text: t('common.ok'), style: 'primary' }]);
       }
     }
   };
@@ -120,16 +127,16 @@ export default function TransformationScreen() {
   if (!isLoading && photos.length < 2) {
     return (
       <ScreenWrapper>
-        <Header title="Ma Transformation" showBack />
+        <Header title={t('transformation.title')} showBack />
         <View style={styles.emptyContainer}>
           <View style={[styles.emptyIconContainer, { backgroundColor: `${colors.accent}15` }]}>
             <Camera size={48} color={colors.accent} strokeWidth={2} />
           </View>
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-            Commence ta transformation
+            {t('transformation.startYourTransformation')}
           </Text>
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            Ajoute au moins 2 photos pour visualiser ta progression et te motiver !
+            {t('transformation.emptyMessage')}
           </Text>
 
           {/* Bénéfices */}
@@ -139,7 +146,7 @@ export default function TransformationScreen() {
                 <Zap size={20} color={colors.gold} />
               </View>
               <Text style={[styles.benefitText, { color: colors.textSecondary }]}>
-                Compare avant/après
+                {t('transformation.compareBeforeAfter')}
               </Text>
             </View>
             <View style={styles.benefitItem}>
@@ -147,7 +154,7 @@ export default function TransformationScreen() {
                 <Target size={20} color={colors.success} />
               </View>
               <Text style={[styles.benefitText, { color: colors.textSecondary }]}>
-                Suis ta progression
+                {t('transformation.trackProgress')}
               </Text>
             </View>
             <View style={styles.benefitItem}>
@@ -155,7 +162,7 @@ export default function TransformationScreen() {
                 <Award size={20} color={colors.accent} />
               </View>
               <Text style={[styles.benefitText, { color: colors.textSecondary }]}>
-                Partage tes résultats
+                {t('transformation.shareResults')}
               </Text>
             </View>
           </View>
@@ -167,7 +174,7 @@ export default function TransformationScreen() {
           >
             <Camera size={20} color={colors.textOnGold} />
             <Text style={[styles.emptyButtonText, { color: colors.textOnGold }]}>
-              Ajouter mes photos
+              {t('transformation.addPhotos')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -179,11 +186,11 @@ export default function TransformationScreen() {
   if (isLoading) {
     return (
       <ScreenWrapper>
-        <Header title="Ma Transformation" showBack />
+        <Header title={t('transformation.title')} showBack />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.gold} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            Chargement...
+            {t('common.loading')}
           </Text>
         </View>
       </ScreenWrapper>
@@ -193,7 +200,7 @@ export default function TransformationScreen() {
   return (
     <ScreenWrapper noPadding>
       <Header
-        title="Ma Transformation"
+        title={t('transformation.title')}
         showBack
         rightElement={
           step === 'compare' ? (
@@ -236,7 +243,7 @@ export default function TransformationScreen() {
             {/* Stats detaillees */}
             <View style={[styles.statsCard, { backgroundColor: colors.card }]}>
               <Text style={[styles.statsTitle, { color: colors.textPrimary }]}>
-                Progression
+                {t('transformation.progression')}
               </Text>
 
               <View style={styles.statsGrid}>
@@ -250,7 +257,7 @@ export default function TransformationScreen() {
                         <TrendingUp size={20} color={colors.danger} />
                       )}
                       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                        Poids
+                        {t('transformation.weight')}
                       </Text>
                     </View>
                     <Text
@@ -262,7 +269,7 @@ export default function TransformationScreen() {
                       {weightDifference > 0 ? '+' : ''}{weightDifference.toFixed(1)} kg
                     </Text>
                     {weightDifference < 0 && (
-                      <Text style={styles.statEmoji}>Bravo !</Text>
+                      <Text style={styles.statEmoji}>{t('transformation.excellent')}</Text>
                     )}
                   </View>
                 )}
@@ -273,14 +280,14 @@ export default function TransformationScreen() {
                     <View style={styles.statIconRow}>
                       <Calendar size={20} color={colors.gold} />
                       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                        Durée
+                        {t('transformation.duration')}
                       </Text>
                     </View>
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                      {daysDifference} jours
+                      {t('transformation.daysPeriod', { days: daysDifference })}
                     </Text>
                     <Text style={[styles.statSub, { color: colors.textMuted }]}>
-                      {Math.floor(daysDifference / 7)} semaines
+                      {t('transformation.weeksCount', { weeks: Math.floor(daysDifference / 7) })}
                     </Text>
                   </View>
                 )}
@@ -290,7 +297,7 @@ export default function TransformationScreen() {
               {weightDifference !== null && weightDifference < 0 && (
                 <View style={[styles.motivationBanner, { backgroundColor: colors.successMuted }]}>
                   <Text style={[styles.motivationText, { color: colors.success }]}>
-                    Tu as perdu {Math.abs(weightDifference).toFixed(1)} kg en {daysDifference} jours !
+                    {t('transformation.motivationMessage', { loss: Math.abs(weightDifference).toFixed(1), days: daysDifference })}
                   </Text>
                 </View>
               )}
@@ -299,7 +306,7 @@ export default function TransformationScreen() {
             {/* Selection rapide */}
             <View style={styles.quickSelectSection}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Changer de photos
+                {t('transformation.changePhotos')}
               </Text>
               <View style={styles.quickSelectRow}>
                 {/* Avant */}
@@ -318,7 +325,7 @@ export default function TransformationScreen() {
                     resizeMode="cover"
                   />
                   <View style={[styles.quickSelectBadge, { backgroundColor: colors.danger }]}>
-                    <Text style={styles.quickSelectBadgeText}>AVANT</Text>
+                    <Text style={styles.quickSelectBadgeText}>{t('transformation.before')}</Text>
                   </View>
                   <Text style={[styles.quickSelectDate, { color: colors.textSecondary }]}>
                     {formatDateShort(selectedBefore.date)}
@@ -345,7 +352,7 @@ export default function TransformationScreen() {
                     resizeMode="cover"
                   />
                   <View style={[styles.quickSelectBadge, { backgroundColor: colors.success }]}>
-                    <Text style={styles.quickSelectBadgeText}>APRES</Text>
+                    <Text style={styles.quickSelectBadgeText}>{t('transformation.after')}</Text>
                   </View>
                   <Text style={[styles.quickSelectDate, { color: colors.textSecondary }]}>
                     {formatDateShort(selectedAfter.date)}
@@ -361,14 +368,14 @@ export default function TransformationScreen() {
           <View style={styles.selectionSection}>
             <View style={styles.selectionHeader}>
               <View style={[styles.selectionBadge, { backgroundColor: '#EF444420' }]}>
-                <Text style={[styles.selectionBadgeText, { color: '#EF4444' }]}>ÉTAPE 1/2</Text>
+                <Text style={[styles.selectionBadgeText, { color: '#EF4444' }]}>{t('transformation.step1')}</Text>
               </View>
             </View>
             <Text style={[styles.selectionTitle, { color: colors.textPrimary }]}>
-              Choisis ta photo AVANT
+              {t('transformation.selectPhotoBefore')}
             </Text>
             <Text style={[styles.selectionSubtitle, { color: colors.textSecondary }]}>
-              Sélectionne la photo de départ de ta transformation
+              {t('transformation.selectStartPhoto')}
             </Text>
 
             <View style={styles.photoGrid}>
@@ -415,7 +422,7 @@ export default function TransformationScreen() {
               />
               <View style={styles.selectedPreviewInfo}>
                 <View style={[styles.selectedBadge, { backgroundColor: colors.danger }]}>
-                  <Text style={styles.selectedBadgeText}>AVANT</Text>
+                  <Text style={styles.selectedBadgeText}>{t('transformation.before')}</Text>
                 </View>
                 <Text style={[styles.selectedDate, { color: colors.textSecondary }]}>
                   {formatDate(selectedBefore.date)}
@@ -435,21 +442,21 @@ export default function TransformationScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={[styles.changeButtonText, { color: colors.gold }]}>
-                  Changer
+                  {t('transformation.change')}
                 </Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.selectionHeader}>
               <View style={[styles.selectionBadge, { backgroundColor: '#10B98120' }]}>
-                <Text style={[styles.selectionBadgeText, { color: '#10B981' }]}>ÉTAPE 2/2</Text>
+                <Text style={[styles.selectionBadgeText, { color: '#10B981' }]}>{t('transformation.step2')}</Text>
               </View>
             </View>
             <Text style={[styles.selectionTitle, { color: colors.textPrimary }]}>
-              Choisis ta photo APRÈS
+              {t('transformation.selectPhotoAfter')}
             </Text>
             <Text style={[styles.selectionSubtitle, { color: colors.textSecondary }]}>
-              Sélectionne ta photo la plus récente
+              {t('transformation.selectLatestPhoto')}
             </Text>
 
             <View style={styles.photoGrid}>

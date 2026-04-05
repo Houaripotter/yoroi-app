@@ -663,10 +663,10 @@ export default function PlanningScreen() {
       setSavedExternalEventIds(prev => new Set(prev).add(event.id));
       await AsyncStorage.setItem(SAVED_EVENTS_KEY, JSON.stringify(newSavedEvents));
 
-      showPopup('Ajoute', `"${event.title.substring(0, 30)}..." ajoute a ton planning`);
+      showPopup(t('planning.sessionAddedTitle'), t('planning.sessionAdded', { event: `"${event.title.substring(0, 30)}..."` }));
     } catch (error) {
       logger.error('Error adding external event:', error);
-      showPopup('Erreur', 'Impossible d\'ajouter l\'evenement');
+      showPopup(t('planning.error'), t('planning.cannotAddEvent'));
     }
   }, [savedExternalEvents, showPopup]);
 
@@ -921,7 +921,7 @@ export default function PlanningScreen() {
       await loadData();
     } catch (error) {
       logger.error('Erreur suppression séance:', error);
-      showPopup('Erreur', 'Impossible de supprimer la séance');
+      showPopup(t('planning.error'), t('planning.cannotDeleteSession'));
     }
   };
 
@@ -951,12 +951,13 @@ export default function PlanningScreen() {
     const dateStr = targetDate.toISOString().split('T')[0];
 
     const isNowRest = await toggleRestDay(dateStr);
+    const dayDisplay = dayId.charAt(0).toUpperCase() + dayId.slice(1);
     showPopup(
-      isNowRest ? 'Jour de repos' : 'Repos annulé',
+      isNowRest ? t('planning.restDay') : t('planning.restCancelled'),
       isNowRest
-        ? `${dayId.charAt(0).toUpperCase() + dayId.slice(1)} marqué comme jour de repos`
-        : `${dayId.charAt(0).toUpperCase() + dayId.slice(1)} n'est plus un jour de repos`,
-      [{ text: 'OK', style: 'primary' }]
+        ? t('planning.markedAsRest', { day: dayDisplay })
+        : t('planning.noLongerRest', { day: dayDisplay }),
+      [{ text: t('planning.ok'), style: 'primary' }]
     );
   };
 
@@ -1133,7 +1134,7 @@ export default function PlanningScreen() {
               borderColor: 'rgba(255,255,255,0.4)',
               borderWidth: 1,
             }]}
-            onPress={() => router.push('/trash' as any)}
+            onPress={() => showPopup(t('planning.trash'), t('planning.trashDescription'), [{ text: t('planning.ok'), style: 'primary' }])}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
@@ -1182,7 +1183,7 @@ export default function PlanningScreen() {
               <View style={[styles.monthlyStatsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
                 <View style={styles.monthlyStatsHeader}>
                   <TrendingUp size={16} color={colors.accentText} />
-                  <Text style={[styles.monthlyStatsTitle, { color: colors.textPrimary }]}>Ce mois</Text>
+                  <Text style={[styles.monthlyStatsTitle, { color: colors.textPrimary }]}>{t('planning.thisMonth')}</Text>
                 </View>
                 <ScrollView
                   horizontal
@@ -1304,16 +1305,16 @@ export default function PlanningScreen() {
                     <Sun size={32} color="#22C55E" strokeWidth={2} />
                   </View>
                   <View style={styles.outdoorInfo}>
-                    <Text style={[styles.outdoorTitle, { color: '#22C55E' }]}>Plein air</Text>
-                    <Text style={[styles.outdoorSubtitle, { color: colors.textSecondary }]}>Entraînements en extérieur</Text>
+                    <Text style={[styles.outdoorTitle, { color: '#22C55E' }]}>{t('planning.outdoor')}</Text>
+                    <Text style={[styles.outdoorSubtitle, { color: colors.textSecondary }]}>{t('planning.outdoorTraining')}</Text>
                   </View>
                   <View style={styles.outdoorStats}>
                     <Text style={[styles.outdoorStatValue, { color: '#22C55E' }]}>{outdoorStats.thisMonth}</Text>
-                    <Text style={[styles.outdoorStatLabel, { color: colors.textMuted }]}>ce mois</Text>
+                    <Text style={[styles.outdoorStatLabel, { color: colors.textMuted }]}>{t('planning.thisMonth')}</Text>
                   </View>
                 </View>
                 <View style={[styles.outdoorTotal, { borderTopColor: '#22C55E20' }]}>
-                  <Text style={[styles.outdoorTotalLabel, { color: colors.textMuted }]}>Total entraînements plein air</Text>
+                  <Text style={[styles.outdoorTotalLabel, { color: colors.textMuted }]}>{t('planning.totalOutdoor')}</Text>
                   <Text style={[styles.outdoorTotalValue, { color: '#22C55E' }]}>{outdoorStats.total}</Text>
                 </View>
               </View>
@@ -1366,19 +1367,19 @@ export default function PlanningScreen() {
                           onPress={() => {
                             impactAsync(ImpactFeedbackStyle.Medium);
                             showPopup(
-                              'Supprimer le club',
-                              `Supprimer "${club.name}" ? Cette action est irréversible.`,
+                              t('planning.deleteClub'),
+                              t('planning.deleteClubConfirm', { clubName: club.name }),
                               [
-                                { text: 'Annuler', style: 'cancel' },
+                                { text: t('planning.cancel'), style: 'cancel' },
                                 {
-                                  text: 'Supprimer',
+                                  text: t('planning.delete'),
                                   style: 'destructive',
                                   onPress: async () => {
                                     try {
                                       await deleteClub(club.id!);
                                       await loadData();
                                     } catch (error) {
-                                      showPopup('Erreur', 'Impossible de supprimer le club', [{ text: 'OK', style: 'primary' }]);
+                                      showPopup(t('planning.error'), t('planning.cannotDeleteClub'), [{ text: t('planning.ok'), style: 'primary' }]);
                                     }
                                   },
                                 },
@@ -1433,7 +1434,7 @@ export default function PlanningScreen() {
                       ) : (
                         <View style={styles.clubStats}>
                           <Text style={[styles.clubStatsValue, { color: club.color || colors.accent }]}>{thisMonthWorkouts}</Text>
-                          <Text style={[styles.clubStatsLabel, { color: colors.textMuted }]}>ce mois</Text>
+                          <Text style={[styles.clubStatsLabel, { color: colors.textMuted }]}>{t('planning.thisMonth')}</Text>
                         </View>
                       )}
                     </View>
@@ -1448,12 +1449,12 @@ export default function PlanningScreen() {
                 <View style={[styles.totalStatsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
                   <View style={styles.totalStatItem}>
                     <Text style={[styles.totalStatValue, { color: colors.textPrimary }]}>{workouts.length}</Text>
-                    <Text style={[styles.totalStatLabel, { color: colors.textMuted }]}>total séances</Text>
+                    <Text style={[styles.totalStatLabel, { color: colors.textMuted }]}>{t('planning.totalSessions')}</Text>
                   </View>
                   <View style={[styles.totalStatDivider, { backgroundColor: colors.border }]} />
                   <View style={styles.totalStatItem}>
                     <Text style={[styles.totalStatValue, { color: colors.textPrimary }]}>{clubs.length}</Text>
-                    <Text style={[styles.totalStatLabel, { color: colors.textMuted }]}>clubs</Text>
+                    <Text style={[styles.totalStatLabel, { color: colors.textMuted }]}>{t('planning.totalClubs')}</Text>
                   </View>
                 </View>
 
@@ -1468,7 +1469,7 @@ export default function PlanningScreen() {
                   activeOpacity={0.8}
                 >
                   <Plus size={20} color={colors.textOnGold} strokeWidth={2.5} />
-                  <Text style={[styles.addClubButtonFixedText, { color: colors.textOnGold }]}>Ajouter un club</Text>
+                  <Text style={[styles.addClubButtonFixedText, { color: colors.textOnGold }]}>{t('planning.addClub')}</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -1764,7 +1765,7 @@ export default function PlanningScreen() {
                       <View style={[styles.filterModalHeader, { backgroundColor: colors.accent }]}>
                         <View style={styles.filterModalHeaderContent}>
                           <Filter size={22} color="#FFFFFF" />
-                          <Text style={styles.filterModalTitle}>Filtres</Text>
+                          <Text style={styles.filterModalTitle}>{t('planning.filters')}</Text>
                         </View>
                         <TouchableOpacity
                           style={styles.filterModalCloseBtn}
@@ -1778,13 +1779,13 @@ export default function PlanningScreen() {
                         {/* Localisation - Cards design */}
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                           <MapPin size={14} color={colors.textMuted} />
-                          <Text style={[styles.filterModalSectionTitle, { color: colors.textMuted }]}>LOCALISATION</Text>
+                          <Text style={[styles.filterModalSectionTitle, { color: colors.textMuted }]}>{t('planning.localization')}</Text>
                         </View>
                         <View style={styles.filterLocationGrid}>
                           {([
-                            { key: 'france', icon: 'flag' as const, label: 'France', color: '#3B82F6' },
-                            { key: 'europe', icon: 'earth' as const, label: 'Europe', color: '#8B5CF6' },
-                            { key: 'monde', icon: 'globe-model' as const, label: 'Monde', color: '#10B981' },
+                            { key: 'france', icon: 'flag' as const, label: t('planning.france'), color: '#3B82F6' },
+                            { key: 'europe', icon: 'earth' as const, label: t('planning.europe'), color: '#8B5CF6' },
+                            { key: 'monde', icon: 'globe-model' as const, label: t('planning.world'), color: '#10B981' },
                           ] as const).map((loc) => (
                             <TouchableOpacity
                               key={loc.key}
@@ -1819,15 +1820,15 @@ export default function PlanningScreen() {
                         {/* Catégorie - Premium Cards */}
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 24 }}>
                           <Trophy size={14} color={colors.textMuted} />
-                          <Text style={[styles.filterModalSectionTitle, { color: colors.textMuted }]}>CATÉGORIE</Text>
+                          <Text style={[styles.filterModalSectionTitle, { color: colors.textMuted }]}>{t('planning.category')}</Text>
                         </View>
                         <View style={styles.filterCategoryGrid}>
                           {([
-                            { key: 'all', icon: 'trophy-outline', label: 'Tous', color: '#6B7280' },
-                            { key: 'combat', icon: 'karate', label: 'Combat', color: '#EF4444' },
-                            { key: 'endurance', icon: 'run-fast', label: 'Endurance', color: '#10B981' },
-                            { key: 'force', icon: 'dumbbell', label: 'Force', color: '#F59E0B' },
-                            { key: 'nature', icon: 'terrain', label: 'Nature', color: '#8B5CF6' },
+                            { key: 'all', icon: 'trophy-outline', label: t('planning.all'), color: '#6B7280' },
+                            { key: 'combat', icon: 'karate', label: t('planning.combat'), color: '#EF4444' },
+                            { key: 'endurance', icon: 'run-fast', label: t('planning.endurance'), color: '#10B981' },
+                            { key: 'force', icon: 'dumbbell', label: t('planning.force'), color: '#F59E0B' },
+                            { key: 'nature', icon: 'terrain', label: t('planning.nature'), color: '#8B5CF6' },
                           ] as const).map((cat) => (
                             <TouchableOpacity
                               key={cat.key}
@@ -2154,7 +2155,7 @@ export default function PlanningScreen() {
                           }}
                         >
                           <X size={16} color={colors.textSecondary} />
-                          <Text style={[styles.filterResetBtnText, { color: colors.textSecondary }]}>Reset</Text>
+                          <Text style={[styles.filterResetBtnText, { color: colors.textSecondary }]}>{t('planning.reset')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[styles.filterApplyBtnNew, { backgroundColor: colors.accent }]}
@@ -2164,7 +2165,7 @@ export default function PlanningScreen() {
                           }}
                         >
                           <Check size={18} color="#FFFFFF" strokeWidth={3} />
-                          <Text style={styles.filterApplyBtnText}>Appliquer ({filteredCatalogEvents.length})</Text>
+                          <Text style={styles.filterApplyBtnText}>{t('planning.apply')} ({filteredCatalogEvents.length})</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -2179,7 +2180,7 @@ export default function PlanningScreen() {
                     </Text>
                   </View>
                   <Text style={[styles.eventsResultsLabel, { color: colors.textSecondary }]}>
-                    evenement{filteredCatalogEvents.length > 1 ? 's' : ''} disponible{filteredCatalogEvents.length > 1 ? 's' : ''}
+                    {t('planning.eventsAvailable', { plural: filteredCatalogEvents.length > 1 ? 's' : '' })}
                   </Text>
                 </View>
 
@@ -2188,7 +2189,7 @@ export default function PlanningScreen() {
                   <View style={[styles.catalogEmptyState, { backgroundColor: colors.backgroundCard }]}>
                     <ActivityIndicator size="large" color={colors.accent} />
                     <Text style={[styles.catalogEmptyText, { color: colors.textMuted, marginTop: 16 }]}>
-                      Chargement des événements...
+                      {t('planning.loadingEvents')}
                     </Text>
                   </View>
                 ) : filteredCatalogEvents.length === 0 ? (
@@ -2215,7 +2216,7 @@ export default function PlanningScreen() {
                         activeOpacity={0.7}
                       >
                         <ChevronRight size={16} color={colors.accent} style={{ transform: [{ rotate: '180deg' }] }} />
-                        <Text style={[styles.eventsBackChipText, { color: colors.accent }]}>Tous les sports</Text>
+                        <Text style={[styles.eventsBackChipText, { color: colors.accent }]}>{t('planning.allSports')}</Text>
                       </TouchableOpacity>
                     )}
 
@@ -2616,7 +2617,7 @@ export default function PlanningScreen() {
                   {sessionsFilter?.name || ''}
                 </Text>
                 <Text style={[sessionsModalStyles.subtitle, { color: colors.textMuted }]}>
-                  {filteredModalSessions.length} séance{filteredModalSessions.length > 1 ? 's' : ''} ce mois
+                  {filteredModalSessions.length} séance{filteredModalSessions.length > 1 ? 's' : ''} {t('planning.thisMonth')}
                   {filteredTotalDuration > 0 ? ` - ${formatDurationShort(filteredTotalDuration)}` : ''}
                 </Text>
               </View>
@@ -2685,12 +2686,12 @@ export default function PlanningScreen() {
                           const sessionId = session.id;
                           const sessionName = club?.name || getSportName(session.sport || 'autre');
                           Alert.alert(
-                            'Supprimer',
-                            `${sessionName} - sera deplace dans la corbeille`,
+                            t('planning.deleteSession'),
+                            t('planning.deleteSessionConfirm', { sessionName: sessionName }),
                             [
-                              { text: 'Annuler', style: 'cancel' },
+                              { text: t('planning.cancel'), style: 'cancel' },
                               {
-                                text: 'Supprimer',
+                                text: t('planning.delete'),
                                 style: 'destructive',
                                 onPress: async () => {
                                   await handleDeleteSession(sessionId);
@@ -2709,7 +2710,7 @@ export default function PlanningScreen() {
               })}
               {filteredModalSessions.length === 0 && (
                 <Text style={[sessionsModalStyles.emptyText, { color: colors.textMuted }]}>
-                  Aucune séance ce mois
+                  {t('planning.noSessionsThisMonth')}
                 </Text>
               )}
             </ScrollView>
@@ -2717,7 +2718,7 @@ export default function PlanningScreen() {
               style={[sessionsModalStyles.closeButton, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
               onPress={() => setShowSessionsModal(false)}
             >
-              <Text style={[sessionsModalStyles.closeButtonText, { color: colors.textPrimary }]}>Fermer</Text>
+              <Text style={[sessionsModalStyles.closeButtonText, { color: colors.textPrimary }]}>{t('planning.close')}</Text>
             </TouchableOpacity>
           </View>
         </View>

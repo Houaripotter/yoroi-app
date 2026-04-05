@@ -10,6 +10,9 @@ import {
   useWindowDimensions,
   Keyboard,
   RefreshControl,
+  DeviceEventEmitter,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter } from 'expo-router';
@@ -37,6 +40,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { BlurView } from 'expo-blur';
 import logger from '@/lib/security/logger';
+import { useI18n } from '@/lib/I18nContext';
 
 const CHART_HEIGHT = 120;
 
@@ -233,7 +237,9 @@ const BodyIllustration = ({ measurements }: { measurements: any }) => {
           <View style={styles.ratioContainer}>
             <Text style={styles.ratioLabel}>Ratio taille/hanches</Text>
             <Text style={styles.ratioValue}>
-              {(parseFloat(measurements.waist) / parseFloat(measurements.hips)).toFixed(2)}
+              {parseFloat(measurements.hips) > 0
+                ? (parseFloat(measurements.waist) / parseFloat(measurements.hips)).toFixed(2)
+                : 'N/A'}
             </Text>
           </View>
         )}
@@ -246,6 +252,7 @@ export default function MeasurementsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   // 🔒 SÉCURITÉ: Protection contre les screenshots
@@ -287,6 +294,12 @@ export default function MeasurementsScreen() {
 
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadData(); }, []);
+
+  // Listener DeviceEventEmitter pour rafraîchissement des données
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadData);
+    return () => sub.remove();
+  }, []);
 
   // Get chart data for a specific measurement
   const getChartData = (key: keyof BodyMeasurement): number[] => {
@@ -340,6 +353,10 @@ export default function MeasurementsScreen() {
   };
 
   return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
@@ -348,6 +365,7 @@ export default function MeasurementsScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
         }
@@ -499,7 +517,7 @@ export default function MeasurementsScreen() {
       </ScrollView>
 
       {/* 🔒 SÉCURITÉ: Flou quand l'app est en background */}
-      {isBlurred && (
+      {isBlurred && Platform.OS === 'ios' && (
         <BlurView
           style={StyleSheet.absoluteFill}
           intensity={100}
@@ -509,6 +527,7 @@ export default function MeasurementsScreen() {
 
       <PopupComponent />
     </View>
+    </KeyboardAvoidingView>
   );
 }
 

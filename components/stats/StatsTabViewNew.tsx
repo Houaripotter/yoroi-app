@@ -3,8 +3,8 @@
 // Design avec tabs horizontaux en haut
 // ============================================
 
-import React, { useRef, useState, useEffect, useLayoutEffect, useMemo, useCallback, memo } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Text, ActivityIndicator, InteractionManager, useWindowDimensions } from 'react-native';
+import React, { useRef, useState, useMemo, useCallback, memo } from 'react';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Text, useWindowDimensions } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -14,7 +14,6 @@ import { CorpsTabPage } from './pages/CorpsTabPage';
 import { TrainingTabPage } from './pages/TrainingTabPage';
 import { VitalitePage } from './pages/VitalitePage';
 import { Scale, Flame, LayoutDashboard, Moon, Footprints, Activity, Dumbbell } from 'lucide-react-native';
-import { SamuraiCircleLoader } from '@/components/SamuraiLoader';
 
 // Wrappers stables pour les onglets santé et séances
 const SeancesPage = React.memo((props: any) => <VitalitePage {...props} forcedTab="seances" />);
@@ -24,34 +23,19 @@ const SignesVitauxPage = React.memo((props: any) => <VitalitePage {...props} for
 import { ScrollProvider } from '@/lib/ScrollContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
-// Memoized page wrapper - affiche SamuraiLoader à chaque activation de l'onglet
-const PageWrapper = memo(({ pageId, component: PageComponent, onNavigateToTab, isActive }: {
+// Memoized page wrapper - affiche SamuraiLoader uniquement à la PREMIÈRE activation de l'onglet
+const PageWrapper = memo(({ pageId, component: PageComponent, onNavigateToTab }: {
   pageId: string;
   component: React.FC<any>;
   onNavigateToTab: (tabId: string) => void;
   isActive: boolean;
 }) => {
-  const { screenBackground } = useTheme();
-  const [showLoader, setShowLoader] = useState(pageId !== 'dashboard');
-
-  useLayoutEffect(() => {
-    if (!isActive || pageId === 'dashboard') return;
-    setShowLoader(true);
-    const t = setTimeout(() => setShowLoader(false), 7000);
-    return () => clearTimeout(t);
-  }, [isActive, pageId]);
-
   return (
     <View style={pageStyles.page}>
       <ErrorBoundary>
         {/* @ts-ignore */}
         <PageComponent onNavigateToTab={onNavigateToTab} />
       </ErrorBoundary>
-      {showLoader && (
-        <View style={[StyleSheet.absoluteFill, { zIndex: 999 }]}>
-          <SamuraiCircleLoader duration={7000} bgColor={screenBackground} />
-        </View>
-      )}
     </View>
   );
 });

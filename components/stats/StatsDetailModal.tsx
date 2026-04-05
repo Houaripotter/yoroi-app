@@ -19,6 +19,10 @@ import { logger } from '@/lib/security/logger';
 
 const sf = (v: number): string => Number.isInteger(v) ? String(v) : v.toFixed(1).replace(/\.0$/, '');
 
+// Cache session pour éviter les appels DB à chaque ouverture de modal
+let _cachedSettings: any = null;
+let _cachedProfile: any = null;
+
 type Period = '7j' | '30j' | '90j' | '6m' | '1a' | 'tout';
 
 const PERIODS: Array<{ value: Period; label: string }> = [
@@ -92,34 +96,32 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
   const [userHeight, setUserHeight] = useState<number | null>(null);
   const [missingProfile, setMissingProfile] = useState(false);
 
-  // Charger les paramètres utilisateur au montage
+  // Charger les paramètres utilisateur — mis en cache pour que les modals suivants s'ouvrent instantanément
   React.useEffect(() => {
     const loadSettings = async () => {
       try {
-        const [settings, profile] = await Promise.all([
-          getUserSettings(),
-          getProfile()
-        ]);
+        // Utiliser le cache session si disponible
+        if (!_cachedSettings || !_cachedProfile) {
+          const [settings, profile] = await Promise.all([getUserSettings(), getProfile()]);
+          _cachedSettings = settings;
+          _cachedProfile = profile;
+        }
+        const settings = _cachedSettings;
+        const profile = _cachedProfile;
+
         setUserGender(settings.gender as 'male' | 'female' || 'male');
         setUserWeight(settings.weight_goal || 75);
 
-        // Récupérer la taille du profil
         if (profile?.height_cm) {
           setUserHeight(profile.height_cm);
         } else {
           setUserHeight(null);
-          // Vérifier si on a besoin de la taille pour cette métrique
-          if (metricKey === 'bmi' || metricKey === 'bmr') {
-            setMissingProfile(true);
-          }
+          if (metricKey === 'bmi' || metricKey === 'bmr') setMissingProfile(true);
         }
 
-        // Calculer l'âge depuis la date de naissance
         if (profile?.birth_date) {
           const birthDate = new Date(profile.birth_date);
-          const today = new Date();
-          const age = today.getFullYear() - birthDate.getFullYear();
-          setUserAge(age);
+          setUserAge(new Date().getFullYear() - birthDate.getFullYear());
         } else if (metricKey === 'bmr' || metricKey === 'vo2Max') {
           setMissingProfile(true);
         }

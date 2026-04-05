@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  DeviceEventEmitter,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -116,6 +117,7 @@ export default function SleepInputScreen() {
       const wakeTimeStr = format(wakeTime, 'HH:mm');
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
       await addSleepEntry(bedTimeStr, wakeTimeStr, quality, '', dateStr);
+      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
 
       // Aussi écrire dans Apple Health (en arrière-plan, non bloquant)
       try {

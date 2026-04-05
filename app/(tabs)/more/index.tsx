@@ -60,6 +60,7 @@ import { safeOpenURL } from '@/lib/security/validators';
 import { scale, scaleModerate } from '@/constants/responsive';
 import { resetAllData } from '@/lib/storage';
 import logger from '@/lib/security/logger';
+import { verifyDevCode } from '@/lib/DevModeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -196,7 +197,7 @@ const FAVORITES_KEY = '@yoroi_tool_favorites';
 // ============================================
 
 export default function MoreScreen() {
-  const { colors, isDark, screenBackground } = useTheme();
+  const { colors, isDark, screenBackground, screenText, screenTextMuted } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
@@ -253,10 +254,10 @@ export default function MoreScreen() {
   }, [loadData]);
 
   // Load favorites on mount — defaults pour le premier lancement
-  const DEFAULT_FAVORITES = ['timer', 'infirmary', 'photos', 'import-csv', 'savoir', 'partners', 'health-professionals'];
+  const DEFAULT_FAVORITES = ['share-hub', 'timer', 'infirmary', 'photos', 'import-csv', 'savoir', 'partners', 'health-professionals'];
 
   // IDs à toujours injecter dans les favoris (même pour utilisateurs existants)
-  const MANDATORY_FAVORITES = ['partners', 'health-professionals'];
+  const MANDATORY_FAVORITES = ['share-hub', 'partners', 'health-professionals'];
 
   useEffect(() => {
     AsyncStorage.getItem(FAVORITES_KEY).then(saved => {
@@ -409,7 +410,8 @@ export default function MoreScreen() {
   };
 
   const handleSecretCodeSubmit = async () => {
-    if (secretCode === '2022') {
+    const isValid = await verifyDevCode(secretCode);
+    if (isValid) {
       notificationAsync(NotificationFeedbackType.Success);
       setScreenshotMenuUnlocked(true);
       setCreatorModeActive(true);
@@ -530,8 +532,8 @@ export default function MoreScreen() {
         {/* HEADER */}
         <View style={styles.header}>
           <View style={styles.headerRow}>
-            <Wrench size={28} color={isDark ? colors.accent : '#FFFFFF'} strokeWidth={2} />
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Outils</Text>
+            <Wrench size={28} color={screenText} strokeWidth={2} />
+            <Text style={[styles.title, { color: screenText }]}>Outils</Text>
           </View>
         </View>
 
@@ -584,7 +586,7 @@ export default function MoreScreen() {
         {filteredSections.map((section) => (
           <View key={section.title} style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: 'rgba(255,255,255,0.7)' }]}>{section.title}</Text>
+              <Text style={[styles.sectionTitle, { color: screenTextMuted }]}>{section.title}</Text>
             </View>
             {section.items.map(renderToolItem)}
           </View>
@@ -614,7 +616,7 @@ export default function MoreScreen() {
 
           <TouchableOpacity onPress={handleVersionTap} activeOpacity={1}>
             <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 12, textAlign: 'center' }}>
-              YOROI Version 2.0
+              YOROI Version 2.3.1
             </Text>
           </TouchableOpacity>
         </View>

@@ -25,7 +25,35 @@ import {
   Stethoscope,
   RotateCcw,
   Edit3,
+  Bed,
+  Snowflake,
+  Flame,
+  CircleDot,
+  ArrowUp,
+  Move,
+  Pill,
+  Hand,
+  LucideIcon,
 } from 'lucide-react-native';
+
+const TREATMENT_ICON_MAP: Record<string, LucideIcon> = {
+  Bed,
+  Snowflake,
+  Flame,
+  CircleDot,
+  ArrowUp,
+  Move,
+  Pill,
+  Stethoscope,
+  Hand,
+  Edit3,
+};
+
+function TreatmentIcon({ name, size = 22, color }: { name: string; size?: number; color: string }) {
+  const IconComponent = TREATMENT_ICON_MAP[name];
+  if (!IconComponent) return null;
+  return <IconComponent size={size} color={color} strokeWidth={2} />;
+}
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -468,7 +496,7 @@ export default function InjuryDetailScreen() {
                 onPress={() => handleAddTreatment(treatment.id)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.treatmentIcon}>{treatment.icon}</Text>
+                <TreatmentIcon name={treatment.icon} size={20} color={colors.textSecondary} />
                 <Text style={[styles.treatmentLabel, { color: colors.textPrimary }]}>
                   {treatment.label}
                 </Text>
@@ -483,7 +511,7 @@ export default function InjuryDetailScreen() {
               </Text>
               {treatments.slice(0, 3).map((treatment) => (
                 <View key={treatment.id} style={styles.treatmentHistoryItem}>
-                  <Text style={styles.treatmentHistoryIcon}>{treatment.icon}</Text>
+                  <TreatmentIcon name={treatment.icon} size={16} color={colors.textSecondary} />
                   <Text style={[styles.treatmentHistoryLabel, { color: colors.textPrimary }]}>
                     {treatment.label}
                   </Text>
@@ -533,7 +561,7 @@ export default function InjuryDetailScreen() {
                       onPress={() => handleAddTreatment(treatment.id)}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.treatmentIcon}>{treatment.icon}</Text>
+                      <TreatmentIcon name={treatment.icon} size={20} color={colors.textSecondary} />
                       <Text style={[styles.treatmentLabel, { color: colors.textPrimary }]}>
                         {treatment.label}
                       </Text>

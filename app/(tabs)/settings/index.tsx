@@ -15,6 +15,7 @@ import {
   Platform,
   DeviceEventEmitter,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -54,8 +55,10 @@ import {
   Syringe,
   BarChart3,
   Database,
+  Globe,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n, SUPPORTED_LANGUAGES } from '@/lib/I18nContext';
 import { useCustomPopup } from '@/components/CustomPopup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
@@ -66,8 +69,8 @@ import { generateProgressPDF } from '@/lib/pdfExport';
 import { resetAllData, resetDataOnly } from '@/lib/storage';
 import { resetDatabase } from '@/lib/database';
 import logger from '@/lib/security/logger';
+import { verifyDevCode } from '@/lib/DevModeContext';
 import { generateHenyDemoData, restoreRealData, isDemoDataActive } from '@/lib/demoDataService';
-import { SamuraiLoader } from '@/components/SamuraiLoader';
 
 // ============================================
 // SECTION DATA
@@ -168,6 +171,7 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark, screenBackground } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { language, setLanguage } = useI18n();
 
   // Search
   const [searchText, setSearchText] = useState('');
@@ -565,7 +569,8 @@ export default function SettingsScreen() {
   };
 
   const handleSecretCodeSubmit = async () => {
-    if (secretCode === '2022') {
+    const isValid = await verifyDevCode(secretCode);
+    if (isValid) {
       notificationAsync(NotificationFeedbackType.Success);
       await AsyncStorage.setItem('@yoroi_screenshot_menu_unlocked', 'true');
       setScreenshotMenuUnlocked(true);
@@ -767,7 +772,7 @@ export default function SettingsScreen() {
       {isGenerating && (
         <View style={styles.loadingOverlay}>
           <View style={[styles.loadingCard, { backgroundColor: colors.card }]}>
-            <SamuraiLoader message="Chargement en cours..." />
+            <ActivityIndicator size="large" color={colors.accent} />
           </View>
         </View>
       )}
@@ -797,6 +802,65 @@ export default function SettingsScreen() {
           />
         </View>
 
+        {/* Language Selector */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionTitle, { color: 'rgba(255,255,255,0.7)' }]}>LANGUE</Text>
+          <View style={[styles.card, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
+            <View style={{ padding: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 10 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#3B82F620', alignItems: 'center', justifyContent: 'center' }}>
+                  <Globe size={18} color="#3B82F6" strokeWidth={2.5} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}>Langue de l'application</Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 1 }}>Français · English · 日本語</Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                {SUPPORTED_LANGUAGES.map((lang) => {
+                  const isSelected = language === lang.code;
+                  return (
+                    <TouchableOpacity
+                      key={lang.code}
+                      onPress={async () => {
+                        impactAsync(ImpactFeedbackStyle.Medium);
+                        await setLanguage(lang.code);
+                      }}
+                      activeOpacity={0.75}
+                      style={{
+                        flex: 1,
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        paddingVertical: 14,
+                        paddingHorizontal: 8,
+                        borderRadius: 14,
+                        borderWidth: isSelected ? 2 : 1,
+                        borderColor: isSelected ? colors.accent : colors.border,
+                        backgroundColor: isSelected ? colors.accent + '18' : isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                      }}
+                    >
+                      <Text style={{ fontSize: 24 }}>{lang.flag}</Text>
+                      <Text style={{
+                        fontSize: 12,
+                        fontWeight: isSelected ? '800' : '500',
+                        color: isSelected ? colors.accent : colors.textSecondary,
+                        textAlign: 'center',
+                      }}>
+                        {lang.nativeName}
+                      </Text>
+                      {isSelected && (
+                        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.accent }} />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        </View>
+
         {/* Sections */}
         {filteredSections.map((section) => (
           <View key={section.title} style={styles.sectionContainer}>
@@ -823,7 +887,7 @@ export default function SettingsScreen() {
 
         {/* Version */}
         <TouchableOpacity onPress={handleVersionTap} activeOpacity={1} style={styles.versionContainer}>
-          <Text style={[styles.versionText, { color: 'rgba(255,255,255,0.5)' }]}>YOROI v2.0</Text>
+          <Text style={[styles.versionText, { color: 'rgba(255,255,255,0.5)' }]}>YOROI v2.3.1</Text>
         </TouchableOpacity>
 
         <View style={{ height: 120 }} />

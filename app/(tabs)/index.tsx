@@ -94,6 +94,7 @@ import { NotificationBellPopup } from '@/components/NotificationBellPopup';
 import { PeerSyncBanner } from '@/components/PeerSyncBanner';
 import { WatchStatusBanner } from '@/components/WatchStatusBanner';
 import { runGamificationMessages } from '@/lib/gamificationMessagesService';
+import { useStatsHealth } from '@/lib/StatsHealthContext';
 
 // Mode Essentiel
 import { useViewMode } from '@/hooks/useViewMode';
@@ -118,6 +119,8 @@ import logger from '@/lib/security/logger';
 const HYDRATION_KEY = '@yoroi_hydration_today';
 const HYDRATION_GOAL_KEY = '@yoroi_hydration_goal';
 const DEFAULT_HYDRATION_GOAL = 2500;
+const HOME_CACHE_KEY = '@yoroi_home_cache_v1';
+const HOME_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 // ============================================
 // ÉCRAN ACCUEIL - VERSION COMPLÈTE YOROI
@@ -374,6 +377,68 @@ export default function HomeScreen() {
   const [weeklyActivityData, setWeeklyActivityData] = useState<Array<{ date: string; calories: number; exerciseMin: number; standH: number }>>([]);
   const [hkSleepHours, setHkSleepHours] = useState(0);
   const [lastSleepPhases, setLastSleepPhases] = useState<{ deep: number; rem: number; core: number; awake: number } | null>(null);
+
+  // ── Contexte santé partagé (données HealthKit déjà chargées par StatsHealthProvider) ──
+  const {
+    todaySteps: ctxSteps,
+    todayCalories: ctxCalories,
+    todayDistance: ctxDistance,
+    todayExerciseMinutes: ctxExerciseMin,
+    todayStandHours: ctxStandHours,
+    healthData: ctxHealthData,
+    rawSleepHistory: ctxRawSleepHistory,
+  } = useStatsHealth();
+
+  // Sync context → état local (sans re-déclencher loadData)
+  useEffect(() => { if (ctxSteps > 0) setSteps(ctxSteps); }, [ctxSteps]);
+  useEffect(() => { if (ctxCalories > 0) setCalories(Math.round(ctxCalories * 10) / 10); }, [ctxCalories]);
+  useEffect(() => { if (ctxDistance > 0) setDistance(ctxDistance); }, [ctxDistance]);
+  useEffect(() => { if (ctxExerciseMin > 0) setExerciseMinutes(ctxExerciseMin); }, [ctxExerciseMin]);
+  useEffect(() => { if (ctxStandHours > 0) setStandHours(ctxStandHours); }, [ctxStandHours]);
+  useEffect(() => { if (ctxHealthData?.heartRate) setHeartRate(ctxHealthData.heartRate); }, [ctxHealthData?.heartRate]);
+  useEffect(() => {
+    const v = (ctxHealthData?.oxygenSaturation as any)?.value;
+    if (v && v > 0) setSpo2(v);
+  }, [ctxHealthData?.oxygenSaturation]);
+  useEffect(() => {
+    const v = (ctxHealthData?.respiratoryRate as any)?.value;
+    if (v && v > 0) setRespiratoryRate(v);
+  }, [ctxHealthData?.respiratoryRate]);
+  useEffect(() => {
+    const v = (ctxHealthData?.vo2max as any)?.value;
+    if (v && v > 0) setVo2Max(v);
+  }, [ctxHealthData?.vo2max]);
+  useEffect(() => {
+    if (ctxRawSleepHistory && ctxRawSleepHistory.length > 0) {
+      const last = ctxRawSleepHistory[ctxRawSleepHistory.length - 1];
+      if (last.deep || last.rem || last.core || last.awake) {
+        setLastSleepPhases({ deep: last.deep, rem: last.rem, core: last.core, awake: last.awake });
+      }
+      if (last.total > 0) setHkSleepHours(last.total / 60);
+    }
+  }, [ctxRawSleepHistory]);
+
+  // Objectifs anneaux Apple + données hebdo — non-bloquant, en arrière-plan
+  useEffect(() => {
+    const loadActivityGoals = async () => {
+      try {
+        const [summary, weeklyData] = await Promise.allSettled([
+          HealthConnect.getTodayActivitySummary(),
+          HealthConnect.getWeeklyActivityData(),
+        ]);
+        if (summary.status === 'fulfilled' && (summary.value as any)?.goals) {
+          const g = (summary.value as any).goals;
+          if (g.move > 0) setMoveGoal(g.move);
+          if (g.exercise > 0) setExerciseGoal(g.exercise);
+          if (g.stand > 0) setStandGoal(g.stand);
+        }
+        if (weeklyData.status === 'fulfilled' && (weeklyData.value as any)?.length > 0) {
+          setWeeklyActivityData(weeklyData.value as any);
+        }
+      } catch { /* non-bloquant */ }
+    };
+    loadActivityGoals();
+  }, []);
 
   // Hydratation functions
   // ✅ FIX: Charger depuis Apple Health EN PRIORITÉ, puis AsyncStorage en fallback
@@ -670,6 +735,31 @@ export default function HomeScreen() {
   const cancelledRef = useRef(false);
   const loadData = useCallback(async () => {
     try {
+      // ── Cache instantané : afficher les données précédentes pendant le rechargement ──
+      try {
+        const cached = await AsyncStorage.getItem(HOME_CACHE_KEY);
+        if (cached) {
+          const { ts, data } = JSON.parse(cached);
+          if (Date.now() - ts < HOME_CACHE_TTL) {
+            if (cancelledRef.current) return;
+            if (data.profile) setProfile(data.profile);
+            if (data.weight) setLatestWeight(data.weight);
+            if (data.history?.length) setWeightHistory(data.history);
+            if (data.streak) setStreak(data.streak);
+            if (data.quote) setDailyQuote(data.quote);
+            if (data.trainings?.length) setTrainings(data.trainings);
+            if (data.sleepStats) setSleepStats(data.sleepStats);
+            if (data.loadStats) setLoadStats(data.loadStats);
+            if (data.challenges?.length) setDailyChallenges(data.challenges);
+            if (data.nextEvent !== undefined) setNextEvent(data.nextEvent);
+            if (data.sections?.length) setHomeSections(data.sections);
+            if (data.bodyComposition) setBodyComposition(data.bodyComposition);
+            if (data.sleepGoal) setSleepGoal(data.sleepGoal);
+            if (data.totalPoints) setTotalPoints(data.totalPoints);
+          }
+        }
+      } catch { /* cache corrompu, on continue */ }
+
       const [profileData, weight, history, streakDays, quote, allTrainings, sleep, load, challenges, event, sections] = await Promise.all([
         getProfile(),
         getLatestWeight(),
@@ -709,69 +799,6 @@ export default function HomeScreen() {
       const goal = await getSleepGoal();
       setSleepGoal(goal);
 
-      // Charger les pas, calories et autres metriques depuis Apple Health
-      try {
-        const results = await Promise.allSettled([
-          HealthConnect.getTodaySteps(),
-          HealthConnect.getTodayCalories(),
-          HealthConnect.getTodayDistance(),
-          HealthConnect.getTodayHeartRate(),
-          HealthConnect.getOxygenSaturation(),
-          HealthConnect.getRespiratoryRate(),
-          HealthConnect.getVO2Max(),
-          HealthConnect.getSleepHistory(1),
-          HealthConnect.getTodayExerciseMinutes(),
-          HealthConnect.getTodayStandHours(),
-        ]);
-        const stepsData = results[0].status === 'fulfilled' ? results[0].value : null;
-        const caloriesData = results[1].status === 'fulfilled' ? results[1].value : null;
-        const distData = results[2].status === 'fulfilled' ? results[2].value : null;
-        const hrData = results[3].status === 'fulfilled' ? results[3].value : null;
-        const spo2Data = results[4].status === 'fulfilled' ? results[4].value : null;
-        const respData = results[5].status === 'fulfilled' ? results[5].value : null;
-        const vo2Data = results[6].status === 'fulfilled' ? results[6].value : null;
-        const sleepHistory = results[7].status === 'fulfilled' ? results[7].value : null;
-        const exerciseData = results[8].status === 'fulfilled' ? results[8].value : null;
-        const standData = results[9].status === 'fulfilled' ? results[9].value : null;
-
-        if (stepsData?.count != null && stepsData.count > 0) setSteps(stepsData.count);
-        if (caloriesData?.active != null && caloriesData.active > 0) setCalories(Math.round(caloriesData.active * 10) / 10);
-        if (distData?.total != null && distData.total > 0) setDistance(distData.total);
-        if (hrData) setHeartRate(hrData);
-        if (spo2Data?.value != null && spo2Data.value > 0) setSpo2(spo2Data.value);
-        if (respData?.value != null && respData.value > 0) setRespiratoryRate(respData.value);
-        if (vo2Data?.value != null && vo2Data.value > 0) setVo2Max(vo2Data.value);
-        if (exerciseData != null && exerciseData > 0) setExerciseMinutes(exerciseData);
-        if (standData != null && standData > 0) setStandHours(standData);
-
-        // Récupérer les objectifs et données hebdomadaires des anneaux Apple
-        try {
-          const [summary, weeklyData] = await Promise.allSettled([
-            HealthConnect.getTodayActivitySummary(),
-            HealthConnect.getWeeklyActivityData(),
-          ]);
-          if (summary.status === 'fulfilled' && summary.value?.goals) {
-            if (summary.value.goals.move > 0) setMoveGoal(summary.value.goals.move);
-            if (summary.value.goals.exercise > 0) setExerciseGoal(summary.value.goals.exercise);
-            if (summary.value.goals.stand > 0) setStandGoal(summary.value.goals.stand);
-          }
-          if (weeklyData.status === 'fulfilled' && weeklyData.value?.length > 0) {
-            setWeeklyActivityData(weeklyData.value);
-          }
-        } catch { /* non-bloquant */ }
-        if (sleepHistory && sleepHistory.length > 0) {
-          // Prendre la nuit la plus récente (triée ascending donc dernière)
-          const last = sleepHistory[sleepHistory.length - 1];
-          if (last.deep || last.rem || last.core || last.awake) {
-            setLastSleepPhases({ deep: last.deep, rem: last.rem, core: last.core, awake: last.awake });
-          }
-          // Durée HealthKit pour la carte sommeil si pas d'entrée manuelle
-          if (last.total > 0) setHkSleepHours(last.total / 60);
-        }
-      } catch (error) {
-        logger.info('Données activité non disponibles depuis Apple Health');
-      }
-
       // Bonus santé du jour (doit etre calcule AVANT les points unifies)
       try {
         await calculateDailyHealthBonus();
@@ -786,6 +813,30 @@ export default function HomeScreen() {
         streakDays,
       );
       setTotalPoints(unifiedTotal);
+
+      // ── Sauvegarder en cache pour le prochain lancement ──
+      try {
+        await AsyncStorage.setItem(HOME_CACHE_KEY, JSON.stringify({
+          ts: Date.now(),
+          data: {
+            profile: profileData,
+            weight,
+            history,
+            streak: streakDays,
+            quote,
+            trainings: allTrainings,
+            sleepStats: sleep,
+            loadStats: load,
+            challenges,
+            nextEvent: event,
+            sections,
+            bodyComposition: bodyComp,
+            sleepGoal: goal,
+            totalPoints: unifiedTotal,
+          },
+        }));
+      } catch { /* non-bloquant */ }
+
       loadHydration();
 
       // Messages gamification dans la cloche (aucune notif systeme)
@@ -898,24 +949,12 @@ export default function HomeScreen() {
       }
 
       const lastSyncTime = status.lastSync ? new Date(status.lastSync).getTime() : 0;
-      const fifteenMinutes = 15 * 60 * 1000;
-      if (Date.now() - lastSyncTime > fifteenMinutes) {
+      const thirtyMinutes = 30 * 60 * 1000;
+      if (Date.now() - lastSyncTime > thirtyMinutes) {
         logger.info('[AutoSync] Syncing health data...');
-        const data = await healthConnectService.syncAll();
-        // Mettre a jour les valeurs affichees apres sync
-        if (data?.steps?.count != null && data.steps.count > 0) setSteps(data.steps.count);
-        if (data?.calories?.active != null && data.calories.active > 0) setCalories(Math.round(data.calories.active));
-        if (data?.distance?.total != null && data.distance.total > 0) setDistance(data.distance.total);
-        if (data?.heartRate) setHeartRate(data.heartRate);
-        if (data?.oxygenSaturation?.value != null && data.oxygenSaturation.value > 0) setSpo2(data.oxygenSaturation.value);
-        if (data?.respiratoryRate?.value != null && data.respiratoryRate.value > 0) setRespiratoryRate(data.respiratoryRate.value);
-        if (data?.vo2Max?.value != null && data.vo2Max.value > 0) setVo2Max(data.vo2Max.value);
-        if (data?.sleep?.phases) {
-          const p = data.sleep.phases;
-          if (p.deep || p.rem || p.core || p.awake) {
-            setLastSleepPhases({ deep: p.deep, rem: p.rem, core: p.core, awake: p.awake });
-          }
-        }
+        await healthConnectService.syncAll();
+        // Les métriques HealthKit (steps, calories, FC...) sont maintenant gérées
+        // par useStatsHealth() context → les effets de sync se déclenchent automatiquement.
 
         // Rafraichir hydratation au retour de l'app
         loadHydration();
@@ -951,9 +990,10 @@ export default function HomeScreen() {
     }
   }, []);
 
-  // Auto-sync au montage
+  // Auto-sync au montage — différé de 4s pour laisser loadData() se terminer en premier
   useEffect(() => {
-    performHealthSync();
+    const t = setTimeout(() => performHealthSync(), 4000);
+    return () => clearTimeout(t);
   }, []);
 
   // Re-sync quand l'app revient au premier plan (foreground)

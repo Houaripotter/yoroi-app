@@ -3,10 +3,10 @@
 // ============================================
 // Contournement du bridge Nitro v13 + iOS 26 beta.
 // Le module Swift retourne une String JSON pure.
-// console.log utilisé (pas logger) pour visibilité en Release.
 // ============================================
 
 import { NativeModules, Platform } from 'react-native';
+import logger from '@/lib/security/logger';
 
 const { YoroiHealthKitModule } = NativeModules;
 
@@ -56,23 +56,22 @@ export interface NativeDiagnosticResult {
 export async function getNativeWorkouts(days: number = 0): Promise<NativeWorkout[]> {
   if (Platform.OS !== 'ios') return [];
 
-  console.log('[YoroiHK-JS] getNativeWorkouts, days=' + days);
-  console.log('[YoroiHK-JS] Module dispo:', !!YoroiHealthKitModule);
+  logger.info('[YoroiHK-JS] getNativeWorkouts, days=' + days);
 
   if (!YoroiHealthKitModule?.getWorkoutsAsJSON) {
-    console.log('[YoroiHK-JS] ERREUR: module natif non trouvé');
-    console.log('[YoroiHK-JS] Modules Yoroi dispo:', Object.keys(NativeModules).filter(k => k.toLowerCase().includes('yoroi')));
+    logger.warn('[YoroiHK-JS] ERREUR: module natif non trouvé');
+    logger.info('[YoroiHK-JS] Modules Yoroi dispo:', Object.keys(NativeModules).filter(k => k.toLowerCase().includes('yoroi')));
     return [];
   }
 
   try {
     const jsonString: string = await YoroiHealthKitModule.getWorkoutsAsJSON(days);
-    console.log('[YoroiHK-JS] Retour Swift (200 chars):', jsonString.substring(0, 200));
+    logger.info('[YoroiHK-JS] Retour Swift (200 chars):', jsonString.substring(0, 200));
     const parsed = JSON.parse(jsonString) as NativeWorkout[];
-    console.log('[YoroiHK-JS] Workouts parsés:', parsed.length);
+    logger.info('[YoroiHK-JS] Workouts parsés:', parsed.length);
     return parsed;
   } catch (e: any) {
-    console.log('[YoroiHK-JS] ERREUR getWorkoutsAsJSON:', e?.message);
+    logger.warn('[YoroiHK-JS] ERREUR getWorkoutsAsJSON:', e?.message);
     return [];
   }
 }
@@ -84,19 +83,19 @@ export async function getNativeWorkouts(days: number = 0): Promise<NativeWorkout
 export async function requestWorkoutReadAuthNative(): Promise<string> {
   if (Platform.OS !== 'ios') return 'error:not iOS';
 
-  console.log('[YoroiHK-JS] requestWorkoutReadAuthNative appelé');
+  logger.info('[YoroiHK-JS] requestWorkoutReadAuthNative appelé');
 
   if (!YoroiHealthKitModule?.requestWorkoutReadAuth) {
-    console.log('[YoroiHK-JS] requestWorkoutReadAuth non disponible — rebuild requis');
+    logger.warn('[YoroiHK-JS] requestWorkoutReadAuth non disponible — rebuild requis');
     return 'error:module absent';
   }
 
   try {
     const result: string = await YoroiHealthKitModule.requestWorkoutReadAuth();
-    console.log('[YoroiHK-JS] requestWorkoutReadAuth résultat:', result);
+    logger.info('[YoroiHK-JS] requestWorkoutReadAuth résultat:', result);
     return result;
   } catch (e: any) {
-    console.log('[YoroiHK-JS] ERREUR requestWorkoutReadAuth:', e?.message);
+    logger.warn('[YoroiHK-JS] ERREUR requestWorkoutReadAuth:', e?.message);
     return `error:${e?.message}`;
   }
 }
@@ -108,19 +107,19 @@ export async function requestWorkoutReadAuthNative(): Promise<string> {
 export async function requestAllHealthPermissionsNative(): Promise<string> {
   if (Platform.OS !== 'ios') return 'error:not iOS';
 
-  console.log('[YoroiHK-JS] requestAllHealthPermissionsNative appelé');
+  logger.info('[YoroiHK-JS] requestAllHealthPermissionsNative appelé');
 
   if (!YoroiHealthKitModule?.requestAllHealthPermissions) {
-    console.log('[YoroiHK-JS] requestAllHealthPermissions non disponible — rebuild requis');
+    logger.warn('[YoroiHK-JS] requestAllHealthPermissions non disponible — rebuild requis');
     return 'error:module absent';
   }
 
   try {
     const result: string = await YoroiHealthKitModule.requestAllHealthPermissions();
-    console.log('[YoroiHK-JS] requestAllHealthPermissions résultat:', result);
+    logger.info('[YoroiHK-JS] requestAllHealthPermissions résultat:', result);
     return result;
   } catch (e: any) {
-    console.log('[YoroiHK-JS] ERREUR requestAllHealthPermissions:', e?.message);
+    logger.warn('[YoroiHK-JS] ERREUR requestAllHealthPermissions:', e?.message);
     return `error:${e?.message}`;
   }
 }
@@ -137,7 +136,7 @@ export async function getTodayActivityRingsNative(): Promise<{
   if (Platform.OS !== 'ios') return null;
 
   if (!YoroiHealthKitModule?.getTodayActivityRings) {
-    console.log('[YoroiHK-JS] getTodayActivityRings non disponible — rebuild requis');
+    logger.warn('[YoroiHK-JS] getTodayActivityRings non disponible — rebuild requis');
     return null;
   }
 
@@ -150,7 +149,7 @@ export async function getTodayActivityRingsNative(): Promise<{
       activeCalories: parsed.activeCalories ?? null,
     };
   } catch (e: any) {
-    console.log('[YoroiHK-JS] ERREUR getTodayActivityRings:', e?.message);
+    logger.warn('[YoroiHK-JS] ERREUR getTodayActivityRings:', e?.message);
     return null;
   }
 }
@@ -163,16 +162,16 @@ export async function saveDietaryWaterNative(amountMl: number): Promise<boolean>
   if (Platform.OS !== 'ios') return false;
 
   if (!YoroiHealthKitModule?.saveDietaryWater) {
-    console.log('[YoroiHK-JS] saveDietaryWater non disponible — rebuild requis');
+    logger.warn('[YoroiHK-JS] saveDietaryWater non disponible — rebuild requis');
     return false;
   }
 
   try {
     await YoroiHealthKitModule.saveDietaryWater(amountMl);
-    console.log(`[YoroiHK-JS] saveDietaryWater OK — ${amountMl} ml`);
+    logger.info(`[YoroiHK-JS] saveDietaryWater OK — ${amountMl} ml`);
     return true;
   } catch (e: any) {
-    console.log('[YoroiHK-JS] ERREUR saveDietaryWater:', e?.message);
+    logger.warn('[YoroiHK-JS] ERREUR saveDietaryWater:', e?.message);
     return false;
   }
 }
@@ -189,7 +188,7 @@ export async function getHeartZonesDataNative(): Promise<{
   if (Platform.OS !== 'ios') return null;
 
   if (!YoroiHealthKitModule?.getHeartZonesData) {
-    console.log('[YoroiHK-JS] getHeartZonesData non disponible — rebuild requis');
+    logger.warn('[YoroiHK-JS] getHeartZonesData non disponible — rebuild requis');
     return null;
   }
 
@@ -197,8 +196,31 @@ export async function getHeartZonesDataNative(): Promise<{
     const json: string = await YoroiHealthKitModule.getHeartZonesData();
     return JSON.parse(json);
   } catch (e: any) {
-    console.log('[YoroiHK-JS] ERREUR getHeartZonesData:', e?.message);
+    logger.warn('[YoroiHK-JS] ERREUR getHeartZonesData:', e?.message);
     return null;
+  }
+}
+
+/**
+ * Récupère l'effort perçu d'un workout Apple Watch (watchOS 10+ / iOS 17+).
+ * Lit HKMetadataKeyWorkoutEffortScore depuis les metadata, puis les samples HealthKit.
+ * @param workoutUUID - UUID du workout HealthKit
+ * @returns effort 1-10 ou -1 si non disponible
+ */
+export async function getWorkoutEffortScoreNative(workoutUUID: string): Promise<number> {
+  if (Platform.OS !== 'ios') return -1;
+
+  if (!YoroiHealthKitModule?.getWorkoutEffortScore) {
+    logger.warn('[YoroiHK-JS] getWorkoutEffortScore non disponible — rebuild requis');
+    return -1;
+  }
+
+  try {
+    const score: number = await YoroiHealthKitModule.getWorkoutEffortScore(workoutUUID);
+    return typeof score === 'number' ? score : -1;
+  } catch (e: any) {
+    logger.warn('[YoroiHK-JS] ERREUR getWorkoutEffortScore:', e?.message);
+    return -1;
   }
 }
 
@@ -211,20 +233,20 @@ export async function getHeartZonesDataNative(): Promise<{
 export async function runNativeDiagnostic(): Promise<NativeDiagnosticResult | null> {
   if (Platform.OS !== 'ios') return null;
 
-  console.log('[YoroiHK-JS] runNativeDiagnostic appelé');
+  logger.info('[YoroiHK-JS] runNativeDiagnostic appelé');
 
   if (!YoroiHealthKitModule?.runDiagnosticAsJSON) {
-    console.log('[YoroiHK-JS] ERREUR: runDiagnosticAsJSON non disponible');
+    logger.warn('[YoroiHK-JS] ERREUR: runDiagnosticAsJSON non disponible');
     return null;
   }
 
   try {
     const jsonString: string = await YoroiHealthKitModule.runDiagnosticAsJSON();
-    console.log('[YoroiHK-JS] Diagnostic brut:', jsonString);
+    logger.info('[YoroiHK-JS] Diagnostic brut:', jsonString);
     const result = JSON.parse(jsonString) as NativeDiagnosticResult;
     return result;
   } catch (e: any) {
-    console.log('[YoroiHK-JS] ERREUR runDiagnosticAsJSON:', e?.message);
+    logger.warn('[YoroiHK-JS] ERREUR runDiagnosticAsJSON:', e?.message);
     return null;
   }
 }

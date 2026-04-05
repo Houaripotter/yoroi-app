@@ -8,7 +8,7 @@ import { Platform, DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Demo data removed - DEMO_MODE is disabled for production
 import logger from '@/lib/security/logger';
-import { getNativeWorkouts, runNativeDiagnostic, NativeDiagnosticResult, requestAllHealthPermissionsNative, getTodayActivityRingsNative } from './yoroiHealthKit';
+import { getNativeWorkouts, runNativeDiagnostic, NativeDiagnosticResult, requestAllHealthPermissionsNative, getTodayActivityRingsNative, getWorkoutEffortScoreNative } from './yoroiHealthKit';
 import { saveHealthDataBatch, saveHealthData, addWeight, addTraining, updateTrainingDetails, getExistingHealthkitUUIDs, getTrainingsCount } from './database';
 import type { HealthDataRecord, Training } from './database';
 import { addSleepEntryFromHealthKit } from './sleepService';
@@ -105,6 +105,16 @@ export interface WorkoutDetails {
   isIndoor?: boolean;
   // FC récupération (post workout)
   recoveryHR?: { atEnd: number; after1Min?: number; after2Min?: number };
+  // Effort perçu (Apple Watch, 1-10)
+  effortScore?: number;
+  // Cadence moyenne (pas/min pour course/marche, tours/min pour vélo)
+  cadence?: number;
+  // Vitesse moyenne en km/h (vélo, natation, rameur)
+  avgSpeedKmh?: number;
+  // Puissance moyenne en watts (vélo, rameur)
+  avgPowerWatts?: number;
+  // VO2 Max (ml/kg/min) — mesuré par Apple Watch lors des séances de course
+  vo2Max?: number;
 }
 
 export interface HealthData {
@@ -948,6 +958,11 @@ class HealthConnectService {
       'HKCategoryTypeIdentifierMindfulSession',
       // Température poignet sommeil (Apple Watch Series 8+)
       'HKQuantityTypeIdentifierAppleSleepingWristTemperature',
+      // Cadence course (pas/min, iOS 16+) et vélo (tours/min, iOS 17+)
+      'HKQuantityTypeIdentifierRunningCadence',
+      'HKQuantityTypeIdentifierCyclingCadence',
+      'HKQuantityTypeIdentifierCyclingSpeed',
+      'HKQuantityTypeIdentifierCyclingPower',
     ];
 
     const toShare = [
@@ -2478,9 +2493,9 @@ class HealthConnectService {
         if (filter) opts.filter = filter;
         const samples = await HealthKit.queryWorkoutSamples(opts);
         if (samples) rawWorkouts = samples;
-        console.log('[getIOSWorkouts] M1 queryWorkoutSamples →', rawWorkouts.length, 'workout(s)');
+        logger.info('[getIOSWorkouts] M1 queryWorkoutSamples →', rawWorkouts.length, 'workout(s)');
       } catch (e: any) {
-        console.log('[getIOSWorkouts] M1 erreur:', e?.message);
+        logger.warn('[getIOSWorkouts] M1 erreur:', e?.message);
       }
 
       // === MÉTHODE 2: queryWorkoutSamplesWithAnchor (fallback si méthode 1 retourne 0) ===
@@ -2491,12 +2506,12 @@ class HealthConnectService {
           const anchorResult = await HealthKit.queryWorkoutSamplesWithAnchor(opts);
           if (anchorResult?.workouts?.length > 0) {
             rawWorkouts = anchorResult.workouts;
-            console.log('[getIOSWorkouts] M2 queryWorkoutSamplesWithAnchor →', rawWorkouts.length, 'workout(s)');
+            logger.info('[getIOSWorkouts] M2 queryWorkoutSamplesWithAnchor →', rawWorkouts.length, 'workout(s)');
           } else {
-            console.log('[getIOSWorkouts] M2 → 0 workout(s)');
+            logger.info('[getIOSWorkouts] M2 → 0 workout(s)');
           }
         } catch (e: any) {
-          console.log('[getIOSWorkouts] M2 erreur:', e?.message);
+          logger.warn('[getIOSWorkouts] M2 erreur:', e?.message);
         }
       }
 
@@ -2504,9 +2519,9 @@ class HealthConnectService {
       if (rawWorkouts.length === 0) {
         try {
           const daysParam = days ?? 0;
-          console.log('[getIOSWorkouts] M3 module Swift natif, days=' + daysParam);
+          logger.info('[getIOSWorkouts] M3 module Swift natif, days=' + daysParam);
           const nativeWorkouts = await getNativeWorkouts(daysParam);
-          console.log('[getIOSWorkouts] M3 résultat:', nativeWorkouts.length, 'workout(s)');
+          logger.info('[getIOSWorkouts] M3 résultat:', nativeWorkouts.length, 'workout(s)');
           if (nativeWorkouts.length > 0) {
             rawWorkouts = nativeWorkouts.map(w => ({
               uuid: w.uuid,
@@ -2519,17 +2534,17 @@ class HealthConnectService {
             }));
           }
         } catch (e: any) {
-          console.log('[getIOSWorkouts] M3 erreur:', e?.message);
+          logger.warn('[getIOSWorkouts] M3 erreur:', e?.message);
         }
       }
 
       if (rawWorkouts.length === 0) {
-        console.log('[getIOSWorkouts] TOUTES LES MÉTHODES ont retourné 0 workout');
+        logger.warn('[getIOSWorkouts] TOUTES LES MÉTHODES ont retourné 0 workout');
         return null;
       }
 
       const mapped = await this.mapRawWorkouts(rawWorkouts);
-      console.log('[getIOSWorkouts] ', mapped.length, 'workout(s) mappés avec succès');
+      logger.info('[getIOSWorkouts] ', mapped.length, 'workout(s) mappés avec succès');
       return mapped.length > 0 ? mapped : null;
     }, 'workouts');
   }
@@ -2665,7 +2680,7 @@ class HealthConnectService {
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout 15s')), 15000)),
       ]);
     } catch (e: any) {
-      console.log('[HealthConnect] runNativeDiagnostic timeout/erreur:', e?.message);
+      logger.warn('[HealthConnect] runNativeDiagnostic timeout/erreur:', e?.message);
     }
 
     // Tester HealthKit 365 jours (le user peut avoir son dernier workout à > 30 jours)
@@ -2839,9 +2854,12 @@ class HealthConnectService {
 
       const details: WorkoutDetails = {};
 
+      // Events du workout (laps, pauses, etc.) — accessible globalement pour les splits
+      const workoutEvents = (workout.events || []) as any[];
+
       // LOG DEBUG: dump brut du workout pour voir toutes les données Apple disponibles
       if (__DEV__) {
-        const rawEvents = (workout.events || []) as any[];
+        const rawEvents = workoutEvents;
         logger.info('[HealthKit] workout.uuid:', workout.uuid);
         logger.info('[HealthKit] workout.metadata keys:', Object.keys(workout.metadata || {}));
         logger.info('[HealthKit] workout.metadata values:', JSON.stringify(workout.metadata || {}));
@@ -2898,6 +2916,17 @@ class HealthConnectService {
       if (__DEV__ && Object.keys(workoutMeta).length > 0) {
         logger.info('[HealthKit] Metadata workout disponibles:', Object.keys(workoutMeta));
       }
+      // Effort perçu Apple Watch (HKWorkoutEffortScore, 1-10)
+      const rawEffort = workoutMeta['HKMetadataKeyWorkoutEffortScore']
+        ?? workoutMeta['HKWorkoutEffortScore']
+        ?? workoutMeta.HKMetadataKeyWorkoutEffortScore;
+      if (rawEffort != null) {
+        const effort = Number(rawEffort);
+        if (!isNaN(effort) && effort >= 1 && effort <= 10) {
+          details.effortScore = effort;
+        }
+      }
+
       const rawAqi = workout.metadataWeatherAirQualityIndex
         ?? workoutMeta.HKWeatherAirQualityIndex
         ?? workoutMeta.HKMetadataKeyWeatherAirQualityIndex;
@@ -2927,6 +2956,15 @@ class HealthConnectService {
           if (distStat?.sumQuantity) {
             details.distanceKm = Math.round(distStat.sumQuantity.quantity / 1000 * 100) / 100;
           }
+          // Fallback: lire totalDistance directement sur le workout (tapis, indoor)
+          if (!details.distanceKm || details.distanceKm <= 0) {
+            const rawDist = this.extractQuantityValue(workout.totalDistance ?? workout.distance);
+            if (rawDist != null && rawDist > 0) {
+              details.distanceKm = rawDist > 100
+                ? Math.round(rawDist / 1000 * 100) / 100 // en mètres → km
+                : Math.round(rawDist * 100) / 100;        // déjà en km
+            }
+          }
 
           // Calories actives
           const calStat = stats['HKQuantityTypeIdentifierActiveEnergyBurned'];
@@ -2945,14 +2983,41 @@ class HealthConnectService {
             if (hrStat.minimumQuantity) details.minHeartRate = Math.round(hrStat.minimumQuantity.quantity);
             if (hrStat.maximumQuantity) details.maxHeartRate = Math.round(hrStat.maximumQuantity.quantity);
           }
+
+          // Cadence (course/marche : pas/min — vélo : tours/min)
+          const cadenceStat = stats['HKQuantityTypeIdentifierRunningCadence']
+            || stats['HKQuantityTypeIdentifierCyclingCadence'];
+          if (cadenceStat?.averageQuantity) {
+            const raw = cadenceStat.averageQuantity.quantity;
+            if (raw > 0) details.cadence = Math.round(raw);
+          }
+
+          // Vitesse moyenne (vélo, natation, etc.)
+          const speedStat = stats['HKQuantityTypeIdentifierCyclingSpeed']
+            || stats['HKQuantityTypeIdentifierRunningSpeed'];
+          if (speedStat?.averageQuantity) {
+            // Apple stocke en m/s → convertir en km/h
+            const ms = speedStat.averageQuantity.quantity;
+            if (ms > 0) details.avgSpeedKmh = Math.round(ms * 3.6 * 10) / 10;
+          }
+
+          // Puissance moyenne (vélo / rameur — watts)
+          const powerStat = stats['HKQuantityTypeIdentifierCyclingPower'];
+          if (powerStat?.averageQuantity) {
+            const watts = powerStat.averageQuantity.quantity;
+            if (watts > 0) details.avgPowerWatts = Math.round(watts);
+          }
         }
       } catch (statsErr) {
         logger.warn('[HealthKit] Erreur getAllStatistics:', statsErr);
       }
 
-      // Allure moyenne
+      // Allure moyenne + vitesse calculée si pas dans les stats
       if (details.distanceKm && details.distanceKm > 0 && details.durationMinutes) {
         details.avgPaceSecondsPerKm = Math.round((details.durationMinutes * 60) / details.distanceKm);
+        if (!details.avgSpeedKmh) {
+          details.avgSpeedKmh = Math.round(details.distanceKm / (details.durationMinutes / 60) * 10) / 10;
+        }
       }
 
       // Route GPS via getWorkoutRoutes()
@@ -3027,6 +3092,16 @@ class HealthConnectService {
                 if (!isNaN(metaVal) && metaVal > 100 && metaVal < 250) {
                   maxHR = Math.round(metaVal);
                   logger.info('[HealthKit] maxHR lu depuis metadata workout:', maxHR);
+                  // Persister pour hrZones.ts et le reste de l'app
+                  try {
+                    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+                    const stored = await AsyncStorage.getItem('@yoroi_health_max_hr');
+                    const storedVal = stored ? Number(stored) : 0;
+                    // Mettre a jour seulement si la nouvelle valeur est differente (evite les ecritures inutiles)
+                    if (Math.abs(storedVal - maxHR) > 1) {
+                      await AsyncStorage.setItem('@yoroi_health_max_hr', String(maxHR));
+                    }
+                  } catch (_) {}
                 }
               } else {
                 // 2. Fallback: date de naissance -> 220-age
@@ -3071,11 +3146,52 @@ class HealthConnectService {
             }
 
             details.heartRateZones = zones;
-            details.cacheVersion = 5; // v5: AQI Open-Meteo + FC getStatistic
+            details.cacheVersion = 7; // v7: effort score Apple Watch depuis metadata
 
-            // Recalculer splits avec avgHeartRate par split si on a des GPS locations
+            // Splits depuis GPS si disponibles
             if (allGpsLocations.length > 0 && details.distanceKm && details.distanceKm > 0.5) {
               details.splits = this.computeSplits(allGpsLocations, hrSamples);
+            }
+
+            // Splits depuis les laps Apple Watch (type 1) si pas de GPS
+            if (!details.splits?.length) {
+              try {
+                const lapEvents = workoutEvents.filter((e: any) => e.type === 1);
+                if (lapEvents.length > 0) {
+                  const validLaps = lapEvents.filter((lap: any) => {
+                    const s = new Date(lap.dateInterval?.startDate ?? lap.startDate ?? workout.startDate).getTime();
+                    const end = new Date(lap.dateInterval?.endDate ?? lap.endDate ?? workout.startDate).getTime();
+                    return Math.round((end - s) / 1000) > 5;
+                  });
+                  if (validLaps.length > 0) {
+                    const lapDistKm = (details.distanceKm && details.distanceKm > 0)
+                      ? Math.round((details.distanceKm / validLaps.length) * 100) / 100
+                      : 1;
+                    details.splits = validLaps.map((lap: any, i: number) => {
+                      const lapStartMs = new Date(lap.dateInterval?.startDate ?? lap.startDate ?? workout.startDate).getTime();
+                      const lapEndMs = new Date(lap.dateInterval?.endDate ?? lap.endDate ?? workout.startDate).getTime();
+                      const lapDurSec = Math.round((lapEndMs - lapStartMs) / 1000);
+                      const lapHrSamples = hrSamples.filter((s: any) => {
+                        const t = new Date(s.startDate).getTime();
+                        return t >= lapStartMs && t <= lapEndMs;
+                      });
+                      const lapAvgHR = lapHrSamples.length > 0
+                        ? Math.round(lapHrSamples.reduce((acc: number, s: any) => acc + s.quantity, 0) / lapHrSamples.length)
+                        : undefined;
+                      return {
+                        index: i + 1,
+                        durationSeconds: lapDurSec,
+                        distanceKm: lapDistKm,
+                        paceSecondsPerKm: lapDistKm > 0 ? Math.round(lapDurSec / lapDistKm) : 0,
+                        avgHeartRate: lapAvgHR,
+                        elevationGain: 0,
+                      };
+                    });
+                  }
+                }
+              } catch (lapErr) {
+                logger.warn('[HealthKit] Erreur lecture laps:', lapErr);
+              }
             }
           }
         }
@@ -3123,6 +3239,39 @@ class HealthConnectService {
         }
       } catch (recoveryErr) {
         logger.warn('[HealthKit] Erreur Recovery HR:', recoveryErr);
+      }
+
+      // VO2 Max — mesuré par Apple Watch lors des séances de course (valeur dans les 7j autour du workout)
+      try {
+        const workoutEnd = new Date(workout.endDate);
+        const vo2Options = this.createQueryOptions(
+          new Date(workoutEnd.getTime() - 7 * 24 * 60 * 60 * 1000),
+          new Date(workoutEnd.getTime() + 24 * 60 * 60 * 1000),
+          { limit: 1, ascending: false }
+        );
+        if (vo2Options) {
+          const vo2Samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierVO2Max', vo2Options);
+          if (vo2Samples && vo2Samples.length > 0) {
+            const raw = this.extractQuantityValue(vo2Samples[0]);
+            if (raw != null && raw > 10 && raw < 100) {
+              details.vo2Max = Math.round(raw * 10) / 10;
+            }
+          }
+        }
+      } catch (vo2Err) {
+        logger.warn('[HealthKit] Erreur VO2Max:', vo2Err);
+      }
+
+      // Effort perçu — fallback natif Swift si metadata n'a pas retourné de valeur
+      if (!details.effortScore && workout.uuid) {
+        try {
+          const nativeScore = await getWorkoutEffortScoreNative(workout.uuid);
+          if (nativeScore >= 1 && nativeScore <= 10) {
+            details.effortScore = nativeScore;
+          }
+        } catch (effortErr) {
+          logger.warn('[HealthKit] Erreur getWorkoutEffortScore natif:', effortErr);
+        }
       }
 
       // Qualité de l'air via Open-Meteo (gratuit, sans clé) si pas dans metadata HK

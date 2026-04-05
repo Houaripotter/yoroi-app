@@ -65,12 +65,9 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
   const dateLocale = fr;
   const [cardWidth, setCardWidth] = useState(0);
   const [activeLines, setActiveLines] = useState<Set<number>>(() => new Set(lines.map((_, i) => i)));
-  // État différé pour le calcul SVG (séparé de l'état visuel des chips)
-  const [chartActiveLines, setChartActiveLines] = useState<Set<number>>(() => new Set(lines.map((_, i) => i)));
   const [fullscreen, setFullscreen] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const fsScrollRef = useRef<ScrollView>(null);
-  const chartUpdateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleScrollContentSize = useCallback((contentWidth: number) => {
     if (scrollRef.current && contentWidth > cardWidth - 32) {
@@ -96,14 +93,11 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
       } else {
         next.add(idx);
       }
-      // Mise à jour immédiate des chips, chart différé de 50ms
-      if (chartUpdateTimer.current) clearTimeout(chartUpdateTimer.current);
-      chartUpdateTimer.current = setTimeout(() => setChartActiveLines(new Set(next)), 50);
       return next;
     });
   };
 
-  const visibleLines = lines.filter((_, i) => chartActiveLines.has(i));
+  const visibleLines = lines.filter((_, i) => activeLines.has(i));
   const hasData = visibleLines.some(l => l.history.length >= 1);
   const maxValue = Math.max(...lines.map(l => l.currentValue), 1);
 

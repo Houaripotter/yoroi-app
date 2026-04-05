@@ -264,7 +264,7 @@ export default function OnboardingScreen() {
     let active = true;
     (async () => {
       try {
-        await setAudioModeAsync({ playsInSilentModeIOS: true });
+        await setAudioModeAsync({ playsInSilentMode: true });
         if (active) {
           introPlayer.loop = true;
           introPlayer.volume = 0.5;

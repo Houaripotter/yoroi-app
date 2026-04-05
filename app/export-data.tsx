@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
@@ -24,6 +25,7 @@ import {
   CheckCircle,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   exportTrainingToJSON,
@@ -46,34 +48,24 @@ interface ExportOption {
   color: string;
 }
 
-const EXPORT_OPTIONS: ExportOption[] = [
-  {
-    id: 'json',
-    label: 'Export JSON',
-    description: 'Format structuré pour sauvegarde complète',
-    icon: FileJson,
-    color: '#F59E0B',
-  },
-  {
-    id: 'csv',
-    label: 'Export CSV',
-    description: 'Compatible Excel, Google Sheets',
-    icon: Table,
-    color: '#10B981',
-  },
-  {
-    id: 'txt',
-    label: 'Rapport Textuel',
-    description: 'Résumé lisible de ta progression',
-    icon: FileText,
-    color: '#3B82F6',
-  },
+// Options defined dynamically inside component to use t()
+const EXPORT_OPTION_CONFIGS = [
+  { id: 'json' as ExportFormat, labelKey: 'Export JSON', descKey: 'exportData.optionJsonDesc', icon: FileJson, color: '#F59E0B' },
+  { id: 'csv' as ExportFormat, labelKey: 'Export CSV', descKey: 'exportData.optionCsvDesc', icon: Table, color: '#10B981' },
+  { id: 'txt' as ExportFormat, labelKey: 'exportData.optionTxtLabel', descKey: 'exportData.optionTxtDesc', icon: FileText, color: '#3B82F6' },
 ];
 
 export default function ExportDataScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { t } = useI18n();
+
+  const EXPORT_OPTIONS = EXPORT_OPTION_CONFIGS.map(opt => ({
+    ...opt,
+    label: opt.labelKey.startsWith('exportData.') ? t(opt.labelKey as any) : opt.labelKey,
+    description: t(opt.descKey as any),
+  }));
 
   // 🔒 SÉCURITÉ: Protection contre les screenshots
   const { isProtected, isBlurred, screenshotDetected } = useSensitiveScreen();
@@ -119,8 +111,8 @@ export default function ExportDataScreen() {
       }
     } catch (error) {
       logger.error('Erreur export:', error);
-      showPopup('Erreur', 'Impossible d\'exporter les données', [
-        { text: 'OK', style: 'primary' }
+      showPopup(t('exportData.errorTitle'), t('exportData.errorMessage'), [
+        { text: t('exportData.ok'), style: 'primary' }
       ]);
     } finally {
       setExporting(false);
@@ -140,8 +132,8 @@ export default function ExportDataScreen() {
       }
     } catch (error) {
       logger.error('Erreur export CSV:', error);
-      showPopup('Erreur', 'Impossible d\'exporter les données', [
-        { text: 'OK', style: 'primary' }
+      showPopup(t('exportData.errorTitle'), t('exportData.errorMessage'), [
+        { text: t('exportData.ok'), style: 'primary' }
       ]);
     } finally {
       setCsvExporting(false);
@@ -162,7 +154,7 @@ export default function ExportDataScreen() {
           <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={2.5} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          Exporter mes données
+          {t('exportData.title')}
         </Text>
         <View style={{ width: 40 }} />
       </View>
@@ -171,7 +163,7 @@ export default function ExportDataScreen() {
       {screenshotDetected && (
         <View style={styles.screenshotWarning}>
           <Text style={styles.screenshotWarningText}>
-            Screenshot détecté - Tes données sont sensibles
+            {t('exportData.screenshotWarning')}
           </Text>
         </View>
       )}
@@ -190,7 +182,7 @@ export default function ExportDataScreen() {
         >
           <Share2 size={20} color={colors.accent} />
           <Text style={[styles.infoText, { color: isDark ? colors.accent : colors.textPrimary }]}>
-            Exporte tes données pour les sauvegarder ou les analyser ailleurs
+            {t('exportData.infoText')}
           </Text>
         </View>
 
@@ -249,7 +241,7 @@ export default function ExportDataScreen() {
                   >
                     <CheckCircle size={14} color={option.color} />
                     <Text style={[styles.successText, { color: option.color }]}>
-                      Exporté
+                      {t('exportData.exported')}
                     </Text>
                   </View>
                 )}
@@ -261,10 +253,10 @@ export default function ExportDataScreen() {
         {/* Export CSV complet (poids + mensurations + composition) */}
         <View style={styles.csvSection}>
           <Text style={[styles.csvSectionTitle, { color: colors.textPrimary }]}>
-            Export CSV complet
+            {t('exportData.csvSectionTitle')}
           </Text>
           <Text style={[styles.csvSectionDesc, { color: colors.textMuted }]}>
-            Poids, composition corporelle et mensurations — une ligne par date, format lisible dans Excel et Google Sheets. Reimportable dans Yoroi.
+            {t('exportData.csvSectionDesc')}
           </Text>
 
           <TouchableOpacity
@@ -288,7 +280,7 @@ export default function ExportDataScreen() {
               )}
             </View>
             <Text style={[styles.csvButtonLabel, { color: colors.textPrimary }]}>
-              Exporter tout en CSV
+              {t('exportData.exportAllCSV')}
             </Text>
             {csvExporting && (
               <ActivityIndicator size="small" color="#10B981" style={{ marginLeft: 'auto' }} />
@@ -304,33 +296,33 @@ export default function ExportDataScreen() {
         {/* Info additionnelle */}
         <View style={styles.additionalInfo}>
           <Text style={[styles.additionalInfoTitle, { color: colors.textPrimary }]}>
-            Formats disponibles
+            {t('exportData.formatsTitle')}
           </Text>
 
           <View style={styles.infoItem}>
             <Text style={[styles.infoItemLabel, { color: colors.textPrimary }]}>
-              JSON
+              {t('exportData.jsonLabel')}
             </Text>
             <Text style={[styles.infoItemText, { color: colors.textMuted }]}>
-              Sauvegarde complète de tous tes exercices et logs. Idéal pour archiver ou importer dans d'autres apps.
+              {t('exportData.jsonDesc')}
             </Text>
           </View>
 
           <View style={styles.infoItem}>
             <Text style={[styles.infoItemLabel, { color: colors.textPrimary }]}>
-              CSV (recommande)
+              {t('exportData.csvLabel')}
             </Text>
             <Text style={[styles.infoItemText, { color: colors.textMuted }]}>
-              Format tableur optimise pour Excel et Google Sheets. Separateur ";" pour compatibilite maximale. Dates en JJ/MM/AAAA. Inclut des commentaires d'aide. Reimportable dans Yoroi.
+              {t('exportData.csvDesc')}
             </Text>
           </View>
 
           <View style={styles.infoItem}>
             <Text style={[styles.infoItemLabel, { color: colors.textPrimary }]}>
-              TXT
+              {t('exportData.txtLabel')}
             </Text>
             <Text style={[styles.infoItemText, { color: colors.textMuted }]}>
-              Rapport textuel lisible avec statistiques et progression. Facile à partager.
+              {t('exportData.txtDesc')}
             </Text>
           </View>
         </View>
@@ -339,7 +331,7 @@ export default function ExportDataScreen() {
       </ScrollView>
 
       {/* 🔒 SÉCURITÉ: Flou quand l'app est en background */}
-      {isBlurred && (
+      {isBlurred && Platform.OS === 'ios' && (
         <BlurView
           style={StyleSheet.absoluteFill}
           intensity={100}

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
+// Fix: stocker la référence de l'animation pour pouvoir l'arrêter avant d'en démarrer une nouvelle
 
 interface AnimatedCompositionCircleProps {
   value: number;
@@ -23,6 +24,8 @@ export const AnimatedCompositionCircle: React.FC<AnimatedCompositionCircleProps>
   const { colors } = useTheme();
   const progressAnim = useRef(new Animated.Value(0)).current;
   const [animatedProgress, setAnimatedProgress] = useState(0);
+  // Référence pour stopper l'animation précédente avant d'en lancer une nouvelle
+  const currentAnimRef = useRef<Animated.CompositeAnimation | null>(null);
 
   const radius = size / 2 - 6;
   const centerX = size / 2;
@@ -31,13 +34,22 @@ export const AnimatedCompositionCircle: React.FC<AnimatedCompositionCircleProps>
   const progress = Math.min(100, (value / max) * 100);
 
   useEffect(() => {
+    // Arrêter l'animation précédente avant d'en démarrer une nouvelle
+    // Évite l'accumulation de multiples animations sur la même valeur
+    if (currentAnimRef.current) {
+      currentAnimRef.current.stop();
+      currentAnimRef.current = null;
+    }
+
     // Animation de rotation du cercle (0% à X%)
-    Animated.spring(progressAnim, {
+    const anim = Animated.spring(progressAnim, {
       toValue: progress / 100,
       tension: 50,
       friction: 7,
       useNativeDriver: false, // REQUIS: utilisé pour calculer strokeDashoffset via listener (propriété SVG)
-    }).start();
+    });
+    currentAnimRef.current = anim;
+    anim.start(() => { currentAnimRef.current = null; });
 
     const listener = progressAnim.addListener(({ value }) => {
       setAnimatedProgress(value);
@@ -45,6 +57,10 @@ export const AnimatedCompositionCircle: React.FC<AnimatedCompositionCircleProps>
 
     return () => {
       progressAnim.removeListener(listener);
+      if (currentAnimRef.current) {
+        currentAnimRef.current.stop();
+        currentAnimRef.current = null;
+      }
     };
   }, [progress]);
 

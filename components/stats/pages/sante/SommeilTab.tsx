@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { SamuraiCircleLoader } from '@/components/SamuraiLoader';
 import { StatsSection } from '../../StatsSection';
 import { StatsDetailModal } from '../../StatsDetailModal';
 import { MultiLineComparisonCard } from '../../charts/MultiLineComparisonCard';
@@ -12,6 +11,7 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Svg, { Path, Line as SvgLine, Circle as SvgCircle, Text as SvgText } from 'react-native-svg';
 import { SLEEP_DURATION_RANGES } from '@/lib/healthRanges';
+import { useI18n } from '@/lib/I18nContext';
 
 interface SommeilTabProps {
   sleep: any;
@@ -59,12 +59,8 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
   onMetricPress,
 }) => {
   const { colors, isDark, screenBackground } = useTheme();
+  const { t } = useI18n();
 
-  const [showLoader, setShowLoader] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setShowLoader(false), 7000);
-    return () => clearTimeout(t);
-  }, []);
 
   const [selectedMetric, setSelectedMetric] = useState<{
     key: string; label: string; color: string; unit: string; icon: React.ReactNode;
@@ -243,7 +239,6 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
   const cardBg = isDark ? '#242430' : '#FFFFFF';
   const cardBorder = isDark ? colors.accent + '30' : colors.border;
 
-  if (showLoader) return <SamuraiCircleLoader duration={7000} bgColor={screenBackground} />;
 
   return (
     <View style={{ backgroundColor: sectionBg, borderRadius: 16, marginHorizontal: 0, paddingTop: 8, paddingBottom: 8 }}>

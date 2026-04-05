@@ -172,11 +172,21 @@ export default function YearCounterV2Screen() {
         quality: 1,
       });
 
-      if (await isAvailableAsync()) {
+      const available = await isAvailableAsync();
+      if (available) {
         await shareAsync(uri, {
           mimeType: 'image/png',
           dialogTitle: 'Partager mon Compteur Annuel',
         });
+      } else {
+        const { status } = await requestPermissionsAsync();
+        if (status === 'granted') {
+          await saveToLibraryAsync(uri);
+          notificationAsync(NotificationFeedbackType.Success);
+          showPopup('Image sauvegardée !', 'La carte a été sauvegardée dans ta galerie.', [{ text: 'OK', style: 'primary' }]);
+        } else {
+          showPopup('Partage indisponible', 'Le partage n\'est pas disponible sur cet appareil.', [{ text: 'OK', style: 'primary' }]);
+        }
       }
     } catch (error) {
       logger.error('Error sharing:', error);

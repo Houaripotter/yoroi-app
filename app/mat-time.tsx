@@ -174,7 +174,7 @@ export default function MatTimeScreen() {
     const strokeWidth = 16;
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
-    const progress = Math.min((current / goal) * 100, 100);
+    const progress = goal > 0 ? Math.min((current / goal) * 100, 100) : 0;
     const strokeDashoffset = circumference - (progress / 100) * circumference;
 
     return (
@@ -228,7 +228,7 @@ export default function MatTimeScreen() {
     );
   }
 
-  const weekProgress = (stats.thisWeekMinutes / weeklyGoal) * 100;
+  const weekProgress = weeklyGoal > 0 ? (stats.thisWeekMinutes / weeklyGoal) * 100 : 0;
 
   return (
     <ScreenWrapper>

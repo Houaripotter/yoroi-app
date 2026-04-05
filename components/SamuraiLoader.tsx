@@ -11,7 +11,7 @@ import LottieView from 'lottie-react-native';
 // SamuraiCircleLoader — cercle blanc centré
 // sur fond sombre, barre de progression 7s
 // ============================================
-export function SamuraiCircleLoader({ duration = 7000, bgColor = '#0a0a0a' }: { duration?: number; bgColor?: string }) {
+export function SamuraiCircleLoader({ duration = 2000, bgColor = '#0a0a0a' }: { duration?: number; bgColor?: string }) {
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {

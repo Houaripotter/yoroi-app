@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, Animated, DeviceEventEmitter } from 'react-native';
+import { StatsHealthProvider } from '@/lib/StatsHealthContext';
 import { Tabs, useRouter } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Home, BarChart2, Plus, Calendar, Wrench, Settings, BookOpen } from 'lucide-react-native';
@@ -343,22 +344,24 @@ export default function TabLayout() {
   }, []);
 
   return (
-    <View style={{ flex: 1 }}>
-      <Tabs
-        key={tabsKey}
-        tabBar={(props) => <FloatingPillTabBar {...props} />}
-        screenOptions={{ headerShown: false }}
-      >
-        <Tabs.Screen name="index" options={{ title: '' }} />
-        <Tabs.Screen name="stats" options={{ title: '' }} />
-        <Tabs.Screen name="carnet" options={{ title: '' }} />
-        <Tabs.Screen name="planning" options={{ title: '' }} />
-        <Tabs.Screen name="add" options={{ title: '' }} />
-        <Tabs.Screen name="more" options={{ title: '' }} />
-        <Tabs.Screen name="settings" options={{ title: '' }} />
-      </Tabs>
-      <ImportProgressBanner />
-    </View>
+    <StatsHealthProvider>
+      <View style={{ flex: 1 }}>
+        <Tabs
+          key={tabsKey}
+          tabBar={(props) => <FloatingPillTabBar {...props} />}
+          screenOptions={{ headerShown: false }}
+        >
+          <Tabs.Screen name="index" options={{ title: '' }} />
+          <Tabs.Screen name="stats" options={{ title: '' }} />
+          <Tabs.Screen name="carnet" options={{ title: '' }} />
+          <Tabs.Screen name="planning" options={{ title: '' }} />
+          <Tabs.Screen name="add" options={{ title: '' }} />
+          <Tabs.Screen name="more" options={{ title: '' }} />
+          <Tabs.Screen name="settings" options={{ title: '' }} />
+        </Tabs>
+        <ImportProgressBanner />
+      </View>
+    </StatsHealthProvider>
   );
 }
 

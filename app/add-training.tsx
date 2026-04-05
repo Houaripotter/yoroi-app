@@ -13,7 +13,10 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   useWindowDimensions,
+  Dimensions,
   DeviceEventEmitter,
+  InteractionManager,
+  UIManager,
 } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { impactAsync, notificationAsync, selectionAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
@@ -47,6 +50,7 @@ import {
   Swords,
   MapPin,
   Navigation,
+  Search,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -72,10 +76,12 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import logger from '@/lib/security/logger';
+import { safeOpenURL } from '@/lib/security/validators';
 import HealthConnect from '@/lib/healthConnect';
 import * as Location from 'expo-location';
 import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
 import { SPORT_OPTIONS, DEFAULT_OPTIONS, SportOption } from '@/constants/sportOptions';
+import { useI18n } from '@/lib/I18nContext';
 
 // Constants for non-theme values
 const FONT_SIZE = TYPOGRAPHY.size;
@@ -94,6 +100,7 @@ export default function AddTrainingScreen() {
   const styles = useMemo(() => createStyles(IS_SMALL_SCREEN), [IS_SMALL_SCREEN]);
   const insets = useSafeAreaInsets();
   const { colors, isDark, screenText } = useTheme();
+  const { t } = useI18n();
   const { avatarImage: contextAvatar } = useAvatar();
   const router = useRouter();
   const { checkBadges } = useBadges();
@@ -132,7 +139,8 @@ export default function AddTrainingScreen() {
     notes?: string,
     stairs?: string,
     pace?: string,
-    cadence?: string
+    cadence?: string,
+    sets_data?: { weight: string; reps: string }[], // Multi-séries musculation
   }>>({});
   const [sportEntries, setSportEntries] = useState<Record<string, string[]>>({}); // { jjb: ['Round 1: 5min', 'Guard work'], running: ['5K en 25min'] }
   const [newEntryText, setNewEntryText] = useState<Record<string, string>>({}); // Texte en cours de saisie pour chaque sport
@@ -192,7 +200,8 @@ export default function AddTrainingScreen() {
   const [cardBackgroundImage, setCardBackgroundImage] = useState<string | null>(null);
   const [showHouariRateModal, setShowHouariRateModal] = useState(false);
   const [lastSavedTrainingId, setLastSavedTrainingId] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState(''); // Barre de recherche
+  const [searchQuery, setSearchQuery] = useState(''); // Barre de recherche (sport/exercice)
+  const [clubSearchQuery, setClubSearchQuery] = useState(''); // Recherche dans la liste des clubs
   const [userName, setUserName] = useState<string>('Champion');
   const [userGender, setUserGender] = useState<'male' | 'female'>('male');
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
@@ -211,6 +220,11 @@ export default function AddTrainingScreen() {
   const [primarySportError, setPrimarySportError] = useState<boolean>(false);
   const sportSelectorRef = useRef<View>(null);
   const [currentStep, setCurrentStep] = useState(1);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const goToStep = (n: number) => {
     setCurrentStep(n);
@@ -352,7 +366,9 @@ export default function AddTrainingScreen() {
     };
 
     updateContextualData();
-  }, [selectedClub, selectedSports, primarySportForObjective]);
+  // JSON.stringify stabilise le tableau — évite les re-triggers quand la référence change sans que les valeurs changent
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClub?.id, JSON.stringify(selectedSports), primarySportForObjective]);
 
   // Calculer heure de fin
   const calculateEndTime = (): string => {
@@ -657,6 +673,27 @@ export default function AddTrainingScreen() {
     }
   };
 
+  // Ouvrir l'adresse dans Apple Maps ou Google Maps
+  const openInMaps = async (provider: 'apple' | 'google') => {
+    const query = locationName.trim();
+    if (!query) return;
+    let url: string;
+    if (provider === 'apple') {
+      if (locationLat && locationLon) {
+        url = `maps://maps.apple.com/?ll=${locationLat},${locationLon}&q=${encodeURIComponent(query)}`;
+      } else {
+        url = `maps://maps.apple.com/?q=${encodeURIComponent(query)}`;
+      }
+    } else {
+      if (locationLat && locationLon) {
+        url = `https://www.google.com/maps/search/?api=1&query=${locationLat},${locationLon}`;
+      } else {
+        url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+      }
+    }
+    await safeOpenURL(url);
+  };
+
   // Capturer GPS actuel
   const captureGPS = async () => {
     try {
@@ -806,26 +843,36 @@ export default function AddTrainingScreen() {
     );
   };
 
+  // Tracker la position de scroll courante pour le calcul de défilement clavier
+  const currentScrollY = useRef(0);
+
   // Helper: Scroller vers l'input focalisé quand le clavier apparaît
+  // event.target = native view tag (number) → utiliser UIManager.measureInWindow
   const scrollToFocusedInput = useCallback((event: any) => {
     if (!scrollViewRef.current) return;
-    const node = event.target;
-    if (node) {
-      // Utiliser measure() au lieu de measureLayout() pour éviter le crash
-      setTimeout(() => {
-        try {
-          node.measure?.((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-            // Ignorer si pageY invalide (mesure ratée → évite le scroll vers y:0)
-            if (pageY !== undefined && height > 0 && pageY > 80) {
-              const targetY = Math.max(0, pageY - 150);
-              scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
-            }
-          });
-        } catch {
-          // Silencieux si measure échoue
-        }
-      }, 350);
-    }
+    const nodeTag = event.target;
+    if (nodeTag == null) return;
+    setTimeout(() => {
+      try {
+        UIManager.measureInWindow(nodeTag, (x: number, y: number, w: number, h: number) => {
+          if (h <= 0) return;
+          // Hauteur clavier réelle approximée selon OS/device
+          const kbHeight = Platform.OS === 'ios' ? 346 : 290;
+          const windowH = Dimensions.get('window').height;
+          const visibleBottom = windowH - kbHeight - 16;
+          const inputBottom = y + h;
+          if (inputBottom > visibleBottom) {
+            const scrollAmount = inputBottom - visibleBottom + 80; // 80px de marge confortable
+            scrollViewRef.current?.scrollTo({
+              y: Math.max(0, currentScrollY.current + scrollAmount),
+              animated: true,
+            });
+          }
+        });
+      } catch {
+        // Silencieux si UIManager échoue (simulateur, etc.)
+      }
+    }, 350);
   }, []);
 
   // Obtenir les options pour un sport
@@ -1311,8 +1358,13 @@ export default function AddTrainingScreen() {
             
             if (stats) {
               const details = [];
-              if (stats.weight || stats.reps) details.push(`${stats.weight || '0'}kg x ${stats.reps || '0'}`);
-              if (stats.sets) details.push(`${stats.sets} series`);
+              if (stats.sets_data && stats.sets_data.length > 0 && stats.sets_data.some(s => s.weight || s.reps)) {
+                const setsStr = stats.sets_data.map((s, i) => `S${i+1}: ${s.weight||'?'}kg×${s.reps||'?'}`).join(', ');
+                details.push(setsStr);
+              } else if (stats.weight || stats.reps) {
+                details.push(`${stats.weight || '0'}kg × ${stats.reps || '0'}`);
+                if (stats.sets) details.push(`${stats.sets} séries`);
+              }
               if (stats.duration) details.push(`${stats.duration}min`);
               if (stats.distance) details.push(`${stats.distance}km`);
               if (stats.speed) details.push(`${stats.speed}km/h`);
@@ -1377,10 +1429,50 @@ export default function AddTrainingScreen() {
           if (r.method) roundLine += ` (${r.method})`;
           if (r.submissionsGiven) roundLine += ` | ${r.submissionsGiven} sub. donnée${r.submissionsGiven > 1 ? 's' : ''}`;
           if (r.submissionsTaken) roundLine += ` | ${r.submissionsTaken} sub. subie${r.submissionsTaken > 1 ? 's' : ''}`;
+          if ((r.pointsFor ?? 0) > 0 || (r.pointsAgainst ?? 0) > 0) roundLine += ` | Score ${r.pointsFor ?? 0}-${r.pointsAgainst ?? 0}`;
+          if (r.methodsGiven?.length) roundLine += ` | Finitions: ${r.methodsGiven.join(', ')}`;
+          if (r.methodsTaken?.length) roundLine += ` | Subies: ${r.methodsTaken.join(', ')}`;
           fullNotes += roundLine + '\n';
           if (r.notes) fullNotes += `    ${r.notes}\n`;
         });
       }
+
+      // Collecter les exercices de force depuis l'accordéon (options validées)
+      const exercisesFromAccordion = selectedSports.flatMap(sId => {
+        const opts = getOptionsForSport(sId);
+        return (selectedOptions[sId] || [])
+          .filter(id => validatedOptions[id] === true)
+          .map(id => {
+            const opt = opts.find(o => o.id === id);
+            if (!opt) return null;
+            const st = optionStats[id] || {};
+            const isRun2 = id.startsWith('r_') || id.includes('run_');
+            const isSwim2 = id.startsWith('sw_') || id.includes('swim_');
+            const isWalk2 = id.startsWith('ma_');
+            const isBike2 = id.startsWith('ve_') || id.includes('velo') || id.includes('spinning');
+            const isCard2 = id.includes('car_') || opt.group === 'CARDIO';
+            const isCombat2 = ['bo_', 'mt_', 'kb_', 'mma_', 'jjb_', 'j_', 'lu_', 'g_', 'p_', 's_', 't_'].some(p => id.startsWith(p));
+            const isStrength2 = !(isRun2 || isSwim2 || isWalk2 || isBike2 || isCard2 || opt.group === 'DISTANCES' || isCombat2);
+            if (!isStrength2) return null;
+            const rawSets = st.sets_data?.filter(s => s.weight || s.reps) || [];
+            const setsData = rawSets.map(s => ({
+              weight: parseFloat(s.weight || '0') || 0,
+              reps: parseInt(s.reps || '0') || 0,
+            }));
+            const bestWeight = setsData.length ? Math.max(...setsData.map(s => s.weight)) : (parseFloat(st.weight || '0') || 0);
+            const bestReps = setsData.length ? (setsData.find(s => s.weight === bestWeight)?.reps || parseInt(st.reps || '0') || 0) : (parseInt(st.reps || '0') || 0);
+            return {
+              name: opt.label,
+              muscle_group: opt.group,
+              weight: bestWeight,
+              reps: bestReps,
+              sets: setsData.length || 0,
+              setsData: setsData.length > 0 ? setsData : undefined,
+            };
+          })
+          .filter((item): item is NonNullable<typeof item> => item !== null);
+      });
+      const allExercises = [...exercisesFromAccordion, ...exercises];
 
       const trainingData = {
         club_id: selectedClub?.id,
@@ -1390,7 +1482,7 @@ export default function AddTrainingScreen() {
         start_time: startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
         notes: fullNotes.trim() || undefined,
         muscles: selectedMuscles.length > 0 ? selectedMuscles.join(',') : undefined,
-        exercises: exercises.length > 0 ? exercises : undefined,
+        exercises: allExercises.length > 0 ? allExercises : undefined,
         technique_rating: techniqueRating,
         technical_theme: technicalTheme.trim() || undefined,
         is_outdoor: isOutdoor,
@@ -1507,6 +1599,7 @@ export default function AddTrainingScreen() {
           if (newChallenges.length > 0) {
             const names = newChallenges.map(c => `"${c.title}" (+${c.xp} XP)`).join('\n');
             setTimeout(() => {
+              if (!isMountedRef.current) return;
               showPopup(
                 'Bravo, défi valide !',
                 `Ta séance a valide :\n${names}\n\nVa dans "Défis" pour reclamer tes XP !`,
@@ -1518,6 +1611,8 @@ export default function AddTrainingScreen() {
       }).catch(() => {});
 
       // AFFICHER LE MODAL DE VALIDATION (Étape 2) - avant les checks non-critiques
+      // Reset l'étape à 2 (aperçu initial) à chaque nouvelle sauvegarde
+      setValidationStep(2);
       setCardBackgroundImage(null);
       setShowValidationModal(true);
 
@@ -1525,7 +1620,7 @@ export default function AddTrainingScreen() {
       incrementReviewTrigger().catch(() => {});
       // Badges : délai de 5s pour laisser le son Pokémon se terminer
       // et éviter que la célébration badge apparaisse pendant la navigation
-      setTimeout(() => { checkBadges().catch(() => {}); }, 5000);
+      setTimeout(() => { if (isMountedRef.current) checkBadges().catch(() => {}); }, 5000);
 
       // Detection de pattern : suggerer un creneau regulier si pattern detecte
       if (!isEditMode && !params?.slotId) {
@@ -1536,6 +1631,7 @@ export default function AddTrainingScreen() {
             const sportName = s.sport.charAt(0).toUpperCase() + s.sport.slice(1);
             // Attendre un peu que le modal de validation se ferme
             setTimeout(() => {
+              if (!isMountedRef.current) return;
               showPopup(
                 'Creneau regulier detecte',
                 `Vous vous entrainez en ${sportName} tous les ${dayNames[s.dayOfWeek]} (${s.count} fois ce mois). Creer un creneau regulier ?`,
@@ -1651,7 +1747,8 @@ export default function AddTrainingScreen() {
         .filter((item): item is NonNullable<typeof item> => item !== null);
     });
   };
-  const optionDetails = getOptionDetails();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const optionDetails = useMemo(() => getOptionDetails(), [selectedSports, selectedOptions, validatedOptions]);
 
   // Construire les notes pour la prévisualisation
   const getPreviewNotes = () => {
@@ -1659,7 +1756,7 @@ export default function AddTrainingScreen() {
     selectedSports.forEach(sportId => {
       const sportName = getSportName(sportId);
       const entries = sportEntries[sportId] || [];
-      
+
       // Entries
       if (entries.length > 0) {
         if (selectedOptions[sportId]?.length === 0) fullNotes += `${sportName}:\n`;
@@ -1672,7 +1769,34 @@ export default function AddTrainingScreen() {
     return fullNotes.trim();
   };
 
-  const previewNotes = getPreviewNotes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const previewNotes = useMemo(() => getPreviewNotes(), [selectedSports, sportEntries, selectedOptions, customDescription, notes]);
+
+  // Objet training mémoïsé pour SessionCard — évite les re-renders à chaque keystroke
+  const sessionCardTraining = useMemo(() => ({
+    sport: selectedSports.join(','),
+    duration_minutes: duration,
+    distance: distance ? parseFloat(distance.replace(',', '.')) : undefined,
+    calories: calories ? parseInt(calories) : undefined,
+    intensity: intensity,
+    heart_rate: heartRate ? parseInt(heartRate) : undefined,
+    date: date.toISOString(),
+    start_time: startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+    rounds: rounds ? parseInt(rounds) : undefined,
+    round_duration: roundDuration ? parseInt(roundDuration) : undefined,
+    club_logo: selectedClub?.logo_uri,
+    club_name: selectedClub?.name,
+    muscles: selectedMuscles.join(','),
+    exercises: exercises,
+    notes: previewNotes,
+    technique_rating: techniqueRating || undefined,
+    is_outdoor: isOutdoor,
+    pente: pente ? parseFloat(pente.replace(',', '.')) : undefined,
+    speed: speed ? parseFloat(speed.replace(',', '.')) : undefined,
+    resistance: resistance ? parseInt(resistance) : undefined,
+    watts: watts ? parseInt(watts) : undefined,
+    cadence: cadence ? parseInt(cadence) : undefined,
+  }), [selectedSports, duration, distance, calories, intensity, heartRate, date, startTime, rounds, roundDuration, selectedClub, selectedMuscles, exercises, previewNotes, techniqueRating, isOutdoor, pente, speed, resistance, watts, cadence]);
 
   return (
     <ScreenWrapper noPadding noContainer>
@@ -1735,11 +1859,13 @@ export default function AddTrainingScreen() {
         <ScrollView
           ref={scrollViewRef}
           style={[styles.scrollView, { backgroundColor: colors.backgroundCard }]}
-          contentContainerStyle={[styles.content, { paddingTop: 20, paddingBottom: 150 }]}
+          contentContainerStyle={[styles.content, { paddingTop: 20, paddingBottom: 200 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           bounces={false}
           overScrollMode="never"
+          scrollEventThrottle={16}
+          onScroll={(e) => { currentScrollY.current = e.nativeEvent.contentOffset.y; }}
         >
 
         {/* Résumé sport — visible sur les étapes 2-4 */}
@@ -2152,7 +2278,7 @@ export default function AddTrainingScreen() {
                   {currentStep === 2 && selectedSports.length > 0 && (
                     <>
                       <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textMuted, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: SPACING.lg, marginBottom: 10 }}>
-                        Lieu d'entraînement
+                        {t('addTraining.trainingPlace')}
                       </Text>
 
                       <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border }}>
@@ -2198,13 +2324,13 @@ export default function AddTrainingScreen() {
                                           selectionAsync();
                                         }}
                                       >
-                                        <Text style={{ fontWeight: '700', fontSize: 14, color: isOutdoor ? colors.accent : colors.textMuted, textAlign: 'center' }}>Plein Air</Text>
+                                        <Text style={{ fontWeight: '700', fontSize: 14, color: isOutdoor ? colors.accent : colors.textMuted, textAlign: 'center' }}>{t('addTraining.outdoor')}</Text>
                                       </TouchableOpacity>
                                     </View>
 
                                     {/* RECHERCHE DE LIEU */}
                                     <View style={{ marginBottom: 16 }}>
-                                      <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginBottom: 10 }}>Lieu d'entraînement</Text>
+                                      <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginBottom: 10 }}>{t('addTraining.trainingPlace')}</Text>
 
                                       {/* Champ de recherche textuelle */}
                                       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
@@ -2215,7 +2341,7 @@ export default function AddTrainingScreen() {
                                             fontSize: 14, fontWeight: '500',
                                             borderWidth: 1.5, borderColor: locationLat ? colors.accent : colors.border,
                                           }}
-                                          placeholder="Ex: Gracie Barra, Fitness Park, Stade..."
+                                          placeholder="Ex: Gracie Barra, Fitness Park..."
                                           placeholderTextColor={colors.textMuted}
                                           value={locationName}
                                           onChangeText={onLocationTextChange}
@@ -2239,6 +2365,36 @@ export default function AddTrainingScreen() {
                                           }
                                         </TouchableOpacity>
                                       </View>
+
+                                      {/* Boutons Apple Maps / Google Maps */}
+                                      {locationName.trim().length > 1 && (
+                                        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                                          <TouchableOpacity
+                                            style={{
+                                              flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+                                              gap: 6, paddingVertical: 10, borderRadius: 10,
+                                              backgroundColor: isDark ? 'rgba(0,122,255,0.15)' : 'rgba(0,122,255,0.08)',
+                                              borderWidth: 1, borderColor: 'rgba(0,122,255,0.3)',
+                                            }}
+                                            onPress={() => openInMaps('apple')}
+                                          >
+                                            <MapPin size={13} color="#007AFF" strokeWidth={2.5} />
+                                            <Text style={{ fontSize: 12, fontWeight: '700', color: '#007AFF' }}>Apple Maps</Text>
+                                          </TouchableOpacity>
+                                          <TouchableOpacity
+                                            style={{
+                                              flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+                                              gap: 6, paddingVertical: 10, borderRadius: 10,
+                                              backgroundColor: isDark ? 'rgba(66,133,244,0.15)' : 'rgba(66,133,244,0.08)',
+                                              borderWidth: 1, borderColor: 'rgba(66,133,244,0.3)',
+                                            }}
+                                            onPress={() => openInMaps('google')}
+                                          >
+                                            <MapPin size={13} color="#4285F4" strokeWidth={2.5} />
+                                            <Text style={{ fontSize: 12, fontWeight: '700', color: '#4285F4' }}>Google Maps</Text>
+                                          </TouchableOpacity>
+                                        </View>
+                                      )}
 
                                       {/* Aucun résultat */}
                                       {locationNoResults && !locationLoading && (
@@ -2308,13 +2464,43 @@ export default function AddTrainingScreen() {
 
                       {/* LISTE DES CLUBS */}
                           <Text style={[styles.clubSectionTitle, { color: colors.textMuted }]}>Sélectionne ton club</Text>
+
+                          {/* Barre de recherche clubs */}
+                          {clubs.length > 2 && (
+                            <View style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              backgroundColor: colors.backgroundElevated,
+                              borderRadius: 12,
+                              paddingHorizontal: 12,
+                              paddingVertical: 8,
+                              marginBottom: 10,
+                              borderWidth: 1,
+                              borderColor: colors.border,
+                              gap: 8,
+                            }}>
+                              <Search size={15} color={colors.textMuted} strokeWidth={2} />
+                              <TextInput
+                                style={{ flex: 1, fontSize: 14, color: colors.textPrimary, padding: 0 }}
+                                placeholder="Rechercher un club..."
+                                placeholderTextColor={colors.textMuted}
+                                value={clubSearchQuery}
+                                onChangeText={setClubSearchQuery}
+                                returnKeyType="search"
+                                clearButtonMode="while-editing"
+                                onFocus={scrollToFocusedInput}
+                              />
+                            </View>
+                          )}
+
                           <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
                             style={styles.clubsScroll}
                             contentContainerStyle={styles.clubsScrollContent}
                           >
-                            {/* Option Sans club */}
+                            {/* Option Sans club - cachée si recherche active */}
+                            {!clubSearchQuery && (
                             <TouchableOpacity
                               style={[
                                 styles.clubCard,
@@ -2330,9 +2516,15 @@ export default function AddTrainingScreen() {
                                 Sans club
                               </Text>
                             </TouchableOpacity>
-        
-                            {/* Clubs enregistrés - triés par pertinence */}
+                            )}
+
+                            {/* Clubs enregistrés - filtrés par recherche + triés par pertinence */}
                             {[...clubs]
+                              .filter(club => {
+                                if (!clubSearchQuery.trim()) return true;
+                                const q = clubSearchQuery.trim().toLowerCase();
+                                return (club.name || '').toLowerCase().includes(q);
+                              })
                               .sort((a, b) => {
                                 const aMatches = selectedSports.includes(a.sport || '');
                                 const bMatches = selectedSports.includes(b.sport || '');
@@ -2395,7 +2587,24 @@ export default function AddTrainingScreen() {
                             );
                             })}
         
-                            {/* Bouton Créer un club */}
+                            {/* Message aucun résultat */}
+                            {clubSearchQuery.trim().length > 0 &&
+                              clubs.filter(c => (c.name || '').toLowerCase().includes(clubSearchQuery.trim().toLowerCase())).length === 0 && (
+                              <View style={{ alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 8 }}>
+                                <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center' }}>
+                                  Aucun club "{clubSearchQuery}" enregistré.
+                                </Text>
+                                <TouchableOpacity
+                                  style={{ marginTop: 6 }}
+                                  onPress={() => { router.push('/add-club' as any); }}
+                                >
+                                  <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700' }}>+ Ajouter ce club</Text>
+                                </TouchableOpacity>
+                              </View>
+                            )}
+
+                            {/* Bouton Créer un club - caché si recherche active */}
+                            {!clubSearchQuery && (
                             <TouchableOpacity
                               style={[
                                 styles.clubCard,
@@ -2410,6 +2619,7 @@ export default function AddTrainingScreen() {
                                 Créer
                               </Text>
                             </TouchableOpacity>
+                            )}
                           </ScrollView>
                       </View>
                     </>
@@ -2579,13 +2789,14 @@ export default function AddTrainingScreen() {
                                       <TouchableOpacity
                                         onPress={(e) => {
                                           e.stopPropagation();
-                                          if (isStrength && (!stats.weight || !stats.reps)) return;
+                                          const hasValidStrength = stats.sets_data?.some(s => s.weight && s.reps) || (stats.weight && stats.reps);
+                                          if (isStrength && !hasValidStrength) return;
                                           setValidatedOptions(prev => ({ ...prev, [option.id]: true }));
                                           Keyboard.dismiss();
                                           notificationAsync(NotificationFeedbackType.Success);
                                         }}
                                         style={{
-                                          backgroundColor: (isStrength && (!stats.weight || !stats.reps))
+                                          backgroundColor: (isStrength && !(stats.sets_data?.some(s => s.weight && s.reps) || (stats.weight && stats.reps)))
                                             ? (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)')
                                             : colors.accent,
                                           width: 30,
@@ -2596,7 +2807,7 @@ export default function AddTrainingScreen() {
                                         }}
                                         activeOpacity={0.7}
                                       >
-                                        <Check size={16} color={(isStrength && (!stats.weight || !stats.reps)) ? colors.textMuted : '#FFF'} />
+                                        <Check size={16} color={(isStrength && !(stats.sets_data?.some(s => s.weight && s.reps) || (stats.weight && stats.reps))) ? colors.textMuted : '#FFF'} />
                                       </TouchableOpacity>
                                     )}
                                     {isSelected && isValid && (
@@ -2618,40 +2829,76 @@ export default function AddTrainingScreen() {
                                       paddingHorizontal: 12,
                                       paddingVertical: 10,
                                     }}>
-                                        {isStrength && (
-                                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                            <TextInput
-                                              style={{ width: 52, height: 36, backgroundColor: colors.backgroundCard, borderRadius: 8, textAlign: 'center', color: colors.textPrimary, fontWeight: '700', fontSize: 15, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)' }}
-                                              placeholder="kg"
-                                              placeholderTextColor={colors.textMuted}
-                                              keyboardType="decimal-pad"
-                                              value={stats.weight}
-                                              onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, weight: val.replace(',', '.') } }))}
-                                              onFocus={scrollToFocusedInput}
-                                            />
-                                            <Text style={{ color: colors.textMuted, fontSize: 13 }}>×</Text>
-                                            <TextInput
-                                              style={{ width: 52, height: 36, backgroundColor: colors.backgroundCard, borderRadius: 8, textAlign: 'center', color: colors.textPrimary, fontWeight: '700', fontSize: 15, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)' }}
-                                              placeholder="reps"
-                                              placeholderTextColor={colors.textMuted}
-                                              keyboardType="number-pad"
-                                              value={stats.reps}
-                                              onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, reps: val } }))}
-                                              onFocus={scrollToFocusedInput}
-                                            />
-                                            <View style={{ flex: 1 }} />
-                                            <TouchableOpacity
-                                              onPress={() => {
-                                                setOptionStats(prev => { const n = { ...prev }; delete n[option.id]; return n; });
-                                                setValidatedOptions(prev => { const n = { ...prev }; delete n[option.id]; return n; });
-                                                toggleOption(sportId, option.id);
-                                              }}
-                                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                                            >
-                                              <X size={16} color={colors.textMuted} />
-                                            </TouchableOpacity>
-                                          </View>
-                                        )}
+                                        {isStrength && (() => {
+                                          const setsArr = stats.sets_data && stats.sets_data.length > 0
+                                            ? stats.sets_data
+                                            : [{ weight: stats.weight ?? '', reps: stats.reps ?? '' }];
+                                          const updateSet = (si: number, key: 'weight' | 'reps', val: string) => {
+                                            const arr = [...setsArr];
+                                            arr[si] = { ...arr[si], [key]: val };
+                                            setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, sets_data: arr } }));
+                                          };
+                                          const addSet = () => {
+                                            const last = setsArr[setsArr.length - 1];
+                                            setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, sets_data: [...setsArr, { weight: last.weight, reps: last.reps }] } }));
+                                          };
+                                          const removeSet = (si: number) => {
+                                            const arr = setsArr.filter((_, i) => i !== si);
+                                            setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, sets_data: arr.length > 0 ? arr : [{ weight: '', reps: '' }] } }));
+                                          };
+                                          const removeExercise = () => {
+                                            setOptionStats(prev => { const n = { ...prev }; delete n[option.id]; return n; });
+                                            setValidatedOptions(prev => { const n = { ...prev }; delete n[option.id]; return n; });
+                                            toggleOption(sportId, option.id);
+                                          };
+                                          return (
+                                            <View style={{ gap: 5 }}>
+                                              {setsArr.map((set, si) => (
+                                                <View key={si} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                                                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, width: 24, textAlign: 'right' }}>S{si + 1}</Text>
+                                                  <TextInput
+                                                    style={{ width: 56, height: 34, backgroundColor: colors.backgroundCard, borderRadius: 8, textAlign: 'center', color: colors.textPrimary, fontWeight: '700', fontSize: 14, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)' }}
+                                                    placeholder="kg"
+                                                    placeholderTextColor={colors.textMuted}
+                                                    keyboardType="decimal-pad"
+                                                    value={set.weight}
+                                                    onChangeText={(val) => updateSet(si, 'weight', val.replace(',', '.'))}
+                                                    onFocus={scrollToFocusedInput}
+                                                  />
+                                                  <Text style={{ color: colors.textMuted, fontSize: 13 }}>×</Text>
+                                                  <TextInput
+                                                    style={{ width: 52, height: 34, backgroundColor: colors.backgroundCard, borderRadius: 8, textAlign: 'center', color: colors.textPrimary, fontWeight: '700', fontSize: 14, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)' }}
+                                                    placeholder="reps"
+                                                    placeholderTextColor={colors.textMuted}
+                                                    keyboardType="number-pad"
+                                                    value={set.reps}
+                                                    onChangeText={(val) => updateSet(si, 'reps', val)}
+                                                    onFocus={scrollToFocusedInput}
+                                                  />
+                                                  {si === setsArr.length - 1 ? (
+                                                    <TouchableOpacity
+                                                      onPress={addSet}
+                                                      style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: isDark ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.12)', alignItems: 'center', justifyContent: 'center' }}
+                                                    >
+                                                      <Plus size={14} color="#6366F1" />
+                                                    </TouchableOpacity>
+                                                  ) : (
+                                                    <View style={{ width: 30 }} />
+                                                  )}
+                                                  {si > 0 ? (
+                                                    <TouchableOpacity onPress={() => removeSet(si)} hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}>
+                                                      <X size={14} color={colors.textMuted} />
+                                                    </TouchableOpacity>
+                                                  ) : (
+                                                    <TouchableOpacity onPress={removeExercise} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                                                      <X size={16} color={colors.textMuted} />
+                                                    </TouchableOpacity>
+                                                  )}
+                                                </View>
+                                              ))}
+                                            </View>
+                                          );
+                                        })()}
                                         {isCardio && renderPerformanceFields(option.id, option.label, sportId)}
 
                                         {/* NOTES POUR COMBAT / TECHNIQUE */}
@@ -2775,7 +3022,7 @@ export default function AddTrainingScreen() {
                                                                     />
                                                                   </View>
                                                                   <View style={{ flex: 1 }}>
-                                                                    <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>SÉRIES</Text>
+                                                                    <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>{t('addTraining.series')}</Text>
                                                                     <TextInput
                                                                       style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 8, borderRadius: 8, color: colors.textPrimary, fontWeight: '700', borderWidth: 1, borderColor: colors.border }}
                                                                       placeholder="0"
@@ -2950,7 +3197,7 @@ export default function AddTrainingScreen() {
 
               {/* DURÉE */}
               <View>
-                <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 8, fontWeight: '600' }}>Durée de la séance</Text>
+                <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 8, fontWeight: '600' }}>{t('addTraining.sessionDuration')}</Text>
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                   <View style={{ flex: 1, backgroundColor: colors.backgroundElevated, padding: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <TextInput
@@ -3113,7 +3360,7 @@ export default function AddTrainingScreen() {
 
                     {/* Partner name */}
                     <View style={{ marginBottom: 8 }}>
-                      <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 3, fontWeight: '600' }}>PARTENAIRE</Text>
+                      <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 3, fontWeight: '600' }}>{t('addTraining.partner')}</Text>
                       <TextInput
                         style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 8, borderRadius: 8, color: colors.textPrimary, fontWeight: '600', borderWidth: 1, borderColor: colors.border, fontSize: 13 }}
                         placeholder="Nom du partenaire..."
@@ -3306,7 +3553,7 @@ export default function AddTrainingScreen() {
                                     {currentStep === 4 && selectedSports.length > 0 && (
                                       <>
                                         <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textMuted, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: SPACING.lg, marginBottom: 10 }}>
-                                          Ressenti de la séance
+                                          {t('addTraining.sessionFeeling')}
                                         </Text>
                   
                                         <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
@@ -3314,7 +3561,7 @@ export default function AddTrainingScreen() {
                                           {/* INTENSITÉ */}
                                           <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
                                             <View style={{ marginBottom: 8 }}>
-                                              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>Intensité de la séance</Text>
+                                              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>{t('addTraining.sessionIntensity')}</Text>
                                             </View>
                                             
                                             <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 16, lineHeight: 18 }}>
@@ -3344,7 +3591,7 @@ export default function AddTrainingScreen() {
                                           {/* FRÉQUENCE CARDIAQUE */}
                                           <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
                                             <View style={{ marginBottom: 8 }}>
-                                              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>Fréquence cardiaque</Text>
+                                              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>{t('addTraining.heartRate')}</Text>
                                             </View>
                                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                                               <TextInput
@@ -3481,7 +3728,7 @@ export default function AddTrainingScreen() {
               }}
               onPress={() => goToStep(currentStep - 1)}
             >
-              <Text style={{ fontWeight: '700', fontSize: 15, color: colors.textPrimary }}>Retour</Text>
+              <Text style={{ fontWeight: '700', fontSize: 15, color: colors.textPrimary }}>{t('addTraining.back')}</Text>
             </TouchableOpacity>
 
             {/* Suivant / Enregistrer — inversé : toujours contrasté dans tous les thèmes */}
@@ -3536,8 +3783,9 @@ export default function AddTrainingScreen() {
                                       animationType="fade"
                                     >
                                       <View style={{ flex: 1, backgroundColor: '#F2F2F7', paddingTop: insets.top }}>
+                                        {/* key=lastSavedTrainingId force le remontage à chaque nouvelle séance → relance les confettis */}
                                         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} pointerEvents="none">
-                                          <ConfettiCannon count={200} origin={{x: -10, y: 0}} />
+                                          <ConfettiCannon key={lastSavedTrainingId ?? 0} count={80} origin={{x: -10, y: 0}} fadeOut={true} />
                                         </View>
 
                                         {/* Header Étape 2 - MODE CLAIR */}
@@ -3582,30 +3830,7 @@ export default function AddTrainingScreen() {
                                 <>
                               <View style={{ width: 360, borderRadius: 24, overflow: 'hidden', shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 20, elevation: 15, marginBottom: 30 }}>
                                 <SessionCard
-                                  training={{
-                                    sport: selectedSports.join(','),
-                                    duration_minutes: duration,
-                                    distance: distance ? parseFloat(distance.replace(',', '.')) : undefined,
-                                    calories: calories ? parseInt(calories) : undefined,
-                                    intensity: intensity,
-                                    heart_rate: heartRate ? parseInt(heartRate) : undefined,
-                                    date: date.toISOString(),
-                                    start_time: startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-                                    rounds: rounds ? parseInt(rounds) : undefined,
-                                    round_duration: roundDuration ? parseInt(roundDuration) : undefined,
-                                    club_logo: selectedClub?.logo_uri,
-                                    club_name: selectedClub?.name,
-                                    muscles: selectedMuscles.join(','),
-                                    exercises: exercises,
-                                    notes: previewNotes,
-                                    technique_rating: techniqueRating || undefined,
-                                    is_outdoor: isOutdoor,
-                                    pente: pente ? parseFloat(pente.replace(',', '.')) : undefined,
-                                    speed: speed ? parseFloat(speed.replace(',', '.')) : undefined,
-                                    resistance: resistance ? parseInt(resistance) : undefined,
-                                    watts: watts ? parseInt(watts) : undefined,
-                                    cadence: cadence ? parseInt(cadence) : undefined,
-                                  }}
+                                  training={sessionCardTraining}
                                   options={optionDetails}
                                   backgroundImage={cardBackgroundImage || userPhoto}
                                   backgroundType={cardBackgroundImage || userPhoto ? 'photo' : 'black'}
@@ -3648,7 +3873,12 @@ export default function AddTrainingScreen() {
                                   onPress={() => {
                                     lightHaptic();
                                     setShowValidationModal(false);
-                                    router.replace('/social-share/last-session');
+                                    const sessionPath = lastSavedTrainingId
+                                      ? `/social-share/last-session?id=${lastSavedTrainingId}`
+                                      : '/social-share/last-session';
+                                    InteractionManager.runAfterInteractions(() => {
+                                      router.replace(sessionPath as any);
+                                    });
                                   }}
                                 >
                                   <Share2 size={24} color={colors.textOnAccent} strokeWidth={2.5} />
@@ -3701,30 +3931,7 @@ export default function AddTrainingScreen() {
                                 <>
                               <View style={{ width: 360, borderRadius: 24, overflow: 'hidden', shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 20, elevation: 15, marginBottom: 30 }}>
                                 <SessionCard
-                                  training={{
-                                    sport: selectedSports.join(','),
-                                    duration_minutes: duration,
-                                    distance: distance ? parseFloat(distance.replace(',', '.')) : undefined,
-                                    calories: calories ? parseInt(calories) : undefined,
-                                    intensity: intensity,
-                                    heart_rate: heartRate ? parseInt(heartRate) : undefined,
-                                    date: date.toISOString(),
-                                    start_time: startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-                                    rounds: rounds ? parseInt(rounds) : undefined,
-                                    round_duration: roundDuration ? parseInt(roundDuration) : undefined,
-                                    club_logo: selectedClub?.logo_uri,
-                                    club_name: selectedClub?.name,
-                                    muscles: selectedMuscles.join(','),
-                                    exercises: exercises,
-                                    notes: previewNotes,
-                                    technique_rating: techniqueRating || undefined,
-                                    is_outdoor: isOutdoor,
-                                    pente: pente ? parseFloat(pente.replace(',', '.')) : undefined,
-                                    speed: speed ? parseFloat(speed.replace(',', '.')) : undefined,
-                                    resistance: resistance ? parseInt(resistance) : undefined,
-                                    watts: watts ? parseInt(watts) : undefined,
-                                    cadence: cadence ? parseInt(cadence) : undefined,
-                                  }}
+                                  training={sessionCardTraining}
                                   options={optionDetails}
                                   backgroundImage={cardBackgroundImage || userPhoto}
                                   backgroundType={cardBackgroundImage || userPhoto ? 'photo' : 'black'}
@@ -3791,13 +3998,13 @@ export default function AddTrainingScreen() {
                                   }}
                                   onPress={() => {
                                     setShowValidationModal(false);
-                                    setTimeout(() => {
+                                    InteractionManager.runAfterInteractions(() => {
                                       if (lastSavedTrainingId) {
                                         router.push(`/social-share/last-session?id=${lastSavedTrainingId}`);
                                       } else {
                                         router.push('/social-share/last-session');
                                       }
-                                    }, 400);
+                                    });
                                   }}
                                 >
                                   <Share2 size={24} color="#000" strokeWidth={2.5} />
@@ -3869,6 +4076,7 @@ export default function AddTrainingScreen() {
                                     setShowValidationModal(false);
                                     setTimeout(async () => {
                                       await pickImageFromGallery();
+                                      if (!isMountedRef.current) return;
                                       setValidationStep(3);
                                       setShowValidationModal(true);
                                     }, 500);
@@ -3897,6 +4105,7 @@ export default function AddTrainingScreen() {
                                     setShowValidationModal(false);
                                     setTimeout(async () => {
                                       await takePhoto();
+                                      if (!isMountedRef.current) return;
                                       setValidationStep(3);
                                       setShowValidationModal(true);
                                     }, 500);
@@ -3994,7 +4203,7 @@ export default function AddTrainingScreen() {
             </TouchableOpacity>
 
             <Text style={{ fontSize: 14, fontStyle: 'italic', color: colors.textMuted, textAlign: 'center' }}>
-              Merci de faire partie de la famille Yoroi
+              {t('addTraining.thankYou')}
             </Text>
 
             {/* Bouton Fermer */}

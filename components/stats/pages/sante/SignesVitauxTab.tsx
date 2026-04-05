@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { SamuraiCircleLoader } from '@/components/SamuraiLoader';
 import { StatsSection } from '../../StatsSection';
 import { StatsDetailModal } from '../../StatsDetailModal';
 import { MultiLineComparisonCard } from '../../charts/MultiLineComparisonCard';
@@ -11,6 +10,7 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Svg, { Path, Line as SvgLine, Circle as SvgCircle, Text as SvgText } from 'react-native-svg';
 import { HRV_RANGES, RESTING_HEART_RATE_RANGES } from '@/lib/healthRanges';
+import { useI18n } from '@/lib/I18nContext';
 
 interface SignesVitauxTabProps {
   heartRate: any;
@@ -50,12 +50,8 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
   onMetricPress,
 }) => {
   const { colors, isDark, screenBackground } = useTheme();
+  const { t } = useI18n();
 
-  const [showLoader, setShowLoader] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setShowLoader(false), 7000);
-    return () => clearTimeout(t);
-  }, []);
 
   const sectionBg = isDark ? colors.accent + '10' : colors.accent + '08';
   const cardBg = isDark ? '#242430' : '#FFFFFF';
@@ -154,7 +150,6 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
 
   const allEmpty = displayHR === 0 && hrvValue === 0 && spO2Value === 0 && respRate === 0 && vo2maxValue === 0 && systolic === 0 && bodyTempValue === 0 && bloodGlucoseValue === 0;
 
-  if (showLoader) return <SamuraiCircleLoader duration={7000} bgColor={screenBackground} />;
 
   if (allEmpty) {
     return (

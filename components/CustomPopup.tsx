@@ -11,6 +11,7 @@ import {
   Modal,
   TouchableOpacity,
   useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@/lib/ThemeContext';
@@ -77,11 +78,13 @@ export const CustomPopup: React.FC<CustomPopupProps> = memo(({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <BlurView
-          intensity={isDark ? 40 : 20}
-          tint={isDark ? 'dark' : 'light'}
-          style={StyleSheet.absoluteFill}
-        />
+        {Platform.OS === 'ios' && (
+          <BlurView
+            intensity={isDark ? 40 : 20}
+            tint={isDark ? 'dark' : 'light'}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
         <View style={styles.centeredView}>
           <View style={[styles.popupContainer, { backgroundColor: colors.card }]}>
             {/* Accent bar */}

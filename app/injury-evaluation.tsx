@@ -10,6 +10,7 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -129,6 +130,7 @@ export default function InjuryEvaluationScreen() {
           notes: notes || undefined,
         });
 
+        DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
         notificationAsync(NotificationFeedbackType.Success);
         showPopup('Blessure mise à jour', 'Les informations ont été modifiées avec succès.', [
           { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); setTimeout(() => setIsNavigating(false), 1000); router.back(); } } },
@@ -145,6 +147,7 @@ export default function InjuryEvaluationScreen() {
           notes: notes || undefined,
         });
 
+        DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
         notificationAsync(NotificationFeedbackType.Success);
 
         // Vérifier récurrence

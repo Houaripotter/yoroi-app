@@ -4,10 +4,9 @@
 // ============================================
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { ScrollView, View, StyleSheet, TouchableOpacity, Text, RefreshControl, InteractionManager, unstable_batchedUpdates } from 'react-native';
+import { ScrollView, View, StyleSheet, TouchableOpacity, Text, RefreshControl, InteractionManager, unstable_batchedUpdates, DeviceEventEmitter } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { SamuraiCircleLoader } from '@/components/SamuraiLoader';
 import { useScrollContext } from '@/lib/ScrollContext';
 import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
@@ -43,12 +42,6 @@ export const CorpsTabPage: React.FC = React.memo(() => {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-  const [showLoader, setShowLoader] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setShowLoader(false), 7000);
-    return () => clearTimeout(t);
-  }, []);
 
   // --- Poids state ---
   const [weightData, setWeightData] = useState<any>(null);
@@ -102,33 +95,19 @@ export const CorpsTabPage: React.FC = React.memo(() => {
     source: 'weight' | 'composition' | 'measurement';
   } | null>(null);
 
-  // BMI traduit
-  const translatedBMIZones = BMI_RANGES.zones.map(zone => ({
-    ...zone,
-    label: zone.label === 'Sous-poids' ? t('stats.bmiUnderweight') :
-           zone.label === 'Normal' ? t('stats.bmiNormal') :
-           zone.label === 'Surpoids' ? t('stats.bmiOverweight') :
-           zone.label === 'Obésité' ? t('stats.bmiObese') : zone.label
-  }));
-  const translatedBMIRanges = { ...BMI_RANGES, zones: translatedBMIZones };
+  // BMI traduit (mémoïsé)
+  const translatedBMIRanges = useMemo(() => {
+    const zones = BMI_RANGES.zones.map(zone => ({
+      ...zone,
+      label: zone.label === 'Sous-poids' ? t('stats.bmiUnderweight') :
+             zone.label === 'Normal' ? t('stats.bmiNormal') :
+             zone.label === 'Surpoids' ? t('stats.bmiOverweight') :
+             zone.label === 'Obésité' ? t('stats.bmiObese') : zone.label
+    }));
+    return { ...BMI_RANGES, zones };
+  }, [t]);
 
-  const isFirstLoad = useRef(true);
-  useEffect(() => {
-    if (isFirstLoad.current) {
-      isFirstLoad.current = false;
-      const handle = InteractionManager.runAfterInteractions(() => { loadData(); });
-      return () => handle.cancel();
-    } else {
-      loadData();
-    }
-  }, [selectedPeriod]);
-
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try { await loadData(); } finally { setRefreshing(false); }
-  }, [selectedPeriod]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [data, profile, allWeights, settings, latest, allMeasurements] = await Promise.all([
@@ -210,7 +189,28 @@ export const CorpsTabPage: React.FC = React.memo(() => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedPeriod]);
+
+  const isFirstLoad = useRef(true);
+  useEffect(() => {
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      const handle = InteractionManager.runAfterInteractions(() => { loadData(); });
+      return () => handle.cancel();
+    } else {
+      loadData();
+    }
+  }, [selectedPeriod]);
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => loadData());
+    return () => sub.remove();
+  }, [loadData]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await loadData(); } finally { setRefreshing(false); }
+  }, [loadData]);
 
   // Memoized sparkline data
   const evolutionSparkline = useMemo(() => {
@@ -339,8 +339,6 @@ export const CorpsTabPage: React.FC = React.memo(() => {
     if (key === 'waist') return getWaistCircumferenceRange(userGender);
     return undefined;
   };
-
-  if (showLoader) return <SamuraiCircleLoader duration={7000} bgColor={screenBackground} />;
 
   return (
     <ScrollView

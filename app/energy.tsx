@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Animated,
   RefreshControl,
+  DeviceEventEmitter,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,6 +27,7 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { format, differenceInDays } from 'date-fns';
 
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { calculateStreak, getTrainings, Training } from '@/lib/database';
 import { getSleepStats, formatSleepDuration, SleepStats } from '@/lib/sleepService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -41,6 +43,7 @@ const HYDRATION_GOAL = 2500;
 export default function EnergyScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [batteryPercent, setBatteryPercent] = useState(0);
   const [hydration, setHydration] = useState(0);
@@ -55,11 +58,11 @@ export default function EnergyScreen() {
 
   // Détails de contribution
   const [contributions, setContributions] = useState({
-    hydration: { value: 0, max: 20, label: 'Hydratation' },
-    sleep: { value: 0, max: 25, label: 'Sommeil' },
-    streak: { value: 0, max: 20, label: 'Régularité' },
-    training: { value: 0, max: 20, label: 'Entraînement récent' },
-    base: { value: 15, max: 15, label: 'Énergie de base' },
+    hydration: { value: 0, max: 20, label: t('energy.contributions.hydration') },
+    sleep: { value: 0, max: 25, label: t('energy.contributions.sleep') },
+    streak: { value: 0, max: 20, label: t('energy.contributions.streak') },
+    training: { value: 0, max: 20, label: t('energy.contributions.training') },
+    base: { value: 15, max: 15, label: t('energy.contributions.base') },
   });
 
   const loadData = useCallback(async () => {
@@ -107,11 +110,11 @@ export default function EnergyScreen() {
       }
 
       const newContributions = {
-        hydration: { value: Math.round(hydrationContrib), max: 20, label: 'Hydratation' },
-        sleep: { value: Math.round(sleepContrib), max: 25, label: 'Sommeil' },
-        streak: { value: Math.round(streakContrib), max: 20, label: 'Régularité' },
-        training: { value: Math.round(trainingContrib), max: 20, label: 'Entraînement récent' },
-        base: { value: 15, max: 15, label: 'Énergie de base' },
+        hydration: { value: Math.round(hydrationContrib), max: 20, label: t('energy.contributions.hydration') },
+        sleep: { value: Math.round(sleepContrib), max: 25, label: t('energy.contributions.sleep') },
+        streak: { value: Math.round(streakContrib), max: 20, label: t('energy.contributions.streak') },
+        training: { value: Math.round(trainingContrib), max: 20, label: t('energy.contributions.training') },
+        base: { value: 15, max: 15, label: t('energy.contributions.base') },
       };
       setContributions(newContributions);
 
@@ -140,6 +143,12 @@ export default function EnergyScreen() {
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadData(); }, []);
 
+  // Listener pour les changements de données YOROI
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadData);
+    return () => sub.remove();
+  }, []);
+
   // Animation pulse
   useEffect(() => {
     const animation = Animated.loop(
@@ -164,11 +173,11 @@ export default function EnergyScreen() {
   };
 
   const getStatusMessage = () => {
-    if (batteryPercent >= 80) return { text: 'Prêt à tout donner !', advice: 'Séance intense recommandée', iconType: 'flame' as const };
-    if (batteryPercent >= 60) return { text: 'Bonne forme', advice: 'Tu peux y aller sereinement', iconType: 'zap' as const };
-    if (batteryPercent >= 40) return { text: 'Fatigue modérée', advice: 'Privilégie le technique léger', iconType: 'activity' as const };
-    if (batteryPercent >= 20) return { text: 'Énergie basse', advice: 'Repos ou stretching conseillé', iconType: 'moon' as const };
-    return { text: 'Recharge nécessaire', advice: 'Prends soin de toi aujourd\'hui', iconType: 'battery' as const };
+    if (batteryPercent >= 80) return { text: t('energy.status.high.text'), advice: t('energy.status.high.advice'), iconType: 'flame' as const };
+    if (batteryPercent >= 60) return { text: t('energy.status.good.text'), advice: t('energy.status.good.advice'), iconType: 'zap' as const };
+    if (batteryPercent >= 40) return { text: t('energy.status.moderate.text'), advice: t('energy.status.moderate.advice'), iconType: 'activity' as const };
+    if (batteryPercent >= 20) return { text: t('energy.status.low.text'), advice: t('energy.status.low.advice'), iconType: 'moon' as const };
+    return { text: t('energy.status.critical.text'), advice: t('energy.status.critical.advice'), iconType: 'battery' as const };
   };
 
   const status = getStatusMessage();
@@ -181,7 +190,7 @@ export default function EnergyScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Énergie du Jour</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('energy.title')}</Text>
         <Battery size={24} color={batteryColor} />
       </View>
 
@@ -249,7 +258,7 @@ export default function EnergyScreen() {
         </View>
 
         {/* DÉTAIL DES CONTRIBUTIONS */}
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>CE QUI REMPLIT TA BATTERIE</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('energy.section.contributions')}</Text>
         
         {Object.entries(contributions).map(([key, contrib]) => {
           const icon = key === 'hydration' ? <Droplets size={18} color="#06B6D4" />
@@ -270,20 +279,20 @@ export default function EnergyScreen() {
               <View style={[styles.contribBar, { backgroundColor: colors.border }]}>
                 <View style={[styles.contribFill, { width: `${percent}%`, backgroundColor: batteryColor }]} />
               </View>
-              <Text style={[styles.contribMax, { color: colors.textMuted }]}>Max: {contrib.max}%</Text>
+              <Text style={[styles.contribMax, { color: colors.textMuted }]}>{t('energy.contributions.max', { value: contrib.max })}</Text>
             </View>
           );
         })}
 
         {/* CONSEILS POUR AMÉLIORER */}
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>AMÉLIORE TON ÉNERGIE</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('energy.section.improve')}</Text>
         
         <TouchableOpacity style={[styles.tipCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/hydration')}>
           <Droplets size={20} color="#06B6D4" />
           <View style={styles.tipContent}>
-            <Text style={[styles.tipTitle, { color: colors.textPrimary }]}>Hydratation</Text>
+            <Text style={[styles.tipTitle, { color: colors.textPrimary }]}>{t('energy.tips.hydration.title')}</Text>
             <Text style={[styles.tipDesc, { color: colors.textMuted }]}>
-              {hydration >= HYDRATION_GOAL ? 'Objectif atteint !' : `${((hydration / HYDRATION_GOAL) * 100).toFixed(0)}% - Continue !`}
+              {hydration >= HYDRATION_GOAL ? t('energy.tips.hydration.reached') : `${((hydration / HYDRATION_GOAL) * 100).toFixed(0)}% - ${t('energy.tips.hydration.continue')}`}
             </Text>
           </View>
           <ChevronRight size={18} color={colors.textMuted} />
@@ -292,9 +301,9 @@ export default function EnergyScreen() {
         <TouchableOpacity style={[styles.tipCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/sleep')}>
           <Moon size={20} color="#8B5CF6" />
           <View style={styles.tipContent}>
-            <Text style={[styles.tipTitle, { color: colors.textPrimary }]}>Sommeil</Text>
+            <Text style={[styles.tipTitle, { color: colors.textPrimary }]}>{t('energy.tips.sleep.title')}</Text>
             <Text style={[styles.tipDesc, { color: colors.textMuted }]}>
-              {sleepStats ? `Moyenne: ${formatSleepDuration(sleepStats.averageDuration)}` : 'Enregistre ton sommeil'}
+              {sleepStats ? `${t('energy.tips.sleep.average')}: ${formatSleepDuration(sleepStats.averageDuration)}` : t('energy.tips.sleep.record')}
             </Text>
           </View>
           <ChevronRight size={18} color={colors.textMuted} />
@@ -303,23 +312,23 @@ export default function EnergyScreen() {
         <TouchableOpacity style={[styles.tipCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/add-training')}>
           <Dumbbell size={20} color={colors.accentText} />
           <View style={styles.tipContent}>
-            <Text style={[styles.tipTitle, { color: colors.textPrimary }]}>Entraînement</Text>
+            <Text style={[styles.tipTitle, { color: colors.textPrimary }]}>{t('energy.tips.training.title')}</Text>
             <Text style={[styles.tipDesc, { color: colors.textMuted }]}>
-              {lastTrainingDays === 0 ? 'Entraîné aujourd\'hui !'
-                : lastTrainingDays === 1 ? 'Dernier entraînement hier'
-                : lastTrainingDays !== null ? `Il y a ${lastTrainingDays} jours` : 'Aucun entraînement récent'}
+              {lastTrainingDays === 0 ? t('energy.tips.training.today')
+                : lastTrainingDays === 1 ? t('energy.tips.training.yesterday')
+                : lastTrainingDays !== null ? t('energy.tips.training.daysAgo', { days: lastTrainingDays }) : t('energy.tips.training.none')}
             </Text>
           </View>
           <ChevronRight size={18} color={colors.textMuted} />
         </TouchableOpacity>
 
         {/* BOUTON GO */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.goButton, { backgroundColor: batteryColor }]}
           onPress={() => { impactAsync(ImpactFeedbackStyle.Heavy); router.push('/add-training'); }}
         >
           <Zap size={24} color="#FFFFFF" />
-          <Text style={styles.goButtonText}>GO ENTRAÎNEMENT !</Text>
+          <Text style={styles.goButtonText}>{t('energy.button.goTraining')}</Text>
         </TouchableOpacity>
 
         <View style={{ height: 100 }} />

@@ -182,7 +182,12 @@ export const AchievementCelebration: React.FC<AchievementCelebrationProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <BlurView intensity={80} style={styles.overlay}>
+      <View style={[styles.overlay, Platform.OS !== 'ios' && { backgroundColor: 'rgba(0,0,0,0.82)' }]}>
+        {/* Blur iOS uniquement */}
+        {Platform.OS === 'ios' && (
+          <BlurView intensity={80} style={StyleSheet.absoluteFill} />
+        )}
+
         {/* Confetti */}
         {visible &&
           Array.from({ length: 30 }).map((_, i) => (
@@ -248,7 +253,7 @@ export const AchievementCelebration: React.FC<AchievementCelebrationProps> = ({
             <Sparkles size={20} color="#FFD700" />
           </View>
         </Animated.View>
-      </BlurView>
+      </View>
     </Modal>
   );
 };

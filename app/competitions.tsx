@@ -10,6 +10,7 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  DeviceEventEmitter,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Calendar, MapPin, Plus, Trophy, Clock, ChevronRight, Download } from 'lucide-react-native';
@@ -27,7 +28,7 @@ import logger from '@/lib/security/logger';
 
 export default function CompetitionsScreen() {
   const { colors } = useTheme();
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [upcomingCompetitions, setUpcomingCompetitions] = useState<Competition[]>([]);
@@ -56,6 +57,11 @@ export default function CompetitionsScreen() {
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadCompetitions(); }, []);
 
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadCompetitions);
+    return () => sub.remove();
+  }, []);
+
   const onRefresh = async () => {
     setRefreshing(true);
     await loadCompetitions();
@@ -67,14 +73,16 @@ export default function CompetitionsScreen() {
       const available = getAvailableCompetitionsCount();
 
       showPopup(
-        'Importer les competitions',
-        `Veux-tu importer ${available.total} compétitions IBJJF et CFJJB ?\n\n` +
-        `- ${available.ibjjf} competitions IBJJF (2025-2026)\n` +
-        `- ${available.cfjjb} competitions CFJJB (2026)`,
+        t('competitions.importTitle'),
+        t('competitions.importMessage', {
+          total: available.total,
+          ibjjf: available.ibjjf,
+          cfjjb: available.cfjjb
+        }),
         [
-          { text: 'Annuler', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: 'Importer',
+            text: t('competitions.import'),
             style: 'primary',
             onPress: async () => {
               setImporting(true);
@@ -86,14 +94,18 @@ export default function CompetitionsScreen() {
                 await loadCompetitions();
 
                 showPopup(
-                  'Import termine !',
-                  `${result.total} competitions ajoutees\n\n` +
-                  `IBJJF : ${result.ibjjf.imported} importees, ${result.ibjjf.skipped} deja presentes\n` +
-                  `CFJJB : ${result.cfjjb.imported} importees, ${result.cfjjb.skipped} deja presentes`,
-                  [{ text: 'OK', style: 'primary' }]
+                  t('competitions.importComplete'),
+                  t('competitions.importResults', {
+                    total: result.total,
+                    ibjjfImported: result.ibjjf.imported,
+                    ibjjfSkipped: result.ibjjf.skipped,
+                    cfjjbImported: result.cfjjb.imported,
+                    cfjjbSkipped: result.cfjjb.skipped
+                  }),
+                  [{ text: t('common.ok'), style: 'primary' }]
                 );
               } catch (error) {
-                showPopup('Erreur', 'Impossible d\'importer les competitions', [{ text: 'OK', style: 'primary' }]);
+                showPopup(t('common.error'), t('competitions.importError'), [{ text: t('common.ok'), style: 'primary' }]);
               } finally {
                 setImporting(false);
               }
@@ -102,7 +114,7 @@ export default function CompetitionsScreen() {
         ]
       );
     } catch (error) {
-      showPopup('Erreur', 'Une erreur est survenue', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('common.error'), t('competitions.errorOccurred'), [{ text: t('common.ok'), style: 'primary' }]);
     }
   };
 
@@ -188,7 +200,7 @@ export default function CompetitionsScreen() {
         {competition.categorie_poids && (
           <View style={styles.categoryRow}>
             <Text style={[styles.categoryLabel, { color: colors.textMuted }]}>
-              Catégorie:
+              {t('competitions.category')}
             </Text>
             <Text style={[styles.categoryValue, { color: colors.textPrimary }]}>
               {competition.categorie_poids}
@@ -217,13 +229,13 @@ export default function CompetitionsScreen() {
             >
               {competition.statut === 'a_venir'
                 ? daysUntil === 0
-                  ? "Aujourd'hui !"
+                  ? t('competitions.today')
                   : daysUntil > 0
-                  ? `Dans ${daysUntil} jours`
-                  : 'À venir'
+                  ? t('competitions.inDays', { days: daysUntil })
+                  : t('competitions.upcoming')
                 : competition.statut === 'terminee'
-                ? 'Terminée'
-                : 'Annulée'}
+                ? t('competitions.completed')
+                : t('competitions.cancelled')}
             </Text>
           </View>
 
@@ -235,7 +247,7 @@ export default function CompetitionsScreen() {
 
   return (
     <ScreenWrapper>
-      <Header title="Mes Compétitions" showBack />
+      <Header title={t('competitions.title')} showBack />
 
       <ScrollView
         style={styles.scrollView}
@@ -253,7 +265,7 @@ export default function CompetitionsScreen() {
               {competitions.length}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-              Total
+              {t('competitions.total')}
             </Text>
           </View>
 
@@ -263,7 +275,7 @@ export default function CompetitionsScreen() {
               {upcomingCompetitions.length}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-              À venir
+              {t('competitions.upcoming')}
             </Text>
           </View>
 
@@ -273,7 +285,7 @@ export default function CompetitionsScreen() {
               {pastCompetitions.length}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-              Passées
+              {t('competitions.past')}
             </Text>
           </View>
         </View>
@@ -293,10 +305,10 @@ export default function CompetitionsScreen() {
           </View>
           <View style={styles.importContent}>
             <Text style={[styles.importTitle, { color: colors.textPrimary }]}>
-              {importing ? 'Import en cours...' : 'Importer les compétitions IBJJF & CFJJB'}
+              {importing ? t('competitions.importing') : t('competitions.importButtonText')}
             </Text>
             <Text style={[styles.importSubtitle, { color: colors.textMuted }]}>
-              {getAvailableCompetitionsCount().total} compétitions disponibles (2025-2026)
+              {t('competitions.availableCompetitions', { count: getAvailableCompetitionsCount().total })}
             </Text>
           </View>
           {!importing && <ChevronRight size={20} color={colors.textMuted} />}
@@ -306,7 +318,7 @@ export default function CompetitionsScreen() {
         {upcomingCompetitions.length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Prochaines compétitions
+              {t('competitions.upcoming')}
             </Text>
             {upcomingCompetitions.map((comp) => renderCompetitionCard(comp))}
           </View>
@@ -316,7 +328,7 @@ export default function CompetitionsScreen() {
         {pastCompetitions.length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Historique
+              {t('competitions.history')}
             </Text>
             {pastCompetitions.map((comp) => renderCompetitionCard(comp))}
           </View>
@@ -327,10 +339,10 @@ export default function CompetitionsScreen() {
           <View style={styles.emptyState}>
             <Trophy size={64} color={colors.textMuted} />
             <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-              Aucune compétition
+              {t('competitions.noCompetitions')}
             </Text>
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              Ajoute ta première compétition pour commencer ton suivi
+              {t('competitions.emptyMessage')}
             </Text>
           </View>
         )}

@@ -40,8 +40,9 @@ const DEV_CODE_HASH = __DEV__
 /**
  * Vérifie si le code entré correspond au code secret
  * Désactivé en production — retourne toujours false
+ * Exporté pour être utilisé dans d'autres écrans (settings, more)
  */
-async function verifyDevCode(inputCode: string): Promise<boolean> {
+export async function verifyDevCode(inputCode: string): Promise<boolean> {
   if (!__DEV__) return false;
   try {
     const inputHash = await digestStringAsync(

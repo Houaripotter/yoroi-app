@@ -51,6 +51,7 @@ class TimerNotificationsService {
   private notificationId: string | null = null;
   private settings: TimerNotifSettings = { ...DEFAULT_SETTINGS };
   private settingsLoaded = false;
+  private permissionGranted: boolean | null = null; // cache pour éviter le délai async
 
   /**
    * Charger les settings depuis AsyncStorage
@@ -89,10 +90,12 @@ class TimerNotificationsService {
   }
 
   /**
-   * Demander la permission pour les notifications
+   * Demander la permission pour les notifications — résultat mis en cache
    */
   async requestPermissions(): Promise<boolean> {
     if (Platform.OS === 'web') return false;
+    // Cache : évite le délai async après le premier appel
+    if (this.permissionGranted !== null) return this.permissionGranted;
 
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
@@ -103,23 +106,27 @@ class TimerNotificationsService {
           allowAlert: true,
           allowBadge: true,
           allowSound: true,
-          allowCriticalAlerts: true,  // plein écran même en silencieux
+          allowCriticalAlerts: true,
           provideAppNotificationSettings: false,
         },
       });
       finalStatus = status;
     }
 
-    return finalStatus === 'granted';
+    this.permissionGranted = finalStatus === 'granted';
+    return this.permissionGranted;
   }
 
   /**
-   * Planifier une notification quand le timer finit
+   * Planifier une notification quand le timer finit.
+   * @param targetTimestampMs Timestamp absolu (ms) quand la notif doit sonner.
+   *   Le délai est recalculé APRÈS les opérations async (permissions, cancel)
+   *   pour éviter le décalage dû au temps d'initialisation.
    */
   async scheduleTimerFinishedNotification(
     title: string,
     body: string,
-    delaySeconds: number
+    targetTimestampMs: number
   ): Promise<void> {
     const hasPermission = await this.requestPermissions();
     if (!hasPermission) {
@@ -128,10 +135,11 @@ class TimerNotificationsService {
     }
 
     try {
-      // Annuler la notification précédente si elle existe
       await this.cancelNotification();
 
-      // Planifier la nouvelle notification
+      // Délai calculé ICI — après les await — pour être précis à la seconde près
+      const delaySeconds = Math.max(1, Math.ceil((targetTimestampMs - Date.now()) / 1000));
+
       this.notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title,
@@ -140,12 +148,11 @@ class TimerNotificationsService {
           priority: Notifications.AndroidNotificationPriority.MAX,
           vibrate: [0, 400, 200, 400, 200, 400],
           data: { type: 'timer_finished' },
-          // iOS : interruption critique — s'affiche plein écran sur l'écran verrouillé
-          // et passe à travers le mode silence et Focus
           ...(Platform.OS === 'ios' && {
-            interruptionLevel: 'critical' as any,
+            // timeSensitive : passe à travers tous les modes Focus (pas besoin d'approbation Apple)
+            interruptionLevel: 'timeSensitive' as any,
+            sound: 'wizz.mp3',
           }),
-          // Android : canal haute priorité + intent plein écran
           ...(Platform.OS === 'android' && {
             channelId: 'timer_alarm',
             fullScreenIntent: true,
@@ -154,13 +161,11 @@ class TimerNotificationsService {
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: Math.max(1, delaySeconds),
+          seconds: delaySeconds,
         } as Notifications.TimeIntervalTriggerInput,
       });
 
-      logger.info(`[TimerNotifications] Notification planifiée pour ${delaySeconds}s`);
-
-      // Sauvegarder dans l'historique
+      logger.info(`[TimerNotifications] Notification planifiée dans ${delaySeconds}s`);
       saveNotification(title, body, 'timer', { type: 'timer_finished' }).catch(() => {});
     } catch (error) {
       logger.error('[TimerNotifications] Erreur planification:', error);
@@ -184,49 +189,44 @@ class TimerNotificationsService {
 
   /**
    * Mettre a jour une notification existante
+   * @param targetTimestampMs Timestamp absolu quand la notif doit sonner
    */
   async updateTimerNotification(
     title: string,
     body: string,
-    delaySeconds: number
+    targetTimestampMs: number
   ): Promise<void> {
-    // Annuler l'ancienne et créer une nouvelle
     await this.cancelNotification();
-    await this.scheduleTimerFinishedNotification(title, body, delaySeconds);
+    await this.scheduleTimerFinishedNotification(title, body, targetTimestampMs);
   }
 
   /**
-   * Planifier notification de fin de timer (appele depuis timer.tsx)
-   * Respecte les settings utilisateur
+   * Planifier notification de fin de timer (appelé depuis timer.tsx)
+   * @param targetTimestampMs Timestamp absolu (Date.now() + durée * 1000) — jamais une durée brute
    */
-  async scheduleTimerEndNotification(mode: string, delaySeconds: number): Promise<void> {
+  async scheduleTimerEndNotification(mode: string, targetTimestampMs: number): Promise<void> {
     if (!this.settingsLoaded) await this.loadSettings();
 
     if (mode === 'musculation') {
       if (!this.settings.restFinished) return;
-      await this.scheduleTimerFinishedNotification('Repos terminé !', 'Go go go ! Prochaine série !', delaySeconds);
+      await this.scheduleTimerFinishedNotification('Repos terminé !', 'Go go go ! Prochaine série !', targetTimestampMs);
     } else {
       if (!this.settings.roundFinished) return;
-      await this.scheduleTimerFinishedNotification('Timer terminé !', 'Excellent travail !', delaySeconds);
+      await this.scheduleTimerFinishedNotification('Timer terminé !', 'Excellent travail !', targetTimestampMs);
     }
   }
 
   /**
-   * Notification pour repos muscu terminé
+   * Notification immédiate — repos muscu terminé
    */
   async notifyRestFinished(): Promise<void> {
     if (!this.settingsLoaded) await this.loadSettings();
     if (!this.settings.restFinished) return;
-
-    await this.scheduleTimerFinishedNotification(
-      'Repos terminé !',
-      'Go go go ! Prochaine série !',
-      0 // Immédiat
-    );
+    await this.scheduleTimerFinishedNotification('Repos terminé !', 'Go go go ! Prochaine série !', Date.now() + 1000);
   }
 
   /**
-   * Notification pour round combat terminé
+   * Notification immédiate — round combat terminé
    */
   async notifyRoundFinished(roundNumber: number, totalRounds: number): Promise<void> {
     if (!this.settingsLoaded) await this.loadSettings();
@@ -236,15 +236,11 @@ class TimerNotificationsService {
       ? `Round ${roundNumber}/${totalRounds} terminé ! Repos.`
       : 'Dernier round terminé ! Bravo !';
 
-    await this.scheduleTimerFinishedNotification(
-      'Round terminé',
-      message,
-      0
-    );
+    await this.scheduleTimerFinishedNotification('Round terminé', message, Date.now() + 1000);
   }
 
   /**
-   * Notification pour entraînement complètement terminé
+   * Notification immédiate — entraînement terminé
    */
   async notifyWorkoutFinished(mode: string): Promise<void> {
     if (!this.settingsLoaded) await this.loadSettings();
@@ -262,7 +258,7 @@ class TimerNotificationsService {
     await this.scheduleTimerFinishedNotification(
       titles[mode] || 'Entraînement terminé !',
       'Excellent travail !',
-      0
+      Date.now() + 1000
     );
   }
 }

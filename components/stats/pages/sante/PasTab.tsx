@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { SamuraiCircleLoader } from '@/components/SamuraiLoader';
+import { useI18n } from '@/lib/I18nContext';
 import { StatsSection } from '../../StatsSection';
 import { StatsDetailModal } from '../../StatsDetailModal';
 import { MultiLineComparisonCard } from '../../charts/MultiLineComparisonCard';
@@ -53,12 +53,8 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
   standHoursHistory,
 }) => {
   const { colors, isDark, screenBackground } = useTheme();
+  const { t } = useI18n();
 
-  const [showLoader, setShowLoader] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setShowLoader(false), 7000);
-    return () => clearTimeout(t);
-  }, []);
 
   const sectionBg = isDark ? colors.accent + '10' : colors.accent + '08';
   const cardBg = isDark ? '#242430' : '#FFFFFF';
@@ -105,7 +101,6 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
   const ringCircumference = 2 * Math.PI * ringR;
   const ringDashOffset = ringCircumference * (1 - stepsProgress);
 
-  if (showLoader) return <SamuraiCircleLoader duration={7000} bgColor={screenBackground} />;
 
   if (!hasData) {
     return (

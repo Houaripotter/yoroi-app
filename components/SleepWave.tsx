@@ -118,7 +118,9 @@ export const SleepWave: React.FC<SleepWaveProps> = ({
     return path.join(' ');
   };
 
-  const wavePath = generateWavePath();
+  // Mémoiser le chemin de l'onde pour éviter un recalcul à chaque render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const wavePath = React.useMemo(() => generateWavePath(), [width, height, waveFrequency, waveAmplitude]);
 
   return (
     <View style={[styles.container, { width, height }]}>

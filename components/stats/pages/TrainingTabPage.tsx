@@ -7,7 +7,6 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { ScrollView, View, StyleSheet, TouchableOpacity, Text, RefreshControl, InteractionManager, DeviceEventEmitter } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { SamuraiCircleLoader } from '@/components/SamuraiLoader';
 import { formatDurationHM } from '@/lib/formatDuration';
 import { useScrollContext } from '@/lib/ScrollContext';
 import { StatsHeader, Period } from '../StatsHeader';
@@ -55,12 +54,6 @@ export const TrainingTabPage: React.FC = React.memo(() => {
 
   const [allTrainingsData, setAllTrainingsData] = useState<any[]>([]);
 
-  const [showLoader, setShowLoader] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setShowLoader(false), 7000);
-    return () => clearTimeout(t);
-  }, []);
-
   const [selectedMetric, setSelectedMetric] = useState<{
     key: string;
     label: string;
@@ -75,31 +68,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
     load: any[];
   }>({ intensity: [], duration: [], load: [] });
 
-  const isFirstLoad = useRef(true);
-  useEffect(() => {
-    if (isFirstLoad.current) {
-      isFirstLoad.current = false;
-      const handle = InteractionManager.runAfterInteractions(() => { loadData(); });
-      return () => handle.cancel();
-    } else {
-      loadData();
-    }
-  }, [selectedPeriod]);
-
-  // Recharger quand Apple Health importe de nouvelles séances
-  useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
-      loadData();
-    });
-    return () => sub.remove();
-  }, [selectedPeriod]);
-
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try { await loadData(); } finally { setRefreshing(false); }
-  }, [selectedPeriod]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [data, allTrainings] = await Promise.all([
@@ -131,7 +100,28 @@ export const TrainingTabPage: React.FC = React.memo(() => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedPeriod]);
+
+  const isFirstLoad = useRef(true);
+  useEffect(() => {
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      const handle = InteractionManager.runAfterInteractions(() => { loadData(); });
+      return () => handle.cancel();
+    } else {
+      loadData();
+    }
+  }, [selectedPeriod]);
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => { loadData(); });
+    return () => sub.remove();
+  }, [loadData]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await loadData(); } finally { setRefreshing(false); }
+  }, [loadData]);
 
   const getIntensityStatus = (value: number) => {
     const zone = INTENSITY_RANGES.zones.find(z => value >= z.start && value <= z.end);
@@ -171,8 +161,6 @@ export const TrainingTabPage: React.FC = React.memo(() => {
         return [];
     }
   }, [selectedMetric, allTrainingsData, dateLocale]);
-
-  if (showLoader) return <SamuraiCircleLoader duration={7000} bgColor={screenBackground} />;
 
   return (
     <ScrollView

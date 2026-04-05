@@ -1235,6 +1235,7 @@ interface PodiumSectionProps {
 }
 
 function PodiumSection({ partners, accent, colors, isDark, onSelect }: PodiumSectionProps) {
+  const { t } = useI18n();
   const displayOrder = PODIUM_ORDER.filter(i => i < partners.length);
 
   return (

@@ -940,7 +940,7 @@ class NotificationService {
   // Ces fonctions sont UNIQUEMENT pour les boutons "Tester" dans les paramètres
   async sendTrainingReminder(): Promise<void> {
     const message = TRAINING_MESSAGES[Math.floor(Math.random() * TRAINING_MESSAGES.length)];
-    await this.sendInstantNotification(message.title, message.body, { type: 'training' }, true);
+    await this.sendInstantNotification(message.title, message.body, { type: 'training', screen: 'add-training' }, true);
   }
 
   async sendHydrationReminder(): Promise<void> {
@@ -979,7 +979,7 @@ class NotificationService {
   /**
    * Notification apres fin de séance - propose de partager sur les reseaux
    */
-  async sendWorkoutCompletedNotification(sport: string, durationMin: number, calories?: number): Promise<void> {
+  async sendWorkoutCompletedNotification(sport: string, durationMin: number, calories?: number, workoutId?: number): Promise<void> {
     const messages = [
       { title: 'Séance terminee !', body: `${sport} - ${durationMin} min${calories ? ` - ${calories} kcal` : ''}. Partage ta perf !` },
       { title: 'Bravo, guerrier !', body: `${sport} dans la poche. Montre ca a tes followers !` },
@@ -990,7 +990,11 @@ class NotificationService {
     await this.sendInstantNotification(
       msg.title,
       msg.body,
-      { type: 'workout_completed', screen: 'social-share/last-session' },
+      {
+        type: 'workout_completed',
+        screen: 'social-share/last-session',
+        ...(workoutId ? { workoutId: workoutId.toString() } : {}),
+      },
       true,
     );
   }

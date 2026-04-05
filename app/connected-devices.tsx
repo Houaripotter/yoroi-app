@@ -664,7 +664,7 @@ export default function ConnectedDevicesScreen() {
                         healthConnect.importFullHistory().catch(() => {});
                       }});
                     } else {
-                      buttons.push({ text: 'Ouvrir Reglages Sante', style: 'primary', onPress: () => Linking.openURL('app-settings:').catch(() => {}) });
+                      buttons.push({ text: 'Ouvrir Reglages Sante', style: 'primary', onPress: () => safeOpenURL('app-settings:') });
                     }
                     showPopup('Diagnostic seances', lines.join('\n'), buttons);
                   } catch (e: any) {

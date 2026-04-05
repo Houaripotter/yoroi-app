@@ -37,6 +37,7 @@ import { SourceBadge } from '@/components/SourceBadge';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
+import { useI18n } from '@/lib/I18nContext';
 
 const CHART_HEIGHT = 250;
 
@@ -127,6 +128,7 @@ const METRICS = [
 export default function CompositionDetailScreen() {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const router = useRouter();
   const params = useLocalSearchParams<{ metric?: string }>();
 
@@ -222,7 +224,7 @@ export default function CompositionDetailScreen() {
         >
           <ChevronLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Composition corporelle</Text>
+        <Text style={styles.headerTitle}>{t('compositionDetail.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -323,21 +325,21 @@ export default function CompositionDetailScreen() {
             </ScrollView>
           ) : (
             <View style={styles.noDataContainer}>
-              <Text style={styles.noDataText}>Aucune donnée disponible</Text>
+              <Text style={styles.noDataText}>{t('compositionDetail.noData')}</Text>
             </View>
           )}
         </View>
 
-        {/* Card Résumé */}
+        {/* Card t('compositionDetail.summary') */}
         {stats && (
           <View
             
             style={styles.summaryCard}
           >
-            <Text style={styles.summaryTitle}>Résumé</Text>
+            <Text style={styles.summaryTitle}>{t('compositionDetail.summary')}</Text>
 
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Actuel</Text>
+              <Text style={styles.summaryLabel}>{t('compositionDetail.current')}</Text>
               <View style={styles.summaryValueContainer}>
                 <Text style={styles.summaryValue}>
                   {stats.current.toFixed(1)} {activeMetric.unit}
@@ -349,7 +351,7 @@ export default function CompositionDetailScreen() {
             <View style={styles.summaryDivider} />
 
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Moyenne</Text>
+              <Text style={styles.summaryLabel}>{t('compositionDetail.average')}</Text>
               <Text style={styles.summaryValue}>
                 {stats.avg.toFixed(1)} {activeMetric.unit}
               </Text>
@@ -358,7 +360,7 @@ export default function CompositionDetailScreen() {
             <View style={styles.summaryDivider} />
 
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Minimum</Text>
+              <Text style={styles.summaryLabel}>{t('compositionDetail.minimum')}</Text>
               <Text style={styles.summaryValue}>
                 {stats.min.toFixed(1)} {activeMetric.unit}
               </Text>
@@ -367,7 +369,7 @@ export default function CompositionDetailScreen() {
             <View style={styles.summaryDivider} />
 
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Maximum</Text>
+              <Text style={styles.summaryLabel}>{t('compositionDetail.maximum')}</Text>
               <Text style={styles.summaryValue}>
                 {stats.max.toFixed(1)} {activeMetric.unit}
               </Text>
@@ -398,12 +400,12 @@ export default function CompositionDetailScreen() {
           </View>
         )}
 
-        {/* Historique */}
+        {/* t('compositionDetail.history') */}
         <View
           
           style={styles.historyContainer}
         >
-          <Text style={styles.historyTitle}>Historique</Text>
+          <Text style={styles.historyTitle}>{t('compositionDetail.history')}</Text>
 
           {filteredData
             .slice()
@@ -596,7 +598,7 @@ const createStyles = (colors: any, accentColor: string) =>
       fontSize: 16,
     },
 
-    // Résumé
+    // t('compositionDetail.summary')
     summaryCard: {
       marginTop: 24,
       marginHorizontal: 16,
@@ -634,7 +636,7 @@ const createStyles = (colors: any, accentColor: string) =>
       backgroundColor: colors.border,
     },
 
-    // Historique
+    // t('compositionDetail.history')
     historyContainer: {
       marginTop: 24,
       marginHorizontal: 16,

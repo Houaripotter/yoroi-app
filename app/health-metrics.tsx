@@ -6,6 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  DeviceEventEmitter,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -84,7 +87,7 @@ const TERM_DEFINITIONS: Record<string, { short: string; full: string }> = {
 export default function HealthMetricsScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -198,6 +201,11 @@ export default function HealthMetricsScreen() {
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadHealthData(); }, [loadHealthData]);
 
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadHealthData);
+    return () => sub.remove();
+  }, [loadHealthData]);
+
   const handleConnect = async () => {
     try {
       impactAsync(ImpactFeedbackStyle.Medium);
@@ -235,7 +243,7 @@ export default function HealthMetricsScreen() {
             <ArrowLeft size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            Métriques Santé
+            {t('healthMetrics.title')}
           </Text>
           <View style={{ width: 40 }} />
         </View>
@@ -255,11 +263,10 @@ export default function HealthMetricsScreen() {
               <Heart size={48} color={colors.gold} />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-              l'app Santé Non Connecté
+              {t('healthMetrics.notConnected')}
             </Text>
             <Text style={[styles.emptyDescription, { color: colors.textSecondary }]}>
-              Connecte YOROI à l'app Santé pour accéder à tes métriques avancées : HRV, VO2 Max,
-              SpO2, sommeil détaillé et plus encore.
+              {t('healthMetrics.connectMessage')}
             </Text>
             <TouchableOpacity style={styles.connectButton} onPress={handleConnect}>
               <LinearGradient
@@ -268,7 +275,7 @@ export default function HealthMetricsScreen() {
                 end={{ x: 1, y: 1 }}
                 style={styles.connectButtonGradient}
               >
-                <Text style={styles.connectButtonText}>Se Connecter</Text>
+                <Text style={styles.connectButtonText}>{t('healthMetrics.connect')}</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -282,6 +289,11 @@ export default function HealthMetricsScreen() {
   // ============================================
 
   return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View
@@ -299,7 +311,7 @@ export default function HealthMetricsScreen() {
         >
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Métriques Santé</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('healthMetrics.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -308,6 +320,8 @@ export default function HealthMetricsScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         refreshControl={
           <RefreshControl
             refreshing={isLoading}
@@ -338,7 +352,7 @@ export default function HealthMetricsScreen() {
                   { color: period === 7 ? colors.textOnAccent : colors.textSecondary },
                 ]}
               >
-                7 jours
+                {t('healthMetrics.period7')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -360,7 +374,7 @@ export default function HealthMetricsScreen() {
                   { color: period === 30 ? colors.textOnAccent : colors.textSecondary },
                 ]}
               >
-                30 jours
+                {t('healthMetrics.period30')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -382,7 +396,7 @@ export default function HealthMetricsScreen() {
                   { color: period === 90 ? colors.textOnAccent : colors.textSecondary },
                 ]}
               >
-                3 mois
+                {t('healthMetrics.period90')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -391,7 +405,7 @@ export default function HealthMetricsScreen() {
           {insights.length > 0 && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Insights & Recommandations
+                {t('healthMetrics.insights')}
               </Text>
               {insights.slice(0, 5).map((insight, index) => (
                 <InsightCard key={index} insight={insight} colors={colors} />
@@ -402,7 +416,7 @@ export default function HealthMetricsScreen() {
           {/* Section: Poids */}
           {weightHistory.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Poids</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('healthMetrics.weight')}</Text>
               <WeightTrendChart
                 data={weightHistory}
                 goal={weightGoal}
@@ -410,7 +424,7 @@ export default function HealthMetricsScreen() {
                 period={period}
                 onPress={() => setSelectedModal({
                   type: 'weight',
-                  title: 'Évolution Poids',
+                  title: t('healthMetrics.weightEvolution'),
                   data: weightHistory.map(w => ({ value: w.value, date: w.date })),
                   color: colors.success,
                   unit: 'kg',
@@ -423,21 +437,21 @@ export default function HealthMetricsScreen() {
           {/* Section: Cardiovasculaire */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Cardiovasculaire
+              {t('healthMetrics.cardiovascular')}
             </Text>
 
             {/* VO2 Max History Chart */}
             {vo2MaxHistory.length > 0 && (
               <View>
                 <TrendLineChart
-                  title={`VO₂ Max (Capacite Aerobie) - ${period} jours`}
+                  title={t('healthMetrics.vo2MaxChart', { period })}
                   data={vo2MaxHistory}
                   color={colors.warning}
                   unit="ml/kg/min"
                   colors={colors}
                   onPress={() => setSelectedModal({
                     type: 'vo2max',
-                    title: 'VO₂ Max (Capacite Aerobie Maximale)',
+                    title: t('healthMetrics.vo2MaxTitle'),
                     data: vo2MaxHistory,
                     color: colors.warning,
                     unit: 'ml/kg/min',
@@ -454,14 +468,14 @@ export default function HealthMetricsScreen() {
             {hrvHistory.length > 0 && (
               <View>
                 <TrendLineChart
-                  title={`HRV (Variabilite Cardiaque) - ${period} jours`}
+                  title={t('healthMetrics.hrvChart', { period })}
                   data={hrvHistory}
                   color={colors.purple}
                   unit="ms"
                   colors={colors}
                   onPress={() => setSelectedModal({
                     type: 'hrv',
-                    title: 'HRV (Variabilite de la Fréquence Cardiaque)',
+                    title: t('healthMetrics.hrvTitle'),
                     data: hrvHistory,
                     color: colors.purple,
                     unit: 'ms',
@@ -477,14 +491,14 @@ export default function HealthMetricsScreen() {
             {/* Resting HR History Chart */}
             {restingHRHistory.length > 0 && (
               <TrendLineChart
-                title={`FC au Repos - ${period} jours`}
+                title={t('healthMetrics.restingHRChart', { period })}
                 data={restingHRHistory}
                 color={colors.danger}
                 unit="BPM"
                 colors={colors}
                 onPress={() => setSelectedModal({
                   type: 'restingHR',
-                  title: 'Fréquence Cardiaque au Repos',
+                  title: t('healthMetrics.restingHRTitle'),
                   data: restingHRHistory,
                   color: colors.danger,
                   unit: 'BPM',
@@ -496,14 +510,14 @@ export default function HealthMetricsScreen() {
             {/* Heart Rate History Chart */}
             {heartRateHistory.length > 0 && (
               <TrendLineChart
-                title={`Fréquence Cardiaque - ${period} jours`}
+                title={t('healthMetrics.heartRateChart', { period })}
                 data={heartRateHistory}
                 color={colors.danger}
                 unit="BPM"
                 colors={colors}
                 onPress={() => setSelectedModal({
                   type: 'heartRate',
-                  title: 'Fréquence Cardiaque Moyenne',
+                  title: t('healthMetrics.heartRateTitle'),
                   data: heartRateHistory,
                   color: colors.danger,
                   unit: 'BPM',
@@ -516,13 +530,13 @@ export default function HealthMetricsScreen() {
               {/* Heart Rate */}
               {healthData?.heartRate && (
                 <MetricCard
-                  title="Fréquence Cardiaque"
+                  title={t('healthMetrics.heartRate')}
                   icon={Heart}
                   iconColor={colors.danger}
                   value={`${healthData.heartRate.current || healthData.heartRate.average}`}
                   unit="BPM"
-                  subtitle={`Repos: ${healthData.heartRate.resting} BPM`}
-                  details={`Min: ${healthData.heartRate.min} | Max: ${healthData.heartRate.max}`}
+                  subtitle={t('healthMetrics.restingHR', { resting: healthData.heartRate.resting })}
+                  details={t('healthMetrics.heartRateRange', { min: healthData.heartRate.min, max: healthData.heartRate.max })}
                   colors={colors}
                   size="large"
                 />
@@ -531,13 +545,13 @@ export default function HealthMetricsScreen() {
               {/* HRV */}
               {healthData?.heartRateVariability && (
                 <MetricCard
-                  title="HRV"
+                  title={t('healthMetrics.hrv')}
                   icon={Activity}
                   iconColor={colors.purple}
                   value={`${healthData.heartRateVariability.value}`}
                   unit="ms"
-                  subtitle="Variabilite Cardiaque"
-                  details="Plus eleve = meilleure récupération"
+                  subtitle={t('healthMetrics.hrvSubtitle')}
+                  details={t('healthMetrics.hrvDetails')}
                   badge={getHRVBadge(healthData.heartRateVariability.value)}
                   colors={colors}
                   size="large"
@@ -549,14 +563,14 @@ export default function HealthMetricsScreen() {
             {oxygenSaturationHistory.length > 0 && (
               <View>
                 <TrendLineChart
-                  title={`Saturation O₂ (SpO2) - ${period} jours`}
+                  title={t('healthMetrics.spo2Chart', { period })}
                   data={oxygenSaturationHistory}
                   color={colors.info}
                   unit="%"
                   colors={colors}
                   onPress={() => setSelectedModal({
                     type: 'spo2',
-                    title: 'Saturation en Oxygene (SpO2)',
+                    title: t('healthMetrics.spo2Title'),
                     data: oxygenSaturationHistory,
                     color: colors.info,
                     unit: '%',
@@ -573,7 +587,7 @@ export default function HealthMetricsScreen() {
               {/* SpO2 */}
               {healthData?.oxygenSaturation && (
                 <MetricCard
-                  title="Saturation O₂"
+                  title={t('healthMetrics.spo2')}
                   icon={Droplet}
                   iconColor={colors.info}
                   value={`${healthData.oxygenSaturation.value}`}
@@ -587,12 +601,12 @@ export default function HealthMetricsScreen() {
               {/* Respiratory Rate */}
               {healthData?.respiratoryRate && (
                 <MetricCard
-                  title="Fréq. Respiratoire"
+                  title={t('healthMetrics.respiratoryRate')}
                   icon={Wind}
                   iconColor={colors.info}
                   value={`${healthData.respiratoryRate.value}`}
                   unit="rpm"
-                  subtitle="Respirations/min"
+                  subtitle={t('healthMetrics.breathsPerMin')}
                   colors={colors}
                 />
               )}
@@ -602,12 +616,12 @@ export default function HealthMetricsScreen() {
             {healthData?.vo2Max && (
               <View style={styles.row}>
                 <MetricCard
-                  title="VO₂ Max"
+                  title={t('healthMetrics.vo2Max')}
                   icon={Zap}
                   iconColor={colors.warning}
                   value={`${healthData.vo2Max.value}`}
                   unit="ml/kg/min"
-                  subtitle="Capacité aérobie"
+                  subtitle={t('healthMetrics.aerobicCapacity')}
                   badge={getVO2MaxBadge(healthData.vo2Max.value)}
                   colors={colors}
                   size="full"
@@ -620,7 +634,7 @@ export default function HealthMetricsScreen() {
           {healthData?.sleep && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Sommeil
+                {t('healthMetrics.sleep')}
               </Text>
 
               {/* Sleep History Chart */}
@@ -630,7 +644,7 @@ export default function HealthMetricsScreen() {
                   colors={colors}
                   onPress={() => setSelectedModal({
                     type: 'sleep',
-                    title: 'Historique Sommeil',
+                    title: t('healthMetrics.sleepHistory'),
                     data: sleepHistory.map(s => ({
                       value: s.total / 60, // Convertir en heures
                       date: s.date,
@@ -652,13 +666,13 @@ export default function HealthMetricsScreen() {
             healthData?.bodyComposition?.leanBodyMass) && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Composition Corporelle
+                {t('healthMetrics.bodyComposition')}
               </Text>
 
               <View style={styles.row}>
                 {healthData.bodyComposition.bodyFatPercentage && (
                   <MetricCard
-                    title="Graisse Corporelle"
+                    title={t('healthMetrics.bodyFat')}
                     icon={TrendingUp}
                     iconColor={colors.warning}
                     value={`${healthData.bodyComposition.bodyFatPercentage}`}
@@ -670,7 +684,7 @@ export default function HealthMetricsScreen() {
 
                 {healthData.bodyComposition.leanBodyMass && (
                   <MetricCard
-                    title="Masse Maigre"
+                    title={t('healthMetrics.leanMass')}
                     icon={Dumbbell}
                     iconColor={colors.success}
                     value={`${healthData.bodyComposition.leanBodyMass}`}
@@ -687,7 +701,7 @@ export default function HealthMetricsScreen() {
           {(healthData?.calories || healthData?.distance || healthData?.steps) && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Activité & Énergie
+                {t('healthMetrics.activityEnergy')}
               </Text>
 
               {/* Calories History Chart */}
@@ -697,7 +711,7 @@ export default function HealthMetricsScreen() {
                   colors={colors}
                   onPress={() => setSelectedModal({
                     type: 'calories',
-                    title: 'Calories Actives',
+                    title: t('healthMetrics.activeCalories'),
                     data: caloriesHistory.map(c => ({
                       value: c.active,
                       date: c.date,
@@ -713,22 +727,22 @@ export default function HealthMetricsScreen() {
               {healthData.calories && (
                 <View style={styles.row}>
                   <MetricCard
-                    title="Calories Actives"
+                    title={t('healthMetrics.activeCalories')}
                     icon={Zap}
                     iconColor={colors.danger}
                     value={`${healthData.calories.active}`}
                     unit="kcal"
-                    subtitle={`Totales: ${healthData.calories.total} kcal`}
+                    subtitle={t('healthMetrics.totalCalories', { total: healthData.calories.total })}
                     colors={colors}
                   />
 
                   <MetricCard
-                    title="Calories Repos"
+                    title={t('healthMetrics.basalCalories')}
                     icon={Moon}
                     iconColor={colors.purple}
                     value={`${healthData.calories.basal}`}
                     unit="kcal"
-                    subtitle="Métabolisme basal"
+                    subtitle={t('healthMetrics.basalMetabolism')}
                     colors={colors}
                   />
                 </View>
@@ -737,24 +751,24 @@ export default function HealthMetricsScreen() {
               <View style={styles.row}>
                 {healthData.distance && (
                   <MetricCard
-                    title="Distance"
+                    title={t('healthMetrics.distance')}
                     icon={Activity}
                     iconColor={colors.info}
                     value={`${healthData.distance.total}`}
                     unit="km"
-                    subtitle={`Marche: ${healthData.distance.walking} | Course: ${healthData.distance.running}`}
+                    subtitle={t('healthMetrics.distanceBreakdown', { walking: healthData.distance.walking, running: healthData.distance.running })}
                     colors={colors}
                   />
                 )}
 
                 {healthData.steps && (
                   <MetricCard
-                    title="Pas"
+                    title={t('healthMetrics.steps')}
                     icon={Activity}
                     iconColor={colors.success}
                     value={`${healthData.steps.count.toLocaleString()}`}
                     unit=""
-                    subtitle="Aujourd'hui"
+                    subtitle={t('common.today')}
                     colors={colors}
                   />
                 )}
@@ -766,20 +780,20 @@ export default function HealthMetricsScreen() {
           {(healthData?.bodyTemperature || bodyTemperatureHistory.length > 0) && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Autres Métriques
+                {t('healthMetrics.otherMetrics')}
               </Text>
 
               {/* Temperature History Chart */}
               {bodyTemperatureHistory.length > 0 && (
                 <TrendLineChart
-                  title={`Température Corporelle (°C) - ${period} jours`}
+                  title={t('healthMetrics.temperatureChart', { period })}
                   data={bodyTemperatureHistory}
                   color={colors.warning}
                   unit="°C"
                   colors={colors}
                   onPress={() => setSelectedModal({
                     type: 'temperature',
-                    title: 'Température Corporelle',
+                    title: t('healthMetrics.bodyTemperature'),
                     data: bodyTemperatureHistory,
                     color: colors.warning,
                     unit: '°C',
@@ -791,12 +805,12 @@ export default function HealthMetricsScreen() {
               {healthData?.bodyTemperature && (
                 <View style={styles.row}>
                   <MetricCard
-                    title="Température"
+                    title={t('healthMetrics.temperature')}
                     icon={Thermometer}
                     iconColor={colors.warning}
                     value={`${healthData.bodyTemperature.value}`}
                     unit="°C"
-                    subtitle="Corporelle"
+                    subtitle={t('healthMetrics.bodily')}
                     colors={colors}
                   />
                 </View>
@@ -808,7 +822,7 @@ export default function HealthMetricsScreen() {
           {healthData?.workouts && healthData.workouts.length > 0 && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Entraînements Récents
+                {t('healthMetrics.recentWorkouts')}
               </Text>
 
               {healthData.workouts.slice(0, 5).map((workout, index) => (
@@ -834,6 +848,7 @@ export default function HealthMetricsScreen() {
         />
       )}
     </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -916,6 +931,7 @@ function MetricCard({
 // ============================================
 
 function SleepCard({ sleep, colors }: { sleep: HealthData['sleep']; colors: any }) {
+  const { t } = useI18n();
   if (!sleep) return null;
 
   const totalMinutes = sleep.duration;
@@ -938,7 +954,7 @@ function SleepCard({ sleep, colors }: { sleep: HealthData['sleep']; colors: any 
             {hours}h {minutes > 0 ? `${minutes}m` : ''}
           </Text>
           <Text style={[styles.sleepSubtitle, { color: colors.textSecondary }]}>
-            Sommeil total
+            {t('healthMetrics.totalSleep')}
           </Text>
         </View>
       </View>
@@ -1024,6 +1040,7 @@ function SleepPhaseSegment({
   color: string;
   total: number;
 }) {
+  if (total <= 0) return null;
   const percentage = (minutes / total) * 100;
 
   if (percentage === 0) return null;

@@ -224,7 +224,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = event.nativeEvent.contentOffset.x;
-    const page = Math.round(offsetX / SCREEN_WIDTH);
+    const page = SCREEN_WIDTH > 0 ? Math.round(offsetX / SCREEN_WIDTH) : 0;
     if (page !== currentPage) {
       setCurrentPage(page);
 

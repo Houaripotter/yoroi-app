@@ -1,5 +1,16 @@
 # YOROI - Guide de Développement
 
+## Règles de sécurité
+
+Voir `.cursor/rules/security.md` pour toutes les règles de sécurité applicables à ce projet.
+Résumé rapide :
+- JAMAIS de secret/code en clair → utiliser `verifyDevCode()` de `lib/DevModeContext.tsx`
+- JAMAIS `console.log` → utiliser `logger` de `lib/security/logger.ts`
+- JAMAIS `Linking.openURL` direct → utiliser `safeOpenURL()` de `lib/security/validators.ts`
+- TOUJOURS des requêtes SQLite paramétrées avec `?` (jamais de concaténation)
+
+---
+
 ## Langue de communication
 
 **TOUJOURS répondre en français.** L'utilisateur ne comprend pas l'anglais. Toutes les explications, résumés, questions et messages doivent être rédigés en français, sans exception.

@@ -4,9 +4,12 @@
 // Fonction centrale pour obtenir les zones FC effectives.
 // Priorité :
 //   1. Zones personnalisées de l'utilisateur (s.heartRateZones)
-//   2. Calcul via FC max (si connue) : formule Karvonen standard (60/70/80/90%)
+//   2. FCmax réelle Apple Watch lue depuis les métadonnées workout (@yoroi_health_max_hr)
 //   3. Calcul via âge : FCmax théorique = 220 - âge
-//   4. Valeurs par défaut adulte moyen 30 ans (FCmax ≈ 190)
+//   4. Valeurs par défaut adulte moyen 30 ans (FCmax = 190)
+//
+// Formule Apple Santé/Fitness (identique à ce qu'affiche Apple) :
+//   Z1 < 63% FCmax | Z2 63–71% | Z3 71–79% | Z4 79–90% | Z5 > 90%
 // ============================================
 
 import { getUserSettings } from './storage';
@@ -41,31 +44,26 @@ export const ZONE_NAMES  = ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5'] as
 export const ZONE_LABELS = ['Récupération', 'Endurance', 'Tempo', 'Seuil', 'Max'] as const;
 
 // Zones par défaut pour un adulte moyen sans données
-// FCmax théorique 220-30 = 190, FCR=60, réserve=130
-// Méthode Apple Santé : Karvonen 50/60/70/80% de réserve
+// FCmax théorique 220-30 = 190, formule Apple : 63/71/79/90%
 const DEFAULT_ZONES: HRZoneThresholds = {
-  z1max: 125, // 50% de 130 + 60
-  z2max: 138, // 60%
-  z3max: 151, // 70%
-  z4max: 164, // 80%
+  z1max: Math.round(190 * 0.63), // 120
+  z2max: Math.round(190 * 0.71), // 135
+  z3max: Math.round(190 * 0.79), // 150
+  z4max: Math.round(190 * 0.90), // 171
   source: 'default',
 };
 
 /**
- * Calcule les seuils de zones à partir de la FC max et FC au repos.
- * Méthode Karvonen identique à Apple Santé : 50/60/70/80% de réserve.
- * seuil = FCR + (FCmax - FCR) × %
+ * Calcule les seuils de zones à partir de la FC max.
+ * Formule Apple Santé/Fitness : 63/71/79/90% de FCmax.
+ * Identique à ce qu'affiche Apple Watch et l'app Forme.
  */
-export function calcZonesFromMaxHR(
-  fcmax: number,
-  fcrepos: number = 60
-): HRZoneThresholds {
-  const reserve = fcmax - fcrepos;
+export function calcZonesFromMaxHR(fcmax: number): HRZoneThresholds {
   return {
-    z1max: Math.round(fcrepos + reserve * 0.50),
-    z2max: Math.round(fcrepos + reserve * 0.60),
-    z3max: Math.round(fcrepos + reserve * 0.70),
-    z4max: Math.round(fcrepos + reserve * 0.80),
+    z1max: Math.round(fcmax * 0.63),
+    z2max: Math.round(fcmax * 0.71),
+    z3max: Math.round(fcmax * 0.79),
+    z4max: Math.round(fcmax * 0.90),
     source: 'age',
   };
 }
@@ -74,43 +72,54 @@ export function calcZonesFromMaxHR(
  * Retourne les zones FC effectives à utiliser dans toute l'app.
  * Ordre de priorité :
  *   1. Zones perso configurées par l'utilisateur
- *   2. Calculées via âge (220 - âge) avec FCR du profil si disponibles
- *   3. Valeurs par défaut (adulte ~30 ans)
+ *   2. FCmax réelle Apple Watch (@yoroi_health_max_hr) → formule Apple 63/71/79/90%
+ *   3. FCmax calculée via âge (220 - âge) → même formule
+ *   4. Valeurs par défaut (adulte ~30 ans, FCmax=190)
  */
 export async function getEffectiveHRZones(): Promise<HRZoneThresholds> {
   try {
     const settings = await getUserSettings();
 
-    // 1. Zones personnalisées
+    // 1. Zones personnalisées (configurées manuellement dans l'app)
     if (settings.heartRateZones) {
       return { ...settings.heartRateZones, source: 'custom' };
     }
+  } catch {
+    // getUserSettings échoué, continuer
+  }
 
-    // 2. Calculer via le profil (âge + éventuellement FC repos)
-    try {
-      const profile = await getProfile();
-      let age = 0;
+  const AsyncStorage = require('@react-native-async-storage/async-storage').default;
 
-      if (profile?.birth_date) {
-        const birth = new Date(profile.birth_date);
-        age = new Date().getFullYear() - birth.getFullYear();
-      } else if (profile?.age && profile.age > 0) {
-        age = profile.age;
+  // 2. FCmax réelle lue depuis les métadonnées Apple Watch (la plus précise)
+  try {
+    const storedMaxHR = await AsyncStorage.getItem('@yoroi_health_max_hr');
+    if (storedMaxHR) {
+      const fcmax = Math.round(parseFloat(storedMaxHR));
+      if (fcmax > 100 && fcmax < 250) {
+        return calcZonesFromMaxHR(fcmax);
       }
-
-      if (age >= 10 && age <= 100) {
-        const fcmax = 220 - age;
-        // FC repos : utiliser la dernière valeur HealthKit si disponible, sinon 60
-        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-        const restingHRRaw = await AsyncStorage.getItem('@yoroi_health_last_resting_hr');
-        const fcrepos = restingHRRaw ? Math.round(parseFloat(restingHRRaw)) : 60;
-        return calcZonesFromMaxHR(fcmax, fcrepos);
-      }
-    } catch {
-      // Profil non disponible, continuer vers défaut
     }
   } catch {
-    // getUserSettings échoué
+    // AsyncStorage indisponible
+  }
+
+  // 3. FCmax calculée via l'âge du profil
+  try {
+    const profile = await getProfile();
+    let age = 0;
+
+    if (profile?.birth_date) {
+      const birth = new Date(profile.birth_date);
+      age = new Date().getFullYear() - birth.getFullYear();
+    } else if (profile?.age && profile.age > 0) {
+      age = profile.age;
+    }
+
+    if (age >= 10 && age <= 100) {
+      return calcZonesFromMaxHR(220 - age);
+    }
+  } catch {
+    // Profil non disponible
   }
 
   return DEFAULT_ZONES;

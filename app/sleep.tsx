@@ -8,11 +8,13 @@ import {
   TextInput,
   Switch,
   RefreshControl,
+  DeviceEventEmitter,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
 import {
   ArrowLeft,
   Moon,
@@ -94,7 +96,7 @@ export default function SleepScreen() {
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
 
   // Flag pour recharger après retour de sleep-input
-  const needsReload = useRef(false);
+
 
   const loadData = useCallback(async () => {
     try {
@@ -142,17 +144,13 @@ export default function SleepScreen() {
   // Charger une seule fois au montage
   useEffect(() => { loadData(); }, []);
 
-  // Recharger quand on revient de sleep-input seulement (pas à chaque focus)
-  useFocusEffect(
-    useCallback(() => {
-      if (needsReload.current) {
-        needsReload.current = false;
-        // Refresh après ajout d'une nuit
-        getSleepEntries().then(setEntries);
-        getSleepStats().then(setStats);
-      }
-    }, [])
-  );
+  // Listener pour les changements de données YOROI
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadData);
+    return () => sub.remove();
+  }, []);
+
+  // Recharge déclenchée par sleep-input via YOROI_DATA_CHANGED (plus de useFocusEffect)
 
   const handleGoalChange = async (minutes: number) => {
     try {
@@ -175,8 +173,8 @@ export default function SleepScreen() {
       if (!granted) {
         setNotificationsEnabled(false);
         showPopup(
-          'Permission requise',
-          'Active les notifications dans les réglages de ton iPhone pour recevoir les rappels sommeil.',
+          t('sleep.permissionRequired'),
+          t('sleep.enableNotificationsMessage'),
           [{ text: 'OK', style: 'primary' }]
         );
         return;
@@ -241,6 +239,10 @@ export default function SleepScreen() {
   const nightCard = '#131D36';
 
   return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
     <View style={[styles.screen, { backgroundColor: nightBg }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: nightCard }]}>
@@ -265,6 +267,8 @@ export default function SleepScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
         }
@@ -273,7 +277,7 @@ export default function SleepScreen() {
         {/* Carte Dernière Nuit */}
         {lastNightTotal > 0 && (
           <View style={[styles.lastNightCard, { backgroundColor: nightCard }]}>
-            <Text style={styles.lastNightLabel}>DERNIERE NUIT</Text>
+            <Text style={styles.lastNightLabel}>{t('sleep.lastNight')}</Text>
 
             {/* Durée + heures coucher/réveil */}
             <View style={styles.lastNightTopRow}>
@@ -310,25 +314,25 @@ export default function SleepScreen() {
                     {deep > 0 && (
                       <View style={[styles.phaseCell, { borderLeftColor: '#1E40AF' }]}>
                         <Text style={[styles.phaseCellValue, { color: '#60A5FA' }]}>{formatSleepDuration(deep)}</Text>
-                        <Text style={styles.phaseCellLabel}>Profond</Text>
+                        <Text style={styles.phaseCellLabel}>{t('sleep.deepSleep')}</Text>
                       </View>
                     )}
                     {rem > 0 && (
                       <View style={[styles.phaseCell, { borderLeftColor: '#7C3AED' }]}>
                         <Text style={[styles.phaseCellValue, { color: '#A78BFA' }]}>{formatSleepDuration(rem)}</Text>
-                        <Text style={styles.phaseCellLabel}>REM</Text>
+                        <Text style={styles.phaseCellLabel}>{t('sleep.remSleep')}</Text>
                       </View>
                     )}
                     {core > 0 && (
                       <View style={[styles.phaseCell, { borderLeftColor: '#3B82F6' }]}>
                         <Text style={[styles.phaseCellValue, { color: '#93C5FD' }]}>{formatSleepDuration(core)}</Text>
-                        <Text style={styles.phaseCellLabel}>Léger</Text>
+                        <Text style={styles.phaseCellLabel}>{t('sleep.lightSleep')}</Text>
                       </View>
                     )}
                     {awake > 0 && (
                       <View style={[styles.phaseCell, { borderLeftColor: '#374151' }]}>
                         <Text style={[styles.phaseCellValue, { color: '#9CA3AF' }]}>{formatSleepDuration(awake)}</Text>
-                        <Text style={styles.phaseCellLabel}>Éveillé</Text>
+                        <Text style={styles.phaseCellLabel}>{t('sleep.awake')}</Text>
                       </View>
                     )}
                   </View>
@@ -345,7 +349,7 @@ export default function SleepScreen() {
                 }]} />
               </View>
               <Text style={styles.lastNightGoalText}>
-                Objectif {formatSleepDuration(goal)}
+                {t('sleep.goal')} {formatSleepDuration(goal)}
               </Text>
             </View>
           </View>
@@ -507,7 +511,6 @@ export default function SleepScreen() {
         <TouchableOpacity
           style={[styles.addBtn, { backgroundColor: '#8B5CF6' }]}
           onPress={() => {
-            needsReload.current = true;
             router.push('/sleep-input');
           }}
         >
@@ -529,8 +532,8 @@ export default function SleepScreen() {
               <Text style={[styles.historyTitle, { color: '#E8ECF4' }]}>{t('sleep.history')}</Text>
               <Text style={[styles.historySubtitle, { color: '#7B8DB5' }]}>
                 {entries.length > 0
-                  ? `${entries.length} nuit${entries.length > 1 ? 's' : ''} enregistrée${entries.length > 1 ? 's' : ''}`
-                  : 'Aucune nuit enregistrée'}
+                  ? t('sleep.nightsRecorded', { count: entries.length })
+                  : t('sleep.noNightsRecorded')}
               </Text>
             </View>
             <View style={[styles.historyArrow, { backgroundColor: '#8B5CF615' }]}>
@@ -567,6 +570,7 @@ export default function SleepScreen() {
       </ScrollView>
       <PopupComponent />
     </View>
+    </KeyboardAvoidingView>
   );
 }
 

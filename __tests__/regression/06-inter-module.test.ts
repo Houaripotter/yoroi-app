@@ -106,7 +106,7 @@ describe('REGRESSION: Inter-Module Interactions', () => {
       const totalPoints = await calculateTotalPoints(0, numWorkouts, 0, 0, 0);
 
       // Points should increase with more workouts
-      expect(totalPoints).toBe(numWorkouts * POINTS_ACTIONS.entrainement);
+      expect(totalPoints).toBe(numWorkouts * POINTS_ACTIONS.entraînement);
       expect(totalPoints).toBeGreaterThan(0);
 
       // Level should progress

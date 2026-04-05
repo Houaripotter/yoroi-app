@@ -12,6 +12,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   RefreshControl,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
@@ -57,10 +58,12 @@ import { addHydration } from '@/lib/quests';
 import { addSleepEntry } from '@/lib/sleepService';
 import { ChallengeConfetti } from '@/components/ChallengeConfetti';
 import logger from '@/lib/security/logger';
+import { useI18n } from '@/lib/I18nContext';
 
 export default function ChallengesScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [dailyChallenges, setDailyChallenges] = useState<ActiveChallenge[]>([]);
@@ -136,6 +139,12 @@ export default function ChallengesScreen() {
 
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadData(); }, []);
+
+  // Listener DeviceEventEmitter pour rafraîchissement des données
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadData);
+    return () => sub.remove();
+  }, []);
 
   const handleClaim = async (challenge: ActiveChallenge) => {
     if (!challenge?.progress?.completed || challenge?.progress?.claimed) return;
@@ -287,7 +296,7 @@ export default function ChallengesScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Défis</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('challenges.title')}</Text>
         <View style={[styles.xpBadge, { backgroundColor: colors.accent }]}>
           <Zap size={12} color={colors.textOnGold} />
           <Text style={[styles.xpText, { color: colors.textOnGold }]}>{totalXP} XP</Text>
@@ -304,7 +313,7 @@ export default function ChallengesScreen() {
           >
             {getTabIcon(tab)}
             <Text style={[styles.tabText, { color: activeTab === tab ? colors.textOnGold : colors.textMuted }]}>
-              {tab === 'daily' ? 'Jour' : tab === 'weekly' ? 'Semaine' : 'Mois'}
+              {tab === 'daily' ? t('challenges.tabDaily') : tab === 'weekly' ? t('challenges.tabWeekly') : t('challenges.tabMonthly')}
             </Text>
           </TouchableOpacity>
         ))}
@@ -331,10 +340,10 @@ export default function ChallengesScreen() {
           <Target size={16} color={colors.accentText} />
           <Text style={[styles.infoText, { color: colors.textMuted }]}>
             {activeTab === 'daily' 
-              ? 'Les défis quotidiens se réinitialisent chaque matin'
+              ? t('challenges.infoDailyHint')
               : activeTab === 'weekly'
-              ? 'Les défis hebdomadaires sont évalués chaque lundi'
-              : 'Les défis mensuels offrent les meilleures récompenses'}
+              ? t('challenges.infoWeeklyHint')
+              : t('challenges.infoMonthlyHint')}
           </Text>
         </View>
 
@@ -431,7 +440,7 @@ export default function ChallengesScreen() {
                       <Gift size={12} color={colors.accentText} />
                       <Text style={[styles.rewardText, { color: isDark ? colors.accent : colors.textPrimary }]}>+{challenge?.reward?.xp ?? 0} XP</Text>
                       {challenge?.reward?.badge && (
-                        <Text style={[styles.rewardBadgeText, { color: isDark ? colors.accent : colors.textPrimary }]}>+ Badge</Text>
+                        <Text style={[styles.rewardBadgeText, { color: isDark ? colors.accent : colors.textPrimary }]}>+ {t('challenges.badge')}</Text>
                       )}
                     </View>
 
@@ -508,7 +517,7 @@ export default function ChallengesScreen() {
                 {/* Contenu selon catégorie */}
                 {quickActionChallenge?.category === 'weight' && (
                   <View style={styles.modalContent}>
-                    <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Ton poids ce matin (kg)</Text>
+                    <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>{t('challenges.weightLabel')}</Text>
                     <TextInput
                       style={[styles.modalInput, { backgroundColor: colors.background, color: colors.textPrimary, borderColor: colors.border }]}
                       placeholder="Ex: 75.5"
@@ -524,18 +533,18 @@ export default function ChallengesScreen() {
                       disabled={isSavingAction}
                     >
                       <Scale size={18} color="#FFFFFF" />
-                      <Text style={styles.modalSaveBtnText}>Enregistrer le poids</Text>
+                      <Text style={styles.modalSaveBtnText}>{t('challenges.saveWeight')}</Text>
                     </TouchableOpacity>
                     {/* Options supplémentaires */}
                     <View style={[styles.extraOptionsLabel, { borderTopColor: colors.border }]}>
-                      <Text style={[styles.modalLabel, { color: colors.textMuted, fontSize: 11 }]}>Aller plus loin (optionnel)</Text>
+                      <Text style={[styles.modalLabel, { color: colors.textMuted, fontSize: 11 }]}>{t('challenges.goFurther')}</Text>
                     </View>
                     <TouchableOpacity
                       style={[styles.extraOptionBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
                       onPress={() => { closeQuickAction(); router.push('/body-composition' as any); }}
                     >
                       <TrendingDown size={16} color={colors.accent} />
-                      <Text style={[styles.extraOptionText, { color: colors.textPrimary }]}>Composition corporelle</Text>
+                      <Text style={[styles.extraOptionText, { color: colors.textPrimary }]}>{t('challenges.bodyComposition')}</Text>
                       <ChevronRight size={16} color={colors.textMuted} />
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -543,7 +552,7 @@ export default function ChallengesScreen() {
                       onPress={() => { closeQuickAction(); router.push('/measurements' as any); }}
                     >
                       <Scale size={16} color={colors.accent} />
-                      <Text style={[styles.extraOptionText, { color: colors.textPrimary }]}>Mensurations</Text>
+                      <Text style={[styles.extraOptionText, { color: colors.textPrimary }]}>{t('challenges.measurements')}</Text>
                       <ChevronRight size={16} color={colors.textMuted} />
                     </TouchableOpacity>
                   </View>
@@ -551,7 +560,7 @@ export default function ChallengesScreen() {
 
                 {quickActionChallenge?.category === 'hydration' && (
                   <View style={styles.modalContent}>
-                    <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Ajoute ta consommation d'eau</Text>
+                    <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>{t('challenges.addWater')}</Text>
                     <View style={styles.presetRow}>
                       {[250, 330, 500, 750, 1000].map(ml => (
                         <TouchableOpacity
@@ -564,7 +573,7 @@ export default function ChallengesScreen() {
                         </TouchableOpacity>
                       ))}
                     </View>
-                    <Text style={[styles.modalLabel, { color: colors.textSecondary, marginTop: 12 }]}>Ou entre un montant custom (ml)</Text>
+                    <Text style={[styles.modalLabel, { color: colors.textSecondary, marginTop: 12 }]}>{t('challenges.customAmount')}</Text>
                     <TextInput
                       style={[styles.modalInput, { backgroundColor: colors.background, color: colors.textPrimary, borderColor: colors.border }]}
                       placeholder="Ex: 400"
@@ -579,7 +588,7 @@ export default function ChallengesScreen() {
                       disabled={isSavingAction}
                     >
                       <Droplets size={18} color="#FFFFFF" />
-                      <Text style={styles.modalSaveBtnText}>Enregistrer</Text>
+                      <Text style={styles.modalSaveBtnText}>{t('challenges.save')}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -590,15 +599,13 @@ export default function ChallengesScreen() {
                     <View style={[styles.sleepArticle, { backgroundColor: `${'#8B5CF6'}12`, borderColor: `${'#8B5CF6'}30` }]}>
                       <View style={styles.sleepArticleHeader}>
                         <BookOpen size={16} color="#8B5CF6" />
-                        <Text style={[styles.sleepArticleTitle, { color: colors.textPrimary }]}>Le sommeil du champion</Text>
+                        <Text style={[styles.sleepArticleTitle, { color: colors.textPrimary }]}>{t('challenges.sleepChampion')}</Text>
                       </View>
                       <Text style={[styles.sleepArticleBody, { color: colors.textSecondary || colors.textMuted }]}>
-                        Le sommeil est l'outil de récupération n°1. Durant la phase de sommeil profond, ton corps libere l'hormone de croissance qui repare les muscles. 7 a 9 heures par nuit optimisent les performances, la concentration et la composition corporelle.
-                        {'\n\n'}
-                        Astuce : couche-toi a la meme heure chaque soir pour ancrer ton rythme circadien.
+                        {t('challenges.sleepArticle')}
                       </Text>
                     </View>
-                    <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Combien d'heures as-tu dormi ?</Text>
+                    <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>{t('challenges.sleepHours')}</Text>
                     <TextInput
                       style={[styles.modalInput, { backgroundColor: colors.background, color: colors.textPrimary, borderColor: colors.border }]}
                       placeholder="Ex: 7.5"
@@ -624,7 +631,7 @@ export default function ChallengesScreen() {
                       disabled={isSavingAction}
                     >
                       <Moon size={18} color="#FFFFFF" />
-                      <Text style={styles.modalSaveBtnText}>Enregistrer le sommeil</Text>
+                      <Text style={styles.modalSaveBtnText}>{t('challenges.saveSleep')}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -632,14 +639,14 @@ export default function ChallengesScreen() {
                 {quickActionChallenge?.category === 'training' && (
                   <View style={styles.modalContent}>
                     <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>
-                      Enregistre une séance pour valider ce défi
+                      {t('challenges.recordSession')}
                     </Text>
                     <TouchableOpacity
                       style={[styles.modalSaveBtn, { backgroundColor: '#F97316' }]}
                       onPress={() => { closeQuickAction(); router.push('/add-training'); }}
                     >
                       <Dumbbell size={18} color="#FFFFFF" />
-                      <Text style={styles.modalSaveBtnText}>Ajouter une séance</Text>
+                      <Text style={styles.modalSaveBtnText}>{t('challenges.addSession')}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -649,7 +656,7 @@ export default function ChallengesScreen() {
                     <View style={[styles.infoBox, { backgroundColor: `${colors.accent}15`, borderColor: colors.border }]}>
                       <Info size={18} color={colors.accent} />
                       <Text style={[styles.infoBoxText, { color: colors.textPrimary }]}>
-                        Le streak se calcule automatiquement selon ton historique d'entraînements. Fais une séance chaque jour pour le maintenir !
+                        {t('challenges.streakInfo')}
                       </Text>
                     </View>
                     <TouchableOpacity

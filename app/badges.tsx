@@ -9,6 +9,7 @@ import {
   Animated,
   ListRenderItem,
   RefreshControl,
+  DeviceEventEmitter,
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -34,6 +35,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
 import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
+import { useI18n } from '@/lib/I18nContext';
 
 // ============================================
 // ECRAN COLLECTION DE BADGES
@@ -47,6 +49,7 @@ interface BadgeItemProps {
 // Composant BadgeItem optimisé avec React.memo
 const BadgeItem: React.FC<BadgeItemProps> = memo(({ badgeProgress, onPress }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { badge, isUnlocked, progressPercent } = badgeProgress;
 
   return (
@@ -189,6 +192,12 @@ export default function BadgesScreen() {
 
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadBadges(); }, []);
+
+  // Listener DeviceEventEmitter pour rafraîchissement des données
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadBadges);
+    return () => sub.remove();
+  }, []);
 
   const handleBadgePress = (badgeProgress: BadgeProgress) => {
     if (isProcessing) return;

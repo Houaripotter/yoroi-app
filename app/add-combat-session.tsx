@@ -47,11 +47,12 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
-import * as Linking from 'expo-linking';
+import { safeOpenURL } from '@/lib/security/validators';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 import { useTheme } from '@/lib/ThemeContext';
+import { useCustomPopup } from '@/components/CustomPopup';
 import {
   addTraining,
   updateTraining,
@@ -77,73 +78,85 @@ const COMBAT_SPORTS = SPORTS.filter(
 
 // --- JJB / GRAPPLING (60+ finitions) ---
 const SUBMISSIONS_GRAPPLING = [
-  // --- Étranglements ---
+  // ─── ÉTRANGLEMENTS DORSAUX ───
   'RNC (Rear Naked Choke)',
+  'Bow and Arrow choke',
+  'Body triangle + RNC',
+  'Rear triangle',
+  'Mata leão',
+  // ─── ÉTRANGLEMENTS DE GARDE ───
   'Triangle (ashi-sankaku)',
   'Triangle dos',
+  'Mounted triangle',
   'Guillotine frontale',
   'Guillotine arm-in',
-  'Guillotine high-elbow',
-  'D\'Arce choke',
+  'Guillotine high-elbow (Marcelotine)',
+  'Arm-in guillotine (hip bump)',
+  // ─── ÉTRANGLEMENTS AU SOL ───
+  "D'Arce choke (no-gi brabo)",
   'Anaconda choke',
-  'Bow and Arrow choke',
+  'Brabo choke (gi)',
   'Loop choke',
   'Baseball bat choke',
   'Paper cutter choke',
-  'Brabo choke',
   'Ezekiel choke (sode guruma)',
   'Crucifix choke',
   'Clock choke',
   'North-south choke',
   'Arm triangle (kata gatame)',
-  'Body triangle RNC',
-  'Gogoplata',
-  'Peruvian necktie',
-  'Twister choke',
-  'Buggy choke',
-  'Lapel choke (worm guard)',
-  'Squirrel choke',
   'Von flue choke',
   'Carotid squeeze',
-  'Rear triangle',
-  'Mounted triangle',
   'Cobra choke',
-  // --- Bras ---
+  // ─── ÉTRANGLEMENTS ORIGINAUX ───
+  'Gogoplata',
+  'Buggy choke',
+  'Peruvian necktie',
+  'Twister choke',
+  'Lapel choke (worm guard)',
+  'Squirrel choke',
+  'Gator roll choke',
+  'Darce-triangle (daratine)',
+  // ─── LOCKS BRAS ───
   'Armbar (juji-gatame)',
-  'Armbar depuis la garde',
+  'Armbar depuis garde fermée',
+  'Armbar depuis triangle',
   'Armbar depuis le dos',
+  'Armbar depuis mount',
   'Kimura',
+  'Kimura trap',
   'Américaine (Americana)',
   'Omoplata',
+  'Monoplata',
+  'Baratoplata',
+  'Tarikoplata',
   'Wristlock',
   'Bicep slicer',
   'Shoulder lock',
   'Hammerlock',
-  'Ude garami (Kimura inversé)',
   'Straight arm lock',
   'Chicken wing',
-  'Gogoplata bras',
-  'Monoplata',
-  'Baratoplata',
-  'Tarikoplata',
-  // --- Jambes ---
+  // ─── LOCKS JAMBES ───
   'Heel hook intérieur (inside heel hook)',
   'Heel hook extérieur (outside heel hook)',
-  'Kneebar (barre de genou)',
+  'Kneebar',
   'Toehold',
   'Calf slicer',
-  'Ankle lock (étau cheville)',
+  'Ankle lock droit',
+  'Ankle lock rotatif',
   'Estima lock',
   'Electric chair',
   'Banana split',
   'Knee reap',
   'Straight foot lock',
-  // --- Résultats match ---
+  'Cross heel hook',
+  'Saddle (inside sankaku)',
+  // ─── RÉSULTATS ───
   'Points / décision',
-  'Sweep count',
+  'Avantages',
   'Abandon (tap)',
   'Verbal tap',
-  'DQ (faute grave)',
+  'DQ (faute)',
+  'No contest',
 ];
 
 // --- MMA (50+ finitions) ---
@@ -384,12 +397,23 @@ function getSubmissionsForSport(sportId: string): string[] {
 // ============================================
 
 const THEMES_GRAPPLING = [
-  'Passage de garde',
-  'Triangle',
-  'Armbar',
-  'Takedown',
-  'Dos / RNC',
-  'Demi-garde',
+  // Gardes debout / takedowns
+  'Single leg', 'Double leg', 'Fauchage ext.', 'Fauchage int.', 'Hanche', 'Épaule', 'Sacrifice', 'Corps à corps',
+  // Gardes au sol
+  'Garde fermée', 'Demi-garde', 'Papillon', 'Spider guard', 'De la Riva',
+  'Reverse De la Riva', 'X-guard', 'Single leg X', '50/50', 'Lasso guard',
+  'Worm guard', 'Rubber guard', 'Garde Z', 'Leg entanglement',
+  // Passage de garde
+  'Toreando', 'Knee slice', 'Leg weave', 'Smash pass', 'Stack pass',
+  'Headquarters (HQ)', 'Over-under', 'Long step', 'Cartwheel pass',
+  // Positions dominantes
+  'Side control', 'Genou poitrine', 'Mount', 'Contrôle dos', 'Nord-sud',
+  'Tortue (turtle)', 'Demi-dos', 'Crab ride',
+  // Dos
+  'Back take', 'Berimbolo', 'Dos depuis tortue', 'Body triangle', '50/50 dos',
+  // Finitions
+  'RNC', 'Triangle', 'Armbar', 'Kimura', 'Guillotine', "D'Arce",
+  'Heel hook intérieur', 'Heel hook extérieur', 'Toe hold', 'Kneebar', 'Ankle lock', 'Omoplata',
 ];
 
 const THEMES_STRIKING = [
@@ -683,120 +707,147 @@ function SubmissionsModal({
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
 
+  // Réinitialise la recherche à chaque ouverture du modal
+  useEffect(() => {
+    if (!visible) setSearch('');
+  }, [visible]);
+
   const filtered = search.trim()
     ? submissions.filter((s) => s.toLowerCase().includes(search.toLowerCase()))
     : submissions;
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View
-          style={[
-            styles.modalSheet,
-            { backgroundColor: colors.background, paddingBottom: insets.bottom + 16 },
-          ]}
-        >
-          {/* Header modal */}
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>{title}</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <X size={22} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Search */}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.modalOverlay}>
           <View
             style={[
-              styles.modalSearch,
-              { backgroundColor: colors.card, borderColor: colors.border ?? '#333' },
+              styles.modalSheet,
+              { backgroundColor: colors.background, paddingBottom: insets.bottom + 16 },
             ]}
           >
-            <Search size={14} color={colors.textMuted ?? '#888'} />
-            <TextInput
-              style={[styles.modalSearchInput, { color: colors.text }]}
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Rechercher..."
-              placeholderTextColor={colors.textMuted ?? '#888'}
-            />
-            {search.length > 0 && (
-              <TouchableOpacity onPress={() => setSearch('')}>
-                <X size={14} color={colors.textMuted ?? '#888'} />
+            {/* Header modal */}
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>{title}</Text>
+              <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <X size={22} color={colors.text} />
               </TouchableOpacity>
-            )}
-          </View>
+            </View>
 
-          {/* Sélectionnés */}
-          {selected.length > 0 && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.selectedTagsRow}
-              style={{ maxHeight: 50, marginBottom: 8 }}
+            {/* Search */}
+            <View
+              style={[
+                styles.modalSearch,
+                { backgroundColor: colors.card, borderColor: colors.border ?? '#333' },
+              ]}
             >
-              {selected.map((sub) => (
-                <TouchableOpacity
-                  key={sub}
-                  style={[styles.selectedTag, { backgroundColor: screenBackground }]}
-                  onPress={() => onToggle(sub)}
-                >
-                  <Text style={styles.selectedTagText}>{sub}</Text>
-                  <X size={10} color="#fff" />
+              <Search size={14} color={colors.textMuted ?? '#888'} />
+              <TextInput
+                style={[styles.modalSearchInput, { color: colors.text }]}
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Rechercher..."
+                placeholderTextColor={colors.textMuted ?? '#888'}
+                autoCorrect={false}
+                returnKeyType="search"
+              />
+              {search.length > 0 && (
+                <TouchableOpacity onPress={() => setSearch('')}>
+                  <X size={14} color={colors.textMuted ?? '#888'} />
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
+              )}
+            </View>
 
-          {/* Liste */}
-          <FlatList
-            data={filtered}
-            keyExtractor={(item) => item}
-            style={{ flex: 1 }}
-            renderItem={({ item }) => {
-              const isSelected = selected.includes(item);
-              return (
-                <TouchableOpacity
-                  style={[
-                    styles.subItem,
-                    {
-                      borderColor: isSelected ? screenBackground : (colors.border ?? '#2a2a2a'),
-                      backgroundColor: isSelected ? screenBackground + '15' : colors.card,
-                    },
-                  ]}
-                  onPress={() => {
-                    impactAsync(ImpactFeedbackStyle.Light);
-                    onToggle(item);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.subItemText,
-                      { color: isSelected ? screenBackground : colors.text },
-                    ]}
+            {/* Sélectionnés */}
+            {selected.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.selectedTagsRow}
+                style={{ maxHeight: 50, marginBottom: 8 }}
+                keyboardShouldPersistTaps="handled"
+              >
+                {selected.map((sub) => (
+                  <TouchableOpacity
+                    key={sub}
+                    style={[styles.selectedTag, { backgroundColor: screenBackground }]}
+                    onPress={() => onToggle(sub)}
                   >
-                    {item}
-                  </Text>
-                  {isSelected && (
-                    <View style={[styles.subItemCheck, { backgroundColor: screenBackground }]}>
-                      <Check size={12} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            }}
-          />
+                    <Text style={styles.selectedTagText}>{sub}</Text>
+                    <X size={10} color="#fff" />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
 
-          {/* Bouton valider */}
-          <TouchableOpacity
-            style={[styles.modalConfirmBtn, { backgroundColor: screenBackground }]}
-            onPress={onClose}
-          >
-            <Text style={styles.modalConfirmBtnText}>
-              {selected.length > 0 ? `Valider (${selected.length})` : 'Fermer'}
-            </Text>
-          </TouchableOpacity>
+            {/* Compteur résultats */}
+            {filtered.length === 0 && search.length > 0 && (
+              <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', marginBottom: 8 }}>
+                Aucune finition trouvée
+              </Text>
+            )}
+            {filtered.length > 0 && (
+              <Text style={{ color: colors.textMuted, fontSize: 11, marginBottom: 6 }}>
+                {filtered.length} finition{filtered.length > 1 ? 's' : ''}{search ? ` pour "${search}"` : ''}
+              </Text>
+            )}
+
+            {/* Liste */}
+            <FlatList
+              data={filtered}
+              keyExtractor={(item) => item}
+              style={{ flex: 1 }}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              renderItem={({ item }) => {
+                const isSelected = selected.includes(item);
+                return (
+                  <TouchableOpacity
+                    style={[
+                      styles.subItem,
+                      {
+                        borderColor: isSelected ? screenBackground : (colors.border ?? '#2a2a2a'),
+                        backgroundColor: isSelected ? screenBackground + '20' : colors.card,
+                      },
+                    ]}
+                    onPress={() => {
+                      impactAsync(ImpactFeedbackStyle.Light);
+                      onToggle(item);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.subItemText,
+                        { color: isSelected ? screenBackground : colors.text, fontWeight: isSelected ? '700' : '500' },
+                      ]}
+                    >
+                      {item}
+                    </Text>
+                    {isSelected && (
+                      <View style={[styles.subItemCheck, { backgroundColor: screenBackground }]}>
+                        <Check size={12} color="#fff" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+
+            {/* Bouton valider */}
+            <TouchableOpacity
+              style={[styles.modalConfirmBtn, { backgroundColor: screenBackground }]}
+              onPress={onClose}
+            >
+              <Text style={styles.modalConfirmBtnText}>
+                {selected.length > 0 ? `Valider (${selected.length})` : 'Fermer'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -820,6 +871,43 @@ function RoundCard({
   colors: any;
   onUpdate: (updates: Partial<CombatRound>) => void;
 }) {
+  // Actions de score rapide BJJ/Grappling (points prédéfinis par action)
+  const sport = COMBAT_SPORTS.find(s => s.id === sportId);
+  const isGrappling = sport?.category === 'combat_grappling';
+
+  // Techniques standard par règlement BJJ/Grappling — organisées par groupe
+  const BJJ_SCORE_ACTIONS = isGrappling ? [
+    // ─── DEBOUT (2 pts chacune) ───
+    { label: 'Single leg', pts: 2, group: 'Debout' },
+    { label: 'Double leg', pts: 2, group: 'Debout' },
+    { label: 'Corps à corps', pts: 2, group: 'Debout' },
+    { label: 'Fauchage', pts: 2, group: 'Debout' },
+    { label: 'Hanche', pts: 2, group: 'Debout' },
+    { label: 'Épaule', pts: 2, group: 'Debout' },
+    { label: 'Sacrifice', pts: 2, group: 'Debout' },
+    { label: 'Renversement', pts: 2, group: 'Debout' },
+    // ─── AU SOL ───
+    { label: 'Sweep', pts: 2, group: 'Sol' },
+    { label: 'Berimbolo', pts: 2, group: 'Sol' },
+    { label: 'Retournement', pts: 2, group: 'Sol' },
+    { label: 'Genou poitrine', pts: 2, group: 'Sol' },
+    { label: 'Passage garde', pts: 3, group: 'Sol' },
+    { label: 'Leg drag', pts: 3, group: 'Sol' },
+    { label: 'Headquarters', pts: 3, group: 'Sol' },
+    { label: 'Mount', pts: 4, group: 'Sol' },
+    { label: 'Contrôle dos', pts: 4, group: 'Sol' },
+    { label: 'Demi-dos', pts: 4, group: 'Sol' },
+    // ─── AVANTAGES / BONUS ───
+    { label: 'Avantage', pts: 1, group: 'Bonus' },
+    { label: 'Pénalité adv.', pts: 1, group: 'Bonus' },
+    { label: 'Near sub.', pts: 1, group: 'Bonus' },
+    { label: 'Expo. dos', pts: 1, group: 'Bonus' },
+  ] : [];
+
+  // État pour technique personnalisée
+  const [customLabel, setCustomLabel] = useState('');
+  const [customPts, setCustomPts] = useState('2');
+
   const RESULTS: { value: 'win' | 'loss' | 'draw'; label: string; color: string }[] = [
     { value: 'win', label: 'Victoire', color: '#22C55E' },
     { value: 'loss', label: 'Défaite', color: '#EF4444' },
@@ -951,6 +1039,203 @@ function RoundCard({
         )}
       </TouchableOpacity>
 
+      {/* Score rapide BJJ */}
+      {BJJ_SCORE_ACTIONS.length > 0 && (
+        <View style={{ marginTop: 10 }}>
+          <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted ?? '#888', marginBottom: 8, letterSpacing: 0.5 }}>
+            SCORE RAPIDE
+          </Text>
+
+          {/* Groupes de techniques */}
+          {(['Debout', 'Sol', 'Bonus'] as const).map(group => {
+            const actions = BJJ_SCORE_ACTIONS.filter(a => a.group === group);
+            const groupColors: Record<string, string> = {
+              Debout: '#3B82F6',
+              Sol: '#22C55E',
+              Bonus: '#F59E0B',
+            };
+            const groupLabels: Record<string, string> = {
+              Debout: 'DEBOUT (TAKEDOWNS / PROJECTIONS)',
+              Sol: 'AU SOL (PASSAGES / POSITIONS)',
+              Bonus: 'AVANTAGES / BONUS',
+            };
+            const color = groupColors[group];
+            return (
+              <View key={group} style={{ marginBottom: 8 }}>
+                <Text style={{ fontSize: 9, fontWeight: '700', color: color, marginBottom: 4, letterSpacing: 0.5 }}>
+                  {groupLabels[group]}
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5 }}>
+                  {actions.map(action => (
+                    <TouchableOpacity
+                      key={action.label}
+                      onPress={() => {
+                        onUpdate({ pointsFor: (round.pointsFor ?? 0) + action.pts });
+                        impactAsync(ImpactFeedbackStyle.Light);
+                      }}
+                      onLongPress={() => {
+                        onUpdate({ pointsAgainst: (round.pointsAgainst ?? 0) + action.pts });
+                        impactAsync(ImpactFeedbackStyle.Medium);
+                      }}
+                      style={{
+                        flexDirection: 'row', alignItems: 'center', gap: 4,
+                        paddingHorizontal: 9, paddingVertical: 5, borderRadius: 8,
+                        backgroundColor: `${color}12`, borderWidth: 1, borderColor: `${color}35`,
+                      }}
+                    >
+                      <Text style={{ fontSize: 11, fontWeight: '700', color }}>{action.label}</Text>
+                      <View style={{ backgroundColor: color, borderRadius: 8, paddingHorizontal: 4, paddingVertical: 1 }}>
+                        <Text style={{ fontSize: 9, fontWeight: '900', color: '#fff' }}>+{action.pts}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            );
+          })}
+
+          <Text style={{ fontSize: 10, color: colors.textMuted ?? '#888', marginBottom: 10 }}>
+            Appui court = tes points · Appui long = points adversaire
+          </Text>
+
+          {/* Technique personnalisée */}
+          <View style={{
+            backgroundColor: (colors.card ?? (colors.background === '#000' ? '#1a1a1a' : '#f5f5f5')),
+            borderRadius: 10, borderWidth: 1,
+            borderColor: colors.border ?? '#333',
+            padding: 10,
+          }}>
+            <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted ?? '#888', marginBottom: 8, letterSpacing: 0.5 }}>
+              + TECHNIQUE PERSONNALISÉE
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              <TextInput
+                style={{
+                  flex: 1, backgroundColor: colors.background,
+                  borderRadius: 8, borderWidth: 1, borderColor: colors.border ?? '#444',
+                  paddingHorizontal: 10, paddingVertical: 7,
+                  color: colors.text, fontSize: 13,
+                }}
+                placeholder="Nom de la technique..."
+                placeholderTextColor={colors.textMuted ?? '#888'}
+                value={customLabel}
+                onChangeText={setCustomLabel}
+                returnKeyType="done"
+              />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <TouchableOpacity
+                  onPress={() => setCustomPts(p => String(Math.max(1, parseInt(p || '1') - 1)))}
+                  style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.08)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border ?? '#444' }}
+                >
+                  <Minus size={12} color={colors.text} />
+                </TouchableOpacity>
+                <TextInput
+                  style={{
+                    width: 36, backgroundColor: colors.background,
+                    borderRadius: 8, borderWidth: 1, borderColor: colors.border ?? '#444',
+                    paddingVertical: 7, color: colors.text,
+                    fontSize: 14, fontWeight: '800', textAlign: 'center',
+                  }}
+                  value={customPts}
+                  onChangeText={v => setCustomPts(v.replace(/[^0-9]/g, ''))}
+                  keyboardType="number-pad"
+                  maxLength={2}
+                />
+                <TouchableOpacity
+                  onPress={() => setCustomPts(p => String(Math.min(99, parseInt(p || '1') + 1)))}
+                  style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: accentColor, justifyContent: 'center', alignItems: 'center' }}
+                >
+                  <Plus size={12} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (!customLabel.trim() || !parseInt(customPts)) return;
+                  onUpdate({ pointsFor: (round.pointsFor ?? 0) + parseInt(customPts) });
+                  impactAsync(ImpactFeedbackStyle.Light);
+                  setCustomLabel('');
+                }}
+                disabled={!customLabel.trim()}
+                style={{
+                  flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+                  gap: 6, backgroundColor: customLabel.trim() ? '#22C55E' : (colors.border ?? '#333'),
+                  borderRadius: 8, paddingVertical: 8,
+                }}
+              >
+                <Plus size={14} color="#fff" />
+                <Text style={{ fontSize: 12, fontWeight: '700', color: '#fff' }}>
+                  +{customPts} pts pour moi
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  if (!customLabel.trim() || !parseInt(customPts)) return;
+                  onUpdate({ pointsAgainst: (round.pointsAgainst ?? 0) + parseInt(customPts) });
+                  impactAsync(ImpactFeedbackStyle.Medium);
+                  setCustomLabel('');
+                }}
+                disabled={!customLabel.trim()}
+                style={{
+                  flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+                  gap: 6, backgroundColor: customLabel.trim() ? '#EF4444' : (colors.border ?? '#333'),
+                  borderRadius: 8, paddingVertical: 8,
+                }}
+              >
+                <Plus size={14} color="#fff" />
+                <Text style={{ fontSize: 12, fontWeight: '700', color: '#fff' }}>
+                  +{customPts} pts adversaire
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Points du round */}
+      <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+        {/* Points marqués */}
+        <View style={{ flex: 1, backgroundColor: 'rgba(34,197,94,0.07)', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(34,197,94,0.25)', padding: 10 }}>
+          <Text style={{ fontSize: 10, fontWeight: '700', color: '#22C55E', marginBottom: 6, textAlign: 'center' }}>MES POINTS</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <TouchableOpacity
+              onPress={() => { onUpdate({ pointsFor: Math.max(0, (round.pointsFor ?? 0) - 1) }); impactAsync(ImpactFeedbackStyle.Light); }}
+              style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(34,197,94,0.15)', justifyContent: 'center', alignItems: 'center' }}
+            >
+              <Minus size={14} color="#22C55E" />
+            </TouchableOpacity>
+            <Text style={{ fontSize: 22, fontWeight: '900', color: '#22C55E', minWidth: 28, textAlign: 'center' }}>{round.pointsFor ?? 0}</Text>
+            <TouchableOpacity
+              onPress={() => { onUpdate({ pointsFor: (round.pointsFor ?? 0) + 1 }); impactAsync(ImpactFeedbackStyle.Light); }}
+              style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: '#22C55E', justifyContent: 'center', alignItems: 'center' }}
+            >
+              <Plus size={14} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Points concédés */}
+        <View style={{ flex: 1, backgroundColor: 'rgba(239,68,68,0.07)', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)', padding: 10 }}>
+          <Text style={{ fontSize: 10, fontWeight: '700', color: '#EF4444', marginBottom: 6, textAlign: 'center' }}>POINTS ADVERSAIRE</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <TouchableOpacity
+              onPress={() => { onUpdate({ pointsAgainst: Math.max(0, (round.pointsAgainst ?? 0) - 1) }); impactAsync(ImpactFeedbackStyle.Light); }}
+              style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(239,68,68,0.15)', justifyContent: 'center', alignItems: 'center' }}
+            >
+              <Minus size={14} color="#EF4444" />
+            </TouchableOpacity>
+            <Text style={{ fontSize: 22, fontWeight: '900', color: '#EF4444', minWidth: 28, textAlign: 'center' }}>{round.pointsAgainst ?? 0}</Text>
+            <TouchableOpacity
+              onPress={() => { onUpdate({ pointsAgainst: (round.pointsAgainst ?? 0) + 1 }); impactAsync(ImpactFeedbackStyle.Light); }}
+              style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: '#EF4444', justifyContent: 'center', alignItems: 'center' }}
+            >
+              <Plus size={14} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
       {/* Notes du round */}
       <TextInput
         style={[
@@ -1015,6 +1300,7 @@ export default function AddCombatSessionScreen() {
   }>();
   const { colors, screenBackground, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // --- State ---
   const [selectedSport, setSelectedSport] = useState(params.sport || 'jjb');
@@ -1157,9 +1443,9 @@ export default function AddCombatSessionScreen() {
     if (!q) return;
     const encoded = encodeURIComponent(q);
     if (Platform.OS === 'ios') {
-      Linking.openURL(`maps://?q=${encoded}`);
+      safeOpenURL(`maps://?q=${encoded}`);
     } else {
-      Linking.openURL(`https://maps.google.com/?q=${encoded}`);
+      safeOpenURL(`https://maps.google.com/?q=${encoded}`);
     }
   };
 
@@ -1223,6 +1509,7 @@ export default function AddCombatSessionScreen() {
       router.back();
     } catch (e) {
       console.error(e);
+      showPopup('Erreur', 'Impossible d\'enregistrer la séance. Vérifie tes données et réessaie.', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setSaving(false);
     }
@@ -1295,15 +1582,16 @@ export default function AddCombatSessionScreen() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: insets.bottom + 40 },
+            { paddingBottom: insets.bottom + 120 },
           ]}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
         >
           {/* ─── SPORT SELECTOR ─── */}
@@ -1755,6 +2043,42 @@ export default function AddCombatSessionScreen() {
                     onUpdate={(updates) => updateRound(index, updates)}
                   />
                 ))}
+
+              {/* Bilan global des rounds */}
+              {combatRounds.some(r => r.result || (r.pointsFor ?? 0) > 0 || (r.pointsAgainst ?? 0) > 0) && (
+                <View style={{ backgroundColor: colors.card, borderRadius: 14, borderWidth: 1, borderColor: colors.border ?? '#2a2a2a', padding: 14, marginTop: 4 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, marginBottom: 10, letterSpacing: 0.5 }}>BILAN</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+                    <View style={{ alignItems: 'center' }}>
+                      <Text style={{ fontSize: 24, fontWeight: '900', color: '#22C55E' }}>{combatRounds.filter(r => r.result === 'win').length}</Text>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: '#22C55E' }}>Victoires</Text>
+                    </View>
+                    <View style={{ width: 1, backgroundColor: colors.border ?? '#333' }} />
+                    <View style={{ alignItems: 'center' }}>
+                      <Text style={{ fontSize: 24, fontWeight: '900', color: '#EF4444' }}>{combatRounds.filter(r => r.result === 'loss').length}</Text>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: '#EF4444' }}>Défaites</Text>
+                    </View>
+                    <View style={{ width: 1, backgroundColor: colors.border ?? '#333' }} />
+                    <View style={{ alignItems: 'center' }}>
+                      <Text style={{ fontSize: 24, fontWeight: '900', color: '#F97316' }}>{combatRounds.filter(r => r.result === 'draw').length}</Text>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: '#F97316' }}>Nuls</Text>
+                    </View>
+                    {combatRounds.some(r => (r.pointsFor ?? 0) > 0 || (r.pointsAgainst ?? 0) > 0) && (
+                      <>
+                        <View style={{ width: 1, backgroundColor: colors.border ?? '#333' }} />
+                        <View style={{ alignItems: 'center' }}>
+                          <Text style={{ fontSize: 16, fontWeight: '900', color: colors.text }}>
+                            {combatRounds.reduce((a, r) => a + (r.pointsFor ?? 0), 0)}
+                            <Text style={{ color: colors.textMuted }}> – </Text>
+                            {combatRounds.reduce((a, r) => a + (r.pointsAgainst ?? 0), 0)}
+                          </Text>
+                          <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>Points</Text>
+                        </View>
+                      </>
+                    )}
+                  </View>
+                </View>
+              )}
             </View>
           )}
 
@@ -1959,6 +2283,7 @@ export default function AddCombatSessionScreen() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+      <PopupComponent />
     </View>
   );
 }
@@ -2333,7 +2658,7 @@ const styles = StyleSheet.create({
   modalSheet: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '80%',
+    height: '80%',
     padding: 20,
   },
   modalHeader: {

@@ -58,7 +58,7 @@ export const MonthlyRecapCardV2 = React.memo(forwardRef<View, MonthlyRecapCardV2
     const profileSource = profilePhoto ? { uri: profilePhoto } : null;
 
     // Calculer objectif mensuel
-    const monthlyGoal = weeklyGoal * 4;
+    const monthlyGoal = weeklyGoal > 0 ? weeklyGoal * 4 : 16;
     const progressPercent = Math.min((stats.totalTrainings / monthlyGoal) * 100, 100);
 
     // Memoized styles
@@ -271,7 +271,7 @@ export const MonthlyRecapCardV2 = React.memo(forwardRef<View, MonthlyRecapCardV2
             </View>
             <View style={statDividerStyle} />
             <View style={statColumnStyle}>
-              <Text style={statValueStyle}>{Math.round((stats.activeDays / stats.totalDays) * 100)}%</Text>
+              <Text style={statValueStyle}>{stats.totalDays > 0 ? Math.round((stats.activeDays / stats.totalDays) * 100) : 0}%</Text>
               <Text style={statLabelStyle}>DU MOIS</Text>
             </View>
           </View>

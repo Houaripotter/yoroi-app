@@ -15,7 +15,7 @@ import { useI18n } from '@/lib/I18nContext';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { BADGES, BADGE_CATEGORIES, Badge, BadgeId, BadgeCategory } from '@/types/badges';
 import { BadgeItem } from './BadgeItem';
-import { useFocusEffect } from 'expo-router';
+// useFocusEffect supprimé - non utilisé (les données sont chargées via useEffect([visible]))
 import { getAllMeasurements, getAllWorkouts, getUnlockedBadges, unlockBadge } from '@/lib/storage';
 import logger from '@/lib/security/logger';
 

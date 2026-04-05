@@ -22,12 +22,14 @@ import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import { getTrainings, Training } from '@/lib/database';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import logger from '@/lib/security/logger';
+import { useI18n } from '@/lib/I18nContext';
 
 type Period = '7d' | '30d' | '90d' | 'all';
 
 export default function ActivityDetailScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
   const [period, setPeriod] = useState<Period>('30d');
@@ -117,7 +119,7 @@ export default function ActivityDetailScreen() {
 
     return Array.from(weeks.entries()).map(([week, data]) => ({
       date: week,
-      value: data.total / data.count,
+      value: data.count > 0 ? data.total / data.count : 0,
     }));
   })();
 
@@ -144,7 +146,7 @@ export default function ActivityDetailScreen() {
     return (
       <View style={[styles.screen, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={colors.accent} />
-        <Text style={[styles.loadingText, { color: colors.textMuted }]}>Analyse de tes performances...</Text>
+        <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('activityDetail.loading')}</Text>
       </View>
     );
   }
@@ -156,7 +158,7 @@ export default function ActivityDetailScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Activité</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('activityDetail.title')}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -178,7 +180,7 @@ export default function ActivityDetailScreen() {
                 { color: period === p ? '#FFFFFF' : colors.textPrimary },
               ]}
             >
-              {p === 'all' ? 'Tout' : p}
+              {p === 'all' ? t('activityDetail.all') : p}
             </Text>
           </TouchableOpacity>
         ))}
@@ -190,19 +192,19 @@ export default function ActivityDetailScreen() {
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
             <Activity size={20} color="#3B82F6" />
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{totalSessions}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Séances</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('activityDetail.sessions')}</Text>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
             <Clock size={20} color="#10B981" />
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatHoursHM(totalHours || 0)}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Volume total</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('activityDetail.totalVolume')}</Text>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
             <Calendar size={20} color="#F59E0B" />
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{(avgSessionsPerWeek || 0).toFixed(1)}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Séances/sem.</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('activityDetail.sessionsPerWeek')}</Text>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
@@ -210,7 +212,7 @@ export default function ActivityDetailScreen() {
             <Text style={[styles.statValue, { color: colors.textPrimary }]} numberOfLines={1}>
               {mostFrequentType}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Type principal</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('activityDetail.mainType')}</Text>
           </View>
         </View>
 
@@ -220,11 +222,11 @@ export default function ActivityDetailScreen() {
             <View style={styles.chartTitleRow}>
               <Clock size={20} color="#10B981" />
               <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-                Volume d'entraînement
+                {t('activityDetail.trainingVolume')}
               </Text>
             </View>
             <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-              Heures par semaine
+              {t('activityDetail.hoursPerWeek')}
             </Text>
           </View>
           {volumeData.length > 0 ? (
@@ -242,7 +244,7 @@ export default function ActivityDetailScreen() {
           ) : (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                Aucune donnée pour cette période
+                {t('activityDetail.noData')}
               </Text>
             </View>
           )}
@@ -254,11 +256,11 @@ export default function ActivityDetailScreen() {
             <View style={styles.chartTitleRow}>
               <Calendar size={20} color="#F59E0B" />
               <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-                Fréquence d'entraînement
+                {t('activityDetail.trainingFrequency')}
               </Text>
             </View>
             <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-              Nombre de séances par semaine
+              {t('activityDetail.sessionsPerWeekFull')}
             </Text>
           </View>
           {frequencyData.length > 0 ? (
@@ -276,7 +278,7 @@ export default function ActivityDetailScreen() {
           ) : (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                Aucune donnée pour cette période
+                {t('activityDetail.noData')}
               </Text>
             </View>
           )}
@@ -288,11 +290,11 @@ export default function ActivityDetailScreen() {
             <View style={styles.chartTitleRow}>
               <TrendingUp size={20} color="#EF4444" />
               <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-                Intensité moyenne
+                {t('activityDetail.averageIntensity')}
               </Text>
             </View>
             <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-              RPE moyen par semaine (échelle 1-10)
+              {t('activityDetail.rpePerWeek')}
             </Text>
           </View>
           {intensityData.length > 0 ? (
@@ -311,7 +313,7 @@ export default function ActivityDetailScreen() {
           ) : (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                Aucune donnée pour cette période
+                {t('activityDetail.noData')}
               </Text>
             </View>
           )}
@@ -320,7 +322,7 @@ export default function ActivityDetailScreen() {
         {filteredTrainings.length === 0 && (
           <View style={styles.emptyState}>
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              Aucun entraînement enregistré pour cette période
+              {t('activityDetail.noTraining')}
             </Text>
           </View>
         )}

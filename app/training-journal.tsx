@@ -72,6 +72,9 @@ import {
 import VictoryShareModal, { VictorySessionData, createVictoryFromEntry } from '@/components/VictoryShareModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPendingVictory } from '@/lib/victoryTrigger';
+
+const JOURNAL_CACHE_KEY = '@yoroi_journal_data_cache_v1';
+const JOURNAL_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { renderIcon } from './training-journal/utils/iconMap';
 import { getRelativeDate } from './training-journal/utils/dateHelpers';
@@ -378,7 +381,7 @@ export default function TrainingJournalScreen() {
       const result = await cleanDemoData();
       await loadData(); // Reload
       showPopup({
-        title: result.removed > 0 ? 'Nettoyage réussi' : 'Déjà propre',
+        title: result.removed > 0 ? t('journal.cleanupSuccess') : t('journal.alreadyClean'),
         message: result.message,
         type: result.removed > 0 ? 'success' : 'info',
         buttons: [{ text: 'OK', style: 'default' }]
@@ -417,7 +420,7 @@ export default function TrainingJournalScreen() {
         await syncRecords(recordsToSync);
       }
 
-      showToast('Bibliothèque complète installée !');
+      showToast(t('journal.libraryInstalled'));
     } catch (error) {
       logger.error('Error installing library:', error);
     } finally {
@@ -491,20 +494,35 @@ export default function TrainingJournalScreen() {
         return;
       }
 
+      // Cache instantané — afficher les données précédentes pendant le rechargement
+      try {
+        const cached = await AsyncStorage.getItem(JOURNAL_CACHE_KEY);
+        if (cached) {
+          const { ts, data } = JSON.parse(cached);
+          if (Date.now() - ts < JOURNAL_CACHE_TTL) {
+            if (data.benchmarks?.length) setBenchmarks(data.benchmarks);
+            if (data.skills?.length) setSkills(data.skills);
+          }
+        }
+      } catch { /* cache corrompu */ }
+
       const [fetchedBenchmarks, fetchedSkills, count] = await Promise.all([
         getBenchmarks(),
         getSkills(),
         getTrashCount(),
       ]);
 
-      // If no benchmarks, offer to initialize common ones
-      if (fetchedBenchmarks.length === 0) {
-        // We could call a helper here to create the 'Big 3' + Poids de Corps
-      }
-
       setBenchmarks(fetchedBenchmarks);
       setSkills(fetchedSkills);
       setTrashCount(count);
+
+      // Sauvegarder en cache
+      try {
+        await AsyncStorage.setItem(JOURNAL_CACHE_KEY, JSON.stringify({
+          ts: Date.now(),
+          data: { benchmarks: fetchedBenchmarks, skills: fetchedSkills },
+        }));
+      } catch { /* non-bloquant */ }
     } catch (error) {
       logger.error('Error loading data:', error);
     }
@@ -514,6 +532,7 @@ export default function TrainingJournalScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    await AsyncStorage.removeItem(JOURNAL_CACHE_KEY).catch(() => {});
     await loadData();
     setRefreshing(false);
   }, [loadData]);
@@ -521,11 +540,17 @@ export default function TrainingJournalScreen() {
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadData(); }, []);
 
-  // Rafraichir quand un exercice est synchronise depuis la montre
+  // Rafraichir quand un exercice est synchronise depuis la montre (bypass cache)
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('CARNET_UPDATED', () => {
+      AsyncStorage.removeItem(JOURNAL_CACHE_KEY).catch(() => {});
       loadData();
     });
+    return () => sub.remove();
+  }, [loadData]);
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadData);
     return () => sub.remove();
   }, [loadData]);
 
@@ -631,8 +656,8 @@ export default function TrainingJournalScreen() {
 
     if (!newBenchmarkName.trim()) {
       showPopup({
-        title: 'Erreur',
-        message: 'Entre un nom pour le suivi',
+        title: t('common.error'),
+        message: t('journal.enterNameForTracking'),
         buttons: [{ text: 'OK', style: 'default' }],
       });
       return;
@@ -645,12 +670,12 @@ export default function TrainingJournalScreen() {
       if (result) {
         setShowAddBenchmarkModal(false);
         setNewBenchmarkName('');
-        showToast('Enregistrement sauvegardé');
+        showToast(t('journal.savedSuccessfully'));
         loadData();
       }
     } catch (error) {
       logger.error('Error adding benchmark:', error);
-      showPopup({ title: 'Erreur', message: 'Impossible de créer le suivi', buttons: [{ text: 'OK', style: 'default' }] });
+      showPopup({ title: t('common.error'), message: t('journal.cannotCreateTracking'), buttons: [{ text: 'OK', style: 'default' }] });
     } finally {
       setIsSubmitting(false);
     }
@@ -706,8 +731,8 @@ export default function TrainingJournalScreen() {
         setNewSkillVideoUri(permanentUri);
       } else {
         showPopup({
-          title: 'Erreur',
-          message: 'Impossible de sauvegarder la video',
+          title: t('common.error'),
+          message: t('journal.cannotSaveVideo'),
           buttons: [{ text: 'OK', style: 'default' }],
         });
       }
@@ -735,7 +760,7 @@ export default function TrainingJournalScreen() {
       if (permanentUri) {
         setNewSkillVideoUri(permanentUri);
       } else {
-        showPopup('Erreur', 'Impossible de sauvegarder la video');
+        showPopup({title: t('common.error'), message: t('journal.cannotSaveVideo'), buttons: [{ text: 'OK', style: 'default' }]});
       }
     }
   };
@@ -743,7 +768,7 @@ export default function TrainingJournalScreen() {
   const handleAddSkill = async () => {
     if (isSubmitting) return; // Anti-spam protection
     if (!newSkillName.trim()) {
-      showPopup('Erreur', 'Entre un nom pour la technique');
+      showPopup({title: t('common.error'), message: t('journal.enterSkillName'), buttons: [{ text: 'OK', style: 'default' }]});
       return;
     }
 
@@ -762,12 +787,12 @@ export default function TrainingJournalScreen() {
         setNewSkillStatus('to_learn');
         setNewSkillNotes('');
         setNewSkillVideoUri(null);
-        showToast('Technique sauvegardée');
+        showToast(t('journal.skillSaved'));
         loadData();
       }
     } catch (error) {
       logger.error('Error adding skill:', error);
-      showPopup({ title: 'Erreur', message: 'Impossible de créer la technique', buttons: [{ text: 'OK', style: 'default' }] });
+      showPopup({ title: t('common.error'), message: t('journal.cannotCreateSkill'), buttons: [{ text: 'OK', style: 'default' }] });
     } finally {
       setIsSubmitting(false);
     }
@@ -778,7 +803,7 @@ export default function TrainingJournalScreen() {
     if (!selectedSkill) return;
     impactAsync(ImpactFeedbackStyle.Light);
     await updateSkillVideoUrl(selectedSkill.id, editingVideoUrl);
-    showToast('Lien vidéo sauvegardé');
+    showToast(t('journal.videoLinkSaved'));
     // Refresh
     const updated = await getSkills();
     const refreshed = updated.find(s => s.id === selectedSkill.id);
@@ -806,7 +831,7 @@ export default function TrainingJournalScreen() {
     if (!isRunningOrCardio && !newEntryValue.trim()) return;
 
     if (isWeightExercise && !newEntryReps.trim()) {
-      showPopup('Erreur', 'Le nombre de repetitions est obligatoire');
+      showPopup(t('common.error'), t('journal.repsRequired'));
       return;
     }
 
@@ -822,7 +847,7 @@ export default function TrainingJournalScreen() {
       const s = parseInt(runningTimeSeconds) || 0;
       value = h * 3600 + m * 60 + s;
       if (value === 0) {
-        showPopup('Erreur', 'Indique la durée de ton effort');
+        showPopup(t('common.error'), t('journal.indicateDuration'));
         setIsSubmitting(false);
         return;
       }
@@ -836,7 +861,7 @@ export default function TrainingJournalScreen() {
     }
 
     if (isNaN(value)) {
-      showPopup('Erreur', 'Valeur invalide');
+      showPopup(t('common.error'), t('journal.invalidValue'));
       return;
     }
 
@@ -920,7 +945,7 @@ export default function TrainingJournalScreen() {
       // Show victory modal (Style Yoroi)
       setShowVictoryModal(true);
 
-      showToast(isPR ? 'Nouveau Record !' : 'Enregistrement sauvegardé');
+      showToast(isPR ? t('journal.newRecord') : t('journal.savedSuccessfully'));
       loadData();
 
       // SYNC VERS LA MONTRE si nouveau record
@@ -942,7 +967,7 @@ export default function TrainingJournalScreen() {
     }
     } catch (error) {
       logger.error('Error adding entry:', error);
-      showPopup({ title: 'Erreur', message: 'Impossible d\'enregistrer', buttons: [{ text: 'OK', style: 'default' }] });
+      showPopup({ title: t('common.error'), message: 'Impossible d\'enregistrer', buttons: [{ text: 'OK', style: 'default' }] });
     } finally {
       setIsSubmitting(false);
     }
@@ -950,12 +975,12 @@ export default function TrainingJournalScreen() {
 
   const handleDeleteBenchmark = async (id: string) => {
     showPopup(
-      'Supprimer',
-      'Supprimer ce suivi et tout son historique ?',
+      t('journal.delete'),
+      t('journal.deleteBenchmarkConfirm'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('journal.delete'),
           style: 'destructive',
           onPress: async () => {
             impactAsync(ImpactFeedbackStyle.Heavy);
@@ -995,7 +1020,7 @@ export default function TrainingJournalScreen() {
       loadData();
     } catch (error) {
       logger.error('Error adding note:', error);
-      showPopup({ title: 'Erreur', message: 'Impossible d\'ajouter la note', buttons: [{ text: 'OK', style: 'default' }] });
+      showPopup({ title: t('common.error'), message: 'Impossible d\'ajouter la note', buttons: [{ text: 'OK', style: 'default' }] });
     } finally {
       setIsSubmitting(false);
     }
@@ -1016,12 +1041,12 @@ export default function TrainingJournalScreen() {
 
   const handleDeleteSkill = async (id: string) => {
     showPopup(
-      'Supprimer',
-      'Supprimer cette technique et toutes ses notes ?',
+      t('journal.delete'),
+      t('journal.deleteSkillConfirm'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('journal.delete'),
           style: 'destructive',
           onPress: async () => {
             impactAsync(ImpactFeedbackStyle.Heavy);
@@ -1046,8 +1071,8 @@ export default function TrainingJournalScreen() {
       if (success) {
         await Promise.all([loadData(), loadTrashData()]);
         showPopup({
-          title: 'Restauré',
-          message: 'Record restauré avec succès',
+          title: t('journal.restored'),
+          message: t('journal.benchmarkRestored'),
           type: 'success',
           buttons: [{ text: 'OK', style: 'default' }]
         });
@@ -1055,8 +1080,8 @@ export default function TrainingJournalScreen() {
     } catch (error) {
       logger.error('Error restoring benchmark:', error);
       showPopup({
-        title: 'Erreur',
-        message: 'Impossible de restaurer',
+        title: t('common.error'),
+        message: t('journal.cannotRestore'),
         type: 'error',
         buttons: [{ text: 'OK', style: 'default' }]
       });
@@ -1070,8 +1095,8 @@ export default function TrainingJournalScreen() {
       if (success) {
         await Promise.all([loadData(), loadTrashData()]);
         showPopup({
-          title: 'Restauré',
-          message: 'Technique restaurée avec succès',
+          title: t('journal.restored'),
+          message: t('journal.skillRestored'),
           type: 'success',
           buttons: [{ text: 'OK', style: 'default' }]
         });
@@ -1079,8 +1104,8 @@ export default function TrainingJournalScreen() {
     } catch (error) {
       logger.error('Error restoring skill:', error);
       showPopup({
-        title: 'Erreur',
-        message: 'Impossible de restaurer',
+        title: t('common.error'),
+        message: t('journal.cannotRestore'),
         type: 'error',
         buttons: [{ text: 'OK', style: 'default' }]
       });
@@ -1090,8 +1115,8 @@ export default function TrainingJournalScreen() {
   const handleEmptyTrash = () => {
     if (trashCount === 0) {
       showPopup({
-        title: 'Corbeille vide',
-        message: 'Rien à supprimer',
+        title: t('journal.trashEmpty'),
+        message: t('journal.nothingToDelete'),
         type: 'info',
         buttons: [{ text: 'OK', style: 'default' }]
       });
@@ -1100,12 +1125,12 @@ export default function TrainingJournalScreen() {
 
     // Confirmation avant suppression définitive
     showPopup({
-      title: 'Vider la corbeille ?',
-      message: `${trashCount} élément(s) seront définitivement supprimés. Cette action est irréversible.`,
+      title: t('journal.emptyTrash'),
+      message: `${trashCount} ${t('journal.itemsWillBeDeleted')}`,
       buttons: [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Vider',
+          text: t('journal.empty'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -1114,16 +1139,16 @@ export default function TrainingJournalScreen() {
               await loadData();
               setShowTrashModal(false);
               showPopup({
-                title: 'Corbeille vidée',
-                message: 'Suppression définitive réussie',
+                title: t('journal.trashEmptied'),
+                message: t('journal.permanentDeletion'),
                 type: 'success',
                 buttons: [{ text: 'OK', style: 'default' }]
               });
             } catch (error) {
               logger.error('Error emptying trash:', error);
               showPopup({
-                title: 'Erreur',
-                message: 'Impossible de vider la corbeille',
+                title: t('common.error'),
+                message: t('journal.cannotEmptyTrash'),
                 type: 'error',
                 buttons: [{ text: 'OK', style: 'default' }]
               });
@@ -1146,7 +1171,7 @@ export default function TrainingJournalScreen() {
     const pr = getBenchmarkPR(benchmark);
     const last = getBenchmarkLast(benchmark);
     const categoryConfig = BENCHMARK_CATEGORIES[benchmark.category] || {
-      label: 'Autre',
+      label: t('journal.other'),
       color: '#6B7280',
       iconName: 'circle'
     };
@@ -1274,7 +1299,7 @@ export default function TrainingJournalScreen() {
     const pr = getBenchmarkPR(benchmark);
     const last = getBenchmarkLast(benchmark);
     const categoryConfig = BENCHMARK_CATEGORIES[benchmark.category] || {
-      label: 'Autre',
+      label: t('journal.other'),
       color: '#6B7280',
       iconName: 'circle'
     };
@@ -1339,7 +1364,7 @@ export default function TrainingJournalScreen() {
         ) : (
           <View style={styles.benchmarkDataRich}>
             <Text style={[styles.benchmarkValue, { color: colors.textMuted }]}>--</Text>
-            <Text style={[styles.benchmarkDate, { color: colors.textMuted }]}>Aucune donnée</Text>
+            <Text style={[styles.benchmarkValue, { color: colors.textMuted }]}>{t('journal.noData')}</Text>
           </View>
         )}
 
@@ -1362,7 +1387,7 @@ export default function TrainingJournalScreen() {
   const renderSkillCard = (skill: Skill) => {
     const statusConfig = SKILL_STATUS_CONFIG[skill.status];
     const categoryConfig = SKILL_CATEGORIES[skill.category] || {
-      label: 'Autre',
+      label: t('journal.other'),
       color: '#6B7280',
       iconName: 'circle'
     };
@@ -1399,7 +1424,7 @@ export default function TrainingJournalScreen() {
             </Text>
             {skill.drillCount > 0 && (
               <Text style={[styles.skillDrillCount, { color: colors.textMuted }]}>
-                {skill.drillCount} répétitions
+                {skill.drillCount} {t('journal.reps')}
               </Text>
             )}
             {hasNotes && (
@@ -1446,7 +1471,7 @@ export default function TrainingJournalScreen() {
             }}
           >
             <Dumbbell size={22} color={colors.textOnAccent} />
-            <Text style={[styles.fabMenuText, { color: colors.textOnAccent }]}>Mon Record</Text>
+            <Text style={[styles.fabMenuText, { color: colors.textOnAccent }]}>{t('journal.myRecord')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -1461,7 +1486,7 @@ export default function TrainingJournalScreen() {
             disabled={isModalProcessing}
           >
             <BookOpen size={22} color={colors.textOnAccent} />
-            <Text style={[styles.fabMenuText, { color: colors.textOnAccent }]}>Technique (Savoir)</Text>
+            <Text style={[styles.fabMenuText, { color: colors.textOnAccent }]}>{t('journal.skillKnowledge')}</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -1478,9 +1503,9 @@ export default function TrainingJournalScreen() {
       <View style={[styles.tabContainer, { backgroundColor: screenBackground }]}>
         <View style={styles.tabsRow}>
           {([
-            { id: 'records',    label: 'Records',   Icon: Dumbbell, count: benchmarksWithEntries.length },
-            { id: 'techniques', label: 'Techniques', Icon: BookOpen, count: skills.length },
-            { id: 'combat',     label: 'Sparring',   Icon: Swords,  count: null },
+            { id: 'records',    label: t('journal.records'),   Icon: Dumbbell, count: benchmarksWithEntries.length },
+            { id: 'techniques', label: t('journal.skills'), Icon: BookOpen, count: skills.length },
+            { id: 'combat',     label: t('journal.sparring'),   Icon: Swords,  count: null },
           ] as const).map(({ id, label, Icon, count }) => {
             const isActive = activeTab === id;
             return (
@@ -1563,7 +1588,7 @@ export default function TrainingJournalScreen() {
               <Search size={20} color={colors.textMuted} />
               <TextInput
                 style={[styles.searchInput, { color: colors.textPrimary }]}
-                placeholder="Rechercher un exercice..."
+                placeholder={t('journal.searchExercise')}
                 placeholderTextColor={colors.textMuted}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -1585,14 +1610,14 @@ export default function TrainingJournalScreen() {
             contentContainerStyle={styles.globalFilterContent}
           >
             {[
-              { key: 'all' as GlobalFilter, label: 'Tout', iconName: 'bar-chart', color: colors.accent, textOnColor: '#FFFFFF' },
-              { key: 'musculation' as GlobalFilter, label: 'Musculation', iconName: 'dumbbell', color: '#EF4444', textOnColor: '#FFFFFF' },
-              { key: 'running' as GlobalFilter, label: 'Running', iconName: 'footprints', color: '#3B82F6', textOnColor: '#FFFFFF' },
-              { key: 'jjb' as GlobalFilter, label: 'JJB', iconName: 'swords', color: '#06B6D4', textOnColor: '#FFFFFF' },
-              { key: 'boxe' as GlobalFilter, label: 'Boxe', iconName: 'zap', color: '#F59E0B', textOnColor: '#FFFFFF' },
-              { key: 'lutte' as GlobalFilter, label: 'Lutte', iconName: 'users', color: '#8B5CF6', textOnColor: '#FFFFFF' },
-              { key: 'grappling' as GlobalFilter, label: 'Grappling', iconName: 'shield', color: '#10B981', textOnColor: '#FFFFFF' },
-              { key: 'autre' as GlobalFilter, label: 'Autre', iconName: 'target', color: '#6B7280', textOnColor: '#FFFFFF' },
+              { key: 'all' as GlobalFilter, label: t('journal.all'), iconName: 'bar-chart', color: colors.accent, textOnColor: '#FFFFFF' },
+              { key: 'musculation' as GlobalFilter, label: t('journal.weightTraining'), iconName: 'dumbbell', color: '#EF4444', textOnColor: '#FFFFFF' },
+              { key: 'running' as GlobalFilter, label: t('journal.running'), iconName: 'footprints', color: '#3B82F6', textOnColor: '#FFFFFF' },
+              { key: 'jjb' as GlobalFilter, label: t('journal.jjb'), iconName: 'swords', color: '#06B6D4', textOnColor: '#FFFFFF' },
+              { key: 'boxe' as GlobalFilter, label: t('journal.boxing'), iconName: 'zap', color: '#F59E0B', textOnColor: '#FFFFFF' },
+              { key: 'lutte' as GlobalFilter, label: t('journal.wrestling'), iconName: 'users', color: '#8B5CF6', textOnColor: '#FFFFFF' },
+              { key: 'grappling' as GlobalFilter, label: t('journal.grappling'), iconName: 'shield', color: '#10B981', textOnColor: '#FFFFFF' },
+              { key: 'autre' as GlobalFilter, label: t('journal.other'), iconName: 'target', color: '#6B7280', textOnColor: '#FFFFFF' },
             ].map(filter => {
               const isSelected = globalFilter === filter.key;
               return (
@@ -1629,22 +1654,22 @@ export default function TrainingJournalScreen() {
         <View style={[styles.legendRow, { backgroundColor: isDark ? colors.background : '#FFFFFF', borderBottomColor: colors.border }]}>
           <View style={styles.legendItem}>
             <TrendingUp size={12} color="#10B981" strokeWidth={2.5} />
-            <Text style={[styles.legendText, { color: colors.textMuted }]}>Progression</Text>
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('journal.progression')}</Text>
           </View>
           <View style={styles.legendItem}>
             <TrendingUp size={12} color="#EF4444" strokeWidth={2.5} style={{ transform: [{ scaleY: -1 }] }} />
-            <Text style={[styles.legendText, { color: colors.textMuted }]}>Régression</Text>
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('journal.regression')}</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendPRBadge, { backgroundColor: '#EF4444' }]}>
               <Text style={[styles.legendPRText, { color: colors.textOnAccent }]}>PR</Text>
             </View>
-            <Text style={[styles.legendText, { color: colors.textMuted }]}>Record perso</Text>
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('journal.personalRecord')}</Text>
           </View>
           <View style={styles.legendItem}>
-            <Text style={[styles.legendText, { color: colors.textMuted }]}>Swipe</Text>
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('journal.swipe')}</Text>
             <Trash2 size={11} color={colors.textMuted} />
-            <Text style={[styles.legendText, { color: colors.textMuted }]}>suppr.</Text>
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('journal.delete_short')}</Text>
           </View>
         </View>
       )}
@@ -1660,17 +1685,17 @@ export default function TrainingJournalScreen() {
         <View style={[styles.statsRow, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: '#EF4444' }]}>{stats.totalPRs}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Records</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('journal.records')}</Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: '#10B981' }]}>{stats.skillsMastered}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Maîtrisées</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('journal.mastered')}</Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: '#F59E0B' }]}>{stats.totalDrills}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Reps</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('journal.repsCount')}</Text>
           </View>
         </View>
 
@@ -1680,7 +1705,7 @@ export default function TrainingJournalScreen() {
             <View style={[styles.sectionHeader, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
               <View style={styles.sectionTitleRow}>
                 <Dumbbell size={20} color="#EF4444" />
-                <Text style={[styles.sectionHeaderTitle, { color: colors.textPrimary }]}>Mes Records</Text>
+                <Text style={[styles.sectionHeaderTitle, { color: colors.textPrimary }]}>{t('journal.myRecords')}</Text>
               </View>
               <TouchableOpacity
                 style={[styles.addSectionBtn, { backgroundColor: '#EF444420' }]}
@@ -1695,10 +1720,10 @@ export default function TrainingJournalScreen() {
                 <View style={[styles.emptyCompactCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
                   <Search size={32} color={colors.textMuted} />
                   <Text style={[styles.emptyCompactText, { color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginTop: 8 }]}>
-                    Aucun résultat
+                    {t('journal.noResults')}
                   </Text>
                   <Text style={[styles.emptyCompactText, { color: colors.textMuted, fontSize: 14, marginTop: 4, textAlign: 'center', paddingHorizontal: 20 }]}>
-                    Aucun record trouvé pour "{searchQuery}"
+                    {t('journal.noRecordFound')} "{searchQuery}"
                   </Text>
                 </View>
               ) : (
@@ -1711,10 +1736,10 @@ export default function TrainingJournalScreen() {
               >
                 <TrendingUp size={32} color={colors.textMuted} />
                 <Text style={[styles.emptyCompactText, { color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginTop: 8 }]}>
-                  Aucun record pour l'instant
+                  {t('journal.noRecordYet')}
                 </Text>
                 <Text style={[styles.emptyCompactText, { color: colors.textMuted, fontSize: 14, marginTop: 4, textAlign: 'center', paddingHorizontal: 20 }]}>
-                  Enregistre tes records personnels pour suivre ta progression
+                  t("journal.recordYourPersonalRecords")
                 </Text>
                 <View style={[styles.emptyActionButton, { backgroundColor: colors.accent, marginTop: 12 }]}>
                   <Plus size={18} color={colors.textOnAccent || '#FFFFFF'} strokeWidth={2.5} />
@@ -1725,7 +1750,10 @@ export default function TrainingJournalScreen() {
               </TouchableOpacity>
               )
             ) : (
-              Object.keys(groupedBenchmarks).map((categoryName) => {
+              (['Force', 'Musculation', 'Street Workout', 'Cardio Appareils', 'Running', 'Trail', 'Hyrox', 'Autre']
+                .filter(cat => groupedBenchmarks[cat])
+                .concat(Object.keys(groupedBenchmarks).filter(cat => !['Force', 'Musculation', 'Street Workout', 'Cardio Appareils', 'Running', 'Trail', 'Hyrox', 'Autre'].includes(cat)))
+              ).map((categoryName) => {
                 // Get the color from the first benchmark in this category
                 const firstBenchmark = Object.values(groupedBenchmarks[categoryName])[0]?.[0];
                 const categoryColor = firstBenchmark?.color || BENCHMARK_CATEGORIES[firstBenchmark?.category]?.color || '#EF4444';
@@ -1768,7 +1796,7 @@ export default function TrainingJournalScreen() {
             <View style={[styles.sectionHeader, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
               <View style={styles.sectionTitleRow}>
                 <BookOpen size={20} color="#8B5CF6" />
-                <Text style={[styles.sectionHeaderTitle, { color: colors.textPrimary }]}>Mes Techniques</Text>
+                <Text style={[styles.sectionHeaderTitle, { color: colors.textPrimary }]}>{t('journal.mySkills')}</Text>
               </View>
               <TouchableOpacity
                 style={[styles.addSectionBtn, { backgroundColor: '#8B5CF620' }]}
@@ -1832,15 +1860,15 @@ export default function TrainingJournalScreen() {
                 >
                   <Target size={48} color={colors.textMuted} />
                   <Text style={[styles.emptySkillsTitle, { color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginTop: 8 }]}>
-                    Aucune technique pour l'instant
+                    {t('journal.noSkillYet')}
                   </Text>
                   <Text style={[styles.emptySkillsText, { color: colors.textMuted, fontSize: 14, marginTop: 4, textAlign: 'center', paddingHorizontal: 20 }]}>
-                    Ajoute les techniques que tu veux maîtriser et suivre
+                    {t('journal.addSkillsToTrack')}
                   </Text>
                   <View style={[styles.emptyActionButton, { backgroundColor: '#8B5CF6', marginTop: 12 }]}>
                     <Plus size={18} color={colors.textOnAccent} strokeWidth={2.5} />
                     <Text style={{ color: colors.textOnAccent, fontWeight: '600', marginLeft: 6 }}>
-                      Ajouter ma première technique
+                      {t('journal.addMyFirstSkill')}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -2066,22 +2094,22 @@ export default function TrainingJournalScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.background, height: '75%' }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>CHOISIR UN SPORT</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('journal.chooseSport')}</Text>
               <TouchableOpacity onPress={() => setIsSportPickerVisible(false)}>
                 <X size={24} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
               {([
-                { name: 'Musculation',    label: 'MUSCULATION',     icon: 'dumbbell', color: '#EF4444', hasMuscleGroups: true,  groups: ['Pectoraux','Dos','Epaules','Bras','Jambes','Abdos','Machines'] },
-                { name: 'Hyrox',          label: 'HYROX',           icon: 'flame',    color: '#D97706', hasMuscleGroups: false, groups: ['Hyrox'] },
-                { name: 'CrossFit',       label: 'CROSSFIT',        icon: 'flame',    color: '#F59E0B', hasMuscleGroups: false, groups: ['CrossFit'] },
-                { name: 'Running',        label: 'RUNNING',         icon: 'timer',    color: '#3B82F6', hasMuscleGroups: false, groups: ['Running'] },
-                { name: 'Cardio',         label: 'CARDIO APPAREILS',icon: 'timer',    color: '#06B6D4', hasMuscleGroups: false, groups: ['Cardio'] },
-                { name: 'Combat',         label: 'COMBAT / MMA',    icon: 'swords',   color: '#8B5CF6', hasMuscleGroups: false, groups: ['Combat'] },
-                { name: 'Strongman',      label: 'STRONGMAN',       icon: 'dumbbell', color: '#B91C1C', hasMuscleGroups: false, groups: ['Strongman'] },
-                { name: 'Olympique',      label: 'HALTÉROPHILIE',   icon: 'dumbbell', color: '#DC2626', hasMuscleGroups: false, groups: ['Olympique'] },
-                { name: 'Street Workout', label: 'STREET WORKOUT',  icon: 'dumbbell', color: '#F59E0B', hasMuscleGroups: false, groups: ['Street Workout'] },
+                { name: 'Musculation',    label: t('journal.musculation'),     icon: 'dumbbell', color: '#EF4444', hasMuscleGroups: true,  groups: ['Pectoraux','Dos','Epaules','Bras','Jambes','Abdos','Machines'] },
+                { name: 'Hyrox',          label: t('journal.hyrox'),           icon: 'flame',    color: '#D97706', hasMuscleGroups: false, groups: ['Hyrox'] },
+                { name: 'CrossFit',       label: t('journal.crossfit'),        icon: 'flame',    color: '#F59E0B', hasMuscleGroups: false, groups: ['CrossFit'] },
+                { name: 'Running',        label: t('journal.running'),         icon: 'timer',    color: '#3B82F6', hasMuscleGroups: false, groups: ['Running'] },
+                { name: 'Cardio',         label: t('journal.cardioMachines'),icon: 'timer',    color: '#06B6D4', hasMuscleGroups: false, groups: ['Cardio'] },
+                { name: 'Combat',         label: t('journal.combat_mma'),    icon: 'swords',   color: '#8B5CF6', hasMuscleGroups: false, groups: ['Combat'] },
+                { name: 'Strongman',      label: t('journal.strongman'),       icon: 'dumbbell', color: '#B91C1C', hasMuscleGroups: false, groups: ['Strongman'] },
+                { name: 'Olympique',      label: t('journal.weightlifting'),   icon: 'dumbbell', color: '#DC2626', hasMuscleGroups: false, groups: ['Olympique'] },
+                { name: 'Street Workout', label: t('journal.streetWorkout'),  icon: 'dumbbell', color: '#F59E0B', hasMuscleGroups: false, groups: ['Street Workout'] },
               ] as const).map((sport) => {
                 const IconComponent = sport.icon === 'flame' ? Flame : sport.icon === 'timer' ? Timer : sport.icon === 'swords' ? Swords : Dumbbell;
                 const exCount = WATCH_EXERCISE_TEMPLATES.filter(t =>
@@ -2132,7 +2160,7 @@ export default function TrainingJournalScreen() {
               <TouchableOpacity onPress={() => { setIsMusclePickerVisible(false); setIsSportPickerVisible(true); }} style={{ padding: 4 }}>
                 <ChevronLeft size={24} color={colors.textPrimary} />
               </TouchableOpacity>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>GROUPE MUSCULAIRE</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('journal.muscleGroup')}</Text>
               <TouchableOpacity onPress={() => setIsMusclePickerVisible(false)}>
                 <X size={24} color={colors.textPrimary} />
               </TouchableOpacity>
@@ -2140,13 +2168,13 @@ export default function TrainingJournalScreen() {
 
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
               {([
-                { name: 'PECTORAUX', icon: 'dumbbell', color: '#EF4444', group: 'Pectoraux' },
-                { name: 'DOS', icon: 'dumbbell', color: '#3B82F6', group: 'Dos' },
-                { name: 'EPAULES', icon: 'dumbbell', color: '#F59E0B', group: 'Epaules' },
-                { name: 'BRAS', icon: 'dumbbell', color: '#EC4899', group: 'Bras' },
-                { name: 'JAMBES', icon: 'dumbbell', color: '#10B981', group: 'Jambes' },
-                { name: 'ABDOS', icon: 'dumbbell', color: '#8B5CF6', group: 'Abdos' },
-                { name: 'MACHINES', icon: 'dumbbell', color: '#6B7280', group: 'Machines' },
+                { name: t('journal.chest'), icon: 'dumbbell', color: '#EF4444', group: 'Pectoraux' },
+                { name: t('journal.back'), icon: 'dumbbell', color: '#3B82F6', group: 'Dos' },
+                { name: t('journal.shoulders'), icon: 'dumbbell', color: '#F59E0B', group: 'Epaules' },
+                { name: t('journal.arms'), icon: 'dumbbell', color: '#EC4899', group: 'Bras' },
+                { name: t('journal.legs'), icon: 'dumbbell', color: '#10B981', group: 'Jambes' },
+                { name: t('journal.abs'), icon: 'dumbbell', color: '#8B5CF6', group: 'Abdos' },
+                { name: t('journal.machines'), icon: 'dumbbell', color: '#6B7280', group: 'Machines' },
                 { name: 'HALTÉROPHILIE', icon: 'dumbbell', color: '#DC2626', group: 'Olympique' },
               ] as const).map((muscle) => {
                 return (
