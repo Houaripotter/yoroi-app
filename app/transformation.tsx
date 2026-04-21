@@ -64,7 +64,15 @@ export default function TransformationScreen() {
   }, []);
 
   // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => { loadPhotos(); }, []);
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      await loadPhotos();
+      if (!mounted) return;
+    };
+    load();
+    return () => { mounted = false; };
+  }, []);
 
   // Listener pour les changements de données YOROI
   useEffect(() => {

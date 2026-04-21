@@ -14,6 +14,7 @@ import {
   Alert,
   RefreshControl,
   DeviceEventEmitter,
+  Share,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -193,9 +194,49 @@ export default function NotificationCenterScreen() {
       setNotifications(prev => prev.map(n => n.id === item.id ? { ...n, read: true } : n));
       DeviceEventEmitter.emit('YOROI_NOTIF_READ');
     }
-    // Naviguer si l'item a un ecran cible
+    // Navigation selon l'écran cible ou le type
     if (item.data?.screen) {
       router.push(`/${item.data.screen}` as any);
+    } else {
+      switch (item.type) {
+        case 'training':
+        case 'workout_completed':
+          router.push('/training-journal' as any);
+          break;
+        case 'streak':
+        case 'achievement':
+          router.push('/badges' as any);
+          break;
+        case 'sleep':
+          router.push('/sleep' as any);
+          break;
+        case 'hydration':
+          router.push('/(tabs)' as any);
+          break;
+        case 'weighing':
+          router.push('/body-composition' as any);
+          break;
+        case 'briefing':
+        case 'smart_check':
+        case 'smart_missed':
+        case 'smart_rest':
+        case 'smart_frequency':
+          router.push('/weekly-report' as any);
+          break;
+        default:
+          break;
+      }
+    }
+  }, []);
+
+  const handleShare = useCallback(async (item: NotificationHistoryItem) => {
+    try {
+      await Share.share({
+        message: `${item.title}\n${item.body}`,
+        title: item.title,
+      });
+    } catch {
+      // ignore
     }
   }, []);
 
@@ -387,10 +428,18 @@ export default function NotificationCenterScreen() {
                         </Text>
                       </View>
 
-                      {/* Heure */}
-                      <Text style={[styles.notifTime, { color: colors.textMuted }]}>
-                        {formatTimeAgo(item.timestamp, locale)}
-                      </Text>
+                      {/* Heure + partage */}
+                      <View style={{ alignItems: 'flex-end', gap: 6 }}>
+                        <Text style={[styles.notifTime, { color: colors.textMuted }]}>
+                          {formatTimeAgo(item.timestamp, locale)}
+                        </Text>
+                        <TouchableOpacity
+                          onPress={(e) => { e.stopPropagation(); handleShare(item); }}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Share2 size={14} color={colors.textMuted} />
+                        </TouchableOpacity>
+                      </View>
                     </TouchableOpacity>
                   );
                 })}

@@ -4,11 +4,12 @@
 
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { router } from 'expo-router';
 import { safeOpenURL } from '@/lib/security/validators';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { X, TrendingUp, TrendingDown, Minus, BookOpen, AlertTriangle, ExternalLink } from 'lucide-react-native';
+import { X, TrendingUp, TrendingDown, Minus, BookOpen, AlertTriangle, ExternalLink, ClipboardList } from 'lucide-react-native';
 import { ModernLineChart } from './charts/ModernLineChart';
 import { MetricRangeIndicator, MetricRange } from './charts/MetricRangeIndicator';
 import { getMetricRange } from '@/constants/metricRanges';
@@ -321,6 +322,26 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                   </View>
                 </View>
               </View>
+            )}
+
+            {/* Bouton Historique complet — pour les métriques corporelles */}
+            {['weight', 'fat_percent', 'muscle', 'water_percent', 'bone_mass', 'visceral_fat',
+              'metabolic_age', 'bmr', 'waist', 'hips', 'chest', 'shoulders', 'left_arm',
+              'right_arm', 'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'neck', 'navel'].includes(metricKey ?? '') && (
+              <TouchableOpacity
+                style={[sdm.histBtn, { backgroundColor: color + '15', borderColor: color + '40' }]}
+                activeOpacity={0.75}
+                onPress={() => {
+                  onClose();
+                  // Ouvre l'historique directement sur la métrique cliquée (pas sur 'Poids' par défaut).
+                  setTimeout(() => router.push({
+                    pathname: '/body-history',
+                    params: metricKey ? { metric: metricKey } : {},
+                  } as any), 200);
+                }}>
+                <ClipboardList size={16} color={color} />
+                <Text style={[sdm.histTxt, { color }]}>Voir l'historique complet</Text>
+              </TouchableOpacity>
             )}
 
             {/* Avertissement données profil manquantes */}
@@ -702,4 +723,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.5,
   },
+});
+
+const sdm = StyleSheet.create({
+  histBtn: { flexDirection:'row', alignItems:'center', gap:8, paddingHorizontal:16, paddingVertical:12, borderRadius:14, borderWidth:1, marginHorizontal:0 },
+  histTxt: { fontSize:14, fontWeight:'700' },
 });

@@ -201,8 +201,10 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
         <ScrollView
           style={{ maxHeight: '90%', width: '100%' }}
-          contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 16 }}
+          contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 16, paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
         >
           <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
             <View style={styles.modalHeader}>

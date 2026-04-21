@@ -168,7 +168,7 @@ export default function RecordsScreen() {
 
   // Composant ligne de record
   const RecordRow = ({
-    emoji,
+    icon: RowIcon,
     label,
     value,
     date,
@@ -176,7 +176,7 @@ export default function RecordsScreen() {
     shareType,
     shareValue,
   }: {
-    emoji: string;
+    icon?: React.ComponentType<{ size: number; color: string }>;
     label: string;
     value: string;
     date?: string;
@@ -186,7 +186,7 @@ export default function RecordsScreen() {
   }) => (
     <View style={[styles.recordRow, { borderBottomColor: colors.border }]}>
       <View style={styles.recordRowLeft}>
-        <Text style={styles.recordEmoji}>{emoji}</Text>
+        {RowIcon ? <RowIcon size={18} color={colors.textMuted} /> : <View style={{ width: 18 }} />}
         <View style={styles.recordRowInfo}>
           <View style={styles.recordRowLabelContainer}>
             <Text style={[styles.recordLabel, { color: colors.textSecondary }]}>
@@ -340,7 +340,7 @@ export default function RecordsScreen() {
         >
           {records?.lowestWeight && (
             <RecordRow
-              emoji=""
+              icon={undefined}
               label={t('screens.records.lowestWeight')}
               value={`${records.lowestWeight.value.toFixed(1)} kg`}
               date={formatRecordDate(records.lowestWeight.date)}
@@ -351,7 +351,7 @@ export default function RecordsScreen() {
           )}
           {records?.startingWeight && (
             <RecordRow
-              emoji=""
+              icon={undefined}
               label={t('screens.records.startingWeight')}
               value={`${records.startingWeight.value.toFixed(1)} kg`}
               date={formatRecordDate(records.startingWeight.date)}
@@ -359,7 +359,7 @@ export default function RecordsScreen() {
           )}
           {records?.maxWeeklyLoss && records.maxWeeklyLoss.value > 0 && (
             <RecordRow
-              emoji="⚖️"
+              icon={Scale}
               label={t('screens.records.maxWeeklyLoss')}
               value={`-${records.maxWeeklyLoss.value.toFixed(1)} kg`}
               date={formatRecordDate(records.maxWeeklyLoss.date)}
@@ -370,7 +370,7 @@ export default function RecordsScreen() {
           )}
           {records?.maxMonthlyLoss && records.maxMonthlyLoss.value > 0 && (
             <RecordRow
-              emoji=""
+              icon={undefined}
               label={t('screens.records.maxMonthlyLoss')}
               value={`-${records.maxMonthlyLoss.value.toFixed(1)} kg`}
               date={records.maxMonthlyLoss.label}
@@ -381,7 +381,7 @@ export default function RecordsScreen() {
           )}
           {records && records.totalWeightLoss > 0 && (
             <RecordRow
-              emoji=""
+              icon={undefined}
               label={t('screens.records.totalLoss')}
               value={`-${records.totalWeightLoss.toFixed(1)} kg`}
             />
@@ -397,7 +397,7 @@ export default function RecordsScreen() {
         >
           {records?.longestStreak && (
             <RecordRow
-              emoji=""
+              icon={undefined}
               label={t('screens.records.longestStreak')}
               value={`${records.longestStreak.value} ${t('screens.records.days')}`}
               date={formatRecordDate(records.longestStreak.date)}
@@ -407,7 +407,7 @@ export default function RecordsScreen() {
             />
           )}
           <RecordRow
-            emoji="📆"
+            icon={Calendar}
             label={t('screens.records.currentStreak')}
             value={`${records?.currentStreak || 0} ${t('screens.records.days')}`}
           />
@@ -423,7 +423,7 @@ export default function RecordsScreen() {
           >
             {records?.lowestWaist && (
               <RecordRow
-                emoji="📏"
+                icon={Ruler}
                 label={t('screens.records.lowestWaist')}
                 value={`${records.lowestWaist.value} cm`}
                 date={formatRecordDate(records.lowestWaist.date)}
@@ -434,7 +434,7 @@ export default function RecordsScreen() {
             )}
             {records && records.totalWaistLoss > 0 && (
               <RecordRow
-                emoji="📐"
+                icon={Ruler}
                 label={t('screens.records.totalWaistLoss')}
                 value={`-${records.totalWaistLoss.toFixed(0)} cm`}
               />
@@ -452,7 +452,7 @@ export default function RecordsScreen() {
           >
             {records?.maxWeeklyWorkouts && (
               <RecordRow
-                emoji=""
+                icon={undefined}
                 label={t('screens.records.maxWeeklyWorkouts')}
                 value={`${records.maxWeeklyWorkouts.value} ${t('screens.records.sessions')}`}
                 date={formatRecordDate(records.maxWeeklyWorkouts.date)}
@@ -462,13 +462,13 @@ export default function RecordsScreen() {
               />
             )}
             <RecordRow
-              emoji=""
+              icon={undefined}
               label={t('screens.records.totalSessions')}
               value={`${records.totalWorkouts}`}
             />
             {records?.favoriteSport && (
               <RecordRow
-                emoji=""
+                icon={undefined}
                 label={t('screens.records.favoriteSport')}
                 value={`${getSportName(records.favoriteSport.type)} (${records.favoriteSport.count})`}
               />
@@ -485,7 +485,7 @@ export default function RecordsScreen() {
         >
           {records?.bestMonthRegularity && (
             <RecordRow
-              emoji=""
+              icon={undefined}
               label={t('screens.records.bestMonth')}
               value={`${records.bestMonthRegularity.value}%`}
               date={records.bestMonthRegularity.label}
@@ -495,7 +495,7 @@ export default function RecordsScreen() {
             />
           )}
           <RecordRow
-            emoji="⚖️"
+            icon={Scale}
             label={t('screens.records.totalWeighings')}
             value={`${records?.totalMeasurements || 0}`}
           />
@@ -510,7 +510,7 @@ export default function RecordsScreen() {
             title={t('screens.records.sections.energy')}
           >
             <RecordRow
-              emoji=""
+              icon={undefined}
               label={t('screens.records.bestEnergyStreak')}
               value={`${records.bestEnergyStreak.value} ${t('screens.records.days')}`}
               date={formatRecordDate(records.bestEnergyStreak.date)}

@@ -34,9 +34,11 @@ import {
   Scale,
   Ruler,
   Activity,
+  BookOpen,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { getUserSettings } from '@/lib/storage';
 import { getAllMeasurements } from '@/lib/storage';
 import logger from '@/lib/security/logger';
@@ -225,6 +227,7 @@ const NUTRITION_PHASES: PhaseData[] = [
 
 export default function QuickNutritionScreen() {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
 
   const [selectedPhase, setSelectedPhase] = useState<NutritionPhase>('pre_training');
   const [bodyWeight, setBodyWeight] = useState('75');
@@ -334,7 +337,7 @@ export default function QuickNutritionScreen() {
         </TouchableOpacity>
 
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          NUTRITION RAPIDE
+          {t('quickNutrition.title')}
         </Text>
 
         <View style={{ width: 44 }} />
@@ -401,14 +404,14 @@ export default function QuickNutritionScreen() {
           <View style={styles.userDataHeader}>
             <Info size={18} color={colors.primary} />
             <Text style={[styles.userDataTitle, { color: colors.textPrimary }]}>
-              Tes Données
+              {t('quickNutrition.yourData')}
             </Text>
           </View>
 
           <View style={styles.userDataRow}>
             <View style={styles.userDataItem}>
               <Scale size={16} color={colors.textSecondary} />
-              <Text style={[styles.userDataLabel, { color: colors.textSecondary }]}>Poids</Text>
+              <Text style={[styles.userDataLabel, { color: colors.textSecondary }]}>{t('quickNutrition.weight')}</Text>
               <View style={[styles.userDataInputContainer, { backgroundColor: colors.cardHover }]}>
                 <TextInput
                   style={[styles.userDataInput, { color: colors.textPrimary }]}
@@ -423,7 +426,7 @@ export default function QuickNutritionScreen() {
 
             <View style={styles.userDataItem}>
               <Ruler size={16} color={colors.textSecondary} />
-              <Text style={[styles.userDataLabel, { color: colors.textSecondary }]}>Taille</Text>
+              <Text style={[styles.userDataLabel, { color: colors.textSecondary }]}>{t('quickNutrition.height')}</Text>
               <View style={[styles.userDataInputContainer, { backgroundColor: colors.cardHover }]}>
                 <TextInput
                   style={[styles.userDataInput, { color: colors.textPrimary }]}
@@ -439,14 +442,14 @@ export default function QuickNutritionScreen() {
 
           {/* Niveau d'activité */}
           <Text style={[styles.activityLabel, { color: colors.textSecondary }]}>
-            Niveau d'activité
+            {t('quickNutrition.activityLevel')}
           </Text>
           <View style={styles.activityRow}>
             {[
-              { id: 'low', label: 'Léger' },
-              { id: 'moderate', label: 'Modéré' },
-              { id: 'high', label: 'Élevé' },
-              { id: 'intense', label: 'Intense' },
+              { id: 'low', label: t('quickNutrition.low') },
+              { id: 'moderate', label: t('quickNutrition.moderate') },
+              { id: 'high', label: t('quickNutrition.high') },
+              { id: 'intense', label: t('quickNutrition.intense') },
             ].map((level) => (
               <TouchableOpacity
                 key={level.id}
@@ -474,7 +477,7 @@ export default function QuickNutritionScreen() {
 
         {/* Besoins Calculés */}
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-          Tes Besoins Quotidiens
+          {t('quickNutrition.dailyNeeds')}
         </Text>
 
         {/* Protein Calculator */}
@@ -482,7 +485,7 @@ export default function QuickNutritionScreen() {
           <View style={styles.proteinHeader}>
             <Egg size={20} color="#22C55E" />
             <Text style={[styles.proteinTitle, { color: colors.textPrimary }]}>
-              Protéines
+              {t('quickNutrition.proteins')}
             </Text>
             <TouchableOpacity
               style={styles.sourceButton}
@@ -496,13 +499,16 @@ export default function QuickNutritionScreen() {
               {proteinNeeds.min} - {proteinNeeds.max}g
             </Text>
             <Text style={[styles.proteinSubtext, { color: colors.textMuted }]}>
-              par jour ({proteinNeeds.perKg}g/kg)
+              {t('quickNutrition.perDay')} ({proteinNeeds.perKg}g/kg)
             </Text>
           </View>
           <View style={[styles.sourceInfo, { backgroundColor: colors.cardHover }]}>
-            <Text style={[styles.sourceText, { color: colors.textSecondary }]}>
-              📚 {SCIENTIFIC_SOURCES.protein.study}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <BookOpen size={11} color={colors.textSecondary} />
+              <Text style={[styles.sourceText, { color: colors.textSecondary }]}>
+                {SCIENTIFIC_SOURCES.protein.study}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -511,7 +517,7 @@ export default function QuickNutritionScreen() {
           <View style={styles.proteinHeader}>
             <Zap size={20} color="#F59E0B" />
             <Text style={[styles.proteinTitle, { color: colors.textPrimary }]}>
-              Glucides
+              {t('quickNutrition.carbs')}
             </Text>
             <TouchableOpacity
               style={styles.sourceButton}
@@ -525,13 +531,16 @@ export default function QuickNutritionScreen() {
               {carbNeeds.min} - {carbNeeds.max}g
             </Text>
             <Text style={[styles.proteinSubtext, { color: colors.textMuted }]}>
-              par jour ({carbNeeds.perKg}g/kg pour activité {activityLevel === 'low' ? 'légère' : activityLevel === 'moderate' ? 'modérée' : activityLevel === 'high' ? 'élevée' : 'intense'})
+              {t('quickNutrition.perDay')} ({carbNeeds.perKg}g/kg pour activité {activityLevel === 'low' ? t('quickNutrition.lightActivity') : activityLevel === 'moderate' ? t('quickNutrition.moderateActivity') : activityLevel === 'high' ? t('quickNutrition.highActivity') : t('quickNutrition.intenseActivity')})
             </Text>
           </View>
           <View style={[styles.sourceInfo, { backgroundColor: colors.cardHover }]}>
-            <Text style={[styles.sourceText, { color: colors.textSecondary }]}>
-              📚 {SCIENTIFIC_SOURCES.carbs.study}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <BookOpen size={11} color={colors.textSecondary} />
+              <Text style={[styles.sourceText, { color: colors.textSecondary }]}>
+                {SCIENTIFIC_SOURCES.carbs.study}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -540,7 +549,7 @@ export default function QuickNutritionScreen() {
           <View style={styles.proteinHeader}>
             <Droplets size={20} color="#06B6D4" />
             <Text style={[styles.proteinTitle, { color: colors.textPrimary }]}>
-              Hydratation
+              {t('quickNutrition.hydration')}
             </Text>
             <TouchableOpacity
               style={styles.sourceButton}
@@ -554,13 +563,16 @@ export default function QuickNutritionScreen() {
               {waterNeeds.min} - {waterNeeds.max}L
             </Text>
             <Text style={[styles.proteinSubtext, { color: colors.textMuted }]}>
-              par jour (30-35ml/kg)
+              {t('quickNutrition.perDay')} (30-35ml/kg)
             </Text>
           </View>
           <View style={[styles.sourceInfo, { backgroundColor: colors.cardHover }]}>
-            <Text style={[styles.sourceText, { color: colors.textSecondary }]}>
-              📚 {SCIENTIFIC_SOURCES.hydration.study}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <BookOpen size={11} color={colors.textSecondary} />
+              <Text style={[styles.sourceText, { color: colors.textSecondary }]}>
+                {SCIENTIFIC_SOURCES.hydration.study}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -569,13 +581,13 @@ export default function QuickNutritionScreen() {
           <View style={styles.proteinHeader}>
             <Flame size={20} color="#EF4444" />
             <Text style={[styles.proteinTitle, { color: colors.textPrimary }]}>
-              Calories (estimation)
+              {t('quickNutrition.calories')}
             </Text>
           </View>
           <View style={styles.caloriesRow}>
             <View style={styles.caloriesItem}>
               <Text style={[styles.caloriesLabel, { color: colors.textSecondary }]}>
-                Métabolisme de base
+                {t('quickNutrition.bmr')}
               </Text>
               <Text style={[styles.caloriesValue, { color: colors.textPrimary }]}>
                 {calorieNeeds.bmr} kcal
@@ -583,7 +595,7 @@ export default function QuickNutritionScreen() {
             </View>
             <View style={styles.caloriesItem}>
               <Text style={[styles.caloriesLabel, { color: colors.textSecondary }]}>
-                Besoin total
+                {t('quickNutrition.totalNeed')}
               </Text>
               <Text style={[styles.caloriesValue, { color: '#EF4444' }]}>
                 {calorieNeeds.tdee} kcal
@@ -591,13 +603,13 @@ export default function QuickNutritionScreen() {
             </View>
           </View>
           <Text style={[styles.caloriesNote, { color: colors.textMuted }]}>
-            * Estimation basée sur Harris-Benedict. Ajuste selon tes résultats.
+            {t('quickNutrition.caloriesNote')}
           </Text>
         </View>
 
         {/* Meals */}
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-          Plan Alimentaire
+          {t('quickNutrition.mealPlan')}
         </Text>
 
         {currentPhase.meals.map((meal, index) => (
@@ -671,20 +683,20 @@ export default function QuickNutritionScreen() {
         <View style={[styles.quickTipsCard, { backgroundColor: colors.goldMuted }]}>
           <Flame size={20} color={colors.gold} />
           <Text style={[styles.quickTipsTitle, { color: colors.gold }]}>
-            Conseils du Guerrier
+            {t('quickNutrition.warriorTips')}
           </Text>
           <View style={styles.quickTipsList}>
             <Text style={[styles.quickTip, { color: colors.textSecondary }]}>
-              • Hydrate-toi: 35ml/kg de poids
+              • {t('quickNutrition.tip1')}
             </Text>
             <Text style={[styles.quickTip, { color: colors.textSecondary }]}>
-              • Mange ce que tu connais avant un combat
+              • {t('quickNutrition.tip2')}
             </Text>
             <Text style={[styles.quickTip, { color: colors.textSecondary }]}>
-              • Evite les aliments nouveaux le jour J
+              • {t('quickNutrition.tip3')}
             </Text>
             <Text style={[styles.quickTip, { color: colors.textSecondary }]}>
-              • Proteines a chaque repas pour la recup
+              • {t('quickNutrition.tip4')}
             </Text>
           </View>
         </View>

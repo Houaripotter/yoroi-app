@@ -33,6 +33,8 @@ import {
   Move,
   Pill,
   Hand,
+  ChevronUp,
+  ChevronDown,
   LucideIcon,
 } from 'lucide-react-native';
 
@@ -106,6 +108,7 @@ export default function InjuryDetailScreen() {
   const [showSurgeonMode, setShowSurgeonMode] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showReturnPlan, setShowReturnPlan] = useState(false);
 
   const loadData = async () => {
     // Validation du paramètre
@@ -146,7 +149,7 @@ export default function InjuryDetailScreen() {
         // Charger les creneaux impactes
         if (injuryData && injuryData.fit_for_duty !== 'operational') {
           const allSlots = await getWeeklyPlan();
-          const impacted = allSlots.filter(s => !s.is_rest_day && isSportImpactedByInjury(s.sport, injuryData));
+          const impacted = Array.isArray(allSlots) ? allSlots.filter(s => !s.is_rest_day && isSportImpactedByInjury(s.sport, injuryData)) : [];
           setAffectedSlots(impacted);
         } else {
           setAffectedSlots([]);
@@ -538,9 +541,11 @@ export default function InjuryDetailScreen() {
                   Mode Chirurgien
                 </Text>
               </View>
-              <Text style={[styles.surgeonToggle, { color: colors.textMuted }]}>
-                {showSurgeonMode ? '▲' : '▼'}
-              </Text>
+              <View style={{ padding: 2 }}>
+                {showSurgeonMode
+                  ? <ChevronUp size={18} color={colors.textMuted} />
+                  : <ChevronDown size={18} color={colors.textMuted} />}
+              </View>
             </TouchableOpacity>
 
             {showSurgeonMode && (
@@ -699,6 +704,78 @@ export default function InjuryDetailScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
+          </View>
+        )}
+
+        {/* Mode Retour de blessure progressif */}
+        {injury && (
+          <View style={[styles.section, { backgroundColor: colors.backgroundCard, marginBottom: SPACING.lg }]}>
+            <TouchableOpacity
+              onPress={() => setShowReturnPlan(v => !v)}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Activity size={18} color="#06B6D4" />
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
+                  Plan de retour progressif
+                </Text>
+              </View>
+              <Text style={{ fontSize: 20, color: colors.textMuted }}>
+                {showReturnPlan ? '−' : '+'}
+              </Text>
+            </TouchableOpacity>
+
+            {showReturnPlan && (() => {
+              // Protocoles par zone (simplifié en 3 familles)
+              const zone = (injury.zone_id ?? '').toLowerCase();
+              const isEpaule = zone.includes('epaule') || zone.includes('bras') || zone.includes('coude') || zone.includes('poignet');
+              const isGenou = zone.includes('genou') || zone.includes('jambe') || zone.includes('cheville') || zone.includes('hanche');
+              const isDos = zone.includes('dos') || zone.includes('cou') || zone.includes('nuque');
+
+              const returnWeeks: { week: number; label: string; restrictions: string[]; color: string }[] = isEpaule ? [
+                { week: 1, label: 'Repos & mobilité douce', restrictions: ['Aucun effort bras', 'Technique jambes uniquement', 'Mouvement doux amplitude réduite'], color: '#EF4444' },
+                { week: 2, label: 'Technique sans résistance', restrictions: ['Technique bras léger', 'Pas de grip / saisies', 'Exercices proprioception'], color: '#F97316' },
+                { week: 3, label: 'Drilling léger', restrictions: ['Drilling technique (pas de sparring)', 'Résistance minimale partenaire', 'Stop si douleur'], color: '#F59E0B' },
+                { week: 4, label: 'Roulage léger partenaires confirmés', restrictions: ['Rolling light uniquement', 'Partenaires de confiance', 'Communication ouverte'], color: '#22C55E' },
+                { week: 5, label: 'Sparring normal progressif', restrictions: ['Sparring technique → intensif', 'Écoute ton corps', 'Bilan avant compétition'], color: '#06B6D4' },
+              ] : isGenou ? [
+                { week: 1, label: 'Repos & glace', restrictions: ['Zéro appui si douleur', 'Élévation du membre', 'Mobilité passive uniquement'], color: '#EF4444' },
+                { week: 2, label: 'Marche & mobilité', restrictions: ['Marche sans douleur', 'Renforcement quadriceps assis', 'Vélo stationnaire si toléré'], color: '#F97316' },
+                { week: 3, label: 'Technique debout légère', restrictions: ['Travail debout sans projections', 'Pas de genou-à-terre', 'Renforcement chaîne postérieure'], color: '#F59E0B' },
+                { week: 4, label: 'Travail au sol progressif', restrictions: ['Drilling au sol (pas de pression genou)', 'Rolling top position uniquement'], color: '#22C55E' },
+                { week: 5, label: 'Retour complet progressif', restrictions: ['Rolling léger → normal', 'Bande de soutien si besoin', 'Bilan médical recommandé'], color: '#06B6D4' },
+              ] : [
+                { week: 1, label: 'Repos strict', restrictions: ['Pas de charge axiale', 'Étirements doux', 'Chaleur / anti-inflammatoires'], color: '#EF4444' },
+                { week: 2, label: 'Mobilité douce', restrictions: ['Étirements progressifs', 'Gainage très doux', 'Pas de projections'], color: '#F97316' },
+                { week: 3, label: 'Renforcement progressif', restrictions: ['Gainage statique', 'Technique debout sans chute', 'Mobilité rachidienne'], color: '#F59E0B' },
+                { week: 4, label: 'Technique légère', restrictions: ['Drilling debout et au sol léger', 'Rolling top position', 'Stop si douleur'], color: '#22C55E' },
+                { week: 5, label: 'Sparring progressif', restrictions: ['Rolling light', 'Communication avec partenaire', 'Avis médical avant intensif'], color: '#06B6D4' },
+              ];
+
+              return (
+                <View style={{ marginTop: 12, gap: 8 }}>
+                  <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 4 }}>
+                    Protocole estimé — ajuste selon ton ressenti et l'avis de ton médecin.
+                  </Text>
+                  {returnWeeks.map(w => (
+                    <View key={w.week} style={{ flexDirection: 'row', gap: 10, padding: 10, borderRadius: 10, backgroundColor: `${w.color}10`, borderLeftWidth: 3, borderLeftColor: w.color }}>
+                      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: w.color, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 11, fontWeight: '900', color: '#fff' }}>S{w.week}</Text>
+                      </View>
+                      <View style={{ flex: 1, gap: 4 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary }}>{w.label}</Text>
+                        {w.restrictions.map((r, i) => (
+                          <View key={i} style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
+                            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: w.color, marginTop: 5 }} />
+                            <Text style={{ fontSize: 11, color: colors.textMuted, flex: 1, lineHeight: 16 }}>{r}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              );
+            })()}
           </View>
         )}
 

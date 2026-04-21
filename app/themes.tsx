@@ -43,7 +43,9 @@ import {
   Cloud,
   Wand,
   Citrus,
+  Type,
 } from 'lucide-react-native';
+import { FontSizeLevel, FONT_SIZE_LABELS } from '@/lib/fontScaleManager';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import { ThemeMode, themeColors } from '@/constants/themes';
@@ -136,7 +138,7 @@ const getThemeIcon = (themeColorId: string, color: string, size: number = 28) =>
 };
 
 export default function ThemesScreen() {
-  const { colors, themeColor, themeMode, setThemeColor, setThemeMode } = useTheme();
+  const { colors, themeColor, themeMode, setThemeColor, setThemeMode, fontSizeLevel, setFontSizeLevel } = useTheme();
   const { t } = useI18n();
   const { isDevMode: creatorModeActive } = useDevMode();
   const [userXP, setUserXP] = useState(0);
@@ -307,6 +309,82 @@ export default function ThemesScreen() {
                   >
                     {label}
                   </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Section: Taille du texte */}
+        <View style={[styles.modeSection, { backgroundColor: colors.backgroundCard, marginTop: 12 }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <Type size={16} color={colors.accent} />
+            <Text style={[styles.modeSectionTitle, { color: colors.textPrimary }]}>
+              Taille du texte
+            </Text>
+          </View>
+          <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 14 }}>
+            Ajuste la taille de tous les textes de l'application
+          </Text>
+
+          {/* Aperçu live */}
+          <View style={{
+            backgroundColor: colors.backgroundElevated,
+            borderRadius: 10,
+            padding: 12,
+            marginBottom: 14,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}>
+            <Text style={{ fontSize: 11 * (fontSizeLevel === 1 ? 0.85 : fontSizeLevel === 3 ? 1.18 : fontSizeLevel === 4 ? 1.36 : 1.0), color: colors.textMuted, marginBottom: 2 }}>
+              ENTRAÎNEMENT DU JOUR
+            </Text>
+            <Text style={{ fontSize: 16 * (fontSizeLevel === 1 ? 0.85 : fontSizeLevel === 3 ? 1.18 : fontSizeLevel === 4 ? 1.36 : 1.0), fontWeight: '700', color: colors.textPrimary, marginBottom: 2 }}>
+              Séance Musculation
+            </Text>
+            <Text style={{ fontSize: 13 * (fontSizeLevel === 1 ? 0.85 : fontSizeLevel === 3 ? 1.18 : fontSizeLevel === 4 ? 1.36 : 1.0), color: colors.textSecondary }}>
+              5 exercices · 45 min · 320 kcal
+            </Text>
+          </View>
+
+          {/* Sélecteur 4 niveaux */}
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {([1, 2, 3, 4] as FontSizeLevel[]).map((level) => {
+              const isActive = fontSizeLevel === level;
+              const previewSize = 10 + level * 3; // 13, 16, 19, 22
+              return (
+                <TouchableOpacity
+                  key={level}
+                  style={[
+                    {
+                      flex: 1,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      paddingVertical: 12,
+                      borderRadius: 12,
+                      backgroundColor: isActive ? colors.accent : colors.backgroundElevated,
+                      borderWidth: 1.5,
+                      borderColor: isActive ? colors.accent : colors.border,
+                      gap: 4,
+                    },
+                  ]}
+                  onPress={async () => {
+                    await impactAsync(ImpactFeedbackStyle.Light);
+                    setFontSizeLevel(level);
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <Text style={{ fontSize: previewSize, fontWeight: '800', color: isActive ? colors.textOnAccent : colors.textPrimary, lineHeight: previewSize + 4 }}>
+                    Aa
+                  </Text>
+                  <Text style={{ fontSize: 10, color: isActive ? colors.textOnAccent : colors.textMuted, fontWeight: '600', textAlign: 'center' }}>
+                    {FONT_SIZE_LABELS[level]}
+                  </Text>
+                  {isActive && (
+                    <View style={{ position: 'absolute', top: 6, right: 6, width: 14, height: 14, borderRadius: 7, backgroundColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' }}>
+                      <Check size={9} color={colors.textOnAccent} strokeWidth={3} />
+                    </View>
+                  )}
                 </TouchableOpacity>
               );
             })}

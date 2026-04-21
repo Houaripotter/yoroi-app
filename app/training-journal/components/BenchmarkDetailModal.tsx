@@ -32,8 +32,8 @@ import {
   formatTime,
   calculatePace,
 } from '@/lib/carnetService';
-import { getRelativeDate } from '../utils/dateHelpers';
-import { renderIcon } from '../utils/iconMap';
+import { getRelativeDate } from '@/lib/training-journal/utils/dateHelpers';
+import { renderIcon } from '@/lib/training-journal/utils/iconMap';
 import { useI18n } from '@/lib/I18nContext';
 
 interface BenchmarkDetailModalProps {

@@ -31,8 +31,8 @@ export interface ExerciseStats {
 
 // Patterns de parsing (ordre d'importance)
 const PATTERNS = {
-  // Poids et répétitions: "70kg x 10" ou "70 kg x 10"
-  weight: /(\d+(?:[.,]\d+)?)\s*kg(?:\s*x\s*(\d+))?/i,
+  // Poids et répétitions: "70kg x 10", "70kg × 10", "70 kg x 10"
+  weight: /(\d+(?:[.,]\d+)?)\s*kg(?:\s*[x×]\s*(\d+))?/i,
 
   // Distance: "5.2km" ou "5,2 km"
   distance: /(\d+(?:[.,]\d+)?)\s*km(?!\/h)/i,
@@ -65,9 +65,9 @@ const PATTERNS = {
 /**
  * Parse une ligne d'exercice
  * Format attendu: • Exercice (stats)
- * Exemple: • Squat (100kg x 10)
+ * Exemple: • Squat (100kg x 10) ou • Squat (S1: 100kg×10, S2: 110kg×8)
  */
-function parseExerciseLine(line: string): ExerciseStats | null {
+function parseExerciseLine(line: string): ExerciseStats | ExerciseStats[] | null {
   if (!line || !line.trim()) return null;
 
   // Extraire le nom de l'exercice et les stats
@@ -85,6 +85,17 @@ function parseExerciseLine(line: string): ExerciseStats | null {
   const [, label, statsStr] = mainMatch;
 
   if (!label || !statsStr) return null;
+
+  // Format multi-séries : "S1: 100kg×10, S2: 110kg×8, S3: 110kg×6"
+  const setsPattern = /S\d+:\s*(\d+(?:[.,]\d+)?)\s*kg\s*[x×]\s*(\d+)/gi;
+  const setsMatches = [...statsStr.matchAll(setsPattern)];
+  if (setsMatches.length > 0) {
+    return setsMatches.map((m, i) => ({
+      label: i === 0 ? label.trim() : '',
+      weight: m[1],
+      reps: m[2],
+    }));
+  }
 
   const exercise: ExerciseStats = {
     label: label.trim(),
@@ -148,7 +159,11 @@ export function parseExercisesFromNotes(notes: string | null | undefined): Exerc
     for (const line of lines) {
       const exercise = parseExerciseLine(line);
       if (exercise) {
-        exercises.push(exercise);
+        if (Array.isArray(exercise)) {
+          exercises.push(...exercise);
+        } else {
+          exercises.push(exercise);
+        }
       }
     }
 

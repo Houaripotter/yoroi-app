@@ -6,6 +6,7 @@
 
 import { Platform, DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { secureStorage } from '@/lib/security/secureStorage';
 // Demo data removed - DEMO_MODE is disabled for production
 import logger from '@/lib/security/logger';
 import { getNativeWorkouts, runNativeDiagnostic, NativeDiagnosticResult, requestAllHealthPermissionsNative, getTodayActivityRingsNative, getWorkoutEffortScoreNative } from './yoroiHealthKit';
@@ -115,6 +116,8 @@ export interface WorkoutDetails {
   avgPowerWatts?: number;
   // VO2 Max (ml/kg/min) — mesuré par Apple Watch lors des séances de course
   vo2Max?: number;
+  // Nombre de pas pendant la séance (marche, course, randonnée)
+  stepsCount?: number;
 }
 
 export interface HealthData {
@@ -3007,6 +3010,13 @@ class HealthConnectService {
             const watts = powerStat.averageQuantity.quantity;
             if (watts > 0) details.avgPowerWatts = Math.round(watts);
           }
+
+          // Nombre de pas (marche, course, randonnée)
+          const stepsStat = stats['HKQuantityTypeIdentifierStepCount'];
+          if (stepsStat?.sumQuantity) {
+            const steps = Math.round(stepsStat.sumQuantity.quantity);
+            if (steps > 0) details.stepsCount = steps;
+          }
         }
       } catch (statsErr) {
         logger.warn('[HealthKit] Erreur getAllStatistics:', statsErr);
@@ -3131,22 +3141,28 @@ class HealthConnectService {
               { zone: 5, name: 'Z5 Max', minBpm: z4Max, maxBpm: 250, durationSeconds: 0, color: '#EF4444' },
             ];
 
-            // Durée dans chaque zone
+            // Durée dans chaque zone — couvre toute la séance (début→fin)
+            const addToZoneInline = (bpm: number, seconds: number) => {
+              if (seconds <= 0 || seconds > 300) return;
+              for (const zone of zones) {
+                if (bpm >= zone.minBpm && bpm < zone.maxBpm) { zone.durationSeconds += seconds; break; }
+              }
+            };
+            // Gap début séance → 1er sample
+            const startGap = (new Date(hrSamples[0].startDate).getTime() - new Date(workout.startDate).getTime()) / 1000;
+            addToZoneInline(hrSamples[0].quantity, startGap);
+            // Gaps entre samples consécutifs
             for (let i = 0; i < hrSamples.length - 1; i++) {
               const bpm = hrSamples[i].quantity;
               const gap = (new Date(hrSamples[i + 1].startDate).getTime() - new Date(hrSamples[i].startDate).getTime()) / 1000;
-              if (gap > 0 && gap < 300) { // Max 5 min entre 2 echantillons
-                for (const zone of zones) {
-                  if (bpm >= zone.minBpm && bpm < zone.maxBpm) {
-                    zone.durationSeconds += gap;
-                    break;
-                  }
-                }
-              }
+              addToZoneInline(bpm, gap);
             }
+            // Gap dernier sample → fin séance
+            const endGap = (new Date(workout.endDate).getTime() - new Date(hrSamples[hrSamples.length - 1].startDate).getTime()) / 1000;
+            addToZoneInline(hrSamples[hrSamples.length - 1].quantity, endGap);
 
             details.heartRateZones = zones;
-            details.cacheVersion = 7; // v7: effort score Apple Watch depuis metadata
+            details.cacheVersion = 8; // v8: step count depuis HKQuantityTypeIdentifierStepCount
 
             // Splits depuis GPS si disponibles
             if (allGpsLocations.length > 0 && details.distanceKm && details.distanceKm > 0.5) {
@@ -3408,7 +3424,12 @@ class HealthConnectService {
           if (toStore.heartRateSamples && toStore.heartRateSamples.length > 1) {
             try {
               const effectiveZones = await getEffectiveHRZones();
-              const computedZones = calcZoneDurations(toStore.heartRateSamples, effectiveZones);
+              const computedZones = calcZoneDurations(
+                toStore.heartRateSamples,
+                effectiveZones,
+                workout.startDate,
+                workout.endDate,
+              );
               toStore.heartRateZones = computedZones;
             } catch {
               // Non bloquant : garder les zones HealthKit si calcul échoue
@@ -4936,17 +4957,24 @@ class HealthConnectService {
 
       // ══════ WORKOUTS → SQLite (table trainings) ══════
       if (data.workouts && data.workouts.length > 0) {
-        // Charger les fingerprints deja importes pour dedup
+        // Charger les fingerprints ET les UUID déjà en base pour dédup fiable
         let importedFingerprints: Set<string> = new Set();
         try {
           const saved = await AsyncStorage.getItem('@yoroi_imported_workouts');
           if (saved) importedFingerprints = new Set(JSON.parse(saved));
         } catch {}
+        // UUID en base (source de vérité — résiste au vidage d'AsyncStorage)
+        let existingUUIDs: Set<string> = new Set();
+        try { existingUUIDs = await getExistingHealthkitUUIDs(); } catch {}
 
         let workoutsSaved = 0;
         const detailsQueue: { uuid: string; trainingId: number; startDate?: string; durationMin?: number }[] = [];
         for (const workout of data.workouts) {
+          const uuid = (workout as any).hkUUID || workout.id;
+          // Dédup par UUID (fiable)
+          if (uuid && existingUUIDs.has(uuid)) continue;
           const fingerprint = `${workout.startDate}_${workout.activityType}_${workout.duration}`;
+          // Dédup par empreinte (fallback si pas d'UUID)
           if (importedFingerprints.has(fingerprint)) continue;
 
           try {
@@ -4980,6 +5008,7 @@ class HealthConnectService {
 
             const trainingId = await addTraining(training);
             importedFingerprints.add(fingerprint);
+            if (uuid) existingUUIDs.add(uuid); // Mettre à jour le cache local
             workoutsSaved++;
 
             // Collecter les details a charger en batch (pas fire-and-forget)
@@ -5065,9 +5094,9 @@ class HealthConnectService {
         logger.warn('[syncAll] Erreur import historique sommeil:', e);
       }
 
-      // ══════ AUSSI sauvegarder dans AsyncStorage (cache rapide pour UI) ══════
+      // ══════ SECURITY: Store weight in SecureStore instead of AsyncStorage ══════
       if (data.weight) {
-        await AsyncStorage.setItem(STORAGE_KEYS.LAST_WEIGHT, JSON.stringify(data.weight));
+        await secureStorage.setItem(STORAGE_KEYS.LAST_WEIGHT, data.weight);
       }
       if (data.steps) {
         await AsyncStorage.setItem(STORAGE_KEYS.LAST_STEPS, JSON.stringify(data.steps));
@@ -5747,9 +5776,10 @@ class HealthConnectService {
       await AsyncStorage.multiRemove([
         STORAGE_KEYS.LAST_STEPS,
         STORAGE_KEYS.LAST_SLEEP,
-        STORAGE_KEYS.LAST_WEIGHT,
         STORAGE_KEYS.LAST_HYDRATION,
       ]);
+      // SECURITY: Also remove weight from SecureStore
+      await secureStorage.removeItem(STORAGE_KEYS.LAST_WEIGHT);
       logger.info('Cache santé nettoyé');
     } catch (error) {
       logger.error('Erreur nettoyage cache:', error);

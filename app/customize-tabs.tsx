@@ -40,6 +40,7 @@ import {
   DEFAULT_TAB_ORDER,
 } from '@/lib/tabOrderService';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
+import { useI18n } from '@/lib/I18nContext';
 
 const ICON_MAP: Record<string, any> = {
   Home,
@@ -53,6 +54,7 @@ const ICON_MAP: Record<string, any> = {
 };
 
 export default function CustomizeTabsScreen() {
+  const { t } = useI18n();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const [tabs, setTabs] = useState<TabItem[]>(DEFAULT_TAB_ORDER);
@@ -218,7 +220,7 @@ export default function CustomizeTabsScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
             <ChevronLeft size={22} color={colors.textPrimary} strokeWidth={2.5} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Barre de navigation</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('customizeTabs.title')}</Text>
           <TouchableOpacity onPress={handleReset} style={styles.resetBtn} activeOpacity={0.7}>
             <RotateCcw size={18} color={colors.accent} strokeWidth={2} />
           </TouchableOpacity>
@@ -226,16 +228,16 @@ export default function CustomizeTabsScreen() {
 
         {/* Apercu */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewLabel, { color: colors.textMuted }]}>Apercu</Text>
+          <Text style={[styles.previewLabel, { color: colors.textMuted }]}>{t('customizeTabs.preview')}</Text>
           {renderPreview()}
           <Text style={[styles.previewCount, { color: colors.textMuted }]}>
-            {enabledTabs.length} onglet{enabledTabs.length > 1 ? 's' : ''} actif{enabledTabs.length > 1 ? 's' : ''}
+            {enabledTabs.length} {t('customizeTabs.tabCount')}
           </Text>
         </View>
 
         {/* Liste plate */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Onglets</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('customizeTabs.tabs')}</Text>
           {sortedTabs.map((tab, i) => renderTabItem(tab, i, sortedTabs.length))}
         </View>
 

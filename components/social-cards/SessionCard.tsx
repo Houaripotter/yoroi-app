@@ -14,11 +14,59 @@ import { getClubLogoSource, getSportName } from '@/lib/sports';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
 
 const GOLD_COLOR = '#D4AF37';
+const WIN_COLOR = '#22C55E';
+const LOSS_COLOR = '#EF4444';
+const DRAW_COLOR = '#9CA3AF';
+
+// Mapping ID soumission → nom d'affichage
+const SUBMISSION_NAME_MAP: Record<string, string> = {
+  rnc: 'RNC', bowarrow: 'Bow & Arrow', bodytri: 'Body Triangle', reartri: 'Triangle arrière',
+  crucifix: 'Crucifix', triangle: 'Triangle', triangleinv: 'Triangle inversé', montedtri: 'Triangle monté',
+  guillotine: 'Guillotine', guillarmin: 'Arm-in Guillotine', marcelo: 'Guillotine haute',
+  hipbumpguil: 'Hip Bump Guillotine', darce: "D'Arce", anaconda: 'Anaconda', armtri: 'Arm Triangle',
+  northsouth: 'Nord-Sud', ezekiel: 'Ezekiel', buggy: 'Buggy Choke', loop: 'Loop Choke',
+  baseball: 'Baseball Bat', papercutter: 'Paper Cutter', brabo: 'Brabo', clockchoke: 'Clock Choke',
+  vonflue: 'Von Flue', peruvian: 'Peruvian Necktie', gogoplata: 'Gogoplata', twister: 'Twister',
+  lapelchoke: 'Lapel Choke', daratine: 'Daratine', katahajime: 'Kata Ha Jime',
+  japanesenetie: 'Japanese Necktie', mountedguill: 'Guillotine montée', kesagatame: 'Kesa Gatame',
+  headscissor: 'Head Scissors', ezekielguard: 'Ezekiel garde', necklace: 'Necklace Choke',
+  chinstrap: 'Chin Strap', crosstri: 'Triangle croisé',
+  armbar: 'Clé de bras', armbarguard: 'Clé de bras garde', armbarmount: 'Clé de bras montée',
+  armbarback: 'Clé de bras dos', kimura: 'Kimura', kimuratrap: 'Kimura Trap',
+  americana: 'Américaine', omoplata: 'Omoplata', monoplata: 'Monoplata', baratoplata: 'Baratoplata',
+  tarikoplata: 'Tarikoplata', wristlock: 'Clé de poignet', bicepslicer: 'Bicep Slicer',
+  shoulder: "Clé d'épaule", hammerlock: 'Hammerlock', straightarm: 'Straight Arm Lock',
+  chickenwing: 'Chicken Wing', spiderweb: 'Spider Web', reversearmbar: 'Reverse Armbar',
+  mirlock: 'Mir Lock', gooseneck: 'Gooseneck', canopener: 'Can Opener',
+  heelint: 'Heel Hook int.', heelext: 'Heel Hook ext.', crossheel: 'Cross Heel Hook',
+  kneebar: 'Clé de genou', anklelock: 'Clé de cheville', anklerot: 'Ankle Lock rotatif',
+  toehold: 'Clé de pied', calfslicer: 'Calf Slicer', estima: 'Estima Lock',
+  electricchair: 'Electric Chair', bananasplit: 'Banana Split', saddle: 'Saddle / Sankaku',
+  straightfoot: 'Straight Foot Lock', suloev: 'Suloev Stretch', aokilock: 'Aoki Lock',
+  revheelhook: 'Reverse Heel Hook', fig4ankle: 'Figure 4 Ankle', texasclover: 'Texas Cloverleaf',
+};
+
+const getSubName = (id: string): string => SUBMISSION_NAME_MAP[id] ?? id;
+
+export interface CombatRoundData {
+  number: number;
+  result?: 'win' | 'loss' | 'draw' | null;
+  pointsFor?: number;
+  pointsAgainst?: number;
+  methodsGiven?: string[];
+  methodsTaken?: string[];
+  usedTechniques?: { label: string; count?: number; pts?: number }[];
+  roundIntensity?: string;
+  partner?: string;
+  partnerRating?: number; // Note adversaire 1-5
+  duration?: number; // durée en minutes (par round, si dispo)
+}
 
 // Constantes de layout — utiliser flex comme les autres cartes V2 (proportions exactes)
 const PHOTO_SECTION_FLEX = 6.5;   // 65%
 const STATS_SECTION_FLEX = 2.3;   // 23%
 const FOOTER_SECTION_FLEX = 1.2;  // 12%
+const MAX_OPTIONS_IN_CARD = 22;   // Limite dure : max 22 lignes (2-3 rounds BJJ complets)
 const PROFILE_SIZE = 50;
 const AVATAR_SIZE = 50;
 const CLUB_LOGO_SIZE = 18;
@@ -51,6 +99,7 @@ interface SessionCardProps {
   yearlyObjective?: number;
   sessionsPerWeek?: number;
   disableInternalScroll?: boolean;
+  combatRounds?: CombatRoundData[];
   options?: {
     label: string,
     icon?: string,
@@ -75,7 +124,7 @@ interface SessionCardProps {
 export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
   ({
     training, backgroundImage, backgroundType = 'black', keepPhotoClear = false, width: widthProp,
-    userAvatar, profilePhoto, userName, rank, userLevel, options,
+    userAvatar, profilePhoto, userName, rank, userLevel, options, combatRounds,
     showYearlyCount = true,
     showDate = true,
     showClub = true,
@@ -153,7 +202,16 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
     const yearDaysSlashStyle = { color: txt, fontSize: 13, fontWeight: '900' as const };
     const yearDaysNumberStyle = useMemo(() => ({ fontSize: 14 }), []);
     const detailsDividerGoldStyle = useMemo(() => ({ backgroundColor: GOLD_COLOR }), []);
-    const scrollMaxHeightStyle = useMemo(() => ({ maxHeight: options && options.length > 7 ? 140 : undefined }), [options]);
+
+    // Tronquer les options à MAX_OPTIONS_IN_CARD pour éviter tout débordement
+    const truncatedOptions = useMemo(() => {
+      if (!options || options.length <= MAX_OPTIONS_IN_CARD) return options;
+      return options.slice(0, MAX_OPTIONS_IN_CARD);
+    }, [options]);
+    const hiddenCount = options ? Math.max(0, options.length - MAX_OPTIONS_IN_CARD) : 0;
+
+
+    const scrollMaxHeightStyle = useMemo(() => ({}), []);
 
     // Calcul du volume total (tonnage) pour la muscu
     const totalTonnage = useMemo(() => {
@@ -194,6 +252,34 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
       );
     };
 
+    // ── Données combat calculées ──
+    const combatStats = useMemo(() => {
+      if (!combatRounds || combatRounds.length === 0) return null;
+      const wins = combatRounds.filter(r => r.result === 'win').length;
+      const losses = combatRounds.filter(r => r.result === 'loss').length;
+      const draws = combatRounds.filter(r => r.result === 'draw').length;
+      const totalFor = combatRounds.reduce((a, r) => a + (r.pointsFor ?? 0), 0);
+      const totalAgainst = combatRounds.reduce((a, r) => a + (r.pointsAgainst ?? 0), 0);
+      // Dédupliquer les soumissions (unique, garder l'ordre de première occurrence)
+      const givenSeen = new Set<string>();
+      const allGiven = combatRounds.flatMap(r => r.methodsGiven ?? []).filter(m => {
+        if (givenSeen.has(m)) return false; givenSeen.add(m); return true;
+      });
+      const takenSeen = new Set<string>();
+      const allTaken = combatRounds.flatMap(r => r.methodsTaken ?? []).filter(m => {
+        if (takenSeen.has(m)) return false; takenSeen.add(m); return true;
+      });
+      // Techniques dédupliquées, triées par fréquence
+      const techCount: Record<string, number> = {};
+      combatRounds.forEach(r => {
+        (r.usedTechniques ?? []).forEach(t => {
+          techCount[t.label] = (techCount[t.label] ?? 0) + (t.count ?? 1);
+        });
+      });
+      const topTechs = Object.entries(techCount).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([label]) => label);
+      return { wins, losses, draws, totalFor, totalAgainst, allGiven, allTaken, topTechs };
+    }, [combatRounds]);
+
     // Quand disableInternalScroll=true, on utilise View au lieu de ScrollView
     // pour éviter que le ScrollView interne bloque le scroll du parent sur iOS
     const ExercisesWrapper = (disableInternalScroll ? View : ScrollView) as typeof ScrollView;
@@ -201,10 +287,10 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
     return (
       <View ref={ref} style={[styles.card, cardStyle]} collapsable={false}>
 
-        {/* 1. SECTION PHOTO */}
-        <View style={styles.photoSection}>
+        {/* 1. SECTION PHOTO — prend tout l'espace restant */}
+        <View style={[styles.photoSection, { flex: 1, minHeight: Math.round(CARD_HEIGHT * 0.28) }]}>
           {backgroundImage ? (
-            <Image source={{ uri: backgroundImage }} style={styles.photoImage} resizeMode="cover" />
+            <Image key={backgroundImage} source={{ uri: backgroundImage }} style={styles.photoImage} resizeMode="cover" />
           ) : (
             <LinearGradient colors={['#1a1a1a', '#000']} style={gradientFlexStyle} />
           )}
@@ -252,11 +338,87 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
           </View>
         </View>
 
-        {/* 2. SECTION STATS & EXERCICES */}
+        {/* 2. SECTION STATS & EXERCICES — taille naturelle du contenu */}
         <View style={styles.statsSection}>
 
-          {/* CHIFFRES CLÉS & PROGRESSION */}
-          {showStats && showYearlyCount && (
+          {/* HEADER : Combat (si combat) ou Objectif annuel (autres sports) */}
+          {combatStats ? (() => {
+            // Calcul des types de séance
+            const SESSION_TYPE_LABELS: Record<string, string> = {
+              cours: 'COURS', sparring: 'SPARRING', drilling: 'DRILLING',
+              openmat: 'OPEN MAT', technique: 'TECHNIQUE',
+              competition: 'COMPÉTITION', entrainement: 'ENTRAÎNEMENT', guerre: 'GUERRE',
+            };
+            const rawTypes = training.session_types
+              ? (() => { try { return JSON.parse(training.session_types as string); } catch { return [training.session_types]; } })()
+              : training.session_type ? [training.session_type] : [];
+            const sessionLabels = (rawTypes as string[])
+              .map(t => SESSION_TYPE_LABELS[t?.toLowerCase()] ?? t?.toUpperCase())
+              .filter(Boolean).slice(0, 3);
+
+            return (
+            <View style={{ paddingHorizontal: 10, paddingTop: 8, paddingBottom: 6 }}>
+
+              {/* ── Ligne 1 : type de séance à gauche + durée à droite ── */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                {/* Type de séance — pill doré */}
+                {sessionLabels.length > 0 ? (
+                  <View style={{ flexDirection: 'row', gap: 5, flexWrap: 'wrap' }}>
+                    {sessionLabels.map((lbl, idx) => (
+                      <View key={idx} style={{ borderWidth: 1.5, borderColor: GOLD_COLOR, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
+                        <Text style={{ color: GOLD_COLOR, fontSize: 11, fontWeight: '900', letterSpacing: 1.2 }}>{lbl}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : <View />}
+                {/* Durée */}
+                {(training.duration_minutes || 0) > 0 && (
+                  <View style={durationBadgeStyle}>
+                    {(() => { const h = Math.floor((training.duration_minutes || 0) / 60); const m = (training.duration_minutes || 0) % 60; return <Text style={durationTextStyle}>{h > 0 ? `${h}H${m > 0 ? m : ''}` : `${m}MIN`}</Text>; })()}
+                  </View>
+                )}
+              </View>
+
+              {/* ── Ligne 2 : chips résumé soum/subies/pts ── */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 12 }}>
+                {combatStats.allGiven.length > 0 && (
+                  <View style={styles.combatSubSummaryChip}>
+                    <Text style={styles.combatSubSummaryText}>✓ {combatStats.allGiven.length} soum.</Text>
+                  </View>
+                )}
+                {combatStats.allTaken.length > 0 && (
+                  <View style={[styles.combatSubSummaryChip, styles.combatSubSummaryChipRed]}>
+                    <Text style={[styles.combatSubSummaryText, { color: LOSS_COLOR }]}>✗ {combatStats.allTaken.length} subie{combatStats.allTaken.length > 1 ? 's' : ''}</Text>
+                  </View>
+                )}
+                {(combatStats.totalFor > 0 || combatStats.totalAgainst > 0) && (
+                  <Text style={styles.combatPts}>{combatStats.totalFor}–{combatStats.totalAgainst} pts</Text>
+                )}
+              </View>
+
+              {/* ── Objectif annuel compact (sous le score combat) ── */}
+              {showYearlyCount && yearlyCount > 0 && (
+                <View style={{ marginTop: 8, paddingTop: 7, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 7.5, fontWeight: '900', letterSpacing: 1.2 }}>OBJECTIF ANNUEL</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 7.5, fontWeight: '700' }}>
+                      <Text style={{ color: GOLD_COLOR, fontWeight: '900' }}>{yearlyCount}</Text>
+                      {' / '}{safeObjective} séances · {Math.round(progressPercent)}%
+                    </Text>
+                  </View>
+                  <View style={{ height: 4, backgroundColor: 'rgba(255,255,255,0.10)', borderRadius: 2, overflow: 'hidden' }}>
+                    <LinearGradient
+                      colors={[GOLD_COLOR, '#F59E0B']}
+                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                      style={{ width: `${progressPercent}%`, height: '100%', borderRadius: 2 }}
+                    />
+                  </View>
+                </View>
+              )}
+
+            </View>
+            );
+          })() : showStats && showYearlyCount && (
             <View style={styles.progressContainer}>
               <View style={styles.progressRow}>
                 <View style={styles.progressLeft}>
@@ -270,10 +432,8 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
                     <Text style={[styles.goldLargeNumber, progressGoalNumberStyle]}>{safeObjective}</Text>
                     <Text style={progressDaysTextStyle}> JOURS</Text>
                   </View>
-                  {/* Barre de progression sous l'objectif */}
                   <View style={progressContainerMarginStyle}>
                     <View style={progressBarBgStyle}>
-                      {/* Graduations */}
                       <View style={progressBarGraduationsStyle}>
                         {[25, 50, 75].map(mark => (
                           <View key={mark} style={progressBarGraduationLineStyle(mark)} />
@@ -286,11 +446,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
                 </View>
                 <View style={styles.progressRight}>
                   <View style={durationBadgeStyle}>
-                    {(() => {
-                      const h = Math.floor((training.duration_minutes || 0) / 60);
-                      const m = (training.duration_minutes || 0) % 60;
-                      return <Text style={durationTextStyle}>{h > 0 ? `${h}H${m > 0 ? m : ''}` : `${m} MIN`}</Text>;
-                    })()}
+                    {(() => { const h = Math.floor((training.duration_minutes || 0) / 60); const m = (training.duration_minutes || 0) % 60; return <Text style={durationTextStyle}>{h > 0 ? `${h}H${m > 0 ? m : ''}` : `${m} MIN`}</Text>; })()}
                   </View>
                   <View style={styles.yearProgressText}>
                     <Text style={[styles.smallGoldText, yearDaysNumberStyle]}>{yearlyCount}</Text>
@@ -305,8 +461,10 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
           {showExercises && <View style={styles.detailsSection}>
             <View style={styles.detailsHeader}>
               <View style={[styles.detailsDivider, detailsDividerGoldStyle]} />
-              <Text style={styles.detailsLabel}>DÉTAILS DE LA SÉANCE</Text>
-              {totalTonnage > 0 && (
+              <Text style={styles.detailsLabel}>
+                {combatStats ? 'ROUNDS' : 'DÉTAILS DE LA SÉANCE'}
+              </Text>
+              {!combatStats && totalTonnage > 0 && (
                 <View style={{ backgroundColor: GOLD_COLOR, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginLeft: 4 }}>
                   <Text style={{ color: '#000', fontSize: 7, fontWeight: '900' }}>
                     {totalTonnage >= 1000
@@ -318,17 +476,144 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
               <View style={[styles.detailsDivider, detailsDividerGoldStyle]} />
             </View>
 
+            {/* ──── AFFICHAGE VISUEL COMBAT ──── */}
+            {combatStats && combatRounds ? (
+              <View style={styles.combatContainer}>
+
+                {/* Détail par round avec bordure colorée */}
+                <View style={styles.combatRoundsList}>
+                  {combatRounds.map((r, i) => {
+                    const resultColor = r.result === 'win' ? WIN_COLOR : r.result === 'loss' ? LOSS_COLOR : DRAW_COLOR;
+                    const resultBg = r.result === 'win' ? 'rgba(34,197,94,0.07)' : r.result === 'loss' ? 'rgba(239,68,68,0.07)' : 'rgba(156,163,175,0.07)';
+                    const resultLabel = r.result === 'win' ? 'VICTOIRE' : r.result === 'loss' ? 'DÉFAITE' : r.result === 'draw' ? 'NUL' : '';
+                    const subsGiven = r.methodsGiven ?? [];
+                    const subsTaken = r.methodsTaken ?? [];
+                    const hasScore = (r.pointsFor ?? 0) > 0 || (r.pointsAgainst ?? 0) > 0;
+                    const roundMin = r.duration ?? (training.round_duration as number | undefined);
+                    const techs = (r.usedTechniques ?? []).slice(0, 4).map(t => t.label);
+                    const intensityLabels: Record<string, string> = { guerre: 'GUERRE', technique: 'TECH', detendu: 'ZEN' };
+                    const intensityLabel = r.roundIntensity ? intensityLabels[r.roundIntensity] ?? r.roundIntensity.toUpperCase() : '';
+                    const hasDetails = roundMin || techs.length > 0 || subsTaken.length > 0 || hasScore || subsGiven.length > 0 || intensityLabel;
+                    return (
+                      <View key={i} style={[styles.combatRoundBlock, { borderLeftColor: resultColor, backgroundColor: resultBg }]}>
+
+                        {/* ── Ligne 1 : ROUND X · Xmin  VS Partenaire  [RÉSULTAT] ── */}
+                        <View style={styles.combatRoundLine}>
+                          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                            <Text style={[styles.combatRoundLineNum, { color: resultColor, fontSize: 9, fontWeight: '900' }]}>
+                              ROUND {r.number}
+                            </Text>
+                            {roundMin ? (
+                              <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 8, fontWeight: '700' }}>· {roundMin}min</Text>
+                            ) : null}
+                            {r.partner ? (
+                              <>
+                                <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 8, fontWeight: '700' }}>VS</Text>
+                                <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 }} numberOfLines={1}>
+                                  {r.partner.toUpperCase()}
+                                </Text>
+                              </>
+                            ) : null}
+                            {intensityLabel ? (
+                              <View style={[styles.combatDetailChip, { backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 5, paddingVertical: 1 }]}>
+                                <Text style={[styles.combatDetailChipText, { fontSize: 7 }]}>{intensityLabel}</Text>
+                              </View>
+                            ) : null}
+                          </View>
+                          {resultLabel ? (
+                            <View style={[styles.combatResultBadge, { backgroundColor: resultColor }]}>
+                              <Text style={styles.combatResultBadgeText}>{resultLabel}</Text>
+                            </View>
+                          ) : null}
+                        </View>
+
+                        {/* ── Ligne 2 : Score de points ── */}
+                        {hasScore && (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
+                            <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 7.5, fontWeight: '700', letterSpacing: 0.5 }}>POINTS</Text>
+                            <Text style={{ color: WIN_COLOR, fontSize: 8.5, fontWeight: '900' }}>{r.pointsFor ?? 0}</Text>
+                            <Text style={{ color: 'rgba(255,255,255,0.30)', fontSize: 8, fontWeight: '600' }}>–</Text>
+                            <Text style={{ color: LOSS_COLOR, fontSize: 8.5, fontWeight: '900' }}>{r.pointsAgainst ?? 0}</Text>
+                          </View>
+                        )}
+
+                        {/* ── Ligne 3 : soumissions données (vert, max 4) ── */}
+                        {subsGiven.length > 0 && (
+                          <View style={[styles.combatRoundSubRow, { marginTop: 4 }]}>
+                            <Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 7, fontWeight: '700', marginRight: 3 }}>DONNÉ</Text>
+                            {subsGiven.slice(0, 4).map((s, si) => (
+                              <View key={`g${si}`} style={[styles.combatDetailChip, styles.combatDetailChipGold]}>
+                                <Text style={[styles.combatDetailChipText, styles.combatDetailChipTextGold]}>✓ {getSubName(s)}</Text>
+                              </View>
+                            ))}
+                            {subsGiven.length > 4 && (
+                              <Text style={{ color: 'rgba(255,255,255,0.40)', fontSize: 7.5, fontWeight: '700' }}>+{subsGiven.length - 4}</Text>
+                            )}
+                          </View>
+                        )}
+
+                        {/* ── Ligne 4 : soumissions subies (rouge, max 4) ── */}
+                        {subsTaken.length > 0 && (
+                          <View style={[styles.combatRoundSubRow, { marginTop: 3 }]}>
+                            <Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 7, fontWeight: '700', marginRight: 3 }}>SUBI</Text>
+                            {subsTaken.slice(0, 4).map((s, si) => (
+                              <View key={`t${si}`} style={[styles.combatDetailChip, styles.combatDetailChipRed]}>
+                                <Text style={[styles.combatDetailChipText, styles.combatDetailChipTextRed]}>✗ {getSubName(s)}</Text>
+                              </View>
+                            ))}
+                            {subsTaken.length > 4 && (
+                              <Text style={{ color: 'rgba(255,255,255,0.40)', fontSize: 7.5, fontWeight: '700' }}>+{subsTaken.length - 4}</Text>
+                            )}
+                          </View>
+                        )}
+
+                        {/* ── Ligne 5 : techniques utilisées ── */}
+                        {techs.length > 0 && (
+                          <View style={[styles.combatRoundDetails, { marginTop: 3 }]}>
+                            <Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 7, fontWeight: '700', marginRight: 2 }}>TECH</Text>
+                            {techs.map((t, ti) => (
+                              <View key={ti} style={[styles.combatDetailChip, { backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' }]}>
+                                <Text style={[styles.combatDetailChipText, { color: 'rgba(255,255,255,0.75)' }]}>{t}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+
+                      </View>
+                    );
+                  })}
+                </View>
+
+                {/* Chips techniques CFJJB */}
+                {combatStats.topTechs.length > 0 && (
+                  <View style={styles.combatTechRow}>
+                    <Text style={styles.combatTechSectionLabel}>TECHNIQUES · </Text>
+                    {combatStats.topTechs.map((tech, i) => (
+                      <View key={i} style={styles.combatTechChip}>
+                        <Text style={styles.combatTechLabel}>{tech.toUpperCase()}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            ) : (
+
             <ExercisesWrapper
               style={scrollMaxHeightStyle}
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled={true}
             >
               <View style={styles.exercisesList}>
-                {options && options.length > 0 ? (
-                  options.map((opt, i) => {
-                    const pace = opt.pace || getPace(opt.speed);
+                {truncatedOptions && truncatedOptions.length > 0 ? (
+                  <>
+                  {truncatedOptions.map((opt, i) => {
+                    // pace calculé depuis speed → afficher avec "/km"
+                    // pace manuel (BJJ résultats etc.) → afficher sans "/km"
+                    const computedPace = getPace(opt.speed);
+                    const manualPace = opt.speed ? undefined : opt.pace; // pace sans unité si pas de speed
+                    const paceWithUnit = computedPace; // uniquement le pace calculé depuis speed
                     // Vérifier si on change de sport (pour afficher un séparateur)
-                    const prevSport = i > 0 ? options[i - 1].sport : null;
+                    const prevSport = i > 0 ? truncatedOptions[i - 1].sport : null;
                     const showSportSeparator = opt.sport && opt.sport !== prevSport && opt.sportName;
 
                     return (
@@ -361,7 +646,8 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
                             {opt.watts && renderStyledStat(opt.watts, 'W')}
                             {opt.resistance && renderStyledStat(opt.resistance, 'NV')}
                             {opt.speed && renderStyledStat(opt.speed, 'KM/H')}
-                            {pace && <Text style={[styles.paceText, paceTextStyle]}>({pace}/km)</Text>}
+                            {manualPace && <Text style={[styles.paceText, paceTextStyle]}>({manualPace})</Text>}
+                            {paceWithUnit && <Text style={[styles.paceText, paceTextStyle]}>({paceWithUnit}/km)</Text>}
                             {opt.pente && renderStyledStat(opt.pente, '%')}
                             {opt.stairs && renderStyledStat(opt.stairs, 'ÉT.')}
                             {opt.calories && renderStyledStat(opt.calories, 'KCAL')}
@@ -369,7 +655,13 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
                         </View>
                       </React.Fragment>
                     );
-                  })
+                  })}
+                  {hiddenCount > 0 && (
+                    <View style={styles.hiddenCountRow}>
+                      <Text style={styles.hiddenCountText}>+ {hiddenCount} ÉLÉMENT{hiddenCount > 1 ? 'S' : ''}</Text>
+                    </View>
+                  )}
+                  </>
                 ) : (
                   <View>
                     {/* Metriques globales de la séance style Strava */}
@@ -514,11 +806,12 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
                 )}
               </View>
             </ExercisesWrapper>
+            )}
           </View>}
         </View>
 
-        {/* 3. FOOTER */}
-        <View style={[styles.footerSection, footerBorderStyle]}>
+        {/* 3. FOOTER — hauteur fixe proportionnelle */}
+        <View style={[styles.footerSection, footerBorderStyle, { height: Math.round(CARD_HEIGHT * 0.12) }]}>
           <SocialCardFooter variant={isWhite ? "light" : "dark"} />
         </View>
       </View>
@@ -532,13 +825,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   photoSection: {
-    flex: PHOTO_SECTION_FLEX,
     width: '100%',
     backgroundColor: '#111',
   },
   photoImage: {
-    width: '100%',
-    height: '100%',
+    ...StyleSheet.absoluteFillObject,
   },
   photoGradient: {
     ...StyleSheet.absoluteFillObject,
@@ -651,10 +942,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   statsSection: {
-    flex: STATS_SECTION_FLEX,
     paddingHorizontal: 20,
-    justifyContent: 'center',
+    paddingVertical: 8,
     gap: 10,
+    overflow: 'hidden',
   },
   progressContainer: {
     marginBottom: 4,
@@ -785,10 +1076,338 @@ const styles = StyleSheet.create({
   globalMetricsGrid: {
     gap: 0,
   },
+  hiddenCountRow: {
+    paddingTop: 2,
+    alignItems: 'center',
+  },
+  hiddenCountText: {
+    color: GOLD_COLOR,
+    fontSize: 7,
+    fontWeight: '900',
+    letterSpacing: 1,
+    opacity: 0.7,
+  },
+  // ─── Styles Combat ───
+  combatHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 4,
+  },
+  combatHeaderLeft: {
+    flex: 1,
+    gap: 4,
+  },
+  combatHeaderMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  combatSubSummaryChip: {
+    backgroundColor: 'rgba(34,197,94,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(34,197,94,0.35)',
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  combatSubSummaryChipRed: {
+    backgroundColor: 'rgba(239,68,68,0.12)',
+    borderColor: 'rgba(239,68,68,0.35)',
+  },
+  combatSubSummaryText: {
+    color: WIN_COLOR,
+    fontSize: 8,
+    fontWeight: '800',
+  },
+  combatScoreLine: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  combatScoreNum: {
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  combatScoreUnit: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  combatScoreDot: {
+    color: 'rgba(255,255,255,0.25)',
+    fontSize: 18,
+    fontWeight: '400',
+  },
+  combatImbattuInline: {
+    color: GOLD_COLOR,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  combatHeaderBubbles: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  combatContainer: {
+    gap: 4,
+  },
+  combatRoundsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 5,
+  },
+  combatRoundBubbleWrap: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  combatRoundBubble: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  combatRoundBubbleGold: {
+    borderWidth: 1.5,
+    borderColor: GOLD_COLOR,
+  },
+  combatRoundLetter: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  combatRoundNum: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 7,
+    fontWeight: '800',
+  },
+  combatRoundFinish: {
+    fontSize: 6,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  combatBilanBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    marginLeft: 4,
+  },
+  combatBilanW: {
+    fontSize: 9,
+    fontWeight: '900',
+  },
+  combatImbattu: {
+    color: GOLD_COLOR,
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  combatBilanSep: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 8,
+    fontWeight: '400',
+  },
+  combatPts: {
+    color: 'rgba(255,255,255,0.45)',
+    fontSize: 8,
+    fontWeight: '700',
+    marginLeft: 4,
+  },
+  combatSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  combatSubBadge: {
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  combatSubBadgeText: {
+    color: '#FFF',
+    fontSize: 7,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  combatSubTextWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    flex: 1,
+    gap: 2,
+  },
+  combatSubText: {
+    color: '#FFF',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  combatSubTextMuted: {
+    color: 'rgba(255,255,255,0.65)',
+  },
+  combatRoundsList: {
+    gap: 0,
+  },
+  combatRoundBlock: {
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    gap: 4,
+    borderLeftWidth: 3,
+    marginBottom: 4,
+    borderRadius: 6,
+  },
+  combatRoundLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  combatRoundNumPill: {
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+  },
+  combatRoundSubRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 4,
+    paddingLeft: 4,
+  },
+  combatRoundLineBorder: {
+    borderTopWidth: 0.5,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  combatRoundLineNum: {
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  combatRoundLinePartner: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '800',
+    flex: 1,
+    letterSpacing: 0.3,
+  },
+  combatRoundLineScore: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 7,
+    fontWeight: '600',
+  },
+  combatRoundLineRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  combatRoundLineResult: {
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  combatRoundLineSubBadge: {
+    backgroundColor: 'rgba(212,175,55,0.18)',
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.4)',
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+  },
+  combatRoundLineSubText: {
+    color: GOLD_COLOR,
+    fontSize: 7,
+    fontWeight: '900',
+  },
+  combatRoundDetails: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 4,
+    paddingLeft: 4,
+  },
+  combatDetailChip: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  combatDetailChipRed: {
+    backgroundColor: 'rgba(239,68,68,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.45)',
+  },
+  combatDetailChipGold: {
+    backgroundColor: 'rgba(212,175,55,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.45)',
+  },
+  combatDetailChipText: {
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 8,
+    fontWeight: '700',
+  },
+  combatDetailChipTextRed: {
+    color: LOSS_COLOR,
+    fontSize: 8,
+    fontWeight: '800',
+  },
+  combatDetailChipTextGold: {
+    color: GOLD_COLOR,
+    fontSize: 8,
+    fontWeight: '800',
+  },
+  combatDetailTech: {
+    color: 'rgba(255,255,255,0.45)',
+    fontSize: 8,
+    fontWeight: '600',
+  },
+  combatTechRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginTop: 2,
+  },
+  combatTechChip: {
+    backgroundColor: 'rgba(212,175,55,0.12)',
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.35)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  combatResultBadge: {
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  combatResultBadgeText: {
+    color: '#FFF',
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  combatTechSectionLabel: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 7,
+    fontWeight: '700',
+  },
+  combatTechLabel: {
+    color: GOLD_COLOR,
+    fontSize: 7,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
   footerSection: {
-    flex: FOOTER_SECTION_FLEX,
+    flexShrink: 0,
     borderTopWidth: 1,
     paddingHorizontal: 20,
     justifyContent: 'center',
+    overflow: 'hidden',
   },
 });

@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
+import { useI18n } from '@/lib/I18nContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronLeft,
@@ -35,6 +36,7 @@ import { COACHES, NUTRITIONISTS, OSTEOPATHS, SPORT_DOCTORS, Coach, Nutritionist,
 export default function HealthProfessionalsScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<'kines' | 'nutritionists' | 'osteos' | 'sport-doctors'>('kines');
   const [selectedProfessional, setSelectedProfessional] = useState<Coach | Nutritionist | Osteopath | SportDoctor | null>(null);
 
@@ -71,10 +73,10 @@ export default function HealthProfessionalsScreen() {
           </TouchableOpacity>
           <View style={styles.headerText}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Pros de Santé
+              {t('healthProfessionals.title')}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              Des pros que je connais et recommande
+              {t('healthProfessionals.subtitle')}
             </Text>
           </View>
         </View>
@@ -99,7 +101,7 @@ export default function HealthProfessionalsScreen() {
                 { color: activeTab === 'kines' ? colors.textOnAccent : colors.textPrimary },
               ]}
             >
-              Kinés
+              {t('healthProfessionals.tabKines')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -115,7 +117,7 @@ export default function HealthProfessionalsScreen() {
                 { color: activeTab === 'nutritionists' ? colors.textOnAccent : colors.textPrimary },
               ]}
             >
-              Nutritionnistes
+              {t('healthProfessionals.tabNutritionists')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -131,7 +133,7 @@ export default function HealthProfessionalsScreen() {
                 { color: activeTab === 'osteos' ? colors.textOnAccent : colors.textPrimary },
               ]}
             >
-              Ostéos
+              {t('healthProfessionals.tabOsteos')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -147,7 +149,7 @@ export default function HealthProfessionalsScreen() {
                 { color: activeTab === 'sport-doctors' ? colors.textOnAccent : colors.textPrimary },
               ]}
             >
-              Médecin
+              {t('healthProfessionals.tabDoctors')}
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -185,11 +187,11 @@ export default function HealthProfessionalsScreen() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
                   <ClipboardList size={16} color={colors.textMuted} />
                   <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                    Aucun nutritionniste pour le moment
+                    {t('healthProfessionals.noNutritionist')}
                   </Text>
                 </View>
                 <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
-                  Les partenariats arrivent bientôt !
+                  {t('healthProfessionals.comingSoon')}
                 </Text>
               </View>
             )}
@@ -212,10 +214,10 @@ export default function HealthProfessionalsScreen() {
             ) : (
               <View style={[styles.emptyState, { backgroundColor: colors.backgroundCard }]}>
                 <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                  Aucun ostéopathe pour le moment
+                  {t('healthProfessionals.noOsteo')}
                 </Text>
                 <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
-                  Les partenariats arrivent bientôt !
+                  {t('healthProfessionals.comingSoon')}
                 </Text>
               </View>
             )}
@@ -238,10 +240,10 @@ export default function HealthProfessionalsScreen() {
             ) : (
               <View style={[styles.emptyState, { backgroundColor: colors.backgroundCard }]}>
                 <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                  Aucun médecin du sport pour le moment
+                  {t('healthProfessionals.noDoctor')}
                 </Text>
                 <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
-                  Les partenariats arrivent bientôt !
+                  {t('healthProfessionals.comingSoon')}
                 </Text>
               </View>
             )}
@@ -252,10 +254,10 @@ export default function HealthProfessionalsScreen() {
         <View style={[styles.becomePartner, { backgroundColor: colors.backgroundCard }]}>
           <Text style={styles.becomePartnerIcon}></Text>
           <Text style={[styles.becomePartnerTitle, { color: colors.textPrimary }]}>
-            Tu veux être dans la sélection ?
+            {t('healthProfessionals.becomePartnerTitle')}
           </Text>
           <Text style={[styles.becomePartnerText, { color: colors.textMuted }]}>
-            Contacte-moi sur Instagram, je serai ravi de te mettre en avant.
+            {t('healthProfessionals.becomePartnerText')}
           </Text>
           <TouchableOpacity
             style={[styles.becomePartnerButton, { backgroundColor: colors.accent }]}
@@ -264,14 +266,14 @@ export default function HealthProfessionalsScreen() {
           >
             <ExternalLink size={18} color={colors.textOnAccent} />
             <Text style={[styles.becomePartnerButtonText, { color: colors.textOnAccent }]}>
-              Nous contacter
+              {t('healthProfessionals.contactUs')}
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Disclaimer */}
         <Text style={[styles.disclaimer, { color: colors.textMuted }]}>
-          Sélection personnelle et subjective. Ces pros ne sont pas liés contractuellement à YOROI.
+          {t('healthProfessionals.disclaimer')}
         </Text>
 
         <View style={{ height: 100 }} />
@@ -323,7 +325,7 @@ export default function HealthProfessionalsScreen() {
               {selectedProfessional.bio && (
                 <View style={styles.detailSection}>
                   <Text style={[styles.detailSectionTitle, { color: colors.textMuted }]}>
-                    À propos
+                    {t('healthProfessionals.about')}
                   </Text>
                   <Text style={[styles.detailBio, { color: colors.textPrimary }]}>
                     {selectedProfessional.bio}
@@ -335,7 +337,7 @@ export default function HealthProfessionalsScreen() {
               {selectedProfessional.specialties && selectedProfessional.specialties.length > 0 && (
                 <View style={styles.detailSection}>
                   <Text style={[styles.detailSectionTitle, { color: colors.textMuted }]}>
-                    Spécialités
+                    {t('healthProfessionals.specialties')}
                   </Text>
                   <View style={styles.specialtiesContainer}>
                     {selectedProfessional.specialties.map((spec, i) => (
@@ -379,7 +381,7 @@ export default function HealthProfessionalsScreen() {
               {selectedProfessional.instagram && (
                 <View style={styles.detailSection}>
                   <Text style={[styles.detailSectionTitle, { color: colors.textMuted }]}>
-                    Réseaux sociaux
+                    {t('healthProfessionals.socialNetworks')}
                   </Text>
                   <TouchableOpacity
                     style={styles.detailInstagramButton}
@@ -401,7 +403,7 @@ export default function HealthProfessionalsScreen() {
                   activeOpacity={0.7}
                 >
                   <ExternalLink size={22} color={colors.textOnAccent} strokeWidth={2.5} />
-                  <Text style={[styles.detailWebsiteText, { color: colors.textOnAccent }]}>Site web</Text>
+                  <Text style={[styles.detailWebsiteText, { color: colors.textOnAccent }]}>{t('healthProfessionals.website')}</Text>
                   <ExternalLink size={18} color={colors.textOnAccent} />
                 </TouchableOpacity>
               )}
@@ -426,7 +428,9 @@ interface ProfessionalCardProps {
   onPress: () => void;
 }
 
-const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, colors, isDark, onPress }) => (
+const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, colors, isDark, onPress }) => {
+  const { t } = useI18n();
+  return (
   <TouchableOpacity
     style={[styles.professionalCard, { backgroundColor: colors.backgroundCard }]}
     onPress={onPress}
@@ -448,7 +452,7 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, color
         {professional.featured && (
           <View style={[styles.featuredBadge, { backgroundColor: colors.accent }]}>
             <Star size={10} color={colors.textOnAccent} />
-            <Text style={[styles.featuredText, { color: colors.textOnAccent }]}>Coup de coeur</Text>
+            <Text style={[styles.featuredText, { color: colors.textOnAccent }]}>{t('healthProfessionals.featured')}</Text>
           </View>
         )}
       </View>
@@ -488,7 +492,8 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, color
     {/* Arrow */}
     <ChevronRight size={20} color={colors.textMuted} />
   </TouchableOpacity>
-);
+  );
+};
 
 // ============================================
 // STYLES

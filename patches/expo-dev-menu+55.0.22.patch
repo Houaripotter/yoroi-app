@@ -1,0 +1,29 @@
+diff --git a/node_modules/expo-dev-menu/ios/DevMenuPackagerConnectionHandler.swift b/node_modules/expo-dev-menu/ios/DevMenuPackagerConnectionHandler.swift
+index aaeb550..2be75ff 100644
+--- a/node_modules/expo-dev-menu/ios/DevMenuPackagerConnectionHandler.swift
++++ b/node_modules/expo-dev-menu/ios/DevMenuPackagerConnectionHandler.swift
+@@ -17,21 +17,9 @@ class DevMenuPackagerConnectionHandler {
+ #if DEBUG
+     self.swizzleRCTDevMenuShow()
+ 
+-    RCTPackagerConnection
+-      .shared()
+-      .addNotificationHandler(
+-        self.sendDevCommandNotificationHandler,
+-        queue: DispatchQueue.main,
+-        forMethod: "sendDevCommand"
+-      )
+-
+-    RCTPackagerConnection
+-      .shared()
+-      .addNotificationHandler(
+-        self.devMenuNotificationHanlder,
+-        queue: DispatchQueue.main,
+-        forMethod: "devMenu"
+-      )
++    // RCTPackagerConnection removed from React-Core prebuilt in RN 0.83 — disabled
++    // RCTPackagerConnection.shared().addNotificationHandler(...)
++    // RCTPackagerConnection.shared().addNotificationHandler(...)
+ #endif
+   }
+ 

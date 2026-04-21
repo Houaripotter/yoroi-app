@@ -1,0 +1,148 @@
+diff --git a/node_modules/expo-dev-launcher/ios/EXDevLauncherController.m b/node_modules/expo-dev-launcher/ios/EXDevLauncherController.m
+index a99d209..5f769e5 100644
+--- a/node_modules/expo-dev-launcher/ios/EXDevLauncherController.m
++++ b/node_modules/expo-dev-launcher/ios/EXDevLauncherController.m
+@@ -12,7 +12,8 @@
+ #import <EXDevLauncher/EXDevLauncherManifestParser.h>
+ #import <EXDevLauncher/EXDevLauncherRCTDevSettings.h>
+ #import <EXDevLauncher/EXDevLauncherUpdatesHelper.h>
+-#import <EXDevLauncher/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.h>
++// RCTPackagerConnection removed in RN 0.83 prebuilt framework
++// #import <EXDevLauncher/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.h>
+ 
+ 
+ #import <ReactAppDependencyProvider/RCTAppDependencyProvider.h>
+@@ -474,7 +475,7 @@ - (void)_initAppWithUrl:(NSURL *)appUrl bundleUrl:(NSURL *)bundleUrl manifest:(E
+ #if RCT_DEV
+     // Connect to the websocket, ignore downloaded update bundles
+     if (![bundleUrl.scheme isEqualToString:@"file"]) {
+-      [[RCTPackagerConnection sharedPackagerConnection] setSocketConnectionURL:bundleUrl];
++      // RCTPackagerConnection removed in RN 0.83 prebuilt framework
+     }
+     self.networkInterceptor = [[EXDevLauncherNetworkInterceptor alloc] initWithBundleUrl:bundleUrl];
+ #endif
+@@ -620,7 +621,7 @@ -(void)copyToClipboard:(NSString *)content {
+ - (void)setDevMenuAppBridge
+ {
+   DevMenuManager *manager = [DevMenuManager shared];
+-  [manager updateCurrentBridge:self.appBridge];
++  [manager updateCurrentBridge:nil]; // appBridge removed in RN 0.83 bridgeless architecture
+ 
+   if (self.manifest != nil) {
+     [manager updateCurrentManifest:self.manifest manifestURL:self.manifestURL];
+diff --git a/node_modules/expo-dev-launcher/ios/Unsafe/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.h b/node_modules/expo-dev-launcher/ios/Unsafe/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.h
+index 04097b3..51621a7 100644
+--- a/node_modules/expo-dev-launcher/ios/Unsafe/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.h
++++ b/node_modules/expo-dev-launcher/ios/Unsafe/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.h
+@@ -1,17 +1,2 @@
+ // Copyright 2015-present 650 Industries. All rights reserved.
+-
+-#import <React/RCTPackagerConnection.h>
+-
+-#if RCT_DEV
+-
+-NS_ASSUME_NONNULL_BEGIN
+-
+-@interface RCTPackagerConnection (EXDevLauncherPackagerConnectionInterceptor)
+-
+-- (void)setSocketConnectionURL:(NSURL *)url;
+-
+-@end
+-
+-NS_ASSUME_NONNULL_END
+-
+-#endif
++// RCTPackagerConnection removed from React-Core prebuilt in RN 0.83 — file disabled.
+diff --git a/node_modules/expo-dev-launcher/ios/Unsafe/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.m b/node_modules/expo-dev-launcher/ios/Unsafe/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.m
+index abb3258..51621a7 100644
+--- a/node_modules/expo-dev-launcher/ios/Unsafe/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.m
++++ b/node_modules/expo-dev-launcher/ios/Unsafe/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.m
+@@ -1,87 +1,2 @@
+ // Copyright 2015-present 650 Industries. All rights reserved.
+-
+-/**
+- * This file is compiled without ARC - the memory needs to be managed by hand.
+- */
+-
+-#import <EXDevLauncher/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.h>
+-#import <EXDevLauncher/EXDevLauncherController.h>
+-
+-#import <React/RCTReconnectingWebSocket.h>
+-
+-#import <objc/runtime.h>
+-#import <mutex>
+-
+-#if RCT_DEV
+-
+-static RCTReconnectingWebSocket *createSocketForURL(NSURL * url)
+-{
+-  NSURLComponents *const components = [NSURLComponents new];
+-  components.host = [url host];
+-  components.scheme = @"http";
+-  components.port =  [url port];
+-  components.path = @"/message";
+-  components.queryItems = @[[NSURLQueryItem queryItemWithName:@"role" value:@"ios"]];
+-  static dispatch_queue_t queue;
+-  static dispatch_once_t onceToken;
+-  dispatch_once(&onceToken, ^{
+-    queue = dispatch_queue_create("com.facebook.RCTPackagerConnectionQueue", DISPATCH_QUEUE_SERIAL);
+-  });
+-
+-  RCTReconnectingWebSocket *webSocket = [[RCTReconnectingWebSocket alloc] initWithURL:components.URL queue:queue];
+-  [components release];
+-  return [webSocket autorelease]; // adds to ARC
+-}
+-
+-@implementation RCTPackagerConnection (EXDevLauncherPackagerConnectionInterceptor)
+-
+-/**
+- * Sets the WebSocket URL.
+- */
+-- (void)setSocketConnectionURL:(NSURL *)url
+-{
+-  // Mutex isn't an objective-c object - [self valueForKey:@"_mutex"] will fail.
+-  // The other solution requires `object_getInstanceVariable` which doesn't work with ARC.
+-  // That's the only solution to get private variables that comes from cpp.
+-  Ivar mutexVar = object_getInstanceVariable(self, "_mutex", NULL);
+-  ptrdiff_t mutexOffset = ivar_getOffset(mutexVar);
+-  unsigned char* selfPtr = (unsigned char *)(__bridge void*)self;
+-  std::mutex *mutex = (std::mutex *)(selfPtr + mutexOffset);
+-  
+-  RCTReconnectingWebSocket *oldSocket = (RCTReconnectingWebSocket *)[self valueForKey:@"_socket"];
+-
+-  std::lock_guard<std::mutex> l(*mutex);
+-  if (oldSocket == nil) {
+-    return; // already stopped
+-  }
+-
+-  [self setValue:@NO forKey:@"_socketConnected"];
+-
+-  oldSocket.delegate = nil;
+-  [oldSocket stop];
+-  
+-  RCTReconnectingWebSocket *newSocket = createSocketForURL(url);
+-  newSocket.delegate = (id<RCTReconnectingWebSocketDelegate>)self;
+-  [newSocket start];
+-
+-  [self setValue:newSocket forKey:@"_socket"];
+-
+-  static dispatch_once_t onceToken;
+-  dispatch_once(&onceToken, ^{
+-    [[NSNotificationCenter defaultCenter] addObserverForName:@"RCTTriggerReloadCommandNotification"
+-                                                      object:nil
+-                                                       queue:[NSOperationQueue mainQueue]
+-                                                  usingBlock:^(NSNotification *_Nonnull __unused note) {
+-      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+-        NSURL *bundleUrl = [EXDevLauncherController sharedInstance].sourceUrl;
+-        if (bundleUrl && ![bundleUrl.scheme isEqualToString:@"file"]) {
+-          [self setSocketConnectionURL:bundleUrl];
+-        }
+-      });
+-    }];
+-  });
+-}
+-
+-@end
+-
+-#endif
++// RCTPackagerConnection removed from React-Core prebuilt in RN 0.83 — file disabled.

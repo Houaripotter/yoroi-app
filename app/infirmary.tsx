@@ -33,6 +33,7 @@ import {
 } from '@/lib/infirmaryService';
 import logger from '@/lib/security/logger';
 import { useI18n } from '@/lib/I18nContext';
+import { getTrainingLoads, getRiskLevel } from '@/lib/trainingLoadService';
 
 
 
@@ -43,6 +44,8 @@ export default function InfirmaryScreen() {
   const [injuries, setInjuries] = useState<Injury[]>([]);
   const [fitForDutyStatus, setFitForDutyStatus] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
+  // Charge hebdomadaire au moment de chaque blessure: injuryId -> { totalLoad, riskLevel }
+  const [injuryLoadMap, setInjuryLoadMap] = useState<Record<number, { totalLoad: number; riskLevel: string }>>({});
   // Zone selection modal state
   const [showZoneModal, setShowZoneModal] = useState(false);
   const [overlappingZones, setOverlappingZones] = useState<Zone[]>([]);
@@ -60,6 +63,25 @@ export default function InfirmaryScreen() {
 
       const injuryStats = await getInjuryStats();
       setStats(injuryStats);
+
+      // Charger la charge d'entraînement pour la semaine de chaque blessure
+      try {
+        const allLoads = await getTrainingLoads();
+        const loadMap: Record<number, { totalLoad: number; riskLevel: string }> = {};
+        for (const inj of injuriesWithNames) {
+          if (!inj.id || !inj.date) continue;
+          const injDate = new Date(inj.date);
+          // Semaine : 7 jours précédant la blessure
+          const weekStart = new Date(injDate);
+          weekStart.setDate(injDate.getDate() - 7);
+          const weekStartStr = weekStart.toISOString().split('T')[0];
+          const injDateStr = injDate.toISOString().split('T')[0];
+          const weekLoads = allLoads.filter(l => l.date >= weekStartStr && l.date <= injDateStr);
+          const totalLoad = weekLoads.reduce((sum, l) => sum + l.load, 0);
+          loadMap[inj.id] = { totalLoad: Math.round(totalLoad), riskLevel: getRiskLevel(totalLoad) };
+        }
+        setInjuryLoadMap(loadMap);
+      } catch (_e) { /* pas critique */ }
 
     } catch (error) {
       logger.error('[Infirmary] Erreur chargement:', error);
@@ -304,6 +326,33 @@ export default function InfirmaryScreen() {
                   </Text>
                   <TrendingDown size={16} color={colors.textMuted} />
                 </View>
+
+                {/* Charge d'entraînement la semaine de la blessure */}
+                {injury.id != null && injuryLoadMap[injury.id] && injuryLoadMap[injury.id].totalLoad > 0 && (() => {
+                  const loadInfo = injuryLoadMap[injury.id!];
+                  const riskColors: Record<string, string> = {
+                    safe: '#22C55E',
+                    moderate: '#F59E0B',
+                    high: '#F97316',
+                    danger: '#EF4444',
+                  };
+                  const riskLabels: Record<string, string> = {
+                    safe: 'Charge ok',
+                    moderate: 'Charge modérée',
+                    high: 'Charge élevée',
+                    danger: 'Surcharge',
+                  };
+                  const col = riskColors[loadInfo.riskLevel] ?? '#94A3B8';
+                  return (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6, paddingTop: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)' }}>
+                      <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: col }} />
+                      <Text style={{ fontSize: 11, color: colors.textSecondary }}>
+                        Semaine précédente : <Text style={{ fontWeight: '700', color: col }}>{riskLabels[loadInfo.riskLevel]}</Text>
+                        {' '}({loadInfo.totalLoad} pts)
+                      </Text>
+                    </View>
+                  );
+                })()}
               </TouchableOpacity>
             ))}
           </View>

@@ -25,13 +25,14 @@ import {
 } from 'react-native';
 import { X, Check, Camera, ImageIcon, Play } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { useI18n } from '@/lib/I18nContext';
 import {
   SkillCategory,
   SkillStatus,
   SKILL_CATEGORIES,
   SKILL_STATUS_CONFIG,
 } from '@/lib/carnetService';
-import { renderIcon } from '../utils/iconMap';
+import { renderIcon } from '@/lib/training-journal/utils/iconMap';
 
 interface AddSkillModalProps {
   visible: boolean;
@@ -76,17 +77,20 @@ export default React.memo(function AddSkillModal({
   onRecordVideo,
   onPickVideo,
 }: AddSkillModalProps) {
+  const { t } = useI18n();
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
         <ScrollView
           style={{ maxHeight: '90%', width: '100%' }}
-          contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 16 }}
+          contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 16, paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
         >
           <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Nouvelle Technique</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('addSkill.title')}</Text>
               <TouchableOpacity onPress={() => {
                 onClose();
                 setNewSkillStatus('to_learn');
@@ -96,7 +100,7 @@ export default React.memo(function AddSkillModal({
               </TouchableOpacity>
             </View>
 
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Nom de la technique</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('addSkill.nameLabel')}</Text>
             <TextInput
               style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
               placeholder="Ex: Berimbolo, Leg Lock Defense..."
@@ -106,7 +110,7 @@ export default React.memo(function AddSkillModal({
               maxLength={50}
             />
 
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Discipline</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('addSkill.discipline')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
               {(Object.keys(SKILL_CATEGORIES) as SkillCategory[]).map(cat => (
                 <TouchableOpacity
@@ -134,7 +138,7 @@ export default React.memo(function AddSkillModal({
             </ScrollView>
 
             {/* Status Selector */}
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Statut initial</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('addSkill.initialStatus')}</Text>
             <View style={styles.statusSelectorRow}>
               {(Object.keys(SKILL_STATUS_CONFIG) as SkillStatus[]).map(status => {
                 const config = SKILL_STATUS_CONFIG[status];
@@ -167,7 +171,7 @@ export default React.memo(function AddSkillModal({
             </View>
 
             {/* Notes Field */}
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Notes techniques (optionnel)</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('addSkill.technicalNotes')}</Text>
             <TextInput
               style={[styles.textAreaInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
               placeholder="Grip pants first, then enter legs..."
@@ -181,14 +185,14 @@ export default React.memo(function AddSkillModal({
             />
 
             {/* Video Picker Section */}
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Vidéo de la technique (optionnel)</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('addSkill.videoLabel')}</Text>
             {newSkillVideoUri ? (
               <View style={[styles.videoPreviewContainer, { backgroundColor: colors.backgroundCard, borderColor: '#8B5CF6' }]}>
                 <View style={styles.videoPreviewIcon}>
                   <Play size={24} color="#8B5CF6" />
                 </View>
                 <Text style={[styles.videoPreviewText, { color: colors.textPrimary }]} numberOfLines={1}>
-                  Vidéo sélectionnée
+                  {t('addSkill.videoSelected')}
                 </Text>
                 <TouchableOpacity
                   style={styles.videoRemoveBtn}
@@ -204,14 +208,14 @@ export default React.memo(function AddSkillModal({
                   onPress={onRecordVideo}
                 >
                   <Camera size={20} color="#FFFFFF" />
-                  <Text style={styles.videoPickerBtnText}>Filmer</Text>
+                  <Text style={styles.videoPickerBtnText}>{t('addSkill.record')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.videoPickerBtn, styles.videoPickerBtnSecondary, { borderColor: '#8B5CF6' }]}
                   onPress={onPickVideo}
                 >
                   <ImageIcon size={20} color="#8B5CF6" />
-                  <Text style={[styles.videoPickerBtnText, { color: '#8B5CF6' }]}>Galerie</Text>
+                  <Text style={[styles.videoPickerBtnText, { color: '#8B5CF6' }]}>{t('addSkill.gallery')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -221,7 +225,7 @@ export default React.memo(function AddSkillModal({
               onPress={onSubmit}
               disabled={isSubmitting}
             >
-              <Text style={styles.modalButtonText}>{isSubmitting ? 'Ajout...' : 'Ajouter la Technique'}</Text>
+              <Text style={styles.modalButtonText}>{isSubmitting ? t('addSkill.submitting') : t('addSkill.submit')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

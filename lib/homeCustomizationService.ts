@@ -141,6 +141,14 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     visible: true,
     order: 14,
   },
+  {
+    id: 'tools_combat',
+    name: 'Combat Lab',
+    description: 'Match tracker, drill counter, partenaires tactiques, BJJ, benchmark, camp de compétition',
+    icon: 'swords',
+    visible: true,
+    order: 15,
+  },
 ];
 
 // Charger la configuration

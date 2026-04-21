@@ -178,6 +178,49 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   }
   @Published var profileImageData: Data? = nil
 
+  // MARK: - Training Stats (synced from unifiedWatchSyncService v2)
+  @Published var trainingsThisWeek: Int = 0 {
+    didSet { UserDefaults.standard.set(trainingsThisWeek, forKey: "yoroi_trainingsWeek"); reloadComplications() }
+  }
+  @Published var trainingsThisMonth: Int = 0 {
+    didSet { UserDefaults.standard.set(trainingsThisMonth, forKey: "yoroi_trainingsMonth"); reloadComplications() }
+  }
+  @Published var trainingsThisYear: Int = 0 {
+    didSet { UserDefaults.standard.set(trainingsThisYear, forKey: "yoroi_trainingsYear"); reloadComplications() }
+  }
+  @Published var yearlyGoal: Int = 365 {
+    didSet { UserDefaults.standard.set(yearlyGoal, forKey: "yoroi_yearlyGoal") }
+  }
+  @Published var lastTrainingDate: String = "" {
+    didSet { UserDefaults.standard.set(lastTrainingDate, forKey: "yoroi_lastTrainingDate") }
+  }
+  @Published var lastTrainingSport: String = "" {
+    didSet { UserDefaults.standard.set(lastTrainingSport, forKey: "yoroi_lastTrainingSport") }
+  }
+  @Published var lastTrainingRating: Int = 0 {
+    didSet { UserDefaults.standard.set(lastTrainingRating, forKey: "yoroi_lastTrainingRating") }
+  }
+  @Published var lastTrainingMood: String = "" {
+    didSet { UserDefaults.standard.set(lastTrainingMood, forKey: "yoroi_lastTrainingMood") }
+  }
+  @Published var weightProgress: Int = 0 {
+    didSet { UserDefaults.standard.set(weightProgress, forKey: "yoroi_weightProgress") }
+  }
+
+  // MARK: - Combat Stats du mois (fighter mode)
+  @Published var submissionsGivenMonth: Int = 0 {
+    didSet { UserDefaults.standard.set(submissionsGivenMonth, forKey: "yoroi_subsGivenMonth"); reloadComplications() }
+  }
+  @Published var submissionsTakenMonth: Int = 0 {
+    didSet { UserDefaults.standard.set(submissionsTakenMonth, forKey: "yoroi_subsTakenMonth") }
+  }
+  @Published var combatWinsMonth: Int = 0 {
+    didSet { UserDefaults.standard.set(combatWinsMonth, forKey: "yoroi_combatWinsMonth") }
+  }
+  @Published var combatLossesMonth: Int = 0 {
+    didSet { UserDefaults.standard.set(combatLossesMonth, forKey: "yoroi_combatLossesMonth") }
+  }
+
   // MARK: - Timer (countdown minuteur)
   @Published var timerTotalSeconds: Int = 90 {
     didSet { UserDefaults.standard.set(timerTotalSeconds, forKey: "yoroi_timerTotal") }
@@ -1013,6 +1056,24 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
        let imgData = Data(base64Encoded: imgBase64) {
       profileImageData = imgData
     }
+
+    // Training stats enrichis (unifiedWatchSyncService)
+    if let sd = intVal("streakDays") { streak = sd }
+    if let tw = intVal("trainingsThisWeek") { trainingsThisWeek = tw }
+    if let tm = intVal("trainingsThisMonth") { trainingsThisMonth = tm }
+    if let ty = intVal("trainingsThisYear") { trainingsThisYear = ty }
+    if let yg = intVal("yearlyGoal") { yearlyGoal = yg }
+    if let ltd = data["lastTrainingDate"] as? String { lastTrainingDate = ltd }
+    if let lts = data["lastTrainingSport"] as? String { lastTrainingSport = lts }
+    if let ltr = intVal("lastTrainingRating") { lastTrainingRating = ltr }
+    if let ltm = data["lastTrainingMood"] as? String { lastTrainingMood = ltm }
+    if let wp = intVal("weightProgress") { weightProgress = wp }
+
+    // Combat stats du mois
+    if let sg = intVal("submissionsGivenThisMonth") { submissionsGivenMonth = sg }
+    if let st = intVal("submissionsTakenThisMonth") { submissionsTakenMonth = st }
+    if let cw = intVal("combatWinsThisMonth") { combatWinsMonth = cw }
+    if let cl = intVal("combatLossesThisMonth") { combatLossesMonth = cl }
 
     // Préférences (unités + timer)
     if let us = data["unitSystem"] as? String {

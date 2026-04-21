@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Calendar, MapPin, Bell } from 'lucide-react-native';
+import { Calendar, MapPin, Bell, Footprints } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 
 type SportType = 'JJB' | 'MMA' | 'Boxe' | 'MuayThai' | 'Foot' | 'Basket' | 'Hand' | 'Running' | 'Padel' | 'Kickboxing' | 'Judo' | 'Lutte';
@@ -54,7 +54,7 @@ const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPre
       case 'JJB': return '';
       case 'MMA': return '';
       case 'Boxe': return '';
-      case 'MuayThai': return '🦵';
+      case 'MuayThai': return null; // rendu séparé via <Footprints>
       case 'Foot': return '';
       case 'Basket': return '';
       case 'Hand': return '';
@@ -133,7 +133,10 @@ const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPre
     >
       {/* Partie gauche - Bande colorée avec sport */}
       <View style={[styles.ticketLeft, { backgroundColor: colors.primary }]}>
-        <Text style={styles.sportIcon}>{getSportIcon()}</Text>
+        {event.sport === 'MuayThai'
+          ? <Footprints size={22} color="#FFFFFF" style={styles.sportIcon} />
+          : <Text style={styles.sportIcon}>{getSportIcon()}</Text>
+        }
         <Text style={styles.sportLabel}>{event.sport}</Text>
       </View>
 

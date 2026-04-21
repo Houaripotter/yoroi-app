@@ -26,6 +26,7 @@ import {
 } from 'react-native';
 import { ChevronLeft, X, Trash2, Check, Plus, Video, ExternalLink } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { useI18n } from '@/lib/I18nContext';
 import {
   Skill,
   SkillStatus,
@@ -86,6 +87,7 @@ export default React.memo(function SkillDetailModal({
   onDelete,
   onRefreshSkill,
 }: SkillDetailModalProps) {
+  const { t } = useI18n();
   if (!skill) return null;
 
   const statusConfig = SKILL_STATUS_CONFIG[skill.status];
@@ -133,7 +135,7 @@ export default React.memo(function SkillDetailModal({
 
           <ScrollView style={styles.detailContent} showsVerticalScrollIndicator={false}>
             {/* Status Selector */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>STATUT</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('skillDetail.status')}</Text>
             <View style={styles.statusRow}>
               {(Object.keys(SKILL_STATUS_CONFIG) as SkillStatus[]).map(status => {
                 const config = SKILL_STATUS_CONFIG[status];
@@ -157,13 +159,13 @@ export default React.memo(function SkillDetailModal({
             </View>
 
             {/* Drill Counter */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>COMPTEUR DE REPS</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('skillDetail.drillCounter')}</Text>
             <View style={[styles.drillCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
               <View style={styles.drillInfo}>
                 <Text style={[styles.drillCount, { color: colors.textPrimary }]}>
                   {skill.drillCount}
                 </Text>
-                <Text style={[styles.drillLabel, { color: colors.textMuted }]}>répétitions</Text>
+                <Text style={[styles.drillLabel, { color: colors.textMuted }]}>{t('skillDetail.repetitions')}</Text>
               </View>
               <View style={styles.drillActions}>
                 <TextInput
@@ -179,13 +181,13 @@ export default React.memo(function SkillDetailModal({
                   onPress={onIncrementDrill}
                 >
                   <Plus size={18} color="#FFFFFF" strokeWidth={3} />
-                  <Text style={styles.drillAddText}>Ajouter</Text>
+                  <Text style={styles.drillAddText}>{t('skillDetail.addReps')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Notes */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>NOTES</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('skillDetail.notes')}</Text>
             <View style={[styles.noteInputContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
               <TextInput
                 style={[styles.noteInput, { color: colors.textPrimary }]}
@@ -235,7 +237,7 @@ export default React.memo(function SkillDetailModal({
             )}
 
             {/* Video Link Section */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>LIEN VIDÉO</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('skillDetail.videoLink')}</Text>
             <View style={[styles.videoLinkContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
               <Video size={20} color={colors.textMuted} />
               <TextInput
@@ -264,7 +266,7 @@ export default React.memo(function SkillDetailModal({
               >
                 <ExternalLink size={16} color={categoryConfig.color} />
                 <Text style={[styles.watchVideoText, { color: categoryConfig.color }]}>
-                  Voir la vidéo
+                  {t('skillDetail.watchVideo')}
                 </Text>
               </TouchableOpacity>
             )}

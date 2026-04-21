@@ -9,7 +9,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronRight, Share2 } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Share2 } from 'lucide-react-native';
 import ViewShot from 'react-native-view-shot';
 import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
@@ -242,8 +242,8 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
             <Animated.View style={[styles.sliderHandle, handleStyle]}>
               <View style={styles.sliderHandleInner}>
                 <View style={styles.sliderArrows}>
-                  <Text style={styles.sliderArrowText}>◀</Text>
-                  <Text style={styles.sliderArrowText}>▶</Text>
+                  <ChevronLeft size={14} color="#fff" />
+                  <ChevronRight size={14} color="#fff" />
                 </View>
               </View>
             </Animated.View>

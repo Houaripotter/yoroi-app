@@ -4,7 +4,8 @@
 // Planification de coupe de poids pour combattants
 // Avec protocole hydrique et alertes de securite
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
   Text,
@@ -27,9 +28,13 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  Bell,
+  BellOff,
+  Zap,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { getWeights, Weight } from '@/lib/database';
 
 // ============================================
 // TYPES & CONSTANTS
@@ -74,16 +79,97 @@ const DANGEROUS_CUT = 0.10; // 10% = dangereux
 export default function WeightCutScreen() {
   const { colors, isDark } = useTheme();
 
-  // Inputs
+  // Inputs simulateur
   const [currentWeight, setCurrentWeight] = useState('');
   const [targetWeight, setTargetWeight] = useState('');
   const [daysUntilFight, setDaysUntilFight] = useState('');
+
+  // Protocole rehydratation jour-J
+  const [rehydDelta, setRehydDelta] = useState('');
+  const [rehydHours, setRehydHours] = useState('');
+  const [rehydNotifActive, setRehydNotifActive] = useState(false);
+
+  const rehydTimeline = useMemo(() => {
+    const delta = parseFloat(rehydDelta);
+    const hours = parseFloat(rehydHours);
+    if (!delta || !hours || delta <= 0 || hours <= 0) return null;
+    // Protocole : 1.5L par kg perdu, réparti sur le temps dispo, rappels toutes les 20min
+    const totalMl = delta * 1500;
+    const slots = Math.floor((hours * 60) / 20);
+    if (slots <= 0) return null;
+    const mlPerSlot = Math.round(totalMl / slots);
+    const steps: { minuteOffset: number; label: string; ml: number }[] = [];
+    for (let i = 0; i < slots; i++) {
+      const min = i * 20;
+      const h = Math.floor(min / 60);
+      const m = min % 60;
+      steps.push({
+        minuteOffset: min,
+        label: h > 0 ? `+${h}h${m > 0 ? m.toString().padStart(2, '0') : ''}` : `+${m}min`,
+        ml: mlPerSlot,
+      });
+    }
+    return { totalMl, slots, mlPerSlot, steps, totalHours: hours };
+  }, [rehydDelta, rehydHours]);
+
+  const scheduleRehydNotifs = async () => {
+    if (!rehydTimeline) return;
+    try {
+      const Notifications = await import('expo-notifications');
+      await Notifications.requestPermissionsAsync();
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      for (const step of rehydTimeline.steps) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: 'Rehydratation Jour-J',
+            body: `Bois ${step.ml} ml maintenant (${step.label} depuis la pesée)`,
+            sound: true,
+          },
+          trigger: { seconds: Math.max(1, step.minuteOffset * 60), repeats: false } as any,
+        });
+      }
+      setRehydNotifActive(true);
+      Alert.alert('Rappels activés', `${rehydTimeline.slots} notifications programmées toutes les 20 min.`);
+    } catch {
+      Alert.alert('Erreur', 'Impossible de programmer les notifications.');
+    }
+  };
+
+  const cancelRehydNotifs = async () => {
+    try {
+      const Notifications = await import('expo-notifications');
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      setRehydNotifActive(false);
+    } catch {}
+  };
+
+  // Suivi réel vers objectif compétition
+  const GOAL_KEY = '@yoroi_weightcut_goal';
+  const [goalWeight, setGoalWeight] = useState('');
+  const [goalDate, setGoalDate] = useState('');
+  const [weightHistory, setWeightHistory] = useState<Weight[]>([]);
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalDraft, setGoalDraft] = useState({ weight: '', date: '' });
+
+  useEffect(() => {
+    // Charger l'objectif sauvegardé
+    AsyncStorage.getItem(GOAL_KEY).then(raw => {
+      if (!raw) return;
+      try {
+        const g = JSON.parse(raw);
+        setGoalWeight(g.weight ?? '');
+        setGoalDate(g.date ?? '');
+      } catch {}
+    });
+    // Charger l'historique poids (90 derniers jours)
+    getWeights(90).then(ws => setWeightHistory(ws)).catch(() => {});
+  }, []);
 
   // Calculer le plan
   const plan = useMemo((): WeightCutPlan | null => {
     const current = parseFloat(currentWeight);
     const target = parseFloat(targetWeight);
-    const days = parseInt(daysUntilFight);
+    const days = parseInt(daysUntilFight, 10);
 
     if (!current || !target || !days || target >= current || days <= 0) {
       return null;
@@ -452,6 +538,256 @@ export default function WeightCutScreen() {
             </Text>
           </View>
         )}
+
+        {/* ── PROTOCOLE REHYDRATATION JOUR-J ── */}
+        <View style={[styles.card, { backgroundColor: colors.card, marginTop: 16 }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <Droplets size={18} color="#3B82F6" />
+            <Text style={[styles.cardTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Protocole rehydratation jour-J</Text>
+          </View>
+          <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 12, lineHeight: 17 }}>
+            Après la pesée, génère un plan de rehydratation et active les rappels toutes les 20 min.
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 5 }}>Poids perdu (kg)</Text>
+              <View style={[styles.inputContainer, { backgroundColor: colors.cardHover }]}>
+                <TextInput
+                  style={[styles.input, { color: colors.textPrimary }]}
+                  value={rehydDelta}
+                  onChangeText={v => setRehydDelta(v.replace(',', '.'))}
+                  keyboardType="decimal-pad"
+                  placeholder="2.5"
+                  placeholderTextColor={colors.textMuted}
+                />
+                <Text style={[styles.inputUnit, { color: colors.textMuted }]}>kg</Text>
+              </View>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 5 }}>Temps avant combat</Text>
+              <View style={[styles.inputContainer, { backgroundColor: colors.cardHover }]}>
+                <TextInput
+                  style={[styles.input, { color: colors.textPrimary }]}
+                  value={rehydHours}
+                  onChangeText={v => setRehydHours(v.replace(',', '.'))}
+                  keyboardType="decimal-pad"
+                  placeholder="2"
+                  placeholderTextColor={colors.textMuted}
+                />
+                <Text style={[styles.inputUnit, { color: colors.textMuted }]}>h</Text>
+              </View>
+            </View>
+          </View>
+
+          {rehydTimeline && (
+            <View style={{ gap: 8 }}>
+              {/* Résumé */}
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4 }}>
+                <View style={{ flex: 1, backgroundColor: '#3B82F618', borderRadius: 10, padding: 10, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>Total à boire</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#3B82F6' }}>{(rehydTimeline.totalMl / 1000).toFixed(1)} L</Text>
+                </View>
+                <View style={{ flex: 1, backgroundColor: '#22C55E18', borderRadius: 10, padding: 10, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>Par rappel</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#22C55E' }}>{rehydTimeline.mlPerSlot} ml</Text>
+                </View>
+                <View style={{ flex: 1, backgroundColor: '#F59E0B18', borderRadius: 10, padding: 10, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>Rappels</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#F59E0B' }}>{rehydTimeline.slots}</Text>
+                </View>
+              </View>
+
+              {/* Timeline (6 premières étapes) */}
+              <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, letterSpacing: 0.5 }}>TIMELINE (20 MIN/RAPPEL)</Text>
+              <View style={{ gap: 6 }}>
+                {rehydTimeline.steps.slice(0, 6).map((step, i) => (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={{ width: 38, height: 22, borderRadius: 6, backgroundColor: '#3B82F618', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 9, fontWeight: '800', color: '#3B82F6' }}>{step.label}</Text>
+                    </View>
+                    <View style={{ flex: 1, height: 4, backgroundColor: `${colors.border}66`, borderRadius: 2, overflow: 'hidden' }}>
+                      <View style={{ width: `${Math.min(100, ((i + 1) / rehydTimeline.slots) * 100)}%`, height: '100%', backgroundColor: '#3B82F6', borderRadius: 2 }} />
+                    </View>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textPrimary, minWidth: 50, textAlign: 'right' }}>{step.ml} ml</Text>
+                  </View>
+                ))}
+                {rehydTimeline.steps.length > 6 && (
+                  <Text style={{ fontSize: 11, color: colors.textMuted, textAlign: 'center' }}>+ {rehydTimeline.steps.length - 6} rappels supplémentaires...</Text>
+                )}
+              </View>
+
+              {/* Bouton notifications */}
+              {rehydNotifActive ? (
+                <TouchableOpacity
+                  onPress={cancelRehydNotifs}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#EF444420', borderRadius: 12, paddingVertical: 12, marginTop: 4 }}
+                >
+                  <BellOff size={16} color="#EF4444" />
+                  <Text style={{ color: '#EF4444', fontWeight: '800', fontSize: 14 }}>Annuler les rappels</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={scheduleRehydNotifs}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#3B82F6', borderRadius: 12, paddingVertical: 12, marginTop: 4 }}
+                >
+                  <Bell size={16} color="#fff" />
+                  <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14 }}>Activer les rappels toutes les 20 min</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+          {!rehydTimeline && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#3B82F60A', borderRadius: 10, padding: 12 }}>
+              <Zap size={14} color="#3B82F6" />
+              <Text style={{ flex: 1, fontSize: 12, color: colors.textMuted, lineHeight: 17 }}>
+                Renseigne le poids perdu et le temps disponible pour générer le plan.
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* ── SUIVI RÉEL VERS OBJECTIF COMPÉTITION ── */}
+        <View style={[styles.card, { backgroundColor: colors.card, marginTop: 16 }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Target size={18} color="#8B5CF6" />
+              <Text style={[styles.cardTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Suivi objectif compétition</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                setGoalDraft({ weight: goalWeight, date: goalDate });
+                setEditingGoal(true);
+              }}
+              style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, backgroundColor: '#8B5CF618' }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#8B5CF6' }}>{goalWeight ? 'Modifier' : 'Définir'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {editingGoal && (
+            <View style={{ gap: 8, marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <View style={[styles.inputContainer, { flex: 1, backgroundColor: colors.cardHover }]}>
+                  <TextInput
+                    style={[styles.input, { color: colors.textPrimary }]}
+                    value={goalDraft.weight}
+                    onChangeText={v => setGoalDraft(d => ({ ...d, weight: v.replace(',', '.') }))}
+                    keyboardType="decimal-pad"
+                    placeholder="Poids cible (kg)"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                  <Text style={[styles.inputUnit, { color: colors.textMuted }]}>kg</Text>
+                </View>
+                <View style={[styles.inputContainer, { flex: 1.5, backgroundColor: colors.cardHover }]}>
+                  <TextInput
+                    style={[styles.input, { color: colors.textPrimary }]}
+                    value={goalDraft.date}
+                    onChangeText={v => setGoalDraft(d => ({ ...d, date: v }))}
+                    placeholder="Date compét. AAAA-MM-JJ"
+                    placeholderTextColor={colors.textMuted}
+                    maxLength={10}
+                  />
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={async () => {
+                  setGoalWeight(goalDraft.weight);
+                  setGoalDate(goalDraft.date);
+                  await AsyncStorage.setItem(GOAL_KEY, JSON.stringify(goalDraft));
+                  setEditingGoal(false);
+                }}
+                style={{ backgroundColor: '#8B5CF6', borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14 }}>Enregistrer</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {goalWeight && goalDate && weightHistory.length > 0 && (() => {
+            const target = parseFloat(goalWeight);
+            const compDate = new Date(goalDate);
+            const today = new Date();
+            const daysLeft = Math.max(0, Math.round((compDate.getTime() - today.getTime()) / 86400000));
+
+            // Poids hebdomadaires (dernier pesée par semaine)
+            const weekMap: Record<string, number> = {};
+            for (const w of weightHistory) {
+              const d = new Date(w.date);
+              const week = `${d.getFullYear()}-${Math.floor(d.getTime() / (7 * 86400000))}`;
+              if (!weekMap[week]) weekMap[week] = w.weight;
+            }
+            const weeks = Object.entries(weekMap).sort((a, b) => a[0].localeCompare(b[0])).slice(-8);
+            const latestWeight = weeks[weeks.length - 1]?.[1];
+            const toGo = latestWeight != null ? Math.max(0, latestWeight - target) : null;
+            const maxW = Math.max(...weeks.map(w => w[1]), target + 1);
+            const minW = Math.min(...weeks.map(w => w[1]), target - 0.5);
+            const range = maxW - minW || 1;
+            const BAR_HEIGHT = 80;
+
+            return (
+              <View style={{ gap: 10 }}>
+                {/* Stats clés */}
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <View style={{ flex: 1, backgroundColor: '#8B5CF618', borderRadius: 10, padding: 10, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 3 }}>Objectif</Text>
+                    <Text style={{ fontSize: 18, fontWeight: '900', color: '#8B5CF6' }}>{target} kg</Text>
+                  </View>
+                  {latestWeight != null && (
+                    <View style={{ flex: 1, backgroundColor: toGo != null && toGo <= 0 ? '#22C55E18' : '#F59E0B18', borderRadius: 10, padding: 10, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 3 }}>À perdre</Text>
+                      <Text style={{ fontSize: 18, fontWeight: '900', color: toGo != null && toGo <= 0 ? '#22C55E' : '#F59E0B' }}>
+                        {toGo != null && toGo <= 0 ? 'Atteint !' : `${toGo?.toFixed(1)} kg`}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={{ flex: 1, backgroundColor: daysLeft < 14 ? '#EF444418' : '#06B6D418', borderRadius: 10, padding: 10, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 3 }}>Jours restants</Text>
+                    <Text style={{ fontSize: 18, fontWeight: '900', color: daysLeft < 14 ? '#EF4444' : '#06B6D4' }}>{daysLeft}</Text>
+                  </View>
+                </View>
+
+                {/* Mini graphique barres semaines */}
+                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, letterSpacing: 0.5 }}>ÉVOLUTION HEBDOMADAIRE</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: BAR_HEIGHT + 20 }}>
+                  {weeks.map(([week, w], i) => {
+                    const barH = ((w - minW) / range) * BAR_HEIGHT;
+                    const isLast = i === weeks.length - 1;
+                    const col = w <= target ? '#22C55E' : w - target < 1 ? '#F59E0B' : '#8B5CF6';
+                    return (
+                      <View key={week} style={{ flex: 1, alignItems: 'center', gap: 3 }}>
+                        <Text style={{ fontSize: 9, color: colors.textMuted }}>{w.toFixed(1)}</Text>
+                        <View style={{
+                          width: '100%',
+                          height: Math.max(8, barH),
+                          backgroundColor: col,
+                          borderRadius: 4,
+                          opacity: isLast ? 1 : 0.55,
+                          borderWidth: isLast ? 1.5 : 0,
+                          borderColor: isLast ? '#fff' : 'transparent',
+                        }} />
+                        <Text style={{ fontSize: 8, color: colors.textMuted }}>S{i + 1}</Text>
+                      </View>
+                    );
+                  })}
+                  {/* Ligne cible */}
+                </View>
+
+                {/* Ligne cible indication */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <View style={{ flex: 1, height: 1.5, backgroundColor: '#22C55E', borderRadius: 1 }} />
+                  <Text style={{ fontSize: 10, color: '#22C55E', fontWeight: '700' }}>Cible {target} kg</Text>
+                  <View style={{ flex: 1, height: 1.5, backgroundColor: '#22C55E', borderRadius: 1 }} />
+                </View>
+              </View>
+            );
+          })()}
+
+          {(!goalWeight || !goalDate) && !editingGoal && (
+            <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', paddingVertical: 12 }}>
+              Définis ton objectif de poids et la date de ta compétition pour suivre ta progression.
+            </Text>
+          )}
+        </View>
 
         <View style={{ height: 40 }} />
       </ScrollView>

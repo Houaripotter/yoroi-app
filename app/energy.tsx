@@ -141,7 +141,15 @@ export default function EnergyScreen() {
   }, [loadData]);
 
   // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      await loadData();
+      if (!mounted) return;
+    };
+    load();
+    return () => { mounted = false; };
+  }, []);
 
   // Listener pour les changements de données YOROI
   useEffect(() => {
@@ -317,6 +325,21 @@ export default function EnergyScreen() {
               {lastTrainingDays === 0 ? t('energy.tips.training.today')
                 : lastTrainingDays === 1 ? t('energy.tips.training.yesterday')
                 : lastTrainingDays !== null ? t('energy.tips.training.daysAgo', { days: lastTrainingDays }) : t('energy.tips.training.none')}
+            </Text>
+          </View>
+          <ChevronRight size={18} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        {/* LIEN READINESS DÉTAILLÉ */}
+        <TouchableOpacity
+          style={[styles.tipCard, { backgroundColor: colors.backgroundCard }]}
+          onPress={() => router.push('/readiness-detail' as any)}
+        >
+          <Activity size={20} color="#8B5CF6" />
+          <View style={styles.tipContent}>
+            <Text style={[styles.tipTitle, { color: colors.textPrimary }]}>Score Readiness détaillé</Text>
+            <Text style={[styles.tipDesc, { color: colors.textMuted }]}>
+              Voir l'analyse complète : sommeil, charge, HRV...
             </Text>
           </View>
           <ChevronRight size={18} color={colors.textMuted} />

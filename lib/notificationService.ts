@@ -542,7 +542,7 @@ class NotificationService {
       content: {
         title: weeklyMessage.title,
         body: weeklyMessage.body,
-        data: { type: 'social_card_weekly', screen: 'share-hub' },
+        data: { type: 'social_card_weekly', screen: 'social-share/weekly-recap-v2', autoShare: true },
         sound: true,
       },
       trigger: {
@@ -570,7 +570,7 @@ class NotificationService {
         content: {
           title: monthlyMessage.title,
           body: monthlyMessage.body,
-          data: { type: 'social_card_monthly', screen: 'share-hub' },
+          data: { type: 'social_card_monthly', screen: 'social-share/monthly-recap-v2', autoShare: true },
           sound: true,
         },
         trigger: {
@@ -963,12 +963,12 @@ class NotificationService {
 
   async sendWeeklyCardReminder(): Promise<void> {
     const message = WEEKLY_CARD_MESSAGES[Math.floor(Math.random() * WEEKLY_CARD_MESSAGES.length)];
-    await this.sendInstantNotification(message.title, message.body, { type: 'social_card_weekly', screen: 'share-hub' }, true);
+    await this.sendInstantNotification(message.title, message.body, { type: 'social_card_weekly', screen: 'social-share/weekly-recap-v2', autoShare: true }, true);
   }
 
   async sendMonthlyCardReminder(): Promise<void> {
     const message = MONTHLY_CARD_MESSAGES[Math.floor(Math.random() * MONTHLY_CARD_MESSAGES.length)];
-    await this.sendInstantNotification(message.title, message.body, { type: 'social_card_monthly', screen: 'share-hub' }, true);
+    await this.sendInstantNotification(message.title, message.body, { type: 'social_card_monthly', screen: 'social-share/monthly-recap-v2', autoShare: true }, true);
   }
 
   async sendBriefing(): Promise<void> {

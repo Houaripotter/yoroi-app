@@ -7,7 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import { Heart, Info } from 'lucide-react-native';
+import { Heart, Info, Check } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
@@ -143,7 +143,7 @@ export default function HeartZonesScreen() {
               { borderColor: colors.border },
               useCustomMax && { backgroundColor: colors.gold, borderColor: colors.gold }
             ]}>
-              {useCustomMax && <Text style={styles.checkmark}>✓</Text>}
+              {useCustomMax && <Check size={12} color="#fff" strokeWidth={3} />}
             </View>
             <Text style={[styles.toggleLabel, { color: colors.textSecondary }]}>
               {t('heartZones.customMaxToggle')}

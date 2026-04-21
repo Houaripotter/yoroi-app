@@ -3,7 +3,7 @@
 // Un seul fichier CSV avec colonne TYPE
 // ============================================
 
-import { addWeight, addTraining, addMeasurementRecord } from '@/lib/database';
+import { addWeight, addTraining, addMeasurementRecord, upsertWeight } from '@/lib/database';
 import { addSleepEntry } from '@/lib/sleepService';
 import { addHydrationEntry } from '@/lib/storage';
 import { saveMood } from '@/lib/storage';
@@ -509,7 +509,10 @@ export async function importParsedRows(rows: ParsedCSVRow[]): Promise<CSVImportR
 }
 
 async function importPoidsRow(data: Record<string, string>): Promise<void> {
-  await addWeight({
+  // Utilise upsertWeight pour éviter les doublons (même date + source = 'csv')
+  // si l'utilisateur importe plusieurs fois le même fichier ou si le CSV
+  // contient des lignes dupliquées.
+  await upsertWeight({
     date: data['date'],
     weight: parseFloat(data['weight']),
     fat_percent: getOptionalFloat(data, 'fat_percent'),

@@ -30,6 +30,7 @@ import {
   ArrowDown,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { COLORS, SPACING, RADIUS, FONT, SHADOWS, TIFFANY } from '@/constants/appTheme';
 import { MotiView, AnimatePresence } from 'moti';
 
@@ -40,15 +41,16 @@ import { MotiView, AnimatePresence } from 'moti';
 type IdeaCategory = 'feature' | 'design' | 'bug' | 'other';
 
 const CATEGORIES = [
-  { id: 'feature' as IdeaCategory, label: 'Fonctionnalité', icon: Sparkles, color: TIFFANY.accent },
-  { id: 'design' as IdeaCategory, label: 'Design', icon: Palette, color: '#8B5CF6' },
-  { id: 'bug' as IdeaCategory, label: 'Bug', icon: Bug, color: '#EF4444' },
-  { id: 'other' as IdeaCategory, label: 'Autre', icon: HelpCircle, color: '#6B7280' },
+  { id: 'feature' as IdeaCategory, labelKey: 'catFeature', icon: Sparkles, color: TIFFANY.accent },
+  { id: 'design' as IdeaCategory, labelKey: 'catDesign', icon: Palette, color: '#8B5CF6' },
+  { id: 'bug' as IdeaCategory, labelKey: 'catBug', icon: Bug, color: '#EF4444' },
+  { id: 'other' as IdeaCategory, labelKey: 'catOther', icon: HelpCircle, color: '#6B7280' },
 ];
 
 export default function IdeasScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const params = useLocalSearchParams();
 
@@ -79,7 +81,7 @@ export default function IdeasScreen() {
 
   const sendIdea = async () => {
     if (!ideaText.trim()) {
-      showPopup('Oups', 'Écris ton idée avant de l\'envoyer !', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('ideas.emptyError'), t('ideas.emptyMsg'), [{ text: t('ideas.ok'), style: 'primary' }]);
       return;
     }
 
@@ -110,9 +112,10 @@ export default function IdeasScreen() {
 
   const sendByEmail = async () => {
     try {
-      const categoryLabel = CATEGORIES.find(c => c.id === category)?.label || 'Autre';
+      const catEntry = CATEGORIES.find(c => c.id === category);
+      const categoryLabel = catEntry ? t(`ideas.${catEntry.labelKey}`) : t('ideas.catOther');
       const subject = encodeURIComponent(`[Yoroi] ${categoryLabel}: Suggestion`);
-      const body = encodeURIComponent(`Catégorie: ${categoryLabel}\n\n${ideaText}\n\n---\nEnvoyé depuis l\'app Yoroi`);
+      const body = encodeURIComponent(`Catégorie: ${categoryLabel}\n\n${ideaText}\n\n---\nEnvoyé depuis l'app Yoroi`);
       const mailto = `mailto:yoroiapp@hotmail.com?subject=${subject}&body=${body}`;
 
       const canOpen = await Linking.canOpenURL(mailto);
@@ -120,13 +123,13 @@ export default function IdeasScreen() {
         await safeOpenURL(mailto);
       } else {
         showPopup(
-          'Email non configuré',
-          'Impossible d\'ouvrir ton application mail. Tu peux nous écrire directement à yoroiapp@hotmail.com',
-          [{ text: 'OK', style: 'primary' }]
+          t('ideas.emailNotConfigured'),
+          t('ideas.emailNotConfiguredMsg'),
+          [{ text: t('ideas.ok'), style: 'primary' }]
         );
       }
     } catch (error) {
-      showPopup('Erreur', 'Impossible d\'ouvrir l\'application mail.', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('ideas.errorTitle'), t('ideas.errorMail'), [{ text: t('ideas.ok'), style: 'primary' }]);
     }
   };
 
@@ -141,7 +144,7 @@ export default function IdeasScreen() {
         safeOpenURL(webUrl);
       }
     }).catch(() => {
-      showPopup('Erreur', 'Impossible d\'ouvrir Instagram', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('ideas.errorTitle'), t('ideas.errorInstagram'), [{ text: t('ideas.ok'), style: 'primary' }]);
     });
   };
 
@@ -156,7 +159,7 @@ export default function IdeasScreen() {
           <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: colors.card }]}>
             <ChevronLeft size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Boîte à Idées</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>{t('ideas.title')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -204,7 +207,7 @@ export default function IdeasScreen() {
                     <View style={styles.successIcon}>
                       <Check size={32} color={COLORS.success} />
                     </View>
-                    <Text style={[styles.successText, { color: colors.text }]}>Idée reçue ! Merci !</Text>
+                    <Text style={[styles.successText, { color: colors.text }]}>{t('ideas.receivedMsg')}</Text>
                   </MotiView>
                 )}
               </AnimatePresence>
@@ -218,14 +221,14 @@ export default function IdeasScreen() {
               >
                 <ArrowDown size={16} color={colors.textMuted} />
                 <Text style={[styles.hurneHintText, { color: colors.textMuted }]}>
-                  Envoie ton message dans la hurne
+                  {t('ideas.hintText')}
                 </Text>
               </MotiView>
             )}
           </View>
 
           {/* Category Selection */}
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>TYPE DE MESSAGE</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('ideas.messageType')}</Text>
           <View style={styles.categoriesRow}>
             {CATEGORIES.map((cat) => {
               const Icon = cat.icon;
@@ -248,7 +251,7 @@ export default function IdeasScreen() {
                 >
                   <Icon size={18} color={isSelected ? cat.color : colors.textMuted} />
                   <Text style={[styles.categoryText, { color: isSelected ? colors.text : colors.textSecondary }]}>
-                    {cat.label}
+                    {t(`ideas.${cat.labelKey}`)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -260,7 +263,7 @@ export default function IdeasScreen() {
             <View style={[styles.inputCard, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
               <TextInput
                 style={[styles.textInput, { color: colors.text }]}
-                placeholder="Décris ton idée, un bug ou une amélioration..."
+                placeholder={t('ideas.placeholder')}
                 placeholderTextColor={colors.textMuted}
                 multiline
                 numberOfLines={6}
@@ -288,17 +291,17 @@ export default function IdeasScreen() {
             disabled={!ideaText.trim() || isSending || isSent}
           >
             {isSending ? (
-              <Text style={styles.sendBtnText}>Envoi en cours...</Text>
+              <Text style={styles.sendBtnText}>{t('ideas.sending')}</Text>
             ) : isSent ? (
               <>
                 <Check size={22} color="#FFF" />
-                <Text style={styles.sendBtnText}>C\'est envoyé !</Text>
+                <Text style={styles.sendBtnText}>{t('ideas.sent')}</Text>
               </>
             ) : (
               <>
                 <Send size={20} color="#FFF" />
                 <Text style={[styles.sendBtnText, { color: '#FFF' }]}>
-                  Glisser dans la hurne
+                  {t('ideas.sendBtn')}
                 </Text>
               </>
             )}
@@ -308,12 +311,12 @@ export default function IdeasScreen() {
           <View style={styles.alternativeButtons}>
             <TouchableOpacity style={styles.emailBtn} onPress={sendByInstagram}>
               <Instagram size={18} color={colors.textSecondary} />
-              <Text style={[styles.emailBtnText, { color: colors.textSecondary }]}>Discute avec nous sur Instagram</Text>
+              <Text style={[styles.emailBtnText, { color: colors.textSecondary }]}>{t('ideas.instagram')}</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.emailBtn} onPress={sendByEmail}>
               <Mail size={16} color={colors.textMuted} />
-              <Text style={[styles.emailBtnText, { color: colors.textMuted, fontSize: 12 }]}>Un souci ? Contacte le support</Text>
+              <Text style={[styles.emailBtnText, { color: colors.textMuted, fontSize: 12 }]}>{t('ideas.support')}</Text>
             </TouchableOpacity>
           </View>
 

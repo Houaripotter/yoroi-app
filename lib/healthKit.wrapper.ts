@@ -6,13 +6,17 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { logger } from '@/lib/security/logger';
 
-// Détection Expo Go robuste : supporte SDK 50+ et anciennes versions
-// - executionEnvironment === 'storeClient' = Expo Go (SDK 46+)
+// Détection Expo Go robuste : supporte SDK 50-55+ et anciennes versions
+// - executionEnvironment === 'storeClient' = Expo Go (SDK 46-54)
+// - executionEnvironment === 'expo' = Expo Go (SDK 55+)
 // - appOwnership === 'expo' = Expo Go (ancienne API)
+// - __DEV__ + absence de EAS projectId = très probablement Expo Go
 const execEnv: string = (Constants as any).executionEnvironment ?? '';
 const isExpoGo =
   execEnv === 'storeClient' ||
-  Constants.appOwnership === 'expo';
+  execEnv === 'expo' ||
+  Constants.appOwnership === 'expo' ||
+  (Constants as any).appOwnership === 'guest';
 
 let HealthKit: any = null;
 let loadError: string | null = null;

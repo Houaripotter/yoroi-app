@@ -279,9 +279,14 @@ export default function FastingScreen() {
     if (isSaving) return;
     setIsSaving(true);
     try {
+      const hours = parseInt(customDuration, 10);
+      if (isNaN(hours) || hours < 1) {
+        setIsSaving(false);
+        return;
+      }
       const settings: CustomFastingSettings = {
         startTime: customStartTime,
-        durationHours: parseInt(customDuration, 10) || 16,
+        durationHours: hours,
         activeDays: customDays,
       };
       await saveCustomFastingSettings(settings);
@@ -459,9 +464,10 @@ export default function FastingScreen() {
         {!fastingState?.isActive && (
           <>
             <View style={styles.header}>
-              <Text style={[styles.title, { color: colors.textPrimary }]}>
-                🍽️ {t('fasting.title')}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Utensils size={22} color={colors.textPrimary} />
+                <Text style={[styles.title, { color: colors.textPrimary }]}>{t('fasting.title')}</Text>
+              </View>
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
                 {t('fasting.chooseYourFastingType')}
               </Text>
@@ -654,9 +660,10 @@ export default function FastingScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                ⚙️ {t('fasting.customFastingTitle')}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Settings size={18} color={colors.textPrimary} />
+                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('fasting.customFastingTitle')}</Text>
+              </View>
               <TouchableOpacity onPress={() => setShowCustomModal(false)}>
                 <X size={24} color={colors.textMuted} />
               </TouchableOpacity>

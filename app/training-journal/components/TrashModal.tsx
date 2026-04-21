@@ -22,6 +22,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { X, Trash2, RotateCcw, Dumbbell, BookOpen } from 'lucide-react-native';
+import { useI18n } from '@/lib/I18nContext';
 import { Benchmark, Skill, TrashItem } from '@/lib/carnetService';
 
 interface TrashModalProps {
@@ -53,6 +54,7 @@ export default React.memo(function TrashModal({
   onRestoreSkill,
   onEmptyTrash,
 }: TrashModalProps) {
+  const { t } = useI18n();
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen">
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -61,7 +63,7 @@ export default React.memo(function TrashModal({
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
             <X size={28} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Corbeille</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('trashModal.title')}</Text>
           <View style={{ width: 36 }} />
         </View>
 
@@ -81,10 +83,10 @@ export default React.memo(function TrashModal({
                 <Trash2 size={36} color={colors.textMuted} />
               </View>
               <Text style={{ fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 }}>
-                Corbeille vide
+                {t('trashModal.emptyTitle')}
               </Text>
               <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center', paddingHorizontal: 40 }}>
-                Les éléments supprimés apparaîtront ici
+                {t('trashModal.emptyMsg')}
               </Text>
             </View>
           )}
@@ -95,7 +97,7 @@ export default React.memo(function TrashModal({
               <View style={styles.sectionHeader}>
                 <Dumbbell size={18} color="#EF4444" />
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                  Records supprimés ({trashBenchmarks.length})
+                  {t('trashModal.deletedBenchmarks').replace('{{count}}', String(trashBenchmarks.length))}
                 </Text>
               </View>
 
@@ -104,7 +106,7 @@ export default React.memo(function TrashModal({
                 const deletedDate = new Date(trashItem.deletedAt);
                 const now = new Date();
                 const diffDays = Math.floor((now.getTime() - deletedDate.getTime()) / (1000 * 60 * 60 * 24));
-                const deletedText = diffDays === 0 ? "Aujourd'hui" : diffDays === 1 ? "Hier" : `Il y a ${diffDays}j`;
+                const deletedText = diffDays === 0 ? t('trashModal.deletedToday') : diffDays === 1 ? t('trashModal.deletedYesterday') : t('trashModal.deletedDaysAgo').replace('{{n}}', String(diffDays));
 
                 return (
                   <View
@@ -123,11 +125,11 @@ export default React.memo(function TrashModal({
                         {benchmark.name}
                       </Text>
                       <Text style={{ fontSize: 12, color: colors.textMuted }}>
-                        Supprimé {deletedText}
+                        {t('trashModal.deleted')} {deletedText}
                       </Text>
                       {benchmark.entries.length > 0 && (
                         <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>
-                          {benchmark.entries.length} entrée(s)
+                          {benchmark.entries.length} {t('trashModal.entries')}
                         </Text>
                       )}
                     </View>
@@ -149,7 +151,7 @@ export default React.memo(function TrashModal({
               <View style={styles.sectionHeader}>
                 <BookOpen size={18} color="#8B5CF6" />
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                  Techniques supprimées ({trashSkills.length})
+                  {t('trashModal.deletedSkills').replace('{{count}}', String(trashSkills.length))}
                 </Text>
               </View>
 
@@ -158,7 +160,7 @@ export default React.memo(function TrashModal({
                 const deletedDate = new Date(trashItem.deletedAt);
                 const now = new Date();
                 const diffDays = Math.floor((now.getTime() - deletedDate.getTime()) / (1000 * 60 * 60 * 24));
-                const deletedText = diffDays === 0 ? "Aujourd'hui" : diffDays === 1 ? "Hier" : `Il y a ${diffDays}j`;
+                const deletedText = diffDays === 0 ? t('trashModal.deletedToday') : diffDays === 1 ? t('trashModal.deletedYesterday') : t('trashModal.deletedDaysAgo').replace('{{n}}', String(diffDays));
 
                 return (
                   <View
@@ -177,15 +179,15 @@ export default React.memo(function TrashModal({
                         {skill.name}
                       </Text>
                       <Text style={{ fontSize: 12, color: colors.textMuted }}>
-                        Supprimé {deletedText}
+                        {t('trashModal.deleted')} {deletedText}
                       </Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
                         <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                          {skill.drillCount} reps
+                          {skill.drillCount} {t('trashModal.reps')}
                         </Text>
                         {skill.notes.length > 0 && (
                           <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                            • {skill.notes.length} note(s)
+                            • {skill.notes.length} {t('trashModal.notes')}
                           </Text>
                         )}
                       </View>
@@ -216,7 +218,7 @@ export default React.memo(function TrashModal({
             >
               <Trash2 size={20} color="#FFFFFF" />
               <Text style={styles.emptyTrashText}>
-                Vider la corbeille ({trashCount})
+                {t('trashModal.emptyTrash').replace('{{count}}', String(trashCount))}
               </Text>
             </TouchableOpacity>
           </View>

@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
   X,
   Share2,
@@ -24,6 +24,8 @@ import {
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
 import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { captureRef } from 'react-native-view-shot';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 
@@ -50,6 +52,7 @@ export default function WeeklyRecapV2Screen() {
   const cardRef = useRef<View>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { autoShare } = useLocalSearchParams<{ autoShare?: string }>();
 
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
   const [selectedTemplate, setSelectedTemplate] = useState<'photo' | 'dark' | 'light'>('dark');
@@ -64,6 +67,7 @@ export default function WeeklyRecapV2Screen() {
   const [userLevel, setUserLevel] = useState<number>(1);
 
   const { stats, isLoading: statsLoading } = useWeekStats();
+  const autoShareTriggered = useRef(false);
 
   // Charger les données utilisateur au montage
   useEffect(() => {
@@ -97,9 +101,31 @@ export default function WeeklyRecapV2Screen() {
     loadUserData();
   }, []);
 
+  // Auto-partage si ouvert depuis une notification
+  useEffect(() => {
+    if (autoShare !== '1' || statsLoading || autoShareTriggered.current) return;
+    autoShareTriggered.current = true;
+    // Délai pour laisser le temps à la carte de se rendre
+    const timer = setTimeout(() => { shareCard(); }, 1200);
+    return () => clearTimeout(timer);
+  }, [autoShare, statsLoading]);
+
   // ============================================
   // PHOTO PICKER
   // ============================================
+
+  const resizeForCard = async (uri: string): Promise<string> => {
+    try {
+      const result = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 1200 } }],
+        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      return result.uri;
+    } catch {
+      return uri;
+    }
+  };
 
   const takePhoto = async () => {
     try {
@@ -117,9 +143,9 @@ export default function WeeklyRecapV2Screen() {
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
         impactAsync(ImpactFeedbackStyle.Light);
-        setBackgroundImage(asset.uri);
+        const finalUri = await resizeForCard(asset.uri);
+        setBackgroundImage(finalUri);
         setSelectedTemplate('photo');
-        // Détecter si l'image est en paysage
         const isLandscape = (asset.width || 0) > (asset.height || 0);
         setIsLandscapeImage(isLandscape);
       }
@@ -132,22 +158,24 @@ export default function WeeklyRecapV2Screen() {
   const pickImage = async () => {
     try {
       const { status } = await requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
+      if ((status as string) !== 'granted' && (status as string) !== 'limited') {
         showPopup(t('socialShare.permissionDeniedTitle'), t('socialShare.permissionDeniedGallery'), [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       const result = await launchImageLibraryAsync({
-        allowsEditing: true,
-        quality: 0.9,
+        allowsEditing: false,
+        quality: 0.85,
+        base64: false,
+        selectionLimit: 1,
       });
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
         impactAsync(ImpactFeedbackStyle.Light);
-        setBackgroundImage(asset.uri);
+        const finalUri = await resizeForCard(asset.uri);
+        setBackgroundImage(finalUri);
         setSelectedTemplate('photo');
-        // Détecter si l'image est en paysage
         const isLandscape = (asset.width || 0) > (asset.height || 0);
         setIsLandscapeImage(isLandscape);
       }
@@ -205,7 +233,7 @@ export default function WeeklyRecapV2Screen() {
 
     try {
       const { status } = await requestPermissionsAsync();
-      if (status !== 'granted') {
+      if ((status as string) !== 'granted' && (status as string) !== 'limited') {
         showPopup(t('socialShare.permissionRequired'), t('socialShare.permissionGallery'), [{ text: 'OK', style: 'primary' }]);
         setIsLoading(false);
         return;
@@ -314,7 +342,7 @@ export default function WeeklyRecapV2Screen() {
 
         {/* Template Selector */}
         <View style={styles.templateRow}>
-          <Text style={[styles.templateLabel, { color: colors.textMuted }]}>Style:</Text>
+          <Text style={[styles.templateLabel, { color: colors.textMuted }]}>{t('socialShare.styleLabel')}</Text>
           {([
             { key: 'photo', label: t('socialShare.stylePhoto') },
             { key: 'dark', label: t('socialShare.styleDark') },

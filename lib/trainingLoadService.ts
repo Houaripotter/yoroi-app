@@ -268,6 +268,49 @@ export const getRiskLevel = (load: number): 'safe' | 'moderate' | 'high' | 'dang
   return 'safe';
 };
 
+// ============================================
+// ALERTE SURMENAGE AUTOMATIQUE
+// ============================================
+
+const OVERTRAINING_ALERT_KEY = '@yoroi_overtraining_alerted';
+
+/**
+ * Vérifie si la charge hebdomadaire dépasse le seuil DANGER et envoie
+ * une notification locale si ce n'est pas déjà fait aujourd'hui.
+ * Appeler cette fonction après chaque sauvegarde de séance.
+ */
+export const checkOvertrainingAlert = async (): Promise<void> => {
+  try {
+    const stats = await getWeeklyLoadStats();
+    if (stats.riskLevel !== 'danger' && stats.riskLevel !== 'high') return;
+
+    // Éviter de spammer : une seule alerte par jour
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const lastAlerted = await AsyncStorage.getItem(OVERTRAINING_ALERT_KEY);
+    if (lastAlerted === today) return;
+
+    // Import dynamique pour éviter une dépendance circulaire
+    const Notifications = await import('expo-notifications');
+
+    const title = stats.riskLevel === 'danger'
+      ? 'Surmenage détecté !'
+      : 'Charge élevée cette semaine';
+    const body = stats.riskLevel === 'danger'
+      ? `Charge de ${Math.round(stats.totalLoad)} pts — risque de blessure élevé. Prends un jour de repos.`
+      : `Charge de ${Math.round(stats.totalLoad)} pts — envisage une séance légère ou un repos.`;
+
+    await Notifications.default.scheduleNotificationAsync({
+      content: { title, body, sound: true },
+      trigger: null, // Immédiat
+    });
+
+    await AsyncStorage.setItem(OVERTRAINING_ALERT_KEY, today);
+    logger.info('[TrainingLoad] Alerte surmenage envoyée:', stats.riskLevel);
+  } catch (e) {
+    logger.warn('[TrainingLoad] Alerte surmenage échouée:', e);
+  }
+};
+
 export default {
   getTrainingLoads,
   saveTrainingLoad,
@@ -277,6 +320,7 @@ export default {
   getRiskLevel,
   getRiskColor,
   formatLoad,
+  checkOvertrainingAlert,
   RPE_SCALE,
 };
 

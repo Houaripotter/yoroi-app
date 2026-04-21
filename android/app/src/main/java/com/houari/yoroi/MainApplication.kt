@@ -23,6 +23,7 @@ class MainApplication : Application(), ReactApplication {
     PackageList(this).packages.apply {
       add(WearSyncPackage())
       add(WidgetDataPackage())
+      add(YoroiCloudPackage())
     }
   }
 

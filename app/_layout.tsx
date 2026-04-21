@@ -15,6 +15,7 @@ import { AvatarProvider } from '@/lib/AvatarContext';
 import DevCodeModal from '@/components/DevCodeModal';
 import { initDatabase } from '@/lib/database';
 import { applyDataRetention, getSelectedLogo } from '@/lib/storage';
+import { importEventsFromJSON } from '@/lib/eventsService';
 import { autoImportCompetitionsOnFirstLaunch } from '@/lib/importCompetitionsService';
 import { notificationService } from '@/lib/notificationService';
 import { saveNotification } from '@/lib/notificationHistoryService';
@@ -22,11 +23,43 @@ import { migrateAvatarSystem } from '@/lib/avatarMigration';
 import { initCitationNotifications } from '@/lib/citationNotificationService';
 import { setupNotificationHandler } from '@/lib/eveningHealthTipsService';
 import { initPeerSync, stopPeerSync } from '@/lib/peerSyncService';
+import { scheduleAutoBackupOnStartup } from '@/lib/autoBackupService';
+import { scheduleCloudSyncCheckOnStartup } from '@/lib/multiDeviceSyncService';
+import { initAutoWatchSync, syncAllWatchesEnriched } from '@/lib/unifiedWatchSyncService';
+import { GlobalPasswordPromptMount } from '@/components/GlobalPasswordPromptMount';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/security/logger';
 import { appleWatchService } from '@/lib/appleWatchService';
 import { healthConnect } from '@/lib/healthConnect';
 import * as Notifications from 'expo-notifications';
+
+// ============================================
+// SECURITY: Notification Data Validation
+// ============================================
+const validateNotificationData = (data: any): { workoutId?: string; screen?: string; autoShare?: boolean } => {
+  if (!data || typeof data !== 'object') {
+    return {};
+  }
+
+  const result: { workoutId?: string; screen?: string; autoShare?: boolean } = {};
+
+  // Validate workoutId: must be a non-empty string, alphanumeric with hyphens/underscores
+  if (typeof data.workoutId === 'string' && /^[a-zA-Z0-9_-]+$/.test(data.workoutId) && data.workoutId.length > 0) {
+    result.workoutId = data.workoutId;
+  }
+
+  // Validate screen: must be a non-empty string, alphanumeric with hyphens/slashes
+  if (typeof data.screen === 'string' && /^[a-zA-Z0-9_/\-]+$/.test(data.screen) && data.screen.length > 0 && data.screen.length < 100) {
+    result.screen = data.screen;
+  }
+
+  // Validate autoShare: boolean flag to auto-trigger share dialog on arrival
+  if (data.autoShare === true) {
+    result.autoShare = true;
+  }
+
+  return result;
+};
 
 // Restaurer l'icône native sélectionnée (expo-alternate-app-icons)
 let _setAlternateAppIcon: ((name: string) => Promise<void>) | null = null;
@@ -67,14 +100,15 @@ async function restoreAppIcon() {
 }
 
 // ============================================
-// PRODUCTION: Désactiver tous les console.log
+// PRODUCTION: Désactiver console.log/warn seulement
+// Keep console.error active for production debugging
 // ============================================
 if (!__DEV__) {
   console.log = () => {};
   console.warn = () => {};
-  console.error = () => {};
   console.debug = () => {};
   console.info = () => {};
+  // console.error intentionally kept active for production error tracking
 }
 
 // ============================================
@@ -110,23 +144,37 @@ function RootLayoutContent() {
       }
     });
 
-    // Deep link: quand l'utilisateur tape sur une notification (background/killed)
-    const workoutNotifSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
+    // Handler commun : sauvegarde dans la cloche + navigation deep link
+    const handleNotificationTap = (response: Notifications.NotificationResponse) => {
       const { title, body, data } = response.notification.request.content;
+      const validatedData = validateNotificationData(data);
 
-      // Sauvegarder dans la cloche (notifications reçues en background puis tapées)
       if (title) {
         const type = (data?.type as string) ?? 'general';
         saveNotification(title, body ?? '', type, data as Record<string, any> | undefined).catch(() => {});
       }
 
-      // Navigation universelle : workoutId en priorité, sinon screen générique
-      if (data?.workoutId) {
-        setTimeout(() => router.push(`/social-share/last-session?id=${data.workoutId}` as any), 500);
-      } else if (data?.screen) {
-        setTimeout(() => router.push(`/${data.screen}` as any), 500);
+      // Timeout plus long (1500ms) pour couvrir cold-start où le router n'est pas encore prêt
+      if (validatedData.workoutId) {
+        setTimeout(() => router.push(`/social-share/last-session?id=${validatedData.workoutId}` as any), 1500);
+      } else if (validatedData.screen) {
+        const url = validatedData.autoShare
+          ? `/${validatedData.screen}?autoShare=1`
+          : `/${validatedData.screen}`;
+        setTimeout(() => router.push(url as any), 1500);
       }
-    });
+    };
+
+    // Deep link: quand l'utilisateur tape sur une notification (app ouvert/background)
+    const workoutNotifSubscription = Notifications.addNotificationResponseReceivedListener(handleNotificationTap);
+
+    // COLD START: si l'app est lancée depuis un tap de notif (app killed), le listener ci-dessus
+    // ne se déclenche pas. On doit vérifier manuellement la dernière réponse au montage.
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) {
+        handleNotificationTap(response);
+      }
+    }).catch(() => {});
 
     let previousAppState = AppState.currentState;
     const appStateSubscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
@@ -146,6 +194,29 @@ function RootLayoutContent() {
             healthConnect.checkNewWorkoutsNow().catch(() => {});
           }
         } catch {}
+
+        // Sync cloche: récupère toutes les notifs présentées (reçues en background, non lues)
+        // pour garantir qu'elles apparaissent dans la cloche in-app.
+        // Déduplication: on ne re-save que les notifs dont l'identifier n'est pas déjà dans l'historique.
+        Notifications.getPresentedNotificationsAsync().then(async (presented) => {
+          if (presented.length === 0) return;
+          try {
+            const { getNotifications } = await import('@/lib/notificationHistoryService');
+            const existing = await getNotifications();
+            const existingIds = new Set(
+              existing.map((n) => (n.data as any)?.__nativeId).filter(Boolean)
+            );
+            for (const notif of presented) {
+              const nativeId = notif.request.identifier;
+              if (existingIds.has(nativeId)) continue;
+              const { title, body, data } = notif.request.content;
+              if (!title) continue;
+              const type = (data?.type as string) ?? 'general';
+              const enrichedData = { ...(data as any), __nativeId: nativeId };
+              saveNotification(title, body ?? '', type, enrichedData).catch(() => {});
+            }
+          } catch {}
+        }).catch(() => {});
       }
       previousAppState = nextAppState;
     });
@@ -183,22 +254,24 @@ function RootLayoutContent() {
         <Stack.Screen name="nutrition-plan" options={{ presentation: 'card' }} />
         <Stack.Screen name="share-hub" options={{ presentation: 'card' }} />
         <Stack.Screen name="partners" options={{ presentation: 'card' }} />
-        <Stack.Screen name="add-measurement" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="entry" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="add-measurement" options={{ presentation: 'modal', animation: 'slide_from_bottom', gestureEnabled: false }} />
+        <Stack.Screen name="entry" options={{ presentation: 'modal', animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="savoir" options={{ presentation: 'card' }} />
         <Stack.Screen name="sport" options={{ presentation: 'card' }} />
         <Stack.Screen name="history" options={{ presentation: 'card' }} />
         <Stack.Screen name="body-status" options={{ presentation: 'card' }} />
         <Stack.Screen name="body-composition" options={{ presentation: 'card' }} />
+        <Stack.Screen name="weight-manager" options={{ presentation: 'card' }} />
+        <Stack.Screen name="body-history" options={{ presentation: 'card' }} />
 
         <Stack.Screen name="badges" options={{ presentation: 'card' }} />
         <Stack.Screen name="records" options={{ presentation: 'card' }} />
         <Stack.Screen name="infirmary" options={{ presentation: 'card' }} />
-        <Stack.Screen name="injury-detail" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="injury-detail" options={{ presentation: 'modal', animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="competitions" options={{ presentation: 'card' }} />
-        <Stack.Screen name="add-competition" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="add-competition" options={{ presentation: 'modal', animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="competition-detail" options={{ presentation: 'card' }} />
-        <Stack.Screen name="add-combat" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="add-combat" options={{ presentation: 'modal', animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="combat-detail" options={{ presentation: 'card' }} />
         <Stack.Screen name="palmares" options={{ presentation: 'card' }} />
         <Stack.Screen name="radar-performance" options={{ presentation: 'card' }} />
@@ -222,18 +295,19 @@ function RootLayoutContent() {
         <Stack.Screen name="health-metrics" options={{ presentation: 'card' }} />
         <Stack.Screen name="health-connect" options={{ presentation: 'card' }} />
         <Stack.Screen name="health-professionals" options={{ presentation: 'card' }} />
-        <Stack.Screen name="sleep-input" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="sleep-input" options={{ presentation: 'modal', animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="training-goals" options={{ presentation: 'card' }} />
         <Stack.Screen name="transformation" options={{ presentation: 'card' }} />
 
         <Stack.Screen name="energy" options={{ presentation: 'card' }} />
         <Stack.Screen name="challenges" options={{ presentation: 'card' }} />
         {/* Écrans outils */}
-        <Stack.Screen name="add-training" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="add-club" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="add-training" options={{ presentation: 'modal', animation: 'slide_from_bottom', gestureEnabled: false }} />
+        <Stack.Screen name="add-combat-session" options={{ presentation: 'modal', animation: 'slide_from_bottom', gestureEnabled: false }} />
+        <Stack.Screen name="add-club" options={{ presentation: 'modal', animation: 'slide_from_bottom', gestureEnabled: false }} />
 
 
-        <Stack.Screen name="quick-nutrition" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="quick-nutrition" options={{ presentation: 'modal', animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="import-workouts" options={{ presentation: 'card' }} />
         <Stack.Screen name="import-csv" options={{ presentation: 'card' }} />
         <Stack.Screen name="customize-tabs" options={{ presentation: 'card' }} />
@@ -264,6 +338,8 @@ function RootLayoutContent() {
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
       <DevCodeModal />
+      {/* Modal global pour demander un mot de passe (cross-platform, remplace Alert.prompt) */}
+      <GlobalPasswordPromptMount />
     </View>
   );
 }
@@ -282,6 +358,8 @@ export default function RootLayout() {
         try {
           await initDatabase();
           logger.info('Base de données initialisee');
+          // Importer les événements sportifs en arrière-plan (ne bloque pas le reste)
+          importEventsFromJSON().catch(err => logger.error('Erreur import événements:', err));
           // Rafraîchir les widgets avec les données actuelles
           import('@/lib/widgetData').then(({ refreshWidgetsFromDB }) => refreshWidgetsFromDB()).catch(() => {});
         } catch (err) {
@@ -323,6 +401,15 @@ export default function RootLayout() {
             .then(() => logger.info('PeerSync iPhone<->iPad démarré'))
             .catch(err => logger.error('Erreur PeerSync:', err)),
         ]);
+
+        // Auto-backup silent quotidien (ne ralentit pas le démarrage — delay 8s)
+        scheduleAutoBackupOnStartup();
+        // Multi-device sync : check si un backup cloud plus récent existe (delay 12s)
+        scheduleCloudSyncCheckOnStartup();
+        // Watch sync enrichi (Apple Watch + Wear OS) — débounced 3s après chaque modif
+        initAutoWatchSync();
+        // Première sync au démarrage (delay 10s)
+        setTimeout(() => syncAllWatchesEnriched().catch(() => {}), 10000);
 
         // HealthKit: connexion et import (iOS uniquement)
         // NOTE: la DEMANDE de permissions est gérée par l'onboarding (renderPageHealth).

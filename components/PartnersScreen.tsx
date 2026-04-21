@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';
-import { X, MapPin, Instagram, ExternalLink, Award, Users } from 'lucide-react-native';
+import { X, MapPin, Instagram, ExternalLink, Award, Users, Castle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface PartnersScreenProps {
@@ -249,9 +249,10 @@ export function PartnersScreen({ visible, onClose }: PartnersScreenProps) {
           ))}
 
           {/* Footer */}
-          <View style={styles.footer}>
+          <View style={[styles.footer, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+            <Castle size={14} color="#B2BEC3" />
             <Text style={styles.footerText}>
-              🏯 Réseau de confiance Yoroi - Partenaires certifiés
+              Réseau de confiance Yoroi - Partenaires certifiés
             </Text>
           </View>
         </ScrollView>

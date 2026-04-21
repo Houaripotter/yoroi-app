@@ -40,6 +40,7 @@ import {
   type CollectionCharacter,
 } from '@/lib/avatarSystem';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 
@@ -77,6 +78,7 @@ interface PackWithStatus {
 // ============================================================================
 
 export default function AvatarSelectionScreen() {
+  const { t } = useI18n();
   const { width } = useWindowDimensions();
   const AVATAR_SIZE = (width - 80) / 5;
   const { colors, isDark } = useTheme();
@@ -159,8 +161,8 @@ export default function AvatarSelectionScreen() {
   const openPreviewCharacter = (pack: AvatarPack, packInfo: PackWithStatus, state: AvatarState) => {
     if (!packInfo.isUnlocked) {
       showPopup(
-        'Pack verrouillé',
-        `Ce pack sera débloqué au rang ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. Continue ton entraînement pour le débloquer !`
+        t('avatarSelection.packLocked'),
+        `${t('avatarSelection.packLockedDesc')} ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. ${t('avatarSelection.keepTraining')}`
       );
       return;
     }
@@ -179,8 +181,8 @@ export default function AvatarSelectionScreen() {
   const openPreviewCollection = (pack: AvatarPack, packInfo: PackWithStatus, character: CollectionCharacter) => {
     if (!packInfo.isUnlocked) {
       showPopup(
-        'Pack verrouillé',
-        `Ce pack sera débloqué au rang ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. Continue ton entraînement pour le débloquer !`
+        t('avatarSelection.packLocked'),
+        `${t('avatarSelection.packLockedDesc')} ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. ${t('avatarSelection.keepTraining')}`
       );
       return;
     }
@@ -207,7 +209,7 @@ export default function AvatarSelectionScreen() {
         : await setFullAvatarConfig(previewPack, selectedGender);
 
       if (!success) {
-        showPopup('Erreur', 'Impossible de sauvegarder l\'avatar.');
+        showPopup(t('common.error'), t('avatarSelection.cannotSave'));
         return;
       }
 
@@ -216,8 +218,8 @@ export default function AvatarSelectionScreen() {
 
       const label = previewState ? STATE_LABELS[previewState] : previewCharacter;
       showPopup(
-        'Avatar équipé !',
-        `Tu as équipé ${previewPackInfo.name} ${label} !`
+        t('avatarSelection.avatarEquipped'),
+        `${t('avatarSelection.youEquipped')} ${previewPackInfo.name} ${label} !`
       );
 
       await loadData();
@@ -231,8 +233,8 @@ export default function AvatarSelectionScreen() {
   const handleSelectCharacterState = async (pack: AvatarPack, packInfo: PackWithStatus, state: AvatarState) => {
     if (!packInfo.isUnlocked) {
       showPopup(
-        'Pack verrouillé',
-        `Ce pack sera débloqué au rang ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. Continue ton entraînement pour le débloquer !`
+        t('avatarSelection.packLocked'),
+        `${t('avatarSelection.packLockedDesc')} ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. ${t('avatarSelection.keepTraining')}`
       );
       return;
     }
@@ -243,21 +245,21 @@ export default function AvatarSelectionScreen() {
       const success = await setFullAvatarConfig(pack, selectedGender);
 
       if (!success) {
-        showPopup('Erreur', 'Impossible de sauvegarder l\'avatar.');
+        showPopup(t('common.error'), t('avatarSelection.cannotSave'));
         return;
       }
 
       notificationAsync(NotificationFeedbackType.Success);
       showPopup(
-        'Avatar équipé !',
-        `Tu es maintenant ${packInfo.name} ${STATE_LABELS[state]} !`
+        t('avatarSelection.avatarEquipped'),
+        `${t('avatarSelection.youAreNow')} ${packInfo.name} ${STATE_LABELS[state]} !`
       );
 
       // Recharger les données
       await loadData();
     } catch (error) {
       logger.error('[AvatarSelection] Erreur sélection:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder l\'avatar.');
+      showPopup(t('common.error'), t('avatarSelection.cannotSave'));
     }
   };
 
@@ -265,8 +267,8 @@ export default function AvatarSelectionScreen() {
   const handleSelectCollectionCharacter = async (pack: AvatarPack, packInfo: PackWithStatus, character: CollectionCharacter) => {
     if (!packInfo.isUnlocked) {
       showPopup(
-        'Pack verrouillé',
-        `Ce pack sera débloqué au rang ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. Continue ton entraînement pour le débloquer !`
+        t('avatarSelection.packLocked'),
+        `${t('avatarSelection.packLockedDesc')} ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. ${t('avatarSelection.keepTraining')}`
       );
       return;
     }
@@ -277,20 +279,20 @@ export default function AvatarSelectionScreen() {
       const success = await setFullAvatarConfig(pack, selectedGender, character);
 
       if (!success) {
-        showPopup('Erreur', 'Impossible de sauvegarder l\'avatar.');
+        showPopup(t('common.error'), t('avatarSelection.cannotSave'));
         return;
       }
 
       notificationAsync(NotificationFeedbackType.Success);
       showPopup(
-        'Avatar équipé !',
-        `Tu as équipé ${character} !`
+        t('avatarSelection.avatarEquipped'),
+        `${t('avatarSelection.youEquipped')} ${character} !`
       );
 
       await loadData();
     } catch (error) {
       logger.error('[AvatarSelection] Erreur sélection:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder l\'avatar.');
+      showPopup(t('common.error'), t('avatarSelection.cannotSave'));
     }
   };
 
@@ -474,10 +476,10 @@ export default function AvatarSelectionScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <Stack.Screen options={{ title: 'Sélection Avatar' }} />
+        <Stack.Screen options={{ title: t('avatarSelection.screenTitle') }} />
         <View style={styles.loadingContainer}>
           <Text style={[styles.loadingText, { color: colors.text }]}>
-            Chargement...
+            {t('common.loading')}
           </Text>
         </View>
       </SafeAreaView>
@@ -488,7 +490,7 @@ export default function AvatarSelectionScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen
         options={{
-          title: 'Sélection Avatar',
+          title: t('avatarSelection.screenTitle'),
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerLeft: () => (
@@ -610,7 +612,7 @@ export default function AvatarSelectionScreen() {
           <Ionicons name="information-circle" size={24} color={colors.primary} />
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
             {creatorModeActive
-              ? '⚙️ Mode Créateur actif - Tous les avatars sont débloqués !'
+              ? 'Mode Créateur actif - Tous les avatars sont débloqués !'
               : 'Les avatars se débloquent en montant de rang dans le Dojo. Utilise le toggle Homme/Femme en haut pour voir les avatars correspondants. Chaque pack contient 5 variations de niveau !'}
           </Text>
         </View>
@@ -657,7 +659,7 @@ export default function AvatarSelectionScreen() {
               onPress={confirmSelection}
             >
               <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
-              <Text style={styles.previewValidateText}>Équiper cet avatar</Text>
+              <Text style={styles.previewValidateText}>{t('avatarSelection.equipAvatar')}</Text>
             </TouchableOpacity>
 
             {/* Bouton annuler */}
@@ -666,7 +668,7 @@ export default function AvatarSelectionScreen() {
               onPress={() => setPreviewModalVisible(false)}
             >
               <Text style={[styles.previewCancelText, { color: colors.textSecondary }]}>
-                Annuler
+                {t('avatarSelection.cancel')}
               </Text>
             </TouchableOpacity>
           </View>

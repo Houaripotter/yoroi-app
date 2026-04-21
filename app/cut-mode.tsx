@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
+import { useI18n } from '@/lib/I18nContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
@@ -92,6 +93,7 @@ const WEIGHT_CATEGORIES = {
 };
 
 export default function CutModeScreen() {
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -145,18 +147,18 @@ export default function CutModeScreen() {
   const startCut = async () => {
     const target = parseFloat(targetWeight);
     if (isNaN(target) || target <= 0) {
-      showPopup('Erreur', 'Entre un poids cible valide');
+      showPopup(t('common.error'), t('cutMode.invalidTargetWeight'));
       return;
     }
 
     if (target >= currentWeight) {
-      showPopup('Attention', 'Le poids cible doit être inférieur à ton poids actuel');
+      showPopup(t('cutMode.warning'), t('cutMode.targetWeightTooHigh'));
       return;
     }
 
     const dateMatch = targetDate.match(/^(\d{1,2})\/(\d{1,2})$/);
     if (!dateMatch) {
-      showPopup('Erreur', 'Format de date invalide (JJ/MM)');
+      showPopup(t('common.error'), t('cutMode.invalidDateFormat'));
       return;
     }
 
@@ -184,18 +186,18 @@ export default function CutModeScreen() {
       notificationAsync(NotificationFeedbackType.Success);
     } catch (error) {
       logger.error('Erreur sauvegarde cut mode:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder');
+      showPopup(t('common.error'), t('cutMode.cannotSave'));
     }
   };
 
   const stopCut = async () => {
     showPopup(
-      'Arrêter le Cut ?',
-      'Es-tu sûr de vouloir arrêter ton cut ? Les données seront effacées.',
+      t('cutMode.stopCutTitle'),
+      t('cutMode.stopCutDesc'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Arrêter',
+          text: t('cutMode.stop'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -214,7 +216,9 @@ export default function CutModeScreen() {
 
   const calculateProgress = (): number => {
     if (!cutData) return 0;
+    if (currentWeight <= 0) return 0;
     const totalToLose = cutData.startWeight - cutData.targetWeight;
+    if (totalToLose <= 0) return 0;
     const lost = cutData.startWeight - currentWeight;
     return Math.min(100, Math.max(0, (lost / totalToLose) * 100));
   };
@@ -263,7 +267,7 @@ export default function CutModeScreen() {
           <ChevronLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          Mode Compétition
+          {t('cutMode.title')}
         </Text>
         <View style={{ width: 40 }} />
       </View>
@@ -278,7 +282,7 @@ export default function CutModeScreen() {
               <View style={styles.targetHeader}>
                 <Target size={24} color={colors.accentText} />
                 <Text style={[styles.targetTitle, { color: colors.textPrimary }]}>
-                  Objectif : {cutData.targetWeight} kg
+                  {t('cutMode.goal')} : {cutData.targetWeight} kg
                 </Text>
               </View>
 
@@ -302,7 +306,7 @@ export default function CutModeScreen() {
                       {Math.round(progress)}%
                     </Text>
                     <Text style={[styles.gaugeLabel, { color: colors.textMuted }]}>
-                      complété
+                      {t('cutMode.completed')}
                     </Text>
                   </View>
                 </View>
@@ -316,7 +320,7 @@ export default function CutModeScreen() {
                     {currentWeight} kg
                   </Text>
                   <Text style={[styles.quickStatLabel, { color: colors.textMuted }]}>
-                    Actuel
+                    {t('cutMode.current')}
                   </Text>
                 </View>
                 <View style={styles.quickStat}>
@@ -325,7 +329,7 @@ export default function CutModeScreen() {
                     -{weightRemaining.toFixed(1)} kg
                   </Text>
                   <Text style={[styles.quickStatLabel, { color: colors.textMuted }]}>
-                    Reste
+                    {t('cutMode.remaining')}
                   </Text>
                 </View>
                 <View style={styles.quickStat}>
@@ -334,7 +338,7 @@ export default function CutModeScreen() {
                     {daysRemaining}
                   </Text>
                   <Text style={[styles.quickStatLabel, { color: colors.textMuted }]}>
-                    Jours
+                    {t('cutMode.days')}
                   </Text>
                 </View>
               </View>
@@ -346,13 +350,13 @@ export default function CutModeScreen() {
                 <AlertTriangle size={20} color={riskColors[riskLevel]} />
                 <View style={styles.alertContent}>
                   <Text style={[styles.alertTitle, { color: riskColors[riskLevel] }]}>
-                    {riskLevel === 'danger' ? 'Cut dangereux !' : 'Attention'}
+                    {riskLevel === 'danger' ? t('cutMode.dangerousCut') : t('cutMode.warning')}
                   </Text>
                   <Text style={[styles.alertText, { color: colors.textSecondary }]}>
-                    Tu dois perdre {dailyTarget.toFixed(2)} kg/jour. 
-                    {riskLevel === 'danger' 
-                      ? ' Consulte un médecin.'
-                      : ' Reste vigilant sur ton hydratation.'}
+                    {t('cutMode.mustLose', { amount: dailyTarget.toFixed(2) })}
+                    {riskLevel === 'danger'
+                      ? ` ${t('cutMode.consultDoctor')}`
+                      : ` ${t('cutMode.watchHydration')}`}
                   </Text>
                 </View>
               </View>
@@ -360,15 +364,15 @@ export default function CutModeScreen() {
 
             {/* Conseils */}
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              CONSEILS CUT
+              {t('cutMode.cutTips')}
             </Text>
-            
+
             <View style={[styles.tipsCard, { backgroundColor: colors.backgroundCard }]}>
               {[
-                { icon: Droplets, color: '#06B6D4', text: 'Bois 3-4L d\'eau par jour, puis réduis avant la pesée' },
-                { icon: Moon, color: '#8B5CF6', text: 'Dors 8h minimum pour optimiser la récupération' },
-                { icon: Dumbbell, color: '#F59E0B', text: 'Réduis l\'intensité la dernière semaine' },
-                { icon: Flame, color: '#EF4444', text: 'Sauna modéré : max 15min à la fois' },
+                { icon: Droplets, color: '#06B6D4', text: t('cutMode.tip1') },
+                { icon: Moon, color: '#8B5CF6', text: t('cutMode.tip2') },
+                { icon: Dumbbell, color: '#F59E0B', text: t('cutMode.tip3') },
+                { icon: Flame, color: '#EF4444', text: t('cutMode.tip4') },
               ].map((tip, i) => (
                 <View key={i} style={[styles.tipRow, i > 0 && { borderTopWidth: 1, borderTopColor: colors.border }]}>
                   <tip.icon size={18} color={tip.color} />
@@ -384,7 +388,7 @@ export default function CutModeScreen() {
               <Trophy size={20} color={colors.gold} />
               <View style={styles.dateInfo}>
                 <Text style={[styles.dateLabel, { color: colors.textMuted }]}>
-                  Jour de la pesée
+                  {t('cutMode.weighInDay')}
                 </Text>
                 <Text style={[styles.dateValue, { color: colors.textPrimary }]}>
                   {format(new Date(cutData.targetDate), 'EEEE d MMMM', { locale: fr })}
@@ -399,7 +403,7 @@ export default function CutModeScreen() {
             >
               <X size={18} color="#EF4444" />
               <Text style={[styles.stopBtnText, { color: '#EF4444' }]}>
-                Arrêter le cut
+                {t('cutMode.stopCut')}
               </Text>
             </TouchableOpacity>
           </>
@@ -408,26 +412,26 @@ export default function CutModeScreen() {
           <>
             <View style={[styles.formCard, { backgroundColor: colors.backgroundCard }]}>
               <Text style={[styles.formTitle, { color: colors.textPrimary }]}>
-                Nouveau Cut
+                {t('cutMode.newCut')}
               </Text>
               <Text style={[styles.formSubtitle, { color: colors.textMuted }]}>
-                Prépare-toi pour ta compétition
+                {t('cutMode.prepareForCompetition')}
               </Text>
 
               {/* Poids actuel */}
               <View style={styles.formRow}>
                 <Text style={[styles.formLabel, { color: colors.textSecondary }]}>
-                  Poids actuel
+                  {t('cutMode.currentWeight')}
                 </Text>
                 <Text style={[styles.formValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
-                  {currentWeight > 0 ? `${currentWeight} kg` : 'Fais une pesée d\'abord'}
+                  {currentWeight > 0 ? `${currentWeight} kg` : t('cutMode.weighFirst')}
                 </Text>
               </View>
 
               {/* Poids cible */}
               <View style={styles.formRow}>
                 <Text style={[styles.formLabel, { color: colors.textSecondary }]}>
-                  Poids cible (kg)
+                  {t('cutMode.targetWeight')}
                 </Text>
                 <TextInput
                   style={[styles.formInput, { color: colors.textPrimary, borderColor: colors.border }]}
@@ -442,7 +446,7 @@ export default function CutModeScreen() {
               {/* Date cible */}
               <View style={styles.formRow}>
                 <Text style={[styles.formLabel, { color: colors.textSecondary }]}>
-                  Date de pesée (JJ/MM)
+                  {t('cutMode.weighInDate')}
                 </Text>
                 <TextInput
                   style={[styles.formInput, { color: colors.textPrimary, borderColor: colors.border }]}
@@ -455,7 +459,7 @@ export default function CutModeScreen() {
 
               {/* Catégories rapides */}
               <Text style={[styles.categoryTitle, { color: colors.textMuted }]}>
-                Ou choisis une catégorie :
+                {t('cutMode.orChooseCategory')}
               </Text>
               
               <View style={styles.sportTabs}>
@@ -505,7 +509,7 @@ export default function CutModeScreen() {
               disabled={currentWeight === 0}
             >
               <Zap size={20} color={colors.textOnGold} />
-              <Text style={[styles.startBtnText, { color: colors.textOnGold }]}>Démarrer le Cut</Text>
+              <Text style={[styles.startBtnText, { color: colors.textOnGold }]}>{t('cutMode.startCut')}</Text>
             </TouchableOpacity>
           </>
         )}

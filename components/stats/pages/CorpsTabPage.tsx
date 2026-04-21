@@ -28,7 +28,8 @@ import {
   getBoneMassRange,
   getWaistCircumferenceRange,
 } from '@/lib/healthRanges';
-import { Scale, Target, TrendingUp, TrendingDown, BarChart3, Activity, Droplet, Bone, Zap, Flame, Ruler } from 'lucide-react-native';
+import { Scale, Target, TrendingUp, TrendingDown, BarChart3, Activity, Droplet, Bone, Zap, Flame, Ruler, ClipboardList } from 'lucide-react-native';
+import { router } from 'expo-router';
 import Svg, { Path, Circle as SvgCircle, Line as SvgLine, Text as SvgText } from 'react-native-svg';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -365,6 +366,21 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         selectedPeriod={selectedPeriod}
         onPeriodChange={setSelectedPeriod}
       />
+
+      {/* Bouton accès rapide Historique corporel */}
+      <TouchableOpacity
+        style={[corpsBannerStyle.btn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+        activeOpacity={0.75}
+        onPress={() => router.push('/body-history')}>
+        <View style={[corpsBannerStyle.icon, { backgroundColor: '#3B82F615' }]}>
+          <ClipboardList size={18} color="#3B82F6" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[corpsBannerStyle.title, { color: colors.textPrimary }]}>Historique corporel complet</Text>
+          <Text style={[corpsBannerStyle.sub, { color: colors.textMuted }]}>Poids · Muscle · Graisse · Mensurations — supprimer / modifier</Text>
+        </View>
+        <Text style={{ color: '#3B82F6', fontSize: 18 }}>›</Text>
+      </TouchableOpacity>
 
       {/* Evolution du poids + Historique récent dans le même bloc */}
       <StatsSection>
@@ -830,4 +846,11 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     marginTop: 1,
   },
+});
+
+const corpsBannerStyle = StyleSheet.create({
+  btn: { flexDirection:'row', alignItems:'center', gap:12, marginHorizontal:16, marginBottom:8, padding:14, borderRadius:16, borderWidth:1 },
+  icon: { width:38, height:38, borderRadius:11, justifyContent:'center', alignItems:'center' },
+  title: { fontSize:14, fontWeight:'700' },
+  sub: { fontSize:11, marginTop:1 },
 });

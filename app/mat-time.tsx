@@ -28,6 +28,7 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { getTrainings, getTrainingStats } from '@/lib/database';
 import logger from '@/lib/security/logger';
+import { useI18n } from '@/lib/I18nContext';
 
 // ============================================
 // TYPES
@@ -53,6 +54,7 @@ const MAT_SPORTS = ['JJB', 'Jiu-Jitsu Brésilien', 'MMA', 'Judo', 'Lutte', 'Grap
 
 export default function MatTimeScreen() {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
 
   const [stats, setStats] = useState<MatTimeStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -209,7 +211,7 @@ export default function MatTimeScreen() {
             / {formatHours(goal)}
           </Text>
           <Text style={[styles.goalSubLabel, { color: colors.textSecondary }]}>
-            cette semaine
+            {t('matTime.thisWeek')}
           </Text>
         </View>
       </View>
@@ -221,7 +223,7 @@ export default function MatTimeScreen() {
       <ScreenWrapper>
         <View style={styles.loadingContainer}>
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            Calcul du mat time...
+            {t('matTime.loading')}
           </Text>
         </View>
       </ScreenWrapper>
@@ -261,14 +263,14 @@ export default function MatTimeScreen() {
           <View style={styles.heroHeader}>
             <Clock size={20} color={colors.gold} />
             <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>
-              TEMPS TOTAL SUR LE TATAMI
+              {t('matTime.totalOnTatami')}
             </Text>
           </View>
           <Text style={[styles.heroValue, { color: colors.gold }]}>
             {formatHours(stats.totalMinutes)}
           </Text>
           <Text style={[styles.heroSubtext, { color: colors.textMuted }]}>
-            {stats.sessions} sessions
+            {stats.sessions} {t('matTime.sessions')}
           </Text>
         </LinearGradient>
 
@@ -277,7 +279,7 @@ export default function MatTimeScreen() {
           <View style={styles.cardHeader}>
             <Target size={18} color={colors.gold} />
             <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-              Objectif Hebdomadaire
+              {t('matTime.weeklyGoal')}
             </Text>
           </View>
 
@@ -286,7 +288,7 @@ export default function MatTimeScreen() {
           {weekProgress >= 100 && (
             <View style={[styles.achievedBadge, { backgroundColor: 'rgba(34, 197, 94, 0.15)' }]}>
               <Award size={16} color="#22C55E" />
-              <Text style={styles.achievedText}>Objectif atteint!</Text>
+              <Text style={styles.achievedText}>{t('matTime.goalReached')}</Text>
             </View>
           )}
         </View>
@@ -298,7 +300,7 @@ export default function MatTimeScreen() {
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {formatTime(stats.thisMonthMinutes)}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Ce mois</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('matTime.thisMonth')}</Text>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: colors.card }]}>
@@ -306,7 +308,7 @@ export default function MatTimeScreen() {
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {formatTime(stats.avgPerSession)}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Moy./session</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('matTime.avgPerSession')}</Text>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: colors.card }]}>
@@ -314,7 +316,7 @@ export default function MatTimeScreen() {
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {formatTime(stats.longestSession)}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Plus long</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('matTime.longest')}</Text>
           </View>
         </View>
 
@@ -323,7 +325,7 @@ export default function MatTimeScreen() {
           <View style={styles.cardHeader}>
             <Calendar size={18} color={colors.gold} />
             <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-              Cette semaine
+              {t('matTime.thisWeek')}
             </Text>
           </View>
 
@@ -374,7 +376,7 @@ export default function MatTimeScreen() {
             <View style={styles.cardHeader}>
               <Award size={18} color={colors.gold} />
               <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-                Par discipline
+                {t('matTime.byDiscipline')}
               </Text>
             </View>
 
@@ -388,7 +390,7 @@ export default function MatTimeScreen() {
                       {discipline.name}
                     </Text>
                     <Text style={[styles.disciplineSessions, { color: colors.textMuted }]}>
-                      {discipline.sessions} sessions
+                      {discipline.sessions} {t('matTime.sessions')}
                     </Text>
                   </View>
                   <View style={styles.disciplineStats}>
@@ -413,10 +415,77 @@ export default function MatTimeScreen() {
           </View>
         )}
 
+        {/* Projection 1000h */}
+        {stats.totalMinutes > 0 && (() => {
+          const TARGET_HOURS = 1000;
+          const targetMinutes = TARGET_HOURS * 60;
+          const totalMin = stats.totalMinutes;
+          const pct1000 = Math.min(100, (totalMin / targetMinutes) * 100);
+          const remaining = Math.max(0, targetMinutes - totalMin);
+
+          // Rythme hebdomadaire : semaine actuelle ou objectif par défaut
+          const weeklyAvg = stats.thisWeekMinutes > 0 ? stats.thisWeekMinutes : weeklyGoal;
+          const weeksLeft = weeklyAvg > 0 ? remaining / weeklyAvg : null;
+          const projectionDate = weeksLeft != null ? (() => {
+            const d = new Date();
+            d.setDate(d.getDate() + Math.round(weeksLeft * 7));
+            return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+          })() : null;
+          const monthsLeft = weeksLeft != null ? Math.round(weeksLeft / 4.33) : null;
+
+          return (
+            <View style={[styles.card, { backgroundColor: colors.card, marginBottom: 16 }]}>
+              <View style={styles.cardHeader}>
+                <Target size={18} color="#F59E0B" />
+                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
+                  {t('matTime.target1000h')}
+                </Text>
+              </View>
+
+              <View style={{ gap: 8 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 13, color: colors.textMuted }}>
+                    {formatHours(totalMin)} / 1 000h
+                  </Text>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#F59E0B' }}>
+                    {pct1000.toFixed(1)}%
+                  </Text>
+                </View>
+                <View style={{ height: 10, borderRadius: 5, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+                  <View style={{ width: `${pct1000}%` as any, height: '100%', backgroundColor: '#F59E0B', borderRadius: 5 }} />
+                </View>
+              </View>
+
+              {pct1000 < 100 ? (
+                <View style={{ flexDirection: 'row', gap: 12, marginTop: 4 }}>
+                  <View style={{ flex: 1, backgroundColor: 'rgba(245,158,11,0.1)', borderRadius: 10, padding: 12, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 4 }}>{t('matTime.remaining')}</Text>
+                    <Text style={{ fontSize: 18, fontWeight: '900', color: '#F59E0B' }}>{formatHours(remaining)}</Text>
+                  </View>
+                  {projectionDate && monthsLeft != null && (
+                    <View style={{ flex: 1, backgroundColor: 'rgba(245,158,11,0.1)', borderRadius: 10, padding: 12, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 4 }}>{t('matTime.currentPace')}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#F59E0B', textAlign: 'center' }}>
+                        {monthsLeft > 0 ? `dans ~${monthsLeft} mois` : t('matTime.thisMonth2')}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>{projectionDate}</Text>
+                    </View>
+                  )}
+                </View>
+              ) : (
+                <View style={{ backgroundColor: 'rgba(34,197,94,0.12)', borderRadius: 10, padding: 14, alignItems: 'center', flexDirection: 'row', gap: 10 }}>
+                  <Award size={20} color="#22C55E" />
+                  <Text style={{ fontSize: 14, fontWeight: '800', color: '#22C55E' }}>{t('matTime.target1000Reached')}</Text>
+                </View>
+              )}
+            </View>
+          );
+        })()}
+
         {/* Tip */}
         <View style={[styles.tipCard, { backgroundColor: colors.goldMuted }]}>
           <Text style={[styles.tipText, { color: colors.gold }]}>
-            L'objectif recommande pour progresser en JJB est de 5 a 6 heures par semaine sur le tatami.
+            {t('matTime.tip')}
           </Text>
         </View>
 

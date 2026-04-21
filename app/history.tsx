@@ -247,7 +247,7 @@ export default function HistoryScreen() {
         }
         return {
           value,
-          label: new Date(record.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' }),
+          label: record.date && !isNaN(new Date(record.date).getTime()) ? new Date(record.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' }) : '—',
           date: record.date,
           frontColor: index % 2 === 0 ? '#1A1A2E' : '#FFFFFF', // Barres alternées noir/blanc
         };
@@ -294,7 +294,7 @@ export default function HistoryScreen() {
         
         return {
           value,
-          label: new Date(record.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' }),
+          label: record.date && !isNaN(new Date(record.date).getTime()) ? new Date(record.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' }) : '—',
           date: record.date,
         };
       })

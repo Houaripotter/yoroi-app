@@ -102,13 +102,13 @@ export const TimerAlarmOverlay: React.FC<TimerAlarmOverlayProps> = ({
   }, []);
 
   // Start sound loop
-  const startSound = useCallback(async () => {
+  const startSound = useCallback(() => {
     // Play initial gong
-    await soundManager.playGong();
+    soundManager.playGong();
 
     // Then play beep every 1.5 seconds
-    soundRef.current = setInterval(async () => {
-      await soundManager.playBeep();
+    soundRef.current = setInterval(() => {
+      soundManager.playBeep();
     }, 1500);
   }, []);
 

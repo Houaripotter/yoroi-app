@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { Activity, Zap } from 'lucide-react-native';
 import { getGridColumns } from '@/constants/responsive';
 
@@ -80,7 +81,8 @@ export const ChargeLottieCard = React.memo<ChargeLottieCardProps>(({
   const CARD_SIZE = (screenWidth - 32 - 8 * (columns - 1)) / columns;
   const styles = useMemo(() => createStyles(CARD_SIZE), [CARD_SIZE]);
   const { colors } = useTheme();
-  
+  const { t } = useI18n();
+
   // Animations
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const waveAnim = useRef(new Animated.Value(0)).current;
@@ -110,33 +112,33 @@ export const ChargeLottieCard = React.memo<ChargeLottieCardProps>(({
     pulseSpeed: number;
   }> = {
     leger: {
-      label: 'Léger',
+      label: t('charge.legerLabel'),
       color: '#0EA5E9',
-      description: 'Repos actif',
+      description: t('charge.legerDesc'),
       pulseSpeed: 1000,
     },
     modere: {
-      label: 'Modéré',
+      label: t('charge.modereLabel'),
       color: '#10B981',
-      description: 'Bonne récup',
+      description: t('charge.modereDesc'),
       pulseSpeed: 700,
     },
     optimal: {
-      label: 'Optimal',
+      label: t('charge.optimalLabel'),
       color: '#10B981',
-      description: 'Zone idéale',
+      description: t('charge.optimalDesc'),
       pulseSpeed: 700,
     },
     eleve: {
-      label: 'Élevé',
+      label: t('charge.eleveLabel'),
       color: '#F59E0B',
-      description: 'Attention fatigue',
+      description: t('charge.eleveDesc'),
       pulseSpeed: 500,
     },
     danger: {
-      label: 'Danger',
+      label: t('charge.dangerLabel'),
       color: '#EF4444',
-      description: 'Risque blessure',
+      description: t('charge.dangerDesc'),
       pulseSpeed: 300,
     },
   };

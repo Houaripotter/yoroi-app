@@ -10,6 +10,7 @@ import { ChevronDown, Flame, Trophy, Zap } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { getCurrentRank } from '@/lib/ranks';
 import { HomeHeroCard } from '@/components/home/HomeHeroCard';
 import { getDailyQuestsProgress } from '@/lib/quests';
@@ -25,6 +26,7 @@ interface Props {
 
 export function HomeHeroSection({ streak, totalPoints, dailyQuote, avatarUri }: Props) {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [questCompleted, setQuestCompleted] = useState(0);
   const [questTotal, setQuestTotal] = useState(0);
@@ -89,7 +91,7 @@ export function HomeHeroSection({ streak, totalPoints, dailyQuote, avatarUri }: 
             <View style={[styles.compactDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)' }]} />
             <Zap size={11} color={colors.accent} fill={colors.accent} />
             <Text style={[styles.compactQuests, { color: colors.textMuted }]}>
-              {questCompleted}/{questTotal} défis
+              {questCompleted}/{questTotal} {questTotal === 1 ? t('challenges.challengesSingular') : t('challenges.challengesPlural')}
             </Text>
           </>
         )}

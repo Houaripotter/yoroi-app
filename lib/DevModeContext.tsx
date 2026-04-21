@@ -31,19 +31,14 @@ const STORAGE_KEY = '@yoroi_dev_mode';
 const TAP_THRESHOLD = 5; // Nombre de taps pour afficher le champ de code
 const TAP_TIMEOUT = 2000; // Reset des taps après 2 secondes
 
-// Hash SHA-256 du code secret — uniquement disponible en __DEV__
-// En production, le code secret est désactivé (le DevCodeModal n'est pas rendu)
-const DEV_CODE_HASH = __DEV__
-  ? 'a29f7cbfdfd1e85b6a9d62adbc8c5cbdfab817a6c2ed7a3671fa22c9e51c7be2'
-  : '';
+// Hash SHA-256 du code secret créateur
+const DEV_CODE_HASH = 'b1ab1e892617f210425f658cf1d361b5489028c8771b56d845fe1c62c1fbc8b0';
 
 /**
  * Vérifie si le code entré correspond au code secret
- * Désactivé en production — retourne toujours false
  * Exporté pour être utilisé dans d'autres écrans (settings, more)
  */
 export async function verifyDevCode(inputCode: string): Promise<boolean> {
-  if (!__DEV__) return false;
   try {
     const inputHash = await digestStringAsync(
       CryptoDigestAlgorithm.SHA256,
@@ -90,9 +85,8 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Gérer les taps secrets — désactivé en production
+  // Gérer les taps secrets
   const handleSecretTap = useCallback(() => {
-    if (!__DEV__) return;
 
     const newCount = tapCount + 1;
     setTapCount(newCount);

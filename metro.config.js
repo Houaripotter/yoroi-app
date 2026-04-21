@@ -3,6 +3,9 @@ const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
+// Désactiver Watchman (problème de priorité nice_value=5 sur ce Mac)
+config.watchman = false;
+
 // Disable enablePackageExports to fix resolution issues with packages that have
 // non-standard main fields or self-imports without exports fields
 // (e.g. @expo/metro-runtime, whatwg-fetch, expo itself).

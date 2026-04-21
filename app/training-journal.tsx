@@ -76,8 +76,8 @@ import { getPendingVictory } from '@/lib/victoryTrigger';
 const JOURNAL_CACHE_KEY = '@yoroi_journal_data_cache_v1';
 const JOURNAL_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
-import { renderIcon } from './training-journal/utils/iconMap';
-import { getRelativeDate } from './training-journal/utils/dateHelpers';
+import { renderIcon } from '@/lib/training-journal/utils/iconMap';
+import { getRelativeDate } from '@/lib/training-journal/utils/dateHelpers';
 import AddEntryModal from './training-journal/components/AddEntryModal';
 import BenchmarkDetailModal from './training-journal/components/BenchmarkDetailModal';
 import SparringTab from './training-journal/components/SparringTab';
@@ -719,7 +719,7 @@ export default function TrainingJournalScreen() {
 
     const result = await launchImageLibraryAsync({
       mediaTypes: MediaTypeOptions.Videos,
-      allowsEditing: true,
+      allowsEditing: false,
       quality: 0.8,
     });
 

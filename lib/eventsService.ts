@@ -95,6 +95,8 @@ function clearCache(): void {
 // ============================================
 
 let isInitialized = false;
+let initPromise: Promise<void> | null = null;
+let importPromise: Promise<void> | null = null;
 // Version des données events - incrementer pour forcer un reimport
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const EVENTS_DATA_VERSION = 6;
@@ -102,8 +104,23 @@ const EVENTS_DATA_VERSION = 6;
 /**
  * Importe les evenements depuis le fichier JSON vers SQLite
  * Utilise un systeme de versioning pour forcer le reimport quand les données changent
+ * Protégé contre les appels concurrents (un seul import à la fois)
  */
 export async function importEventsFromJSON(): Promise<void> {
+  // Si un import est déjà en cours, attendre sa fin
+  if (importPromise) {
+    await importPromise;
+    return;
+  }
+  importPromise = _doImportEvents();
+  try {
+    await importPromise;
+  } finally {
+    importPromise = null;
+  }
+}
+
+async function _doImportEvents(): Promise<void> {
   try {
     const db = await openDatabase();
 
@@ -199,42 +216,75 @@ export async function importEventsFromJSON(): Promise<void> {
 
 /**
  * Assure que les données sont initialisées
+ * Utilise une promise unique pour éviter les imports concurrents
  */
 async function ensureInitialized(): Promise<void> {
-  if (!isInitialized) {
-    try {
-      // Vérifier que la table existe
-      const db = await openDatabase();
-      const tableExists = await db.getFirstAsync<{ count: number }>(
-        `SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='events_catalog'`
-      );
+  if (isInitialized) return;
 
-      if (!tableExists || tableExists.count === 0) {
-        logger.warn('Table events_catalog manquante - les événements ne seront pas disponibles');
-        // Marquer comme initialisé pour éviter de réessayer à chaque fois
-        isInitialized = true;
-        return;
-      }
+  // Déduplication : si un import est déjà en cours, attendre sa fin
+  if (initPromise) {
+    await initPromise;
+    return;
+  }
 
-      // Vérifier si des événements sont déjà importés
-      const count = await db.getFirstAsync<{ count: number }>(
-        'SELECT COUNT(*) as count FROM events_catalog'
-      );
+  initPromise = _doInitialize();
+  try {
+    await initPromise;
+  } finally {
+    initPromise = null;
+  }
+}
 
-      if (!count || count.count === 0) {
-        logger.info('Import des événements...');
-        await importEventsFromJSON();
-      } else {
-        logger.info(`Events déjà importés: ${count.count} événements`);
-        isInitialized = true;
-      }
-    } catch (error) {
-      logger.error('Erreur ensureInitialized:', error);
-      // Marquer comme initialisé pour éviter de réessayer
-      isInitialized = true;
-      // Ne pas throw pour éviter de crasher l'app
-      // Les fonctions appelantes retourneront un tableau vide
+async function _doInitialize(): Promise<void> {
+  try {
+    const db = await openDatabase();
+
+    // Vérifier que la table existe
+    const tableExists = await db.getFirstAsync<{ count: number }>(
+      `SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='events_catalog'`
+    );
+
+    if (!tableExists || tableExists.count === 0) {
+      // Table manquante — la créer nous-mêmes pour ne pas dépendre du timing de initDatabase
+      logger.warn('Table events_catalog manquante — création à la volée');
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS events_catalog (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          date_start TEXT NOT NULL,
+          city TEXT,
+          country TEXT,
+          full_address TEXT,
+          category TEXT NOT NULL,
+          sport_tag TEXT NOT NULL,
+          registration_link TEXT,
+          federation TEXT,
+          image_logo_url TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_events_date ON events_catalog(date_start);');
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_events_country ON events_catalog(country);');
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_events_sport ON events_catalog(sport_tag);');
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_events_category ON events_catalog(category);');
     }
+
+    // Vérifier si des événements sont déjà importés
+    const count = await db.getFirstAsync<{ count: number }>(
+      'SELECT COUNT(*) as count FROM events_catalog'
+    );
+
+    if (!count || count.count === 0) {
+      logger.info('Import des événements...');
+      await importEventsFromJSON();
+    } else {
+      logger.info('Events déjà importés: ' + count.count + ' événements');
+      isInitialized = true;
+    }
+  } catch (error) {
+    logger.error('Erreur ensureInitialized:', error);
+    // NE PAS marquer isInitialized = true en cas d'erreur,
+    // pour permettre un retry au prochain appel
   }
 }
 
@@ -668,8 +718,10 @@ export async function forceReimportEvents(): Promise<void> {
       logger.warn('Table events_catalog inexistante, skip DELETE');
     }
 
-    // Réinitialiser le flag
+    // Réinitialiser les flags
     isInitialized = false;
+    initPromise = null;
+    importPromise = null;
 
     // Vider le cache
     clearCache();

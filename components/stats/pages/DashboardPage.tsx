@@ -19,7 +19,7 @@ import {
   Waves,
   PlusCircle
 } from 'lucide-react-native';
-import { getWeights, getTrainings, getMeasurements } from '@/lib/database';
+import { getWeights, getTrainings, getMeasurements, getLatestWeight } from '@/lib/database';
 import { getSleepStats } from '@/lib/sleepService';
 import { calculateReadinessScore } from '@/lib/readinessService';
 import { getWeeklyLoadStats } from '@/lib/trainingLoadService';
@@ -95,37 +95,55 @@ const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady, colu
       <View style={styles.miniChartWrapper}>
         {hasData ? (
           chartReady ? (
-            <LineChart
-              data={metric.data}
-              height={85}
-              width={columnWidth}
-              initialSpacing={15}
-              spacing={85}
-              hideRules
-              hideAxesAndRules
-              hideYAxisText
-              xAxisThickness={0}
-              xAxisLabelsHeight={22}
-              curved
-              thickness={3.5}
-              color={metric.color}
-              startFillColor={metric.color}
-              endFillColor={metric.color}
-              startOpacity={0.2}
-              endOpacity={0.01}
-              areaChart
-              yAxisOffset={yAxisOffset}
-              hideDataPoints={false}
-              dataPointsHeight={8}
-              dataPointsWidth={8}
-              dataPointsColor={metric.color}
-              showValuesAsDataPointsText
-              textFontSize={10}
-              textColor={isDark ? '#FFFFFF' : '#000000'}
-              textShiftY={-15}
-              xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 8, fontWeight: '900' }}
-              onPress={handlePress}
-            />
+            (() => {
+              // Vue : on montre exactement 3 points à la fois, le reste est scrollable
+              // horizontalement (gifted-charts scrolle auto si le total dépasse width).
+              const chartWidth = columnWidth + 28;
+              const initialSpacing = 24;
+              const endPadding = 24;
+              const available = chartWidth - initialSpacing - endPadding;
+              // 3 points visibles = 2 intervalles
+              const spacing = Math.max(40, available / 2);
+              return (
+                <LineChart
+                  data={metric.data}
+                  height={100}
+                  width={chartWidth}
+                  initialSpacing={initialSpacing}
+                  endSpacing={endPadding}
+                  spacing={spacing}
+                  hideRules
+                  hideAxesAndRules
+                  hideYAxisText
+                  xAxisThickness={0}
+                  xAxisLabelsHeight={28}
+                  curved
+                  thickness={3.5}
+                  color={metric.color}
+                  startFillColor={metric.color}
+                  endFillColor={metric.color}
+                  startOpacity={0.2}
+                  endOpacity={0.01}
+                  areaChart
+                  yAxisOffset={yAxisOffset}
+                  hideDataPoints={false}
+                  dataPointsHeight={10}
+                  dataPointsWidth={10}
+                  dataPointsColor={metric.color}
+                  showValuesAsDataPointsText
+                  textFontSize={11}
+                  textColor={isDark ? '#FFFFFF' : '#1F2937'}
+                  textShiftY={-8}
+                  textShiftX={-14}
+                  xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 10, fontWeight: '700' }}
+                  scrollToEnd
+                  scrollAnimation={false}
+                  disableScroll={false}
+                  showScrollIndicator={false}
+                  onPress={handlePress}
+                />
+              );
+            })()
           ) : (
             <View style={styles.chartPlaceholder}>
               <ActivityIndicator size="small" color={metric.color + '40'} />
@@ -154,7 +172,11 @@ export const DashboardPage: React.FC = React.memo(() => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
   const [allMetrics, setAllMetrics] = useState<any[]>([]);
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
+  // Default = 'tout' (par demande user : voir tout l'historique par défaut
+  // pour ne pas passer à côté des données anciennes)
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('tout');
+  const [customStart, setCustomStart] = useState<string | undefined>();
+  const [customEnd, setCustomEnd] = useState<string | undefined>();
 
   // Staggered chart mounting: start with first batch, progressively add more
   const [mountedChartCount, setMountedChartCount] = useState(INITIAL_CHARTS);
@@ -195,36 +217,86 @@ export const DashboardPage: React.FC = React.memo(() => {
     return ids;
   }, [allMetrics, mountedChartCount]);
 
-  const loadAllData = useCallback(async (period: Period = '30j') => {
-    const daysMap: Record<Period, number> = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, 'tout': 3650 };
-    const days = daysMap[period] || 30;
+  const loadAllData = useCallback(async (
+    period: Period = 'tout',
+    cStart?: string,
+    cEnd?: string,
+  ) => {
+    const daysMap: Record<string, number> = {
+      '7j': 7, '14j': 14, '30j': 30, '60j': 60, '90j': 90,
+      '6m': 180, '9m': 270, '1a': 365, '2a': 730, 'tout': 3650,
+    };
+    // En mode custom, on fetch tout l'historique puis on filtre par [start, end]
+    const days = period === 'custom' ? 3650 : (daysMap[period] || 30);
 
     try {
       setLoading(true);
       const settings = await getUserSettings();
 
-      const [weights, trainings, measurements, sleep, readiness, loadStats] = await Promise.all([
+      const [weights, trainings, measurements, sleep, readiness, loadStats, latestWeight] = await Promise.all([
         getWeights(days),
         getTrainings(days),
         getMeasurements(days),
         getSleepStats(),
         calculateReadinessScore(7),
-        getWeeklyLoadStats()
+        getWeeklyLoadStats(),
+        getLatestWeight(),
       ]);
+
+      // Fallback : si la période ne contient aucune entrée mais qu'il existe des données plus anciennes,
+      // on bascule sur l'historique complet pour pouvoir afficher la courbe ET la valeur.
+      let effectiveWeights: any[];
+      let effectiveMeasurements: any[];
+      if (weights && weights.length > 0) {
+        effectiveWeights = weights;
+      } else {
+        // Aucune donnée sur la période → on prend toutes les pesées pour afficher la courbe
+        effectiveWeights = await getWeights();
+      }
+      if (measurements && measurements.length > 0) {
+        effectiveMeasurements = measurements;
+      } else {
+        effectiveMeasurements = await getMeasurements();
+      }
+
+      // Si mode custom → filtre client-side sur [cStart, cEnd]
+      if (period === 'custom' && cStart && cEnd) {
+        const startMs = new Date(cStart).getTime();
+        const endMs = new Date(cEnd).getTime() + 24 * 3600 * 1000 - 1; // inclusive de la journée
+        const inRange = (item: any) => {
+          const t = new Date(item.date).getTime();
+          return t >= startMs && t <= endMs;
+        };
+        effectiveWeights = effectiveWeights.filter(inRange);
+        effectiveMeasurements = effectiveMeasurements.filter(inRange);
+      }
 
       const metricsList: any[] = [];
 
+      // Cap dur pour perf (50 points = largement suffisant pour un sparkline).
+      // Au-delà on garde les 50 plus récents — le chart reste scrollable horizontalement.
+      const HARD_CAP = 50;
       const prepareLineData = (data: any[], valueKey: string, color: string) => {
         if (!data || data.length === 0) return [];
         const filtered = data.filter(item => item[valueKey] != null && item[valueKey] > 0);
-        return filtered.slice().reverse().map(item => {
+        // Tri chronologique croissant (plus ancien → plus récent)
+        const chronological = filtered.slice().reverse();
+        // Garde les HARD_CAP dernières entrées (perf + lisibilité scroll)
+        const sampled = chronological.length > HARD_CAP
+          ? chronological.slice(chronological.length - HARD_CAP)
+          : chronological;
+
+        return sampled.map((item) => {
           const val = item[valueKey] || 0;
+          // Affiche la valeur au-dessus ET la date sous CHAQUE point,
+          // pour que l'user sache exactement à quelle date correspond chaque valeur.
           return {
             value: val,
             date: item.date,
             dataPointText: val.toFixed(1),
+            // Format "6 MARS" — lisible et identifiable comme dans l'ancien design
             label: format(parseISO(item.date), 'd MMM', { locale: fr }).toUpperCase(),
-            labelTextStyle: { color: colors.textMuted, fontSize: 8, fontWeight: '900' as const },
+            labelTextStyle: { color: colors.textMuted, fontSize: 10, fontWeight: '700' as const },
             dataPointColor: color,
           };
         });
@@ -237,16 +309,16 @@ export const DashboardPage: React.FC = React.memo(() => {
       };
 
       // --- 1. CORPS ---
-      metricsList.push({ id: 'weight', metricKey: 'weight', theme: 'Corps', title: 'Poids', icon: <Scale size={16} color="#3B82F6" />, color: '#3B82F6', unit: 'kg', value: getLatestValue(weights, 'weight'), data: prepareLineData(weights, 'weight', '#3B82F6') });
-      metricsList.push({ id: 'muscle_percent', metricKey: 'muscle_percent', theme: 'Corps', title: 'Muscle', icon: <TrendingUp size={16} color="#10B981" />, color: '#10B981', unit: '%', value: getLatestValue(weights, 'muscle_percent'), data: prepareLineData(weights, 'muscle_percent', '#10B981') });
-      metricsList.push({ id: 'fat_percent', metricKey: 'fat_percent', theme: 'Corps', title: 'Gras', icon: <Activity size={16} color="#EF4444" />, color: '#EF4444', unit: '%', value: getLatestValue(weights, 'fat_percent'), data: prepareLineData(weights, 'fat_percent', '#EF4444') });
-      metricsList.push({ id: 'water_percent', metricKey: 'water_percent', theme: 'Corps', title: 'Eau', icon: <Waves size={16} color="#06B6D4" />, color: '#06B6D4', unit: '%', value: getLatestValue(weights, 'water_percent'), data: prepareLineData(weights, 'water_percent', '#06B6D4') });
+      metricsList.push({ id: 'weight', metricKey: 'weight', theme: 'Corps', title: 'Poids', icon: <Scale size={16} color="#3B82F6" />, color: '#3B82F6', unit: 'kg', value: getLatestValue(effectiveWeights, 'weight'), data: prepareLineData(effectiveWeights, 'weight', '#3B82F6') });
+      metricsList.push({ id: 'muscle_percent', metricKey: 'muscle_percent', theme: 'Corps', title: 'Muscle', icon: <TrendingUp size={16} color="#10B981" />, color: '#10B981', unit: '%', value: getLatestValue(effectiveWeights, 'muscle_percent'), data: prepareLineData(effectiveWeights, 'muscle_percent', '#10B981') });
+      metricsList.push({ id: 'fat_percent', metricKey: 'fat_percent', theme: 'Corps', title: 'Gras', icon: <Activity size={16} color="#EF4444" />, color: '#EF4444', unit: '%', value: getLatestValue(effectiveWeights, 'fat_percent'), data: prepareLineData(effectiveWeights, 'fat_percent', '#EF4444') });
+      metricsList.push({ id: 'water_percent', metricKey: 'water_percent', theme: 'Corps', title: 'Eau', icon: <Waves size={16} color="#06B6D4" />, color: '#06B6D4', unit: '%', value: getLatestValue(effectiveWeights, 'water_percent'), data: prepareLineData(effectiveWeights, 'water_percent', '#06B6D4') });
 
       // --- 2. COMPOSITION ---
-      metricsList.push({ id: 'visceral_fat', metricKey: 'visceral_fat', theme: 'Composition', title: 'Gras Visc.', icon: <Target size={16} color="#EF4444" />, color: '#EF4444', unit: '', value: weights?.[0]?.visceral_fat || '--', data: prepareLineData(weights, 'visceral_fat', '#EF4444') });
-      metricsList.push({ id: 'bone_mass', metricKey: 'bone_mass', theme: 'Composition', title: 'Os', icon: <Bone size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: 'kg', value: getLatestValue(weights, 'bone_mass'), data: prepareLineData(weights, 'bone_mass', '#8B5CF6') });
-      metricsList.push({ id: 'bmr', metricKey: 'bmr', theme: 'Composition', title: 'BMR', icon: <Flame size={16} color="#F59E0B" />, color: '#F59E0B', unit: 'kcal', value: weights?.[0]?.bmr || '--', data: prepareLineData(weights, 'bmr', '#F59E0B') });
-      metricsList.push({ id: 'metabolic_age', metricKey: 'metabolic_age', theme: 'Composition', title: 'Âge Métab.', icon: <Calendar size={16} color="#06B6D4" />, color: '#06B6D4', unit: 'ans', value: weights?.[0]?.metabolic_age || '--', data: prepareLineData(weights, 'metabolic_age', '#06B6D4') });
+      metricsList.push({ id: 'visceral_fat', metricKey: 'visceral_fat', theme: 'Composition', title: 'Gras Visc.', icon: <Target size={16} color="#EF4444" />, color: '#EF4444', unit: '', value: effectiveWeights?.[0]?.visceral_fat || '--', data: prepareLineData(effectiveWeights, 'visceral_fat', '#EF4444') });
+      metricsList.push({ id: 'bone_mass', metricKey: 'bone_mass', theme: 'Composition', title: 'Os', icon: <Bone size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: 'kg', value: getLatestValue(effectiveWeights, 'bone_mass'), data: prepareLineData(effectiveWeights, 'bone_mass', '#8B5CF6') });
+      metricsList.push({ id: 'bmr', metricKey: 'bmr', theme: 'Composition', title: 'BMR', icon: <Flame size={16} color="#F59E0B" />, color: '#F59E0B', unit: 'kcal', value: effectiveWeights?.[0]?.bmr || '--', data: prepareLineData(effectiveWeights, 'bmr', '#F59E0B') });
+      metricsList.push({ id: 'metabolic_age', metricKey: 'metabolic_age', theme: 'Composition', title: 'Âge Métab.', icon: <Calendar size={16} color="#06B6D4" />, color: '#06B6D4', unit: 'ans', value: effectiveWeights?.[0]?.metabolic_age || '--', data: prepareLineData(effectiveWeights, 'metabolic_age', '#06B6D4') });
 
       // --- 3. MENSURATIONS ---
       const mKeys = [
@@ -256,17 +328,33 @@ export const DashboardPage: React.FC = React.memo(() => {
         { key: 'left_thigh', title: 'Cuisse', color: '#8B5CF6' },
       ];
       mKeys.forEach(m => {
-        metricsList.push({ id: m.key, metricKey: m.key, theme: 'Mensures', title: m.title, icon: <Ruler size={16} color={m.color} />, color: m.color, unit: 'cm', value: getLatestValue(measurements, m.key), data: prepareLineData(measurements, m.key, m.color) });
+        metricsList.push({ id: m.key, metricKey: m.key, theme: 'Mensures', title: m.title, icon: <Ruler size={16} color={m.color} />, color: m.color, unit: 'cm', value: getLatestValue(effectiveMeasurements, m.key), data: prepareLineData(effectiveMeasurements, m.key, m.color) });
       });
 
       // --- 4. DISCIPLINE ---
       const trainingsFiltered = trainings?.filter((t: any) => {
         const date = new Date(t.date);
+        if (period === 'custom' && cStart && cEnd) {
+          const s = new Date(cStart).getTime();
+          const e = new Date(cEnd).getTime() + 24 * 3600 * 1000 - 1;
+          const ts = date.getTime();
+          return ts >= s && ts <= e;
+        }
         const cutoff = subDays(new Date(), days);
         return date >= cutoff;
       }) || [];
 
-      metricsList.push({ id: 'trainings', metricKey: 'trainings', theme: 'Discipline', title: 'Entraînements', icon: <Trophy size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: `/${days}j`, value: trainingsFiltered.length, data: [] });
+      // Libellé d'unité : "/Xj" pour presets, "/Nj" calculé pour custom
+      let unitLabel = `/${days}j`;
+      if (period === 'custom' && cStart && cEnd) {
+        const diffDays = Math.max(
+          1,
+          Math.round((new Date(cEnd).getTime() - new Date(cStart).getTime()) / (24 * 3600 * 1000)) + 1,
+        );
+        unitLabel = `/${diffDays}j`;
+      }
+
+      metricsList.push({ id: 'trainings', metricKey: 'trainings', theme: 'Discipline', title: 'Entraînements', icon: <Trophy size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: unitLabel, value: trainingsFiltered.length, data: [] });
       metricsList.push({ id: 'load', metricKey: 'load', theme: 'Discipline', title: 'Charge globale', icon: <Flame size={16} color="#F97316" />, color: '#F97316', unit: 'pts', value: loadStats?.totalLoad || 0, data: [] });
 
       // --- 5. SANTÉ ---
@@ -287,21 +375,28 @@ export const DashboardPage: React.FC = React.memo(() => {
 
   useEffect(() => {
     const handle = InteractionManager.runAfterInteractions(() => {
-      loadAllData(selectedPeriod);
+      loadAllData(selectedPeriod, customStart, customEnd);
     });
     return () => handle.cancel();
-  }, [selectedPeriod]);
+  }, [selectedPeriod, customStart, customEnd]);
 
   // Recharger si des données changent ailleurs dans l'app
   useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => loadAllData(selectedPeriod));
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () =>
+      loadAllData(selectedPeriod, customStart, customEnd),
+    );
     return () => sub.remove();
-  }, [selectedPeriod, loadAllData]);
+  }, [selectedPeriod, customStart, customEnd, loadAllData]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    try { await loadAllData(selectedPeriod); } finally { setRefreshing(false); }
-  }, [selectedPeriod]);
+    try { await loadAllData(selectedPeriod, customStart, customEnd); } finally { setRefreshing(false); }
+  }, [selectedPeriod, customStart, customEnd]);
+
+  const handleCustomRangeChange = useCallback((start: string, end: string) => {
+    setCustomStart(start);
+    setCustomEnd(end);
+  }, []);
 
   const handleMetricPress = useCallback((metric: any) => {
     const route = METRIC_ROUTES[metric.id];
@@ -357,6 +452,9 @@ export const DashboardPage: React.FC = React.memo(() => {
         description="Vision globale de ton évolution physique et performance"
         selectedPeriod={selectedPeriod}
         onPeriodChange={setSelectedPeriod}
+        customStart={customStart}
+        customEnd={customEnd}
+        onCustomRangeChange={handleCustomRangeChange}
       />
 
       <View style={styles.gridContainer}>
@@ -485,7 +583,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
     position: 'relative',
-    overflow: 'hidden',
+    overflow: 'visible', // permet aux labels de ne pas être coupés par les coins
   },
   cardHeader: {
     flexDirection: 'row',
@@ -529,9 +627,11 @@ const styles = StyleSheet.create({
   miniChartWrapper: {
     height: 120,
     marginTop: 5,
-    marginLeft: -25,
+    marginLeft: -14,
     marginBottom: -10,
+    paddingTop: 10,
     justifyContent: 'center',
+    overflow: 'visible',
   },
   noDataContainer: {
     flex: 1,

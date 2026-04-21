@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   StatusBar,
-  Image,
   Pressable,
   Keyboard,
   DeviceEventEmitter,
@@ -18,6 +17,8 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system/legacy';
 import {
   ChevronLeft,
   Target,
@@ -36,7 +37,6 @@ import {
   Activity,
   Camera,
   ChevronRight,
-  User,
   Sparkles,
   Flame,
   Globe,
@@ -58,6 +58,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n, SUPPORTED_LANGUAGES } from '@/lib/I18nContext';
 // 🔒 SÉCURITÉ: Protection contre les screenshots
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
+import { FramedProfilePhoto } from '@/components/FramedProfilePhoto';
 import { BlurView } from 'expo-blur';
 import logger from '@/lib/security/logger';
 
@@ -188,8 +189,18 @@ export default function ProfileScreen() {
   const { colors, isDark } = useTheme();
   const { t, language, setLanguage } = useI18n();
 
-  // 🔒 SÉCURITÉ: Protection contre les screenshots
-  const { isBlurred, screenshotDetected } = useSensitiveScreen();
+  // 🔒 SÉCURITÉ: Protection contre les screenshots (désactivée sur le profil —
+  // l'utilisateur doit pouvoir prendre un screenshot de sa page profil)
+  const { isBlurred, screenshotDetected } = useSensitiveScreen(false);
+
+  // Force l'autorisation des captures d'écran sur cette page (au cas où
+  // une autre page sensible aurait activé la protection sans la désactiver).
+  useEffect(() => {
+    try {
+      const ScreenCapture = require('expo-screen-capture');
+      ScreenCapture.allowScreenCaptureAsync?.().catch(() => {});
+    } catch {}
+  }, []);
 
   // Custom popup
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -213,6 +224,24 @@ export default function ProfileScreen() {
   // Protection anti-spam
   const [isSaving, setIsSaving] = useState(false);
   const [isPickingPhoto, setIsPickingPhoto] = useState(false);
+
+  // Redimensionne une photo à max 800x800 et la copie en zone PERMANENTE
+  const resizePhoto = async (uri: string): Promise<string> => {
+    try {
+      const result = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 800 } }],
+        { compress: 0.95, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      // Copier dans documentDirectory pour que la photo survive aux sauvegardes
+      const fileName = `profile_photo_${Date.now()}.jpg`;
+      const permanentUri = `${FileSystem.documentDirectory}${fileName}`;
+      await FileSystem.copyAsync({ from: result.uri, to: permanentUri });
+      return permanentUri;
+    } catch {
+      return uri; // fallback : image originale si erreur
+    }
+  };
 
   // Calcul automatique de l'âge à partir de la date de naissance
   const calculateAge = (dateStr: string): number | null => {
@@ -302,7 +331,7 @@ export default function ProfileScreen() {
     try {
       await saveProfile({
         name: name.trim(),
-        height_cm: heightCm ? parseInt(heightCm) : undefined,
+        height_cm: heightCm ? parseInt(heightCm, 10) : undefined,
         target_weight: targetWeight ? parseFloat(targetWeight) : undefined,
         start_weight: startWeight ? parseFloat(startWeight) : undefined,
         start_date: profile?.start_date || format(new Date(), 'yyyy-MM-dd'),
@@ -324,54 +353,46 @@ export default function ProfileScreen() {
     }
   };
 
-  const takeProfilePhoto = async (withEditing: boolean = false) => {
-    // Protection anti-spam
+  const _savePhotoToProfile = async (uri: string) => {
+    const resized = await resizePhoto(uri);
+    setProfilePhoto(resized);
+    const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
+    await saveProfile({
+      name: safeName,
+      height_cm: profile?.height_cm,
+      target_weight: profile?.target_weight,
+      start_weight: profile?.start_weight,
+      start_date: profile?.start_date,
+      avatar_gender: profile?.avatar_gender || 'homme',
+      profile_photo: resized,
+    });
+    DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+    // Pas de popup succès — la photo s'affiche instantanément, c'est suffisant
+  };
+
+  const takeProfilePhoto = async () => {
     if (isPickingPhoto) return;
     setIsPickingPhoto(true);
-
     try {
       const { status } = await requestCameraPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission refusée', 'Accès à la caméra requis pour prendre une photo.');
-        setIsPickingPhoto(false);
         return;
       }
-
       const result = await launchCameraAsync({
         mediaTypes: ['images'],
-        allowsEditing: withEditing,
-        aspect: withEditing ? [1, 1] : undefined,
-        quality: 0.8,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.85,
       });
-
-      if (!result.canceled && result.assets && result.assets[0]) {
-        const photoUri = result.assets[0].uri;
-        setProfilePhoto(photoUri);
-        const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
-
-        await saveProfile({
-          name: safeName,
-          height_cm: profile?.height_cm,
-          target_weight: profile?.target_weight,
-          start_weight: profile?.start_weight,
-          start_date: profile?.start_date,
-          avatar_gender: profile?.avatar_gender || 'homme',
-          profile_photo: photoUri,
-        });
-
-        await loadData();
-        DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
-        showPopup('Photo mise à jour', 'Ta photo de profil a été changée avec succès.');
+      if (!result.canceled && result.assets?.[0]) {
+        await _savePhotoToProfile(result.assets[0].uri);
       }
     } catch (error) {
       logger.error('[Profile] Erreur prise de photo:', error);
-      // Si erreur camera (simulateur), proposer galerie
       if (error && error.toString().includes('Camera not available')) {
-        showPopup(
-          'Caméra non disponible',
-          'Utilise la galerie pour choisir une photo.',
-          [{ text: 'Galerie', style: 'primary', onPress: () => pickProfilePhoto(withEditing) }]
-        );
+        showPopup('Caméra non disponible', 'Utilise la galerie pour choisir une photo.',
+          [{ text: 'Galerie', style: 'primary', onPress: () => pickProfilePhoto() }]);
       } else {
         showPopup('Erreur', 'Impossible de prendre une photo. Réessaye plus tard.');
       }
@@ -380,45 +401,24 @@ export default function ProfileScreen() {
     }
   };
 
-  const pickProfilePhoto = async (withEditing: boolean = true) => {
-    // Protection anti-spam
+  const pickProfilePhoto = async () => {
     if (isPickingPhoto) return;
     setIsPickingPhoto(true);
-
     try {
       const { status } = await requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission refusée', 'Accès à la galerie requis pour choisir une photo.');
-        setIsPickingPhoto(false);
         return;
       }
-
       const result = await launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsEditing: withEditing,
-        aspect: withEditing ? [1, 1] : undefined,
-        quality: 0.8,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.85,
         selectionLimit: 1,
       });
-
-      if (!result.canceled && result.assets && result.assets[0]) {
-        const photoUri = result.assets[0].uri;
-        setProfilePhoto(photoUri);
-        const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
-
-        await saveProfile({
-          name: safeName,
-          height_cm: profile?.height_cm,
-          target_weight: profile?.target_weight,
-          start_weight: profile?.start_weight,
-          start_date: profile?.start_date,
-          avatar_gender: profile?.avatar_gender || 'homme',
-          profile_photo: photoUri,
-        });
-
-        await loadData();
-        DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
-        showPopup('Photo mise à jour', 'Ta photo de profil a été changée avec succès.');
+      if (!result.canceled && result.assets?.[0]) {
+        await _savePhotoToProfile(result.assets[0].uri);
       }
     } catch (error) {
       logger.error('[Profile] Erreur sélection photo:', error);
@@ -436,20 +436,12 @@ export default function ProfileScreen() {
         {
           text: t('profile.takePhoto') || 'Prendre une photo',
           style: 'primary',
-          onPress: async () => {
-            setTimeout(() => {
-              takeProfilePhoto(true);
-            }, 500);
-          }
+          onPress: () => { setTimeout(takeProfilePhoto, 600); }
         },
         {
           text: t('profile.chooseFromGallery') || 'Choisir depuis la galerie',
           style: 'default',
-          onPress: async () => {
-            setTimeout(() => {
-              pickProfilePhoto(true);
-            }, 500);
-          }
+          onPress: () => { setTimeout(pickProfilePhoto, 600); }
         },
         { text: t('common.cancel') || 'Annuler', style: 'cancel' },
       ]
@@ -542,22 +534,38 @@ export default function ProfileScreen() {
               style={({ pressed }) => [{ alignItems: 'center', opacity: pressed ? 0.7 : 1 }]}
             >
               <View style={{ position: 'relative' }}>
-                {profilePhoto ? (
-                  <Image
-                    source={{ uri: profilePhoto }}
-                    style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 4, borderColor: colors?.accent ?? '#0ABAB5' }}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={[styles.photoPlaceholderLarge, { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: colors?.accent ?? '#0ABAB5' }]}>
-                    <User size={48} color={colors?.textMuted ?? '#6B7280'} />
-                  </View>
-                )}
-                <View style={[styles.cameraButton, { bottom: 4, right: 4, backgroundColor: colors?.accent ?? '#0ABAB5' }]}>
+                <FramedProfilePhoto
+                  uri={profilePhoto ?? undefined}
+                  size={120}
+                  borderColor={colors?.accent ?? '#0ABAB5'}
+                  borderWidth={4}
+                />
+                <View style={[styles.cameraButton, { bottom: 4, right: 4, backgroundColor: colors?.accent ?? '#0ABAB5', zIndex: 10 }]}>
                   <Camera size={16} color={colors?.textOnAccent ?? '#FFFFFF'} />
                 </View>
               </View>
             </Pressable>
+
+            {/* Bouton personnaliser cadre */}
+            <TouchableOpacity
+              onPress={() => router.push('/frame-selection' as any)}
+              activeOpacity={0.75}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 5,
+                marginTop: 10,
+                paddingHorizontal: 14,
+                paddingVertical: 6,
+                borderRadius: 20,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+              }}
+            >
+              <Sparkles size={13} color={colors?.accent ?? '#0ABAB5'} />
+              <Text style={{ fontSize: 12, fontWeight: '600', color: colors?.accent ?? '#0ABAB5' }}>
+                Personnaliser
+              </Text>
+            </TouchableOpacity>
 
             {/* Date d'inscription */}
             {profile?.start_date && (
@@ -631,7 +639,7 @@ export default function ProfileScreen() {
             <View style={styles.dojoStatItem}>
               <Flame size={18} color="#F97316" strokeWidth={2.5} />
               <Text style={[styles.dojoStatValue, { color: '#F97316' }]}>{streak}</Text>
-              <Text style={[styles.dojoStatLabel, { color: colors?.textMuted ?? '#6B7280' }]}>Streak</Text>
+              <Text style={[styles.dojoStatLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('home.streak')}</Text>
             </View>
 
             {/* Rang */}

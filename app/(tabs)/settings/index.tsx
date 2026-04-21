@@ -33,6 +33,7 @@ import {
   Upload,
   FileUp,
   FileText,
+  Archive,
   ShieldCheck,
   Lock,
   Trash2,
@@ -56,8 +57,11 @@ import {
   BarChart3,
   Database,
   Globe,
+  Check,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { Type } from 'lucide-react-native';
+import { FontSizeLevel, FONT_SIZE_LABELS } from '@/lib/fontScaleManager';
 import { useI18n, SUPPORTED_LANGUAGES } from '@/lib/I18nContext';
 import { useCustomPopup } from '@/components/CustomPopup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -67,7 +71,7 @@ import { exportDataToJSON, importDataFromJSON, exportEditableCSV, importEditable
 import * as FileSystem from 'expo-file-system/legacy';
 import { generateProgressPDF } from '@/lib/pdfExport';
 import { resetAllData, resetDataOnly } from '@/lib/storage';
-import { resetDatabase } from '@/lib/database';
+import { resetDatabase, deduplicateTrainings } from '@/lib/database';
 import logger from '@/lib/security/logger';
 import { verifyDevCode } from '@/lib/DevModeContext';
 import { generateHenyDemoData, restoreRealData, isDemoDataActive } from '@/lib/demoDataService';
@@ -94,58 +98,58 @@ interface SettingsSection {
 
 const SETTINGS_SECTIONS: SettingsSection[] = [
   {
-    title: 'PROFIL & PRESENTATION',
+    title: 'settings.sections.profile',
     items: [
-      { id: 'profile', label: 'Mon Profil', sublabel: 'Infos personnelles', Icon: UserRound, iconColor: '#3B82F6', route: '/profile' },
-      { id: 'avatar', label: 'Avatar', sublabel: 'Personnaliser ton avatar', Icon: UserRound, iconColor: '#F97316', route: '/avatar-selection' },
-      { id: 'frame', label: 'Photo de profil', sublabel: 'Cadre, accessoires et bordure', Icon: Hash, iconColor: '#8B5CF6', route: '/frame-selection' },
-      { id: 'logos', label: 'Logo de l\'app', sublabel: 'Personalise l\'icone Yoroi sur ton ecran', Icon: ImageIcon, iconColor: '#8B5CF6', route: '/logo-selection' },
+      { id: 'profile', label: 'settings.items.profile.label', sublabel: 'settings.items.profile.sublabel', Icon: UserRound, iconColor: '#3B82F6', route: '/profile' },
+      { id: 'avatar', label: 'settings.items.avatar.label', sublabel: 'settings.items.avatar.sublabel', Icon: UserRound, iconColor: '#F97316', route: '/avatar-selection' },
+      { id: 'frame', label: 'settings.items.frame.label', sublabel: 'settings.items.frame.sublabel', Icon: Hash, iconColor: '#8B5CF6', route: '/frame-selection' },
+      { id: 'logos', label: 'settings.items.logos.label', sublabel: 'settings.items.logos.sublabel', Icon: ImageIcon, iconColor: '#8B5CF6', route: '/logo-selection' },
     ],
   },
   {
-    title: 'APPARENCE',
+    title: 'settings.sections.appearance',
     items: [
-      { id: 'themes', label: 'Themes', sublabel: 'Themes et personnalisation', Icon: Palette, iconColor: '#8B5CF6', route: '/themes' },
-      { id: 'units', label: 'Unites', sublabel: 'Kg/Lbs, Cm/Inches', Icon: Sliders, iconColor: '#8B5CF6', handler: 'units' },
+      { id: 'themes', label: 'settings.items.themes.label', sublabel: 'settings.items.themes.sublabel', Icon: Palette, iconColor: '#8B5CF6', route: '/themes' },
+      { id: 'units', label: 'settings.items.units.label', sublabel: 'settings.items.units.sublabel', Icon: Sliders, iconColor: '#8B5CF6', handler: 'units' },
     ],
   },
   {
-    title: 'PERSONNALISATION',
+    title: 'settings.sections.customization',
     items: [
-      { id: 'navbar', label: 'Barre de navigation', sublabel: 'Ordre et visibilite des onglets', Icon: Grip, iconColor: '#8B5CF6', route: '/customize-tabs' },
-      { id: 'citations', label: 'Citations', sublabel: 'Style et notifications', Icon: MessageSquareQuote, iconColor: '#F59E0B', route: '/citations' },
+      { id: 'navbar', label: 'settings.items.navbar.label', sublabel: 'settings.items.navbar.sublabel', Icon: Grip, iconColor: '#8B5CF6', route: '/customize-tabs' },
+      { id: 'citations', label: 'settings.items.citations.label', sublabel: 'settings.items.citations.sublabel', Icon: MessageSquareQuote, iconColor: '#F59E0B', route: '/citations' },
     ],
   },
   {
-    title: 'NOTIFICATIONS & CONNECTIVITE',
+    title: 'settings.sections.notifications',
     items: [
-      { id: 'notifications', label: 'Notifications', sublabel: 'Rappels, briefing, alertes intelligentes', Icon: Bell, iconColor: '#F59E0B', route: '/notifications' },
-      { id: 'health-data', label: 'Données Santé', sublabel: 'Synchronise tes données santé', Icon: Stethoscope, iconColor: '#EC4899', route: '/connected-devices' },
-      { id: 'heart-zones', label: 'Zones cardiaques', sublabel: 'Configure tes 5 zones personnelles', Icon: Heart, iconColor: '#EF4444', route: '/heart-zones-settings' },
+      { id: 'notifications', label: 'settings.items.notifications.label', sublabel: 'settings.items.notifications.sublabel', Icon: Bell, iconColor: '#F59E0B', route: '/notifications' },
+      { id: 'health-data', label: 'settings.items.healthData.label', sublabel: 'settings.items.healthData.sublabel', Icon: Stethoscope, iconColor: '#EC4899', route: '/connected-devices' },
+      { id: 'heart-zones', label: 'settings.items.heartZones.label', sublabel: 'settings.items.heartZones.sublabel', Icon: Heart, iconColor: '#EF4444', route: '/heart-zones-settings' },
     ],
   },
   {
-    title: 'MES DONNÉES',
+    title: 'settings.sections.data',
     items: [
-      { id: 'companion', label: 'Mes données', sublabel: 'Tableau, graphiques, ajout et export CSV', Icon: Table, iconColor: '#4F8EF7', route: '/companion' },
-      { id: 'export', label: 'Sauvegarder', sublabel: 'Backup complet (JSON ou CSV)', Icon: Download, iconColor: '#14B8A6', handler: 'export' },
-      { id: 'import', label: 'Restaurer', sublabel: 'Importer un backup', Icon: Upload, iconColor: '#14B8A6', handler: 'import' },
-      { id: 'import-csv', label: 'Import CSV', sublabel: 'Importer depuis un ordinateur (PC/Mac)', Icon: FileUp, iconColor: '#6366F1', route: '/import-csv' },
-      { id: 'pdf', label: 'Rapport PDF', sublabel: 'Pour medecin ou coach', Icon: FileText, iconColor: '#6B7280', handler: 'pdf' },
-      { id: 'clear-cache', label: 'Vider le cache', sublabel: 'Libere de l\'espace, garde tes données', Icon: Database, iconColor: '#F59E0B', handler: 'clear-cache' },
-      { id: 'privacy', label: 'Vie Privee & Données', sublabel: 'Gere tes données personnelles', Icon: ShieldCheck, iconColor: '#14B8A6', route: '/privacy-data' },
-      { id: 'privacy-policy', label: 'Politique de confidentialite', sublabel: '', Icon: Lock, iconColor: '#6B7280', handler: 'privacy-policy' },
-      { id: 'clean-uninstall', label: 'Quitter sans laisser de trace', sublabel: 'Efface tout avant de desinstaller', Icon: LogOut, iconColor: '#EF4444', handler: 'clean-uninstall', labelColor: '#EF4444' },
-      { id: 'reset', label: 'Reinitialiser Tout', sublabel: 'Effacer toutes les données', Icon: Trash2, iconColor: '#EF4444', handler: 'reset', labelColor: '#EF4444' },
+      { id: 'companion', label: 'settings.items.companion.label', sublabel: 'settings.items.companion.sublabel', Icon: Table, iconColor: '#4F8EF7', route: '/companion' },
+      { id: 'export', label: 'settings.items.export.label', sublabel: 'settings.items.export.sublabel', Icon: Download, iconColor: '#14B8A6', handler: 'export' },
+      { id: 'import', label: 'settings.items.importData.label', sublabel: 'settings.items.importData.sublabel', Icon: Upload, iconColor: '#14B8A6', handler: 'import' },
+      { id: 'backup-history', label: 'Mes sauvegardes', sublabel: 'Retrouver et restaurer vos backups locaux', Icon: Archive, iconColor: '#14B8A6', route: '/backup-history' },
+      { id: 'deduplicate', label: 'Nettoyer les doublons', sublabel: 'Supprimer les séances en double (Apple Santé)', Icon: ShieldCheck, iconColor: '#F59E0B', handler: 'deduplicate' },
+      { id: 'pdf', label: 'settings.items.pdf.label', sublabel: 'settings.items.pdf.sublabel', Icon: FileText, iconColor: '#6B7280', handler: 'pdf' },
+      { id: 'clear-cache', label: 'settings.items.clearCache.label', sublabel: 'settings.items.clearCache.sublabel', Icon: Database, iconColor: '#F59E0B', handler: 'clear-cache' },
+      { id: 'privacy', label: 'settings.items.privacy.label', sublabel: 'settings.items.privacy.sublabel', Icon: ShieldCheck, iconColor: '#14B8A6', route: '/privacy-data' },
+      { id: 'privacy-policy', label: 'settings.items.privacyPolicy.label', sublabel: 'settings.items.privacyPolicy.sublabel', Icon: Lock, iconColor: '#6B7280', handler: 'privacy-policy' },
+      { id: 'clean-uninstall', label: 'settings.items.cleanUninstall.label', sublabel: 'settings.items.cleanUninstall.sublabel', Icon: LogOut, iconColor: '#EF4444', handler: 'clean-uninstall', labelColor: '#EF4444' },
+      { id: 'reset', label: 'settings.items.reset.label', sublabel: 'settings.items.reset.sublabel', Icon: Trash2, iconColor: '#EF4444', handler: 'reset', labelColor: '#EF4444' },
     ],
   },
   {
-    title: 'SUPPORT & A PROPOS',
+    title: 'settings.sections.support',
     items: [
-      { id: 'about', label: 'A propos de Yoroi', sublabel: 'Qui suis-je et pourquoi cette app', Icon: Info, iconColor: '#8B5CF6', handler: 'about' },
-      { id: 'ideas', label: 'Boite a idees', sublabel: 'Proposer des idees et signaler des bugs', Icon: Lightbulb, iconColor: '#14B8A6', handler: 'ideas' },
-      { id: 'instagram', label: 'Instagram : Yoroiapp', sublabel: "Suis l'avancee", Icon: Camera, iconColor: '#EC4899', handler: 'instagram' },
-      { id: 'rate', label: "Noter l'App", sublabel: 'Laisse un avis sur le Store', Icon: Star, iconColor: '#F59E0B', handler: 'rate' },
+      { id: 'about', label: 'settings.items.about.label', sublabel: 'settings.items.about.sublabel', Icon: Info, iconColor: '#8B5CF6', handler: 'about' },
+      { id: 'ideas', label: 'settings.items.ideas.label', sublabel: 'settings.items.ideas.sublabel', Icon: Lightbulb, iconColor: '#14B8A6', handler: 'ideas' },
+      { id: 'rate', label: 'settings.items.rate.label', sublabel: 'settings.items.rate.sublabel', Icon: Star, iconColor: '#F59E0B', handler: 'rate' },
     ],
   },
 ];
@@ -156,7 +160,7 @@ const CREATOR_ITEMS: SettingsItem[] = [
   { id: 'creator-journal', label: 'Mode Carnet', sublabel: 'Desactive', Icon: BookOpen, iconColor: '#F97316', handler: 'toggle-journal' },
   { id: 'creator-surgeon', label: 'Mode Chirurgien', sublabel: 'Desactive', Icon: Syringe, iconColor: '#EF4444', handler: 'toggle-surgeon' },
   { id: 'creator-mock', label: 'Stats Mock', sublabel: 'Desactive', Icon: BarChart3, iconColor: '#8B5CF6', handler: 'toggle-mock' },
-  { id: 'creator-hery', label: 'Profil Demo Henry', sublabel: 'Injecter données realistes', Icon: Database, iconColor: '#10B981', handler: 'demo-hery' },
+  { id: 'creator-hery', label: 'Profil Demo Heny', sublabel: 'Injecter données realistes', Icon: Database, iconColor: '#10B981', handler: 'demo-hery' },
   { id: 'creator-onboarding', label: 'Voir Onboarding', sublabel: 'Previsualiser l\'ecran d\'accueil', Icon: Eye, iconColor: '#06B6D4', handler: 'preview-onboarding' },
   { id: 'creator-reset', label: 'Tout Desactiver', sublabel: 'Nettoyer les données de demo', Icon: Trash2, iconColor: '#EF4444', handler: 'reset-creator', labelColor: '#EF4444' },
   { id: 'creator-purge', label: 'PURGE FORCEE', sublabel: 'Efface poids + séances (SQLite direct)', Icon: Trash2, iconColor: '#FF0000', handler: 'purge-data', labelColor: '#FF0000' },
@@ -169,9 +173,9 @@ const CREATOR_ITEMS: SettingsItem[] = [
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, isDark, screenBackground } = useTheme();
+  const { colors, isDark, screenBackground, fontSizeLevel, setFontSizeLevel } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const { language, setLanguage } = useI18n();
+  const { language, setLanguage, t } = useI18n();
 
   // Search
   const [searchText, setSearchText] = useState('');
@@ -366,22 +370,22 @@ export default function SettingsScreen() {
     return CREATOR_ITEMS.map(item => {
       switch (item.id) {
         case 'creator-screenshot':
-          return { ...item, sublabel: isGlobalScreenshotMode ? 'Active' : 'Desactive' };
+          return { ...item, sublabel: isGlobalScreenshotMode ? t('settings.creatorMode.active') : t('settings.creatorMode.inactive') };
         case 'creator-journal':
-          return { ...item, sublabel: isJournalScreenshotMode ? 'Active' : 'Desactive' };
+          return { ...item, sublabel: isJournalScreenshotMode ? t('settings.creatorMode.active') : t('settings.creatorMode.inactive') };
         case 'creator-surgeon':
-          return { ...item, sublabel: isSurgeonMode ? 'Active' : 'Desactive' };
+          return { ...item, sublabel: isSurgeonMode ? t('settings.creatorMode.active') : t('settings.creatorMode.inactive') };
         case 'creator-mock':
-          return { ...item, sublabel: isMockStatsMode ? 'Active' : 'Desactive' };
+          return { ...item, sublabel: isMockStatsMode ? t('settings.creatorMode.active') : t('settings.creatorMode.inactive') };
         case 'creator-hery':
-          return { ...item, sublabel: isDemoActive ? 'Active - données demo injectees' : 'Injecter données realistes' };
+          return { ...item, sublabel: isDemoActive ? t('settings.creatorMode.demoActive') : t('settings.creatorMode.injectData') };
         case 'creator-reset':
-          return { ...item, sublabel: isDemoActive ? 'Restaurer tes vraies données' : 'Nettoyer les données de demo' };
+          return { ...item, sublabel: isDemoActive ? t('settings.creatorMode.restoreData') : t('settings.creatorMode.clearDemo') };
         default:
           return item;
       }
     });
-  }, [isGlobalScreenshotMode, isJournalScreenshotMode, isSurgeonMode, isMockStatsMode, isDemoActive]);
+  }, [isGlobalScreenshotMode, isJournalScreenshotMode, isSurgeonMode, isMockStatsMode, isDemoActive, t]);
 
   // Filtered sections based on search
   const filteredSections = useMemo((): SettingsSection[] => {
@@ -391,11 +395,11 @@ export default function SettingsScreen() {
       ...section,
       items: section.items.filter(
         item =>
-          item.label.toLowerCase().includes(query) ||
-          item.sublabel.toLowerCase().includes(query)
+          t(item.label).toLowerCase().includes(query) ||
+          t(item.sublabel).toLowerCase().includes(query)
       ),
     })).filter(section => section.items.length > 0);
-  }, [searchText]);
+  }, [searchText, t]);
 
   // Filtered creator items based on search
   const filteredCreatorItems = useMemo((): SettingsItem[] => {
@@ -414,36 +418,38 @@ export default function SettingsScreen() {
 
   const handleExport = () => {
     showPopup(
-      'Exporter mes données',
-      'Choisis le format de sauvegarde',
+      t('settings.exportPopup.title'),
+      t('settings.exportPopup.message'),
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Backup Complet', style: 'primary', onPress: () => exportDataToJSON() },
-        { text: 'CSV Editable', style: 'default', onPress: () => handleExportEditable() },
+        { text: t('settings.exportPopup.cancel'), style: 'cancel' },
+        { text: t('settings.exportPopup.fullBackup'), style: 'primary', onPress: () => exportDataToJSON() },
+        { text: t('settings.exportPopup.editableCSV'), style: 'default', onPress: () => handleExportEditable() },
       ]
     );
   };
 
   const handleExportEditable = () => {
     showPopup(
-      'Export Editable',
-      'Exporte tes données dans un format modifiable sur ordinateur',
+      t('settings.exportPopup.editableTitle'),
+      t('settings.exportPopup.editableMsg'),
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Mes Données', style: 'primary', onPress: () => exportEditableCSV() },
-        { text: 'Template Vide', style: 'default', onPress: () => exportEmptyTemplate() },
+        { text: t('settings.exportPopup.cancel'), style: 'cancel' },
+        { text: t('settings.exportPopup.myData'), style: 'primary', onPress: () => exportEditableCSV() },
+        { text: t('settings.exportPopup.emptyTemplate'), style: 'default', onPress: () => exportEmptyTemplate() },
       ]
     );
   };
 
   const handleImport = () => {
+    // Un seul moyen de restaurer : le backup JSON.
+    // La migration automatique gère toutes les versions (v1.0, v2.0, v5.0, etc.)
     showPopup(
-      'Restaurer mes données',
-      'Choisis le type de fichier a importer',
+      t('settings.importPopup.title'),
+      t('settings.importPopup.message'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('settings.importPopup.cancel'), style: 'cancel' },
         {
-          text: 'Backup JSON',
+          text: t('settings.importPopup.backupJSON'),
           style: 'primary',
           onPress: async () => {
             try {
@@ -458,47 +464,31 @@ export default function SettingsScreen() {
             }
           },
         },
-        {
-          text: 'CSV Editable',
-          style: 'default',
-          onPress: async () => {
-            try {
-              const success = await importEditableCSV();
-              if (success) {
-                notificationAsync(NotificationFeedbackType.Success);
-                router.push('/(tabs)');
-              }
-            } catch (error) {
-              logger.error('Import CSV error:', error);
-              notificationAsync(NotificationFeedbackType.Error);
-            }
-          },
-        },
       ]
     );
   };
 
   const handleExportPDF = () => {
     showPopup(
-      'Rapport PDF',
-      'Choisis la periode du rapport',
+      t('settings.pdfPopup.title'),
+      t('settings.pdfPopup.message'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('settings.pdfPopup.cancel'), style: 'cancel' },
         {
-          text: '30 jours',
+          text: t('settings.pdfPopup.30days'),
           style: 'default',
           onPress: async () => {
             try { await generateProgressPDF('30j'); } catch (e) {
-              showPopup('Erreur', 'Impossible de generer le PDF', [{ text: 'OK', style: 'primary' }]);
+              showPopup(t('settings.error'), t('settings.pdfPopup.error'), [{ text: 'OK', style: 'primary' }]);
             }
           },
         },
         {
-          text: '90 jours',
+          text: t('settings.pdfPopup.90days'),
           style: 'primary',
           onPress: async () => {
             try { await generateProgressPDF('90j'); } catch (e) {
-              showPopup('Erreur', 'Impossible de generer le PDF', [{ text: 'OK', style: 'primary' }]);
+              showPopup(t('settings.error'), t('settings.pdfPopup.error'), [{ text: 'OK', style: 'primary' }]);
             }
           },
         },
@@ -513,21 +503,22 @@ export default function SettingsScreen() {
 
   const handleResetAll = () => {
     showPopup(
-      'Sauvegarde recommandee',
-      'Avant de reinitialiser, on te recommande de sauvegarder tes données.',
+      t('settings.resetModal.backupRecommended'),
+      t('settings.resetModal.backupRecommendedMsg'),
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Sauvegarder d\'abord', style: 'primary', onPress: async () => {
+        { text: t('settings.resetModal.cancel'), style: 'cancel' },
+        { text: t('settings.resetModal.backupFirst'), style: 'primary', onPress: async () => {
           await exportDataToJSON();
           openResetModal();
         }},
-        { text: 'Continuer sans sauvegarder', style: 'default', onPress: () => openResetModal() },
+        { text: t('settings.resetModal.continueWithout'), style: 'default', onPress: () => openResetModal() },
       ]
     );
   };
 
   const normalizedText = resetConfirmText.trim().toUpperCase();
-  const isResetConfirmed = normalizedText === 'SUPPRIMER' || normalizedText === 'SUPRIMER' || normalizedText === 'EFFACER' || normalizedText === 'OUI';
+  const confirmWord = t('settings.resetModal.confirmWord').toUpperCase();
+  const isResetConfirmed = normalizedText === confirmWord || normalizedText === 'SUPPRIMER' || normalizedText === 'SUPRIMER' || normalizedText === 'EFFACER' || normalizedText === 'OUI' || normalizedText === 'YES';
 
   const confirmReset = async () => {
     if (isResetConfirmed) {
@@ -536,14 +527,14 @@ export default function SettingsScreen() {
         setResetModalVisible(false);
         setResetConfirmText('');
         showPopup(
-          'Données supprimees',
-          'Tes données ont ete effacees. Tes photos ont ete conservees.',
+          t('settings.resetModal.deleted'),
+          t('settings.resetModal.deletedMsg'),
           [{ text: 'OK', style: 'primary', onPress: () => router.replace('/onboarding') }],
           <CheckCircle size={32} color="#10B981" />
         );
       } catch (error) {
         logger.error('[Settings] Error resetting data:', error);
-        showPopup('Erreur', 'Impossible de reinitialiser', [{ text: 'OK', style: 'primary' }]);
+        showPopup(t('settings.error'), t('settings.resetModal.error'), [{ text: 'OK', style: 'primary' }]);
       }
     }
   };
@@ -579,14 +570,14 @@ export default function SettingsScreen() {
       await loadCreatorSettings();
     } else {
       notificationAsync(NotificationFeedbackType.Error);
-      showPopup('Code Incorrect', "Le code saisi n'est pas valide.", [{ text: 'Reessayer', style: 'primary' }]);
+      showPopup(t('settings.secretCodeModal.incorrect'), t('settings.secretCodeModal.incorrectMsg'), [{ text: t('settings.secretCodeModal.retry'), style: 'primary' }]);
       setSecretCode('');
     }
   };
 
-  const handleDemoHenry = () => {
+  const handleDemoHeny = () => {
     showPopup(
-      'Profil Demo Henry',
+      'Profil Demo Heny',
       isDemoActive
         ? 'Le mode demo est deja actif. Regenerer les données ?'
         : 'Tes vraies données seront sauvegardees automatiquement et restaurees quand tu desactiveras le mode demo.',
@@ -604,7 +595,7 @@ export default function SettingsScreen() {
               DeviceEventEmitter.emit('YOROI_DEMO_CHANGED');
               notificationAsync(NotificationFeedbackType.Success);
               showPopup(
-                'Profil Henry cree',
+                'Profil Heny cree',
                 `${result.workouts} séances, ${result.weights} pesees, ${result.measurements} mensurations, ${result.sleepEntries} nuits, ${result.benchmarks} benchmarks, ${result.skills} techniques.\n\nTes vraies données sont sauvegardees. Utilise "Tout Desactiver" pour les restaurer.`,
                 [{ text: 'OK', style: 'primary', onPress: () => router.replace('/(tabs)') }]
               );
@@ -621,12 +612,12 @@ export default function SettingsScreen() {
 
   const handleClearCache = useCallback(() => {
     showPopup(
-      'Vider le cache',
-      'Efface les fichiers temporaires et les images en cache. Tes données, séances et statistiques sont conservees.',
+      t('settings.clearCachePopup.title'),
+      t('settings.clearCachePopup.message'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('settings.resetModal.cancel'), style: 'cancel' },
         {
-          text: 'Vider',
+          text: t('settings.clearCachePopup.confirm'),
           style: 'primary',
           onPress: async () => {
             setIsGenerating(true);
@@ -654,10 +645,10 @@ export default function SettingsScreen() {
               }
 
               notificationAsync(NotificationFeedbackType.Success);
-              showPopup('Cache vide !', 'Le cache a ete nettoye avec succes.', [{ text: 'OK', style: 'primary' }]);
+              showPopup(t('settings.clearCachePopup.success'), t('settings.clearCachePopup.successMsg'), [{ text: 'OK', style: 'primary' }]);
             } catch (e) {
               logger.error('Clear cache error', e);
-              showPopup('Erreur', 'Impossible de vider le cache.', [{ text: 'OK', style: 'cancel' }]);
+              showPopup(t('settings.error'), t('settings.clearCachePopup.error'), [{ text: 'OK', style: 'cancel' }]);
             } finally {
               setIsGenerating(false);
             }
@@ -665,7 +656,7 @@ export default function SettingsScreen() {
         },
       ]
     );
-  }, [showPopup]);
+  }, [showPopup, t]);
 
   const handleCleanUninstall = useCallback(async () => {
     setIsGenerating(true);
@@ -691,6 +682,36 @@ export default function SettingsScreen() {
     }
   }, []);
 
+  const handleDeduplicateTrainings = useCallback(() => {
+    showPopup(
+      '🔍 Nettoyer les doublons',
+      'Cette action va analyser toutes tes séances et supprimer les entrées en double provenant d\'Apple Santé.\n\nLes séances que tu as créées manuellement ne seront pas touchées.\n\nRecommandé : faire une sauvegarde avant.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Nettoyer',
+          style: 'destructive',
+          onPress: async () => {
+            setIsGenerating(true);
+            try {
+              const deleted = await deduplicateTrainings();
+              if (deleted === 0) {
+                showPopup('✅ Aucun doublon', 'Tes séances sont déjà propres — aucun doublon trouvé.', [{ text: 'OK', style: 'primary' }]);
+              } else {
+                showPopup('✅ Nettoyage terminé', `${deleted} séance${deleted > 1 ? 's' : ''} en double supprimée${deleted > 1 ? 's' : ''}.\n\nTon journal d'entraînement est maintenant propre.`, [{ text: 'OK', style: 'primary' }]);
+              }
+            } catch (e) {
+              logger.error('[Deduplicate] Erreur:', e);
+              showPopup('Erreur', 'Impossible de nettoyer les doublons. Réessaie.', [{ text: 'OK', style: 'primary' }]);
+            } finally {
+              setIsGenerating(false);
+            }
+          },
+        },
+      ]
+    );
+  }, [showPopup]);
+
   const handleItemPress = useCallback((item: SettingsItem) => {
     impactAsync(ImpactFeedbackStyle.Light);
 
@@ -706,7 +727,7 @@ export default function SettingsScreen() {
       case 'instagram': safeOpenURL('https://www.instagram.com/yoroiapp'); return;
       case 'rate':
         if (Platform.OS === 'android') {
-          safeOpenURL('https://play.google.com/store/search?q=Yoroi+Suivi+poids+Sport&c=apps');
+          safeOpenURL('https://play.google.com/store/apps/details?id=com.houari24.yoroi');
         } else {
           safeOpenURL('https://apps.apple.com/fr/app/yoroi-suivi-poids-sport/id6757306612');
         }
@@ -717,12 +738,13 @@ export default function SettingsScreen() {
       case 'toggle-journal': toggleJournalScreenshotMode(!isJournalScreenshotMode); return;
       case 'toggle-surgeon': toggleSurgeonMode(!isSurgeonMode); return;
       case 'toggle-mock': toggleMockStatsMode(!isMockStatsMode); return;
-      case 'demo-hery': handleDemoHenry(); return;
+      case 'demo-hery': handleDemoHeny(); return;
       case 'preview-onboarding': router.push({ pathname: '/onboarding', params: { preview: 'true' } } as any); return;
       case 'reset-creator': resetAllCreatorModes(); return;
       case 'purge-data': handleForceDeleteData(); return;
       case 'clear-cache': handleClearCache(); return;
       case 'clean-uninstall': setCleanStep(0); setCleanUninstallVisible(true); return;
+      case 'deduplicate': handleDeduplicateTrainings(); return;
     }
 
     // Route-based items
@@ -737,7 +759,8 @@ export default function SettingsScreen() {
 
   const renderItem = (item: SettingsItem, isLast: boolean) => {
     const IconComp = item.Icon;
-    const sublabel = item.sublabel;
+    const translatedLabel = t(item.label);
+    const translatedSublabel = t(item.sublabel);
 
     return (
       <View key={item.id}>
@@ -751,11 +774,11 @@ export default function SettingsScreen() {
           </View>
           <View style={styles.rowContent}>
             <Text style={[styles.rowLabel, { color: item.labelColor || colors.textPrimary }]} numberOfLines={1}>
-              {item.label}
+              {translatedLabel}
             </Text>
-            {sublabel ? (
+            {translatedSublabel ? (
               <Text style={[styles.rowSublabel, { color: colors.textMuted }]} numberOfLines={1}>
-                {sublabel}
+                {translatedSublabel}
               </Text>
             ) : null}
           </View>
@@ -785,7 +808,7 @@ export default function SettingsScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Settings size={26} color="#FFFFFF" strokeWidth={2} />
-          <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Reglages</Text>
+          <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>{t('settings.title')}</Text>
         </View>
 
         {/* Search Bar */}
@@ -793,7 +816,7 @@ export default function SettingsScreen() {
           <Search size={18} color={colors.textMuted} strokeWidth={2} />
           <TextInput
             style={[styles.searchInput, { color: colors.textPrimary }]}
-            placeholder="Rechercher..."
+            placeholder={t('settings.search')}
             placeholderTextColor={colors.textMuted}
             value={searchText}
             onChangeText={setSearchText}
@@ -804,7 +827,7 @@ export default function SettingsScreen() {
 
         {/* Language Selector */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: 'rgba(255,255,255,0.7)' }]}>LANGUE</Text>
+          <Text style={[styles.sectionTitle, { color: 'rgba(255,255,255,0.7)' }]}>{t('settings.language').toUpperCase()}</Text>
           <View style={[styles.card, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
             <View style={{ padding: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 10 }}>
@@ -812,8 +835,8 @@ export default function SettingsScreen() {
                   <Globe size={18} color="#3B82F6" strokeWidth={2.5} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}>Langue de l'application</Text>
-                  <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 1 }}>Français · English · 日本語</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}>{t('settings.appLanguage')}</Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 1 }}>{t('settings.appLanguageSubtitle')}</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -823,8 +846,12 @@ export default function SettingsScreen() {
                     <TouchableOpacity
                       key={lang.code}
                       onPress={async () => {
-                        impactAsync(ImpactFeedbackStyle.Medium);
-                        await setLanguage(lang.code);
+                        try {
+                          impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+                          await setLanguage(lang.code);
+                        } catch {
+                          // Fallback silencieux — ne pas bloquer l'UI
+                        }
                       }}
                       activeOpacity={0.75}
                       style={{
@@ -864,10 +891,65 @@ export default function SettingsScreen() {
         {/* Sections */}
         {filteredSections.map((section) => (
           <View key={section.title} style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: 'rgba(255,255,255,0.7)' }]}>{section.title}</Text>
+            <Text style={[styles.sectionTitle, { color: 'rgba(255,255,255,0.7)' }]}>{t(section.title)}</Text>
             <View style={[styles.card, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
               {section.items.map((item, idx) =>
                 renderItem(item, idx === section.items.length - 1)
+              )}
+              {/* Taille du texte — inline dans la section Apparence */}
+              {section.title === 'settings.sections.appearance' && (
+                <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 16, borderTopWidth: 1, borderTopColor: colors.border }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#8B5CF620', alignItems: 'center', justifyContent: 'center' }}>
+                      <Type size={16} color="#8B5CF6" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 15, fontWeight: '600', color: colors.textPrimary }}>Taille du texte</Text>
+                      <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 1 }}>
+                        {FONT_SIZE_LABELS[fontSizeLevel as FontSizeLevel]}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {([1, 2, 3, 4] as FontSizeLevel[]).map((level) => {
+                      const isActive = fontSizeLevel === level;
+                      const previewSize = 11 + level * 2.5;
+                      return (
+                        <TouchableOpacity
+                          key={level}
+                          style={{
+                            flex: 1,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            paddingVertical: 10,
+                            borderRadius: 10,
+                            backgroundColor: isActive ? '#8B5CF6' : (isDark ? colors.backgroundElevated : '#F3F4F6'),
+                            borderWidth: 1.5,
+                            borderColor: isActive ? '#8B5CF6' : colors.border,
+                            gap: 3,
+                          }}
+                          onPress={() => {
+                            impactAsync(ImpactFeedbackStyle.Light);
+                            setFontSizeLevel(level);
+                          }}
+                          activeOpacity={0.75}
+                        >
+                          <Text style={{ fontSize: previewSize, fontWeight: '800', color: isActive ? '#FFFFFF' : colors.textPrimary, lineHeight: previewSize + 4 }}>
+                            Aa
+                          </Text>
+                          <Text style={{ fontSize: 9, color: isActive ? 'rgba(255,255,255,0.85)' : colors.textMuted, fontWeight: '600' }}>
+                            {level === 1 ? 'S' : level === 2 ? 'M' : level === 3 ? 'L' : 'XL'}
+                          </Text>
+                          {isActive && (
+                            <View style={{ position: 'absolute', top: 5, right: 5, width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' }}>
+                              <Check size={8} color="#FFFFFF" strokeWidth={3} />
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
               )}
             </View>
           </View>
@@ -876,7 +958,7 @@ export default function SettingsScreen() {
         {/* Creator Mode - standard rows, visible only when unlocked */}
         {screenshotMenuUnlocked && filteredCreatorItems.length > 0 && (
           <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: 'rgba(255,255,255,0.7)' }]}>CREATEUR</Text>
+            <Text style={[styles.sectionTitle, { color: 'rgba(255,255,255,0.7)' }]}>{t('settings.sections.creator')}</Text>
             <View style={[styles.card, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
               {filteredCreatorItems.map((item, idx) =>
                 renderItem(item, idx === filteredCreatorItems.length - 1)
@@ -887,7 +969,7 @@ export default function SettingsScreen() {
 
         {/* Version */}
         <TouchableOpacity onPress={handleVersionTap} activeOpacity={1} style={styles.versionContainer}>
-          <Text style={[styles.versionText, { color: 'rgba(255,255,255,0.5)' }]}>YOROI v2.3.1</Text>
+          <Text style={[styles.versionText, { color: 'rgba(255,255,255,0.5)' }]}>YOROI v2.3.2</Text>
         </TouchableOpacity>
 
         <View style={{ height: 120 }} />
@@ -900,14 +982,14 @@ export default function SettingsScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Unites</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('settings.unitsModal.title')}</Text>
               <TouchableOpacity onPress={() => setUnitsModalVisible(false)}>
                 <X size={24} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
             <View style={styles.modalBody}>
               {/* Weight */}
-              <Text style={[styles.unitSectionLabel, { color: colors.textMuted }]}>POIDS</Text>
+              <Text style={[styles.unitSectionLabel, { color: colors.textMuted }]}>{t('settings.unitsModal.weight').toUpperCase()}</Text>
               <View style={styles.unitToggleRow}>
                 {(['kg', 'lbs'] as const).map(u => (
                   <TouchableOpacity
@@ -921,7 +1003,7 @@ export default function SettingsScreen() {
               </View>
 
               {/* Measurements */}
-              <Text style={[styles.unitSectionLabel, { color: colors.textMuted, marginTop: 20 }]}>MESURES</Text>
+              <Text style={[styles.unitSectionLabel, { color: colors.textMuted, marginTop: 20 }]}>{t('settings.unitsModal.measurements').toUpperCase()}</Text>
               <View style={styles.unitToggleRow}>
                 {(['cm', 'in'] as const).map(u => (
                   <TouchableOpacity
@@ -949,7 +1031,7 @@ export default function SettingsScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Reinitialiser</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('settings.resetModal.title')}</Text>
               <TouchableOpacity onPress={() => setResetModalVisible(false)}>
                 <X size={24} color={colors.textMuted} />
               </TouchableOpacity>
@@ -957,19 +1039,19 @@ export default function SettingsScreen() {
             <View style={styles.modalBody}>
               <View style={[styles.warningCard, { backgroundColor: '#EF444420', borderColor: '#EF4444' }]}>
                 <Trash2 size={32} color="#EF4444" />
-                <Text style={[styles.warningTitle, { color: '#EF4444' }]}>Action irreversible</Text>
+                <Text style={[styles.warningTitle, { color: '#EF4444' }]}>{t('settings.resetModal.irreversible')}</Text>
                 <Text style={[styles.warningText, { color: colors.textSecondary }]}>
-                  Toutes tes données seront supprimees : poids, séances, badges, reglages... Tes photos seront conservees.
+                  {t('settings.resetModal.warningText')}
                 </Text>
               </View>
               <Text style={[styles.confirmLabel, { color: colors.textPrimary }]}>
-                Pour confirmer, ecris <Text style={{ fontWeight: '800', color: '#EF4444' }}>OUI</Text>
+                {t('settings.resetModal.confirmLabel')} <Text style={{ fontWeight: '800', color: '#EF4444' }}>{t('settings.resetModal.confirmWord')}</Text>
               </Text>
               <TextInput
                 style={[styles.confirmInput, { backgroundColor: colors.backgroundElevated, borderColor: isResetConfirmed ? '#10B981' : colors.border, color: colors.textPrimary }]}
                 value={resetConfirmText}
                 onChangeText={setResetConfirmText}
-                placeholder="Ecris OUI"
+                placeholder={t('settings.resetModal.confirmPlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 autoCapitalize="characters"
                 autoCorrect={false}
@@ -977,7 +1059,7 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.resetBtns}>
               <TouchableOpacity style={[styles.resetCancelBtn, { backgroundColor: colors.backgroundElevated }]} onPress={() => { setResetModalVisible(false); setResetConfirmText(''); }}>
-                <Text style={[styles.resetCancelText, { color: colors.textPrimary }]}>Annuler</Text>
+                <Text style={[styles.resetCancelText, { color: colors.textPrimary }]}>{t('settings.resetModal.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.resetConfirmBtn, { backgroundColor: isResetConfirmed ? '#EF4444' : colors.backgroundElevated, opacity: isResetConfirmed ? 1 : 0.5 }]}
@@ -985,7 +1067,7 @@ export default function SettingsScreen() {
                 disabled={!isResetConfirmed}
               >
                 <Trash2 size={18} color={isResetConfirmed ? '#FFF' : colors.textMuted} />
-                <Text style={[styles.resetConfirmText, { color: isResetConfirmed ? '#FFF' : colors.textMuted }]}>Tout supprimer</Text>
+                <Text style={[styles.resetConfirmText, { color: isResetConfirmed ? '#FFF' : colors.textMuted }]}>{t('settings.resetModal.deleteAll')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -997,7 +1079,7 @@ export default function SettingsScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Quitter sans laisser de trace</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('settings.cleanUninstallModal.title')}</Text>
               <TouchableOpacity onPress={() => setCleanUninstallVisible(false)}>
                 <X size={24} color={colors.textMuted} />
               </TouchableOpacity>
@@ -1008,9 +1090,9 @@ export default function SettingsScreen() {
                 <>
                   <View style={[styles.warningCard, { backgroundColor: '#EF444415', borderColor: '#EF4444' }]}>
                     <LogOut size={28} color="#EF4444" />
-                    <Text style={[styles.warningTitle, { color: '#EF4444' }]}>3 etapes pour partir proprement</Text>
+                    <Text style={[styles.warningTitle, { color: '#EF4444' }]}>{t('settings.cleanUninstallModal.step1Title')}</Text>
                     <Text style={[styles.warningText, { color: colors.textSecondary }]}>
-                      Cette action va effacer TOUTES tes données dans l'app. Ensuite on te guide pour supprimer les acces Apple Santé et desactiver iCloud.
+                      {t('settings.cleanUninstallModal.step1Text')}
                     </Text>
                   </View>
 
@@ -1019,14 +1101,14 @@ export default function SettingsScreen() {
                     onPress={handleCleanUninstall}
                   >
                     <Trash2 size={18} color="#FFF" />
-                    <Text style={[styles.resetConfirmText, { color: '#FFF' }]}>Etape 1 — Effacer toutes mes données</Text>
+                    <Text style={[styles.resetConfirmText, { color: '#FFF' }]}>{t('settings.cleanUninstallModal.step1Btn')}</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={[styles.resetCancelBtn, { backgroundColor: colors.backgroundElevated, marginTop: 8, width: '100%', justifyContent: 'center' }]}
                     onPress={() => setCleanUninstallVisible(false)}
                   >
-                    <Text style={[styles.resetCancelText, { color: colors.textPrimary }]}>Annuler</Text>
+                    <Text style={[styles.resetCancelText, { color: colors.textPrimary }]}>{t('settings.cleanUninstallModal.cancel')}</Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -1034,48 +1116,48 @@ export default function SettingsScreen() {
               {cleanStep === 1 && (
                 <>
                   <View style={[styles.warningCard, { backgroundColor: '#10B98115', borderColor: '#10B981' }]}>
-                    <Text style={{ fontSize: 28 }}>✓</Text>
-                    <Text style={[styles.warningTitle, { color: '#10B981' }]}>Données effacees !</Text>
+                    <CheckCircle size={28} color="#10B981" />
+                    <Text style={[styles.warningTitle, { color: '#10B981' }]}>{t('settings.cleanUninstallModal.dataDeleted')}</Text>
                     <Text style={[styles.warningText, { color: colors.textSecondary }]}>
-                      Toutes tes données Yoroi sont supprimees. Suis maintenant les etapes 2 et 3 pour partir sans laisser de trace.
+                      {t('settings.cleanUninstallModal.dataDeletedText')}
                     </Text>
                   </View>
 
-                  <Text style={[styles.confirmLabel, { color: colors.textPrimary, marginTop: 12 }]}>Etape 2 — Revoquer les acces Apple Santé</Text>
+                  <Text style={[styles.confirmLabel, { color: colors.textPrimary, marginTop: 12 }]}>{t('settings.cleanUninstallModal.step2Title')}</Text>
                   <Text style={[styles.warningText, { color: colors.textMuted, marginBottom: 8 }]}>
-                    iOS garde les permissions Santé meme apres desinstallation. Va les supprimer manuellement.
+                    {t('settings.cleanUninstallModal.step2Text')}
                   </Text>
                   <TouchableOpacity
                     style={[styles.resetConfirmBtn, { backgroundColor: '#FF3D80', width: '100%', justifyContent: 'center' }]}
                     onPress={() => safeOpenURL('x-apple-health://')}
                   >
                     <ShieldCheck size={18} color="#FFF" />
-                    <Text style={[styles.resetConfirmText, { color: '#FFF' }]}>Ouvrir Apple Santé</Text>
+                    <Text style={[styles.resetConfirmText, { color: '#FFF' }]}>{t('settings.cleanUninstallModal.step2Btn')}</Text>
                   </TouchableOpacity>
                   <Text style={[styles.warningText, { color: colors.textMuted, fontSize: 12, marginTop: 4, marginBottom: 12 }]}>
-                    Dans Santé : Acces aux apps → Yoroi → tout desactiver
+                    {t('settings.cleanUninstallModal.step2Hint')}
                   </Text>
 
-                  <Text style={[styles.confirmLabel, { color: colors.textPrimary }]}>Etape 3 — Desactiver iCloud pour Yoroi</Text>
+                  <Text style={[styles.confirmLabel, { color: colors.textPrimary }]}>{t('settings.cleanUninstallModal.step3Title')}</Text>
                   <Text style={[styles.warningText, { color: colors.textMuted, marginBottom: 8 }]}>
-                    Sans ca, tes données reviennent a la reinstallation.
+                    {t('settings.cleanUninstallModal.step3Text')}
                   </Text>
                   <TouchableOpacity
                     style={[styles.resetConfirmBtn, { backgroundColor: '#6366F1', width: '100%', justifyContent: 'center' }]}
                     onPress={() => Linking.openSettings()}
                   >
                     <Lock size={18} color="#FFF" />
-                    <Text style={[styles.resetConfirmText, { color: '#FFF' }]}>Ouvrir les Reglages iPhone</Text>
+                    <Text style={[styles.resetConfirmText, { color: '#FFF' }]}>{t('settings.cleanUninstallModal.step3Btn')}</Text>
                   </TouchableOpacity>
                   <Text style={[styles.warningText, { color: colors.textMuted, fontSize: 12, marginTop: 4 }]}>
-                    Dans Reglages : ton nom → iCloud → Sauvegardes → desactive Yoroi
+                    {t('settings.cleanUninstallModal.step3Hint')}
                   </Text>
 
                   <TouchableOpacity
                     style={[styles.resetCancelBtn, { backgroundColor: '#10B98120', borderWidth: 1, borderColor: '#10B981', marginTop: 16, width: '100%', justifyContent: 'center' }]}
                     onPress={() => setCleanUninstallVisible(false)}
                   >
-                    <Text style={[styles.resetCancelText, { color: '#10B981' }]}>C'est bon, je peux desinstaller</Text>
+                    <Text style={[styles.resetCancelText, { color: '#10B981' }]}>{t('settings.cleanUninstallModal.doneBtn')}</Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -1090,7 +1172,7 @@ export default function SettingsScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card, maxWidth: 340 }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Mode Createur</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('settings.secretCodeModal.title')}</Text>
               <TouchableOpacity onPress={() => setShowSecretCodeModal(false)}>
                 <X size={24} color={colors.textMuted} />
               </TouchableOpacity>
@@ -1100,7 +1182,7 @@ export default function SettingsScreen() {
                 style={[styles.secretInput, { backgroundColor: colors.backgroundElevated, borderColor: colors.border, color: colors.textPrimary }]}
                 value={secretCode}
                 onChangeText={setSecretCode}
-                placeholder="Code"
+                placeholder={t('settings.secretCodeModal.title')}
                 placeholderTextColor={colors.textMuted}
                 keyboardType="number-pad"
                 maxLength={4}
@@ -1112,7 +1194,7 @@ export default function SettingsScreen() {
                 onPress={handleSecretCodeSubmit}
                 disabled={secretCode.length !== 4}
               >
-                <Text style={[styles.modalSaveBtnText, { color: secretCode.length === 4 ? '#FFF' : colors.textMuted }]}>Debloquer</Text>
+                <Text style={[styles.modalSaveBtnText, { color: secretCode.length === 4 ? '#FFF' : colors.textMuted }]}>{t('settings.secretCodeModal.unlock')}</Text>
               </TouchableOpacity>
             </View>
           </View>

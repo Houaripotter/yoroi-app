@@ -36,7 +36,9 @@ import {
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { BlurView } from 'expo-blur';
 import logger from '@/lib/security/logger';
-import { shareExportCSV } from '@/lib/csvTemplates';
+import { shareExportCSV, shareFilteredTrainingsCSV } from '@/lib/csvTemplates';
+import { SPORTS } from '@/lib/sports';
+import { TextInput as RNTextInput } from 'react-native';
 
 type ExportFormat = 'json' | 'csv' | 'txt';
 
@@ -50,8 +52,8 @@ interface ExportOption {
 
 // Options defined dynamically inside component to use t()
 const EXPORT_OPTION_CONFIGS = [
-  { id: 'json' as ExportFormat, labelKey: 'Export JSON', descKey: 'exportData.optionJsonDesc', icon: FileJson, color: '#F59E0B' },
-  { id: 'csv' as ExportFormat, labelKey: 'Export CSV', descKey: 'exportData.optionCsvDesc', icon: Table, color: '#10B981' },
+  { id: 'json' as ExportFormat, labelKey: 'exportData.optionJsonLabel', descKey: 'exportData.optionJsonDesc', icon: FileJson, color: '#F59E0B' },
+  { id: 'csv' as ExportFormat, labelKey: 'exportData.optionCsvLabel', descKey: 'exportData.optionCsvDesc', icon: Table, color: '#10B981' },
   { id: 'txt' as ExportFormat, labelKey: 'exportData.optionTxtLabel', descKey: 'exportData.optionTxtDesc', icon: FileText, color: '#3B82F6' },
 ];
 
@@ -63,7 +65,7 @@ export default function ExportDataScreen() {
 
   const EXPORT_OPTIONS = EXPORT_OPTION_CONFIGS.map(opt => ({
     ...opt,
-    label: opt.labelKey.startsWith('exportData.') ? t(opt.labelKey as any) : opt.labelKey,
+    label: t(opt.labelKey as any),
     description: t(opt.descKey as any),
   }));
 
@@ -74,6 +76,13 @@ export default function ExportDataScreen() {
   const [exportedFormat, setExportedFormat] = useState<ExportFormat | null>(null);
   const [csvExporting, setCsvExporting] = useState(false);
   const [csvExported, setCsvExported] = useState(false);
+
+  // Filtres export séances
+  const [filterSport, setFilterSport] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+  const [filteredExporting, setFilteredExporting] = useState(false);
+  const [filteredExported, setFilteredExported] = useState(false);
 
   // Ref pour le timeout (cleanup)
   const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -116,6 +125,30 @@ export default function ExportDataScreen() {
       ]);
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleFilteredExport = async () => {
+    setFilteredExporting(true);
+    impactAsync(ImpactFeedbackStyle.Medium);
+    try {
+      const success = await shareFilteredTrainingsCSV({
+        sport: filterSport.trim() || undefined,
+        dateFrom: filterDateFrom.trim() || undefined,
+        dateTo: filterDateTo.trim() || undefined,
+      });
+      if (success) {
+        setFilteredExported(true);
+        notificationAsync(NotificationFeedbackType.Success);
+        resetTimeoutRef.current = setTimeout(() => setFilteredExported(false), 3000);
+      } else {
+        showPopup('Aucune séance', 'Aucune séance ne correspond à ces filtres.', [{ text: 'OK', style: 'primary' }]);
+      }
+    } catch (error) {
+      logger.error('Erreur export filtré:', error);
+      showPopup(t('exportData.errorTitle'), t('exportData.errorMessage'), [{ text: t('exportData.ok'), style: 'primary' }]);
+    } finally {
+      setFilteredExporting(false);
     }
   };
 
@@ -288,6 +321,111 @@ export default function ExportDataScreen() {
             {csvExported && !csvExporting && (
               <View style={[styles.csvExportedBadge, { backgroundColor: '#10B98120' }]}>
                 <Text style={[styles.csvExportedText, { color: '#10B981' }]}>OK</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Export séances filtré */}
+        <View style={[styles.csvSection, { marginTop: 8 }]}>
+          <Text style={[styles.csvSectionTitle, { color: colors.textPrimary }]}>
+            Export séances (filtré)
+          </Text>
+          <Text style={[styles.csvSectionDesc, { color: colors.textMuted }]}>
+            Exporte tes séances en CSV avec filtre par sport et/ou période.
+          </Text>
+
+          {/* Filtre sport */}
+          <RNTextInput
+            style={{
+              backgroundColor: colors.backgroundCard,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: filterSport ? '#3B82F6' : colors.border,
+              paddingHorizontal: 12,
+              paddingVertical: 9,
+              color: colors.textPrimary,
+              fontSize: 14,
+              marginBottom: 8,
+            }}
+            placeholder="Sport (ex: jjb, mma, course...)"
+            placeholderTextColor={colors.textMuted}
+            value={filterSport}
+            onChangeText={setFilterSport}
+            returnKeyType="done"
+          />
+
+          {/* Filtres dates */}
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+            <RNTextInput
+              style={{
+                flex: 1,
+                backgroundColor: colors.backgroundCard,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: filterDateFrom ? '#3B82F6' : colors.border,
+                paddingHorizontal: 12,
+                paddingVertical: 9,
+                color: colors.textPrimary,
+                fontSize: 13,
+              }}
+              placeholder="Du (AAAA-MM-JJ)"
+              placeholderTextColor={colors.textMuted}
+              value={filterDateFrom}
+              onChangeText={setFilterDateFrom}
+              keyboardType="numeric"
+              maxLength={10}
+            />
+            <RNTextInput
+              style={{
+                flex: 1,
+                backgroundColor: colors.backgroundCard,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: filterDateTo ? '#3B82F6' : colors.border,
+                paddingHorizontal: 12,
+                paddingVertical: 9,
+                color: colors.textPrimary,
+                fontSize: 13,
+              }}
+              placeholder="Au (AAAA-MM-JJ)"
+              placeholderTextColor={colors.textMuted}
+              value={filterDateTo}
+              onChangeText={setFilterDateTo}
+              keyboardType="numeric"
+              maxLength={10}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.csvButton,
+              {
+                backgroundColor: colors.backgroundCard,
+                borderColor: filteredExported ? '#3B82F6' : colors.border,
+                borderWidth: filteredExported ? 2 : 1,
+              },
+            ]}
+            onPress={() => !filteredExporting && handleFilteredExport()}
+            activeOpacity={0.7}
+            disabled={filteredExporting}
+          >
+            <View style={[styles.csvButtonIcon, { backgroundColor: '#3B82F615' }]}>
+              {filteredExported ? (
+                <CheckCircle size={20} color="#3B82F6" />
+              ) : (
+                <Table size={20} color="#3B82F6" />
+              )}
+            </View>
+            <Text style={[styles.csvButtonLabel, { color: colors.textPrimary }]}>
+              Exporter les séances filtrées
+            </Text>
+            {filteredExporting && (
+              <ActivityIndicator size="small" color="#3B82F6" style={{ marginLeft: 'auto' }} />
+            )}
+            {filteredExported && !filteredExporting && (
+              <View style={[styles.csvExportedBadge, { backgroundColor: '#3B82F620' }]}>
+                <Text style={[styles.csvExportedText, { color: '#3B82F6' }]}>OK</Text>
               </View>
             )}
           </TouchableOpacity>

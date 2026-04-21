@@ -12,6 +12,7 @@ import {
   TextInput,
 } from 'react-native';
 import { router } from 'expo-router';
+import { useI18n } from '@/lib/I18nContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, Info, ExternalLink, User, Weight, Ruler, Calendar, Zap, Apple, Beef, Droplets } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -30,6 +31,7 @@ import { SPACING } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
 
 export default function NutritionPlanScreen() {
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
 
@@ -120,10 +122,10 @@ export default function NutritionPlanScreen() {
           </TouchableOpacity>
           <View style={styles.headerText}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Plan Nutritionnel
+              {t('nutritionPlan.title')}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              Personnalisé selon ton profil
+              {t('nutritionPlan.subtitle')}
             </Text>
           </View>
         </View>
@@ -135,7 +137,7 @@ export default function NutritionPlanScreen() {
               <User size={22} color={colors.accent} strokeWidth={2.5} />
             </View>
             <Text style={[styles.personalInfoTitle, { color: colors.textPrimary }]}>
-              Tes informations
+              {t('nutritionPlan.yourInfo')}
             </Text>
           </View>
 
@@ -144,12 +146,13 @@ export default function NutritionPlanScreen() {
             <View style={[styles.inputGroup, { backgroundColor: colors.background }]}>
               <Weight size={18} color={colors.textMuted} />
               <View style={styles.inputContent}>
-                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Poids</Text>
+                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{t('nutritionPlan.weight')}</Text>
                 <TextInput
                   style={[styles.input, { color: colors.textPrimary }]}
                   value={userProfile.weight.toString()}
                   onChangeText={(text) => {
-                    const num = parseFloat(text.replace(',', '.')) || 0;
+                    const num = parseFloat(text.replace(',', '.'));
+                    if (isNaN(num) || num <= 0) return;
                     setUserProfile({ ...userProfile, weight: num });
                   }}
                   keyboardType="decimal-pad"
@@ -164,7 +167,7 @@ export default function NutritionPlanScreen() {
             <View style={[styles.inputGroup, { backgroundColor: colors.background }]}>
               <Ruler size={18} color={colors.textMuted} />
               <View style={styles.inputContent}>
-                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Taille</Text>
+                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{t('nutritionPlan.height')}</Text>
                 <TextInput
                   style={[styles.input, { color: colors.textPrimary }]}
                   value={userProfile.height.toString()}
@@ -184,7 +187,7 @@ export default function NutritionPlanScreen() {
             <View style={[styles.inputGroup, { backgroundColor: colors.background }]}>
               <Calendar size={18} color={colors.textMuted} />
               <View style={styles.inputContent}>
-                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Âge</Text>
+                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{t('nutritionPlan.age')}</Text>
                 <TextInput
                   style={[styles.input, { color: colors.textPrimary }]}
                   value={userProfile.age.toString()}
@@ -218,7 +221,7 @@ export default function NutritionPlanScreen() {
                     { color: userProfile.gender === 'male' ? colors.textOnAccent : colors.textPrimary },
                   ]}
                 >
-                  Homme
+                  {t('nutritionPlan.male')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -237,7 +240,7 @@ export default function NutritionPlanScreen() {
                     { color: userProfile.gender === 'female' ? colors.textOnAccent : colors.textPrimary },
                   ]}
                 >
-                  Femme
+                  {t('nutritionPlan.female')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -257,12 +260,12 @@ export default function NutritionPlanScreen() {
                 <View style={[styles.caloriesIconBg, { backgroundColor: colors.accent + '15' }]}>
                   <Zap size={32} color={colors.accent} strokeWidth={2.5} />
                 </View>
-                <Text style={[styles.caloriesLabel, { color: isDark ? colors.accent : colors.textPrimary }]}>OBJECTIF CALORIQUE</Text>
+                <Text style={[styles.caloriesLabel, { color: isDark ? colors.accent : colors.textPrimary }]}>{t('nutritionPlan.caloricGoal')}</Text>
                 <View style={styles.caloriesValueContainer}>
                   <Text style={[styles.caloriesValue, { color: colors.textPrimary }]}>{results.goalCalories}</Text>
                   <Text style={[styles.caloriesUnit, { color: colors.textSecondary }]}>kcal</Text>
                 </View>
-                <Text style={[styles.caloriesSubtext, { color: colors.textMuted }]}>par jour</Text>
+                <Text style={[styles.caloriesSubtext, { color: colors.textMuted }]}>{t('nutritionPlan.perDay')}</Text>
 
                 {results.deficit > 0 && (
                   <LinearGradient
@@ -272,7 +275,7 @@ export default function NutritionPlanScreen() {
                     style={styles.deficitBadge}
                   >
                     <Text style={styles.deficitText}>
-                      Déficit de {results.deficit} kcal = {selectedGoal?.weeklyChange}
+                      {t('nutritionPlan.deficit')} {results.deficit} kcal = {selectedGoal?.weeklyChange}
                     </Text>
                   </LinearGradient>
                 )}
@@ -284,7 +287,7 @@ export default function NutritionPlanScreen() {
                     style={styles.deficitBadge}
                   >
                     <Text style={styles.deficitText}>
-                      Surplus de {Math.abs(results.deficit)} kcal = {selectedGoal?.weeklyChange}
+                      {t('nutritionPlan.surplus')} {Math.abs(results.deficit)} kcal = {selectedGoal?.weeklyChange}
                     </Text>
                   </LinearGradient>
                 )}
@@ -295,7 +298,7 @@ export default function NutritionPlanScreen() {
                     end={{ x: 1, y: 0 }}
                     style={styles.deficitBadge}
                   >
-                    <Text style={styles.deficitText}>Maintien du poids actuel</Text>
+                    <Text style={styles.deficitText}>{t('nutritionPlan.maintenance')}</Text>
                   </LinearGradient>
                 )}
               </View>
@@ -306,7 +309,7 @@ export default function NutritionPlanScreen() {
         {/* Niveau d'activité */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Niveau d'activité
+            {t('nutritionPlan.activityLevel')}
           </Text>
           <View style={styles.optionsGrid}>
             {ACTIVITY_LEVELS.map(level => (
@@ -359,7 +362,7 @@ export default function NutritionPlanScreen() {
         {/* Objectif */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Objectif
+            {t('nutritionPlan.goal')}
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.goalsRow}>
@@ -409,7 +412,7 @@ export default function NutritionPlanScreen() {
         {/* Profil Macro */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Répartition des macros
+            {t('nutritionPlan.macroDistribution')}
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.macroProfilesRow}>
@@ -469,7 +472,7 @@ export default function NutritionPlanScreen() {
         {results && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Tes macros journaliers
+              {t('nutritionPlan.dailyMacros')}
             </Text>
 
             <View style={[styles.macrosResult, { backgroundColor: colors.backgroundCard }]}>
@@ -483,7 +486,7 @@ export default function NutritionPlanScreen() {
                     <Beef size={18} color="#FFFFFF" strokeWidth={2.5} />
                   </LinearGradient>
                   <View style={styles.macroTextContainer}>
-                    <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>Protéines</Text>
+                    <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>{t('nutritionPlan.proteins')}</Text>
                     <View style={styles.macroProgressBg}>
                       <LinearGradient
                         colors={['#E53935', '#C62828']}
@@ -514,7 +517,7 @@ export default function NutritionPlanScreen() {
                     <Apple size={18} color="#FFFFFF" strokeWidth={2.5} />
                   </LinearGradient>
                   <View style={styles.macroTextContainer}>
-                    <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>Glucides</Text>
+                    <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>{t('nutritionPlan.carbs')}</Text>
                     <View style={styles.macroProgressBg}>
                       <LinearGradient
                         colors={['#FF9800', '#F57C00']}
@@ -545,7 +548,7 @@ export default function NutritionPlanScreen() {
                     <Droplets size={18} color="#FFFFFF" strokeWidth={2.5} />
                   </LinearGradient>
                   <View style={styles.macroTextContainer}>
-                    <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>Lipides</Text>
+                    <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>{t('nutritionPlan.fats')}</Text>
                     <View style={styles.macroProgressBg}>
                       <LinearGradient
                         colors={['#4CAF50', '#388E3C']}
@@ -570,13 +573,13 @@ export default function NutritionPlanScreen() {
             {/* Recommandation protéines */}
             <View style={[styles.proteinRec, { backgroundColor: colors.backgroundCard }]}>
               <Text style={[styles.proteinRecTitle, { color: colors.textPrimary }]}>
-                Recommandation protéines (basée sur ton poids)
+                {t('nutritionPlan.proteinRec')}
               </Text>
               <Text style={[styles.proteinRecValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
                 {results.proteinRec.min}g - {results.proteinRec.max}g / jour
               </Text>
               <Text style={[styles.proteinRecNote, { color: colors.textMuted }]}>
-                Optimal : {results.proteinRec.optimal}g ({(results.proteinRec.optimal / userProfile.weight).toFixed(1)}g/kg)
+                {t('nutritionPlan.optimal')} : {results.proteinRec.optimal}g ({(results.proteinRec.optimal / userProfile.weight).toFixed(1)}g/kg)
               </Text>
               <Text style={[styles.proteinRecSource, { color: colors.textMuted }]}>
                 Source : ISSN Position Stand on Protein (2017)
@@ -589,13 +592,13 @@ export default function NutritionPlanScreen() {
         {results && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Détail des calculs
+              {t('nutritionPlan.calculationDetail')}
             </Text>
 
             <View style={[styles.calculDetail, { backgroundColor: colors.backgroundCard }]}>
               <View style={styles.calculRow}>
                 <Text style={[styles.calculLabel, { color: colors.textMuted }]}>
-                  Métabolisme de base (BMR)
+                  {t('nutritionPlan.bmr')}
                 </Text>
                 <Text style={[styles.calculValue, { color: colors.textPrimary }]}>
                   {results.bmr} kcal
@@ -603,7 +606,7 @@ export default function NutritionPlanScreen() {
               </View>
               <View style={styles.calculRow}>
                 <Text style={[styles.calculLabel, { color: colors.textMuted }]}>
-                  × Facteur activité ({selectedActivity?.name})
+                  × {t('nutritionPlan.activityFactor')} ({selectedActivity?.name})
                 </Text>
                 <Text style={[styles.calculValue, { color: colors.textPrimary }]}>
                   × {selectedActivity?.multiplier}
@@ -611,7 +614,7 @@ export default function NutritionPlanScreen() {
               </View>
               <View style={[styles.calculRow, styles.calculTotal, { borderTopColor: colors.border }]}>
                 <Text style={[styles.calculLabel, { color: colors.textMuted }]}>
-                  = Besoins journaliers (TDEE)
+                  = {t('nutritionPlan.tdee')}
                 </Text>
                 <Text style={[styles.calculValue, { color: colors.textPrimary }]}>
                   {results.tdee} kcal
@@ -619,7 +622,7 @@ export default function NutritionPlanScreen() {
               </View>
               <View style={styles.calculRow}>
                 <Text style={[styles.calculLabel, { color: colors.textMuted }]}>
-                  {results.deficit > 0 ? '- Déficit' : results.deficit < 0 ? '+ Surplus' : 'Maintien'} ({selectedGoal?.name})
+                  {results.deficit > 0 ? `- ${t('nutritionPlan.deficit')}` : results.deficit < 0 ? `+ ${t('nutritionPlan.surplus')}` : t('nutritionPlan.maintenance')} ({selectedGoal?.name})
                 </Text>
                 <Text
                   style={[
@@ -632,7 +635,7 @@ export default function NutritionPlanScreen() {
               </View>
               <View style={[styles.calculRow, styles.calculFinal, { borderTopColor: colors.border }]}>
                 <Text style={[styles.calculLabel, { color: colors.textPrimary, fontWeight: '700' }]}>
-                  = OBJECTIF FINAL
+                  = {t('nutritionPlan.finalGoal')}
                 </Text>
                 <Text style={[styles.calculValue, { color: isDark ? colors.accent : colors.textPrimary, fontWeight: '800' }]}>
                   {results.goalCalories} kcal
@@ -650,7 +653,7 @@ export default function NutritionPlanScreen() {
         {results && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Exemple de journée type
+              {t('nutritionPlan.typicalDay')}
             </Text>
 
             <View style={[styles.mealPlan, { backgroundColor: colors.backgroundCard }]}>
@@ -682,7 +685,7 @@ export default function NutritionPlanScreen() {
         {/* Sources scientifiques */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Sources scientifiques
+            {t('nutritionPlan.scientificSources')}
           </Text>
           <View style={[styles.sourcesCard, { backgroundColor: colors.backgroundCard }]}>
             {Object.values(SCIENTIFIC_SOURCES).map((source, index) => (

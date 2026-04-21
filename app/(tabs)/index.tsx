@@ -51,6 +51,11 @@ import {
   List,
   Watch,
   Swords,
+  Mic,
+  Users,
+  Repeat,
+  MapPin as MapPinIcon,
+  BarChart2,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { format, differenceInDays } from 'date-fns';
@@ -93,6 +98,7 @@ import { getUnreadCount } from '@/lib/notificationHistoryService';
 import { NotificationBellPopup } from '@/components/NotificationBellPopup';
 import { PeerSyncBanner } from '@/components/PeerSyncBanner';
 import { WatchStatusBanner } from '@/components/WatchStatusBanner';
+import { HomeBannerStack } from '@/components/HomeBannerStack';
 import { runGamificationMessages } from '@/lib/gamificationMessagesService';
 import { useStatsHealth } from '@/lib/StatsHealthContext';
 
@@ -704,7 +710,7 @@ export default function HomeScreen() {
 
   const handleNavigateBodyComposition = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
-    handleNavigate('/body-composition');
+    handleNavigate('/body-history');
   }, [handleNavigate]);
 
   // Handlers pour les modaux
@@ -1054,10 +1060,10 @@ export default function HomeScreen() {
   // Salutation
   const getGreeting = useCallback(() => {
     const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return 'Bonjour';
-    if (hour >= 12 && hour < 18) return 'Bon après-midi';
-    return 'Bonsoir';
-  }, []);
+    if (hour >= 5 && hour < 12) return t('home.greetingMorning');
+    if (hour >= 12 && hour < 18) return t('home.greetingAfternoon');
+    return t('home.greetingEvening');
+  }, [t]);
 
   // Calcul Batterie Athlète
   const calculateBatteryPercent = useCallback(() => {
@@ -1096,11 +1102,11 @@ export default function HomeScreen() {
 
   // Batterie status - avec icônes au lieu d'emojis
   const getBatteryStatus = useCallback(() => {
-    if (batteryPercent >= 80) return { color: '#10B981', label: 'Prêt à tout donner', iconType: 'flame' as const };
-    if (batteryPercent >= 60) return { color: '#F59E0B', label: 'Bonne forme', iconType: 'zap' as const };
-    if (batteryPercent >= 40) return { color: '#F97316', label: 'Fatigue modérée', iconType: 'activity' as const };
-    return { color: '#EF4444', label: 'Repos nécessaire', iconType: 'moon' as const };
-  }, [batteryPercent]);
+    if (batteryPercent >= 80) return { color: '#10B981', label: t('home.readyForAnything'), iconType: 'flame' as const };
+    if (batteryPercent >= 60) return { color: '#F59E0B', label: t('home.goodShape'), iconType: 'zap' as const };
+    if (batteryPercent >= 40) return { color: '#F97316', label: t('home.moderateFatigue'), iconType: 'activity' as const };
+    return { color: '#EF4444', label: t('home.restNeeded'), iconType: 'moon' as const };
+  }, [batteryPercent, t]);
 
   // Animation batterie
   const batteryAnim = useRef(new Animated.Value(0)).current;
@@ -1314,17 +1320,21 @@ export default function HomeScreen() {
                 </View>
               </TouchableOpacity>
 
-              {/* Texte (Centre) */}
-              <View style={styles.headerText}>
+              {/* Texte (Centre) — cliquable pour aller au profil.
+                  Le ViewModeSwitch enfant intercepte ses propres clics (responder RN). */}
+              <TouchableOpacity
+                style={styles.headerText}
+                onPress={handleNavigateProfile}
+                activeOpacity={0.7}
+              >
                 <View style={styles.greetingRow}>
                   <Text style={[styles.greeting, { color: screenTextMuted }]}>{getGreeting()}</Text>
-                  {/* watchDot supprimé — remplacé par WatchStatusBanner sous le header */}
                 </View>
                 <View style={styles.userNameRow}>
                   <Text style={[styles.userName, { color: screenText }]}>{profile?.name || t('index.defaultName')}</Text>
                   <ViewModeSwitch mode={mode} onToggle={toggleMode} />
                 </View>
-              </View>
+              </TouchableOpacity>
 
               {/* Cloche notifications (popup) */}
               <View style={styles.headerIconBtn}>
@@ -1361,6 +1371,10 @@ export default function HomeScreen() {
 
             {/* Statut montre connectée */}
             <WatchStatusBanner />
+
+            {/* Banners backup groupés (max 3 visibles en tout avec PeerSync + WatchStatus).
+                 HomeBannerStack limite et priorise pour ne pas encombrer l'écran. */}
+            <HomeBannerStack slotsUsedBefore={2 /* PeerSync + WatchStatus comptent comme 2 slots utilisés */} />
 
             {/* Hint pour informer du switch de mode */}
             <ViewModeHint />
@@ -1793,6 +1807,81 @@ export default function HomeScreen() {
           </View>
         );
 
+      // ── COMBAT LAB ── 6 outils avancés pour combattants
+      case 'tools_combat':
+        return (
+          <View key={sectionId} style={{ gap: 8 }}>
+            {/* Titre de section */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 2, marginBottom: 2 }}>
+              <Swords size={16} color="#EF4444" />
+              <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textPrimary, letterSpacing: 0.3 }}>Combat Lab</Text>
+              <View style={{ flex: 1, height: 1, backgroundColor: isDark ? 'rgba(239,68,68,0.25)' : 'rgba(239,68,68,0.2)', borderRadius: 1 }} />
+            </View>
+
+            {/* Ligne 1 : Match Tracker · Drill Tracker · Camp de compét */}
+            <View style={styles.batteryToolsRowSingle}>
+              <TouchableOpacity
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); handleNavigate('/match-tracker'); }}
+                activeOpacity={0.85}
+              >
+                <Swords size={24} color="#EF4444" />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Match</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Tracker live</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); handleNavigate('/drill-tracker'); }}
+                activeOpacity={0.85}
+              >
+                <Repeat size={24} color="#F97316" />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Drills</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Compteur reps</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); handleNavigate('/competition-camp'); }}
+                activeOpacity={0.85}
+              >
+                <Trophy size={24} color="#8B5CF6" />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Camp</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Périodisation</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Ligne 2 : Partenaires · BJJ Positions · Benchmark */}
+            <View style={styles.batteryToolsRowSingle}>
+              <TouchableOpacity
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); handleNavigate('/sparring-partners'); }}
+                activeOpacity={0.85}
+              >
+                <Users size={24} color="#06B6D4" />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Partenaires</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Notes tactiques</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); handleNavigate('/bjj-positions'); }}
+                activeOpacity={0.85}
+              >
+                <MapPinIcon size={24} color="#22C55E" />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Positions BJJ</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Heatmap</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); handleNavigate('/benchmark'); }}
+                activeOpacity={0.85}
+              >
+                <BarChart2 size={24} color="#F59E0B" />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Benchmark</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Vs tes pairs</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        );
+
       default:
         return null;
     }
@@ -1945,6 +2034,15 @@ export default function HomeScreen() {
       >
         <Cloud size={20} color="#FFFFFF" />
       </TouchableOpacity> */}
+
+      {/* FAB Log rapide vocal */}
+      <TouchableOpacity
+        style={[styles.quickLogFab, { backgroundColor: '#8B5CF6' }]}
+        onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); handleNavigate('/quick-log'); }}
+        activeOpacity={0.85}
+      >
+        <Mic size={22} color="#fff" />
+      </TouchableOpacity>
 
 
       </View>
@@ -3562,5 +3660,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  quickLogFab: {
+    position: 'absolute',
+    bottom: 100,
+    right: 16,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 10,
   },
 });

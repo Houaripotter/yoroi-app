@@ -14,6 +14,13 @@ import {
   defaultThemeMode,
   GRADIENTS,
 } from '@/constants/themes';
+import {
+  FontSizeLevel,
+  FONT_SIZE_SCALES,
+  STORAGE_KEY_FONT_SIZE,
+  applyFontScale,
+  getCurrentFontScale,
+} from '@/lib/fontScaleManager';
 
 // ===================================================
 // YOROI THEME CONTEXT - 18 THÈMES PREMIUM
@@ -62,6 +69,11 @@ interface ThemeContextType {
   gradients: typeof GRADIENTS;
   // Nom du thème (compatibilité avec ancien code)
   themeName: string;
+  // Taille de police (1=Petit, 2=Normal, 3=Grand, 4=Très grand)
+  fontSizeLevel: FontSizeLevel;
+  setFontSizeLevel: (level: FontSizeLevel) => Promise<void>;
+  // Fonction utilitaire : multiplie n par le scale actuel
+  fs: (n: number) => number;
   // Chargement terminé
   isLoaded: boolean;
 }
@@ -93,6 +105,9 @@ const ThemeContext = createContext<ThemeContextType>({
   },
   gradients: GRADIENTS,
   themeName: `${defaultThemeColor}_dark`,
+  fontSizeLevel: 2,
+  setFontSizeLevel: async () => {},
+  fs: (n: number) => n,
   isLoaded: false,
 });
 
@@ -125,6 +140,9 @@ export const useTheme = () => {
       },
       gradients: GRADIENTS,
       themeName: `${defaultThemeColor}_dark`,
+      fontSizeLevel: 2,
+      setFontSizeLevel: async () => {},
+      fs: (n: number) => n,
       isLoaded: true,
     };
   }
@@ -143,6 +161,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [themeColor, setThemeColorState] = useState<ThemeColor>(defaultThemeColor);
   const [themeMode, setThemeModeState] = useState<ThemeMode>(defaultThemeMode);
+  const [fontSizeLevel, setFontSizeLevelState] = useState<FontSizeLevel>(2);
 
   // Déterminer le mode réel (résolution de auto)
   const actualMode: 'dark' | 'light' = themeMode === 'auto'
@@ -168,6 +187,13 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
         if (savedMode && ['dark', 'light', 'auto'].includes(savedMode)) {
           setThemeModeState(savedMode as ThemeMode);
+        }
+
+        const savedFontLevel = await AsyncStorage.getItem(STORAGE_KEY_FONT_SIZE);
+        if (savedFontLevel && ['1', '2', '3', '4'].includes(savedFontLevel)) {
+          const level = parseInt(savedFontLevel, 10) as FontSizeLevel;
+          setFontSizeLevelState(level);
+          applyFontScale(FONT_SIZE_SCALES[level]);
         }
       } catch (error) {
         logger.error('Erreur chargement thème:', error);
@@ -208,6 +234,17 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     }
   }, []);
 
+  // Changer la taille de police
+  const setFontSizeLevel = useCallback(async (level: FontSizeLevel) => {
+    try {
+      setFontSizeLevelState(level);
+      applyFontScale(FONT_SIZE_SCALES[level]);
+      await AsyncStorage.setItem(STORAGE_KEY_FONT_SIZE, String(level));
+    } catch (error) {
+      logger.error('Erreur sauvegarde taille police:', error);
+    }
+  }, []);
+
   // Générer le style de glow basé sur l'accent (mémoïsé pour éviter re-renders)
   const glowShadow = useMemo(() => ({
     shadowColor: colors.accent,
@@ -237,8 +274,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     glowShadow,
     gradients: GRADIENTS,
     themeName: `${themeColor}_${actualMode}`,
+    fontSizeLevel,
+    setFontSizeLevel,
+    fs: (n: number) => Math.round(n * getCurrentFontScale()),
     isLoaded,
-  }), [theme, colors, themeColor, themeMode, actualMode, setThemeColor, setThemeMode, glowShadow, isLoaded]);
+  }), [theme, colors, themeColor, themeMode, actualMode, setThemeColor, setThemeMode, glowShadow, fontSizeLevel, setFontSizeLevel, isLoaded]);
 
   // Attendre le chargement avant de rendre
   if (!isLoaded) {

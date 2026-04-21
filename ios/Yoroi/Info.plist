@@ -19,7 +19,7 @@
     <key>CFBundlePackageType</key>
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.3.0</string>
+    <string>2.3.2</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleURLTypes</key>
@@ -39,7 +39,7 @@
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>6</string>
+    <string>15</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSRequiresIPhoneOS</key>
@@ -51,12 +51,11 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
-    <key>NSLocalNetworkUsageDescription</key>
-    <string>YOROI utilise le réseau local pour synchroniser vos données entre votre iPhone et votre iPad à proximité.</string>
     <key>NSBonjourServices</key>
     <array>
       <string>_yoroi-sync._tcp</string>
       <string>_yoroi-sync._udp</string>
+      <string>_expo._tcp</string>
     </array>
     <key>NSCalendarsFullAccessUsageDescription</key>
     <string>YOROI accède à votre calendrier pour vous rappeler vos séances d'entraînement planifiées.</string>
@@ -70,13 +69,17 @@
     <string>YOROI lit vos données de poids, composition corporelle, sommeil, pas, fréquence cardiaque et calories pour afficher vos statistiques de progression, calculer vos objectifs personnalisés et suivre votre évolution physique au fil du temps.</string>
     <key>NSHealthUpdateUsageDescription</key>
     <string>YOROI enregistre vos pesées quotidiennes, vos séances d'entraînement, vos données d'hydratation et de sommeil pour synchroniser automatiquement vos progrès entre tous vos appareils.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>YOROI utilise le réseau local pour synchroniser vos données entre votre iPhone et votre iPad à proximité.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>YOROI utilise votre position GPS pour enregistrer le tracé et la distance de vos séances de course, vélo et activités en plein air.</string>
     <key>NSLocationAlwaysUsageDescription</key>
     <string>YOROI utilise votre position GPS pour enregistrer le tracé et la distance de vos séances de course, vélo et activités en plein air.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>YOROI utilise votre position GPS pour enregistrer le tracé et la distance de vos séances de course, vélo et activités en plein air.</string>
-<key>NSPhotoLibraryAddUsageDescription</key>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>YOROI peut utiliser le microphone pour enregistrer des notes vocales liées à vos séances d'entraînement.</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
     <string>YOROI enregistre vos photos de progression et vos cartes de partage social dans votre photothèque.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>YOROI a besoin d'accéder à vos photos pour définir votre photo de profil.</string>
@@ -90,8 +93,14 @@
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
     </array>
+    <key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
+    <true/>
     <key>RCTNewArchEnabled</key>
     <true/>
+    <key>UIBackgroundModes</key>
+    <array>
+      <string>audio</string>
+    </array>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>

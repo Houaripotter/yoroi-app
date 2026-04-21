@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { formatHoursHM } from '@/lib/formatDuration';
-import { Moon, Clock, AlertTriangle, CheckCircle } from 'lucide-react-native';
+import { Moon, Clock, AlertTriangle, CheckCircle, Star } from 'lucide-react-native';
 import Svg, { Path, Circle, Ellipse } from 'react-native-svg';
 import { router } from 'expo-router';
 import { getGridColumns } from '@/constants/responsive';
@@ -27,6 +28,7 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
   const CARD_SIZE = (screenWidth - 32 - 8 * (columns - 1)) / columns;
   const styles = useMemo(() => createStyles(CARD_SIZE), [CARD_SIZE]);
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   
   // Animations
   const moonFloat = useRef(new Animated.Value(0)).current;
@@ -194,10 +196,10 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
 
   // Déterminer le statut
   const getStatus = () => {
-    if (hours === 0) return { text: 'Aucune donnée', color: '#9CA3AF', icon: Moon };
-    if (hours >= 7) return { text: 'Excellent', color: '#10B981', icon: CheckCircle };
-    if (hours >= 5) return { text: 'Correct', color: '#F59E0B', icon: Moon };
-    return { text: 'Insuffisant', color: '#EF4444', icon: AlertTriangle };
+    if (hours === 0) return { text: t('sleep.statusNoData'), color: '#9CA3AF', icon: Moon };
+    if (hours >= 7) return { text: t('sleep.statusExcellent'), color: '#10B981', icon: CheckCircle };
+    if (hours >= 5) return { text: t('sleep.statusOk'), color: '#F59E0B', icon: Moon };
+    return { text: t('sleep.statusInsufficient'), color: '#EF4444', icon: AlertTriangle };
   };
 
   const status = getStatus();
@@ -219,30 +221,30 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
 
       {/* Zone animation */}
       <View style={styles.animationContainer}>
-        {/* Vraies étoiles ★ */}
+        {/* Étoiles décoratives */}
         <Animated.View style={[styles.star, styles.star1, { opacity: starOpacity1 }]}>
-          <Text style={[styles.starIcon, { color: '#DDD6FE' }]}>★</Text>
+          <Star size={14} color="#DDD6FE" fill="#DDD6FE" />
         </Animated.View>
         <Animated.View style={[styles.star, styles.star2, { opacity: starOpacity2 }]}>
-          <Text style={[styles.starIconSmall, { color: '#C4B5FD' }]}>★</Text>
+          <Star size={10} color="#C4B5FD" fill="#C4B5FD" />
         </Animated.View>
         <Animated.View style={[styles.star, styles.star3, { opacity: starOpacity3 }]}>
-          <Text style={[styles.starIcon, { color: '#DDD6FE' }]}>★</Text>
+          <Star size={14} color="#DDD6FE" fill="#DDD6FE" />
         </Animated.View>
         <Animated.View style={[styles.star, styles.star4, { opacity: starOpacity1 }]}>
-          <Text style={[styles.starIconSmall, { color: '#E9D5FF' }]}>★</Text>
+          <Star size={10} color="#E9D5FF" fill="#E9D5FF" />
         </Animated.View>
         <Animated.View style={[styles.star, styles.star5, { opacity: starOpacity2 }]}>
-          <Text style={[styles.starIcon, { color: '#C4B5FD' }]}>★</Text>
+          <Star size={14} color="#C4B5FD" fill="#C4B5FD" />
         </Animated.View>
         <Animated.View style={[styles.star, styles.star6, { opacity: starOpacity3 }]}>
-          <Text style={[styles.starIconSmall, { color: '#DDD6FE' }]}>★</Text>
+          <Star size={10} color="#DDD6FE" fill="#DDD6FE" />
         </Animated.View>
         <Animated.View style={[styles.star, styles.star7, { opacity: starOpacity1 }]}>
-          <Text style={[styles.starIconSmall, { color: '#E9D5FF' }]}>★</Text>
+          <Star size={10} color="#E9D5FF" fill="#E9D5FF" />
         </Animated.View>
         <Animated.View style={[styles.star, styles.star8, { opacity: starOpacity2 }]}>
-          <Text style={[styles.starIcon, { color: '#C4B5FD' }]}>★</Text>
+          <Star size={14} color="#C4B5FD" fill="#C4B5FD" />
         </Animated.View>
         
         {/* Croissant de lune en haut à droite */}

@@ -6,6 +6,7 @@
 import React, { createContext, useContext, ReactNode, useMemo, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
+import { logger } from './security/logger';
 import frTranslations from './i18n/fr.json';
 import enTranslations from './i18n/en.json';
 import jaTranslations from './i18n/ja.json';
@@ -146,8 +147,8 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
           // On sauvegarde pour les prochains lancements
           await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, detected);
         }
-      } catch {
-        // En cas d'erreur → détection quand même
+      } catch (e) {
+        logger.warn('I18n: erreur lors du chargement de la langue sauvegardée', e);
         const detected = detectDeviceLanguage();
         setLanguageState(detected);
       } finally {
@@ -159,12 +160,13 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
 
   const setLanguage = useCallback(async (lang: string): Promise<void> => {
     const validLang = (lang === 'fr' || lang === 'en' || lang === 'ja') ? lang as LanguageCode : 'fr';
+    // Mettre à jour l'état immédiatement pour garantir le re-render
+    setLanguageState(validLang);
     try {
       await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, validLang);
-    } catch {
-      // Ignorer l'erreur AsyncStorage
+    } catch (e) {
+      logger.warn('I18n: échec de la sauvegarde de la langue dans AsyncStorage', e);
     }
-    setLanguageState(validLang);
   }, []);
 
   const t = useCallback((key: string, options?: any): string => {

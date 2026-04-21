@@ -3,8 +3,9 @@
 // Toutes les cartes sont cliquables avec modal graphique
 // ============================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
+import Svg, { Path, G } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { useScrollContext } from '@/lib/ScrollContext';
@@ -47,6 +48,29 @@ export const DisciplinePage: React.FC = () => {
   const [trainingData, setTrainingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [allTrainingsData, setAllTrainingsData] = useState<any[]>([]);
+
+  // Couleurs pour le pie chart
+  const PIE_COLORS = ['#8B5CF6', '#06B6D4', '#22C55E', '#F59E0B', '#EF4444', '#EC4899', '#3B82F6', '#F97316', '#14B8A6', '#A855F7'];
+
+  // Répartition par discipline pour la période sélectionnée
+  const disciplineBreakdown = useMemo(() => {
+    if (!allTrainingsData.length) return [];
+    const daysMap: Record<string, number> = { '7j': 7, '30j': 30, '90j': 90, 'tout': 9999 };
+    const days = daysMap[selectedPeriod] ?? 30;
+    const cutoff = new Date(Date.now() - days * 86400000);
+    const filtered = allTrainingsData.filter((t: any) => new Date(t.date) >= cutoff);
+    const map: Record<string, { minutes: number; sessions: number }> = {};
+    for (const t of filtered) {
+      const sport = t.sport || 'Autre';
+      if (!map[sport]) map[sport] = { minutes: 0, sessions: 0 };
+      map[sport].minutes += t.duration || t.duration_minutes || 0;
+      map[sport].sessions++;
+    }
+    const total = Object.values(map).reduce((s, v) => s + v.minutes, 0);
+    return Object.entries(map)
+      .map(([name, v]) => ({ name, ...v, pct: total > 0 ? v.minutes / total : 0 }))
+      .sort((a, b) => b.minutes - a.minutes);
+  }, [allTrainingsData, selectedPeriod]);
 
   // État pour le modal
   const [selectedMetric, setSelectedMetric] = useState<{
@@ -106,10 +130,10 @@ export const DisciplinePage: React.FC = () => {
               value: t.intensity,
             })),
           duration: filtered
-            .filter((t: any) => t.duration && t.duration > 0)
+            .filter((t: any) => (t.duration || t.duration_minutes) && (t.duration || t.duration_minutes) > 0)
             .map((t: any) => ({
               date: t.date,
-              value: t.duration,
+              value: t.duration || t.duration_minutes,
             })),
           load: filtered
             .filter((t: any) => t.intensity && t.duration)
@@ -241,11 +265,75 @@ export const DisciplinePage: React.FC = () => {
         onPeriodChange={setSelectedPeriod}
       />
 
-      <StatsExplanation 
+      <StatsExplanation
         title="Discipline & Charge"
         text="La Discipline mesure ta régularité (fréquence des séances). La Charge d'entraînement est calculée en multipliant la durée par l'intensité (RPE). Elle permet de suivre ton volume de travail global pour optimiser tes cycles de progression et éviter les blessures."
         color="#8B5CF6"
       />
+
+      {/* Pie chart répartition par discipline */}
+      {disciplineBreakdown.length > 1 && (() => {
+        const SIZE = 160;
+        const INNER = 58;
+        const cx = SIZE / 2;
+        const cy = SIZE / 2;
+        const r = SIZE / 2;
+
+        // Calcul des arcs SVG
+        const toRad = (deg: number) => (deg * Math.PI) / 180;
+        let startAngle = -90;
+        const paths = disciplineBreakdown.map((d, i) => {
+          const angle = d.pct * 360;
+          const endAngle = startAngle + angle;
+          const largeArc = angle > 180 ? 1 : 0;
+          const x1 = cx + r * Math.cos(toRad(startAngle));
+          const y1 = cy + r * Math.sin(toRad(startAngle));
+          const x2 = cx + r * Math.cos(toRad(endAngle));
+          const y2 = cy + r * Math.sin(toRad(endAngle));
+          const xi1 = cx + INNER * Math.cos(toRad(startAngle));
+          const yi1 = cy + INNER * Math.sin(toRad(startAngle));
+          const xi2 = cx + INNER * Math.cos(toRad(endAngle));
+          const yi2 = cy + INNER * Math.sin(toRad(endAngle));
+          const path = `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} L ${xi2} ${yi2} A ${INNER} ${INNER} 0 ${largeArc} 0 ${xi1} ${yi1} Z`;
+          startAngle = endAngle;
+          return { path, color: PIE_COLORS[i % PIE_COLORS.length], name: d.name, pct: d.pct };
+        });
+
+        return (
+          <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+            <View style={{ backgroundColor: colors.backgroundCard ?? colors.card, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', padding: 16 }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: 14, letterSpacing: 0.5 }}>
+                RÉPARTITION PAR DISCIPLINE
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
+                {/* Donut */}
+                <Svg width={SIZE} height={SIZE}>
+                  <G>
+                    {paths.map((p, i) => (
+                      <Path key={i} d={p.path} fill={p.color} />
+                    ))}
+                  </G>
+                </Svg>
+                {/* Légende */}
+                <View style={{ flex: 1, gap: 8 }}>
+                  {disciplineBreakdown.slice(0, 6).map((d, i) => (
+                    <View key={d.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                      <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                      <Text style={{ flex: 1, fontSize: 12, color: colors.textPrimary ?? colors.text }} numberOfLines={1}>{d.name}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '800', color: PIE_COLORS[i % PIE_COLORS.length] }}>
+                        {Math.round(d.pct * 100)}%
+                      </Text>
+                    </View>
+                  ))}
+                  {disciplineBreakdown.length > 6 && (
+                    <Text style={{ fontSize: 11, color: colors.textMuted }}>+{disciplineBreakdown.length - 6} autres</Text>
+                  )}
+                </View>
+              </View>
+            </View>
+          </View>
+        );
+      })()}
 
       {/* Graphique de tendance principal */}
       <StatsSection
@@ -328,7 +416,7 @@ export const DisciplinePage: React.FC = () => {
           >
             <MetricCard
               label={t('statsPages.discipline.averageIntensity')}
-              value={trainingData?.averageIntensity?.toFixed(1) || 0}
+              value={trainingData?.averageIntensity?.toFixed(1) ?? '0'}
               unit="/10"
               icon={<Target size={24} color="#EF4444" strokeWidth={2.5} />}
               color="#EF4444"

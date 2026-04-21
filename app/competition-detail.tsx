@@ -135,10 +135,28 @@ export default function CompetitionDetailScreen() {
     setTimeout(() => setIsNavigating(false), 1000);
   };
 
-  if (loading || !competition) {
+  if (loading) {
     return (
       <ScreenWrapper>
         <Header title="Chargement..." showBack />
+      </ScreenWrapper>
+    );
+  }
+
+  if (!competition) {
+    return (
+      <ScreenWrapper>
+        <Header title="Compétition introuvable" showBack />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Trophy size={64} color={colors.textMuted} />
+          <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '600', marginTop: 16, textAlign: 'center' }}>
+            Compétition introuvable
+          </Text>
+          <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center' }}>
+            Cette compétition n'existe plus ou a été supprimée.
+          </Text>
+        </View>
+        <PopupComponent />
       </ScreenWrapper>
     );
   }

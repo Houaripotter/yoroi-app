@@ -67,6 +67,68 @@ const PHASE_DESCRIPTIONS: Record<string, { title: string; desc: string }> = {
 // HELPERS
 // ============================================
 
+/**
+ * Calcul multi-facteurs de la qualite du sommeil (0-5 etoiles).
+ * - Duree (40%) : optimal 420-540 min (7-9h)
+ * - Sommeil profond % (30%) : optimal 13-23% du temps total au lit
+ * - REM % (20%) : optimal 20-25% du temps total au lit
+ * - Efficacite (10%) : temps de sommeil / temps au lit
+ */
+const computeSleepQuality = (
+  durationMin: number,
+  deepMin: number,
+  remMin: number,
+  awakeMin: number,
+): number => {
+  const totalInBed = durationMin + awakeMin;
+  if (totalInBed <= 0) return 0;
+
+  // --- Duree (40%) : score 0-1 ---
+  let durationScore: number;
+  if (durationMin >= 420 && durationMin <= 540) {
+    durationScore = 1; // 7-9h = parfait
+  } else if (durationMin < 420) {
+    durationScore = Math.max(0, durationMin / 420); // lineaire jusqu'a 7h
+  } else {
+    // Au-dela de 9h, penalite douce
+    durationScore = Math.max(0, 1 - (durationMin - 540) / 180);
+  }
+
+  // --- Sommeil profond % (30%) : optimal 13-23% ---
+  const deepPct = (deepMin / totalInBed) * 100;
+  let deepScore: number;
+  if (deepPct >= 13 && deepPct <= 23) {
+    deepScore = 1;
+  } else if (deepPct < 13) {
+    deepScore = Math.max(0, deepPct / 13);
+  } else {
+    deepScore = Math.max(0, 1 - (deepPct - 23) / 15);
+  }
+
+  // --- REM % (20%) : optimal 20-25% ---
+  const remPct = (remMin / totalInBed) * 100;
+  let remScore: number;
+  if (remPct >= 20 && remPct <= 25) {
+    remScore = 1;
+  } else if (remPct < 20) {
+    remScore = Math.max(0, remPct / 20);
+  } else {
+    remScore = Math.max(0, 1 - (remPct - 25) / 15);
+  }
+
+  // --- Efficacite (10%) : temps sommeil / temps au lit ---
+  const efficiencyScore = Math.min(1, durationMin / totalInBed);
+
+  // Score composite (0-5)
+  const raw =
+    durationScore * 0.4 +
+    deepScore * 0.3 +
+    remScore * 0.2 +
+    efficiencyScore * 0.1;
+
+  return Math.min(5, Math.max(0, Math.round(raw * 5)));
+};
+
 const formatDuration = (minutes: number): string => {
   const h = Math.floor(minutes / 60);
   const m = Math.round(minutes % 60);
@@ -218,7 +280,12 @@ export default function SleepDetailScreen() {
             bedTime: toLocalHHMM(match.startTime),
             wakeTime: toLocalHHMM(match.endTime),
             duration: match.total || match.duration || 0,
-            quality: Math.min(5, Math.round(((match.total || 0) / 480) * 5)),
+            quality: computeSleepQuality(
+              match.total || match.duration || 0,
+              match.deep || 0,
+              match.rem || 0,
+              match.awake || 0,
+            ),
             phases: {
               deep: match.deep || 0,
               rem: match.rem || 0,
@@ -425,18 +492,25 @@ export default function SleepDetailScreen() {
 
             {/* Detail des phases avec descriptions */}
             <View style={styles.phasesGrid}>
-              {entry.phases.deep > 0 && (
-                <PhaseItem phaseKey="deep" minutes={entry.phases.deep} total={entry.duration} />
-              )}
-              {entry.phases.core > 0 && (
-                <PhaseItem phaseKey="core" minutes={entry.phases.core} total={entry.duration} />
-              )}
-              {entry.phases.rem > 0 && (
-                <PhaseItem phaseKey="rem" minutes={entry.phases.rem} total={entry.duration} />
-              )}
-              {(entry.phases.awake || 0) > 0 && (
-                <PhaseItem phaseKey="awake" minutes={entry.phases.awake || 0} total={entry.duration + (entry.phases.awake || 0)} />
-              )}
+              {(() => {
+                const totalInBed = entry.duration + (entry.phases?.awake || 0);
+                return (
+                  <>
+                    {entry.phases.deep > 0 && (
+                      <PhaseItem phaseKey="deep" minutes={entry.phases.deep} total={totalInBed} />
+                    )}
+                    {entry.phases.core > 0 && (
+                      <PhaseItem phaseKey="core" minutes={entry.phases.core} total={totalInBed} />
+                    )}
+                    {entry.phases.rem > 0 && (
+                      <PhaseItem phaseKey="rem" minutes={entry.phases.rem} total={totalInBed} />
+                    )}
+                    {(entry.phases.awake || 0) > 0 && (
+                      <PhaseItem phaseKey="awake" minutes={entry.phases.awake || 0} total={totalInBed} />
+                    )}
+                  </>
+                );
+              })()}
             </View>
           </View>
         )}

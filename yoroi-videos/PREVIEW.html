@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>YOROI — Aperçu Vidéos TikTok</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #050508;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: white;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: 6px;
+    color: #CCFF00;
+    text-shadow: 0 0 30px #CCFF00;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #9CA3AF;
+    margin-bottom: 40px;
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+  .videos-row {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .phone-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .phone-label {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: #CCFF00;
+    text-transform: uppercase;
+  }
+  .phone-duration {
+    font-size: 13px;
+    color: #9CA3AF;
+    letter-spacing: 1px;
+  }
+  .phone-frame {
+    width: 360px;
+    height: 640px;
+    border-radius: 40px;
+    border: 3px solid #333;
+    overflow: hidden;
+    position: relative;
+    background: #0A0A0F;
+    box-shadow: 0 0 60px rgba(204,255,0,0.15), 0 30px 80px rgba(0,0,0,0.8);
+  }
+  .video-content {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Grid lines */
+  .grid {
+    position: absolute;
+    inset: 0;
+    opacity: 0.2;
+    background-image:
+      linear-gradient(rgba(204,255,0,0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(204,255,0,0.1) 1px, transparent 1px);
+    background-size: 45px 45px;
+  }
+
+  /* Particles */
+  .particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    background: #CCFF00;
+    animation: float linear infinite;
+  }
+  @keyframes float {
+    from { transform: translateY(110%); opacity: 0; }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.3; }
+    to { transform: translateY(-10%); opacity: 0; }
+  }
+
+  /* SCENES */
+  .scene {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 30px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .scene.active {
+    opacity: 1;
+  }
+
+  /* Typography */
+  .hook-title {
+    font-size: 56px;
+    font-weight: 900;
+    text-transform: uppercase;
+    line-height: 1;
+    letter-spacing: -1px;
+    text-align: center;
+    animation: slideUp 0.6s ease forwards;
+  }
+  .volt { color: #CCFF00; text-shadow: 0 0 30px #CCFF00, 0 0 60px rgba(204,255,0,0.3); }
+  .white { color: #fff; }
+  .subtitle-text {
+    color: #9CA3AF;
+    font-size: 18px;
+    text-align: center;
+    margin-top: 20px;
+    letter-spacing: 1px;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Logo scene */
+  .logo-img {
+    width: 130px;
+    height: 130px;
+    border-radius: 26px;
+    box-shadow: 0 0 40px rgba(204,255,0,0.5);
+    animation: scaleIn 0.5s ease forwards;
+  }
+  .app-name {
+    font-size: 64px;
+    font-weight: 900;
+    letter-spacing: 8px;
+    color: white;
+    margin-top: 16px;
+  }
+  .app-tagline {
+    font-size: 16px;
+    color: #CCFF00;
+    letter-spacing: 4px;
+    margin-top: 8px;
+  }
+
+  /* Stat cards */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+  }
+  .stat-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 16px;
+    animation: fadeInUp 0.5s ease forwards;
+  }
+  .stat-label { font-size: 11px; color: #9CA3AF; letter-spacing: 1px; text-transform: uppercase; }
+  .stat-value { font-size: 36px; font-weight: 900; color: white; }
+  .stat-unit { font-size: 16px; }
+
+  /* Feature slide */
+  .feature-icon {
+    font-size: 60px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.05);
+    margin-bottom: 20px;
+    animation: scaleIn 0.4s ease forwards;
+  }
+  .feature-title {
+    font-size: 32px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .feature-desc {
+    font-size: 20px;
+    color: rgba(255,255,255,0.7);
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  /* Progress dots */
+  .dots {
+    display: flex;
+    gap: 8px;
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.2);
+    transition: all 0.3s;
+  }
+  .dot.active {
+    width: 24px;
+    background: #CCFF00;
+  }
+
+  /* CTA */
+  .cta-btn {
+    background: #CCFF00;
+    color: #0A0A0F;
+    border: none;
+    padding: 18px 40px;
+    border-radius: 100px;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    box-shadow: 0 0 30px rgba(204,255,0,0.5);
+    cursor: pointer;
+    margin-top: 20px;
+    animation: scaleIn 0.4s ease forwards;
+  }
+
+  /* Watermark */
+  .watermark {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 11px;
+    color: rgba(204,255,0,0.3);
+    letter-spacing: 2px;
+    font-weight: 700;
+  }
+
+  /* Progress bar */
+  .progress-bar-container {
+    margin-top: 16px;
+    width: 100%;
+  }
+  .progress-track {
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    height: 10px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 8px;
+    background: linear-gradient(to right, #CCFF00, #00FF88);
+    box-shadow: 0 0 10px #CCFF00;
+    animation: fillBar 2s ease forwards;
+  }
+  @keyframes fillBar {
+    from { width: 0; }
+    to { width: 96%; }
+  }
+
+  /* Rank badges */
+  .ranks-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: flex-end;
+    margin: 20px 0;
+  }
+  .rank-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    animation: scaleIn 0.4s ease forwards;
+  }
+  .rank-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    border: 2px solid currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+  .rank-icon.active {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    font-size: 36px;
+  }
+  .rank-name { font-size: 10px; letter-spacing: 1px; }
+
+  /* BJJ bars */
+  .bjj-bar {
+    margin-bottom: 16px;
+    animation: fadeInUp 0.5s ease forwards;
+  }
+  .bjj-bar-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .bjj-bar-name { font-size: 18px; font-weight: 700; }
+  .bjj-bar-count { font-size: 18px; font-weight: 700; }
+  .bjj-track {
+    background: rgba(255,255,255,0.1);
+    border-radius: 6px;
+    height: 8px;
+  }
+  .bjj-fill {
+    height: 100%;
+    border-radius: 6px;
+    animation: fillBar 1.5s ease forwards;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .btn {
+    background: rgba(204,255,0,0.15);
+    border: 1px solid #CCFF00;
+    color: #CCFF00;
+    padding: 10px 24px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn:hover { background: rgba(204,255,0,0.3); }
+  .btn.active { background: #CCFF00; color: #0A0A0F; }
+
+  .scene-counter {
+    font-size: 13px;
+    color: #9CA3AF;
+    letter-spacing: 2px;
+  }
+
+  /* Glow ring */
+  .glow-ring {
+    position: absolute;
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.05); }
+  }
+
+  .mascot-img {
+    width: 160px;
+    height: 160px;
+    object-fit: contain;
+    animation: scaleIn 0.5s ease forwards;
+  }
+
+  /* Instructions */
+  .instructions {
+    max-width: 800px;
+    margin: 60px auto 0;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(204,255,0,0.2);
+    border-radius: 24px;
+    padding: 32px;
+  }
+  .instructions h2 {
+    color: #CCFF00;
+    font-size: 20px;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+  .cmd {
+    background: #0A0A0F;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 15px;
+    color: #CCFF00;
+    margin: 8px 0;
+    letter-spacing: 0.5px;
+  }
+  .step {
+    margin: 16px 0;
+    color: #9CA3AF;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .step strong { color: white; }
+</style>
+</head>
+<body>
+
+<h1>YOROI 鎧</h1>
+<div class="subtitle">APERÇU DES VIDÉOS TIKTOK / INSTAGRAM REELS</div>
+
+<div class="videos-row">
+  <!-- TRAILER -->
+  <div class="phone-wrapper">
+    <div class="phone-label">🎬 Trailer</div>
+    <div class="phone-duration">30 secondes • 1080×1920</div>
+    <div class="phone-frame" id="trailer-phone">
+      <div class="video-content">
+        <div class="grid"></div>
+        <div class="particles" id="particles1"></div>
+        <div class="watermark">YOROI 鎧</div>
+
+        <!-- Scene 1: Hook -->
+        <div class="scene" id="t-s1">
+          <div class="hook-title white">TON CORPS</div>
+          <div class="hook-title volt">C'EST TON</div>
+          <div class="hook-title white">ARMURE</div>
+          <div class="subtitle-text">Construis-la. Porte-la. Chaque jour.</div>
+        </div>
+
+        <!-- Scene 2: Logo -->
+        <div class="scene" id="t-s2">
+          <img class="logo-img" src="public/assets/yoroi-logo-volt.png" onerror="this.style.cssText='width:130px;height:130px;border-radius:26px;background:linear-gradient(135deg,#1a1a2e,#0d4f2e);display:flex;align-items:center;justify-content:center;font-size:60px;box-shadow:0 0 40px rgba(204,255,0,0.5);animation:scaleIn 0.5s ease forwards'">
+          <div class="app-name">YOROI</div>
+          <div class="app-tagline">鎧 — L'ARMURE DE TON CORPS</div>
+          <div class="subtitle-text" style="margin-top:16px">L'app fitness pour les guerriers</div>
+        </div>
+
+        <!-- Scene 3: Features carousel -->
+        <div class="scene" id="t-s3">
+          <div class="feature-icon" id="feat-icon" style="color:#CCFF00;border-color:#CCFF00">⚖️</div>
+          <div class="feature-title volt" id="feat-title">POIDS & COMPOSITION</div>
+          <div class="feature-desc" id="feat-desc">Suivi précis via balances Tanita<br>Masse musculaire · Graisse · Eau</div>
+          <div class="dots" id="feat-dots"></div>
+        </div>
+
+        <!-- Scene 4: CTA -->
+        <div class="scene" id="t-s4">
+          <img class="mascot-img" src="public/assets/mascot.png" onerror="this.style.cssText='font-size:80px;animation:scaleIn 0.5s ease forwards'">
+          <div style="font-size:34px;font-weight:900;text-align:center;margin-top:16px">
+            Prêt à construire<br><span class="volt">ton armure ?</span>
+          </div>
+          <button class="cta-btn">📲 TÉLÉCHARGE YOROI</button>
+        </div>
+
+        <!-- Scene 5: End -->
+        <div class="scene" id="t-s5">
+          <div class="glow-ring" style="width:300px;height:300px;background:radial-gradient(circle,rgba(204,255,0,0.15),transparent)"></div>
+          <div style="font-size:80px;font-weight:900;letter-spacing:10px" class="white">YOROI</div>
+          <div class="volt" style="font-size:16px;letter-spacing:4px;margin-top:8px">鎧 · YOUR BODY IS YOUR ARMOR</div>
+          <div style="font-size:14px;color:#9CA3AF;margin-top:24px;letter-spacing:2px;text-align:center">#YOROI #BJJ #MMA #FITNESS</div>
+        </div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn" onclick="prevScene('t')">◀ PREV</button>
+      <span class="scene-counter" id="t-counter">1 / 5</span>
+      <button class="btn" onclick="nextScene('t')">NEXT ▶</button>
+    </div>
+    <button class="btn active" onclick="autoPlay('t')" id="t-autoplay">▶ AUTO-PLAY</button>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="phone-wrapper">
+    <div class="phone-label">⚡ Features</div>
+    <div class="phone-duration">15 secondes • 1080×1920</div>
+    <div class="phone-frame" id="features-phone">
+      <div class="video-content">
+        <div class="grid"></div>
+        <div class="particles" id="particles2"></div>
+        <div class="watermark">YOROI 鎧</div>
+
+        <!-- Scene 1: Intro hook -->
+        <div class="scene" id="f-s1">
+          <div style="font-size:34px;color:#9CA3AF;text-align:center;line-height:2">
+            Tu fais du BJJ 🥋<br>
+            Tu liftes. Tu cours. 💪
+          </div>
+          <div style="font-size:46px;font-weight:900;text-align:center;margin-top:20px" class="volt">Y'a une app pour toi.</div>
+        </div>
+
+        <!-- Scene 2: Stats -->
+        <div class="scene" id="f-s2">
+          <div style="font-size:22px;color:#2DD4BF;letter-spacing:3px;font-weight:700;text-align:center;margin-bottom:16px;text-transform:uppercase">📊 TES STATS EN TEMPS RÉEL</div>
+          <div class="stats-grid">
+            <div class="stat-card" style="border-color:rgba(45,212,191,0.3)">
+              <div class="stat-label" style="color:#2DD4BF">Poids</div>
+              <div class="stat-value">82.4<span class="stat-unit" style="color:#2DD4BF">kg</span></div>
+            </div>
+            <div class="stat-card" style="border-color:rgba(204,255,0,0.3)">
+              <div class="stat-label" style="color:#CCFF00">Muscle</div>
+              <div class="stat-value">43.2<span class="stat-unit" style="color:#CCFF00">%</span></div>
+            </div>
+            <div class="stat-card" style="border-color:rgba(255,107,157,0.3)">
+              <div class="stat-label" style="color:#FF6B9D">Graisse</div>
+              <div class="stat-value">14.8<span class="stat-unit" style="color:#FF6B9D">%</span></div>
+            </div>
+            <div class="stat-card" style="border-color:rgba(255,215,0,0.3)">
+              <div class="stat-label" style="color:#FFD700">Séances</div>
+              <div class="stat-value">148</div>
+            </div>
+          </div>
+          <div class="progress-bar-container">
+            <div style="display:flex;justify-content:space-between;font-size:14px">
+              <span>XP Total</span><span class="volt">4820 / 5000</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scene 3: BJJ -->
+        <div class="scene" id="f-s3">
+          <div style="font-size:22px;color:#CCFF00;letter-spacing:2px;font-weight:700;text-align:center;margin-bottom:20px;text-transform:uppercase">🥋 TON CARNET BJJ/MMA</div>
+          <div style="width:100%">
+            <div class="bjj-bar">
+              <div class="bjj-bar-header">
+                <span class="bjj-bar-name">Guard Passé</span>
+                <span class="bjj-bar-count volt">23×</span>
+              </div>
+              <div class="bjj-track"><div class="bjj-fill" style="background:#CCFF00;width:46%"></div></div>
+            </div>
+            <div class="bjj-bar">
+              <div class="bjj-bar-header">
+                <span class="bjj-bar-name">Armbar</span>
+                <span class="bjj-bar-count" style="color:#FF6B9D">41×</span>
+              </div>
+              <div class="bjj-track"><div class="bjj-fill" style="background:#FF6B9D;width:82%"></div></div>
+            </div>
+            <div class="bjj-bar">
+              <div class="bjj-bar-header">
+                <span class="bjj-bar-name">RNC</span>
+                <span class="bjj-bar-count" style="color:#2DD4BF">18×</span>
+              </div>
+              <div class="bjj-track"><div class="bjj-fill" style="background:#2DD4BF;width:36%"></div></div>
+            </div>
+            <div class="bjj-bar">
+              <div class="bjj-bar-header">
+                <span class="bjj-bar-name">Triangle</span>
+                <span class="bjj-bar-count" style="color:#FFD700">29×</span>
+              </div>
+              <div class="bjj-track"><div class="bjj-fill" style="background:#FFD700;width:58%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scene 4: Ranks -->
+        <div class="scene" id="f-s4">
+          <div style="font-size:22px;color:#FFD700;letter-spacing:2px;font-weight:700;text-align:center;margin-bottom:12px;text-transform:uppercase;text-shadow:0 0 20px rgba(255,215,0,0.5)">🏆 SYSTÈME DE RANGS</div>
+          <div class="ranks-row">
+            <div class="rank-badge">
+              <div class="rank-icon" style="color:#CD7F32;border-color:#CD7F32">⚔️</div>
+              <div class="rank-name" style="color:#CD7F32">ASHIGARU</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.3)">Lv.1</div>
+            </div>
+            <div class="rank-badge">
+              <div class="rank-icon" style="color:#C0C0C0;border-color:#C0C0C0">⚔️</div>
+              <div class="rank-name" style="color:#C0C0C0">SAMURAI</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.3)">Lv.2</div>
+            </div>
+            <div class="rank-badge">
+              <div class="rank-icon active" style="color:#FFD700;border-color:#FFD700;background:rgba(255,215,0,0.15);box-shadow:0 0 30px rgba(255,215,0,0.5)">⚔️</div>
+              <div class="rank-name" style="color:#FFD700;font-weight:700">HATAMOTO</div>
+              <div style="font-size:10px;color:#FFD700">Lv.3 ←</div>
+            </div>
+            <div class="rank-badge">
+              <div class="rank-icon" style="color:#CCFF00;border-color:rgba(204,255,0,0.3)">⚔️</div>
+              <div class="rank-name" style="color:rgba(204,255,0,0.4)">DAIMYŌ</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.3)">Lv.4</div>
+            </div>
+          </div>
+          <div style="text-align:center;margin-top:16px">
+            <div style="font-size:34px;font-weight:900">Gravis les rangs.</div>
+            <div style="font-size:34px;font-weight:900;color:#FFD700;text-shadow:0 0 20px rgba(255,215,0,0.5)">Deviens Daimyō. ⚔️</div>
+          </div>
+        </div>
+
+        <!-- Scene 5: CTA -->
+        <div class="scene" id="f-s5">
+          <img class="mascot-img" src="public/assets/mascot.png" onerror="this.innerText='🥋'">
+          <div style="font-size:56px;font-weight:900;letter-spacing:8px;text-align:center;margin-top:12px">YOROI</div>
+          <div class="volt" style="font-size:16px;letter-spacing:4px;margin-top:8px;text-align:center">🎌 L'ARMURE DE TON CORPS</div>
+          <button class="cta-btn" style="margin-top:20px;font-size:18px">📲 GRATUIT sur App Store</button>
+          <div style="font-size:13px;color:#9CA3AF;margin-top:16px;letter-spacing:1px;text-align:center">#YOROI #BJJ #MMA #GracieBarra</div>
+        </div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn" onclick="prevScene('f')">◀ PREV</button>
+      <span class="scene-counter" id="f-counter">1 / 5</span>
+      <button class="btn" onclick="nextScene('f')">NEXT ▶</button>
+    </div>
+    <button class="btn active" onclick="autoPlay('f')" id="f-autoplay">▶ AUTO-PLAY</button>
+  </div>
+</div>
+
+<!-- Instructions -->
+<div class="instructions">
+  <h2>📦 Rendre les vraies vidéos MP4</h2>
+  <div class="step"><strong>1. Ouvre le terminal dans ton dossier app :</strong></div>
+  <div class="cmd">cd /Users/houari/Documents/APP_Houari/yoroi_app/yoroi-videos</div>
+  <div class="step"><strong>2. Installe les dépendances :</strong></div>
+  <div class="cmd">npm install</div>
+  <div class="step"><strong>3. Lance le studio Remotion pour preview live :</strong></div>
+  <div class="cmd">npx remotion studio</div>
+  <div class="step"><strong>4. Ou render directement en MP4 :</strong></div>
+  <div class="cmd">npx remotion render YoroiTrailer out/trailer.mp4</div>
+  <div class="cmd">npx remotion render YoroiFeatures out/features.mp4</div>
+  <div class="step" style="margin-top:16px;font-size:13px;color:#6B7280">
+    ⚡ Les vidéos sortiront en <strong style="color:white">1080×1920 (9:16)</strong> — format parfait pour TikTok et Instagram Reels.<br>
+    Remotion télécharge Chrome automatiquement la première fois (~200MB).<br>
+    Temps de rendu : ~2min par vidéo.
+  </div>
+</div>
+
+<script>
+// Features carousel data
+const features = [
+  { icon: '⚖️', title: 'POIDS & COMPOSITION', desc: 'Suivi précis via balances Tanita<br>Masse musculaire · Graisse · Eau', color: '#2DD4BF' },
+  { icon: '🥋', title: 'BJJ & MMA', desc: 'Log tes séances de combat<br>Techniques · Sparring · Progression', color: '#CCFF00' },
+  { icon: '🏆', title: 'GAMIFICATION', desc: 'Système de rangs japonais<br>Ashigaru → Daimyō · XP · Badges', color: '#FFD700' },
+  { icon: '🍱', title: 'NUTRITION', desc: 'Suivi calories et macros<br>Adapté à tes objectifs combat', color: '#FF6B9D' },
+  { icon: '⌚', title: 'APPLE WATCH', desc: 'Synchronisation native<br>Tes données toujours sur toi', color: '#00FF88' },
+  { icon: '🔒', title: '100% PRIVÉ', desc: 'Tes données restent sur ton tel<br>Zéro cloud · Zéro tracking', color: '#7C3AED' },
+];
+let currentFeat = 0;
+const dotsContainer = document.getElementById('feat-dots');
+features.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i === 0 ? ' active' : '');
+  dotsContainer.appendChild(d);
+});
+function updateFeature() {
+  const f = features[currentFeat];
+  document.getElementById('feat-icon').textContent = f.icon;
+  document.getElementById('feat-icon').style.color = f.color;
+  document.getElementById('feat-icon').style.borderColor = f.color;
+  document.getElementById('feat-title').textContent = f.title;
+  document.getElementById('feat-title').style.color = f.color;
+  document.getElementById('feat-title').style.textShadow = `0 0 20px ${f.color}80`;
+  document.getElementById('feat-desc').innerHTML = f.desc;
+  document.querySelectorAll('#feat-dots .dot').forEach((d, i) => {
+    d.className = 'dot' + (i === currentFeat ? ' active' : '');
+  });
+}
+
+// Scene management
+const state = {
+  t: { current: 1, total: 5, timer: null },
+  f: { current: 1, total: 5, timer: null },
+};
+
+function showScene(prefix, n) {
+  const s = state[prefix];
+  for (let i = 1; i <= s.total; i++) {
+    const el = document.getElementById(`${prefix}-s${i}`);
+    if (el) el.classList.remove('active');
+  }
+  const el = document.getElementById(`${prefix}-s${n}`);
+  if (el) el.classList.add('active');
+  document.getElementById(`${prefix}-counter`).textContent = `${n} / ${s.total}`;
+  s.current = n;
+
+  // Cycle features in trailer scene 3
+  if (prefix === 't' && n === 3) {
+    currentFeat = 0;
+    updateFeature();
+    clearInterval(window.featTimer);
+    window.featTimer = setInterval(() => {
+      currentFeat = (currentFeat + 1) % features.length;
+      updateFeature();
+    }, 1400);
+  } else {
+    clearInterval(window.featTimer);
+  }
+}
+
+function nextScene(prefix) {
+  const s = state[prefix];
+  const next = s.current < s.total ? s.current + 1 : 1;
+  showScene(prefix, next);
+}
+
+function prevScene(prefix) {
+  const s = state[prefix];
+  const prev = s.current > 1 ? s.current - 1 : s.total;
+  showScene(prefix, prev);
+}
+
+function autoPlay(prefix) {
+  const s = state[prefix];
+  const btn = document.getElementById(`${prefix}-autoplay`);
+  if (s.timer) {
+    clearInterval(s.timer);
+    s.timer = null;
+    btn.textContent = '▶ AUTO-PLAY';
+  } else {
+    btn.textContent = '⏸ PAUSE';
+    s.timer = setInterval(() => nextScene(prefix), 2500);
+  }
+}
+
+// Particles
+function createParticles(containerId) {
+  const container = document.getElementById(containerId);
+  for (let i = 0; i < 15; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 2 + Math.random() * 3;
+    p.style.cssText = `
+      width:${size}px;height:${size}px;
+      left:${Math.random()*100}%;
+      bottom:-10px;
+      opacity:${0.2 + Math.random()*0.4};
+      box-shadow:0 0 ${size*3}px #CCFF00;
+      animation-duration:${4+Math.random()*6}s;
+      animation-delay:${Math.random()*5}s;
+    `;
+    container.appendChild(p);
+  }
+}
+
+// Init
+createParticles('particles1');
+createParticles('particles2');
+showScene('t', 1);
+showScene('f', 1);
+autoPlay('t');
+autoPlay('f');
+</script>
+</body>
+</html>

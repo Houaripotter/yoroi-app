@@ -50,6 +50,8 @@ import { CheckCircle, AlertCircle,
   Search,
   RefreshCw,
   Table,
+  Database,
+  TrendingUp,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
@@ -101,9 +103,9 @@ const TOOL_SECTIONS: ToolSection[] = [
   {
     title: 'CORPS & SANTÉ',
     items: [
-      { id: 'weight', label: 'Poids', sublabel: "Suivi de l'evolution du poids", Icon: Scale, route: '/body-composition', iconColor: '#3B82F6' },
-      { id: 'measurements', label: 'Mensurations', sublabel: 'Tour de bras, taille, cuisses...', Icon: Ruler, route: '/measurements', iconColor: '#8B5CF6' },
-      { id: 'body-composition', label: 'Composition corporelle', sublabel: 'Masse grasse, muscle, eau', Icon: Activity, route: '/body-composition', iconColor: '#10B981' },
+      { id: 'body-history', label: 'Historique corporel', sublabel: 'Poids · Muscle · Graisse · Mensurations…', Icon: Database, route: '/body-history', iconColor: '#3B82F6' },
+      { id: 'body-composition', label: 'Ajouter composition', sublabel: 'Saisir graisse, muscle, eau depuis balance', Icon: Activity, route: '/body-composition', iconColor: '#10B981' },
+      { id: 'measurements', label: 'Ajouter mensurations', sublabel: 'Tour de bras, taille, cuisses...', Icon: Ruler, route: '/measurements', iconColor: '#8B5CF6' },
       { id: 'body-status', label: 'Etat du corps', sublabel: 'Carte des zones a surveiller', Icon: Shield, route: '/body-status', iconColor: '#F97316' },
       { id: 'infirmary', label: 'Infirmerie', sublabel: 'Suivi des blessures et recup', Icon: Heart, route: '/infirmary', iconColor: '#EF4444' },
       { id: 'injury-assessment', label: 'Evaluation blessure', sublabel: 'Severite et temps de recup', Icon: AlertCircle, route: '/injury-evaluation', iconColor: '#EF4444' },
@@ -131,6 +133,25 @@ const TOOL_SECTIONS: ToolSection[] = [
       { id: 'weight-cut', label: 'Coupe de poids', sublabel: 'Gestion de perte controlee', Icon: Scale, route: '/weight-cut', iconColor: '#F97316' },
       { id: 'fighter-card', label: 'Carte fighter', sublabel: 'Profil a partager', Icon: User, route: '/fighter-card', iconColor: '#EC4899' },
       { id: 'mat-time', label: 'Mat Time', sublabel: "Total d'heures sur le tatami", Icon: Clock, route: '/mat-time', iconColor: '#8B5CF6' },
+      { id: 'match-tracker', label: 'Match Tracker', sublabel: 'Suivi de match en direct', Icon: Swords, route: '/match-tracker', iconColor: '#EF4444' },
+      { id: 'competition-camp', label: 'Camp de competition', sublabel: 'Plan periodise avant une compet', Icon: Trophy, route: '/competition-camp', iconColor: '#8B5CF6' },
+      { id: 'benchmark', label: 'Benchmark vs pairs', sublabel: 'Compare tes stats a ton niveau', Icon: Award, route: '/benchmark', iconColor: '#F59E0B' },
+    ],
+  },
+  {
+    title: 'COMBAT LAB',
+    items: [
+      { id: 'drill-tracker', label: 'Drill Tracker', sublabel: 'Compteur de repetitions par technique', Icon: Target, route: '/drill-tracker', iconColor: '#F97316' },
+      { id: 'sparring-partners', label: 'Partenaires tactiques', sublabel: 'Forces, faiblesses, ce qui marche', Icon: Shield, route: '/sparring-partners', iconColor: '#06B6D4' },
+      { id: 'sparring-ranking', label: 'Classement Sparring', sublabel: 'Rank tes partenaires de combat', Icon: Trophy, route: '/sparring-ranking', iconColor: '#F59E0B' },
+      { id: 'combat-timer', label: 'Mode Salle', sublabel: 'Timer de rounds sparring avec suivi', Icon: Timer, route: '/combat-timer', iconColor: '#EF4444' },
+      { id: 'game-plan', label: 'Mon Game Plan', sublabel: 'Checklist, playbook, dangers, journal', Icon: Target, route: '/game-plan', iconColor: '#8B5CF6' },
+      { id: 'combat-achievements', label: 'Achievements Sparring', sublabel: 'Badges à débloquer', Icon: Award, route: '/combat-achievements', iconColor: '#EAB308' },
+      { id: 'bjj-positions', label: 'Carte BJJ', sublabel: 'Heatmap des positions et soumissions', Icon: Layers, route: '/bjj-positions', iconColor: '#22C55E' },
+      { id: 'combat-analytics', label: 'Analyse de combat', sublabel: 'Stats sparring, techniques, finitions', Icon: Activity, route: '/combat-analytics', iconColor: '#8B5CF6' },
+      { id: 'rounds-insights', label: 'Suivi des débriefs', sublabel: 'Ce qui marche, ce qui bloque, ressentis', Icon: TrendingUp, route: '/rounds-insights', iconColor: '#22C55E' },
+      { id: 'sync-history', label: 'Historique de synchronisation', sublabel: 'Backups, sync cloud, transferts iPad…', Icon: Clock, route: '/sync-history', iconColor: '#8B5CF6' },
+      { id: 'quick-log', label: 'Log rapide', sublabel: 'Saisie vocale post-seance', Icon: Zap, route: '/quick-log', iconColor: '#8B5CF6' },
     ],
   },
   {
@@ -616,7 +637,7 @@ export default function MoreScreen() {
 
           <TouchableOpacity onPress={handleVersionTap} activeOpacity={1}>
             <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 12, textAlign: 'center' }}>
-              YOROI Version 2.3.1
+              YOROI Version 2.3.2
             </Text>
           </TouchableOpacity>
         </View>

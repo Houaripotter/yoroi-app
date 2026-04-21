@@ -30,6 +30,7 @@ import { FramedProfilePhoto } from '@/components/FramedProfilePhoto';
 import { logger } from '@/lib/security/logger';
 import HomeChallengesSection from '@/components/home/HomeChallengesSection';
 import { NotificationBellPopup } from '@/components/NotificationBellPopup';
+import { useResponsive } from '@/constants/responsive';
 
 const CARD_PADDING = 12; // Padding horizontal pour réduire la largeur des cartes
 
@@ -444,6 +445,7 @@ interface HydrationGridCardProps {
 
 const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, isDark }: HydrationGridCardProps) => {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const { t } = useI18n();
   const H_CARD_W = (SCREEN_WIDTH - CARD_PADDING * 2 - 12) / 2;
   const H_CARD_PAGE_W = H_CARD_W - CARD_BORDER_W * 2;
   const H_CARD_INNER = H_CARD_W - 28;
@@ -688,7 +690,7 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
             <View style={hStyles.header}>
               <View style={hStyles.titleRow}>
                 <Droplet size={13} color={accentColor} fill={accentColor} />
-                <Text style={[hStyles.title, { color: colors.textMuted }]}>Hydratation</Text>
+                <Text style={[hStyles.title, { color: colors.textMuted }]}>{t('hydration.title')}</Text>
               </View>
               <TouchableOpacity onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/hydration'); }} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
                 <Ionicons name="settings-outline" size={15} color={colors.textMuted} />
@@ -787,7 +789,7 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
             <View style={hStyles.header}>
               <View style={hStyles.titleRow}>
                 <Calendar size={13} color="#8B5CF6" />
-                <Text style={[hStyles.title, { color: colors.textMuted }]}>Cette semaine</Text>
+                <Text style={[hStyles.title, { color: colors.textMuted }]}>{t('hydration.thisWeek')}</Text>
               </View>
               <TouchableOpacity onPress={() => router.push('/hydration')} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
                 <Ionicons name="stats-chart-outline" size={15} color={colors.textMuted} />
@@ -801,21 +803,21 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
                   <TrendingUp size={13} color="#10B981" />
                 </View>
                 <Text style={[hStyles.statValue, { color: colors.textPrimary }]}>{successRate}%</Text>
-                <Text style={[hStyles.statLabel, { color: colors.textMuted }]}>Réussite</Text>
+                <Text style={[hStyles.statLabel, { color: colors.textMuted }]}>{t('hydration.successRate')}</Text>
               </View>
               <View style={hStyles.statItem}>
                 <View style={[hStyles.statIconBg, { backgroundColor: '#06B6D415' }]}>
                   <Droplet size={13} color="#06B6D4" />
                 </View>
                 <Text style={[hStyles.statValue, { color: colors.textPrimary }]}>{avgAmount.toFixed(1)}L</Text>
-                <Text style={[hStyles.statLabel, { color: colors.textMuted }]}>Moy/jour</Text>
+                <Text style={[hStyles.statLabel, { color: colors.textMuted }]}>{t('hydration.avgPerDay')}</Text>
               </View>
               <View style={hStyles.statItem}>
                 <View style={[hStyles.statIconBg, { backgroundColor: '#8B5CF615' }]}>
                   <Check size={13} color="#8B5CF6" />
                 </View>
                 <Text style={[hStyles.statValue, { color: colors.textPrimary }]}>{successDays}/7</Text>
-                <Text style={[hStyles.statLabel, { color: colors.textMuted }]}>Réussis</Text>
+                <Text style={[hStyles.statLabel, { color: colors.textMuted }]}>{t('hydration.successfulDays')}</Text>
               </View>
             </View>
 
@@ -1002,7 +1004,7 @@ const createHStyles = (H_CARD_W: number) => StyleSheet.create({
 });
 
 const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
-  userName = 'Athlète',
+  userName,
   profilePhoto,
   dailyQuote,
   steps = 0,
@@ -1038,7 +1040,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   onNotifCountChange,
 }) => {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const { s: rs, sv, isCompact } = useResponsive();
   const IS_SMALL_SCREEN = SCREEN_WIDTH < 375;
+  // La largeur des cards reste identique — on ne touche PAS aux marges horizontales.
+  // En mode compact, seul le gap vertical entre les rangées est réduit.
   const H_CARD_W = (SCREEN_WIDTH - CARD_PADDING * 2 - 12) / 2;
   const H_CARD_PAGE_W = H_CARD_W - CARD_BORDER_W * 2;
   const styles = useMemo(() => createStyles(IS_SMALL_SCREEN, SCREEN_WIDTH), [IS_SMALL_SCREEN, SCREEN_WIDTH]);
@@ -1290,13 +1295,13 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   // ── Charge config ──
   const getChargeConfig = useCallback(() => {
     switch (workloadStatus) {
-      case 'none': return { label: 'Repos', color: '#94A3B8', pct: 0, speed: 2000, icon: 'moon', msg: 'Aucune séance récente', msgShort: 'Pas de séance', advice: 'Tu peux t\'entraîner sans risque !', adviceShort: 'Prêt à foncer', rec: 'Ton corps est reposé. C\'est le moment idéal pour une bonne séance.', rest: '' };
-      case 'light': return { label: 'Légère', color: '#10B981', pct: 30, speed: 1200, icon: 'shield', msg: 'Corps bien reposé', msgShort: 'Bien reposé', advice: 'Tu peux t\'entraîner à fond !', adviceShort: 'Feu vert total', rec: 'Ta récupération est excellente. Profites-en pour une séance intense.', rest: '12h' };
-      case 'moderate': return { label: 'Modérée', color: '#F59E0B', pct: 65, speed: 800, icon: 'zap', msg: 'Corps sollicité', msgShort: 'Sollicité', advice: 'Entraîne-toi mais reste à l\'écoute', adviceShort: 'Prudence', rec: 'Tu peux continuer mais évite les séances trop longues. Pense à bien t\'étirer.', rest: '24h' };
-      case 'intense': return { label: 'Élevée', color: '#EF4444', pct: 90, speed: 500, icon: 'alert', msg: 'Risque de blessure', msgShort: 'Attention', advice: 'Repose-toi, ton corps en a besoin', adviceShort: 'Repos conseillé', rec: 'Tu as beaucoup sollicité ton corps. Un jour de repos évitera une blessure.', rest: '48h' };
-      default: return { label: 'Modérée', color: '#F59E0B', pct: 65, speed: 800, icon: 'zap', msg: 'Corps sollicité', msgShort: 'Sollicité', advice: 'Entraîne-toi mais reste à l\'écoute', adviceShort: 'Prudence', rec: 'Continue ta routine en restant attentif à ton corps.', rest: '24h' };
+      case 'none': return { label: t('workload.noneLabel'), color: '#94A3B8', pct: 0, speed: 2000, icon: 'moon', msg: t('workload.noneMsg'), msgShort: t('workload.noneMsgShort'), advice: t('workload.noneAdvice'), adviceShort: t('workload.noneAdviceShort'), rec: t('workload.noneRec'), rest: '' };
+      case 'light': return { label: t('workload.lightLabel'), color: '#10B981', pct: 30, speed: 1200, icon: 'shield', msg: t('workload.lightMsg'), msgShort: t('workload.lightMsgShort'), advice: t('workload.lightAdvice'), adviceShort: t('workload.lightAdviceShort'), rec: t('workload.lightRec'), rest: '12h' };
+      case 'moderate': return { label: t('workload.moderateLabel'), color: '#F59E0B', pct: 65, speed: 800, icon: 'zap', msg: t('workload.moderateMsg'), msgShort: t('workload.moderateMsgShort'), advice: t('workload.moderateAdvice'), adviceShort: t('workload.moderateAdviceShort'), rec: t('workload.moderateRec'), rest: '24h' };
+      case 'intense': return { label: t('workload.intenseLabel'), color: '#EF4444', pct: 90, speed: 500, icon: 'alert', msg: t('workload.intenseMsg'), msgShort: t('workload.intenseMsgShort'), advice: t('workload.intenseAdvice'), adviceShort: t('workload.intenseAdviceShort'), rec: t('workload.intenseRec'), rest: '48h' };
+      default: return { label: t('workload.moderateLabel'), color: '#F59E0B', pct: 65, speed: 800, icon: 'zap', msg: t('workload.moderateMsg'), msgShort: t('workload.moderateMsgShort'), advice: t('workload.moderateAdvice'), adviceShort: t('workload.moderateAdviceShort'), rec: t('workload.moderateRecDefault'), rest: '24h' };
     }
-  }, [workloadStatus]);
+  }, [workloadStatus, t]);
   const chargeConfig = getChargeConfig();
 
   // ── Charge animations ──
@@ -1389,10 +1394,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
   const navToProfile = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/profile'); }, []);
   const navToSettings = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/settings'); }, []);
-  const navToStatsWeight = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/stats?tab=poids' as any); }, []);
+  const navToStatsWeight = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/body-history', params: { metric: 'weight' } } as any); }, []);
   const navToStatsBody = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/stats?tab=corps' as any); }, []);
   const navToStatsSante = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé' } } as any); }, []);
-  const navToBodyComposition = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/body-composition'); }, []);
+  const navToBodyComposition = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/body-history', params: { metric: 'fat_percent' } } as any); }, []);
   const navToSleepInput = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/sleep-input'); }, []);
   const navToGoals = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/goals'); }, []);
   const navToWeightPredictions = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/weight-predictions'); }, []);
@@ -1454,7 +1459,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               {getGreeting()}
             </Text>
             <Text style={[styles.nameClean, { color: colors.textOnAccent }]}>
-              {userName}
+              {userName || t('home.defaultName')}
             </Text>
           </View>
 
@@ -1494,7 +1499,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
       </View>
 
       {/* REPORT 2x2 - Poids, Hydratation, Sommeil, Charge */}
-      <View style={styles.reportGrid}>
+      <View style={[styles.reportGrid, isCompact && { gap: sv(8), marginBottom: sv(10) }]}>
         {/* Rangée 1: Poids + Hydratation (même hauteur) */}
         <View style={styles.reportGridRow}>
         {/* Poids - Carte multi-pages swipeable (Jauge / Compo / Prédictions) */}
@@ -1556,17 +1561,17 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           return (
           <View style={[styles.reportGridCard, { backgroundColor: cardBg, flex: 1, padding: 0, overflow: 'hidden', borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
             {/* Header fixe avec icone */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingTop: 10, paddingBottom: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingTop: sv(10), paddingBottom: sv(2) }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                 <Ionicons name="scale-outline" size={14} color="#10B981" />
-                <Text style={[styles.reportGridCardTitle, { color: colors.textMuted }]}>Poids</Text>
+                <Text style={[styles.reportGridCardTitle, { color: colors.textMuted }]}>{t('home.weight')}</Text>
               </View>
               <View style={{
                 backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
                 paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6,
               }}>
                 <Text style={{ fontSize: 7, fontWeight: '800', color: isDark ? '#FFFFFF' : '#1A1A2E', textTransform: 'uppercase', letterSpacing: 0.2 }}>
-                  {userGoal === 'lose' ? 'Perte de poids' : userGoal === 'gain' ? 'Prise de poids' : 'Maintien du poids'}
+                  {userGoal === 'lose' ? t('home.weightLoss') : userGoal === 'gain' ? t('home.weightGain') : t('home.weightMaintain')}
                 </Text>
               </View>
             </View>
@@ -1591,7 +1596,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={navToStatsWeight}
-                style={{ width: H_CARD_PAGE_W, paddingHorizontal: 14, paddingVertical: 6, justifyContent: 'center' }}
+                style={{ width: H_CARD_PAGE_W, paddingHorizontal: 14, paddingVertical: sv(6), justifyContent: 'center' }}
               >
                 {(() => {
                   // Calcul progression - seulement si objectif defini
@@ -1610,16 +1615,17 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                   const progress = totalToLose > 0 ? Math.min(1, lost / totalToLose) : 0;
 
                   // Arc semi-circulaire avec 10 segments pilules epais
-                  const AW = 180;
-                  const AH = 100;
+                  // rs() applique le facteur compact (0.75 en mode S) → arc plus petit
+                  const AW = rs(180);
+                  const AH = rs(100);
                   const acx = AW / 2;
                   const acy = AH;
-                  const arcRadius = 70;
+                  const arcRadius = rs(70);
                   const totalSegments = 10;
                   const filledSegments = Math.round(progress * totalSegments);
-                  const pillW = 11;
-                  const pillH = 26;
-                  const pillR = 5.5;
+                  const pillW = rs(11);
+                  const pillH = rs(26);
+                  const pillR = rs(5.5);
                   const emptyColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)';
 
                   return (
@@ -1655,18 +1661,18 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                             <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMuted }}> kg</Text>
                           </Text>
                           <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted, textAlign: 'center', marginTop: -1 }}>
-                            {!hasGoal ? 'Definis ton objectif' : progress > 0 ? `${(progress * 100).toFixed(0)}% atteint` : 'Debut du parcours'}
+                            {!hasGoal ? 'Definis ton objectif' : progress > 0 ? `${(progress * 100).toFixed(0)}% atteint` : t('home.journeyStart')}
                           </Text>
                         </View>
                       </View>
 
                       {/* 3 stats en bas : Perdu | Objectif | Reste - quadrillé */}
-                      <View style={{ flexDirection: 'row', marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', width: '100%' }}>
+                      <View style={{ flexDirection: 'row', marginTop: sv(10), paddingTop: sv(10), borderTopWidth: 1, borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', width: '100%' }}>
                         {/* Perdu - aligné à gauche */}
                         <View style={{ flex: 1, alignItems: 'flex-start' }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 4 }}>
                             <TrendingDown size={9} color="#10B981" strokeWidth={2.5} />
-                            <Text style={{ fontSize: 9, fontWeight: '700', color: '#10B981', textTransform: 'uppercase', letterSpacing: 0.5 }}>Perdu</Text>
+                            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ fontSize: 9, fontWeight: '700', color: '#10B981', textTransform: 'uppercase', letterSpacing: 0 }}>{t('home.lost')}</Text>
                           </View>
                           <Text style={{ fontSize: 15, fontWeight: '800', color: '#10B981' }}>
                             {hasGoal ? lost.toFixed(1) : '0.0'}<Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted }}> kg</Text>
@@ -1682,7 +1688,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 4 }}>
                             <Target size={9} color={colors.accent} strokeWidth={2.5} />
-                            <Text style={{ fontSize: 9, fontWeight: '700', color: colors.accent, textTransform: 'uppercase', letterSpacing: 0.5 }}>Objectif</Text>
+                            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ fontSize: 9, fontWeight: '700', color: colors.accent, textTransform: 'uppercase', letterSpacing: 0 }}>{t('home.objective')}</Text>
                           </View>
                           <Text style={{ fontSize: 15, fontWeight: '800', color: colors.textPrimary }}>
                             {hasGoal ? targetWeight.toFixed(1) : '--'}<Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted }}> kg</Text>
@@ -1694,7 +1700,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                         <View style={{ flex: 1, alignItems: 'flex-end' }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 4 }}>
                             <TrendingUp size={9} color="#EF4444" strokeWidth={2.5} />
-                            <Text style={{ fontSize: 9, fontWeight: '700', color: '#EF4444', textTransform: 'uppercase', letterSpacing: 0.5 }}>Reste</Text>
+                            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ fontSize: 9, fontWeight: '700', color: '#EF4444', textTransform: 'uppercase', letterSpacing: 0 }}>{t('home.remaining')}</Text>
                           </View>
                           <Text style={{ fontSize: 15, fontWeight: '800', color: '#EF4444' }}>
                             {hasGoal ? remaining.toFixed(1) : '--'}<Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted }}> kg</Text>
@@ -1832,20 +1838,20 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
                   let bmiLabel = '';
                   let bmiColor = '#22C55E';
-                  if (bmi < 16) { bmiLabel = 'Dénutrition'; bmiColor = '#DC2626'; }
-                  else if (bmi < 18.5) { bmiLabel = 'Maigreur'; bmiColor = '#F97316'; }
-                  else if (bmi < 25) { bmiLabel = 'Normal'; bmiColor = '#22C55E'; }
-                  else if (bmi < 30) { bmiLabel = 'Surpoids'; bmiColor = '#F97316'; }
-                  else if (bmi < 35) { bmiLabel = 'Obésité I'; bmiColor = '#EF4444'; }
-                  else if (bmi < 40) { bmiLabel = 'Obésité II'; bmiColor = '#DC2626'; }
-                  else { bmiLabel = 'Obésité III'; bmiColor = '#991B1B'; }
+                  if (bmi < 16) { bmiLabel = t('bmi.undernutrition'); bmiColor = '#DC2626'; }
+                  else if (bmi < 18.5) { bmiLabel = t('bmi.underweight'); bmiColor = '#F97316'; }
+                  else if (bmi < 25) { bmiLabel = t('bmi.normal'); bmiColor = '#22C55E'; }
+                  else if (bmi < 30) { bmiLabel = t('bmi.overweight'); bmiColor = '#F97316'; }
+                  else if (bmi < 35) { bmiLabel = t('bmi.obese1'); bmiColor = '#EF4444'; }
+                  else if (bmi < 40) { bmiLabel = t('bmi.obese2'); bmiColor = '#DC2626'; }
+                  else { bmiLabel = t('bmi.obese3'); bmiColor = '#991B1B'; }
 
-                  const GW = 160;
-                  const GH = 100;
+                  const GW = rs(160);
+                  const GH = rs(100);
                   const gcx = GW / 2;
                   const gcy = GH - 2;
-                  const gr = 50;
-                  const gsw = 14;
+                  const gr = rs(50);
+                  const gsw = rs(14);
                   const BMI_MIN = 15;
                   const BMI_MAX = 40;
                   const clampedBmi = Math.max(BMI_MIN, Math.min(BMI_MAX, bmi));
@@ -1877,10 +1883,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                   const ny = gcy - nLen * Math.sin(needleAngle);
 
                   const cats = [
-                    { label: 'Maigreur', color: '#F97316' },
-                    { label: 'Normal', color: '#22C55E' },
-                    { label: 'Surpoids', color: '#F97316' },
-                    { label: 'Obésité', color: '#EF4444' },
+                    { label: t('bmi.underweight'), color: '#F97316' },
+                    { label: t('bmi.normal'), color: '#22C55E' },
+                    { label: t('bmi.overweight'), color: '#F97316' },
+                    { label: t('bmi.obesity'), color: '#EF4444' },
                   ];
 
                   return (
@@ -1976,7 +1982,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         {/* ═══ SOMMEIL - 3 pages swipeable ═══ */}
         {(() => {
           const CARD_W = H_CARD_PAGE_W;
-          const sleepStatus = sleepHours === 0 ? { text: 'Aucune donnée', color: '#9CA3AF' } : sleepHours >= 7 ? { text: 'Excellent', color: '#10B981' } : sleepHours >= 5 ? { text: 'Correct', color: '#F59E0B' } : { text: 'Insuffisant', color: '#EF4444' };
+          const sleepStatus = sleepHours === 0 ? { text: t('sleep.noData'), color: '#9CA3AF' } : sleepHours >= 7 ? { text: 'Excellent', color: '#10B981' } : sleepHours >= 5 ? { text: 'Correct', color: '#F59E0B' } : { text: 'Insuffisant', color: '#EF4444' };
           const sleepQuality = sleepGoal > 0 ? Math.min(Math.round((sleepHours / sleepGoal) * 100), 100) : 0;
           const sleepMinutes = Math.round((sleepHours % 1) * 60);
           const sleepH = Math.floor(sleepHours);
@@ -1994,10 +2000,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           return (
           <View style={[styles.reportGridCard, { backgroundColor: cardBg, flex: 1, padding: 0, overflow: 'hidden', borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
             {/* Header */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 10, paddingBottom: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: sv(10), paddingBottom: sv(2) }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                 <Moon size={14} color={NIGHT_MID} />
-                <Text style={[styles.reportGridCardTitle, { color: colors.textMuted }]}>Sommeil</Text>
+                <Text style={[styles.reportGridCardTitle, { color: colors.textMuted }]}>{t('sleep.title')}</Text>
               </View>
               <TouchableOpacity onPress={navToSleepInput} activeOpacity={0.7}
                 style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: NIGHT_MID, justifyContent: 'center', alignItems: 'center' }}>
@@ -2050,7 +2056,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                 <View style={{ flexDirection: 'row', marginTop: 4, paddingHorizontal: 10, gap: 8 }}>
                   {/* Gauche - Derniere nuit */}
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 8, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 1 }}>Derniere nuit</Text>
+                    <Text style={{ fontSize: 8, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 1 }}>{t('sleep.lastNightLabel')}</Text>
                     <Text style={{ fontSize: 20, fontWeight: '900', color: colors.textPrimary, letterSpacing: -1 }}>
                       {sleepHours > 0 ? `${sleepH}h${sleepMinutes.toString().padStart(2, '0')}` : '--'}
                     </Text>
@@ -2063,7 +2069,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                   <View style={{ width: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)', marginVertical: 2 }} />
                   {/* Droite - Score de sommeil */}
                   <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 8, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 2 }}>Score</Text>
+                    <Text style={{ fontSize: 8, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 2 }}>{t('sleep.scoreLabel')}</Text>
                     <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
                       <Svg width={44} height={44} viewBox="0 0 44 44">
                         <SvgCircle cx="22" cy="22" r="18" stroke="rgba(37,99,235,0.18)" strokeWidth="4" fill="none" />
@@ -2075,6 +2081,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                       </View>
                     </View>
                     <Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 1 }}>/ 100</Text>
+
                   </View>
                 </View>
               </TouchableOpacity>
@@ -2084,7 +2091,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                 <View style={{ flexDirection: 'row', gap: 8, flex: 1 }}>
                   {/* Gauche - Derniere nuit */}
                   <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>Derniere nuit</Text>
+                    <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>{t('sleep.lastNightLabel')}</Text>
                     <Text style={{ fontSize: 22, fontWeight: '900', color: colors.textPrimary, letterSpacing: -1 }}>
                       {sleepHours > 0 ? `${sleepH}h${sleepMinutes.toString().padStart(2, '0')}` : '--'}
                     </Text>
@@ -2099,19 +2106,19 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                   <View style={{ width: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', marginVertical: 8 }} />
                   {/* Droite - Moyenne semaine */}
                   <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>Moy. 7 jours</Text>
+                    <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>{t('sleep.weekAvg')}</Text>
                     <Text style={{ fontSize: 22, fontWeight: '900', color: NIGHT_MID, letterSpacing: -1 }}>
                       {sleepWeeklyAvg > 0 ? `${avgH}h${avgM.toString().padStart(2, '0')}` : '--'}
                     </Text>
                     {sleepDebt > 0 ? (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 6 }}>
                         <AlertTriangle size={10} color="#EF4444" />
-                        <Text style={{ fontSize: 9, fontWeight: '700', color: '#EF4444' }}>Dette {formatHoursHM(sleepDebt)}</Text>
+                        <Text style={{ fontSize: 9, fontWeight: '700', color: '#EF4444' }}>{t('sleep.debt')} {formatHoursHM(sleepDebt)}</Text>
                       </View>
                     ) : (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 6 }}>
                         <CheckCircle size={10} color="#10B981" />
-                        <Text style={{ fontSize: 9, fontWeight: '700', color: '#10B981' }}>Pas de dette</Text>
+                        <Text style={{ fontSize: 9, fontWeight: '700', color: '#10B981' }}>{t('sleep.noDebt')}</Text>
                       </View>
                     )}
                     <View style={{ height: 4, borderRadius: 2, backgroundColor: isDark ? 'rgba(37,99,235,0.15)' : 'rgba(37,99,235,0.1)', overflow: 'hidden', marginTop: 6, width: '90%' }}>
@@ -2130,14 +2137,14 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                   </Svg>
                   <View style={{ position: 'absolute', alignItems: 'center' }}><Text style={{ fontSize: 13, fontWeight: '900', color: NIGHT_MID }}>{sleepQuality}%</Text></View>
                 </View>
-                <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted, textAlign: 'center', marginBottom: 6 }}>{sleepHours >= sleepGoal ? 'Objectif atteint !' : `Encore ${(sleepGoal - sleepHours).toFixed(1)}h`}</Text>
+                <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted, textAlign: 'center', marginBottom: 6 }}>{sleepHours >= sleepGoal ? t('sleep.goalReached') : `Encore ${(sleepGoal - sleepHours).toFixed(1)}h`}</Text>
                 <TouchableOpacity onPress={navToSleepInput} activeOpacity={0.7}
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: NIGHT_MID + '18', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, marginBottom: 4 }}>
                   <Plus size={12} color={NIGHT_MID} strokeWidth={2.5} />
-                  <Text style={{ fontSize: 10, fontWeight: '700', color: NIGHT_MID }}>Ajouter</Text>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: NIGHT_MID }}>{t('sleep.addSleep')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={navToStatsSante} activeOpacity={0.7}>
-                  <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted }}>Voir details</Text>
+                  <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textMuted }}>{t('sleep.viewDetails')}</Text>
                 </TouchableOpacity>
               </View>
 
@@ -2157,10 +2164,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           return (
           <View style={[styles.reportGridCard, { backgroundColor: cardBg, flex: 1, padding: 0, overflow: 'hidden', borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
             {/* Header */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 10, paddingBottom: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: sv(10), paddingBottom: sv(2) }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                 <Activity size={14} color={cc.color} />
-                <Text style={[styles.reportGridCardTitle, { color: colors.textMuted }]}>Forme</Text>
+                <Text style={[styles.reportGridCardTitle, { color: colors.textMuted }]}>{t('home.form')}</Text>
               </View>
               <View style={{ backgroundColor: cc.color + '18', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 }}>
                 <Text style={{ fontSize: 7, fontWeight: '800', color: cc.color, textTransform: 'uppercase', letterSpacing: 0.2 }}>{cc.adviceShort}</Text>
@@ -2174,42 +2181,42 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Footprints size={16} color="#3B82F6" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#3B82F6' }}>{steps > 0 ? steps.toLocaleString('fr-FR') : '--'}</Text>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>pas</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.steps')}</Text>
                     </View>
                   </TouchableOpacity>
                   <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Heart size={16} color="#EC4899" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#EC4899' }}>{healthData.heartRate ? `${healthData.heartRate.min}-${healthData.heartRate.max}` : '--'}</Text>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>bpm</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.bpm')}</Text>
                     </View>
                   </TouchableOpacity>
                   <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Droplet size={16} color="#0EA5E9" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#0EA5E9' }}>{healthData.oxygen != null ? `${healthData.oxygen}%` : '--'}</Text>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>SpO2</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.spo2')}</Text>
                     </View>
                   </TouchableOpacity>
                   <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Wind size={16} color="#8B5CF6" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#8B5CF6' }}>{healthData.respiratory != null ? `${healthData.respiratory}` : '--'}</Text>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>resp/min</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.respPerMin')}</Text>
                     </View>
                   </TouchableOpacity>
                   <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'calories' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Flame size={16} color="#F97316" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#F97316' }}>{calories > 0 ? (calories % 1 === 0 ? calories.toString() : calories.toFixed(1)) : '--'}</Text>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>kcal</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.kcal')}</Text>
                     </View>
                   </TouchableOpacity>
                   <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'pas' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <MaterialCommunityIcons name="map-marker-distance" size={16} color="#06B6D4" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#06B6D4' }}>{healthData.distance != null ? `${healthData.distance.toFixed(2)}` : '--'}</Text>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>km</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.km')}</Text>
                     </View>
                   </TouchableOpacity>
                 </View>
@@ -2243,14 +2250,14 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                             : `${Math.round(healthData.standHours * 60)}min`
                           : '--'}
                       </Text>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>debout</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.standing')}</Text>
                     </View>
                   </TouchableOpacity>
                   <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Heart size={16} color="#EF4444" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#EF4444' }}>{healthData.heartRate?.resting ?? '--'}</Text>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>bpm repos</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.restingBpm')}</Text>
                     </View>
                   </TouchableOpacity>
                   <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'sommeil' } } as any); }}>

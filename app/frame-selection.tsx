@@ -27,6 +27,7 @@ import * as ImagePicker from 'expo-image-picker';
 import Svg, { Path, Circle, Rect, Polygon, Defs, ClipPath, Image as SvgImage, G } from 'react-native-svg';
 import { getProfile, saveProfile } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
+import { useI18n } from '@/lib/I18nContext';
 
 export const FRAME_SHAPE_CHANGED_EVENT = 'FRAME_SHAPE_CHANGED';
 export const FRAME_ACCESSORY_CHANGED_EVENT = 'FRAME_ACCESSORY_CHANGED';
@@ -1969,6 +1970,7 @@ export default function FrameSelectionScreen() {
   const FRAME_SIZE = (SCREEN_WIDTH - SPACING.lg * 2 - SPACING.md * 2) / 3;
   const styles = useMemo(() => createStyles(SCREEN_WIDTH, FRAME_SIZE), [SCREEN_WIDTH, FRAME_SIZE]);
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const [selectedFrame, setSelectedFrame] = useState<FrameShape>('circle');
   const [selectedAccessory, setSelectedAccessory] = useState<FrameAccessory>('none');
   const [selectedAccessory2, setSelectedAccessory2] = useState<FrameAccessory>('none');
@@ -2368,7 +2370,7 @@ export default function FrameSelectionScreen() {
   const framesGrid = useMemo(() => (
     <>
       <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-        Formes disponibles
+        {t('frameSelection.framesTitle')}
       </Text>
       <View style={styles.grid}>
         {FRAME_OPTIONS.map((frame) => {
@@ -2412,16 +2414,16 @@ export default function FrameSelectionScreen() {
         })}
       </View>
     </>
-  ), [selectedFrame, colors, isDark]);
+  ), [selectedFrame, colors, isDark, t]);
 
   // Memoize la grille des accessoires
   const accessoriesGrid = useMemo(() => (
     <>
       <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: SPACING.md }]}>
-        Accessoires
+        {t('frameSelection.accessories')}
       </Text>
       <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
-        Ajoute un ornement sur le bord de ta photo
+        {t('frameSelection.accessoriesSubtitle')}
       </Text>
       <View style={styles.accessoryRow}>
         {ACCESSORY_OPTIONS.map((acc) => {
@@ -2463,7 +2465,7 @@ export default function FrameSelectionScreen() {
         })}
       </View>
     </>
-  ), [selectedAccessory, colors, isDark]);
+  ), [selectedAccessory, colors, isDark, t]);
 
   return (
     <ScreenWrapper>
@@ -2496,17 +2498,17 @@ export default function FrameSelectionScreen() {
           </TouchableOpacity>
 
           <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Cadres photo
+            {t('frameSelection.title')}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            Choisis la forme et positionne ta photo
+            {t('frameSelection.subtitle')}
           </Text>
         </View>
 
         {/* Preview avec vraie photo */}
         <View style={[styles.previewContainer, { backgroundColor: colors.backgroundCard }]}>
           <Text style={[styles.previewLabel, { color: colors.textMuted }]}>
-            Apercu
+            {t('frameSelection.preview')}
           </Text>
           <View style={styles.previewFrame}>
             {renderLivePreview()}
@@ -2554,14 +2556,14 @@ export default function FrameSelectionScreen() {
           >
             <ImagePlus size={16} color={colors.accent} />
             <Text style={[styles.changePhotoText, { color: colors.accent }]}>
-              {photoUri ? 'Changer la photo' : 'Choisir une photo'}
+              {photoUri ? t('frameSelection.changePhoto') : t('frameSelection.choosePhoto')}
             </Text>
           </TouchableOpacity>
 
           {/* Hint pour le drag */}
           {photoUri && (
             <Text style={[styles.hintText, { color: colors.textMuted }]}>
-              Glisse ou pince (meme hors du cercle) pour ajuster
+              {t('frameSelection.hint')}
             </Text>
           )}
         </View>
@@ -2570,7 +2572,7 @@ export default function FrameSelectionScreen() {
         {photoHistory.length >= 1 && (
           <View style={styles.historySection}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Photos recentes
+              {t('frameSelection.recentPhotos')}
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.historyScroll}>
               {photoHistory.map((uri, index) => (
@@ -2598,10 +2600,10 @@ export default function FrameSelectionScreen() {
 
         {/* BORDURE - Couleur */}
         <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: SPACING.xl }]}>
-          Couleur de bordure
+          {t('frameSelection.borderColor')}
         </Text>
         <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
-          Personnalise la couleur de ton cadre
+          {t('frameSelection.borderColorSubtitle')}
         </Text>
         <View style={styles.colorPalette}>
           {BORDER_COLORS.map((bc) => {
@@ -2634,7 +2636,7 @@ export default function FrameSelectionScreen() {
 
         {/* BORDURE - Epaisseur */}
         <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: SPACING.lg }]}>
-          Epaisseur de bordure
+          {t('frameSelection.borderThickness')}
         </Text>
         <View style={styles.thicknessRow}>
           {BORDER_THICKNESS_OPTIONS.map((t) => {
@@ -2655,7 +2657,7 @@ export default function FrameSelectionScreen() {
 
         {/* BORDURE - Effet */}
         <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: SPACING.lg }]}>
-          Effet de bordure
+          {t('frameSelection.borderEffect')}
         </Text>
         <View style={styles.effectRow}>
           {BORDER_EFFECT_OPTIONS.map((e) => {
@@ -2681,10 +2683,10 @@ export default function FrameSelectionScreen() {
 
         {/* Accessoire 2 - combinaison */}
         <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: SPACING.md }]}>
-          2eme accessoire
+          {t('frameSelection.accessory2')}
         </Text>
         <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
-          Combine deux accessoires a la fois
+          {t('frameSelection.accessory2Subtitle')}
         </Text>
         <View style={styles.accessoryRow}>
           {ACCESSORY_OPTIONS.map((acc) => {

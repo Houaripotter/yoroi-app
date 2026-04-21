@@ -20,8 +20,10 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  Check,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import {
@@ -42,6 +44,7 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import logger from '@/lib/security/logger';
 
 export default function CitationsScreen() {
+  const { t } = useI18n();
   const { colors } = useTheme();
   const [selectedCitationStyle, setSelectedCitationStyle] = useState<CitationStyle>('all');
   const [citationNotifSettings, setCitationNotifSettingsState] = useState<CitationNotifSettings>({
@@ -81,7 +84,7 @@ export default function CitationsScreen() {
       notificationAsync(NotificationFeedbackType.Success);
     } catch (error) {
       logger.error('[Citations] Erreur changement style citation:', error);
-      showPopup('Erreur', 'Impossible de changer le style de citation', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('common.error'), t('citations.cannotChangeStyle'), [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -94,8 +97,8 @@ export default function CitationsScreen() {
         const hasPermission = await requestNotificationPermissions();
         if (!hasPermission) {
           showPopup(
-            'Permissions requises',
-            'Pour recevoir les citations motivantes, autorise les notifications dans les reglages de ton appareil.',
+            t('citations.permissionsRequired'),
+            t('citations.enableNotificationsInSettings'),
             [{ text: 'OK', style: 'primary' }],
             <AlertCircle size={32} color="#F59E0B" />
           );
@@ -113,12 +116,12 @@ export default function CitationsScreen() {
       if (enabled && success) {
         notificationAsync(NotificationFeedbackType.Success);
         showPopup(
-          'Notifications activees',
-          `Tu recevras ${citationNotifSettings.frequency} citation${citationNotifSettings.frequency > 1 ? 's' : ''} par jour pour te motiver !\n\nLes notifications sont planifiees pour les 7 prochains jours.`,
+          t('citations.notificationsEnabled'),
+          `${t('citations.willReceive')} ${citationNotifSettings.frequency} ${t('citations.citationPerDay')}${citationNotifSettings.frequency > 1 ? 's' : ''} ${t('citations.toMotivate')}\n\n${t('citations.scheduledFor7Days')}`,
           [
             { text: 'OK', style: 'default' },
             {
-              text: 'Tester maintenant',
+              text: t('citations.testNow'),
               style: 'primary',
               onPress: async () => {
                 await sendImmediateCitationNotification();
@@ -130,7 +133,7 @@ export default function CitationsScreen() {
       }
     } catch (error) {
       logger.error('[Citations] Erreur toggle notif citation:', error);
-      showPopup('Erreur', 'Impossible de modifier les notifications', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('common.error'), t('citations.cannotModifyNotifs'), [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -155,7 +158,7 @@ export default function CitationsScreen() {
       <ScreenWrapper>
         <View style={[styles.container, { backgroundColor: colors.background }]}>
           <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-            Chargement...
+            {t('common.loading')}
           </Text>
         </View>
       </ScreenWrapper>
@@ -188,10 +191,10 @@ export default function CitationsScreen() {
             </View>
             <View style={styles.headerText}>
               <Text style={[styles.title, { color: colors.textPrimary }]}>
-                Citations
+                {t('citations.title')}
               </Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                Style et notifications motivantes
+                {t('citations.subtitle')}
               </Text>
             </View>
           </View>
@@ -200,10 +203,10 @@ export default function CitationsScreen() {
         {/* Section: Style de Citations */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Style de Citations
+            {t('citations.citationStyle')}
           </Text>
           <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
-            Choisis le type de citations qui vous inspire
+            {t('citations.citationStyleDesc')}
           </Text>
 
           <View style={styles.citationsGrid}>
@@ -231,7 +234,7 @@ export default function CitationsScreen() {
                     </View>
                     {isSelected && (
                       <View style={[styles.activeIndicator, { backgroundColor: colors.accent }]}>
-                        <Text style={styles.activeText}>✓</Text>
+                        <Check size={12} color="#fff" strokeWidth={3} />
                       </View>
                     )}
                   </View>
@@ -253,10 +256,10 @@ export default function CitationsScreen() {
         {/* Section: Notifications de Citations */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Notifications de Citations
+            {t('citations.notifSection')}
           </Text>
           <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
-            Recevez des citations motivantes chaque jour
+            {t('citations.notifSectionDesc')}
           </Text>
 
           {/* Toggle activer/désactiver */}
@@ -267,10 +270,10 @@ export default function CitationsScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.notifLabel, { color: colors.textPrimary }]}>
-                  Activer les notifications
+                  {t('citations.enableNotifs')}
                 </Text>
                 <Text style={[styles.notifSublabel, { color: colors.textMuted }]}>
-                  Reçois ta dose de motivation quotidienne
+                  {t('citations.dailyMotivation')}
                 </Text>
               </View>
               <Switch
@@ -289,7 +292,7 @@ export default function CitationsScreen() {
                   <View style={styles.frequencyHeader}>
                     <Clock size={18} color={colors.textMuted} />
                     <Text style={[styles.frequencyLabel, { color: colors.textPrimary }]}>
-                      Fréquence par jour
+                      {t('citations.frequencyPerDay')}
                     </Text>
                   </View>
                   <View style={styles.frequencyOptions}>
@@ -323,11 +326,11 @@ export default function CitationsScreen() {
                     ))}
                   </View>
                   <Text style={[styles.frequencyHint, { color: colors.textMuted }]}>
-                    {citationNotifSettings.frequency === 1 && 'Une citation le matin pour bien démarrer'}
-                    {citationNotifSettings.frequency === 2 && 'Matin et après-midi pour rester motivé'}
-                    {citationNotifSettings.frequency === 3 && 'Matin, midi et soir pour une motivation continue'}
-                    {citationNotifSettings.frequency === 4 && 'Toutes les 4-5 heures pour te booster'}
-                    {citationNotifSettings.frequency === 5 && 'Mode guerrier : citations régulières !'}
+                    {citationNotifSettings.frequency === 1 && t('citations.freq1')}
+                    {citationNotifSettings.frequency === 2 && t('citations.freq2')}
+                    {citationNotifSettings.frequency === 3 && t('citations.freq3')}
+                    {citationNotifSettings.frequency === 4 && t('citations.freq4')}
+                    {citationNotifSettings.frequency === 5 && t('citations.freq5')}
                   </Text>
                 </View>
               </>

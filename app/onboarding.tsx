@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useI18n } from '@/lib/I18nContext';
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import {
   View,
@@ -46,10 +47,12 @@ import {
   Info,
   X,
   Heart,
+  Download,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { saveProfile } from '@/lib/database';
 import { saveUserSettings } from '@/lib/storage';
+import { importDataFromJSON } from '@/lib/exportService';
 import { healthConnect } from '@/lib/healthConnect';
 import { setUserMode, setUserSport, setUserWeightCategory } from '@/lib/fighterModeService';
 import { format } from 'date-fns';
@@ -218,6 +221,7 @@ const SPORT_CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function OnboardingScreen() {
+  const { t } = useI18n();
   const { width } = useWindowDimensions();
   const s = useMemo(() => createStyles(width), [width]);
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -258,6 +262,18 @@ export default function OnboardingScreen() {
   const [isConnectingHealth, setIsConnectingHealth] = useState(false);
   const [healthConnected, setHealthConnected] = useState(false);
 
+  // Restauration de sauvegarde (depuis la page 1)
+  const [isRestoring, setIsRestoring] = useState(false);
+
+  // Autofocus du champ prénom à l'arrivée sur le formulaire
+  const nameInputRef = useRef<TextInput | null>(null);
+  useEffect(() => {
+    if (currentPage === 2) {
+      const t = setTimeout(() => nameInputRef.current?.focus(), 400);
+      return () => clearTimeout(t);
+    }
+  }, [currentPage]);
+
   // Musique d'intro en fond
   const introPlayer = useAudioPlayer(require('@/assets/sounds/intro.mp3'));
   useEffect(() => {
@@ -296,13 +312,19 @@ export default function OnboardingScreen() {
     return age;
   };
 
+  // Feedback visuel de validation (bordure verte sur les champs valides)
+  const isNameValid = validators.username(userName.trim()).valid;
+  const isHeightValid = !!heightCm && validators.height(parseFloat(heightCm)).valid;
+  const isTargetWeightValid = !!targetWeight && validators.weight(parseFloat(targetWeight)).valid;
+  const isBirthDateValid = !!birthDate && calculateAge(birthDate) >= 13;
+
   const canComplete = useMemo((): boolean => {
     if (!validators.username(userName.trim()).valid) return false;
     if (!gender) return false;
     if (!heightCm || !validators.height(parseFloat(heightCm)).valid) return false;
     if (!targetWeight || !validators.weight(parseFloat(targetWeight)).valid) return false;
     if (!birthDate) return false;
-    if (calculateAge(birthDate) < 13) return false;
+    if (birthDate && calculateAge(birthDate) < 13) return false;
     if (!goal) return false;
     if (!mode) return false;
     if (mode === 'competiteur' && !selectedSport) return false;
@@ -311,14 +333,14 @@ export default function OnboardingScreen() {
 
   const pickFromGallery = async () => {
     const { status } = await requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') { showPopup('Permission requise', 'Autorise l\'acces a ta galerie.'); return; }
+    if (status !== 'granted') { showPopup(t('onboarding.permissionRequired'), t('onboarding.allowGalleryAccess')); return; }
     const result = await launchImageLibraryAsync({ quality: 0.9, allowsEditing: false });
     if (!result.canceled && result.assets[0]) setCropModalUri(result.assets[0].uri);
   };
 
   const takePhoto = async () => {
     const { status } = await requestCameraPermissionsAsync();
-    if (status !== 'granted') { showPopup('Permission requise', 'Autorise l\'acces a ta camera.'); return; }
+    if (status !== 'granted') { showPopup(t('onboarding.permissionRequired'), t('onboarding.allowCameraAccess')); return; }
     const result = await launchCameraAsync({ quality: 0.9, allowsEditing: false });
     if (!result.canceled && result.assets[0]) setCropModalUri(result.assets[0].uri);
   };
@@ -329,8 +351,8 @@ export default function OnboardingScreen() {
       const age = calculateAge(d);
       if (age < 13) {
         showPopup(
-          'Age minimum requis',
-          'Tu dois avoir au moins 13 ans pour utiliser YOROI. Cette application n\'est pas destinee aux enfants de moins de 13 ans.'
+          t('onboarding.ageRequired'),
+          t('onboarding.ageRequiredDesc')
         );
         setBirthDate(null);
         return;
@@ -347,15 +369,41 @@ export default function OnboardingScreen() {
     );
   };
 
+  const handleRestoreBackup = async () => {
+    if (isRestoring) return;
+    setIsRestoring(true);
+    try {
+      const ok = await importDataFromJSON();
+      if (!ok) {
+        setIsRestoring(false);
+        return;
+      }
+      // La sauvegarde est importée : on marque l'onboarding comme terminé
+      await AsyncStorage.setItem(LEGAL_ACCEPTED_KEY, 'true');
+      await AsyncStorage.setItem('yoroi_onboarding_done', 'true');
+      // S'assurer que le flag onboardingCompleted est bien posé dans les settings
+      try {
+        await saveUserSettings({ onboardingCompleted: true });
+      } catch {}
+      logger.info('Onboarding completed via backup restore');
+      router.replace('/(tabs)');
+    } catch (error) {
+      logger.error('Onboarding restore failed', error);
+      const msg = error instanceof Error ? error.message : String(error);
+      showPopup(t('onboarding.error'), `${t('onboarding.error')}: ${msg}`);
+      setIsRestoring(false);
+    }
+  };
+
   const handleComplete = async () => {
     const usernameCheck = validators.username(userName.trim());
-    if (!usernameCheck.valid) { showPopup('Nom invalide', usernameCheck.error || 'Verifie ton nom.'); return; }
+    if (!usernameCheck.valid) { showPopup(t('onboarding.invalidName'), usernameCheck.error || t('onboarding.checkName')); return; }
     const heightCheck = validators.height(parseFloat(heightCm));
-    if (!heightCheck.valid) { showPopup('Taille invalide', heightCheck.error || 'Entre 100 et 250 cm.'); return; }
+    if (!heightCheck.valid) { showPopup(t('onboarding.invalidHeight'), heightCheck.error || t('onboarding.heightRange')); return; }
     const weightCheck = validators.weight(parseFloat(targetWeight));
-    if (!weightCheck.valid) { showPopup('Poids invalide', weightCheck.error || 'Entre 30 et 250 kg.'); return; }
+    if (!weightCheck.valid) { showPopup(t('onboarding.invalidWeight'), weightCheck.error || t('onboarding.weightRange')); return; }
     if (!birthDate || calculateAge(birthDate) < 13) {
-      showPopup('Age minimum requis', 'Tu dois avoir au moins 13 ans pour utiliser YOROI.');
+      showPopup(t('onboarding.ageRequired'), t('onboarding.ageRequiredShort'));
       return;
     }
 
@@ -384,7 +432,7 @@ export default function OnboardingScreen() {
     } catch (error) {
       logger.error('Onboarding save failed', error);
       const msg = error instanceof Error ? error.message : String(error);
-      showPopup('Erreur', `Erreur: ${msg}`);
+      showPopup(t('onboarding.error'), `${t('onboarding.error')}: ${msg}`);
     }
   };
 
@@ -404,34 +452,34 @@ export default function OnboardingScreen() {
 
       <Text style={s.p1Brand}>YOROI</Text>
       <View style={s.p1GoldBar} />
-      <Text style={s.p1Tagline}>Forge ton armure. Écris ton histoire.</Text>
+      <Text style={s.p1Tagline}>{t('onboarding.tagline')}</Text>
 
       {/* Titre principal */}
-      <Text style={s.p1Title} numberOfLines={1} adjustsFontSizeToFit>Bienvenue dans la Famille Yoroi</Text>
+      <Text style={s.p1Title} numberOfLines={1} adjustsFontSizeToFit>{t('onboarding.welcomeTitle')}</Text>
 
       {/* Histoire */}
       <View style={s.p1Card}>
         <Text style={s.p1Story}>
-          J'ai créé YOROI seul, par passion.
+          {t('onboarding.story1')}
         </Text>
         <Text style={s.p1Story}>
-          Un jour, je ne me suis plus reconnu devant le miroir. J'avais énormément pris de poids. J'ai cherché une application complète pour me reprendre en main, rien ne me convenait. Alors je l'ai construite moi-même.
+          {t('onboarding.story2')}
         </Text>
         <Text style={s.p1Story}>
-          Des amis, des inconnus sur des forums, des gens comme toi m'ont suggéré des fonctionnalités. Je les ai toutes intégrées. Aujourd'hui, cette application est autant la tienne que la mienne.
+          {t('onboarding.story3')}
         </Text>
         <View style={s.p1Divider} />
-        <Text style={s.p1Highlight}>Une application entre toi et moi.</Text>
+        <Text style={s.p1Highlight}>{t('onboarding.highlight')}</Text>
         <Text style={s.p1Story}>
-          Pas de société derrière. Pas de publicité, pas de compte requis. Juste un passionné qui se bat pour aller mieux, un peu comme toi peut-être. Le samouraï n'abandonne jamais, quoi qu'il arrive.
+          {t('onboarding.story4')}
         </Text>
         <Text style={s.p1Italic}>
-          <Text style={s.p1ItalicBold}>Ta confiance et tes retours comptent plus que tout.</Text>
-          {'\n'}<Text style={s.p1ItalicBold}>Merci d'être là.</Text>
+          <Text style={s.p1ItalicBold}>{t('onboarding.trust')}</Text>
+          {'\n'}<Text style={s.p1ItalicBold}>{t('onboarding.thanks')}</Text>
         </Text>
         <View style={s.p1Divider} />
         <Text style={s.p1FreeNote}>
-          YOROI est aujourd'hui entièrement gratuit. Je la construis seul, sans revenu. Si un jour elle te devient vraiment utile, un petit abonnement m'aidera à continuer à la faire grandir pour toi.
+          {t('onboarding.freeNote')}
         </Text>
       </View>
 
@@ -444,7 +492,7 @@ export default function OnboardingScreen() {
         <View style={[s.p1Checkbox, ageConfirmed && s.p1CheckboxActive]}>
           {ageConfirmed && <Ionicons name="checkmark" size={16} color={C.white} />}
         </View>
-        <Text style={s.p1AgeText}>Je confirme avoir au moins 13 ans</Text>
+        <Text style={s.p1AgeText}>{t('onboarding.ageConfirm')}</Text>
       </TouchableOpacity>
 
       {/* Bouton continuer */}
@@ -454,12 +502,32 @@ export default function OnboardingScreen() {
         activeOpacity={0.8}
         disabled={!ageConfirmed}
       >
-        <Text style={[s.p1BtnText, !ageConfirmed && s.disabledBtnText]}>Rejoindre l'aventure</Text>
+        <Text style={[s.p1BtnText, !ageConfirmed && s.disabledBtnText]}>{t('onboarding.joinAdventure')}</Text>
         <ChevronRight size={20} color={ageConfirmed ? C.white : C.textMuted} />
       </TouchableOpacity>
 
+      {/* Restaurer une sauvegarde existante */}
+      <TouchableOpacity
+        style={[s.p1RestoreBtn, isRestoring && s.disabledBtn]}
+        onPress={handleRestoreBackup}
+        activeOpacity={0.8}
+        disabled={isRestoring}
+      >
+        {isRestoring ? (
+          <ActivityIndicator size="small" color={C.goldDark} />
+        ) : (
+          <Download size={18} color={C.goldDark} />
+        )}
+        <Text style={s.p1RestoreBtnText}>
+          {isRestoring ? 'Restauration en cours…' : 'J\'ai déjà une sauvegarde'}
+        </Text>
+      </TouchableOpacity>
+      <Text style={s.p1RestoreHint}>
+        Importer un fichier .json pour retrouver ton profil et ton historique
+      </Text>
+
       <Text style={s.p1Footer}>
-        En continuant, tu acceptes nos conditions d'utilisation
+        {t('onboarding.termsNotice')}
       </Text>
 
       <View style={{ height: 40 }} />
@@ -471,14 +539,21 @@ export default function OnboardingScreen() {
   // =============================================
   const renderPage2 = () => (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={s.p2Wrap} showsVerticalScrollIndicator={false}>
-      {/* Bouton retour */}
-      <TouchableOpacity style={s.backBtn} onPress={() => goToPage(0)} activeOpacity={0.7}>
-        <ChevronLeft size={22} color={C.text} />
-        <Text style={s.backBtnText}>Retour</Text>
-      </TouchableOpacity>
+      {/* Header : retour + stepper */}
+      <View style={s.formHeader}>
+        <TouchableOpacity style={s.backPill} onPress={() => goToPage(0)} activeOpacity={0.7}>
+          <ChevronLeft size={20} color={C.text} />
+          <Text style={s.backPillText}>{t('common.back')}</Text>
+        </TouchableOpacity>
+        <View style={s.stepper}>
+          {[0, 1, 2, 3].map((i) => (
+            <View key={i} style={[s.stepDot, i <= 1 && s.stepDotDone]} />
+          ))}
+        </View>
+      </View>
 
-      <Text style={s.p2Title}>Tout ce dont tu as besoin</Text>
-      <Text style={s.p2Sub}>Appuie sur un module pour en savoir plus</Text>
+      <Text style={s.p2Title}>{t('onboarding.everythingYouNeed')}</Text>
+      <Text style={s.p2Sub}>{t('onboarding.tapModuleHint')}</Text>
 
       {FEATURES.map((f, i) => {
         const Icon = f.icon;
@@ -519,7 +594,7 @@ export default function OnboardingScreen() {
       })}
 
       <TouchableOpacity style={s.goldBtn} onPress={() => goToPage(2)} activeOpacity={0.8}>
-        <Text style={s.goldBtnText}>Configurer mon profil</Text>
+        <Text style={s.goldBtnText}>{t('onboarding.configureProfile')}</Text>
       </TouchableOpacity>
 
       <View style={{ height: 30 }} />
@@ -535,11 +610,18 @@ export default function OnboardingScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
     >
-      {/* Bouton retour */}
-      <TouchableOpacity style={s.backBtn} onPress={() => goToPage(1)} activeOpacity={0.7}>
-        <ChevronLeft size={22} color={C.text} />
-        <Text style={s.backBtnText}>Retour</Text>
-      </TouchableOpacity>
+      {/* Header : retour + stepper */}
+      <View style={s.formHeader}>
+        <TouchableOpacity style={s.backPill} onPress={() => goToPage(1)} activeOpacity={0.7}>
+          <ChevronLeft size={20} color={C.text} />
+          <Text style={s.backPillText}>{t('common.back')}</Text>
+        </TouchableOpacity>
+        <View style={s.stepper}>
+          {[0, 1, 2, 3].map((i) => (
+            <View key={i} style={[s.stepDot, i <= 2 && s.stepDotDone]} />
+          ))}
+        </View>
+      </View>
 
       <ScrollView
         style={{ flex: 1 }}
@@ -547,140 +629,225 @@ export default function OnboardingScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Photo profil */}
-        <View style={s.photoRow}>
-          <TouchableOpacity style={s.photoCircle} onPress={pickFromGallery} activeOpacity={0.8}>
-            {profilePhoto ? (
-              <Image source={{ uri: profilePhoto }} style={s.photoImg} />
-            ) : (
-              <MaterialCommunityIcons name="camera-plus-outline" size={32} color={C.textMuted} />
-            )}
-          </TouchableOpacity>
-          <View style={{ flex: 1 }}>
-            <Text style={s.photoLabel}>Photo de profil</Text>
-            <Text style={s.photoHint}>Optionnel - appuie sur le cercle</Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-              <TouchableOpacity style={s.photoSmallBtn} onPress={pickFromGallery}>
-                <ImageIcon size={14} color={C.text} />
-                <Text style={s.photoSmallText}>Galerie</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={s.photoSmallBtn} onPress={takePhoto}>
-                <Camera size={14} color={C.text} />
-                <Text style={s.photoSmallText}>Camera</Text>
-              </TouchableOpacity>
+        {/* Titre de l'étape */}
+        <Text style={s.formTitle}>Parle-nous de toi</Text>
+        <Text style={s.formSubtitle}>Quelques infos pour personnaliser ton expérience</Text>
+
+        {/* =========================================
+            SECTION 1 — À propos de toi
+            ========================================= */}
+        <View style={s.sectionCard}>
+          <View style={s.sectionHeaderRow}>
+            <View style={[s.sectionIconBadge, { backgroundColor: C.goldLight }]}>
+              <MaterialCommunityIcons name="account-outline" size={18} color={C.goldDark} />
+            </View>
+            <Text style={s.sectionCardTitle}>À propos de toi</Text>
+          </View>
+
+          {/* Photo */}
+          <View style={s.photoRow}>
+            <TouchableOpacity style={s.photoCircle} onPress={pickFromGallery} activeOpacity={0.8}>
+              {profilePhoto ? (
+                <Image source={{ uri: profilePhoto }} style={s.photoImg} />
+              ) : (
+                <MaterialCommunityIcons name="camera-plus-outline" size={28} color={C.textMuted} />
+              )}
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={s.photoLabel}>{t('onboarding.profilePhoto')}</Text>
+              <Text style={s.photoHint}>Optionnel — aide à personnaliser ton avatar</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                <TouchableOpacity style={s.photoSmallBtn} onPress={pickFromGallery}>
+                  <ImageIcon size={14} color={C.text} />
+                  <Text style={s.photoSmallText}>{t('onboarding.gallery')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.photoSmallBtn} onPress={takePhoto}>
+                  <Camera size={14} color={C.text} />
+                  <Text style={s.photoSmallText}>{t('onboarding.camera')}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Nom */}
-        <Text style={s.label}>Prenom ou pseudo</Text>
-        <TextInput
-          style={s.input}
-          placeholder="Ex: Heny"
-          placeholderTextColor={C.textMuted}
-          value={userName}
-          onChangeText={setUserName}
-          maxLength={50}
-          autoCapitalize="words"
-        />
-
-        {/* Genre */}
-        <Text style={s.label}>Genre</Text>
-        <View style={s.row}>
-          {(['homme', 'femme'] as const).map((g) => (
-            <TouchableOpacity
-              key={g}
-              style={[s.chip, gender === g && s.chipActive]}
-              onPress={() => setGender(g)}
-            >
-              <MaterialCommunityIcons
-                name={g === 'homme' ? 'human-male' : 'human-female'}
-                size={22}
-                color={gender === g ? C.gold : C.text}
-              />
-              <Text style={[s.chipText, gender === g && s.chipTextActive]}>
-                {g === 'homme' ? 'Homme' : 'Femme'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Taille + Poids */}
-        <View style={s.row}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.label}>Taille (cm)</Text>
-            <TextInput style={s.input} placeholder="175" placeholderTextColor={C.textMuted} value={heightCm} onChangeText={setHeightCm} keyboardType="decimal-pad" maxLength={5} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.label}>Poids objectif (kg)</Text>
-            <TextInput style={s.input} placeholder="80" placeholderTextColor={C.textMuted} value={targetWeight} onChangeText={setTargetWeight} keyboardType="decimal-pad" maxLength={5} />
-          </View>
-        </View>
-
-        {/* Date de naissance */}
-        <Text style={s.label}>Date de naissance</Text>
-        <View style={s.row}>
-          <TouchableOpacity style={[s.dateBtn, { flex: 1 }]} onPress={() => setShowDatePicker(!showDatePicker)}>
-            <Text style={birthDate ? s.dateTxt : s.datePlaceholder}>
-              {birthDate ? format(birthDate, 'dd MMMM yyyy', { locale: fr }) : 'Selectionner'}
-            </Text>
-            {birthDate && (
-              <View style={s.ageBadge}>
-                <Text style={s.ageText}>{calculateAge(birthDate)} ans</Text>
+          {/* Prénom */}
+          <Text style={s.label}>{t('onboarding.nameLabel')}</Text>
+          <View style={s.inputWrap}>
+            <TextInput
+              ref={nameInputRef}
+              style={[s.input, isNameValid && s.inputValid]}
+              placeholder="Comment tu veux qu'on t'appelle ?"
+              placeholderTextColor={C.textMuted}
+              value={userName}
+              onChangeText={setUserName}
+              maxLength={50}
+              autoCapitalize="words"
+              returnKeyType="next"
+            />
+            {isNameValid && (
+              <View style={s.validCheck}>
+                <Check size={14} color="#30D158" strokeWidth={3} />
               </View>
             )}
-          </TouchableOpacity>
-          {showDatePicker && Platform.OS === 'ios' && (
-            <TouchableOpacity style={s.dateOkBtn} onPress={() => setShowDatePicker(false)}>
-              <Text style={s.dateOkText}>OK</Text>
+          </View>
+
+          {/* Genre */}
+          <Text style={s.label}>{t('onboarding.genderLabel')}</Text>
+          <View style={s.row}>
+            {(['homme', 'femme'] as const).map((g) => (
+              <TouchableOpacity
+                key={g}
+                style={[s.chip, gender === g && s.chipActive]}
+                onPress={() => setGender(g)}
+              >
+                <MaterialCommunityIcons
+                  name={g === 'homme' ? 'human-male' : 'human-female'}
+                  size={22}
+                  color={gender === g ? C.gold : C.text}
+                />
+                <Text style={[s.chipText, gender === g && s.chipTextActive]}>
+                  {g === 'homme' ? t('onboarding.male') : t('onboarding.female')}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* =========================================
+            SECTION 2 — Tes mesures
+            ========================================= */}
+        <View style={s.sectionCard}>
+          <View style={s.sectionHeaderRow}>
+            <View style={[s.sectionIconBadge, { backgroundColor: '#E0F2FE' }]}>
+              <MaterialCommunityIcons name="ruler" size={18} color="#0284C7" />
+            </View>
+            <Text style={s.sectionCardTitle}>Tes mesures</Text>
+          </View>
+
+          <View style={s.row}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.label}>{t('onboarding.heightLabel')}</Text>
+              <View style={s.inputWrap}>
+                <TextInput
+                  style={[s.input, isHeightValid && s.inputValid]}
+                  placeholder="175"
+                  placeholderTextColor={C.textMuted}
+                  value={heightCm}
+                  onChangeText={setHeightCm}
+                  keyboardType="decimal-pad"
+                  maxLength={5}
+                />
+                {isHeightValid && (
+                  <View style={s.validCheck}>
+                    <Check size={14} color="#30D158" strokeWidth={3} />
+                  </View>
+                )}
+              </View>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.label}>{t('onboarding.targetWeightLabel')}</Text>
+              <View style={s.inputWrap}>
+                <TextInput
+                  style={[s.input, isTargetWeightValid && s.inputValid]}
+                  placeholder="80"
+                  placeholderTextColor={C.textMuted}
+                  value={targetWeight}
+                  onChangeText={setTargetWeight}
+                  keyboardType="decimal-pad"
+                  maxLength={5}
+                />
+                {isTargetWeightValid && (
+                  <View style={s.validCheck}>
+                    <Check size={14} color="#30D158" strokeWidth={3} />
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {/* Date de naissance */}
+          <Text style={s.label}>{t('onboarding.birthDateLabel')}</Text>
+          <View style={s.row}>
+            <TouchableOpacity style={[s.dateBtn, { flex: 1 }, isBirthDateValid && s.inputValid]} onPress={() => setShowDatePicker(!showDatePicker)}>
+              <Text style={birthDate ? s.dateTxt : s.datePlaceholder}>
+                {birthDate ? format(birthDate, 'dd MMMM yyyy', { locale: fr }) : t('onboarding.selectDate')}
+              </Text>
+              {birthDate && (
+                <View style={s.ageBadge}>
+                  <Text style={s.ageText}>{calculateAge(birthDate)} {t('onboarding.yearsOld')}</Text>
+                </View>
+              )}
             </TouchableOpacity>
+            {showDatePicker && Platform.OS === 'ios' && (
+              <TouchableOpacity style={s.dateOkBtn} onPress={() => setShowDatePicker(false)}>
+                <Text style={s.dateOkText}>OK</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          {showDatePicker && (
+            <DateTimePicker
+              value={birthDate || new Date(2000, 0, 1)}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              themeVariant="light"
+              maximumDate={new Date()}
+              minimumDate={new Date(1920, 0, 1)}
+              onChange={handleDateChange}
+            />
+          )}
+
+          {birthDate && calculateAge(birthDate) < 13 && (
+            <View style={s.ageWarning}>
+              <Info size={16} color={C.danger} />
+              <Text style={s.ageWarningText}>{t('onboarding.ageRequiredShort')}</Text>
+            </View>
           )}
         </View>
-        {showDatePicker && (
-          <DateTimePicker
-            value={birthDate || new Date(2000, 0, 1)}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            themeVariant="light"
-            maximumDate={new Date()}
-            minimumDate={new Date(1920, 0, 1)}
-            onChange={handleDateChange}
-          />
-        )}
 
-        {/* Warning age < 13 */}
-        {birthDate && calculateAge(birthDate) < 13 && (
-          <View style={s.ageWarning}>
-            <Info size={16} color={C.danger} />
-            <Text style={s.ageWarningText}>Tu dois avoir au moins 13 ans pour utiliser YOROI.</Text>
+        {/* =========================================
+            SECTION 3 — Ton objectif
+            ========================================= */}
+        <View style={s.sectionCard}>
+          <View style={s.sectionHeaderRow}>
+            <View style={[s.sectionIconBadge, { backgroundColor: '#FEF3C7' }]}>
+              <MaterialCommunityIcons name="target" size={18} color="#D97706" />
+            </View>
+            <Text style={s.sectionCardTitle}>Ton objectif</Text>
           </View>
-        )}
 
-        {/* Objectif */}
-        <Text style={s.label}>Objectif</Text>
-        <View style={s.row}>
-          {([
-            { id: 'lose' as const, label: 'Perdre', Icon: TrendingDown, color: '#30D158' },
-            { id: 'maintain' as const, label: 'Maintenir', Icon: Minus, color: C.gold },
-            { id: 'gain' as const, label: 'Prendre', Icon: TrendingUp, color: '#FF3B30' },
-          ]).map((o) => (
-            <TouchableOpacity
-              key={o.id}
-              style={[s.goalCard, goal === o.id && { borderColor: o.color, backgroundColor: o.color + '12' }]}
-              onPress={() => setGoal(o.id)}
-            >
-              <o.Icon size={24} color={goal === o.id ? o.color : C.textSub} />
-              <Text style={[s.goalLabel, goal === o.id && { color: o.color, fontWeight: '700' }]}>{o.label}</Text>
-            </TouchableOpacity>
-          ))}
+          <View style={s.row}>
+            {([
+              { id: 'lose' as const, label: t('onboarding.goalLose'), Icon: TrendingDown, color: '#30D158' },
+              { id: 'maintain' as const, label: t('onboarding.goalMaintain'), Icon: Minus, color: C.gold },
+              { id: 'gain' as const, label: t('onboarding.goalGain'), Icon: TrendingUp, color: '#FF3B30' },
+            ]).map((o) => (
+              <TouchableOpacity
+                key={o.id}
+                style={[s.goalCard, goal === o.id && { borderColor: o.color, backgroundColor: o.color + '12' }]}
+                onPress={() => setGoal(o.id)}
+              >
+                <o.Icon size={24} color={goal === o.id ? o.color : C.textSub} />
+                <Text style={[s.goalLabel, goal === o.id && { color: o.color, fontWeight: '700' }]}>{o.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
-        {/* Mode */}
-        <Text style={s.label}>Mode</Text>
-        <View style={s.row}>
+        {/* =========================================
+            SECTION 4 — Ton profil sportif
+            ========================================= */}
+        <View style={s.sectionCard}>
+          <View style={s.sectionHeaderRow}>
+            <View style={[s.sectionIconBadge, { backgroundColor: '#FEE2E2' }]}>
+              <MaterialCommunityIcons name="dumbbell" size={18} color="#DC2626" />
+            </View>
+            <Text style={s.sectionCardTitle}>Ton profil sportif</Text>
+          </View>
+
+          <Text style={s.label}>{t('onboarding.modeLabel')}</Text>
+          <View style={s.row}>
           {([
-            { id: 'competiteur' as UserMode, label: 'Competiteur', desc: 'Competitions & categories', Icon: Swords, color: '#FF3B30' },
-            { id: 'loisir' as UserMode, label: 'Loisir', desc: 'Forme & bien-etre', Icon: Dumbbell, color: '#0A84FF' },
+            { id: 'competiteur' as UserMode, label: t('onboarding.modeCompetitor'), desc: t('onboarding.modeCompetitorDesc'), Icon: Swords, color: '#FF3B30' },
+            { id: 'loisir' as UserMode, label: t('onboarding.modeFitness'), desc: t('onboarding.modeFitnessDesc'), Icon: Dumbbell, color: '#0A84FF' },
           ]).map((m) => (
             <TouchableOpacity
               key={m.id}
@@ -699,8 +866,8 @@ export default function OnboardingScreen() {
             ============================================= */}
         {mode === 'competiteur' && (
           <>
-            <Text style={s.label}>Ton sport principal</Text>
-            <Text style={s.labelHint}>Selectionne une categorie puis ton sport</Text>
+            <Text style={s.label}>{t('onboarding.mainSportLabel')}</Text>
+            <Text style={s.labelHint}>{t('onboarding.selectCategoryHint')}</Text>
 
             {SPORT_CATEGORIES.map((category) => {
               const sportsInCategory = SPORTS.filter((s2) => s2.category === category);
@@ -784,7 +951,7 @@ export default function OnboardingScreen() {
             {selectedSport && sportHasCategories && (
               <>
                 <Text style={[s.label, { marginTop: 20 }]}>
-                  Categorie de poids - {SPORTS.find((s2) => s2.id === selectedSport)?.name ?? selectedSport}
+                  {t('onboarding.weightCategoryLabel')} - {SPORTS.find((s2) => s2.id === selectedSport)?.name ?? selectedSport}
                 </Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
                   <View style={s.catRow}>
@@ -814,12 +981,14 @@ export default function OnboardingScreen() {
               <View style={s.noCategories}>
                 <Info size={16} color={C.textMuted} />
                 <Text style={s.noCategoriesText}>
-                  {SPORTS.find((s2) => s2.id === selectedSport)?.name ?? selectedSport} n'a pas de categories de poids officielles
+                  {SPORTS.find((s2) => s2.id === selectedSport)?.name ?? selectedSport} {t('onboarding.noWeightCategories')}
                 </Text>
               </View>
             )}
           </>
         )}
+        </View>
+        {/* fin SECTION 4 */}
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -835,7 +1004,7 @@ export default function OnboardingScreen() {
           {isProcessing ? (
             <ActivityIndicator color={C.white} />
           ) : (
-            <Text style={[s.goldBtnText, !canComplete && s.disabledBtnText]}>Commencer l'aventure</Text>
+            <Text style={[s.goldBtnText, !canComplete && s.disabledBtnText]}>{t('onboarding.startAdventure')}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -868,10 +1037,10 @@ export default function OnboardingScreen() {
         setTimeout(() => finishOnboarding(), 1200);
       } else {
         showPopup(
-          'Permissions requises',
+          t('onboarding.permissionsRequired'),
           Platform.OS === 'android'
-            ? 'Va dans Paramètres > Health Connect > Applications > YOROI pour autoriser l\'accès.'
-            : 'Va dans Réglages > Santé > Partage de données > YOROI pour autoriser l\'accès.',
+            ? t('onboarding.healthPermissionAndroid')
+            : t('onboarding.healthPermissionIOS'),
           [{ text: 'OK', style: 'primary' }]
         );
       }
@@ -884,6 +1053,15 @@ export default function OnboardingScreen() {
 
   const renderPageHealth = () => (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 }}>
+      {/* Stepper (complet) en haut */}
+      <View style={s.stepperFloating}>
+        <View style={s.stepper}>
+          {[0, 1, 2, 3].map((i) => (
+            <View key={i} style={[s.stepDot, s.stepDotDone]} />
+          ))}
+        </View>
+      </View>
+
       {/* Icone */}
       <View style={[s.healthIconCircle, healthConnected && { backgroundColor: '#D1FAE5' }]}>
         {healthConnected ? (
@@ -895,25 +1073,25 @@ export default function OnboardingScreen() {
 
       {/* Titre */}
       <Text style={s.healthTitle}>
-        {healthConnected ? 'Connecté !' : Platform.OS === 'android' ? 'Connecte Health Connect' : 'Connecte Apple\u00A0Santé'}
+        {healthConnected ? t('onboarding.healthConnected') : Platform.OS === 'android' ? t('onboarding.connectHealthConnect') : t('onboarding.connectAppleHealth')}
       </Text>
 
       {/* Sous-titre */}
       <Text style={s.healthSubtitle}>
         {healthConnected
-          ? 'Tes données de santé sont maintenant synchronisees avec YOROI.'
-          : 'YOROI lit tes données pour un suivi complet de ta forme physique.'}
+          ? t('onboarding.healthSyncedDesc')
+          : t('onboarding.healthReadDesc')}
       </Text>
 
       {/* Liste des données */}
       {!healthConnected && (
         <View style={s.healthDataList}>
           {[
-            { icon: 'heart-pulse', label: 'Fréquence cardiaque & SpO2' },
-            { icon: 'shoe-print', label: 'Pas, distance & calories' },
-            { icon: 'moon-waning-crescent', label: 'Sommeil & récupération' },
-            { icon: 'scale-bathroom', label: 'Poids & composition corporelle' },
-            { icon: 'run', label: 'Séances & entraînements' },
+            { icon: 'heart-pulse', label: t('onboarding.healthHR') },
+            { icon: 'shoe-print', label: t('onboarding.healthSteps') },
+            { icon: 'moon-waning-crescent', label: t('onboarding.healthSleep') },
+            { icon: 'scale-bathroom', label: t('onboarding.healthWeight') },
+            { icon: 'run', label: t('onboarding.healthWorkouts') },
           ].map((item, i) => (
             <View key={i} style={s.healthDataRow}>
               <MaterialCommunityIcons name={item.icon as any} size={18} color={C.goldDark} />
@@ -934,7 +1112,7 @@ export default function OnboardingScreen() {
           {isConnectingHealth ? (
             <ActivityIndicator color={C.white} />
           ) : (
-            <Text style={s.goldBtnText}>{Platform.OS === 'android' ? 'Connecter Health Connect' : 'Connecter Apple Santé'}</Text>
+            <Text style={s.goldBtnText}>{Platform.OS === 'android' ? t('onboarding.connectHealthConnectBtn') : t('onboarding.connectAppleHealthBtn')}</Text>
           )}
         </TouchableOpacity>
       )}
@@ -946,14 +1124,14 @@ export default function OnboardingScreen() {
           style={{ marginTop: 18, padding: 8 }}
           activeOpacity={0.6}
         >
-          <Text style={s.healthSkip}>Passer pour l'instant</Text>
+          <Text style={s.healthSkip}>{t('onboarding.skipForNow')}</Text>
         </TouchableOpacity>
       )}
 
       {/* Note confidentialite */}
       {!healthConnected && (
         <Text style={s.healthNote}>
-          Tes données restent privees et stockees uniquement sur ton appareil.
+          {t('onboarding.healthPrivacyNote')}
         </Text>
       )}
     </View>
@@ -1266,6 +1444,32 @@ const createStyles = (width: number) => StyleSheet.create({
     fontSize: 17,
     fontWeight: '800',
     letterSpacing: 0.5,
+  },
+  p1RestoreBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: C.goldLight,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    width: '100%',
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: C.gold,
+  },
+  p1RestoreBtnText: {
+    color: C.goldDark,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  p1RestoreHint: {
+    fontSize: 12,
+    color: C.textMuted,
+    textAlign: 'center',
+    marginTop: 6,
+    paddingHorizontal: 12,
   },
   p1Footer: {
     fontSize: 12,
@@ -1727,5 +1931,104 @@ const createStyles = (width: number) => StyleSheet.create({
     backgroundColor: C.bg,
     borderTopWidth: 1,
     borderTopColor: C.border,
+  },
+
+  // ========= FORM REDESIGN =========
+  formHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    paddingBottom: 10,
+    gap: 12,
+  },
+  backPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: C.bgCard,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  backPillText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: C.text,
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  stepperFloating: {
+    position: 'absolute',
+    top: 20,
+    alignSelf: 'center',
+    alignItems: 'center',
+  },
+  stepDot: {
+    width: 22,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: C.border,
+  },
+  stepDotDone: {
+    backgroundColor: C.gold,
+  },
+  formTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: C.text,
+    letterSpacing: -0.5,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  formSubtitle: {
+    fontSize: 14,
+    color: C.textSub,
+    marginBottom: 20,
+  },
+  sectionCard: {
+    backgroundColor: C.bgCard,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 16,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  sectionIconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionCardTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: C.text,
+    letterSpacing: -0.2,
+  },
+  inputWrap: {
+    position: 'relative',
+  },
+  inputValid: {
+    borderColor: '#30D158',
+    backgroundColor: '#F0FDF4',
+  },
+  validCheck: {
+    position: 'absolute',
+    right: 12,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 22,
   },
 });

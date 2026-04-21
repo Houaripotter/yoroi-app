@@ -33,6 +33,7 @@ import {
   TrendingUp,
   Award,
   Zap,
+  Castle,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -310,12 +311,11 @@ export default function FighterCardScreen() {
                   style={styles.avatarBorder}
                 >
                   <View style={styles.avatarInner}>
-                    <Text style={styles.avatarEmoji}>
-                      {stats.rank.includes('Shogun') || stats.rank.includes('Shōgun') ? '🏯' :
-                       stats.rank.includes('Ronin') || stats.rank.includes('Rōnin') ? '' :
-                       stats.rank.includes('Samurai') || stats.rank.includes('Samouraï') ? '' :
-                       stats.rank.includes('Bushi') ? '🥷' : ''}
-                    </Text>
+                    {stats.rank.includes('Shogun') || stats.rank.includes('Shōgun') ? (
+                      <Castle size={42} color="#D4AF37" />
+                    ) : stats.rank.includes('Bushi') ? (
+                      <Swords size={42} color="#D4AF37" />
+                    ) : null}
                   </View>
                 </LinearGradient>
               </View>

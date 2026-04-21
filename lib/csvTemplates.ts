@@ -12,7 +12,7 @@
 //  - BOM UTF-8 géré
 // ============================================
 
-import { getWeights, getMeasurements, addWeight, addMeasurementRecord, openDatabase } from '@/lib/database';
+import { getWeights, getMeasurements, addWeight, addMeasurementRecord, openDatabase, getTrainings } from '@/lib/database';
 import { getAllBodyCompositions } from '@/lib/bodyComposition';
 import {
   validateDate,
@@ -917,6 +917,82 @@ export async function shareExportCSV(): Promise<boolean> {
     return true;
   } catch (err) {
     logger.error('Error sharing export CSV:', err);
+    return false;
+  }
+}
+
+// ============================================
+// EXPORT CSV SÉANCES FILTRÉES (sport + période)
+// ============================================
+
+export interface TrainingExportFilters {
+  sport?: string;        // Filtre sport (undefined = tous)
+  dateFrom?: string;     // ISO date (inclus)
+  dateTo?: string;       // ISO date (inclus)
+}
+
+export async function shareFilteredTrainingsCSV(filters: TrainingExportFilters = {}): Promise<boolean> {
+  try {
+    const allTrainings = await getTrainings(3650);
+    let filtered = allTrainings ?? [];
+
+    if (filters.sport) {
+      filtered = filtered.filter((t: any) =>
+        (t.sport ?? '').toLowerCase().includes(filters.sport!.toLowerCase())
+      );
+    }
+    if (filters.dateFrom) {
+      filtered = filtered.filter((t: any) => (t.date ?? '') >= filters.dateFrom!);
+    }
+    if (filters.dateTo) {
+      filtered = filtered.filter((t: any) => (t.date ?? '') <= filters.dateTo!);
+    }
+
+    if (filtered.length === 0) return false;
+
+    const SEP = ';';
+    const headers = ['Date', 'Sport', 'Type séance', 'Durée (min)', 'Intensité (RPE)', 'Calories', 'Distance (km)', 'FC moy.', 'Notes'];
+    const lines: string[] = [
+      `# YOROI - Export séances`,
+      `# Filtres : sport=${filters.sport ?? 'tous'} | du=${filters.dateFrom ?? '-'} au=${filters.dateTo ?? '-'}`,
+      `# ${filtered.length} séance(s) exportée(s)`,
+      headers.join(SEP),
+    ];
+
+    for (const t of filtered) {
+      const d = (t.date ?? '').split('-');
+      const displayDate = d.length === 3 ? `${d[2]}/${d[1]}/${d[0]}` : t.date ?? '';
+      const note = (t.notes ?? '').replace(/"/g, '""').replace(/;/g, ',');
+      lines.push([
+        displayDate,
+        t.sport ?? '',
+        t.session_type ?? '',
+        t.duration_minutes ?? t.duration ?? '',
+        t.intensity ?? '',
+        t.calories ?? '',
+        t.distance ?? '',
+        t.heart_rate ?? '',
+        `"${note}"`,
+      ].join(SEP));
+    }
+
+    const content = lines.join('\n');
+    const dateStr = new Date().toISOString().split('T')[0];
+    const sportSlug = filters.sport ? `_${filters.sport.replace(/\s+/g, '_')}` : '';
+    const path = `${FileSystem.cacheDirectory}yoroi_seances${sportSlug}_${dateStr}.csv`;
+    await FileSystem.writeAsStringAsync(path, content, { encoding: FileSystem.EncodingType.UTF8 });
+
+    const canShare = await Sharing.isAvailableAsync();
+    if (!canShare) { logger.warn('Sharing not available'); return false; }
+
+    await Sharing.shareAsync(path, {
+      mimeType: 'text/csv',
+      dialogTitle: 'Export séances Yoroi',
+      UTI: 'public.comma-separated-values-text',
+    });
+    return true;
+  } catch (err) {
+    logger.error('Error sharing filtered trainings CSV:', err);
     return false;
   }
 }

@@ -16,8 +16,10 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, ExternalLink, BookOpen, GraduationCap } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 
 export default function ScientificSourcesScreen() {
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
 
@@ -113,7 +115,7 @@ export default function ScientificSourcesScreen() {
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          Revues Scientifiques
+          {t('scientificSources.title')}
         </Text>
         <View style={{ width: 24 }} />
       </View>
@@ -125,11 +127,10 @@ export default function ScientificSourcesScreen() {
             <GraduationCap size={28} color={colors.accent} />
           </View>
           <Text style={[styles.introTitle, { color: colors.textPrimary }]}>
-            Fondé sur la science
+            {t('scientificSources.basedOnScience')}
           </Text>
           <Text style={[styles.introText, { color: colors.textSecondary }]}>
-            Toutes les recommandations et calculs de Yoroi sont basés sur des études scientifiques
-            et des organisations de santé reconnues internationalement.
+            {t('scientificSources.introText')}
           </Text>
         </View>
 
@@ -175,7 +176,7 @@ export default function ScientificSourcesScreen() {
         {/* Footer */}
         <View style={[styles.footerCard, { backgroundColor: colors.backgroundCard }]}>
           <Text style={[styles.footerText, { color: colors.textMuted }]}>
-            Les liens mènent vers des sources externes. Yoroi n'est pas affilié à ces organisations.
+            {t('scientificSources.footerNote')}
           </Text>
         </View>
 

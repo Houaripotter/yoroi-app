@@ -20,6 +20,7 @@ import {
 } from 'react-native';
 import Svg, { Rect, Line } from 'react-native-svg';
 import { MuscleMapCard } from '@/components/MuscleMapCard';
+import { getMethodDisplayName } from '@/components/BJJBodyMap';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { getEffectiveHRZones, calcZoneDurations, HRZoneThresholds } from '@/lib/hrZones';
@@ -27,7 +28,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Clock, MapPin, Flame, Heart, Timer, TrendingUp,
   Mountain, Thermometer, Droplets, Zap, Activity,
-  Wind, ArrowUp, ArrowDown, Maximize2, X, Star, Users, Edit3,
+  Wind, ArrowUp, ArrowDown, Maximize2, X, Star, Users, Edit3, Share2,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/ThemeContext';
@@ -52,7 +53,7 @@ const RETRY_DELAY_MS = 1500;
 
 function generateDemoDetails(training: Training): WorkoutDetails {
   const duration = training.duration_minutes || 60;
-  const isCardio = ['running', 'cycling', 'swimming', 'hiking', 'rowing'].some(s =>
+  const isCardio = ['running', 'cycling', 'swimming', 'hiking', 'rowing', 'marche', 'randonnee', 'walking'].some(s =>
     (training.sport || '').toLowerCase().includes(s)
   );
 
@@ -345,9 +346,27 @@ export default function WorkoutDetailScreen() {
   //   3. Dernier recours : estimation depuis âge/défaut
   const hrZones = useMemo(() => {
     const hrSamples = details?.heartRateSamples;
+
+    // Reconstitue les bornes temporelles de la séance (début/fin) pour que les
+    // gaps début→1er sample et dernier sample→fin soient comptabilisés dans la
+    // bonne zone — c'est ce que fait Apple Santé. Sans ces bornes, Yoroi perdait
+    // ~1-2 minutes (réparties surtout en Zone 1 et Zone 2).
+    const dur = training?.duration_minutes ?? details?.durationMinutes;
+    let workoutStartISO: string | undefined;
+    let workoutEndISO: string | undefined;
+    if (training?.date && training?.start_time) {
+      const start = new Date(`${training.date}T${training.start_time}:00`);
+      if (!isNaN(start.getTime())) {
+        workoutStartISO = start.toISOString();
+        if (dur && dur > 0) {
+          workoutEndISO = new Date(start.getTime() + dur * 60_000).toISOString();
+        }
+      }
+    }
+
     // 1. Zones perso configurées + samples → calcul précis
     if (userZones?.source === 'custom' && hrSamples && hrSamples.length > 1) {
-      return calcZoneDurations(hrSamples, userZones);
+      return calcZoneDurations(hrSamples, userZones, workoutStartISO, workoutEndISO);
     }
     // 2. Zones HealthKit (FCmax réel Apple Watch) → toujours correct
     if (details?.heartRateZones && details.heartRateZones.length > 0) {
@@ -355,10 +374,10 @@ export default function WorkoutDetailScreen() {
     }
     // 3. Fallback estimé
     if (userZones && hrSamples && hrSamples.length > 1) {
-      return calcZoneDurations(hrSamples, userZones);
+      return calcZoneDurations(hrSamples, userZones, workoutStartISO, workoutEndISO);
     }
     return null;
-  }, [userZones, details?.heartRateSamples, details?.heartRateZones]);
+  }, [userZones, details?.heartRateSamples, details?.heartRateZones, details?.durationMinutes, training?.date, training?.start_time, training?.duration_minutes]);
 
   // Parser les combat_rounds (stockés en JSON dans la DB, non parsés par getTrainingById)
   const combatRounds: CombatRound[] = useMemo(() => {
@@ -436,8 +455,8 @@ export default function WorkoutDetailScreen() {
       if (tr.workout_details_json) {
         try {
           const cached = JSON.parse(tr.workout_details_json);
-          // v6: laps depuis workout events + distance fallback indoor
-          const isStaleCache = (cached.cacheVersion ?? 1) < 7;
+          // v8: step count + isCardio fix pour marche
+          const isStaleCache = (cached.cacheVersion ?? 1) < 8;
           // Verifier que le cache a du contenu utile (pas juste durationMinutes)
           const hasRichData = cached.heartRateSamples?.length > 0 || cached.routePoints?.length > 0
             || cached.heartRateZones?.length > 0 || cached.weatherTemp != null;
@@ -861,6 +880,22 @@ export default function WorkoutDetailScreen() {
                 </>
               );
             })()}
+
+            {/* Row 6: Nombre de pas (marche, course, randonnée) */}
+            {details?.stepsCount != null && details.stepsCount > 0 && (
+              <>
+                <View style={[styles.appleDetailsSep, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
+                <View style={styles.appleDetailsRow}>
+                  <View style={styles.appleDetailCell}>
+                    <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Nombre de pas</Text>
+                    <Text style={[styles.appleDetailValue, { color: '#8B5CF6' }]}>
+                      {details.stepsCount.toLocaleString('fr-FR')}
+                      <Text style={styles.appleDetailUnit}> PAS</Text>
+                    </Text>
+                  </View>
+                </View>
+              </>
+            )}
           </View>
         </AnimatedCard>
 
@@ -1001,7 +1036,7 @@ export default function WorkoutDetailScreen() {
                   {/* Méthode (champ legacy simple) */}
                   {round.method && !(round.methodsGiven?.length) && !(round.methodsTaken?.length) ? (
                     <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 4 }}>
-                      Finition : <Text style={{ color: colors.text, fontWeight: '600' }}>{round.method}</Text>
+                      Finition : <Text style={{ color: colors.text, fontWeight: '600' }}>{getMethodDisplayName(round.method)}</Text>
                     </Text>
                   ) : null}
                   {/* Finitions données (multi-select) */}
@@ -1013,7 +1048,7 @@ export default function WorkoutDetailScreen() {
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                         {round.methodsGiven!.map((m, i) => (
                           <View key={i} style={{ backgroundColor: isDark ? 'rgba(22,163,74,0.15)' : 'rgba(22,163,74,0.1)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
-                            <Text style={{ fontSize: 12, color: '#16A34A', fontWeight: '600' }}>{m}</Text>
+                            <Text style={{ fontSize: 12, color: '#16A34A', fontWeight: '600' }}>{getMethodDisplayName(m)}</Text>
                           </View>
                         ))}
                       </View>
@@ -1028,7 +1063,7 @@ export default function WorkoutDetailScreen() {
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                         {round.methodsTaken!.map((m, i) => (
                           <View key={i} style={{ backgroundColor: isDark ? 'rgba(220,38,38,0.15)' : 'rgba(220,38,38,0.1)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
-                            <Text style={{ fontSize: 12, color: '#DC2626', fontWeight: '600' }}>{m}</Text>
+                            <Text style={{ fontSize: 12, color: '#DC2626', fontWeight: '600' }}>{getMethodDisplayName(m)}</Text>
                           </View>
                         ))}
                       </View>
@@ -1056,6 +1091,38 @@ export default function WorkoutDetailScreen() {
                       {round.notes}
                     </Text>
                   ) : null}
+
+                  {/* Analyse du round */}
+                  {(round.gamePlan || round.whatWorked || round.whatDidntWork || round.counteredBy || round.improvement) && (
+                    <View style={{ marginTop: 8, gap: 5, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: isDark ? 'rgba(139,92,246,0.2)' : 'rgba(139,92,246,0.15)', paddingTop: 8 }}>
+                      {[
+                        { key: 'gamePlan', label: 'Game plan', color: '#3B82F6', value: round.gamePlan },
+                        { key: 'whatWorked', label: 'A marché', color: '#22C55E', value: round.whatWorked },
+                        { key: 'whatDidntWork', label: "N'a pas marché", color: '#EF4444', value: round.whatDidntWork },
+                        { key: 'counteredBy', label: 'Contré par', color: '#F59E0B', value: round.counteredBy },
+                        { key: 'improvement', label: 'Amélioration', color: '#8B5CF6', value: round.improvement },
+                      ].filter(f => !!f.value).map(f => (
+                        <View key={f.key} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+                          <View style={{ backgroundColor: `${f.color}20`, borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2, marginTop: 1 }}>
+                            <Text style={{ fontSize: 10, fontWeight: '700', color: f.color }}>{f.label}</Text>
+                          </View>
+                          <Text style={{ fontSize: 13, color: colors.text, flex: 1, lineHeight: 18 }}>{f.value}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Lien vers le profil du partenaire */}
+                  {round.partner && (
+                    <TouchableOpacity
+                      onPress={() => router.push({ pathname: '/sparring-partners', params: { partnerName: round.partner } })}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, backgroundColor: '#06B6D410', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, alignSelf: 'flex-start' }}
+                      activeOpacity={0.7}
+                    >
+                      <Users size={12} color="#06B6D4" />
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#06B6D4' }}>Voir le profil de {round.partner}</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               );
             })}
@@ -1597,6 +1664,31 @@ export default function WorkoutDetailScreen() {
           </AnimatedCard>
           );
         })()}
+
+        {/* Bouton Partager */}
+        <TouchableOpacity
+          onPress={() => router.push(`/social-share/last-session?id=${training.id}` as any)}
+          style={{
+            marginHorizontal: 16,
+            marginTop: 8,
+            marginBottom: 8,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            paddingVertical: 14,
+            borderRadius: 14,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
+          }}
+          activeOpacity={0.7}
+        >
+          <Share2 size={18} color={colors.textSecondary} />
+          <Text style={{ fontSize: 15, fontWeight: '600', color: colors.textSecondary }}>
+            Partager cette séance
+          </Text>
+        </TouchableOpacity>
 
         <View style={{ height: insets.bottom + 30 }} />
       </ScrollView>

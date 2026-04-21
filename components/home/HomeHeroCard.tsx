@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Flame, Trophy, Zap, ChevronRight, Target,
+  Flame, Trophy, Zap, ChevronRight, ChevronUp, Target,
   Clock, CheckCircle, Dumbbell, Droplets,
   Moon, Scale, Camera, Footprints, Star,
   TrendingUp, TrendingDown,
@@ -24,6 +24,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
+import { useResponsive } from '@/constants/responsive';
 import { getCurrentRank, getNextRank, getRankProgress, getDaysToNextRank } from '@/lib/ranks';
 import { getGhostData, updateCurrentWeek, GhostData } from '@/lib/ghostLeaderboardService';
 import { getTrainings, getWeights } from '@/lib/database';
@@ -104,16 +106,24 @@ function formatCountdown(ms: number): string {
   return `${h.toString().padStart(2, '0')}:${mm}:${ss}`;
 }
 
-const TABS: { id: TabId; label: string; color: string }[] = [
-  { id: 'jour',    label: 'Jour',    color: '#F97316' },
-  { id: 'semaine', label: 'Semaine', color: '#8B5CF6' },
-  { id: 'mois',    label: 'Mois',    color: '#3B82F6' },
-];
+const TAB_COLORS: Record<TabId, string> = {
+  jour: '#F97316',
+  semaine: '#8B5CF6',
+  mois: '#3B82F6',
+};
 
 // ── Composant principal ────────────────────────────────────────────────────────
 
 export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, onCollapse }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
+  const { sv, s: rs } = useResponsive();
+
+  const TABS: { id: TabId; label: string; color: string }[] = [
+    { id: 'jour',    label: t('challenges.tabDaily'),   color: TAB_COLORS.jour },
+    { id: 'semaine', label: t('challenges.tabWeekly'),  color: TAB_COLORS.semaine },
+    { id: 'mois',    label: t('challenges.tabMonthly'), color: TAB_COLORS.mois },
+  ];
 
   // Rang
   const rank     = useMemo(() => getCurrentRank(totalPoints), [totalPoints]);
@@ -217,23 +227,23 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
   const showGhost    = ghostData && (ghostData.hasHistory || ghostData.currentTrainings > 0);
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
+    <View style={[styles.card, { backgroundColor: colors.backgroundCard, marginTop: sv(12), paddingTop: sv(14) }]}>
 
       {/* ═══ SECTION 1 — RANG ═══════════════════════════════════════════════ */}
       <TouchableOpacity
         activeOpacity={0.88}
         onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/gamification'); }}
       >
-        <View style={styles.rankRow}>
+        <View style={[styles.rankRow, { paddingBottom: sv(14) }]}>
           {/* Avatar */}
           <TouchableOpacity
             onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/avatar-selection' as any); }}
             activeOpacity={0.8}
           >
             {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.avatar} />
+              <Image source={{ uri: avatarUri }} style={[styles.avatar, { width: rs(72), height: rs(72) }]} />
             ) : (
-              <View style={styles.avatarPlaceholder}>
+              <View style={[styles.avatarPlaceholder, { width: rs(72), height: rs(72), borderRadius: rs(36) }]}>
                 <Ionicons name="person" size={34} color="#CCC" />
               </View>
             )}
@@ -265,10 +275,10 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
             {nextRank ? (
               <Text style={[styles.xpNext, { color: colors.textMuted }]}>
                 <Text style={{ fontWeight: '800', color: accentRank }}>{nextRank.name}</Text>
-                {'  '}{xpToNext} XP restants
+                {'  '}{xpToNext} {t('home.xpRemaining')}
               </Text>
             ) : (
-              <Text style={[styles.xpNext, { color: accentRank, fontWeight: '800' }]}>Rang maximum</Text>
+              <Text style={[styles.xpNext, { color: accentRank, fontWeight: '800' }]}>{t('home.maxRank')}</Text>
             )}
           </View>
 
@@ -287,14 +297,14 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
           activeOpacity={0.88}
           onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/gamification'); }}
         >
-          <View style={styles.ghostSection}>
+          <View style={[styles.ghostSection, { paddingVertical: sv(12) }]}>
             {/* Header ghost */}
             <View style={styles.ghostHeader}>
               <View style={[styles.ghostIconBg, { backgroundColor: `${ghostColor}18` }]}>
                 <Trophy size={12} color={ghostColor} />
               </View>
               <Text style={[styles.ghostTitle, { color: colors.textPrimary }]}>
-                {isBeating ? 'Nouveau record en vue !' : 'Ghost de la semaine'}
+                {isBeating ? t('home.newRecord') : t('home.ghostWeek')}
               </Text>
               {isBeating
                 ? <TrendingUp size={14} color="#10B981" style={{ marginLeft: 'auto' }} />
@@ -308,7 +318,7 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
                 <Text style={[styles.ghostStatVal, { color: ghostColor }]}>
                   {ghostData!.currentTrainings}
                 </Text>
-                <Text style={[styles.ghostStatLabel, { color: colors.textMuted }]}>Cette semaine</Text>
+                <Text style={[styles.ghostStatLabel, { color: colors.textMuted }]}>{t('home.thisWeek')}</Text>
               </View>
               <View style={[styles.vsBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
                 <Zap size={9} color={ghostColor} />
@@ -319,7 +329,7 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
                   {ghostData!.hasHistory ? ghostData!.bestTrainings : '-'}
                 </Text>
                 <Text style={[styles.ghostStatLabel, { color: colors.textMuted }]}>
-                  {ghostData!.hasHistory ? 'Record' : 'Pas de record'}
+                  {ghostData!.hasHistory ? t('home.record') : t('home.noRecordShort')}
                 </Text>
               </View>
             </View>
@@ -332,7 +342,7 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
 
             {!ghostData!.hasHistory && ghostData!.currentTrainings > 0 && (
               <Text style={[styles.ghostHint, { color: colors.textMuted }]}>
-                Continue, tu batis ton premier record !
+                {t('home.keepGoing')}
               </Text>
             )}
           </View>
@@ -383,7 +393,7 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
             <View style={[styles.defiFill, { width: `${pct * 100}%`, backgroundColor: tabCfg.color }]} />
           </View>
           <Text style={[styles.defiCount, { color: colors.textMuted }]}>
-            {completed}/{total} défi{total > 1 ? 's' : ''}
+            {completed}/{total} {total === 1 ? t('challenges.challengesSingular') : t('challenges.challengesPlural')}
           </Text>
         </View>
 
@@ -394,7 +404,7 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
               <CheckCircle size={14} color="#10B981" />
             </View>
             <Text style={[styles.featuredTitle, { color: '#10B981' }]}>
-              Tous les défis {activeTab === 'jour' ? 'du jour' : activeTab === 'semaine' ? 'de la semaine' : 'du mois'} validés !
+              {activeTab === 'jour' ? t('challenges.allValidatedDay') : activeTab === 'semaine' ? t('challenges.allValidatedWeek') : t('challenges.allValidatedMonth')}
             </Text>
           </View>
         ) : topQuest ? (
@@ -431,12 +441,12 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               style={[styles.collapseBtn, { backgroundColor: colors.accent }]}
             >
-              <Text style={styles.collapseBtnText}>▲</Text>
+              <ChevronUp size={16} color="#fff" />
             </TouchableOpacity>
           )}
           <View style={styles.footerRight}>
             <Text style={[styles.footerText, { color: colors.textMuted }]}>
-              Voir tous les défis dans le Dojo
+              {t('home.viewAllChallenges')}
             </Text>
             <ChevronRight size={12} color={colors.textMuted} />
           </View>

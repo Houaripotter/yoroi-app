@@ -7,6 +7,7 @@
 
 import { Platform, DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { secureStorage } from '@/lib/security/secureStorage';
 import logger from '@/lib/security/logger';
 import { addTraining, updateTrainingDetails, getProfile, saveHealthDataBatch } from './database';
 import type { Training, HealthDataRecord } from './database';
@@ -2937,9 +2938,9 @@ class HealthConnectService {
       logger.info('[HealthConnect Android] Synchronisation en cours...');
       const data = await this.getAllHealthData();
 
-      // Cache rapide pour l'UI
+      // SECURITY: Store weight in SecureStore instead of AsyncStorage
       if (data.weight) {
-        await AsyncStorage.setItem(STORAGE_KEYS.LAST_WEIGHT, JSON.stringify(data.weight));
+        await secureStorage.setItem(STORAGE_KEYS.LAST_WEIGHT, data.weight);
       }
       if (data.steps) {
         await AsyncStorage.setItem(STORAGE_KEYS.LAST_STEPS, JSON.stringify(data.steps));

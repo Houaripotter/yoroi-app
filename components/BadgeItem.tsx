@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, Pressable } from 'react-native';
+import { Lock } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Badge } from '@/types/badges';
 
@@ -107,7 +108,7 @@ export function BadgeItem({ badge, unlocked, onPress, showAnimation = false }: B
         </View>
         {!unlocked && (
           <View style={styles.lockOverlay}>
-            <Text style={styles.lockIcon}>🔒</Text>
+            <Lock size={18} color="#fff" />
           </View>
         )}
       </Animated.View>

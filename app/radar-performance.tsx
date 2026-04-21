@@ -63,11 +63,11 @@ export default function RadarPerformanceScreen() {
 
   // 5 axes équidistants (72° entre chaque)
   const axes = [
-    { key: 'force', label: 'Force', angle: -90, color: '#EF4444', Icon: Flame },
-    { key: 'cardio', label: 'Cardio', angle: -18, color: '#3B82F6', Icon: Heart },
-    { key: 'souplesse', label: 'Souplesse', angle: 54, color: '#8B5CF6', Icon: Target },
-    { key: 'mental', label: 'Mental', angle: 126, color: '#10B981', Icon: Brain },
-    { key: 'technique', label: 'Technique', angle: 198, color: '#F59E0B', Icon: Trophy },
+    { key: 'force', label: t('radarPerformance.axisForce'), angle: -90, color: '#EF4444', Icon: Flame },
+    { key: 'cardio', label: t('radarPerformance.axisCardio'), angle: -18, color: '#3B82F6', Icon: Heart },
+    { key: 'souplesse', label: t('radarPerformance.axisSouplesse'), angle: 54, color: '#8B5CF6', Icon: Target },
+    { key: 'mental', label: t('radarPerformance.axisMental'), angle: 126, color: '#10B981', Icon: Brain },
+    { key: 'technique', label: t('radarPerformance.axisTechnique'), angle: 198, color: '#F59E0B', Icon: Trophy },
   ];
 
   useEffect(() => {

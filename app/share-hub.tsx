@@ -21,9 +21,11 @@ import {
   Share2,
   Camera,
   Lightbulb,
+  Swords,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 
 // ============================================
 // TEMPLATES DISPONIBLES
@@ -70,6 +72,16 @@ const SHARE_TEMPLATES: ShareTemplate[] = [
     route: '/social-share/monthly-recap-v2',
     gradient: ['#3B82F6', '#60A5FA'],
   },
+  {
+    id: 'duel-card',
+    title: 'Carte de Duel',
+    subtitle: 'Toi VS ton partenaire',
+    description: 'Ton bilan face à un partenaire de sparring : V-D-N, win rate, techniques. Choisis ton adversaire.',
+    icon: Swords,
+    route: '/sparring-partners',
+    gradient: ['#EF4444', '#EC4899'],
+    badge: 'NOUVEAU',
+  },
 ];
 
 // ============================================
@@ -77,6 +89,7 @@ const SHARE_TEMPLATES: ShareTemplate[] = [
 // ============================================
 
 export default function ShareHubScreen() {
+  const { t } = useI18n();
   const { colors, isDark } = useTheme();
 
   const renderTemplate = (template: ShareTemplate) => {
@@ -140,10 +153,10 @@ export default function ShareHubScreen() {
 
         <View style={styles.headerTitleContainer}>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            Partage ta progression
+            {t('shareHub.title')}
           </Text>
           <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-            Mets ta photo en avant, fais la star !
+            {t('shareHub.subtitle')}
           </Text>
         </View>
 
@@ -162,17 +175,17 @@ export default function ShareHubScreen() {
         >
           <Share2 size={40} color={colors.textOnAccent} strokeWidth={2.5} />
           <Text style={[styles.heroTitle, { color: colors.textOnAccent }]}>
-            Fais-toi remarquer
+            {t('shareHub.heroTitle')}
           </Text>
           <Text style={[styles.heroText, { color: colors.textOnAccent, opacity: 0.8 }]}>
-            Choisis un template, ajoute ta photo, et deviens la star de ta communauté !
+            {t('shareHub.heroText')}
           </Text>
         </LinearGradient>
 
         {/* Section Title */}
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            TEMPLATES AVEC TA PHOTO
+            {t('shareHub.templatesSection')}
           </Text>
           <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
             {SHARE_TEMPLATES.length}
@@ -189,12 +202,11 @@ export default function ShareHubScreen() {
           <View style={styles.tipTitleRow}>
             <Lightbulb size={18} color={isDark ? colors.accent : '#1A1A1A'} />
             <Text style={[styles.tipTitle, { color: colors.textPrimary }]}>
-              Astuce Pro
+              {t('shareHub.proTip')}
             </Text>
           </View>
           <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-            Ajoute ta photo pour que tes followers voient ton visage ! Tu peux prendre un selfie ou
-            choisir depuis ta galerie. Plus tu es visible, plus tu vas faire fureur !
+            {t('shareHub.proTipText')}
           </Text>
         </View>
 

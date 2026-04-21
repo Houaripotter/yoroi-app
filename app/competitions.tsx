@@ -33,6 +33,7 @@ export default function CompetitionsScreen() {
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [upcomingCompetitions, setUpcomingCompetitions] = useState<Competition[]>([]);
   const [pastCompetitions, setPastCompetitions] = useState<Competition[]>([]);
+  const [cancelledCompetitions, setCancelledCompetitions] = useState<Competition[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [importing, setImporting] = useState(false);
 
@@ -47,8 +48,12 @@ export default function CompetitionsScreen() {
       setUpcomingCompetitions(upcoming);
 
       const today = new Date().toISOString().split('T')[0];
-      const past = all.filter(c => c.date < today && c.statut === 'terminee');
+      // Toutes les compétitions passées (quel que soit le statut) + terminées futures
+      const past = all.filter(c => c.date < today || c.statut === 'terminee');
+      // Compétitions annulées non encore passées (dates futures annulées)
+      const cancelled = all.filter(c => c.statut === 'annulee' && c.date >= today);
       setPastCompetitions(past);
+      setCancelledCompetitions(cancelled);
     } catch (error) {
       logger.error('Error loading competitions:', error);
     }
@@ -331,6 +336,16 @@ export default function CompetitionsScreen() {
               {t('competitions.history')}
             </Text>
             {pastCompetitions.map((comp) => renderCompetitionCard(comp))}
+          </View>
+        )}
+
+        {/* Cancelled Competitions */}
+        {cancelledCompetitions.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+              {t('competitions.cancelled')}
+            </Text>
+            {cancelledCompetitions.map((comp) => renderCompetitionCard(comp))}
           </View>
         )}
 

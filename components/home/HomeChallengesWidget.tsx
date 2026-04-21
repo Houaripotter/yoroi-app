@@ -35,6 +35,7 @@ import {
 import { router } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import {
   getDailyQuestsProgress,
   getWeeklyQuestsProgress,
@@ -124,13 +125,13 @@ function formatCountdown(ms: number): string {
   return `${h.toString().padStart(2, '0')}:${mm}:${ss}`;
 }
 
-// ── Config onglets ────────────────────────────────────────────────────────────
+// ── Config onglets couleurs ───────────────────────────────────────────────────
 
-const TABS: { id: TabId; label: string; color: string }[] = [
-  { id: 'jour',    label: 'Jour',    color: '#F97316' },
-  { id: 'semaine', label: 'Semaine', color: '#8B5CF6' },
-  { id: 'mois',    label: 'Mois',    color: '#3B82F6' },
-];
+const TAB_COLORS: Record<TabId, string> = {
+  jour: '#F97316',
+  semaine: '#8B5CF6',
+  mois: '#3B82F6',
+};
 
 // ── Composant ────────────────────────────────────────────────────────────────
 
@@ -140,6 +141,14 @@ interface HomeChallengesWidgetProps {
 
 export const HomeChallengesWidget: React.FC<HomeChallengesWidgetProps> = ({ onCollapse }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
+
+  const TABS: { id: TabId; label: string; color: string }[] = [
+    { id: 'jour',    label: t('challenges.tabDaily'),   color: TAB_COLORS.jour },
+    { id: 'semaine', label: t('challenges.tabWeekly'),  color: TAB_COLORS.semaine },
+    { id: 'mois',    label: t('challenges.tabMonthly'), color: TAB_COLORS.mois },
+  ];
+
   const [activeTab, setActiveTab] = useState<TabId>('jour');
   const [quests, setQuests] = useState<QuestWithProgress[]>([]);
   const [countdown, setCountdown] = useState('');
@@ -243,7 +252,7 @@ export const HomeChallengesWidget: React.FC<HomeChallengesWidgetProps> = ({ onCo
           }]} />
         </View>
         <Text style={[styles.progressLabel, { color: colors.textMuted }]}>
-          {completed}/{total} défi{total > 1 ? 's' : ''}
+          {completed}/{total} {total === 1 ? t('challenges.challengesSingular') : t('challenges.challengesPlural')}
         </Text>
       </View>
 
@@ -254,7 +263,7 @@ export const HomeChallengesWidget: React.FC<HomeChallengesWidgetProps> = ({ onCo
             <CheckCircle size={15} color="#10B981" />
           </View>
           <Text style={[styles.featuredTitle, { color: '#10B981', fontWeight: '700' }]}>
-            Tous les défis {activeTab === 'jour' ? 'du jour' : activeTab === 'semaine' ? 'de la semaine' : 'du mois'} sont validés !
+            {activeTab === 'jour' ? t('challenges.allValidatedDay') : activeTab === 'semaine' ? t('challenges.allValidatedWeek') : t('challenges.allValidatedMonth')}
           </Text>
         </View>
       ) : topQuest ? (
@@ -297,7 +306,7 @@ export const HomeChallengesWidget: React.FC<HomeChallengesWidgetProps> = ({ onCo
         )}
         <View style={styles.footerRight}>
           <Text style={[styles.footerText, { color: colors.textMuted }]}>
-            Voir tous les défis dans le Dojo
+            {t('home.viewAllChallenges')}
           </Text>
           <ChevronRight size={13} color={colors.textMuted} />
         </View>

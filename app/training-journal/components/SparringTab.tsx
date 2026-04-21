@@ -18,20 +18,36 @@ import {
   KeyboardAvoidingView,
   Platform,
   DeviceEventEmitter,
+  Image,
+  Alert,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { getTrainings } from '@/lib/database';
+import { getTrainings, openDatabase } from '@/lib/database';
 import type { Training, CombatRound } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
 import {
   Users, Zap, Target, TrendingUp, BarChart2, X, ChevronRight,
   Calendar, Clock, CheckCircle, Circle, Flame, Settings, Star,
+  Share2, Swords, Shield, AlertTriangle, Lightbulb, Dumbbell,
+  Trophy, ClipboardList, Plus, Edit2, Camera,
 } from 'lucide-react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { getMethodDisplayName } from '@/components/BJJBodyMap';
 
 const WEEKLY_GOAL_KEY = '@sparring_weekly_goal';
+const SPARRING_PARTNERS_KEY = '@yoroi_sparring_partners';
+
+interface SparringPartnerData {
+  id: string;
+  name: string;
+  photoUri?: string;
+  belt?: string;
+}
 
 // ============================================
 // TYPES
@@ -47,6 +63,8 @@ interface PartnerStats {
   submissionsTaken: number;
   lastSession?: string;
   sessions: PartnerSession[];
+  avgRating?: number;        // Moyenne des notes données (1-10)
+  ratingHistory?: { date: string; rating: number }[]; // Évolution de la note
 }
 
 interface PartnerSession {
@@ -175,6 +193,7 @@ interface SparringTabProps {
 export default function SparringTab({ refreshTrigger }: SparringTabProps) {
   const { colors, isDark, screenBackground } = useTheme();
   const { t } = useI18n();
+  const router = useRouter();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [loading, setLoading] = useState(true);
@@ -184,12 +203,263 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
   const [selectedSport, setSelectedSport] = useState<string | null>(null);
 
   // Objectif hebdo
-  const [weeklyGoal, setWeeklyGoal] = useState<number>(20);
+  const [weeklyGoal, setWeeklyGoal] = useState<number>(10);
   const [showGoalEditor, setShowGoalEditor] = useState(false);
-  const [goalInput, setGoalInput] = useState('20');
+  const [goalInput, setGoalInput] = useState('10');
 
   // Modal partenaire
   const [selectedPartner, setSelectedPartner] = useState<PartnerStats | null>(null);
+
+  // Photos + noms des partenaires qui ont une fiche (depuis sparring-partners.tsx)
+  const [partnerPhotos, setPartnerPhotos] = useState<Record<string, string>>({});
+  // Noms des partenaires qui ont une fiche (même sans photo)
+  const [partnerHasFiche, setPartnerHasFiche] = useState<Set<string>>(new Set());
+
+  // Modal édition partenaire (nom + photo)
+  const [editingPartner, setEditingPartner] = useState<string | null>(null); // nom actuel
+  const [editName, setEditName] = useState('');
+  const [editPhoto, setEditPhoto] = useState<string | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  const loadPartnerPhotos = async () => {
+    try {
+      const raw = await AsyncStorage.getItem(SPARRING_PARTNERS_KEY);
+      if (!raw) return;
+      let partners: SparringPartnerData[] = [];
+      try { partners = JSON.parse(raw); } catch { return; }
+
+      // Dédoublonner : garder une seule entrée par nom (lowercase), la dernière ayant une photo
+      const seen = new Map<string, SparringPartnerData>();
+      for (const p of partners) {
+        const key = p.name.trim().toLowerCase();
+        const existing = seen.get(key);
+        if (!existing || (!existing.photoUri && p.photoUri)) {
+          seen.set(key, p);
+        }
+      }
+      const deduped = Array.from(seen.values());
+      if (deduped.length !== partners.length) {
+        // Sauvegarder la version dédoublonnée silencieusement
+        try { await AsyncStorage.setItem(SPARRING_PARTNERS_KEY, JSON.stringify(deduped)); } catch {}
+      }
+
+      const photoMap: Record<string, string> = {};
+      const ficheSet = new Set<string>();
+      for (const p of deduped) {
+        const key = p.name.trim().toLowerCase();
+        ficheSet.add(key);
+        if (p.photoUri) photoMap[key] = p.photoUri;
+      }
+      setPartnerPhotos(photoMap);
+      setPartnerHasFiche(ficheSet);
+    } catch {}
+  };
+
+  const savePartnerPhoto = async (partnerName: string, photoUri: string) => {
+    try {
+      const raw = await AsyncStorage.getItem(SPARRING_PARTNERS_KEY);
+      let partners: SparringPartnerData[] = raw ? JSON.parse(raw) : [];
+      const key = partnerName.trim().toLowerCase();
+      const existing = partners.find(p => p.name.trim().toLowerCase() === key);
+      if (existing) {
+        existing.photoUri = photoUri || undefined;
+      } else if (photoUri) {
+        // Crée un nouveau partenaire si inexistant et qu'il y a une photo
+        partners.push({ id: Date.now().toString(), name: partnerName.trim(), photoUri });
+      }
+      await AsyncStorage.setItem(SPARRING_PARTNERS_KEY, JSON.stringify(partners));
+      if (photoUri) {
+        setPartnerPhotos(prev => ({ ...prev, [key]: photoUri }));
+      } else {
+        setPartnerPhotos(prev => { const next = { ...prev }; delete next[key]; return next; });
+      }
+    } catch {}
+  };
+
+  const pickPhotoForPartner = async (partnerName: string) => {
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert('Permission refusée', "Autorise l'accès à la galerie dans les Réglages.");
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        await savePartnerPhoto(partnerName, result.assets[0].uri);
+      }
+    } catch (e) {
+      Alert.alert('Erreur', `Impossible d'ouvrir la galerie : ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
+
+  const openEditPartner = (name: string) => {
+    setEditingPartner(name);
+    setEditName(name);
+    setEditPhoto(partnerPhotos[name.trim().toLowerCase()] || null);
+  };
+
+  const pickEditPhoto = async () => {
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert('Permission refusée', "Autorise l'accès à la galerie dans les Réglages pour ajouter une photo.");
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        setEditPhoto(result.assets[0].uri);
+      }
+    } catch (e) {
+      Alert.alert('Erreur', `Impossible d'ouvrir la galerie : ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
+
+  const deletePartner = async () => {
+    if (!editingPartner) return;
+    const key = editingPartner.trim().toLowerCase();
+    try {
+      const raw = await AsyncStorage.getItem(SPARRING_PARTNERS_KEY);
+      let partners: SparringPartnerData[] = [];
+      try { partners = raw ? JSON.parse(raw) : []; } catch { partners = []; }
+      partners = partners.filter(p => p.name.trim().toLowerCase() !== key);
+      await AsyncStorage.setItem(SPARRING_PARTNERS_KEY, JSON.stringify(partners));
+      setPartnerPhotos(prev => { const next = { ...prev }; delete next[key]; return next; });
+      setPartnerHasFiche(prev => { const next = new Set(prev); next.delete(key); return next; });
+      setEditingPartner(null);
+    } catch (e) {
+      Alert.alert('Erreur', `Impossible de supprimer : ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
+
+  const confirmDeletePartner = () => {
+    Alert.alert(
+      'Supprimer le partenaire',
+      `Supprimer la fiche de ${editingPartner} ? Son historique de combats est conservé.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Supprimer', style: 'destructive', onPress: deletePartner },
+      ]
+    );
+  };
+
+  const saveEditPartner = async () => {
+    if (!editingPartner || !editName.trim()) return;
+    setIsSavingEdit(true);
+    try {
+      const oldKey = editingPartner.trim().toLowerCase();
+      const newName = editName.trim();
+      const newKey = newName.toLowerCase();
+      const photoToSave = editPhoto || undefined;
+
+      // 1. Mettre à jour AsyncStorage sans créer de doublons
+      const raw = await AsyncStorage.getItem(SPARRING_PARTNERS_KEY);
+      let partners: SparringPartnerData[] = [];
+      try { partners = raw ? JSON.parse(raw) : []; } catch { partners = []; }
+
+      const oldIdx = partners.findIndex(p => p.name.trim().toLowerCase() === oldKey);
+      const newIdx = partners.findIndex(p => p.name.trim().toLowerCase() === newKey);
+
+      if (oldIdx >= 0) {
+        // Mettre à jour l'entrée existante
+        partners[oldIdx] = { ...partners[oldIdx], name: newName, photoUri: photoToSave };
+        // Supprimer l'éventuel doublon avec le nouveau nom
+        if (newIdx >= 0 && newIdx !== oldIdx) {
+          partners.splice(newIdx > oldIdx ? newIdx : newIdx, 1);
+        }
+      } else if (newIdx >= 0) {
+        // Déjà une entrée avec le nouveau nom (tentative précédente) — la mettre à jour
+        partners[newIdx] = { ...partners[newIdx], name: newName, photoUri: photoToSave };
+      } else {
+        // Nouvelle entrée
+        partners.push({ id: Date.now().toString(), name: newName, photoUri: photoToSave });
+      }
+      await AsyncStorage.setItem(SPARRING_PARTNERS_KEY, JSON.stringify(partners));
+
+      // 2. Renommer dans les combat_rounds de la DB si le nom change
+      if (oldKey !== newKey) {
+        try {
+          const db = await openDatabase();
+          const rows = await db.getAllAsync<{ id: number; combat_rounds: string }>(
+            `SELECT id, combat_rounds FROM trainings WHERE combat_rounds IS NOT NULL AND combat_rounds != '[]'`
+          );
+          for (const row of rows) {
+            try {
+              const rounds: CombatRound[] = JSON.parse(row.combat_rounds);
+              if (!Array.isArray(rounds)) continue;
+              let changed = false;
+              for (const r of rounds) {
+                if (r.partner?.trim().toLowerCase() === oldKey) {
+                  r.partner = newName;
+                  changed = true;
+                }
+              }
+              if (changed) {
+                await db.runAsync(`UPDATE trainings SET combat_rounds = ? WHERE id = ?`, [JSON.stringify(rounds), row.id]);
+              }
+            } catch {}
+          }
+        } catch {}
+      }
+
+      // 3. Mettre à jour le state local — garder les deux clés pour éviter
+      //    une disparition de photo si le rename DB a échoué
+      setPartnerPhotos(prev => {
+        const next = { ...prev };
+        delete next[oldKey];
+        delete next[newKey];
+        if (photoToSave) {
+          next[newKey] = photoToSave;
+          next[oldKey] = photoToSave; // alias temporaire au cas où le rename DB n'a pas pris
+        }
+        return next;
+      });
+      setPartnerHasFiche(prev => {
+        const next = new Set(prev);
+        next.delete(oldKey);
+        next.add(newKey);
+        next.add(oldKey); // alias temporaire
+        return next;
+      });
+
+      setEditingPartner(null);
+      await load(true);
+
+      // 4. Reconstruire la photo map depuis AS + alias pour cohérence
+      const finalRaw = await AsyncStorage.getItem(SPARRING_PARTNERS_KEY);
+      const finalPartners: SparringPartnerData[] = (() => {
+        try { return finalRaw ? JSON.parse(finalRaw) : []; } catch { return []; }
+      })();
+      const photoMap: Record<string, string> = {};
+      const ficheSet = new Set<string>();
+      for (const p of finalPartners) {
+        const k = p.name.trim().toLowerCase();
+        ficheSet.add(k);
+        if (p.photoUri) photoMap[k] = p.photoUri;
+      }
+      // Alias : si partnerStats a encore l'ancien nom (rename DB non appliqué),
+      // associer quand même la photo
+      if (oldKey !== newKey && photoToSave && !photoMap[oldKey]) {
+        photoMap[oldKey] = photoToSave;
+      }
+      setPartnerPhotos(photoMap);
+      setPartnerHasFiche(ficheSet);
+
+    } catch (e) {
+      Alert.alert('Erreur', `Impossible de sauvegarder : ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
 
   const load = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -202,7 +472,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
     }
   };
 
-  useEffect(() => { load(); }, [refreshTrigger]);
+  useEffect(() => { load(); loadPartnerPhotos(); }, [refreshTrigger]);
 
   // Recharger quand les données changent (ex: nouvel entraînement ajouté)
   useEffect(() => {
@@ -290,6 +560,17 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
     // Trier les sessions de chaque partenaire par date desc
     for (const p of Object.values(map)) {
       p.sessions.sort((a, b) => b.date.localeCompare(a.date));
+      // Calculer note moyenne + historique
+      const ratings: { date: string; rating: number }[] = [];
+      for (const s of p.sessions) {
+        for (const r of s.rounds) {
+          if (r.partnerRating) ratings.push({ date: s.date, rating: r.partnerRating });
+        }
+      }
+      if (ratings.length > 0) {
+        p.ratingHistory = ratings.sort((a, b) => a.date.localeCompare(b.date));
+        p.avgRating = Math.round((ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length) * 10) / 10;
+      }
     }
     return Object.values(map).sort((a, b) => b.totalRounds - a.totalRounds);
   }, [filteredTrainings]);
@@ -425,6 +706,122 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
     return { rounds, wins, losses, winRate, partners: partnerStats.length, techniques: techniqueStats.length };
   }, [partnerStats, techniqueStats]);
 
+  // ── Top finitions reçues (toutes séances) ──
+  const topMethodsTaken = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const tr of filteredTrainings) {
+      const rounds = parseCombatRounds(tr.combat_rounds);
+      for (const r of rounds) {
+        for (const m of (r.methodsTaken ?? [])) {
+          const key = getMethodDisplayName(m.trim());
+          if (!key) continue;
+          map[key] = (map[key] ?? 0) + 1;
+        }
+      }
+    }
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  }, [filteredTrainings]);
+
+  // ── Insights Coach auto-générés ──
+  const insights = useMemo(() => {
+    const out: { Icon: React.ComponentType<{ size?: number; color?: string }>; text: string; color: string }[] = [];
+    if (partnerStats.length === 0) return out;
+
+    // 1. Finition la + récurrente reçue
+    if (topMethodsTaken.length > 0) {
+      const [name, count] = topMethodsTaken[0];
+      if (count >= 2) out.push({
+        Icon: Shield,
+        text: `Tu te fais prendre ${count}× par ${name}. Priorité : drill ta défense.`,
+        color: '#EF4444',
+      });
+    }
+
+    // 2. Niveau moyen des adversaires
+    const ratings = partnerStats.filter(p => p.avgRating != null).map(p => p.avgRating!);
+    if (ratings.length >= 2) {
+      const avg = Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10;
+      out.push({
+        Icon: Swords,
+        text: `Niveau moyen de tes adversaires : ${avg}/10`,
+        color: avg <= 4 ? '#22C55E' : avg <= 7 ? '#F59E0B' : '#9333EA',
+      });
+    }
+
+    // 3. Matchup difficile (partenaire avec 0 victoire)
+    const tough = partnerStats.filter(p => p.losses >= 2 && p.wins === 0);
+    if (tough.length > 0) {
+      const worst = tough[0];
+      out.push({
+        Icon: AlertTriangle,
+        text: `${worst.losses} défaites d'affilée contre ${worst.name}. Change de stratégie.`,
+        color: '#F59E0B',
+      });
+    }
+
+    // 4. Partenaire à réattaquer (stat dormante)
+    const dormant = partnerStats.find(p => {
+      if (!p.lastSession) return false;
+      const days = Math.floor((Date.now() - new Date(p.lastSession).getTime()) / 86400000);
+      return days >= 21;
+    });
+    if (dormant) {
+      const days = Math.floor((Date.now() - new Date(dormant.lastSession!).getTime()) / 86400000);
+      out.push({
+        Icon: Clock,
+        text: `${days} jours sans croiser ${dormant.name}. Retry pour voir si tu as progressé.`,
+        color: '#3B82F6',
+      });
+    }
+
+    // 5. Win rate global
+    if (totals.winRate != null && (totals.wins + totals.losses) >= 3) {
+      if (totals.winRate >= 70) out.push({
+        Icon: Flame,
+        text: `${totals.winRate}% de victoires — tu domines. Cherche du plus dur.`,
+        color: '#22C55E',
+      });
+      else if (totals.winRate <= 30) out.push({
+        Icon: Dumbbell,
+        text: `${totals.winRate}% de victoires — phase d'apprentissage. Concentre-toi sur 1 objectif par séance.`,
+        color: '#EF4444',
+      });
+    }
+
+    // 6. Victoire seulement contre un niveau faible
+    const hasEasyWins = partnerStats.some(p => p.wins > 0 && (p.avgRating ?? 5) <= 3);
+    const hasHardWins = partnerStats.some(p => p.wins > 0 && (p.avgRating ?? 5) >= 6);
+    if (hasEasyWins && !hasHardWins && partnerStats.length >= 3) {
+      out.push({
+        Icon: Target,
+        text: `Tu bats les débutants mais pas les intermédiaires. Prochain défi : un round face à du 6+/10.`,
+        color: '#8B5CF6',
+      });
+    }
+
+    return out.slice(0, 4);
+  }, [partnerStats, topMethodsTaken, totals]);
+
+  // ── Tri des partenaires ──
+  const [partnerSortMode, setPartnerSortMode] = useState<'volume' | 'winrate' | 'recent' | 'level'>('volume');
+  const sortedPartners = useMemo(() => {
+    const arr = [...partnerStats];
+    switch (partnerSortMode) {
+      case 'winrate':
+        return arr.sort((a, b) => {
+          const wrA = (a.wins + a.losses) > 0 ? a.wins / (a.wins + a.losses) : -1;
+          const wrB = (b.wins + b.losses) > 0 ? b.wins / (b.wins + b.losses) : -1;
+          return wrB - wrA;
+        });
+      case 'recent':
+        return arr.sort((a, b) => (b.lastSession ?? '').localeCompare(a.lastSession ?? ''));
+      case 'level':
+        return arr.sort((a, b) => (b.avgRating ?? 0) - (a.avgRating ?? 0));
+      default:
+        return arr; // volume (déjà trié par totalRounds desc)
+    }
+  }, [partnerStats, partnerSortMode]);
+
   const maxRounds = partnerStats[0]?.totalRounds ?? 1;
   const maxTech = techniqueStats[0]?.count ?? 1;
 
@@ -511,8 +908,68 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
             accent={accent}
             colors={colors}
             isDark={isDark}
-            onSelect={setSelectedPartner}
+            onSelect={(p) => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              router.push(`/sparring-partners?partnerName=${encodeURIComponent(p.name)}` as any);
+            }}
+            partnerPhotos={partnerPhotos}
           />
+        )}
+
+        {/* ── ACCÈS RAPIDES : Game Plan + Achievements ── */}
+        {!isEmpty && (
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+            <TouchableOpacity
+              onPress={() => {
+                impactAsync(ImpactFeedbackStyle.Light);
+                router.push('/game-plan' as any);
+              }}
+              activeOpacity={0.85}
+              style={{ flex: 1, backgroundColor: '#8B5CF6', borderRadius: 14, padding: 14, shadowColor: '#8B5CF6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <Target size={20} color="#fff" />
+                <Text style={{ fontSize: 10, fontWeight: '900', color: 'rgba(255,255,255,0.7)', letterSpacing: 1 }}>PLAYBOOK</Text>
+              </View>
+              <Text style={{ fontSize: 15, fontWeight: '900', color: '#fff', letterSpacing: 0.3 }}>Mon Game Plan</Text>
+              <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>Checklist, playbook, journal</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                impactAsync(ImpactFeedbackStyle.Light);
+                router.push('/combat-achievements' as any);
+              }}
+              activeOpacity={0.85}
+              style={{ flex: 1, backgroundColor: '#EAB308', borderRadius: 14, padding: 14, shadowColor: '#EAB308', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <Trophy size={20} color="#fff" />
+                <Text style={{ fontSize: 10, fontWeight: '900', color: 'rgba(255,255,255,0.7)', letterSpacing: 1 }}>BADGES</Text>
+              </View>
+              <Text style={{ fontSize: 15, fontWeight: '900', color: '#fff', letterSpacing: 0.3 }}>Achievements</Text>
+              <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>35+ badges à débloquer</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* ── INSIGHTS COACH ── */}
+        {insights.length > 0 && (
+          <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder, marginBottom: 12 }]}>
+            <View style={[styles.sectionHead, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+              <Lightbulb size={16} color={colors.text} />
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Coach — insights</Text>
+            </View>
+            <View style={{ gap: 8, marginTop: 6 }}>
+              {insights.map((ins, i) => (
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: `${ins.color}12`, borderRadius: 10, padding: 10, borderLeftWidth: 3, borderLeftColor: ins.color }}>
+                  <View style={{ marginTop: 1 }}>
+                    <ins.Icon size={16} color={ins.color} />
+                  </View>
+                  <Text style={{ flex: 1, fontSize: 13, color: colors.text, lineHeight: 18 }}>{ins.text}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
         )}
 
         {/* ── VUE D'ENSEMBLE — grille 2×2 ── */}
@@ -533,13 +990,19 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               <Text style={[styles.overviewValue, { color: '#F59E0B' }]}>{totals.techniques}</Text>
               <Text style={[styles.overviewLabel, { color: '#F59E0B' }]}>{t('sparring.techniques')}</Text>
             </View>
-            {/* Win rate */}
-            <View style={[styles.overviewBox, { backgroundColor: '#22C55E20' }]}>
-              <Text style={[styles.overviewValue, { color: '#22C55E' }]}>
-                {totals.winRate !== null ? `${totals.winRate}%` : '--'}
-              </Text>
-              <Text style={[styles.overviewLabel, { color: '#22C55E' }]}>{t('sparring.winRate')}</Text>
-            </View>
+            {/* Win rate — couleur dynamique */}
+            {(() => {
+              const wr = totals.winRate;
+              const wrColor = wr == null ? '#6B7280' : wr >= 60 ? '#22C55E' : wr >= 40 ? '#F59E0B' : '#EF4444';
+              return (
+                <View style={[styles.overviewBox, { backgroundColor: `${wrColor}20` }]}>
+                  <Text style={[styles.overviewValue, { color: wrColor }]}>
+                    {wr !== null ? `${wr}%` : '--'}
+                  </Text>
+                  <Text style={[styles.overviewLabel, { color: wrColor }]}>{t('sparring.winRate')}</Text>
+                </View>
+              );
+            })()}
           </View>
         )}
 
@@ -726,13 +1189,16 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
         )}
 
         {/* ── GRAPHIQUE WIN RATE MENSUEL ── */}
-        {monthlyWinRate.length > 0 && (
+        {monthlyWinRate.length > 0 && (() => {
+          const currentWR = monthlyWinRate[monthlyWinRate.length - 1]?.value ?? 0;
+          const wrColor = currentWR >= 60 ? '#22C55E' : currentWR >= 40 ? '#F59E0B' : '#EF4444';
+          return (
           <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
             <View style={styles.sectionHead}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('sparring.monthlyWinRate')}</Text>
-              <View style={[styles.countBadge, { backgroundColor: '#22C55E18' }]}>
-                <Text style={[styles.countBadgeText, { color: '#22C55E' }]}>
-                  {monthlyWinRate[monthlyWinRate.length - 1]?.value ?? 0}%
+              <View style={[styles.countBadge, { backgroundColor: `${wrColor}18` }]}>
+                <Text style={[styles.countBadgeText, { color: wrColor }]}>
+                  {currentWR}%
                 </Text>
               </View>
             </View>
@@ -789,6 +1255,28 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               </View>
             </View>
           </View>
+          );
+        })()}
+
+        {/* ── TOP FINITIONS REÇUES (global) ── */}
+        {topMethodsTaken.length > 0 && (
+          <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+            <View style={[styles.sectionHead, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+              <Shield size={16} color={colors.text} />
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Finitions reçues — à défendre</Text>
+            </View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+              {topMethodsTaken.map(([name, count]) => (
+                <View key={name} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#EF444418', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#EF444430' }}>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#EF4444' }}>{name}</Text>
+                  <Text style={{ fontSize: 11, color: '#EF444499', fontWeight: '700' }}>×{count}</Text>
+                </View>
+              ))}
+            </View>
+            <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 8, lineHeight: 15 }}>
+              Les finitions qui te sont le + souvent appliquées. Travaille ta défense sur la première.
+            </Text>
+          </View>
         )}
 
         {/* ── PARTENAIRES ── */}
@@ -801,14 +1289,45 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               </View>
             </View>
 
+            {/* Sélecteur de tri */}
+            {partnerStats.length >= 2 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8, marginBottom: 4 }} contentContainerStyle={{ gap: 6 }}>
+                {([
+                  { key: 'volume', label: 'Volume', Icon: BarChart2 },
+                  { key: 'winrate', label: 'Win rate', Icon: Trophy },
+                  { key: 'recent', label: 'Récent', Icon: Clock },
+                  { key: 'level', label: 'Niveau', Icon: Star },
+                ] as { key: typeof partnerSortMode; label: string; Icon: React.ComponentType<{ size?: number; color?: string }> }[]).map(opt => {
+                  const active = partnerSortMode === opt.key;
+                  const iconColor = active ? '#fff' : colors.textMuted;
+                  return (
+                    <TouchableOpacity
+                      key={opt.key}
+                      onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setPartnerSortMode(opt.key); }}
+                      style={{
+                        flexDirection: 'row', alignItems: 'center', gap: 5,
+                        backgroundColor: active ? accent : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                        borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6,
+                      }}
+                    >
+                      <opt.Icon size={12} color={iconColor} />
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: active ? '#fff' : colors.textMuted }}>{opt.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            )}
+
             <View style={{ gap: 10, marginTop: 4 }}>
-              {partnerStats.map((p, idx) => {
+              {sortedPartners.map((p, idx) => {
                 const avatarColor = nameToColor(p.name);
                 const initials = getInitials(p.name);
                 const winRate = (p.wins + p.losses) > 0
                   ? Math.round((p.wins / (p.wins + p.losses)) * 100)
                   : null;
                 const isTop = idx === 0;
+
+                const photoUri = partnerPhotos[p.name.trim().toLowerCase()];
 
                 return (
                   <TouchableOpacity
@@ -821,18 +1340,38 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                       borderWidth: isTop ? 1.5 : 1,
                     }]}
                     onPress={() => setSelectedPartner(p)}
+                    onLongPress={() => { impactAsync(ImpactFeedbackStyle.Medium); openEditPartner(p.name); }}
+                    delayLongPress={500}
                     activeOpacity={0.75}
                   >
-                    {/* Avatar */}
-                    <View style={[styles.avatarCircle, {
-                      backgroundColor: `${avatarColor}28`,
-                      borderColor: isTop ? '#F59E0B' : `${avatarColor}50`,
-                      borderWidth: isTop ? 2 : 1.5,
-                    }]}>
-                      <Text style={{ fontSize: 14, fontWeight: '800', color: avatarColor }}>
-                        {initials}
-                      </Text>
-                    </View>
+                    {/* Avatar — photo ou initiales */}
+                    <TouchableOpacity
+                      onPress={() => {
+                        Alert.alert(
+                          `Photo de ${p.name}`,
+                          photoUri ? 'Changer ou supprimer la photo ?' : 'Ajouter une photo ?',
+                          [
+                            { text: 'Annuler', style: 'cancel' },
+                            { text: photoUri ? 'Changer' : 'Ajouter depuis la galerie', onPress: () => pickPhotoForPartner(p.name) },
+                            ...(photoUri ? [{ text: 'Supprimer', style: 'destructive' as const, onPress: () => savePartnerPhoto(p.name, '') }] : []),
+                          ]
+                        );
+                      }}
+                      style={[styles.avatarCircle, {
+                        backgroundColor: photoUri ? 'transparent' : `${avatarColor}28`,
+                        borderColor: isTop ? '#F59E0B' : (photoUri ? 'rgba(255,255,255,0.2)' : `${avatarColor}50`),
+                        borderWidth: isTop ? 2 : 1.5,
+                        overflow: 'hidden',
+                      }]}
+                    >
+                      {photoUri ? (
+                        <Image source={{ uri: photoUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                      ) : (
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: avatarColor }}>
+                          {initials}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
 
                     {/* Infos */}
                     <View style={{ flex: 1, gap: 4 }}>
@@ -889,11 +1428,72 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                         </View>
                       </View>
 
+                      {/* Note moyenne + évolution */}
+                      {p.avgRating != null && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <View style={{
+                            flexDirection: 'row', alignItems: 'center', gap: 4,
+                            backgroundColor: p.avgRating <= 3 ? '#22C55E18' : p.avgRating <= 6 ? '#F59E0B18' : p.avgRating <= 8 ? '#EF444418' : '#9333EA18',
+                            borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3,
+                          }}>
+                            <Star size={10} color={p.avgRating <= 3 ? '#22C55E' : p.avgRating <= 6 ? '#F59E0B' : p.avgRating <= 8 ? '#EF4444' : '#9333EA'} fill={p.avgRating <= 3 ? '#22C55E' : p.avgRating <= 6 ? '#F59E0B' : p.avgRating <= 8 ? '#EF4444' : '#9333EA'} />
+                            <Text style={{ fontSize: 10, fontWeight: '900', color: p.avgRating <= 3 ? '#22C55E' : p.avgRating <= 6 ? '#F59E0B' : p.avgRating <= 8 ? '#EF4444' : '#9333EA' }}>
+                              {p.avgRating}/10
+                            </Text>
+                          </View>
+                          {p.ratingHistory && p.ratingHistory.length >= 2 && (() => {
+                            const first = p.ratingHistory[0].rating;
+                            const last = p.ratingHistory[p.ratingHistory.length - 1].rating;
+                            const diff = last - first;
+                            if (diff > 0) return <Text style={{ fontSize: 10, color: '#EF4444', fontWeight: '700' }}>↑ +{diff} pts</Text>;
+                            if (diff < 0) return <Text style={{ fontSize: 10, color: '#22C55E', fontWeight: '700' }}>↓ {diff} pts</Text>;
+                            return null;
+                          })()}
+                        </View>
+                      )}
+
                       {p.lastSession && (
                         <Text style={{ fontSize: 11, color: colors.textMuted }}>
                           {t('sparring.lastSession')} : {formatDateShort(p.lastSession)}
                         </Text>
                       )}
+
+                      {/* Bouton Fiche partenaire */}
+                      <TouchableOpacity
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          impactAsync(ImpactFeedbackStyle.Light);
+                          router.push(`/sparring-partners?partnerName=${encodeURIComponent(p.name)}` as any);
+                        }}
+                        style={{
+                          marginTop: 6,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 5,
+                          alignSelf: 'flex-start',
+                          backgroundColor: partnerHasFiche.has(p.name.trim().toLowerCase())
+                            ? '#8B5CF615'
+                            : '#EF444415',
+                          borderRadius: 8,
+                          paddingHorizontal: 10,
+                          paddingVertical: 5,
+                          borderWidth: 1,
+                          borderColor: partnerHasFiche.has(p.name.trim().toLowerCase())
+                            ? '#8B5CF630'
+                            : '#EF444430',
+                        }}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          {partnerHasFiche.has(p.name.trim().toLowerCase()) ? (
+                            <ClipboardList size={12} color="#8B5CF6" />
+                          ) : (
+                            <Plus size={12} color="#EF4444" />
+                          )}
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: partnerHasFiche.has(p.name.trim().toLowerCase()) ? '#8B5CF6' : '#EF4444' }}>
+                            {partnerHasFiche.has(p.name.trim().toLowerCase()) ? 'Voir la fiche' : 'Créer la fiche'}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
                     </View>
                   </TouchableOpacity>
                 );
@@ -1041,6 +1641,117 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           isDark={isDark}
         />
       )}
+
+      {/* ── MODAL ÉDITION NOM + PHOTO ── */}
+      <Modal visible={editingPartner !== null} transparent animationType="slide" onRequestClose={() => setEditingPartner(null)}>
+        <View style={{ flex: 1 }}>
+          {/* Backdrop — position absolue pour ne pas bloquer les touches sur le contenu */}
+          <TouchableOpacity
+            style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.55)' }}
+            activeOpacity={1}
+            onPress={() => setEditingPartner(null)}
+          />
+          {/* Contenu — KeyboardAvoidingView entoure uniquement le bas */}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1, justifyContent: 'flex-end' }}
+            pointerEvents="box-none"
+          >
+            <View style={{ backgroundColor: colors.backgroundCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '85%' }}>
+              <ScrollView
+                contentContainerStyle={{ padding: 24, paddingBottom: 48 }}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                {/* Header */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text }}>Modifier le partenaire</Text>
+                  <TouchableOpacity onPress={() => setEditingPartner(null)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <X size={22} color={colors.textMuted} />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Photo */}
+                <TouchableOpacity
+                  onPress={pickEditPhoto}
+                  style={{ alignSelf: 'center', marginBottom: 20 }}
+                  activeOpacity={0.8}
+                >
+                  <View style={{
+                    width: 90, height: 90, borderRadius: 45, overflow: 'hidden',
+                    backgroundColor: editPhoto ? 'transparent' : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
+                    borderWidth: 2, borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
+                    alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {editPhoto ? (
+                      <Image source={{ uri: editPhoto }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    ) : (
+                      <Camera size={28} color={colors.textMuted} />
+                    )}
+                  </View>
+                  <View style={{ position: 'absolute', bottom: 0, right: 0, backgroundColor: '#8B5CF6', borderRadius: 12, padding: 5 }}>
+                    <Edit2 size={12} color="#FFF" />
+                  </View>
+                </TouchableOpacity>
+                {editPhoto && (
+                  <TouchableOpacity onPress={() => setEditPhoto(null)} style={{ alignSelf: 'center', marginBottom: 16 }}>
+                    <Text style={{ fontSize: 12, color: '#EF4444', fontWeight: '700' }}>Supprimer la photo</Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* Nom */}
+                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Nom</Text>
+                <TextInput
+                  style={{
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                    borderRadius: 12, borderWidth: 1.5,
+                    borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+                    paddingHorizontal: 16, paddingVertical: 14,
+                    fontSize: 17, fontWeight: '700', color: colors.text, marginBottom: 24,
+                  }}
+                  value={editName}
+                  onChangeText={setEditName}
+                  placeholder="Nom du partenaire"
+                  placeholderTextColor={colors.textMuted}
+                  autoCapitalize="words"
+                  maxLength={50}
+                  returnKeyType="done"
+                />
+
+                {/* Bouton sauvegarder */}
+                <TouchableOpacity
+                  onPress={saveEditPartner}
+                  disabled={isSavingEdit || !editName.trim()}
+                  style={{
+                    backgroundColor: '#8B5CF6', borderRadius: 14, paddingVertical: 16,
+                    alignItems: 'center', opacity: (isSavingEdit || !editName.trim()) ? 0.5 : 1,
+                    marginBottom: 12,
+                  }}
+                >
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#FFF' }}>
+                    {isSavingEdit ? 'Sauvegarde...' : 'Enregistrer'}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Bouton supprimer */}
+                <TouchableOpacity
+                  onPress={confirmDeletePartner}
+                  disabled={isSavingEdit}
+                  style={{
+                    borderRadius: 14, paddingVertical: 14,
+                    alignItems: 'center', borderWidth: 1.5, borderColor: '#EF4444',
+                    opacity: isSavingEdit ? 0.5 : 1,
+                  }}
+                >
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: '#EF4444' }}>
+                    Supprimer ce partenaire
+                  </Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -1058,15 +1769,17 @@ interface PartnerDetailModalProps {
 
 function PartnerDetailModal({ partner, onClose, colors, isDark }: PartnerDetailModalProps) {
   const { t } = useI18n();
+  const router = useRouter();
   const winRate = (partner.wins + partner.losses) > 0
     ? Math.round((partner.wins / (partner.wins + partner.losses)) * 100)
     : null;
 
   // Finitions les plus utilisées contre ce partenaire (legacy + multi-select)
   const subMap: Record<string, { name: string; given: number; taken: number }> = {};
-  const addSub = (name: string, isWin: boolean) => {
-    const key = name.trim().toLowerCase();
-    if (!subMap[key]) subMap[key] = { name: name.trim(), given: 0, taken: 0 };
+  const addSub = (rawName: string, isWin: boolean) => {
+    const display = getMethodDisplayName(rawName.trim());
+    const key = display.toLowerCase();
+    if (!subMap[key]) subMap[key] = { name: display, given: 0, taken: 0 };
     if (isWin) subMap[key].given++;
     else subMap[key].taken++;
   };
@@ -1101,13 +1814,73 @@ function PartnerDetailModal({ partner, onClose, colors, isDark }: PartnerDetailM
             </TouchableOpacity>
           </View>
 
+          {/* Actions rapides */}
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+            <TouchableOpacity
+              onPress={() => {
+                impactAsync(ImpactFeedbackStyle.Light);
+                onClose();
+                setTimeout(() => {
+                  router.push(`/social-share/duel-card?partnerName=${encodeURIComponent(partner.name)}` as any);
+                }, 150);
+              }}
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#EC489915', borderRadius: 10, paddingVertical: 10, borderWidth: 1, borderColor: '#EC489930' }}
+            >
+              <Share2 size={14} color="#EC4899" />
+              <Text style={{ fontSize: 12, fontWeight: '800', color: '#EC4899' }}>Partager le duel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                impactAsync(ImpactFeedbackStyle.Light);
+                onClose();
+                setTimeout(() => {
+                  router.push(`/sparring-partners?partnerName=${encodeURIComponent(partner.name)}` as any);
+                }, 150);
+              }}
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#8B5CF615', borderRadius: 10, paddingVertical: 10, borderWidth: 1, borderColor: '#8B5CF630' }}
+            >
+              <Target size={14} color="#8B5CF6" />
+              <Text style={{ fontSize: 12, fontWeight: '800', color: '#8B5CF6' }}>Profil tactique</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Stats globales */}
           <View style={[styles.partnerStatsRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderRadius: 12 }]}>
             <MiniStat value={partner.totalRounds} label={t('sparring.rounds')} color="#8B5CF6" />
             <MiniStat value={partner.wins} label={t('sparring.victories')} color="#22C55E" />
             <MiniStat value={partner.losses} label={t('sparring.defeats')} color="#EF4444" />
             {winRate !== null && <MiniStat value={`${winRate}%`} label={t('sparring.winRate')} color={winRate >= 60 ? '#22C55E' : winRate >= 40 ? '#F59E0B' : '#EF4444'} />}
+            {partner.avgRating != null && <MiniStat value={`${partner.avgRating}/10`} label="Niveau" color={partner.avgRating <= 3 ? '#22C55E' : partner.avgRating <= 6 ? '#F59E0B' : partner.avgRating <= 8 ? '#EF4444' : '#9333EA'} />}
           </View>
+
+          {/* Évolution de la note */}
+          {partner.ratingHistory && partner.ratingHistory.length >= 2 && (
+            <View style={{ marginBottom: 12 }}>
+              <Text style={[styles.partnerSectionLabel, { color: colors.textMuted }]}>ÉVOLUTION DU NIVEAU</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4, marginTop: 8, height: 50 }}>
+                {partner.ratingHistory.map((h, i) => {
+                  const barColor = h.rating <= 3 ? '#22C55E' : h.rating <= 6 ? '#F59E0B' : h.rating <= 8 ? '#EF4444' : '#9333EA';
+                  return (
+                    <View key={i} style={{ flex: 1, alignItems: 'center', gap: 3 }}>
+                      <Text style={{ fontSize: 8, color: colors.textMuted, fontWeight: '700' }}>{h.rating}</Text>
+                      <View style={{ width: '100%', height: (h.rating / 10) * 36, backgroundColor: barColor, borderRadius: 4, opacity: 0.85 }} />
+                      <Text style={{ fontSize: 7, color: colors.textMuted }} numberOfLines={1}>
+                        {new Date(h.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+              {(() => {
+                const first = partner.ratingHistory[0].rating;
+                const last = partner.ratingHistory[partner.ratingHistory.length - 1].rating;
+                const diff = last - first;
+                if (diff > 0) return <Text style={{ fontSize: 11, color: '#EF4444', fontWeight: '700', marginTop: 4 }}>↑ Adversaire +{diff} pts plus fort qu'au début</Text>;
+                if (diff < 0) return <Text style={{ fontSize: 11, color: '#22C55E', fontWeight: '700', marginTop: 4 }}>↓ Tu progressas : adversaire perçu {Math.abs(diff)} pts moins difficile</Text>;
+                return <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 4 }}>→ Niveau stable</Text>;
+              })()}
+            </View>
+          )}
 
           {/* Top finitions */}
           {topSubs.length > 0 && (
@@ -1167,7 +1940,7 @@ function PartnerDetailModal({ partner, onClose, colors, isDark }: PartnerDetailM
                     <View key={rIdx} style={[styles.roundLine, {
                       borderLeftColor: resultColor(r.result ?? ''),
                     }]}>
-                      {/* En-tête : numéro + résultat */}
+                      {/* En-tête : numéro + résultat + note */}
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <View style={[styles.resultDot, { backgroundColor: resultColor(r.result ?? '') }]}>
                           <Text style={{ fontSize: 9, fontWeight: '800', color: '#FFF' }}>
@@ -1177,13 +1950,25 @@ function PartnerDetailModal({ partner, onClose, colors, isDark }: PartnerDetailM
                         <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>
                           {t('sparring.roundLabel', { num: r.number ?? rIdx + 1 })}
                         </Text>
+                        {r.partnerRating != null && (
+                          <View style={{
+                            flexDirection: 'row', alignItems: 'center', gap: 3,
+                            backgroundColor: r.partnerRating <= 3 ? '#22C55E18' : r.partnerRating <= 6 ? '#F59E0B18' : r.partnerRating <= 8 ? '#EF444418' : '#9333EA18',
+                            borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2,
+                          }}>
+                            <Star size={10} color={r.partnerRating <= 3 ? '#22C55E' : r.partnerRating <= 6 ? '#F59E0B' : r.partnerRating <= 8 ? '#EF4444' : '#9333EA'} fill={r.partnerRating <= 3 ? '#22C55E' : r.partnerRating <= 6 ? '#F59E0B' : r.partnerRating <= 8 ? '#EF4444' : '#9333EA'} />
+                            <Text style={{ fontSize: 10, fontWeight: '800', color: r.partnerRating <= 3 ? '#22C55E' : r.partnerRating <= 6 ? '#F59E0B' : r.partnerRating <= 8 ? '#EF4444' : '#9333EA' }}>
+                              {r.partnerRating}/10
+                            </Text>
+                          </View>
+                        )}
                       </View>
                       {/* Finitions données */}
                       {allGiven.length > 0 && (
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 5 }}>
                           {allGiven.map((m, mi) => (
                             <View key={mi} style={{ backgroundColor: isDark ? 'rgba(22,163,74,0.15)' : 'rgba(22,163,74,0.1)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
-                              <Text style={{ fontSize: 11, color: '#16A34A', fontWeight: '600' }}>{m}</Text>
+                              <Text style={{ fontSize: 11, color: '#16A34A', fontWeight: '600' }}>{getMethodDisplayName(m)}</Text>
                             </View>
                           ))}
                         </View>
@@ -1193,7 +1978,7 @@ function PartnerDetailModal({ partner, onClose, colors, isDark }: PartnerDetailM
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                           {allTaken.map((m, mi) => (
                             <View key={mi} style={{ backgroundColor: isDark ? 'rgba(220,38,38,0.15)' : 'rgba(220,38,38,0.1)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
-                              <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '600' }}>{m}</Text>
+                              <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '600' }}>{getMethodDisplayName(m)}</Text>
                             </View>
                           ))}
                         </View>
@@ -1232,9 +2017,10 @@ interface PodiumSectionProps {
   colors: any;
   isDark: boolean;
   onSelect: (p: PartnerStats) => void;
+  partnerPhotos: Record<string, string>;
 }
 
-function PodiumSection({ partners, accent, colors, isDark, onSelect }: PodiumSectionProps) {
+function PodiumSection({ partners, accent, colors, isDark, onSelect, partnerPhotos }: PodiumSectionProps) {
   const { t } = useI18n();
   const displayOrder = PODIUM_ORDER.filter(i => i < partners.length);
 
@@ -1246,7 +2032,7 @@ function PodiumSection({ partners, accent, colors, isDark, onSelect }: PodiumSec
       {/* ── Bande titre ── */}
       <View style={[styles.podiumTitleBar, { backgroundColor: `${accent}12` }]}>
         <View style={[styles.podiumTitleDot, { backgroundColor: accent }]} />
-        <Text style={[styles.podiumTitle, { color: accent }]}>TOP SPARRING</Text>
+        <Text style={[styles.podiumTitle, { color: accent }]}>TOP SPARRING · PAR VOLUME</Text>
         <View style={[styles.podiumTitleDot, { backgroundColor: accent }]} />
       </View>
 
@@ -1261,6 +2047,7 @@ function PodiumSection({ partners, accent, colors, isDark, onSelect }: PodiumSec
           const isFirst    = rank === 0;
           const avatarColor = nameToColor(p.name);
           const firstName  = p.name.trim().split(/\s+/)[0];
+          const photoUri = partnerPhotos[p.name.trim().toLowerCase()];
           const winRate = (p.wins + p.losses) > 0
             ? Math.round((p.wins / (p.wins + p.losses)) * 100)
             : null;
@@ -1293,27 +2080,32 @@ function PodiumSection({ partners, accent, colors, isDark, onSelect }: PodiumSec
                 <View style={[
                   styles.podiumAvatar,
                   {
-                    backgroundColor: `${avatarColor}18`,
+                    backgroundColor: photoUri ? 'transparent' : `${avatarColor}18`,
                     borderColor: medalColor,
                     borderWidth: isFirst ? 3 : 2,
                     width: isFirst ? 68 : 52,
                     height: isFirst ? 68 : 52,
                     borderRadius: isFirst ? 34 : 26,
+                    overflow: 'hidden',
                   },
                 ]}>
-                  <Text
-                    style={{
-                      fontSize: isFirst ? 16 : 12,
-                      fontWeight: '900',
-                      color: avatarColor,
-                      paddingHorizontal: 4,
-                    }}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.5}
-                  >
-                    {firstName}
-                  </Text>
+                  {photoUri ? (
+                    <Image source={{ uri: photoUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                  ) : (
+                    <Text
+                      style={{
+                        fontSize: isFirst ? 16 : 12,
+                        fontWeight: '900',
+                        color: avatarColor,
+                        paddingHorizontal: 4,
+                      }}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.5}
+                    >
+                      {firstName}
+                    </Text>
+                  )}
                 </View>
                 {/* Badge médaille rond */}
                 <View style={[styles.podiumMedalBadge, {

@@ -38,7 +38,6 @@ const EMPTY_STATE_CONFIG = {
     title: 'Commence ton aventure',
     message: 'Ajoute ta première séance d\'entraînement pour suivre ta progression',
     actionLabel: 'Ajouter une séance',
-    emoji: '🗓️',
   },
   programme: {
     icon: Clock,
@@ -46,7 +45,6 @@ const EMPTY_STATE_CONFIG = {
     title: 'Planifie ta semaine',
     message: 'Crée ton emploi du temps hebdomadaire pour rester régulier',
     actionLabel: 'Créer mon planning',
-    emoji: '📋',
   },
   journal: {
     icon: BookOpen,
@@ -54,7 +52,6 @@ const EMPTY_STATE_CONFIG = {
     title: 'Documente ta progression',
     message: 'Enregistre tes progrès, compétences et benchmarks personnels',
     actionLabel: 'Ouvrir le carnet',
-    emoji: '📖',
   },
   clubs: {
     icon: Users,
@@ -62,7 +59,6 @@ const EMPTY_STATE_CONFIG = {
     title: 'Ajoute ton club',
     message: 'Enregistre tes clubs d\'entraînement pour mieux organiser tes séances',
     actionLabel: 'Ajouter un club',
-    emoji: '',
   },
   competitions: {
     icon: Trophy,
@@ -70,7 +66,6 @@ const EMPTY_STATE_CONFIG = {
     title: 'Trouve ta prochaine compétition',
     message: 'Fixe-toi un objectif et inscris-toi à ton premier événement',
     actionLabel: 'Découvrir les événements',
-    emoji: '',
   },
 };
 

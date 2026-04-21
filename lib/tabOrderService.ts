@@ -18,14 +18,16 @@ export interface TabItem {
   enabled: boolean;
 }
 
+// NOTE: les labels ici sont des clés de fallback seulement.
+// L'affichage réel utilise t('tabLayout.*') depuis lib/i18n/fr.json
 export const DEFAULT_TAB_ORDER: TabItem[] = [
-  { id: 'index', label: 'Accueil', icon: 'Home', order: 0, side: 'left', enabled: true },
-  { id: 'stats', label: 'Stats', icon: 'BarChart2', order: 1, side: 'left', enabled: true },
-  { id: 'carnet', label: 'Carnet', icon: 'BookOpen', order: 2, side: 'left', enabled: true },
-  { id: 'planning', label: 'Planning', icon: 'Calendar', order: 0, side: 'right', enabled: true },
-  { id: 'more', label: 'Outils', icon: 'Wrench', order: 1, side: 'right', enabled: true },
-  { id: 'profile', label: 'Profil', icon: 'User', order: 2, side: 'right', enabled: true },
-  { id: 'settings', label: 'Reglages', icon: 'Settings', order: 3, side: 'right', enabled: true },
+  { id: 'index',    label: 'Accueil',   icon: 'Home',     order: 0, side: 'left',  enabled: true },
+  { id: 'stats',    label: 'Stats',     icon: 'BarChart2', order: 1, side: 'left', enabled: true },
+  { id: 'carnet',   label: 'Carnet',    icon: 'BookOpen', order: 2, side: 'left',  enabled: true },
+  { id: 'planning', label: 'Planning',  icon: 'Calendar', order: 0, side: 'right', enabled: true },
+  { id: 'more',     label: 'Outils',    icon: 'Wrench',   order: 1, side: 'right', enabled: true },
+  // { id: 'profile' } — supprimé : onglet inexistant dans la navigation
+  { id: 'settings', label: 'Réglages',  icon: 'Settings', order: 2, side: 'right', enabled: true },
 ];
 
 export const getTabOrder = async (): Promise<TabItem[]> => {

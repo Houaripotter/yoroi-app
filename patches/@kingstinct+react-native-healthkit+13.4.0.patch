@@ -1,0 +1,78 @@
+diff --git a/node_modules/@kingstinct/react-native-healthkit/lib/commonjs/modules.js b/node_modules/@kingstinct/react-native-healthkit/lib/commonjs/modules.js
+index aaba739..37fc4e9 100644
+--- a/node_modules/@kingstinct/react-native-healthkit/lib/commonjs/modules.js
++++ b/node_modules/@kingstinct/react-native-healthkit/lib/commonjs/modules.js
+@@ -1,14 +1,25 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.StateOfMind = exports.HeartbeatSeries = exports.Electrocardiograms = exports.CorrelationTypes = exports.CategoryTypes = exports.QuantityTypes = exports.Characteristics = exports.Workouts = exports.Medication = exports.Core = void 0;
+-const react_native_nitro_modules_1 = require("react-native-nitro-modules");
+-exports.Core = react_native_nitro_modules_1.NitroModules.createHybridObject('CoreModule');
+-exports.Medication = react_native_nitro_modules_1.NitroModules.createHybridObject('MedicationModule');
+-exports.Workouts = react_native_nitro_modules_1.NitroModules.createHybridObject('WorkoutsModule');
+-exports.Characteristics = react_native_nitro_modules_1.NitroModules.createHybridObject('CharacteristicTypeModule');
+-exports.QuantityTypes = react_native_nitro_modules_1.NitroModules.createHybridObject('QuantityTypeModule');
+-exports.CategoryTypes = react_native_nitro_modules_1.NitroModules.createHybridObject('CategoryTypeModule');
+-exports.CorrelationTypes = react_native_nitro_modules_1.NitroModules.createHybridObject('CorrelationTypeModule');
+-exports.Electrocardiograms = react_native_nitro_modules_1.NitroModules.createHybridObject('ElectrocardiogramModule');
+-exports.HeartbeatSeries = react_native_nitro_modules_1.NitroModules.createHybridObject('HeartbeatSeriesModule');
+-exports.StateOfMind = react_native_nitro_modules_1.NitroModules.createHybridObject('StateOfMindModule');
++// Patch Yoroi: NitroModules.createHybridObject() throws at top-level if NitroModules
++// native module is not registered (prebuilt RN 0.83). Wrap in try/catch so the mock
++// path in healthKit.wrapper.ts is used instead.
++let NitroModules_safe = null;
++try {
++  const m = require("react-native-nitro-modules");
++  NitroModules_safe = m && m.NitroModules ? m.NitroModules : null;
++} catch (_e) { NitroModules_safe = null; }
++function safeCreate(name) {
++  if (!NitroModules_safe) return null;
++  try { return NitroModules_safe.createHybridObject(name); } catch (_e) { return null; }
++}
++exports.Core = safeCreate('CoreModule');
++exports.Medication = safeCreate('MedicationModule');
++exports.Workouts = safeCreate('WorkoutsModule');
++exports.Characteristics = safeCreate('CharacteristicTypeModule');
++exports.QuantityTypes = safeCreate('QuantityTypeModule');
++exports.CategoryTypes = safeCreate('CategoryTypeModule');
++exports.CorrelationTypes = safeCreate('CorrelationTypeModule');
++exports.Electrocardiograms = safeCreate('ElectrocardiogramModule');
++exports.HeartbeatSeries = safeCreate('HeartbeatSeriesModule');
++exports.StateOfMind = safeCreate('StateOfMindModule');
+diff --git a/node_modules/@kingstinct/react-native-healthkit/lib/module/modules.js b/node_modules/@kingstinct/react-native-healthkit/lib/module/modules.js
+index 2935326..2a3e924 100644
+--- a/node_modules/@kingstinct/react-native-healthkit/lib/module/modules.js
++++ b/node_modules/@kingstinct/react-native-healthkit/lib/module/modules.js
+@@ -1,11 +1,21 @@
+-import { NitroModules } from 'react-native-nitro-modules';
+-export const Core = NitroModules.createHybridObject('CoreModule');
+-export const Medication = NitroModules.createHybridObject('MedicationModule');
+-export const Workouts = NitroModules.createHybridObject('WorkoutsModule');
+-export const Characteristics = NitroModules.createHybridObject('CharacteristicTypeModule');
+-export const QuantityTypes = NitroModules.createHybridObject('QuantityTypeModule');
+-export const CategoryTypes = NitroModules.createHybridObject('CategoryTypeModule');
+-export const CorrelationTypes = NitroModules.createHybridObject('CorrelationTypeModule');
+-export const Electrocardiograms = NitroModules.createHybridObject('ElectrocardiogramModule');
+-export const HeartbeatSeries = NitroModules.createHybridObject('HeartbeatSeriesModule');
+-export const StateOfMind = NitroModules.createHybridObject('StateOfMindModule');
++// Patch Yoroi: NitroModules.createHybridObject() throws at top-level if NitroModules
++// native module is not registered (prebuilt RN 0.83). Wrap in try/catch.
++let NitroModules_safe = null;
++try {
++  const m = require('react-native-nitro-modules');
++  NitroModules_safe = m && m.NitroModules ? m.NitroModules : null;
++} catch (_e) { NitroModules_safe = null; }
++function safeCreate(name) {
++  if (!NitroModules_safe) return null;
++  try { return NitroModules_safe.createHybridObject(name); } catch (_e) { return null; }
++}
++export const Core = safeCreate('CoreModule');
++export const Medication = safeCreate('MedicationModule');
++export const Workouts = safeCreate('WorkoutsModule');
++export const Characteristics = safeCreate('CharacteristicTypeModule');
++export const QuantityTypes = safeCreate('QuantityTypeModule');
++export const CategoryTypes = safeCreate('CategoryTypeModule');
++export const CorrelationTypes = safeCreate('CorrelationTypeModule');
++export const Electrocardiograms = safeCreate('ElectrocardiogramModule');
++export const HeartbeatSeries = safeCreate('HeartbeatSeriesModule');
++export const StateOfMind = safeCreate('StateOfMindModule');

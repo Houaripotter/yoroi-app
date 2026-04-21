@@ -31,6 +31,7 @@ import {
   Minus,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { getAllWeights, getMeasurements, deleteWeight, deleteMeasurementRecord, addWeight, addMeasurementRecord, Weight, Measurement } from '@/lib/database';
 import { getAllBodyCompositions, deleteBodyComposition, BodyComposition } from '@/lib/bodyComposition';
@@ -99,15 +100,15 @@ function isoToFr(iso: string): string {
 // ============================================
 
 const COLUMNS = [
-  { key: 'weight',    label: 'Poids',      unit: 'kg',  width: 72 },
-  { key: 'fat',       label: 'MG',         unit: '%',   width: 64 },
-  { key: 'muscle',    label: 'MM',         unit: '%',   width: 64 },
-  { key: 'water',     label: 'Eau',        unit: '%',   width: 60 },
-  { key: 'chest',     label: 'Poitrine',   unit: 'cm',  width: 80 },
-  { key: 'waist',     label: 'Taille',     unit: 'cm',  width: 72 },
-  { key: 'hips',      label: 'Hanches',    unit: 'cm',  width: 80 },
-  { key: 'left_arm',  label: 'Bras G',     unit: 'cm',  width: 72 },
-  { key: 'right_arm', label: 'Bras D',     unit: 'cm',  width: 72 },
+  { key: 'weight',    labelKey: 'colWeight',    unit: 'kg',  width: 72 },
+  { key: 'fat',       labelKey: 'colFat',       unit: '%',   width: 64 },
+  { key: 'muscle',    labelKey: 'colMuscle',    unit: '%',   width: 64 },
+  { key: 'water',     labelKey: 'colWater',     unit: '%',   width: 60 },
+  { key: 'chest',     labelKey: 'colChest',     unit: 'cm',  width: 80 },
+  { key: 'waist',     labelKey: 'colWaist',     unit: 'cm',  width: 72 },
+  { key: 'hips',      labelKey: 'colHips',      unit: 'cm',  width: 80 },
+  { key: 'left_arm',  labelKey: 'colLeftArm',   unit: 'cm',  width: 72 },
+  { key: 'right_arm', labelKey: 'colRightArm',  unit: 'cm',  width: 72 },
 ];
 
 const DATE_COL_WIDTH = 88;
@@ -124,6 +125,7 @@ interface AddModalProps {
 }
 
 function AddModal({ visible, colors, onClose, onSave }: AddModalProps) {
+  const { t } = useI18n();
   const today = new Date().toLocaleDateString('fr-FR');
   const [date, setDate] = useState(today);
   const fields = COLUMNS.map(c => c.key);
@@ -140,10 +142,10 @@ function AddModal({ visible, colors, onClose, onSave }: AddModalProps) {
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.modalOverlay}>
         <View style={[styles.modalBox, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Nouvelle entrée</Text>
+          <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('companion.newEntry')}</Text>
 
           <ScrollView showsVerticalScrollIndicator={false}>
-            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>Date (JJ/MM/AAAA)</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{t('companion.dateLabel')}</Text>
             <TextInput
               style={[styles.fieldInput, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.background }]}
               value={date}
@@ -155,7 +157,7 @@ function AddModal({ visible, colors, onClose, onSave }: AddModalProps) {
             {COLUMNS.map(col => (
               <View key={col.key}>
                 <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
-                  {col.label} ({col.unit})
+                  {t(`companion.${col.labelKey}`)} ({col.unit})
                 </Text>
                 <TextInput
                   style={[styles.fieldInput, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.background }]}
@@ -174,13 +176,13 @@ function AddModal({ visible, colors, onClose, onSave }: AddModalProps) {
               style={[styles.modalBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
               onPress={onClose}
             >
-              <Text style={[styles.modalBtnText, { color: colors.textMuted }]}>Annuler</Text>
+              <Text style={[styles.modalBtnText, { color: colors.textMuted }]}>{t('companion.cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.modalBtn, { backgroundColor: colors.accent }]}
               onPress={handleSave}
             >
-              <Text style={[styles.modalBtnText, { color: '#FFF' }]}>Enregistrer</Text>
+              <Text style={[styles.modalBtnText, { color: '#FFF' }]}>{t('companion.save')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -198,6 +200,7 @@ type TabType = 'table' | 'charts';
 export default function CompanionScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const { showPopup, PopupComponent } = useCustomPopup();
 
@@ -230,7 +233,8 @@ export default function CompanionScreen() {
         byDate[m.date].measurement = m;
       }
       for (const c of compositions) {
-        const dateKey = c.date.split('T')[0];
+        const dateKey = c.date?.split('T')[0] ?? '';
+        if (!dateKey) continue;
         if (!byDate[dateKey]) byDate[dateKey] = { date: dateKey };
         byDate[dateKey].composition = c;
       }
@@ -244,7 +248,15 @@ export default function CompanionScreen() {
     }
   }, []);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      await loadData();
+      if (!mounted) return;
+    };
+    load();
+    return () => { mounted = false; };
+  }, []);
 
   // Masquer le loader après 2 secondes maximum
   useEffect(() => {
@@ -259,12 +271,12 @@ export default function CompanionScreen() {
   const handleDelete = useCallback((row: MergedRow) => {
     impactAsync(ImpactFeedbackStyle.Medium);
     showPopup(
-      'Supprimer cette entrée',
-      `${isoToFr(row.date)} — Cette action est irréversible.`,
+      t('companion.deleteTitle'),
+      t('companion.deleteMsg').replace('{{date}}', isoToFr(row.date)),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('companion.cancelBtn'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('companion.deleteBtn'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -277,7 +289,7 @@ export default function CompanionScreen() {
               await loadData();
             } catch (err) {
               logger.error('[Companion] Erreur suppression:', err);
-              showPopup('Erreur', 'Impossible de supprimer cette entrée', [{ text: 'OK', style: 'primary' }]);
+              showPopup(t('companion.errorTitle'), t('companion.errorDelete'), [{ text: 'OK', style: 'primary' }]);
             }
           },
         },
@@ -338,7 +350,7 @@ export default function CompanionScreen() {
       await loadData();
     } catch (err) {
       logger.error('[Companion] Erreur ajout:', err);
-      showPopup('Erreur', "Impossible d'enregistrer l'entrée", [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('companion.errorTitle'), t('companion.errorSave'), [{ text: 'OK', style: 'primary' }]);
     }
   }, [loadData, showPopup]);
 
@@ -354,7 +366,7 @@ export default function CompanionScreen() {
       if (ok) notificationAsync(NotificationFeedbackType.Success);
     } catch (err) {
       logger.error('[Companion] Erreur export:', err);
-      showPopup('Erreur', "Impossible d'exporter les données", [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('companion.errorTitle'), t('companion.errorExport'), [{ text: 'OK', style: 'primary' }]);
     } finally {
       setExporting(false);
     }
@@ -395,11 +407,11 @@ export default function CompanionScreen() {
   const renderTableHeader = () => (
     <View style={[styles.tableRow, { backgroundColor: colors.backgroundCard, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
       <View style={[styles.dateCell, styles.headerCell]}>
-        <Text style={[styles.headerText, { color: colors.textMuted }]}>Date</Text>
+        <Text style={[styles.headerText, { color: colors.textMuted }]}>{t('companion.dateCol')}</Text>
       </View>
       {COLUMNS.map(col => (
         <View key={col.key} style={[styles.dataCell, styles.headerCell, { width: col.width }]}>
-          <Text style={[styles.headerText, { color: colors.textMuted }]}>{col.label}</Text>
+          <Text style={[styles.headerText, { color: colors.textMuted }]}>{t(`companion.${col.labelKey}`)}</Text>
           <Text style={[styles.headerUnit, { color: colors.textMuted + '80' }]}>{col.unit}</Text>
         </View>
       ))}
@@ -455,7 +467,7 @@ export default function CompanionScreen() {
         <View style={styles.emptyCharts}>
           <BarChart2 size={40} color={colors.textMuted + '40'} />
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            Ajoute au moins 2 entrées de poids pour voir les graphiques
+            {t('companion.minEntries')}
           </Text>
         </View>
       );
@@ -465,9 +477,9 @@ export default function CompanionScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
         {/* Graphique poids */}
         <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>Évolution du poids</Text>
+          <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>{t('companion.weightEvolution')}</Text>
           <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-            {weightData.length} mesure{weightData.length > 1 ? 's' : ''}
+            {weightData.length > 1 ? t('companion.measuresPlural').replace('{{n}}', String(weightData.length)) : t('companion.measures').replace('{{n}}', String(weightData.length))}
           </Text>
           <LineChart
             data={weightData}
@@ -494,16 +506,16 @@ export default function CompanionScreen() {
         {/* Graphique MG/MM */}
         {fatData.length >= 2 && (
           <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard }]}>
-            <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>Composition corporelle</Text>
+            <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>{t('companion.bodyComposition')}</Text>
             <View style={styles.chartLegend}>
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: FAT_COLOR }]} />
-                <Text style={[styles.legendText, { color: colors.textMuted }]}>Masse grasse %</Text>
+                <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('companion.fatPercent')}</Text>
               </View>
               {muscleData.length >= 2 && (
                 <View style={styles.legendItem}>
                   <View style={[styles.legendDot, { backgroundColor: MUSCLE_COLOR }]} />
-                  <Text style={[styles.legendText, { color: colors.textMuted }]}>Masse musculaire %</Text>
+                  <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('companion.musclePercent')}</Text>
                 </View>
               )}
             </View>
@@ -552,7 +564,7 @@ export default function CompanionScreen() {
           <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={2.5} />
         </TouchableOpacity>
 
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Mes données</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('companion.myData')}</Text>
 
         <View style={styles.headerActions}>
           <TouchableOpacity
@@ -579,12 +591,12 @@ export default function CompanionScreen() {
         <View style={[styles.statsRow, { backgroundColor: colors.backgroundCard, borderBottomColor: colors.border }]}>
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{rows.length}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>entrées</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('companion.statEntries')}</Text>
           </View>
           {lastWeight !== undefined && (
             <View style={styles.statItem}>
               <Text style={[styles.statValue, { color: colors.textPrimary }]}>{lastWeight} kg</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>dernier poids</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('companion.statLastWeight')}</Text>
             </View>
           )}
           {weightDiff !== null && Math.abs(weightDiff) > 0.1 && (
@@ -598,7 +610,7 @@ export default function CompanionScreen() {
                   {weightDiff > 0 ? '+' : ''}{weightDiff.toFixed(1)} kg
                 </Text>
               </View>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>total</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('companion.statTotal')}</Text>
             </View>
           )}
         </View>
@@ -612,7 +624,7 @@ export default function CompanionScreen() {
         >
           <Table size={16} color={tab === 'table' ? colors.accent : colors.textMuted} strokeWidth={2} />
           <Text style={[styles.tabText, { color: tab === 'table' ? colors.accent : colors.textMuted }]}>
-            Tableau
+            {t('companion.tableTab')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -621,7 +633,7 @@ export default function CompanionScreen() {
         >
           <BarChart2 size={16} color={tab === 'charts' ? colors.accent : colors.textMuted} strokeWidth={2} />
           <Text style={[styles.tabText, { color: tab === 'charts' ? colors.accent : colors.textMuted }]}>
-            Graphiques
+            {t('companion.chartsTab')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -634,9 +646,9 @@ export default function CompanionScreen() {
       ) : rows.length === 0 ? (
         <View style={styles.empty}>
           <Table size={48} color={colors.textMuted + '40'} strokeWidth={1.5} />
-          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Aucune donnée</Text>
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('companion.noData')}</Text>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            Ajoute ton premier poids avec le bouton +{'\n'}ou importe un fichier CSV
+            {t('companion.noDataMsg')}
           </Text>
         </View>
       ) : tab === 'table' ? (

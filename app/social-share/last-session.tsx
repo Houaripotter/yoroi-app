@@ -31,7 +31,10 @@ import {
 } from 'lucide-react-native';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
+import { getMethodDisplayName } from '@/components/BJJBodyMap';
 import { captureRef } from 'react-native-view-shot';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -44,9 +47,10 @@ import { getCurrentRank, rankToLevel } from '@/lib/ranks';
 import { getUnifiedPoints } from '@/lib/gamification';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { SessionCard } from '@/components/social-cards/SessionCard';
+import { SessionCard, CombatRoundData } from '@/components/social-cards/SessionCard';
 import { parseExercisesFromNotes } from '@/lib/exerciseParser';
 import { useI18n } from '@/lib/I18nContext';
+import { Celebration } from '@/components/Celebration';
 
 const GOLD_COLOR = '#D4AF37';
 
@@ -79,6 +83,8 @@ export default function LastSessionScreen() {
   const [userRank, setUserRank] = useState<string>('Ashigaru');
   const [userLevel, setUserLevel] = useState<number>(1);
   const [optionDetails, setOptionDetails] = useState<any[]>([]);
+  const [combatRoundsData, setCombatRoundsData] = useState<CombatRoundData[] | undefined>(undefined);
+  const [combatCelebration, setCombatCelebration] = useState<{ visible: boolean; title: string; subtitle: string; icon: string } | null>(null);
 
   // Toggles
   const [showDate, setShowDate] = useState(true);
@@ -138,24 +144,35 @@ export default function LastSessionScreen() {
           setLastTraining(currentTraining);
 
           if (currentTraining) {
-            // 1. Parser depuis les notes texte
             let parsedOptions: any[] = [];
-            if (currentTraining.notes) {
-              parsedOptions = parseExercisesFromNotes(currentTraining.notes);
+
+            // 1. Exercices structurés de la DB (priorité — données complètes avec séries)
+            if (currentTraining.exercises && currentTraining.exercises.length > 0) {
+              parsedOptions = currentTraining.exercises.flatMap((ex: any) => {
+                // Si on a les séries détaillées, afficher chaque série
+                if (Array.isArray(ex.setsData) && ex.setsData.length > 0) {
+                  return ex.setsData.map((set: any, i: number) => ({
+                    label: i === 0 ? (ex.name ?? 'Exercice') : '',
+                    weight: (set.weight ?? 0) > 0 ? set.weight.toString() : undefined,
+                    reps: (set.reps ?? 0) > 0 ? set.reps.toString() : undefined,
+                  }));
+                }
+                return [{
+                  label: ex.name ?? 'Exercice',
+                  weight: (ex.weight ?? 0) > 0 ? ex.weight.toString() : undefined,
+                  reps: (ex.reps ?? 0) > 0 ? ex.reps.toString() : undefined,
+                  sets: (ex.sets ?? 0) > 1 ? ex.sets.toString() : undefined,
+                  distance: ex.distance ? ex.distance.toString() : undefined,
+                  calories: ex.calories ? ex.calories.toString() : undefined,
+                  pace: ex.pace || undefined,
+                  stairs: ex.stairs ? ex.stairs.toString() : undefined,
+                }];
+              });
             }
 
-            // 2. Si pas d'exercices dans les notes, utiliser les exercices structurés de la DB
-            if (parsedOptions.length === 0 && currentTraining.exercises && currentTraining.exercises.length > 0) {
-              parsedOptions = currentTraining.exercises.map(ex => ({
-                label: ex.name ?? 'Exercice',
-                weight: (ex.weight ?? 0) > 0 ? ex.weight.toString() : undefined,
-                reps: (ex.reps ?? 0) > 0 ? ex.reps.toString() : undefined,
-                sets: (ex.sets ?? 0) > 1 ? ex.sets.toString() : undefined,
-                distance: ex.distance ? ex.distance.toString() : undefined,
-                calories: ex.calories ? ex.calories.toString() : undefined,
-                pace: ex.pace || undefined,
-                stairs: ex.stairs ? ex.stairs.toString() : undefined,
-              }));
+            // 2. Fallback : parser les notes texte (si aucun exercice en DB)
+            if (parsedOptions.length === 0 && currentTraining.notes) {
+              parsedOptions = parseExercisesFromNotes(currentTraining.notes);
             }
 
             // 3. Pour les sports de combat : parser les combat_rounds si aucun exercice
@@ -164,15 +181,138 @@ export default function LastSessionScreen() {
                 const rawRounds = (currentTraining as any).combat_rounds;
                 const rounds = typeof rawRounds === 'string' ? JSON.parse(rawRounds) : rawRounds;
                 if (Array.isArray(rounds) && rounds.length > 0) {
-                  parsedOptions = rounds.map((r: any) => {
-                    const label = r.partner ? `Round ${r.number} vs ${r.partner}` : `Round ${r.number}`;
-                    const result = r.result ? (r.result === 'win' ? 'Victoire' : r.result === 'loss' ? 'Défaite' : 'Nul') : undefined;
-                    return { label, duration: r.duration?.toString(), pace: result };
+                  const rows: typeof parsedOptions = [];
+                  const nb = rounds.length;
+                  // Seuils d'affichage :
+                  // 1-2 rounds → détail complet
+                  // 3 rounds   → sans notes de round
+                  // 4+ rounds  → 1 ligne compacte par round + bilan
+                  const mode: 'full' | 'medium' | 'compact' =
+                    nb <= 2 ? 'full' : nb === 3 ? 'medium' : 'compact';
+
+                  rounds.forEach((r: any) => {
+                    const resultEmoji = r.result === 'win' ? 'V' : r.result === 'loss' ? 'D' : r.result === 'draw' ? 'N' : '';
+                    const resultLabel = r.result === 'win' ? 'V' : r.result === 'loss' ? 'D' : r.result === 'draw' ? 'N' : '';
+                    const partner = r.partner ? ` vs ${r.partner}` : '';
+
+                    if (mode === 'compact') {
+                      // ── Mode compact : 1 ligne header + 1 ligne techniques ──
+                      const scorePart = (r.pointsFor ?? 0) > 0 || (r.pointsAgainst ?? 0) > 0
+                        ? `${r.pointsFor ?? 0}-${r.pointsAgainst ?? 0}pts` : '';
+                      const givenSub = Array.isArray(r.methodsGiven) && r.methodsGiven.length > 0
+                        ? `↗${getMethodDisplayName(r.methodsGiven[0])}` : '';
+                      const takenSub = Array.isArray(r.methodsTaken) && r.methodsTaken.length > 0
+                        ? `↘${getMethodDisplayName(r.methodsTaken[0])}` : '';
+                      const rightParts = [resultEmoji ? `${resultEmoji}${resultLabel}` : '', scorePart, givenSub, takenSub].filter(Boolean);
+                      rows.push({ label: `R${r.number}${partner}`, pace: rightParts.join(' ') || undefined });
+                      // Techniques utilisées (condensé)
+                      const techLabels: string[] = [];
+                      if (Array.isArray(r.usedTechniques) && r.usedTechniques.length > 0) {
+                        r.usedTechniques.slice(0, 3).forEach((t: any) => techLabels.push(`· ${t.label}`));
+                        if (r.usedTechniques.length > 3) techLabels.push(`+${r.usedTechniques.length - 3}`);
+                      }
+                      if (techLabels.length > 0) {
+                        rows.push({ label: `  ${techLabels.join('  ')}` });
+                      }
+                    } else {
+                      // ── Mode full / medium ──
+                      const label = r.partner ? `Round ${r.number}  vs ${r.partner}` : `Round ${r.number}`;
+                      rows.push({ label, pace: resultEmoji ? `${resultEmoji} ${r.result === 'win' ? 'Victoire' : r.result === 'loss' ? 'Défaite' : 'Nul'}` : undefined });
+
+                      if (r.partnerRating) {
+                        const ratingLabel = r.partnerRating <= 2 ? 'Débutant' : r.partnerRating <= 4 ? 'Intermédiaire' : r.partnerRating <= 6 ? 'Bon niveau' : r.partnerRating <= 8 ? 'Avancé' : r.partnerRating === 9 ? 'Expert' : 'Élite';
+                        rows.push({ label: `  Niveau adv.`, pace: `★ ${r.partnerRating}/10 · ${ratingLabel}` });
+                      }
+
+                      if (r.roundIntensity) {
+                        const intensityMap: Record<string, string> = { guerre: 'Guerre', technique: 'Technique', detendu: 'Détendu' };
+                        rows.push({ label: `  ${intensityMap[r.roundIntensity] ?? r.roundIntensity}` });
+                      }
+
+                      if ((r.pointsFor ?? 0) > 0 || (r.pointsAgainst ?? 0) > 0) {
+                        rows.push({ label: `  Score`, pace: `${r.pointsFor ?? 0} – ${r.pointsAgainst ?? 0} pts` });
+                      }
+
+                      if (Array.isArray(r.methodsGiven) && r.methodsGiven.length > 0) {
+                        r.methodsGiven.forEach((m: string) => rows.push({ label: `  ↗ ${m}`, pace: 'donné' }));
+                      }
+                      if (Array.isArray(r.methodsTaken) && r.methodsTaken.length > 0) {
+                        r.methodsTaken.forEach((m: string) => rows.push({ label: `  ↘ ${m}`, pace: 'subi' }));
+                      }
+
+                      if (Array.isArray(r.usedTechniques) && r.usedTechniques.length > 0) {
+                        r.usedTechniques.forEach((t: any) => {
+                          rows.push({ label: `  · ${t.label}`, reps: t.count > 1 ? `×${t.count}` : undefined });
+                        });
+                      }
+
+                      // Notes uniquement en mode full
+                      if (mode === 'full' && r.notes?.trim()) {
+                        rows.push({ label: `  "${r.notes.trim()}"` });
+                      }
+                    }
                   });
+
+                  // ── Bilan global ──
+                  const wins = rounds.filter((r: any) => r.result === 'win').length;
+                  const losses = rounds.filter((r: any) => r.result === 'loss').length;
+                  const draws = rounds.filter((r: any) => r.result === 'draw').length;
+                  const totalFor = rounds.reduce((a: number, r: any) => a + (r.pointsFor ?? 0), 0);
+                  const totalAgainst = rounds.reduce((a: number, r: any) => a + (r.pointsAgainst ?? 0), 0);
+                  const hasResults = wins + losses + draws > 0;
+                  const hasPoints = totalFor > 0 || totalAgainst > 0;
+
+                  if (nb > 1 && (hasResults || hasPoints)) {
+                    const bilanParts: string[] = [];
+                    if (hasResults) bilanParts.push(`${wins}V ${losses}D ${draws}N`);
+                    if (hasPoints) bilanParts.push(`${totalFor} – ${totalAgainst} pts`);
+                    rows.push({ label: `BILAN`, pace: bilanParts.join('  ·  ') });
+                  }
+
+                  parsedOptions = rows;
+                  // Stocker les données brutes pour le rendu visuel combat
+                  setCombatRoundsData(rounds as CombatRoundData[]);
+
+                  // ── Détection victoire impressionnante ──
+                  const getRatingLabel = (r: number) => r <= 2 ? 'Débutant' : r <= 4 ? 'Intermédiaire' : r <= 6 ? 'Bon niveau' : r <= 8 ? 'Avancé' : r === 9 ? 'Expert' : 'Élite';
+                  const winsVsRated = rounds.filter((r: any) => r.result === 'win' && (r.partnerRating ?? 0) >= 7);
+                  const bestWin = winsVsRated.reduce((best: any, r: any) => (!best || r.partnerRating > best.partnerRating ? r : best), null);
+                  const totalWins = rounds.filter((r: any) => r.result === 'win').length;
+                  const totalRounds = rounds.length;
+
+                  if (bestWin?.partnerRating >= 9) {
+                    setCombatCelebration({
+                      visible: true,
+                      icon: '🏆',
+                      title: bestWin.partnerRating === 10 ? 'Élite battu !' : 'Expert dominé !',
+                      subtitle: bestWin.partner
+                        ? `Tu as battu ${bestWin.partner} noté ${bestWin.partnerRating}/10\nLes champions se révèlent dans l'adversité !`
+                        : `Victoire contre un adversaire ${getRatingLabel(bestWin.partnerRating)} (${bestWin.partnerRating}/10) !`,
+                    });
+                  } else if (bestWin?.partnerRating >= 7) {
+                    setCombatCelebration({
+                      visible: true,
+                      icon: '🔥',
+                      title: 'Adversaire fort battu !',
+                      subtitle: bestWin.partner
+                        ? `Victoire sur ${bestWin.partner} noté ${bestWin.partnerRating}/10\nTu progresses à grande vitesse !`
+                        : `Victoire contre un adversaire ${getRatingLabel(bestWin.partnerRating)} (${bestWin.partnerRating}/10) !`,
+                    });
+                  } else if (totalWins > 0 && totalRounds >= 3 && totalWins === totalRounds) {
+                    setCombatCelebration({
+                      visible: true,
+                      icon: '⚔️',
+                      title: 'Séance parfaite !',
+                      subtitle: `${totalWins} victoires sur ${totalRounds} rounds\nAucune défaite — domination totale !`,
+                    });
+                  }
                 }
               } catch {
                 // combat_rounds malformé — ignorer
+                setCombatRoundsData(undefined);
               }
+            } else {
+              setCombatRoundsData(undefined);
             }
 
             setOptionDetails(parsedOptions);
@@ -244,9 +384,9 @@ export default function LastSessionScreen() {
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
         impactAsync(ImpactFeedbackStyle.Light);
-        setBackgroundImage(asset.uri);
+        const resized = await resizeForCard(asset.uri);
+        setBackgroundImage(resized);
         setBackgroundType('photo');
-        // Détecter si l'image est en paysage (largeur > hauteur)
         const isLandscape = (asset.width || 0) > (asset.height || 0);
         setIsLandscapeImage(isLandscape);
       }
@@ -256,25 +396,40 @@ export default function LastSessionScreen() {
     }
   };
 
+  // Réduit toute image à 1200px max — résout le bug d'affichage des photos 12MP+ iPhone
+  const resizeForCard = async (uri: string): Promise<string> => {
+    try {
+      const result = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 1200 } }],
+        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      return result.uri;
+    } catch {
+      return uri; // fallback sur l'original si le resize échoue
+    }
+  };
+
   const pickImage = async () => {
     try {
       const { status } = await requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
+      if ((status as string) !== 'granted' && (status as string) !== 'limited') {
         showPopup('Permission refusée', 'Autorise l\'accès à tes photos pour ajouter une image.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       const result = await launchImageLibraryAsync({
-        allowsEditing: true,
-        quality: 0.9,
+        allowsEditing: false,
+        quality: 1,
+        selectionLimit: 1,
       });
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
         impactAsync(ImpactFeedbackStyle.Light);
-        setBackgroundImage(asset.uri);
+        const resized = await resizeForCard(asset.uri);
+        setBackgroundImage(resized);
         setBackgroundType('photo');
-        // Détecter si l'image est en paysage (largeur > hauteur)
         const isLandscape = (asset.width || 0) > (asset.height || 0);
         setIsLandscapeImage(isLandscape);
       }
@@ -333,7 +488,7 @@ export default function LastSessionScreen() {
 
     try {
       const { status } = await requestPermissionsAsync();
-      if (status !== 'granted') {
+      if ((status as string) !== 'granted' && (status as string) !== 'limited') {
         showPopup('Permission requise', 'Autorise l\'accès à ta galerie pour sauvegarder l\'image.', [{ text: 'OK', style: 'primary' }]);
         setIsLoading(false);
         return;
@@ -570,6 +725,7 @@ export default function LastSessionScreen() {
               rank={userRank}
               userLevel={userLevel}
               options={optionDetails}
+              combatRounds={combatRoundsData ?? undefined}
               yearlyCount={yearlyCount}
               monthlyCount={monthlyCount}
               weeklyCount={weeklyCount}
@@ -606,6 +762,17 @@ export default function LastSessionScreen() {
         </ScrollView>
       </View>
       <PopupComponent />
+      {combatCelebration && (
+        <Celebration
+          visible={combatCelebration.visible}
+          type="challenge_complete"
+          title={combatCelebration.title}
+          subtitle={combatCelebration.subtitle}
+          icon={combatCelebration.icon}
+          onClose={() => setCombatCelebration(null)}
+          autoClose={false}
+        />
+      )}
     </ScreenWrapper>
   );
 }

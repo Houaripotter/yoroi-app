@@ -172,6 +172,7 @@ export const Page2ActionGrid: React.FC = () => {
           index,
         })}
         removeClippedSubviews={true}
+        initialNumToRender={15}
         maxToRenderPerBatch={4}
         windowSize={5}
         ListHeaderComponent={

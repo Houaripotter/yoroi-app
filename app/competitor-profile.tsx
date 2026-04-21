@@ -45,11 +45,11 @@ const IBJJF_CATEGORIES_WOMEN = [
 
 // Ceintures BJJ
 const BJJ_BELTS = [
-  { id: 'white', name: 'Blanche', color: '#FFFFFF', borderColor: '#E5E7EB' },
-  { id: 'blue', name: 'Bleue', color: '#3B82F6', borderColor: '#3B82F6' },
-  { id: 'purple', name: 'Violette', color: '#8B5CF6', borderColor: '#8B5CF6' },
-  { id: 'brown', name: 'Marron', color: '#78350F', borderColor: '#78350F' },
-  { id: 'black', name: 'Noire', color: '#1F2937', borderColor: '#1F2937' },
+  { id: 'white', nameKey: 'beltWhite', color: '#FFFFFF', borderColor: '#E5E7EB' },
+  { id: 'blue', nameKey: 'beltBlue', color: '#3B82F6', borderColor: '#3B82F6' },
+  { id: 'purple', nameKey: 'beltPurple', color: '#8B5CF6', borderColor: '#8B5CF6' },
+  { id: 'brown', nameKey: 'beltBrown', color: '#78350F', borderColor: '#78350F' },
+  { id: 'black', nameKey: 'beltBlack', color: '#1F2937', borderColor: '#1F2937' },
 ];
 
 interface CompetitorProfile {
@@ -215,7 +215,7 @@ export default function CompetitorProfileScreen() {
             <View style={styles.sectionHeader}>
               <Weight size={20} color={colors.accentText} />
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                2. Poids actuel
+                {t('competitorProfile.section2')}
               </Text>
             </View>
 
@@ -240,7 +240,7 @@ export default function CompetitorProfileScreen() {
             {recommendedCategory && (
               <View style={[styles.recommendationBadge, { backgroundColor: colors.success + '15' }]}>
                 <Text style={[styles.recommendationText, { color: colors.success }]}>
-                  Catégorie recommandée: {recommendedCategory.name} ({recommendedCategory.weight})
+                  {t('competitorProfile.recommendedCategory').replace('{{name}}', recommendedCategory.name).replace('{{weight}}', recommendedCategory.weight)}
                 </Text>
               </View>
             )}
@@ -253,12 +253,12 @@ export default function CompetitorProfileScreen() {
             <View style={styles.sectionHeader}>
               <Trophy size={20} color={colors.accentText} />
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                3. Catégorie IBJJF
+                {t('competitorProfile.section3')}
               </Text>
             </View>
 
             <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
-              Sélectionne ta catégorie de poids officielle
+              {t('competitorProfile.section3Desc')}
             </Text>
 
             <View style={styles.categoriesGrid}>
@@ -297,12 +297,12 @@ export default function CompetitorProfileScreen() {
             <View style={styles.sectionHeader}>
               <Award size={20} color={colors.accentText} />
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                4. Ceinture BJJ
+                {t('competitorProfile.section4')}
               </Text>
             </View>
 
             <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
-              Ton niveau actuel en Jiu-Jitsu Brésilien
+              {t('competitorProfile.section4Desc')}
             </Text>
 
             <View style={styles.beltsGrid}>
@@ -326,7 +326,7 @@ export default function CompetitorProfileScreen() {
                   )}
                   <View style={[styles.beltVisual, { backgroundColor: belt.color, borderColor: belt.borderColor }]} />
                   <Text style={[styles.beltName, { color: profile.belt === belt.id && belt.id !== 'white' ? belt.color : colors.textPrimary }]}>
-                    {belt.name}
+                    {t(`competitorProfile.${belt.nameKey}`)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -340,20 +340,20 @@ export default function CompetitorProfileScreen() {
             <View style={styles.summaryHeader}>
               <Trophy size={24} color={colors.accent} />
               <Text style={[styles.summaryTitle, { color: isDark ? colors.accent : colors.textPrimary }]}>
-                Profil Competiteur
+                {t('competitorProfile.summaryTitle')}
               </Text>
             </View>
 
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Genre:</Text>
+              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('competitorProfile.summaryGender')}</Text>
               <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
-                {profile.gender === 'male' ? 'Homme' : 'Femme'}
+                {profile.gender === 'male' ? t('competitorProfile.male') : t('competitorProfile.female')}
               </Text>
             </View>
 
             {profile.currentWeight && (
               <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Poids actuel:</Text>
+                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('competitorProfile.summaryWeight')}</Text>
                 <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
                   {profile.currentWeight} kg
                 </Text>
@@ -361,16 +361,16 @@ export default function CompetitorProfileScreen() {
             )}
 
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Catégorie:</Text>
+              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('competitorProfile.summaryCategory')}</Text>
               <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
                 {getCurrentCategories().find(c => c.id === profile.category)?.name}
               </Text>
             </View>
 
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Ceinture:</Text>
+              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('competitorProfile.summaryBelt')}</Text>
               <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
-                {BJJ_BELTS.find(b => b.id === profile.belt)?.name}
+                {(() => { const belt = BJJ_BELTS.find(b => b.id === profile.belt); return belt ? t(`competitorProfile.${belt.nameKey}`) : ''; })()}
               </Text>
             </View>
 
@@ -378,7 +378,7 @@ export default function CompetitorProfileScreen() {
               style={[styles.goToCompetitionsButton, { backgroundColor: colors.accent }]}
               onPress={() => router.push('/planning?tab=competitions')}
             >
-              <Text style={[styles.goToCompetitionsText, { color: colors.textOnGold }]}>Voir mes compétitions</Text>
+              <Text style={[styles.goToCompetitionsText, { color: colors.textOnGold }]}>{t('competitorProfile.viewCompetitions')}</Text>
               <ChevronRight size={20} color={colors.textOnGold} />
             </TouchableOpacity>
           </View>

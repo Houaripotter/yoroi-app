@@ -13,12 +13,14 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useI18n } from '@/lib/I18nContext';
 import { useTheme } from '@/lib/ThemeContext';
 import { Header } from '@/components/ui/Header';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getTrainings } from '@/lib/database';
 import type { Training, CombatRound } from '@/lib/database';
-import { Users, Zap, Trophy, TrendingUp, Shield, Target, ChevronRight } from 'lucide-react-native';
+import { Users, Zap, Trophy, TrendingUp, Shield, Target, ChevronRight, Activity, BookOpen, MapPin, BarChart2 } from 'lucide-react-native';
+import { getMethodDisplayName } from '@/components/BJJBodyMap';
 
 // ============================================
 // TYPES
@@ -120,6 +122,7 @@ const RecordBadge: React.FC<{ wins: number; losses: number; draws: number }> = (
 // ============================================
 
 export default function CombatAnalyticsScreen() {
+  const { t } = useI18n();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -181,20 +184,92 @@ export default function CombatAnalyticsScreen() {
     return Object.values(map).sort((a, b) => b.count - a.count);
   }, [trainings]);
 
-  // ── Agrégation des soumissions ──
+  // ── Agrégation des soumissions (methodsGiven/methodsTaken + fallback method) ──
   const submissionStats = useMemo<SubmissionStats[]>(() => {
     const map: Record<string, SubmissionStats> = {};
+    const add = (name: string, side: 'given' | 'taken') => {
+      const display = getMethodDisplayName(name.trim());
+      const key = display.toLowerCase();
+      if (!key) return;
+      if (!map[key]) map[key] = { name: display, given: 0, taken: 0 };
+      map[key][side]++;
+    };
     for (const tr of trainings) {
       const rounds = parseCombatRounds(tr.combat_rounds);
       for (const round of rounds) {
-        if (!round.method?.trim()) continue;
-        const key = round.method.trim().toLowerCase();
-        if (!map[key]) map[key] = { name: round.method.trim(), given: 0, taken: 0 };
-        if (round.result === 'win') map[key].given++;
-        else if (round.result === 'loss') map[key].taken++;
+        // Priorité aux listes détaillées
+        if (round.methodsGiven?.length) {
+          round.methodsGiven.forEach(m => add(m, 'given'));
+        }
+        if (round.methodsTaken?.length) {
+          round.methodsTaken.forEach(m => add(m, 'taken'));
+        }
+        // Fallback : champ method + résultat du round
+        if (!round.methodsGiven?.length && !round.methodsTaken?.length && round.method?.trim()) {
+          if (round.result === 'win') add(round.method, 'given');
+          else if (round.result === 'loss') add(round.method, 'taken');
+        }
       }
     }
     return Object.values(map).sort((a, b) => (b.given + b.taken) - (a.given + a.taken));
+  }, [trainings]);
+
+  // ── Ratio drilling / sparring par mois (6 derniers mois) ──
+  const guardRatio = useMemo(() => {
+    const isType = (tr: Training, keyword: string) => {
+      if (tr.session_type?.toLowerCase().includes(keyword)) return true;
+      if (tr.session_types) {
+        try {
+          const arr: string[] = JSON.parse(tr.session_types);
+          return arr.some(s => s.toLowerCase().includes(keyword));
+        } catch {}
+      }
+      return false;
+    };
+
+    const monthMap: Record<string, { drilling: number; sparring: number; label: string }> = {};
+    let totalDrilling = 0;
+    let totalSparring = 0;
+
+    for (const tr of trainings) {
+      const d = new Date(tr.date);
+      const now = new Date();
+      const monthsAgo = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+      if (monthsAgo > 5) continue;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!monthMap[key]) {
+        monthMap[key] = {
+          drilling: 0, sparring: 0,
+          label: d.toLocaleDateString('fr-FR', { month: 'short' }),
+        };
+      }
+      if (isType(tr, 'drilling') || isType(tr, 'drill')) {
+        monthMap[key].drilling++;
+        totalDrilling++;
+      }
+      if (isType(tr, 'sparring')) {
+        monthMap[key].sparring++;
+        totalSparring++;
+      }
+    }
+
+    const months = Object.entries(monthMap)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([, v]) => v);
+
+    const total = totalDrilling + totalSparring;
+    const drillingPct = total > 0 ? Math.round((totalDrilling / total) * 100) : 0;
+    const sparringPct = total > 0 ? 100 - drillingPct : 0;
+
+    // Recommandation (ratio idéal drilling:sparring ~ 60:40 pour BJJ)
+    let advice = '';
+    if (total === 0) advice = '';
+    else if (drillingPct > 80) advice = 'Trop de drilling — augmente le sparring pour tester en conditions réelles.';
+    else if (drillingPct < 20) advice = 'Trop de sparring — intègre plus de drilling pour ancrer les techniques.';
+    else if (drillingPct >= 50 && drillingPct <= 70) advice = 'Ratio équilibré — bonne alternance drilling / sparring.';
+    else advice = `${drillingPct}% drilling / ${sparringPct}% sparring.`;
+
+    return { months, totalDrilling, totalSparring, drillingPct, sparringPct, total, advice };
   }, [trainings]);
 
   // ── Totaux globaux ──
@@ -223,7 +298,7 @@ export default function CombatAnalyticsScreen() {
   if (loading) {
     return (
       <View style={[styles.root, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
-        <Header title="Analyse de combat" showBack />
+        <Header title={t('combatAnalytics.title')} showBack />
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#8B5CF6" />
         </View>
@@ -235,23 +310,45 @@ export default function CombatAnalyticsScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
-      <Header title="Analyse de combat" showBack />
+      <Header title={t('combatAnalytics.title')} showBack />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* ── RACCOURCIS OUTILS AVANCÉS ── */}
+        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+          {[
+            { label: t('combatAnalytics.partners'), sub: t('combatAnalytics.tacticalNotes'), icon: <Users size={20} color="#06B6D4" />, color: '#06B6D4', route: '/sparring-partners' },
+            { label: 'BJJ Map', sub: t('combatAnalytics.positionsSubmissions'), icon: <MapPin size={20} color="#22C55E" />, color: '#22C55E', route: '/bjj-positions' },
+            { label: 'Benchmark', sub: t('combatAnalytics.vsPeers'), icon: <BarChart2 size={20} color="#F59E0B" />, color: '#F59E0B', route: '/benchmark' },
+          ].map(item => (
+            <TouchableOpacity
+              key={item.route}
+              onPress={() => router.push(item.route as any)}
+              style={[cardStyle, { flex: 1, alignItems: 'center', padding: 12, gap: 6, marginBottom: 0 }]}
+              activeOpacity={0.8}
+            >
+              <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: `${item.color}18`, justifyContent: 'center', alignItems: 'center' }}>
+                {item.icon}
+              </View>
+              <Text style={{ fontSize: 11, fontWeight: '800', color: colors.text, textAlign: 'center' }}>{item.label}</Text>
+              <Text style={{ fontSize: 9, color: colors.textMuted, textAlign: 'center', lineHeight: 12 }}>{item.sub}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         {/* ── RÉSUMÉ GLOBAL ── */}
         {!isEmpty && (
           <View style={[cardStyle, { marginBottom: 20 }]}>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>Résumé global</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>{t('combatAnalytics.globalSummary')}</Text>
             <View style={styles.globalGrid}>
-              <GlobalStat value={globalStats.totalRounds} label="Rounds total" color="#8B5CF6" />
-              <GlobalStat value={partnerStats.length} label="Partenaires" color="#06B6D4" />
-              <GlobalStat value={techniqueStats.length} label="Techniques" color="#F59E0B" />
-              <GlobalStat value={globalStats.totalWins} label="Victoires" color="#22C55E" />
-              <GlobalStat value={globalStats.totalLosses} label="Défaites" color="#EF4444" />
-              <GlobalStat value={globalStats.totalSubGiven} label="Soumissions" color="#EC4899" />
+              <GlobalStat value={globalStats.totalRounds} label={t('combatAnalytics.totalRounds')} color="#8B5CF6" />
+              <GlobalStat value={partnerStats.length} label={t('combatAnalytics.partners')} color="#06B6D4" />
+              <GlobalStat value={techniqueStats.length} label={t('combatAnalytics.techniques')} color="#F59E0B" />
+              <GlobalStat value={globalStats.totalWins} label={t('combatAnalytics.wins')} color="#22C55E" />
+              <GlobalStat value={globalStats.totalLosses} label={t('combatAnalytics.losses')} color="#EF4444" />
+              <GlobalStat value={globalStats.totalSubGiven} label={t('combatAnalytics.submissions')} color="#EC4899" />
             </View>
           </View>
         )}
@@ -261,10 +358,10 @@ export default function CombatAnalyticsScreen() {
           <View style={[cardStyle, { alignItems: 'center', paddingVertical: 40, marginBottom: 20 }]}>
             <Users size={48} color={isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'} />
             <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginTop: 16, textAlign: 'center' }}>
-              Pas encore de données
+              {t('combatAnalytics.noData')}
             </Text>
             <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 8, textAlign: 'center', lineHeight: 19 }}>
-              Ajoute des séances avec des rounds de sparring{'\n'}pour voir tes statistiques ici.
+              {t('combatAnalytics.noDataDesc')}
             </Text>
           </View>
         )}
@@ -273,8 +370,8 @@ export default function CombatAnalyticsScreen() {
         {partnerStats.length > 0 && (
           <View style={[cardStyle, { marginBottom: 20 }]}>
             <SectionTitle
-              title="Partenaires de sparring"
-              subtitle={`${partnerStats.length} partenaire${partnerStats.length > 1 ? 's' : ''}`}
+              title={t('combatAnalytics.sparringPartners')}
+              subtitle={`${partnerStats.length} ${t('combatAnalytics.partnerCount', { count: partnerStats.length })}`}
               icon={<Users size={18} color="#06B6D4" />}
               color="#06B6D4"
             />
@@ -319,11 +416,22 @@ export default function CombatAnalyticsScreen() {
                         </View>
                       )}
                     </View>
-                    {p.lastSession && (
-                      <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                        Dernière séance : {formatDate(p.lastSession)}
-                      </Text>
-                    )}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      {p.lastSession && (
+                        <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                          {t('combatAnalytics.lastSession')} : {formatDate(p.lastSession)}
+                        </Text>
+                      )}
+                      <TouchableOpacity
+                        onPress={() => router.push({ pathname: '/sparring-partners', params: { partnerName: p.name } })}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#06B6D415', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 }}
+                        activeOpacity={0.7}
+                      >
+                        <BookOpen size={11} color="#06B6D4" />
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#06B6D4' }}>Profil</Text>
+                        <ChevronRight size={11} color="#06B6D4" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
               </View>
@@ -335,13 +443,13 @@ export default function CombatAnalyticsScreen() {
         {techniqueStats.length > 0 && (
           <View style={[cardStyle, { marginBottom: 20 }]}>
             <SectionTitle
-              title="Techniques travaillées"
-              subtitle={`${techniqueStats.length} thème${techniqueStats.length > 1 ? 's' : ''} différent${techniqueStats.length > 1 ? 's' : ''}`}
+              title={t('combatAnalytics.techniquesWorked')}
+              subtitle={`${techniqueStats.length} ${t('combatAnalytics.differentThemes', { count: techniqueStats.length })}`}
               icon={<Zap size={18} color="#F59E0B" />}
               color="#F59E0B"
             />
-            {techniqueStats.slice(0, 10).map((t, idx) => (
-              <View key={t.name}>
+            {techniqueStats.slice(0, 10).map((tech, idx) => (
+              <View key={tech.name}>
                 {idx > 0 && <View style={[styles.sep, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]} />}
                 <View style={styles.techniqueRow}>
                   {/* Médaille top 3 */}
@@ -352,15 +460,15 @@ export default function CombatAnalyticsScreen() {
                   </View>
                   <View style={{ flex: 1, gap: 4 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, flex: 1 }}>{t.name}</Text>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, flex: 1 }}>{tech.name}</Text>
                       <Text style={{ fontSize: 13, fontWeight: '700', color: '#F59E0B' }}>
-                        {t.count}x
+                        {tech.count}x
                       </Text>
                     </View>
-                    <ProgressBar value={t.count} max={maxTechCount} color="#F59E0B" />
-                    {t.lastSession && (
+                    <ProgressBar value={tech.count} max={maxTechCount} color="#F59E0B" />
+                    {tech.lastSession && (
                       <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                        Dernière fois : {formatDate(t.lastSession)}
+                        {t('combatAnalytics.lastTime')} : {formatDate(tech.lastSession)}
                       </Text>
                     )}
                   </View>
@@ -370,37 +478,139 @@ export default function CombatAnalyticsScreen() {
           </View>
         )}
 
-        {/* ── FINITIONS / SOUMISSIONS ── */}
+        {/* ── FINITIONS / SOUMISSIONS — FORCES VS FAILLES ── */}
         {submissionStats.length > 0 && (
           <View style={[cardStyle, { marginBottom: 20 }]}>
             <SectionTitle
-              title="Finitions"
-              subtitle="Méthodes utilisées en sparring"
-              icon={<Target size={18} color="#EC4899" />}
+              title={t('combatAnalytics.strengthsWeaknesses')}
+              subtitle={t('combatAnalytics.submissionsGivenTaken')}
+              icon={<Shield size={18} color="#EC4899" />}
               color="#EC4899"
             />
-            {submissionStats.map((s, idx) => (
-              <View key={s.name}>
-                {idx > 0 && <View style={[styles.sep, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]} />}
-                <View style={styles.submissionRow}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text, flex: 1 }}>{s.name}</Text>
-                  <View style={{ flexDirection: 'row', gap: 8 }}>
-                    {s.given > 0 && (
-                      <View style={[styles.subBadge, { backgroundColor: '#22C55E18' }]}>
-                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#22C55E' }}>{s.given}</Text>
-                        <Text style={{ fontSize: 10, color: '#22C55E' }}>placée{s.given > 1 ? 's' : ''}</Text>
+
+            {/* Légende */}
+            <View style={{ flexDirection: 'row', gap: 16, marginBottom: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <View style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: '#22C55E' }} />
+                <Text style={{ fontSize: 11, color: colors.textMuted }}>{t('combatAnalytics.given')}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <View style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: '#EF4444' }} />
+                <Text style={{ fontSize: 11, color: colors.textMuted }}>{t('combatAnalytics.received')}</Text>
+              </View>
+            </View>
+
+            {submissionStats.map((s, idx) => {
+              const maxVal = Math.max(s.given, s.taken, 1);
+              const givenPct = s.given / maxVal;
+              const takenPct = s.taken / maxVal;
+              // Ratio force/faille : > 1 = force, < 1 = faille
+              const ratio = s.taken === 0 ? '∞' : (s.given / s.taken).toFixed(1);
+              const isForse = s.given >= s.taken;
+              return (
+                <View key={s.name}>
+                  {idx > 0 && <View style={[styles.sep, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]} />}
+                  <View style={{ gap: 6 }}>
+                    {/* Nom + ratio */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text, flex: 1 }} numberOfLines={1}>
+                        {s.name}
+                      </Text>
+                      <View style={[styles.subBadge, { backgroundColor: isForse ? '#22C55E18' : '#EF444418', marginLeft: 8 }]}>
+                        <Text style={{ fontSize: 11, fontWeight: '800', color: isForse ? '#22C55E' : '#EF4444' }}>
+                          {isForse ? t('combatAnalytics.strength') : t('combatAnalytics.weakness')}
+                        </Text>
                       </View>
-                    )}
-                    {s.taken > 0 && (
-                      <View style={[styles.subBadge, { backgroundColor: '#EF444418' }]}>
-                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#EF4444' }}>{s.taken}</Text>
-                        <Text style={{ fontSize: 10, color: '#EF4444' }}>prise{s.taken > 1 ? 's' : ''}</Text>
+                    </View>
+
+                    {/* Barre placées */}
+                    <View style={{ gap: 3 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <View style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+                          <View style={{ width: `${givenPct * 100}%` as any, height: '100%', backgroundColor: '#22C55E', borderRadius: 4 }} />
+                        </View>
+                        <Text style={{ fontSize: 12, fontWeight: '800', color: '#22C55E', minWidth: 20, textAlign: 'right' }}>{s.given}</Text>
                       </View>
-                    )}
+                      {/* Barre subies */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <View style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+                          <View style={{ width: `${takenPct * 100}%` as any, height: '100%', backgroundColor: '#EF4444', borderRadius: 4 }} />
+                        </View>
+                        <Text style={{ fontSize: 12, fontWeight: '800', color: '#EF4444', minWidth: 20, textAlign: 'right' }}>{s.taken}</Text>
+                      </View>
+                    </View>
                   </View>
                 </View>
+              );
+            })}
+          </View>
+        )}
+        {/* ── RATIO DRILLING / SPARRING ── */}
+        {guardRatio.total > 0 && (
+          <View style={[cardStyle, { marginBottom: 20 }]}>
+            <SectionTitle
+              title={t('combatAnalytics.drillingRatio')}
+              subtitle={t('combatAnalytics.last6Months')}
+              icon={<Activity size={18} color="#06B6D4" />}
+              color="#06B6D4"
+            />
+
+            {/* Barres empilées globales */}
+            <View style={{ gap: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Text style={{ fontSize: 11, color: colors.textMuted, width: 60 }}>{t('combatAnalytics.drilling')}</Text>
+                <View style={{ flex: 1, height: 16, backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', borderRadius: 8, overflow: 'hidden' }}>
+                  <View style={{ width: `${guardRatio.drillingPct}%` as any, height: '100%', backgroundColor: '#06B6D4', borderRadius: 8 }} />
+                </View>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: '#06B6D4', width: 44, textAlign: 'right' }}>
+                  {guardRatio.totalDrilling} ({guardRatio.drillingPct}%)
+                </Text>
               </View>
-            ))}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Text style={{ fontSize: 11, color: colors.textMuted, width: 60 }}>{t('combatAnalytics.sparring')}</Text>
+                <View style={{ flex: 1, height: 16, backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', borderRadius: 8, overflow: 'hidden' }}>
+                  <View style={{ width: `${guardRatio.sparringPct}%` as any, height: '100%', backgroundColor: '#EF4444', borderRadius: 8 }} />
+                </View>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: '#EF4444', width: 44, textAlign: 'right' }}>
+                  {guardRatio.totalSparring} ({guardRatio.sparringPct}%)
+                </Text>
+              </View>
+            </View>
+
+            {/* Évolution mensuelle */}
+            {guardRatio.months.length > 0 && (
+              <View style={{ marginTop: 8 }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, letterSpacing: 0.5, marginBottom: 8 }}>{t('combatAnalytics.perMonth')}</Text>
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                  {guardRatio.months.map((m, i) => {
+                    const total = m.drilling + m.sparring;
+                    const dPct = total > 0 ? (m.drilling / total) * 100 : 0;
+                    const sPct = 100 - dPct;
+                    const barH = 56;
+                    return (
+                      <View key={i} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
+                        <View style={{ width: '100%', height: barH, borderRadius: 6, overflow: 'hidden', backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}>
+                          {/* Empilé : drilling en haut (bleu), sparring en bas (rouge) */}
+                          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: `${dPct}%` as any, backgroundColor: '#06B6D4' }} />
+                          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${sPct}%` as any, backgroundColor: '#EF444480' }} />
+                        </View>
+                        <Text style={{ fontSize: 9, color: colors.textMuted, textAlign: 'center' }}>{m.label}</Text>
+                        {total > 0 && <Text style={{ fontSize: 8, color: '#06B6D4', fontWeight: '700' }}>{m.drilling}D</Text>}
+                        {total > 0 && <Text style={{ fontSize: 8, color: '#EF4444', fontWeight: '700' }}>{m.sparring}S</Text>}
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {/* Conseil */}
+            {guardRatio.advice ? (
+              <View style={{ flexDirection: 'row', gap: 8, backgroundColor: isDark ? 'rgba(6,182,212,0.08)' : 'rgba(6,182,212,0.06)', borderRadius: 10, padding: 10, marginTop: 4 }}>
+                <Target size={14} color="#06B6D4" style={{ marginTop: 1 }} />
+                <Text style={{ flex: 1, fontSize: 12, color: colors.textMuted, lineHeight: 17 }}>{guardRatio.advice}</Text>
+              </View>
+            ) : null}
           </View>
         )}
       </ScrollView>

@@ -96,6 +96,48 @@ useEffect(() => {
 }, []);
 ```
 
+### 3b. Rafraîchissement instantané entre écrans — utiliser `DeviceEventEmitter`
+
+**Problème fréquent** : l'utilisateur ajoute/modifie un élément dans un écran (ex : un partenaire tactique dans `sparring-partners.tsx`), puis va dans un autre écran qui utilise cette liste (ex : autocomplete dans `add-combat-session.tsx`) — mais la liste n'est pas à jour tant qu'il n'a pas fermé/relancé l'app. Inacceptable pour l'UX.
+
+**Solution officielle** : propager les changements via `DeviceEventEmitter` (pattern déjà utilisé dans l'app via l'event `YOROI_DATA_CHANGED`).
+
+```typescript
+// ─── CÔTÉ ÉCRIVAIN (après un INSERT/UPDATE/DELETE) ───
+import { DeviceEventEmitter } from 'react-native';
+
+const savePartner = async (partner) => {
+  await AsyncStorage.setItem(KEY, ...);
+  // NOTIFIER tous les écrans qui écoutent
+  DeviceEventEmitter.emit('YOROI_PARTNERS_CHANGED');
+};
+
+// ─── CÔTÉ LECTEUR (l'écran qui affiche la liste) ───
+useEffect(() => {
+  loadPartners(); // initial load
+
+  const sub = DeviceEventEmitter.addListener('YOROI_PARTNERS_CHANGED', () => {
+    loadPartners(); // recharge seulement quand un changement a eu lieu
+  });
+  return () => sub.remove();
+}, []);
+```
+
+**Pourquoi c'est mieux que `useFocusEffect`** :
+- Ne recharge que quand il y a VRAIMENT un changement (pas à chaque retour sur l'écran → reste fluide)
+- Ne casse pas le scroll ni les animations
+- Respecte la règle #1 (`useEffect` pour charger, pas `useFocusEffect`)
+
+**Events standards du projet** (à utiliser en priorité, ne pas multiplier) :
+- `YOROI_DATA_CHANGED` — données générales (poids, trainings, mesures)
+- `YOROI_PARTNERS_CHANGED` — partenaires sparring / tactiques
+- `YOROI_CLUBS_CHANGED` — clubs
+- `YOROI_PROFILE_CHANGED` — profil utilisateur
+
+**Règle d'or** : dès qu'une fonctionnalité crée/modifie une donnée qui est LUE ailleurs dans l'app, **emit un event approprié**. Dès qu'un écran dépend d'une liste externe, **il écoute l'event correspondant**.
+
+---
+
 ### 4. Quand utiliser `useFocusEffect` ?
 
 Utilisez `useFocusEffect` UNIQUEMENT pour :

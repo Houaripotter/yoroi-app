@@ -23,6 +23,7 @@ import {
   Plus,
   Minus,
   Copy,
+  Pencil,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -334,7 +335,10 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
       {debug && selectedZone && isUpperBody && (
         <View style={[styles.controlPanel, { backgroundColor: colors.backgroundCard }]}>
           <View style={styles.controlHeader}>
-            <Text style={styles.controlTitle}>✏️ {selectedZone.label.toUpperCase()}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Pencil size={13} color="#4ADE80" />
+              <Text style={styles.controlTitle}>{selectedZone.label.toUpperCase()}</Text>
+            </View>
             <TouchableOpacity onPress={copySelectedZone} style={styles.copyBtn}>
               <Copy size={14} color="#4ADE80" />
               <Text style={styles.copyBtnText}>Copier</Text>
@@ -434,7 +438,10 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
       {debug && selectedZone && !isUpperBody && (
         <View style={[styles.controlPanel, { backgroundColor: colors.backgroundCard }]}>
           <View style={styles.controlHeader}>
-            <Text style={styles.controlTitle}>✏️ {selectedZone.label.toUpperCase()}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Pencil size={13} color="#4ADE80" />
+              <Text style={styles.controlTitle}>{selectedZone.label.toUpperCase()}</Text>
+            </View>
             <TouchableOpacity onPress={copySelectedZone} style={styles.copyBtn}>
               <Copy size={14} color="#4ADE80" />
               <Text style={styles.copyBtnText}>Copier</Text>

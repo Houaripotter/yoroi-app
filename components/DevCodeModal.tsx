@@ -61,9 +61,10 @@ const DevCodeModal: React.FC = () => {
         <View style={[styles.modal, { backgroundColor: colors.backgroundCard }]}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>
-              🔐 Mode Créateur
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Lock size={18} color={colors.textPrimary} />
+              <Text style={[styles.title, { color: colors.textPrimary }]}>Mode Créateur</Text>
+            </View>
             <TouchableOpacity onPress={handleClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <X size={24} color={colors.textMuted} />
             </TouchableOpacity>

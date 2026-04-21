@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { safeOpenURL } from '@/lib/security/validators';
+import { useI18n } from '@/lib/I18nContext';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '@/lib/ThemeContext';
@@ -42,6 +43,8 @@ import {
   AlertTriangle,
   Maximize2,
   Brain,
+  Shield,
+  Swords,
 } from 'lucide-react-native';
 
 // Enable LayoutAnimation on Android
@@ -350,6 +353,114 @@ const scienceData: ScienceCard[] = [
       how: "Dors 7-9h pour avoir suffisamment de REM (les cycles tardifs en contiennent plus). La mélatonine naturelle aide - pas les somnifères qui suppriment le REM.",
       sourceName: "Étude : Mah et al. (2011) - Sleep",
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/21731144/"
+    }
+  },
+
+  // ══════════════════════════════════════════════
+  // RÈGLES COMBAT — JJB / GRAPPLING (CFJJB)
+  // ══════════════════════════════════════════════
+  {
+    id: 'c1',
+    title: "Le Barème CFJJB : Vue d'ensemble",
+    icon: "shield",
+    category: "Combat",
+    content: {
+      what: "Tableau officiel des points CFJJB. +2 pts : amenée au sol, renversement, genou sur l'estomac. +3 pts : passage de garde. +4 pts : montée, montée arrière, contrôle du dos. Soumission = victoire immédiate quelle que soit la différence de points.",
+      why: "La hiérarchie des positions dicte ta stratégie de match. Une montée (4 pts) vaut deux takedowns. En fin de match serré, les avantages (tiebreaker) décident avant les pénalités.",
+      how: "Priorité stratégique : cherche les 4 pts (montée, dos) depuis le passage de garde (3 pts). En cas d'égalité, cumule les avantages. Ne sois jamais passif — les pénalités s'accumulent contre toi.",
+      sourceName: "Règlement Officiel CFJJB — Guide Général de Compétition",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+  {
+    id: 'c2',
+    title: "Amenée au Sol & Renversement (+2 pts)",
+    icon: "swords",
+    category: "Combat",
+    content: {
+      what: "2 points pour deux actions distinctes. Amenée au sol : projeter/emmener l'adversaire au sol depuis debout en gardant une position de contrôle. Renversement : renverser l'adversaire depuis sa garde (sweep) pour finir dessus en position dominante.",
+      why: "Ce sont les actions de transition debout → sol. Maîtriser l'amenée au sol donne 2 pts + position avantageuse immédiatement. Depuis la garde adverse, un renversement retourne entièrement le rapport de force.",
+      how: "Amenée au sol : single leg, double leg, arm drag, projections judo. Renversement : butterfly sweep, tripod, scissor sweep, hip bump, berimbolo. Condition obligatoire : contrôle maintenu pendant 3 secondes minimum.",
+      sourceName: "CFJJB Art. 4.1 & 4.2",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+  {
+    id: 'c3',
+    title: "Genou sur l'Estomac (+2 pts)",
+    icon: "shield",
+    category: "Combat",
+    content: {
+      what: "2 points pour placer son genou sur l'estomac/ventre de l'adversaire en position de contrôle. L'adversaire est au sol, tu es en appui avec ton genou posé sur son abdomen et ton autre pied au sol. Position maintenue 3 secondes minimum.",
+      why: "Position de transition stratégique entre side control et montée. Elle force l'adversaire à réagir, créant des opportunités de finition ou de progression vers les 4 pts. Très efficace en no-gi pour dicter le rythme.",
+      how: "Chaîne classique : side control → genou sur l'estomac (2 pts) → montée (4 pts). Contrôle la ceinture + col/nuque pour maintenir la pression. Attention : le genou doit être SUR l'estomac — s'il glisse sur le côté, les points ne sont pas accordés.",
+      sourceName: "CFJJB Art. 4.3",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+  {
+    id: 'c4',
+    title: "Passage de Garde (+3 pts)",
+    icon: "swords",
+    category: "Combat",
+    content: {
+      what: "3 points pour dépasser la garde de l'adversaire et stabiliser une position de contrôle latéral (side control, north-south) pendant 3 secondes. L'adversaire ne doit plus être capable d'utiliser ses jambes pour protéger ou attaquer.",
+      why: "Action la plus fréquente en compétition — porte d'entrée vers les positions dominantes 4 pts. 3 pts vs 2 pts = avantage potentiellement décisif. En bas niveau, beaucoup de matchs se gagnent uniquement sur les passages de garde.",
+      how: "Techniques clés : toreando, leg drag, knee cut, smash pass, over-under, stack pass, bull fighter, headquarters. Clé : stabiliser 3 secondes complètes SANS que l'adversaire récupère sa garde — sinon les points sont refusés.",
+      sourceName: "CFJJB Art. 4.5",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+  {
+    id: 'c5',
+    title: "Montée & Contrôle du Dos (+4 pts)",
+    icon: "shield",
+    category: "Combat",
+    content: {
+      what: "4 points — valeur maximale — pour deux positions distinctes. Montée : être assis sur le torse adverse, cuisses de chaque côté, face à sa tête. Contrôle du dos : être dans le dos de l'adversaire avec au minimum un crochet (hook) de jambe inséré. Montée arrière (4 pts aussi) : adversaire face sol, tu montes dans son dos.",
+      why: "Positions les plus haut cotées car elles offrent les meilleures opportunités de soumission. Une montée réussie oblige l'adversaire à dépenser énormément d'énergie pour défendre — même sans finition, c'est un avantage tactique massif.",
+      how: "Montée : depuis side control ou KoS → montée. Contrôle du dos : prise de dos depuis turtle, berimbolo, ou basculement depuis la montée. Minimum un crochet pour valider. Body triangle = variation du contrôle dos (4 pts identiques).",
+      sourceName: "CFJJB Art. 4.4",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+  {
+    id: 'c6',
+    title: "Les Avantages CFJJB",
+    icon: "shield",
+    category: "Combat",
+    content: {
+      what: "L'avantage est un tiebreaker — il ne s'additionne PAS au score principal. Accordé pour quasi-actions non finalisées : quasi-soumission, quasi-renversement, quasi-passage de garde, quasi-takedown. Si égalité de points en fin de match, le joueur avec le plus d'avantages gagne.",
+      why: "Décisifs en compétition — beaucoup de matchs haut niveau se terminent à égalité de points. Un avantage obtenu à la 1ère minute peut décider du résultat à la dernière seconde. Ne jamais les négliger.",
+      how: "Obtenir un avantage : tenter une soumission (même ratée), menacer une passe de garde sans finaliser, quasi-sweep. Rappel : 2ème pénalité adversaire = +1 avantage pour toi. Stratégie fin de match : si tu as 1 avantage d'avance sur égalité, joue la montre légalement.",
+      sourceName: "CFJJB Art. 4.6 — Avantages",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+  {
+    id: 'c7',
+    title: "Les Pénalités CFJJB",
+    icon: "swords",
+    category: "Combat",
+    content: {
+      what: "Système progressif en 4 niveaux. 1ère pénalité : avertissement simple (aucun point accordé). 2ème pénalité : +1 avantage accordé à l'adversaire. 3ème pénalité : +2 points accordés à l'adversaire. 4ème pénalité : disqualification (DQ) immédiate.",
+      why: "Conçues pour punir la passivité, la fuite, les prises dangereuses ou déloyales. Un compétiteur qui accumule 3 pénalités offre 2 pts à l'adversaire — ce qui peut inverser un match jusque-là gagné.",
+      how: "Éviter : passivité prolongée, fuir hors du tapis, retarder intentionnellement, techniques interdites à son grade. Surveiller les pénalités adversaire : à sa 2ème, tu gagnes un avantage — à sa 3ème, tu gagnes 2 pts. Adapte ta stratégie en conséquence.",
+      sourceName: "CFJJB Art. 6 — Pénalités",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+  {
+    id: 'c8',
+    title: "Soumissions Autorisées par Grade (CFJJB)",
+    icon: "shield",
+    category: "Combat",
+    content: {
+      what: "Les techniques autorisées varient selon le grade. Blanche : étranglements + locks de bras uniquement (armbar, kimura, americana, omoplata). Bleue/Violette : + locks de genoux sans rotation (kneebar, toehold, ankle lock droit). Marron/Noire : + heel hooks (intérieur et extérieur, reaping autorisé).",
+      why: "Appliquer une technique interdite à son grade = disqualification immédiate, même si c'est involontaire. En plus, certaines soumissions peuvent blesser un partenaire non préparé à les défendre.",
+      how: "Règle pratique : en blanc, reste bras + étranglements. Bleu+, les genoux sans rotation sont disponibles. Jamais de heel hook rotatif avant marron/noir. En no-gi les règles sont souvent différentes — vérifie toujours le règlement du tournoi avant de t'inscrire.",
+      sourceName: "CFJJB Annexe — Techniques autorisées par grade",
+      sourceUrl: "https://cfjjb.com"
     }
   },
 ];
@@ -724,6 +835,10 @@ const getIcon = (iconName: string, size: number = 24, color: string) => {
       return <Maximize2 size={size} color={color} strokeWidth={2.5} />;
     case 'brain':
       return <Brain size={size} color={color} strokeWidth={2.5} />;
+    case 'shield':
+      return <Shield size={size} color={color} strokeWidth={2.5} />;
+    case 'swords':
+      return <Swords size={size} color={color} strokeWidth={2.5} />;
     default:
       return <Activity size={size} color={color} strokeWidth={2.5} />;
   }
@@ -752,6 +867,8 @@ const getCategoryColor = (category: string) => {
       return '#06B6D4'; // Cyan
     case 'Mental':
       return '#A855F7'; // Violet clair (différent de Métabolisme)
+    case 'Combat':
+      return '#EF4444'; // Rouge combat
     default:
       return '#6B7280'; // Gris neutre
   }
@@ -781,6 +898,7 @@ type TabType = 'ARTICLES' | 'PROTOCOLES';
 
 export default function SavoirScreen() {
   const router = useRouter();
+  const { t } = useI18n();
   const { colors: themeColors, isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>('ARTICLES');
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -923,7 +1041,7 @@ export default function SavoirScreen() {
               { color: activeTab === 'ARTICLES' ? themeColors.textPrimary : themeColors.textMuted },
             ]}
           >
-            ARTICLES
+            {t('savoir.tabArticles')}
           </Text>
           {activeTab === 'ARTICLES' && <View style={[styles.tabIndicator, { backgroundColor: themeColors.accent }]} />}
         </TouchableOpacity>
@@ -939,7 +1057,7 @@ export default function SavoirScreen() {
               { color: activeTab === 'PROTOCOLES' ? themeColors.textPrimary : themeColors.textMuted },
             ]}
           >
-            PROTOCOLES
+            {t('savoir.tabProtocols')}
           </Text>
           {activeTab === 'PROTOCOLES' && <View style={[styles.tabIndicator, { backgroundColor: themeColors.accent }]} />}
         </TouchableOpacity>
@@ -959,13 +1077,13 @@ export default function SavoirScreen() {
               {scienceData.length}
             </Text>
             <Text style={[styles.sectionHeaderLabel, { color: themeColors.textMuted }]}>
-              ARTICLES SCIENTIFIQUES
+              {t('savoir.scientificArticles')}
             </Text>
             {readArticles.size > 0 && (
               <View style={[styles.readBadgeHeader, { backgroundColor: '#10B98120' }]}>
                 <CheckCircle2 size={12} color="#10B981" strokeWidth={2.5} />
                 <Text style={[styles.readBadgeHeaderText, { color: '#10B981' }]}>
-                  {readArticles.size}/{scienceData.length} lus
+                  {readArticles.size}/{scienceData.length} {t('savoir.read')}
                 </Text>
               </View>
             )}
@@ -1038,7 +1156,7 @@ export default function SavoirScreen() {
                     {/* C'est quoi ? */}
                     <View style={styles.sectionFirst}>
                       <View style={[styles.sectionLabelRow, { backgroundColor: `${categoryColor}15` }]}>
-                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>C'est quoi ?</Text>
+                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>{t('savoir.whatIsIt')}</Text>
                       </View>
                       <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
                         {card.content.what}
@@ -1048,7 +1166,7 @@ export default function SavoirScreen() {
                     {/* Pourquoi ça marche ? */}
                     <View style={styles.section}>
                       <View style={[styles.sectionLabelRow, { backgroundColor: `${categoryColor}15` }]}>
-                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Pourquoi ça marche ?</Text>
+                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>{t('savoir.whyItWorks')}</Text>
                       </View>
                       <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
                         {card.content.why}
@@ -1058,7 +1176,7 @@ export default function SavoirScreen() {
                     {/* Comment l'appliquer ? */}
                     <View style={styles.section}>
                       <View style={[styles.sectionLabelRow, { backgroundColor: `${categoryColor}15` }]}>
-                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Comment l'appliquer ?</Text>
+                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>{t('savoir.howToApply')}</Text>
                       </View>
                       <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
                         {card.content.how}
@@ -1093,13 +1211,13 @@ export default function SavoirScreen() {
               {protocolData.length}
             </Text>
             <Text style={[styles.sectionHeaderLabel, { color: themeColors.textMuted }]}>
-              PROTOCOLES D'ENTRAÎNEMENT
+              {t('savoir.trainingProtocols')}
             </Text>
             {readProtocols.size > 0 && (
               <View style={[styles.readBadgeHeader, { backgroundColor: '#10B98120' }]}>
                 <CheckCircle2 size={12} color="#10B981" strokeWidth={2.5} />
                 <Text style={[styles.readBadgeHeaderText, { color: '#10B981' }]}>
-                  {readProtocols.size}/{protocolData.length} lus
+                  {readProtocols.size}/{protocolData.length} {t('savoir.read')}
                 </Text>
               </View>
             )}
@@ -1179,7 +1297,7 @@ export default function SavoirScreen() {
                     {/* Objectif */}
                     <View style={styles.sectionFirst}>
                       <View style={[styles.sectionLabelRow, { backgroundColor: `${categoryColor}15` }]}>
-                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Objectif</Text>
+                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>{t('savoir.objective')}</Text>
                       </View>
                       <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
                         {protocol.content.objective}
@@ -1189,7 +1307,7 @@ export default function SavoirScreen() {
                     {/* Durée */}
                     <View style={styles.section}>
                       <View style={[styles.sectionLabelRow, { backgroundColor: `${categoryColor}15` }]}>
-                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Durée</Text>
+                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>{t('savoir.duration')}</Text>
                       </View>
                       <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
                         {protocol.content.duration}
@@ -1199,7 +1317,7 @@ export default function SavoirScreen() {
                     {/* Protocole */}
                     <View style={styles.section}>
                       <View style={[styles.sectionLabelRow, { backgroundColor: `${categoryColor}15` }]}>
-                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Protocole</Text>
+                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>{t('savoir.protocol')}</Text>
                       </View>
                       {protocol.content.protocol.map((step, index) => (
                         <View key={index} style={[styles.protocolStep, { borderLeftColor: `${categoryColor}50` }]}>
@@ -1216,7 +1334,7 @@ export default function SavoirScreen() {
                     {/* Fréquence */}
                     <View style={styles.section}>
                       <View style={[styles.sectionLabelRow, { backgroundColor: `${categoryColor}15` }]}>
-                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Fréquence</Text>
+                        <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>{t('savoir.frequency')}</Text>
                       </View>
                       <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
                         {protocol.content.frequency}
@@ -1241,7 +1359,7 @@ export default function SavoirScreen() {
         <View style={styles.sectionContainer}>
           <View style={[styles.sectionHeaderRow, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
             <Text style={[styles.sectionHeaderLabel, { color: themeColors.textMuted }]}>
-              PROTOCOLES AVEC CHECKLIST
+              {t('savoir.protocolsWithChecklist')}
             </Text>
           </View>
           {LAB_PROTOCOLS.map((protocol) => (
@@ -1260,7 +1378,7 @@ export default function SavoirScreen() {
         <View style={styles.sectionContainer}>
           <View style={[styles.sectionHeaderRow, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
             <Text style={[styles.sectionHeaderLabel, { color: themeColors.textMuted }]}>
-              INDICATEUR D'HYDRATATION
+              {t('savoir.hydrationIndicator')}
             </Text>
           </View>
           <HydrationScale />

@@ -26,6 +26,7 @@ import {
   Heart,
   Zap,
   Info,
+  Database,
 } from 'lucide-react-native';
 import { format } from 'date-fns';
 import {
@@ -363,7 +364,12 @@ export default function BodyCompositionScreen() {
             <ChevronLeft size={22} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Composition Corporelle</Text>
-          <View style={{ width: 44 }} />
+          <TouchableOpacity
+            style={[styles.backButton, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+            onPress={() => router.push('/weight-manager')}
+          >
+            <Database size={18} color={colors.textPrimary} />
+          </TouchableOpacity>
         </View>
 
         {/* Info Card */}

@@ -27,6 +27,9 @@ import {
   RefreshCw,
   SkipForward,
   Target,
+  Footprints,
+  Settings,
+  Flag,
 } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
@@ -69,7 +72,7 @@ const MUSCULATION_PRESETS = [
 // Presets combat
 const COMBAT_PRESETS: Record<CombatPreset, {
   name: string;
-  icon: string;
+  icon?: React.ComponentType<{ size: number; color: string }>;
   roundTime: number;
   restTime: number;
   rounds: number;
@@ -77,7 +80,6 @@ const COMBAT_PRESETS: Record<CombatPreset, {
 }> = {
   jjb: {
     name: 'JJB',
-    icon: '',
     roundTime: 5 * 60,
     restTime: 60,
     rounds: 5,
@@ -85,7 +87,6 @@ const COMBAT_PRESETS: Record<CombatPreset, {
   },
   mma: {
     name: 'MMA',
-    icon: '',
     roundTime: 5 * 60,
     restTime: 60,
     rounds: 3,
@@ -93,7 +94,6 @@ const COMBAT_PRESETS: Record<CombatPreset, {
   },
   boxe: {
     name: 'Boxe',
-    icon: '',
     roundTime: 3 * 60,
     restTime: 60,
     rounds: 10,
@@ -101,7 +101,7 @@ const COMBAT_PRESETS: Record<CombatPreset, {
   },
   muaythai: {
     name: 'Muay Thai',
-    icon: '🦵',
+    icon: Footprints,
     roundTime: 3 * 60,
     restTime: 120,
     rounds: 5,
@@ -109,7 +109,7 @@ const COMBAT_PRESETS: Record<CombatPreset, {
   },
   kickboxing: {
     name: 'Kickboxing',
-    icon: '🦶',
+    icon: Zap,
     roundTime: 3 * 60,
     restTime: 60,
     rounds: 3,
@@ -117,7 +117,6 @@ const COMBAT_PRESETS: Record<CombatPreset, {
   },
   lutte: {
     name: 'Lutte',
-    icon: '',
     roundTime: 3 * 60,
     restTime: 30,
     rounds: 3,
@@ -125,7 +124,7 @@ const COMBAT_PRESETS: Record<CombatPreset, {
   },
   grappling: {
     name: 'Grappling',
-    icon: '🤺',
+    icon: Swords,
     roundTime: 6 * 60,
     restTime: 60,
     rounds: 3,
@@ -133,7 +132,7 @@ const COMBAT_PRESETS: Record<CombatPreset, {
   },
   custom: {
     name: 'Perso',
-    icon: '⚙️',
+    icon: Settings,
     roundTime: 3 * 60,
     restTime: 60,
     rounds: 5,
@@ -246,9 +245,59 @@ export default function TimerScreen() {
   const forTimeStartRef = useRef<number>(0);
   const lastForTimeElapsedRef = useRef<number>(-1);
 
-  // Initialiser le SoundManager
+  // === REFS miroir pour éviter de recréer l'intervalle à chaque transition ===
+  // Le useEffect du timer ne dépend que de timerState.
+  // Les transitions lisent depuis ces refs au lieu du state capturé par closure.
+  const modeRef = useRef(mode);
+  const isInRestRef = useRef(isInRest);
+  const currentRoundRef = useRef(currentRound);
+  const totalRoundsRef = useRef(totalRounds);
+  const roundDurationRef = useRef(roundDuration);
+  const restDurationRef = useRef(restDuration);
+  const tabataIsWorkRef = useRef(tabataIsWork);
+  const tabataCurrentRoundRef = useRef(tabataCurrentRound);
+  const tabataRoundsRef = useRef(tabataRounds);
+  const tabataWorkRef = useRef(tabataWork);
+  const tabataRestRef = useRef(tabataRest);
+  const tabataIsRestBetweenSetsRef = useRef(tabataIsRestBetweenSets);
+  const tabataCurrentSetRef = useRef(tabataCurrentSet);
+  const tabataSetsRef = useRef(tabataSets);
+  const tabataRestBetweenSetsRef = useRef(tabataRestBetweenSets);
+  const emomCurrentMinuteRef = useRef(emomCurrentMinute);
+  const emomDurationRef = useRef(emomDuration);
+  const forTimeCapRef = useRef(forTimeCap);
+  const trackRepsWeightRef = useRef(trackRepsWeight);
+  const musculationRestRef = useRef(musculationRest);
+  const seriesCountRef = useRef(seriesCount);
+
+  // Synchroniser les refs avec le state à chaque render
+  useEffect(() => { modeRef.current = mode; }, [mode]);
+  useEffect(() => { isInRestRef.current = isInRest; }, [isInRest]);
+  useEffect(() => { currentRoundRef.current = currentRound; }, [currentRound]);
+  useEffect(() => { totalRoundsRef.current = totalRounds; }, [totalRounds]);
+  useEffect(() => { roundDurationRef.current = roundDuration; }, [roundDuration]);
+  useEffect(() => { restDurationRef.current = restDuration; }, [restDuration]);
+  useEffect(() => { tabataIsWorkRef.current = tabataIsWork; }, [tabataIsWork]);
+  useEffect(() => { tabataCurrentRoundRef.current = tabataCurrentRound; }, [tabataCurrentRound]);
+  useEffect(() => { tabataRoundsRef.current = tabataRounds; }, [tabataRounds]);
+  useEffect(() => { tabataWorkRef.current = tabataWork; }, [tabataWork]);
+  useEffect(() => { tabataRestRef.current = tabataRest; }, [tabataRest]);
+  useEffect(() => { tabataIsRestBetweenSetsRef.current = tabataIsRestBetweenSets; }, [tabataIsRestBetweenSets]);
+  useEffect(() => { tabataCurrentSetRef.current = tabataCurrentSet; }, [tabataCurrentSet]);
+  useEffect(() => { tabataSetsRef.current = tabataSets; }, [tabataSets]);
+  useEffect(() => { tabataRestBetweenSetsRef.current = tabataRestBetweenSets; }, [tabataRestBetweenSets]);
+  useEffect(() => { emomCurrentMinuteRef.current = emomCurrentMinute; }, [emomCurrentMinute]);
+  useEffect(() => { emomDurationRef.current = emomDuration; }, [emomDuration]);
+  useEffect(() => { forTimeCapRef.current = forTimeCap; }, [forTimeCap]);
+  useEffect(() => { trackRepsWeightRef.current = trackRepsWeight; }, [trackRepsWeight]);
+  useEffect(() => { musculationRestRef.current = musculationRest; }, [musculationRest]);
+  useEffect(() => { seriesCountRef.current = seriesCount; }, [seriesCount]);
+
+  // Initialiser le SoundManager + pré-demander les permissions notifications
+  // pour éviter que la dialog iOS apparaisse en plein milieu d'un timer
   useEffect(() => {
     soundManager.initialize();
+    timerNotifications.requestPermissions().catch(() => {});
 
     return () => {
       soundManager.cleanup();
@@ -386,11 +435,11 @@ export default function TimerScreen() {
         phaseEndedRef.current = false;
       }
 
-      // Jouer le son de debut - gong pour combat, beep pour le reste (sans bloquer)
+      // Jouer le son de debut - gong pour combat, beep pour le reste
       if (mode === 'combat') {
-        soundManager.playGong().catch(e => logger.error('Sound error:', e));
+        soundManager.playGong();
       } else {
-        soundManager.playBeep().catch(e => logger.error('Sound error:', e));
+        soundManager.playBeep();
       }
 
       // Dynamic Island - Démarrer l'activité
@@ -436,9 +485,9 @@ export default function TimerScreen() {
       lastForTimeElapsedRef.current = -1;
       phaseEndedRef.current = false;
     } else if (timeRemaining > 0) {
+      endTimestampRef.current = Date.now() + timeRemaining * 1000;
       timerNotifications.scheduleTimerEndNotification(mode, endTimestampRef.current)
         .catch(e => logger.error('Notification error:', e));
-      endTimestampRef.current = Date.now() + timeRemaining * 1000;
       lastCountdownRef.current = -1;
       phaseEndedRef.current = false;
     }
@@ -617,12 +666,12 @@ export default function TimerScreen() {
             lastCountdownRef.current = -1;
             phaseEndedRef.current = false;
             setTimeRemaining(roundDuration);
-            await soundManager.playGong();
+            soundManager.playGong();
           } else {
             // C'etait le dernier repos
             phaseEndedRef.current = true;
             setTimerState('finished');
-            await soundManager.playVictory();
+            soundManager.playVictory();
             setTimeRemaining(0);
           }
         } else {
@@ -633,12 +682,12 @@ export default function TimerScreen() {
             lastCountdownRef.current = -1;
             phaseEndedRef.current = false;
             setTimeRemaining(restDuration);
-            await soundManager.playGong();
+            soundManager.playGong();
           } else {
             // C'etait le dernier round
             phaseEndedRef.current = true;
             setTimerState('finished');
-            await soundManager.playVictory();
+            soundManager.playVictory();
             setTimeRemaining(0);
           }
         }
@@ -664,11 +713,11 @@ export default function TimerScreen() {
           } else {
             phaseEndedRef.current = true;
             setTimerState('finished');
-            await soundManager.playVictory();
+            soundManager.playVictory();
             setTimeRemaining(0);
           }
         }
-        await soundManager.playBeep();
+        soundManager.playBeep();
         break;
 
       case 'emom':
@@ -679,11 +728,11 @@ export default function TimerScreen() {
           lastCountdownRef.current = -1;
           phaseEndedRef.current = false;
           setTimeRemaining(60);
-          await soundManager.playBeep();
+          soundManager.playBeep();
         } else {
           phaseEndedRef.current = true;
           setTimerState('finished');
-          await soundManager.playVictory();
+          soundManager.playVictory();
           setTimeRemaining(0);
         }
         break;
@@ -693,12 +742,15 @@ export default function TimerScreen() {
         phaseEndedRef.current = true;
         setTimerState('finished');
         setTimeRemaining(0);
-        await soundManager.playBeep();
+        soundManager.playBeep();
         break;
     }
   };
 
   // Timer logic — précision basée sur timestamp réel (évite le drift de setInterval)
+  // IMPORTANT : ne dépend QUE de timerState pour éviter de recréer l'intervalle
+  // à chaque transition de phase (cause du freeze). Toutes les valeurs de transition
+  // sont lues depuis les refs miroir.
   useEffect(() => {
     if (timerState === 'running') {
       phaseEndedRef.current = false;
@@ -708,15 +760,15 @@ export default function TimerScreen() {
       intervalRef.current = setInterval(() => {
 
         // FOR TIME : compte vers le HAUT via timestamp réel
-        if (mode === 'fortime') {
+        if (modeRef.current === 'fortime') {
           const elapsed = Math.floor((Date.now() - forTimeStartRef.current) / 1000);
           if (elapsed !== lastForTimeElapsedRef.current) {
             lastForTimeElapsedRef.current = elapsed;
             setTimeRemaining(elapsed);
             setForTimeElapsed(elapsed);
-            if (elapsed >= forTimeCap && !phaseEndedRef.current) {
+            if (elapsed >= forTimeCapRef.current && !phaseEndedRef.current) {
               phaseEndedRef.current = true;
-              soundManager.playBeep().catch(() => {});
+              soundManager.playBeep();
               triggerHaptic('heavy');
               Vibration.vibrate([0, 500, 200, 500]);
               setTimerState('finished');
@@ -753,33 +805,33 @@ export default function TimerScreen() {
           Vibration.vibrate([0, 500, 200, 500, 200, 500]);
           flashService.alarm();
 
-          switch (mode) {
+          switch (modeRef.current) {
             case 'musculation':
               backgroundTaskService.end();
               setTimerState('finished');
               setTimeRemaining(0);
-              if (trackRepsWeight) {
+              if (trackRepsWeightRef.current) {
                 setShowRepsWeightModal(true);
               } else {
                 setSeriesHistory(prev => [...prev, {
-                  seriesNumber: seriesCount,
+                  seriesNumber: seriesCountRef.current,
                   timestamp: new Date(),
-                  restDuration: musculationRest,
+                  restDuration: musculationRestRef.current,
                 }]);
               }
               break;
 
             case 'combat':
-              if (isInRest) {
-                if (currentRound < totalRounds) {
+              if (isInRestRef.current) {
+                if (currentRoundRef.current < totalRoundsRef.current) {
                   setCurrentRound(r => r + 1);
                   setIsInRest(false);
                   backgroundTaskService.begin();
+                  endTimestampRef.current = Date.now() + roundDurationRef.current * 1000;
                   timerNotifications.scheduleTimerEndNotification('combat', endTimestampRef.current).catch(() => {});
-                  endTimestampRef.current = Date.now() + roundDuration * 1000;
                   lastCountdownRef.current = -1;
                   phaseEndedRef.current = false;
-                  setTimeRemaining(roundDuration);
+                  setTimeRemaining(roundDurationRef.current);
                 } else {
                   backgroundTaskService.end();
                   setTimerState('finished');
@@ -787,14 +839,14 @@ export default function TimerScreen() {
                   soundManager.playVictory();
                 }
               } else {
-                if (currentRound < totalRounds) {
+                if (currentRoundRef.current < totalRoundsRef.current) {
                   setIsInRest(true);
                   backgroundTaskService.begin();
+                  endTimestampRef.current = Date.now() + restDurationRef.current * 1000;
                   timerNotifications.scheduleTimerEndNotification('combat', endTimestampRef.current).catch(() => {});
-                  endTimestampRef.current = Date.now() + restDuration * 1000;
                   lastCountdownRef.current = -1;
                   phaseEndedRef.current = false;
-                  setTimeRemaining(restDuration);
+                  setTimeRemaining(restDurationRef.current);
                 } else {
                   backgroundTaskService.end();
                   setTimerState('finished');
@@ -805,43 +857,43 @@ export default function TimerScreen() {
               break;
 
             case 'tabata':
-              if (tabataIsRestBetweenSets) {
+              if (tabataIsRestBetweenSetsRef.current) {
                 setTabataCurrentSet(s => s + 1);
                 setTabataCurrentRound(1);
                 setTabataIsRestBetweenSets(false);
                 setTabataIsWork(true);
                 backgroundTaskService.begin();
+                endTimestampRef.current = Date.now() + tabataWorkRef.current * 1000;
                 timerNotifications.scheduleTimerEndNotification('tabata', endTimestampRef.current).catch(() => {});
-                endTimestampRef.current = Date.now() + tabataWork * 1000;
                 lastCountdownRef.current = -1;
                 phaseEndedRef.current = false;
-                setTimeRemaining(tabataWork);
-              } else if (tabataIsWork) {
+                setTimeRemaining(tabataWorkRef.current);
+              } else if (tabataIsWorkRef.current) {
                 setTabataIsWork(false);
                 backgroundTaskService.begin();
+                endTimestampRef.current = Date.now() + tabataRestRef.current * 1000;
                 timerNotifications.scheduleTimerEndNotification('tabata', endTimestampRef.current).catch(() => {});
-                endTimestampRef.current = Date.now() + tabataRest * 1000;
                 lastCountdownRef.current = -1;
                 phaseEndedRef.current = false;
-                setTimeRemaining(tabataRest);
+                setTimeRemaining(tabataRestRef.current);
               } else {
-                if (tabataCurrentRound < tabataRounds) {
+                if (tabataCurrentRoundRef.current < tabataRoundsRef.current) {
                   setTabataCurrentRound(r => r + 1);
                   setTabataIsWork(true);
                   backgroundTaskService.begin();
+                  endTimestampRef.current = Date.now() + tabataWorkRef.current * 1000;
                   timerNotifications.scheduleTimerEndNotification('tabata', endTimestampRef.current).catch(() => {});
-                  endTimestampRef.current = Date.now() + tabataWork * 1000;
                   lastCountdownRef.current = -1;
                   phaseEndedRef.current = false;
-                  setTimeRemaining(tabataWork);
-                } else if (tabataCurrentSet < tabataSets) {
+                  setTimeRemaining(tabataWorkRef.current);
+                } else if (tabataCurrentSetRef.current < tabataSetsRef.current) {
                   setTabataIsRestBetweenSets(true);
                   backgroundTaskService.begin();
+                  endTimestampRef.current = Date.now() + tabataRestBetweenSetsRef.current * 1000;
                   timerNotifications.scheduleTimerEndNotification('tabata', endTimestampRef.current).catch(() => {});
-                  endTimestampRef.current = Date.now() + tabataRestBetweenSets * 1000;
                   lastCountdownRef.current = -1;
                   phaseEndedRef.current = false;
-                  setTimeRemaining(tabataRestBetweenSets);
+                  setTimeRemaining(tabataRestBetweenSetsRef.current);
                 } else {
                   backgroundTaskService.end();
                   setTimerState('finished');
@@ -852,11 +904,11 @@ export default function TimerScreen() {
               break;
 
             case 'emom':
-              if (emomCurrentMinute < emomDuration) {
+              if (emomCurrentMinuteRef.current < emomDurationRef.current) {
                 setEmomCurrentMinute(m => m + 1);
                 backgroundTaskService.begin();
-                timerNotifications.scheduleTimerEndNotification('emom', endTimestampRef.current).catch(() => {});
                 endTimestampRef.current = Date.now() + 60 * 1000;
+                timerNotifications.scheduleTimerEndNotification('emom', endTimestampRef.current).catch(() => {});
                 lastCountdownRef.current = -1;
                 phaseEndedRef.current = false;
                 setTimeRemaining(60);
@@ -895,11 +947,8 @@ export default function TimerScreen() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [timerState, mode, isInRest, currentRound, totalRounds, roundDuration, restDuration,
-      tabataIsWork, tabataCurrentRound, tabataRounds, tabataWork, tabataRest,
-      tabataIsRestBetweenSets, tabataCurrentSet, tabataSets, tabataRestBetweenSets,
-      emomCurrentMinute, emomDuration,
-      forTimeCap, trackRepsWeight, musculationRest, seriesCount]);
+  }, [timerState]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ↑ Seul timerState redémarre l'intervalle. Les transitions lisent les refs.
 
   // Calculate progress
   const totalTime = getCurrentTotalTime();
@@ -986,12 +1035,12 @@ export default function TimerScreen() {
       contentContainerStyle={styles.modeTabsContent}
     >
       {[
-        { id: 'musculation' as TimerMode, icon: Dumbbell, label: 'Muscu' },
-        { id: 'combat' as TimerMode, icon: Swords, label: 'Combat' },
-        { id: 'tabata' as TimerMode, icon: Zap, label: 'Tabata' },
-        { id: 'emom' as TimerMode, icon: RefreshCw, label: 'EMOM' },
-        { id: 'amrap' as TimerMode, icon: Timer, label: 'AMRAP' },
-        { id: 'fortime' as TimerMode, icon: Timer, label: 'For Time' },
+        { id: 'musculation' as TimerMode, icon: Dumbbell, label: t('timer.modeMuscu') },
+        { id: 'combat' as TimerMode, icon: Swords, label: t('timer.modeCombat') },
+        { id: 'tabata' as TimerMode, icon: Zap, label: t('timer.modeTabata') },
+        { id: 'emom' as TimerMode, icon: RefreshCw, label: t('timer.modeEMOM') },
+        { id: 'amrap' as TimerMode, icon: Timer, label: t('timer.modeAMRAP') },
+        { id: 'fortime' as TimerMode, icon: Timer, label: t('timer.modeForTime') },
       ].map(({ id, icon: Icon, label }) => (
         <TouchableOpacity
           key={id}
@@ -1115,7 +1164,10 @@ export default function TimerScreen() {
                     ]}
                     onPress={() => applyCombatPreset(key)}
                   >
-                    <Text style={styles.combatPresetIcon}>{preset.icon}</Text>
+                    {preset.icon
+                      ? React.createElement(preset.icon, { size: 24, color: isSelected ? colors.textOnGold ?? '#fff' : colors.textPrimary })
+                      : <View style={{ height: 24, marginBottom: SPACING.xs }} />
+                    }
                     <Text style={[
                       styles.combatPresetName,
                       { color: colors.textPrimary },
@@ -1210,9 +1262,9 @@ export default function TimerScreen() {
       case 'tabata':
         return (
           <View style={[styles.settingsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-            <Text style={[styles.settingsTitle, { color: colors.textPrimary }]}>Tabata</Text>
+            <Text style={[styles.settingsTitle, { color: colors.textPrimary }]}>{t('timer.modeTabata')}</Text>
             <Text style={[styles.settingsSubtitle, { color: colors.textMuted }]}>
-              {tabataWork}s travail / {tabataRest}s repos
+              {t('timer.tabataSubtitle').replace('{{work}}', String(tabataWork)).replace('{{rest}}', String(tabataRest))}
             </Text>
 
             <View style={styles.tabataPresetsRow}>
@@ -1244,7 +1296,7 @@ export default function TimerScreen() {
                     { color: colors.textMuted },
                     tabataRounds === preset.rounds && { color: colors.textOnGold },
                   ]}>
-                    {preset.rounds} rounds
+                    {t('timer.tabataRoundsLabel').replace('{{n}}', String(preset.rounds))}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -1350,7 +1402,7 @@ export default function TimerScreen() {
               )}
 
               <Text style={[styles.totalDuration, { color: colors.textMuted, marginTop: SPACING.md }]}>
-                Durée totale: {formatTime((tabataWork + tabataRest) * tabataRounds * tabataSets + (tabataSets > 1 ? tabataRestBetweenSets * (tabataSets - 1) : 0))}
+                {t('timer.totalDurationLabel').replace('{{time}}', formatTime((tabataWork + tabataRest) * tabataRounds * tabataSets + (tabataSets > 1 ? tabataRestBetweenSets * (tabataSets - 1) : 0)))}
               </Text>
             </View>
           </View>
@@ -1359,9 +1411,9 @@ export default function TimerScreen() {
       case 'emom':
         return (
           <View style={[styles.settingsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-            <Text style={[styles.settingsTitle, { color: colors.textPrimary }]}>EMOM</Text>
+            <Text style={[styles.settingsTitle, { color: colors.textPrimary }]}>{t('timer.modeEMOM')}</Text>
             <Text style={[styles.settingsSubtitle, { color: colors.textMuted }]}>
-              Every Minute On the Minute
+              {t('timer.emomSubtitle')}
             </Text>
 
             <View style={styles.emomPresetsRow}>
@@ -1410,9 +1462,9 @@ export default function TimerScreen() {
       case 'amrap':
         return (
           <View style={[styles.settingsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-            <Text style={[styles.settingsTitle, { color: colors.textPrimary }]}>AMRAP</Text>
+            <Text style={[styles.settingsTitle, { color: colors.textPrimary }]}>{t('timer.modeAMRAP')}</Text>
             <Text style={[styles.settingsSubtitle, { color: colors.textMuted }]}>
-              As Many Rounds As Possible
+              {t('timer.amrapSubtitle')}
             </Text>
 
             {/* Durée */}
@@ -1456,7 +1508,7 @@ export default function TimerScreen() {
       case 'fortime':
         return (
           <View style={[styles.settingsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-            <Text style={[styles.settingsTitle, { color: colors.textPrimary }]}>FOR TIME</Text>
+            <Text style={[styles.settingsTitle, { color: colors.textPrimary }]}>{t('timer.fortimeTitle')}</Text>
             <Text style={[styles.settingsSubtitle, { color: colors.textMuted }]}>
               {t('timer.forTimeDesc')}
             </Text>
@@ -1485,7 +1537,7 @@ export default function TimerScreen() {
             {forTimeExercises.length > 0 && (
               <View style={[styles.exercisesListContainer, { marginTop: SPACING.lg }]}>
                 <Text style={[styles.exercisesListTitle, { color: colors.textSecondary }]}>
-                  Workout
+                  {t('timer.fortimeWorkout')}
                 </Text>
                 {forTimeExercises.map((exercise, index) => (
                   <View key={index} style={[styles.exerciseItem, { backgroundColor: colors.backgroundElevated }]}>
@@ -1509,20 +1561,20 @@ export default function TimerScreen() {
       case 'musculation':
         return t('timer.statusRest');
       case 'combat':
-        return isInRest ? t('timer.statusRest') : `ROUND ${currentRound}/${totalRounds}`;
+        return isInRest ? t('timer.statusRest') : t('timer.statusRound').replace('{{current}}', String(currentRound)).replace('{{total}}', String(totalRounds));
       case 'tabata':
         if (tabataIsRestBetweenSets) {
-          return `${t('timer.statusRest')} SET ${tabataCurrentSet}/${tabataSets}`;
+          return t('timer.statusRestBetweenSets').replace('{{current}}', String(tabataCurrentSet)).replace('{{total}}', String(tabataSets));
         }
         const setInfo = tabataSets > 1 ? ` - SET ${tabataCurrentSet}/${tabataSets}` : '';
         return tabataIsWork
-          ? `TRAVAIL ${tabataCurrentRound}/${tabataRounds}${setInfo}`
-          : `${t('timer.statusRest')} ${tabataCurrentRound}/${tabataRounds}${setInfo}`;
+          ? t('timer.statusWork').replace('{{current}}', String(tabataCurrentRound)).replace('{{total}}', String(tabataRounds)) + setInfo
+          : t('timer.statusRestTabata').replace('{{current}}', String(tabataCurrentRound)).replace('{{total}}', String(tabataRounds)) + setInfo;
       case 'emom':
         const currentExercise = emomExercises.length > 0 ? emomExercises[(emomCurrentMinute - 1) % emomExercises.length] : '';
-        return currentExercise || `MINUTE ${emomCurrentMinute}/${emomDuration}`;
+        return currentExercise || t('timer.statusMinute').replace('{{current}}', String(emomCurrentMinute)).replace('{{total}}', String(emomDuration));
       case 'amrap':
-        return `ROUNDS: ${amrapRoundsCompleted}`;
+        return t('timer.statusRounds').replace('{{n}}', String(amrapRoundsCompleted));
       case 'fortime':
         return timerState === 'idle' ? t('timer.statusReady') : t('timer.statusInProgress');
     }
@@ -1615,11 +1667,11 @@ export default function TimerScreen() {
               {mode === 'combat' ? (
                 <View style={styles.fractionDisplay}>
                   <Text style={[styles.statusText, { color: statusColor }]}>
-                    {isInRest ? 'REPOS' : `R${currentRound}/${totalRounds}`}
+                    {isInRest ? t('timer.combatRest') : `R${currentRound}/${totalRounds}`}
                   </Text>
                   <View style={[styles.fractionLine, { backgroundColor: statusColor }]} />
                   <Text style={[styles.fractionBottom, { color: colors.textMuted }]}>
-                    {isInRest ? `Prochain: R${currentRound + 1}` : `Repos: ${formatTime(restDuration)}`}
+                    {isInRest ? t('timer.combatNextRound').replace('{{n}}', String(currentRound + 1)) : `${t('timer.rest')}: ${formatTime(restDuration)}`}
                   </Text>
                 </View>
               ) : (
@@ -1638,7 +1690,7 @@ export default function TimerScreen() {
               )}
 
               {timeRemaining <= 10 && timerState === 'running' && (
-                <Text style={[styles.warningText, { color: '#EF4444' }]}>GO !</Text>
+                <Text style={[styles.warningText, { color: '#EF4444' }]}>{t('timer.goAlert')}</Text>
               )}
             </View>
           </View>
@@ -1713,11 +1765,14 @@ export default function TimerScreen() {
               style={[styles.forTimeButton, { backgroundColor: '#10B981' }]}
               onPress={async () => {
                 setTimerState('finished');
-                await soundManager.playVictory();
+                soundManager.playVictory();
                 triggerHaptic('heavy');
               }}
             >
-              <Text style={styles.forTimeButtonText}>🏁 FINISHED !</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Flag size={16} color="#FFFFFF" />
+                <Text style={styles.forTimeButtonText}>FINISHED !</Text>
+              </View>
             </TouchableOpacity>
           </View>
         )}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Droplets } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { BarChart, BarData } from './BarChart';
 import { CircularProgress } from './CircularProgress';
@@ -25,9 +26,10 @@ export const HydrationCard: React.FC<HydrationCardProps> = ({
       { backgroundColor: colors.backgroundElevated }
     ]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          💧 Hydratation
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Droplets size={16} color={colors.textPrimary} />
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Hydratation</Text>
+        </View>
         <Text style={[styles.value, { color: isDark ? colors.accent : colors.textPrimary }]}>
           {currentLiters}L
         </Text>

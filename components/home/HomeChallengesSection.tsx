@@ -40,6 +40,7 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { router } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import {
@@ -154,6 +155,7 @@ const selectRotating5 = (quests: QuestWithProgress[], seed: number): QuestWithPr
 
 export default function HomeChallengesSection({ onXPGained }: Props) {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabType>('JOUR');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [totalXP, setTotalXP] = useState(0);
@@ -275,7 +277,7 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <XCircle size={14} color={colors.textMuted} />
-                <Text style={[styles.cancelText, { color: colors.textMuted }]}>Annuler ce défi</Text>
+                <Text style={[styles.cancelText, { color: colors.textMuted }]}>{t('challenges.cancelChallenge')}</Text>
               </TouchableOpacity>
             </View>
             <View style={[styles.badgeCompleted, { backgroundColor: `${colors.accent}15` }]}>
@@ -315,7 +317,7 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
                 onPress={() => toggleExpand(quest.questId)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Text style={[styles.detailsText, { color: colors.textMuted }]}>Voir les details</Text>
+                <Text style={[styles.detailsText, { color: colors.textMuted }]}>{t('challenges.viewDetails')}</Text>
                 <ChevronDown size={14} color={colors.textMuted} />
               </TouchableOpacity>
             )}
@@ -359,7 +361,7 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Gamepad2 size={20} color={colors.textPrimary} strokeWidth={2} />
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Défis</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('challenges.title')}</Text>
           <View style={[styles.xpHeaderBadge, { backgroundColor: `${colors.accentDark}25` }]}>
             <Zap size={12} color={colors.accent} fill={colors.accent} />
             <Text style={[styles.xpHeaderText, { color: colors.accent }]}>+{xpEarned} XP</Text>
@@ -373,7 +375,11 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
 
       {/* TABS - combo couleurs du theme */}
       <View style={[styles.tabsRow, { backgroundColor: isDark ? (colors.companion + '15') : (colors.companion + '18') }]}>
-        {(['JOUR', 'SEMAINE', 'MOIS'] as TabType[]).map(tab => (
+        {([
+          { id: 'JOUR' as TabType, label: t('challenges.tabDaily') },
+          { id: 'SEMAINE' as TabType, label: t('challenges.tabWeekly') },
+          { id: 'MOIS' as TabType, label: t('challenges.tabMonthly') },
+        ].map(({ id: tab, label: tabLabel }) => (
           <TouchableOpacity
             key={tab}
             style={[
@@ -388,10 +394,10 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
               { color: activeTab === tab ? colors.textPrimary : colors.textMuted },
               activeTab === tab && styles.tabTextActive,
             ]}>
-              {tab}
+              {tabLabel}
             </Text>
           </TouchableOpacity>
-        ))}
+        )))}
       </View>
 
       {/* PROGRESS BAR - couleur combo du theme */}

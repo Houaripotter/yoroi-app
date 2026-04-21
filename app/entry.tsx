@@ -42,6 +42,8 @@ import { useBadges } from '@/lib/BadgeContext';
 import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, GRADIENTS } from '@/constants/design';
 import logger from '@/lib/security/logger';
 import { useWatch } from '@/lib/WatchConnectivityProvider';
+import { backupReminderService } from '@/lib/backupReminderService';
+import { exportDataToJSON } from '@/lib/exportService';
 
 // ============================================
 // ECRAN DE SAISIE - DESIGN V5 VIBRANT
@@ -233,18 +235,42 @@ export default function EntryScreen() {
         message += `\n${sign}${diff.toFixed(1)} kg depuis la dernière pesée`;
       }
 
+      // Vérifier si on doit proposer une sauvegarde (tous les 5 enregistrements)
+      const shouldBackup = await backupReminderService.onDataAdded().catch(() => false);
+
+      const goBack = () => router.back();
+
+      const showBackupSuggestion = () => {
+        backupReminderService.markReminderShown().catch(() => {});
+        showPopup(
+          '💾 Sauvegarder tes données ?',
+          'Tu as ajouté plusieurs entrées. Yoroi ne sauvegarde que sur ton téléphone — pense à faire un backup pour ne rien perdre !',
+          [
+            { text: 'Plus tard', style: 'cancel', onPress: goBack },
+            {
+              text: 'Sauvegarder',
+              style: 'primary',
+              onPress: async () => {
+                await exportDataToJSON().catch(() => {});
+                goBack();
+              },
+            },
+          ]
+        );
+      };
+
       if (newRecords.length > 0) {
         const recordMessages = newRecords.map(r => `${r.emoji} ${r.message}`).join('\n');
         showPopup(
           'Nouveau record !',
           `${message}\n\n${recordMessages}`,
-          [{ text: 'Super !', style: 'primary', onPress: () => router.back() }]
+          [{ text: 'Super !', style: 'primary', onPress: shouldBackup ? showBackupSuggestion : goBack }]
         );
       } else {
         showPopup(
           'Enregistre',
           message,
-          [{ text: 'OK', style: 'primary', onPress: () => router.back() }]
+          [{ text: 'OK', style: 'primary', onPress: shouldBackup ? showBackupSuggestion : goBack }]
         );
       }
 
@@ -268,7 +294,8 @@ export default function EntryScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 48 : 0}
       >
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
           {/* Header */}
@@ -287,6 +314,7 @@ export default function EntryScreen() {
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
             showsVerticalScrollIndicator={false}
           >
             {/* Date Selector */}
@@ -492,6 +520,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
+    paddingBottom: 280,
   },
 
   // Date Selector

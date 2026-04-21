@@ -157,22 +157,37 @@ export function getZoneForBpm(bpm: number, thresholds: HRZoneThresholds): number
  */
 export function calcZoneDurations(
   hrSamples: { timestamp: string; bpm: number }[],
-  thresholds: HRZoneThresholds
+  thresholds: HRZoneThresholds,
+  workoutStartISO?: string,
+  workoutEndISO?: string,
 ): (HRZone & { durationSeconds: number })[] {
   const zones = thresholdsToZones(thresholds).map(z => ({ ...z, durationSeconds: 0 }));
 
-  if (!hrSamples || hrSamples.length < 2) return zones;
+  if (!hrSamples || hrSamples.length < 1) return zones;
 
-  for (let i = 0; i < hrSamples.length - 1; i++) {
-    const bpm = hrSamples[i].bpm;
-    const gap = (new Date(hrSamples[i + 1].timestamp).getTime() - new Date(hrSamples[i].timestamp).getTime()) / 1000;
-    if (gap <= 0 || gap > 300) continue; // ignorer les gaps > 5 min (pause)
+  const addToZone = (bpm: number, seconds: number) => {
+    if (seconds <= 0 || seconds > 300) return;
     for (const z of zones) {
-      if (bpm >= z.minBpm && bpm < z.maxBpm) {
-        z.durationSeconds += gap;
-        break;
-      }
+      if (bpm >= z.minBpm && bpm < z.maxBpm) { z.durationSeconds += seconds; break; }
     }
+  };
+
+  // Gap du début de séance au 1er sample
+  if (workoutStartISO) {
+    const startGap = (new Date(hrSamples[0].timestamp).getTime() - new Date(workoutStartISO).getTime()) / 1000;
+    addToZone(hrSamples[0].bpm, startGap);
+  }
+
+  // Gaps entre samples consécutifs
+  for (let i = 0; i < hrSamples.length - 1; i++) {
+    const gap = (new Date(hrSamples[i + 1].timestamp).getTime() - new Date(hrSamples[i].timestamp).getTime()) / 1000;
+    addToZone(hrSamples[i].bpm, gap);
+  }
+
+  // Gap du dernier sample à la fin de séance
+  if (workoutEndISO) {
+    const endGap = (new Date(workoutEndISO).getTime() - new Date(hrSamples[hrSamples.length - 1].timestamp).getTime()) / 1000;
+    addToZone(hrSamples[hrSamples.length - 1].bpm, endGap);
   }
 
   return zones;

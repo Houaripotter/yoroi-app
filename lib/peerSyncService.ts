@@ -17,6 +17,7 @@
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DeviceEventEmitter } from 'react-native';
 import MultipeerBridge, { PeerChangedEvent, DataReceivedEvent } from './multipeerBridge';
 import { openDatabase } from './database';
 import logger from './security/logger';
@@ -26,21 +27,74 @@ import logger from './security/logger';
 // ============================================
 
 const LAST_SYNC_KEY = '@yoroi_peer_last_sync';
-const PROTOCOL_VERSION = '1';
+// v2 : ajout de toutes les tables manquantes + sync des clés AsyncStorage (KV).
+// Les anciens devices v1 continuent de fonctionner (on ignore les champs inconnus).
+const PROTOCOL_VERSION = '2';
 
-// Tables synchronisées dans l'ordre (clubs avant trainings pour les FK)
+// Tables synchronisées dans l'ordre (FK : clubs avant trainings, etc.)
+// v2 : version étendue qui couvre TOUTES les données utilisateur SQLite.
 const SYNC_TABLES = [
+  // Core user data
   'profile',
   'clubs',
   'weights',
   'measurements',
   'trainings',
+  'body_compositions',
+  // Santé & bien-être
   'sleep_entries',
   'fasting_sessions',
+  // Planning & goals
   'weekly_plan',
+  'slot_occurrences',
+  'training_goals',
+  // Compétition & combat
+  'competitions',
+  'combats',
+  'injuries',
+  'injury_eva_history',
+  'injury_treatments',
+  'treatment_reminders',
+  // Gamification
+  'achievements',
+  // Training Journal (v5.5)
+  'progression_items',
+  'practice_logs',
 ] as const;
 
 type SyncTable = typeof SYNC_TABLES[number];
+
+// Clés AsyncStorage synchronisées entre devices (v2)
+// → partenaires, templates game plans, records, etc. (tout ce qui n'est pas en SQLite)
+// Les valeurs sont des strings JSON, on les transfère telles quelles.
+const SYNC_KV_KEYS = [
+  '@yoroi_sparring_partners',
+  '@yoroi_playbook_custom_gamePlan',
+  '@yoroi_playbook_custom_whatWorked',
+  '@yoroi_playbook_custom_whatDidntWork',
+  '@yoroi_playbook_custom_counteredBy',
+  '@yoroi_playbook_custom_improvement',
+  '@yoroi_drill_tracker',
+  '@yoroi_gameplan_checked',
+  '@yoroi_tool_favorites',
+  '@yoroi_benchmarks_v2',
+  '@yoroi_skills_v2',
+  '@yoroi_personal_records',
+  '@yoroi_training_loads',
+  '@yoroi_health_bonus_history',
+  '@sparring_weekly_goal',
+  'bjj_fav_submissions_v2',
+  '@yoroi_photo_history',
+  // Apparence / personnalisation
+  'yoroi_theme_color_v5',
+  'yoroi_theme_mode_v5',
+  '@yoroi_tab_order',
+  '@yoroi_avatar_config',
+  '@yoroi_user_gear',
+  '@yoroi_user_mode',
+  '@yoroi_weight_category',
+  '@yoroi_belt',
+] as const;
 
 // ============================================
 // TYPES DU PROTOCOLE
@@ -56,6 +110,7 @@ interface SyncMessage {
   lastSyncTs?: string;
   // SYNC_DATA
   tables?: Partial<Record<SyncTable, any[]>>;
+  kv?: Record<string, { value: string | null; updatedAt: string }>; // v2 : AsyncStorage clés
   ts?: string;         // timestamp de cet envoi
   // SYNC_ACK
   ackTs?: string;
@@ -234,10 +289,19 @@ const sendDelta = async (sinceTs: string) => {
 
     for (const table of SYNC_TABLES) {
       try {
-        const rows = (await db.getAllAsync(
-          `SELECT * FROM ${table} WHERE created_at > ? ORDER BY created_at ASC LIMIT 1000`,
-          [sinceTs]
-        )) as Record<string, unknown>[];
+        // Essaie d'utiliser created_at, fallback sur une simple lecture full-table
+        // pour les tables sans created_at (ex: achievements si c'est une table de mapping)
+        let rows: Record<string, unknown>[] = [];
+        try {
+          rows = (await db.getAllAsync(
+            `SELECT * FROM ${table} WHERE created_at > ? ORDER BY created_at ASC LIMIT 1000`,
+            [sinceTs]
+          )) as Record<string, unknown>[];
+        } catch {
+          // Colonne created_at absente → fallback : envoyer toute la table
+          // (utile pour les petites tables comme achievements, training_goals)
+          rows = (await db.getAllAsync(`SELECT * FROM ${table} LIMIT 1000`)) as Record<string, unknown>[];
+        }
         if (rows.length > 0) {
           tables[table] = rows.map(sanitizeForTransfer);
           total += rows.length;
@@ -247,21 +311,112 @@ const sendDelta = async (sinceTs: string) => {
       }
     }
 
+    // v2 : sync des clés AsyncStorage (partenaires, templates, records…)
+    const kv = await collectKVDelta(sinceTs);
+
     const ts = nowTs();
     await MultipeerBridge.sendData({
       type: 'SYNC_DATA',
       v: PROTOCOL_VERSION,
       device: myDeviceName,
       tables,
+      kv,
       ts,
     } satisfies SyncMessage);
 
-    logger.info(`[PeerSync] Envoi de ${total} enregistrements (depuis ${sinceTs})`);
+    const kvCount = Object.keys(kv).length;
+    logger.info(`[PeerSync] Envoi de ${total} enregistrements SQL + ${kvCount} clés KV (depuis ${sinceTs})`);
   } catch (err) {
     logger.error('[PeerSync] Erreur export delta:', err);
     setStatus({ isSyncing: false });
   }
 };
+
+/**
+ * Collecte les valeurs AsyncStorage à envoyer au peer.
+ *
+ * DÉTECTION AUTOMATIQUE PAR HASH :
+ * On stocke pour chaque clé un hash simple de sa dernière valeur synchronisée.
+ * À chaque sync, on recalcule le hash. Si différent → la valeur a changé
+ * quelque part et on l'inclut dans le delta. Pas besoin de brancher manuellement
+ * une notification à chaque setItem dans l'app.
+ */
+const KV_HASHES_KEY = '@yoroi_kv_hashes';        // hash de la dernière valeur connue
+const KV_TIMESTAMPS_KEY = '@yoroi_kv_timestamps'; // ts de la dernière modif détectée
+
+/** Hash simple (FNV-1a 32-bit) rapide sur une string. Suffit pour détecter les changements. */
+function fastHash(s: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(16);
+}
+
+async function collectKVDelta(sinceTs: string): Promise<Record<string, { value: string | null; updatedAt: string }>> {
+  const result: Record<string, { value: string | null; updatedAt: string }> = {};
+  try {
+    const [hashesRaw, tsRaw] = await Promise.all([
+      AsyncStorage.getItem(KV_HASHES_KEY),
+      AsyncStorage.getItem(KV_TIMESTAMPS_KEY),
+    ]);
+    const hashes: Record<string, string> = hashesRaw ? JSON.parse(hashesRaw) : {};
+    const timestamps: Record<string, string> = tsRaw ? JSON.parse(tsRaw) : {};
+    const now = nowTs();
+    let anyChange = false;
+
+    for (const key of SYNC_KV_KEYS) {
+      const value = await AsyncStorage.getItem(key);
+      const currentHash = fastHash(value ?? '__null__');
+      const lastHash = hashes[key];
+
+      if (currentHash !== lastHash) {
+        // La valeur a changé depuis la dernière sync (ou jamais synchronisée)
+        hashes[key] = currentHash;
+        timestamps[key] = now;
+        anyChange = true;
+        result[key] = { value, updatedAt: now };
+      } else {
+        // Pas de changement, mais on envoie quand même si le ts > sinceTs
+        // (cas où on a déjà envoyé mais le peer ne l'a pas reçu)
+        const keyTs = timestamps[key] ?? '1970-01-01 00:00:00';
+        if (keyTs > sinceTs) {
+          result[key] = { value, updatedAt: keyTs };
+        }
+      }
+    }
+
+    if (anyChange) {
+      await Promise.all([
+        AsyncStorage.setItem(KV_HASHES_KEY, JSON.stringify(hashes)),
+        AsyncStorage.setItem(KV_TIMESTAMPS_KEY, JSON.stringify(timestamps)),
+      ]);
+    }
+  } catch (e) {
+    logger.warn('[PeerSync] Erreur collecte KV:', e);
+  }
+  return result;
+}
+
+/**
+ * (Optionnel, pour force manuelle) : marque une clé comme modifiée sans attendre
+ * la détection automatique par hash. Utile pour déclencher une sync immédiate.
+ */
+export async function markKVKeyChanged(key: string): Promise<void> {
+  if (!(SYNC_KV_KEYS as readonly string[]).includes(key)) return;
+  try {
+    const tsRaw = await AsyncStorage.getItem(KV_TIMESTAMPS_KEY);
+    const timestamps: Record<string, string> = tsRaw ? JSON.parse(tsRaw) : {};
+    timestamps[key] = nowTs();
+    await AsyncStorage.setItem(KV_TIMESTAMPS_KEY, JSON.stringify(timestamps));
+    // On invalide aussi le hash pour forcer la détection au prochain collectKVDelta
+    const hashesRaw = await AsyncStorage.getItem(KV_HASHES_KEY);
+    const hashes: Record<string, string> = hashesRaw ? JSON.parse(hashesRaw) : {};
+    delete hashes[key];
+    await AsyncStorage.setItem(KV_HASHES_KEY, JSON.stringify(hashes));
+  } catch { /* silent */ }
+}
 
 /** Supprime les champs trop lourds (photos base64) avant l'envoi réseau */
 const sanitizeForTransfer = (row: Record<string, unknown>): Record<string, unknown> => {
@@ -278,8 +433,9 @@ const sanitizeForTransfer = (row: Record<string, unknown>): Record<string, unkno
 // ============================================
 
 const handleSyncData = async (peer: string, msg: SyncMessage) => {
-  const { tables, ts, device } = msg;
-  if (!tables) return;
+  const { tables, kv, ts, device } = msg;
+  // Au moins tables ou kv doit être présent pour traiter le message
+  if (!tables && !kv) return;
 
   setStatus({ isSyncing: true });
 
@@ -288,18 +444,35 @@ const handleSyncData = async (peer: string, msg: SyncMessage) => {
     let imported = 0;
     let skipped = 0;
 
-    for (const table of SYNC_TABLES) {
-      const rows = tables[table];
-      if (!rows || rows.length === 0) continue;
+    // Applique les tables SQL
+    if (tables) {
+      for (const table of SYNC_TABLES) {
+        const rows = tables[table];
+        if (!rows || rows.length === 0) continue;
 
-      for (const row of rows) {
-        const inserted = await upsertRow(db, table, row);
-        if (inserted) imported++;
-        else skipped++;
+        for (const row of rows) {
+          const inserted = await upsertRow(db, table, row);
+          if (inserted) imported++;
+          else skipped++;
+        }
       }
     }
 
-    logger.info(`[PeerSync] Import depuis ${device || peer}: ${imported} insérés, ${skipped} ignorés`);
+    // v2 : Applique les clés AsyncStorage reçues
+    let kvApplied = 0;
+    if (kv) {
+      await applyKVDelta(kv);
+      kvApplied = Object.keys(kv).length;
+    }
+
+    logger.info(`[PeerSync] Import depuis ${device || peer}: ${imported} SQL insérés, ${skipped} ignorés, ${kvApplied} clés KV appliquées`);
+
+    // Émet un event pour que les écrans écoutant les KV changés rafraîchissent
+    // (ex: autocomplete partenaires dans add-combat-session)
+    if (kvApplied > 0) {
+      DeviceEventEmitter.emit('YOROI_PARTNERS_CHANGED');
+      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+    }
 
     // Envoyer l'ACK
     const ackTs = ts ?? nowTs();
@@ -317,6 +490,48 @@ const handleSyncData = async (peer: string, msg: SyncMessage) => {
     setStatus({ isSyncing: false });
   }
 };
+
+/**
+ * Applique les valeurs KV reçues du peer.
+ * Stratégie "last-write-wins" : on compare avec notre updatedAt local.
+ * Si la valeur reçue est plus récente → on l'applique. Sinon on garde la nôtre.
+ */
+async function applyKVDelta(kv: Record<string, { value: string | null; updatedAt: string }>): Promise<void> {
+  try {
+    const [tsRaw, hashesRaw] = await Promise.all([
+      AsyncStorage.getItem(KV_TIMESTAMPS_KEY),
+      AsyncStorage.getItem(KV_HASHES_KEY),
+    ]);
+    const timestamps: Record<string, string> = tsRaw ? JSON.parse(tsRaw) : {};
+    const hashes: Record<string, string> = hashesRaw ? JSON.parse(hashesRaw) : {};
+
+    for (const [key, payload] of Object.entries(kv)) {
+      if (!(SYNC_KV_KEYS as readonly string[]).includes(key)) continue;
+
+      const localTs = timestamps[key] ?? '1970-01-01 00:00:00';
+      const remoteTs = payload.updatedAt;
+
+      // Conflict resolution : plus récent gagne. En cas d'égalité : on garde local (pas de flicker).
+      if (remoteTs > localTs) {
+        if (payload.value === null) {
+          await AsyncStorage.removeItem(key);
+        } else {
+          await AsyncStorage.setItem(key, payload.value);
+        }
+        timestamps[key] = remoteTs;
+        // Met à jour le hash pour que la prochaine sync ne re-détecte pas ce changement comme local
+        hashes[key] = fastHash(payload.value ?? '__null__');
+      }
+    }
+
+    await Promise.all([
+      AsyncStorage.setItem(KV_TIMESTAMPS_KEY, JSON.stringify(timestamps)),
+      AsyncStorage.setItem(KV_HASHES_KEY, JSON.stringify(hashes)),
+    ]);
+  } catch (e) {
+    logger.warn('[PeerSync] Erreur apply KV:', e);
+  }
+}
 
 // ============================================
 // PHASE 4 : ACK

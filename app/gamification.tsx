@@ -1441,7 +1441,7 @@ export default function DojoScreen() {
                       </View>
                       <View style={[styles.questXP, { backgroundColor: quest.completed ? '#10B98130' : '#FFD700' }]}>
                         <Text style={[styles.questXPText, { color: quest.completed ? '#FFFFFF' : '#000000' }]}>
-                          {quest.completed ? '✓' : `+${quest.xp}`}
+                          {quest.completed ? <Check size={12} color="#FFFFFF" strokeWidth={3} /> : `+${quest.xp}`}
                         </Text>
                       </View>
                     </Pressable>

@@ -63,6 +63,36 @@ class YoroiDataRepository(private val context: Context) {
     var streak by mutableStateOf(prefs.getInt("streak", 0))
         private set
 
+    // --- Training Stats (synced from unifiedWatchSyncService v2) ---
+    var trainingsThisWeek by mutableStateOf(prefs.getInt("trainingsThisWeek", 0))
+        private set
+    var trainingsThisMonth by mutableStateOf(prefs.getInt("trainingsThisMonth", 0))
+        private set
+    var trainingsThisYear by mutableStateOf(prefs.getInt("trainingsThisYear", 0))
+        private set
+    var yearlyGoal by mutableStateOf(prefs.getInt("yearlyGoal", 365))
+        private set
+    var lastTrainingDate by mutableStateOf(prefs.getString("lastTrainingDate", "") ?: "")
+        private set
+    var lastTrainingSport by mutableStateOf(prefs.getString("lastTrainingSport", "") ?: "")
+        private set
+    var lastTrainingRating by mutableStateOf(prefs.getInt("lastTrainingRating", 0))
+        private set
+    var lastTrainingMood by mutableStateOf(prefs.getString("lastTrainingMood", "") ?: "")
+        private set
+    var weightProgress by mutableStateOf(prefs.getInt("weightProgress", 0))
+        private set
+
+    // --- Combat Stats du mois ---
+    var submissionsGivenMonth by mutableStateOf(prefs.getInt("submissionsGivenMonth", 0))
+        private set
+    var submissionsTakenMonth by mutableStateOf(prefs.getInt("submissionsTakenMonth", 0))
+        private set
+    var combatWinsMonth by mutableStateOf(prefs.getInt("combatWinsMonth", 0))
+        private set
+    var combatLossesMonth by mutableStateOf(prefs.getInt("combatLossesMonth", 0))
+        private set
+
     // --- Sante ---
     var heartRate by mutableStateOf(prefs.getInt("heartRate", 0))
         private set
@@ -188,6 +218,24 @@ class YoroiDataRepository(private val context: Context) {
         intOf("activeCalories")?.let { activeCalories = it; save("activeCalories", it) }
         doubleOf("distance")?.let { distance = it; save("distance", it.toFloat()) }
         intOf("stepsGoal")?.let { stepsGoal = it; save("stepsGoal", it) }
+
+        // Training stats enrichis (unifiedWatchSyncService v2)
+        intOf("streakDays")?.let { streak = it; save("streak", it) }
+        intOf("trainingsThisWeek")?.let { trainingsThisWeek = it; save("trainingsThisWeek", it) }
+        intOf("trainingsThisMonth")?.let { trainingsThisMonth = it; save("trainingsThisMonth", it) }
+        intOf("trainingsThisYear")?.let { trainingsThisYear = it; save("trainingsThisYear", it) }
+        intOf("yearlyGoal")?.let { yearlyGoal = it; save("yearlyGoal", it) }
+        (data["lastTrainingDate"] as? String)?.let { lastTrainingDate = it; saveStr("lastTrainingDate", it) }
+        (data["lastTrainingSport"] as? String)?.let { lastTrainingSport = it; saveStr("lastTrainingSport", it) }
+        intOf("lastTrainingRating")?.let { lastTrainingRating = it; save("lastTrainingRating", it) }
+        (data["lastTrainingMood"] as? String)?.let { lastTrainingMood = it; saveStr("lastTrainingMood", it) }
+        intOf("weightProgress")?.let { weightProgress = it; save("weightProgress", it) }
+
+        // Combat stats du mois (fighter mode)
+        intOf("submissionsGivenThisMonth")?.let { submissionsGivenMonth = it; save("submissionsGivenMonth", it) }
+        intOf("submissionsTakenThisMonth")?.let { submissionsTakenMonth = it; save("submissionsTakenMonth", it) }
+        intOf("combatWinsThisMonth")?.let { combatWinsMonth = it; save("combatWinsMonth", it) }
+        intOf("combatLossesThisMonth")?.let { combatLossesMonth = it; save("combatLossesMonth", it) }
 
         // Profile photo
         (data["profileImage"] as? String)?.let {

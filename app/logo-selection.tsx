@@ -19,6 +19,7 @@ import { ChevronLeft, Check, Crown, Sparkles } from 'lucide-react-native';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useDevMode } from '@/lib/DevModeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 import {
   getSelectedLogo,
@@ -58,6 +59,7 @@ export default function LogoSelectionScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { isPro } = useDevMode();
+  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [currentLogo, setCurrentLogo] = useState<LogoVariant>('default');
@@ -81,9 +83,9 @@ export default function LogoSelectionScreen() {
     if (!isUnlocked) {
       notificationAsync(NotificationFeedbackType.Warning);
       showPopup(
-        'Logo Premium',
-        'Ce logo nécessite la version Premium.\n\nMode Créateur : Tapez 5 fois sur "Version 2.0.0" dans les Réglages pour débloquer.',
-        [{ text: 'OK', style: 'primary' }]
+        t('logoSelection.premiumTitle'),
+        t('logoSelection.premiumMsg'),
+        [{ text: t('logoSelection.ok'), style: 'primary' }]
       );
       return;
     }
@@ -117,15 +119,15 @@ export default function LogoSelectionScreen() {
       notificationAsync(NotificationFeedbackType.Success);
       setCurrentLogo(selectedLogo);
       showPopup(
-        'Logo mis a jour !',
+        t('logoSelection.updated'),
         supportsAlternateIcons
-          ? 'Ton nouveau logo est maintenant actif sur ton ecran d\'accueil.'
-          : 'Logo sauvegarde. Le changement d\'icone necessite un build natif.',
-        [{ text: 'Super !', style: 'primary', onPress: () => router.back() }]
+          ? t('logoSelection.updatedActiveMsg')
+          : t('logoSelection.updatedNativeMsg'),
+        [{ text: t('logoSelection.superBtn'), style: 'primary', onPress: () => router.back() }]
       );
     } catch (error) {
       logger.error('Erreur sauvegarde logo:', error);
-      showPopup('Erreur', 'Impossible de changer le logo. Relance l\'app et reessaie.', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('logoSelection.errorTitle'), t('logoSelection.errorMsg'), [{ text: t('logoSelection.ok'), style: 'primary' }]);
     } finally {
       setIsSaving(false);
     }
@@ -147,10 +149,10 @@ export default function LogoSelectionScreen() {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            Personnalisation
+            {t('logoSelection.title')}
           </Text>
           <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
-            Choisis ton logo
+            {t('logoSelection.subtitle')}
           </Text>
         </View>
         <View style={{ width: 44 }} />
@@ -163,7 +165,7 @@ export default function LogoSelectionScreen() {
       >
         {/* Preview du logo selectionne */}
         <View style={[styles.previewCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-          <Text style={[styles.previewLabel, { color: colors.textMuted }]}>APERCU</Text>
+          <Text style={[styles.previewLabel, { color: colors.textMuted }]}>{t('logoSelection.preview')}</Text>
           <View style={styles.previewContent}>
             <YoroiLogo size="large" forceLogoId={selectedLogo} />
           </View>
@@ -180,16 +182,16 @@ export default function LogoSelectionScreen() {
           <Sparkles size={20} color={colors.accent} />
           <View style={styles.premiumBannerText}>
             <Text style={[styles.premiumBannerTitle, { color: colors.textPrimary }]}>
-              Logos Premium
+              {t('logoSelection.premiumLogos')}
             </Text>
             <Text style={[styles.premiumBannerDesc, { color: colors.textSecondary }]}>
-              Debloque tous les logos apres 6 mois d'utilisation
+              {t('logoSelection.premiumDesc')}
             </Text>
           </View>
         </View>
 
         {/* Grille des logos */}
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>LOGOS DISPONIBLES</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('logoSelection.availableLogos')}</Text>
         
         <View style={styles.logosGrid}>
           {LOGO_OPTIONS.map((option) => {
@@ -253,7 +255,7 @@ export default function LogoSelectionScreen() {
                 {/* Current indicator */}
                 {isCurrent && !isSelected && (
                   <View style={[styles.currentIndicator, { backgroundColor: colors.success }]}>
-                    <Text style={styles.currentText}>Actuel</Text>
+                    <Text style={styles.currentText}>{t('logoSelection.current')}</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -264,11 +266,10 @@ export default function LogoSelectionScreen() {
         {/* Info */}
         <View style={[styles.infoCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
           <Text style={[styles.infoTitle, { color: colors.textPrimary }]}>
-            Comment debloquer les logos Premium ?
+            {t('logoSelection.howToUnlock')}
           </Text>
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            Les logos Premium sont automatiquement debloques apres 6 mois d'utilisation de l'application.
-            Continue a t'entrainer et a suivre ta progression !
+            {t('logoSelection.howToUnlockText')}
           </Text>
         </View>
 
@@ -285,7 +286,7 @@ export default function LogoSelectionScreen() {
           >
             <Check size={20} color={colors.textOnAccent} />
             <Text style={[styles.saveButtonText, { color: colors.textOnAccent }]}>
-              {isSaving ? 'Sauvegarde...' : 'Appliquer ce logo'}
+              {isSaving ? t('logoSelection.saving') : t('logoSelection.applyLogo')}
             </Text>
           </TouchableOpacity>
         </View>

@@ -53,11 +53,11 @@ export function WorkoutSummaryModal({
       case 'tabata':
         return 'Tabata terminé !';
       case 'emom':
-        return '🔄 EMOM terminé !';
+        return 'EMOM terminé !';
       case 'amrap':
         return 'AMRAP terminé !';
       case 'fortime':
-        return '⏱️ For Time terminé !';
+        return 'For Time terminé !';
       default:
         return 'Entraînement terminé !';
     }

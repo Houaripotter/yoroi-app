@@ -229,9 +229,9 @@ export default function PhotosScreen() {
     try {
       const result = await launchImageLibraryAsync({
         mediaTypes: 'images',
-        allowsEditing: true,
-        aspect: [3, 4],
+        allowsEditing: false,
         quality: 0.8,
+        selectionLimit: 1,
       });
 
       if (!result.canceled && result.assets?.[0]) {

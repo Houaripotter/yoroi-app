@@ -21,6 +21,7 @@ import {
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 
 // ============================================
 // ESPACE COMPÉTITEUR - Page dédiée
@@ -28,8 +29,8 @@ import { useTheme } from '@/lib/ThemeContext';
 
 interface MenuItem {
   id: string;
-  label: string;
-  sublabel: string;
+  labelKey: string;
+  sublabelKey: string;
   icon: any;
   iconColor: string;
   iconBg: string;
@@ -39,8 +40,8 @@ interface MenuItem {
 const COMPETITOR_ITEMS: MenuItem[] = [
   {
     id: 'profile',
-    label: 'Profil Compétiteur',
-    sublabel: 'Catégorie, ceinture, sport',
+    labelKey: 'competitorSpace.menuProfile',
+    sublabelKey: 'competitorSpace.menuProfileSub',
     icon: Swords,
     iconColor: '#8B5CF6',
     iconBg: '#8B5CF620',
@@ -48,8 +49,8 @@ const COMPETITOR_ITEMS: MenuItem[] = [
   },
   {
     id: 'competitions',
-    label: 'Compétitions',
-    sublabel: 'Gérer mes compétitions à venir',
+    labelKey: 'competitorSpace.menuCompetitions',
+    sublabelKey: 'competitorSpace.menuCompetitionsSub',
     icon: Calendar,
     iconColor: '#06B6D4',
     iconBg: '#06B6D420',
@@ -57,8 +58,8 @@ const COMPETITOR_ITEMS: MenuItem[] = [
   },
   {
     id: 'palmares',
-    label: 'Palmarès',
-    sublabel: 'Mes combats et statistiques',
+    labelKey: 'competitorSpace.menuPalmares',
+    sublabelKey: 'competitorSpace.menuPalmaresSub',
     icon: Award,
     iconColor: '#F59E0B',
     iconBg: '#F59E0B20',
@@ -66,8 +67,8 @@ const COMPETITOR_ITEMS: MenuItem[] = [
   },
   {
     id: 'cut',
-    label: 'Mode Cut',
-    sublabel: 'Gestion du poids pour la pesée',
+    labelKey: 'competitorSpace.menuCut',
+    sublabelKey: 'competitorSpace.menuCutSub',
     icon: TrendingDown,
     iconColor: '#EF4444',
     iconBg: '#EF444420',
@@ -75,8 +76,8 @@ const COMPETITOR_ITEMS: MenuItem[] = [
   },
   {
     id: 'hydration',
-    label: 'Hydratation Cut',
-    sublabel: 'Protocole hydratation compétition',
+    labelKey: 'competitorSpace.menuHydration',
+    sublabelKey: 'competitorSpace.menuHydrationSub',
     icon: Droplet,
     iconColor: '#3B82F6',
     iconBg: '#3B82F620',
@@ -84,8 +85,8 @@ const COMPETITOR_ITEMS: MenuItem[] = [
   },
   {
     id: 'combat-analytics',
-    label: 'Analyse de combat',
-    sublabel: 'Partenaires, techniques, soumissions',
+    labelKey: 'competitorSpace.menuCombatAnalytics',
+    sublabelKey: 'competitorSpace.menuCombatAnalyticsSub',
     icon: BarChart2,
     iconColor: '#8B5CF6',
     iconBg: '#8B5CF620',
@@ -94,6 +95,7 @@ const COMPETITOR_ITEMS: MenuItem[] = [
 ];
 
 export default function CompetitorSpaceScreen() {
+  const { t } = useI18n();
   const { colors, isDark } = useTheme();
 
   return (
@@ -111,7 +113,7 @@ export default function CompetitorSpaceScreen() {
           >
             <ChevronLeft size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Espace Compétiteur</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('competitorSpace.title')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -124,10 +126,10 @@ export default function CompetitorSpaceScreen() {
             <Swords size={32} color="#8B5CF6" />
           </View>
           <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>
-            Mode Compétiteur
+            {t('competitorSpace.heroTitle')}
           </Text>
           <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
-            Prépare tes compétitions, gère ton poids et suis ton palmarès
+            {t('competitorSpace.heroSubtitle')}
           </Text>
         </LinearGradient>
 
@@ -147,10 +149,10 @@ export default function CompetitorSpaceScreen() {
                   </View>
                   <View style={styles.menuItemContent}>
                     <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>
-                      {item.label}
+                      {t(item.labelKey)}
                     </Text>
                     <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
-                      {item.sublabel}
+                      {t(item.sublabelKey)}
                     </Text>
                   </View>
                   <ChevronRight size={18} color={colors.textMuted} />
@@ -168,10 +170,10 @@ export default function CompetitorSpaceScreen() {
           <Trophy size={20} color="#F59E0B" />
           <View style={{ flex: 1 }}>
             <Text style={[styles.tipsTitle, { color: colors.textPrimary }]}>
-              Conseil du coach
+              {t('competitorSpace.coachTip')}
             </Text>
             <Text style={[styles.tipsText, { color: colors.textSecondary }]}>
-              Planifie ta pesée 7 jours avant la compétition pour un cut optimal et sans risque.
+              {t('competitorSpace.coachTipText')}
             </Text>
           </View>
         </View>

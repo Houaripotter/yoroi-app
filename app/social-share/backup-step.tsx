@@ -21,6 +21,7 @@ import {
   Shield,
   ArrowRight,
   CheckCircle,
+  ShieldCheck,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -118,10 +119,33 @@ export default function BackupStepScreen() {
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 100 }]} showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: colors.background }}>
         
         {/* LOGO SYNC */}
-        <View style={styles.iconContainer}>
-          <Cloud size={60} color={colors.accent} />
-          <View style={styles.shieldOverlay}>
-            <Shield size={24} color="#10B981" fill="#10B981" />
+        <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+          {/* Cercle externe pulsant */}
+          <View style={{
+            width: 130, height: 130, borderRadius: 65,
+            backgroundColor: colors.accent + '12',
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            {/* Cercle intermédiaire */}
+            <View style={{
+              width: 100, height: 100, borderRadius: 50,
+              backgroundColor: colors.accent + '22',
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              {/* Cercle central */}
+              <View style={{
+                width: 72, height: 72, borderRadius: 36,
+                backgroundColor: colors.accent,
+                alignItems: 'center', justifyContent: 'center',
+                shadowColor: colors.accent,
+                shadowOpacity: 0.5,
+                shadowRadius: 16,
+                shadowOffset: { width: 0, height: 6 },
+                elevation: 12,
+              }}>
+                <ShieldCheck size={36} color="#fff" strokeWidth={2} />
+              </View>
+            </View>
           </View>
         </View>
 

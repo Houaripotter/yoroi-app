@@ -4,6 +4,7 @@ import { Tabs, useRouter } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Home, BarChart2, Plus, Calendar, Wrench, Settings, BookOpen } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
@@ -23,6 +24,7 @@ function ImportProgressBanner() {
   const [total, setTotal] = useState(7);
   const slideAnim = useRef(new Animated.Value(-60)).current;
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const show = useCallback(() => {
     setVisible(true);
@@ -40,14 +42,14 @@ function ImportProgressBanner() {
   useEffect(() => {
     const subs = [
       DeviceEventEmitter.addListener('YOROI_IMPORT_START', () => {
-        setCurrent(0); setStepLabel('Démarrage...'); setTotal(7);
+        setCurrent(0); setStepLabel(t('import.starting')); setTotal(7);
         show();
       }),
       DeviceEventEmitter.addListener('YOROI_IMPORT_PROGRESS', (data: { step: string; current: number; total: number }) => {
         setStepLabel(data.step); setCurrent(data.current); setTotal(data.total);
       }),
       DeviceEventEmitter.addListener('YOROI_IMPORT_DONE', () => {
-        setStepLabel('Import terminé !'); setCurrent(7);
+        setStepLabel(t('import.importDoneFull')); setCurrent(7);
         setTimeout(hide, 1800);
       }),
     ];
@@ -64,7 +66,7 @@ function ImportProgressBanner() {
         <View style={bannerStyles.row}>
           <View style={bannerStyles.dot} />
           <Text style={bannerStyles.label} numberOfLines={1}>
-            Import santé — {stepLabel}
+            {t('tabLayout.importLabel').replace('{{step}}', stepLabel)}
           </Text>
           <Text style={bannerStyles.counter}>{current}/{total}</Text>
         </View>
@@ -146,27 +148,30 @@ const ROUTE_ICONS: Record<string, any> = {
   settings: Settings,
 };
 
-// Labels par route
-const ROUTE_LABELS: Record<string, string> = {
-  index: 'Accueil',
-  stats: 'Stats',
-  carnet: 'Carnet',
-  planning: 'Planning',
-  more: 'Outils',
-  settings: 'Reglages',
-};
+// Labels par route - définis dynamiquement dans le composant via useI18n
 
 // ============================================
 // CUSTOM FLOATING PILL TAB BAR
 // ============================================
 function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const router = useRouter();
+  const ROUTE_LABELS: Record<string, string> = {
+    index: t('tabLayout.home'),
+    stats: t('tabLayout.stats'),
+    carnet: t('tabLayout.journal'),
+    planning: t('tabLayout.planning'),
+    more: t('tabLayout.tools'),
+    settings: t('tabLayout.settings'),
+  };
   const plusScale = useRef(new Animated.Value(1)).current;
   const plusRotate = useRef(new Animated.Value(0)).current;
   const [tabOrder, setTabOrder] = useState<TabItem[] | null>(null);
   const { pillWidth, s, fs, isIPad: pad, isSmallPhone } = useResponsive();
 
+  // Structure de la tab bar : dimensions fixes (device-responsive uniquement).
+  // Le texte des labels scale automatiquement via le patch jsx-runtime.
   const ICON_SIZE = s(isSmallPhone ? 20 : 22);
   const ICON_SIZE_ACTIVE = s(isSmallPhone ? 22 : 24);
   const PILL_H = s(pad ? 72 : 68);
@@ -269,6 +274,8 @@ function FloatingPillTabBar({ state, navigation }: BottomTabBarProps) {
             isFocused && styles.tabLabelActive,
           ]}
           numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.6}
         >
           {label}
         </Text>

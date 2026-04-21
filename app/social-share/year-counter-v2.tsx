@@ -24,11 +24,14 @@ import {
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
 import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { captureRef } from 'react-native-view-shot';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { YearCounterCardV2 } from '@/components/social-cards/YearCounterCardV2';
 import { useYearStats } from '@/lib/social-cards/useYearStats';
 import logger from '@/lib/security/logger';
@@ -44,6 +47,7 @@ import { getUnifiedPoints } from '@/lib/gamification';
 
 export default function YearCounterV2Screen() {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { avatarImage: contextAvatar } = useAvatar();
   const cardRef = useRef<View>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -96,15 +100,28 @@ export default function YearCounterV2Screen() {
     loadUserData();
   }, []);
 
-  // ============================================ 
-  // PHOTO PICKER 
-  // ============================================ 
+  // ============================================
+  // PHOTO PICKER
+  // ============================================
+
+  const resizeForCard = async (uri: string): Promise<string> => {
+    try {
+      const result = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 1200 } }],
+        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      return result.uri;
+    } catch {
+      return uri;
+    }
+  };
 
   const takePhoto = async () => {
     try {
       const { status } = await requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        showPopup('Permission refusée', 'Autorise l\'accès à la caméra pour prendre une photo.', [{ text: 'OK', style: 'primary' }]);
+        showPopup(t('yearCounter.permDenied'), t('yearCounter.permCameraMsg'), [{ text: t('yearCounter.ok'), style: 'primary' }]);
         return;
       }
 
@@ -116,43 +133,45 @@ export default function YearCounterV2Screen() {
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
         impactAsync(ImpactFeedbackStyle.Light);
-        setBackgroundImage(asset.uri);
+        const finalUri = await resizeForCard(asset.uri);
+        setBackgroundImage(finalUri);
         setSelectedTemplate('photo');
-        // Détecter si l\'image est en paysage
         const isLandscape = (asset.width || 0) > (asset.height || 0);
         setIsLandscapeImage(isLandscape);
       }
     } catch (error) {
       logger.error('Erreur photo:', error);
-      showPopup('Erreur', 'Impossible de prendre la photo', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('yearCounter.errorTitle'), t('yearCounter.errorShare'), [{ text: t('yearCounter.ok'), style: 'primary' }]);
     }
   };
 
   const pickImage = async () => {
     try {
       const { status } = await requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        showPopup('Permission refusée', 'Autorise l\'accès à tes photos pour ajouter une image.', [{ text: 'OK', style: 'primary' }]);
+      if ((status as string) !== 'granted' && (status as string) !== 'limited') {
+        showPopup(t('yearCounter.permDenied'), t('yearCounter.permGalleryMsg'), [{ text: t('yearCounter.ok'), style: 'primary' }]);
         return;
       }
 
       const result = await launchImageLibraryAsync({
-        allowsEditing: true,
-        quality: 0.9,
+        allowsEditing: false,
+        quality: 0.85,
+        base64: false,
+        selectionLimit: 1,
       });
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
         impactAsync(ImpactFeedbackStyle.Light);
-        setBackgroundImage(asset.uri);
+        const finalUri = await resizeForCard(asset.uri);
+        setBackgroundImage(finalUri);
         setSelectedTemplate('photo');
-        // Détecter si l\'image est en paysage
         const isLandscape = (asset.width || 0) > (asset.height || 0);
         setIsLandscapeImage(isLandscape);
       }
     } catch (error) {
       logger.error('Erreur galerie:', error);
-      showPopup('Erreur', 'Impossible de choisir l\'image', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('yearCounter.errorTitle'), t('yearCounter.errorSave'), [{ text: t('yearCounter.ok'), style: 'primary' }]);
     }
   };
 
@@ -183,14 +202,14 @@ export default function YearCounterV2Screen() {
         if (status === 'granted') {
           await saveToLibraryAsync(uri);
           notificationAsync(NotificationFeedbackType.Success);
-          showPopup('Image sauvegardée !', 'La carte a été sauvegardée dans ta galerie.', [{ text: 'OK', style: 'primary' }]);
+          showPopup(t('yearCounter.imageSaved'), t('yearCounter.imageSavedMsg'), [{ text: t('yearCounter.ok'), style: 'primary' }]);
         } else {
-          showPopup('Partage indisponible', 'Le partage n\'est pas disponible sur cet appareil.', [{ text: 'OK', style: 'primary' }]);
+          showPopup(t('yearCounter.shareUnavailable'), t('yearCounter.shareUnavailableMsg'), [{ text: t('yearCounter.ok'), style: 'primary' }]);
         }
       }
     } catch (error) {
       logger.error('Error sharing:', error);
-      showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('yearCounter.errorTitle'), t('yearCounter.errorShare'), [{ text: t('yearCounter.ok'), style: 'primary' }]);
     } finally {
       setIsLoading(false);
     }
@@ -204,8 +223,8 @@ export default function YearCounterV2Screen() {
 
     try {
       const { status } = await requestPermissionsAsync();
-      if (status !== 'granted') {
-        showPopup('Permission requise', 'Autorise l\'accès à ta galerie pour sauvegarder l\'image.', [{ text: 'OK', style: 'primary' }]);
+      if ((status as string) !== 'granted' && (status as string) !== 'limited') {
+        showPopup(t('yearCounter.permDenied'), t('yearCounter.permSaveMsg'), [{ text: t('yearCounter.ok'), style: 'primary' }]);
         setIsLoading(false);
         return;
       }
@@ -217,10 +236,10 @@ export default function YearCounterV2Screen() {
 
       await saveToLibraryAsync(uri);
       notificationAsync(NotificationFeedbackType.Success);
-      showPopup('Sauvegardé', 'Ta carte a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('yearCounter.saved'), t('yearCounter.savedMsg'), [{ text: t('yearCounter.ok'), style: 'primary' }]);
     } catch (error) {
       logger.error('Error saving:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('yearCounter.errorTitle'), t('yearCounter.errorSave'), [{ text: t('yearCounter.ok'), style: 'primary' }]);
     } finally {
       setIsLoading(false);
     }
@@ -243,7 +262,7 @@ export default function YearCounterV2Screen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            Calcul de tes stats...
+            {t('yearCounter.loadingStats')}
           </Text>
         </View>
       </ScreenWrapper>
@@ -261,7 +280,7 @@ export default function YearCounterV2Screen() {
             style={[styles.button, { backgroundColor: colors.card }]}
             onPress={() => router.back()}
           >
-            <Text style={[styles.buttonText, { color: colors.textPrimary }]}>Retour</Text>
+            <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('yearCounter.back')}</Text>
           </TouchableOpacity>
         </View>
       </ScreenWrapper>
@@ -273,17 +292,17 @@ export default function YearCounterV2Screen() {
       <ScreenWrapper>
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-            Aucune donnée pour {currentYear}
+            {t('yearCounter.noDataTitle').replace('{{year}}', String(currentYear))}
           </Text>
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            Commence à tracker tes entraînements pour générer ton Compteur Annuel !
+            {t('yearCounter.noDataText')}
           </Text>
           <TouchableOpacity
             style={[styles.addButton, { backgroundColor: colors.accent }]}
             onPress={() => router.push('/add-training')}
           >
             <Text style={[styles.addButtonText, { color: colors.textOnGold }]}>
-              Ajouter un entraînement
+              {t('yearCounter.addTraining')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -302,7 +321,7 @@ export default function YearCounterV2Screen() {
           <View style={styles.headerCenter}>
             <Trophy size={20} color="#F59E0B" />
             <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-              Année {currentYear}
+              {t('yearCounter.year')} {currentYear}
             </Text>
           </View>
           <View style={{ width: 40 }} />
@@ -334,11 +353,11 @@ export default function YearCounterV2Screen() {
 
           {/* Template Selector */}
           <View style={styles.templateRow}>
-            <Text style={[styles.templateLabel, { color: colors.textMuted }]}>Style:</Text>
+            <Text style={[styles.templateLabel, { color: colors.textMuted }]}>{t('yearCounter.styleLabel')}</Text>
             {([
-              { key: 'photo', label: 'Photo' },
-              { key: 'dark', label: 'Sombre' },
-              { key: 'light', label: 'Clair' },
+              { key: 'photo', label: t('yearCounter.stylePhoto') },
+              { key: 'dark', label: t('yearCounter.styleDark') },
+              { key: 'light', label: t('yearCounter.styleLight') },
             ] as const).map(({ key, label }) => (
               <TouchableOpacity
                 key={key}
@@ -374,7 +393,7 @@ export default function YearCounterV2Screen() {
           {selectedTemplate === 'photo' && !backgroundImage && (
             <View style={styles.photoPickerContainer}>
               <Text style={[styles.photoPickerTitle, { color: colors.textPrimary }]}>
-                Ajoute ta photo
+                {t('yearCounter.addPhoto')}
               </Text>
               <View style={styles.photoPickerButtons}>
                 <TouchableOpacity
@@ -382,14 +401,14 @@ export default function YearCounterV2Screen() {
                   onPress={takePhoto}
                 >
                   <Camera size={20} color={colors.textOnAccent} />
-                  <Text style={[styles.photoPickerBtnText, { color: colors.textOnAccent }]}>Photo</Text>
+                  <Text style={[styles.photoPickerBtnText, { color: colors.textOnAccent }]}>{t('yearCounter.photoBtn')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.photoPickerBtn, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}
                   onPress={pickImage}
                 >
                   <ImageIcon size={20} color={colors.textPrimary} />
-                  <Text style={[styles.photoPickerBtnText, { color: colors.textPrimary }]}>Galerie</Text>
+                  <Text style={[styles.photoPickerBtnText, { color: colors.textPrimary }]}>{t('yearCounter.galleryBtn')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -401,14 +420,14 @@ export default function YearCounterV2Screen() {
                 onPress={pickImage}
               >
                 <ImageIcon size={18} color={colors.textPrimary} />
-                <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Changer</Text>
+                <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>{t('yearCounter.changeBtn')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                 onPress={takePhoto}
               >
                 <Camera size={18} color={colors.textPrimary} />
-                <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Nouvelle</Text>
+                <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>{t('yearCounter.newBtn')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -425,7 +444,7 @@ export default function YearCounterV2Screen() {
               ) : (
                 <>
                   <Share2 size={20} color={colors.textOnAccent} />
-                  <Text style={[styles.shareBtnText, { color: colors.textOnAccent }]}>Partager</Text>
+                  <Text style={[styles.shareBtnText, { color: colors.textOnAccent }]}>{t('yearCounter.shareBtn')}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -440,7 +459,7 @@ export default function YearCounterV2Screen() {
 
           {/* Close Button */}
           <TouchableOpacity style={styles.skipBtn} onPress={() => router.back()}>
-            <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
+            <Text style={[styles.skipText, { color: colors.textMuted }]}>{t('yearCounter.close')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>

@@ -53,6 +53,7 @@ import {
   Sofa,
   Share2,
   ClipboardList,
+  Check,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 
@@ -726,7 +727,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
 
                 <View style={[styles.xpReward, { backgroundColor: quest.completed ? '#10B98130' : '#FFD700' }]}>
                   <Text style={[styles.xpRewardText, { color: quest.completed ? '#FFFFFF' : '#000000' }]}>
-                    {quest.completed ? '✓' : `+${quest.xp}`}
+                    {quest.completed ? <Check size={12} color="#FFFFFF" strokeWidth={3} /> : `+${quest.xp}`}
                   </Text>
                 </View>
               </Pressable>

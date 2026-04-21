@@ -536,7 +536,7 @@ export default function AddScreen() {
           const names = newChallenges.map(c => `"${c.title}" (+${c.xp} XP)`).join('\n');
           setTimeout(() => {
             showPopup(
-              'Bravo, défi valide !',
+              t('challenges.bravoValidated'),
               `Ton poids a valide :\n${names}\n\nVa dans "Défis" pour reclamer tes XP !`,
               [{ text: 'Super !', style: 'primary' }]
             );

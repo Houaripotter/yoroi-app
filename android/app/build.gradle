@@ -100,8 +100,8 @@ android {
         minSdkVersion Integer.parseInt(findProperty('android.minSdkVersion') ?: rootProject.ext.minSdkVersion.toString())
         // Health Connect (react-native-health-connect) requires minSdk 26
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 22
-        versionName "2.3.0"
+        versionCode 43
+        versionName "2.3.2"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -169,6 +169,9 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+
+    // Storage Access Framework — accès aux dossiers cloud (Google Drive, OneDrive, Dropbox…)
+    implementation("androidx.documentfile:documentfile:1.0.1")
 
     // Wearable Data Layer API — communication téléphone → montre Wear OS
     implementation("com.google.android.gms:play-services-wearable:18.2.0")

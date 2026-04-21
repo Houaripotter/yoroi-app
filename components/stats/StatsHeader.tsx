@@ -8,7 +8,18 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { PeriodSelector } from './PeriodSelector';
 
-export type Period = '7j' | '30j' | '90j' | '6m' | 'tout';
+export type Period =
+  | '7j'
+  | '14j'
+  | '30j'
+  | '60j'
+  | '90j'
+  | '6m'
+  | '9m'
+  | '1a'
+  | '2a'
+  | 'tout'
+  | 'custom';
 
 interface StatsHeaderProps {
   title: string;
@@ -17,6 +28,9 @@ interface StatsHeaderProps {
   selectedPeriod: Period;
   onPeriodChange: (period: Period) => void;
   showPeriodSelector?: boolean;
+  customStart?: string;
+  customEnd?: string;
+  onCustomRangeChange?: (start: string, end: string) => void;
 }
 
 export const StatsHeader: React.FC<StatsHeaderProps> = React.memo(({
@@ -26,6 +40,9 @@ export const StatsHeader: React.FC<StatsHeaderProps> = React.memo(({
   selectedPeriod,
   onPeriodChange,
   showPeriodSelector = true,
+  customStart,
+  customEnd,
+  onCustomRangeChange,
 }) => {
   const { colors, isDark } = useTheme();
 
@@ -51,6 +68,9 @@ export const StatsHeader: React.FC<StatsHeaderProps> = React.memo(({
             <PeriodSelector
               selected={selectedPeriod}
               onChange={onPeriodChange}
+              customStart={customStart}
+              customEnd={customEnd}
+              onCustomRangeChange={onCustomRangeChange}
             />
           </View>
         )}
@@ -67,7 +87,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 16,
-    padding: 16,
+    padding: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -77,7 +97,7 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   iconContainer: {
     marginRight: 12,
@@ -91,9 +111,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 20,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   periodContainer: {
-    marginTop: 8,
+    marginTop: 4,
   },
 });

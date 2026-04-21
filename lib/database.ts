@@ -6,6 +6,19 @@ import { logger } from '@/lib/security/logger';
 // YOROI DATABASE - STOCKAGE LOCAL SQLite
 // ============================================
 
+/** Returns true if the error is a benign "duplicate column" from ALTER TABLE ADD COLUMN */
+const _isDuplicateColumnError = (e: unknown): boolean => {
+  const msg = String((e as any)?.message ?? e).toLowerCase();
+  return msg.includes('duplicate column') || msg.includes('already exists');
+};
+
+/** Log unexpected migration errors (not duplicate-column) */
+const _logUnexpectedMigrationError = (e: unknown, context?: string): void => {
+  if (!_isDuplicateColumnError(e)) {
+    logger.warn(`DB migration error${context ? ` (${context})` : ''}:`, e);
+  }
+};
+
 let db: SQLite.SQLiteDatabase | null = null;
 let _initPromise: Promise<void> | null = null;
 
@@ -64,7 +77,7 @@ const _performInit = async () => {
   for (const migration of profileMigrations) {
     try {
       await database.execAsync(migration);
-    } catch (_e) { /* colonne existe déjà */ }
+    } catch (e) { _logUnexpectedMigrationError(e, 'profile migration'); }
   }
 
   // Table Pesees (poids + composition)
@@ -139,120 +152,140 @@ const _performInit = async () => {
   // Migration: ajouter les colonnes si elles n'existent pas
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN start_time TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN session_type TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN exercises TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE profile ADD COLUMN profile_photo TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN technique_rating INTEGER DEFAULT NULL;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN session_types TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN technical_theme TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN distance REAL;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN calories INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN intensity INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN rounds INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN round_duration INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN is_outdoor INTEGER DEFAULT 0;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN pente REAL;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN speed REAL;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN resistance INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN watts INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN cadence INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   // Colonnes pour les details enrichis Apple Health (route GPS, météo, FC, splits)
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN healthkit_uuid TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN workout_details_json TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN heart_rate INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN max_heart_rate INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN min_heart_rate INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN source TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN location_lat REAL;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN location_lon REAL;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN location_name TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN game_plan TEXT;`);
+  } catch (e) { _logUnexpectedMigrationError(e); }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN what_worked TEXT;`);
+  } catch (e) { _logUnexpectedMigrationError(e); }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN what_didnt_work TEXT;`);
+  } catch (e) { _logUnexpectedMigrationError(e); }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN session_rating INTEGER;`);
+  } catch (e) { _logUnexpectedMigrationError(e); }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN session_mood TEXT;`);
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN session_type TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   try {
     await database.execAsync(`ALTER TABLE measurements ADD COLUMN navel REAL;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   // Table Corbeille (trash) pour les séances supprimees
   await database.execAsync(`
@@ -297,7 +330,7 @@ const _performInit = async () => {
     `ALTER TABLE trash_trainings ADD COLUMN combat_rounds TEXT`,
   ];
   for (const sql of trashMigrations) {
-    try { await database.execAsync(sql); } catch (e) { /* colonne existe déjà */ }
+    try { await database.execAsync(sql); } catch (e) { _logUnexpectedMigrationError(e); }
   }
 
   // Auto-clean trash older than 30 days
@@ -305,7 +338,7 @@ const _performInit = async () => {
     await database.execAsync(
       `DELETE FROM trash_trainings WHERE deleted_at < datetime('now', '-30 days')`
     );
-  } catch (e) { /* ignore */ }
+  } catch (e) { logger.warn('DB: auto-clean trash error:', e); }
 
   // Table Planning Semaine Type
   await database.execAsync(`
@@ -447,7 +480,7 @@ const _performInit = async () => {
   for (const column of competitionsColumnsToAdd) {
     try {
       await database.execAsync(`ALTER TABLE competitions ADD COLUMN ${column};`);
-    } catch (e) { /* colonne existe déjà */ }
+    } catch (e) { _logUnexpectedMigrationError(e); }
   }
 
   // Table Combats
@@ -562,17 +595,17 @@ const _performInit = async () => {
   // Migration: Ajouter label sur weekly_plan
   try {
     await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN label TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   // Migration: Ajouter session_type sur weekly_plan (web)
   try {
     await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN session_type TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   // Migration: Ajouter weekly_plan_id sur trainings
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN weekly_plan_id INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
+  } catch (e) { _logUnexpectedMigrationError(e); }
 
   // Table Slot Occurrences - suivi hebdomadaire des créneaux
   await database.execAsync(`
@@ -699,6 +732,7 @@ export interface Exercise {
 export interface CombatRound {
   number: number;
   partner?: string;
+  partnerRating?: number; // Note de l'adversaire/partenaire (1-10)
   result?: 'win' | 'loss' | 'draw';
   method?: string;
   methodsGiven?: string[];   // Finitions / soumissions données (liste)
@@ -707,7 +741,19 @@ export interface CombatRound {
   submissionsTaken?: number;
   pointsFor?: number;        // Points marqués dans ce round
   pointsAgainst?: number;    // Points concédés dans ce round
+  roundIntensity?: 'guerre' | 'technique' | 'detendu'; // Intensité perçue par round
+  usedTechniques?: { label: string; pts: number; count: number }[]; // Techniques utilisées
   notes?: string;
+  // Analyse de round (suivi sparring)
+  gamePlan?: string;       // Stratégie / game plan prévu
+  whatWorked?: string;     // Ce qui a marché
+  whatDidntWork?: string;  // Ce qui n'a pas marché
+  counteredBy?: string;    // Par quoi l'adversaire t'a contré
+  improvement?: string;    // Piste d'amélioration pour la prochaine fois
+  // Nouveaux champs premium (Hedi n'a pas pensé mais les users kifferont)
+  selfRating?: number;     // Auto-évaluation du round (1-10)
+  mood?: string;           // Mood / ressenti (chaîne : fire, strong, tired, focus, gassed, confused)
+  energyLevel?: number;    // Niveau d'énergie dans ce round (1-10)
 }
 
 export interface Training {
@@ -751,6 +797,12 @@ export interface Training {
   location_lat?: number;
   location_lon?: number;
   location_name?: string;
+  // Game Plan & Bilan (combat sports)
+  game_plan?: string;
+  what_worked?: string;
+  what_didnt_work?: string;
+  session_rating?: number | null;
+  session_mood?: string;
   // Joined fields
   club_name?: string;
   club_logo?: string;
@@ -886,17 +938,17 @@ export const saveProfile = async (profile: Profile): Promise<void> => {
   try {
     await database.runAsync(`ALTER TABLE profile ADD COLUMN birth_date TEXT`);
   } catch (e) {
-    // La colonne existe déjà, on ignore l'erreur
+    _logUnexpectedMigrationError(e, 'saveProfile birth_date');
   }
   try {
     await database.runAsync(`ALTER TABLE profile ADD COLUMN weight_goal TEXT`);
   } catch (e) {
-    // La colonne existe déjà, on ignore l'erreur
+    _logUnexpectedMigrationError(e, 'saveProfile weight_goal');
   }
   try {
     await database.runAsync(`ALTER TABLE profile ADD COLUMN age INTEGER`);
   } catch (e) {
-    // La colonne existe déjà, on ignore l'erreur
+    _logUnexpectedMigrationError(e, 'saveProfile age');
   }
 
   if (existing) {
@@ -956,6 +1008,137 @@ export const addWeight = async (data: Weight): Promise<number> => {
   return result.lastInsertRowId;
 };
 
+/**
+ * Insère ou met à jour une entrée de poids de manière idempotente.
+ * Utilisé par l'import CSV pour éviter les doublons quand l'utilisateur
+ * importe plusieurs fois le même fichier (ou un fichier avec des lignes dupliquées).
+ * Une entrée existante est repérée par (date, source). Si trouvée, on met à jour
+ * les colonnes non-nulles du nouveau enregistrement. Sinon, on insère.
+ *
+ * @returns { action: 'inserted' | 'updated', id: number }
+ */
+export const upsertWeight = async (
+  data: Weight
+): Promise<{ action: 'inserted' | 'updated'; id: number }> => {
+  const database = await openDatabase();
+  const source = data.source || 'manual';
+
+  const existing = await database.getFirstAsync<{ id: number }>(
+    'SELECT id FROM weights WHERE date = ? AND source = ? LIMIT 1',
+    [data.date, source]
+  );
+
+  if (existing?.id) {
+    // UPDATE : ne remplace que les colonnes non-nulles du nouveau record
+    const updates: string[] = [];
+    const values: any[] = [];
+    const cols: Array<[string, any]> = [
+      ['weight', data.weight],
+      ['fat_percent', data.fat_percent],
+      ['muscle_percent', data.muscle_percent],
+      ['water_percent', data.water_percent],
+      ['bone_mass', data.bone_mass],
+      ['visceral_fat', data.visceral_fat],
+      ['metabolic_age', data.metabolic_age],
+      ['bmr', data.bmr],
+      ['note', data.note],
+    ];
+    for (const [col, val] of cols) {
+      if (val != null && val !== '') {
+        updates.push(`${col} = ?`);
+        values.push(val);
+      }
+    }
+    if (updates.length > 0) {
+      values.push(existing.id);
+      await database.runAsync(
+        `UPDATE weights SET ${updates.join(', ')} WHERE id = ?`,
+        values
+      );
+    }
+    return { action: 'updated', id: existing.id };
+  }
+
+  // INSERT
+  const id = await addWeight(data);
+  return { action: 'inserted', id };
+};
+
+/**
+ * Supprime les doublons dans la table `weights`.
+ * Deux entrées sont considérées doublons si elles ont la même `date` ET la même `source`.
+ * Stratégie : pour chaque groupe, on fusionne les valeurs (on garde la première valeur
+ * non-null rencontrée pour chaque colonne) sur l'entrée avec l'id le plus bas,
+ * puis on supprime les autres.
+ *
+ * @returns { removed: nombre d'entrées supprimées, kept: nombre d'entrées restantes }
+ */
+export const deduplicateWeights = async (): Promise<{ removed: number; kept: number }> => {
+  const database = await openDatabase();
+  const rows = await database.getAllAsync<any>('SELECT * FROM weights ORDER BY id ASC');
+
+  // Grouper par (date, source)
+  const groups = new Map<string, any[]>();
+  for (const row of rows) {
+    const key = `${row.date}|${row.source || 'manual'}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(row);
+  }
+
+  const columns = ['weight', 'fat_percent', 'muscle_percent', 'water_percent',
+                   'bone_mass', 'visceral_fat', 'metabolic_age', 'bmr', 'note'];
+  let removed = 0;
+
+  for (const group of groups.values()) {
+    if (group.length <= 1) continue;
+
+    // Fusionner : garder la meilleure valeur (première non-null) pour chaque colonne
+    const merged: any = { ...group[0] };
+    for (const row of group.slice(1)) {
+      for (const col of columns) {
+        if ((merged[col] == null || merged[col] === '') && row[col] != null && row[col] !== '') {
+          merged[col] = row[col];
+        }
+      }
+    }
+
+    // Mettre à jour l'entrée conservée (id le plus bas)
+    await database.runAsync(
+      `UPDATE weights SET weight = ?, fat_percent = ?, muscle_percent = ?, water_percent = ?,
+       bone_mass = ?, visceral_fat = ?, metabolic_age = ?, bmr = ?, note = ? WHERE id = ?`,
+      [merged.weight, merged.fat_percent ?? null, merged.muscle_percent ?? null,
+       merged.water_percent ?? null, merged.bone_mass ?? null, merged.visceral_fat ?? null,
+       merged.metabolic_age ?? null, merged.bmr ?? null, merged.note ?? null, merged.id]
+    );
+
+    // Supprimer les doublons (toutes les entrées sauf la première)
+    const idsToDelete = group.slice(1).map(r => r.id);
+    const placeholders = idsToDelete.map(() => '?').join(',');
+    await database.runAsync(`DELETE FROM weights WHERE id IN (${placeholders})`, idsToDelete);
+    removed += idsToDelete.length;
+  }
+
+  return { removed, kept: rows.length - removed };
+};
+
+/**
+ * Compte les doublons sans les supprimer (utile pour prévisualiser le nettoyage).
+ */
+export const countWeightDuplicates = async (): Promise<number> => {
+  const database = await openDatabase();
+  const rows = await database.getAllAsync<any>('SELECT date, source FROM weights');
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const key = `${row.date}|${row.source || 'manual'}`;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  let duplicates = 0;
+  for (const c of counts.values()) {
+    if (c > 1) duplicates += c - 1;
+  }
+  return duplicates;
+};
+
 export const getWeights = async (days?: number): Promise<Weight[]> => {
   const database = await openDatabase();
   const query = days
@@ -998,6 +1181,46 @@ export const deleteWeight = async (id: number): Promise<void> => {
   await database.runAsync('DELETE FROM weights WHERE id = ?', [id]);
 };
 
+export const updateWeight = async (id: number, data: Partial<Weight>): Promise<void> => {
+  const database = await openDatabase();
+  await database.runAsync(
+    `UPDATE weights SET
+      weight = COALESCE(?, weight),
+      fat_percent = ?,
+      muscle_percent = ?,
+      water_percent = ?,
+      bone_mass = ?,
+      visceral_fat = ?,
+      metabolic_age = ?,
+      bmr = ?,
+      note = ?,
+      date = COALESCE(?, date)
+    WHERE id = ?`,
+    [
+      data.weight ?? null,
+      data.fat_percent ?? null,
+      data.muscle_percent ?? null,
+      data.water_percent ?? null,
+      data.bone_mass ?? null,
+      data.visceral_fat ?? null,
+      data.metabolic_age ?? null,
+      data.bmr ?? null,
+      data.note ?? null,
+      data.date ?? null,
+      id,
+    ]
+  );
+};
+
+export const deleteWeightsBySource = async (source: string): Promise<number> => {
+  const database = await openDatabase();
+  const countResult = await database.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM weights WHERE source = ?', [source]
+  );
+  await database.runAsync('DELETE FROM weights WHERE source = ?', [source]);
+  return countResult?.count || 0;
+};
+
 // ============================================
 // FONCTIONS CRUD - ENTRAÎNEMENTS
 // ============================================
@@ -1032,7 +1255,7 @@ export const updateTraining = async (id: number, data: Partial<Training>): Promi
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const combatRoundsJson = data.combat_rounds ? JSON.stringify(data.combat_rounds) : null;
   await database.runAsync(
-    `UPDATE trainings SET club_id = ?, sport = ?, session_type = ?, date = ?, start_time = ?, duration_minutes = ?, notes = ?, muscles = ?, exercises = ?, technique_rating = ?, is_outdoor = ?, distance = ?, calories = ?, intensity = ?, rounds = ?, round_duration = ?, pente = ?, speed = ?, resistance = ?, watts = ?, cadence = ?, heart_rate = ?, min_heart_rate = ?, max_heart_rate = ?, source = ?, combat_rounds = ?, location_lat = ?, location_lon = ?, location_name = ?
+    `UPDATE trainings SET club_id = ?, sport = ?, session_type = ?, date = ?, start_time = ?, duration_minutes = ?, notes = ?, muscles = ?, exercises = ?, technique_rating = ?, is_outdoor = ?, distance = ?, calories = ?, intensity = ?, rounds = ?, round_duration = ?, pente = ?, speed = ?, resistance = ?, watts = ?, cadence = ?, heart_rate = ?, min_heart_rate = ?, max_heart_rate = ?, source = ?, combat_rounds = ?, location_lat = ?, location_lon = ?, location_name = ?, game_plan = ?, what_worked = ?, what_didnt_work = ?, session_rating = ?, session_mood = ?
      WHERE id = ?`,
     [data.club_id || null, data.sport || null, data.session_type || null, data.date || null,
      data.start_time || null, data.duration_minutes || null,
@@ -1041,7 +1264,9 @@ export const updateTraining = async (id: number, data: Partial<Training>): Promi
      data.intensity || null, data.rounds || null, data.round_duration || null,
      data.pente || null, data.speed || null, data.resistance || null, data.watts || null, data.cadence || null,
      data.heart_rate || null, data.min_heart_rate || null, data.max_heart_rate || null, data.source || null, combatRoundsJson,
-     data.location_lat || null, data.location_lon || null, data.location_name || null, id]
+     data.location_lat || null, data.location_lon || null, data.location_name || null,
+     data.game_plan || null, data.what_worked || null, data.what_didnt_work || null,
+     data.session_rating ?? null, data.session_mood || null, id]
   );
 };
 
@@ -1050,8 +1275,8 @@ export const addTraining = async (data: Training): Promise<number> => {
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const combatRoundsJson = data.combat_rounds ? JSON.stringify(data.combat_rounds) : null;
   const result = await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, healthkit_uuid, workout_details_json, heart_rate, min_heart_rate, max_heart_rate, source, combat_rounds, weekly_plan_id, location_lat, location_lon, location_name)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, healthkit_uuid, workout_details_json, heart_rate, min_heart_rate, max_heart_rate, source, combat_rounds, weekly_plan_id, location_lat, location_lon, location_name, game_plan, what_worked, what_didnt_work, session_rating, session_mood)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.club_id || null, data.sport, data.session_type || null, data.date,
      data.start_time || null, data.duration_minutes || null,
      data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null,
@@ -1060,7 +1285,9 @@ export const addTraining = async (data: Training): Promise<number> => {
      data.pente || null, data.speed || null, data.resistance || null, data.watts || null, data.cadence || null,
      data.healthkit_uuid || null, data.workout_details_json || null, data.heart_rate || null,
      data.min_heart_rate || null, data.max_heart_rate || null, data.source || null, combatRoundsJson, data.weekly_plan_id || null,
-     data.location_lat || null, data.location_lon || null, data.location_name || null]
+     data.location_lat || null, data.location_lon || null, data.location_name || null,
+     data.game_plan || null, data.what_worked || null, data.what_didnt_work || null,
+     data.session_rating ?? null, data.session_mood || null]
   );
   if (!result?.lastInsertRowId) {
     throw new Error('Failed to insert training record');
@@ -1129,6 +1356,72 @@ export const getExistingHealthkitUUIDs = async (): Promise<Set<string>> => {
     `SELECT healthkit_uuid FROM trainings WHERE healthkit_uuid IS NOT NULL`
   );
   return new Set(rows.map(r => r.healthkit_uuid));
+};
+
+/**
+ * Supprime les séances en double importées depuis Apple Santé.
+ * Stratégie :
+ *   1. Doublons par healthkit_uuid identique → garder celui qui a le plus de données (workout_details_json, calories…)
+ *   2. Doublons par empreinte date+heure+durée+sport (même séance sans UUID) → garder le plus ancien id
+ * Retourne le nombre de lignes supprimées.
+ */
+export const deduplicateTrainings = async (): Promise<number> => {
+  const database = await openDatabase();
+  let deleted = 0;
+
+  // ── 1. Doublons par UUID HealthKit ──────────────────────────────────────
+  // Pour chaque UUID, garder l'id avec workout_details_json non null (le plus enrichi),
+  // sinon garder le MIN(id) (le plus ancien).
+  const uuidDuplicates = await database.getAllAsync<{ keep_id: number; remove_ids: string }>(
+    `SELECT
+       COALESCE(
+         MIN(CASE WHEN workout_details_json IS NOT NULL THEN id END),
+         MIN(id)
+       ) AS keep_id,
+       GROUP_CONCAT(id) AS all_ids
+     FROM trainings
+     WHERE healthkit_uuid IS NOT NULL
+     GROUP BY healthkit_uuid
+     HAVING COUNT(*) > 1`
+  );
+
+  for (const row of uuidDuplicates) {
+    const allIds: number[] = (row as any).all_ids.split(',').map(Number);
+    const toDelete = allIds.filter(id => id !== row.keep_id);
+    for (const id of toDelete) {
+      await database.runAsync(`DELETE FROM trainings WHERE id = ?`, [id]);
+      deleted++;
+    }
+  }
+
+  // ── 2. Doublons par empreinte (date + start_time + duration + sport) ────
+  // Seulement pour les séances Apple Health (source contient 'apple' ou 'health' ou 'watch')
+  // qui n'ont pas de UUID (sinon déjà traités ci-dessus).
+  const fingerprintDuplicates = await database.getAllAsync<{ keep_id: number; all_ids: string }>(
+    `SELECT
+       MIN(id) AS keep_id,
+       GROUP_CONCAT(id) AS all_ids
+     FROM trainings
+     WHERE healthkit_uuid IS NULL
+       AND (
+         LOWER(source) LIKE '%apple%' OR
+         LOWER(source) LIKE '%health%' OR
+         LOWER(source) LIKE '%watch%'
+       )
+     GROUP BY date, COALESCE(start_time,''), CAST(ROUND(duration_minutes) AS INTEGER), sport
+     HAVING COUNT(*) > 1`
+  );
+
+  for (const row of fingerprintDuplicates) {
+    const allIds: number[] = row.all_ids.split(',').map(Number);
+    const toDelete = allIds.filter(id => id !== row.keep_id);
+    for (const id of toDelete) {
+      await database.runAsync(`DELETE FROM trainings WHERE id = ?`, [id]);
+      deleted++;
+    }
+  }
+
+  return deleted;
 };
 
 export const getTrainingsByMonth = async (year: number, month: number): Promise<Training[]> => {
@@ -1405,6 +1698,35 @@ export const getFirstMeasurement = async (): Promise<Measurement | null> => {
 export const deleteMeasurementRecord = async (id: number): Promise<void> => {
   const database = await openDatabase();
   await database.runAsync('DELETE FROM measurements WHERE id = ?', [id]);
+};
+
+export const updateMeasurementRecord = async (id: number, data: Partial<Measurement>): Promise<void> => {
+  const database = await openDatabase();
+  await database.runAsync(
+    `UPDATE measurements SET
+      chest = COALESCE(?, chest),
+      waist = COALESCE(?, waist),
+      navel = COALESCE(?, navel),
+      hips = COALESCE(?, hips),
+      left_arm = COALESCE(?, left_arm),
+      right_arm = COALESCE(?, right_arm),
+      left_thigh = COALESCE(?, left_thigh),
+      right_thigh = COALESCE(?, right_thigh),
+      left_calf = COALESCE(?, left_calf),
+      right_calf = COALESCE(?, right_calf),
+      shoulders = COALESCE(?, shoulders),
+      neck = COALESCE(?, neck),
+      date = COALESCE(?, date)
+    WHERE id = ?`,
+    [
+      data.chest ?? null, data.waist ?? null, data.navel ?? null,
+      data.hips ?? null, data.left_arm ?? null, data.right_arm ?? null,
+      data.left_thigh ?? null, data.right_thigh ?? null,
+      data.left_calf ?? null, data.right_calf ?? null,
+      data.shoulders ?? null, data.neck ?? null,
+      data.date ?? null, id,
+    ]
+  );
 };
 
 // ============================================
@@ -2151,29 +2473,29 @@ export const resetDatabase = async (): Promise<void> => {
 
     // Supprimer toutes les données de chaque table
     // Tables principales
-    try { await database.execAsync('DELETE FROM weights;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM trainings;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM measurements;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM photos;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM achievements;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM weekly_plan;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM clubs;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM profile;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM competitions;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM weights;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM trainings;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM measurements;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM photos;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM achievements;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM weekly_plan;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM clubs;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM profile;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM competitions;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
 
     // Tables YOROI MEDIC
-    try { await database.execAsync('DELETE FROM treatment_reminders;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM injury_treatments;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM injury_eva_history;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM injuries;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM treatment_reminders;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM injury_treatments;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM injury_eva_history;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM injuries;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
 
     // Tables Carnet d'Entraînement
-    try { await database.execAsync('DELETE FROM benchmark_entries;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM benchmarks;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM skills;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM benchmark_entries;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM benchmarks;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM skills;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
 
     // Table Données de santé
-    try { await database.execAsync('DELETE FROM health_data;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM health_data;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
 
   } catch (error) {
     logger.error('Erreur reset database:', error);
@@ -2187,28 +2509,28 @@ export const resetDatabaseKeepPhotos = async (): Promise<void> => {
     const database = await openDatabase();
 
     // Tables principales (sans photos)
-    try { await database.execAsync('DELETE FROM weights;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM trainings;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM measurements;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM achievements;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM weekly_plan;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM clubs;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM profile;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM competitions;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM weights;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM trainings;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM measurements;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM achievements;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM weekly_plan;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM clubs;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM profile;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM competitions;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
 
     // Tables YOROI MEDIC
-    try { await database.execAsync('DELETE FROM treatment_reminders;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM injury_treatments;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM injury_eva_history;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM injuries;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM treatment_reminders;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM injury_treatments;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM injury_eva_history;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM injuries;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
 
     // Tables Carnet d'Entraînement
-    try { await database.execAsync('DELETE FROM benchmark_entries;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM benchmarks;'); } catch (e) { /* table peut ne pas exister */ }
-    try { await database.execAsync('DELETE FROM skills;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM benchmark_entries;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM benchmarks;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
+    try { await database.execAsync('DELETE FROM skills;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
 
     // Table Données de santé
-    try { await database.execAsync('DELETE FROM health_data;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM health_data;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
 
   } catch (error) {
     logger.error('Erreur reset database (keep photos):', error);
@@ -2353,6 +2675,34 @@ export const deleteAllTrainings = async (): Promise<number> => {
   const countResult = await database.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM trainings');
   await database.runAsync('DELETE FROM trainings');
   return countResult?.count || 0;
+};
+
+// Retourne toutes les séances qui contiennent au moins un round avec ce partenaire (recherche insensible à la casse)
+export const getTrainingsByPartnerName = async (partnerName: string): Promise<Training[]> => {
+  const database = await openDatabase();
+  const rows = await database.getAllAsync<any>(
+    `SELECT * FROM trainings WHERE combat_rounds IS NOT NULL AND combat_rounds != '[]' ORDER BY date DESC`
+  );
+  const nameLower = partnerName.toLowerCase().trim();
+  const matched: Training[] = [];
+  for (const r of rows) {
+    try {
+      const rounds: CombatRound[] = JSON.parse(r.combat_rounds || '[]');
+      const hasPartner = rounds.some(rd => rd.partner && rd.partner.toLowerCase().includes(nameLower));
+      if (!hasPartner) continue;
+      let exercises;
+      if (r.exercises) { try { exercises = JSON.parse(r.exercises); } catch { exercises = undefined; } }
+      let combat_rounds: CombatRound[] | undefined;
+      try { combat_rounds = JSON.parse(r.combat_rounds); } catch { combat_rounds = undefined; }
+      matched.push({
+        ...r,
+        exercises,
+        combat_rounds,
+        is_outdoor: !!r.is_outdoor,
+      });
+    } catch { /* skip malformed */ }
+  }
+  return matched;
 };
 
 export default {

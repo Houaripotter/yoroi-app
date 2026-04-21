@@ -3,11 +3,12 @@
 // minHeight 200px pour eviter chevauchements
 // ============================================
 
-import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, LayoutChangeEvent } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { SparklineChart } from './SparklineChart';
 
 interface MetricCardProps {
   label: string;
@@ -45,8 +46,10 @@ export const MetricCard: React.FC<MetricCardProps> = React.memo(({
   onPress,
   statusColor,
   statusLabel,
+  sparklineData,
 }) => {
   const { colors, isDark } = useTheme();
+  const [chartWidth, setChartWidth] = useState(0);
 
   const handlePress = useCallback(() => {
     if (Platform.OS !== 'web') {
@@ -54,6 +57,14 @@ export const MetricCard: React.FC<MetricCardProps> = React.memo(({
     }
     onPress?.();
   }, [onPress]);
+
+  const handleChartLayout = useCallback((e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width;
+    if (w > 0 && w !== chartWidth) setChartWidth(w);
+  }, [chartWidth]);
+
+  // Affiche le mini-graphique si on a au moins 2 points
+  const hasSparkline = Array.isArray(sparklineData) && sparklineData.length >= 2;
 
   const getTrendIcon = () => {
     if (!trend) return null;
@@ -129,6 +140,22 @@ export const MetricCard: React.FC<MetricCardProps> = React.memo(({
         </Text>
       </View>
 
+      {/* Mini-courbe (sparkline) */}
+      {hasSparkline && (
+        <View style={styles.sparklineContainer} onLayout={handleChartLayout}>
+          {chartWidth > 0 && (
+            <SparklineChart
+              data={sparklineData!}
+              width={chartWidth}
+              height={36}
+              color={color}
+              thickness={2}
+              showGradient
+            />
+          )}
+        </View>
+      )}
+
     </Wrapper>
   );
 });
@@ -198,5 +225,10 @@ const styles = StyleSheet.create({
   unit: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  sparklineContainer: {
+    marginTop: 12,
+    height: 36,
+    width: '100%',
   },
 });

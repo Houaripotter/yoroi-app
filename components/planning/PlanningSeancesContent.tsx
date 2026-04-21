@@ -360,7 +360,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
         <TouchableOpacity onPress={toggleMonthFilter} activeOpacity={0.75} style={{ flex: 1, alignItems: 'center' }}>
           <Text style={[styles.monthTitle, { color: colors.textPrimary }]}>
             {showAllMonths
-              ? 'Toutes les séances'
+              ? t('planning.allSessions')
               : format(currentMonth, 'MMMM yyyy', { locale: dateLocale }).replace(/^\w/, c => c.toUpperCase())}
           </Text>
         </TouchableOpacity>
@@ -499,7 +499,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
           {diagStatus === 'checking' && (
             <View style={{ paddingVertical: 32, alignItems: 'center', gap: 12 }}>
               <ActivityIndicator size="large" color="#6366F1" />
-              <Text style={{ fontSize: 13, color: '#6366F1', fontWeight: '600' }}>Vérification Apple Santé...</Text>
+              <Text style={{ fontSize: 13, color: '#6366F1', fontWeight: '600' }}>{t('planning.checkingAppleHealth')}</Text>
             </View>
           )}
 
@@ -508,14 +508,10 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
             <>
               <ShieldAlert size={38} color="#F59E0B" strokeWidth={1.5} />
               <Text style={[styles.emptyText, { color: colors.textPrimary, fontWeight: '700', marginTop: 12 }]}>
-                Accès aux séances bloqué
+                {t('planning.sessionsAccessBlocked')}
               </Text>
               <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center', marginTop: 6, lineHeight: 20, paddingHorizontal: 8 }}>
-                Va dans :{'\n'}
-                <Text style={{ color: colors.textPrimary, fontWeight: '600' }}>
-                  Réglages {'>'} Santé {'>'} Accès aux données{'\n'}{'>'} Yoroi {'>'} active "Entraînements"
-                </Text>
-                {'\n\n'}Puis reviens ici et appuie sur "Importer".
+                {t('planning.goToSettingsInstructions')}
               </Text>
               <View style={{ marginTop: 16, gap: 10, width: '100%', alignItems: 'center' }}>
                 <TouchableOpacity
@@ -556,7 +552,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                     : <RefreshCw size={14} color={colors.accent} />
                   }
                   <Text style={{ fontSize: 13, fontWeight: '700', color: colors.accent }}>
-                    Demander les permissions
+                    {t('planning.requestPermissions')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -572,12 +568,11 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                   activeOpacity={0.7}
                 >
                   <Text style={{ fontSize: 13, fontWeight: '600', color: '#D4AF37' }}>
-                    Ouvrir Reglages Sante
+                    {t('planning.openHealthSettings')}
                   </Text>
                 </TouchableOpacity>
                 <Text style={{ fontSize: 11, color: colors.textMuted, textAlign: 'center', paddingHorizontal: 16, lineHeight: 16 }}>
-                  Dans Reglages {'>'} Sante {'>'} Acces aux donnees {'>'} YOROI{'\n'}
-                  Active "Entraînements" puis reviens ici
+                  {t('planning.healthSettingsInstructions')}
                 </Text>
               </View>
             </>
@@ -587,7 +582,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
           {diagStatus === 'ok' && (
             <View style={{ paddingVertical: 32, alignItems: 'center', gap: 12 }}>
               <ActivityIndicator size="large" color="#6366F1" />
-              <Text style={{ fontSize: 13, color: '#6366F1', fontWeight: '600' }}>Import des séances en cours...</Text>
+              <Text style={{ fontSize: 13, color: '#6366F1', fontWeight: '600' }}>{t('planning.importingSessionsProgress')}</Text>
             </View>
           )}
 
@@ -599,7 +594,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                 {t('planning.noSessions')}
               </Text>
               <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', marginTop: 6 }}>
-                Apple Santé est connecte mais aucune seance n'a ete enregistree.
+                {t('planning.appleHealthConnectedNoSessions')}
               </Text>
             </>
           )}
@@ -609,10 +604,10 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
             <>
               <Dumbbell size={38} color={colors.textMuted} strokeWidth={1.5} />
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                Aucune séance
+                {t('planning.noSession')}
               </Text>
               <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center', marginTop: 4, lineHeight: 19, paddingHorizontal: 16 }}>
-                Tes séances Apple Santé n'ont pas encore été importées.
+                {t('planning.sessionsNotImportedYet')}
               </Text>
               <TouchableOpacity
                 onPress={async () => {
@@ -651,7 +646,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                   : <RefreshCw size={16} color={colors.textOnAccent} />
                 }
                 <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textOnAccent }}>
-                  {isForceImporting ? 'Importation...' : 'Importer mes séances Apple Santé'}
+                  {isForceImporting ? t('planning.importing') : t('planning.importAppleHealthSessions')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -663,19 +658,19 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                     const diag = await healthConnect.diagnoseWorkouts();
                     const count = diag.rawApiTest >= 0 ? diag.rawApiTest : (diag.healthkit30d || diag.healthkitAll || 0);
                     if (count > 0) {
-                      alert(`Permissions OK ! ${count} séance(s) trouvée(s). Appuie sur "Importer" maintenant.`);
+                      alert(t('planning.permissionsOkSessionsFound', { count }));
                     } else {
-                      alert('Toujours 0 séance. Va dans Réglages > Santé > Accès aux données et app > Yoroi et vérifie que "Entraînements" est bien activé en LECTURE (pas seulement en écriture).');
+                      alert(t('planning.stillZeroSessions'));
                     }
                   } catch (e: any) {
-                    alert(`Erreur : ${e?.message || e}`);
+                    alert(t('planning.errorPrefix', { error: e?.message || e }));
                   }
                 }}
                 style={{ marginTop: 12, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, borderWidth: 1.5, borderColor: '#10B981' }}
                 activeOpacity={0.7}
               >
                 <Text style={{ fontSize: 13, fontWeight: '600', color: '#10B981' }}>
-                  Redemander l'accès aux entraînements
+                  {t('planning.reRequestWorkoutAccess')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -684,7 +679,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                 activeOpacity={0.7}
               >
                 <Text style={{ fontSize: 12, color: colors.textMuted, textDecorationLine: 'underline' }}>
-                  Ouvrir les réglages Yoroi
+                  {t('planning.openYoroiSettings')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -693,25 +688,25 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                     const diag = await healthConnect.diagnoseWorkouts();
                     const lines: string[] = [];
                     if (diag.rawApiTest === -2) {
-                      lines.push(`ERREUR HealthKit : ${diag.rawApiError}`);
+                      lines.push(t('planning.healthKitError', { error: diag.rawApiError }));
                     } else {
-                      lines.push(`HealthKit retourne : ${diag.rawApiTest} seance(s) (test direct)`);
-                      lines.push(`HealthKit 365j : ${diag.healthkit30d} seance(s)`);
-                      lines.push(`HealthKit tout : ${diag.healthkitAll >= 0 ? diag.healthkitAll : 'timeout'} seance(s)`);
+                      lines.push(t('planning.healthKitReturnsSessions', { count: diag.rawApiTest }));
+                      lines.push(t('planning.healthKit365d', { count: diag.healthkit30d }));
+                      lines.push(t('planning.healthKitAll', { count: diag.healthkitAll >= 0 ? diag.healthkitAll : 'timeout' }));
                     }
-                    lines.push(`Base YOROI : ${diag.dbCount} seances`);
-                    if (diag.error) lines.push(`Erreur : ${diag.error}`);
-                    if (!diag.moduleLoaded) lines.push('HealthKit non disponible (simulateur ?)');
+                    lines.push(t('planning.yoroiDbSessions', { count: diag.dbCount }));
+                    if (diag.error) lines.push(t('planning.errorPrefix', { error: diag.error }));
+                    if (!diag.moduleLoaded) lines.push(t('planning.healthKitNotAvailable'));
                     alert(lines.join('\n'));
                   } catch (e: any) {
-                    alert(`Erreur diagnostic : ${e?.message || e}`);
+                    alert(t('planning.diagnosticError', { error: e?.message || e }));
                   }
                 }}
                 style={{ marginTop: 8, paddingVertical: 8 }}
                 activeOpacity={0.7}
               >
                 <Text style={{ fontSize: 12, color: '#6366F1', textDecorationLine: 'underline' }}>
-                  Diagnostiquer (voir les erreurs HealthKit)
+                  {t('planning.diagnoseHealthKit')}
                 </Text>
               </TouchableOpacity>
             </>
@@ -732,7 +727,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
               activeOpacity={0.7}
             >
               <Text style={{ fontSize: 13, fontWeight: '700', color: '#6366F1' }}>
-                Voir une seance exemple
+                {t('planning.viewExampleSession')}
               </Text>
             </TouchableOpacity>
           )}
@@ -833,7 +828,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
             </View>
 
             {/* ── BADGES : types session, outdoor, GPS ── */}
-            {(sessionTypes.length > 0 || training.is_outdoor || hasGPS || training.location_name || training.technical_theme) && (
+            {!!(sessionTypes.length > 0 || training.is_outdoor || hasGPS || training.location_name || training.technical_theme) && (
               <View style={styles.tagsRow}>
                 {sessionTypes.map((st, i) => (
                   <View key={i} style={[styles.tag, { backgroundColor: sportColor + '18' }]}>

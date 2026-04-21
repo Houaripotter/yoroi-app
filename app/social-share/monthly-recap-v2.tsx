@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
   X,
   Share2,
@@ -24,6 +24,8 @@ import {
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
 import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { captureRef } from 'react-native-view-shot';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 
@@ -50,6 +52,8 @@ export default function MonthlyRecapV2Screen() {
   const cardRef = useRef<View>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { autoShare } = useLocalSearchParams<{ autoShare?: string }>();
+  const autoShareTriggered = useRef(false);
 
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
   const [selectedTemplate, setSelectedTemplate] = useState<'photo' | 'dark' | 'light'>('photo');
@@ -102,6 +106,14 @@ export default function MonthlyRecapV2Screen() {
     loadUserData();
   }, []);
 
+  // Auto-partage si ouvert depuis une notification
+  useEffect(() => {
+    if (autoShare !== '1' || statsLoading || autoShareTriggered.current) return;
+    autoShareTriggered.current = true;
+    const timer = setTimeout(() => { shareCard(); }, 1200);
+    return () => clearTimeout(timer);
+  }, [autoShare, statsLoading]);
+
   // ============================================
   // PHOTO PICKER
   // ============================================
@@ -122,9 +134,9 @@ export default function MonthlyRecapV2Screen() {
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
         impactAsync(ImpactFeedbackStyle.Light);
-        setBackgroundImage(asset.uri);
+        const resized = await resizeForCard(asset.uri);
+        setBackgroundImage(resized);
         setSelectedTemplate('photo');
-        // Détecter si l'image est en paysage
         const isLandscape = (asset.width || 0) > (asset.height || 0);
         setIsLandscapeImage(isLandscape);
       }
@@ -134,25 +146,39 @@ export default function MonthlyRecapV2Screen() {
     }
   };
 
+  const resizeForCard = async (uri: string): Promise<string> => {
+    try {
+      const result = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 1200 } }],
+        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      return result.uri;
+    } catch {
+      return uri;
+    }
+  };
+
   const pickImage = async () => {
     try {
       const { status } = await requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
+      if ((status as string) !== 'granted' && (status as string) !== 'limited') {
         showPopup(t('socialShare.permissionDeniedTitle'), t('socialShare.permissionDeniedGallery'), [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       const result = await launchImageLibraryAsync({
-        allowsEditing: true,
-        quality: 0.9,
+        allowsEditing: false,
+        quality: 1,
+        selectionLimit: 1,
       });
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
         impactAsync(ImpactFeedbackStyle.Light);
-        setBackgroundImage(asset.uri);
+        const resized = await resizeForCard(asset.uri);
+        setBackgroundImage(resized);
         setSelectedTemplate('photo');
-        // Détecter si l'image est en paysage
         const isLandscape = (asset.width || 0) > (asset.height || 0);
         setIsLandscapeImage(isLandscape);
       }
@@ -210,7 +236,7 @@ export default function MonthlyRecapV2Screen() {
 
     try {
       const { status } = await requestPermissionsAsync();
-      if (status !== 'granted') {
+      if ((status as string) !== 'granted' && (status as string) !== 'limited') {
         showPopup(t('socialShare.permissionRequired'), t('socialShare.permissionGallery'), [{ text: 'OK', style: 'primary' }]);
         setIsLoading(false);
         return;
@@ -337,7 +363,7 @@ export default function MonthlyRecapV2Screen() {
 
           {/* Template Selector */}
           <View style={styles.templateRow}>
-            <Text style={[styles.templateLabel, { color: colors.textMuted }]}>Style:</Text>
+            <Text style={[styles.templateLabel, { color: colors.textMuted }]}>{t('socialShare.styleLabel')}</Text>
             {([
               { key: 'photo', label: t('socialShare.stylePhoto') },
               { key: 'dark', label: t('socialShare.styleDark') },

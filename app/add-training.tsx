@@ -54,9 +54,11 @@ import {
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { useKeyboardHeight } from '@/lib/useKeyboardHeight';
 import { useBadges } from '@/lib/BadgeContext';
 import { addTraining, updateTraining, getTrainingById, getClubs, Club, Exercise, CombatRound, getProfile, getTrainings, getWeights, getWeeklyPlanById, validateSlot, addWeeklyPlanItem } from '@/lib/database';
 import { detectSlotPatterns } from '@/lib/slotSuggestionService';
+import { checkOvertrainingAlert } from '@/lib/trainingLoadService';
 import { SPORTS, getSportIcon, getSportName, getClubLogoSource } from '@/lib/sports';
 import { getCurrentRank } from '@/lib/ranks';
 import { getUnifiedPoints } from '@/lib/gamification';
@@ -79,9 +81,12 @@ import logger from '@/lib/security/logger';
 import { safeOpenURL } from '@/lib/security/validators';
 import HealthConnect from '@/lib/healthConnect';
 import * as Location from 'expo-location';
+import { searchPlacesNative } from '@/lib/yoroiPlaces';
 import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
 import { SPORT_OPTIONS, DEFAULT_OPTIONS, SportOption } from '@/constants/sportOptions';
 import { useI18n } from '@/lib/I18nContext';
+import { backupReminderService } from '@/lib/backupReminderService';
+import { exportDataToJSON } from '@/lib/exportService';
 
 // Constants for non-theme values
 const FONT_SIZE = TYPOGRAPHY.size;
@@ -99,6 +104,7 @@ export default function AddTrainingScreen() {
   const IS_SMALL_SCREEN = SCREEN_WIDTH < 375;
   const styles = useMemo(() => createStyles(IS_SMALL_SCREEN), [IS_SMALL_SCREEN]);
   const insets = useSafeAreaInsets();
+  const keyboardHeight = useKeyboardHeight();
   const { colors, isDark, screenText } = useTheme();
   const { t } = useI18n();
   const { avatarImage: contextAvatar } = useAvatar();
@@ -180,13 +186,53 @@ export default function AddTrainingScreen() {
   const [showCombatRounds, setShowCombatRounds] = useState(false); // Toggle detailed view
   const [technicalTheme, setTechnicalTheme] = useState(''); // Thème technique travaillé (ex: "Triangle", "Passage de garde")
   const [notes, setNotes] = useState('');
+  // Game Plan & Bilan (combat sports - step 4)
+  const [gamePlan, setGamePlan] = useState('');
+  const [whatWorked, setWhatWorked] = useState('');
+  const [whatDidntWork, setWhatDidntWork] = useState('');
+  const [sessionRating, setSessionRating] = useState<number | null>(null);
+  const [sessionMood, setSessionMood] = useState<string>('');
+  // Multi-select tags pour chaque champ
+  const [gamePlanTags, setGamePlanTags] = useState<string[]>([]);
+  const [whatWorkedTags, setWhatWorkedTags] = useState<string[]>([]);
+  const [whatDidntWorkTags, setWhatDidntWorkTags] = useState<string[]>([]);
+
+  const GAME_PLAN_TEMPLATES = [
+    'Jeu de garde', 'Imposer le rythme', 'Rester en mouvement', 'Chercher les finitions',
+    'Défense en priorité', 'Jeu au sol', 'Clinch', 'Contrôle de distance',
+    'Contre-attaque', 'Jeu de jambes', 'Passer la garde', 'Travailler le dos',
+    'Takedowns', 'Jeu debout', 'Travail de position',
+  ];
+  const WHAT_WORKED_TEMPLATES = [
+    'Jeu de garde', 'Mes takedowns', 'Mes finitions', 'Ma défense',
+    'Mon timing', 'Mon cardio', 'Mes sweeps', 'Garde passée',
+    'Entrées de jambe', 'Dos pris', 'Clinch', 'Jeu debout',
+    'Contrôle de position', 'Soumissions', 'Points marqués',
+  ];
+  const WHAT_DIDNT_WORK_TEMPLATES = [
+    'Ma garde', 'Mes takedowns', 'Mes finitions', 'Mon cardio',
+    'Mon timing', 'Gestion des distances', 'Défense soumissions',
+    'Jeu debout', 'Dos exposé', 'Garde percée', 'Manque d\'explosivité',
+    'Manque de précision', 'Gestion du stress', 'Positionnement',
+  ];
 
   // Combat submission options
   const COMBAT_METHODS = [
-    'RNC', 'Triangle', 'Armbar', 'Kimura', 'Guillotine', 'Darce', 'Anaconda',
-    'Omoplata', 'Heel Hook', 'Ankle Lock', 'Kneebar', 'Toe Hold',
-    'Bow & Arrow', 'Ezekiel', 'Cross Choke', 'Loop Choke',
-    'Points', 'Avantage', 'KO/TKO', 'Decision',
+    // Étranglements arrière
+    'RNC', 'Bow & Arrow', 'Loop Choke', 'Ezekiel',
+    // Étranglements avant
+    'Guillotine', 'Arm-In Guillotine', 'High Elbow Guillotine', 'Darce', 'Anaconda',
+    'Cross Choke', 'Baseball Choke', 'Papercutter', 'Clock Choke', 'North-South Choke',
+    // Triangles
+    'Triangle', 'Triangle Inversé', 'Triangle Bras',
+    // Clés de bras
+    'Armbar', 'Kimura', 'Omoplata', 'Americana', 'Wristlock',
+    // Clés de jambes
+    'Heel Hook', 'Inside Heel Hook', 'Outside Heel Hook', 'Ankle Lock', 'Kneebar', 'Toe Hold',
+    // Résultats de combat
+    'Points', 'Avantage', 'KO/TKO', 'Décision', 'Disqualification',
+    // Autre (personnalisé)
+    'Autre',
   ];
 
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
@@ -213,6 +259,14 @@ export default function AddTrainingScreen() {
   const [scoreHome, setScoreHome] = useState<string>('');
   const [scoreAway, setScoreAway] = useState<string>('');
   const [userWeight, setUserWeight] = useState<number>(75); // Poids par défaut
+  // Musculation — perf précédente par exercice (label → data) pour affichage "Dernière fois"
+  const [lastExercisePerf, setLastExercisePerf] = useState<Record<string, {
+    date: string;
+    sets: { weight: number; reps: number }[];
+    best1RM: number;
+  }>>({});
+  // Musculation — meilleur 1RM all-time par exercice (pour détection PR)
+  const [allTimeBest1RM, setAllTimeBest1RM] = useState<Record<string, number>>({});
   const [userAvatar, setUserAvatar] = useState<any>(null);
   const [userRank, setUserRank] = useState<string>('Ashigaru');
   const [userLevel, setUserLevel] = useState<number>(0);
@@ -220,11 +274,33 @@ export default function AddTrainingScreen() {
   const [primarySportError, setPrimarySportError] = useState<boolean>(false);
   const sportSelectorRef = useRef<View>(null);
   const [currentStep, setCurrentStep] = useState(1);
+  // Chronomètre repos musculation : { exId_setIdx → secondes restantes }
+  const [restTimers, setRestTimers] = useState<Record<string, number>>({});
+  const restIntervalRef = useRef<Record<string, ReturnType<typeof setInterval>>>({});
+  const isCombatSport = selectedSports.some(s => ['jjb', 'mma', 'boxe', 'muay_thai', 'lutte', 'karate', 'sambo', 'judo', 'grappling', 'kickboxing', 'krav_maga', 'catch', 'boxe_francaise', 'taekwondo'].includes(s));
+  const totalSteps = isCombatSport ? 6 : 4;
   const isMountedRef = useRef(true);
   useEffect(() => {
     isMountedRef.current = true;
-    return () => { isMountedRef.current = false; };
+    return () => {
+      isMountedRef.current = false;
+      // Nettoyer tous les timers repos
+      Object.values(restIntervalRef.current).forEach(clearInterval);
+    };
   }, []);
+
+  // Toggle un tag dans une liste et synchronise le champ texte libre
+  const toggleTag = (
+    tag: string,
+    tags: string[],
+    setTags: (t: string[]) => void,
+    setText: (s: string) => void,
+  ) => {
+    const next = tags.includes(tag) ? tags.filter(t => t !== tag) : [...tags, tag];
+    setTags(next);
+    setText(next.join(', '));
+    impactAsync(ImpactFeedbackStyle.Light);
+  };
 
   const goToStep = (n: number) => {
     setCurrentStep(n);
@@ -262,6 +338,38 @@ export default function AddTrainingScreen() {
         if (weights && weights.length > 0) {
           setUserWeight(weights?.[0]?.weight || 75);
         }
+
+        // Calculer les perfs précédentes de musculation (pour affichage "Dernière fois" + 1RM)
+        // allTrainings est trié DESC par date — la première occurrence d'un exo = la plus récente
+        const lastPerf: Record<string, { date: string; sets: { weight: number; reps: number }[]; best1RM: number }> = {};
+        const allBest: Record<string, number> = {};
+        const calc1RM = (w: number, r: number) => r > 1 && r <= 15 ? Math.round(w * (1 + r / 30) * 2) / 2 : 0;
+        for (const t of allTrainings) {
+          if (!t.exercises || !Array.isArray(t.exercises)) continue;
+          for (const ex of t.exercises as any[]) {
+            const label: string = ex.name;
+            if (!label) continue;
+            const rawSets: { weight: number; reps: number }[] =
+              ex.setsData && ex.setsData.length > 0
+                ? ex.setsData
+                : ex.weight && ex.reps ? [{ weight: ex.weight, reps: ex.reps }] : [];
+            if (rawSets.length === 0) continue;
+            // All-time best 1RM
+            for (const s of rawSets) {
+              const orm = calc1RM(s.weight, s.reps);
+              if (orm > 0 && (allBest[label] === undefined || orm > allBest[label])) {
+                allBest[label] = orm;
+              }
+            }
+            // Last perf (première occurrence = plus récente, trainings triés DESC)
+            if (!lastPerf[label]) {
+              const best1RM = rawSets.reduce((m, s) => Math.max(m, calc1RM(s.weight, s.reps)), 0);
+              lastPerf[label] = { date: t.date, sets: rawSets.map(s => ({ weight: s.weight, reps: s.reps })), best1RM };
+            }
+          }
+        }
+        setLastExercisePerf(lastPerf);
+        setAllTimeBest1RM(allBest);
 
         // Avatar charge via useAvatar() context
         if (contextAvatar) {
@@ -602,8 +710,13 @@ export default function AddTrainingScreen() {
 
   // Timer debounce pour la recherche auto
   const locationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchLocationRef = useRef<(query: string) => Promise<void>>();
 
-  // Recherche de lieu via Nominatim (OpenStreetMap) — gratuit, sans clé API
+  // Recherche de lieu — TOUS les moteurs en PARALLÈLE (plus de fallbacks séquentiels)
+  // 1. Photon (komoot) — OSM full-text, biais France
+  // 2. Overpass API — clubs/salles sport OSM
+  // 3. MKLocalSearch natif iOS (Apple Maps) — excellent pour les salles françaises
+  // 4. Nominatim — OSM texte avec restriction France
   const searchLocation = async (query: string) => {
     if (!query.trim() || query.trim().length < 2) {
       setLocationSuggestions([]);
@@ -611,43 +724,147 @@ export default function AddTrainingScreen() {
       return;
     }
     setLocationNoResults(false);
+    setLocationLoading(true);
     try {
-      setLocationLoading(true);
+      type Suggestion = { name: string; address: string; lat: number; lon: number };
       const encoded = encodeURIComponent(query.trim());
-      const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=5&addressdetails=1`;
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
-      const res = await fetch(url, {
-        headers: { 'User-Agent': 'YoroiApp/1.0' },
-        signal: controller.signal,
+
+      // Centre géographique de la France — biais Photon pour éviter les résultats hors-France
+      const FRANCE_LAT = 46.2276;
+      const FRANCE_LON = 2.2137;
+
+      const photonController = new AbortController();
+      const photonTimeout = setTimeout(() => photonController.abort(), 8000);
+      const overpassController = new AbortController();
+      const overpassTimeout = setTimeout(() => overpassController.abort(), 20000);
+      const nominatimController = new AbortController();
+      const nominatimTimeout = setTimeout(() => nominatimController.abort(), 8000);
+
+      // Photon avec biais France (lat/lon + location_bias_scale)
+      const photonUrl = `https://photon.komoot.io/api/?q=${encoded}&limit=20&lang=fr&lat=${FRANCE_LAT}&lon=${FRANCE_LON}&location_bias_scale=0.5`;
+
+      // Overpass — salles de sport par nom
+      const safeQuery = query.trim().replace(/["\\\[\](){}^$.*+?|]/g, '\\$&');
+      const overpassQuery = `[out:json][timeout:20];(node["name"~"${safeQuery}","i"]["leisure"~"sports_centre|fitness_centre"];node["name"~"${safeQuery}","i"]["amenity"~"gym|dojo|sports_hall"];node["name"~"${safeQuery}","i"]["sport"];way["name"~"${safeQuery}","i"]["leisure"~"sports_centre|fitness_centre"];way["name"~"${safeQuery}","i"]["amenity"~"gym|dojo|sports_hall"];);out center 30;`;
+      const overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+
+      // Nominatim avec restriction France
+      const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=15&addressdetails=1&countrycodes=fr`;
+
+      // TOUS en parallèle — on n'attend pas qu'un moteur échoue avant d'essayer le suivant
+      const [photonRes, overpassRes, nominatimRes, nativeResults] = await Promise.allSettled([
+        fetch(photonUrl, { signal: photonController.signal }),
+        fetch(overpassUrl, { signal: overpassController.signal }),
+        fetch(nominatimUrl, { headers: { 'User-Agent': 'YoroiApp/1.0' }, signal: nominatimController.signal }),
+        searchPlacesNative(query.trim(), FRANCE_LAT, FRANCE_LON), // Apple Maps avec biais France
+      ]);
+      clearTimeout(photonTimeout);
+      clearTimeout(overpassTimeout);
+      clearTimeout(nominatimTimeout);
+
+      const allSuggestions: Suggestion[] = [];
+
+      // Photon
+      if (photonRes.status === 'fulfilled' && photonRes.value.ok) {
+        try {
+          const data = await photonRes.value.json();
+          (data?.features ?? [])
+            .filter((f: any) => f.geometry?.coordinates && f.properties?.name)
+            .forEach((f: any) => {
+              const p = f.properties ?? {};
+              const addrParts = [
+                p.housenumber ? `${p.housenumber} ${p.street || ''}`.trim() : p.street,
+                p.city || p.town || p.village,
+                p.postcode,
+                p.country,
+              ].filter(Boolean);
+              allSuggestions.push({
+                name: p.name,
+                address: addrParts.join(', '),
+                lat: f.geometry.coordinates[1],
+                lon: f.geometry.coordinates[0],
+              });
+            });
+        } catch { /* silence */ }
+      }
+
+      // Overpass
+      if (overpassRes.status === 'fulfilled' && overpassRes.value.ok) {
+        try {
+          const data = await overpassRes.value.json();
+          (data?.elements ?? []).forEach((el: any) => {
+            if (!el.tags?.name) return;
+            const lat = el.lat ?? el.center?.lat;
+            const lon = el.lon ?? el.center?.lon;
+            if (!lat || !lon) return;
+            const addrParts = [
+              el.tags?.['addr:housenumber'] && el.tags?.['addr:street']
+                ? `${el.tags['addr:housenumber']} ${el.tags['addr:street']}`
+                : el.tags?.['addr:street'],
+              el.tags?.['addr:city'],
+              el.tags?.['addr:postcode'],
+              el.tags?.['addr:country'],
+            ].filter(Boolean);
+            allSuggestions.push({ name: el.tags.name, address: addrParts.join(', '), lat, lon });
+          });
+        } catch { /* silence */ }
+      }
+
+      // Nominatim
+      if (nominatimRes.status === 'fulfilled' && nominatimRes.value.ok) {
+        try {
+          const data2 = await nominatimRes.value.json();
+          if (Array.isArray(data2)) {
+            data2.forEach((item: any) => {
+              const addr = item.address || {};
+              const name = item.name || addr.amenity || addr.leisure || item.display_name?.split(',')[0] || query.trim();
+              const addrParts = [addr.road, addr.city || addr.town || addr.village, addr.postcode].filter(Boolean);
+              allSuggestions.push({ name, address: addrParts.join(', '), lat: parseFloat(item.lat), lon: parseFloat(item.lon) });
+            });
+          }
+        } catch { /* silence */ }
+      }
+
+      // Apple Maps natif (MKLocalSearch)
+      if (nativeResults.status === 'fulfilled' && nativeResults.value.length > 0) {
+        nativeResults.value.forEach((r) => allSuggestions.push(r));
+      }
+
+      // Déduplication par position géographique (rayon ~100m)
+      const seen = new Set<string>();
+      const suggestions: Suggestion[] = [];
+      allSuggestions.forEach((s) => {
+        const key = `${s.name.toLowerCase().slice(0, 20)}|${s.lat.toFixed(2)}|${s.lon.toFixed(2)}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          suggestions.push(s);
+        }
       });
-      clearTimeout(timeout);
-      if (!res.ok) throw new Error('Nominatim error');
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const suggestions = data.map((item: any) => {
-          const addr = item.address || {};
-          const nameParts = [
-            item.name || addr.amenity || addr.leisure || addr.shop || addr.building,
-            addr.road || addr.pedestrian,
-          ].filter(Boolean);
-          const addrParts = [
-            addr.city || addr.town || addr.village || addr.municipality,
-            addr.postcode,
-            addr.country,
-          ].filter(Boolean);
-          return {
-            name: nameParts.join(', ') || item.display_name?.split(',')[0] || query.trim(),
-            address: addrParts.join(', '),
-            lat: parseFloat(item.lat),
-            lon: parseFloat(item.lon),
-          };
-        });
-        setLocationSuggestions(suggestions);
+      const finalSuggestions = suggestions.slice(0, 25);
+
+      if (finalSuggestions.length > 0) {
+        setLocationSuggestions(finalSuggestions);
         setLocationNoResults(false);
       } else {
-        setLocationSuggestions([]);
-        setLocationNoResults(true);
+        // Dernier recours — geocodeur Apple natif
+        try {
+          const geoResults = await Location.geocodeAsync(query.trim());
+          if (geoResults.length > 0) {
+            setLocationSuggestions(geoResults.map(r => ({
+              name: query.trim(),
+              address: '',
+              lat: r.latitude,
+              lon: r.longitude,
+            })));
+            setLocationNoResults(false);
+          } else {
+            setLocationSuggestions([]);
+            setLocationNoResults(true);
+          }
+        } catch {
+          setLocationSuggestions([]);
+          setLocationNoResults(true);
+        }
       }
     } catch {
       setLocationSuggestions([]);
@@ -657,20 +874,23 @@ export default function AddTrainingScreen() {
     }
   };
 
-  // Recherche automatique avec debounce 500ms
+  // Toujours pointer vers la dernière version de searchLocation
+  searchLocationRef.current = searchLocation;
+
+  // Recherche automatique avec debounce 300ms pendant la frappe
   const onLocationTextChange = (text: string) => {
     setLocationName(text);
     setLocationNoResults(false);
-    if (!text) {
+    if (locationDebounceRef.current) clearTimeout(locationDebounceRef.current);
+    if (!text || text.trim().length < 2) {
       setLocationLat(null);
       setLocationLon(null);
       setLocationSuggestions([]);
       return;
     }
-    if (locationDebounceRef.current) clearTimeout(locationDebounceRef.current);
-    if (text.trim().length >= 2) {
-      locationDebounceRef.current = setTimeout(() => searchLocation(text), 500);
-    }
+    locationDebounceRef.current = setTimeout(() => {
+      searchLocationRef.current?.(text);
+    }, 400);
   };
 
   // Ouvrir l'adresse dans Apple Maps ou Google Maps
@@ -1298,8 +1518,7 @@ export default function AddTrainingScreen() {
 
   const handleCloseHouariModal = () => {
     setShowHouariRateModal(false);
-    // CRITIQUE : Rediriger l'utilisateur pour ne pas le laisser bloqué sur l'écran d'ajout
-    router.replace('/(tabs)');
+    setTimeout(() => router.back(), 350);
   };
 
   // Quick Fill pour pré-remplir le formulaire avec la dernière séance
@@ -1502,6 +1721,11 @@ export default function AddTrainingScreen() {
         heart_rate: heartRate ? (isNaN(parseInt(heartRate)) ? undefined : parseInt(heartRate)) : undefined,
         combat_rounds: combatRounds.length > 0 ? combatRounds : undefined,
         weekly_plan_id: params?.slotId ? parseInt(params.slotId, 10) : undefined,
+        game_plan: gamePlan.trim() || undefined,
+        what_worked: whatWorked.trim() || undefined,
+        what_didnt_work: whatDidntWork.trim() || undefined,
+        session_rating: sessionRating ?? undefined,
+        session_mood: sessionMood || undefined,
       };
 
       let newId: number | null = null;
@@ -1532,6 +1756,32 @@ export default function AddTrainingScreen() {
       if (newId) {
         setLastSavedTrainingId(Number(newId));
       }
+
+      // Vérifier surmenage après chaque séance sauvegardée
+      checkOvertrainingAlert().catch(() => {});
+
+      // Vérifier si on doit proposer une sauvegarde (tous les 5 enregistrements)
+      backupReminderService.onDataAdded().then(shouldBackup => {
+        if (shouldBackup) {
+          backupReminderService.markReminderShown().catch(() => {});
+          // Délai pour laisser le modal de validation et le son se terminer
+          setTimeout(() => {
+            if (!isMountedRef.current) return;
+            showPopup(
+              '💾 Sauvegarder tes données ?',
+              'Tu as ajouté plusieurs séances. Yoroi ne sauvegarde que sur ton téléphone — pense à faire un backup pour ne rien perdre !',
+              [
+                { text: 'Plus tard', style: 'cancel' },
+                {
+                  text: 'Sauvegarder',
+                  style: 'primary',
+                  onPress: () => { exportDataToJSON().catch(() => {}); },
+                },
+              ]
+            );
+          }, 8000); // après le son Pokémon + modal de validation
+        }
+      }).catch(() => {});
 
       // Sauvegarder le premier sport et durée pour le Quick Add
       await saveLastSportAndDuration(selectedSports[0], duration);
@@ -1681,9 +1931,9 @@ export default function AddTrainingScreen() {
 
     const result = await launchImageLibraryAsync({
       mediaTypes: MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [16, 9],
+      allowsEditing: false,
       quality: 0.8,
+      selectionLimit: 1,
     });
 
     if (!result.canceled && result.assets?.[0]) {
@@ -1725,13 +1975,23 @@ export default function AddTrainingScreen() {
           const opt = opts.find(o => o.id === id);
           if (!opt) return null;
           const stats = optionStats[id];
+          // Dériver le meilleur poids/reps depuis sets_data (multi-séries musculation)
+          const setsArr = stats?.sets_data?.filter((s: { weight: string; reps: string }) => s.weight || s.reps) || [];
+          const bestSet = setsArr.length > 0
+            ? setsArr.reduce((best: { weight: string; reps: string }, s: { weight: string; reps: string }) =>
+                (parseFloat(s.weight || '0') || 0) >= (parseFloat(best.weight || '0') || 0) ? s : best
+              , setsArr[0])
+            : null;
+          const effectiveWeight = bestSet?.weight || stats?.weight || undefined;
+          const effectiveReps = bestSet?.reps || stats?.reps || undefined;
+          const effectiveSets = setsArr.length > 1 ? setsArr.length.toString() : (stats?.sets || undefined);
           return {
             ...opt,
-            sport: sportId, // Ajouter le sport pour différenciation
-            sportName: getSportName(sportId), // Nom lisible du sport
-            weight: stats?.weight,
-            reps: stats?.reps,
-            sets: stats?.sets,
+            sport: sportId,
+            sportName: getSportName(sportId),
+            weight: effectiveWeight,
+            reps: effectiveReps,
+            sets: effectiveSets,
             distance: stats?.distance,
             duration: stats?.duration,
             speed: stats?.speed,
@@ -1805,15 +2065,20 @@ export default function AddTrainingScreen() {
 
       {/* HEADER ÉTAPE - COLLÉ AU TOP */}
       <View style={{
-        backgroundColor: colors.backgroundCard,
+        backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
         borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-        zIndex: 999
+        borderBottomColor: isDark ? colors.border : 'rgba(0,0,0,0.07)',
+        zIndex: 999,
+        paddingTop: insets.top,
+        shadowColor: '#000',
+        shadowOpacity: isDark ? 0 : 0.04,
+        shadowOffset: { width: 0, height: 1 },
+        shadowRadius: 4,
       }}>
         {/* Bouton fermer — toujours visible */}
         <TouchableOpacity
           style={{
-            position: 'absolute', top: 6, right: 12, zIndex: 10,
+            position: 'absolute', top: insets.top + 6, right: 12, zIndex: 10,
             width: 34, height: 34, borderRadius: 17,
             backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)',
             alignItems: 'center', justifyContent: 'center',
@@ -1826,10 +2091,10 @@ export default function AddTrainingScreen() {
 
         <View style={{ paddingBottom: 10, paddingTop: 5, alignItems: 'center' }}>
           <Text style={{ fontSize: 13, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, letterSpacing: 3, marginBottom: 8 }}>
-            {isEditMode ? 'MODIFICATION' : `ÉTAPE ${currentStep} SUR 4`}
+            {isEditMode ? 'MODIFICATION' : `ÉTAPE ${currentStep} SUR ${totalSteps}`}
           </Text>
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-            {[1, 2, 3, 4].map((s, i) => (
+            {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s, i) => (
               <React.Fragment key={s}>
                 {i > 0 && <View style={{ width: 30, height: 2, backgroundColor: s <= currentStep ? colors.accent : colors.border }} />}
                 <View style={{
@@ -1846,22 +2111,23 @@ export default function AddTrainingScreen() {
             ))}
           </View>
           <Text style={{ fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginTop: 10, letterSpacing: 0.5 }}>
-            {isEditMode ? 'MODIFICATION' : ['CHOIX DU SPORT', 'LIEU & CONTENU', 'DATE & DURÉE', 'RESSENTI'][currentStep - 1]}
+            {isEditMode ? 'MODIFICATION' : (isCombatSport ? ['CHOIX DU SPORT', 'LIEU & CONTENU', 'ROUNDS DE COMBAT', 'GAME PLAN & BILAN', 'DATE & DURÉE', 'RESSENTI'] : ['CHOIX DU SPORT', 'LIEU & CONTENU', 'DATE & DURÉE', 'RESSENTI'])[currentStep - 1]}
           </Text>
         </View>
       </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1, backgroundColor: colors.backgroundCard }}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 120 : 30}
+        style={{ flex: 1, backgroundColor: isDark ? colors.backgroundCard : '#F2F3F7' }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 48 : 0}
       >
         <ScrollView
           ref={scrollViewRef}
-          style={[styles.scrollView, { backgroundColor: colors.backgroundCard }]}
-          contentContainerStyle={[styles.content, { paddingTop: 20, paddingBottom: 200 }]}
+          style={[styles.scrollView, { backgroundColor: isDark ? colors.backgroundCard : '#F2F3F7' }]}
+          contentContainerStyle={[styles.content, { paddingTop: 20, paddingBottom: Math.max(320, keyboardHeight + 120) }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           bounces={false}
           overScrollMode="never"
           scrollEventThrottle={16}
@@ -1919,15 +2185,20 @@ export default function AddTrainingScreen() {
         {/* BARRE DE RECHERCHE - UNIQUEMENT ÉTAPE 1 */}
         {currentStep === 1 && (selectedSports.length === 0 || showAddSportSection) && (
           <View style={{ marginBottom: 20 }}>
-            <View style={[styles.customSportInputContainer, { backgroundColor: colors.backgroundElevated, borderColor: colors.border, height: 54, borderRadius: 18 }]}>
+            <View style={[styles.customSportInputContainer, { backgroundColor: isDark ? colors.backgroundElevated : '#FFFFFF', borderColor: isDark ? colors.border : 'rgba(0,0,0,0.09)', minHeight: 54, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 18, shadowColor: '#000', shadowOpacity: isDark ? 0 : 0.05, shadowOffset: { width: 0, height: 1 }, shadowRadius: 4, elevation: 2 }]}>
               <MaterialCommunityIcons name="magnify" size={24} color={colors.accent} />
               <TextInput
-                style={[styles.customSportInput, { color: colors.textPrimary, fontSize: 16 }]}
+                style={[styles.customSportInput, { color: colors.text, fontSize: 16 }]}
                 placeholder="Rechercher un sport..."
                 placeholderTextColor={colors.textMuted}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 autoCapitalize="none"
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+                  }, 300);
+                }}
               />
               {searchQuery.length > 0 && (
                 <TouchableOpacity onPress={() => setSearchQuery('')}>
@@ -1944,8 +2215,8 @@ export default function AddTrainingScreen() {
 
         {/* Titre quand aucun sport sélectionné */}
         {currentStep === 1 && selectedSports.length === 0 && (
-          <Text style={[styles.sectionTitle, { color: screenText }]}>
-            1. Choisis ton sport
+          <Text style={[styles.sectionTitle, { color: isDark ? colors.textSecondary : '#555F6E', fontSize: 11, fontWeight: '800', letterSpacing: 2 }]}>
+            1. CHOISIS TON SPORT
           </Text>
         )}
 
@@ -1979,7 +2250,7 @@ export default function AddTrainingScreen() {
           const categoryLabels: Record<string, string> = {
             cardio: 'Cardio',
             fitness: 'Musculation & Fitness',
-            combat_grappling: 'Combat (Grappling)',
+            combat_grappling: 'Combat (Gi / No Gi)',
             combat_striking: 'Combat (Pieds-Poings)',
             danse: 'Danse',
             collectif: 'Sports Collectifs',
@@ -2048,15 +2319,25 @@ export default function AddTrainingScreen() {
           return (
             <>
               {showFavorites && (
-                <View style={styles.categorySection}>
-                  <View style={[styles.categoryHeader, { backgroundColor: colors.card, borderColor: colors.gold + '60' }]}>
-                    <View style={styles.categoryHeaderLeft}>
-                      <View style={[styles.categoryIconBadge, { backgroundColor: colors.gold + '20' }]}>
-                        <MaterialCommunityIcons name="star" size={20} color={colors.gold} />
+                <View style={[styles.categorySection, { marginBottom: 10 }]}>
+                  <View style={[styles.categoryHeader, {
+                    backgroundColor: isDark ? colors.card : '#FFFFFF',
+                    borderColor: 'transparent',
+                    borderRadius: 14, paddingLeft: 0, overflow: 'hidden',
+                    shadowColor: '#000', shadowOpacity: isDark ? 0 : 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 6, elevation: 3,
+                  }]}>
+                    <View style={{ width: 5, alignSelf: 'stretch', backgroundColor: colors.gold }} />
+                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 14 }}>
+                      <View style={styles.categoryHeaderLeft}>
+                        <View style={[styles.categoryIconBadge, { backgroundColor: colors.gold + '20', width: 42, height: 42, borderRadius: 12 }]}>
+                          <MaterialCommunityIcons name="star" size={22} color={colors.gold} />
+                        </View>
+                        <Text style={[styles.categoryLabel, { color: colors.gold, fontSize: 13 }]}>Favoris</Text>
                       </View>
-                      <Text style={[styles.categoryLabel, { color: colors.gold }]}>Favoris</Text>
+                      <View style={{ backgroundColor: `${colors.gold}20`, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: colors.gold }}>{favoriteSportObjects.length}</Text>
+                      </View>
                     </View>
-                    <Text style={[styles.categorySportCount, { color: colors.textMuted }]}>{favoriteSportObjects.length}</Text>
                   </View>
                   <View style={styles.sportsGrid}>
                     {favoriteSportObjects.map((sport) => {
@@ -2108,40 +2389,70 @@ export default function AddTrainingScreen() {
             const catColor = categoryColors[category] || '#6B7280';
 
             return (
-              <View key={category} style={styles.categorySection}>
+              <View key={category} style={[styles.categorySection, { marginBottom: 6 }]}>
                 {/* Header de catégorie cliquable */}
                 <TouchableOpacity
                   style={[
                     styles.categoryHeader,
-                    { backgroundColor: colors.card, borderColor: hasSelectedSport ? catColor : colors.border },
-                    hasSelectedSport && { backgroundColor: catColor + '15' }
+                    {
+                      backgroundColor: isDark ? `${catColor}22` : `${catColor}18`,
+                      borderColor: hasSelectedSport ? catColor : `${catColor}40`,
+                      borderWidth: hasSelectedSport ? 2 : 1,
+                      borderRadius: 14,
+                      paddingLeft: 0,
+                      overflow: 'hidden',
+                      shadowColor: catColor,
+                      shadowOpacity: isDark ? 0 : 0.12,
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowRadius: 6,
+                      elevation: 3,
+                    },
+                    hasSelectedSport && { backgroundColor: isDark ? `${catColor}35` : `${catColor}28` }
                   ]}
                   onPress={() => toggleCategory(category)}
+                  activeOpacity={0.75}
                 >
-                  <View style={styles.categoryHeaderLeft}>
-                    <View style={[styles.categoryIconBadge, { backgroundColor: catColor + '20' }]}>
-                      <MaterialCommunityIcons
-                        name={categoryIcons[category] as any}
-                        size={20}
-                        color={catColor}
-                      />
+                  {/* Barre colorée gauche */}
+                  <View style={{ width: 5, alignSelf: 'stretch', backgroundColor: catColor, borderTopLeftRadius: 14, borderBottomLeftRadius: isExpanded ? 0 : 14 }} />
+
+                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 10 }}>
+                    <View style={styles.categoryHeaderLeft}>
+                      <View style={[styles.categoryIconBadge, {
+                        backgroundColor: catColor + '20',
+                        width: 34, height: 34, borderRadius: 10,
+                      }]}>
+                        <MaterialCommunityIcons
+                          name={categoryIcons[category] as any}
+                          size={18}
+                          color={catColor}
+                        />
+                      </View>
+                      <View>
+                        <Text style={[
+                          styles.categoryLabel,
+                          { color: hasSelectedSport ? catColor : colors.textPrimary }
+                        ]}>
+                          {categoryLabels[category]}
+                        </Text>
+                        {hasSelectedSport && (
+                          <Text style={{ fontSize: 10, color: catColor, fontWeight: '600', marginTop: 1 }}>
+                            Sélectionné
+                          </Text>
+                        )}
+                      </View>
                     </View>
-                    <Text style={[
-                      styles.categoryLabel,
-                      { color: hasSelectedSport ? catColor : colors.textPrimary }
-                    ]}>
-                      {categoryLabels[category]}
-                    </Text>
-                  </View>
-                  <View style={styles.categoryHeaderRight}>
-                    <Text style={[styles.categorySportCount, { color: colors.textMuted }]}>
-                      {sportsInCategory.length}
-                    </Text>
-                    {isExpanded ? (
-                      <ChevronDown size={20} color={colors.textMuted} />
-                    ) : (
-                      <ChevronRight size={20} color={colors.textMuted} />
-                    )}
+                    <View style={styles.categoryHeaderRight}>
+                      <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : `${catColor}15`, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: catColor }}>
+                          {sportsInCategory.length}
+                        </Text>
+                      </View>
+                      {isExpanded ? (
+                        <ChevronDown size={18} color={catColor} />
+                      ) : (
+                        <ChevronRight size={18} color={colors.textMuted} />
+                      )}
+                    </View>
                   </View>
                 </TouchableOpacity>
 
@@ -2287,44 +2598,48 @@ export default function AddTrainingScreen() {
                                       <TouchableOpacity
                                         style={{
                                           flex: 1,
-                                          backgroundColor: !isOutdoor ? colors.accent + '15' : colors.backgroundElevated,
-                                          borderColor: !isOutdoor ? colors.accent : colors.border,
+                                          backgroundColor: !isOutdoor ? colors.accent + '18' : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'),
+                                          borderColor: !isOutdoor ? colors.accent : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'),
                                           borderWidth: !isOutdoor ? 2 : 1,
-                                          padding: 12,
-                                          borderRadius: 12,
+                                          paddingVertical: 14,
+                                          paddingHorizontal: 8,
+                                          borderRadius: 14,
                                           alignItems: 'center',
                                           justifyContent: 'center',
-                                          gap: 6,
-                                          height: 80
+                                          gap: 8,
+                                          height: 88,
                                         }}
-                                        onPress={() => {
-                                          setIsOutdoor(false);
-                                          selectionAsync();
-                                        }}
+                                        onPress={() => { setIsOutdoor(false); selectionAsync(); }}
+                                        activeOpacity={0.75}
                                       >
-                                        <Text style={{ fontWeight: '700', fontSize: 14, color: !isOutdoor ? colors.accent : colors.textMuted, textAlign: 'center' }}>En Salle</Text>
+                                        <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: !isOutdoor ? colors.accent + '25' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'), alignItems: 'center', justifyContent: 'center' }}>
+                                          <Building2 size={18} color={!isOutdoor ? colors.accent : colors.textMuted} />
+                                        </View>
+                                        <Text style={{ fontWeight: '700', fontSize: 13, color: !isOutdoor ? colors.accent : colors.textMuted, textAlign: 'center' }}>En Salle</Text>
                                       </TouchableOpacity>
 
                                       {/* Option PLEIN AIR */}
                                       <TouchableOpacity
                                         style={{
                                           flex: 1,
-                                          backgroundColor: isOutdoor ? colors.accent + '15' : colors.backgroundElevated,
-                                          borderColor: isOutdoor ? colors.accent : colors.border,
+                                          backgroundColor: isOutdoor ? colors.accent + '18' : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'),
+                                          borderColor: isOutdoor ? colors.accent : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'),
                                           borderWidth: isOutdoor ? 2 : 1,
-                                          padding: 12,
-                                          borderRadius: 12,
+                                          paddingVertical: 14,
+                                          paddingHorizontal: 8,
+                                          borderRadius: 14,
                                           alignItems: 'center',
                                           justifyContent: 'center',
-                                          gap: 6,
-                                          height: 80
+                                          gap: 8,
+                                          height: 88,
                                         }}
-                                        onPress={() => {
-                                          setIsOutdoor(true);
-                                          selectionAsync();
-                                        }}
+                                        onPress={() => { setIsOutdoor(true); selectionAsync(); }}
+                                        activeOpacity={0.75}
                                       >
-                                        <Text style={{ fontWeight: '700', fontSize: 14, color: isOutdoor ? colors.accent : colors.textMuted, textAlign: 'center' }}>{t('addTraining.outdoor')}</Text>
+                                        <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: isOutdoor ? colors.accent + '25' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'), alignItems: 'center', justifyContent: 'center' }}>
+                                          <Sun size={18} color={isOutdoor ? colors.accent : colors.textMuted} />
+                                        </View>
+                                        <Text style={{ fontWeight: '700', fontSize: 13, color: isOutdoor ? colors.accent : colors.textMuted, textAlign: 'center' }}>{t('addTraining.outdoor')}</Text>
                                       </TouchableOpacity>
                                     </View>
 
@@ -2396,27 +2711,66 @@ export default function AddTrainingScreen() {
                                         </View>
                                       )}
 
-                                      {/* Aucun résultat */}
-                                      {locationNoResults && !locationLoading && (
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 10, borderRadius: 10, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', marginBottom: 8 }}>
-                                          <MaterialCommunityIcons name="map-marker-off" size={14} color={colors.textMuted} />
-                                          <Text style={{ fontSize: 12, color: colors.textMuted, fontWeight: '500' }}>
-                                            Aucun résultat. Essaie une adresse plus précise ou utilise le GPS.
-                                          </Text>
-                                        </View>
+                                      {/* Aucun résultat → proposer d'utiliser le nom tel quel */}
+                                      {locationNoResults && !locationLoading && locationName.trim().length > 0 && (
+                                        <TouchableOpacity
+                                          style={{
+                                            flexDirection: 'row', alignItems: 'center', gap: 10,
+                                            padding: 12, borderRadius: 12, marginBottom: 8,
+                                            backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                                            borderWidth: 1, borderColor: colors.border,
+                                          }}
+                                          onPress={() => {
+                                            setLocationNoResults(false);
+                                            setLocationSuggestions([]);
+                                            selectionAsync();
+                                          }}
+                                        >
+                                          <View style={{
+                                            width: 32, height: 32, borderRadius: 8,
+                                            backgroundColor: isDark ? 'rgba(255,149,0,0.15)' : 'rgba(255,149,0,0.1)',
+                                            alignItems: 'center', justifyContent: 'center',
+                                          }}>
+                                            <MapPin size={16} color="#FF9500" strokeWidth={2} />
+                                          </View>
+                                          <View style={{ flex: 1 }}>
+                                            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary }} numberOfLines={1}>
+                                              Utiliser « {locationName.trim()} »
+                                            </Text>
+                                            <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 1 }}>
+                                              Lieu introuvable sur la carte — sauvegarder tel quel
+                                            </Text>
+                                          </View>
+                                        </TouchableOpacity>
                                       )}
 
-                                      {/* Suggestions de résultats */}
+                                      {/* Suggestions de résultats — style Google/Apple Maps */}
                                       {locationSuggestions.length > 0 && (
-                                        <View style={{ borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', marginBottom: 8 }}>
+                                        <View style={{
+                                          borderRadius: 14,
+                                          borderWidth: 1,
+                                          borderColor: colors.border,
+                                          overflow: 'hidden',
+                                          marginBottom: 8,
+                                          backgroundColor: colors.backgroundCard,
+                                          shadowColor: '#000',
+                                          shadowOffset: { width: 0, height: 2 },
+                                          shadowOpacity: isDark ? 0.3 : 0.08,
+                                          shadowRadius: 6,
+                                          elevation: 3,
+                                        }}>
                                           {locationSuggestions.map((s, idx) => (
                                             <TouchableOpacity
                                               key={idx}
                                               style={{
-                                                padding: 12,
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
+                                                paddingHorizontal: 14,
+                                                paddingVertical: 12,
                                                 backgroundColor: colors.backgroundCard,
                                                 borderBottomWidth: idx < locationSuggestions.length - 1 ? 1 : 0,
                                                 borderBottomColor: colors.border,
+                                                gap: 12,
                                               }}
                                               onPress={() => {
                                                 setLocationName(s.name);
@@ -2427,8 +2781,17 @@ export default function AddTrainingScreen() {
                                                 selectionAsync();
                                               }}
                                             >
-                                              <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary }}>{s.name}</Text>
-                                              {s.address ? <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>{s.address}</Text> : null}
+                                              <View style={{
+                                                width: 32, height: 32, borderRadius: 8,
+                                                backgroundColor: isDark ? 'rgba(255,59,48,0.15)' : 'rgba(255,59,48,0.1)',
+                                                alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                                              }}>
+                                                <MapPin size={16} color="#FF3B30" strokeWidth={2} />
+                                              </View>
+                                              <View style={{ flex: 1 }}>
+                                                <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textPrimary }} numberOfLines={1}>{s.name}</Text>
+                                                {s.address ? <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }} numberOfLines={1}>{s.address}</Text> : null}
+                                              </View>
                                             </TouchableOpacity>
                                           ))}
                                         </View>
@@ -2698,6 +3061,7 @@ export default function AddTrainingScreen() {
                      return stats && (stats.weight || stats.reps);
                   });
 
+                  const selectedInGroup = groupOpts.filter(o => sportSelectedOptions.includes(o.id)).length;
                   return (
                     <View key={groupName} style={{ marginBottom: 8 }}>
                       <TouchableOpacity
@@ -2705,25 +3069,37 @@ export default function AddTrainingScreen() {
                           flexDirection: 'row',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          paddingVertical: 11,
+                          paddingVertical: 13,
                           paddingHorizontal: 14,
                           backgroundColor: isGroupValidated
-                            ? (isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.07)')
-                            : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'),
-                          borderRadius: 10,
+                            ? (isDark ? 'rgba(16,185,129,0.14)' : 'rgba(16,185,129,0.1)')
+                            : selectedInGroup > 0
+                              ? (isDark ? `${sport.color}22` : `${sport.color}18`)
+                              : (isDark ? 'rgba(255,255,255,0.06)' : `${sport.color}0E`),
+                          borderRadius: 12,
                           borderWidth: 1,
                           borderColor: isGroupValidated
-                            ? 'rgba(16,185,129,0.4)'
-                            : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'),
+                            ? 'rgba(16,185,129,0.45)'
+                            : selectedInGroup > 0
+                              ? `${sport.color}60`
+                              : (isDark ? 'rgba(255,255,255,0.1)' : `${sport.color}30`),
                         }}
                         onPress={() => toggleGroup(groupId)}
+                        activeOpacity={0.7}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                          <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: isGroupValidated ? '#10B981' : sport.color }} />
-                          <Text style={{ fontSize: 13, fontWeight: '700', color: isGroupValidated ? '#10B981' : colors.textPrimary, textTransform: 'uppercase', letterSpacing: 0.3 }}>{groupName}</Text>
+                          <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: isGroupValidated ? 'rgba(16,185,129,0.25)' : `${sport.color}25`, alignItems: 'center', justifyContent: 'center' }}>
+                            <View style={{ width: 4, height: 14, borderRadius: 2, backgroundColor: isGroupValidated ? '#10B981' : sport.color }} />
+                          </View>
+                          <Text style={{ fontSize: 13, fontWeight: '800', color: isGroupValidated ? '#10B981' : selectedInGroup > 0 ? sport.color : colors.textPrimary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{groupName}</Text>
                         </View>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                          <Text style={{ fontSize: 11, color: isGroupValidated ? '#10B981' : colors.textMuted }}>{groupOpts.length} exos</Text>
+                          {selectedInGroup > 0 && (
+                            <View style={{ backgroundColor: isGroupValidated ? '#10B981' : sport.color, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 }}>
+                              <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff' }}>{selectedInGroup}</Text>
+                            </View>
+                          )}
+                          <Text style={{ fontSize: 11, color: isGroupValidated ? '#10B981' : colors.textMuted, fontWeight: '500' }}>{groupOpts.length} exos</Text>
                           {isExpanded ? <ChevronDown size={16} color={colors.textMuted} /> : <ChevronRight size={16} color={colors.textMuted} />}
                         </View>
                       </TouchableOpacity>
@@ -2749,69 +3125,101 @@ export default function AddTrainingScreen() {
                               // Validation Logic - Ne valide QUE si explicitement validé via le bouton
                               const isValid = validatedOptions[option.id] === true;
 
+                              // Couleur accent de l'exercice (depuis option.color ou groupe)
+                              const exColor = option.color || colors.accent;
+                              // Résumé pour l'état validé
+                              const validSummary = (() => {
+                                if (!isValid || !isStrength) return null;
+                                const allS = (stats.sets_data || []).filter((s: any) => s.weight || s.reps);
+                                const nS = allS.length;
+                                const maxW = allS.reduce((m: number, s: any) => Math.max(m, parseFloat(s.weight || '0')), 0);
+                                const calcO = (w: number, r: number) => w > 0 && r > 1 && r <= 15 ? Math.round(w * (1 + r / 30) * 2) / 2 : 0;
+                                const bestO = allS.reduce((m: number, s: any) => Math.max(m, calcO(parseFloat(s.weight || '0'), parseInt(s.reps || '0'))), 0);
+                                if (nS === 0) return null;
+                                return `${nS} série${nS > 1 ? 's' : ''}${maxW > 0 ? ` · ${maxW} kg` : ''}${bestO > 0 ? ` · 1RM ${bestO} kg` : ''}`;
+                              })();
+                              const hasData = stats.sets_data?.some((s: any) => s.weight && s.reps) || (stats.weight && stats.reps);
+
                               return (
-                                <View key={option.id} style={{ marginBottom: 6, width: '100%' }}>
+                                <View key={option.id} style={{ marginBottom: 8, width: '100%' }}>
                                   {/* Ligne exercice */}
                                   <TouchableOpacity
                                     style={{
                                       flexDirection: 'row',
                                       alignItems: 'center',
-                                      paddingVertical: 11,
+                                      paddingVertical: 12,
                                       paddingHorizontal: 12,
                                       backgroundColor: isSelected
                                         ? (isValid
-                                          ? (isDark ? 'rgba(16,185,129,0.08)' : 'rgba(16,185,129,0.06)')
-                                          : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'))
-                                        : 'transparent',
-                                      borderRadius: isSelected ? 10 : 8,
-                                      borderWidth: isSelected ? 1 : 0,
+                                          ? (isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.08)')
+                                          : (isDark ? `${exColor}16` : `${exColor}12`))
+                                        : (isDark ? 'rgba(255,255,255,0.04)' : `${exColor}08`),
+                                      borderRadius: 10,
+                                      borderWidth: 1,
                                       borderColor: isValid
-                                        ? 'rgba(16,185,129,0.35)'
-                                        : (isSelected ? (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)') : 'transparent'),
+                                        ? 'rgba(16,185,129,0.4)'
+                                        : isSelected
+                                          ? `${exColor}50`
+                                          : (isDark ? 'rgba(255,255,255,0.08)' : `${exColor}25`),
                                       borderBottomLeftRadius: isSelected && !isValid ? 0 : 10,
                                       borderBottomRightRadius: isSelected && !isValid ? 0 : 10,
-                                      borderBottomWidth: isSelected && !isValid ? 0 : (isSelected ? 1 : 0),
+                                      borderBottomWidth: isSelected && !isValid ? 0 : 1,
+                                      gap: 10,
                                     }}
                                     onPress={() => {
                                       if (isValid) return;
                                       toggleOption(sportId, option.id);
                                     }}
                                   >
-                                    <Text style={{
-                                      flex: 1,
-                                      fontSize: 14,
-                                      color: isValid ? '#10B981' : (isSelected ? colors.textPrimary : colors.textSecondary),
-                                      fontWeight: isSelected ? '600' : '400',
-                                    }}>
-                                      {option.label}
-                                    </Text>
+                                    {/* Barre de couleur gauche */}
+                                    <View style={{ width: 4, height: 34, borderRadius: 2, backgroundColor: isSelected ? (isValid ? '#10B981' : exColor) : `${exColor}50` }} />
+
+                                    {/* Texte + groupe + résumé */}
+                                    <View style={{ flex: 1 }}>
+                                      <Text style={{
+                                        fontSize: 14,
+                                        color: isValid ? '#10B981' : (isSelected ? colors.textPrimary : colors.textSecondary),
+                                        fontWeight: isSelected ? '700' : '400',
+                                      }}>
+                                        {option.label}
+                                      </Text>
+                                      {isSelected && !isValid && option.group && (
+                                        <Text style={{ fontSize: 10, color: exColor, fontWeight: '700', marginTop: 1, textTransform: 'uppercase', letterSpacing: 0.3 }}>
+                                          {option.group}
+                                        </Text>
+                                      )}
+                                      {validSummary && (
+                                        <Text style={{ fontSize: 11, color: '#10B981', fontWeight: '600', marginTop: 2 }}>{validSummary}</Text>
+                                      )}
+                                    </View>
+
+                                    {/* Bouton valider / badge validé */}
                                     {isSelected && !isValid && (
                                       <TouchableOpacity
                                         onPress={(e) => {
                                           e.stopPropagation();
-                                          const hasValidStrength = stats.sets_data?.some(s => s.weight && s.reps) || (stats.weight && stats.reps);
-                                          if (isStrength && !hasValidStrength) return;
+                                          if (isStrength && !hasData) return;
                                           setValidatedOptions(prev => ({ ...prev, [option.id]: true }));
                                           Keyboard.dismiss();
                                           notificationAsync(NotificationFeedbackType.Success);
                                         }}
                                         style={{
-                                          backgroundColor: (isStrength && !(stats.sets_data?.some(s => s.weight && s.reps) || (stats.weight && stats.reps)))
+                                          backgroundColor: (isStrength && !hasData)
                                             ? (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)')
-                                            : colors.accent,
-                                          width: 30,
-                                          height: 30,
-                                          borderRadius: 15,
+                                            : exColor,
+                                          width: 32,
+                                          height: 32,
+                                          borderRadius: 16,
                                           alignItems: 'center',
                                           justifyContent: 'center',
                                         }}
                                         activeOpacity={0.7}
                                       >
-                                        <Check size={16} color={(isStrength && !(stats.sets_data?.some(s => s.weight && s.reps) || (stats.weight && stats.reps))) ? colors.textMuted : '#FFF'} />
+                                        <Check size={16} color={(isStrength && !hasData) ? colors.textMuted : '#FFF'} />
                                       </TouchableOpacity>
                                     )}
                                     {isSelected && isValid && (
-                                      <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: '#10B981', alignItems: 'center', justifyContent: 'center' }}>
+                                      <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#10B981', alignItems: 'center', justifyContent: 'center' }}>
                                         <Check size={16} color="#FFF" />
                                       </View>
                                     )}
@@ -2820,15 +3228,26 @@ export default function AddTrainingScreen() {
                                   {/* Zone de saisie */}
                                   {isSelected && !isValid && (
                                     <View style={{
-                                      backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.025)',
-                                      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                                      backgroundColor: isDark ? `${exColor}07` : `${exColor}05`,
+                                      borderColor: `${exColor}30`,
                                       borderWidth: 1,
                                       borderTopWidth: 0,
                                       borderBottomLeftRadius: 10,
                                       borderBottomRightRadius: 10,
                                       paddingHorizontal: 12,
-                                      paddingVertical: 10,
+                                      paddingTop: 0,
+                                      paddingBottom: 12,
+                                      overflow: 'hidden',
                                     }}>
+                                      {/* En-têtes colonnes (uniquement musculation) */}
+                                      {isStrength && (
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, marginBottom: 4, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}>
+                                          <Text style={{ width: 36, fontSize: 9, fontWeight: '700', color: colors.textMuted, textAlign: 'center' }}>SÉR.</Text>
+                                          <Text style={{ flex: 1, fontSize: 9, fontWeight: '700', color: colors.textMuted, textAlign: 'center' }}>POIDS (kg)</Text>
+                                          <Text style={{ width: 70, fontSize: 9, fontWeight: '700', color: colors.textMuted, textAlign: 'center' }}>REPS</Text>
+                                          <View style={{ width: 52 }} />
+                                        </View>
+                                      )}
                                         {isStrength && (() => {
                                           const setsArr = stats.sets_data && stats.sets_data.length > 0
                                             ? stats.sets_data
@@ -2851,51 +3270,290 @@ export default function AddTrainingScreen() {
                                             setValidatedOptions(prev => { const n = { ...prev }; delete n[option.id]; return n; });
                                             toggleOption(sportId, option.id);
                                           };
+                                          // Helpers musculation
+                                          const calc1RM = (w: number, r: number) =>
+                                            w > 0 && r > 1 && r <= 15 ? Math.round(w * (1 + r / 30) * 2) / 2 : 0;
+                                          const prevPerf = lastExercisePerf[option.label];
+                                          // Volume total (séries avec données)
+                                          const totalVolume = setsArr.reduce((sum, s) => {
+                                            const w = parseFloat(s.weight || '0');
+                                            const r = parseInt(s.reps || '0');
+                                            return sum + (w > 0 && r > 0 ? w * r : 0);
+                                          }, 0);
+                                          // Meilleur 1RM de la séance actuelle
+                                          const currentBest1RM = setsArr.reduce((max, s) => {
+                                            const orm = calc1RM(parseFloat(s.weight || '0'), parseInt(s.reps || '0'));
+                                            return Math.max(max, orm);
+                                          }, 0);
+                                          // PR = meilleur 1RM de cette séance > record all-time (hors séance en cours)
+                                          const isPR = currentBest1RM > 0 && (
+                                            !allTimeBest1RM[option.label] || currentBest1RM > allTimeBest1RM[option.label]
+                                          );
+                                          // Nb de jours depuis la dernière fois
+                                          const daysAgo = prevPerf
+                                            ? Math.round((Date.now() - new Date(prevPerf.date).getTime()) / 86400000)
+                                            : null;
+                                          // Chrono repos : démarrer 90s pour un exo, identifié par exId_si
+                                          const startRest = (si: number, seconds = 90) => {
+                                            const key = `${option.id}_${si}`;
+                                            if (restIntervalRef.current[key]) clearInterval(restIntervalRef.current[key]);
+                                            setRestTimers(prev => ({ ...prev, [key]: seconds }));
+                                            restIntervalRef.current[key] = setInterval(() => {
+                                              setRestTimers(prev => {
+                                                const next = (prev[key] ?? 1) - 1;
+                                                if (next <= 0) {
+                                                  clearInterval(restIntervalRef.current[key]);
+                                                  delete restIntervalRef.current[key];
+                                                  const { [key]: _, ...rest } = prev;
+                                                  return rest;
+                                                }
+                                                return { ...prev, [key]: next };
+                                              });
+                                            }, 1000);
+                                          };
+                                          const stopRest = (si: number) => {
+                                            const key = `${option.id}_${si}`;
+                                            clearInterval(restIntervalRef.current[key]);
+                                            delete restIntervalRef.current[key];
+                                            setRestTimers(prev => { const { [key]: _, ...rest } = prev; return rest; });
+                                          };
+
                                           return (
                                             <View style={{ gap: 5 }}>
-                                              {setsArr.map((set, si) => (
-                                                <View key={si} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                                                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, width: 24, textAlign: 'right' }}>S{si + 1}</Text>
-                                                  <TextInput
-                                                    style={{ width: 56, height: 34, backgroundColor: colors.backgroundCard, borderRadius: 8, textAlign: 'center', color: colors.textPrimary, fontWeight: '700', fontSize: 14, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)' }}
-                                                    placeholder="kg"
-                                                    placeholderTextColor={colors.textMuted}
-                                                    keyboardType="decimal-pad"
-                                                    value={set.weight}
-                                                    onChangeText={(val) => updateSet(si, 'weight', val.replace(',', '.'))}
-                                                    onFocus={scrollToFocusedInput}
-                                                  />
-                                                  <Text style={{ color: colors.textMuted, fontSize: 13 }}>×</Text>
-                                                  <TextInput
-                                                    style={{ width: 52, height: 34, backgroundColor: colors.backgroundCard, borderRadius: 8, textAlign: 'center', color: colors.textPrimary, fontWeight: '700', fontSize: 14, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)' }}
-                                                    placeholder="reps"
-                                                    placeholderTextColor={colors.textMuted}
-                                                    keyboardType="number-pad"
-                                                    value={set.reps}
-                                                    onChangeText={(val) => updateSet(si, 'reps', val)}
-                                                    onFocus={scrollToFocusedInput}
-                                                  />
-                                                  {si === setsArr.length - 1 ? (
-                                                    <TouchableOpacity
-                                                      onPress={addSet}
-                                                      style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: isDark ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.12)', alignItems: 'center', justifyContent: 'center' }}
-                                                    >
-                                                      <Plus size={14} color="#6366F1" />
-                                                    </TouchableOpacity>
-                                                  ) : (
-                                                    <View style={{ width: 30 }} />
-                                                  )}
-                                                  {si > 0 ? (
-                                                    <TouchableOpacity onPress={() => removeSet(si)} hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}>
-                                                      <X size={14} color={colors.textMuted} />
-                                                    </TouchableOpacity>
-                                                  ) : (
-                                                    <TouchableOpacity onPress={removeExercise} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                                                      <X size={16} color={colors.textMuted} />
-                                                    </TouchableOpacity>
+                                              {/* ── Bannière dernière perf ── */}
+                                              {prevPerf && (
+                                                <View style={{
+                                                  flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                                                  backgroundColor: isDark ? 'rgba(99,102,241,0.1)' : 'rgba(99,102,241,0.07)',
+                                                  borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 6,
+                                                  borderWidth: 1, borderColor: isDark ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.2)',
+                                                }}>
+                                                  <View style={{ flex: 1 }}>
+                                                    <Text style={{ fontSize: 9, fontWeight: '700', color: '#6366F1', marginBottom: 1 }}>
+                                                      DERNIÈRE FOIS {daysAgo === 0 ? "AUJOURD'HUI" : daysAgo === 1 ? 'HIER' : `IL Y A ${daysAgo}J`}
+                                                    </Text>
+                                                    <Text style={{ fontSize: 11, color: colors.textSecondary, fontWeight: '600' }} numberOfLines={1}>
+                                                      {prevPerf.sets.slice(0, 4).map((s, i) => `S${i+1} ${s.weight}kg×${s.reps}`).join('  ')}
+                                                    </Text>
+                                                  </View>
+                                                  <TouchableOpacity
+                                                    onPress={() => {
+                                                      const newData = prevPerf.sets.map(s => ({ weight: s.weight.toString(), reps: s.reps.toString() }));
+                                                      setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, sets_data: newData } }));
+                                                      impactAsync(ImpactFeedbackStyle.Medium);
+                                                    }}
+                                                    style={{ backgroundColor: '#6366F1', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, marginLeft: 8 }}
+                                                    hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                                                  >
+                                                    <Text style={{ fontSize: 10, fontWeight: '800', color: '#FFF' }}>↩ Reprendre</Text>
+                                                  </TouchableOpacity>
+                                                </View>
+                                              )}
+
+                                              {/* ── Lignes de séries ── */}
+                                              {setsArr.map((set, si) => {
+                                                const w = parseFloat(set.weight || '0');
+                                                const r = parseInt(set.reps || '0');
+                                                const setORM = calc1RM(w, r);
+                                                const setIsPR = setORM > 0 && (!allTimeBest1RM[option.label] || setORM > allTimeBest1RM[option.label]);
+                                                const setDone = w > 0 && r > 0;
+                                                return (
+                                                  <View key={si} style={{
+                                                    borderRadius: 8,
+                                                    backgroundColor: setDone
+                                                      ? (isDark ? `${exColor}15` : `${exColor}0C`)
+                                                      : 'transparent',
+                                                    paddingHorizontal: 0,
+                                                    paddingVertical: setDone ? 4 : 2,
+                                                    marginBottom: 2,
+                                                  }}>
+                                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                                                      {/* Badge numéro de série */}
+                                                      <View style={{
+                                                        width: 26, height: 26, borderRadius: 13,
+                                                        backgroundColor: setDone ? exColor : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'),
+                                                        alignItems: 'center', justifyContent: 'center',
+                                                      }}>
+                                                        <Text style={{ fontSize: 11, fontWeight: '800', color: setDone ? '#FFF' : colors.textMuted }}>{si + 1}</Text>
+                                                      </View>
+
+                                                      {/* Poids avec boutons ± 2.5 */}
+                                                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                                                        <TouchableOpacity
+                                                          onPress={() => {
+                                                            const v = Math.max(0, parseFloat(set.weight || '0') - 2.5);
+                                                            updateSet(si, 'weight', v % 1 === 0 ? v.toString() : v.toFixed(1));
+                                                            impactAsync(ImpactFeedbackStyle.Light);
+                                                          }}
+                                                          style={{ width: 26, height: 40, borderRadius: 7, backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', alignItems: 'center', justifyContent: 'center' }}
+                                                          hitSlop={{ top: 4, bottom: 4 }}
+                                                        >
+                                                          <Text style={{ color: colors.textSecondary, fontSize: 17, fontWeight: '300', lineHeight: 20 }}>−</Text>
+                                                        </TouchableOpacity>
+                                                        <TextInput
+                                                          style={{ flex: 1, height: 40, backgroundColor: colors.backgroundCard, borderRadius: 8, textAlign: 'center', color: colors.textPrimary, fontWeight: '800', fontSize: 15, borderWidth: 1, borderColor: setDone ? `${exColor}50` : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)') }}
+                                                          placeholder="kg"
+                                                          placeholderTextColor={colors.textMuted}
+                                                          keyboardType="decimal-pad"
+                                                          value={set.weight}
+                                                          onChangeText={(val) => updateSet(si, 'weight', val.replace(',', '.'))}
+                                                          onFocus={scrollToFocusedInput}
+                                                        />
+                                                        <TouchableOpacity
+                                                          onPress={() => {
+                                                            const v = parseFloat(set.weight || '0') + 2.5;
+                                                            updateSet(si, 'weight', v % 1 === 0 ? v.toString() : v.toFixed(1));
+                                                            impactAsync(ImpactFeedbackStyle.Light);
+                                                          }}
+                                                          style={{ width: 26, height: 40, borderRadius: 7, backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', alignItems: 'center', justifyContent: 'center' }}
+                                                          hitSlop={{ top: 4, bottom: 4 }}
+                                                        >
+                                                          <Text style={{ color: colors.textSecondary, fontSize: 17, fontWeight: '300', lineHeight: 20 }}>+</Text>
+                                                        </TouchableOpacity>
+                                                      </View>
+
+                                                      {/* Séparateur × */}
+                                                      <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '300', width: 10, textAlign: 'center' }}>×</Text>
+
+                                                      {/* Reps avec boutons ± 1 */}
+                                                      <View style={{ width: 94, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                                                        <TouchableOpacity
+                                                          onPress={() => {
+                                                            const v = Math.max(1, parseInt(set.reps || '0') - 1);
+                                                            updateSet(si, 'reps', v.toString());
+                                                            impactAsync(ImpactFeedbackStyle.Light);
+                                                          }}
+                                                          style={{ width: 24, height: 40, borderRadius: 7, backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', alignItems: 'center', justifyContent: 'center' }}
+                                                          hitSlop={{ top: 4, bottom: 4 }}
+                                                        >
+                                                          <Text style={{ color: colors.textSecondary, fontSize: 17, fontWeight: '300', lineHeight: 20 }}>−</Text>
+                                                        </TouchableOpacity>
+                                                        <TextInput
+                                                          style={{ flex: 1, height: 40, backgroundColor: colors.backgroundCard, borderRadius: 8, textAlign: 'center', color: colors.textPrimary, fontWeight: '800', fontSize: 15, borderWidth: 1, borderColor: setDone ? `${exColor}50` : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)') }}
+                                                          placeholder="reps"
+                                                          placeholderTextColor={colors.textMuted}
+                                                          keyboardType="number-pad"
+                                                          value={set.reps}
+                                                          onChangeText={(val) => updateSet(si, 'reps', val)}
+                                                          onFocus={scrollToFocusedInput}
+                                                        />
+                                                        <TouchableOpacity
+                                                          onPress={() => {
+                                                            const v = parseInt(set.reps || '0') + 1;
+                                                            updateSet(si, 'reps', v.toString());
+                                                            impactAsync(ImpactFeedbackStyle.Light);
+                                                          }}
+                                                          style={{ width: 24, height: 40, borderRadius: 7, backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', alignItems: 'center', justifyContent: 'center' }}
+                                                          hitSlop={{ top: 4, bottom: 4 }}
+                                                        >
+                                                          <Text style={{ color: colors.textSecondary, fontSize: 17, fontWeight: '300', lineHeight: 20 }}>+</Text>
+                                                        </TouchableOpacity>
+                                                      </View>
+
+                                                      {/* Bouton + série ou espace */}
+                                                      {si === setsArr.length - 1 ? (
+                                                        <TouchableOpacity
+                                                          onPress={addSet}
+                                                          style={{ width: 28, height: 28, borderRadius: 7, backgroundColor: isDark ? `${exColor}25` : `${exColor}18`, alignItems: 'center', justifyContent: 'center' }}
+                                                        >
+                                                          <Plus size={13} color={exColor} />
+                                                        </TouchableOpacity>
+                                                      ) : (
+                                                        <View style={{ width: 28 }} />
+                                                      )}
+
+                                                      {/* Supprimer */}
+                                                      {si > 0 ? (
+                                                        <TouchableOpacity onPress={() => removeSet(si)} hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}>
+                                                          <X size={13} color={colors.textMuted} />
+                                                        </TouchableOpacity>
+                                                      ) : (
+                                                        <TouchableOpacity onPress={removeExercise} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                                                          <X size={15} color={colors.textMuted} />
+                                                        </TouchableOpacity>
+                                                      )}
+                                                    </View>
+
+                                                    {/* Ligne infos : 1RM + progression + timer repos */}
+                                                    {setDone && (
+                                                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 31, marginTop: 3, gap: 6 }}>
+                                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                                                          {setORM > 0 && (
+                                                            <Text style={{ fontSize: 10, fontWeight: '600', color: setIsPR ? '#F59E0B' : colors.textMuted }}>
+                                                              {setIsPR ? '🏆 PR · ' : ''}1RM ~{setORM} kg{setIsPR ? ' 🔥' : ''}
+                                                            </Text>
+                                                          )}
+                                                          {(() => {
+                                                            const prevSet = prevPerf?.sets[si];
+                                                            if (!prevSet || prevSet.weight <= 0) return null;
+                                                            const diff = w - prevSet.weight;
+                                                            if (diff === 0) return (
+                                                              <Text style={{ fontSize: 10, fontWeight: '600', color: colors.textMuted }}>= même poids</Text>
+                                                            );
+                                                            return (
+                                                              <Text style={{ fontSize: 10, fontWeight: '700', color: diff > 0 ? '#10B981' : '#F97316' }}>
+                                                                {diff > 0 ? '▲' : '▼'} {Math.abs(diff) % 1 === 0 ? Math.abs(diff) : Math.abs(diff).toFixed(1)} kg
+                                                              </Text>
+                                                            );
+                                                          })()}
+                                                        </View>
+                                                        {/* Chronomètre repos */}
+                                                        {(() => {
+                                                          const timerKey = `${option.id}_${si}`;
+                                                          const remaining = restTimers[timerKey];
+                                                          if (remaining !== undefined) {
+                                                            const mins = Math.floor(remaining / 60);
+                                                            const secs = remaining % 60;
+                                                            return (
+                                                              <TouchableOpacity
+                                                                onPress={() => stopRest(si)}
+                                                                style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: remaining <= 10 ? '#EF444420' : `${exColor}20`, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}
+                                                              >
+                                                                <Text style={{ fontSize: 11, fontWeight: '800', color: remaining <= 10 ? '#EF4444' : exColor }}>
+                                                                  {mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `${secs}s`}
+                                                                </Text>
+                                                                <X size={10} color={remaining <= 10 ? '#EF4444' : exColor} />
+                                                              </TouchableOpacity>
+                                                            );
+                                                          }
+                                                          return (
+                                                            <TouchableOpacity
+                                                              onPress={() => { startRest(si); impactAsync(ImpactFeedbackStyle.Light); }}
+                                                              style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}
+                                                            >
+                                                              <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>⏱ Repos 90s</Text>
+                                                            </TouchableOpacity>
+                                                          );
+                                                        })()}
+                                                      </View>
+                                                    )}
+                                                  </View>
+                                                );
+                                              })}
+
+                                              {/* ── Barre de stats volume + 1RM ── */}
+                                              {totalVolume > 0 && (
+                                                <View style={{
+                                                  flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+                                                  marginTop: 8, paddingTop: 8, paddingHorizontal: 4,
+                                                  borderTopWidth: 1, borderTopColor: `${exColor}20`,
+                                                }}>
+                                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: exColor }} />
+                                                    <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                                                      Volume <Text style={{ fontWeight: '800', color: colors.textPrimary }}>{totalVolume.toLocaleString('fr-FR')} kg</Text>
+                                                    </Text>
+                                                  </View>
+                                                  {currentBest1RM > 0 && (
+                                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                                      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: isPR ? '#F59E0B' : colors.textMuted }} />
+                                                      <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                                                        {isPR ? '🏆 PR ' : '1RM '}<Text style={{ fontWeight: '800', color: isPR ? '#F59E0B' : colors.textPrimary }}>{currentBest1RM} kg</Text>
+                                                      </Text>
+                                                    </View>
                                                   )}
                                                 </View>
-                                              ))}
+                                              )}
                                             </View>
                                           );
                                         })()}
@@ -3134,7 +3792,7 @@ export default function AddTrainingScreen() {
         {/* ═══════════════════════════════════════════ */}
         {/* ÉTAPE 4: DATE & HEURE */}
         {/* ═══════════════════════════════════════════ */}
-        {currentStep === 3 && selectedSports.length > 0 && (
+        {currentStep === (isCombatSport ? 5 : 3) && selectedSports.length > 0 && (
           <>
             <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textMuted, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: SPACING.lg, marginBottom: 10 }}>
               Date & Heure
@@ -3236,7 +3894,38 @@ export default function AddTrainingScreen() {
                 </View>
               </View>
 
-
+              {/* CALORIES & FC */}
+              <View style={{ marginTop: 16 }}>
+                <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 8, fontWeight: '600' }}>Calories & Fréquence cardiaque</Text>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <View style={{ flex: 1, backgroundColor: colors.backgroundElevated, padding: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <TextInput
+                      style={{ fontSize: 20, fontWeight: '700', color: '#F59E0B', flex: 1, textAlign: 'center' }}
+                      placeholder="—"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="number-pad"
+                      value={calories}
+                      onChangeText={setCalories}
+                      onFocus={scrollToFocusedInput}
+                      maxLength={5}
+                    />
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>KCAL</Text>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: colors.backgroundElevated, padding: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <TextInput
+                      style={{ fontSize: 20, fontWeight: '700', color: '#EF4444', flex: 1, textAlign: 'center' }}
+                      placeholder="—"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="number-pad"
+                      value={heartRate}
+                      onChangeText={setHeartRate}
+                      onFocus={scrollToFocusedInput}
+                      maxLength={3}
+                    />
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>BPM</Text>
+                  </View>
+                </View>
+              </View>
 
             </View>
           </>
@@ -3245,7 +3934,7 @@ export default function AddTrainingScreen() {
         {/* FIN DES STATS PERFORMANCE */}
 
         {/* CHAMPS COMBAT (Rounds detailles) - Si sport de combat selectionne */}
-        {currentStep === 2 && selectedSports.some(s => ['jjb', 'mma', 'boxe', 'muay_thai', 'lutte', 'karate', 'sambo', 'judo', 'grappling', 'kickboxing', 'krav_maga', 'catch', 'boxe_francaise', 'taekwondo'].includes(s)) && (
+        {currentStep === (isCombatSport ? 3 : 2) && isCombatSport && (
           <View style={{ marginTop: 20, backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
             {/* Header Rounds */}
             <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
@@ -3270,6 +3959,10 @@ export default function AddTrainingScreen() {
                           }
                           return newRounds;
                         });
+                        setShowCombatRounds(true);
+                      } else {
+                        setCombatRounds([]);
+                        setShowCombatRounds(false);
                       }
                     }}
                     placeholder="0"
@@ -3309,16 +4002,38 @@ export default function AddTrainingScreen() {
               </View>
 
               {/* Toggle detail rounds */}
-              {combatRounds.length > 0 && (
+              {combatRounds.length > 0 && !showCombatRounds && (
                 <TouchableOpacity
-                  onPress={() => { setShowCombatRounds(!showCombatRounds); impactAsync(ImpactFeedbackStyle.Light); }}
-                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12, paddingVertical: 8, backgroundColor: isDark ? 'rgba(239,68,68,0.1)' : 'rgba(239,68,68,0.06)', borderRadius: 10 }}
+                  onPress={() => { setShowCombatRounds(true); impactAsync(ImpactFeedbackStyle.Medium); }}
+                  style={{
+                    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                    marginTop: 14, paddingVertical: 14, paddingHorizontal: 16,
+                    backgroundColor: '#EF4444', borderRadius: 12,
+                  }}
                 >
-                  <UserPlus size={14} color="#EF4444" />
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#EF4444' }}>
-                    {showCombatRounds ? 'Masquer le detail' : 'Detailler chaque round (partenaire, resultat...)'}
-                  </Text>
-                  {showCombatRounds ? <ChevronUp size={14} color="#EF4444" /> : <ChevronDown size={14} color="#EF4444" />}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                      <UserPlus size={16} color="#FFF" />
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: '#FFF' }}>
+                        Détailler {combatRounds.length} round{combatRounds.length > 1 ? 's' : ''}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', marginTop: 1 }}>
+                        Partenaire · Résultat · Soumissions
+                      </Text>
+                    </View>
+                  </View>
+                  <ChevronDown size={20} color="#FFF" />
+                </TouchableOpacity>
+              )}
+              {combatRounds.length > 0 && showCombatRounds && (
+                <TouchableOpacity
+                  onPress={() => { setShowCombatRounds(false); impactAsync(ImpactFeedbackStyle.Light); }}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12, paddingVertical: 7, backgroundColor: isDark ? 'rgba(239,68,68,0.1)' : 'rgba(239,68,68,0.06)', borderRadius: 10 }}
+                >
+                  <ChevronUp size={14} color="#EF4444" />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#EF4444' }}>Masquer les détails</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -3327,13 +4042,23 @@ export default function AddTrainingScreen() {
             {showCombatRounds && combatRounds.length > 0 && (
               <View style={{ padding: 16, gap: 12 }}>
                 {combatRounds.map((round, idx) => (
-                  <View key={idx} style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: round.result === 'win' ? '#10B981' : round.result === 'loss' ? '#EF4444' : colors.border }}>
-                    {/* Round header */}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                      <Text style={{ fontSize: 14, fontWeight: '800', color: colors.textPrimary }}>Round {idx + 1}</Text>
+                  <View key={idx} style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 14, overflow: 'hidden', borderWidth: 1.5, borderColor: round.result === 'win' ? '#10B981' : round.result === 'loss' ? '#EF4444' : round.result === 'draw' ? '#F59E0B' : colors.border }}>
+                    {/* Round header coloré */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 10, backgroundColor: round.result === 'win' ? 'rgba(16,185,129,0.12)' : round.result === 'loss' ? 'rgba(239,68,68,0.12)' : round.result === 'draw' ? 'rgba(245,158,11,0.12)' : (isDark ? 'rgba(239,68,68,0.08)' : 'rgba(239,68,68,0.05)') }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center' }}>
+                          <Text style={{ fontSize: 12, fontWeight: '900', color: '#FFF' }}>{idx + 1}</Text>
+                        </View>
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: colors.textPrimary }}>Round {idx + 1}</Text>
+                        {roundDuration ? <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>· {roundDuration} min</Text> : null}
+                      </View>
                       {/* Result pills */}
-                      <View style={{ flexDirection: 'row', gap: 6 }}>
-                        {(['win', 'loss', 'draw'] as const).map(result => (
+                      <View style={{ flexDirection: 'row', gap: 5 }}>
+                        {([
+                          { key: 'win', label: 'Victoire', color: '#10B981' },
+                          { key: 'loss', label: 'Défaite', color: '#EF4444' },
+                          { key: 'draw', label: '= Nul', color: '#F59E0B' },
+                        ] as const).map(({ key: result, label, color }) => (
                           <TouchableOpacity
                             key={result}
                             onPress={() => {
@@ -3341,22 +4066,20 @@ export default function AddTrainingScreen() {
                               impactAsync(ImpactFeedbackStyle.Light);
                             }}
                             style={{
-                              paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
-                              backgroundColor: round.result === result
-                                ? (result === 'win' ? '#10B981' : result === 'loss' ? '#EF4444' : '#F59E0B')
-                                : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                              paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8,
+                              backgroundColor: round.result === result ? color : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                              borderWidth: 1,
+                              borderColor: round.result === result ? color : 'transparent',
                             }}
                           >
-                            <Text style={{
-                              fontSize: 11, fontWeight: '700',
-                              color: round.result === result ? '#FFF' : colors.textMuted,
-                            }}>
-                              {result === 'win' ? 'V' : result === 'loss' ? 'D' : 'Nul'}
+                            <Text style={{ fontSize: 10, fontWeight: '800', color: round.result === result ? '#FFF' : colors.textMuted }}>
+                              {label}
                             </Text>
                           </TouchableOpacity>
                         ))}
                       </View>
                     </View>
+                    <View style={{ padding: 12 }}>
 
                     {/* Partner name */}
                     <View style={{ marginBottom: 8 }}>
@@ -3379,25 +4102,42 @@ export default function AddTrainingScreen() {
                         </Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
                           <View style={{ flexDirection: 'row', gap: 6 }}>
-                            {COMBAT_METHODS.map(method => (
-                              <TouchableOpacity
-                                key={method}
-                                onPress={() => {
-                                  setCombatRounds(prev => prev.map((r, i) => i === idx ? { ...r, method: r.method === method ? undefined : method } : r));
-                                  impactAsync(ImpactFeedbackStyle.Light);
-                                }}
-                                style={{
-                                  paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8,
-                                  backgroundColor: round.method === method ? '#EF4444' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
-                                  borderWidth: 1,
-                                  borderColor: round.method === method ? '#EF4444' : 'transparent',
-                                }}
-                              >
-                                <Text style={{ fontSize: 11, fontWeight: '600', color: round.method === method ? '#FFF' : colors.textMuted }}>{method}</Text>
-                              </TouchableOpacity>
-                            ))}
+                            {COMBAT_METHODS.map(method => {
+                              const isCustomValue = round.method && !COMBAT_METHODS.includes(round.method);
+                              const isSelected = method === 'Autre'
+                                ? (round.method === 'Autre' || isCustomValue)
+                                : round.method === method;
+                              return (
+                                <TouchableOpacity
+                                  key={method}
+                                  onPress={() => {
+                                    setCombatRounds(prev => prev.map((r, i) => i === idx ? { ...r, method: isSelected ? undefined : method } : r));
+                                    impactAsync(ImpactFeedbackStyle.Light);
+                                  }}
+                                  style={{
+                                    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8,
+                                    backgroundColor: isSelected ? '#EF4444' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                                    borderWidth: 1,
+                                    borderColor: isSelected ? '#EF4444' : 'transparent',
+                                  }}
+                                >
+                                  <Text style={{ fontSize: 11, fontWeight: '600', color: isSelected ? '#FFF' : colors.textMuted }}>{method}</Text>
+                                </TouchableOpacity>
+                              );
+                            })}
                           </View>
                         </ScrollView>
+                        {/* Champ texte libre si "Autre" est sélectionné ou méthode personnalisée */}
+                        {(round.method === 'Autre' || (round.method && !COMBAT_METHODS.slice(0, -1).includes(round.method))) && (
+                          <TextInput
+                            style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 8, borderRadius: 8, color: colors.textPrimary, fontWeight: '600', borderWidth: 1, borderColor: '#EF4444', fontSize: 13, marginTop: 6 }}
+                            placeholder="Précise la technique..."
+                            placeholderTextColor={colors.textMuted}
+                            value={round.method === 'Autre' ? '' : (round.method || '')}
+                            onChangeText={(val) => setCombatRounds(prev => prev.map((r, i) => i === idx ? { ...r, method: val || 'Autre' } : r))}
+                            autoFocus={round.method === 'Autre'}
+                          />
+                        )}
                       </View>
                     )}
 
@@ -3438,6 +4178,7 @@ export default function AddTrainingScreen() {
                       onChangeText={(val) => setCombatRounds(prev => prev.map((r, i) => i === idx ? { ...r, notes: val } : r))}
                       onFocus={scrollToFocusedInput}
                     />
+                    </View>{/* fin padding: 12 */}
                   </View>
                 ))}
 
@@ -3464,6 +4205,197 @@ export default function AddTrainingScreen() {
                 )}
               </View>
             )}
+          </View>
+        )}
+
+        {/* ═══════════════════════════════════════════ */}
+        {/* ÉTAPE 4: GAME PLAN & BILAN (combat sports only) */}
+        {/* ═══════════════════════════════════════════ */}
+        {currentStep === 4 && isCombatSport && (
+          <View style={{ marginTop: 8 }}>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textMuted, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 16 }}>
+              GAME PLAN & BILAN
+            </Text>
+
+            {/* HUMEUR DE SÉANCE */}
+            <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 16, marginBottom: 12 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 }}>Comment tu t'es senti ?</Text>
+              <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'space-around' }}>
+                {[
+                  { emoji: '🔥', label: 'En feu', value: 'fire' },
+                  { emoji: '💪', label: 'Solide', value: 'solid' },
+                  { emoji: '😐', label: 'Correct', value: 'ok' },
+                  { emoji: '😓', label: 'Difficile', value: 'hard' },
+                  { emoji: '💀', label: 'Ecrasé', value: 'crushed' },
+                ].map(({ emoji, label, value }) => {
+                  const isSelected = sessionMood === value;
+                  return (
+                    <TouchableOpacity
+                      key={value}
+                      onPress={() => { setSessionMood(isSelected ? '' : value); impactAsync(ImpactFeedbackStyle.Light); }}
+                      style={{
+                        alignItems: 'center', padding: 10, borderRadius: 12,
+                        backgroundColor: isSelected ? colors.accent + '25' : 'transparent',
+                        borderWidth: 1.5,
+                        borderColor: isSelected ? colors.accent : colors.border,
+                      }}
+                    >
+                      <Text style={{ fontSize: 28 }}>{emoji}</Text>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: isSelected ? colors.accent : colors.textMuted, marginTop: 4 }}>{label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* NOTE DE SÉANCE 1-10 */}
+            <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 16, marginBottom: 12 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 }}>Note de la séance</Text>
+              <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 12 }}>Qualité globale du training</Text>
+              <View style={{ flexDirection: 'row', gap: 5 }}>
+                {[1,2,3,4,5,6,7,8,9,10].map(n => {
+                  const isSelected = sessionRating === n;
+                  const ratingColor = n <= 3 ? '#EF4444' : n <= 6 ? '#F59E0B' : n <= 8 ? '#84CC16' : '#22C55E';
+                  return (
+                    <TouchableOpacity
+                      key={n}
+                      onPress={() => { setSessionRating(isSelected ? null : n); impactAsync(ImpactFeedbackStyle.Light); }}
+                      style={{
+                        flex: 1, height: 44, borderRadius: 8,
+                        backgroundColor: isSelected ? ratingColor : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'),
+                        borderWidth: 1.5,
+                        borderColor: isSelected ? ratingColor : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'),
+                        alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: isSelected ? '#fff' : (isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.25)') }}>{n}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              {sessionRating !== null && (
+                <Text style={{ textAlign: 'center', fontSize: 13, fontWeight: '700', color: sessionRating <= 3 ? '#EF4444' : sessionRating <= 6 ? '#F59E0B' : sessionRating <= 8 ? '#84CC16' : '#22C55E', marginTop: 10 }}>
+                  {sessionRating <= 3 ? 'Mauvaise séance' : sessionRating <= 6 ? 'Séance correcte' : sessionRating <= 8 ? 'Bonne séance' : 'Excellente séance !'}
+                </Text>
+              )}
+            </View>
+
+            {/* GAME PLAN */}
+            <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 16, marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <Lightbulb size={18} color="#F59E0B" />
+                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>Game Plan</Text>
+              </View>
+              <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 10 }}>Appuie sur plusieurs objectifs à la fois</Text>
+              {/* Chips multi-select */}
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                {GAME_PLAN_TEMPLATES.map(tag => {
+                  const isSelected = gamePlanTags.includes(tag);
+                  return (
+                    <TouchableOpacity
+                      key={tag}
+                      onPress={() => toggleTag(tag, gamePlanTags, setGamePlanTags, setGamePlan)}
+                      style={{
+                        paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
+                        backgroundColor: isSelected ? '#F59E0B' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'),
+                        borderWidth: 1.5, borderColor: isSelected ? '#F59E0B' : colors.border,
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: isSelected ? '#FFF' : colors.textSecondary }}>{tag}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              {/* Texte libre en complément */}
+              <TextInput
+                style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 12, borderRadius: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border, minHeight: 60, textAlignVertical: 'top' }}
+                placeholder="Ou écris ton game plan librement..."
+                placeholderTextColor={colors.textMuted}
+                value={gamePlan}
+                onChangeText={(txt) => {
+                  setGamePlan(txt);
+                  // Désynchronise les chips si l'utilisateur édite manuellement
+                  setGamePlanTags([]);
+                }}
+                multiline
+                numberOfLines={3}
+                onFocus={scrollToFocusedInput}
+              />
+            </View>
+
+            {/* CE QUI A MARCHÉ */}
+            <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: '#22C55E40', padding: 16, marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <Check size={18} color="#22C55E" strokeWidth={3} />
+                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>Ce qui a marché ✅</Text>
+              </View>
+              <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 10 }}>Sélectionne plusieurs éléments</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                {WHAT_WORKED_TEMPLATES.map(tag => {
+                  const isSelected = whatWorkedTags.includes(tag);
+                  return (
+                    <TouchableOpacity
+                      key={tag}
+                      onPress={() => toggleTag(tag, whatWorkedTags, setWhatWorkedTags, setWhatWorked)}
+                      style={{
+                        paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
+                        backgroundColor: isSelected ? '#22C55E' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'),
+                        borderWidth: 1.5, borderColor: isSelected ? '#22C55E' : colors.border,
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: isSelected ? '#FFF' : colors.textSecondary }}>{tag}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <TextInput
+                style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 12, borderRadius: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border, minHeight: 60, textAlignVertical: 'top' }}
+                placeholder="Ou ajoute des détails..."
+                placeholderTextColor={colors.textMuted}
+                value={whatWorked}
+                onChangeText={(txt) => { setWhatWorked(txt); setWhatWorkedTags([]); }}
+                multiline
+                numberOfLines={3}
+                onFocus={scrollToFocusedInput}
+              />
+            </View>
+
+            {/* CE QUI N'A PAS MARCHÉ */}
+            <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: '#EF444440', padding: 16, marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <X size={18} color="#EF4444" strokeWidth={3} />
+                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>À améliorer ❌</Text>
+              </View>
+              <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 10 }}>Sélectionne plusieurs éléments</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                {WHAT_DIDNT_WORK_TEMPLATES.map(tag => {
+                  const isSelected = whatDidntWorkTags.includes(tag);
+                  return (
+                    <TouchableOpacity
+                      key={tag}
+                      onPress={() => toggleTag(tag, whatDidntWorkTags, setWhatDidntWorkTags, setWhatDidntWork)}
+                      style={{
+                        paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
+                        backgroundColor: isSelected ? '#EF4444' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'),
+                        borderWidth: 1.5, borderColor: isSelected ? '#EF4444' : colors.border,
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: isSelected ? '#FFF' : colors.textSecondary }}>{tag}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <TextInput
+                style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 12, borderRadius: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border, minHeight: 60, textAlignVertical: 'top' }}
+                placeholder="Ou ajoute des détails..."
+                placeholderTextColor={colors.textMuted}
+                value={whatDidntWork}
+                onChangeText={(txt) => { setWhatDidntWork(txt); setWhatDidntWorkTags([]); }}
+                multiline
+                numberOfLines={3}
+                onFocus={scrollToFocusedInput}
+              />
+            </View>
           </View>
         )}
 
@@ -3548,9 +4480,9 @@ export default function AddTrainingScreen() {
         )}
 
                                     {/* ═══════════════════════════════════════════ */}
-                                    {/* ÉTAPE 5: ANALYSE & RESSENTI */}
+                                    {/* ÉTAPE 6: ANALYSE & RESSENTI */}
                                     {/* ═══════════════════════════════════════════ */}
-                                    {currentStep === 4 && selectedSports.length > 0 && (
+                                    {currentStep === (isCombatSport ? 6 : 4) && selectedSports.length > 0 && (
                                       <>
                                         <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textMuted, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: SPACING.lg, marginBottom: 10 }}>
                                           {t('addTraining.sessionFeeling')}
@@ -3564,27 +4496,39 @@ export default function AddTrainingScreen() {
                                               <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>{t('addTraining.sessionIntensity')}</Text>
                                             </View>
                                             
-                                            <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 16, lineHeight: 18 }}>
-                                              L'échelle RPE (Rate of Perceived Exertion) mesure ton effort ressenti. C'est le meilleur indicateur de ta charge interne.
-                                            </Text>
-                  
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, justifyContent: 'center' }}>
-                                              <TouchableOpacity onPress={() => setIntensity(Math.max(1, intensity - 1))} style={styles.intensityStep}>
-                                                <Text style={{ fontSize: 28, color: colors.textMuted, fontWeight: '300' }}>-</Text>
-                                              </TouchableOpacity>
-                                              
-                                              <View style={{ alignItems: 'center', minWidth: 80 }}>
-                                                <Text style={[styles.proStatInput, { color: intensity > 7 ? '#EF4444' : colors.accent, marginBottom: -4 }]}>
-                                                  {intensity}
-                                                </Text>
-                                                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase' }}>
-                                                  {intensity <= 3 ? 'Facile' : intensity <= 6 ? 'Modéré' : intensity <= 8 ? 'Difficile' : 'Maximal'}
-                                                </Text>
+                                            {/* ÉCHELLE RPE VISUELLE 1-10 */}
+                                            <View style={{ gap: 10 }}>
+                                              <View style={{ flexDirection: 'row', gap: 5 }}>
+                                                {[1,2,3,4,5,6,7,8,9,10].map(n => {
+                                                  const isSelected = intensity === n;
+                                                  const rpeColor = n <= 3 ? '#22C55E' : n <= 5 ? '#84CC16' : n <= 7 ? '#F59E0B' : n <= 8 ? '#F97316' : '#EF4444';
+                                                  return (
+                                                    <TouchableOpacity
+                                                      key={n}
+                                                      onPress={() => { setIntensity(n); impactAsync(ImpactFeedbackStyle.Light); }}
+                                                      style={{
+                                                        flex: 1, height: 42, borderRadius: 8,
+                                                        backgroundColor: isSelected ? rpeColor : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'),
+                                                        borderWidth: 1.5,
+                                                        borderColor: isSelected ? rpeColor : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'),
+                                                        alignItems: 'center', justifyContent: 'center',
+                                                      }}
+                                                    >
+                                                      <Text style={{ fontSize: 13, fontWeight: '800', color: isSelected ? '#fff' : (isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.25)') }}>{n}</Text>
+                                                    </TouchableOpacity>
+                                                  );
+                                                })}
                                               </View>
-                  
-                                              <TouchableOpacity onPress={() => setIntensity(Math.min(10, intensity + 1))} style={styles.intensityStep}>
-                                                <Text style={{ fontSize: 28, color: colors.textMuted, fontWeight: '300' }}>+</Text>
-                                              </TouchableOpacity>
+                                              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <Text style={{ fontSize: 10, color: '#22C55E', fontWeight: '700' }}>FACILE</Text>
+                                                <View style={{ alignItems: 'center' }}>
+                                                  <Text style={{ fontSize: 22, fontWeight: '900', color: intensity <= 3 ? '#22C55E' : intensity <= 5 ? '#84CC16' : intensity <= 7 ? '#F59E0B' : intensity <= 8 ? '#F97316' : '#EF4444' }}>{intensity}</Text>
+                                                  <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', marginTop: -2 }}>
+                                                    {intensity <= 3 ? 'Facile' : intensity <= 5 ? 'Modéré' : intensity <= 7 ? 'Difficile' : intensity <= 8 ? 'Très difficile' : 'Maximal'}
+                                                  </Text>
+                                                </View>
+                                                <Text style={{ fontSize: 10, color: '#EF4444', fontWeight: '700' }}>MAXIMAL</Text>
+                                              </View>
                                             </View>
                                           </View>
                   
@@ -3646,7 +4590,7 @@ export default function AddTrainingScreen() {
                                       </>
                                     )}
         {/* SÉLECTEUR SPORT PRINCIPAL POUR OBJECTIF ANNUEL */}
-        {currentStep === 4 && selectedSports.length > 1 && (
+        {currentStep === (isCombatSport ? 6 : 4) && selectedSports.length > 1 && (
           <View
             ref={sportSelectorRef}
             style={{
@@ -3732,7 +4676,7 @@ export default function AddTrainingScreen() {
             </TouchableOpacity>
 
             {/* Suivant / Enregistrer — inversé : toujours contrasté dans tous les thèmes */}
-            {currentStep < 4 ? (
+            {currentStep < totalSteps ? (
               <TouchableOpacity
                 style={{
                   flex: 2, paddingVertical: 16, borderRadius: 16,
@@ -3917,7 +4861,7 @@ export default function AddTrainingScreen() {
                                   onPress={() => {
                                     setShowValidationModal(false);
                                     setCardBackgroundImage(null);
-                                    router.replace('/(tabs)');
+                                    setTimeout(() => router.back(), 350);
                                   }}
                                 >
                                   <Text style={{ color: colors.textMuted, fontWeight: '700', fontSize: 14 }}>PASSER</Text>
@@ -4161,7 +5105,7 @@ export default function AddTrainingScreen() {
             </View>
 
             <Text style={{ fontSize: 22, fontWeight: '900', color: colors.textPrimary, marginBottom: 12, textAlign: 'center' }}>
-              Hello {userGender === 'female' ? 'Championne' : 'Champion'} {userName} ! 👋
+              Hello {userGender === 'female' ? 'Championne' : 'Champion'} {userName} !
             </Text>
 
             <Text style={{ fontSize: 15, color: colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 24 }}>
@@ -4198,7 +5142,7 @@ export default function AddTrainingScreen() {
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Star fill={colors.textOnGold} color={colors.textOnGold} size={20} />
-                <Text style={{ color: colors.textOnGold, fontWeight: '800', fontSize: 18 }}>Donner de la force (5★)</Text>
+                <Text style={{ color: colors.textOnGold, fontWeight: '800', fontSize: 18 }}>Donner de la force</Text>
               </View>
             </TouchableOpacity>
 
@@ -4531,8 +5475,8 @@ const createStyles = (IS_SMALL_SCREEN: boolean) => StyleSheet.create({
     fontSize: FONT_SIZE.xs,
   },
   categoryLabel: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },

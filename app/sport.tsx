@@ -17,7 +17,7 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Check, X, Plus, Clock } from 'lucide-react-native';
+import { Check, X, Plus, Clock, Moon } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { useRouter } from 'expo-router';
@@ -200,7 +200,7 @@ export default function SportScreen() {
     
     // Si c'est un jour de repos
     if (dayRoutine.length === 1 && dayRoutine[0]?.activity === 'REPOS') {
-      return { type: 'rest', label: '💤 Repos' };
+      return { type: 'rest', label: 'Repos' };
     }
     
     // Prendre la première activité
@@ -520,7 +520,7 @@ export default function SportScreen() {
                       </View>
                     ) : isRest ? (
                       <View style={styles.restDayContainer}>
-                        <Text style={styles.restDayEmoji}>💤</Text>
+                        <Moon size={18} color="#6366F1" />
                         <Text style={styles.restDayText}>Repos</Text>
                       </View>
                     ) : (
@@ -584,7 +584,10 @@ export default function SportScreen() {
                       if (block.activity === 'REPOS') {
                         return (
                           <View key={index} style={styles.restBlock}>
-                            <Text style={styles.restText}>💤 Repos</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                              <Moon size={14} color="#6366F1" />
+                              <Text style={styles.restText}>Repos</Text>
+                            </View>
                             <TouchableOpacity onPress={() => {
                               const newRoutine = { ...routine };
                               delete newRoutine[editingDay];

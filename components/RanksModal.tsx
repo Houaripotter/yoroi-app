@@ -97,7 +97,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({
           {/* Header avec décoration japonaise */}
           <View style={styles.header}>
             <View style={styles.headerDecor}>
-              <Text style={styles.toriiLeft}>⛩️</Text>
+              <Sword size={22} color={colors.textMuted} style={{ transform: [{ rotate: '-45deg' }] }} />
               <View>
                 <Text style={[styles.title, { color: colors.textPrimary }]}>
                   Rangs Samouraï
@@ -106,7 +106,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({
                   武士道 - La Voie du Guerrier
                 </Text>
               </View>
-              <Text style={styles.toriiRight}>⛩️</Text>
+              <Sword size={22} color={colors.textMuted} style={{ transform: [{ rotate: '45deg' }] }} />
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <X size={24} color={colors.textMuted} />

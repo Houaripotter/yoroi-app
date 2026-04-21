@@ -1,10 +1,16 @@
 # Dependencies (EAS runs npm install on the server)
 node_modules
 
+# Build artifacts
+*.aab
+*.apk
+*.ipa
+
 # Build caches
 android/app/build
 android/app/.cxx
 android/build
+android/wear/build
 android/.gradle
 android/.idea
 ios/build

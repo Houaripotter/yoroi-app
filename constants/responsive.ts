@@ -4,6 +4,7 @@
 
 import { Dimensions, Platform, PixelRatio } from 'react-native';
 import { useWindowDimensions } from 'react-native';
+import { getCurrentFontScale } from '@/lib/fontScaleManager';
 
 // ===================================================
 // DÉTECTION DU TYPE D'APPAREIL (statique, fiable)
@@ -182,26 +183,44 @@ export function useResponsive() {
   const pad = isIPad();
   const isLandscape = width > height;
 
-  // Scale horizontal dynamique
+  // Facteur de compacité : en mode S (fontScale < 1), les paddings/marges/tailles
+  // rétrécissent aussi pour donner un rendu plus dense. En mode M/L/XL, pas d'effet.
+  const fontScale = getCurrentFontScale();
+  const compactFactor = fontScale < 1.0 ? fontScale : 1.0;
+
+  // Scale horizontal + compacité (réduit légèrement les marges en mode S)
   const s = (size: number): number => {
-    const factor = pad
+    const deviceFactor = pad
       ? clamp(width / REF_WIDTH, 1.0, 2.0)
       : clamp(width / REF_WIDTH, 0.82, 1.18);
-    return Math.round(size * factor);
+    return Math.round(size * deviceFactor * compactFactor);
   };
 
-  // Scale vertical dynamique
+  // Scale vertical + compacité (les hauteurs de cartes diminuent en mode S)
   const sv = (size: number): number => {
-    const factor = pad
+    const deviceFactor = pad
       ? clamp(height / REF_HEIGHT, 1.0, 2.0)
       : clamp(height / REF_HEIGHT, 0.82, 1.18);
-    return Math.round(size * factor);
+    return Math.round(size * deviceFactor * compactFactor);
   };
 
-  // Font size dynamique
+  // Font size dynamique (device-only — le patch jsx-runtime gère S/M/L/XL)
   const fs = (size: number): number => {
-    const scaled = s(size);
+    const deviceFactor = pad
+      ? clamp(width / REF_WIDTH, 1.0, 2.0)
+      : clamp(width / REF_WIDTH, 0.82, 1.18);
+    const scaled = Math.round(size * deviceFactor);
     return Math.round(size + (scaled - size) * 0.4);
+  };
+
+  // Scale UI incluant la préférence de taille de l'utilisateur (S/M/L/XL)
+  // Utilisé pour les icônes, boutons, éléments qui doivent suivre la taille choisie.
+  // NE PAS utiliser pour fontSize (la jsx-runtime patch le gère déjà).
+  const ui = (size: number): number => {
+    const deviceFactor = pad
+      ? clamp(width / REF_WIDTH, 1.0, 2.0)
+      : clamp(width / REF_WIDTH, 0.82, 1.18);
+    return Math.round(size * deviceFactor * fontScale);
   };
 
   // Nombre de colonnes selon l'écran
@@ -231,6 +250,9 @@ export function useResponsive() {
     s,
     sv,
     fs,
+    ui,
+    fontScale,
+    isCompact: fontScale < 1.0,
     cols,
     colWidth,
     maxWidth,

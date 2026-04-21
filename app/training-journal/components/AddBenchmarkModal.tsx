@@ -30,7 +30,7 @@ import {
   BenchmarkUnit,
   BENCHMARK_CATEGORIES,
 } from '@/lib/carnetService';
-import { renderIcon } from '../utils/iconMap';
+import { renderIcon } from '@/lib/training-journal/utils/iconMap';
 
 interface AddBenchmarkModalProps {
   visible: boolean;

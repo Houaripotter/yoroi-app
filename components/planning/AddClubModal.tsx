@@ -37,6 +37,21 @@ import { SPORTS, getSportIcon } from '@/lib/sports';
 import { addClub, updateClub, Club } from '@/lib/database';
 import { setGoal, getGoalBySport } from '@/lib/trainingGoalsService';
 import { logger } from '@/lib/security/logger';
+import * as FileSystem from 'expo-file-system/legacy';
+
+// Copie une image dans le dossier permanent de l'app pour qu'elle survive aux sauvegardes
+const saveImagePermanently = async (tempUri: string): Promise<string> => {
+  try {
+    const ext = tempUri.split('.').pop()?.split('?')[0] ?? 'jpg';
+    const fileName = `club_logo_${Date.now()}.${ext}`;
+    const destUri = `${FileSystem.documentDirectory}${fileName}`;
+    await FileSystem.copyAsync({ from: tempUri, to: destUri });
+    return destUri;
+  } catch (e) {
+    logger.warn('saveImagePermanently club logo:', e);
+    return tempUri; // fallback : URI temporaire
+  }
+};
 
 // ============================================
 // TYPES
@@ -263,7 +278,8 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
       }
 
       if (!result.canceled && result.assets[0]) {
-        setLogoUri(result.assets[0].uri);
+        const permanentUri = await saveImagePermanently(result.assets[0].uri);
+        setLogoUri(permanentUri);
       }
     } catch (error) {
       logger.error('Erreur image:', error);

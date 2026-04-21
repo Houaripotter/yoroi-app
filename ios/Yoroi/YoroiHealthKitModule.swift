@@ -631,8 +631,8 @@ class YoroiHealthKitModule: NSObject {
       if let wristTempType = HKObjectType.quantityType(forIdentifier: .appleSleepingWristTemperature) {
         readTypes.insert(wristTempType)
       }
-      // Cadence de course (pas/min) — iOS 16+
-      if let runCadType = HKObjectType.quantityType(forIdentifier: .runningCadence) {
+      // Cadence de course (pas/min) — identifiant string pour compatibilité SDK
+      if let runCadType = HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier(rawValue: "HKQuantityTypeIdentifierRunningCadence")) {
         readTypes.insert(runCadType)
       }
     }
@@ -789,7 +789,7 @@ class YoroiHealthKitModule: NSObject {
 
       // 1. Clé metadata directe (watchOS 10 / iOS 17+)
       if #available(iOS 17.0, *) {
-        if let num = workout.metadata?[HKMetadataKeyWorkoutEffortScore] as? NSNumber {
+        if let num = workout.metadata?["HKMetadataKeyWorkoutEffortScore"] as? NSNumber {
           let v = num.intValue
           if v >= 1 && v <= 10 { resolve(v); return }
         }

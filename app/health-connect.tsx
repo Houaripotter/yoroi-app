@@ -276,9 +276,15 @@ export default function HealthConnectScreen() {
               <Text style={[styles.providerName, { color: colors.textPrimary }]}>
                 {providerName}
               </Text>
-              <Text style={[styles.providerStatus, { color: isConnected ? '#10B981' : colors.textMuted }]}>
-                {isConnected ? '● Connecté' : '○ Non connecté'}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <View style={{
+                  width: 8, height: 8, borderRadius: 4,
+                  backgroundColor: isConnected ? '#10B981' : colors.textMuted,
+                }} />
+                <Text style={[styles.providerStatus, { color: isConnected ? '#10B981' : colors.textMuted }]}>
+                  {isConnected ? 'Connecté' : 'Non connecté'}
+                </Text>
+              </View>
             </View>
             {isConnected && (
               <TouchableOpacity 

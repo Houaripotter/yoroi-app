@@ -13,7 +13,8 @@ import {
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { X, AlertTriangle, CheckCircle, Activity } from 'lucide-react-native';
+import { X, AlertTriangle, CheckCircle, Activity, FileText } from 'lucide-react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getUserBodyStatus, saveUserBodyStatus } from '@/lib/storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
@@ -36,15 +37,15 @@ interface BodyStatusData {
   [key: string]: BodyZoneData;
 }
 
-const BODY_ZONES: Array<{ key: BodyZone; icon: string }> = [
-  { key: 'neck', icon: '🫁' },
-  { key: 'shoulders', icon: '' },
-  { key: 'back', icon: '🦴' },
-  { key: 'elbows', icon: '🦾' },
-  { key: 'wrists', icon: '✋' },
-  { key: 'hips', icon: '🦵' },
-  { key: 'knees', icon: '🦵' },
-  { key: 'ankles', icon: '🦶' },
+const BODY_ZONES: Array<{ key: BodyZone; mciIcon: string }> = [
+  { key: 'neck', mciIcon: 'account-outline' },
+  { key: 'shoulders', mciIcon: 'arm-flex-outline' },
+  { key: 'back', mciIcon: 'human-handsdown' },
+  { key: 'elbows', mciIcon: 'arm-flex' },
+  { key: 'wrists', mciIcon: 'hand-wave-outline' },
+  { key: 'hips', mciIcon: 'human-male' },
+  { key: 'knees', mciIcon: 'run' },
+  { key: 'ankles', mciIcon: 'shoe-print' },
 ];
 
 export default function BodyStatusScreen() {
@@ -222,7 +223,7 @@ export default function BodyStatusScreen() {
                 activeOpacity={0.7}
               >
                 <View style={[styles.zoneIconContainer, { backgroundColor: statusColor + '20' }]}>
-                  <Text style={styles.zoneIcon}>{zone.icon}</Text>
+                  <MaterialCommunityIcons name={zone.mciIcon as any} size={22} color={statusColor} />
                 </View>
                 <Text style={[styles.zoneLabel, { color: colors.textPrimary }]}>{getZoneLabel(zone.key)}</Text>
                 {zoneStatus ? (
@@ -237,9 +238,12 @@ export default function BodyStatusScreen() {
                       <Text style={styles.zonePainText}>{t('screens.bodyStatus.painLevel')}: {zoneStatus.pain}/10</Text>
                     )}
                     {zoneStatus.note && (
-                      <Text style={[styles.zoneNoteText, { color: colors.textSecondary }]} numberOfLines={1}>
-                        📝 {zoneStatus.note}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <FileText size={12} color={colors.textSecondary} />
+                        <Text style={[styles.zoneNoteText, { color: colors.textSecondary }]} numberOfLines={1}>
+                          {zoneStatus.note}
+                        </Text>
+                      </View>
                     )}
                   </View>
                 ) : (

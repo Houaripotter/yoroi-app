@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Footprints } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { BarChart, BarData } from './BarChart';
 
@@ -77,7 +78,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <View style={styles.statHeader}>
-            <Text style={styles.statIcon}>👣</Text>
+            <Footprints size={16} color={colors.textMuted} />
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>
               Pas
             </Text>
