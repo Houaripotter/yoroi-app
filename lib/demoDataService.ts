@@ -243,13 +243,19 @@ function buildDemoRounds(sessionType: 'sparring' | 'open_mat' | 'cours', dateStr
   for (let i = 1; i <= count; i++) {
     const partner = pool[i % pool.length];
 
-    // Résultat selon skill : plus skill élevé, plus de chances de perdre
-    const skillDiff = partner.skill - 7; // Heny ~ niveau 7 (ceinture bleue)
-    const winChance = Math.max(0.1, Math.min(0.8, 0.5 - skillDiff * 0.1));
-    const drawChance = 0.15;
-    const r = Math.random();
-    const result: 'win' | 'loss' | 'draw' =
-      r < winChance ? 'win' : r < winChance + drawChance ? 'draw' : 'loss';
+    // Résultat selon skill : plus skill élevé, plus de chances de perdre.
+    // RESPECT CEINTURES NOIRES : contre un prof noir, on ne gagne JAMAIS (loss ou draw uniquement).
+    let result: 'win' | 'loss' | 'draw';
+    if (partner.belt === 'noire') {
+      // 80% loss, 20% draw — jamais de win contre un prof ceinture noire
+      result = Math.random() < 0.8 ? 'loss' : 'draw';
+    } else {
+      const skillDiff = partner.skill - 7; // Heny ~ niveau 7 (ceinture bleue)
+      const winChance = Math.max(0.1, Math.min(0.8, 0.5 - skillDiff * 0.1));
+      const drawChance = 0.15;
+      const r = Math.random();
+      result = r < winChance ? 'win' : r < winChance + drawChance ? 'draw' : 'loss';
+    }
 
     // Techniques utilisées dans ce round (1-4)
     const usedTechs = [...JJB_TECHNIQUES]
@@ -259,13 +265,17 @@ function buildDemoRounds(sessionType: 'sparring' | 'open_mat' | 'cours', dateStr
 
     const methodsGiven: string[] = [];
     const methodsTaken: string[] = [];
-    if (result === 'win') {
+    if (partner.belt === 'noire') {
+      // Contre un prof noir : AUCUNE soumission donnée, 1-3 soumissions subies
+      const nbSubs = result === 'loss' ? randInt(1, 3) : randInt(0, 1);
+      for (let j = 0; j < nbSubs; j++) methodsTaken.push(pick(SUBMISSIONS));
+    } else if (result === 'win') {
       // Gagné : 1-2 soumissions données
       methodsGiven.push(pick(SUBMISSIONS));
       if (Math.random() > 0.7) methodsGiven.push(pick(SUBMISSIONS));
     } else if (result === 'loss') {
-      // Perdu : 1-2 soumissions subies (plus si prof)
-      const nbSubs = partner.belt === 'noire' ? randInt(1, 3) : randInt(1, 2);
+      // Perdu : 1-2 soumissions subies
+      const nbSubs = randInt(1, 2);
       for (let j = 0; j < nbSubs; j++) methodsTaken.push(pick(SUBMISSIONS));
     } else {
       // Nul : parfois 1 soum des deux côtés
