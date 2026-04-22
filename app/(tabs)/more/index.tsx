@@ -671,6 +671,7 @@ export default function MoreScreen() {
         style={styles.scrollView}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
         showsVerticalScrollIndicator={false}
+        stickyHeaderIndices={[1]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -709,23 +710,25 @@ export default function MoreScreen() {
           </View>
         </View>
 
-        {/* SEARCH BAR */}
-        <View style={[styles.searchBar, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-          <Search size={18} color={colors.textMuted} />
-          <TextInput
-            style={[styles.searchInput, { color: colors.textPrimary }]}
-            placeholder="Rechercher un outil..."
-            placeholderTextColor={colors.textMuted}
-            value={searchText}
-            onChangeText={setSearchText}
-            autoCorrect={false}
-            returnKeyType="search"
-          />
-          {searchText.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchText('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <X size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
+        {/* SEARCH BAR — sticky en haut du scroll, masque le contenu derriere via screenBackground */}
+        <View style={{ marginHorizontal: -20, paddingHorizontal: 20, paddingBottom: 8, backgroundColor: screenBackground }}>
+          <View style={[styles.searchBar, { backgroundColor: colors.backgroundCard, borderColor: colors.border, marginBottom: 0 }]}>
+            <Search size={18} color={colors.textMuted} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.textPrimary }]}
+              placeholder="Rechercher un outil..."
+              placeholderTextColor={colors.textMuted}
+              value={searchText}
+              onChangeText={setSearchText}
+              autoCorrect={false}
+              returnKeyType="search"
+            />
+            {searchText.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchText('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <X size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* INFO CARD (theme-safe : utilise les couleurs du thème courant) */}
