@@ -50,7 +50,7 @@ class YoroiCloudModule(private val reactContext: ReactApplicationContext)
 
     @ReactMethod
     fun pickFolder(promise: Promise) {
-        val activity = currentActivity
+        val activity = reactContext.currentActivity
         if (activity == null) {
             promise.reject("NO_ACTIVITY", "Aucune activité disponible")
             return
@@ -68,7 +68,7 @@ class YoroiCloudModule(private val reactContext: ReactApplicationContext)
         activity.startActivityForResult(intent, PICK_FOLDER_REQUEST)
     }
 
-    override fun onActivityResult(activity: Activity?, requestCode: Int, resultCode: Int, data: Intent?) {
+    override fun onActivityResult(activity: Activity, requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode != PICK_FOLDER_REQUEST) return
         val promise = pendingPromise ?: return
         pendingPromise = null
@@ -107,7 +107,7 @@ class YoroiCloudModule(private val reactContext: ReactApplicationContext)
         promise.resolve(result)
     }
 
-    override fun onNewIntent(intent: Intent?) {}
+    override fun onNewIntent(intent: Intent) {}
 
     // ──────────────────────────────────────────
     // 2. Récupérer le dossier sauvegardé
