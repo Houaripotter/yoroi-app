@@ -2841,6 +2841,37 @@ export default function PlanningScreen() {
         </View>
       </Modal>
 
+      {/* FAB ajouter une séance — visible uniquement sur Calendar et Seances */}
+      {(viewMode === 'calendar' || viewMode === 'seances') && (
+        <TouchableOpacity
+          onPress={() => {
+            impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+            router.push('/add-training' as any);
+          }}
+          activeOpacity={0.85}
+          style={{
+            position: 'absolute',
+            bottom: insets.bottom + 100,
+            right: 18,
+            width: 58, height: 58,
+            borderRadius: 29,
+            backgroundColor: colors.accent,
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: colors.accent,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.4,
+            shadowRadius: 14,
+            elevation: 8,
+            zIndex: 999,
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Ajouter une séance"
+        >
+          <Plus size={28} color="#FFFFFF" strokeWidth={2.8} />
+        </TouchableOpacity>
+      )}
+
       <PopupComponent />
 
 
