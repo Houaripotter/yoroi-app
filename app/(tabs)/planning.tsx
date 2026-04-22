@@ -119,7 +119,7 @@ const FAVORITE_SPORTS_KEY = '@yoroi_favorite_sports';
 
 export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, isDark, screenBackground, themeColor, themeColors } = useTheme();
+  const { colors, isDark, screenBackground, screenText, screenTextMuted, themeColor, themeColors } = useTheme();
   const { t, locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
@@ -998,12 +998,24 @@ export default function PlanningScreen() {
     setShowRatingPopup(false);
   };
 
+  // Compteur de competitions à venir (pour le badge sur l'onglet)
+  const upcomingCompetitionsCount = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return competitions.filter(c => {
+      try {
+        const d = new Date(c.date);
+        return d >= today;
+      } catch { return false; }
+    }).length;
+  }, [competitions]);
+
   // Gérer le clic sur un onglet
-  const tabs: { key: ViewMode; label: string; sublabel?: string; icon: any; color: string; description: string }[] = [
+  const tabs: { key: ViewMode; label: string; sublabel?: string; icon: any; color: string; description: string; badge?: number }[] = [
     { key: 'calendar', label: t('planning.calendar'), icon: Calendar, color: colors.accent, description: t('planning.calendarDescription') },
     { key: 'seances', label: t('planning.seances'), icon: Activity, color: '#F97316', description: t('planning.seancesDescription') },
     { key: 'clubs', label: t('planning.clubs'), icon: Dumbbell, color: '#10B981', description: t('planning.clubsDescription') },
-    { key: 'competitions', label: t('planning.events'), icon: Trophy, color: '#F59E0B', description: t('planning.eventsDescription') },
+    { key: 'competitions', label: t('planning.events'), icon: Trophy, color: '#F59E0B', description: t('planning.eventsDescription'), badge: upcomingCompetitionsCount },
   ];
 
   const handleTabPress = (tab: ViewMode, index: number) => {
@@ -1093,6 +1105,11 @@ export default function PlanningScreen() {
           {tabs.map((tab, index) => {
             const Icon = tab.icon;
             const isActive = viewMode === tab.key;
+            // Theme-safe : sur fond accent (light), texte blanc ; sur fond sombre, screenText
+            const inactiveTextColor = screenText;
+            const inactiveTextOpacity = 0.65;
+            const inactiveCircleBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.18)';
+            const inactiveCircleBorder = isDark ? (colors.companion + '40') : 'rgba(255,255,255,0.3)';
             return (
               <TouchableOpacity
                 key={tab.key}
@@ -1105,20 +1122,40 @@ export default function PlanningScreen() {
                   {
                     backgroundColor: isActive
                       ? (isDark ? colors.accent : '#FFFFFF')
-                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)'),
+                      : inactiveCircleBg,
                     borderWidth: isActive ? 0 : 1,
-                    borderColor: isActive ? 'transparent' : (isDark ? (colors.companion + '40') : 'rgba(255,255,255,0.3)'),
+                    borderColor: isActive ? 'transparent' : inactiveCircleBorder,
                   },
                 ]}>
                   <Icon
                     size={18}
-                    color={isActive ? (isDark ? colors.textOnAccent : colors.accent) : (isDark ? colors.textMuted : 'rgba(255,255,255,0.7)')}
+                    color={isActive ? (isDark ? colors.textOnAccent : colors.accent) : inactiveTextColor}
                     strokeWidth={2.5}
+                    style={{ opacity: isActive ? 1 : inactiveTextOpacity }}
                   />
+                  {/* Badge compteur (uniquement competitions à venir) */}
+                  {tab.badge && tab.badge > 0 ? (
+                    <View style={{
+                      position: 'absolute', top: -3, right: -3,
+                      minWidth: 18, height: 18, borderRadius: 9,
+                      backgroundColor: '#EF4444',
+                      borderWidth: 1.5,
+                      borderColor: screenBackground,
+                      alignItems: 'center', justifyContent: 'center',
+                      paddingHorizontal: 4,
+                    }}>
+                      <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '900' }}>
+                        {tab.badge > 9 ? '9+' : tab.badge}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
                 <Text style={[
                   styles.tabTitle,
-                  { color: isActive ? (isDark ? colors.accent : '#FFFFFF') : (isDark ? colors.textMuted : 'rgba(255,255,255,0.7)') }
+                  {
+                    color: isActive ? (isDark ? colors.accent : '#FFFFFF') : inactiveTextColor,
+                    opacity: isActive ? 1 : inactiveTextOpacity,
+                  }
                 ]}>
                   {tab.label}
                 </Text>
@@ -1127,24 +1164,24 @@ export default function PlanningScreen() {
           })}
         </ScrollView>
 
-          {/* Trash icon - small, white */}
+          {/* Trash icon - small, theme-safe */}
           <TouchableOpacity
             style={[styles.trashIconButton, {
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              borderColor: 'rgba(255,255,255,0.4)',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.2)',
+              borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)',
               borderWidth: 1,
             }]}
             onPress={() => showPopup(t('planning.trash'), t('planning.trashDescription'), [{ text: t('planning.ok'), style: 'primary' }])}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Trash2 size={16} color="#FFFFFF" strokeWidth={2.5} />
+            <Trash2 size={16} color={screenText} strokeWidth={2.5} />
           </TouchableOpacity>
 
         {/* Description de la page active (masquée pour events car header card) */}
         {viewMode !== 'competitions' && (
           <View style={styles.descriptionContainer}>
-            <Text style={[styles.pageDescription, { color: isDark ? colors.textSecondary : 'rgba(255,255,255,0.8)' }]}>
+            <Text style={[styles.pageDescription, { color: screenText, opacity: 0.8 }]}>
               {tabs.find(t => t.key === viewMode)?.description || ''}
             </Text>
           </View>
