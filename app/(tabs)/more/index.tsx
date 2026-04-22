@@ -213,7 +213,22 @@ for (const section of TOOL_SECTIONS) {
 
 const FAVORITES_KEY = '@yoroi_tool_favorites';
 const RECENTS_KEY = '@yoroi_tool_recents';
+const COLLAPSED_SECTIONS_KEY = '@yoroi_tool_collapsed_sections';
 const RECENTS_MAX = 6;
+
+// IDs d'outils ajoutés récemment (badge NEW affiché à droite)
+const NEW_TOOL_IDS = new Set<string>([
+  'game-plan',
+  'sync-history',
+  'rounds-insights',
+  'combat-analytics',
+  'match-tracker',
+  'mat-time',
+  'combat-achievements',
+  'sparring-ranking',
+  'competition-camp',
+  'benchmark',
+]);
 
 // IDs d'outils nécessitant Premium (badge PRO affiché à droite)
 const PREMIUM_TOOL_IDS = new Set<string>([
@@ -265,6 +280,9 @@ export default function MoreScreen() {
   // Premium status — pour décider d'afficher le badge PRO
   const [isPremium, setIsPremium] = useState<boolean>(false);
 
+  // Sections repliées (set des titres de section actuellement collapsées)
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+
   // Creator mode / secret code states
   const [versionTapCount, setVersionTapCount] = useState(0);
   const [lastTapTime, setLastTapTime] = useState(0);
@@ -297,6 +315,10 @@ export default function MoreScreen() {
       if (recentsRaw) {
         try { setRecents(JSON.parse(recentsRaw)); } catch {}
       }
+      const collapsedRaw = await AsyncStorage.getItem(COLLAPSED_SECTIONS_KEY);
+      if (collapsedRaw) {
+        try { setCollapsedSections(new Set(JSON.parse(collapsedRaw))); } catch {}
+      }
       const premium = await AsyncStorage.getItem('@yoroi_is_premium');
       setIsPremium(premium === 'true');
       const infoDismissed = await AsyncStorage.getItem('@yoroi_tool_info_dismissed');
@@ -318,6 +340,33 @@ export default function MoreScreen() {
       return next;
     });
   }, []);
+
+  // Toggle d'une section collapsed/expanded
+  const toggleSection = useCallback((title: string) => {
+    setCollapsedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(title)) next.delete(title); else next.add(title);
+      AsyncStorage.setItem(COLLAPSED_SECTIONS_KEY, JSON.stringify([...next])).catch(() => {});
+      return next;
+    });
+    impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+  }, []);
+
+  const collapseAll = useCallback(() => {
+    const all = new Set(TOOL_SECTIONS.map(s => s.title));
+    setCollapsedSections(all);
+    AsyncStorage.setItem(COLLAPSED_SECTIONS_KEY, JSON.stringify([...all])).catch(() => {});
+    impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+  }, []);
+
+  const expandAll = useCallback(() => {
+    setCollapsedSections(new Set());
+    AsyncStorage.setItem(COLLAPSED_SECTIONS_KEY, JSON.stringify([])).catch(() => {});
+    impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+  }, []);
+
+  // Toutes plies ?
+  const allCollapsed = collapsedSections.size >= TOOL_SECTIONS.length;
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -563,6 +612,7 @@ export default function MoreScreen() {
     const IconComponent = item.Icon;
     const isFav = favorites.has(item.id);
     const isPremiumLocked = PREMIUM_TOOL_IDS.has(item.id) && !isPremium;
+    const isNew = NEW_TOOL_IDS.has(item.id);
 
     return (
       <TouchableOpacity
@@ -579,6 +629,11 @@ export default function MoreScreen() {
             <Text style={[styles.toolItemLabel, { color: colors.textPrimary }]} numberOfLines={1}>
               {item.label}
             </Text>
+            {isNew ? (
+              <View style={{ backgroundColor: '#10B981', paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 5 }}>
+                <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.4 }}>NEW</Text>
+              </View>
+            ) : null}
             {isPremiumLocked ? (
               <View style={{ backgroundColor: '#A855F7', paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 5 }}>
                 <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.4 }}>PRO</Text>
@@ -635,6 +690,22 @@ export default function MoreScreen() {
                 {totalToolsCount} outils · {favorites.size} en favoris
               </Text>
             </View>
+            {/* Bouton ? d'aide (rouvre la carte info) */}
+            <TouchableOpacity
+              onPress={() => { setShowInfoCard(true); AsyncStorage.removeItem('@yoroi_tool_info_dismissed'); }}
+              style={{ width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.1)' }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Info size={18} color={screenText} strokeWidth={2.2} />
+            </TouchableOpacity>
+            {/* Bouton tout replier / déplier */}
+            <TouchableOpacity
+              onPress={allCollapsed ? expandAll : collapseAll}
+              style={{ width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.1)' }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Layers size={18} color={screenText} strokeWidth={2.2} />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -657,18 +728,70 @@ export default function MoreScreen() {
           )}
         </View>
 
-        {/* INFO CARD */}
+        {/* INFO CARD (theme-safe : utilise les couleurs du thème courant) */}
         {showInfoCard && (
           <TouchableOpacity
-            style={[styles.infoCard, { backgroundColor: isDark ? '#1E293B' : '#F0F9FF', borderColor: isDark ? '#334155' : '#BAE6FD' }]}
+            style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.accent + '40' }]}
             onPress={dismissInfoCard}
             activeOpacity={0.8}
           >
-            <Info size={18} color={isDark ? '#38BDF8' : '#0284C7'} />
-            <Text style={[styles.infoCardText, { color: isDark ? '#94A3B8' : '#475569' }]}>
-              Appuie sur l'etoile d'un outil pour l'ajouter a tes favoris. Ils apparaitront ici en haut.
+            <Info size={18} color={colors.accent} />
+            <Text style={[styles.infoCardText, { color: colors.textSecondary }]}>
+              Touche l'étoile d'un outil pour l'épingler en favoris. Tes derniers outils ouverts apparaissent en "Récemment utilisés".
             </Text>
             <X size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
+
+        {/* UPSELL PREMIUM (uniquement si pas premium et pas de recherche en cours) */}
+        {!isPremium && !searchText && (
+          <TouchableOpacity
+            onPress={() => router.push('/premium' as any)}
+            activeOpacity={0.88}
+            style={{
+              marginBottom: 16,
+              borderRadius: 18,
+              padding: 16,
+              backgroundColor: colors.card,
+              borderWidth: 1.5,
+              borderColor: '#A855F7' + '60',
+              shadowColor: '#A855F7',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 12,
+              elevation: 4,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+              <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#A855F720', alignItems: 'center', justifyContent: 'center' }}>
+                <Star size={22} color="#A855F7" fill="#A855F7" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 15, fontWeight: '900', color: colors.textPrimary, letterSpacing: -0.2 }}>
+                  Yoroi Premium
+                </Text>
+                <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
+                  Débloque {PREMIUM_TOOL_IDS.size} outils PRO + widget + insights
+                </Text>
+              </View>
+              <ChevronRight size={18} color="#A855F7" />
+            </View>
+            {/* Preview des icônes locked */}
+            <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+              {Array.from(PREMIUM_TOOL_IDS).slice(0, 6).map(id => {
+                const item = ALL_ITEMS_MAP.get(id);
+                if (!item) return null;
+                const I = item.Icon;
+                return (
+                  <View key={id} style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: item.iconColor + '20', alignItems: 'center', justifyContent: 'center' }}>
+                    <I size={14} color={item.iconColor} strokeWidth={2.2} />
+                  </View>
+                );
+              })}
+              <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#A855F7' + '15', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 11, color: '#A855F7', fontWeight: '900' }}>+{PREMIUM_TOOL_IDS.size - 6}</Text>
+              </View>
+            </View>
           </TouchableOpacity>
         )}
 
@@ -714,20 +837,39 @@ export default function MoreScreen() {
           </View>
         )}
 
-        {/* SECTIONS */}
+        {/* SECTIONS — clickables pour collapse/expand (sauf si recherche en cours) */}
         {filteredSections.map((section) => {
           const sectionMeta = SECTION_ICONS[section.title];
           const SectionIcon = sectionMeta?.Icon;
           const sectionColor = sectionMeta?.color || screenTextMuted;
+          // Quand recherche active, on force expand pour voir les résultats
+          const isCollapsed = !searchText && collapsedSections.has(section.title);
+
           return (
             <View key={section.title} style={styles.sectionContainer}>
-              <View style={styles.sectionHeader}>
-                {SectionIcon ? <SectionIcon size={14} color={sectionColor} /> : null}
-                <Text style={[styles.sectionTitle, { color: SectionIcon ? sectionColor : screenTextMuted }]}>
-                  {section.title} · {section.items.length}
-                </Text>
-              </View>
-              {section.items.map(renderToolItem)}
+              <TouchableOpacity
+                onPress={() => !searchText && toggleSection(section.title)}
+                activeOpacity={searchText ? 1 : 0.6}
+                style={[styles.sectionHeader, { justifyContent: 'space-between', paddingVertical: 4 }]}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  {SectionIcon ? <SectionIcon size={14} color={sectionColor} /> : null}
+                  <Text style={[styles.sectionTitle, { color: SectionIcon ? sectionColor : screenTextMuted }]}>
+                    {section.title} · {section.items.length}
+                  </Text>
+                </View>
+                {!searchText ? (
+                  <ChevronRight
+                    size={16}
+                    color={sectionColor}
+                    style={{
+                      opacity: 0.6,
+                      transform: [{ rotate: isCollapsed ? '0deg' : '90deg' }],
+                    }}
+                  />
+                ) : null}
+              </TouchableOpacity>
+              {!isCollapsed && section.items.map(renderToolItem)}
             </View>
           );
         })}
