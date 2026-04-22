@@ -279,47 +279,166 @@ export default function BadgesScreen() {
   const keyExtractor = useCallback((item: typeof categoriesData[0]) => item.key, []);
 
   // Header component pour FlatList
-  const ListHeaderComponent = useMemo(() => (
-    <Card variant="gold" style={styles.statsCard}>
-      <LinearGradient
-        colors={['#F5F0E6', '#EDE5D8']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.statsGradient}
-      >
-        <View style={styles.statsMainContent}>
-          <View style={[styles.statsIconContainer, { backgroundColor: '#D4AF3720' }]}>
-            <Award size={48} color="#D4AF37" strokeWidth={2.5} />
-          </View>
-          <View style={styles.statsTextContent}>
-            <Text style={[styles.statsCount, { color: '#1A1A1A' }]}>
-              {unlockedCount}/{totalBadges}
-            </Text>
-            <Text style={[styles.statsLabel, { color: '#666666' }]}>
-              BADGES DÉBLOQUÉS
-            </Text>
-          </View>
-        </View>
+  const ListHeaderComponent = useMemo(() => {
+    // Plus proche du déblocage (badge avec progressPercent le + élevé mais pas encore unlocked)
+    const closest = allBadges
+      .filter(b => !b.isUnlocked && b.progressPercent > 0)
+      .sort((a, b) => b.progressPercent - a.progressPercent)[0];
+    // Dernier badge débloqué (basé sur l'ordre dans allBadges)
+    const lastUnlocked = allBadges.filter(b => b.isUnlocked).slice(-1)[0];
+    // Distribution par catégorie
+    const categoryStats = CATEGORIES.map(cat => ({
+      ...cat,
+      total: allBadges.filter(b => b.badge.category === cat.key).length,
+      unlocked: allBadges.filter(b => b.badge.category === cat.key && b.isUnlocked).length,
+    })).filter(c => c.total > 0);
 
-        <View style={styles.statsProgressSection}>
-          <View style={[styles.statsProgressBg, { backgroundColor: '#D4AF3730' }]}>
-            <View
-              style={[
-                styles.statsProgressFill,
-                {
-                  backgroundColor: '#D4AF37',
-                  width: `${(unlockedCount / totalBadges) * 100}%`,
-                },
-              ]}
-            />
+    return (
+      <>
+        <Card variant="gold" style={styles.statsCard}>
+          <LinearGradient
+            colors={['#F5F0E6', '#EDE5D8']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.statsGradient}
+          >
+            <View style={styles.statsMainContent}>
+              <View style={[styles.statsIconContainer, { backgroundColor: '#D4AF3720' }]}>
+                <Award size={48} color="#D4AF37" strokeWidth={2.5} />
+              </View>
+              <View style={styles.statsTextContent}>
+                <Text style={[styles.statsCount, { color: '#1A1A1A' }]}>
+                  {unlockedCount}/{totalBadges}
+                </Text>
+                <Text style={[styles.statsLabel, { color: '#666666' }]}>
+                  BADGES DÉBLOQUÉS
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.statsProgressSection}>
+              <View style={[styles.statsProgressBg, { backgroundColor: '#D4AF3730' }]}>
+                <View
+                  style={[
+                    styles.statsProgressFill,
+                    {
+                      backgroundColor: '#D4AF37',
+                      width: `${(unlockedCount / totalBadges) * 100}%`,
+                    },
+                  ]}
+                />
+              </View>
+              <Text style={[styles.statsProgressText, { color: '#8B7535' }]}>
+                {Math.round((unlockedCount / totalBadges) * 100)}% Collection complète
+              </Text>
+            </View>
+          </LinearGradient>
+        </Card>
+
+        {/* ── DASHBOARD DÉTAILLÉ ── */}
+        {totalBadges > 0 && (
+          <View style={{
+            backgroundColor: colors.backgroundCard,
+            borderRadius: 16, padding: 14, marginHorizontal: 16, marginTop: 8, marginBottom: 12,
+            borderWidth: 1, borderColor: colors.border,
+          }}>
+            {/* Distribution par catégorie */}
+            {categoryStats.length > 0 && (
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 11, fontWeight: '900', color: colors.textMuted, letterSpacing: 0.5, marginBottom: 10 }}>
+                  PAR CATÉGORIE
+                </Text>
+                <View style={{ gap: 8 }}>
+                  {categoryStats.map(cat => {
+                    const pct = cat.total > 0 ? (cat.unlocked / cat.total) * 100 : 0;
+                    const color = pct === 100 ? '#22C55E' : pct >= 50 ? '#F59E0B' : pct > 0 ? '#3B82F6' : '#94A3B8';
+                    return (
+                      <View key={cat.key}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                            <cat.IconComponent size={12} color={color} />
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textPrimary }} numberOfLines={1}>
+                              {cat.title}
+                            </Text>
+                          </View>
+                          <Text style={{ fontSize: 11, fontWeight: '900', color: color }}>
+                            {cat.unlocked}/{cat.total}
+                          </Text>
+                        </View>
+                        <View style={{ height: 5, borderRadius: 2.5, backgroundColor: colors.border, overflow: 'hidden' }}>
+                          <View style={{ width: `${pct}%`, height: '100%', backgroundColor: color, borderRadius: 2.5 }} />
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {/* Le plus proche du déblocage */}
+            {closest && (
+              <View style={{
+                backgroundColor: '#A855F715', borderRadius: 12, padding: 12, marginBottom: lastUnlocked ? 8 : 0,
+                flexDirection: 'row', alignItems: 'center', gap: 10,
+                borderLeftWidth: 3, borderLeftColor: '#A855F7',
+              }}>
+                <View style={{
+                  width: 40, height: 40, borderRadius: 10,
+                  backgroundColor: '#A855F725',
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {React.createElement(closest.badge.iconComponent, { size: 20, color: '#A855F7', strokeWidth: 2.2 })}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 9, fontWeight: '800', color: '#A855F7', letterSpacing: 0.4 }}>
+                    PLUS PROCHE DU DÉBLOCAGE
+                  </Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginTop: 1 }} numberOfLines={1}>
+                    {closest.badge.name}
+                  </Text>
+                  <View style={{ height: 4, borderRadius: 2, backgroundColor: '#A855F720', overflow: 'hidden', marginTop: 5 }}>
+                    <View style={{ width: `${closest.progressPercent}%`, height: '100%', backgroundColor: '#A855F7', borderRadius: 2 }} />
+                  </View>
+                </View>
+                <Text style={{ fontSize: 16, fontWeight: '900', color: '#A855F7', letterSpacing: -0.3 }}>
+                  {Math.round(closest.progressPercent)}%
+                </Text>
+              </View>
+            )}
+
+            {/* Dernier débloqué */}
+            {lastUnlocked && (
+              <View style={{
+                backgroundColor: '#22C55E15', borderRadius: 12, padding: 12,
+                flexDirection: 'row', alignItems: 'center', gap: 10,
+                borderLeftWidth: 3, borderLeftColor: '#22C55E',
+              }}>
+                <View style={{
+                  width: 40, height: 40, borderRadius: 10,
+                  backgroundColor: '#22C55E25',
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {React.createElement(lastUnlocked.badge.iconComponent, { size: 20, color: '#22C55E', strokeWidth: 2.2 })}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 9, fontWeight: '800', color: '#22C55E', letterSpacing: 0.4 }}>
+                    DERNIER DÉBLOQUÉ
+                  </Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginTop: 1 }} numberOfLines={1}>
+                    {lastUnlocked.badge.name}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2, fontStyle: 'italic' }} numberOfLines={2}>
+                    {lastUnlocked.badge.description}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 22 }}>🏆</Text>
+              </View>
+            )}
           </View>
-          <Text style={[styles.statsProgressText, { color: '#8B7535' }]}>
-            {Math.round((unlockedCount / totalBadges) * 100)}% Collection complète
-          </Text>
-        </View>
-      </LinearGradient>
-    </Card>
-  ), [unlockedCount, totalBadges]);
+        )}
+      </>
+    );
+  }, [unlockedCount, totalBadges, allBadges, colors]);
 
   return (
     <ScreenWrapper noPadding>
