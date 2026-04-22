@@ -158,15 +158,14 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
 ];
 
 // Creator mode items as standard rows
+// Note : les toggles "Chirurgien" et "Stats Mock" sont retires car jamais consommes dans l'app.
 const CREATOR_ITEMS: SettingsItem[] = [
-  { id: 'creator-screenshot', label: 'Mode Screenshot', sublabel: 'Desactive', Icon: Smartphone, iconColor: '#3B82F6', handler: 'toggle-screenshot' },
-  { id: 'creator-journal', label: 'Mode Carnet', sublabel: 'Desactive', Icon: BookOpen, iconColor: '#F97316', handler: 'toggle-journal' },
-  { id: 'creator-surgeon', label: 'Mode Chirurgien', sublabel: 'Desactive', Icon: Syringe, iconColor: '#EF4444', handler: 'toggle-surgeon' },
-  { id: 'creator-mock', label: 'Stats Mock', sublabel: 'Desactive', Icon: BarChart3, iconColor: '#8B5CF6', handler: 'toggle-mock' },
-  { id: 'creator-hery', label: 'Profil Demo Heny', sublabel: 'Injecter données realistes', Icon: Database, iconColor: '#10B981', handler: 'demo-hery' },
+  { id: 'creator-screenshot', label: 'Mode Screenshot', sublabel: 'Affiche les valeurs max pour captures App Store', Icon: Smartphone, iconColor: '#3B82F6', handler: 'toggle-screenshot' },
+  { id: 'creator-journal', label: 'Mode Carnet', sublabel: 'Remplace le carnet par des donnees demo', Icon: BookOpen, iconColor: '#F97316', handler: 'toggle-journal' },
+  { id: 'creator-hery', label: 'Profil Demo Heny', sublabel: 'Injecte un profil BJJ realiste (187 seances, 25 techniques…)', Icon: Database, iconColor: '#10B981', handler: 'demo-hery' },
   { id: 'creator-onboarding', label: 'Voir Onboarding', sublabel: 'Previsualiser l\'ecran d\'accueil', Icon: Eye, iconColor: '#06B6D4', handler: 'preview-onboarding' },
-  { id: 'creator-reset', label: 'Tout Desactiver', sublabel: 'Nettoyer les données de demo', Icon: Trash2, iconColor: '#EF4444', handler: 'reset-creator', labelColor: '#EF4444' },
-  { id: 'creator-purge', label: 'PURGE FORCEE', sublabel: 'Efface poids + séances (SQLite direct)', Icon: Trash2, iconColor: '#FF0000', handler: 'purge-data', labelColor: '#FF0000' },
+  { id: 'creator-reset', label: 'Tout Desactiver', sublabel: 'Nettoyer les donnees de demo', Icon: Trash2, iconColor: '#EF4444', handler: 'reset-creator', labelColor: '#EF4444' },
+  { id: 'creator-purge', label: 'PURGE FORCEE', sublabel: 'Efface poids + seances (SQLite direct)', Icon: Trash2, iconColor: '#FF0000', handler: 'purge-data', labelColor: '#FF0000' },
 ];
 
 // ============================================
@@ -176,12 +175,18 @@ const CREATOR_ITEMS: SettingsItem[] = [
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, isDark, screenBackground, fontSizeLevel, setFontSizeLevel } = useTheme();
+  const { colors, isDark, screenBackground, screenText, screenTextMuted, fontSizeLevel, setFontSizeLevel } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { language, setLanguage, t } = useI18n();
 
   // Search
   const [searchText, setSearchText] = useState('');
+
+  // Profil (pour la hero card en tête de page)
+  const [profileName, setProfileName] = useState<string>('');
+  const [profileBelt, setProfileBelt] = useState<string>('');
+  const [profileStreak, setProfileStreak] = useState<number>(0);
+  const [isPremium, setIsPremium] = useState<boolean>(false);
 
   // Reset modal
   const [resetModalVisible, setResetModalVisible] = useState(false);
@@ -215,6 +220,7 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     loadUnits();
+    loadProfileHeader();
     // Check if creator mode is unlocked
     AsyncStorage.getItem('@yoroi_screenshot_menu_unlocked').then(val => {
       if (val === 'true') {
@@ -224,7 +230,30 @@ export default function SettingsScreen() {
     });
     // Check if demo data is active
     isDemoDataActive().then(setIsDemoActive);
+    // Listener : recharge la hero card quand le profil change
+    const sub = DeviceEventEmitter.addListener('YOROI_PROFILE_CHANGED', loadProfileHeader);
+    return () => sub.remove();
   }, []);
+
+  const loadProfileHeader = async () => {
+    try {
+      const [settingsRaw, belt, streakRaw, premiumRaw] = await Promise.all([
+        AsyncStorage.getItem('@yoroi_user_settings'),
+        AsyncStorage.getItem('@yoroi_belt'),
+        AsyncStorage.getItem('@yoroi_current_streak'),
+        AsyncStorage.getItem('@yoroi_is_premium'),
+      ]);
+      if (settingsRaw) {
+        try {
+          const s = JSON.parse(settingsRaw);
+          setProfileName(s.username || '');
+        } catch {}
+      }
+      if (belt) setProfileBelt(belt);
+      if (streakRaw) setProfileStreak(parseInt(streakRaw, 10) || 0);
+      setIsPremium(premiumRaw === 'true');
+    } catch {}
+  };
 
   const loadCreatorSettings = async () => {
     try {
@@ -764,6 +793,9 @@ export default function SettingsScreen() {
     const IconComp = item.Icon;
     const translatedLabel = t(item.label);
     const translatedSublabel = t(item.sublabel);
+    // Badge "actif" pour certains items avec état
+    const showPremiumActive = item.id === 'premium' && isPremium;
+    const showDemoActive = item.id === 'creator-hery' && isDemoActive;
 
     return (
       <View key={item.id}>
@@ -776,9 +808,21 @@ export default function SettingsScreen() {
             <IconComp size={20} color={item.iconColor} strokeWidth={2} />
           </View>
           <View style={styles.rowContent}>
-            <Text style={[styles.rowLabel, { color: item.labelColor || colors.textPrimary }]} numberOfLines={1}>
-              {translatedLabel}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={[styles.rowLabel, { color: item.labelColor || colors.textPrimary }]} numberOfLines={1}>
+                {translatedLabel}
+              </Text>
+              {showPremiumActive ? (
+                <View style={{ backgroundColor: '#A855F7', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 }}>
+                  <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5 }}>ACTIF</Text>
+                </View>
+              ) : null}
+              {showDemoActive ? (
+                <View style={{ backgroundColor: '#10B981', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 }}>
+                  <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5 }}>ON</Text>
+                </View>
+              ) : null}
+            </View>
             {translatedSublabel ? (
               <Text style={[styles.rowSublabel, { color: colors.textMuted }]} numberOfLines={1}>
                 {translatedSublabel}
@@ -810,9 +854,53 @@ export default function SettingsScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Settings size={26} color="#FFFFFF" strokeWidth={2} />
-          <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>{t('settings.title')}</Text>
+          <Settings size={26} color={screenText} strokeWidth={2} />
+          <Text style={[styles.headerTitle, { color: screenText }]}>{t('settings.title')}</Text>
         </View>
+
+        {/* Hero profil — avatar + nom + ceinture + streak, clic → profile */}
+        {profileName ? (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push('/profile' as any)}
+            style={[styles.heroCard, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}
+          >
+            <View style={[styles.heroAvatar, { backgroundColor: colors.accent + '20', borderColor: colors.accent }]}>
+              <Text style={[styles.heroAvatarText, { color: colors.accent }]}>
+                {profileName.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.heroName, { color: colors.textPrimary }]} numberOfLines={1}>
+                {profileName}
+              </Text>
+              <View style={styles.heroMetaRow}>
+                {profileBelt ? (
+                  <View style={[styles.heroChip, { backgroundColor: colors.accent + '15', borderColor: colors.accent + '40' }]}>
+                    <Text style={[styles.heroChipText, { color: colors.accent }]}>
+                      Ceinture {profileBelt}
+                    </Text>
+                  </View>
+                ) : null}
+                {profileStreak > 0 ? (
+                  <View style={[styles.heroChip, { backgroundColor: '#F9731615', borderColor: '#F9731640' }]}>
+                    <Text style={[styles.heroChipText, { color: '#EA580C' }]}>
+                      🔥 {profileStreak} jours
+                    </Text>
+                  </View>
+                ) : null}
+                {isPremium ? (
+                  <View style={[styles.heroChip, { backgroundColor: '#A855F715', borderColor: '#A855F740' }]}>
+                    <Text style={[styles.heroChipText, { color: '#9333EA' }]}>
+                      PRO
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+            <ChevronRight size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+        ) : null}
 
         {/* Search Bar */}
         <View style={[styles.searchBar, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
@@ -830,7 +918,7 @@ export default function SettingsScreen() {
 
         {/* Language Selector */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: 'rgba(255,255,255,0.7)' }]}>{t('settings.language').toUpperCase()}</Text>
+          <Text style={[styles.sectionTitle, { color: screenText, opacity: 0.7 }]}>{t('settings.language').toUpperCase()}</Text>
           <View style={[styles.card, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
             <View style={{ padding: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 10 }}>
@@ -894,7 +982,7 @@ export default function SettingsScreen() {
         {/* Sections */}
         {filteredSections.map((section) => (
           <View key={section.title} style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: 'rgba(255,255,255,0.7)' }]}>{t(section.title)}</Text>
+            <Text style={[styles.sectionTitle, { color: screenText, opacity: 0.7 }]}>{t(section.title)}</Text>
             <View style={[styles.card, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
               {section.items.map((item, idx) =>
                 renderItem(item, idx === section.items.length - 1)
@@ -961,7 +1049,7 @@ export default function SettingsScreen() {
         {/* Creator Mode - standard rows, visible only when unlocked */}
         {screenshotMenuUnlocked && filteredCreatorItems.length > 0 && (
           <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: 'rgba(255,255,255,0.7)' }]}>{t('settings.sections.creator')}</Text>
+            <Text style={[styles.sectionTitle, { color: screenText, opacity: 0.7 }]}>{t('settings.sections.creator')}</Text>
             <View style={[styles.card, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
               {filteredCreatorItems.map((item, idx) =>
                 renderItem(item, idx === filteredCreatorItems.length - 1)
@@ -970,9 +1058,12 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {/* Version */}
+        {/* Version + footer */}
         <TouchableOpacity onPress={handleVersionTap} activeOpacity={1} style={styles.versionContainer}>
-          <Text style={[styles.versionText, { color: 'rgba(255,255,255,0.5)' }]}>YOROI v2.3.2</Text>
+          <Text style={[styles.versionText, { color: screenText, opacity: 0.5 }]}>YOROI v2.3.3</Text>
+          <Text style={[styles.versionSubtext, { color: screenText, opacity: 0.4 }]}>
+            Made with ❤️ in Marseille · 100% offline
+          </Text>
         </TouchableOpacity>
 
         <View style={{ height: 120 }} />
@@ -1235,6 +1326,56 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
 
+  // Hero profil
+  heroCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 14,
+    borderRadius: 18,
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  heroAvatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroAvatarText: {
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  heroName: {
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    marginBottom: 6,
+  },
+  heroMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  heroChip: {
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  heroChipText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: -0.1,
+  },
+
   // Search Bar
   searchBar: {
     flexDirection: 'row',
@@ -1318,9 +1459,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
     marginBottom: 8,
+    gap: 4,
   },
   versionText: {
     fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  versionSubtext: {
+    fontSize: 11,
     fontWeight: '500',
   },
 
