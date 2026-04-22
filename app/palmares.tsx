@@ -20,6 +20,9 @@ import {
   Minus,
   Plus,
   Calendar,
+  Flame,
+  Target,
+  Award,
 } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
@@ -92,6 +95,61 @@ export default function PalmaresScreen() {
   const record = calculateRecord(combats);
   const totalFights = combats.length;
   const winRate = totalFights > 0 ? (record.victoires / totalFights) * 100 : 0;
+
+  // ── Streak actuel (depuis le combat le plus récent) ──
+  const sortedByDate = [...combats].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const currentStreak = (() => {
+    if (sortedByDate.length === 0) return null;
+    const first = sortedByDate[0].resultat;
+    if (first === 'nul') return null;
+    let count = 0;
+    for (const c of sortedByDate) {
+      if (c.resultat === first) count++;
+      else break;
+    }
+    return { type: first, count };
+  })();
+  const lastCombat = sortedByDate[0] || null;
+
+  // ── Top techniques de finition (sur victoires uniquement) ──
+  const topTechniques = (() => {
+    const freq: Record<string, number> = {};
+    for (const c of combats) {
+      if (c.resultat === 'victoire' && c.technique) {
+        freq[c.technique] = (freq[c.technique] || 0) + 1;
+      }
+    }
+    return Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  })();
+
+  // ── Méthodes de victoire (soumission/points/decision/ko/abandon) ──
+  const methodsBreakdown = (() => {
+    const labels: Record<string, string> = {
+      soumission: 'Soumission',
+      points: 'Points',
+      decision: 'Décision',
+      ko: 'KO',
+      tko: 'TKO',
+      abandon: 'Abandon',
+      forfait: 'Forfait',
+    };
+    const counts: Record<string, number> = {};
+    let totalWins = 0;
+    for (const c of combats) {
+      if (c.resultat === 'victoire' && c.methode) {
+        counts[c.methode] = (counts[c.methode] || 0) + 1;
+        totalWins++;
+      }
+    }
+    return Object.entries(counts)
+      .map(([key, count]) => ({
+        key,
+        label: labels[key] || key,
+        count,
+        pct: totalWins > 0 ? Math.round((count / totalWins) * 100) : 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+  })();
 
   return (
     <ScreenWrapper>
@@ -177,6 +235,140 @@ export default function PalmaresScreen() {
             </View>
           )}
         </View>
+
+        {/* ── STREAK + DERNIER COMBAT ── */}
+        {totalFights > 0 && (
+          <View style={{
+            backgroundColor: colors.backgroundCard,
+            borderRadius: 16, padding: 14, marginHorizontal: 16, marginBottom: 12,
+            borderLeftWidth: 4,
+            borderLeftColor: currentStreak?.type === 'victoire' ? '#22C55E' : currentStreak?.type === 'defaite' ? '#EF4444' : colors.accent,
+          }}>
+            {currentStreak && currentStreak.count >= 2 && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <Text style={{ fontSize: 18 }}>{currentStreak.type === 'victoire' ? '🔥' : '⚠️'}</Text>
+                <Text style={{
+                  fontSize: 14, fontWeight: '900',
+                  color: currentStreak.type === 'victoire' ? '#22C55E' : '#EF4444',
+                  letterSpacing: -0.2,
+                }}>
+                  {currentStreak.count} {currentStreak.type === 'victoire' ? 'victoires' : 'défaites'} d'affilée
+                </Text>
+              </View>
+            )}
+            {lastCombat && (
+              <View>
+                <Text style={{ fontSize: 9, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.4, marginBottom: 4 }}>
+                  DERNIER COMBAT
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }} numberOfLines={1}>
+                      {lastCombat.resultat === 'victoire' ? '✓' : lastCombat.resultat === 'defaite' ? '✗' : '='} {lastCombat.adversaire_nom || 'Adversaire inconnu'}
+                    </Text>
+                    {lastCombat.adversaire_club && (
+                      <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2, fontWeight: '600' }} numberOfLines={1}>
+                        {lastCombat.adversaire_club}
+                      </Text>
+                    )}
+                    {(lastCombat.methode || lastCombat.technique) && (
+                      <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2, fontStyle: 'italic' }} numberOfLines={1}>
+                        {lastCombat.methode}{lastCombat.technique ? ` · ${lastCombat.technique}` : ''}{lastCombat.temps ? ` · ${lastCombat.temps}` : ''}
+                      </Text>
+                    )}
+                  </View>
+                  <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>
+                    {(() => {
+                      try {
+                        const days = Math.floor((Date.now() - new Date(lastCombat.date).getTime()) / 86400000);
+                        if (days === 0) return "aujourd'hui";
+                        if (days === 1) return 'hier';
+                        if (days < 7) return `il y a ${days}j`;
+                        if (days < 30) return `il y a ${Math.floor(days / 7)}sem`;
+                        return `il y a ${Math.floor(days / 30)}mois`;
+                      } catch { return ''; }
+                    })()}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* ── TOP TECHNIQUES DE FINITION ── */}
+        {topTechniques.length > 0 && (
+          <View style={{
+            backgroundColor: colors.backgroundCard,
+            borderRadius: 16, padding: 14, marginHorizontal: 16, marginBottom: 12,
+            borderWidth: 1, borderColor: colors.border,
+          }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+              <Award size={16} color="#F59E0B" />
+              <Text style={{ fontSize: 13, fontWeight: '900', color: colors.textPrimary, letterSpacing: 0.3 }}>
+                TES FINITIONS PRÉFÉRÉES
+              </Text>
+            </View>
+            {topTechniques.map(([tech, count], i) => {
+              const maxCount = topTechniques[0][1];
+              const pct = (count / maxCount) * 100;
+              const colorTint = ['#F59E0B', '#3B82F6', '#22C55E', '#A855F7', '#EC4899'][i] || '#64748B';
+              return (
+                <View key={tech} style={{ marginBottom: i < topTechniques.length - 1 ? 8 : 0 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary }}>
+                      {i === 0 ? '🏆 ' : ''}{tech}
+                    </Text>
+                    <Text style={{ fontSize: 12, fontWeight: '900', color: colorTint }}>×{count}</Text>
+                  </View>
+                  <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.border, overflow: 'hidden' }}>
+                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: colorTint, borderRadius: 3 }} />
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* ── MÉTHODES DE VICTOIRE (distribution) ── */}
+        {methodsBreakdown.length > 0 && (
+          <View style={{
+            backgroundColor: colors.backgroundCard,
+            borderRadius: 16, padding: 14, marginHorizontal: 16, marginBottom: 12,
+            borderWidth: 1, borderColor: colors.border,
+          }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+              <Target size={16} color="#A855F7" />
+              <Text style={{ fontSize: 13, fontWeight: '900', color: colors.textPrimary, letterSpacing: 0.3 }}>
+                MÉTHODES DE VICTOIRE
+              </Text>
+            </View>
+            {/* Barre stacked */}
+            <View style={{ flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden', marginBottom: 10, backgroundColor: colors.border }}>
+              {methodsBreakdown.map((m, i) => {
+                const c = ['#22C55E', '#3B82F6', '#A855F7', '#F59E0B', '#EC4899', '#06B6D4', '#EF4444'][i] || '#64748B';
+                return <View key={m.key} style={{ width: `${m.pct}%`, backgroundColor: c }} />;
+              })}
+            </View>
+            {/* Légende */}
+            <View style={{ gap: 6 }}>
+              {methodsBreakdown.map((m, i) => {
+                const c = ['#22C55E', '#3B82F6', '#A855F7', '#F59E0B', '#EC4899', '#06B6D4', '#EF4444'][i] || '#64748B';
+                return (
+                  <View key={m.key} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c }} />
+                      <Text style={{ fontSize: 13, color: colors.textPrimary, fontWeight: '600' }}>{m.label}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                      <Text style={{ fontSize: 12, fontWeight: '900', color: c }}>{m.pct}%</Text>
+                      <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>({m.count})</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
 
         {/* Filters */}
         <View style={styles.filtersContainer}>
