@@ -212,6 +212,36 @@ for (const section of TOOL_SECTIONS) {
 }
 
 const FAVORITES_KEY = '@yoroi_tool_favorites';
+const RECENTS_KEY = '@yoroi_tool_recents';
+const RECENTS_MAX = 6;
+
+// IDs d'outils nécessitant Premium (badge PRO affiché à droite)
+const PREMIUM_TOOL_IDS = new Set<string>([
+  'combat-analytics',
+  'rounds-insights',
+  'sparring-ranking',
+  'benchmark',
+  'competition-camp',
+  'game-plan',
+  'fighter-card',
+  'match-tracker',
+  'weight-cut',
+]);
+
+// Petite icône thématique par section pour visualisation rapide
+const SECTION_ICONS: Record<string, { Icon: LucideIcon; color: string }> = {
+  'ENTRAÎNEMENT': { Icon: Dumbbell, color: '#EF4444' },
+  'CORPS & SANTÉ': { Icon: Heart, color: '#EC4899' },
+  'SUIVI QUOTIDIEN': { Icon: Moon, color: '#6366F1' },
+  'COMPETITEUR': { Icon: Swords, color: '#F59E0B' },
+  'COMBAT LAB': { Icon: Layers, color: '#8B5CF6' },
+  'OUTILS & CALCULS': { Icon: Calculator, color: '#06B6D4' },
+  'PROGRESSION & GAMIFICATION': { Icon: Sparkles, color: '#FBBF24' },
+  'HISTORIQUES & COURBES': { Icon: TrendingUp, color: '#10B981' },
+  'DONNÉES': { Icon: Database, color: '#4F8EF7' },
+  'COMMUNAUTE & SAVOIR': { Icon: BookOpen, color: '#22C55E' },
+  'PARTENAIRES': { Icon: Award, color: '#818CF8' },
+};
 
 // ============================================
 // MAIN COMPONENT
@@ -228,6 +258,12 @@ export default function MoreScreen() {
 
   // Favorites
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+  // Recents (derniers outils ouverts, ordre récent → ancien)
+  const [recents, setRecents] = useState<string[]>([]);
+
+  // Premium status — pour décider d'afficher le badge PRO
+  const [isPremium, setIsPremium] = useState<boolean>(false);
 
   // Creator mode / secret code states
   const [versionTapCount, setVersionTapCount] = useState(0);
@@ -257,6 +293,12 @@ export default function MoreScreen() {
           // ignore parse errors
         }
       }
+      const recentsRaw = await AsyncStorage.getItem(RECENTS_KEY);
+      if (recentsRaw) {
+        try { setRecents(JSON.parse(recentsRaw)); } catch {}
+      }
+      const premium = await AsyncStorage.getItem('@yoroi_is_premium');
+      setIsPremium(premium === 'true');
       const infoDismissed = await AsyncStorage.getItem('@yoroi_tool_info_dismissed');
       if (infoDismissed === 'true') setShowInfoCard(false);
       const mode = await AsyncStorage.getItem('@yoroi_screenshot_mode');
@@ -266,6 +308,15 @@ export default function MoreScreen() {
     } catch {
       // ignore errors
     }
+  }, []);
+
+  // Track quand un tool est ouvert pour la section "Récemment utilisés"
+  const trackToolOpen = useCallback((id: string) => {
+    setRecents(prev => {
+      const next = [id, ...prev.filter(x => x !== id)].slice(0, RECENTS_MAX);
+      AsyncStorage.setItem(RECENTS_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
   }, []);
 
   const handleRefresh = useCallback(async () => {
@@ -354,6 +405,21 @@ export default function MoreScreen() {
     return items;
   }, [favorites]);
 
+  // Outils récemment utilisés (filtrés pour exister + dédoublonnés des favoris)
+  const recentItems = useMemo(() => {
+    const out: ToolItem[] = [];
+    for (const id of recents) {
+      if (favorites.has(id)) continue; // pas en double avec les favoris
+      const it = ALL_ITEMS_MAP.get(id);
+      if (it) out.push(it);
+      if (out.length >= RECENTS_MAX) break;
+    }
+    return out;
+  }, [recents, favorites]);
+
+  // Total tools count (pour le sous-titre du header)
+  const totalToolsCount = useMemo(() => ALL_ITEMS_MAP.size, []);
+
   // Filtered sections based on search
   const filteredSections = useMemo(() => {
     if (!searchText.trim()) return TOOL_SECTIONS;
@@ -397,6 +463,7 @@ export default function MoreScreen() {
   };
 
   const handleItemPress = useCallback((item: ToolItem) => {
+    trackToolOpen(item.id);
     if (item.handler === 'export') {
       handleExport();
       return;
@@ -408,7 +475,7 @@ export default function MoreScreen() {
     if (item.route) {
       router.push(item.route as any);
     }
-  }, []);
+  }, [trackToolOpen]);
 
   const handleVersionTap = () => {
     const now = Date.now();
@@ -495,6 +562,7 @@ export default function MoreScreen() {
   const renderToolItem = useCallback((item: ToolItem) => {
     const IconComponent = item.Icon;
     const isFav = favorites.has(item.id);
+    const isPremiumLocked = PREMIUM_TOOL_IDS.has(item.id) && !isPremium;
 
     return (
       <TouchableOpacity
@@ -507,9 +575,16 @@ export default function MoreScreen() {
           <IconComponent size={20} color={item.iconColor} strokeWidth={2} />
         </View>
         <View style={styles.toolItemContent}>
-          <Text style={[styles.toolItemLabel, { color: colors.textPrimary }]} numberOfLines={1}>
-            {item.label}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={[styles.toolItemLabel, { color: colors.textPrimary }]} numberOfLines={1}>
+              {item.label}
+            </Text>
+            {isPremiumLocked ? (
+              <View style={{ backgroundColor: '#A855F7', paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 5 }}>
+                <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.4 }}>PRO</Text>
+              </View>
+            ) : null}
+          </View>
           <Text style={[styles.toolItemSublabel, { color: colors.textMuted }]} numberOfLines={1}>
             {item.sublabel}
           </Text>
@@ -529,7 +604,7 @@ export default function MoreScreen() {
         <ChevronRight size={16} color={colors.textMuted} />
       </TouchableOpacity>
     );
-  }, [favorites, colors, handleItemPress, toggleFavorite]);
+  }, [favorites, colors, handleItemPress, toggleFavorite, isPremium]);
 
   // ============================================
   // RENDER
@@ -554,7 +629,12 @@ export default function MoreScreen() {
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <Wrench size={28} color={screenText} strokeWidth={2} />
-            <Text style={[styles.title, { color: screenText }]}>Outils</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.title, { color: screenText }]}>Outils</Text>
+              <Text style={{ color: screenText, opacity: 0.6, fontSize: 12, fontWeight: '600', marginTop: 2 }}>
+                {totalToolsCount} outils · {favorites.size} en favoris
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -597,21 +677,60 @@ export default function MoreScreen() {
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Star size={14} color="#FBBF24" fill="#FBBF24" />
-              <Text style={[styles.sectionTitle, { color: '#FBBF24' }]}>FAVORIS</Text>
+              <Text style={[styles.sectionTitle, { color: '#FBBF24' }]}>FAVORIS · {favoriteItems.length}</Text>
             </View>
             {favoriteItems.map(renderToolItem)}
           </View>
         )}
 
-        {/* SECTIONS */}
-        {filteredSections.map((section) => (
-          <View key={section.title} style={styles.sectionContainer}>
+        {/* RECENTS SECTION (uniquement si on a des récents distincts des favoris) */}
+        {!searchText && recentItems.length > 0 && (
+          <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: screenTextMuted }]}>{section.title}</Text>
+              <Clock size={14} color="#06B6D4" />
+              <Text style={[styles.sectionTitle, { color: '#06B6D4' }]}>RÉCEMMENT UTILISÉS · {recentItems.length}</Text>
             </View>
-            {section.items.map(renderToolItem)}
+            {recentItems.map(renderToolItem)}
           </View>
-        ))}
+        )}
+
+        {/* EMPTY SEARCH STATE */}
+        {searchText && filteredSections.length === 0 && (
+          <View style={{ alignItems: 'center', paddingVertical: 40, paddingHorizontal: 20 }}>
+            <Search size={36} color={screenText} style={{ opacity: 0.3, marginBottom: 14 }} />
+            <Text style={{ color: screenText, fontSize: 16, fontWeight: '700', marginBottom: 6 }}>
+              Aucun outil pour "{searchText}"
+            </Text>
+            <Text style={{ color: screenText, opacity: 0.6, fontSize: 13, textAlign: 'center', marginBottom: 16 }}>
+              Essaie avec un autre mot-clé{'\n'}(sport, sommeil, sparring, photos…)
+            </Text>
+            <TouchableOpacity
+              onPress={() => setSearchText('')}
+              style={{ backgroundColor: colors.accent, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12 }}
+              activeOpacity={0.85}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800' }}>Effacer la recherche</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* SECTIONS */}
+        {filteredSections.map((section) => {
+          const sectionMeta = SECTION_ICONS[section.title];
+          const SectionIcon = sectionMeta?.Icon;
+          const sectionColor = sectionMeta?.color || screenTextMuted;
+          return (
+            <View key={section.title} style={styles.sectionContainer}>
+              <View style={styles.sectionHeader}>
+                {SectionIcon ? <SectionIcon size={14} color={sectionColor} /> : null}
+                <Text style={[styles.sectionTitle, { color: SectionIcon ? sectionColor : screenTextMuted }]}>
+                  {section.title} · {section.items.length}
+                </Text>
+              </View>
+              {section.items.map(renderToolItem)}
+            </View>
+          );
+        })}
 
         {/* FOOTER */}
         <View style={styles.footer}>
@@ -630,14 +749,14 @@ export default function MoreScreen() {
           </View>
 
           <View style={styles.madeWith}>
-            <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '500' }}>{t('menu.madeWithLove')}</Text>
+            <Text style={{ color: screenText, opacity: 0.6, fontSize: 13, fontWeight: '500' }}>{t('menu.madeWithLove')}</Text>
             <Heart size={14} color="#EF4444" fill="#EF4444" />
-            <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '500' }}>{t('menu.inFrance')}</Text>
+            <Text style={{ color: screenText, opacity: 0.6, fontSize: 13, fontWeight: '500' }}>{t('menu.inFrance')}</Text>
           </View>
 
           <TouchableOpacity onPress={handleVersionTap} activeOpacity={1}>
-            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 12, textAlign: 'center' }}>
-              YOROI Version 2.3.2
+            <Text style={{ color: screenText, opacity: 0.5, fontSize: 12, marginTop: 12, textAlign: 'center', fontWeight: '700', letterSpacing: 0.4 }}>
+              YOROI v2.3.3
             </Text>
           </TouchableOpacity>
         </View>
