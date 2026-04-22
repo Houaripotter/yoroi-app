@@ -94,6 +94,11 @@ const DEMO_ASYNC_KEYS = [
   '@yoroi_health_bonus_history',
   '@yoroi_competitor_profile',
   '@yoroi_sparring_partners',
+  '@yoroi_fasting_streak',
+  '@yoroi_fasting_last_completed',
+  '@yoroi_is_premium',
+  '@yoroi_premium_expires_at',
+  '@yoroi_premium_source',
 ];
 
 // ============================================
@@ -1241,6 +1246,18 @@ export const generateHenyDemoData = async (): Promise<{
   // ========== 12. TECHNIQUES BJJ ==========
   const skills: any[] = [];
   const nowIso = new Date().toISOString();
+  // Quelques refs video YouTube (tutos publics BJJ reconnus) pour les skills mastered.
+  // → montre la feature "vidéo attachée" pleine dans les screenshots.
+  const SKILL_VIDEO_URLS: Record<string, string> = {
+    'Triangle': 'https://www.youtube.com/watch?v=vDp43CuwPyY',
+    'Kimura': 'https://www.youtube.com/watch?v=d4Jg8IzRuNg',
+    'Garde Fermee': 'https://www.youtube.com/watch?v=VnZAomJxgHQ',
+    'Etranglement Arriere (RNC)': 'https://www.youtube.com/watch?v=k-O0LJU8MBo',
+    'Berimbolo': 'https://www.youtube.com/watch?v=v80GyVBXlYU',
+    'Knee Cut': 'https://www.youtube.com/watch?v=J-7oNtu6hvE',
+    'Single Leg': 'https://www.youtube.com/watch?v=kxhH0YepfJ0',
+  };
+
   const makeSkill = (name: string, cat: string, status: 'mastered' | 'in_progress' | 'to_learn', drills: number) => ({
     id: generateId(),
     name,
@@ -1248,6 +1265,7 @@ export const generateHenyDemoData = async (): Promise<{
     status,
     drillCount: drills,
     notes: buildSkillNotes(status, name),
+    videoUrl: SKILL_VIDEO_URLS[name] || undefined,
     createdAt: startDate.toISOString(),
     updatedAt: nowIso,
   });
@@ -1520,6 +1538,41 @@ export const generateHenyDemoData = async (): Promise<{
     belt: 'blue',
     currentWeight: 82.0,
   }));
+
+  // ========== 25. JEUNE INTERMITTENT (15 sessions, 12 complétées) ==========
+  const fastingHistory: any[] = [];
+  for (let i = 0; i < 15; i++) {
+    const dayOffset = i * 2; // tous les 2 jours environ
+    const startDate = new Date(now.getTime() - (dayOffset + 1) * 86400000);
+    startDate.setHours(20, 0, 0, 0); // start 20h la veille
+    const endDate = new Date(startDate.getTime() + 16 * 3600 * 1000); // 16h plus tard = 12h le lendemain
+    const completed = i < 12; // 12 sur 15 completées (80%)
+    const targetMin = 16 * 60;
+    const actualMin = completed ? targetMin + randInt(0, 45) : randInt(8 * 60, 14 * 60); // tenu ou abandonné
+    fastingHistory.push({
+      id: generateId(),
+      date: fmtDate(startDate),
+      modeId: '16_8',
+      startTime: startDate.toISOString(),
+      endTime: completed ? endDate.toISOString() : new Date(startDate.getTime() + actualMin * 60 * 1000).toISOString(),
+      targetDuration: targetMin,
+      actualDuration: actualMin,
+      completed,
+      notes: completed && i < 3 ? pick([
+        'Facile, j\'ai même pas ressenti la faim',
+        'Cassé juste après le training JJB, parfait timing',
+        'Bon niveau d\'énergie toute la matinée',
+      ]) : undefined,
+    });
+  }
+  await secureStorage.setItem('@yoroi_fasting_history', fastingHistory);
+  await AsyncStorage.setItem('@yoroi_fasting_streak', '7');
+  await AsyncStorage.setItem('@yoroi_fasting_last_completed', fmtDate(addDays(now, -2)));
+
+  // ========== 26. PREMIUM DÉBLOQUÉ (pour screenshots des features locked) ==========
+  await AsyncStorage.setItem('@yoroi_is_premium', 'true');
+  await AsyncStorage.setItem('@yoroi_premium_expires_at', String(Date.now() + 365 * 86400 * 1000));
+  await AsyncStorage.setItem('@yoroi_premium_source', 'creator_demo');
 
   // ======= STEP 3: MARK DEMO AS ACTIVE =======
   await AsyncStorage.setItem(DEMO_ACTIVE_KEY, 'true');
