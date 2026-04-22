@@ -254,6 +254,36 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     elevation: 10,
   }), [colors.accent]);
 
+  // Calcul de la luminance d'une couleur hex pour décider d'un texte clair ou foncé.
+  // Formule W3C : 0.299*R + 0.587*G + 0.114*B (sur 255). > 150 = couleur claire → texte foncé.
+  const getLuminance = (hex: string): number => {
+    try {
+      const c = hex.replace('#', '');
+      const full = c.length === 3 ? c.split('').map(x => x + x).join('') : c;
+      if (full.length !== 6) return 0;
+      const r = parseInt(full.slice(0, 2), 16);
+      const g = parseInt(full.slice(2, 4), 16);
+      const b = parseInt(full.slice(4, 6), 16);
+      return r * 0.299 + g * 0.587 + b * 0.114;
+    } catch {
+      return 0;
+    }
+  };
+
+  // Calcul dynamique du screenText selon la luminance de l'accent en light mode.
+  // En dark mode, on garde textPrimary (blanc sur fond sombre).
+  // En light mode, le screenBackground = accent → on choisit blanc ou noir selon la clarté.
+  const screenTextComputed = useMemo(() => {
+    if (actualMode === 'dark') return colors.textPrimary;
+    // Light mode : screenBackground = accent. Si accent clair (luminance > 150), texte sombre.
+    return getLuminance(colors.accent) > 150 ? '#0F172A' : '#FFFFFF';
+  }, [actualMode, colors.accent, colors.textPrimary]);
+
+  const screenTextMutedComputed = useMemo(() => {
+    if (actualMode === 'dark') return colors.textMuted;
+    return getLuminance(colors.accent) > 150 ? 'rgba(15,23,42,0.65)' : 'rgba(255,255,255,0.7)';
+  }, [actualMode, colors.accent, colors.textMuted]);
+
   // Mémoïser la value du Provider pour éviter les re-renders en cascade
   // IMPORTANT: Doit être AVANT le return conditionnel (Rules of Hooks)
   const contextValue = useMemo(() => ({
@@ -269,8 +299,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     themeColors,
     screenBackground: actualMode === 'dark' ? colors.background : colors.accent,
     containerBackground: colors.backgroundCard,
-    screenText: actualMode === 'dark' ? colors.textPrimary : '#FFFFFF',
-    screenTextMuted: actualMode === 'dark' ? colors.textMuted : 'rgba(255,255,255,0.7)',
+    screenText: screenTextComputed,
+    screenTextMuted: screenTextMutedComputed,
     glowShadow,
     gradients: GRADIENTS,
     themeName: `${themeColor}_${actualMode}`,
@@ -278,7 +308,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setFontSizeLevel,
     fs: (n: number) => Math.round(n * getCurrentFontScale()),
     isLoaded,
-  }), [theme, colors, themeColor, themeMode, actualMode, setThemeColor, setThemeMode, glowShadow, fontSizeLevel, setFontSizeLevel, isLoaded]);
+  }), [theme, colors, themeColor, themeMode, actualMode, setThemeColor, setThemeMode, glowShadow, fontSizeLevel, setFontSizeLevel, isLoaded, screenTextComputed, screenTextMutedComputed]);
 
   // Attendre le chargement avant de rendre
   if (!isLoaded) {
