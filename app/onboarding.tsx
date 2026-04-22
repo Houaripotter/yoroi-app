@@ -477,10 +477,6 @@ export default function OnboardingScreen() {
           <Text style={s.p1ItalicBold}>{t('onboarding.trust')}</Text>
           {'\n'}<Text style={s.p1ItalicBold}>{t('onboarding.thanks')}</Text>
         </Text>
-        <View style={s.p1Divider} />
-        <Text style={s.p1FreeNote}>
-          {t('onboarding.freeNote')}
-        </Text>
       </View>
 
       {/* Confirmation age */}
