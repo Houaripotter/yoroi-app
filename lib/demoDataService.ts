@@ -93,6 +93,7 @@ const DEMO_ASYNC_KEYS = [
   '@yoroi_health_daily_bonus',
   '@yoroi_health_bonus_history',
   '@yoroi_competitor_profile',
+  '@yoroi_sparring_partners',
 ];
 
 // ============================================
@@ -142,6 +143,183 @@ const MUSCU_MUSCLES: Record<string, string[]> = {
   'Legs': ['quadriceps', 'hamstrings', 'glutes', 'calves'],
   'Full Body': ['chest', 'back', 'shoulders', 'quadriceps', 'core'],
 };
+
+// ============================================
+// PARTENAIRES DE SPARRING (pour screenshots)
+// ============================================
+// Profs ceinture noire → meilleurs techniciens, victoires rares, nombreuses soumissions subies (apprentissage)
+// Autres → niveau varié, interactions plus équilibrées
+
+interface DemoPartner {
+  name: string;
+  belt: 'blanche' | 'bleue' | 'violette' | 'marron' | 'noire';
+  skill: number;    // 1-10, influence winRate
+  notes?: string;
+}
+
+const SPARRING_PARTNERS: DemoPartner[] = [
+  { name: 'Professeur Veni',  belt: 'noire',    skill: 10, notes: 'Référence technique. Jeu de garde redoutable, passages précis.' },
+  { name: 'Professeur Lucas', belt: 'noire',    skill: 10, notes: 'Style pressing, passages en force, top lourd.' },
+  { name: 'Hedi',             belt: 'violette', skill: 8,  notes: 'Partenaire régulier. Jeu fluide, beaucoup de triangles.' },
+  { name: 'Eliott',           belt: 'bleue',    skill: 6,  notes: 'Jeune, explosif, enchaînements rapides. En progrès.' },
+  { name: 'Yanis',            belt: 'bleue',    skill: 6,  notes: 'Style wrestling, takedowns agressifs, peu de guard pull.' },
+  { name: 'Larbi',            belt: 'marron',   skill: 9,  notes: 'Énorme pressure, étranglements mortels, patience inégalée.' },
+];
+
+const JJB_TECHNIQUES = [
+  { label: 'Triangle', pts: 3 },
+  { label: 'Kimura', pts: 3 },
+  { label: 'Armbar', pts: 3 },
+  { label: 'Étranglement arrière', pts: 3 },
+  { label: 'Guillotine', pts: 3 },
+  { label: 'Darce', pts: 3 },
+  { label: 'Omoplata', pts: 3 },
+  { label: 'Leg lock', pts: 3 },
+  { label: 'Passage de garde', pts: 2 },
+  { label: 'Berimbolo', pts: 2 },
+  { label: 'Balayage De la Riva', pts: 2 },
+  { label: 'Balayage papillon', pts: 2 },
+  { label: 'Knee cut', pts: 2 },
+  { label: 'Back take', pts: 2 },
+  { label: 'Mount', pts: 2 },
+  { label: 'Takedown double-leg', pts: 2 },
+  { label: 'Garde fermée', pts: 1 },
+  { label: 'Demi-garde', pts: 1 },
+];
+
+const SUBMISSIONS = [
+  'Triangle', 'Kimura', 'Armbar', 'Étranglement arrière',
+  'Guillotine', 'Darce', 'Omoplata', 'Ezekiel', 'Leg lock',
+  'Americana', 'Crucifix', 'Papa-bear',
+];
+
+const GAME_PLANS = [
+  'Jouer la garde fermée et chercher le triangle',
+  'Passage knee-cut depuis combat grip',
+  'Berimbolo + back take',
+  'Pressure top, étouffer et chercher la mount',
+  'Sortir en demi-garde profonde',
+  'Prendre le dos tôt dans le round',
+];
+
+const WHAT_WORKED_SAMPLES = [
+  'Belle entrée en garde fermée, j\'ai enchaîné sur un triangle',
+  'Passage propre après feinte, j\'ai bien contrôlé la hanche',
+  'Back take après balayage, le contrôle du dos a tenu',
+  'Bon setup de kimura depuis demi-garde',
+  'Pressure en top, j\'ai vidé son gaz',
+];
+
+const WHAT_DIDNT_WORK_SAMPLES = [
+  'Je me suis laissé passer la demi-garde trop vite',
+  'Mon étranglement n\'était pas assez serré',
+  'Trop statique, je n\'ai pas créé de mouvement',
+  'Grip cassé trop tôt',
+  'J\'ai laissé l\'underhook, il est passé direct',
+];
+
+const IMPROVEMENT_SAMPLES = [
+  'Travailler le contrôle des grips avant la tentative',
+  'Caler le grappling timing sur le rythme adverse',
+  'Drill la sortie de dos 15min par session',
+  'Améliorer la pression en top',
+  'Meilleure gestion du cardio sur les gros rounds',
+];
+
+const MOODS = ['fire', 'strong', 'focus', 'fire', 'strong', 'gassed', 'tired', 'focus'];
+
+/**
+ * Construit des rounds réalistes pour une session sparring.
+ * Retourne : { rounds, technicalTheme, notes }
+ */
+function buildDemoRounds(sessionType: 'sparring' | 'open_mat' | 'cours', dateStr: string): any[] {
+  const count = sessionType === 'open_mat' ? randInt(6, 10) : randInt(4, 7);
+  const rounds: any[] = [];
+
+  // Sélectionner 2-4 partenaires pour cette session (sur les 6 disponibles)
+  const nb = randInt(2, 4);
+  const pool = [...SPARRING_PARTNERS].sort(() => Math.random() - 0.5).slice(0, nb);
+
+  for (let i = 1; i <= count; i++) {
+    const partner = pool[i % pool.length];
+
+    // Résultat selon skill : plus skill élevé, plus de chances de perdre
+    const skillDiff = partner.skill - 7; // Heny ~ niveau 7 (ceinture bleue)
+    const winChance = Math.max(0.1, Math.min(0.8, 0.5 - skillDiff * 0.1));
+    const drawChance = 0.15;
+    const r = Math.random();
+    const result: 'win' | 'loss' | 'draw' =
+      r < winChance ? 'win' : r < winChance + drawChance ? 'draw' : 'loss';
+
+    // Techniques utilisées dans ce round (1-4)
+    const usedTechs = [...JJB_TECHNIQUES]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, randInt(1, 4))
+      .map(t => ({ label: t.label, pts: t.pts, count: randInt(1, 3) }));
+
+    const methodsGiven: string[] = [];
+    const methodsTaken: string[] = [];
+    if (result === 'win') {
+      // Gagné : 1-2 soumissions données
+      methodsGiven.push(pick(SUBMISSIONS));
+      if (Math.random() > 0.7) methodsGiven.push(pick(SUBMISSIONS));
+    } else if (result === 'loss') {
+      // Perdu : 1-2 soumissions subies (plus si prof)
+      const nbSubs = partner.belt === 'noire' ? randInt(1, 3) : randInt(1, 2);
+      for (let j = 0; j < nbSubs; j++) methodsTaken.push(pick(SUBMISSIONS));
+    } else {
+      // Nul : parfois 1 soum des deux côtés
+      if (Math.random() > 0.5) methodsGiven.push(pick(SUBMISSIONS));
+      if (Math.random() > 0.5) methodsTaken.push(pick(SUBMISSIONS));
+    }
+
+    const intensity = i > count - 2 ? 'guerre' : pick(['technique', 'technique', 'guerre', 'detendu']);
+    const selfRating = result === 'win' ? randInt(7, 10) : result === 'loss' ? randInt(4, 7) : randInt(5, 8);
+    const partnerRating = Math.min(10, partner.skill + (Math.random() > 0.5 ? 0 : -1));
+
+    const round: any = {
+      number: i,
+      partner: partner.name,
+      partnerRating,
+      result,
+      methodsGiven,
+      methodsTaken,
+      submissionsGiven: methodsGiven.length,
+      submissionsTaken: methodsTaken.length,
+      pointsFor: result === 'win' ? randInt(2, 8) : randInt(0, 3),
+      pointsAgainst: result === 'loss' ? randInt(2, 8) : randInt(0, 3),
+      roundIntensity: intensity,
+      usedTechniques: usedTechs,
+      selfRating,
+      mood: pick(MOODS),
+      energyLevel: Math.max(3, 10 - i),
+    };
+
+    // 40% de chance d'avoir du contenu narratif (gamePlan/what worked/etc.)
+    if (Math.random() > 0.6) {
+      round.gamePlan = pick(GAME_PLANS);
+      round.whatWorked = pick(WHAT_WORKED_SAMPLES);
+      round.whatDidntWork = pick(WHAT_DIDNT_WORK_SAMPLES);
+      round.improvement = pick(IMPROVEMENT_SAMPLES);
+    }
+
+    rounds.push(round);
+  }
+
+  return rounds;
+}
+
+/**
+ * Sauvegarde les 6 partenaires dans SPARRING_PARTNERS_KEY pour qu'ils aient une fiche.
+ */
+async function seedSparringPartners(): Promise<void> {
+  const partners = SPARRING_PARTNERS.map(p => ({
+    id: generateId(),
+    name: p.name,
+    belt: p.belt,
+  }));
+  await AsyncStorage.setItem('@yoroi_sparring_partners', JSON.stringify(partners));
+}
 
 // ============================================
 // CHECK IF DEMO IS ACTIVE
@@ -382,6 +560,9 @@ export const generateHenyDemoData = async (): Promise<{
   await upsertSlotOccurrence({ weekly_plan_id: slotId4, week_start: weekStarts[3], status: 'validated' });
   await upsertSlotOccurrence({ weekly_plan_id: slotId5, week_start: weekStarts[3], status: 'skipped' });
 
+  // ========== 3c. PARTENAIRES SPARRING (fiches + belts) ==========
+  await seedSparringPartners();
+
   // ========== 4. TRAININGS ==========
   let current = new Date(startDate);
   const trainingLoads: any[] = [];
@@ -397,31 +578,39 @@ export const generateHenyDemoData = async (): Promise<{
       if (Math.random() > 0.1) {
         const duration = randInt(75, 95);
         const intensity = randInt(6, 9);
+        const sessionType: 'cours' | 'drilling' | 'sparring' = pick(['cours', 'cours', 'cours', 'drilling', 'sparring']);
+        // Rounds réalistes sur les sessions sparring (et 1/3 des drilling)
+        const hasRounds = sessionType === 'sparring' || (sessionType === 'drilling' && Math.random() > 0.6);
+        const rounds = hasRounds ? buildDemoRounds(sessionType === 'sparring' ? 'sparring' : 'cours', dateStr) : undefined;
         await addTraining({
           club_id: gbClubId, sport: 'jjb',
-          session_type: pick(['cours', 'cours', 'cours', 'drilling', 'sparring']),
+          session_type: sessionType,
           date: dateStr, start_time: '19:00', duration_minutes: duration, intensity,
           technical_theme: pick(JJB_THEMES),
           calories: Math.round(duration * rand(8, 12, 0)),
           heart_rate: randInt(125, 155), max_heart_rate: randInt(165, 185),
           technique_rating: randInt(2, 5), source: 'manual',
+          rounds: rounds?.length, round_duration: 5,
+          combat_rounds: rounds,
         });
         workoutCount++;
         trainingLoads.push({ date: dateStr, duration, rpe: intensity, load: duration * intensity, sport: 'jjb' });
       }
     }
 
-    // JJB: Sam(6) 10h open mat
+    // JJB: Sam(6) 10h open mat (avec combat_rounds riches)
     if (d === 6 && Math.random() > 0.2) {
       const duration = randInt(90, 130);
       const intensity = randInt(7, 10);
+      const rounds = buildDemoRounds('open_mat', dateStr);
       await addTraining({
         club_id: gbClubId, sport: 'jjb', session_type: 'open_mat',
         date: dateStr, start_time: '10:00', duration_minutes: duration, intensity,
         technical_theme: 'Open mat',
         calories: Math.round(duration * rand(9, 13, 0)),
         heart_rate: randInt(135, 160), max_heart_rate: randInt(170, 190),
-        technique_rating: randInt(3, 5), rounds: randInt(6, 12), round_duration: 5, source: 'manual',
+        technique_rating: randInt(3, 5), rounds: rounds.length, round_duration: 5, source: 'manual',
+        combat_rounds: rounds,
       });
       workoutCount++;
       trainingLoads.push({ date: dateStr, duration, rpe: intensity, load: duration * intensity, sport: 'jjb' });
