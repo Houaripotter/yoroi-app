@@ -102,12 +102,37 @@ export const initTrainingJournalDB = () => {
       );
     `);
 
-    // Migration : Ajouter les colonnes manquantes si elles n'existent pas
+    // Migration : Ajouter les colonnes manquantes si elles n'existent pas.
+    // IMPORTANT : utiliser PRAGMA table_info pour ne ALTER QUE les colonnes vraiment
+    // manquantes. Le module natif iOS expo-sqlite log l'erreur AVANT le catch JS,
+    // d'où les "duplicate column" dans la console Xcode si on tape ALTER à l'aveugle.
     try {
-      // Vérifier si les colonnes existent, sinon les ajouter
+      // 1. Récupérer les colonnes existantes via PRAGMA
+      const existing = new Set<string>();
+      try {
+        const rows: any = db.getAllSync('PRAGMA table_info(progression_items)');
+        if (Array.isArray(rows)) {
+          for (const r of rows) {
+            if (r && typeof r === 'object' && 'name' in r && typeof r.name === 'string') {
+              existing.add(r.name);
+            }
+          }
+        }
+      } catch (pragmaErr) {
+        logger.warn('[TRAINING_JOURNAL] PRAGMA lookup failed, skip migrations:', pragmaErr);
+        return; // skip migrations pour éviter le bruit de logs
+      }
+
+      // Si le PRAGMA n'a rien retourné, la table n'existe peut-être pas → skip.
+      if (existing.size === 0) {
+        logger.info('[TRAINING_JOURNAL] progression_items absent ou vide — skip migrations');
+        return;
+      }
+
       const columns = ['current_weight', 'target_weight', 'distance_km', 'current_time', 'target_time', 'success_rate', 'competition_ready'];
 
       for (const column of columns) {
+        if (existing.has(column)) continue; // déjà là, skip silencieux (zéro log natif)
         try {
           db.execSync(`ALTER TABLE progression_items ADD COLUMN ${column} ${
             column === 'current_weight' || column === 'target_weight' || column === 'distance_km' ? 'REAL' :
@@ -116,13 +141,8 @@ export const initTrainingJournalDB = () => {
           }`);
           logger.info(`[TRAINING_JOURNAL] Colonne ${column} ajoutée`);
         } catch (e: unknown) {
-          // La colonne existe déjà, ignorer l'erreur silencieusement
-          // L'erreur peut être dans e.message ou dans la cause (format Expo SQLite)
           const errorStr = String(e instanceof Error ? e.message : e || '').toLowerCase();
-          if (errorStr.includes('duplicate column') || errorStr.includes('duplicate')) {
-            // Colonne existe déjà, c'est normal, on ignore silencieusement
-          } else {
-            // Autre erreur, on la log
+          if (!errorStr.includes('duplicate column') && !errorStr.includes('duplicate')) {
             logger.error(`[TRAINING_JOURNAL] Erreur ajout colonne ${column}:`, e);
           }
         }

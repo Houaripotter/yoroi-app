@@ -6,6 +6,57 @@ import logger from '@/lib/security/logger';
 // YOROI DATABASE - STOCKAGE LOCAL SQLite
 // ============================================
 
+// ============================================
+// HELPERS DE MIGRATION SÉCURISÉS
+// ============================================
+// IMPORTANT : Le module natif iOS expo-sqlite imprime les erreurs SQLite
+// AVANT que le catch JS les intercepte. Sans ces helpers, on voit dans les
+// logs Xcode des "duplicate column" pour CHAQUE colonne déjà migrée.
+// → On utilise PRAGMA table_info pour ne ALTER QUE les colonnes manquantes.
+
+const _columnsCache = new Map<string, Set<string>>();
+
+const _isDuplicateColumnError = (e: unknown): boolean => {
+  const msg = String((e as any)?.message ?? e).toLowerCase();
+  return msg.includes('duplicate column') || msg.includes('already exists');
+};
+
+const _getTableColumns = async (database: SQLite.SQLiteDatabase, table: string): Promise<Set<string>> => {
+  const cached = _columnsCache.get(table);
+  if (cached) return cached;
+  try {
+    const rows = await database.getAllAsync<{ name: string }>(`PRAGMA table_info(${table})`);
+    const cols = new Set(rows.map(r => r.name));
+    _columnsCache.set(table, cols);
+    return cols;
+  } catch {
+    return new Set();
+  }
+};
+
+const safeAddColumn = async (
+  database: SQLite.SQLiteDatabase,
+  table: string,
+  column: string,
+  type: string,
+): Promise<void> => {
+  try {
+    const cols = await _getTableColumns(database, table);
+    if (cols.has(column)) return; // déjà là, on skip silencieusement
+    await database.execAsync(`ALTER TABLE ${table} ADD COLUMN ${column} ${type};`);
+    cols.add(column);
+  } catch (e) {
+    if (!_isDuplicateColumnError(e)) {
+      logger.warn(`[DB] Migration error on ${table}.${column}:`, e);
+    }
+  }
+};
+
+const _invalidateColumnsCache = (table?: string): void => {
+  if (table) _columnsCache.delete(table);
+  else _columnsCache.clear();
+};
+
 let db: SQLite.SQLiteDatabase | null = null;
 let _initPromise: Promise<void> | null = null;
 
@@ -57,18 +108,11 @@ const _performInit = async () => {
     );
   `);
 
-  // Migrations: ajouter les colonnes manquantes si la table existe déjà
-  const profileMigrations = [
-    'ALTER TABLE profile ADD COLUMN profile_photo TEXT;',
-    'ALTER TABLE profile ADD COLUMN birth_date TEXT;',
-    "ALTER TABLE profile ADD COLUMN weight_goal TEXT DEFAULT 'lose';",
-    'ALTER TABLE profile ADD COLUMN age INTEGER;',
-  ];
-  for (const migration of profileMigrations) {
-    try {
-      await database.execAsync(migration);
-    } catch (_e) { /* colonne existe déjà */ }
-  }
+  // Migrations profile (PRAGMA-protected, zéro bruit dans logs)
+  await safeAddColumn(database, 'profile', 'profile_photo', 'TEXT');
+  await safeAddColumn(database, 'profile', 'birth_date', 'TEXT');
+  await safeAddColumn(database, 'profile', 'weight_goal', "TEXT DEFAULT 'lose'");
+  await safeAddColumn(database, 'profile', 'age', 'INTEGER');
 
   // Table Pesees (poids + composition)
   await database.execAsync(`
@@ -138,102 +182,31 @@ const _performInit = async () => {
     );
   `);
 
-  // Migration: ajouter les colonnes si elles n'existent pas
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN start_time TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN session_type TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN exercises TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE profile ADD COLUMN profile_photo TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN technique_rating INTEGER DEFAULT NULL;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN session_types TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN technical_theme TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN distance REAL;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN calories INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN intensity INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN rounds INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN round_duration INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN is_outdoor INTEGER DEFAULT 0;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN pente REAL;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN speed REAL;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN resistance INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN watts INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN cadence INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN healthkit_uuid TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN workout_details_json TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN heart_rate INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN max_heart_rate INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN source TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN combat_rounds TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
+  // Migration : ajouter les colonnes manquantes (PRAGMA-protected, zéro bruit dans logs)
+  await safeAddColumn(database, 'trainings', 'start_time', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'session_type', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'exercises', 'TEXT');
+  await safeAddColumn(database, 'profile', 'profile_photo', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'technique_rating', 'INTEGER DEFAULT NULL');
+  await safeAddColumn(database, 'trainings', 'session_types', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'technical_theme', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'distance', 'REAL');
+  await safeAddColumn(database, 'trainings', 'calories', 'INTEGER');
+  await safeAddColumn(database, 'trainings', 'intensity', 'INTEGER');
+  await safeAddColumn(database, 'trainings', 'rounds', 'INTEGER');
+  await safeAddColumn(database, 'trainings', 'round_duration', 'INTEGER');
+  await safeAddColumn(database, 'trainings', 'is_outdoor', 'INTEGER DEFAULT 0');
+  await safeAddColumn(database, 'trainings', 'pente', 'REAL');
+  await safeAddColumn(database, 'trainings', 'speed', 'REAL');
+  await safeAddColumn(database, 'trainings', 'resistance', 'INTEGER');
+  await safeAddColumn(database, 'trainings', 'watts', 'INTEGER');
+  await safeAddColumn(database, 'trainings', 'cadence', 'INTEGER');
+  await safeAddColumn(database, 'trainings', 'healthkit_uuid', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'workout_details_json', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'heart_rate', 'INTEGER');
+  await safeAddColumn(database, 'trainings', 'max_heart_rate', 'INTEGER');
+  await safeAddColumn(database, 'trainings', 'source', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'combat_rounds', 'TEXT');
 
   // Table Planning Semaine Type
   await database.execAsync(`
@@ -252,15 +225,9 @@ const _performInit = async () => {
     );
   `);
 
-  // Migration: Ajouter session_type si la table existe déjà
-  try {
-    await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN session_type TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  // Migration: Ajouter navel à la table measurements
-  try {
-    await database.execAsync(`ALTER TABLE measurements ADD COLUMN navel REAL;`);
-  } catch (e) { /* colonne existe déjà */ }
+  // Migrations : weekly_plan + measurements
+  await safeAddColumn(database, 'weekly_plan', 'session_type', 'TEXT');
+  await safeAddColumn(database, 'measurements', 'navel', 'REAL');
 
   // Table Photos
   await database.execAsync(`
@@ -370,22 +337,20 @@ const _performInit = async () => {
     );
   `);
 
-  // Migrations: Ajouter les colonnes manquantes pour les bases existantes
-  const competitionsColumnsToAdd = [
-    'type_evenement TEXT',
-    'lien_inscription TEXT',
-    'resultat TEXT',
-    'placement TEXT',
-    'adversaires INTEGER',
-    'victoires INTEGER',
-    'defaites INTEGER',
-    'notes TEXT',
-    'temps_total TEXT',
+  // Migrations competitions (PRAGMA-protected)
+  const competitionsColumnsToAdd: Array<[string, string]> = [
+    ['type_evenement', 'TEXT'],
+    ['lien_inscription', 'TEXT'],
+    ['resultat', 'TEXT'],
+    ['placement', 'TEXT'],
+    ['adversaires', 'INTEGER'],
+    ['victoires', 'INTEGER'],
+    ['defaites', 'INTEGER'],
+    ['notes', 'TEXT'],
+    ['temps_total', 'TEXT'],
   ];
-  for (const column of competitionsColumnsToAdd) {
-    try {
-      await database.execAsync(`ALTER TABLE competitions ADD COLUMN ${column};`);
-    } catch (e) { /* colonne existe déjà */ }
+  for (const [name, type] of competitionsColumnsToAdd) {
+    await safeAddColumn(database, 'competitions', name, type);
   }
 
   // Table Combats
@@ -517,15 +482,8 @@ const _performInit = async () => {
   await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_health_date ON health_data(date);`);
   await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_health_type ON health_data(type);`);
 
-  // Migration: Ajouter label sur weekly_plan
-  try {
-    await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN label TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
-
-  // Migration: Ajouter weekly_plan_id sur trainings
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN weekly_plan_id INTEGER;`);
-  } catch (e) { /* colonne existe déjà */ }
+  await safeAddColumn(database, 'weekly_plan', 'label', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'weekly_plan_id', 'INTEGER');
 
   // Table Slot Occurrences - suivi hebdomadaire des créneaux
   await database.execAsync(`
@@ -589,28 +547,16 @@ const _performInit = async () => {
     );
   } catch (_e) { /* ignore */ }
 
-  // Migrations trash_trainings (colonnes ajoutées après la création initiale)
-  const trashMigrations = [
-    `ALTER TABLE trash_trainings ADD COLUMN heart_rate INTEGER`,
-    `ALTER TABLE trash_trainings ADD COLUMN max_heart_rate INTEGER`,
-    `ALTER TABLE trash_trainings ADD COLUMN location_lat REAL`,
-    `ALTER TABLE trash_trainings ADD COLUMN location_lon REAL`,
-    `ALTER TABLE trash_trainings ADD COLUMN location_name TEXT`,
-    `ALTER TABLE trash_trainings ADD COLUMN combat_rounds TEXT`,
-  ];
-  for (const sql of trashMigrations) {
-    try { await database.execAsync(sql); } catch (_e) { /* colonne existe déjà */ }
-  }
-
-  // Migrations clubs (colonnes ajoutées après la création initiale)
-  const clubsMigrations = [
-    `ALTER TABLE clubs ADD COLUMN logo_uri TEXT`,
-    `ALTER TABLE clubs ADD COLUMN color TEXT`,
-    `ALTER TABLE clubs ADD COLUMN sessions_per_week INTEGER`,
-  ];
-  for (const sql of clubsMigrations) {
-    try { await database.execAsync(sql); } catch (_e) { /* colonne existe déjà */ }
-  }
+  // Migrations trash_trainings + clubs (PRAGMA-protected)
+  await safeAddColumn(database, 'trash_trainings', 'heart_rate', 'INTEGER');
+  await safeAddColumn(database, 'trash_trainings', 'max_heart_rate', 'INTEGER');
+  await safeAddColumn(database, 'trash_trainings', 'location_lat', 'REAL');
+  await safeAddColumn(database, 'trash_trainings', 'location_lon', 'REAL');
+  await safeAddColumn(database, 'trash_trainings', 'location_name', 'TEXT');
+  await safeAddColumn(database, 'trash_trainings', 'combat_rounds', 'TEXT');
+  await safeAddColumn(database, 'clubs', 'logo_uri', 'TEXT');
+  await safeAddColumn(database, 'clubs', 'color', 'TEXT');
+  await safeAddColumn(database, 'clubs', 'sessions_per_week', 'INTEGER');
 
   // Initialiser le carnet d'entraînement
   await initTrainingJournalDB();
