@@ -64,7 +64,7 @@ interface StatsTabViewNewProps {
 
 export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) => {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const { colors, isDark, screenBackground, screenTextMuted } = useTheme();
+  const { colors, isDark, screenBackground, screenText, screenTextMuted } = useTheme();
   const { t } = useI18n();
 
   // Memoize pages to avoid new object references on every render
@@ -153,8 +153,9 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
             {PAGES.map((page, index) => {
               const Icon = page.icon;
               const isActive = currentPage === index;
-              const activeColor = isDark ? colors.accent : '#FFFFFF';
-              const inactiveColor = screenTextMuted || (isDark ? colors.textMuted : 'rgba(255,255,255,0.7)');
+              // Theme-safe : screenText pour l'icone et le label inactifs, opacity pour la nuance
+              const inactiveCircleBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.18)';
+              const inactiveCircleBorder = isDark ? (colors.companion + '40') : 'rgba(255,255,255,0.3)';
               return (
                 <TouchableOpacity
                   key={page.id}
@@ -167,20 +168,24 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
                     {
                       backgroundColor: isActive
                         ? (isDark ? colors.accent : '#FFFFFF')
-                        : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.15)'),
+                        : inactiveCircleBg,
                       borderWidth: isActive ? 0 : 1,
-                      borderColor: isActive ? 'transparent' : (isDark ? (colors.companion + '40') : 'rgba(255,255,255,0.3)'),
+                      borderColor: isActive ? 'transparent' : inactiveCircleBorder,
                     },
                   ]}>
                     <Icon
                       size={18}
-                      color={isActive ? (isDark ? colors.textOnAccent : colors.accent) : inactiveColor}
+                      color={isActive ? (isDark ? colors.textOnAccent : colors.accent) : screenText}
                       strokeWidth={2.5}
+                      style={{ opacity: isActive ? 1 : 0.7 }}
                     />
                   </View>
                   <Text style={[
                     styles.tabLabel,
-                    { color: isActive ? (isDark ? colors.accent : '#FFFFFF') : inactiveColor },
+                    {
+                      color: isActive ? (isDark ? colors.accent : '#FFFFFF') : screenText,
+                      opacity: isActive ? 1 : 0.7,
+                    },
                   ]}>
                     {page.title}
                   </Text>
