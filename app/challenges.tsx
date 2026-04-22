@@ -335,11 +335,88 @@ export default function ChallengesScreen() {
           }}
         />
         
+        {/* ── DASHBOARD OVERVIEW ── */}
+        {(() => {
+          const currentList = getChallenges();
+          const completed = currentList.filter(c => c?.progress?.completed).length;
+          const claimed = currentList.filter(c => c?.progress?.claimed).length;
+          const total = currentList.length;
+          const completionPct = total > 0 ? Math.round((completed / total) * 100) : 0;
+          // XP non réclamé sur les complétés
+          const unclaimedXP = currentList
+            .filter(c => c?.progress?.completed && !c?.progress?.claimed)
+            .reduce((sum, c) => sum + (c?.xpReward || 0), 0);
+          const tabColor = activeTab === 'daily' ? '#3B82F6' : activeTab === 'weekly' ? '#8B5CF6' : '#F59E0B';
+          const tabLabel = activeTab === 'daily' ? 'aujourd\'hui' : activeTab === 'weekly' ? 'cette semaine' : 'ce mois';
+          return (
+            <View style={{
+              backgroundColor: colors.backgroundCard,
+              borderRadius: 16, padding: 14, marginHorizontal: 16, marginBottom: 12,
+              borderLeftWidth: 4, borderLeftColor: tabColor,
+            }}>
+              {/* Header avec progression globale */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 10 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.4 }}>
+                    PROGRESSION {tabLabel.toUpperCase()}
+                  </Text>
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: tabColor, marginTop: 2, letterSpacing: -0.5 }}>
+                    {completed}/{total}
+                  </Text>
+                </View>
+                <View style={{ alignItems: 'center', minWidth: 60 }}>
+                  <Text style={{ fontSize: 22, fontWeight: '900', color: colors.textPrimary, letterSpacing: -0.5 }}>
+                    {completionPct}%
+                  </Text>
+                  <Text style={{ fontSize: 9, color: colors.textMuted, fontWeight: '700' }}>complétés</Text>
+                </View>
+              </View>
+
+              {/* Progress bar */}
+              <View style={{ height: 8, borderRadius: 4, overflow: 'hidden', backgroundColor: tabColor + '20', marginBottom: 10 }}>
+                <View style={{ width: `${completionPct}%`, height: '100%', backgroundColor: tabColor, borderRadius: 4 }} />
+              </View>
+
+              {/* Stats row */}
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <View style={{ flex: 1, backgroundColor: '#22C55E15', borderRadius: 10, padding: 8, alignItems: 'center' }}>
+                  <CheckCircle2 size={14} color="#22C55E" />
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#22C55E', marginTop: 3, letterSpacing: -0.3 }}>{claimed}</Text>
+                  <Text style={{ fontSize: 9, fontWeight: '700', color: '#22C55E', letterSpacing: 0.3 }}>RÉCLAMÉS</Text>
+                </View>
+                <View style={{ flex: 1, backgroundColor: '#F59E0B15', borderRadius: 10, padding: 8, alignItems: 'center' }}>
+                  <Gift size={14} color="#F59E0B" />
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#F59E0B', marginTop: 3, letterSpacing: -0.3 }}>{completed - claimed}</Text>
+                  <Text style={{ fontSize: 9, fontWeight: '700', color: '#F59E0B', letterSpacing: 0.3 }}>À RÉCLAMER</Text>
+                </View>
+                <View style={{ flex: 1, backgroundColor: '#A855F715', borderRadius: 10, padding: 8, alignItems: 'center' }}>
+                  <Zap size={14} color="#A855F7" />
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#A855F7', marginTop: 3, letterSpacing: -0.3 }}>{unclaimedXP}</Text>
+                  <Text style={{ fontSize: 9, fontWeight: '700', color: '#A855F7', letterSpacing: 0.3 }}>XP DISPO</Text>
+                </View>
+              </View>
+
+              {/* Banner motivant si XP à réclamer */}
+              {unclaimedXP > 0 && (
+                <View style={{
+                  marginTop: 10, padding: 10, borderRadius: 10,
+                  backgroundColor: '#F59E0B', flexDirection: 'row', alignItems: 'center', gap: 8,
+                }}>
+                  <Gift size={16} color="#FFFFFF" />
+                  <Text style={{ flex: 1, fontSize: 12, fontWeight: '700', color: '#FFFFFF' }}>
+                    Tu as {unclaimedXP} XP à récupérer en bas !
+                  </Text>
+                </View>
+              )}
+            </View>
+          );
+        })()}
+
         {/* Info */}
         <View style={[styles.infoCard, { backgroundColor: colors.backgroundCard }]}>
           <Target size={16} color={colors.accentText} />
           <Text style={[styles.infoText, { color: colors.textMuted }]}>
-            {activeTab === 'daily' 
+            {activeTab === 'daily'
               ? t('challenges.infoDailyHint')
               : activeTab === 'weekly'
               ? t('challenges.infoWeeklyHint')
