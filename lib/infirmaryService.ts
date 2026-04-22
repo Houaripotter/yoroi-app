@@ -404,18 +404,43 @@ export const completeReminder = async (reminderId: number): Promise<void> => {
 // ============================================
 
 /**
- * Retourne le nom d'affichage d'une zone corporelle à partir de son ID
- * Cherche d'abord dans bodyZones constants, puis dans le BodyMap INITIAL_DATA
+ * Retourne le nom d'affichage d'une zone corporelle à partir de son ID.
+ * Cherche d'abord dans bodyZones constants, puis dans le BodyMap INITIAL_DATA.
+ * Si l'ID est inconnue (typo, ancienne version, etc.), tente plusieurs variantes,
+ * puis formate l'ID en label lisible (ex: "finger_l_2" → "Finger Gauche").
  */
 export const getZoneDisplayName = (zoneId: string, zoneView: 'front' | 'back'): string => {
-  // First try the bodyZones constants
+  if (!zoneId) return 'Zone inconnue';
+
+  // 1) Match exact dans bodyZones constants
   const zone = getZoneById(zoneId, zoneView);
   if (zone) return zone.name;
 
-  // Fallback: look up in BodyMap's INITIAL_DATA (uses 'label' instead of 'name')
+  // 2) Match dans BodyMap INITIAL_DATA (utilise 'label' au lieu de 'name')
   const bodyMapZones = zoneView === 'front' ? INITIAL_DATA.front : INITIAL_DATA.back;
   const bodyMapZone = bodyMapZones.find(z => z.id === zoneId);
-  return bodyMapZone?.label || zoneId;
+  if (bodyMapZone?.label) return bodyMapZone.label;
+
+  // 3) Variantes : strip suffixes numériques (finger_l_2 → finger_l), pluriel (finger_l → fingers_l)
+  const stripped = zoneId.replace(/_\d+$/, '');                    // finger_l_2 → finger_l
+  if (stripped !== zoneId) {
+    const z = getZoneById(stripped, zoneView);
+    if (z) return z.name;
+  }
+  const parts = stripped.split('_');                                // [finger, l]
+  if (parts.length >= 2) {
+    const pluralized = parts[0] + 's_' + parts.slice(1).join('_');  // fingers_l
+    const z = getZoneById(pluralized, zoneView);
+    if (z) return z.name;
+  }
+
+  // 4) Dernier recours : formater l'ID brut en label humain (Title Case + côté en français)
+  const cleaned = stripped
+    .replace(/_l$|_left$/i, ' Gauche')
+    .replace(/_r$|_right$/i, ' Droite')
+    .replace(/_back/i, ' (Arrière)')
+    .replace(/_/g, ' ');
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 };
 
 /**
