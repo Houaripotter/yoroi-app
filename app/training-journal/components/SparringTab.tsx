@@ -1824,6 +1824,228 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           );
         })()}
 
+        {/* ── WINRATE PAR INTENSITÉ (guerre / technique / détendu) ── */}
+        {!isEmpty && filteredTrainings.length > 0 && (() => {
+          const byIntensity: Record<string, { wins: number; losses: number; draws: number; total: number }> = {
+            guerre: { wins: 0, losses: 0, draws: 0, total: 0 },
+            technique: { wins: 0, losses: 0, draws: 0, total: 0 },
+            detendu: { wins: 0, losses: 0, draws: 0, total: 0 },
+          };
+          for (const tr of filteredTrainings) {
+            for (const r of parseCombatRounds(tr.combat_rounds)) {
+              const ki = r.roundIntensity || 'technique';
+              if (!byIntensity[ki]) continue;
+              if (r.result === 'win') byIntensity[ki].wins++;
+              else if (r.result === 'loss') byIntensity[ki].losses++;
+              else if (r.result === 'draw') byIntensity[ki].draws++;
+              byIntensity[ki].total++;
+            }
+          }
+          const totalAll = byIntensity.guerre.total + byIntensity.technique.total + byIntensity.detendu.total;
+          if (totalAll === 0) return null;
+          const intensityMeta = [
+            { key: 'guerre', label: '🔥 Guerre', color: '#EF4444', desc: 'Rounds intenses' },
+            { key: 'technique', label: '🎯 Technique', color: '#3B82F6', desc: 'Travail technique' },
+            { key: 'detendu', label: '🌊 Détendu', color: '#22C55E', desc: 'Roll léger' },
+          ];
+          return (
+            <View style={{
+              backgroundColor: cardBg,
+              borderRadius: 16,
+              padding: 16,
+              marginHorizontal: 16,
+              marginVertical: 8,
+              borderWidth: 1,
+              borderColor: cardBorder,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+                <Text style={{ fontSize: 14 }}>📊</Text>
+                <Text style={{ fontSize: 13, fontWeight: '900', color: colors.text, letterSpacing: 0.3 }}>
+                  PERFORMANCE PAR INTENSITÉ
+                </Text>
+              </View>
+              <View style={{ gap: 10 }}>
+                {intensityMeta.map(m => {
+                  const s = byIntensity[m.key];
+                  if (s.total === 0) return null;
+                  const wr = Math.round((s.wins / s.total) * 100);
+                  const winPct = (s.wins / s.total) * 100;
+                  const drawPct = (s.draws / s.total) * 100;
+                  return (
+                    <View key={m.key}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+                          <Text style={{ fontSize: 13, fontWeight: '800', color: colors.text }}>{m.label}</Text>
+                          <Text style={{ fontSize: 10, color: colors.textMuted, fontWeight: '600' }}>{m.desc}</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                          <Text style={{ fontSize: 16, fontWeight: '900', color: m.color, letterSpacing: -0.3 }}>{wr}%</Text>
+                          <Text style={{ fontSize: 10, color: colors.textMuted, fontWeight: '700' }}>
+                            {s.wins}V/{s.losses}D{s.draws > 0 ? `/${s.draws}N` : ''}
+                          </Text>
+                        </View>
+                      </View>
+                      {/* Barre stacked V/N/D */}
+                      <View style={{ flexDirection: 'row', height: 8, borderRadius: 4, overflow: 'hidden', backgroundColor: cardBorder }}>
+                        <View style={{ width: `${winPct}%`, backgroundColor: '#22C55E' }} />
+                        <View style={{ width: `${drawPct}%`, backgroundColor: '#F59E0B' }} />
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          );
+        })()}
+
+        {/* ── PERFORMANCE PAR JOUR DE LA SEMAINE ── */}
+        {!isEmpty && filteredTrainings.length > 0 && (() => {
+          const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+          const byDay: { wins: number; total: number; sessions: number }[] = days.map(() => ({ wins: 0, total: 0, sessions: 0 }));
+          for (const tr of filteredTrainings) {
+            const rounds = parseCombatRounds(tr.combat_rounds);
+            if (rounds.length === 0) continue;
+            try {
+              const d = new Date(tr.date);
+              const dayIdx = d.getDay();
+              byDay[dayIdx].sessions++;
+              for (const r of rounds) {
+                if (r.result === 'win') byDay[dayIdx].wins++;
+                if (r.result) byDay[dayIdx].total++;
+              }
+            } catch {}
+          }
+          const maxSessions = Math.max(...byDay.map(d => d.sessions));
+          if (maxSessions === 0) return null;
+          // Réorganiser : Lun, Mar, ..., Sam, Dim
+          const order = [1, 2, 3, 4, 5, 6, 0];
+          return (
+            <View style={{
+              backgroundColor: cardBg,
+              borderRadius: 16,
+              padding: 16,
+              marginHorizontal: 16,
+              marginVertical: 8,
+              borderWidth: 1,
+              borderColor: cardBorder,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+                <Text style={{ fontSize: 14 }}>📅</Text>
+                <Text style={{ fontSize: 13, fontWeight: '900', color: colors.text, letterSpacing: 0.3 }}>
+                  PERFORMANCE PAR JOUR
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 110 }}>
+                {order.map(idx => {
+                  const d = byDay[idx];
+                  const wr = d.total > 0 ? Math.round((d.wins / d.total) * 100) : null;
+                  const barH = maxSessions > 0 ? Math.max(4, (d.sessions / maxSessions) * 70) : 4;
+                  // Couleur selon winrate
+                  const color = wr === null ? '#94A3B8' : wr >= 60 ? '#22C55E' : wr >= 40 ? '#F59E0B' : '#EF4444';
+                  return (
+                    <View key={idx} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: wr !== null ? color : colors.textMuted }}>
+                        {wr !== null ? `${wr}%` : '—'}
+                      </Text>
+                      <View style={{
+                        width: '70%',
+                        height: barH,
+                        backgroundColor: color,
+                        borderRadius: 4,
+                        opacity: d.sessions === 0 ? 0.2 : 1,
+                      }} />
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, marginTop: 2 }}>{days[idx]}</Text>
+                      <Text style={{ fontSize: 9, color: colors.textMuted, opacity: 0.7 }}>
+                        {d.sessions > 0 ? `${d.sessions}s` : '—'}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+              <Text style={{ fontSize: 10, color: colors.textMuted, fontStyle: 'italic', marginTop: 10, textAlign: 'center' }}>
+                Hauteur = nb de sessions · Couleur = win rate · Vert ≥ 60% · Orange 40-60% · Rouge &lt; 40%
+              </Text>
+            </View>
+          );
+        })()}
+
+        {/* ── STATS CARDIO SPARRING (FC moy + calories) ── */}
+        {!isEmpty && filteredTrainings.length > 0 && (() => {
+          const sessionsWithHR = filteredTrainings.filter(tr => tr.heart_rate && tr.heart_rate > 0);
+          const sessionsWithCal = filteredTrainings.filter(tr => tr.calories && tr.calories > 0);
+          const sessionsWithDur = filteredTrainings.filter(tr => tr.duration_minutes && tr.duration_minutes > 0);
+          if (sessionsWithHR.length === 0 && sessionsWithCal.length === 0 && sessionsWithDur.length === 0) return null;
+          const avgHR = sessionsWithHR.length > 0
+            ? Math.round(sessionsWithHR.reduce((s, t) => s + (t.heart_rate || 0), 0) / sessionsWithHR.length)
+            : null;
+          const maxHR = sessionsWithHR.length > 0
+            ? Math.max(...sessionsWithHR.map(t => t.max_heart_rate || t.heart_rate || 0))
+            : null;
+          const totalKcal = sessionsWithCal.reduce((s, t) => s + (t.calories || 0), 0);
+          const totalMin = sessionsWithDur.reduce((s, t) => s + (t.duration_minutes || 0), 0);
+          const totalH = totalMin / 60;
+          return (
+            <View style={{
+              backgroundColor: cardBg,
+              borderRadius: 16,
+              padding: 16,
+              marginHorizontal: 16,
+              marginVertical: 8,
+              borderWidth: 1,
+              borderColor: cardBorder,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+                <Text style={{ fontSize: 14 }}>❤️</Text>
+                <Text style={{ fontSize: 13, fontWeight: '900', color: colors.text, letterSpacing: 0.3 }}>
+                  CARDIO & VOLUME SPARRING
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {totalH > 0 && (
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: '#A855F715', borderRadius: 12, padding: 12, borderLeftWidth: 3, borderLeftColor: '#A855F7' }}>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#A855F7', letterSpacing: 0.4, marginBottom: 4 }}>TEMPS TOTAL</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: '#A855F7', letterSpacing: -0.5 }}>
+                      {totalH >= 100 ? Math.round(totalH) : totalH.toFixed(1)}h
+                    </Text>
+                    <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
+                      sur le tatami
+                    </Text>
+                  </View>
+                )}
+                {totalKcal > 0 && (
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: '#F9731615', borderRadius: 12, padding: 12, borderLeftWidth: 3, borderLeftColor: '#F97316' }}>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#F97316', letterSpacing: 0.4, marginBottom: 4 }}>CALORIES</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: '#F97316', letterSpacing: -0.5 }}>
+                      {totalKcal >= 1000 ? `${(totalKcal / 1000).toFixed(1)}k` : totalKcal}
+                    </Text>
+                    <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
+                      brûlées au total
+                    </Text>
+                  </View>
+                )}
+                {avgHR !== null && (
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: '#EF444415', borderRadius: 12, padding: 12, borderLeftWidth: 3, borderLeftColor: '#EF4444' }}>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#EF4444', letterSpacing: 0.4, marginBottom: 4 }}>FC MOYENNE</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: '#EF4444', letterSpacing: -0.5 }}>{avgHR}</Text>
+                    <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
+                      bpm sur {sessionsWithHR.length} séances
+                    </Text>
+                  </View>
+                )}
+                {maxHR !== null && maxHR > 0 && (
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: '#DC262615', borderRadius: 12, padding: 12, borderLeftWidth: 3, borderLeftColor: '#DC2626' }}>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#DC2626', letterSpacing: 0.4, marginBottom: 4 }}>FC MAX ATTEINTE</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: '#DC2626', letterSpacing: -0.5 }}>{maxHR}</Text>
+                    <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
+                      bpm record
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          );
+        })()}
+
         {/* ── HEATMAP TECHNIQUES (données vs reçues) ── */}
         {!isEmpty && methodsCombined.length > 0 && (
           <TechniqueHeatmap methods={methodsCombined} maxItems={10} />
