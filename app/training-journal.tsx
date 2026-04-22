@@ -307,6 +307,65 @@ export default function TrainingJournalScreen() {
     totalDrills: skills.reduce((count, s) => count + (s.drillCount || 0), 0),
   }), [benchmarksWithEntries, skills]);
 
+  // Stats avancées Records (pour le bloc analytics tab Records)
+  const recordsStats = useMemo(() => {
+    if (benchmarksWithEntries.length === 0) {
+      return { categories: 0, lastPR: null, mostActive: null, recentMonth: 0 };
+    }
+    const cats = new Set<string>();
+    let lastPR: { name: string; date: string; value: string; unit: string; color: string } | null = null;
+    let mostActive: { name: string; entries: number; color: string } | null = null;
+    let recentMonth = 0;
+    const monthAgo = Date.now() - 30 * 86400000;
+
+    for (const b of benchmarksWithEntries) {
+      if (b.category) cats.add(b.category);
+      const entries = b.entries || [];
+      // Compteur PR du mois
+      for (const e of entries) {
+        try {
+          if (new Date(e.date).getTime() >= monthAgo) recentMonth++;
+        } catch {}
+      }
+      // Plus actif
+      if (!mostActive || entries.length > mostActive.entries) {
+        mostActive = { name: b.name, entries: entries.length, color: b.color || '#EF4444' };
+      }
+      // Dernier PR (entrée la plus récente)
+      const sorted = [...entries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const recent = sorted[0];
+      if (recent && (!lastPR || new Date(recent.date).getTime() > new Date(lastPR.date).getTime())) {
+        lastPR = {
+          name: b.name,
+          date: recent.date,
+          value: String(recent.value),
+          unit: b.unit || '',
+          color: b.color || '#EF4444',
+        };
+      }
+    }
+    return { categories: cats.size, lastPR, mostActive, recentMonth };
+  }, [benchmarksWithEntries]);
+
+  // Stats avancées Techniques (pour le bloc analytics tab Techniques)
+  const skillsStats = useMemo(() => {
+    const inProgress = skills.filter(s => s.status === 'in_progress').length;
+    const toLearn = skills.filter(s => s.status === 'to_learn').length;
+    const mastered = skills.filter(s => s.status === 'mastered').length;
+    const total = skills.length;
+    const masteryPct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+    // Suggestion : in_progress avec le plus FAIBLE drillCount (pour booster)
+    const suggestion = skills
+      .filter(s => s.status === 'in_progress')
+      .sort((a, b) => (a.drillCount || 0) - (b.drillCount || 0))[0] || null;
+    // Top drillé (mastered ou in_progress)
+    const topDrilled = [...skills].sort((a, b) => (b.drillCount || 0) - (a.drillCount || 0))[0] || null;
+    // Recent mastered
+    const recentMastered = [...skills.filter(s => s.status === 'mastered')]
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0] || null;
+    return { inProgress, toLearn, mastered, total, masteryPct, suggestion, topDrilled, recentMastered };
+  }, [skills]);
+
   // Load user preferences
   useEffect(() => {
     const loadUserPrefs = async () => {
@@ -1721,6 +1780,82 @@ export default function TrainingJournalScreen() {
         {/* SECTION: MES RECORDS */}
         {activeTab === 'records' && (
           <View>
+            {/* ── DASHBOARD STATS RECORDS ── */}
+            {benchmarksWithEntries.length > 0 && (
+              <View style={{
+                backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+                borderRadius: 16, padding: 14, marginHorizontal: 12, marginBottom: 10,
+                borderWidth: 1, borderColor: colors.border,
+              }}>
+                {/* 4 mini-stats en grille 2×2 */}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: '#EF444415', borderRadius: 10, padding: 10, borderLeftWidth: 3, borderLeftColor: '#EF4444' }}>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#EF4444', letterSpacing: 0.4, marginBottom: 2 }}>RECORDS</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: '#EF4444', letterSpacing: -0.5 }}>{stats.totalPRs}</Text>
+                    <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
+                      sur {stats.totalBenchmarks} exercices
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: '#3B82F615', borderRadius: 10, padding: 10, borderLeftWidth: 3, borderLeftColor: '#3B82F6' }}>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#3B82F6', letterSpacing: 0.4, marginBottom: 2 }}>CATÉGORIES</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: '#3B82F6', letterSpacing: -0.5 }}>{recordsStats.categories}</Text>
+                    <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
+                      types de records
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: '#22C55E15', borderRadius: 10, padding: 10, borderLeftWidth: 3, borderLeftColor: '#22C55E' }}>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#22C55E', letterSpacing: 0.4, marginBottom: 2 }}>CE MOIS</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: '#22C55E', letterSpacing: -0.5 }}>{recordsStats.recentMonth}</Text>
+                    <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
+                      PR battus
+                    </Text>
+                  </View>
+                  {recordsStats.mostActive && (
+                    <View style={{ flex: 1, minWidth: '45%', backgroundColor: '#A855F715', borderRadius: 10, padding: 10, borderLeftWidth: 3, borderLeftColor: '#A855F7' }}>
+                      <Text style={{ fontSize: 9, fontWeight: '800', color: '#A855F7', letterSpacing: 0.4, marginBottom: 2 }}>+ ACTIF</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: '#A855F7', letterSpacing: -0.3 }} numberOfLines={1}>
+                        {recordsStats.mostActive.name}
+                      </Text>
+                      <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
+                        {recordsStats.mostActive.entries} entrées
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                {/* Dernier PR mis en avant */}
+                {recordsStats.lastPR && (
+                  <View style={{
+                    marginTop: 10,
+                    backgroundColor: recordsStats.lastPR.color + '12',
+                    borderRadius: 10, padding: 10,
+                    flexDirection: 'row', alignItems: 'center', gap: 10,
+                  }}>
+                    <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: recordsStats.lastPR.color + '25', alignItems: 'center', justifyContent: 'center' }}>
+                      <TrophyIcon size={18} color={recordsStats.lastPR.color} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 9, fontWeight: '800', color: recordsStats.lastPR.color, letterSpacing: 0.4 }}>DERNIER PR</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginTop: 1 }} numberOfLines={1}>
+                        {recordsStats.lastPR.name} — {recordsStats.lastPR.value} {recordsStats.lastPR.unit}
+                      </Text>
+                    </View>
+                    <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>
+                      {(() => {
+                        try {
+                          const days = Math.floor((Date.now() - new Date(recordsStats.lastPR.date).getTime()) / 86400000);
+                          if (days === 0) return "aujourd'hui";
+                          if (days === 1) return 'hier';
+                          if (days < 7) return `il y a ${days}j`;
+                          if (days < 30) return `il y a ${Math.floor(days / 7)}sem`;
+                          return `il y a ${Math.floor(days / 30)} mois`;
+                        } catch { return ''; }
+                      })()}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
             <View style={[styles.sectionHeader, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
               <View style={styles.sectionTitleRow}>
                 <Dumbbell size={20} color="#EF4444" />
@@ -1812,6 +1947,87 @@ export default function TrainingJournalScreen() {
         {/* SECTION: MES TECHNIQUES */}
         {activeTab === 'techniques' && (
           <>
+            {/* ── DASHBOARD STATS TECHNIQUES ── */}
+            {skillsStats.total > 0 && (
+              <View style={{
+                backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+                borderRadius: 16, padding: 14, marginHorizontal: 12, marginBottom: 10,
+                borderWidth: 1, borderColor: colors.border,
+              }}>
+                {/* Header avec progress bar de mastery */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 10 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.4 }}>PROGRESSION DE MAÎTRISE</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: colors.textPrimary, marginTop: 2, letterSpacing: -0.5 }}>
+                      {skillsStats.masteryPct}%
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>
+                      {skillsStats.mastered}/{skillsStats.total} techniques
+                    </Text>
+                    <Text style={{ fontSize: 9, color: colors.textMuted, marginTop: 2 }}>
+                      {stats.totalDrills} drills cumulés
+                    </Text>
+                  </View>
+                </View>
+                {/* Barre stacked mastered/in_progress/to_learn */}
+                <View style={{ flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden', backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', marginBottom: 12 }}>
+                  <View style={{ width: `${(skillsStats.mastered / skillsStats.total) * 100}%`, backgroundColor: '#22C55E' }} />
+                  <View style={{ width: `${(skillsStats.inProgress / skillsStats.total) * 100}%`, backgroundColor: '#F59E0B' }} />
+                  <View style={{ width: `${(skillsStats.toLearn / skillsStats.total) * 100}%`, backgroundColor: '#94A3B8' }} />
+                </View>
+
+                {/* 3 chiffres clés */}
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+                  <View style={{ flex: 1, backgroundColor: '#22C55E15', borderRadius: 10, padding: 10, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 18, fontWeight: '900', color: '#22C55E', letterSpacing: -0.3 }}>{skillsStats.mastered}</Text>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#22C55E', letterSpacing: 0.4, marginTop: 2 }}>MAÎTRISÉES</Text>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: '#F59E0B15', borderRadius: 10, padding: 10, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 18, fontWeight: '900', color: '#F59E0B', letterSpacing: -0.3 }}>{skillsStats.inProgress}</Text>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#F59E0B', letterSpacing: 0.4, marginTop: 2 }}>EN COURS</Text>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: '#94A3B815', borderRadius: 10, padding: 10, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 18, fontWeight: '900', color: '#64748B', letterSpacing: -0.3 }}>{skillsStats.toLearn}</Text>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#64748B', letterSpacing: 0.4, marginTop: 2 }}>À APPRENDRE</Text>
+                  </View>
+                </View>
+
+                {/* Suggestion : technique à drill */}
+                {skillsStats.suggestion && (
+                  <View style={{ backgroundColor: '#A855F715', borderRadius: 10, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: skillsStats.recentMastered ? 8 : 0 }}>
+                    <Text style={{ fontSize: 18 }}>💡</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 9, fontWeight: '800', color: '#A855F7', letterSpacing: 0.4 }}>SUGGESTION DU JOUR</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginTop: 1 }} numberOfLines={1}>
+                        Drill {skillsStats.suggestion.name}
+                      </Text>
+                      <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 1 }}>
+                        Seulement {skillsStats.suggestion.drillCount || 0} reps · pousse-la vers Mastered
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Recent mastered */}
+                {skillsStats.recentMastered && (
+                  <View style={{ backgroundColor: '#22C55E15', borderRadius: 10, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Text style={{ fontSize: 18 }}>🏆</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 9, fontWeight: '800', color: '#22C55E', letterSpacing: 0.4 }}>DERNIÈRE MAÎTRISÉE</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginTop: 1 }} numberOfLines={1}>
+                        {skillsStats.recentMastered.name}
+                      </Text>
+                      <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 1 }}>
+                        {skillsStats.recentMastered.drillCount || 0} drills pour la valider
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
+
             <View style={[styles.sectionHeader, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
               <View style={styles.sectionTitleRow}>
                 <BookOpen size={20} color="#8B5CF6" />
