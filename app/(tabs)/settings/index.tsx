@@ -16,6 +16,7 @@ import {
   DeviceEventEmitter,
   Linking,
   ActivityIndicator,
+  Share,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -59,6 +60,10 @@ import {
   Database,
   Globe,
   Check,
+  Share2,
+  Sparkles,
+  Mail,
+  AlertTriangle,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Type } from 'lucide-react-native';
@@ -130,7 +135,7 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
     ],
   },
   {
-    title: 'settings.sections.data',
+    title: 'Sauvegarde & Données',
     items: [
       { id: 'companion', label: 'settings.items.companion.label', sublabel: 'settings.items.companion.sublabel', Icon: Table, iconColor: '#4F8EF7', route: '/companion' },
       { id: 'export', label: 'settings.items.export.label', sublabel: 'settings.items.export.sublabel', Icon: Download, iconColor: '#14B8A6', handler: 'export' },
@@ -140,19 +145,28 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
       { id: 'premium', label: 'Yoroi Premium', sublabel: 'Widget, insights, heatmap, partage HD…', Icon: Star, iconColor: '#A855F7', route: '/premium' },
       { id: 'deduplicate', label: 'Nettoyer les doublons', sublabel: 'Supprimer les séances en double (Apple Santé)', Icon: ShieldCheck, iconColor: '#F59E0B', handler: 'deduplicate' },
       { id: 'pdf', label: 'settings.items.pdf.label', sublabel: 'settings.items.pdf.sublabel', Icon: FileText, iconColor: '#6B7280', handler: 'pdf' },
-      { id: 'clear-cache', label: 'settings.items.clearCache.label', sublabel: 'settings.items.clearCache.sublabel', Icon: Database, iconColor: '#F59E0B', handler: 'clear-cache' },
       { id: 'privacy', label: 'settings.items.privacy.label', sublabel: 'settings.items.privacy.sublabel', Icon: ShieldCheck, iconColor: '#14B8A6', route: '/privacy-data' },
       { id: 'privacy-policy', label: 'settings.items.privacyPolicy.label', sublabel: 'settings.items.privacyPolicy.sublabel', Icon: Lock, iconColor: '#6B7280', handler: 'privacy-policy' },
-      { id: 'clean-uninstall', label: 'settings.items.cleanUninstall.label', sublabel: 'settings.items.cleanUninstall.sublabel', Icon: LogOut, iconColor: '#EF4444', handler: 'clean-uninstall', labelColor: '#EF4444' },
-      { id: 'reset', label: 'settings.items.reset.label', sublabel: 'settings.items.reset.sublabel', Icon: Trash2, iconColor: '#EF4444', handler: 'reset', labelColor: '#EF4444' },
     ],
   },
   {
     title: 'settings.sections.support',
     items: [
-      { id: 'about', label: 'settings.items.about.label', sublabel: 'settings.items.about.sublabel', Icon: Info, iconColor: '#8B5CF6', handler: 'about' },
-      { id: 'ideas', label: 'settings.items.ideas.label', sublabel: 'settings.items.ideas.sublabel', Icon: Lightbulb, iconColor: '#14B8A6', handler: 'ideas' },
+      { id: 'whats-new', label: 'Nouveautés de la version', sublabel: 'Découvre ce qui vient d\'être ajouté', Icon: Sparkles, iconColor: '#A855F7', handler: 'whats-new' },
+      { id: 'share-app', label: 'Partager Yoroi avec un ami', sublabel: 'Lien App Store', Icon: Share2, iconColor: '#3B82F6', handler: 'share-app' },
       { id: 'rate', label: 'settings.items.rate.label', sublabel: 'settings.items.rate.sublabel', Icon: Star, iconColor: '#F59E0B', handler: 'rate' },
+      { id: 'ideas', label: 'settings.items.ideas.label', sublabel: 'settings.items.ideas.sublabel', Icon: Lightbulb, iconColor: '#14B8A6', handler: 'ideas' },
+      { id: 'contact-dev', label: 'Contacter le développeur', sublabel: 'Envoie-moi un email', Icon: Mail, iconColor: '#EC4899', handler: 'contact-dev' },
+      { id: 'about', label: 'settings.items.about.label', sublabel: 'settings.items.about.sublabel', Icon: Info, iconColor: '#8B5CF6', handler: 'about' },
+    ],
+  },
+  // Zone sensible — séparée visuellement pour éviter les clics par erreur
+  {
+    title: '⚠️  Zone sensible',
+    items: [
+      { id: 'clear-cache', label: 'settings.items.clearCache.label', sublabel: 'settings.items.clearCache.sublabel', Icon: Database, iconColor: '#F59E0B', handler: 'clear-cache' },
+      { id: 'clean-uninstall', label: 'settings.items.cleanUninstall.label', sublabel: 'settings.items.cleanUninstall.sublabel', Icon: LogOut, iconColor: '#EF4444', handler: 'clean-uninstall', labelColor: '#EF4444' },
+      { id: 'reset', label: 'settings.items.reset.label', sublabel: 'settings.items.reset.sublabel', Icon: Trash2, iconColor: '#EF4444', handler: 'reset', labelColor: '#EF4444' },
     ],
   },
 ];
@@ -175,7 +189,7 @@ const CREATOR_ITEMS: SettingsItem[] = [
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, isDark, screenBackground, screenText, screenTextMuted, fontSizeLevel, setFontSizeLevel } = useTheme();
+  const { colors, isDark, screenBackground, screenText, screenTextMuted, fontSizeLevel, setFontSizeLevel, themeName } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { language, setLanguage, t } = useI18n();
 
@@ -187,6 +201,14 @@ export default function SettingsScreen() {
   const [profileBelt, setProfileBelt] = useState<string>('');
   const [profileStreak, setProfileStreak] = useState<number>(0);
   const [isPremium, setIsPremium] = useState<boolean>(false);
+  // Stats hero + infos dynamiques sous-titres
+  const [totalSessions, setTotalSessions] = useState<number>(0);
+  const [weightLost, setWeightLost] = useState<number | null>(null);
+  const [bestStreak, setBestStreak] = useState<number>(0);
+  const [lastBackupAgo, setLastBackupAgo] = useState<string | null>(null);
+  const [storageInfo, setStorageInfo] = useState<string | null>(null);
+  // Modal "Nouveautés 2.3.3"
+  const [whatsNewVisible, setWhatsNewVisible] = useState<boolean>(false);
 
   // Reset modal
   const [resetModalVisible, setResetModalVisible] = useState(false);
@@ -221,6 +243,8 @@ export default function SettingsScreen() {
   useEffect(() => {
     loadUnits();
     loadProfileHeader();
+    loadLastBackupDate();
+    loadStorageInfo();
     // Check if creator mode is unlocked
     AsyncStorage.getItem('@yoroi_screenshot_menu_unlocked').then(val => {
       if (val === 'true') {
@@ -237,11 +261,13 @@ export default function SettingsScreen() {
 
   const loadProfileHeader = async () => {
     try {
-      const [settingsRaw, belt, streakRaw, premiumRaw] = await Promise.all([
+      const [settingsRaw, belt, streakRaw, premiumRaw, bestStreakRaw, prRaw] = await Promise.all([
         AsyncStorage.getItem('@yoroi_user_settings'),
         AsyncStorage.getItem('@yoroi_belt'),
         AsyncStorage.getItem('@yoroi_current_streak'),
         AsyncStorage.getItem('@yoroi_is_premium'),
+        AsyncStorage.getItem('@yoroi_best_streak'),
+        AsyncStorage.getItem('@yoroi_personal_records'),
       ]);
       if (settingsRaw) {
         try {
@@ -251,7 +277,59 @@ export default function SettingsScreen() {
       }
       if (belt) setProfileBelt(belt);
       if (streakRaw) setProfileStreak(parseInt(streakRaw, 10) || 0);
+      if (bestStreakRaw) setBestStreak(parseInt(bestStreakRaw, 10) || 0);
+      if (prRaw) {
+        try {
+          const pr = JSON.parse(prRaw);
+          if (typeof pr.totalWorkouts === 'number') setTotalSessions(pr.totalWorkouts);
+          if (typeof pr.totalWeightLoss === 'number') setWeightLost(pr.totalWeightLoss);
+        } catch {}
+      }
       setIsPremium(premiumRaw === 'true');
+    } catch {}
+  };
+
+  const loadLastBackupDate = async () => {
+    try {
+      const dir = FileSystem.documentDirectory;
+      if (!dir) return;
+      const files = await FileSystem.readDirectoryAsync(dir);
+      const backupFiles = files.filter(f => f.startsWith('yoroi_backup_') && f.endsWith('.json'));
+      if (backupFiles.length === 0) {
+        setLastBackupAgo('jamais');
+        return;
+      }
+      let mostRecent = 0;
+      for (const name of backupFiles) {
+        try {
+          const info = await FileSystem.getInfoAsync(`${dir}${name}`) as any;
+          if (info.modificationTime && info.modificationTime > mostRecent) {
+            mostRecent = info.modificationTime;
+          }
+        } catch {}
+      }
+      if (mostRecent === 0) return;
+      const daysAgo = Math.floor((Date.now() - mostRecent * 1000) / 86400000);
+      if (daysAgo === 0) setLastBackupAgo('aujourd\'hui');
+      else if (daysAgo === 1) setLastBackupAgo('hier');
+      else setLastBackupAgo(`il y a ${daysAgo} jours`);
+    } catch {}
+  };
+
+  const loadStorageInfo = async () => {
+    try {
+      const dir = FileSystem.documentDirectory;
+      if (!dir) return;
+      const files = await FileSystem.readDirectoryAsync(dir);
+      let total = 0;
+      for (const f of files) {
+        try {
+          const info = await FileSystem.getInfoAsync(`${dir}${f}`) as any;
+          if (info.exists && info.size) total += info.size;
+        } catch {}
+      }
+      const mb = total / (1024 * 1024);
+      setStorageInfo(mb < 1 ? `${Math.round(total / 1024)} Ko` : `${mb.toFixed(1)} Mo`);
     } catch {}
   };
 
@@ -765,6 +843,15 @@ export default function SettingsScreen() {
         }
         return;
       case 'privacy-policy': safeOpenURL('https://easy-woodwind-a70.notion.site/Yoroi-App-2d950188283880dbbd44d7e5abefecbb'); return;
+      case 'whats-new': setWhatsNewVisible(true); return;
+      case 'share-app':
+        Share.share({
+          message: 'J\'utilise YOROI pour tracker mes séances BJJ, mes stats et ma progression — 100% offline. Check ça : https://apps.apple.com/fr/app/yoroi-suivi-poids-sport/id6757306612',
+        }).catch(() => {});
+        return;
+      case 'contact-dev':
+        safeOpenURL('mailto:h_ouari@hotmail.com?subject=Feedback%20Yoroi%202.3.3&body=Salut%20Houari%2C%0A%0A');
+        return;
       // Creator mode toggles
       case 'toggle-screenshot': toggleGlobalScreenshotMode(!isGlobalScreenshotMode); return;
       case 'toggle-journal': toggleJournalScreenshotMode(!isJournalScreenshotMode); return;
@@ -789,13 +876,47 @@ export default function SettingsScreen() {
   // RENDER
   // ============================================
 
+  // Sous-titres dynamiques : montrer la valeur actuelle plutôt qu'une desc générique
+  const getDynamicSublabel = (item: SettingsItem, fallback: string): string => {
+    switch (item.id) {
+      case 'themes': {
+        // themeName = "fizz_dark" → "Fizz · Sombre"
+        const parts = themeName.split('_');
+        const colorName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+        const mode = parts[1] === 'dark' ? 'Sombre' : 'Clair';
+        return `${colorName} · ${mode}`;
+      }
+      case 'units':
+        return `${weightUnit === 'kg' ? 'Kilogrammes' : 'Livres'} · ${measurementUnit === 'cm' ? 'Centimètres' : 'Pouces'}`;
+      case 'backup-history':
+        return lastBackupAgo ? `Dernière sauvegarde : ${lastBackupAgo}` : fallback;
+      case 'clear-cache':
+        return storageInfo ? `${storageInfo} utilisés dans l'app` : fallback;
+      case 'sync-devices':
+        return 'iPhone ↔ iPad · sans internet';
+      default:
+        return fallback;
+    }
+  };
+
   const renderItem = (item: SettingsItem, isLast: boolean) => {
     const IconComp = item.Icon;
     const translatedLabel = t(item.label);
-    const translatedSublabel = t(item.sublabel);
+    const rawSublabel = t(item.sublabel);
+    const translatedSublabel = getDynamicSublabel(item, rawSublabel);
     // Badge "actif" pour certains items avec état
     const showPremiumActive = item.id === 'premium' && isPremium;
     const showDemoActive = item.id === 'creator-hery' && isDemoActive;
+    // Couleur spéciale pour "Dernière sauvegarde : il y a X jours" quand vieille
+    let sublabelColor = colors.textMuted;
+    if (item.id === 'backup-history' && lastBackupAgo) {
+      if (lastBackupAgo === 'jamais') sublabelColor = '#EF4444';
+      else if (lastBackupAgo.match(/il y a (\d+) jours?/)) {
+        const days = parseInt(RegExp.$1, 10);
+        if (days >= 14) sublabelColor = '#EF4444';
+        else if (days >= 7) sublabelColor = '#F59E0B';
+      }
+    }
 
     return (
       <View key={item.id}>
@@ -824,11 +945,23 @@ export default function SettingsScreen() {
               ) : null}
             </View>
             {translatedSublabel ? (
-              <Text style={[styles.rowSublabel, { color: colors.textMuted }]} numberOfLines={1}>
+              <Text style={[styles.rowSublabel, { color: sublabelColor }]} numberOfLines={1}>
                 {translatedSublabel}
               </Text>
             ) : null}
           </View>
+          {/* Pastille couleur du thème actif à côté de la ligne Thèmes */}
+          {item.id === 'themes' ? (
+            <View
+              style={{
+                width: 18, height: 18, borderRadius: 9,
+                backgroundColor: colors.accent,
+                borderWidth: 2,
+                borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
+                marginRight: 6,
+              }}
+            />
+          ) : null}
           <ChevronRight size={18} color={colors.textMuted} />
         </TouchableOpacity>
         {!isLast && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
@@ -858,47 +991,75 @@ export default function SettingsScreen() {
           <Text style={[styles.headerTitle, { color: screenText }]}>{t('settings.title')}</Text>
         </View>
 
-        {/* Hero profil — avatar + nom + ceinture + streak, clic → profile */}
+        {/* Hero profil — avatar + nom + chips + mini-stats, clic → profile */}
         {profileName ? (
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={() => router.push('/profile' as any)}
             style={[styles.heroCard, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}
           >
-            <View style={[styles.heroAvatar, { backgroundColor: colors.accent + '20', borderColor: colors.accent }]}>
-              <Text style={[styles.heroAvatarText, { color: colors.accent }]}>
-                {profileName.charAt(0).toUpperCase()}
-              </Text>
+            <View style={styles.heroTop}>
+              <View style={[styles.heroAvatar, { backgroundColor: colors.accent + '20', borderColor: colors.accent }]}>
+                <Text style={[styles.heroAvatarText, { color: colors.accent }]}>
+                  {profileName.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.heroName, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {profileName}
+                </Text>
+                <View style={styles.heroMetaRow}>
+                  {profileBelt ? (
+                    <View style={[styles.heroChip, { backgroundColor: colors.accent + '15', borderColor: colors.accent + '40' }]}>
+                      <Text style={[styles.heroChipText, { color: colors.accent }]}>
+                        Ceinture {profileBelt}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {profileStreak > 0 ? (
+                    <View style={[styles.heroChip, { backgroundColor: '#F9731615', borderColor: '#F9731640' }]}>
+                      <Text style={[styles.heroChipText, { color: '#EA580C' }]}>
+                        🔥 {profileStreak} j
+                      </Text>
+                    </View>
+                  ) : null}
+                  {isPremium ? (
+                    <View style={[styles.heroChip, { backgroundColor: '#A855F715', borderColor: '#A855F740' }]}>
+                      <Text style={[styles.heroChipText, { color: '#9333EA' }]}>
+                        PRO
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              </View>
+              <ChevronRight size={18} color={colors.textMuted} />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.heroName, { color: colors.textPrimary }]} numberOfLines={1}>
-                {profileName}
-              </Text>
-              <View style={styles.heroMetaRow}>
-                {profileBelt ? (
-                  <View style={[styles.heroChip, { backgroundColor: colors.accent + '15', borderColor: colors.accent + '40' }]}>
-                    <Text style={[styles.heroChipText, { color: colors.accent }]}>
-                      Ceinture {profileBelt}
-                    </Text>
+
+            {/* Mini stats row (sous le bloc principal, séparée par une ligne fine) */}
+            {(totalSessions > 0 || weightLost !== null || bestStreak > 0) ? (
+              <View style={[styles.heroStatsRow, { borderTopColor: colors.border }]}>
+                {totalSessions > 0 ? (
+                  <View style={styles.heroStatCol}>
+                    <Text style={[styles.heroStatValue, { color: colors.textPrimary }]}>{totalSessions}</Text>
+                    <Text style={[styles.heroStatLabel, { color: colors.textMuted }]}>séances</Text>
                   </View>
                 ) : null}
-                {profileStreak > 0 ? (
-                  <View style={[styles.heroChip, { backgroundColor: '#F9731615', borderColor: '#F9731640' }]}>
-                    <Text style={[styles.heroChipText, { color: '#EA580C' }]}>
-                      🔥 {profileStreak} jours
+                {weightLost !== null ? (
+                  <View style={styles.heroStatCol}>
+                    <Text style={[styles.heroStatValue, { color: weightLost > 0 ? '#10B981' : colors.textPrimary }]}>
+                      {weightLost > 0 ? '-' : ''}{Math.abs(weightLost).toFixed(1)} kg
                     </Text>
+                    <Text style={[styles.heroStatLabel, { color: colors.textMuted }]}>perdus</Text>
                   </View>
                 ) : null}
-                {isPremium ? (
-                  <View style={[styles.heroChip, { backgroundColor: '#A855F715', borderColor: '#A855F740' }]}>
-                    <Text style={[styles.heroChipText, { color: '#9333EA' }]}>
-                      PRO
-                    </Text>
+                {bestStreak > 0 ? (
+                  <View style={styles.heroStatCol}>
+                    <Text style={[styles.heroStatValue, { color: colors.textPrimary }]}>{bestStreak}</Text>
+                    <Text style={[styles.heroStatLabel, { color: colors.textMuted }]}>best streak</Text>
                   </View>
                 ) : null}
               </View>
-            </View>
-            <ChevronRight size={18} color={colors.textMuted} />
+            ) : null}
           </TouchableOpacity>
         ) : null}
 
@@ -1295,6 +1456,66 @@ export default function SettingsScreen() {
         </View>
       </Modal>
 
+      {/* Modal "Nouveautés de la version" */}
+      <Modal visible={whatsNewVisible} transparent animationType="fade" onRequestClose={() => setWhatsNewVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card, maxHeight: '80%' }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#A855F720', alignItems: 'center', justifyContent: 'center' }}>
+                  <Sparkles size={18} color="#A855F7" />
+                </View>
+                <View>
+                  <Text style={{ fontSize: 17, fontWeight: '900', color: colors.textPrimary }}>Nouveautés v2.3.3</Text>
+                  <Text style={{ fontSize: 11, color: colors.textMuted }}>La plus grosse mise à jour de Yoroi</Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => setWhatsNewVisible(false)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <X size={22} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {[
+                { title: 'STATS QUI TE MOTIVENT', items: ['Nouveau tableau de bord 7 catégories', 'Vue calendrier annuelle des séances', 'Streak de jours d\'affilée animé', 'Records personnels mis en avant', 'Insights intelligents auto', 'Comparaisons fun "Le saviez-vous ?"', 'Graphiques poids/muscle/sommeil avec tendance', 'Badges débloqués en bandeau'] },
+                { title: 'TRACKER COMBAT', items: ['Sparring round par round', 'Partenaires + clubs avec fiches', 'Analyse forces/faiblesses auto', 'BJJ, MMA, Boxe, K1, Judo, Lutte, Karaté', 'Palmarès & compétitions', 'Radar 5 dimensions Force/Cardio/Technique/Mental/Souplesse'] },
+                { title: 'SYNCHRONISATION', items: ['iPhone ↔ iPad direct sans internet', 'Aucun serveur, aucun cloud'] },
+                { title: 'NOUVEAU GUIDE D\'ACCUEIL', items: ['4 écrans clairs pour les premiers pas'] },
+                { title: 'PARTAGE INSTAGRAM', items: ['Partager mes stats / mes records', 'Cartes 1080×1080 prêtes à poster'] },
+                { title: 'INTERFACE', items: ['Tous les thèmes revus pour lisibilité parfaite', 'Cartes maintenant visibles sur tout fond', 'Petites bulles d\'aide mieux intégrées'] },
+                { title: 'iPAD AMÉLIORÉ', items: ['Barre de navigation mieux proportionnée', 'Plus de contenu caché derrière la barre du bas'] },
+                { title: 'SANTÉ', items: ['Connexion Apple Santé entièrement refaite', '27 types de données importés', 'FC moyenne et max sur chaque séance'] },
+                { title: 'AUTRES', items: ['App nettement plus rapide sur Stats', 'Sommeil bien plus fluide', 'Le clavier ne cache plus les champs', 'Mises à jour instantanées partout'] },
+                { title: 'CORRECTIONS', items: ['Plantage de l\'historique corrigé', 'Calendrier en mode sombre lisible', 'Plein de petits bugs chassés'] },
+              ].map((section, sIdx) => (
+                <View key={sIdx} style={{ marginBottom: 16 }}>
+                  <Text style={{ fontSize: 12, fontWeight: '900', color: colors.accent, letterSpacing: 0.8, marginBottom: 8 }}>
+                    {section.title}
+                  </Text>
+                  {section.items.map((it, iIdx) => (
+                    <View key={iIdx} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
+                      <Text style={{ fontSize: 13, color: colors.accent, marginTop: 1 }}>•</Text>
+                      <Text style={{ fontSize: 13, color: colors.textSecondary, flex: 1, lineHeight: 18 }}>
+                        {it}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              ))}
+              <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', fontStyle: 'italic', marginTop: 8, marginBottom: 8 }}>
+                Merci à tous ceux qui envoient leurs retours — continuez, c'est ce qui fait grandir l'app.
+              </Text>
+            </ScrollView>
+            <TouchableOpacity
+              onPress={() => setWhatsNewVisible(false)}
+              style={{ backgroundColor: colors.accent, paddingVertical: 14, borderRadius: 14, alignItems: 'center', marginTop: 12 }}
+              activeOpacity={0.85}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 0.3 }}>C'est noté</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <PopupComponent />
     </View>
   );
@@ -1328,9 +1549,6 @@ const styles = StyleSheet.create({
 
   // Hero profil
   heroCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
     padding: 14,
     borderRadius: 18,
     marginBottom: 14,
@@ -1339,6 +1557,34 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 3,
+  },
+  heroTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  heroStatsRow: {
+    flexDirection: 'row',
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    justifyContent: 'space-around',
+  },
+  heroStatCol: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  heroStatValue: {
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  heroStatLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   heroAvatar: {
     width: 54,
