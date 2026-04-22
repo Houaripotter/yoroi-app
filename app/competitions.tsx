@@ -295,6 +295,103 @@ export default function CompetitionsScreen() {
           </View>
         </View>
 
+        {/* ── PROCHAINE COMPÉTITION HIGHLIGHT (countdown) ── */}
+        {upcomingCompetitions.length > 0 && (() => {
+          const next = [...upcomingCompetitions].sort((a, b) => a.date.localeCompare(b.date))[0];
+          const daysUntil = calculateDaysUntil(next.date);
+          // Couleur urgence selon jours restants
+          const urgencyColor = daysUntil <= 7 ? '#EF4444' : daysUntil <= 30 ? '#F59E0B' : '#22C55E';
+          const urgencyLabel = daysUntil === 0 ? "C'EST AUJOURD'HUI" : daysUntil <= 7 ? 'URGENT' : daysUntil <= 30 ? 'BIENTÔT' : 'DANS LONGTEMPS';
+          return (
+            <View style={{
+              marginHorizontal: 16, marginBottom: 12,
+              borderRadius: 18, padding: 16,
+              backgroundColor: colors.backgroundCard,
+              borderLeftWidth: 5, borderLeftColor: urgencyColor,
+              shadowColor: urgencyColor,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15, shadowRadius: 12, elevation: 4,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Trophy size={14} color={urgencyColor} />
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: urgencyColor, letterSpacing: 0.5 }}>
+                    PROCHAINE COMPÉTITION
+                  </Text>
+                </View>
+                <View style={{ backgroundColor: urgencyColor, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                  <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5 }}>{urgencyLabel}</Text>
+                </View>
+              </View>
+
+              {/* Nom + date countdown */}
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+                <View style={{
+                  width: 72, height: 72, borderRadius: 16,
+                  backgroundColor: urgencyColor + '20',
+                  alignItems: 'center', justifyContent: 'center',
+                  borderWidth: 2, borderColor: urgencyColor,
+                }}>
+                  <Text style={{ fontSize: 28, fontWeight: '900', color: urgencyColor, letterSpacing: -1 }}>
+                    {daysUntil >= 0 ? daysUntil : '—'}
+                  </Text>
+                  <Text style={{ fontSize: 9, fontWeight: '800', color: urgencyColor, letterSpacing: 0.4 }}>
+                    {daysUntil > 1 ? 'JOURS' : 'JOUR'}
+                  </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: colors.textPrimary, letterSpacing: -0.3 }} numberOfLines={2}>
+                    {next.nom}
+                  </Text>
+                  {next.lieu && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                      <MapPin size={11} color={colors.textMuted} />
+                      <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }} numberOfLines={1}>
+                        {next.lieu}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
+                    <Calendar size={11} color={colors.textMuted} />
+                    <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>
+                      {(() => {
+                        try {
+                          return new Date(next.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                        } catch { return next.date; }
+                      })()}
+                    </Text>
+                  </View>
+                  {next.categorie_poids && (
+                    <View style={{ marginTop: 6, alignSelf: 'flex-start', backgroundColor: colors.accent + '18', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: colors.accent }}>
+                        Catégorie {next.categorie_poids}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              {/* Conseil contextuel selon urgence */}
+              {daysUntil <= 7 && daysUntil > 0 && (
+                <View style={{ marginTop: 12, padding: 10, borderRadius: 10, backgroundColor: '#EF444415', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ fontSize: 16 }}>⚡</Text>
+                  <Text style={{ flex: 1, fontSize: 12, fontWeight: '700', color: '#EF4444' }}>
+                    Coupe de poids et revue technique en cours — bonne chance !
+                  </Text>
+                </View>
+              )}
+              {daysUntil > 7 && daysUntil <= 30 && (
+                <View style={{ marginTop: 12, padding: 10, borderRadius: 10, backgroundColor: '#F59E0B15', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ fontSize: 16 }}>🔥</Text>
+                  <Text style={{ flex: 1, fontSize: 12, fontWeight: '700', color: '#F59E0B' }}>
+                    Phase d'intensification : drill technique + sparring sélectifs.
+                  </Text>
+                </View>
+              )}
+            </View>
+          );
+        })()}
+
         {/* Import Button */}
         <TouchableOpacity
           style={[
