@@ -477,6 +477,13 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
             const zoneColor = getZoneColor(zone.id);
             const hasInjury = zoneColor !== 'transparent';
 
+            // Réduit la zone tactile à 60% de sa taille originale → plus de précision.
+            // L'utilisateur peut zoomer (pinch) pour cliquer précisément.
+            // En mode debug (chirurgien), garder taille originale pour édition.
+            const ZONE_SHRINK = debug ? 1 : 0.6;
+            const w = zone.w * ZONE_SHRINK;
+            const h = zone.h * ZONE_SHRINK;
+
             return (
               <TouchableOpacity
                 key={zone.id}
@@ -485,10 +492,10 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
                 style={[
                   styles.zone,
                   {
-                    left: `${zone.x - zone.w / 2}%`,
-                    top: `${zone.y - zone.h / 2}%`,
-                    width: `${zone.w}%`,
-                    height: `${zone.h}%`,
+                    left: `${zone.x - w / 2}%`,
+                    top: `${zone.y - h / 2}%`,
+                    width: `${w}%`,
+                    height: `${h}%`,
                     backgroundColor: isSelected
                       ? 'rgba(0, 255, 0, 0.4)'
                       : debug
@@ -639,7 +646,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 10 },
   iconBtn: { padding: 5 },
   mainArea: { flex: 1, justifyContent: 'center', alignItems: 'center', width: '100%' },
-  imageFrame: { width: '85%', maxWidth: 380, position: 'relative', alignSelf: 'center' },
+  imageFrame: { width: '65%', maxWidth: 280, position: 'relative', alignSelf: 'center' },
   image: { width: '100%', height: '100%' },
   zone: { position: 'absolute', borderRadius: 4 },
   // Marqueur de blessure
