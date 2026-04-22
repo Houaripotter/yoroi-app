@@ -305,8 +305,8 @@ function buildDemoRounds(sessionType: 'sparring' | 'open_mat' | 'cours', dateStr
       energyLevel: Math.max(3, 10 - i),
     };
 
-    // 70% de chance d'avoir du contenu narratif (gamePlan/what worked/etc.)
-    if (Math.random() > 0.3) {
+    // 95% de chance d'avoir du contenu narratif (screenshots → on veut que ça soit plein)
+    if (Math.random() > 0.05) {
       round.gamePlan = pick(GAME_PLANS);
       round.whatWorked = pick(WHAT_WORKED_SAMPLES);
       round.whatDidntWork = pick(WHAT_DIDNT_WORK_SAMPLES);
@@ -324,14 +324,212 @@ function buildDemoRounds(sessionType: 'sparring' | 'open_mat' | 'cours', dateStr
 }
 
 /**
- * Sauvegarde les 6 partenaires dans SPARRING_PARTNERS_KEY pour qu'ils aient une fiche.
+ * Fiches complètes pour chaque partenaire : forces/faiblesses/ce-qui-marche/notes tactiques.
+ * Utilisé par l'écran sparring-partners.tsx pour le détail riche.
  */
+const PARTNER_SCOUTING_REPORTS: Record<string, {
+  strengths: string[];
+  weaknesses: string[];
+  whatWorks: string[];
+  tacticalNotes: string[];
+  matchCount: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  weight: string;
+  activeGoal?: string;
+}> = {
+  'Professeur Veni': {
+    strengths: [
+      'Contrôle des grips imparable',
+      'Passage de garde pressure incroyable',
+      'Lecture du sparring, toujours 2 coups d\'avance',
+      'Back take depuis n\'importe quelle position',
+    ],
+    weaknesses: [
+      '(aucune vraie faiblesse — ceinture noire 3e degré)',
+    ],
+    whatWorks: [
+      'Rester calme et ne pas paniquer quand il prend la position',
+      'Bouger constamment les hanches pour ne pas se faire figer',
+      'Survivre les 5min est déjà une victoire',
+    ],
+    tacticalNotes: [
+      'Il casse toujours les grips en serrant les doigts, pas en tirant. Contre-grip intérieur.',
+      'Son jeu favori = pressure passing → side control → mount. Anticiper.',
+      'Si je bouge trop vite, il m\'attend. Si je bouge trop lentement, il passe. Trouver le juste milieu.',
+      'Aujourd\'hui il m\'a chopé 3 fois sur le même triangle setup. À drill.',
+      'Il m\'a dit : "Tes grips sont bons mais tu les poses trop tôt. Attend le bon moment."',
+    ],
+    matchCount: 52, wins: 0, losses: 41, draws: 11,
+    weight: '78 kg',
+    activeGoal: 'Survivre 5 rounds complets sans soumission',
+  },
+  'Professeur Lucas': {
+    strengths: [
+      'Top pressure énorme, impossible à pousser',
+      'Crossface dévastateur',
+      'Leg locks, surtout heel hook no-gi',
+      'Calme absolu, ne se précipite jamais',
+    ],
+    weaknesses: [
+      '(ceinture noire — cherche pas de faiblesses)',
+    ],
+    whatWorks: [
+      'Le frame précoce avant qu\'il ne pose la pression',
+      'Ne pas accepter la mount passivement',
+      'Donner les grips, ne pas se battre pour des grips qu\'on va perdre',
+    ],
+    tacticalNotes: [
+      'Style completement opposé à Prof Veni. Lui c\'est pressure, Veni c\'est technique.',
+      'Son heel hook vient toujours depuis saddle / 411. Éviter cette position en no-gi.',
+      'Il m\'a soumis 4 fois aujourd\'hui, toutes des étranglements.',
+      'Il est généreux avec les feedbacks pendant les rounds. Écouter à fond.',
+      'Ses passages de garde : "Ne pousse pas les jambes, décolle le bas du dos."',
+    ],
+    matchCount: 38, wins: 0, losses: 30, draws: 8,
+    weight: '82 kg',
+    activeGoal: 'Tenir un round entier sans perdre la position dominante',
+  },
+  'Larbi': {
+    strengths: [
+      'Pressure top redoutable',
+      'Étranglements arrière très propres',
+      'Cardio infini (il est frais au round 10)',
+      'Jeu mental : il attend ton erreur, il ne force jamais',
+    ],
+    weaknesses: [
+      'Moins à l\'aise en garde ouverte quand il est en dessous',
+      'Takedowns basiques, pas de wrestling avancé',
+      'Transitions latérales un peu lentes',
+    ],
+    whatWorks: [
+      'Jouer la garde ouverte tôt pour l\'empêcher de poser la pression',
+      'Bouger constamment en bottom — un Larbi statique = un Larbi qui passe',
+      'Défendre préventivement les étranglements arrière (main sur le cou)',
+    ],
+    tacticalNotes: [
+      'Partenaire de drilling préféré. Super honnête, corrige mes erreurs techniques.',
+      'Il m\'étouffe systématiquement avec le même RNC. Drill la défense en priorité.',
+      'Rounds avec lui = écoles de patience. Il m\'apprend à ne pas griller le gaz.',
+      'Sa pression de passage est digne d\'une ceinture noire. Il est solide pour sa ceinture.',
+      'Session d\'hier : je l\'ai tenu 4 minutes en demi-garde profonde. Premier vrai succès.',
+    ],
+    matchCount: 47, wins: 9, losses: 28, draws: 10,
+    weight: '85 kg',
+    activeGoal: 'Atteindre 20% de winrate contre lui (actuel 19%)',
+  },
+  'Hedi': {
+    strengths: [
+      'Triangle depuis la garde fermée redoutable',
+      'Flexibilité au-dessus de la moyenne',
+      'Transitions omoplata ↔ triangle fluides',
+      'Bonne lecture du timing',
+    ],
+    weaknesses: [
+      'Cardio moyen — gaz après 6 rounds',
+      'Wrestling presque inexistant',
+      'Parfois trop passif en top position',
+    ],
+    whatWorks: [
+      'Rester actif, créer des scrambles pour griller son gaz',
+      'Dominer debout pour le forcer en défense dès le départ',
+      'Défendre tôt les triangles, garder posture haute en garde',
+    ],
+    tacticalNotes: [
+      'Partenaire régulier depuis 8 mois. Les rolls avec lui me font progresser.',
+      'Son triangle m\'a chopé 6 fois avant que je trouve la défense.',
+      'Il est trop confortable quand je lui donne la garde. Ne jamais pull guard contre lui.',
+      'Weekend open mat : 3 wins / 2 losses sur 5 rounds. Match équilibré.',
+      'Il bosse le berimbolo en ce moment. Attention aux entrées DLR.',
+    ],
+    matchCount: 68, wins: 32, losses: 28, draws: 8,
+    weight: '76 kg',
+    activeGoal: 'Gagner 60% des rounds (actuel 47%)',
+  },
+  'Yanis': {
+    strengths: [
+      'Takedowns explosifs (fond wrestling)',
+      'Double-leg en force de la nature',
+      'Jeu top avec beaucoup d\'énergie',
+    ],
+    weaknesses: [
+      'Très peu de jeu de garde — se fait passer facilement',
+      'Étranglements subis facilement',
+      'Gestion du cardio médiocre',
+      'Pas patient, il force tout',
+    ],
+    whatWorks: [
+      'Défense de takedown : whizzer + sprawl dès qu\'il change de niveau',
+      'Guillotine sur son shoot (il plonge tête en avant)',
+      'Le laisser se fatiguer, attendre la bonne ouverture',
+      'Préparer un gameplan de soumission pour le round 1 avant qu\'il ne gaze',
+    ],
+    tacticalNotes: [
+      'Gagne souvent le takedown mais perd souvent au sol. Le laisser en top puis balayer.',
+      'Sa guillotine à lui est faible, pas d\'inquiétude si on saute dans sa garde.',
+      'Je l\'ai guillotiné 2 fois cette semaine sur son double-leg. Il apprend pas.',
+      'Ultra-motivé, toujours à fond. Respecte mais attention : dangereux si on le sous-estime.',
+    ],
+    matchCount: 43, wins: 27, losses: 13, draws: 3,
+    weight: '80 kg',
+  },
+  'Eliott': {
+    strengths: [
+      'Explosivité et rapidité',
+      'Bon instinct pour les balayages',
+      'Jeune, motivé, progresse vite',
+    ],
+    weaknesses: [
+      'Technique encore en construction',
+      'Manque d\'expérience en sparring long',
+      'Panique quand il est dominé',
+    ],
+    whatWorks: [
+      'Le calmer dès le premier round en imposant un rythme technique',
+      'Attendre ses erreurs — il en fait beaucoup',
+      'Le pousser en défense tôt, avant qu\'il ne se sente confortable',
+    ],
+    tacticalNotes: [
+      'Ceinture bleue récente, énergie débordante. Bon partenaire pour drill les soumissions.',
+      'Super positif, bonne mentalité. Toujours partant pour un roll supplémentaire.',
+      'Je dois le forcer à ralentir pour qu\'il apprenne vraiment, pas juste qu\'il encaisse.',
+    ],
+    matchCount: 31, wins: 24, losses: 5, draws: 2,
+    weight: '72 kg',
+  },
+};
+
 async function seedSparringPartners(): Promise<void> {
-  const partners = SPARRING_PARTNERS.map(p => ({
-    id: generateId(),
-    name: p.name,
-    belt: p.belt,
-  }));
+  const nowIso = new Date().toISOString();
+
+  const partners = SPARRING_PARTNERS.map(p => {
+    const scout = PARTNER_SCOUTING_REPORTS[p.name];
+    const notes = scout?.tacticalNotes.map(content => ({
+      id: generateId(),
+      date: new Date(Date.now() - randInt(3, 90) * 86400000).toISOString(),
+      content,
+    })) || [];
+    return {
+      id: generateId(),
+      name: p.name,
+      belt: p.belt,
+      weight: scout?.weight || '',
+      sport: 'jjb',
+      strengths: scout?.strengths || [],
+      weaknesses: scout?.weaknesses || [],
+      whatWorks: scout?.whatWorks || [],
+      notes,
+      matchCount: scout?.matchCount || 0,
+      wins: scout?.wins || 0,
+      losses: scout?.losses || 0,
+      draws: scout?.draws || 0,
+      createdAt: nowIso,
+      activeGoal: scout?.activeGoal
+        ? { text: scout.activeGoal, createdAt: nowIso }
+        : undefined,
+    };
+  });
   await AsyncStorage.setItem('@yoroi_sparring_partners', JSON.stringify(partners));
 }
 
@@ -346,6 +544,12 @@ const SESSION_GAME_PLANS = [
   'Pressure passing + mount. Pas jouer la garde ce soir.',
   'Rester calme, économiser le gaz, jouer défensif puis contre-attaquer.',
   'Spam les étranglements arrière. Build le dos fort.',
+  'Travailler la demi-garde profonde et la remontée. Pas de garde fermée.',
+  'Tester les leg entries en no-gi. Objectif : 3 tentatives par round.',
+  'Focus lutte debout. Prendre 1 takedown par round minimum.',
+  'Récupération active : rouler léger, technique uniquement, 0 ego.',
+  'Pratiquer les retournements depuis side control. 10 mouvements par round.',
+  'Cours du jour : spider guard. Appliquer direct en sparring.',
 ];
 
 const SESSION_WHAT_WORKED = [
@@ -355,6 +559,12 @@ const SESSION_WHAT_WORKED = [
   'J\'ai tenu le dos pendant 4 rounds d\'affilée, gros progrès.',
   'Le Prof Veni m\'a corrigé les grips, différence énorme.',
   'Kimura depuis demi-garde plus propre grâce aux drills de la semaine.',
+  'La récupération entre rounds est 2x meilleure qu\'il y a un mois.',
+  'Passage knee-cut automatique maintenant, ça sort sans réfléchir.',
+  'Mental solide contre les profs, aucune frustration.',
+  'Setup de back take depuis demi-garde validé 3 fois.',
+  'Défense du triangle améliorée, plus aucune prise ce soir.',
+  'Score de points constant sur les passages, bon timing.',
 ];
 
 const SESSION_WHAT_DIDNT_WORK = [
@@ -364,6 +574,12 @@ const SESSION_WHAT_DIDNT_WORK = [
   'Mes grips lâchent trop vite face à Larbi. À travailler.',
   'Le berimbolo manque de propreté, je me retrouve en side control.',
   'Défense des back takes médiocre contre les profs.',
+  'Trop d\'énergie dépensée sur les premiers rounds, je paye à la fin.',
+  'Je tiens trop la garde fermée, je dois ouvrir plus vite pour scorer.',
+  'Les grips cassent trop facilement face aux ceintures supérieures.',
+  'Hésitation sur les leg entries, à drill en iso.',
+  'Sortie de side control pas assez fluide, plusieurs positions bloquées.',
+  'Spam des mêmes techniques, il faut diversifier pour surprendre.',
 ];
 
 const SESSION_MOODS = ['fire', 'strong', 'focus', 'gassed', 'tired', 'strong', 'fire'];
@@ -409,6 +625,22 @@ function buildSkillNotes(
       'Chain du takedown même si le premier run rate. Ne pas abandonner à mi-chemin.',
       'Yanis me passe à travers quand je baisse les yeux. Keep posture.',
     ],
+    'Mount Escape': [
+      'Le upa fonctionne seulement si les bras sont piégés. Sinon shrimp.',
+      'Framer tôt, avant qu\'il ne stabilise la high mount.',
+      'Prof. Lucas : "Une sortie de mount commence AVANT le mount." Sentir l\'entrée.',
+      'Contre Larbi : il m\'étouffe en 10s si je bouge pas. Reflexe à drill.',
+    ],
+    'Side Control Escape': [
+      'Replacer le coude intérieur en priorité. Sans ça, tout le reste casse.',
+      'Knee-elbow escape quand il est dépressuré, underhook quand il est posé.',
+      'Ne jamais pousser les épaules. C\'est le piège n°1.',
+    ],
+    'Back Control': [
+      'Hooks + body lock = contrôle total. Pas de raccourci.',
+      'Garder la tête collée à la sienne, sinon il retourne en escape.',
+      'Setup favori : étranglement cross collar → RNC si échec.',
+    ],
   };
 
   const inProgressTips: Record<string, string[]> = {
@@ -436,6 +668,26 @@ function buildSkillNotes(
     'Double Leg': [
       'Level change trop lent, je me fais sprawl systématiquement.',
       'Drill le changement de niveau seul, 30 reps/jour.',
+    ],
+    'Berimbolo': [
+      'Setup depuis De la Riva, pas depuis la garde fermée.',
+      'Prof. Veni a montré la bascule arrière en 3 phases. À drill 100 reps.',
+      'Pas encore clean contre résistance. Je finis en side control.',
+    ],
+    'Spider Guard': [
+      'Grips sur les manches, pas les bouts de manche.',
+      'Jambes actives, pas passives. Si tu sens les jambes immobiles, tu vas te faire passer.',
+      'Bonne setup pour triangle et omoplata.',
+    ],
+    'Ezekiel Choke': [
+      'Plus facile depuis la mount que depuis la garde adverse.',
+      'Mieux marcher le positionnement du poignet intérieur.',
+      'Hedi m\'a chopé là-dessus au dernier open mat. À pratiquer.',
+    ],
+    'Guillotine': [
+      'Arrière du cou, pas la nuque. C\'est le détail qui change tout.',
+      'Bon anti-takedown face à Yanis qui fonce tête en avant.',
+      'Garder les coudes vers l\'intérieur sinon pas de squeeze.',
     ],
   };
 
@@ -639,10 +891,13 @@ export const generateHenyDemoData = async (): Promise<{
   // ========== 2. CLUBS ==========
   const gbClubId = await addClub({ name: 'Gracie Barra Les Olives', sport: 'jjb', color: '#EF4444', sessions_per_week: 4, logo_uri: 'graciebarra' });
   const bfClubId = await addClub({ name: 'Basic-Fit Prado', sport: 'musculation', color: '#3B82F6', sessions_per_week: 3, logo_uri: 'basic-fit' });
+  // 3e club : no-gi / open mat du dimanche avec un collectif indépendant
+  const nogiClubId = await addClub({ name: 'Open Mat Marseille No-Gi', sport: 'jjb', color: '#8B5CF6', sessions_per_week: 1 });
 
   await AsyncStorage.setItem('@yoroi_user_clubs', JSON.stringify([
     { id: gbClubId, name: 'Gracie Barra Les Olives', sport: 'jjb', color: '#EF4444', sessions_per_week: 4, logo_uri: 'graciebarra' },
     { id: bfClubId, name: 'Basic-Fit Prado', sport: 'musculation', color: '#3B82F6', sessions_per_week: 3, logo_uri: 'basic-fit' },
+    { id: nogiClubId, name: 'Open Mat Marseille No-Gi', sport: 'jjb', color: '#8B5CF6', sessions_per_week: 1 },
   ]));
   await AsyncStorage.setItem('@yoroi_favorite_sports', JSON.stringify(['jjb', 'musculation']));
 
@@ -1011,6 +1266,19 @@ export const generateHenyDemoData = async (): Promise<{
   skills.push(makeSkill('Body Lock Pass', 'jjb_passage', 'to_learn', 0));
   skills.push(makeSkill('Omoplata', 'jjb_soumission', 'to_learn', 0));
   skills.push(makeSkill('Darce Choke', 'jjb_nogi', 'to_learn', 0));
+
+  // Skills supplementaires pour un carnet bien rempli
+  skills.push(makeSkill('Berimbolo', 'jjb_garde', 'in_progress', randInt(8, 18)));
+  skills.push(makeSkill('Spider Guard', 'jjb_garde', 'in_progress', randInt(12, 22)));
+  skills.push(makeSkill('Ezekiel Choke', 'jjb_soumission', 'in_progress', randInt(6, 14)));
+  skills.push(makeSkill('Guillotine', 'jjb_soumission', 'in_progress', randInt(10, 20)));
+  skills.push(makeSkill('Mount Escape', 'jjb_garde', 'mastered', randInt(30, 45)));
+  skills.push(makeSkill('Side Control Escape', 'jjb_garde', 'mastered', randInt(25, 40)));
+  skills.push(makeSkill('Back Control', 'jjb_passage', 'mastered', randInt(20, 35)));
+  skills.push(makeSkill('Takedown Ankle Pick', 'lutte', 'to_learn', 0));
+  skills.push(makeSkill('Crucifix', 'jjb_soumission', 'to_learn', 0));
+  skills.push(makeSkill('Leg Drag Pass', 'jjb_passage', 'to_learn', 0));
+
   await AsyncStorage.setItem('yoroi_skills_v2', JSON.stringify(skills));
 
   // ========== 13. GAMIFICATION ==========
@@ -1085,11 +1353,14 @@ export const generateHenyDemoData = async (): Promise<{
   await AsyncStorage.setItem('@yoroi_quests_state', JSON.stringify(questsState));
 
   // ========== 16. BLESSURES ==========
-  await addInjury({ zone_id: 'shoulder_r', zone_view: 'front', pain_type: 'tendinite', cause: 'Surcharge en développé couché', eva_score: 3, notes: 'Douleur à la rotation externe, amélioration progressive', date: daysAgo(45), status: 'healing', fit_for_duty: 'restricted' });
-  await addInjury({ zone_id: 'wrist_r', zone_view: 'front', pain_type: 'entorse', cause: 'Chute en sparring BJJ', eva_score: 2, notes: 'Légère instabilité, port de strapping recommandé', date: daysAgo(30), status: 'healing', fit_for_duty: 'restricted' });
-  await addInjury({ zone_id: 'knee_l', zone_view: 'front', pain_type: 'entorse', cause: 'Shoot raté lors d\'un tournoi', eva_score: 5, notes: 'IRM en attente, éviter les shoots et takedowns', date: daysAgo(18), status: 'active', fit_for_duty: 'unfit' });
-  await addInjury({ zone_id: 'spine_lower', zone_view: 'back', pain_type: 'lumbago', cause: 'Soulevé de terre charge excessive', eva_score: 4, notes: 'Séances kiné 2x/semaine, étirements quotidiens', date: daysAgo(60), status: 'healing', fit_for_duty: 'restricted' });
-  await addInjury({ zone_id: 'hamstring_l', zone_view: 'back', pain_type: 'contracture', cause: 'Echauffement insuffisant', eva_score: 0, notes: 'Totalement rétabli, reprise progressive validée', date: daysAgo(90), status: 'healed', fit_for_duty: 'operational' });
+  await addInjury({ zone_id: 'shoulder_r', zone_view: 'front', pain_type: 'tendinite', cause: 'Surcharge en développé couché (95kg × 5 séries)', eva_score: 3, notes: 'Douleur à la rotation externe. Kiné 1x/sem, élastique bande verte 3x/jour. Nette amélioration depuis 2 sem. Reprise muscu pecs progressive à 70% charge.', date: daysAgo(45), status: 'healing', fit_for_duty: 'restricted' });
+  await addInjury({ zone_id: 'wrist_r', zone_view: 'front', pain_type: 'entorse', cause: 'Chute en sparring BJJ contre Larbi (back take mal posé)', eva_score: 2, notes: 'Instabilité légère. Strapping obligatoire pendant 3 sem. Drilling OK, sparring contrôlé autorisé. À surveiller sur les grips profonds.', date: daysAgo(30), status: 'healing', fit_for_duty: 'restricted' });
+  await addInjury({ zone_id: 'knee_l', zone_view: 'front', pain_type: 'entorse', cause: 'Shoot raté lors de l\'Open de Marseille (1er round)', eva_score: 5, notes: 'IRM programmée semaine prochaine. Douleur vive au ligament interne. Pas de sparring, pas de takedown, juste drilling léger. Estimé 4-6 semaines d\'arrêt.', date: daysAgo(18), status: 'active', fit_for_duty: 'unfit' });
+  await addInjury({ zone_id: 'spine_lower', zone_view: 'back', pain_type: 'lumbago', cause: 'Soulevé de terre 150kg avec technique dégradée', eva_score: 4, notes: 'Séances kiné 2x/semaine + McKenzie exercises quotidiens. Amélioration 60%. Reprise muscu jambes uniquement en squat goblet léger pour l\'instant.', date: daysAgo(60), status: 'healing', fit_for_duty: 'restricted' });
+  await addInjury({ zone_id: 'hamstring_l', zone_view: 'back', pain_type: 'contracture', cause: 'Échauffement insuffisant avant open mat', eva_score: 0, notes: 'Totalement rétabli. Leçon retenue : warmup dynamique 15min obligatoire avant tout sparring intense. Zéro récidive en 3 mois.', date: daysAgo(90), status: 'healed', fit_for_duty: 'operational' });
+  // 2 blessures supplementaires pour un historique plus epais
+  await addInjury({ zone_id: 'finger_l_2', zone_view: 'front', pain_type: 'entorse', cause: 'Grip accroché dans le gi de Prof. Veni', eva_score: 1, notes: 'Classique du BJJ. Bandage noué + patience. À surveiller, ne pas brusquer.', date: daysAgo(10), status: 'active', fit_for_duty: 'operational' });
+  await addInjury({ zone_id: 'ankle_r', zone_view: 'front', pain_type: 'entorse', cause: 'Torsion en leg lock défendu (heel hook Prof. Lucas)', eva_score: 3, notes: 'Glaçage + repos 1 semaine. Retour progressif avec chevillère. Ne plus attraper les leg locks sans tap rapide.', date: daysAgo(120), status: 'healed', fit_for_duty: 'operational' });
 
   // ========== 17. AVATAR ==========
   await AsyncStorage.setItem('@yoroi_avatar_config', JSON.stringify({
@@ -1157,18 +1428,23 @@ export const generateHenyDemoData = async (): Promise<{
 
   // ========== 19. COMBATS BJJ ==========
   const combatsData = [
-    { date: fmtDate(addDays(now, -5)),  resultat: 'victoire', methode: 'soumission', technique: 'Triangle',           round: 2, temps: '3:42', adversaire_nom: 'Lucas Fernandez',  adversaire_club: 'Alliance BJJ',          poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Belle entrée en triangle depuis la garde ouverte' },
-    { date: fmtDate(addDays(now, -12)), resultat: 'victoire', methode: 'soumission', technique: 'Kimura',             round: 1, temps: '1:58', adversaire_nom: 'Rayan Benali',     adversaire_club: 'Gracie Barra Lyon',     poids_pesee: 82.0, poids_jour_j: 82.5, notes: 'Kimura depuis la garde fermée, bonne pression' },
-    { date: fmtDate(addDays(now, -19)), resultat: 'defaite',  methode: 'points',     technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Marco Costa',      adversaire_club: 'Checkmat Paris',        poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Perdu aux points 8-4, à retravailler la garde' },
-    { date: fmtDate(addDays(now, -26)), resultat: 'victoire', methode: 'soumission', technique: 'Rear Naked Choke',   round: 2, temps: '4:15', adversaire_nom: 'Sofiane Hadj',     adversaire_club: 'Team Nogueira',         poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Pris le dos depuis la demi-garde' },
-    { date: fmtDate(addDays(now, -33)), resultat: 'victoire', methode: 'points',     technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Ahmed Touati',     adversaire_club: 'Metamoris France',      poids_pesee: 81.5, poids_jour_j: 82.0, notes: 'Victoire aux points 12-2, bonne gestion' },
-    { date: fmtDate(addDays(now, -45)), resultat: 'nul',      methode: 'decision',   technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Pierre Moreau',    adversaire_club: 'Gracie Barra Paris',    poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Match très serré, tout dans la garde' },
-    { date: fmtDate(addDays(now, -60)), resultat: 'victoire', methode: 'soumission', technique: 'Armbar',             round: 1, temps: '2:30', adversaire_nom: 'Yoann Petit',      adversaire_club: 'Basic-Fit BJJ',         poids_pesee: 82.0, poids_jour_j: 81.5, notes: 'Armbar depuis la garde montée' },
-    { date: fmtDate(addDays(now, -75)), resultat: 'defaite',  methode: 'soumission', technique: 'Heel Hook',          round: 2, temps: '3:10', adversaire_nom: 'Mateus Silva',     adversaire_club: 'Atos Paris',            poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Heel hook inattendu, mieux défendre les jambes' },
-    { date: fmtDate(addDays(now, -90)), resultat: 'victoire', methode: 'soumission', technique: 'Guillotine',         round: 1, temps: '1:22', adversaire_nom: 'Thomas Blanc',     adversaire_club: 'Tristar Paris',         poids_pesee: 81.5, poids_jour_j: 82.0, notes: 'Guillotine parfaite sur le takedown adverse' },
-    { date: fmtDate(addDays(now, -110)),resultat: 'victoire', methode: 'points',     technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Karim Hadjadj',    adversaire_club: 'Lotus Club',            poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Bonne gestion, passage en side control dominant' },
-    { date: fmtDate(addDays(now, -130)),resultat: 'defaite',  methode: 'points',     technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Julien Vasseur',   adversaire_club: 'Carlson Gracie Paris',  poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Perdu de justesse 4-6' },
-    { date: fmtDate(addDays(now, -150)),resultat: 'victoire', methode: 'soumission', technique: 'Cross Collar Choke', round: 2, temps: '4:48', adversaire_nom: 'Nassim Boucharel', adversaire_club: 'Ribeiro Jiu-Jitsu',     poids_pesee: 82.5, poids_jour_j: 82.5, notes: 'Étranglement depuis la montée, bien travaillé' },
+    { date: fmtDate(addDays(now, -5)),  resultat: 'victoire', methode: 'soumission', technique: 'Triangle',           round: 2, temps: '3:42', adversaire_nom: 'Lucas Fernandez',  adversaire_club: 'Alliance BJJ',          poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Belle entrée en triangle depuis la garde ouverte. Il a voulu passer en torreando, j\'ai saisi la tête et verrouillé direct. Tap à 3\'42. Finale de poule.' },
+    { date: fmtDate(addDays(now, -12)), resultat: 'victoire', methode: 'soumission', technique: 'Kimura',             round: 1, temps: '1:58', adversaire_nom: 'Rayan Benali',     adversaire_club: 'Gracie Barra Lyon',     poids_pesee: 82.0, poids_jour_j: 82.5, notes: 'Kimura depuis garde fermée en 2 min. Setup exactement comme drillé avec Prof. Lucas. Adversaire beaucoup plus fort physiquement, mais technique supérieure.' },
+    { date: fmtDate(addDays(now, -19)), resultat: 'defaite',  methode: 'points',     technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Marco Costa',      adversaire_club: 'Checkmat Paris',        poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Perdu 8-4 aux points. Son jeu de De La Riva était au-dessus. Je dois bosser la défense DLR en priorité. Frustrant mais lucide.' },
+    { date: fmtDate(addDays(now, -26)), resultat: 'victoire', methode: 'soumission', technique: 'Rear Naked Choke',   round: 2, temps: '4:15', adversaire_nom: 'Sofiane Hadj',     adversaire_club: 'Team Nogueira',         poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Pris le dos après balayage depuis demi-garde. Hooks posés, RNC propre, tap rapide. Le drill back control du mois dernier a payé.' },
+    { date: fmtDate(addDays(now, -33)), resultat: 'victoire', methode: 'points',     technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Ahmed Touati',     adversaire_club: 'Metamoris France',      poids_pesee: 81.5, poids_jour_j: 82.0, notes: 'Victoire 12-2 : 2 passages + mount + back control. Gestion parfaite, j\'ai contrôlé tout le match. Mental solide.' },
+    { date: fmtDate(addDays(now, -45)), resultat: 'nul',      methode: 'decision',   technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Pierre Moreau',    adversaire_club: 'Gracie Barra Paris',    poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Match super serré, 2-2 à la fin. Décision du jury en sa faveur sur critères. Aucun regret, j\'ai tout donné.' },
+    { date: fmtDate(addDays(now, -60)), resultat: 'victoire', methode: 'soumission', technique: 'Armbar',             round: 1, temps: '2:30', adversaire_nom: 'Yoann Petit',      adversaire_club: 'Basic-Fit BJJ',         poids_pesee: 82.0, poids_jour_j: 81.5, notes: 'Armbar depuis la mount. Transition balayage → mount → armbar. Technique fluide, la séquence était dans le game plan avant le match.' },
+    { date: fmtDate(addDays(now, -75)), resultat: 'defaite',  methode: 'soumission', technique: 'Heel Hook',          round: 2, temps: '3:10', adversaire_nom: 'Mateus Silva',     adversaire_club: 'Atos Paris',            poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Heel hook rapide que je n\'ai pas vu venir. Leg lock game encore en retard. Je prends des cours spécifiques au dojo no-gi maintenant.' },
+    { date: fmtDate(addDays(now, -90)), resultat: 'victoire', methode: 'soumission', technique: 'Guillotine',         round: 1, temps: '1:22', adversaire_nom: 'Thomas Blanc',     adversaire_club: 'Tristar Paris',         poids_pesee: 81.5, poids_jour_j: 82.0, notes: 'Guillotine en sprawl sur son takedown. Il fonçait tête en avant, j\'avais le grip prêt. Tap en 1\'22. Round 1 du Paris Open.' },
+    { date: fmtDate(addDays(now, -110)),resultat: 'victoire', methode: 'points',     technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Karim Hadjadj',    adversaire_club: 'Lotus Club',            poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Passage en side control très dominant. 7-0 aux points. J\'ai maintenu la pression du début à la fin, il a jamais pu créer.' },
+    { date: fmtDate(addDays(now, -130)),resultat: 'defaite',  methode: 'points',     technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Julien Vasseur',   adversaire_club: 'Carlson Gracie Paris',  poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Perdu 4-6 dans les dernières secondes. Il m\'a scoré un balayage que j\'aurais pu voir venir. Debrief à la vidéo, beaucoup à apprendre.' },
+    { date: fmtDate(addDays(now, -150)),resultat: 'victoire', methode: 'soumission', technique: 'Cross Collar Choke', round: 2, temps: '4:48', adversaire_nom: 'Nassim Boucharel', adversaire_club: 'Ribeiro Jiu-Jitsu',     poids_pesee: 82.5, poids_jour_j: 82.5, notes: 'Étranglement cross collar depuis la mount. Setup en 3 phases : mount → postural control → double grip → squeeze. Le drill du mois a payé.' },
+    // Combats supplementaires pour un palmares plus epais
+    { date: fmtDate(addDays(now, -175)),resultat: 'victoire', methode: 'soumission', technique: 'Omoplata',            round: 2, temps: '3:05', adversaire_nom: 'Anthony Pereira',  adversaire_club: 'New School Paris',      poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Omoplata depuis spider guard. Transition atypique qui l\'a surpris. Il a tenté de rouler mais je l\'avais verrouillé bassin.' },
+    { date: fmtDate(addDays(now, -195)),resultat: 'defaite',  methode: 'points',     technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Rafael Morais',    adversaire_club: 'Gordo Jiu-Jitsu',       poids_pesee: 82.5, poids_jour_j: 82.5, notes: 'Perdu aux avantages 0-0 / 2-3. Super match contre un marron, j\'ai tenu le round. Beaucoup appris sur sa pressure passing.' },
+    { date: fmtDate(addDays(now, -220)),resultat: 'victoire', methode: 'soumission', technique: 'Darce',               round: 2, temps: '2:45', adversaire_nom: 'Vincent Leroy',    adversaire_club: 'Marcelo Garcia Paris',  poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Darce depuis head-and-arm scramble. Setup rapide sur une erreur de posture. Finish clean.' },
+    { date: fmtDate(addDays(now, -245)),resultat: 'victoire', methode: 'points',     technique: null,                 round: 3, temps: '5:00', adversaire_nom: 'Hugo Bertrand',    adversaire_club: 'Nova União France',     poids_pesee: 82.0, poids_jour_j: 82.0, notes: 'Contrôle total 10-0. Demi-finale du Regional. Énorme confiance après ce match.' },
   ];
   for (const combat of combatsData) {
     try { await addCombat(combat as any); } catch { /* table déjà initialisée */ }
