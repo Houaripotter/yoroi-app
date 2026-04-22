@@ -124,7 +124,7 @@ export async function computeBackupDiff(backupData: any): Promise<BackupDiff> {
       ? countNew(backupData.hydrationEntries, localHydration as any[], (h: any) => h.id ?? `${h.date}|${h.amount}`)
       : 0;
     const newBadges = Array.isArray(backupData.unlockedBadges)
-      ? backupData.unlockedBadges.filter((id: string) => !localBadges.includes(id)).length
+      ? backupData.unlockedBadges.filter((id: string) => !(localBadges as string[]).includes(id)).length
       : 0;
 
     const hasProfileUpdate = !!(backupData.profile?.name);

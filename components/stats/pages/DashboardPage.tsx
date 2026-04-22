@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, useWindowDimensions, ActivityIndicator, TouchableOpacity, InteractionManager, RefreshControl, DeviceEventEmitter } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, useWindowDimensions, ActivityIndicator, TouchableOpacity, InteractionManager, RefreshControl, DeviceEventEmitter, Platform } from 'react-native';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { formatDurationHM } from '@/lib/formatDuration';
 import { LineChart } from 'react-native-gifted-charts';
@@ -30,6 +31,17 @@ import { fr } from 'date-fns/locale';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { StatsHeader, Period } from '../StatsHeader';
 import { logger } from '@/lib/security/logger';
+import { buildCacheKey, getCached, setCached, invalidateCachePrefix } from '@/lib/statsMemoryCache';
+import { StatsEmptyState } from '../StatsEmptyState';
+import { StatsInsightBanner } from '../StatsInsightBanner';
+import { generateInsights, type Insight } from '@/lib/statsInsights';
+import { SkeletonGrid } from '../SkeletonCard';
+import { StreakBadge } from '../StreakBadge';
+import { FunComparisonsCard } from '../FunComparisonsCard';
+import { generateFunComparisons, type FunComparison } from '@/lib/funComparisons';
+import { OnboardingTooltip } from '../OnboardingTooltip';
+import { RecentBadgesStrip } from '../RecentBadgesStrip';
+import { AnimatedCounter } from '../AnimatedCounter';
 
 const METRIC_ROUTES: Record<string, string> = {
   sleep: '/sleep',
@@ -51,15 +63,45 @@ const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady, colu
 }) => {
   const hasData = metric.data && metric.data.length > 0;
 
-  const { yAxisOffset } = useMemo(() => {
-    if (!hasData) return { yAxisOffset: 0 };
+  const { yAxisOffset, maxChartValue, trend } = useMemo(() => {
+    if (!hasData) return { yAxisOffset: 0, maxChartValue: undefined as number | undefined, trend: null as null | { dir: 'up' | 'down' | 'flat'; pct: number } };
     const values = metric.data.map((d: any) => d.value);
     const minValue = Math.min(...values);
     const maxValue = Math.max(...values);
     const range = maxValue - minValue;
-    const offset = Math.floor(minValue - (range > 0 ? range * 0.5 : 1));
-    return { yAxisOffset: offset > 0 ? offset : 0 };
+    const bottom = Math.floor(minValue - (range > 0 ? range * 0.8 : Math.max(1, minValue * 0.05)));
+    const top = Math.ceil(maxValue + (range > 0 ? range * 0.6 : Math.max(1, maxValue * 0.03)));
+
+    // Tendance : moyenne 1ère moitié vs 2ème moitié de la série
+    let trendData: { dir: 'up' | 'down' | 'flat'; pct: number } | null = null;
+    if (values.length >= 2) {
+      const half = Math.max(1, Math.floor(values.length / 2));
+      const firstHalf = values.slice(0, half);
+      const secondHalf = values.slice(values.length - half);
+      const avgFirst = firstHalf.reduce((s: number, v: number) => s + v, 0) / firstHalf.length;
+      const avgSecond = secondHalf.reduce((s: number, v: number) => s + v, 0) / secondHalf.length;
+      if (avgFirst !== 0) {
+        const pct = ((avgSecond - avgFirst) / Math.abs(avgFirst)) * 100;
+        if (Math.abs(pct) < 1) trendData = { dir: 'flat', pct: 0 };
+        else if (pct > 0) trendData = { dir: 'up', pct };
+        else trendData = { dir: 'down', pct: Math.abs(pct) };
+      }
+    }
+    return {
+      yAxisOffset: bottom > 0 ? bottom : 0,
+      maxChartValue: top,
+      trend: trendData,
+    };
   }, [metric.data, hasData]);
+
+  // Convention sémantique : pour poids/gras/visceral_fat → ↓ = positif (perte = bien),
+  // pour muscle/eau/sleep/trainings → ↑ = positif. Sinon neutre.
+  const isLossGood = ['weight', 'fat_percent', 'visceral_fat', 'metabolic_age'].includes(metric.id);
+  const trendColor = trend?.dir === 'flat'
+    ? '#9CA3AF'
+    : trend?.dir === 'up'
+      ? (isLossGood ? '#EF4444' : '#10B981')
+      : (isLossGood ? '#10B981' : '#EF4444');
 
   const handlePress = useCallback(() => {
     onPress(metric);
@@ -70,6 +112,9 @@ const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady, colu
       activeOpacity={0.95}
       onPress={handlePress}
       style={[styles.miniCard, { backgroundColor: isDark ? colors.backgroundCard : `${metric.color}08` }]}
+      accessibilityRole="button"
+      accessibilityLabel={`${metric.title} : ${metric.value} ${metric.unit}`}
+      accessibilityHint="Toucher pour voir le détail complet"
     >
       <View
         style={styles.cardHeader}
@@ -79,6 +124,21 @@ const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady, colu
         </View>
         <Text style={[styles.themeLabel, { color: colors.textMuted }]}>{metric.theme}</Text>
         <View style={{ flex: 1 }} />
+        {/* Badge tendance ↑/↓ %, animé count-up à l'apparition */}
+        {trend && trend.dir !== 'flat' && (
+          <View style={[styles.trendBadge, { backgroundColor: trendColor + '18' }]}>
+            <Text style={[styles.trendBadgeText, { color: trendColor }]}>
+              {trend.dir === 'up' ? '↑ ' : '↓ '}
+            </Text>
+            <AnimatedCounter
+              value={trend.pct}
+              decimals={1}
+              suffix="%"
+              duration={700}
+              style={[styles.trendBadgeText, { color: trendColor }]}
+            />
+          </View>
+        )}
         <Maximize2 size={12} color={colors.textMuted} />
       </View>
 
@@ -95,55 +155,40 @@ const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady, colu
       <View style={styles.miniChartWrapper}>
         {hasData ? (
           chartReady ? (
-            (() => {
-              // Vue : on montre exactement 3 points à la fois, le reste est scrollable
-              // horizontalement (gifted-charts scrolle auto si le total dépasse width).
-              const chartWidth = columnWidth + 28;
-              const initialSpacing = 24;
-              const endPadding = 24;
-              const available = chartWidth - initialSpacing - endPadding;
-              // 3 points visibles = 2 intervalles
-              const spacing = Math.max(40, available / 2);
-              return (
-                <LineChart
-                  data={metric.data}
-                  height={100}
-                  width={chartWidth}
-                  initialSpacing={initialSpacing}
-                  endSpacing={endPadding}
-                  spacing={spacing}
-                  hideRules
-                  hideAxesAndRules
-                  hideYAxisText
-                  xAxisThickness={0}
-                  xAxisLabelsHeight={28}
-                  curved
-                  thickness={3.5}
-                  color={metric.color}
-                  startFillColor={metric.color}
-                  endFillColor={metric.color}
-                  startOpacity={0.2}
-                  endOpacity={0.01}
-                  areaChart
-                  yAxisOffset={yAxisOffset}
-                  hideDataPoints={false}
-                  dataPointsHeight={10}
-                  dataPointsWidth={10}
-                  dataPointsColor={metric.color}
-                  showValuesAsDataPointsText
-                  textFontSize={11}
-                  textColor={isDark ? '#FFFFFF' : '#1F2937'}
-                  textShiftY={-8}
-                  textShiftX={-14}
-                  xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 10, fontWeight: '700' }}
-                  scrollToEnd
-                  scrollAnimation={false}
-                  disableScroll={false}
-                  showScrollIndicator={false}
-                  onPress={handlePress}
-                />
-              );
-            })()
+            <LineChart
+              data={metric.data}
+              height={100}
+              width={columnWidth}
+              initialSpacing={18}
+              endSpacing={20}
+              spacing={85}
+              hideRules
+              hideAxesAndRules
+              hideYAxisText
+              xAxisThickness={0}
+              xAxisLabelsHeight={22}
+              curved
+              thickness={3.5}
+              color={metric.color}
+              startFillColor={metric.color}
+              endFillColor={metric.color}
+              startOpacity={0.2}
+              endOpacity={0.01}
+              areaChart
+              yAxisOffset={yAxisOffset > 0 ? yAxisOffset : 0}
+              maxValue={maxChartValue != null ? maxChartValue - (yAxisOffset > 0 ? yAxisOffset : 0) : undefined}
+              hideDataPoints={false}
+              dataPointsHeight={8}
+              dataPointsWidth={8}
+              dataPointsColor={metric.color}
+              showValuesAsDataPointsText
+              textFontSize={10}
+              textColor={isDark ? '#FFFFFF' : '#000000'}
+              textShiftY={-10}
+              disableScroll={false}
+              xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 8, fontWeight: '900' }}
+              onPress={handlePress}
+            />
           ) : (
             <View style={styles.chartPlaceholder}>
               <ActivityIndicator size="small" color={metric.color + '40'} />
@@ -177,9 +222,16 @@ export const DashboardPage: React.FC = React.memo(() => {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('tout');
   const [customStart, setCustomStart] = useState<string | undefined>();
   const [customEnd, setCustomEnd] = useState<string | undefined>();
+  const [insights, setInsights] = useState<Insight[]>([]);
+  const [funComparisons, setFunComparisons] = useState<FunComparison[]>([]);
+  const [allTrainingsForStreak, setAllTrainingsForStreak] = useState<any[]>([]);
 
   // Staggered chart mounting: start with first batch, progressively add more
   const [mountedChartCount, setMountedChartCount] = useState(INITIAL_CHARTS);
+
+  // Anti-race : si user clique 7j → 14j → 30j vite, on incrémente requestId et
+  // on ignore les setState périmés (résultat tardif d'une requête précédente).
+  const requestIdRef = useRef(0);
 
   // After data loads, progressively mount charts in batches
   useEffect(() => {
@@ -221,7 +273,23 @@ export const DashboardPage: React.FC = React.memo(() => {
     period: Period = 'tout',
     cStart?: string,
     cEnd?: string,
+    opts: { silent?: boolean } = {},
   ) => {
+    const { silent = false } = opts;
+    const cacheKey = buildCacheKey('dashboard', period, cStart, cEnd);
+
+    // Incrémente l'ID de requête : tout setState ultérieur de cette closure
+    // sera comparé à requestIdRef.current et ignoré si périmé.
+    const myRequestId = ++requestIdRef.current;
+    const isStillCurrent = () => requestIdRef.current === myRequestId;
+
+    // Cache HIT : on affiche les données instantanément, sans spinner.
+    // Un refresh silencieux tourne quand même en arrière-plan après.
+    const cached = getCached<any[]>(cacheKey);
+    if (cached && cached.length > 0) {
+      setAllMetrics(cached);
+      setLoading(false);
+    }
     const daysMap: Record<string, number> = {
       '7j': 7, '14j': 14, '30j': 30, '60j': 60, '90j': 90,
       '6m': 180, '9m': 270, '1a': 365, '2a': 730, 'tout': 3650,
@@ -230,39 +298,35 @@ export const DashboardPage: React.FC = React.memo(() => {
     const days = period === 'custom' ? 3650 : (daysMap[period] || 30);
 
     try {
-      setLoading(true);
+      // Mode silencieux : refresh en arrière-plan sans faire clignoter le spinner.
+      // Utilisé pour les refresh déclenchés par YOROI_DATA_CHANGED (sync HealthKit,
+      // Watch, etc.) pour ne pas rebasculer l'écran en bleu toutes les 10s.
+      if (!silent) setLoading(true);
       const settings = await getUserSettings();
 
+      // Cap à 500 lignes DB : au-delà, le mini-sparkline ne peut pas exploiter plus
+      // (on sample à 30 points de toute façon). Évite de charger 6000+ rows en RAM.
+      const DB_FETCH_LIMIT = 500;
       const [weights, trainings, measurements, sleep, readiness, loadStats, latestWeight] = await Promise.all([
-        getWeights(days),
-        getTrainings(days),
-        getMeasurements(days),
+        getWeights(days, DB_FETCH_LIMIT),
+        getTrainings(days, DB_FETCH_LIMIT),
+        getMeasurements(days, DB_FETCH_LIMIT),
         getSleepStats(),
         calculateReadinessScore(7),
         getWeeklyLoadStats(),
         getLatestWeight(),
       ]);
 
-      // Fallback : si la période ne contient aucune entrée mais qu'il existe des données plus anciennes,
-      // on bascule sur l'historique complet pour pouvoir afficher la courbe ET la valeur.
-      let effectiveWeights: any[];
-      let effectiveMeasurements: any[];
-      if (weights && weights.length > 0) {
-        effectiveWeights = weights;
-      } else {
-        // Aucune donnée sur la période → on prend toutes les pesées pour afficher la courbe
-        effectiveWeights = await getWeights();
-      }
-      if (measurements && measurements.length > 0) {
-        effectiveMeasurements = measurements;
-      } else {
-        effectiveMeasurements = await getMeasurements();
-      }
+      // FILTRE STRICT : pas de fallback vers tout l'historique quand la période
+      // sélectionnée est vide. L'utilisateur a demandé "14j" → on montre 14j, point.
+      // S'il n'y a rien, la carte affichera l'état vide "Saisir".
+      let effectiveWeights: any[] = weights || [];
+      let effectiveMeasurements: any[] = measurements || [];
 
-      // Si mode custom → filtre client-side sur [cStart, cEnd]
+      // Si mode custom → filtre client-side sur [cStart, cEnd] (on a fetch 3650j)
       if (period === 'custom' && cStart && cEnd) {
         const startMs = new Date(cStart).getTime();
-        const endMs = new Date(cEnd).getTime() + 24 * 3600 * 1000 - 1; // inclusive de la journée
+        const endMs = new Date(cEnd).getTime() + 24 * 3600 * 1000 - 1; // inclusif fin de journée
         const inRange = (item: any) => {
           const t = new Date(item.date).getTime();
           return t >= startMs && t <= endMs;
@@ -273,30 +337,33 @@ export const DashboardPage: React.FC = React.memo(() => {
 
       const metricsList: any[] = [];
 
-      // Cap dur pour perf (50 points = largement suffisant pour un sparkline).
-      // Au-delà on garde les 50 plus récents — le chart reste scrollable horizontalement.
-      const HARD_CAP = 50;
+      // Cap dur à 30 points échantillonnés uniformément (1er + dernier + intermédiaires
+      // répartis). Au-delà, le chart ne peut plus se rendre (6000+ points = SVG géant).
+      // Le sparkline reste représentatif de la tendance globale.
+      const HARD_CAP = 30;
       const prepareLineData = (data: any[], valueKey: string, color: string) => {
         if (!data || data.length === 0) return [];
-        const filtered = data.filter(item => item[valueKey] != null && item[valueKey] > 0);
-        // Tri chronologique croissant (plus ancien → plus récent)
+        const filtered = data.filter(item => item[valueKey] != null);
         const chronological = filtered.slice().reverse();
-        // Garde les HARD_CAP dernières entrées (perf + lisibilité scroll)
-        const sampled = chronological.length > HARD_CAP
-          ? chronological.slice(chronological.length - HARD_CAP)
-          : chronological;
 
-        return sampled.map((item) => {
+        let sampled: any[] = chronological;
+        if (chronological.length > HARD_CAP) {
+          sampled = [];
+          const step = (chronological.length - 1) / (HARD_CAP - 1);
+          for (let i = 0; i < HARD_CAP; i++) {
+            const idx = Math.round(i * step);
+            sampled.push(chronological[idx]);
+          }
+        }
+
+        return sampled.map(item => {
           const val = item[valueKey] || 0;
-          // Affiche la valeur au-dessus ET la date sous CHAQUE point,
-          // pour que l'user sache exactement à quelle date correspond chaque valeur.
           return {
             value: val,
             date: item.date,
             dataPointText: val.toFixed(1),
-            // Format "6 MARS" — lisible et identifiable comme dans l'ancien design
             label: format(parseISO(item.date), 'd MMM', { locale: fr }).toUpperCase(),
-            labelTextStyle: { color: colors.textMuted, fontSize: 10, fontWeight: '700' as const },
+            labelTextStyle: { color: colors.textMuted, fontSize: 8, fontWeight: '900' as const },
             dataPointColor: color,
           };
         });
@@ -344,14 +411,19 @@ export const DashboardPage: React.FC = React.memo(() => {
         return date >= cutoff;
       }) || [];
 
-      // Libellé d'unité : "/Xj" pour presets, "/Nj" calculé pour custom
-      let unitLabel = `/${days}j`;
-      if (period === 'custom' && cStart && cEnd) {
+      // Libellé d'unité : "/Xj" pour presets courts, "total" pour tout l'historique,
+      // "/Nj" calculé pour custom
+      let unitLabel: string;
+      if (period === 'tout') {
+        unitLabel = 'total';
+      } else if (period === 'custom' && cStart && cEnd) {
         const diffDays = Math.max(
           1,
           Math.round((new Date(cEnd).getTime() - new Date(cStart).getTime()) / (24 * 3600 * 1000)) + 1,
         );
         unitLabel = `/${diffDays}j`;
+      } else {
+        unitLabel = `/${days}j`;
       }
 
       metricsList.push({ id: 'trainings', metricKey: 'trainings', theme: 'Discipline', title: 'Entraînements', icon: <Trophy size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: unitLabel, value: trainingsFiltered.length, data: [] });
@@ -365,11 +437,42 @@ export const DashboardPage: React.FC = React.memo(() => {
       const sleepDuration = latestSleepEntry?.duration ? formatDurationHM(latestSleepEntry.duration) : '--';
       metricsList.push({ id: 'sleep', metricKey: 'sleep', theme: 'Santé', title: 'Sommeil', icon: <Moon size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: '', value: sleepDuration, data: prepareLineData(weeklyDataArr, 'duration', '#8B5CF6').map(d => ({...d, value: Math.round(d.value / 60 * 10) / 10, dataPointText: formatDurationHM(d.value)})) });
 
-      setAllMetrics(metricsList);
+      // On cache toujours (le résultat reste utile même si une autre période
+      // est en cours), mais on ne setState que si on est encore "courant".
+      setCached(cacheKey, metricsList);
+      if (isStillCurrent()) {
+        setAllMetrics(metricsList);
+        setAllTrainingsForStreak(trainings || []);
+        // Génération insights contextuels (perte/gain poids, séances semaine, sommeil)
+        const generated = generateInsights({
+          weights: effectiveWeights,
+          trainings: trainings || [],
+          nights: weeklyDataArr,
+          sleepGoalMinutes: 480,
+        }, 2);
+        setInsights(generated);
+
+        // Comparaisons fun depuis les totaux globaux (sur la période courante)
+        const totalDur = (trainings || []).reduce(
+          (s: number, t: any) => s + (t.duration_minutes || t.duration || 0), 0,
+        );
+        const totalKcal = (trainings || []).reduce(
+          (s: number, t: any) => s + (t.calories || 0), 0,
+        );
+        const totalDist = (trainings || []).reduce(
+          (s: number, t: any) => s + (t.distance || 0), 0,
+        );
+        setFunComparisons(generateFunComparisons({
+          totalSessions: (trainings || []).length,
+          totalDurationMinutes: totalDur,
+          totalKcal: totalKcal,
+          totalDistanceKm: totalDist,
+        }, 3));
+      }
     } catch (e) {
       logger.error("Error loading dashboard data", e);
     } finally {
-      setLoading(false);
+      if (!silent && isStillCurrent()) setLoading(false);
     }
   }, []);
 
@@ -380,12 +483,21 @@ export const DashboardPage: React.FC = React.memo(() => {
     return () => handle.cancel();
   }, [selectedPeriod, customStart, customEnd]);
 
-  // Recharger si des données changent ailleurs dans l'app
+  // Recharger si des données changent ailleurs dans l'app — invalide le cache
+  // puis refresh silencieux + debounce 1.5s pour éviter les rafales d'events.
   useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () =>
-      loadAllData(selectedPeriod, customStart, customEnd),
-    );
-    return () => sub.remove();
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
+      invalidateCachePrefix('dashboard');
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        loadAllData(selectedPeriod, customStart, customEnd, { silent: true });
+      }, 1500);
+    });
+    return () => {
+      sub.remove();
+      if (timeout) clearTimeout(timeout);
+    };
   }, [selectedPeriod, customStart, customEnd, loadAllData]);
 
   const handleRefresh = useCallback(async () => {
@@ -399,6 +511,10 @@ export const DashboardPage: React.FC = React.memo(() => {
   }, []);
 
   const handleMetricPress = useCallback((metric: any) => {
+    // Haptic avant l'action : feedback < 50ms même si la navigation/modal prend du temps
+    if (Platform.OS !== 'web') {
+      impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+    }
     const route = METRIC_ROUTES[metric.id];
     if (route) {
       router.push(route as any);
@@ -428,10 +544,9 @@ export const DashboardPage: React.FC = React.memo(() => {
     }));
   }, [selectedMetric]);
 
-  if (loading) {
-    return null;
-  }
-
+  // NOTE: on ne bloque PLUS le render pendant `loading` — la structure (header +
+  // sélecteur de période) s'affiche immédiatement, les cartes se remplissent au fur
+  // et à mesure. C'est la clé pour que l'onglet apparaisse instantanément.
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: screenBackground }]}
@@ -456,6 +571,34 @@ export const DashboardPage: React.FC = React.memo(() => {
         customEnd={customEnd}
         onCustomRangeChange={handleCustomRangeChange}
       />
+
+      {/* Onboarding contextuel — affiché 1 seule fois pour les nouveaux users */}
+      <OnboardingTooltip
+        id="dashboard-period-dropdown"
+        title="Choisis ta période"
+        text="Touche le bandeau de période pour filtrer (7j, 30j, custom...)"
+      />
+
+      {/* Streak séances (Duolingo-style) — tout en haut pour effet motivant */}
+      <StreakBadge items={allTrainingsForStreak} />
+
+      {/* Bandeau insights contextuels (juste sous le header de période) */}
+      {insights.length > 0 && <StatsInsightBanner insights={insights} />}
+
+      {loading && allMetrics.length === 0 && (
+        <SkeletonGrid count={8} cardHeight={235} />
+      )}
+
+      {!loading && allMetrics.every(m => !m.data || m.data.length === 0) && allMetrics.length > 0 && (
+        <StatsEmptyState
+          icon={<Scale size={36} color="#3B82F6" strokeWidth={2} />}
+          title="Pas encore de données"
+          description="Enregistre ta première pesée pour démarrer ton suivi. Tes courbes apparaîtront ici dès la première entrée."
+          ctaLabel="Ajouter ma première pesée"
+          ctaHref="/add-weight"
+          accentColor="#3B82F6"
+        />
+      )}
 
       <View style={styles.gridContainer}>
       {groupedThemes.map(({ theme, metrics }, sectionIdx) => {
@@ -496,6 +639,14 @@ export const DashboardPage: React.FC = React.memo(() => {
       })}
       </View>
 
+      {/* Derniers badges débloqués (réutilise lib/badges existant) */}
+      <RecentBadgesStrip />
+
+      {/* Comparaisons fun (carrousel horizontal — effet wow) */}
+      {funComparisons.length > 0 && (
+        <FunComparisonsCard comparisons={funComparisons} title="Le saviez-vous ?" />
+      )}
+
       <View style={{ height: 40 }} />
 
       {selectedMetric && (
@@ -520,7 +671,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: 120,
+    paddingBottom: 200, // iPhone 120 + buffer iPad pour tab bar flottante
   },
   centered: {
     flex: 1,
@@ -575,7 +726,7 @@ const styles = StyleSheet.create({
     width: '47%',
     borderRadius: 24,
     padding: 14,
-    minHeight: 215,
+    minHeight: 235,
     justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -604,10 +755,25 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  trendBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginRight: 6,
+  },
+  trendBadgeText: {
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.2,
+  },
   cardTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    marginBottom: 2,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+    marginBottom: 4,
+    opacity: 0.85,
   },
   valueRow: {
     flexDirection: 'row',
@@ -616,21 +782,24 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   cardValue: {
-    fontSize: 22,
+    fontSize: 26,           // +4 vs avant pour plus d'impact
     fontWeight: '900',
-    letterSpacing: -0.5,
+    letterSpacing: -0.8,    // un peu plus serré (look Apple)
+    lineHeight: 30,
   },
   cardUnit: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
+    letterSpacing: -0.1,
   },
   miniChartWrapper: {
-    height: 120,
-    marginTop: 5,
+    height: 135,
+    marginTop: 8,
     marginLeft: -14,
+    marginRight: -8,
     marginBottom: -10,
-    paddingTop: 10,
-    justifyContent: 'center',
+    paddingTop: 18,
+    justifyContent: 'flex-end',
     overflow: 'visible',
   },
   noDataContainer: {

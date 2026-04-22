@@ -9,6 +9,14 @@ import { Dumbbell, ArrowDown, ArrowUp } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { router } from 'expo-router';
+import { RichTrainingCard } from '@/components/training/RichTrainingCard';
+import { SessionsHeatmap } from '@/components/stats/SessionsHeatmap';
+import { StreakBadge } from '@/components/stats/StreakBadge';
+import { AnimatedCounter } from '@/components/stats/AnimatedCounter';
+import { FunComparisonsCard } from '@/components/stats/FunComparisonsCard';
+import { generateFunComparisons } from '@/lib/funComparisons';
+import { PersonalRecordsCard } from '@/components/stats/PersonalRecordsCard';
+import { ShareStatsButton } from '@/components/stats/ShareStatsButton';
 
 // Accepte toujours les trainings depuis le parent (rétrocompatibilité)
 // mais charge aussi les siennes si le parent ne donne rien
@@ -66,7 +74,9 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
   const loadData = useCallback(async () => {
     try {
       const days = PERIOD_DAYS[period];
-      const data = await getTrainings(days);
+      // Cap 800 séances même en mode 'tout' (sinon FlatList re-render explosif).
+      // Une personne avec 800+ séances est rare et la liste reste navigable.
+      const data = await getTrainings(days, 800);
       setLocalTrainings(Array.isArray(data) ? data : []);
     } catch (err) {
       setLocalTrainings([]);
@@ -139,11 +149,51 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
     return cal.toLocaleString('fr-FR');
   };
 
-  const summaryItems = useMemo(() => [
-    { value: totalSessions.toString(), label: t('seances.sessions'), color: colors.accent },
-    { value: formatDurationCompact(totalMinutes), label: t('seances.total'), color: '#F97316' },
-    { value: totalCalories > 0 ? formatCalories(totalCalories) : '--', label: t('seances.kcal'), color: '#EF4444' },
+  // 3 KPI affichés en tête de l'onglet — version structurée pour AnimatedCounter
+  const summaryKpis = useMemo(() => [
+    {
+      key: 'sessions',
+      value: totalSessions,
+      decimals: 0,
+      compact: false,
+      suffix: '',
+      label: t('seances.sessions'),
+      color: colors.accent,
+    },
+    {
+      key: 'minutes',
+      value: totalMinutes / 60,
+      decimals: 0,
+      compact: false,
+      suffix: ' h',
+      label: t('seances.total'),
+      color: '#F97316',
+    },
+    {
+      key: 'kcal',
+      value: totalCalories,
+      decimals: 0,
+      compact: true,
+      suffix: ' kcal',
+      label: t('seances.kcal'),
+      color: '#EF4444',
+    },
   ], [totalSessions, totalMinutes, totalCalories, colors.accent, t]);
+
+  // Comparaisons fun générées depuis les totaux globaux
+  const totalDistanceKm = useMemo(
+    () => filteredTrainings.reduce((s, t) => s + (t.distance || 0), 0),
+    [filteredTrainings],
+  );
+  const funComparisons = useMemo(
+    () => generateFunComparisons({
+      totalSessions,
+      totalDurationMinutes: totalMinutes,
+      totalKcal: totalCalories,
+      totalDistanceKm,
+    }, 4),
+    [totalSessions, totalMinutes, totalCalories, totalDistanceKm],
+  );
 
   const sportCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -154,99 +204,9 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
   }, [trainings]);
 
   const renderSession = useCallback(({ item: training }: { item: Training }) => {
-    const sportIcon = getSportIcon(training.sport);
-    const sportName = getSportName(training.sport);
-    const sportColor = getSportColor(training.sport);
-    const duration = training.duration_minutes || training.duration || 0;
-
-    let dateStr = '';
-    let timeStr = '';
-    try {
-      const d = parseISO(training.date);
-      dateStr = format(d, 'EEE d MMM yyyy', { locale: fr });
-      if (training.start_time) {
-        const [sh, sm] = training.start_time.split(':').map(Number);
-        const endMin = sh * 60 + sm + duration;
-        const eh = Math.floor(endMin / 60) % 24;
-        const em = endMin % 60;
-        timeStr = `${sh.toString().padStart(2, '0')}:${sm.toString().padStart(2, '0')}-${eh.toString().padStart(2, '0')}:${em.toString().padStart(2, '0')}`;
-      }
-    } catch {
-      dateStr = training.date;
-    }
-
-    const dist = training.distance || 0;
-    const hasSecondary = dist > 0 || (training.heart_rate || 0) > 0;
-    const pace = dist > 0 && duration > 0 ? Math.round((duration * 60) / dist) : 0;
-    const paceMin = pace > 0 ? Math.floor(pace / 60) : 0;
-    const paceSec = pace > 0 ? Math.round(pace % 60) : 0;
-
-    return (
-      <TouchableOpacity
-        style={[styles.sessionCard, { backgroundColor: cardBg, borderWidth: 1, borderColor: cardBorder }]}
-        activeOpacity={0.7}
-        onPress={() => {
-          if (training.id != null) {
-            router.push(`/workout-detail?id=${training.id}` as any);
-          }
-        }}
-      >
-        <View style={styles.sessionRow}>
-          <View style={[styles.sportIconContainer, { backgroundColor: sportColor + '18' }]}>
-            <MaterialCommunityIcons name={sportIcon as any} size={22} color={sportColor} />
-          </View>
-          <View style={styles.sessionInfo}>
-            <Text style={[styles.sessionSport, { color: colors.textPrimary }]} numberOfLines={1}>
-              {sportName}
-            </Text>
-            <Text style={[styles.sessionDate, { color: colors.textMuted }]}>
-              {dateStr}{timeStr ? ` \u00B7 ${timeStr}` : ''}
-            </Text>
-          </View>
-          <View style={styles.sessionMetrics}>
-            {duration > 0 && (
-              <Text style={[styles.sessionMetricValue, { color: colors.textPrimary }]}>
-                {formatDuration(duration)}
-              </Text>
-            )}
-            {(() => {
-              const cal = training.calories || estimateCalories(training.sport, duration);
-              return cal > 0 ? (
-                <Text style={[styles.sessionMetricSub, { color: '#F97316' }]}>
-                  {cal} kcal
-                </Text>
-              ) : null;
-            })()}
-          </View>
-        </View>
-
-        {hasSecondary && (
-          <View style={[styles.sessionSecondary, { borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-            {dist > 0 && (
-              <Text style={[styles.sessionSecondaryText, { color: '#3B82F6' }]}>
-                {dist.toFixed(1)} km
-              </Text>
-            )}
-            {pace > 0 && (
-              <Text style={[styles.sessionSecondaryText, { color: '#22C55E' }]}>
-                {paceMin}'{paceSec.toString().padStart(2, '0')}"/km
-              </Text>
-            )}
-            {(training.heart_rate || 0) > 0 && (
-              <Text style={[styles.sessionSecondaryText, { color: '#EF4444' }]}>
-                {training.heart_rate} bpm
-              </Text>
-            )}
-            {training.source && training.source !== 'manual' && (
-              <Text style={[styles.sessionSourceBadge, { color: colors.textMuted, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
-                {training.source}
-              </Text>
-            )}
-          </View>
-        )}
-      </TouchableOpacity>
-    );
-  }, [isDark, colors]);
+    // Carte riche partagée avec Planning > Séances pour cohérence visuelle
+    return <RichTrainingCard training={training} />;
+  }, []);
 
   if (trainings.length === 0) {
     return (
@@ -370,22 +330,53 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
             </TouchableOpacity>
           </View>
 
-          {/* Résumé en haut */}
+          {/* Résumé en haut — chiffres animés count-up */}
           <View style={styles.summaryRow}>
-            {summaryItems.map((item, i) => (
+            {summaryKpis.map(kpi => (
               <View
-                key={i}
+                key={kpi.key}
                 style={[styles.summaryCard, {
                   backgroundColor: cardBg,
                   borderTopWidth: 3,
-                  borderTopColor: item.color,
+                  borderTopColor: kpi.color,
                 }]}
               >
-                <Text style={[styles.summaryValue, { color: item.color }]}>{item.value}</Text>
-                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{item.label}</Text>
+                <AnimatedCounter
+                  value={kpi.value}
+                  decimals={kpi.decimals}
+                  suffix={kpi.suffix}
+                  compact={kpi.compact}
+                  formatThousands={!kpi.compact && kpi.value >= 1000}
+                  style={[styles.summaryValue, { color: kpi.color }]}
+                />
+                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{kpi.label}</Text>
               </View>
             ))}
           </View>
+
+          {/* 🔥 Streak counter (Duolingo-style) si l'user a une streak active */}
+          <StreakBadge items={trainings as any[]} />
+
+          {/* Heatmap annuel style GitHub */}
+          <SessionsHeatmap trainings={trainings} days={365} />
+
+          {/* Records personnels (4 cartes scrollables) */}
+          <PersonalRecordsCard trainings={trainings as any} />
+
+          {/* Comparaisons fun (carrousel horizontal) */}
+          <FunComparisonsCard comparisons={funComparisons} />
+
+          {/* Bouton "Partager mes stats" → carte image Instagram-ready */}
+          <ShareStatsButton
+            title="Mes stats Yoroi"
+            stats={[
+              { label: 'Séances', value: String(totalSessions), color: '#3B82F6' },
+              { label: 'Heures', value: `${(totalMinutes / 60).toFixed(0)}h`, color: '#F97316' },
+              { label: 'Calories', value: totalCalories >= 1000 ? `${(totalCalories / 1000).toFixed(1)}k` : String(totalCalories), color: '#EF4444' },
+              { label: 'Distance', value: `${totalDistanceKm.toFixed(0)} km`, color: '#22C55E' },
+            ]}
+            tagline="La régularité paie 💪"
+          />
         </View>
       }
     />

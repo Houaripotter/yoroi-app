@@ -70,6 +70,11 @@ import {
   WATCH_EXERCISE_TEMPLATES,
 } from '@/lib/carnetService';
 import VictoryShareModal, { VictorySessionData, createVictoryFromEntry } from '@/components/VictoryShareModal';
+import { AnimatedCounter } from '@/components/stats/AnimatedCounter';
+import { StatsEmptyState } from '@/components/stats/StatsEmptyState';
+import { StatsInsightBanner } from '@/components/stats/StatsInsightBanner';
+import { ShareStatsButton } from '@/components/stats/ShareStatsButton';
+import { Trophy as TrophyIcon, Brain } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPendingVictory } from '@/lib/victoryTrigger';
 
@@ -1681,20 +1686,29 @@ export default function TrainingJournalScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
         }
       >
-        {/* Stats Summary */}
+        {/* Stats Summary — chiffres animés count-up pour effet premium */}
         <View style={[styles.statsRow, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: '#EF4444' }]}>{stats.totalPRs}</Text>
+            <AnimatedCounter
+              value={stats.totalPRs}
+              style={[styles.statValue, { color: '#EF4444' }]}
+            />
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('journal.records')}</Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: '#10B981' }]}>{stats.skillsMastered}</Text>
+            <AnimatedCounter
+              value={stats.skillsMastered}
+              style={[styles.statValue, { color: '#10B981' }]}
+            />
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('journal.mastered')}</Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: '#F59E0B' }]}>{stats.totalDrills}</Text>
+            <AnimatedCounter
+              value={stats.totalDrills}
+              style={[styles.statValue, { color: '#F59E0B' }]}
+            />
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('journal.repsCount')}</Text>
           </View>
         </View>
@@ -1903,6 +1917,21 @@ export default function TrainingJournalScreen() {
               )}
             </View>
           </>
+        )}
+
+        {/* Bouton "Partager mes stats carnet" — carte Instagram-ready */}
+        {(stats.totalPRs > 0 || stats.skillsMastered > 0) && (
+          <ShareStatsButton
+            title="Mon carnet Yoroi"
+            stats={[
+              { label: 'Records', value: String(stats.totalPRs), color: '#EF4444' },
+              { label: 'Maîtrisées', value: String(stats.skillsMastered), color: '#10B981' },
+              { label: 'Reps', value: String(stats.totalDrills), color: '#F59E0B' },
+              { label: 'Total skills', value: String(skills.length), color: '#8B5CF6' },
+            ]}
+            tagline="Progression continue 🥋"
+            accentColor="#EF4444"
+          />
         )}
 
         <View style={{ height: 120 }} />

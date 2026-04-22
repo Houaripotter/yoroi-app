@@ -405,7 +405,8 @@ export default function BackupHistoryScreen() {
       for (const name of backupFiles) {
         const uri = `${dir}${name}`;
         try {
-          const info = await FileSystem.getInfoAsync(uri, { size: true }) as any;
+          // `size: true` était une option déprécié — getInfoAsync retourne size par défaut
+          const info = await FileSystem.getInfoAsync(uri) as any;
           if (!info.exists) continue;
           let version = '?', userName = '?';
           let weightsCount = 0, trainingsCount = 0, photosCount = 0;

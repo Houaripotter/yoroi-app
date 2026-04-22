@@ -605,4 +605,28 @@ const saveSyncTs = async (ts: string, device: string) => {
   await AsyncStorage.setItem(LAST_SYNC_KEY, JSON.stringify({ ts, device }));
 };
 
-export default { initPeerSync, stopPeerSync, onSyncStatusChange, getSyncStatus };
+/**
+ * Force une re-synchronisation manuelle avec tous les peers connectés.
+ * Envoie un handshake fresh → déclenche un échange de delta si data changed.
+ * Retourne le nombre de peers à qui le handshake a été envoyé.
+ */
+export const forceSync = async (): Promise<number> => {
+  if (!MultipeerBridge.isAvailable) return 0;
+  const peers = await MultipeerBridge.getConnectedPeers();
+  if (peers.length === 0) return 0;
+  try {
+    await sendHandshake();
+    return peers.length;
+  } catch (err) {
+    logger.error('[PeerSync] Erreur forceSync:', err);
+    return 0;
+  }
+};
+
+/** Renvoie le nom de l'appareil local (ex. "iPhone de Houari"). */
+export const getMyDeviceName = (): string => myDeviceName;
+
+/** Indique si le module natif Multipeer est disponible (iOS + linké). */
+export const isPeerSyncAvailable = (): boolean => MultipeerBridge.isAvailable;
+
+export default { initPeerSync, stopPeerSync, onSyncStatusChange, getSyncStatus, forceSync, getMyDeviceName, isPeerSyncAvailable };

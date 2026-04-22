@@ -44,15 +44,28 @@ export function SleepHistoryChart({ data, colors, onPress }: SleepHistoryChartPr
   const avgDeep = data.reduce((sum, d) => sum + d.deep, 0) / data.length;
   const avgRem = data.reduce((sum, d) => sum + d.rem, 0) / data.length;
 
+  // Cap à 60 barres max avec échantillonnage uniforme. Au-delà, BarChart essaie
+  // de dessiner une CALayer gigantesque (60+ barres × 56px = > 3000px = OK, mais
+  // 5000+ barres → 280 000px → crash "Ignoring bogus layer size").
+  const MAX_BARS = 60;
+  const sourceData = data.length > MAX_BARS
+    ? (() => {
+        const sampled: typeof data = [];
+        const step = (data.length - 1) / (MAX_BARS - 1);
+        for (let i = 0; i < MAX_BARS; i++) sampled.push(data[Math.round(i * step)]);
+        return sampled;
+      })()
+    : data;
+
   // Formater les données pour le bar chart
-  const chartData = data.map((item, index) => {
+  const chartData = sourceData.map((item, index) => {
     const date = new Date(item.date);
     const day = date.getDate();
     const month = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'][date.getMonth()];
 
     return {
       value: item.total / 60, // Convertir en heures
-      label: data.length <= 7 ? `${day} ${month}` : `${day}`,
+      label: sourceData.length <= 7 ? `${day} ${month}` : `${day}`,
       frontColor: colors.purple,
       spacing: 2,
       labelWidth: 50,

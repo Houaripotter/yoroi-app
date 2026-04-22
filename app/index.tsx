@@ -9,6 +9,7 @@ import logger from '@/lib/security/logger';
 export default function Index() {
   const [isLoading, setIsLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [needsTour, setNeedsTour] = useState(false);
 
   useEffect(() => {
     const checkAppState = async () => {
@@ -48,6 +49,11 @@ export default function Index() {
     };
 
     checkAppState();
+    // Vérifie si le tour onboarding a été fait (hors de checkAppState pour pouvoir
+    // afficher le tour APRÈS l'onboarding principal, pas à la place)
+    AsyncStorage.getItem('@yoroi_onboarding_tour_done').then(v => {
+      if (v !== 'true') setNeedsTour(true);
+    }).catch(() => {});
   }, []);
 
   if (isLoading) {
@@ -56,6 +62,11 @@ export default function Index() {
 
   if (needsOnboarding) {
     return <Redirect href="/onboarding" />;
+  }
+
+  // Tour post-onboarding : nouveau user qui découvre les features
+  if (needsTour) {
+    return <Redirect href="/onboarding-tour" />;
   }
 
   return <Redirect href="/(tabs)" />;

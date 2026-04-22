@@ -307,13 +307,13 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
               </View>
             </TouchableOpacity>
 
-            {/* ── Explication contextuelle du score */}
-            <View style={[styles.explanationBlock, { backgroundColor: sleepScore.color + '10', borderColor: sleepScore.color + '30' }]}>
+            {/* ── Explication contextuelle du score (fond blanc forcé pour lisibilité) */}
+            <View style={[styles.explanationBlock, { backgroundColor: '#FFFFFF', borderColor: sleepScore.color + '55' }]}>
               <Text style={[styles.explanationTitle, { color: sleepScore.color }]}>
                 {sleepScore.grade === 'A' ? 'Comment est calculé ce score ?' : 'Comment améliorer ton score ?'}
               </Text>
-              <Text style={[styles.explanationText, { color: colors.textSecondary }]}>{gaugeExplanation.text}</Text>
-              <Text style={[styles.explanationCalc, { color: colors.textMuted }]}>
+              <Text style={[styles.explanationText, { color: '#334155' }]}>{gaugeExplanation.text}</Text>
+              <Text style={[styles.explanationCalc, { color: '#64748B' }]}>
                 Score = 60% durée + 40% qualité des phases (profond + REM)
               </Text>
               {gaugeExplanation.tips.length > 0 && (
@@ -321,7 +321,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
                   {gaugeExplanation.tips.map((tip, i) => (
                     <View key={i} style={styles.tipRow}>
                       <View style={[styles.tipDot, { backgroundColor: sleepScore.color }]} />
-                      <Text style={[styles.tipText, { color: colors.textSecondary }]}>{tip}</Text>
+                      <Text style={[styles.tipText, { color: '#334155' }]}>{tip}</Text>
                     </View>
                   ))}
                 </View>

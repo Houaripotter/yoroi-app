@@ -27,6 +27,13 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { logger } from '@/lib/security/logger';
 import { ImportProgressBanner } from '@/components/ImportProgressBanner';
+import { buildCacheKey, getCached, setCached, invalidateCachePrefix } from '@/lib/statsMemoryCache';
+import { StatsEmptyState } from '../StatsEmptyState';
+import { StatsInsightBanner } from '../StatsInsightBanner';
+import { StreakBadge } from '../StreakBadge';
+import { FunComparisonsCard } from '../FunComparisonsCard';
+import { generateInsights, type Insight } from '@/lib/statsInsights';
+import { generateFunComparisons, type FunComparison } from '@/lib/funComparisons';
 
 export const TrainingTabPage: React.FC = React.memo(() => {
   const { colors, isDark, screenBackground } = useTheme();
@@ -53,6 +60,8 @@ export const TrainingTabPage: React.FC = React.memo(() => {
   const [refreshing, setRefreshing] = useState(false);
 
   const [allTrainingsData, setAllTrainingsData] = useState<any[]>([]);
+  const [insights, setInsights] = useState<Insight[]>([]);
+  const [funComparisons, setFunComparisons] = useState<FunComparison[]>([]);
 
   const [selectedMetric, setSelectedMetric] = useState<{
     key: string;
@@ -68,37 +77,75 @@ export const TrainingTabPage: React.FC = React.memo(() => {
     load: any[];
   }>({ intensity: [], duration: [], load: [] });
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const requestIdRef = useRef(0);
+  const loadData = useCallback(async (opts: { silent?: boolean } = {}) => {
+    const { silent = false } = opts;
+    const cacheKey = buildCacheKey('training', selectedPeriod);
+    const myReq = ++requestIdRef.current;
+    const isCurrent = () => requestIdRef.current === myReq;
+
+    // Cache HIT : hydrate les états instantanément
+    const cached = getCached<any>(cacheKey);
+    if (cached) {
+      setTrainingData(cached.data);
+      if (cached.periodTrainings) setAllTrainingsData(cached.periodTrainings);
+      if (cached.trainingHistory) setTrainingHistory(cached.trainingHistory);
+      setLoading(false);
+    }
+
+    if (!silent && !cached) setLoading(true);
     try {
-      const [data, allTrainings] = await Promise.all([
+      const daysMap: { [key: string]: number } = {
+        '7j': 7, '14j': 14, '30j': 30, '60j': 60, '90j': 90,
+        '6m': 180, '9m': 270, '1a': 365, '2a': 730, 'tout': 3650, 'custom': 3650,
+      };
+      const days = daysMap[selectedPeriod] || 30;
+
+      // PERF : on charge uniquement la période + cap 500 séances (index DB actif).
+      const [data, periodTrainings] = await Promise.all([
         aggregateTrainingData(selectedPeriod),
-        getTrainings(),
+        getTrainings(days, 500),
       ]);
+      // Anti-race
+      if (!isCurrent()) return;
       setTrainingData(data);
 
-      if (allTrainings?.length > 0) {
-        setAllTrainingsData(allTrainings);
+      let trainingHistory: any = null;
+      if (periodTrainings?.length > 0) {
+        setAllTrainingsData(periodTrainings);
+
+        // Un seul passage pour construire les 3 séries
+        const reversed = periodTrainings.slice().reverse();
+        const intensity: any[] = [], duration: any[] = [], load: any[] = [];
+        for (const t of reversed) {
+          if (t.intensity && t.intensity > 0) intensity.push({ date: t.date, value: t.intensity });
+          if (t.duration && t.duration > 0) duration.push({ date: t.date, value: t.duration });
+          if (t.intensity && t.duration) load.push({ date: t.date, value: (t.intensity * t.duration) / 60 });
+        }
+        trainingHistory = { intensity, duration, load };
+        setTrainingHistory(trainingHistory);
+
+        // Insights spécifiques training (séances/semaine, charge)
+        setInsights(generateInsights({ trainings: periodTrainings }, 2));
+
+        // Comparaisons fun depuis totaux training
+        const totalDur = periodTrainings.reduce((s: number, t: any) => s + (t.duration_minutes || t.duration || 0), 0);
+        const totalKcal = periodTrainings.reduce((s: number, t: any) => s + (t.calories || 0), 0);
+        const totalDist = periodTrainings.reduce((s: number, t: any) => s + (t.distance || 0), 0);
+        setFunComparisons(generateFunComparisons({
+          totalSessions: periodTrainings.length,
+          totalDurationMinutes: totalDur,
+          totalKcal: totalKcal,
+          totalDistanceKm: totalDist,
+        }, 3));
       }
 
-      if (allTrainings?.length > 0) {
-        const now = new Date();
-        const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, '1a': 365, '2a': 730, 'tout': 3650 };
-        const days = daysMap[selectedPeriod] || 30;
-        const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-
-        const filtered = allTrainings.filter((t: any) => new Date(t.date) >= cutoffDate).reverse();
-
-        setTrainingHistory({
-          intensity: filtered.filter((t: any) => t.intensity && t.intensity > 0).map((t: any) => ({ date: t.date, value: t.intensity })),
-          duration: filtered.filter((t: any) => t.duration && t.duration > 0).map((t: any) => ({ date: t.date, value: t.duration })),
-          load: filtered.filter((t: any) => t.intensity && t.duration).map((t: any) => ({ date: t.date, value: (t.intensity * t.duration) / 60 })),
-        });
-      }
+      // Stocke en cache pour switch d'onglet rapide
+      setCached(cacheKey, { data, periodTrainings, trainingHistory });
     } catch (error) {
       logger.error('Error loading training data:', error);
     } finally {
-      setLoading(false);
+      if (!silent && isCurrent()) setLoading(false);
     }
   }, [selectedPeriod]);
 
@@ -113,9 +160,18 @@ export const TrainingTabPage: React.FC = React.memo(() => {
     }
   }, [selectedPeriod]);
 
+  // Debounce 1.5s + invalide cache + silent (anti-flicker)
   useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => { loadData(); });
-    return () => sub.remove();
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
+      invalidateCachePrefix('training');
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(() => loadData({ silent: true }), 1500);
+    });
+    return () => {
+      sub.remove();
+      if (timeout) clearTimeout(timeout);
+    };
   }, [loadData]);
 
   const handleRefresh = useCallback(async () => {
@@ -188,6 +244,24 @@ export const TrainingTabPage: React.FC = React.memo(() => {
       />
 
       <ImportProgressBanner />
+
+      {/* Streak séances pour cette page training */}
+      <StreakBadge items={allTrainingsData} />
+
+      {/* Insights training (séances semaine, charge) */}
+      {insights.length > 0 && <StatsInsightBanner insights={insights} />}
+
+      {/* Empty state si aucune séance */}
+      {!loading && (!trainingData || (trainingData.count || 0) === 0) && (
+        <StatsEmptyState
+          icon={<Flame size={36} color="#F97316" strokeWidth={2} />}
+          title="Démarre ton journal d'entraînement"
+          description="Enregistre tes séances pour suivre ta charge, ta discipline et ta progression au fil du temps."
+          ctaLabel="Ajouter une séance"
+          ctaHref="/add-training"
+          accentColor="#F97316"
+        />
+      )}
 
       {/* ========== VOLUME + SÉANCES RÉCENTES dans la même carte ========== */}
       <StatsSection>
@@ -373,6 +447,11 @@ export const TrainingTabPage: React.FC = React.memo(() => {
           </View>
         </View>
       </StatsSection>
+
+      {/* Comparaisons fun (carrousel horizontal) */}
+      {funComparisons.length > 0 && (
+        <FunComparisonsCard comparisons={funComparisons} title="Le saviez-vous ?" />
+      )}
 
       <View style={{ height: 40 }} />
 

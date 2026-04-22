@@ -2361,7 +2361,9 @@ const createStyles = (IS_SMALL_SCREEN: boolean, SCREEN_WIDTH: number) => StyleSh
   scrollContent: {
     paddingTop: 0,
     paddingHorizontal: CARD_PADDING,
-    paddingBottom: IS_SMALL_SCREEN ? 230 : 250,
+    // iPad : la tab bar flottante est plus grande + on veut plus d'air en bas.
+    // Sans ça, le contenu passe SOUS la tab bar (non visible).
+    paddingBottom: SCREEN_WIDTH >= 768 ? 340 : IS_SMALL_SCREEN ? 230 : 250,
   },
   // Grille 2x2
   reportGrid: {

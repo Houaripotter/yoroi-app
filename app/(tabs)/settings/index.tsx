@@ -52,6 +52,7 @@ import {
   Table,
   CheckCircle,
   Smartphone,
+  Wifi,
   BookOpen,
   Syringe,
   BarChart3,
@@ -135,6 +136,8 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
       { id: 'export', label: 'settings.items.export.label', sublabel: 'settings.items.export.sublabel', Icon: Download, iconColor: '#14B8A6', handler: 'export' },
       { id: 'import', label: 'settings.items.importData.label', sublabel: 'settings.items.importData.sublabel', Icon: Upload, iconColor: '#14B8A6', handler: 'import' },
       { id: 'backup-history', label: 'Mes sauvegardes', sublabel: 'Retrouver et restaurer vos backups locaux', Icon: Archive, iconColor: '#14B8A6', route: '/backup-history' },
+      { id: 'sync-devices', label: 'Synchronisation locale', sublabel: 'iPhone ↔ iPad sans internet (Bluetooth + WiFi)', Icon: Wifi, iconColor: '#3B82F6', route: '/sync-devices' },
+      { id: 'premium', label: 'Yoroi Premium', sublabel: 'Widget, insights, heatmap, partage HD…', Icon: Star, iconColor: '#A855F7', route: '/premium' },
       { id: 'deduplicate', label: 'Nettoyer les doublons', sublabel: 'Supprimer les séances en double (Apple Santé)', Icon: ShieldCheck, iconColor: '#F59E0B', handler: 'deduplicate' },
       { id: 'pdf', label: 'settings.items.pdf.label', sublabel: 'settings.items.pdf.sublabel', Icon: FileText, iconColor: '#6B7280', handler: 'pdf' },
       { id: 'clear-cache', label: 'settings.items.clearCache.label', sublabel: 'settings.items.clearCache.sublabel', Icon: Database, iconColor: '#F59E0B', handler: 'clear-cache' },
@@ -1213,7 +1216,11 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollView: { flex: 1 },
-  content: { paddingHorizontal: 16 },
+  content: {
+    paddingHorizontal: 16,
+    // paddingBottom important pour éviter que la tab bar flottante cache le contenu
+    paddingBottom: 200,
+  },
 
   // Header
   header: {

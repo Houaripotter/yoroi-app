@@ -24,7 +24,11 @@ const sf = (v: number): string => Number.isInteger(v) ? String(v) : v.toFixed(1)
 let _cachedSettings: any = null;
 let _cachedProfile: any = null;
 
-type Period = '7j' | '30j' | '90j' | '6m' | '1a' | 'tout';
+// Type aligné avec StatsHeader/PeriodSelector pour éviter les fallbacks silencieux
+// quand l'utilisateur sélectionne 14j/60j/9m/2a/custom dans une autre page.
+type Period =
+  | '7j' | '14j' | '30j' | '60j' | '90j'
+  | '6m' | '9m' | '1a' | '2a' | 'tout' | 'custom';
 
 const PERIODS: Array<{ value: Period; label: string }> = [
   { value: '7j', label: '7 jours' },
@@ -38,11 +42,16 @@ const PERIODS: Array<{ value: Period; label: string }> = [
 const getPeriodDays = (period: Period): number => {
   switch (period) {
     case '7j': return 7;
+    case '14j': return 14;
     case '30j': return 30;
+    case '60j': return 60;
     case '90j': return 90;
     case '6m': return 180;
+    case '9m': return 270;
     case '1a': return 365;
+    case '2a': return 730;
     case 'tout': return 3650;
+    case 'custom': return 3650; // custom géré par le caller
     default: return 30;
   }
 };
@@ -168,6 +177,34 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
 
     return { latest, first, min, max, avg, change, changePercent, trend };
   }, [filteredData]);
+
+  // Comparaison vs période précédente (même durée, juste avant la période courante)
+  const periodComparison = useMemo(() => {
+    if (!data || data.length === 0) return null;
+    const days = getPeriodDays(selectedPeriod);
+    const now = new Date();
+    const currentStart = new Date(now);
+    currentStart.setDate(currentStart.getDate() - days);
+    const previousStart = new Date(currentStart);
+    previousStart.setDate(previousStart.getDate() - days);
+
+    const previousData = data.filter(item => {
+      if (!item.date) return false;
+      const d = new Date(item.date);
+      return d >= previousStart && d < currentStart;
+    });
+    if (previousData.length === 0 || filteredData.length === 0) return null;
+    const avgCurrent = filteredData.reduce((s, x) => s + x.value, 0) / filteredData.length;
+    const avgPrevious = previousData.reduce((s, x) => s + x.value, 0) / previousData.length;
+    if (avgPrevious === 0) return null;
+    const deltaPct = ((avgCurrent - avgPrevious) / Math.abs(avgPrevious)) * 100;
+    return {
+      avgCurrent,
+      avgPrevious,
+      deltaPct,
+      hasEnoughData: previousData.length >= 2,
+    };
+  }, [data, filteredData, selectedPeriod]);
 
   const handlePeriodChange = (period: Period) => {
     if (Platform.OS !== 'web') {
@@ -411,12 +448,23 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
               </Text>
               {filteredData.length > 0 ? (
                 <ModernLineChart
-                  data={[...filteredData].reverse()}
+                  // Slice AVANT reverse pour éviter l'array op sur 6699 items :
+                  // on prend au max les 500 derniers puis on inverse.
+                  data={filteredData.slice(-500).reverse()}
                   color={color}
                   height={260}
                   showGrid={true}
                   showGradient={true}
-                  maxDataPoints={selectedPeriod === '1a' ? 60 : selectedPeriod === '6m' ? 45 : 30}
+                  maxDataPoints={
+                    selectedPeriod === 'tout' ? 100 :
+                    selectedPeriod === '2a' ? 80 :
+                    selectedPeriod === '1a' ? 60 :
+                    selectedPeriod === '9m' ? 50 :
+                    selectedPeriod === '6m' ? 45 :
+                    selectedPeriod === '90j' ? 40 :
+                    selectedPeriod === '60j' ? 35 :
+                    30
+                  }
                 />
               ) : (
                 <View style={styles.noDataContainer}>
@@ -426,6 +474,27 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                 </View>
               )}
             </View>
+
+            {/* Comparaison vs période précédente */}
+            {periodComparison && periodComparison.hasEnoughData && (
+              (() => {
+                const isUp = periodComparison.deltaPct > 0;
+                const isFlat = Math.abs(periodComparison.deltaPct) < 1;
+                const arrow = isFlat ? '→' : isUp ? '↑' : '↓';
+                const cmpColor = isFlat ? '#9CA3AF' : isUp ? '#10B981' : '#EF4444';
+                const sign = isUp ? '+' : '';
+                return (
+                  <View style={[styles.compareBadge, { backgroundColor: '#FFFFFF', borderColor: cmpColor + '55' }]}>
+                    <Text style={[styles.compareText, { color: cmpColor }]}>
+                      {arrow} {sign}{periodComparison.deltaPct.toFixed(1)}% vs période précédente
+                    </Text>
+                    <Text style={[styles.compareSub, { color: '#64748B' }]}>
+                      Moy. {periodComparison.avgCurrent.toFixed(1)} (vs {periodComparison.avgPrevious.toFixed(1)})
+                    </Text>
+                  </View>
+                );
+              })()
+            )}
 
             {/* Stats supplémentaires */}
             {stats && (
@@ -685,6 +754,23 @@ const styles = StyleSheet.create({
   noDataText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  compareBadge: {
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  compareText: {
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: -0.2,
+    marginBottom: 2,
+  },
+  compareSub: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   statsCard: {
     borderRadius: 16,

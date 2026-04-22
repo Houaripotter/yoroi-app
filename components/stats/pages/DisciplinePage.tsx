@@ -55,7 +55,10 @@ export const DisciplinePage: React.FC = () => {
   // Répartition par discipline pour la période sélectionnée
   const disciplineBreakdown = useMemo(() => {
     if (!allTrainingsData.length) return [];
-    const daysMap: Record<string, number> = { '7j': 7, '30j': 30, '90j': 90, 'tout': 9999 };
+    const daysMap: Record<string, number> = {
+      '7j': 7, '14j': 14, '30j': 30, '60j': 60, '90j': 90,
+      '6m': 180, '9m': 270, '1a': 365, '2a': 730, 'tout': 9999, 'custom': 9999,
+    };
     const days = daysMap[selectedPeriod] ?? 30;
     const cutoff = new Date(Date.now() - days * 86400000);
     const filtered = allTrainingsData.filter((t: any) => new Date(t.date) >= cutoff);
@@ -96,7 +99,8 @@ export const DisciplinePage: React.FC = () => {
     try {
       const [data, allTrainings] = await Promise.all([
         aggregateTrainingData(selectedPeriod),
-        getTrainings()
+        // 2 ans + 500 séances max (avant : full-scan + JOIN clubs)
+        getTrainings(730, 500)
       ]);
       setTrainingData(data);
 
@@ -109,10 +113,8 @@ export const DisciplinePage: React.FC = () => {
       if (allTrainings && allTrainings.length > 0) {
         const now = new Date();
         const daysMap: { [key: string]: number } = {
-          '7j': 7,
-          '30j': 30,
-          '90j': 90,
-          'tout': 365,
+          '7j': 7, '14j': 14, '30j': 30, '60j': 60, '90j': 90,
+          '6m': 180, '9m': 270, '1a': 365, '2a': 730, 'tout': 3650, 'custom': 3650,
         };
         const days = daysMap[selectedPeriod] || 7;
         const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);

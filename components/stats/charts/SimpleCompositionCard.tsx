@@ -24,7 +24,7 @@ interface SimpleCompositionCardProps {
   waterLabel?: string;
 }
 
-export const SimpleCompositionCard: React.FC<SimpleCompositionCardProps> = ({
+const SimpleCompositionCardInner: React.FC<SimpleCompositionCardProps> = ({
   fatPercent,
   musclePercent,
   waterPercent,
@@ -147,4 +147,5 @@ const styles = StyleSheet.create({
   },
 });
 
+export const SimpleCompositionCard = React.memo(SimpleCompositionCardInner);
 export default SimpleCompositionCard;

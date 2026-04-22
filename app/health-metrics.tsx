@@ -321,6 +321,8 @@ export default function HealthMetricsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+          contentInsetAdjustmentBehavior="automatic"
         keyboardDismissMode="on-drag"
         refreshControl={
           <RefreshControl

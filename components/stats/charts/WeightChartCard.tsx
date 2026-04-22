@@ -8,8 +8,9 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  LayoutChangeEvent, ScrollView,
+  LayoutChangeEvent, ScrollView, Platform,
 } from 'react-native';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import Svg, {
   Path, Circle as SvgCircle, Line, Text as SvgText,
@@ -56,8 +57,18 @@ const buildSmooth = (pts: { x: number; y: number }[]): string => {
   return d;
 };
 
-export const WeightChartCard: React.FC<WeightChartCardProps> = ({
-  data,
+// Cap des points pour garder le chart fluide. Sampling uniforme au-delà.
+const MAX_POINTS = 50;
+const sampleData = <T extends { date?: string; value: number }>(data: T[]): T[] => {
+  if (data.length <= MAX_POINTS) return data;
+  const sampled: T[] = [];
+  const step = (data.length - 1) / (MAX_POINTS - 1);
+  for (let i = 0; i < MAX_POINTS; i++) sampled.push(data[Math.round(i * step)]);
+  return sampled;
+};
+
+const WeightChartCardInner: React.FC<WeightChartCardProps> = ({
+  data: rawData,
   color = '#3B82F6',
   unit = ' kg',
   title = 'Évolution du poids',
@@ -73,8 +84,12 @@ export const WeightChartCard: React.FC<WeightChartCardProps> = ({
   const [activeMetric, setActiveMetric] = useState<MetricKey>('current');
   const scrollRef = useRef<ScrollView>(null);
 
-  const handleLayout = (e: LayoutChangeEvent) =>
+  // Échantillonnage stable via useMemo — évite de re-sampler à chaque render
+  const data = useMemo(() => sampleData(rawData), [rawData]);
+
+  const handleLayout = useCallback((e: LayoutChangeEvent) => {
     setCardWidth(e.nativeEvent.layout.width);
+  }, []);
 
   const hasData = data.length >= 1;
   const isScrollable = data.length > 5;
@@ -173,6 +188,7 @@ export const WeightChartCard: React.FC<WeightChartCardProps> = ({
   }, [chartData, cardWidth]);
 
   const handleMetricPress = (key: MetricKey) => {
+    if (Platform.OS !== 'web') impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
     setActiveMetric(key);
     if (!metrics) return;
     const idxMap: Record<MetricKey, number> = {
@@ -383,30 +399,40 @@ export const WeightChartCard: React.FC<WeightChartCardProps> = ({
                 );
               })}
 
-              {/* Étiquette valeur sur le point sélectionné */}
+              {/* Étiquette valeur sur le point sélectionné — clampée pour rester dans le chart */}
               {highlightIdx >= 0 && chartData.pts[highlightIdx] && (() => {
                 const pt = chartData.pts[highlightIdx];
                 const label = `${smartFmt(pt.value)}${unit}`;
                 const w = label.length * 6.5 + 12;
+                // Clamp horizontal : s'assure que le badge reste dans [0, svgWidth]
+                let rectX = pt.x - w / 2;
+                if (rectX < 4) rectX = 4;
+                if (rectX + w > chartData.svgWidth - 4) rectX = chartData.svgWidth - 4 - w;
+                const textX = rectX + w / 2;
                 return (
                   <G>
-                    <Rect x={pt.x - w / 2} y={pt.y - 27} width={w} height={17} rx={6} ry={6} fill={hlColor} opacity={0.93} />
-                    <SvgText x={pt.x} y={pt.y - 15} textAnchor="middle" fontSize={9} fontWeight="800" fill="#FFFFFF">
+                    <Rect x={rectX} y={pt.y - 27} width={w} height={17} rx={6} ry={6} fill={hlColor} opacity={0.93} />
+                    <SvgText x={textX} y={pt.y - 15} textAnchor="middle" fontSize={9} fontWeight="800" fill="#FFFFFF">
                       {label}
                     </SvgText>
                   </G>
                 );
               })()}
 
-              {/* Étiquette du point le plus récent si pas déjà sélectionné */}
+              {/* Étiquette du point le plus récent si pas déjà sélectionné — clampée aussi */}
               {(() => {
                 const recentIdx = newestFirst ? 0 : chartData.pts.length - 1;
                 if (highlightIdx === recentIdx || chartData.pts.length === 0) return null;
                 const lp = chartData.pts[recentIdx];
+                const w = 40;
+                let rectX = lp.x - w / 2;
+                if (rectX < 4) rectX = 4;
+                if (rectX + w > chartData.svgWidth - 4) rectX = chartData.svgWidth - 4 - w;
+                const textX = rectX + w / 2;
                 return (
                   <G>
-                    <Rect x={lp.x - 20} y={lp.y - 24} width={40} height={16} rx={6} ry={6} fill={color} opacity={0.9} />
-                    <SvgText x={lp.x} y={lp.y - 13} textAnchor="middle" fontSize={9} fontWeight="800" fill="#FFFFFF">
+                    <Rect x={rectX} y={lp.y - 24} width={w} height={16} rx={6} ry={6} fill={color} opacity={0.9} />
+                    <SvgText x={textX} y={lp.y - 13} textAnchor="middle" fontSize={9} fontWeight="800" fill="#FFFFFF">
                       {smartFmt(lp.value)}
                     </SvgText>
                   </G>
@@ -485,6 +511,21 @@ export const WeightChartCard: React.FC<WeightChartCardProps> = ({
     </View>
   );
 };
+
+// React.memo avec comparaison deep : ne re-render que si la data change vraiment
+const areWeightEqual = (prev: WeightChartCardProps, next: WeightChartCardProps) => {
+  if (prev.color !== next.color) return false;
+  if (prev.unit !== next.unit) return false;
+  if (prev.title !== next.title) return false;
+  if (prev.targetWeight !== next.targetWeight) return false;
+  if (prev.newestFirst !== next.newestFirst) return false;
+  if (prev.data.length !== next.data.length) return false;
+  const a = prev.data[prev.data.length - 1];
+  const b = next.data[next.data.length - 1];
+  if (a?.date !== b?.date || a?.value !== b?.value) return false;
+  return true;
+};
+export const WeightChartCard = React.memo(WeightChartCardInner, areWeightEqual);
 
 const styles = StyleSheet.create({
   container: {

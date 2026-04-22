@@ -11,6 +11,7 @@ import { useScrollContext } from '@/lib/ScrollContext';
 import { StatsHeader } from '../StatsHeader';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { HealthKitConnectCard } from '../HealthKitConnectCard';
+import { SkeletonGrid } from '../SkeletonCard';
 import { Moon, Flame, Heart, Footprints } from 'lucide-react-native';
 import { SLEEP_DURATION_RANGES, HRV_RANGES, RESTING_HEART_RATE_RANGES } from '@/lib/healthRanges';
 import { format } from 'date-fns';
@@ -206,9 +207,7 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
       {/* Contenu de l'onglet actif */}
       <View style={styles.tabContent}>
         {tabLoading && (
-          <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-            <ActivityIndicator size="small" color={colors.accent} />
-          </View>
+          <SkeletonGrid count={4} cardHeight={160} />
         )}
 
         {activeTab === 'sommeil' && !isHealthKitConnected && !loading && (

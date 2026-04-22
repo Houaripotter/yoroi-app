@@ -32,7 +32,7 @@ interface MetricRangeIndicatorProps {
   onInfoPress?: () => void;
 }
 
-export const MetricRangeIndicator: React.FC<MetricRangeIndicatorProps> = ({
+const MetricRangeIndicatorInner: React.FC<MetricRangeIndicatorProps> = ({
   value,
   range,
   onInfoPress,
@@ -216,3 +216,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+export const MetricRangeIndicator = React.memo(MetricRangeIndicatorInner);

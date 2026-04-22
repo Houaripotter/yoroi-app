@@ -130,6 +130,40 @@ function RootLayoutContent() {
   const { isDark, colors } = useTheme();
   const router = useRouter();
 
+  // Sync widget iOS au démarrage + à chaque changement de données.
+  // No-op silencieux sur Android ou si le widget n'est pas linké en Xcode.
+  useEffect(() => {
+    import('@/lib/widgetSync').then(({ syncWidget }) => {
+      syncWidget(); // initial sync
+      const sub = require('react-native').DeviceEventEmitter.addListener(
+        'YOROI_DATA_CHANGED',
+        () => syncWidget(),
+      );
+      return () => sub.remove();
+    }).catch(() => {});
+  }, []);
+
+  // Notification hebdo récap (dimanche 19h) — s'assure qu'elle est planifiée
+  useEffect(() => {
+    import('@/lib/weeklyRecapNotification')
+      .then(({ ensureWeeklyRecapScheduled }) => ensureWeeklyRecapScheduled())
+      .catch(() => {});
+  }, []);
+
+  // Init crash reporter (no-op tant que Sentry n'est pas installé + DSN configuré)
+  useEffect(() => {
+    import('@/lib/crashReporter')
+      .then(({ initCrashReporter }) => initCrashReporter())
+      .catch(() => {});
+  }, []);
+
+  // Init flag Premium
+  useEffect(() => {
+    import('@/lib/premiumService')
+      .then(({ initPremium }) => initPremium())
+      .catch(() => {});
+  }, []);
+
   // Sauvegarde automatique quand l'app passe en background
   useEffect(() => {
     // Handler pour les clics sur notifications
@@ -423,10 +457,22 @@ export default function RootLayout() {
               const connected = await healthConnect.connect();
               if (connected) {
                 await healthConnect.setupWorkoutObserver();
-                // Toujours relancer l'import en arrière-plan au démarrage.
-                // La déduplication par UUID dans importFullHistory empêche les doublons.
-                // Pas de flag de version : si DB vide ou pas, l'import tourne et synchronise.
-                healthConnect.importFullHistory().catch(err => logger.error('Erreur import historique:', err));
+                // Throttle : ne relancer l'import complet qu'une fois toutes les 24h.
+                // Sinon, à chaque démarrage, ça déclenche le banner "Import santé"
+                // qui clignote pendant que 6000+ entrées sont reparcourues.
+                // L'observer workout (setupWorkoutObserver) capte déjà les nouvelles
+                // séances en temps réel, donc le full import est juste un filet de sécurité.
+                const LAST_IMPORT_KEY = '@yoroi_last_full_import_ts';
+                const lastStr = await AsyncStorage.getItem(LAST_IMPORT_KEY);
+                const last = lastStr ? parseInt(lastStr, 10) : 0;
+                const now = Date.now();
+                if (!last || now - last > 24 * 3600 * 1000) {
+                  healthConnect.importFullHistory()
+                    .then(() => AsyncStorage.setItem(LAST_IMPORT_KEY, String(now)))
+                    .catch(err => logger.error('Erreur import historique:', err));
+                } else {
+                  logger.info(`[HealthKit] Import full skip (dernier il y a ${Math.round((now - last) / 3600000)}h)`);
+                }
               }
             }
             // Si hasAsked est null = premier lancement, l'onboarding gère la demande
@@ -448,8 +494,16 @@ export default function RootLayout() {
               if (connected) {
                 await healthConnect.setupWorkoutObserver();
                 logger.info('[HealthConnect] Observer workout Android actif');
-                // Toujours relancer l'import (déduplication UUID empêche les doublons)
-                healthConnect.importFullHistory().catch(err => logger.error('Erreur import historique Android:', err));
+                // Throttle : import complet max 1x par 24h (même raison que iOS ci-dessus)
+                const LAST_IMPORT_KEY_ANDROID = '@yoroi_last_full_import_ts_android';
+                const lastStrA = await AsyncStorage.getItem(LAST_IMPORT_KEY_ANDROID);
+                const lastA = lastStrA ? parseInt(lastStrA, 10) : 0;
+                const nowA = Date.now();
+                if (!lastA || nowA - lastA > 24 * 3600 * 1000) {
+                  healthConnect.importFullHistory()
+                    .then(() => AsyncStorage.setItem(LAST_IMPORT_KEY_ANDROID, String(nowA)))
+                    .catch(err => logger.error('Erreur import historique Android:', err));
+                }
               }
             }
           } catch (err) {

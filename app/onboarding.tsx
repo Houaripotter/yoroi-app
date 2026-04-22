@@ -628,6 +628,8 @@ export default function OnboardingScreen() {
         contentContainerStyle={s.formWrap}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+          contentInsetAdjustmentBehavior="automatic"
       >
         {/* Titre de l'étape */}
         <Text style={s.formTitle}>Parle-nous de toi</Text>

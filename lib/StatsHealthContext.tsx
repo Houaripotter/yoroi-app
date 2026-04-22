@@ -335,10 +335,14 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
     loadingTabsRef.current.add(tab);
 
     const period = selectedPeriodRef.current;
-    const daysMap: Record<string, number> = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, '1a': 365, '2a': 730, 'tout': 3650 };
+    const daysMap: Record<string, number> = {
+      '7j': 7, '14j': 14, '30j': 30, '60j': 60, '90j': 90,
+      '6m': 180, '9m': 270, '1a': 365, '2a': 730, 'tout': 3650, 'custom': 3650,
+    };
     const days = daysMap[period] ?? 30;
-    // Timeout réduit : 5s max (était 8-60s) — on affiche ce qui arrive
-    const timeoutMs = 5000;
+    // Timeout équilibré : 10s max. 5s était trop court — certains iPhones mettent
+    // 6-8s pour la première sync HealthKit → le user voyait des données incomplètes.
+    const timeoutMs = 10000;
     const currentLoadId = ++loadIdRef.current;
 
     setTabLoading(true);
@@ -569,16 +573,26 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
     reloadFromCache();
   }, [selectedPeriod]);
 
-  // YOROI_DATA_CHANGED → invalider le cache séances
+  // YOROI_DATA_CHANGED → invalider le cache séances, mais avec DEBOUNCE 3s pour
+  // éviter la boucle : syncAll() émet YOROI_DATA_CHANGED → on invalide 'seances' →
+  // qui relance syncAll() → qui ré-émet → boucle infinie toutes les 10s.
+  // Le debounce garantit qu'on n'invalide qu'une fois tous les 3s max.
   useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
     const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
-      setLoadedTabs(prev => {
-        const next = new Set(prev);
-        next.delete('seances');
-        return next;
-      });
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        setLoadedTabs(prev => {
+          const next = new Set(prev);
+          next.delete('seances');
+          return next;
+        });
+      }, 3000);
     });
-    return () => sub.remove();
+    return () => {
+      sub.remove();
+      if (timeout) clearTimeout(timeout);
+    };
   }, []);
 
   // AppState → retenter après Réglages iOS

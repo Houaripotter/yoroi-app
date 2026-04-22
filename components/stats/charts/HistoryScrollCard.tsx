@@ -33,7 +33,7 @@ const CARD_WIDTH = 130;
 const CARD_HEIGHT = 170;
 const CARD_GAP = 12;
 
-export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
+const HistoryScrollCardInner: React.FC<HistoryScrollCardProps> = ({
   data,
   unit,
   healthRange,
@@ -301,3 +301,5 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 });
+
+export const HistoryScrollCard = React.memo(HistoryScrollCardInner);

@@ -4,14 +4,15 @@
 // Style identique a DualComparisonCard (Torse)
 // ============================================
 
-import React, { useState, useMemo, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent, ScrollView, useWindowDimensions, Modal } from 'react-native';
+import React, { useState, useMemo, useRef, useCallback, useDeferredValue } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent, ScrollView, useWindowDimensions, Modal, Platform } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import Svg, { Path, Circle as SvgCircle, Line, Text as SvgText, Defs, LinearGradient, Stop, G, Rect } from 'react-native-svg';
 import { ArrowLeftRight, TrendingUp, TrendingDown, Minus, Maximize2, X } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useI18n } from '@/lib/I18nContext';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 interface LineSeries {
   label: string;
@@ -53,7 +54,18 @@ const buildSmooth = (pts: { x: number; y: number }[]) => {
   return d;
 };
 
-export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = ({
+// Cap des points par série pour garder le chart fluide.
+// Au-delà, on échantillonne uniformément (1er + dernier + équi-répartis).
+const MAX_POINTS_PER_LINE = 40;
+const sampleLine = (history: { date: string; value: number }[]) => {
+  if (history.length <= MAX_POINTS_PER_LINE) return history;
+  const sampled: typeof history = [];
+  const step = (history.length - 1) / (MAX_POINTS_PER_LINE - 1);
+  for (let i = 0; i < MAX_POINTS_PER_LINE; i++) sampled.push(history[Math.round(i * step)]);
+  return sampled;
+};
+
+const MultiLineComparisonCardInner: React.FC<MultiLineComparisonCardProps> = ({
   title,
   lines,
   unit,
@@ -81,11 +93,15 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
     }
   }, []);
 
-  const handleLayout = (e: LayoutChangeEvent) => {
+  const handleLayout = useCallback((e: LayoutChangeEvent) => {
     setCardWidth(e.nativeEvent.layout.width);
-  };
+  }, []);
 
-  const toggleLine = (idx: number) => {
+  const toggleLine = useCallback((idx: number) => {
+    // Haptic IMMÉDIAT pour un feedback tactile instantané
+    if (Platform.OS !== 'web') {
+      impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+    }
     setActiveLines(prev => {
       const next = new Set(prev);
       if (next.has(idx)) {
@@ -95,11 +111,33 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
       }
       return next;
     });
-  };
+  }, []);
 
-  const visibleLines = lines.filter((_, i) => activeLines.has(i));
-  const hasData = visibleLines.some(l => l.history.length >= 1);
-  const maxValue = Math.max(...lines.map(l => l.currentValue), 1);
+  // MEMOÏSATION CRITIQUE : `lines.filter(...)` créait une nouvelle ref à chaque render
+  // → le useMemo de `chartData` perdait sa mémoïsation → tout le SVG (1500 éléments)
+  // se recalculait à chaque tap sur une pill.
+  const sampledLines = useMemo(
+    () => lines.map(l => ({ ...l, history: sampleLine(l.history) })),
+    [lines],
+  );
+
+  // useDeferredValue : la pill highlight utilise `activeLines` (réactif),
+  // le chart utilise `deferredActiveLines` qui se met à jour quand React a du temps.
+  // Résultat : la pill s'allume INSTANTANÉMENT, le chart suit ~100ms après.
+  const deferredActiveLines = useDeferredValue(activeLines);
+
+  const visibleLines = useMemo(
+    () => sampledLines.filter((_, i) => deferredActiveLines.has(i)),
+    [sampledLines, deferredActiveLines],
+  );
+  const hasData = useMemo(
+    () => visibleLines.some(l => l.history.length >= 1),
+    [visibleLines],
+  );
+  const maxValue = useMemo(
+    () => Math.max(...lines.map(l => l.currentValue), 1),
+    [lines],
+  );
 
   const computeChart = (containerWidth: number, chartHeight: number) => {
     if (!hasData || containerWidth === 0) return null;
@@ -195,16 +233,42 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
           </G>
         ))}
 
-        {/* Valeurs sur tous les points */}
-        {data.lineData.map((ld, lineIdx) =>
-          ld.pts.map((pt, idx) => {
-            const total = ld.pts.length;
+        {/* Valeurs : seulement sur premier + dernier + min + max de chaque ligne pour
+            éviter les chevauchements quand plusieurs lignes ont des valeurs proches.
+            En mode plein écran, on les affiche toutes (espace dispo). */}
+        {data.lineData.map((ld, lineIdx) => {
+          // Calculer les indices à afficher
+          const total = ld.pts.length;
+          const indicesToShow = new Set<number>();
+          if (total === 0) return null;
+          indicesToShow.add(0);                    // premier
+          indicesToShow.add(total - 1);            // dernier
+          if (total > 2) {
+            // min et max
+            let minIdx = 0, maxIdx = 0;
+            ld.pts.forEach((p, i) => {
+              if (p.value < ld.pts[minIdx].value) minIdx = i;
+              if (p.value > ld.pts[maxIdx].value) maxIdx = i;
+            });
+            indicesToShow.add(minIdx);
+            indicesToShow.add(maxIdx);
+          }
+          // En plein écran, on montre tout
+          const showAll = isFullscreen;
+
+          return ld.pts.map((pt, idx) => {
+            if (!showAll && !indicesToShow.has(idx)) return null;
             const isFirst = idx === 0; const isLast = idx === total - 1;
             const anchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
             const lx = isFirst ? pt.x + 2 : isLast ? pt.x - 2 : pt.x;
             const label = smartFormat(pt.value);
             const w = label.length * 6 + 10;
-            const labelY = Math.max(pt.y - 20, 4);
+            // Décalage vertical selon l'index de ligne pour limiter chevauchement
+            // ligne 0 = au-dessus du point, ligne 1 = en-dessous, ligne 2 = au-dessus +éloigné
+            const yOffset = lineIdx === 1 ? 18 : (lineIdx === 2 ? -28 : -20);
+            const labelY = lineIdx === 1
+              ? Math.min(pt.y + 18, data.chartHeight - 18)
+              : Math.max(pt.y + yOffset, 4);
             const rx = anchor === 'start' ? lx : anchor === 'end' ? lx - w : lx - w / 2;
             return (
               <G key={`vl-${lineIdx}-${idx}`}>
@@ -213,8 +277,8 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
                 <SvgText x={lx} y={labelY} textAnchor={anchor} fontSize={8.5} fontWeight="800" fill={isDark ? '#FFFFFF' : '#1a1a1a'}>{label}</SvgText>
               </G>
             );
-          })
-        )}
+          });
+        })}
 
         {/* Points par-dessus les labels */}
         {data.lineData.map((ld, lineIdx) =>
@@ -272,6 +336,10 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
               ]}
               onPress={() => toggleLine(i)}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={`${line.label} ${isActive ? 'visible' : 'masquée'}`}
+              accessibilityHint="Toucher pour afficher ou masquer cette courbe"
             >
               <View style={[styles.chipDot, { backgroundColor: isActive ? '#FFFFFF' : line.color }]} />
               <Text style={[styles.chipText, { color: isActive ? '#FFFFFF' : colors.textSecondary }]}>
@@ -393,6 +461,29 @@ export const MultiLineComparisonCard: React.FC<MultiLineComparisonCardProps> = (
     </TouchableOpacity>
   );
 };
+
+// React.memo avec comparaison DEEP personnalisée : le parent (CorpsTabPage) recrée
+// l'array `lines` inline à chaque render, donc shallow compare est inefficace.
+// On compare par contenu (titre, unit, couleurs, historiques par length + date du
+// dernier point) pour ne re-render que quand les DATA changent réellement.
+const areLinesEqual = (prev: MultiLineComparisonCardProps, next: MultiLineComparisonCardProps) => {
+  if (prev.title !== next.title) return false;
+  if (prev.unit !== next.unit) return false;
+  if (prev.lines.length !== next.lines.length) return false;
+  for (let i = 0; i < prev.lines.length; i++) {
+    const a = prev.lines[i], b = next.lines[i];
+    if (a.label !== b.label) return false;
+    if (a.color !== b.color) return false;
+    if (a.currentValue !== b.currentValue) return false;
+    if (a.history.length !== b.history.length) return false;
+    // Heuristique rapide : si len identique + dernière entrée identique, on considère égal
+    const la = a.history[a.history.length - 1];
+    const lb = b.history[b.history.length - 1];
+    if (la?.date !== lb?.date || la?.value !== lb?.value) return false;
+  }
+  return true;
+};
+export const MultiLineComparisonCard = React.memo(MultiLineComparisonCardInner, areLinesEqual);
 
 const styles = StyleSheet.create({
   container: {

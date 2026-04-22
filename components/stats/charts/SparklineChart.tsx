@@ -1,9 +1,12 @@
 import React from 'react';
-import { View } from 'react-native';
-import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { View, Text, StyleSheet } from 'react-native';
+import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
+import { format, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface SparklineDataPoint {
   value: number;
+  date?: string;
 }
 
 interface SparklineChartProps {
@@ -15,9 +18,24 @@ interface SparklineChartProps {
   thickness?: number;
   showLastValues?: number;
   valueUnit?: string;
+  /** Si true : affiche valeurs au-dessus + dates en-dessous (style Résumé/Dashboard) */
+  showLabels?: boolean;
+  /** Nombre max de points affichés en mode showLabels (défaut 4) */
+  maxLabeledPoints?: number;
 }
 
-export const SparklineChart: React.FC<SparklineChartProps> = ({
+/**
+ * Échantillonne uniformément à `n` points (premier + dernier + équi-répartis).
+ */
+const sample = <T,>(arr: T[], n: number): T[] => {
+  if (arr.length <= n) return arr;
+  const out: T[] = [];
+  const step = (arr.length - 1) / (n - 1);
+  for (let i = 0; i < n; i++) out.push(arr[Math.round(i * step)]);
+  return out;
+};
+
+const SparklineChartInner: React.FC<SparklineChartProps> = ({
   data,
   width,
   height,
@@ -25,8 +43,12 @@ export const SparklineChart: React.FC<SparklineChartProps> = ({
   showGradient = false,
   thickness = 2,
   showLastValues,
+  showLabels = false,
+  maxLabeledPoints = 4,
 }) => {
-  const points = showLastValues ? data.slice(-showLastValues) : data;
+  // En mode labels : on échantillonne pour garder seulement quelques points lisibles
+  const sourcePoints = showLastValues ? data.slice(-showLastValues) : data;
+  const points = showLabels ? sample(sourcePoints, maxLabeledPoints) : sourcePoints;
 
   if (points.length < 2) return <View style={{ width, height }} />;
 
@@ -35,9 +57,18 @@ export const SparklineChart: React.FC<SparklineChartProps> = ({
   const max = Math.max(...values);
   const range = max - min || 1;
 
+  // En mode labels, on réserve de l'espace haut (valeur) + bas (date)
+  const padTop = showLabels ? 16 : 2;
+  const padBottom = showLabels ? 14 : 2;
+  const padX = showLabels ? 14 : 0;
+  const plotH = height - padTop - padBottom;
+  const plotW = width - padX * 2;
+
   const coords = points.map((p, i) => ({
-    x: (i / (points.length - 1)) * width,
-    y: height - ((p.value - min) / range) * (height - 4) - 2,
+    x: padX + (i / (points.length - 1)) * plotW,
+    y: padTop + plotH - ((p.value - min) / range) * plotH,
+    value: p.value,
+    date: p.date,
   }));
 
   const linePath = coords
@@ -45,6 +76,22 @@ export const SparklineChart: React.FC<SparklineChartProps> = ({
     .join(' ');
 
   const gradientId = `sparkGrad_${color.replace('#', '')}`;
+  const areaPath = showGradient && coords.length > 0
+    ? `${linePath} L ${coords[coords.length - 1].x.toFixed(1)} ${height - padBottom} L ${coords[0].x.toFixed(1)} ${height - padBottom} Z`
+    : '';
+
+  const formatVal = (v: number): string => {
+    if (Number.isInteger(v)) return String(v);
+    return v.toFixed(1);
+  };
+  const formatDate = (iso?: string): string => {
+    if (!iso) return '';
+    try {
+      return format(parseISO(iso), 'd MMM', { locale: fr }).toUpperCase();
+    } catch {
+      return '';
+    }
+  };
 
   return (
     <View style={{ width, height }}>
@@ -57,6 +104,9 @@ export const SparklineChart: React.FC<SparklineChartProps> = ({
             </LinearGradient>
           </Defs>
         )}
+        {showGradient && areaPath && (
+          <Path d={areaPath} fill={`url(#${gradientId})`} />
+        )}
         <Path
           d={linePath}
           stroke={color}
@@ -65,9 +115,70 @@ export const SparklineChart: React.FC<SparklineChartProps> = ({
           strokeLinecap="round"
           strokeLinejoin="round"
         />
+        {/* Points + labels en mode showLabels */}
+        {showLabels && coords.map((c, i) => (
+          <Circle key={`pt-${i}`} cx={c.x} cy={c.y} r={3.5} fill={color} />
+        ))}
       </Svg>
+      {/* Valeurs au-dessus + dates en-dessous (overlay text pour propre rendu) */}
+      {showLabels && coords.map((c, i) => {
+        const valStr = formatVal(c.value);
+        const dateStr = formatDate(c.date);
+        const isFirst = i === 0;
+        const isLast = i === coords.length - 1;
+        const align: 'flex-start' | 'flex-end' | 'center' =
+          isFirst ? 'flex-start' : isLast ? 'flex-end' : 'center';
+        return (
+          <View
+            key={`lbl-${i}`}
+            style={[
+              styles.labelStack,
+              {
+                left: c.x - 30,
+                width: 60,
+                alignItems: align,
+              },
+            ]}
+            pointerEvents="none"
+          >
+            <Text style={[styles.valueText, { top: Math.max(c.y - padTop - 4, 0) }]}>
+              {valStr}
+            </Text>
+            {dateStr ? (
+              <Text style={[styles.dateText, { top: height - padBottom }]} numberOfLines={1}>
+                {dateStr}
+              </Text>
+            ) : null}
+          </View>
+        );
+      })}
     </View>
   );
 };
 
+const styles = StyleSheet.create({
+  labelStack: {
+    position: 'absolute',
+    height: 0,
+  },
+  valueText: {
+    position: 'absolute',
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#1a1a1a',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    borderRadius: 4,
+  },
+  dateText: {
+    position: 'absolute',
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#9CA3AF',
+    letterSpacing: 0.3,
+  },
+});
+
+export const SparklineChart = React.memo(SparklineChartInner);
 export default SparklineChart;

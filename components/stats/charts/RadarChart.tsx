@@ -20,7 +20,7 @@ interface RadarChartProps {
   color?: string;
 }
 
-export const RadarChart: React.FC<RadarChartProps> = ({
+const RadarChartInner: React.FC<RadarChartProps> = ({
   data,
   size = 280,
   color = '#8B5CF6',
@@ -181,3 +181,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+export const RadarChart = React.memo(RadarChartInner);

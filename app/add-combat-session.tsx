@@ -2786,10 +2786,11 @@ export default function AddCombatSessionScreen() {
       DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
 
       // Rappel de sauvegarde après ajout d'une séance sparring (protège les données)
+      // Pattern aligné sur add-training.tsx et entry.tsx (markReminderShown au lieu de showReminder)
       import('@/lib/backupReminderService').then(({ backupReminderService }) => {
         backupReminderService.onDataAdded().then(shouldShow => {
           if (shouldShow) {
-            backupReminderService.showReminder().catch(() => {});
+            backupReminderService.markReminderShown().catch(() => {});
           }
         }).catch(() => {});
       }).catch(() => {});
@@ -2965,6 +2966,10 @@ export default function AddCombatSessionScreen() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
+          // iOS 14+ : ajuste automatiquement le scroll inset quand le clavier apparaît,
+          // garantit que le champ actif reste visible sans scroll manuel
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+          contentInsetAdjustmentBehavior="automatic"
         >
           {/* ══ ÉTAPE 1 : Club + Quand & Où ══ */}
           {step === 1 && (

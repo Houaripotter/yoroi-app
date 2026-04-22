@@ -26,7 +26,7 @@ interface MetricProgressCardProps {
   evolutionGoal?: 'increase' | 'decrease' | 'stable';
 }
 
-export const MetricProgressCard: React.FC<MetricProgressCardProps> = ({
+const MetricProgressCardInner: React.FC<MetricProgressCardProps> = ({
   label,
   value,
   unit,
@@ -186,3 +186,5 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
 });
+
+export const MetricProgressCard = React.memo(MetricProgressCardInner);

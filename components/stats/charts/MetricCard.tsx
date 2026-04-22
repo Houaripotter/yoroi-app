@@ -140,17 +140,19 @@ export const MetricCard: React.FC<MetricCardProps> = React.memo(({
         </Text>
       </View>
 
-      {/* Mini-courbe (sparkline) */}
+      {/* Mini-courbe (sparkline) — style "Résumé/Dashboard" : valeurs + dates visibles */}
       {hasSparkline && (
         <View style={styles.sparklineContainer} onLayout={handleChartLayout}>
           {chartWidth > 0 && (
             <SparklineChart
               data={sparklineData!}
               width={chartWidth}
-              height={36}
+              height={70}
               color={color}
-              thickness={2}
+              thickness={2.5}
               showGradient
+              showLabels
+              maxLabeledPoints={4}
             />
           )}
         </View>
@@ -228,7 +230,7 @@ const styles = StyleSheet.create({
   },
   sparklineContainer: {
     marginTop: 12,
-    height: 36,
+    height: 70,
     width: '100%',
   },
 });

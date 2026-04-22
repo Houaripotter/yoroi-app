@@ -5,14 +5,15 @@
 // Scroll horizontal + auto-scroll vers les données recentes
 // ============================================
 
-import React, { useState, useMemo, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent, ScrollView, useWindowDimensions, Modal } from 'react-native';
+import React, { useState, useMemo, useRef, useCallback, useDeferredValue } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent, ScrollView, useWindowDimensions, Modal, Platform } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import Svg, { Path, Circle as SvgCircle, Line, Text as SvgText, Defs, LinearGradient, Stop, G, Rect } from 'react-native-svg';
 import { ArrowLeftRight, TrendingUp, TrendingDown, Minus, Maximize2, X } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useI18n } from '@/lib/I18nContext';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 interface DualComparisonCardProps {
   title: string;
@@ -56,14 +57,24 @@ const buildSmooth = (pts: { x: number; y: number }[]) => {
   return d;
 };
 
-export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
+// Cap des points par série pour garder le chart fluide (voir MultiLineComparisonCard)
+const MAX_POINTS_PER_LINE = 40;
+const sampleLine = (history: { date: string; value: number }[]) => {
+  if (history.length <= MAX_POINTS_PER_LINE) return history;
+  const sampled: typeof history = [];
+  const step = (history.length - 1) / (MAX_POINTS_PER_LINE - 1);
+  for (let i = 0; i < MAX_POINTS_PER_LINE; i++) sampled.push(history[Math.round(i * step)]);
+  return sampled;
+};
+
+const DualComparisonCardInner: React.FC<DualComparisonCardProps> = ({
   title,
   leftLabel,
   rightLabel,
   leftColor,
   rightColor,
-  leftHistory,
-  rightHistory,
+  leftHistory: rawLeftHistory,
+  rightHistory: rawRightHistory,
   leftValue,
   rightValue,
   unit,
@@ -72,6 +83,9 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
   onPressLeft,
   onPressRight,
 }) => {
+  // Sampling UNIQUE au changement de data, pas à chaque render
+  const leftHistory = useMemo(() => sampleLine(rawLeftHistory), [rawLeftHistory]);
+  const rightHistory = useMemo(() => sampleLine(rawRightHistory), [rawRightHistory]);
   const { colors, isDark } = useTheme();
   const { language } = useI18n();
   const { width: SCREEN_WIDTH, height: screenHeight } = useWindowDimensions();
@@ -88,22 +102,30 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
     setCardWidth(e.nativeEvent.layout.width);
   };
 
-  const toggleLeft = () => {
+  const toggleLeft = useCallback(() => {
     if (showLeft && !showRight) return;
+    if (Platform.OS !== 'web') impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
     setShowLeft(prev => !prev);
-  };
-  const toggleRight = () => {
+  }, [showLeft, showRight]);
+  const toggleRight = useCallback(() => {
     if (showRight && !showLeft) return;
+    if (Platform.OS !== 'web') impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
     setShowRight(prev => !prev);
-  };
+  }, [showLeft, showRight]);
+
+  // Versions différées pour le chart : la pill s'allume instantanément,
+  // le chart suit quand React a du temps (~100ms).
+  const deferredShowLeft = useDeferredValue(showLeft);
+  const deferredShowRight = useDeferredValue(showRight);
 
   const hasData = (leftHistory.length >= 1) || (rightHistory.length >= 1);
   const maxValue = Math.max(leftValue, rightValue, 1);
   const delta = Math.abs(leftValue - rightValue);
 
   const computeChart = useCallback((containerWidth: number, chartHeight: number) => {
-    const activeLeft = showLeft && leftHistory.length >= 1;
-    const activeRight = showRight && rightHistory.length >= 1;
+    // Utilise les valeurs DEFFERRED pour le calcul → la pill reste réactive
+    const activeLeft = deferredShowLeft && leftHistory.length >= 1;
+    const activeRight = deferredShowRight && rightHistory.length >= 1;
     if ((!activeLeft && !activeRight) || containerWidth === 0) return null;
 
     const activeMaxLen = Math.max(
@@ -165,7 +187,7 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
     });
 
     return { svgWidth, leftPts, rightPts, leftLine, rightLine, leftArea, rightArea, yLabels, xLabels, maxXLabels, plotBottom, chartHeight, activeIsScrollable };
-  }, [showLeft, showRight, leftHistory, rightHistory, dateLocale]);
+  }, [deferredShowLeft, deferredShowRight, leftHistory, rightHistory, dateLocale]);
 
   const chartData = useMemo(() => computeChart(cardWidth, CHART_HEIGHT), [computeChart, cardWidth]);
 
@@ -227,6 +249,9 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
           }]}
           onPress={toggleLeft}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityState={{ selected: showLeft }}
+          accessibilityLabel={`${leftLabel} ${showLeft ? 'visible' : 'masquée'}`}
         >
           <View style={[styles.chipDot, { backgroundColor: showLeft ? '#FFFFFF' : leftColor }]} />
           <Text style={[styles.chipText, { color: showLeft ? '#FFFFFF' : colors.textSecondary }]}>{leftLabel}</Text>
@@ -238,6 +263,9 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
           }]}
           onPress={toggleRight}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityState={{ selected: showRight }}
+          accessibilityLabel={`${rightLabel} ${showRight ? 'visible' : 'masquée'}`}
         >
           <View style={[styles.chipDot, { backgroundColor: showRight ? '#FFFFFF' : rightColor }]} />
           <Text style={[styles.chipText, { color: showRight ? '#FFFFFF' : colors.textSecondary }]}>{rightLabel}</Text>
@@ -520,6 +548,26 @@ export const DualComparisonCard: React.FC<DualComparisonCardProps> = ({
     </TouchableOpacity>
   );
 };
+
+// React.memo avec comparaison DEEP : évite les re-renders inutiles quand
+// CorpsTabPage re-render (les callbacks inline changent la shallow-ref).
+const areDualEqual = (prev: DualComparisonCardProps, next: DualComparisonCardProps) => {
+  if (prev.title !== next.title) return false;
+  if (prev.unit !== next.unit) return false;
+  if (prev.leftLabel !== next.leftLabel || prev.rightLabel !== next.rightLabel) return false;
+  if (prev.leftColor !== next.leftColor || prev.rightColor !== next.rightColor) return false;
+  if (prev.leftValue !== next.leftValue || prev.rightValue !== next.rightValue) return false;
+  if (prev.leftHistory.length !== next.leftHistory.length) return false;
+  if (prev.rightHistory.length !== next.rightHistory.length) return false;
+  const lA = prev.leftHistory[prev.leftHistory.length - 1];
+  const lB = next.leftHistory[next.leftHistory.length - 1];
+  if (lA?.date !== lB?.date || lA?.value !== lB?.value) return false;
+  const rA = prev.rightHistory[prev.rightHistory.length - 1];
+  const rB = next.rightHistory[next.rightHistory.length - 1];
+  if (rA?.date !== rB?.date || rA?.value !== rB?.value) return false;
+  return true;
+};
+export const DualComparisonCard = React.memo(DualComparisonCardInner, areDualEqual);
 
 const styles = StyleSheet.create({
   container: {

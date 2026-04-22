@@ -80,6 +80,8 @@ const saveImagePermanently = async (tempUri: string): Promise<string> => {
   }
 };
 import { getMethodDisplayName } from '@/components/BJJBodyMap';
+import { StatsEmptyState } from '@/components/stats/StatsEmptyState';
+import { AnimatedCounter } from '@/components/stats/AnimatedCounter';
 
 // ============================================
 // TYPES
@@ -750,7 +752,9 @@ function PartnerDetail({
         </View>
       </Modal>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 280 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 280 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+          contentInsetAdjustmentBehavior="automatic">
 
         {/* ════════════════════════════════════════════════
             🥊 FIGHTER CARD — Hero stylée façon UFC / EA Sports
@@ -1857,19 +1861,14 @@ export default function SparringPartnersScreen() {
         showsVerticalScrollIndicator={false}
       >
         {partners.length === 0 && !showNewForm && (
-          <View style={{ alignItems: 'center', paddingVertical: 60, gap: 12 }}>
-            <User size={40} color={colors.textMuted ?? '#888'} />
-            <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>Aucun partenaire</Text>
-            <Text style={{ fontSize: 13, color: colors.textMuted ?? '#888', textAlign: 'center', maxWidth: 260, lineHeight: 18 }}>
-              Ajoute tes partenaires de sparring pour noter leurs forces, faiblesses et tes stratégies.
-            </Text>
-            <TouchableOpacity
-              onPress={() => { setShowNewForm(true); setNewName(''); }}
-              style={{ backgroundColor: '#EF4444', borderRadius: 12, paddingHorizontal: 20, paddingVertical: 12 }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14 }}>Ajouter un partenaire</Text>
-            </TouchableOpacity>
-          </View>
+          <StatsEmptyState
+            icon={<User size={36} color="#EF4444" strokeWidth={2} />}
+            title="Aucun partenaire"
+            description="Ajoute tes partenaires de sparring pour noter leurs forces, faiblesses et tes stratégies."
+            ctaLabel="Ajouter un partenaire"
+            onCtaPress={() => { setShowNewForm(true); setNewName(''); }}
+            accentColor="#EF4444"
+          />
         )}
 
         {partners.map(partner => {

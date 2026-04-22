@@ -36,6 +36,10 @@ const blockListEntries = [
   /.*\.py$/,
   // Cache Python
   /\/__pycache__\/.*/,
+  // Doublons créés par iCloud/Finder (ex: "healthConnect.ios 2.ts") — ils
+  // doublent les listeners DeviceEventEmitter → banner "Import santé" qui
+  // clignote + boucle YOROI_DATA_CHANGED toutes les 10s.
+  /.*\s\d+\.(ts|tsx|js|jsx)$/,
 ];
 
 const existing = config.resolver.blockList;

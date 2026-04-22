@@ -24,8 +24,19 @@ interface ScrollableLineChartProps {
 
 
 
+// Cap de sécurité : si appelé directement (sans passer par ModernLineChart qui
+// sample déjà), on cap à 150 points uniformes pour éviter chartWidth > 12000px.
+const HARD_CAP = 150;
+const sampleData = <T extends { date?: string; value: number }>(d: T[]): T[] => {
+  if (d.length <= HARD_CAP) return d;
+  const out: T[] = [];
+  const step = (d.length - 1) / (HARD_CAP - 1);
+  for (let i = 0; i < HARD_CAP; i++) out.push(d[Math.round(i * step)]);
+  return out;
+};
+
 export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.memo(({
-  data,
+  data: rawData,
   color,
   height = 220,
   compact = false,
@@ -41,6 +52,9 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
 
   const lineColor = color || colors.accent;
   const dateLocale = fr;
+
+  // Sampling stable : recalcule UNIQUEMENT si rawData change (réf)
+  const data = useMemo(() => sampleData(rawData), [rawData]);
 
   // Calculer les données du graphique
   const chartData = useMemo(() => {

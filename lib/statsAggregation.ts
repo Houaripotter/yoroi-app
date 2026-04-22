@@ -7,8 +7,20 @@
 import { getWeights, getTrainings, getMeasurements } from './database';
 import { getWeeklyLoadStats } from './trainingLoadService';
 import logger from './security/logger';
+import { safeMinMax, safeSum } from './safeMath';
 
-export type Period = '7j' | '30j' | '90j' | '6m' | '1a' | '2a' | 'tout';
+export type Period =
+  | '7j'
+  | '14j'
+  | '30j'
+  | '60j'
+  | '90j'
+  | '6m'
+  | '9m'
+  | '1a'
+  | '2a'
+  | 'tout'
+  | 'custom';
 
 export interface AggregatedStats {
   period: Period;
@@ -28,12 +40,16 @@ export interface AggregatedStats {
 const getPeriodDays = (period: Period): number => {
   switch (period) {
     case '7j': return 7;
+    case '14j': return 14;
     case '30j': return 30;
+    case '60j': return 60;
     case '90j': return 90;
     case '6m': return 180;
+    case '9m': return 270;
     case '1a': return 365;
     case '2a': return 730;
     case 'tout': return 3650; // ~10 ans = toutes les données
+    case 'custom': return 3650; // custom géré côté écran avec filtre client-side
     default: return 30;
   }
 };
@@ -72,7 +88,9 @@ const calculateChangePercent = (values: number[]): number => {
 export const aggregateWeightData = async (period: Period): Promise<AggregatedStats | null> => {
   try {
     const days = getPeriodDays(period);
-    const filtered = await getWeights(days);
+    // Cap 1000 lignes : largement suffisant pour calculer min/max/avg/trend
+    // (avant : full-scan jusqu'à 6699 lignes, freeze)
+    const filtered = await getWeights(days, 1000);
 
     if (!filtered || filtered.length === 0) return null;
 
@@ -82,13 +100,16 @@ export const aggregateWeightData = async (period: Period): Promise<AggregatedSta
     const values = filtered.map(w => ({ date: w.date, value: w.weight }));
     const numericValues = filtered.map(w => w.weight);
 
+    // safeMinMax : évite "Maximum call stack size exceeded" avec Math.min(...arr)
+    // quand l'array a plus de ~5000 éléments (cas "Tout l'historique")
+    const { min, max } = safeMinMax(numericValues);
     return {
       period,
       metric: 'weight',
       values,
-      average: numericValues.reduce((sum, v) => sum + v, 0) / numericValues.length,
-      min: Math.min(...numericValues),
-      max: Math.max(...numericValues),
+      average: safeSum(numericValues) / numericValues.length,
+      min,
+      max,
       trend: calculateTrend(numericValues),
       changePercent: calculateChangePercent(numericValues),
     };
@@ -109,7 +130,7 @@ export const aggregateCompositionData = async (period: Period): Promise<{
 } | null> => {
   try {
     const days = getPeriodDays(period);
-    const filtered = await getWeights(days);
+    const filtered = await getWeights(days, 1000);
 
     if (!filtered || filtered.length === 0) return null;
 
@@ -129,8 +150,7 @@ export const aggregateCompositionData = async (period: Period): Promise<{
         metric: 'bodyFat',
         values,
         average: numericValues.reduce((sum, v) => sum + v, 0) / numericValues.length,
-        min: Math.min(...numericValues),
-        max: Math.max(...numericValues),
+        ...safeMinMax(numericValues),
         trend: calculateTrend(numericValues),
         changePercent: calculateChangePercent(numericValues),
       };
@@ -147,8 +167,7 @@ export const aggregateCompositionData = async (period: Period): Promise<{
         metric: 'muscle',
         values,
         average: numericValues.reduce((sum, v) => sum + v, 0) / numericValues.length,
-        min: Math.min(...numericValues),
-        max: Math.max(...numericValues),
+        ...safeMinMax(numericValues),
         trend: calculateTrend(numericValues),
         changePercent: calculateChangePercent(numericValues),
       };
@@ -165,8 +184,7 @@ export const aggregateCompositionData = async (period: Period): Promise<{
         metric: 'water',
         values,
         average: numericValues.reduce((sum, v) => sum + v, 0) / numericValues.length,
-        min: Math.min(...numericValues),
-        max: Math.max(...numericValues),
+        ...safeMinMax(numericValues),
         trend: calculateTrend(numericValues),
         changePercent: calculateChangePercent(numericValues),
       };
@@ -192,7 +210,7 @@ export const aggregateTrainingData = async (period: Period): Promise<{
 } | null> => {
   try {
     const days = getPeriodDays(period);
-    const trainings = await getTrainings(days);
+    const trainings = await getTrainings(days, 1000);
 
     if (!trainings || trainings.length === 0) return null;
 
@@ -233,7 +251,7 @@ export const aggregateTrainingData = async (period: Period): Promise<{
 export const aggregateMeasurementData = async (period: Period, field: string): Promise<AggregatedStats | null> => {
   try {
     const days = getPeriodDays(period);
-    const filtered = await getMeasurements(days);
+    const filtered = await getMeasurements(days, 1000);
 
     if (!filtered || filtered.length === 0) return null;
 
@@ -256,8 +274,7 @@ export const aggregateMeasurementData = async (period: Period, field: string): P
       metric: field,
       values,
       average: numericValues.reduce((sum, v) => sum + v, 0) / numericValues.length,
-      min: Math.min(...numericValues),
-      max: Math.max(...numericValues),
+      ...safeMinMax(numericValues),
       trend: calculateTrend(numericValues),
       changePercent: calculateChangePercent(numericValues),
     };

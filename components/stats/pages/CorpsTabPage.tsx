@@ -16,7 +16,7 @@ import { DualComparisonCard } from '../charts/DualComparisonCard';
 import { MultiLineComparisonCard } from '../charts/MultiLineComparisonCard';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { aggregateWeightData } from '@/lib/statsAggregation';
-import { getProfile, getAllWeights, getLatestWeight, getLatestMeasurement, getMeasurements } from '@/lib/database';
+import { getProfile, getAllWeights, getLatestWeight, getLatestMeasurement, getMeasurements, getWeights } from '@/lib/database';
 import { getUserSettings } from '@/lib/storage';
 import {
   BMI_RANGES,
@@ -34,6 +34,11 @@ import Svg, { Path, Circle as SvgCircle, Line as SvgLine, Text as SvgText } from
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { logger } from '@/lib/security/logger';
+import { buildCacheKey, getCached, setCached, invalidateCachePrefix } from '@/lib/statsMemoryCache';
+import { StatsEmptyState } from '../StatsEmptyState';
+import { StatsInsightBanner } from '../StatsInsightBanner';
+import { StreakBadge } from '../StreakBadge';
+import { generateInsights, type Insight } from '@/lib/statsInsights';
 
 export const CorpsTabPage: React.FC = React.memo(() => {
   const { colors, screenBackground } = useTheme();
@@ -51,6 +56,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
   const [heightCm, setHeightCm] = useState<number | null>(null);
   const [allWeightsData, setAllWeightsData] = useState<any[]>([]);
   const [targetWeight, setTargetWeight] = useState<number | null>(null);
+  const [insights, setInsights] = useState<Insight[]>([]);
 
   // --- Composition state ---
   const [latestWeight, setLatestWeight] = useState<any>(null);
@@ -108,16 +114,51 @@ export const CorpsTabPage: React.FC = React.memo(() => {
     return { ...BMI_RANGES, zones };
   }, [t]);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const requestIdRef = useRef(0);
+  const loadData = useCallback(async (opts: { silent?: boolean } = {}) => {
+    const { silent = false } = opts;
+    const cacheKey = buildCacheKey('corps', selectedPeriod);
+    const myReq = ++requestIdRef.current;
+    const isCurrent = () => requestIdRef.current === myReq;
+
+    // Cache HIT : hydrate l'écran instantanément depuis la mémoire
+    const cached = getCached<any>(cacheKey);
+    if (cached) {
+      unstable_batchedUpdates(() => {
+        if (cached.userGender) setUserGender(cached.userGender);
+        if (cached.resolvedGoal) setTargetWeight(cached.resolvedGoal);
+        setWeightData(cached.data);
+        if (cached.allWeights) setAllWeightsData(cached.allWeights);
+        if (cached.bmiVal !== null) setBmi(cached.bmiVal);
+        if (cached.heightCmVal !== null) setHeightCm(cached.heightCmVal);
+        if (cached.weightHistoryVal) setWeightHistory(cached.weightHistoryVal);
+        setLatestWeight(cached.latest);
+        if (cached.compositionHistoryVal) setCompositionHistory(cached.compositionHistoryVal);
+        if (cached.compositionAdvancedHistoryVal) setCompositionAdvancedHistory(cached.compositionAdvancedHistoryVal);
+        setLatestMeasurement(cached.allMeasurements?.[0] || null);
+        if (cached.allMeasurements) setAllMeasurementsData(cached.allMeasurements);
+        if (cached.measurementHistoryVal) setMeasurementHistory(cached.measurementHistoryVal);
+      });
+      setLoading(false);
+    }
+
+    if (!silent && !cached) setLoading(true);
     try {
-      const [data, profile, allWeights, settings, latest, allMeasurements] = await Promise.all([
+      const daysMap: { [key: string]: number } = {
+        '7j': 7, '14j': 14, '30j': 30, '60j': 60, '90j': 90,
+        '6m': 180, '9m': 270, '1a': 365, '2a': 730, 'tout': 3650, 'custom': 3650,
+      };
+      const days = daysMap[selectedPeriod] || 30;
+
+      // PERF : on charge uniquement la période + cap 500 lignes (index DB actif).
+      // Avant : getAllWeights() + getMeasurements() sans param → 6000+ rows en RAM.
+      const [data, profile, periodWeights, settings, latest, periodMeasurements] = await Promise.all([
         aggregateWeightData(selectedPeriod),
         getProfile(),
-        getAllWeights(),
+        getWeights(days, 500),
         getUserSettings(),
         getLatestWeight(),
-        getMeasurements(),
+        getMeasurements(days, 500),
       ]);
 
       // Tout calculer avant les setState
@@ -134,40 +175,69 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         heightCmVal = profile.height_cm;
       }
 
-      const now = new Date();
-      const daysMap: { [key: string]: number } = { '7j': 7, '30j': 30, '90j': 90, '6m': 180, '1a': 365, '2a': 730, 'tout': 3650 };
-      const days = daysMap[selectedPeriod] || 30;
-      const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-
+      // `periodWeights` est déjà filtré par date côté SQL et indexé → juste inverser.
       let weightHistoryVal: any[] = [];
       let compositionHistoryVal: any = null;
       let compositionAdvancedHistoryVal: any = null;
-      if (allWeights?.length > 0) {
-        const filtered = allWeights.filter((w: any) => new Date(w.date) >= cutoffDate).reverse();
-        weightHistoryVal = filtered.map((w: any) => ({ date: w.date, value: w.weight }));
-        compositionHistoryVal = {
-          bodyFat: filtered.filter((w: any) => w.fat_percent > 0).map((w: any) => ({ date: w.date, value: w.fat_percent })).reverse(),
-          muscle: filtered.filter((w: any) => w.muscle_percent > 0).map((w: any) => ({ date: w.date, value: w.muscle_percent })).reverse(),
-          water: filtered.filter((w: any) => w.water_percent > 0).map((w: any) => ({ date: w.date, value: w.water_percent })).reverse(),
-        };
-        compositionAdvancedHistoryVal = {
-          bone: filtered.filter((w: any) => w.bone_mass > 0).map((w: any) => ({ date: w.date, value: w.bone_mass })).reverse(),
-          visceral: filtered.filter((w: any) => w.visceral_fat > 0).map((w: any) => ({ date: w.date, value: w.visceral_fat })).reverse(),
-          bmr: filtered.filter((w: any) => w.bmr > 0).map((w: any) => ({ date: w.date, value: w.bmr })).reverse(),
-          metabolicAge: filtered.filter((w: any) => w.metabolic_age > 0).map((w: any) => ({ date: w.date, value: w.metabolic_age })).reverse(),
-        };
+      if (periodWeights?.length > 0) {
+        // Un seul passage pour construire toutes les séries (au lieu de 7 filter/map séparés)
+        const reversed = periodWeights.slice().reverse();
+        weightHistoryVal = reversed.map((w: any) => ({ date: w.date, value: w.weight }));
+        const bodyFat: any[] = [], muscle: any[] = [], water: any[] = [];
+        const bone: any[] = [], visceral: any[] = [], bmr: any[] = [], metabolicAge: any[] = [];
+        for (const w of reversed as any[]) {
+          if (w.fat_percent && w.fat_percent > 0) bodyFat.push({ date: w.date, value: w.fat_percent });
+          if (w.muscle_percent && w.muscle_percent > 0) muscle.push({ date: w.date, value: w.muscle_percent });
+          if (w.water_percent && w.water_percent > 0) water.push({ date: w.date, value: w.water_percent });
+          if (w.bone_mass && w.bone_mass > 0) bone.push({ date: w.date, value: w.bone_mass });
+          if (w.visceral_fat && w.visceral_fat > 0) visceral.push({ date: w.date, value: w.visceral_fat });
+          if (w.bmr && w.bmr > 0) bmr.push({ date: w.date, value: w.bmr });
+          if (w.metabolic_age && w.metabolic_age > 0) metabolicAge.push({ date: w.date, value: w.metabolic_age });
+        }
+        compositionHistoryVal = { bodyFat, muscle, water };
+        compositionAdvancedHistoryVal = { bone, visceral, bmr, metabolicAge };
       }
 
+      // Mensurations : un seul passage pour les 12 champs (au lieu de 12 filter/map)
       let measurementHistoryVal: any = null;
-      if (allMeasurements?.length > 0) {
-        const filteredM = allMeasurements.filter((m: any) => new Date(m.date) >= cutoffDate).reverse();
+      if (periodMeasurements?.length > 0) {
+        const reversedM = periodMeasurements.slice().reverse();
         const fields = ['chest', 'waist', 'navel', 'hips', 'shoulders', 'left_arm', 'right_arm', 'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'neck'];
         const history: any = {};
-        fields.forEach(field => {
-          history[field] = filteredM.filter((m: any) => m[field] && m[field] > 0).map((m: any) => ({ date: m.date, value: m[field] }));
-        });
+        for (const f of fields) history[f] = [];
+        for (const m of reversedM as any[]) {
+          for (const f of fields) {
+            if (m[f] && m[f] > 0) history[f].push({ date: m.date, value: m[f] });
+          }
+        }
         measurementHistoryVal = history;
       }
+      // Aliases pour la logique setState (modal full history = chargé à la demande)
+      const allWeights = periodWeights;
+      const allMeasurements = periodMeasurements;
+
+      // Stocke en cache mémoire pour réouverture rapide de l'onglet
+      setCached(cacheKey, {
+        userGender: settings?.gender,
+        resolvedGoal,
+        data,
+        allWeights,
+        bmiVal,
+        heightCmVal,
+        weightHistoryVal,
+        latest,
+        compositionHistoryVal,
+        compositionAdvancedHistoryVal,
+        allMeasurements,
+        measurementHistoryVal,
+      });
+
+      // Anti-race : skip setState si une autre requête a démarré entre-temps
+      if (!isCurrent()) return;
+
+      // Génération insights spécifiques à Corps (perte/gain poids, composition)
+      const corpsInsights = generateInsights({ weights: allWeights }, 2);
+      setInsights(corpsInsights);
 
       // Un seul re-render pour tout mettre à jour
       unstable_batchedUpdates(() => {
@@ -188,7 +258,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
     } catch (error) {
       logger.error('Error loading corps data:', error);
     } finally {
-      setLoading(false);
+      if (!silent && isCurrent()) setLoading(false);
     }
   }, [selectedPeriod]);
 
@@ -203,9 +273,19 @@ export const CorpsTabPage: React.FC = React.memo(() => {
     }
   }, [selectedPeriod]);
 
+  // Debounce 1.5s + invalide cache + silent (pas de spinner qui clignote).
+  // Évite la boucle YOROI_DATA_CHANGED → reload → ré-émet (déjà fixé sur Dashboard).
   useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => loadData());
-    return () => sub.remove();
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
+      invalidateCachePrefix('corps');
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(() => loadData({ silent: true }), 1500);
+    });
+    return () => {
+      sub.remove();
+      if (timeout) clearTimeout(timeout);
+    };
   }, [loadData]);
 
   const handleRefresh = useCallback(async () => {
@@ -367,11 +447,38 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         onPeriodChange={setSelectedPeriod}
       />
 
+      {/* Streak pesées (motivant pour suivi régulier) */}
+      <StreakBadge
+        items={allWeightsData}
+        unitSingular="jour de pesée"
+        unitPlural="jours de pesée"
+        contextLabel="Suivi régulier, bravo"
+        forceColor="#3B82F6"
+      />
+
+      {/* Insights contextuels (perte/gain poids, composition) */}
+      {insights.length > 0 && <StatsInsightBanner insights={insights} />}
+
+      {/* Empty state si aucune donnée corps + pas en chargement */}
+      {!loading && (!weightData?.values || weightData.values.length === 0) && (!allWeightsData || allWeightsData.length === 0) && (
+        <StatsEmptyState
+          icon={<Scale size={36} color="#3B82F6" strokeWidth={2} />}
+          title="Démarre ton suivi corporel"
+          description="Enregistre ta première pesée pour voir l'évolution de ton poids, ta composition corporelle et tes mensurations."
+          ctaLabel="Ajouter ma première pesée"
+          ctaHref="/add-weight"
+          accentColor="#3B82F6"
+        />
+      )}
+
       {/* Bouton accès rapide Historique corporel */}
       <TouchableOpacity
         style={[corpsBannerStyle.btn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
         activeOpacity={0.75}
-        onPress={() => router.push('/body-history')}>
+        onPress={() => router.push('/body-history')}
+        accessibilityRole="button"
+        accessibilityLabel="Accéder à l'historique corporel complet"
+      >
         <View style={[corpsBannerStyle.icon, { backgroundColor: '#3B82F615' }]}>
           <ClipboardList size={18} color="#3B82F6" />
         </View>

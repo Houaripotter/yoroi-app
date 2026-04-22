@@ -38,6 +38,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { getMethodDisplayName } from '@/components/BJJBodyMap';
+import { SkeletonGrid } from '@/components/stats/SkeletonCard';
+import { StatsErrorBoundary } from '@/components/stats/StatsErrorBoundary';
+import { StatsEmptyState } from '@/components/stats/StatsEmptyState';
+import { StreakBadge } from '@/components/stats/StreakBadge';
+import { AnimatedCounter } from '@/components/stats/AnimatedCounter';
+import { ShareStatsButton } from '@/components/stats/ShareStatsButton';
+import { OnboardingTooltip } from '@/components/stats/OnboardingTooltip';
+import { SPARRING_COLORS, SPARRING_HIT_SLOP } from '@/constants/sparringDesignSystem';
+import { StatsInsightBanner } from '@/components/stats/StatsInsightBanner';
+import { generateSparringInsights } from '@/lib/sparringInsights';
+import { TechniqueHeatmap } from '@/components/stats/TechniqueHeatmap';
+import { MethodsTimeline } from '@/components/stats/MethodsTimeline';
 
 const WEEKLY_GOAL_KEY = '@sparring_weekly_goal';
 const SPARRING_PARTNERS_KEY = '@yoroi_sparring_partners';
@@ -722,6 +734,47 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
     return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 5);
   }, [filteredTrainings]);
 
+  // Finitions données (symétrique de topMethodsTaken)
+  const topMethodsGiven = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const tr of filteredTrainings) {
+      const rounds = parseCombatRounds(tr.combat_rounds);
+      for (const r of rounds) {
+        for (const m of (r.methodsGiven ?? [])) {
+          const key = getMethodDisplayName(m.trim());
+          if (!key) continue;
+          map[key] = (map[key] ?? 0) + 1;
+        }
+      }
+    }
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  }, [filteredTrainings]);
+
+  // Combinaison données + reçues par méthode (pour insights & heatmap)
+  const methodsCombined = useMemo(() => {
+    const givenMap: Record<string, number> = {};
+    const takenMap: Record<string, number> = {};
+    for (const tr of filteredTrainings) {
+      const rounds = parseCombatRounds(tr.combat_rounds);
+      for (const r of rounds) {
+        for (const m of (r.methodsGiven ?? [])) {
+          const k = getMethodDisplayName(m.trim());
+          if (k) givenMap[k] = (givenMap[k] ?? 0) + 1;
+        }
+        for (const m of (r.methodsTaken ?? [])) {
+          const k = getMethodDisplayName(m.trim());
+          if (k) takenMap[k] = (takenMap[k] ?? 0) + 1;
+        }
+      }
+    }
+    const allKeys = new Set([...Object.keys(givenMap), ...Object.keys(takenMap)]);
+    return Array.from(allKeys).map(method => ({
+      method,
+      given: givenMap[method] || 0,
+      taken: takenMap[method] || 0,
+    })).sort((a, b) => (b.given + b.taken) - (a.given + a.taken));
+  }, [filteredTrainings]);
+
   // ── Insights Coach auto-générés ──
   const insights = useMemo(() => {
     const out: { Icon: React.ComponentType<{ size?: number; color?: string }>; text: string; color: string }[] = [];
@@ -833,9 +886,10 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
   const trackBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)';
 
   if (loading) {
+    // Skeleton shimmer plutôt qu'un spinner blanc — perçu comme + rapide
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 }}>
-        <ActivityIndicator size="large" color={accent} />
+      <View style={{ flex: 1, backgroundColor: bgColor, paddingTop: 16 }}>
+        <SkeletonGrid count={6} cardHeight={140} />
       </View>
     );
   }
@@ -868,7 +922,14 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                 backgroundColor: selectedSport === null ? accent : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
                 borderColor: selectedSport === null ? accent : cardBorder,
               }]}
-              onPress={() => setSelectedSport(null)}
+              onPress={() => {
+                if (Platform.OS !== 'web') impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+                setSelectedSport(null);
+              }}
+              hitSlop={SPARRING_HIT_SLOP}
+              accessibilityRole="button"
+              accessibilityState={{ selected: selectedSport === null }}
+              accessibilityLabel={`Filtre : tous les sports ${selectedSport === null ? '(actif)' : ''}`}
             >
               <Text style={[styles.sportPillText, { color: selectedSport === null ? '#FFF' : colors.textMuted }]}>
                 {t('sparring.filterAll')}
@@ -881,7 +942,14 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                   backgroundColor: selectedSport === sport ? accent : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
                   borderColor: selectedSport === sport ? accent : cardBorder,
                 }]}
-                onPress={() => setSelectedSport(sport === selectedSport ? null : sport)}
+                onPress={() => {
+                  if (Platform.OS !== 'web') impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+                  setSelectedSport(sport === selectedSport ? null : sport);
+                }}
+                hitSlop={SPARRING_HIT_SLOP}
+                accessibilityRole="button"
+                accessibilityState={{ selected: selectedSport === sport }}
+                accessibilityLabel={`Filtre ${getSportName(sport)} ${selectedSport === sport ? '(actif)' : ''}`}
               >
                 <Text style={[styles.sportPillText, { color: selectedSport === sport ? '#FFF' : colors.textMuted }]}>
                   {getSportName(sport)}
@@ -891,15 +959,47 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           </ScrollView>
         )}
 
-        {/* ── VIDE ── */}
+        {/* ── VIDE — empty state riche avec CTA ── */}
         {isEmpty && (
-          <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('sparring.noData')}</Text>
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              {t('sparring.noDataMessage')}
-            </Text>
-          </View>
+          <StatsEmptyState
+            icon={<Swords size={36} color={SPARRING_COLORS.win} strokeWidth={2} />}
+            title="Démarre ton suivi sparring"
+            description="Enregistre ta première séance de combat pour analyser tes partenaires, techniques et progrès."
+            ctaLabel="Ajouter une séance combat"
+            ctaHref="/add-combat-session"
+            accentColor={SPARRING_COLORS.win}
+          />
         )}
+
+        {/* Onboarding tooltip 1ère visite */}
+        {!isEmpty && (
+          <OnboardingTooltip
+            id="sparring-podium-tap"
+            title="Touche un podium pour voir le détail"
+            text="Stats par partenaire, dernier sparring, vos confrontations."
+          />
+        )}
+
+        {/* Streak séances combat — motivant et viral */}
+        {!isEmpty && (
+          <StreakBadge
+            items={trainings as any[]}
+            unitSingular="jour de combat"
+            unitPlural="jours de combat"
+            contextLabel="Régularité au tatami"
+            forceColor={SPARRING_COLORS.win}
+          />
+        )}
+
+        {/* Insights auto-générés sparring (meilleure arme, faiblesse, win rate) */}
+        {!isEmpty && (() => {
+          const autoInsights = generateSparringInsights({
+            partners: partnerStats,
+            methods: methodsCombined,
+            trainings: filteredTrainings,
+          }, 3);
+          return autoInsights.length > 0 ? <StatsInsightBanner insights={autoInsights} /> : null;
+        })()}
 
         {/* ── PODIUM TOP 3 — tout en haut ── */}
         {partnerStats.length >= 2 && (
@@ -1576,6 +1676,31 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
             </View>
           </View>
         )}
+
+        {/* ── HEATMAP TECHNIQUES (données vs reçues) ── */}
+        {!isEmpty && methodsCombined.length > 0 && (
+          <TechniqueHeatmap methods={methodsCombined} maxItems={10} />
+        )}
+
+        {/* ── TIMELINE MÉTHODES par mois (évolution top 3) ── */}
+        {!isEmpty && filteredTrainings.length > 0 && (
+          <MethodsTimeline trainings={filteredTrainings as any} getMethodName={getMethodDisplayName} maxMonths={6} />
+        )}
+
+        {/* ── PARTAGE STATS SPARRING (carte Instagram-ready) ── */}
+        {!isEmpty && totals.rounds > 0 && (
+          <ShareStatsButton
+            title="Mon sparring Yoroi"
+            stats={[
+              { label: 'Rounds', value: String(totals.rounds), color: SPARRING_COLORS.win },
+              { label: 'Partenaires', value: String(totals.partners), color: '#3B82F6' },
+              { label: 'Win rate', value: totals.winRate !== null ? `${totals.winRate}%` : '—', color: '#A855F7' },
+              { label: 'Techniques', value: String(totals.techniques), color: '#F59E0B' },
+            ]}
+            tagline="Tatami life 🥋"
+            accentColor={SPARRING_COLORS.win}
+          />
+        )}
       </ScrollView>
 
       {/* ── MODAL OBJECTIF ── */}
@@ -2137,6 +2262,25 @@ function PodiumSection({ partners, accent, colors, isDark, onSelect, partnerPhot
                 <Text style={[styles.podiumWinRate, { color: colors.textMuted }]}>—</Text>
               )}
 
+              {/* Étoiles niveau partenaire (rating 1-10 → 5 étoiles) */}
+              {p.avgRating != null && p.avgRating > 0 && (
+                <View style={{ flexDirection: 'row', gap: 1, marginTop: 2 }}>
+                  {[1, 2, 3, 4, 5].map(i => {
+                    const threshold = i * 2; // 1-2 → étoile 1, 3-4 → étoile 2, etc.
+                    const filled = (p.avgRating ?? 0) >= threshold;
+                    const half = !filled && (p.avgRating ?? 0) >= threshold - 1;
+                    return (
+                      <Star
+                        key={i}
+                        size={9}
+                        color={filled || half ? '#F59E0B' : 'rgba(128,128,128,0.35)'}
+                        fill={filled ? '#F59E0B' : 'transparent'}
+                      />
+                    );
+                  })}
+                </View>
+              )}
+
               {/* Socle coloré */}
               <View style={[styles.podiumBase, {
                 height: podiumH,
@@ -2178,7 +2322,9 @@ function PodiumSection({ partners, accent, colors, isDark, onSelect, partnerPhot
 // MINI-COMPOSANTS
 // ============================================
 
-const GlobalStat: React.FC<{ value: number | string; label: string; color: string }> = ({ value, label, color }) => {
+// React.memo : ces sub-components s'affichent en grille ; sans memo, chaque
+// re-render du parent SparringTab provoque leur re-render même si props stables.
+const GlobalStat = React.memo<{ value: number | string; label: string; color: string }>(({ value, label, color }) => {
   const { colors } = useTheme();
   return (
     <View style={styles.globalStatItem}>
@@ -2186,9 +2332,9 @@ const GlobalStat: React.FC<{ value: number | string; label: string; color: strin
       <Text style={[styles.globalStatLabel, { color: colors.textMuted }]}>{label}</Text>
     </View>
   );
-};
+});
 
-const MiniStat: React.FC<{ value: number | string; label: string; color: string }> = ({ value, label, color }) => {
+const MiniStat = React.memo<{ value: number | string; label: string; color: string }>(({ value, label, color }) => {
   const { colors } = useTheme();
   return (
     <View style={styles.globalStatItem}>
@@ -2196,14 +2342,14 @@ const MiniStat: React.FC<{ value: number | string; label: string; color: string 
       <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2 }}>{label}</Text>
     </View>
   );
-};
+});
 
-const RecordPill: React.FC<{ value: number; label: string; color: string }> = ({ value, label, color }) => (
+const RecordPill = React.memo<{ value: number; label: string; color: string }>(({ value, label, color }) => (
   <View style={[styles.recordPill, { backgroundColor: `${color}18` }]}>
     <Text style={{ fontSize: 12, fontWeight: '800', color }}>{value}</Text>
     <Text style={{ fontSize: 10, fontWeight: '700', color }}>{label}</Text>
   </View>
-);
+));
 
 // ============================================
 // STYLES

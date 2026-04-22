@@ -239,9 +239,12 @@ export function useResponsive() {
   // Largeur max pour les conteneurs (limité à 600 sur iPad)
   const maxWidth = pad ? Math.min(width, 680) : width;
 
-  // Pill tab bar width
+  // Pill tab bar width.
+  // Sur iPad portrait : on veut ~60% de la largeur (~450-500px)
+  // Sur iPad landscape : on veut max 500px (pas 0.7 × 1366 = 956px, ce serait énorme)
+  // Sur iPhone : width - 24
   const pillWidth = pad
-    ? Math.min(width * 0.7, 600)
+    ? Math.min(width * 0.55, 520)
     : width - 24;
 
   return {

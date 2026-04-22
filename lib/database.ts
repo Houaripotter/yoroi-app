@@ -19,6 +19,50 @@ const _logUnexpectedMigrationError = (e: unknown, context?: string): void => {
   }
 };
 
+/**
+ * Cache des colonnes existantes par table (rempli paresseusement à la première
+ * lecture). Évite des PRAGMA table_info répétés.
+ */
+const _columnsCache = new Map<string, Set<string>>();
+
+const _getTableColumns = async (database: SQLite.SQLiteDatabase, table: string): Promise<Set<string>> => {
+  const cached = _columnsCache.get(table);
+  if (cached) return cached;
+  const rows = await database.getAllAsync<{ name: string }>(`PRAGMA table_info(${table})`);
+  const cols = new Set(rows.map(r => r.name));
+  _columnsCache.set(table, cols);
+  return cols;
+};
+
+/**
+ * ALTER TABLE ADD COLUMN sécurisé : ne tente la migration que si la colonne
+ * n'existe pas déjà. Évite les ~10 erreurs SQLite loggées au démarrage par le
+ * module natif iOS (qui les print AVANT d'arriver à notre try/catch JS).
+ *
+ * Usage : await safeAddColumn(database, 'profile', 'current_weight', 'REAL');
+ */
+const safeAddColumn = async (
+  database: SQLite.SQLiteDatabase,
+  table: string,
+  column: string,
+  type: string,
+): Promise<void> => {
+  try {
+    const cols = await _getTableColumns(database, table);
+    if (cols.has(column)) return; // déjà là, on skip
+    await database.execAsync(`ALTER TABLE ${table} ADD COLUMN ${column} ${type};`);
+    cols.add(column); // mise à jour cache
+  } catch (e) {
+    _logUnexpectedMigrationError(e, `${table}.${column}`);
+  }
+};
+
+/** Invalide le cache des colonnes pour une table (utile après schema reset) */
+const _invalidateColumnsCache = (table?: string): void => {
+  if (table) _columnsCache.delete(table);
+  else _columnsCache.clear();
+};
+
 let db: SQLite.SQLiteDatabase | null = null;
 let _initPromise: Promise<void> | null = null;
 
@@ -150,142 +194,74 @@ const _performInit = async () => {
   `);
 
   // Migration: ajouter les colonnes si elles n'existent pas
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN start_time TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'start_time', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN session_type TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'session_type', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN exercises TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'exercises', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE profile ADD COLUMN profile_photo TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'profile', 'profile_photo', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN technique_rating INTEGER DEFAULT NULL;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'technique_rating', 'INTEGER DEFAULT NULL');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN session_types TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'session_types', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN technical_theme TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'technical_theme', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN distance REAL;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'distance', 'REAL');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN calories INTEGER;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'calories', 'INTEGER');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN intensity INTEGER;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'intensity', 'INTEGER');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN rounds INTEGER;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'rounds', 'INTEGER');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN round_duration INTEGER;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'round_duration', 'INTEGER');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN is_outdoor INTEGER DEFAULT 0;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'is_outdoor', 'INTEGER DEFAULT 0');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN pente REAL;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'pente', 'REAL');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN speed REAL;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'speed', 'REAL');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN resistance INTEGER;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'resistance', 'INTEGER');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN watts INTEGER;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'watts', 'INTEGER');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN cadence INTEGER;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'cadence', 'INTEGER');
 
   // Colonnes pour les details enrichis Apple Health (route GPS, météo, FC, splits)
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN healthkit_uuid TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'healthkit_uuid', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN workout_details_json TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'workout_details_json', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN heart_rate INTEGER;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'heart_rate', 'INTEGER');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN max_heart_rate INTEGER;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'max_heart_rate', 'INTEGER');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN min_heart_rate INTEGER;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'min_heart_rate', 'INTEGER');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN source TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'source', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN location_lat REAL;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'location_lat', 'REAL');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN location_lon REAL;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'location_lon', 'REAL');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN location_name TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'location_name', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN game_plan TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'game_plan', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN what_worked TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'what_worked', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN what_didnt_work TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'what_didnt_work', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN session_rating INTEGER;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'session_rating', 'INTEGER');
 
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN session_mood TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'session_mood', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN session_type TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'weekly_plan', 'session_type', 'TEXT');
 
-  try {
-    await database.execAsync(`ALTER TABLE measurements ADD COLUMN navel REAL;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'measurements', 'navel', 'REAL');
 
   // Table Corbeille (trash) pour les séances supprimees
   await database.execAsync(`
@@ -478,9 +454,11 @@ const _performInit = async () => {
     'temps_total TEXT',
   ];
   for (const column of competitionsColumnsToAdd) {
-    try {
-      await database.execAsync(`ALTER TABLE competitions ADD COLUMN ${column};`);
-    } catch (e) { _logUnexpectedMigrationError(e); }
+    // Format: 'colName TYPE' → split sur le premier espace
+    const spaceIdx = column.indexOf(' ');
+    const colName = spaceIdx > 0 ? column.slice(0, spaceIdx) : column;
+    const colType = spaceIdx > 0 ? column.slice(spaceIdx + 1) : 'TEXT';
+    await safeAddColumn(database, 'competitions', colName, colType);
   }
 
   // Table Combats
@@ -592,20 +570,19 @@ const _performInit = async () => {
   await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_trainings_sport ON trainings(sport);`);
   await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_trainings_club_id ON trainings(club_id);`);
 
+  // Index essentiels pour les écrans Stats (filtres par date fréquents).
+  // Sans ces index, chaque SELECT ... WHERE date >= ? faisait un full-scan.
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_weights_date ON weights(date);`);
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_measurements_date ON measurements(date);`);
+
   // Migration: Ajouter label sur weekly_plan
-  try {
-    await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN label TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'weekly_plan', 'label', 'TEXT');
 
   // Migration: Ajouter session_type sur weekly_plan (web)
-  try {
-    await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN session_type TEXT;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'weekly_plan', 'session_type', 'TEXT');
 
   // Migration: Ajouter weekly_plan_id sur trainings
-  try {
-    await database.execAsync(`ALTER TABLE trainings ADD COLUMN weekly_plan_id INTEGER;`);
-  } catch (e) { _logUnexpectedMigrationError(e); }
+  await safeAddColumn(database, 'trainings', 'weekly_plan_id', 'INTEGER');
 
   // Table Slot Occurrences - suivi hebdomadaire des créneaux
   await database.execAsync(`
@@ -1139,11 +1116,12 @@ export const countWeightDuplicates = async (): Promise<number> => {
   return duplicates;
 };
 
-export const getWeights = async (days?: number): Promise<Weight[]> => {
+export const getWeights = async (days?: number, limit?: number): Promise<Weight[]> => {
   const database = await openDatabase();
+  const limitClause = limit && limit > 0 ? ` LIMIT ${Math.floor(limit)}` : '';
   const query = days
-    ? `SELECT * FROM weights WHERE date >= date('now', ?) ORDER BY date DESC`
-    : `SELECT * FROM weights ORDER BY date DESC`;
+    ? `SELECT * FROM weights WHERE date >= date('now', ?) ORDER BY date DESC${limitClause}`
+    : `SELECT * FROM weights ORDER BY date DESC${limitClause}`;
 
   return await database.getAllAsync<Weight>(query, days ? [`-${days} days`] : []);
 };
@@ -1295,18 +1273,19 @@ export const addTraining = async (data: Training): Promise<number> => {
   return result.lastInsertRowId;
 };
 
-export const getTrainings = async (days?: number): Promise<Training[]> => {
+export const getTrainings = async (days?: number, limit?: number): Promise<Training[]> => {
   const database = await openDatabase();
+  const limitClause = limit && limit > 0 ? ` LIMIT ${Math.floor(limit)}` : '';
   const query = days
     ? `SELECT t.*, t.duration_minutes as duration, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
        FROM trainings t
        LEFT JOIN clubs c ON t.club_id = c.id
        WHERE t.date >= date('now', ?)
-       ORDER BY t.date DESC, t.start_time ASC`
+       ORDER BY t.date DESC, t.start_time ASC${limitClause}`
     : `SELECT t.*, t.duration_minutes as duration, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
        FROM trainings t
        LEFT JOIN clubs c ON t.club_id = c.id
-       ORDER BY t.date DESC, t.start_time ASC`;
+       ORDER BY t.date DESC, t.start_time ASC${limitClause}`;
 
   const results = await database.getAllAsync<Training & { exercises?: string; combat_rounds?: string; is_outdoor?: number }>(query, days ? [`-${days} days`] : []);
   return results.map(r => {
@@ -1670,11 +1649,12 @@ export const addMeasurementRecord = async (data: Measurement): Promise<number> =
   return result.lastInsertRowId;
 };
 
-export const getMeasurements = async (days?: number): Promise<Measurement[]> => {
+export const getMeasurements = async (days?: number, limit?: number): Promise<Measurement[]> => {
   const database = await openDatabase();
+  const limitClause = limit && limit > 0 ? ` LIMIT ${Math.floor(limit)}` : '';
   const query = days
-    ? `SELECT * FROM measurements WHERE date >= date('now', ?) ORDER BY date DESC`
-    : `SELECT * FROM measurements ORDER BY date DESC`;
+    ? `SELECT * FROM measurements WHERE date >= date('now', ?) ORDER BY date DESC${limitClause}`
+    : `SELECT * FROM measurements ORDER BY date DESC${limitClause}`;
 
   return await database.getAllAsync<Measurement>(query, days ? [`-${days} days`] : []);
 };

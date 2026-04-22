@@ -70,7 +70,7 @@ const buildSmooth = (pts: { x: number; y: number }[]) => {
   return d;
 };
 
-export const SvgLineChart: React.FC<SvgLineChartProps> = ({
+const SvgLineChartInner: React.FC<SvgLineChartProps> = ({
   series,
   xLabels,
   width,
@@ -309,4 +309,6 @@ const styles = StyleSheet.create({
   legendLabel: { fontSize: 12, fontWeight: '600' },
 });
 
+// React.memo : évite re-render si props ne changent pas (économise calcul SVG paths)
+export const SvgLineChart = React.memo(SvgLineChartInner);
 export default SvgLineChart;

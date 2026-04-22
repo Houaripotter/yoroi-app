@@ -18,7 +18,7 @@ import { StatsDetailModal } from '../StatsDetailModal';
 import { aggregateWeightData } from '@/lib/statsAggregation';
 import { Target, TrendingUp, TrendingDown, Scale, BarChart3 } from 'lucide-react-native';
 import { BMI_RANGES, getMetricStatus } from '@/lib/healthRanges';
-import { getProfile, getAllWeights } from '@/lib/database';
+import { getProfile, getAllWeights, getWeights } from '@/lib/database';
 import { getUserSettings } from '@/lib/storage';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -77,7 +77,8 @@ export const PoidsPage: React.FC = () => {
       const [data, profile, allWeights, settings] = await Promise.all([
         aggregateWeightData(selectedPeriod),
         getProfile(),
-        getAllWeights(),
+        // 2 ans + 500 lignes max (avant : full-scan de 6000+ lignes)
+        getWeights(730, 500),
         getUserSettings()
       ]);
       setWeightData(data);
@@ -115,12 +116,8 @@ export const PoidsPage: React.FC = () => {
       if (allWeights && allWeights.length > 0) {
         const now = new Date();
         const daysMap: { [key: string]: number } = {
-          '7j': 7,
-          '30j': 30,
-          '90j': 90,
-          '6m': 180,
-          '1a': 365,
-          'tout': 3650,
+          '7j': 7, '14j': 14, '30j': 30, '60j': 60, '90j': 90,
+          '6m': 180, '9m': 270, '1a': 365, '2a': 730, 'tout': 3650, 'custom': 3650,
         };
         const days = daysMap[selectedPeriod] || 30;
         const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);

@@ -21,7 +21,7 @@ interface RingChartProps {
   strokeWidth?: number;
 }
 
-export const RingChart: React.FC<RingChartProps> = ({
+const RingChartInner: React.FC<RingChartProps> = ({
   rings,
   size = 200,
   strokeWidth = 12,
@@ -121,3 +121,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+export const RingChart = React.memo(RingChartInner);

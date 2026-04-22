@@ -16,7 +16,7 @@ import { SimpleMetricCard } from '../charts/SimpleMetricCard';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
 import { ScrollableLineChart } from '../charts/ScrollableLineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
-import { getLatestWeight, getAllWeights , getProfile } from '@/lib/database';
+import { getLatestWeight, getAllWeights, getWeights, getProfile } from '@/lib/database';
 import { Activity, Droplet, Bone, Zap, Flame } from 'lucide-react-native';
 import {
   WATER_PERCENTAGE_RANGES,
@@ -95,8 +95,9 @@ export const CompositionPage: React.FC = () => {
       const latest = await getLatestWeight();
       setLatestWeight(latest);
 
-      // Récupérer tous les poids
-      const allWeights = await getAllWeights();
+      // PERF : charge uniquement les 2 dernières années max + cap 500 lignes
+      // (avant : 6699 entrées en RAM, freeze au rendu de la page).
+      const allWeights = await getWeights(730, 500);
 
       if (!allWeights || allWeights.length === 0) {
         setHistoryData({ bodyFat: [], muscle: [], water: [] });
@@ -111,12 +112,8 @@ export const CompositionPage: React.FC = () => {
       // Préparer les données pour l'historique selon la période
       const now = new Date();
       const daysMap: { [key: string]: number } = {
-        '7j': 7,
-        '30j': 30,
-        '90j': 90,
-        '6m': 180,
-        '1a': 365,
-        'tout': 3650,
+        '7j': 7, '14j': 14, '30j': 30, '60j': 60, '90j': 90,
+        '6m': 180, '9m': 270, '1a': 365, '2a': 730, 'tout': 3650, 'custom': 3650,
       };
       const days = daysMap[selectedPeriod] || 30;
       const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);

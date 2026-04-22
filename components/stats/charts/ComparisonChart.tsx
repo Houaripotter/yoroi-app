@@ -22,7 +22,7 @@ interface ComparisonChartProps {
   showGrid?: boolean;
 }
 
-export const ComparisonChart: React.FC<ComparisonChartProps> = ({
+const ComparisonChartInner: React.FC<ComparisonChartProps> = ({
   series,
   height = 200,
   showGrid = true,
@@ -201,3 +201,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+export const ComparisonChart = React.memo(ComparisonChartInner);

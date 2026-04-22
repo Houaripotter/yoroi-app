@@ -21,9 +21,10 @@ const SommeilPage = React.memo((props: any) => <VitalitePage {...props} forcedTa
 const PasPage = React.memo((props: any) => <VitalitePage {...props} forcedTab="pas" />);
 const SignesVitauxPage = React.memo((props: any) => <VitalitePage {...props} forcedTab="signes" />);
 import { ScrollProvider } from '@/lib/ScrollContext';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { StatsErrorBoundary } from './StatsErrorBoundary';
 
-// Memoized page wrapper - affiche SamuraiLoader uniquement à la PREMIÈRE activation de l'onglet
+// Memoized page wrapper — isolation par onglet via StatsErrorBoundary : si un
+// onglet crash, l'utilisateur peut retry sans relancer toute l'app.
 const PageWrapper = memo(({ pageId, component: PageComponent, onNavigateToTab }: {
   pageId: string;
   component: React.FC<any>;
@@ -32,10 +33,10 @@ const PageWrapper = memo(({ pageId, component: PageComponent, onNavigateToTab }:
 }) => {
   return (
     <View style={pageStyles.page}>
-      <ErrorBoundary>
+      <StatsErrorBoundary tabName={pageId}>
         {/* @ts-ignore */}
         <PageComponent onNavigateToTab={onNavigateToTab} />
-      </ErrorBoundary>
+      </StatsErrorBoundary>
     </View>
   );
 });

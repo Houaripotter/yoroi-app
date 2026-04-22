@@ -37,7 +37,7 @@ const PAD_BOTTOM = 30;
 const PAD_LEFT = 32;
 const BAR_W = 28;
 
-export const SvgBarChart: React.FC<SvgBarChartProps> = ({
+const SvgBarChartInner: React.FC<SvgBarChartProps> = ({
   data,
   width,
   height = 180,
@@ -137,4 +137,5 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 13, fontWeight: '600' },
 });
 
+export const SvgBarChart = React.memo(SvgBarChartInner);
 export default SvgBarChart;

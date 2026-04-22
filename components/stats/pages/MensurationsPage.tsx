@@ -71,7 +71,8 @@ export const MensurationsPage: React.FC = () => {
     try {
       const [measurement, allMeasurements, settings] = await Promise.all([
         getLatestMeasurement(),
-        getMeasurements(),
+        // Cap 2 ans + 500 lignes (évite full-scan sur base avec beaucoup d'historique)
+        getMeasurements(730, 500),
         getUserSettings()
       ]);
       setLatestMeasurement(measurement);
@@ -89,10 +90,8 @@ export const MensurationsPage: React.FC = () => {
       if (allMeasurements && allMeasurements.length > 0) {
         const now = new Date();
         const daysMap: { [key: string]: number } = {
-          '7j': 7,
-          '30j': 30,
-          '90j': 90,
-          'tout': 365,
+          '7j': 7, '14j': 14, '30j': 30, '60j': 60, '90j': 90,
+          '6m': 180, '9m': 270, '1a': 365, '2a': 730, 'tout': 3650, 'custom': 3650,
         };
         const days = daysMap[selectedPeriod] || 30;
         const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);

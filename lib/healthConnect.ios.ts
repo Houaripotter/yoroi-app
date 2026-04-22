@@ -3424,11 +3424,17 @@ class HealthConnectService {
           if (toStore.heartRateSamples && toStore.heartRateSamples.length > 1) {
             try {
               const effectiveZones = await getEffectiveHRZones();
+              // Utilise startDate/endDate du training (params de la fonction) car
+              // `workout` n'existe pas dans ce scope. Fallback sur les samples HR.
+              const wStart = startDate || (toStore.heartRateSamples?.[0]?.timestamp);
+              const wEnd = wStart && durationMin
+                ? new Date(new Date(wStart).getTime() + durationMin * 60000).toISOString()
+                : (toStore.heartRateSamples?.[toStore.heartRateSamples.length - 1]?.timestamp);
               const computedZones = calcZoneDurations(
                 toStore.heartRateSamples,
                 effectiveZones,
-                workout.startDate,
-                workout.endDate,
+                wStart,
+                wEnd,
               );
               toStore.heartRateZones = computedZones;
             } catch {

@@ -208,6 +208,8 @@ export default function EditCompetitionScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+          contentInsetAdjustmentBehavior="automatic"
       >
         {/* Nom */}
         <View style={styles.field}>

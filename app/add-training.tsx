@@ -710,7 +710,7 @@ export default function AddTrainingScreen() {
 
   // Timer debounce pour la recherche auto
   const locationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const searchLocationRef = useRef<(query: string) => Promise<void>>();
+  const searchLocationRef = useRef<((query: string) => Promise<void>) | undefined>(undefined);
 
   // Recherche de lieu — TOUS les moteurs en PARALLÈLE (plus de fallbacks séquentiels)
   // 1. Photon (komoot) — OSM full-text, biais France
@@ -1519,6 +1519,10 @@ export default function AddTrainingScreen() {
   const handleCloseHouariModal = () => {
     setShowHouariRateModal(false);
     setTimeout(() => router.back(), 350);
+    // Moment positif : l'user vient de noter sa séance → demander review si OK
+    import('@/lib/reviewPromptService')
+      .then(({ promptReviewAfterPositiveAction }) => promptReviewAfterPositiveAction(1500))
+      .catch(() => {});
   };
 
   // Quick Fill pour pré-remplir le formulaire avec la dernière séance
@@ -2128,6 +2132,9 @@ export default function AddTrainingScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
+          // iOS 14+ : scroll auto quand le clavier apparaît (champ toujours visible)
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+          contentInsetAdjustmentBehavior="automatic"
           bounces={false}
           overScrollMode="never"
           scrollEventThrottle={16}

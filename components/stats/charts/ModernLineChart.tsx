@@ -54,7 +54,18 @@ export const ModernLineChart: React.FC<ModernLineChartProps> = React.memo(({
     );
   }
 
-  // Memoize min, max, moyenne computation
+  // Sampling pour limiter à `maxDataPoints` (défaut 100). Au-delà, le SVG
+  // explose en perf (5000 points = 50 000 SVG ops). On garde toujours premier+dernier.
+  const sampledData = useMemo(() => {
+    const cap = maxDataPoints && maxDataPoints > 0 ? maxDataPoints : 100;
+    if (data.length <= cap) return data;
+    const sampled: typeof data = [];
+    const step = (data.length - 1) / (cap - 1);
+    for (let i = 0; i < cap; i++) sampled.push(data[Math.round(i * step)]);
+    return sampled;
+  }, [data, maxDataPoints]);
+
+  // Min/Max/Avg calculés sur les VRAIES données (avant sampling) pour rester exacts
   const { min, max, avg } = useMemo(() => {
     const values = data.map(d => d.value);
     return {
@@ -73,9 +84,9 @@ export const ModernLineChart: React.FC<ModernLineChartProps> = React.memo(({
         </Text>
       )}
 
-      {/* Graphique scrollable */}
+      {/* Graphique scrollable — utilise la version échantillonnée pour rester fluide */}
       <ScrollableLineChart
-        data={data}
+        data={sampledData}
         color={color}
         height={compact ? 100 : height}
         compact={compact}

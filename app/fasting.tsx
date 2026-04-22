@@ -363,6 +363,8 @@ export default function FastingScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+          contentInsetAdjustmentBehavior="automatic"
         keyboardDismissMode="on-drag"
       >
         {/* TIMER ACTIF */}

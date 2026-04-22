@@ -40,15 +40,26 @@ export function CaloriesHistoryChart({ data, colors, onPress }: CaloriesHistoryC
   const avgActive = Math.round(data.reduce((sum, d) => sum + d.active, 0) / data.length);
   const avgTotal = Math.round(data.reduce((sum, d) => sum + d.total, 0) / data.length);
 
+  // Cap à 60 barres max (voir SleepHistoryChart pour le pourquoi)
+  const MAX_BARS = 60;
+  const sourceData = data.length > MAX_BARS
+    ? (() => {
+        const sampled: typeof data = [];
+        const step = (data.length - 1) / (MAX_BARS - 1);
+        for (let i = 0; i < MAX_BARS; i++) sampled.push(data[Math.round(i * step)]);
+        return sampled;
+      })()
+    : data;
+
   // Formater les données pour le bar chart (active calories)
-  const chartData = data.map((item) => {
+  const chartData = sourceData.map((item) => {
     const date = new Date(item.date);
     const day = date.getDate();
     const month = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'][date.getMonth()];
 
     return {
       value: item.active, // Afficher calories actives
-      label: data.length <= 7 ? `${day} ${month}` : `${day}`,
+      label: sourceData.length <= 7 ? `${day} ${month}` : `${day}`,
       frontColor: colors.danger,
       spacing: 2,
       labelWidth: 50,
@@ -56,7 +67,7 @@ export function CaloriesHistoryChart({ data, colors, onPress }: CaloriesHistoryC
     };
   });
 
-  const maxValue = Math.max(...data.map(d => d.active));
+  const maxValue = Math.max(...sourceData.map(d => d.active));
 
   const Wrapper = onPress ? TouchableOpacity : View;
 

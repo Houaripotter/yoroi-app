@@ -29,7 +29,7 @@ interface SparklineCardProps {
   onPress?: () => void;
 }
 
-export const SparklineCard: React.FC<SparklineCardProps> = ({
+const SparklineCardInner: React.FC<SparklineCardProps> = ({
   label,
   value,
   unit,
@@ -176,3 +176,5 @@ const styles = StyleSheet.create({
     marginHorizontal: 0, // Au lieu de -6 (cause des chevauchements)
   },
 });
+
+export const SparklineCard = React.memo(SparklineCardInner);
