@@ -632,79 +632,344 @@ function PartnerDetail({
         </View>
       </View>
 
-      {/* Modal Briefing pré-combat */}
-      <Modal visible={showBriefing} transparent animationType="slide" onRequestClose={() => setShowBriefing(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: isDark ? '#1a1a1a' : '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: insets.bottom + 24 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      {/* Modal Briefing pré-combat — full screen, riche, scrollable */}
+      <Modal visible={showBriefing} transparent={false} animationType="slide" onRequestClose={() => setShowBriefing(false)}>
+        <View style={{ flex: 1, backgroundColor: isDark ? '#0F0F12' : '#F8FAFC' }}>
+          {/* Header sticky */}
+          <View style={{
+            paddingTop: insets.top + 12,
+            paddingHorizontal: 16,
+            paddingBottom: 12,
+            backgroundColor: '#EF4444',
+            borderBottomLeftRadius: 24,
+            borderBottomRightRadius: 24,
+          }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Flag size={18} color="#EF4444" />
-                <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text }}>Briefing — {p.name}</Text>
+                <Flag size={20} color="#FFFFFF" strokeWidth={2.5} />
+                <Text style={{ fontSize: 13, fontWeight: '800', color: '#FFFFFF', letterSpacing: 1 }}>BRIEFING PRÉ-COMBAT</Text>
               </View>
-              <TouchableOpacity onPress={() => setShowBriefing(false)}>
-                <X size={20} color={colors.textMuted ?? '#888'} />
+              <TouchableOpacity
+                onPress={() => setShowBriefing(false)}
+                style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <X size={18} color="#FFFFFF" strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
 
-            {/* Objectif actif */}
-            {p.activeGoal?.text && (
-              <View style={{ backgroundColor: '#8B5CF615', borderRadius: 12, padding: 12, marginBottom: 12, borderLeftWidth: 3, borderLeftColor: '#8B5CF6' }}>
-                <Text style={{ fontSize: 10, fontWeight: '800', color: '#8B5CF6', marginBottom: 4 }}>OBJECTIF DU JOUR</Text>
-                <Text style={{ fontSize: 14, color: colors.text, fontWeight: '600', lineHeight: 20 }}>{p.activeGoal.text}</Text>
+            {/* Hero : avatar + nom + ceinture + winrate */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{
+                width: 64, height: 64, borderRadius: 32,
+                backgroundColor: 'rgba(255,255,255,0.22)',
+                borderWidth: 2, borderColor: '#FFFFFF',
+                alignItems: 'center', justifyContent: 'center',
+                overflow: 'hidden',
+              }}>
+                {p.photoUri ? (
+                  <Image source={{ uri: p.photoUri }} style={{ width: '100%', height: '100%' }} />
+                ) : (
+                  <Text style={{ fontSize: 26, fontWeight: '900', color: '#FFFFFF' }}>{p.name.charAt(0).toUpperCase()}</Text>
+                )}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 22, fontWeight: '900', color: '#FFFFFF', letterSpacing: -0.5 }} numberOfLines={1}>
+                  {p.name}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+                  {p.belt ? (
+                    <View style={{ backgroundColor: 'rgba(255,255,255,0.22)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#FFFFFF' }}>Ceinture {p.belt}</Text>
+                    </View>
+                  ) : null}
+                  {p.weight ? (
+                    <View style={{ backgroundColor: 'rgba(255,255,255,0.22)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#FFFFFF' }}>{p.weight}</Text>
+                    </View>
+                  ) : null}
+                </View>
+              </View>
+              {/* Win rate big */}
+              {dbWinRate !== null && (
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={{ fontSize: 28, fontWeight: '900', color: '#FFFFFF', letterSpacing: -1 }}>{dbWinRate}%</Text>
+                  <Text style={{ fontSize: 9, fontWeight: '800', color: 'rgba(255,255,255,0.85)', letterSpacing: 0.5 }}>WINRATE</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Stats compactes */}
+            {dbTotal > 0 && (
+              <View style={{ flexDirection: 'row', marginTop: 12, gap: 6 }}>
+                <View style={{ flex: 1, backgroundColor: 'rgba(34,197,94,0.25)', borderRadius: 10, paddingVertical: 8, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 18, fontWeight: '900', color: '#FFFFFF' }}>{dbWins}</Text>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.85)' }}>VICTOIRES</Text>
+                </View>
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.18)', borderRadius: 10, paddingVertical: 8, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 18, fontWeight: '900', color: '#FFFFFF' }}>{dbLosses}</Text>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.85)' }}>DÉFAITES</Text>
+                </View>
+                <View style={{ flex: 1, backgroundColor: 'rgba(245,158,11,0.25)', borderRadius: 10, paddingVertical: 8, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 18, fontWeight: '900', color: '#FFFFFF' }}>{dbDraws}</Text>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.85)' }}>NULS</Text>
+                </View>
+                <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 10, paddingVertical: 8, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 18, fontWeight: '900', color: '#FFFFFF' }}>{dbTotal}</Text>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.85)' }}>ROUNDS</Text>
+                </View>
               </View>
             )}
 
-            {/* Dangers */}
+            {/* Streak */}
+            {currentStreak && currentStreak.count >= 2 && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, alignSelf: 'flex-start', backgroundColor: 'rgba(0,0,0,0.2)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 }}>
+                <Text style={{ fontSize: 14 }}>{currentStreak.type === 'win' ? '🔥' : '⚠️'}</Text>
+                <Text style={{ fontSize: 11, fontWeight: '800', color: '#FFFFFF' }}>
+                  {currentStreak.count} {currentStreak.type === 'win' ? 'victoires' : 'défaites'} d'affilée
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32 }} showsVerticalScrollIndicator={false}>
+            {/* OBJECTIF DU JOUR — gros bloc accent violet */}
+            {p.activeGoal?.text && (
+              <View style={{
+                backgroundColor: '#8B5CF6', borderRadius: 16, padding: 16, marginBottom: 14,
+                shadowColor: '#8B5CF6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <Target size={14} color="#FFFFFF" strokeWidth={2.5} />
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1 }}>OBJECTIF DU JOUR</Text>
+                </View>
+                <Text style={{ fontSize: 16, color: '#FFFFFF', fontWeight: '700', lineHeight: 22 }}>{p.activeGoal.text}</Text>
+              </View>
+            )}
+
+            {/* OBJECTIF LONG TERME */}
+            {p.longTermGoal?.text && (
+              <View style={{
+                backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                borderRadius: 14, padding: 14, marginBottom: 14,
+                borderLeftWidth: 4, borderLeftColor: '#06B6D4',
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: '#06B6D4', letterSpacing: 0.5 }}>🎯 OBJECTIF LONG TERME</Text>
+                  {p.longTermGoal.targetWinRate ? (
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textMuted ?? '#888' }}>cible {p.longTermGoal.targetWinRate}%</Text>
+                  ) : null}
+                </View>
+                <Text style={{ fontSize: 14, color: colors.text, fontWeight: '600', lineHeight: 20 }}>{p.longTermGoal.text}</Text>
+              </View>
+            )}
+
+            {/* DANGERS — ses forces (rouge) */}
             {p.strengths.length > 0 && (
-              <View style={{ marginBottom: 12 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                  <AlertCircle size={13} color="#EF4444" />
-                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#EF4444' }}>DANGERS — ses points forts</Text>
+              <View style={{
+                backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                borderRadius: 14, padding: 14, marginBottom: 14,
+                borderLeftWidth: 4, borderLeftColor: '#EF4444',
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <AlertCircle size={14} color="#EF4444" />
+                  <Text style={{ fontSize: 12, fontWeight: '900', color: '#EF4444', letterSpacing: 0.5 }}>DANGERS — SES POINTS FORTS</Text>
                 </View>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                   {p.strengths.map((s, i) => (
-                    <View key={i} style={{ backgroundColor: '#EF444415', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 }}>
-                      <Text style={{ fontSize: 12, color: '#EF4444', fontWeight: '600' }}>{s}</Text>
+                    <View key={i} style={{ backgroundColor: '#EF444418', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
+                      <Text style={{ fontSize: 12.5, color: '#EF4444', fontWeight: '700' }}>{s}</Text>
                     </View>
                   ))}
                 </View>
+                {/* Top techniques qu'il a données contre toi */}
+                {topTaken.length > 0 && (
+                  <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}>
+                    <Text style={{ fontSize: 10, fontWeight: '800', color: colors.textMuted ?? '#888', marginBottom: 6, letterSpacing: 0.5 }}>SES SOUMISSIONS PRÉFÉRÉES SUR TOI</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      {topTaken.map(([name, count], i) => (
+                        <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EF444412', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 }}>
+                          <Text style={{ fontSize: 12, color: '#EF4444', fontWeight: '700' }}>{name}</Text>
+                          <Text style={{ fontSize: 10, color: '#EF4444', fontWeight: '900' }}>×{count}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
               </View>
             )}
 
-            {/* Ce qui marche */}
-            {p.whatWorks.length > 0 && (
-              <View style={{ marginBottom: 12 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                  <Zap size={13} color="#22C55E" />
-                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#22C55E' }}>OPPORTUNITÉS — ce qui fonctionne</Text>
+            {/* OPPORTUNITÉS — ce qui marche (vert) */}
+            {(p.whatWorks.length > 0 || topGiven.length > 0) && (
+              <View style={{
+                backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                borderRadius: 14, padding: 14, marginBottom: 14,
+                borderLeftWidth: 4, borderLeftColor: '#22C55E',
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <Zap size={14} color="#22C55E" />
+                  <Text style={{ fontSize: 12, fontWeight: '900', color: '#22C55E', letterSpacing: 0.5 }}>OPPORTUNITÉS — CE QUI MARCHE</Text>
+                </View>
+                {p.whatWorks.length > 0 && (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                    {p.whatWorks.map((s, i) => (
+                      <View key={i} style={{ backgroundColor: '#22C55E18', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
+                        <Text style={{ fontSize: 12.5, color: '#22C55E', fontWeight: '700' }}>{s}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+                {topGiven.length > 0 && (
+                  <View style={{ marginTop: p.whatWorks.length > 0 ? 12 : 0, paddingTop: p.whatWorks.length > 0 ? 12 : 0, borderTopWidth: p.whatWorks.length > 0 ? 1 : 0, borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}>
+                    <Text style={{ fontSize: 10, fontWeight: '800', color: colors.textMuted ?? '#888', marginBottom: 6, letterSpacing: 0.5 }}>TES SOUMISSIONS QUI PASSENT</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      {topGiven.map(([name, count], i) => (
+                        <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#22C55E12', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 }}>
+                          <Text style={{ fontSize: 12, color: '#22C55E', fontWeight: '700' }}>{name}</Text>
+                          <Text style={{ fontSize: 10, color: '#22C55E', fontWeight: '900' }}>×{count}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* FAIBLESSES (orange) */}
+            {p.weaknesses.length > 0 && (
+              <View style={{
+                backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                borderRadius: 14, padding: 14, marginBottom: 14,
+                borderLeftWidth: 4, borderLeftColor: '#F59E0B',
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <Text style={{ fontSize: 13 }}>⚡</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '900', color: '#F59E0B', letterSpacing: 0.5 }}>SES FAIBLESSES — À EXPLOITER</Text>
                 </View>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                  {p.whatWorks.map((s, i) => (
-                    <View key={i} style={{ backgroundColor: '#22C55E15', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 }}>
-                      <Text style={{ fontSize: 12, color: '#22C55E', fontWeight: '600' }}>{s}</Text>
+                  {p.weaknesses.map((s, i) => (
+                    <View key={i} style={{ backgroundColor: '#F59E0B18', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
+                      <Text style={{ fontSize: 12.5, color: '#F59E0B', fontWeight: '700' }}>{s}</Text>
                     </View>
                   ))}
                 </View>
               </View>
             )}
 
-            {/* Dernier game plan */}
+            {/* GAME PLAN + ce qui a marché la dernière fois */}
             {(() => {
               const lastGP = sessionHistory.flatMap(e => e.rounds.map(r => r.gamePlan)).find(Boolean);
-              return lastGP ? (
-                <View style={{ backgroundColor: '#3B82F615', borderRadius: 10, padding: 10, marginBottom: 4 }}>
-                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#3B82F6', marginBottom: 3 }}>DERNIER GAME PLAN</Text>
-                  <Text style={{ fontSize: 13, color: colors.text }}>{lastGP}</Text>
+              const lastWorked = sessionHistory.flatMap(e => e.rounds.map(r => r.whatWorked)).find(Boolean);
+              const lastDidnt = sessionHistory.flatMap(e => e.rounds.map(r => r.whatDidntWork)).find(Boolean);
+              if (!lastGP && !lastWorked && !lastDidnt && !lastImprovement) return null;
+              return (
+                <View style={{
+                  backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                  borderRadius: 14, padding: 14, marginBottom: 14,
+                  borderLeftWidth: 4, borderLeftColor: '#3B82F6',
+                }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                    <Text style={{ fontSize: 13 }}>📋</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '900', color: '#3B82F6', letterSpacing: 0.5 }}>DERNIÈRE SESSION — DEBRIEF</Text>
+                  </View>
+                  {lastGP && (
+                    <View style={{ marginBottom: 10 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '800', color: colors.textMuted ?? '#888', marginBottom: 3, letterSpacing: 0.4 }}>GAME PLAN PRÉVU</Text>
+                      <Text style={{ fontSize: 13, color: colors.text, lineHeight: 18 }}>{lastGP}</Text>
+                    </View>
+                  )}
+                  {lastWorked && (
+                    <View style={{ marginBottom: 10 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '800', color: '#22C55E', marginBottom: 3, letterSpacing: 0.4 }}>✓ CE QUI A MARCHÉ</Text>
+                      <Text style={{ fontSize: 13, color: colors.text, lineHeight: 18 }}>{lastWorked}</Text>
+                    </View>
+                  )}
+                  {lastDidnt && (
+                    <View style={{ marginBottom: 10 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '800', color: '#EF4444', marginBottom: 3, letterSpacing: 0.4 }}>✗ CE QUI N'A PAS MARCHÉ</Text>
+                      <Text style={{ fontSize: 13, color: colors.text, lineHeight: 18 }}>{lastDidnt}</Text>
+                    </View>
+                  )}
+                  {lastImprovement && (
+                    <View>
+                      <Text style={{ fontSize: 10, fontWeight: '800', color: '#A855F7', marginBottom: 3, letterSpacing: 0.4 }}>→ PISTE D'AMÉLIORATION</Text>
+                      <Text style={{ fontSize: 13, color: colors.text, lineHeight: 18 }}>{lastImprovement.text}</Text>
+                    </View>
+                  )}
                 </View>
-              ) : null;
+              );
             })()}
 
-            {(!p.activeGoal?.text && p.strengths.length === 0 && p.whatWorks.length === 0) && (
-              <Text style={{ fontSize: 13, color: colors.textMuted ?? '#888', textAlign: 'center', paddingVertical: 20 }}>
-                Remplis le profil de {p.name} pour avoir un briefing complet.
-              </Text>
+            {/* PROGRESSION récente — mini timeline */}
+            {progressionBlocks.length > 0 && (
+              <View style={{
+                backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                borderRadius: 14, padding: 14, marginBottom: 14,
+                borderLeftWidth: 4, borderLeftColor: '#A855F7',
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <Text style={{ fontSize: 13 }}>📊</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '900', color: '#A855F7', letterSpacing: 0.5 }}>PROGRESSION — {progressionBlocks.length} DERNIÈRES SESSIONS</Text>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 4, flexWrap: 'wrap' }}>
+                  {progressionBlocks.slice(0, 20).map((b, i) => (
+                    <View
+                      key={i}
+                      style={{
+                        width: 22, height: 22, borderRadius: 6,
+                        backgroundColor: b.result === 'win' ? '#22C55E' : b.result === 'loss' ? '#EF4444' : '#F59E0B',
+                        alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <Text style={{ fontSize: 11, fontWeight: '900', color: '#FFFFFF' }}>
+                        {b.result === 'win' ? 'V' : b.result === 'loss' ? 'D' : 'N'}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                <Text style={{ fontSize: 10, color: colors.textMuted ?? '#888', marginTop: 8, fontStyle: 'italic' }}>
+                  Du plus récent (gauche) au plus ancien
+                </Text>
+              </View>
             )}
-          </View>
+
+            {/* NOTES TACTIQUES — 3 dernières */}
+            {p.notes.length > 0 && (
+              <View style={{
+                backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                borderRadius: 14, padding: 14, marginBottom: 14,
+                borderLeftWidth: 4, borderLeftColor: '#64748B',
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <Text style={{ fontSize: 13 }}>📝</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '900', color: '#64748B', letterSpacing: 0.5 }}>NOTES TACTIQUES RÉCENTES</Text>
+                </View>
+                {p.notes.slice(0, 3).map((n, i) => (
+                  <View key={n.id} style={{ marginBottom: i < Math.min(p.notes.length, 3) - 1 ? 10 : 0, paddingBottom: i < Math.min(p.notes.length, 3) - 1 ? 10 : 0, borderBottomWidth: i < Math.min(p.notes.length, 3) - 1 ? 1 : 0, borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}>
+                    <Text style={{ fontSize: 9, color: colors.textMuted ?? '#888', marginBottom: 3, fontWeight: '700', letterSpacing: 0.3 }}>
+                      {new Date(n.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}
+                    </Text>
+                    <Text style={{ fontSize: 13, color: colors.text, lineHeight: 18 }}>{n.content}</Text>
+                  </View>
+                ))}
+                {p.notes.length > 3 && (
+                  <Text style={{ fontSize: 11, color: colors.textMuted ?? '#888', marginTop: 8, fontStyle: 'italic' }}>
+                    +{p.notes.length - 3} autre{p.notes.length - 3 > 1 ? 's' : ''} dans la fiche complète
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {/* Empty state si rien */}
+            {!p.activeGoal?.text && !p.longTermGoal?.text && p.strengths.length === 0 && p.weaknesses.length === 0 && p.whatWorks.length === 0 && p.notes.length === 0 && sessionHistory.length === 0 && (
+              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                <Text style={{ fontSize: 36, marginBottom: 12 }}>🥋</Text>
+                <Text style={{ fontSize: 14, color: colors.textMuted ?? '#888', textAlign: 'center', maxWidth: 280, lineHeight: 20 }}>
+                  Remplis le profil de {p.name} (forces, faiblesses, ce qui marche) pour avoir un briefing complet avant ton prochain sparring.
+                </Text>
+              </View>
+            )}
+          </ScrollView>
         </View>
       </Modal>
 
