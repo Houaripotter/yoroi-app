@@ -295,12 +295,16 @@ function buildDemoRounds(sessionType: 'sparring' | 'open_mat' | 'cours', dateStr
       energyLevel: Math.max(3, 10 - i),
     };
 
-    // 40% de chance d'avoir du contenu narratif (gamePlan/what worked/etc.)
-    if (Math.random() > 0.6) {
+    // 70% de chance d'avoir du contenu narratif (gamePlan/what worked/etc.)
+    if (Math.random() > 0.3) {
       round.gamePlan = pick(GAME_PLANS);
       round.whatWorked = pick(WHAT_WORKED_SAMPLES);
       round.whatDidntWork = pick(WHAT_DIDNT_WORK_SAMPLES);
       round.improvement = pick(IMPROVEMENT_SAMPLES);
+      // Contre-technique si perdu
+      if (result === 'loss' && Math.random() > 0.5) {
+        round.counteredBy = `${partner.name} a ${pick(['passé ma garde en knee-cut', 'pris mon dos sur une erreur de hanche', 'utilisé un crossface pour m\'écraser', 'enchaîné sur un étranglement arrière'])}`;
+      }
     }
 
     rounds.push(round);
@@ -319,6 +323,131 @@ async function seedSparringPartners(): Promise<void> {
     belt: p.belt,
   }));
   await AsyncStorage.setItem('@yoroi_sparring_partners', JSON.stringify(partners));
+}
+
+// ============================================
+// GAME PLANS SESSION (niveau session, plus détaillés que par round)
+// ============================================
+
+const SESSION_GAME_PLANS = [
+  'Focus sur la garde fermée et le triangle. Garder les grips longs.',
+  'Travailler le passage knee-cut tout le long. Pas de pull guard.',
+  'Jouer le dos dès que possible, drill berimbolo en isolation au warm-up.',
+  'Pressure passing + mount. Pas jouer la garde ce soir.',
+  'Rester calme, économiser le gaz, jouer défensif puis contre-attaquer.',
+  'Spam les étranglements arrière. Build le dos fort.',
+];
+
+const SESSION_WHAT_WORKED = [
+  'Le triangle depuis la garde fermée est resté solide toute la session.',
+  'Bonne lecture des timings sur les passages. Plus fluide que d\'habitude.',
+  'Garde fermée + étranglement cross collar a fonctionné 2 fois.',
+  'J\'ai tenu le dos pendant 4 rounds d\'affilée, gros progrès.',
+  'Le Prof Veni m\'a corrigé les grips, différence énorme.',
+  'Kimura depuis demi-garde plus propre grâce aux drills de la semaine.',
+];
+
+const SESSION_WHAT_DIDNT_WORK = [
+  'Toujours trop statique en garde. Il faut créer des mouvements.',
+  'Cardio en baisse sur les 2 derniers rounds, je tombe en qualité.',
+  'Je laisse passer Yanis sur le takedown double-leg à chaque fois.',
+  'Mes grips lâchent trop vite face à Larbi. À travailler.',
+  'Le berimbolo manque de propreté, je me retrouve en side control.',
+  'Défense des back takes médiocre contre les profs.',
+];
+
+const SESSION_MOODS = ['fire', 'strong', 'focus', 'gassed', 'tired', 'strong', 'fire'];
+
+/**
+ * Génère des notes riches pour un skill mastered/in_progress.
+ */
+function buildSkillNotes(
+  status: 'mastered' | 'in_progress' | 'to_learn',
+  skillName: string
+): any[] {
+  if (status === 'to_learn') return [];
+  const notes: any[] = [];
+  const count = status === 'mastered' ? randInt(3, 5) : randInt(1, 3);
+
+  const masteredTips: Record<string, string[]> = {
+    'Triangle': [
+      'Prof. Veni : couper l\'angle à 45° AVANT de serrer. Sans ça, l\'adversaire se dégage.',
+      'Toujours contrôler la tête AVEC le bras extérieur, sinon il sort postures.',
+      'Drill : 50 reps de finition depuis la garde fermée. Ça a tout changé.',
+      'Si il se redresse, je bascule direct sur omoplata.',
+      'Note session contre Larbi : son truc c\'est de plonger en avant, je dois reculer les hanches en même temps que je serre.',
+    ],
+    'Kimura': [
+      'Prof. Lucas : verrouillage double-main AVANT tout mouvement de hanches.',
+      'Depuis demi-garde top : coller l\'épaule au sol pour l\'immobiliser avant de tourner.',
+      'Éviter de chercher le tap trop tôt. Build la position d\'abord.',
+      'Contre Hedi : il défend bien en flexion, je dois le forcer à étendre le bras.',
+    ],
+    'Garde Fermée': [
+      'Les hanches sont l\'arme, pas les bras. Push-pull constant.',
+      'Grips : col + manche opposée. Toujours.',
+      'Open la garde seulement pour setup une soum ou un balayage, jamais par fatigue.',
+      'Contre Prof. Veni : il casse les grips en 2 secondes. Solution = chainer vite.',
+    ],
+    'Demi-Garde': [
+      'Underhook = or. Sans underhook, je meurs.',
+      'Knee-shield plus haut pour bloquer le passage en force de Prof. Lucas.',
+      'Depuis deep half : bascule direct sur le single leg.',
+    ],
+    'Single Leg': [
+      'Tête dedans, pas en dehors. Sinon tu prends une guillotine.',
+      'Chain du takedown même si le premier run rate. Ne pas abandonner à mi-chemin.',
+      'Yanis me passe à travers quand je baisse les yeux. Keep posture.',
+    ],
+  };
+
+  const inProgressTips: Record<string, string[]> = {
+    'De la Riva': [
+      'Encore du mal avec le grip de la manche. À retravailler.',
+      'Le DLR X-guard transition est pas encore automatique.',
+      'Prof. Veni m\'a montré le berimbolo setup, je dois drill.',
+    ],
+    'Knee Cut': [
+      'Le shoulder-to-shoulder contact n\'est pas assez serré, je perds la pression.',
+      'Quand l\'adversaire fait framing, je dois passer sur le knee-slice strict.',
+    ],
+    'Cle de Bras (Armbar)': [
+      'Depuis la mount ça passe. Depuis la garde c\'est plus dur.',
+      'Serrer le genou contre la tête avant de tirer le bras.',
+    ],
+    'Etranglement Arriere (RNC)': [
+      'Hooks profonds, pas de crochets cassés.',
+      'Main under chin, pas sur la mâchoire. Sinon il va dormir pour de mauvaises raisons.',
+    ],
+    'Heel Hook': [
+      'Pas autorisé en IBJJF gi. Je drill en no-gi open mat.',
+      'Encore flou sur les positions d\'entrée, besoin de séance dédiée avec Prof. Lucas.',
+    ],
+    'Double Leg': [
+      'Level change trop lent, je me fais sprawl systématiquement.',
+      'Drill le changement de niveau seul, 30 reps/jour.',
+    ],
+  };
+
+  const generic = [
+    'Notes prises après session sparring.',
+    'À retravailler en drilling la semaine prochaine.',
+    'Vidéo regardée : technique différente de ce qu\'on fait au club.',
+    'Premier succès en sparring ce soir, sensation validée.',
+  ];
+
+  const pool = status === 'mastered'
+    ? (masteredTips[skillName] || generic)
+    : (inProgressTips[skillName] || generic);
+
+  for (let i = 0; i < count && i < pool.length; i++) {
+    notes.push({
+      id: generateId(),
+      text: pool[i],
+      date: fmtDate(new Date(Date.now() - randInt(5, 120) * 86400000)),
+    });
+  }
+  return notes;
 }
 
 // ============================================
@@ -582,6 +711,8 @@ export const generateHenyDemoData = async (): Promise<{
         // Rounds réalistes sur les sessions sparring (et 1/3 des drilling)
         const hasRounds = sessionType === 'sparring' || (sessionType === 'drilling' && Math.random() > 0.6);
         const rounds = hasRounds ? buildDemoRounds(sessionType === 'sparring' ? 'sparring' : 'cours', dateStr) : undefined;
+        // Narration session : gamePlan / whatWorked / didntWork / mood / rating — sur les sparrings avec rounds
+        const hasNarration = hasRounds && Math.random() > 0.3;
         await addTraining({
           club_id: gbClubId, sport: 'jjb',
           session_type: sessionType,
@@ -592,6 +723,11 @@ export const generateHenyDemoData = async (): Promise<{
           technique_rating: randInt(2, 5), source: 'manual',
           rounds: rounds?.length, round_duration: 5,
           combat_rounds: rounds,
+          game_plan: hasNarration ? pick(SESSION_GAME_PLANS) : undefined,
+          what_worked: hasNarration ? pick(SESSION_WHAT_WORKED) : undefined,
+          what_didnt_work: hasNarration ? pick(SESSION_WHAT_DIDNT_WORK) : undefined,
+          session_rating: hasNarration ? randInt(6, 9) : undefined,
+          session_mood: hasNarration ? pick(SESSION_MOODS) : undefined,
         });
         workoutCount++;
         trainingLoads.push({ date: dateStr, duration, rpe: intensity, load: duration * intensity, sport: 'jjb' });
@@ -611,6 +747,11 @@ export const generateHenyDemoData = async (): Promise<{
         heart_rate: randInt(135, 160), max_heart_rate: randInt(170, 190),
         technique_rating: randInt(3, 5), rounds: rounds.length, round_duration: 5, source: 'manual',
         combat_rounds: rounds,
+        game_plan: pick(SESSION_GAME_PLANS),
+        what_worked: pick(SESSION_WHAT_WORKED),
+        what_didnt_work: pick(SESSION_WHAT_DIDNT_WORK),
+        session_rating: randInt(7, 10),
+        session_mood: pick(SESSION_MOODS),
       });
       workoutCount++;
       trainingLoads.push({ date: dateStr, duration, rpe: intensity, load: duration * intensity, sport: 'jjb' });
@@ -836,7 +977,14 @@ export const generateHenyDemoData = async (): Promise<{
   const skills: any[] = [];
   const nowIso = new Date().toISOString();
   const makeSkill = (name: string, cat: string, status: 'mastered' | 'in_progress' | 'to_learn', drills: number) => ({
-    id: generateId(), name, category: cat, status, drillCount: drills, notes: [], createdAt: startDate.toISOString(), updatedAt: nowIso,
+    id: generateId(),
+    name,
+    category: cat,
+    status,
+    drillCount: drills,
+    notes: buildSkillNotes(status, name),
+    createdAt: startDate.toISOString(),
+    updatedAt: nowIso,
   });
   skills.push(makeSkill('Garde Fermee', 'jjb_garde', 'mastered', randInt(40, 60)));
   skills.push(makeSkill('Demi-Garde', 'jjb_garde', 'mastered', randInt(35, 55)));
