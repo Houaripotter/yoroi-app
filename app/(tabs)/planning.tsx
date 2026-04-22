@@ -810,6 +810,21 @@ export default function PlanningScreen() {
       .slice(0, 8);
   }, [workouts, currentMonth, clubs]);
 
+  // Stats de la semaine courante : séances faites + objectif (slots prévus)
+  const weeklyStats = useMemo(() => {
+    const now = new Date();
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+    const sessionsDone = workouts.filter(w => {
+      try {
+        const d = new Date(w.date);
+        return d >= weekStart && d <= weekEnd;
+      } catch { return false; }
+    }).length;
+    const sessionsPlanned = slotsWithStatus?.length || 0;
+    return { sessionsDone, sessionsPlanned };
+  }, [workouts, slotsWithStatus]);
+
   // Clé pour forcer le rechargement des jours de repos dans EnhancedCalendarView
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
 
@@ -1215,6 +1230,71 @@ export default function PlanningScreen() {
               />
             }
           >
+            {/* WEEKLY STATS BANNER — quick glance sur la semaine en cours */}
+            {(weeklyStats.sessionsDone > 0 || weeklyStats.sessionsPlanned > 0) && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: colors.backgroundCard,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  borderRadius: 16,
+                  padding: 14,
+                  marginBottom: 12,
+                  gap: 14,
+                }}
+              >
+                {/* Badge avec compteur */}
+                <View
+                  style={{
+                    width: 52, height: 52, borderRadius: 14,
+                    backgroundColor: colors.accent + '18',
+                    alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <Text style={{ fontSize: 18, fontWeight: '900', color: colors.accent, letterSpacing: -0.5 }}>
+                    {weeklyStats.sessionsDone}
+                  </Text>
+                  {weeklyStats.sessionsPlanned > 0 ? (
+                    <Text style={{ fontSize: 9, color: colors.accent, fontWeight: '700', opacity: 0.7 }}>
+                      / {weeklyStats.sessionsPlanned}
+                    </Text>
+                  ) : null}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.2 }}>
+                    Cette semaine
+                  </Text>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted, marginTop: 2 }}>
+                    {weeklyStats.sessionsDone === 0
+                      ? (weeklyStats.sessionsPlanned > 0 ? `${weeklyStats.sessionsPlanned} séances prévues` : 'Aucune séance pour le moment')
+                      : weeklyStats.sessionsPlanned > 0
+                        ? (weeklyStats.sessionsDone >= weeklyStats.sessionsPlanned ? '✓ Objectif atteint, beau boulot' : `Plus que ${weeklyStats.sessionsPlanned - weeklyStats.sessionsDone} pour ton objectif`)
+                        : `${weeklyStats.sessionsDone} séance${weeklyStats.sessionsDone > 1 ? 's' : ''} cette semaine`}
+                  </Text>
+                </View>
+                {/* Mini progress bar si objectif défini */}
+                {weeklyStats.sessionsPlanned > 0 ? (
+                  <View style={{ width: 56 }}>
+                    <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.accent + '20', overflow: 'hidden' }}>
+                      <View
+                        style={{
+                          height: '100%',
+                          width: `${Math.min(100, (weeklyStats.sessionsDone / weeklyStats.sessionsPlanned) * 100)}%`,
+                          backgroundColor: colors.accent,
+                          borderRadius: 3,
+                        }}
+                      />
+                    </View>
+                    <Text style={{ fontSize: 10, fontWeight: '800', color: colors.accent, textAlign: 'center', marginTop: 4 }}>
+                      {Math.round((weeklyStats.sessionsDone / weeklyStats.sessionsPlanned) * 100)}%
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            )}
+
             {/* MONTHLY STATS BY CLUB - COMPACT */}
             {monthlyClubStats.length > 0 && (
               <View style={[styles.monthlyStatsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
