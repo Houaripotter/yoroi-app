@@ -187,7 +187,7 @@ const swipeStyles = StyleSheet.create({
 
 export default function TrainingJournalScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, isDark, screenBackground } = useTheme();
+  const { colors, isDark, screenBackground, screenText } = useTheme();
   const { t, locale } = useI18n();
   const { isWatchAvailable, syncRecords } = useWatch();
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -1525,7 +1525,7 @@ export default function TrainingJournalScreen() {
                   {
                     backgroundColor: isActive
                       ? (isDark ? colors.accent : '#FFFFFF')
-                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)'),
+                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.18)'),
                     borderWidth: isActive ? 0 : 1,
                     borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.3)',
                   },
@@ -1534,8 +1534,9 @@ export default function TrainingJournalScreen() {
                     size={18}
                     color={isActive
                       ? (isDark ? '#FFFFFF' : colors.accent)
-                      : 'rgba(255,255,255,0.75)'}
+                      : screenText}
                     strokeWidth={2.5}
+                    style={{ opacity: isActive ? 1 : 0.7 }}
                   />
                   {count !== null && count > 0 && (
                     <View style={styles.circleBadge}>
@@ -1545,7 +1546,11 @@ export default function TrainingJournalScreen() {
                 </View>
                 <Text style={[
                   styles.circleTabLabel,
-                  { color: isActive ? (isDark ? colors.accent : '#FFFFFF') : 'rgba(255,255,255,0.7)', fontWeight: isActive ? '700' : '500' },
+                  {
+                    color: isActive ? (isDark ? colors.accent : '#FFFFFF') : screenText,
+                    opacity: isActive ? 1 : 0.7,
+                    fontWeight: isActive ? '700' : '500',
+                  },
                 ]}>
                   {label}
                 </Text>
@@ -1564,14 +1569,14 @@ export default function TrainingJournalScreen() {
             });
           }}
           style={[styles.trashIconBtn, {
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            borderColor: 'rgba(255,255,255,0.35)',
+            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.2)',
+            borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.35)',
           }]}
           disabled={isModalProcessing}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Trash2 size={15} color="#FFFFFF" strokeWidth={2.5} />
+          <Trash2 size={15} color={screenText} strokeWidth={2.5} />
           {trashCount > 0 && (
             <View style={styles.trashBadge}>
               <Text style={styles.trashBadgeText}>{trashCount > 9 ? '9+' : trashCount}</Text>
