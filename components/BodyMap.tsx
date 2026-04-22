@@ -3,7 +3,7 @@
 // ============================================
 // 70 zones anatomiques pour sportifs
 
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -24,10 +24,18 @@ import {
   Minus,
   Copy,
   Pencil,
+  Maximize2,
+  ZoomIn,
 } from 'lucide-react-native';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
 import { useTheme } from '@/lib/ThemeContext';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+
+// Limites de zoom pour éviter d'aller trop loin
+const ZOOM_MIN = 1;
+const ZOOM_MAX = 4;
 
 // ============================================
 // TYPES
@@ -200,6 +208,76 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
   const [zones, setZones] = useState(INITIAL_DATA);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [debug, setDebug] = useState(false); // Mode chirurgien désactivé
+
+  // ── ZOOM & PAN avec gestures (pinch + pan)
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const savedTranslateX = useSharedValue(0);
+  const savedTranslateY = useSharedValue(0);
+  const [isZoomed, setIsZoomed] = useState(false);
+
+  const updateZoomedState = useCallback((zoomed: boolean) => {
+    setIsZoomed(zoomed);
+  }, []);
+
+  const resetZoom = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+    scale.value = withTiming(1, { duration: 250 });
+    savedScale.value = 1;
+    translateX.value = withTiming(0, { duration: 250 });
+    translateY.value = withTiming(0, { duration: 250 });
+    savedTranslateX.value = 0;
+    savedTranslateY.value = 0;
+    setIsZoomed(false);
+  }, [scale, savedScale, translateX, translateY, savedTranslateX, savedTranslateY]);
+
+  const pinchGesture = Gesture.Pinch()
+    .onUpdate((e) => {
+      const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, savedScale.value * e.scale));
+      scale.value = next;
+    })
+    .onEnd(() => {
+      savedScale.value = scale.value;
+      if (scale.value <= 1.05) {
+        // Snap back si quasi-1
+        scale.value = withTiming(1);
+        savedScale.value = 1;
+        translateX.value = withTiming(0);
+        translateY.value = withTiming(0);
+        savedTranslateX.value = 0;
+        savedTranslateY.value = 0;
+        runOnJS(updateZoomedState)(false);
+      } else {
+        runOnJS(updateZoomedState)(true);
+      }
+    });
+
+  const panGesture = Gesture.Pan()
+    .minPointers(1)
+    .maxPointers(1)
+    .onUpdate((e) => {
+      // Pan uniquement quand zoomé
+      if (savedScale.value > 1.05) {
+        translateX.value = savedTranslateX.value + e.translationX;
+        translateY.value = savedTranslateY.value + e.translationY;
+      }
+    })
+    .onEnd(() => {
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
+    });
+
+  const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
+  }));
 
   const activeZones = zones[view];
   const selectedZone = activeZones.find((z) => z.id === selectedId);
@@ -387,12 +465,14 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
         </View>
       )}
 
-      {/* ZONE IMAGE */}
+      {/* ZONE IMAGE — wrappé dans GestureDetector pour pinch + pan zoom */}
       <View style={styles.mainArea}>
-        <View style={[styles.imageFrame, { aspectRatio: FORCED_ASPECT_RATIO }]}>
-          <Image source={imageSource} style={styles.image} resizeMode="stretch" />
+        <GestureDetector gesture={composedGesture}>
+          <View style={[styles.imageFrame, { aspectRatio: FORCED_ASPECT_RATIO, overflow: 'hidden' }]}>
+            <Animated.View style={[{ width: '100%', height: '100%', position: 'relative' }, animatedStyle]}>
+              <Image source={imageSource} style={styles.image} resizeMode="stretch" />
 
-          {activeZones.map((zone) => {
+              {activeZones.map((zone) => {
             const isSelected = zone.id === selectedId;
             const zoneColor = getZoneColor(zone.id);
             const hasInjury = zoneColor !== 'transparent';
@@ -431,7 +511,40 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
               </TouchableOpacity>
             );
           })}
-        </View>
+            </Animated.View>
+
+            {/* HINT pinch-to-zoom (visible uniquement quand non zoomé) */}
+            {!isZoomed && !debug && (
+              <View style={{
+                position: 'absolute', top: 8, right: 8,
+                backgroundColor: 'rgba(0,0,0,0.55)',
+                paddingHorizontal: 10, paddingVertical: 5,
+                borderRadius: 999,
+                flexDirection: 'row', alignItems: 'center', gap: 5,
+              }} pointerEvents="none">
+                <ZoomIn size={12} color="#FFFFFF" strokeWidth={2.5} />
+                <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>Pince pour zoomer</Text>
+              </View>
+            )}
+
+            {/* BOUTON RESET ZOOM (visible quand zoomé) */}
+            {isZoomed && (
+              <TouchableOpacity
+                onPress={resetZoom}
+                style={{
+                  position: 'absolute', top: 8, right: 8,
+                  backgroundColor: 'rgba(0,0,0,0.7)',
+                  width: 36, height: 36, borderRadius: 18,
+                  alignItems: 'center', justifyContent: 'center',
+                  zIndex: 200,
+                }}
+                accessibilityLabel="Réinitialiser le zoom"
+              >
+                <Maximize2 size={16} color="#FFFFFF" strokeWidth={2.5} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </GestureDetector>
       </View>
 
       {/* PANNEAU EN BAS (zones du bas) */}
@@ -526,7 +639,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 10 },
   iconBtn: { padding: 5 },
   mainArea: { flex: 1, justifyContent: 'center', alignItems: 'center', width: '100%' },
-  imageFrame: { width: '100%', maxWidth: 500, position: 'relative' },
+  imageFrame: { width: '85%', maxWidth: 380, position: 'relative', alignSelf: 'center' },
   image: { width: '100%', height: '100%' },
   zone: { position: 'absolute', borderRadius: 4 },
   // Marqueur de blessure
