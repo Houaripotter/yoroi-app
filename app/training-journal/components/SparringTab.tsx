@@ -1677,6 +1677,153 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           </View>
         )}
 
+        {/* ── PODIUM TOP 3 PARTENAIRES (par nombre de rounds) ── */}
+        {!isEmpty && partnerStats.length >= 3 && (() => {
+          const top3 = [...partnerStats].sort((a, b) => b.totalRounds - a.totalRounds).slice(0, 3);
+          // Ordre podium : 2e à gauche, 1er au centre, 3e à droite
+          const podiumOrder = [top3[1], top3[0], top3[2]];
+          const heights = [110, 140, 90];
+          const medals = ['🥈', '🥇', '🥉'];
+          const colors_ = ['#A1A1AA', '#FBBF24', '#D97706'];
+          return (
+            <View style={{
+              backgroundColor: cardBg,
+              borderRadius: 16,
+              padding: 16,
+              marginHorizontal: 16,
+              marginVertical: 8,
+              borderWidth: 1,
+              borderColor: cardBorder,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+                <Text style={{ fontSize: 14 }}>🏆</Text>
+                <Text style={{ fontSize: 13, fontWeight: '900', color: colors.text, letterSpacing: 0.3 }}>
+                  TOP 3 PARTENAIRES SPARRING
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', gap: 8 }}>
+                {podiumOrder.map((p, i) => {
+                  if (!p) return <View key={i} style={{ flex: 1 }} />;
+                  const photoUri = partnerPhotos[p.name.trim().toLowerCase()];
+                  const initial = p.name.charAt(0).toUpperCase();
+                  return (
+                    <View key={p.name} style={{ flex: 1, alignItems: 'center' }}>
+                      <View style={{ alignItems: 'center', marginBottom: 6 }}>
+                        <View style={{
+                          width: 48, height: 48, borderRadius: 24,
+                          borderWidth: 2.5, borderColor: colors_[i],
+                          alignItems: 'center', justifyContent: 'center',
+                          backgroundColor: colors_[i] + '20',
+                          overflow: 'hidden',
+                          marginBottom: 4,
+                        }}>
+                          {photoUri ? (
+                            <Image source={{ uri: photoUri }} style={{ width: '100%', height: '100%' }} />
+                          ) : (
+                            <Text style={{ fontSize: 18, fontWeight: '900', color: colors_[i] }}>{initial}</Text>
+                          )}
+                        </View>
+                        <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text, textAlign: 'center' }} numberOfLines={1}>
+                          {p.name}
+                        </Text>
+                        <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '700' }}>
+                          {p.totalRounds} rounds · {p.wins}V/{p.losses}D
+                        </Text>
+                      </View>
+                      <View style={{
+                        width: '100%',
+                        height: heights[i],
+                        backgroundColor: colors_[i] + '25',
+                        borderTopLeftRadius: 12, borderTopRightRadius: 12,
+                        borderTopWidth: 3, borderColor: colors_[i],
+                        alignItems: 'center', justifyContent: 'flex-start',
+                        paddingTop: 10,
+                      }}>
+                        <Text style={{ fontSize: 28 }}>{medals[i]}</Text>
+                        <Text style={{ fontSize: 11, fontWeight: '900', color: colors_[i], marginTop: 4, letterSpacing: 0.5 }}>
+                          {i === 0 ? '2ÈME' : i === 1 ? '1ER' : '3ÈME'}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          );
+        })()}
+
+        {/* ── RECORDS SPARRING (mini-cards) ── */}
+        {!isEmpty && filteredTrainings.length > 0 && (() => {
+          const sessionsWithRounds = filteredTrainings.filter(tr => parseCombatRounds(tr.combat_rounds).length > 0);
+          if (sessionsWithRounds.length === 0) return null;
+          // Plus longue session (max rounds)
+          const longest = sessionsWithRounds.reduce((max, tr) => {
+            const n = parseCombatRounds(tr.combat_rounds).length;
+            return n > (max.n ?? 0) ? { tr, n } : max;
+          }, { tr: null as any, n: 0 });
+          // Session avec le plus de soumissions données
+          const mostSubs = sessionsWithRounds.reduce((max, tr) => {
+            const n = parseCombatRounds(tr.combat_rounds).reduce((s, r) => s + (r.methodsGiven?.length ?? 0), 0);
+            return n > (max.n ?? 0) ? { tr, n } : max;
+          }, { tr: null as any, n: 0 });
+          // Meilleur winrate sur une session (≥ 4 rounds)
+          const bestWinRate = sessionsWithRounds.reduce((best, tr) => {
+            const rounds = parseCombatRounds(tr.combat_rounds);
+            if (rounds.length < 4) return best;
+            const wins = rounds.filter(r => r.result === 'win').length;
+            const rate = (wins / rounds.length) * 100;
+            return rate > (best.rate ?? 0) ? { tr, rate, wins, total: rounds.length } : best;
+          }, { tr: null as any, rate: 0, wins: 0, total: 0 });
+
+          return (
+            <View style={{
+              backgroundColor: cardBg,
+              borderRadius: 16,
+              padding: 16,
+              marginHorizontal: 16,
+              marginVertical: 8,
+              borderWidth: 1,
+              borderColor: cardBorder,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                <Text style={{ fontSize: 14 }}>⚡</Text>
+                <Text style={{ fontSize: 13, fontWeight: '900', color: colors.text, letterSpacing: 0.3 }}>
+                  TES RECORDS SPARRING
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {longest.n > 0 && (
+                  <View style={{ flex: 1, backgroundColor: '#3B82F615', borderRadius: 12, padding: 12, borderLeftWidth: 3, borderLeftColor: '#3B82F6' }}>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#3B82F6', letterSpacing: 0.4, marginBottom: 4 }}>PLUS LONGUE</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: '#3B82F6', letterSpacing: -0.5 }}>{longest.n}</Text>
+                    <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
+                      rounds · {formatDateShort(longest.tr.date)}
+                    </Text>
+                  </View>
+                )}
+                {mostSubs.n > 0 && (
+                  <View style={{ flex: 1, backgroundColor: '#22C55E15', borderRadius: 12, padding: 12, borderLeftWidth: 3, borderLeftColor: '#22C55E' }}>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#22C55E', letterSpacing: 0.4, marginBottom: 4 }}>+ SOUMISSIONS</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: '#22C55E', letterSpacing: -0.5 }}>{mostSubs.n}</Text>
+                    <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
+                      en 1 session · {formatDateShort(mostSubs.tr.date)}
+                    </Text>
+                  </View>
+                )}
+                {bestWinRate.rate > 0 && (
+                  <View style={{ flex: 1, backgroundColor: '#A855F715', borderRadius: 12, padding: 12, borderLeftWidth: 3, borderLeftColor: '#A855F7' }}>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#A855F7', letterSpacing: 0.4, marginBottom: 4 }}>BEST WINRATE</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: '#A855F7', letterSpacing: -0.5 }}>{Math.round(bestWinRate.rate)}%</Text>
+                    <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
+                      {bestWinRate.wins}/{bestWinRate.total} · {formatDateShort(bestWinRate.tr.date)}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          );
+        })()}
+
         {/* ── HEATMAP TECHNIQUES (données vs reçues) ── */}
         {!isEmpty && methodsCombined.length > 0 && (
           <TechniqueHeatmap methods={methodsCombined} maxItems={10} />

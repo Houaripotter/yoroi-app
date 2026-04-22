@@ -1560,6 +1560,52 @@ export const getSportCategory = (id: string): string => {
 };
 
 // ============================================
+// LABELS DES TYPES DE SÉANCE (open_mat → Open Mat, etc.)
+// ============================================
+const SESSION_TYPE_LABELS: Record<string, string> = {
+  open_mat: 'Open Mat',
+  openmat: 'Open Mat',
+  cours: 'Cours',
+  drilling: 'Drilling',
+  sparring: 'Sparring',
+  technique: 'Technique',
+  competition: 'Compétition',
+  competition_prep: 'Prépa compétition',
+  guerre: 'Guerre',
+  rolling: 'Rolling',
+  entrainement: 'Entraînement',
+  warmup: 'Échauffement',
+  warm_up: 'Échauffement',
+  recovery: 'Récupération',
+  conditioning: 'Conditioning',
+  push: 'Push',
+  pull: 'Pull',
+  legs: 'Jambes',
+  full_body: 'Full Body',
+  cardio: 'Cardio',
+  hiit: 'HIIT',
+  course: 'Course',
+  yoga: 'Yoga',
+  mobility: 'Mobilité',
+};
+
+/**
+ * Convertit un session_type brut (ex: 'open_mat') en label humain (ex: 'Open Mat').
+ * Si l'ID n'est pas connue, formate en Title Case avec underscores → espaces.
+ */
+export const getSessionTypeLabel = (sessionType?: string | null): string => {
+  if (!sessionType) return '';
+  const key = sessionType.toLowerCase().trim();
+  if (SESSION_TYPE_LABELS[key]) return SESSION_TYPE_LABELS[key];
+  // Fallback : remplace _ par espace + Title Case
+  return key
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+};
+
+// ============================================
 // LOGOS DES CLUBS
 // ============================================
 

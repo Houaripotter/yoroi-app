@@ -20,7 +20,7 @@ import { ImportProgressBanner } from '@/components/ImportProgressBanner';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Training, Club } from '@/lib/database';
-import { getSportIcon, getSportName, getSportColor } from '@/lib/sports';
+import { getSportIcon, getSportName, getSportColor, getSessionTypeLabel } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ChevronLeft, ChevronRight, Dumbbell, ChevronDown, ChevronUp, AlertCircle, RefreshCw, ShieldAlert } from 'lucide-react-native';
 import { useDevMode } from '@/lib/DevModeContext';
@@ -832,7 +832,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
               <View style={styles.tagsRow}>
                 {sessionTypes.map((st, i) => (
                   <View key={i} style={[styles.tag, { backgroundColor: sportColor + '18' }]}>
-                    <Text style={[styles.tagText, { color: sportColor }]}>{st}</Text>
+                    <Text style={[styles.tagText, { color: sportColor }]}>{getSessionTypeLabel(st)}</Text>
                   </View>
                 ))}
                 {training.is_outdoor && (

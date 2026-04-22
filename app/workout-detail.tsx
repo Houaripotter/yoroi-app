@@ -40,7 +40,7 @@ import { getTrainingById as _getTrainingById, updateTrainingDetails, updateTrain
 import type { Training, CombatRound, Exercise } from '@/lib/database';
 import type { WorkoutDetails, HeartRateSample } from '@/lib/healthConnect.ios';
 import { healthConnect } from '@/lib/healthConnect';
-import { getSportColor, getSportIcon, getSportName, SPORTS } from '@/lib/sports';
+import { getSportColor, getSportIcon, getSportName, getSessionTypeLabel, SPORTS } from '@/lib/sports';
 import logger from '@/lib/security/logger';
 import { safeOpenURL } from '@/lib/security/validators';
 
@@ -655,7 +655,7 @@ export default function WorkoutDetailScreen() {
               <View style={styles.heroTitleBlock}>
                 <Text style={[styles.heroSportName, { color: colors.textOnAccent }]} numberOfLines={1}>
                   {(() => {
-                    const base = training.session_type || sportName;
+                    const base = training.session_type ? getSessionTypeLabel(training.session_type) : sportName;
                     if (!details?.isIndoor) return base;
                     const indoorSuffix: Record<string, string> = {
                       'Marche': 'Marche (tapis)', 'Course': 'Course (tapis)',

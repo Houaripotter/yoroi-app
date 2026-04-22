@@ -15,7 +15,7 @@ import { format, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '@/lib/ThemeContext';
 import { Training, Club } from '@/lib/database';
-import { getClubLogoSource, getSportIcon, getSportColor, getSportName } from '@/lib/sports';
+import { getClubLogoSource, getSportIcon, getSportColor, getSportName, getSessionTypeLabel } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { WeeklySlotWithStatus } from '@/hooks/useWeeklySlots';
 
@@ -254,7 +254,7 @@ export function DayDetailModal({
                               {endTime ? ` - ${endTime}` : ''}
                               {' • '}
                               {formatDuration(session.duration_minutes)}
-                              {session.session_type ? ` • ${session.session_type}` : ''}
+                              {session.session_type ? ` • ${getSessionTypeLabel(session.session_type)}` : ''}
                             </Text>
                           </View>
                           {session.notes && (
