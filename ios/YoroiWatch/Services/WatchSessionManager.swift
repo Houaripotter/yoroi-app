@@ -563,19 +563,23 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
   func startTimer() {
     timerAlarmRinging = false
-    timerIsRunning = true
 
-    // 1. Sauvegarder la date de fin absolue (source de vérité)
+    // 1. Sauvegarder la date de fin absolue AVANT de flipper timerIsRunning
+    //    Ainsi quand reloadComplications() est appelé (via didSet de timerIsRunning),
+    //    le endDate est déjà à jour dans UserDefaults.
     let endDate = Date().addingTimeInterval(Double(timerRemainingSeconds))
     timerEndDate = endDate
 
-    // 2. Notification locale — se déclenche même en veille complète
+    // 2. Flip running → déclenche reloadComplications() avec bon endDate
+    timerIsRunning = true
+
+    // 3. Notification locale — se déclenche même en veille complète, avec son wizz custom
     scheduleTimerNotification(fireDate: endDate, seconds: timerRemainingSeconds)
 
-    // 3. Session étendue — garde l'app en vie en arrière-plan
+    // 4. Session étendue — garde l'app en vie en arrière-plan
     startExtendedSession()
 
-    // 4. Timer UI — calcule depuis endDate (pas de décrément simple)
+    // 5. Timer UI — calcule depuis endDate (pas de décrément simple)
     //    Mode .common = fire même si le RunLoop est dans un autre mode
     let t = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
       DispatchQueue.main.async { self?.tickFromEndDate() }
@@ -642,53 +646,81 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   /// - 1 notification à l'heure exacte de fin
   /// - 40 répétitions toutes les 15s (= 10 minutes d'alarme)
   /// Ainsi même si l'app ne tourne pas en background, les notifications arrivent.
+  ///
+  /// IMPORTANT :
+  /// - Le delay est calculé depuis fireDate.timeIntervalSinceNow pour rester précis.
+  /// - On supprime UNIQUEMENT les notifs timer (pas toutes les notifs Yoroi).
+  /// - Le son utilise wizz.mp3 (custom) au lieu de UNNotificationSound.default
+  ///   qui est trop discret sur watchOS.
+  /// - interruptionLevel .timeSensitive force la notification à percer le mode Ne pas déranger.
   private func scheduleTimerNotification(fireDate: Date, seconds: Int) {
     let center = UNUserNotificationCenter.current()
-    center.removeAllPendingNotificationRequests()
 
-    center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-      guard granted else { return }
+    // 1. Annuler UNIQUEMENT les notifs timer existantes
+    cancelTimerNotification()
 
-      let wizzSound = UNNotificationSound.default
+    // 2. Calculer le delay précis depuis la date de fin absolue
+    let delay = max(1, fireDate.timeIntervalSinceNow)
 
-      // — Notification principale à la fin exacte du timer
-      let main = UNMutableNotificationContent()
-      main.title              = "TIMER TERMINÉ"
-      main.body               = "Appuie pour arrêter l'alarme"
-      main.sound              = wizzSound
-      main.categoryIdentifier = "yoroi.timer.alarm"
-      if #available(watchOS 8.0, *) { main.interruptionLevel = .timeSensitive }
-      let delay = max(1, seconds)
-      center.add(UNNotificationRequest(
-        identifier: "yoroi.timer.end",
-        content: main,
-        trigger: UNTimeIntervalNotificationTrigger(timeInterval: Double(delay), repeats: false)
-      ))
+    // 3. Son custom wizz.mp3 — bien plus audible que le .default sur watchOS
+    let wizzSound: UNNotificationSound = {
+      // UNNotificationSound(named:) cherche dans le bundle de l'app
+      let name = UNNotificationSoundName("wizz.mp3")
+      return UNNotificationSound(named: name)
+    }()
 
-      // — 40 répétitions toutes les 15s après la fin = 10 minutes d'alarme en boucle
-      for i in 1...40 {
-        let rep = UNMutableNotificationContent()
-        rep.title              = "TIMER TERMINÉ"
-        rep.body               = "Appuie pour arrêter l'alarme"
-        rep.sound              = wizzSound
-        rep.categoryIdentifier = "yoroi.timer.alarm"
-        if #available(watchOS 8.0, *) { rep.interruptionLevel = .timeSensitive }
-        center.add(UNNotificationRequest(
-          identifier: "yoroi.timer.repeat.\(i)",
-          content: rep,
-          trigger: UNTimeIntervalNotificationTrigger(
-            timeInterval: Double(delay) + Double(i * 15),
-            repeats: false
-          )
-        ))
+    // 4. Notification principale à la fin exacte du timer
+    let main = UNMutableNotificationContent()
+    main.title              = "⏰ Timer terminé"
+    main.body               = "Appuie pour arrêter l'alarme"
+    main.sound              = wizzSound
+    main.categoryIdentifier = "yoroi.timer.alarm"
+    if #available(watchOS 8.0, *) {
+      main.interruptionLevel = .timeSensitive
+      main.relevanceScore    = 1.0 // maximise la priorité dans Smart Stack / notif center
+    }
+    center.add(UNNotificationRequest(
+      identifier: "yoroi.timer.end",
+      content: main,
+      trigger: UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)
+    )) { error in
+      if let error = error {
+        // Log silencieux — fallback = haptics + son foreground
+        print("[Timer] scheduleNotification error: \(error.localizedDescription)")
       }
+    }
+
+    // 5. 40 répétitions toutes les 15s après la fin = 10 minutes d'alarme en boucle
+    //    watchOS limite à 64 pending notifs → 41 total (1 main + 40 rep) est OK.
+    for i in 1...40 {
+      let rep = UNMutableNotificationContent()
+      rep.title              = "⏰ Timer terminé"
+      rep.body               = "Appuie pour arrêter l'alarme"
+      rep.sound              = wizzSound
+      rep.categoryIdentifier = "yoroi.timer.alarm"
+      if #available(watchOS 8.0, *) {
+        rep.interruptionLevel = .timeSensitive
+        rep.relevanceScore    = 1.0
+      }
+      center.add(UNNotificationRequest(
+        identifier: "yoroi.timer.repeat.\(i)",
+        content: rep,
+        trigger: UNTimeIntervalNotificationTrigger(
+          timeInterval: delay + Double(i * 15),
+          repeats: false
+        )
+      ))
     }
   }
 
+  /// Annule UNIQUEMENT les notifications du timer (ID yoroi.timer.*)
+  /// Ne touche pas aux autres notifications (rappels, etc.)
   private func cancelTimerNotification() {
     var ids = ["yoroi.timer.end"]
     ids += (1...40).map { "yoroi.timer.repeat.\($0)" }
-    UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
+    let center = UNUserNotificationCenter.current()
+    center.removePendingNotificationRequests(withIdentifiers: ids)
+    center.removeDeliveredNotifications(withIdentifiers: ids)
   }
 
   // MARK: - Alarm (son wizz illimité + haptics)
@@ -725,7 +757,8 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     audioPlayer = nil
     hapticTimer?.invalidate()
     hapticTimer = nil
-    UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+    // Annule UNIQUEMENT les notifs timer (pas les rappels Yoroi)
+    cancelTimerNotification()
     stopExtendedSession()
   }
 
