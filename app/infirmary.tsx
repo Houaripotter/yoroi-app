@@ -30,6 +30,7 @@ import {
   getInjuriesWithZoneNames,
   getDaysSinceInjury,
   getEVAColor,
+  getZoneDisplayName,
 } from '@/lib/infirmaryService';
 import logger from '@/lib/security/logger';
 import { useI18n } from '@/lib/I18nContext';
@@ -283,6 +284,77 @@ export default function InfirmaryScreen() {
             </View>
           </View>
         )}
+
+        {/* ── ZONE LA PLUS TOUCHÉE — insight contextuel ── */}
+        {stats && stats.mostAffectedZone && stats.totalInjuries >= 2 && (() => {
+          const zoneName = getZoneDisplayName(stats.mostAffectedZone, 'front');
+          // Compte d'injuries sur cette zone
+          const allWithThisZone = injuries.length; // approximation : toutes les blessures actives
+          return (
+            <View style={{
+              marginHorizontal: 16, marginTop: 8, marginBottom: 12,
+              borderRadius: 14, padding: 14,
+              backgroundColor: colors.backgroundCard,
+              borderLeftWidth: 4, borderLeftColor: '#F59E0B',
+              flexDirection: 'row', alignItems: 'center', gap: 12,
+            }}>
+              <View style={{
+                width: 44, height: 44, borderRadius: 12,
+                backgroundColor: '#F59E0B25',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Text style={{ fontSize: 22 }}>⚠️</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 9, fontWeight: '900', color: '#F59E0B', letterSpacing: 0.5 }}>
+                  ZONE À SURVEILLER
+                </Text>
+                <Text style={{ fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginTop: 2 }}>
+                  {zoneName}
+                </Text>
+                <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2, fontStyle: 'italic' }}>
+                  Ta zone la plus blessée. Renforcement + mobilité ciblés recommandés.
+                </Text>
+              </View>
+            </View>
+          );
+        })()}
+
+        {/* ── BILAN MENSUEL — taux de récup ── */}
+        {stats && stats.totalInjuries > 0 && (() => {
+          const recoveryRate = stats.totalInjuries > 0
+            ? Math.round((stats.healedInjuries / stats.totalInjuries) * 100)
+            : 0;
+          const status = recoveryRate >= 70 ? { color: '#22C55E', label: 'Excellent', icon: '✓' }
+            : recoveryRate >= 40 ? { color: '#F59E0B', label: 'Correct', icon: '~' }
+            : { color: '#EF4444', label: 'Préoccupant', icon: '!' };
+          return (
+            <View style={{
+              marginHorizontal: 16, marginBottom: 12,
+              borderRadius: 14, padding: 14,
+              backgroundColor: colors.backgroundCard,
+              borderLeftWidth: 4, borderLeftColor: status.color,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Text style={{ fontSize: 11, fontWeight: '900', color: status.color, letterSpacing: 0.5 }}>
+                  TAUX DE RÉCUPÉRATION
+                </Text>
+                <View style={{ backgroundColor: status.color + '20', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: status.color }}>{status.icon} {status.label}</Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
+                <Text style={{ fontSize: 26, fontWeight: '900', color: status.color, letterSpacing: -0.5 }}>{recoveryRate}%</Text>
+                <Text style={{ fontSize: 12, color: colors.textMuted, fontWeight: '600' }}>
+                  ({stats.healedInjuries}/{stats.totalInjuries} guéries)
+                </Text>
+              </View>
+              <View style={{ height: 6, borderRadius: 3, backgroundColor: status.color + '20', overflow: 'hidden' }}>
+                <View style={{ width: `${recoveryRate}%`, height: '100%', backgroundColor: status.color, borderRadius: 3 }} />
+              </View>
+            </View>
+          );
+        })()}
 
         {/* Body Map */}
         <BodyMap onZonePress={handleZonePress} injuredZones={injuredZones} />
