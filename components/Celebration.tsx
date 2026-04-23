@@ -24,7 +24,9 @@ export type CelebrationType =
   | 'rank_up'           // Montée de rang
   | 'challenge_complete' // Défi hebdomadaire complété
   | 'streak_record'     // Nouveau record de streak
-  | 'milestone';        // Milestone (100ème pesée, etc.)
+  | 'milestone'         // Milestone (100ème pesée, etc.)
+  | 'new_pr'            // Nouveau record personnel (PR) sur un benchmark
+  | 'badge_unlocked';   // Badge débloqué
 
 interface CelebrationProps {
   visible: boolean;
@@ -73,6 +75,18 @@ const CELEBRATION_CONFIG: Record<CelebrationType, {
     icon: '',
     colors: ['#9B59B6', '#8E44AD'] as const,
     confettiColors: ['#9B59B6', '#E74C3C', '#FFD700', '#3498DB'],
+    sound: 'level_up',
+  },
+  new_pr: {
+    icon: '',
+    colors: ['#FF3B30', '#FF9500'] as const,
+    confettiColors: ['#FF3B30', '#FF9500', '#FFD700', '#FFFFFF'],
+    sound: 'victory',
+  },
+  badge_unlocked: {
+    icon: '',
+    colors: ['#34C759', '#30B24A'] as const,
+    confettiColors: ['#34C759', '#FFD700', '#FFFFFF', '#4ECDC4'],
     sound: 'level_up',
   },
 };

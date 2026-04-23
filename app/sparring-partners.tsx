@@ -82,6 +82,25 @@ const saveImagePermanently = async (tempUri: string): Promise<string> => {
 import { getMethodDisplayName } from '@/components/BJJBodyMap';
 import { StatsEmptyState } from '@/components/stats/StatsEmptyState';
 import { AnimatedCounter } from '@/components/stats/AnimatedCounter';
+// Extensions partenaires (archetype, missions, badges, media, PDF, insights)
+import PartnerFighterProfile from '@/components/PartnerFighterProfile';
+import PartnerTimelineHeadToHead from '@/components/PartnerTimelineHeadToHead';
+import PartnerWinrateTrend from '@/components/PartnerWinrateTrend';
+import PartnerLossHeatMap from '@/components/PartnerLossHeatMap';
+import PartnerMatchupPredictor from '@/components/PartnerMatchupPredictor';
+import PartnerAudioNotes from '@/components/PartnerAudioNotes';
+import PartnerFaceoffShare from '@/components/PartnerFaceoffShare';
+import PartnerGamePlanCard from '@/components/PartnerGamePlanCard';
+import PartnerBadgesRow from '@/components/PartnerBadgesRow';
+import PartnerMonthlyMissionCard from '@/components/PartnerMonthlyMissionCard';
+import PartnerStreakBadge from '@/components/PartnerStreakBadge';
+import PartnerMediaGallery from '@/components/PartnerMediaGallery';
+import PartnerQuickNoteButton from '@/components/PartnerQuickNoteButton';
+import { exportPartnerPDF } from '@/lib/partnerPdfService';
+import { computePartnerStreaks } from '@/lib/partnerStreaksService';
+import { checkAndUnlockPartnerBadges } from '@/lib/partnerBadgesService';
+import type { PartnerMedia, Archetype, ExperienceLevel, PartnerBadge as PartnerBadgeT } from '@/lib/partnerModel';
+import { FileText } from 'lucide-react-native';
 
 // ============================================
 // TYPES
@@ -111,6 +130,21 @@ interface Partner {
   createdAt: string;
   activeGoal?: { text: string; createdAt: string };
   longTermGoal?: { text: string; targetWinRate: number; deadline: string; createdAt: string };
+  // Champs etendus (optionnels, ajoutes progressivement)
+  archetype?: Archetype;
+  experienceLevel?: ExperienceLevel;
+  weightDeltaKg?: number;
+  heightDeltaCm?: number;
+  media?: PartnerMedia[];
+  unlockedBadges?: PartnerBadgeT[];
+  // Carte Combattant
+  styleStats?: { garde: number; passage: number; debout: number; cardio: number; explosivite: number };
+  dangerousMoves?: string[];
+  similarTo?: string;
+  nickname?: string;
+  gardePreferred?: string[];
+  reachDeltaCm?: number;
+  audioNotes?: { id: string; uri: string; date: string; durationMs: number }[];
 }
 
 const STORAGE_KEY = '@yoroi_sparring_partners';
@@ -379,6 +413,49 @@ function PartnerDetail({
   const dbTotal = dbWins + dbLosses + dbDraws;
   const dbWinRate = dbTotal > 0 ? Math.round((dbWins / dbTotal) * 100) : null;
 
+  // Check des badges deverrouillables a chaque chargement de l'historique
+  useEffect(() => {
+    if (historyLoading) return;
+    // Calcule les streaks pour les badges conditionnels
+    const allRounds = sessionHistory.flatMap(e => e.rounds.map(r => ({
+      date: e.training.date,
+      result: (r.result === 'win' ? 'V' : r.result === 'loss' ? 'D' : r.result === 'draw' ? 'N' : null) as 'V' | 'D' | 'N' | null,
+      tapOut: r.result === 'loss' && ((r.methodsTaken?.length ?? 0) > 0),
+    })));
+    const streaks = computePartnerStreaks(allRounds);
+    // Compte les semaines consecutives
+    const weekSet = new Set(sessionHistory.map(e => {
+      const d = new Date(e.training.date);
+      const first = new Date(d);
+      first.setDate(d.getDate() - d.getDay());
+      return first.toISOString().slice(0, 10);
+    }));
+    let weeksInARow = 0;
+    {
+      const arr = Array.from(weekSet).sort();
+      let best = 0, cur = 0;
+      let prevTs = 0;
+      for (const w of arr) {
+        const ts = new Date(w).getTime();
+        if (prevTs && (ts - prevTs) === 7 * 86400000) {
+          cur += 1;
+        } else {
+          cur = 1;
+        }
+        if (cur > best) best = cur;
+        prevTs = ts;
+      }
+      weeksInARow = best;
+    }
+    checkAndUnlockPartnerBadges(p.id, {
+      wins: dbWins, losses: dbLosses, draws: dbDraws, total: dbTotal,
+      streakWins: streaks.longestWinStreak,
+      streakNoTap: streaks.longestNoTapStreak,
+      roundsWithPartner: dbTotal,
+      weeksInARow,
+    }).catch(() => {});
+  }, [historyLoading, dbWins, dbLosses, dbTotal]);
+
   // Progression par séance (résultat dominant de chaque séance, du plus récent au plus ancien)
   const progressionBlocks = sessionHistory.map(e => {
     const w = e.rounds.filter(r => r.result === 'win').length;
@@ -466,6 +543,15 @@ function PartnerDetail({
     update({ notes: [note, ...p.notes] });
     setNewNote('');
     setShowNoteInput(false);
+  };
+
+  const addQuickNote = async (content: string) => {
+    const note: TacticalNote = { id: makeId(), date: new Date().toISOString(), content };
+    const next: Partner = { ...p, notes: [note, ...p.notes] };
+    setP(next);
+    setDirty(false);
+    // Save immediatement pour persister la note rapide
+    onUpdate(next);
   };
 
   // ── Sélection photo ──
@@ -1147,6 +1233,94 @@ function PartnerDetail({
             </View>
           )}
         </View>
+
+        {/* ════════════════════════════════════════════════
+            🔮 PREDICTEUR DE MATCH-UP · avant de rouler
+            ════════════════════════════════════════════════ */}
+        <PartnerMatchupPredictor
+          partnerName={p.name}
+          wins={dbWins}
+          losses={dbLosses}
+          draws={dbDraws}
+          recentResults={progressionBlocks.slice(0, 5).map(b => b.result === 'win' ? 'V' : b.result === 'loss' ? 'D' : 'N') as Array<'V' | 'D' | 'N'>}
+          weightDeltaKg={p.weightDeltaKg}
+          heightDeltaCm={p.heightDeltaCm}
+          experienceLevel={p.experienceLevel}
+        />
+
+        {/* ════════════════════════════════════════════════
+            📈 TIMELINE HEAD-TO-HEAD
+            ════════════════════════════════════════════════ */}
+        {sessionHistory.length > 0 && (() => {
+          const allRounds = sessionHistory.flatMap(e => e.rounds.map(r => ({
+            date: e.training.date,
+            result: (r.result === 'win' ? 'V' : r.result === 'loss' ? 'D' : r.result === 'draw' ? 'N' : null) as 'V' | 'D' | 'N' | null,
+            tapOut: r.result === 'loss' && ((r.methodsTaken?.length ?? 0) > 0),
+          })));
+          return <PartnerTimelineHeadToHead matchups={allRounds} partnerName={p.name} />;
+        })()}
+
+        {/* ════════════════════════════════════════════════
+            📊 COURBE WINRATE 12 MOIS
+            ════════════════════════════════════════════════ */}
+        {sessionHistory.length > 0 && (() => {
+          const allRounds = sessionHistory.flatMap(e => e.rounds.map(r => ({
+            date: e.training.date,
+            result: (r.result === 'win' ? 'V' : r.result === 'loss' ? 'D' : r.result === 'draw' ? 'N' : null) as 'V' | 'D' | 'N' | null,
+          })));
+          return <PartnerWinrateTrend matchups={allRounds} />;
+        })()}
+
+        {/* ════════════════════════════════════════════════
+            🎯 ZONES D'ATTAQUE SUBIES (heatmap corporelle)
+            ════════════════════════════════════════════════ */}
+        {(() => {
+          const allMethodsTaken = sessionHistory.flatMap(e => e.rounds.flatMap(r => r.methodsTaken || []));
+          if (allMethodsTaken.length === 0) return null;
+          return <PartnerLossHeatMap methodsTaken={allMethodsTaken.map(getMethodDisplayName)} />;
+        })()}
+
+        {/* ════════════════════════════════════════════════
+            🎯 GAME PLAN FLASH · rappel pre-sparring
+            ════════════════════════════════════════════════ */}
+        <PartnerGamePlanCard
+          partnerName={p.name}
+          whatWorks={p.whatWorks}
+          weaknesses={p.weaknesses}
+          lastResult={progressionBlocks[0]?.result === 'win' ? 'V' : progressionBlocks[0]?.result === 'loss' ? 'D' : progressionBlocks[0]?.result === 'draw' ? 'N' : null}
+          lastNote={lastImprovement?.text}
+        />
+
+        {/* ════════════════════════════════════════════════
+            🎖️ MISSION DU MOIS (auto-generee)
+            ════════════════════════════════════════════════ */}
+        <PartnerMonthlyMissionCard partnerId={p.id} />
+
+        {/* ════════════════════════════════════════════════
+            🔥 STREAKS (victoires / rounds sans tapper)
+            ════════════════════════════════════════════════ */}
+        {sessionHistory.length > 0 && (() => {
+          const allRounds = sessionHistory.flatMap(e => e.rounds.map(r => ({
+            date: e.training.date,
+            result: (r.result === 'win' ? 'V' : r.result === 'loss' ? 'D' : r.result === 'draw' ? 'N' : null) as 'V' | 'D' | 'N' | null,
+            tapOut: r.result === 'loss' && ((r.methodsTaken?.length ?? 0) > 0),
+          })));
+          const streaks = computePartnerStreaks(allRounds);
+          return (
+            <View style={{ marginBottom: 12 }}>
+              <PartnerStreakBadge streaks={streaks} />
+            </View>
+          );
+        })()}
+
+        {/* ════════════════════════════════════════════════
+            🏅 BADGES DEBLOQUES
+            ════════════════════════════════════════════════ */}
+        {(p.unlockedBadges && p.unlockedBadges.length > 0) && (
+          <View style={[cardStyle]}>
+            <PartnerBadgesRow badges={p.unlockedBadges} />
+          </View>
+        )}
 
         {/* ════════════════════════════════════════════════
             ⚔️ TALE OF THE TAPE · scorecard comparatif MOI vs LUI
@@ -1842,6 +2016,72 @@ function PartnerDetail({
           <TagList items={p.whatWorks} color="#F59E0B" editable onAdd={v => update({ whatWorks: [...p.whatWorks, v] })} onRemove={i => update({ whatWorks: p.whatWorks.filter((_, idx) => idx !== i) })} />
         </View>
 
+        {/* Carte Combattant (remplace l'ancien Profil etendu) */}
+        <View style={{ marginBottom: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <User size={14} color="#D4AF37" />
+            <Text style={{ fontSize: 13, fontWeight: '800', color: colors.text, letterSpacing: 0.5 }}>CARTE COMBATTANT</Text>
+          </View>
+          <PartnerFighterProfile
+            partnerName={p.name}
+            archetype={p.archetype}
+            experienceLevel={p.experienceLevel}
+            weightDeltaKg={p.weightDeltaKg}
+            heightDeltaCm={p.heightDeltaCm}
+            styleStats={p.styleStats}
+            dangerousMoves={p.dangerousMoves}
+            similarTo={p.similarTo}
+            winrate={dbWinRate}
+            totalRounds={dbTotal}
+            onChange={patch => update(patch)}
+          />
+        </View>
+
+        {/* Galerie media (photos + videos) */}
+        <View style={cardStyle}>
+          <PartnerMediaGallery
+            media={p.media || []}
+            onChange={media => update({ media })}
+          />
+        </View>
+
+        {/* Notes audio (30s vocal) */}
+        <PartnerAudioNotes
+          notes={p.audioNotes || []}
+          onChange={n => update({ audioNotes: n })}
+        />
+
+        {/* Face-a-face partageable */}
+        <PartnerFaceoffShare
+          partnerName={p.name}
+          partnerPhotoUri={p.photoUri}
+          partnerBelt={p.belt}
+          partnerArchetype={p.archetype}
+          partnerNickname={p.nickname}
+          wins={dbWins}
+          losses={dbLosses}
+          draws={dbDraws}
+        />
+
+        {/* Export PDF */}
+        <TouchableOpacity
+          onPress={async () => {
+            impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+            await exportPartnerPDF(p.id, { wins: dbWins, losses: dbLosses, draws: dbDraws, total: dbTotal });
+          }}
+          activeOpacity={0.85}
+          style={[cardStyle, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
+        >
+          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#0EA5E920', alignItems: 'center', justifyContent: 'center' }}>
+            <FileText size={16} color="#0EA5E9" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: colors.text }}>Exporter la fiche PDF</Text>
+            <Text style={{ fontSize: 11, color: colors.textMuted ?? '#888' }}>Envoie tout a ton coach en un tap</Text>
+          </View>
+          <ChevronRight size={18} color={colors.textMuted ?? '#888'} />
+        </TouchableOpacity>
+
         {/* Notes tactiques */}
         <View style={cardStyle}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -1938,6 +2178,11 @@ function PartnerDetail({
           )}
         </View>
       </ScrollView>
+
+      {/* FAB Quick Note (dictee iOS) */}
+      <View style={{ position: 'absolute', right: 16, bottom: insets.bottom + 20 }}>
+        <PartnerQuickNoteButton partnerName={p.name} onSave={addQuickNote} />
+      </View>
     </View>
   );
 }

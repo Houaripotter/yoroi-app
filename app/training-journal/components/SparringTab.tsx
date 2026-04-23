@@ -48,6 +48,8 @@ import { OnboardingTooltip } from '@/components/stats/OnboardingTooltip';
 import { SPARRING_COLORS, SPARRING_HIT_SLOP } from '@/constants/sparringDesignSystem';
 import { StatsInsightBanner } from '@/components/stats/StatsInsightBanner';
 import { generateSparringInsights } from '@/lib/sparringInsights';
+import PartnerInsightsBanner from '@/components/PartnerInsightsBanner';
+import { Grid3x3, Crown } from 'lucide-react-native';
 import { TechniqueHeatmap } from '@/components/stats/TechniqueHeatmap';
 import { MethodsTimeline } from '@/components/stats/MethodsTimeline';
 
@@ -910,6 +912,61 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accent} colors={[accent]} />}
       >
+        {/* ── AUTO-INSIGHTS PARTENAIRES ── */}
+        <View style={{ marginHorizontal: -16, marginBottom: 12 }}>
+          <PartnerInsightsBanner />
+        </View>
+
+        {/* ── BOUTONS VUES GLOBALES ── */}
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+          <TouchableOpacity
+            onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); router.push('/matchup-matrix' as any); }}
+            activeOpacity={0.85}
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              padding: 12,
+              borderRadius: 12,
+              backgroundColor: isDark ? 'rgba(212,175,55,0.1)' : 'rgba(212,175,55,0.08)',
+              borderWidth: 1,
+              borderColor: accent + '44',
+            }}
+          >
+            <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: accent + '22', alignItems: 'center', justifyContent: 'center' }}>
+              <Grid3x3 size={16} color={accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text }}>Matrix</Text>
+              <Text style={{ fontSize: 10, color: colors.textMuted }} numberOfLines={1}>Grille volume/winrate</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); router.push('/partners-tier-list' as any); }}
+            activeOpacity={0.85}
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              padding: 12,
+              borderRadius: 12,
+              backgroundColor: isDark ? 'rgba(239,68,68,0.1)' : 'rgba(239,68,68,0.08)',
+              borderWidth: 1,
+              borderColor: '#EF444444',
+            }}
+          >
+            <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#EF444422', alignItems: 'center', justifyContent: 'center' }}>
+              <Crown size={16} color="#EF4444" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text }}>Tier List</Text>
+              <Text style={{ fontSize: 10, color: colors.textMuted }} numberOfLines={1}>S/A/B/C auto</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
         {/* ── FILTRE PAR SPORT ── */}
         {combatSports.length > 1 && (
           <ScrollView

@@ -3,6 +3,7 @@
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DeviceEventEmitter } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import {
   Flame,
@@ -732,6 +733,18 @@ export const unlockBadge = async (badgeId: string): Promise<boolean> => {
     );
 
     logger.info('Badge debloque:', badgeId);
+
+    // Emettre un event global pour que l'app puisse declencher une celebration
+    const badge = ALL_BADGES.find(b => b.id === badgeId);
+    if (badge) {
+      DeviceEventEmitter.emit('YOROI_BADGE_UNLOCKED', {
+        badgeId,
+        name: badge.name,
+        description: badge.description,
+        xpReward: badge.xpReward,
+      });
+    }
+
     return true;
   } catch (error) {
     logger.error('Erreur deblocage badge:', error);

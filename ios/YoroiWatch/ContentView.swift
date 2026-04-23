@@ -41,11 +41,13 @@ struct ContentView: View {
       .containerBackground(session.bgColor, for: .tabView)
 
       // Tab 6 : Sparring (rounds semaine, winrate, V/D)
-      NavigationStack {
-        SparringPage()
-      }
-      .tag(6)
-      .containerBackground(session.bgColor, for: .tabView)
+      // TEMPORAIREMENT COMMENTE · SparringPage.swift a ajouter manuellement
+      // via Xcode dans le target YoroiWatch pour reactiver ce tab.
+      // NavigationStack {
+      //   SparringPage()
+      // }
+      // .tag(6)
+      // .containerBackground(session.bgColor, for: .tabView)
 
       // Tab 7 : Compétition (rang, corps, PRs)
       CompetitionPage()

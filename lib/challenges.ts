@@ -5,6 +5,7 @@
 // L'utilisateur a jusqu'à dimanche pour le compléter
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DeviceEventEmitter } from 'react-native';
 import { getAllMeasurements, getAllWorkouts, getPhotosFromStorage } from './storage';
 import logger from '@/lib/security/logger';
 import { calculateAndStoreUnifiedPoints } from './gamification';
@@ -377,15 +378,25 @@ export const getOrCreateWeeklyChallenge = async (): Promise<WeeklyChallenge> => 
     // Mettre à jour la progression
     const progress = await calculateChallengeProgress(existing.challenge.id);
     const completed = progress >= existing.challenge.target;
+    const justCompleted = completed && !existing.completedAt;
 
     const updated: WeeklyChallenge = {
       ...existing,
       progress,
       completed,
-      completedAt: completed && !existing.completedAt ? new Date().toISOString() : existing.completedAt,
+      completedAt: justCompleted ? new Date().toISOString() : existing.completedAt,
     };
 
     await saveWeeklyChallenge(updated);
+
+    // Emit celebration event si le defi vient d'etre complete
+    if (justCompleted) {
+      DeviceEventEmitter.emit('YOROI_CHALLENGE_COMPLETE', {
+        name: existing.challenge.name,
+        xpReward: existing.challenge.xpReward,
+      });
+    }
+
     return updated;
   }
 

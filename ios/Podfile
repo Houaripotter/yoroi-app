@@ -61,5 +61,32 @@ target 'Yoroi' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    # Fix libavif : 'avif/internal.h' file not found
+    # Fix ZXingObjC : 'ZXBitMatrix.h' file not found
+    # Ces pods ont des sources qui incluent des headers relatifs sans que
+    # HEADER_SEARCH_PATHS ne soit correct. On patch les 2.
+    installer.pods_project.targets.each do |target|
+      if target.name == 'libavif'
+        target.build_configurations.each do |config|
+          config.build_settings['HEADER_SEARCH_PATHS'] ||= '$(inherited)'
+          paths = config.build_settings['HEADER_SEARCH_PATHS']
+          extra = '${PODS_ROOT}/libavif/include ${PODS_ROOT}/libavif/src'
+          unless paths.to_s.include?(extra)
+            config.build_settings['HEADER_SEARCH_PATHS'] = "#{paths} #{extra}"
+          end
+        end
+      end
+      if target.name == 'ZXingObjC'
+        target.build_configurations.each do |config|
+          config.build_settings['HEADER_SEARCH_PATHS'] ||= '$(inherited)'
+          paths = config.build_settings['HEADER_SEARCH_PATHS']
+          extra = '${PODS_ROOT}/ZXingObjC/ZXingObjC ${PODS_ROOT}/ZXingObjC/ZXingObjC/**'
+          unless paths.to_s.include?(extra)
+            config.build_settings['HEADER_SEARCH_PATHS'] = "#{paths} #{extra}"
+          end
+        end
+      end
+    end
   end
 end

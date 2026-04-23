@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, AppState, AppStateStatus, LogBox, Platform } from 'react-native';
+import { View, AppState, AppStateStatus, LogBox, Platform, DeviceEventEmitter } from 'react-native';
+import Celebration from '@/components/Celebration';
+import BiometricLockOverlay from '@/components/BiometricLockOverlay';
 import { SamuraiSplash } from '@/components/SamuraiLoader';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -129,6 +131,46 @@ const LOADING_COLORS = {
 function RootLayoutContent() {
   const { isDark, colors } = useTheme();
   const router = useRouter();
+
+  // Celebration globale : badge debloque / challenge complete / milestone
+  const [celebration, setCelebration] = useState<{
+    type: 'badge_unlocked' | 'challenge_complete' | 'milestone';
+    title: string;
+    subtitle?: string;
+    xpGained?: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const badgeSub = DeviceEventEmitter.addListener('YOROI_BADGE_UNLOCKED', (payload: { name?: string; description?: string; xpReward?: number }) => {
+      setCelebration({
+        type: 'badge_unlocked',
+        title: 'BADGE DÉBLOQUÉ',
+        subtitle: payload?.name ? `${payload.name}${payload.description ? ` · ${payload.description}` : ''}` : undefined,
+        xpGained: payload?.xpReward,
+      });
+    });
+    const challengeSub = DeviceEventEmitter.addListener('YOROI_CHALLENGE_COMPLETE', (payload: { name?: string; xpReward?: number }) => {
+      setCelebration({
+        type: 'challenge_complete',
+        title: 'DÉFI RELEVÉ',
+        subtitle: payload?.name,
+        xpGained: payload?.xpReward,
+      });
+    });
+    const milestoneSub = DeviceEventEmitter.addListener('YOROI_MILESTONE', (payload: { name?: string; subtitle?: string; xpReward?: number }) => {
+      setCelebration({
+        type: 'milestone',
+        title: payload?.name || 'ÉTAPE FRANCHIE',
+        subtitle: payload?.subtitle,
+        xpGained: payload?.xpReward,
+      });
+    });
+    return () => {
+      badgeSub.remove();
+      challengeSub.remove();
+      milestoneSub.remove();
+    };
+  }, []);
 
   // Sync widget iOS au démarrage + à chaque changement de données.
   // No-op silencieux sur Android ou si le widget n'est pas linké en Xcode.
@@ -385,12 +427,33 @@ function RootLayoutContent() {
         <Stack.Screen name="cut-mode" options={{ presentation: 'card' }} />
         <Stack.Screen name="weight-cut" options={{ presentation: 'card' }} />
         <Stack.Screen name="fighter-card" options={{ presentation: 'card' }} />
+        <Stack.Screen name="wrapped" options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }} />
+        <Stack.Screen name="competition-countdown" options={{ presentation: 'card' }} />
+        <Stack.Screen name="matchup-matrix" options={{ presentation: 'card' }} />
+        <Stack.Screen name="partner-insights" options={{ presentation: 'card' }} />
+        <Stack.Screen name="partner-export" options={{ presentation: 'card' }} />
+        <Stack.Screen name="partners-tier-list" options={{ presentation: 'card' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
       <DevCodeModal />
       {/* Modal global pour demander un mot de passe (cross-platform, remplace Alert.prompt) */}
       <GlobalPasswordPromptMount />
+      {/* Biometric lock (FaceID / TouchID) · tout en haut pour masquer l'UI */}
+      <BiometricLockOverlay />
+      {/* Celebration globale (badge / challenge / milestone) */}
+      {celebration && (
+        <Celebration
+          visible={!!celebration}
+          type={celebration.type}
+          title={celebration.title}
+          subtitle={celebration.subtitle}
+          xpGained={celebration.xpGained}
+          autoClose
+          autoCloseDelay={3500}
+          onClose={() => setCelebration(null)}
+        />
+      )}
     </View>
   );
 }

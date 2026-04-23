@@ -39,14 +39,18 @@ import {
   Timer,
 } from 'lucide-react-native';
 import logger from '@/lib/security/logger';
+import { startLiveActivity, updateLiveActivity, endLiveActivity } from '@/lib/liveActivityBridge';
 
 // ============================================
 // TYPES
 // ============================================
 
 type AppPhase = 'setup' | 'active' | 'summary';
-type TimerPhase = 'round' | 'rest';
+type TimerPhase = 'pre_round' | 'round' | 'rest';
 type RoundResult = 'V' | 'D' | 'N' | null;
+
+// Duree du pre-round (countdown "Get ready") avant le round 1
+const PRE_ROUND_SECONDS = 10;
 
 interface RoundEntry {
   roundNumber: number;
@@ -145,13 +149,21 @@ export default function CombatTimerScreen() {
   }, [isRunning]);
 
   // ---- TICK LOGIC ----
+  // Haptic feedback contextuel :
+  //  - 10s restantes en round : warning (3 derniers rounds = plus intense)
+  //  - 5s, 4s, 3s, 2s, 1s : light haptic chaque seconde
+  //  - 0s : geré par handlePhaseEnd (success haptic)
   const handleTick = useCallback(() => {
     setSecondsLeft((prev) => {
-      if (prev <= 1) {
-        // Phase terminée
-        return 0;
+      const next = prev - 1;
+      if (next <= 5 && next > 0) {
+        impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+      } else if (next === 10) {
+        // 10s avant fin de round : warning
+        notificationAsync(NotificationFeedbackType.Warning).catch(() => {});
       }
-      return prev - 1;
+      if (prev <= 1) return 0;
+      return next;
     });
   }, []);
 
@@ -168,9 +180,19 @@ export default function CombatTimerScreen() {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setIsRunning(false);
 
-    notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+    // Heavy haptic + success pour marquer la transition
+    impactAsync(ImpactFeedbackStyle.Heavy).catch(() => {});
+    setTimeout(() => {
+      notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+    }, 200);
 
-    if (timerPhase === 'round') {
+    if (timerPhase === 'pre_round') {
+      // Fin du countdown initial → demarre le round 1
+      setTimerPhase('round');
+      const duration = config.roundDuration * 60;
+      setSecondsLeft(duration);
+      startInterval();
+    } else if (timerPhase === 'round') {
       // Fin de round → afficher le sheet de résultat
       setPendingResult(null);
       setPendingNotes('');
@@ -201,6 +223,7 @@ export default function CombatTimerScreen() {
   }, [handleTick]);
 
   // ---- DÉMARRER LA SESSION ----
+  // Demarrage avec countdown "Get ready" de 10s puis round 1
   const handleStart = useCallback(() => {
     logger.info('CombatTimer: session démarrée', {
       rounds: config.totalRounds,
@@ -209,11 +232,18 @@ export default function CombatTimerScreen() {
     });
     setRoundsHistory([]);
     setCurrentRound(1);
-    setTimerPhase('round');
-    const duration = config.roundDuration * 60;
-    setSecondsLeft(duration);
+    setTimerPhase('pre_round');
+    setSecondsLeft(PRE_ROUND_SECONDS);
     setAppPhase('active');
     impactAsync(ImpactFeedbackStyle.Heavy).catch(() => {});
+
+    // Lancer la Live Activity (Dynamic Island + ecran verrouille)
+    startLiveActivity({
+      sportName: config.partnerName ? `Sparring vs ${config.partnerName}` : 'Sparring',
+      sportIcon: 'figure.martial.arts',
+      sportColorHex: 'EF4444',
+    }).catch(() => {});
+
     // Démarrer le timer après que l'état soit mis à jour
     setTimeout(() => {
       startInterval();
@@ -238,8 +268,30 @@ export default function CombatTimerScreen() {
     setAppPhase('setup');
     setShowResultSheet(false);
     impactAsync(ImpactFeedbackStyle.Heavy).catch(() => {});
+    endLiveActivity().catch(() => {});
     logger.info('CombatTimer: session arrêtée manuellement');
   }, []);
+
+  // Sync Live Activity a chaque seconde quand la session est active
+  useEffect(() => {
+    if (appPhase !== 'active') return;
+    const elapsed =
+      timerPhase === 'pre_round' ? 0
+      : timerPhase === 'round'
+        ? config.roundDuration * 60 - secondsLeft
+        : config.roundDuration * 60 + (config.restDuration * 60 - secondsLeft);
+    updateLiveActivity({
+      elapsedSeconds: Math.max(0, Math.floor(elapsed + (currentRound - 1) * (config.roundDuration * 60 + config.restDuration * 60))),
+      rounds: currentRound,
+    }).catch(() => {});
+  }, [secondsLeft, currentRound, appPhase, timerPhase, config]);
+
+  // Fermer la Live Activity quand on arrive au summary
+  useEffect(() => {
+    if (appPhase === 'summary') {
+      endLiveActivity().catch(() => {});
+    }
+  }, [appPhase]);
 
   // ---- VALIDER RÉSULTAT DU ROUND ----
   const handleConfirmResult = useCallback(() => {
@@ -282,19 +334,36 @@ export default function CombatTimerScreen() {
 
   const elapsedRounds = currentRound - 1;
   const elapsedSeconds =
-    elapsedRounds * config.roundDuration * 60 +
-    elapsedRounds * config.restDuration * 60 +
-    (timerPhase === 'round'
-      ? config.roundDuration * 60 - secondsLeft
-      : config.roundDuration * 60 + (config.restDuration * 60 - secondsLeft));
+    timerPhase === 'pre_round'
+      ? 0
+      : elapsedRounds * config.roundDuration * 60 +
+        elapsedRounds * config.restDuration * 60 +
+        (timerPhase === 'round'
+          ? config.roundDuration * 60 - secondsLeft
+          : config.roundDuration * 60 + (config.restDuration * 60 - secondsLeft));
 
   const overallProgress = totalDuration > 0 ? Math.min(elapsedSeconds / totalDuration, 1) : 0;
 
   // ---- COULEURS SELON PHASE ----
-  const phaseColor = timerPhase === 'round' ? '#EF4444' : '#3B82F6';
-  const phaseBg = timerPhase === 'round'
-    ? (isDark ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.08)')
-    : (isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)');
+  const phaseColor =
+    timerPhase === 'round' ? '#EF4444'
+    : timerPhase === 'pre_round' ? '#F59E0B'
+    : '#3B82F6';
+  const phaseBg =
+    timerPhase === 'round'
+      ? (isDark ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.08)')
+      : timerPhase === 'pre_round'
+        ? (isDark ? 'rgba(245,158,11,0.12)' : 'rgba(245,158,11,0.08)')
+        : (isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)');
+
+  const phaseLabel =
+    timerPhase === 'round' ? 'ROUND'
+    : timerPhase === 'pre_round' ? 'PRÊT'
+    : 'REPOS';
+  const phaseLabelLower =
+    timerPhase === 'round' ? 'Round'
+    : timerPhase === 'pre_round' ? 'Préparation'
+    : 'Repos';
 
   // ---- SUMMARY STATS ----
   const wins = roundsHistory.filter((r) => r.result === 'V').length;
@@ -542,7 +611,7 @@ export default function CombatTimerScreen() {
                   textTransform: 'uppercase',
                 }}
               >
-                {timerPhase === 'round' ? 'Round' : 'Repos'}
+                {phaseLabelLower}
                 {timerPhase === 'round' ? ` ${currentRound} / ${config.totalRounds}` : ''}
               </Text>
             </View>
@@ -602,7 +671,7 @@ export default function CombatTimerScreen() {
                     marginTop: 4,
                   }}
                 >
-                  {timerPhase === 'round' ? 'ROUND' : 'REPOS'}
+                  {phaseLabel}
                 </Text>
 
                 {/* Petite info round dans le cercle */}
@@ -713,7 +782,9 @@ export default function CombatTimerScreen() {
                 const duration =
                   timerPhase === 'round'
                     ? config.roundDuration * 60
-                    : config.restDuration * 60;
+                    : timerPhase === 'pre_round'
+                      ? PRE_ROUND_SECONDS
+                      : config.restDuration * 60;
                 setSecondsLeft(duration);
               }}
               activeOpacity={0.8}

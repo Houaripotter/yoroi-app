@@ -109,6 +109,7 @@ import { ViewModeHint } from '@/components/home/ViewModeHint';
 import { EssentielActivityCard } from '@/components/home/essentiel/EssentielActivityCard';
 import { HomeTabView } from '@/components/home/HomeTabView';
 import HomeChallengesSection from '@/components/home/HomeChallengesSection';
+import CoachOfTheDayCard from '@/components/CoachOfTheDayCard';
 
 // Composants animés premium
 import AnimatedCounter from '@/components/AnimatedCounter';
@@ -1483,6 +1484,13 @@ export default function HomeScreen() {
               <Text style={[styles.quickToolText, { color: colors.textPrimary }]}>{t('index.objective')}</Text>
             </TouchableOpacity>
           </View>
+        );
+
+      case 'coach_of_the_day':
+        return (
+          <AnimatedCard index={0} key={sectionId}>
+            <CoachOfTheDayCard />
+          </AnimatedCard>
         );
 
       case 'challenges':

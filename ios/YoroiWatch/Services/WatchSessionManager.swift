@@ -690,12 +690,10 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     // 2. Calculer le delay précis depuis la date de fin absolue
     let delay = max(1, fireDate.timeIntervalSinceNow)
 
-    // 3. Son custom wizz.mp3 — bien plus audible que le .default sur watchOS
-    let wizzSound: UNNotificationSound = {
-      // UNNotificationSound(named:) cherche dans le bundle de l'app
-      let name = UNNotificationSoundName("wizz.mp3")
-      return UNNotificationSound(named: name)
-    }()
+    // 3. Son : sur watchOS, UNNotificationSound(named:) n'est pas disponible.
+    // On utilise .default qui joue le son systeme standard (bell).
+    // Le fichier wizz.mp3 reste utilise via AVAudioPlayer quand l'app est au foreground.
+    let wizzSound: UNNotificationSound = .default
 
     // 4. Notification principale à la fin exacte du timer
     let main = UNMutableNotificationContent()

@@ -449,13 +449,25 @@ export default function CompetitionsScreen() {
         {/* Empty State */}
         {competitions.length === 0 && (
           <View style={styles.emptyState}>
-            <Trophy size={64} color={colors.textMuted} />
+            <View style={[styles.emptyIconCircle, { backgroundColor: colors.accent + '22' }]}>
+              <Trophy size={56} color={colors.accent} />
+            </View>
             <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
               {t('competitions.noCompetitions')}
             </Text>
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>
               {t('competitions.emptyMessage')}
             </Text>
+            <TouchableOpacity
+              style={[styles.emptyCTA, { backgroundColor: colors.accent }]}
+              onPress={handleAddCompetition}
+              activeOpacity={0.8}
+            >
+              <Plus size={18} color={colors.textOnGold} />
+              <Text style={[styles.emptyCTAText, { color: colors.textOnGold }]}>
+                {t('competitions.addFirst') || 'Ajouter ma première compétition'}
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -619,6 +631,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+    paddingHorizontal: SPACING.lg,
+  },
+  emptyIconCircle: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyCTA: {
+    marginTop: SPACING.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.full,
+  },
+  emptyCTAText: {
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   importCard: {
     flexDirection: 'row',

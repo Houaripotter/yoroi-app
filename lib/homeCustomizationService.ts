@@ -93,6 +93,14 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     order: 8,
   },
   {
+    id: 'coach_of_the_day',
+    name: 'Coach du Jour',
+    description: 'Recommandation personnalisee quotidienne',
+    icon: 'compass',
+    visible: true,
+    order: 8.5,
+  },
+  {
     id: 'challenges',
     name: 'Défis du Jour',
     description: 'Tes objectifs quotidiens',

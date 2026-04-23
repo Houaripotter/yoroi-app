@@ -70,6 +70,7 @@ import {
   WATCH_EXERCISE_TEMPLATES,
 } from '@/lib/carnetService';
 import VictoryShareModal, { VictorySessionData, createVictoryFromEntry } from '@/components/VictoryShareModal';
+import Celebration from '@/components/Celebration';
 import { AnimatedCounter } from '@/components/stats/AnimatedCounter';
 import { StatsEmptyState } from '@/components/stats/StatsEmptyState';
 import { StatsInsightBanner } from '@/components/stats/StatsInsightBanner';
@@ -294,6 +295,9 @@ export default function TrainingJournalScreen() {
   // PILLAR 3: Victory Share Modal
   const [showVictoryModal, setShowVictoryModal] = useState(false);
   const [victorySessionData, setVictorySessionData] = useState<VictorySessionData | null>(null);
+  // Célébration PR (confetti + haptic heavy)
+  const [showPRCelebration, setShowPRCelebration] = useState(false);
+  const [prCelebrationData, setPRCelebrationData] = useState<{ title: string; subtitle?: string } | null>(null);
 
   // Computed stats from local data
   const benchmarksWithEntries = useMemo(
@@ -1006,8 +1010,22 @@ export default function TrainingJournalScreen() {
         ...advancedMetrics,
       });
 
-      // Show victory modal (Style Yoroi)
-      setShowVictoryModal(true);
+      // Célébration RP : confetti + heavy haptic + animation AVANT le modal de partage
+      if (isPR) {
+        impactAsync(ImpactFeedbackStyle.Heavy).catch(() => {});
+        setPRCelebrationData({
+          title: 'NOUVEAU RECORD',
+          subtitle: `${selectedBenchmark.name} · ${performanceStr}`,
+        });
+        setShowPRCelebration(true);
+        // Laisser la célébration jouer 2.2s puis ouvrir le VictoryShareModal
+        setTimeout(() => {
+          setShowVictoryModal(true);
+        }, 2200);
+      } else {
+        // Show victory modal (Style Yoroi)
+        setShowVictoryModal(true);
+      }
 
       showToast(isPR ? t('journal.newRecord') : t('journal.savedSuccessfully'));
       loadData();
@@ -2308,6 +2326,22 @@ export default function TrainingJournalScreen() {
         onRestoreSkill={handleRestoreSkill}
         onEmptyTrash={handleEmptyTrash}
       />
+
+      {/* Célébration RP : confetti + animations juste après un nouveau record */}
+      {prCelebrationData && (
+        <Celebration
+          visible={showPRCelebration}
+          type="new_pr"
+          title={prCelebrationData.title}
+          subtitle={prCelebrationData.subtitle}
+          autoClose
+          autoCloseDelay={2000}
+          onClose={() => {
+            setShowPRCelebration(false);
+            setPRCelebrationData(null);
+          }}
+        />
+      )}
 
       {/* PILLAR 3: Victory Share Modal (Strava-Style) */}
       {victorySessionData && (
