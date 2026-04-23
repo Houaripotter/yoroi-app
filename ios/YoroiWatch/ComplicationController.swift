@@ -112,6 +112,20 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
   private var carnetLastExercise: String { ud.string(forKey: "yoroi_carnet_lastExercise") ?? "" }
   private var carnetLastPR: Double  { ud.double(forKey: "yoroi_carnet_lastPR") }
   private var carnetLastUnit: String { ud.string(forKey: "yoroi_carnet_lastUnit") ?? "kg" }
+  // Sparring de la semaine (rounds + winrate)
+  private var sparringRoundsWeek: Int { ud.integer(forKey: "yoroi_sparring_roundsWeek") }
+  private var sparringRoundsGoal: Int { let v = ud.integer(forKey: "yoroi_sparring_roundsGoal"); return v > 0 ? v : 30 }
+  private var sparringWinRate: Int    { ud.integer(forKey: "yoroi_sparring_winRate") } // 0-100
+  private var sparringWinsWeek: Int   { ud.integer(forKey: "yoroi_sparring_winsWeek") }
+  private var sparringLossesWeek: Int { ud.integer(forKey: "yoroi_sparring_lossesWeek") }
+  // Prochaine compétition
+  private var nextCompetitionName: String { ud.string(forKey: "yoroi_nextCompetitionName") ?? "" }
+  private var nextCompetitionDate: Date?  { ud.object(forKey: "yoroi_nextCompetitionDate") as? Date }
+  private var nextCompetitionDaysUntil: Int {
+    guard let d = nextCompetitionDate else { return -1 }
+    let days = Calendar.current.dateComponents([.day], from: Date(), to: d).day ?? -1
+    return max(-1, days)
+  }
 
   // MARK: - Onglets de navigation
   // Tab 0: Dashboard  Tab 1: Poids  Tab 2: Hydratation  Tab 3: Sommeil
@@ -214,6 +228,18 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
         supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall],
         userInfo: ["tabIndex": Tab.carnet] as [AnyHashable: Any]
       ),
+      CLKComplicationDescriptor(
+        identifier: "yoroi.sparring",
+        displayName: "Sparring – Cette semaine",
+        supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall, .modularSmall],
+        userInfo: ["tabIndex": Tab.carnet] as [AnyHashable: Any]
+      ),
+      CLKComplicationDescriptor(
+        identifier: "yoroi.nextcompetition",
+        displayName: "Prochaine Compétition",
+        supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall, .modularSmall],
+        userInfo: ["tabIndex": Tab.competition] as [AnyHashable: Any]
+      ),
     ]
     handler(descriptors)
   }
@@ -308,6 +334,16 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
       return sampleTimerTemplate(family: family)
     case "yoroi.addexercice":
       return sampleAddExerciceTemplate(family: family)
+    case "yoroi.sparring":
+      return sampleCircularGauge(family: family, center: "18", bottom: "/30 ROUNDS",
+                                  start: .crimson, end: .orange, fill: 0.6,
+                                  body1: "18 / 30 rounds", body2: "12V · 6D · 67% WR",
+                                  flatText: "18r", header: "Sparring · 67% WR")
+    case "yoroi.nextcompetition":
+      return sampleCircularGauge(family: family, center: "J-12", bottom: "JOURS",
+                                  start: .navyBlue, end: .orange, fill: 0.8,
+                                  body1: "Open de Marseille", body2: "Dans 12 jours",
+                                  flatText: "J-12", header: "🏆 Prochaine compétition")
     default:
       return nil
     }
@@ -535,6 +571,8 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     case "yoroi.restinghr":  return restingHRTemplate(family: complication.family)
     case "yoroi.respiratory": return respiratoryTemplate(family: complication.family)
     case "yoroi.addexercice": return addExerciceTemplate(family: complication.family)
+    case "yoroi.sparring":    return sparringTemplate(family: complication.family)
+    case "yoroi.nextcompetition": return nextCompetitionTemplate(family: complication.family)
     default:                  return nil
     }
   }
@@ -1414,6 +1452,127 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     case .utilitarianSmall:
       let t = CLKComplicationTemplateUtilitarianSmallFlat()
       t.textProvider = CLKSimpleTextProvider(text: "+ Série", shortText: "+")
+      return t
+
+    default: return nil
+    }
+  }
+
+  // MARK: - Sparring (rounds de la semaine + winrate)
+  private func sparringTemplate(family: CLKComplicationFamily) -> CLKComplicationTemplate? {
+    let rounds = sparringRoundsWeek
+    let goal = sparringRoundsGoal
+    let rate = sparringWinRate
+    let fill = goal > 0 ? min(1.0, Float(rounds) / Float(goal)) : 0.0
+    let gauge = elegantGauge(from: .crimson, to: .orange, fill: fill)
+    let header = rate > 0 ? "Sparring · \(rate)% WR" : "Sparring semaine"
+    let body1 = "\(rounds) / \(goal) rounds"
+    let body2 = sparringWinsWeek + sparringLossesWeek > 0
+      ? "\(sparringWinsWeek)V · \(sparringLossesWeek)D"
+      : "Commence la semaine"
+
+    switch family {
+    case .graphicCircular:
+      let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
+      t.gaugeProvider = gauge
+      t.centerTextProvider = CLKSimpleTextProvider(text: rounds >= 1000 ? "1k+" : "\(rounds)")
+      return t
+
+    case .graphicCorner:
+      let t = CLKComplicationTemplateGraphicCornerGaugeText()
+      t.gaugeProvider = gauge
+      t.outerTextProvider = CLKSimpleTextProvider(text: "Sparring")
+      t.leadingTextProvider = CLKSimpleTextProvider(text: "0")
+      t.trailingTextProvider = CLKSimpleTextProvider(text: "\(goal)")
+      return t
+
+    case .graphicRectangular:
+      let t = CLKComplicationTemplateGraphicRectangularTextGauge()
+      t.headerTextProvider = CLKSimpleTextProvider(text: header)
+      t.body1TextProvider = CLKSimpleTextProvider(text: body1)
+      t.gaugeProvider = gauge
+      return t
+
+    case .utilitarianSmall:
+      let t = CLKComplicationTemplateUtilitarianSmallFlat()
+      t.textProvider = CLKSimpleTextProvider(text: "\(rounds)r", shortText: "\(rounds)")
+      return t
+
+    case .modularSmall:
+      let t = CLKComplicationTemplateModularSmallRingText()
+      t.textProvider = CLKSimpleTextProvider(text: "\(rounds)")
+      t.fillFraction = fill
+      t.ringStyle = .closed
+      return t
+
+    default: return nil
+    }
+  }
+
+  // MARK: - Prochaine compétition (countdown jours)
+  private func nextCompetitionTemplate(family: CLKComplicationFamily) -> CLKComplicationTemplate? {
+    let days = nextCompetitionDaysUntil
+    let name = nextCompetitionName
+    let hasComp = !name.isEmpty && days >= 0
+
+    let daysText: String
+    if !hasComp {
+      daysText = "—"
+    } else if days == 0 {
+      daysText = "🔥"
+    } else if days >= 100 {
+      daysText = "99+"
+    } else {
+      daysText = "\(days)"
+    }
+
+    let subtitle: String
+    if !hasComp {
+      subtitle = "Aucune prévue"
+    } else if days == 0 {
+      subtitle = "C'est aujourd'hui !"
+    } else if days == 1 {
+      subtitle = "Dans 1 jour"
+    } else {
+      subtitle = "Dans \(days) jours"
+    }
+
+    // Gauge : rempli d'autant plus qu'on approche (inversé)
+    let fill: Float = !hasComp ? 0.0 : days == 0 ? 1.0 : days >= 60 ? 0.05 : 1.0 - Float(days) / 60.0
+    let gauge = elegantGauge(from: .navyBlue, to: .orange, fill: fill)
+
+    switch family {
+    case .graphicCircular:
+      let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
+      t.gaugeProvider = gauge
+      t.centerTextProvider = CLKSimpleTextProvider(text: daysText)
+      return t
+
+    case .graphicCorner:
+      let t = CLKComplicationTemplateGraphicCornerStackText()
+      t.outerTextProvider = CLKSimpleTextProvider(text: hasComp ? "J-\(days)" : "Compet")
+      t.innerTextProvider = CLKSimpleTextProvider(text: hasComp ? name : "Aucune")
+      return t
+
+    case .graphicRectangular:
+      let t = CLKComplicationTemplateGraphicRectangularStandardBody()
+      t.headerTextProvider = CLKSimpleTextProvider(text: "🏆 Prochaine compétition")
+      t.body1TextProvider = CLKSimpleTextProvider(
+        text: hasComp ? name : "Aucune programmée",
+        shortText: hasComp ? String(name.prefix(20)) : "—"
+      )
+      t.body2TextProvider = CLKSimpleTextProvider(text: subtitle)
+      return t
+
+    case .utilitarianSmall:
+      let t = CLKComplicationTemplateUtilitarianSmallFlat()
+      t.textProvider = CLKSimpleTextProvider(text: hasComp ? "J-\(days)" : "—")
+      return t
+
+    case .modularSmall:
+      let t = CLKComplicationTemplateModularSmallStackText()
+      t.line1TextProvider = CLKSimpleTextProvider(text: "J-")
+      t.line2TextProvider = CLKSimpleTextProvider(text: daysText)
       return t
 
     default: return nil
