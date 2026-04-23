@@ -15,20 +15,29 @@ struct YoroiWatchApp: App {
     let center = UNUserNotificationCenter.current()
     center.requestAuthorization(options: [.alert, .sound, .badge, .criticalAlert]) { _, _ in }
 
-    // Registration de la catégorie d'alarme AVEC une action "Arrêter"
-    // → permet à l'utilisateur de stopper l'alarme directement depuis la notification
+    // Registration de la catégorie d'alarme AVEC actions "Arrêter" et "Répéter"
+    // → style Apple Timer : l'utilisateur peut stopper OU relancer le même timer
+    //   directement depuis la notification, sans ouvrir l'app.
     let stopAction = UNNotificationAction(
       identifier: "yoroi.timer.stop",
       title: "Arrêter",
       options: [.foreground, .destructive]
     )
+    let repeatAction = UNNotificationAction(
+      identifier: "yoroi.timer.repeat",
+      title: "Répéter",
+      options: [.foreground]
+    )
     let category = UNNotificationCategory(
       identifier: "yoroi.timer.alarm",
-      actions: [stopAction],
+      actions: [stopAction, repeatAction],
       intentIdentifiers: [],
       options: [.customDismissAction]
     )
     center.setNotificationCategories([category])
+
+    // Delegate pour handler les actions Arrêter / Répéter
+    center.delegate = WatchSessionManager.shared
   }
 
   var body: some Scene {

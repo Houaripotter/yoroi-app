@@ -258,6 +258,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   }
   @Published var timerAlarmRinging: Bool = false
   @Published var timerFavorites: [Int] = []
+  @Published var timerRecents: [Int] = [] // 5 derniers timers lancés (le + récent en premier)
 
   // MARK: - Carnet (Training Journal)
   @Published var benchmarks: [BenchmarkRecord] = []
@@ -553,6 +554,17 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
   func loadTimerFavorites() {
     timerFavorites = UserDefaults.standard.array(forKey: "timerFavorites") as? [Int] ?? []
+    timerRecents = UserDefaults.standard.array(forKey: "timerRecents") as? [Int] ?? []
+  }
+
+  /// Ajoute un timer aux récents (LRU, max 5, dédupliqué)
+  /// Appelé automatiquement à chaque setTimer(seconds:)
+  func addTimerRecent(_ seconds: Int) {
+    var next = timerRecents.filter { $0 != seconds }
+    next.insert(seconds, at: 0)
+    if next.count > 5 { next = Array(next.prefix(5)) }
+    timerRecents = next
+    UserDefaults.standard.set(next, forKey: "timerRecents")
   }
 
   // Source de vérité : date de fin absolue
@@ -563,6 +575,11 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
   func startTimer() {
     timerAlarmRinging = false
+
+    // 0. Ajout aux récents (historique LRU 5 derniers, style Apple Timer)
+    if timerTotalSeconds > 0 {
+      addTimerRecent(timerTotalSeconds)
+    }
 
     // 1. Sauvegarder la date de fin absolue AVANT de flipper timerIsRunning
     //    Ainsi quand reloadComplications() est appelé (via didSet de timerIsRunning),
@@ -1252,6 +1269,38 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 }
 
 // MARK: - Extended Runtime Session Delegate
+
+// MARK: - Notification actions handler (Arrêter / Répéter)
+// Gère les actions utilisateur depuis la notification timer (Apple Timer style)
+extension WatchSessionManager: UNUserNotificationCenterDelegate {
+  func userNotificationCenter(_ center: UNUserNotificationCenter,
+                               didReceive response: UNNotificationResponse,
+                               withCompletionHandler completionHandler: @escaping () -> Void) {
+    let id = response.notification.request.content.categoryIdentifier
+    guard id == "yoroi.timer.alarm" else { completionHandler(); return }
+
+    switch response.actionIdentifier {
+    case "yoroi.timer.stop", UNNotificationDismissActionIdentifier:
+      stopAlarm()
+    case "yoroi.timer.repeat":
+      stopAlarm()
+      // Relance le même timer avec la durée totale précédente
+      setTimer(seconds: timerTotalSeconds > 0 ? timerTotalSeconds : 60)
+      startTimer()
+    default:
+      // Tap sur la notification → stop l'alarme et ouvre l'app
+      stopAlarm()
+    }
+    completionHandler()
+  }
+
+  // Permet aux notifications de s'afficher même quand l'app est au foreground
+  func userNotificationCenter(_ center: UNUserNotificationCenter,
+                               willPresent notification: UNNotification,
+                               withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+    completionHandler([.banner, .sound, .list])
+  }
+}
 
 extension WatchSessionManager: WKExtendedRuntimeSessionDelegate {
   func extendedRuntimeSessionDidStart(_ extendedRuntimeSession: WKExtendedRuntimeSession) {

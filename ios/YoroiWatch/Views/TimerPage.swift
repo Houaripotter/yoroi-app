@@ -400,84 +400,138 @@ struct TimerDetailPage: View {
     }
   }
 
-  // MARK: - Preset Selector (scrollable horizontal)
+  // MARK: - Preset Selector (Apple-like grid)
+  // Grid 3 colonnes de presets + section Récents (style Apple Timer)
   private var presetSelector: some View {
     ScrollView {
-      VStack(spacing: 10) {
-        Text("MINUTEUR")
-          .font(.system(size: 9, weight: .heavy))
-          .foregroundColor(session.accentColor)
-          .tracking(2)
+      VStack(spacing: 12) {
+        // Header
+        HStack(spacing: 4) {
+          Image(systemName: "timer")
+            .font(.system(size: 12, weight: .bold))
+            .foregroundColor(session.accentColor)
+          Text("Minuteur")
+            .font(.system(size: 15, weight: .bold))
+            .foregroundColor(session.textPrimary)
+        }
+        .padding(.top, 2)
 
-        Text("Choisis un temps")
-          .font(.system(size: 10))
-          .foregroundColor(session.textSecondary)
-
-        // Horizontal scrollable presets
-        ScrollView(.horizontal, showsIndicators: false) {
-          HStack(spacing: 8) {
-            ForEach(presets, id: \.0) { (seconds, label) in
-              Button(action: {
-                selectedPreset = seconds
-                session.setTimer(seconds: seconds)
-              }) {
-                VStack(spacing: 4) {
-                  Text(label)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(session.textPrimary)
-                }
-                .frame(width: 52, height: 52)
-                .background(session.accentColor.opacity(0.15))
-                .clipShape(Circle())
-              }
-              .buttonStyle(.plain)
+        // Grille presets 3 colonnes (style Apple Timer)
+        let gridColumns = [
+          GridItem(.flexible(), spacing: 6),
+          GridItem(.flexible(), spacing: 6),
+          GridItem(.flexible(), spacing: 6),
+        ]
+        LazyVGrid(columns: gridColumns, spacing: 6) {
+          ForEach(presets, id: \.0) { (seconds, label) in
+            Button {
+              WKInterfaceDevice.current().play(.click)
+              selectedPreset = seconds
+              session.setTimer(seconds: seconds)
+              session.addTimerRecent(seconds)
+            } label: {
+              Text(label)
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundColor(session.textPrimary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 42)
+                .background(session.accentColor.opacity(0.18))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
+            .buttonStyle(.plain)
           }
-          .padding(.horizontal, 8)
-        }
-
-        // Custom button
-        Button(action: { showCustom = true }) {
-          HStack(spacing: 4) {
-            Image(systemName: "slider.horizontal.3")
-              .font(.system(size: 10))
-            Text("Personnalise")
-              .font(.system(size: 10, weight: .semibold))
+          // Bouton "+ Perso" dans la même grille
+          Button {
+            WKInterfaceDevice.current().play(.click)
+            showCustom = true
+          } label: {
+            VStack(spacing: 1) {
+              Image(systemName: "slider.horizontal.3")
+                .font(.system(size: 12, weight: .bold))
+              Text("Perso")
+                .font(.system(size: 9, weight: .bold))
+            }
+            .foregroundColor(session.accentColor)
+            .frame(maxWidth: .infinity)
+            .frame(height: 42)
+            .background(session.accentColor.opacity(0.08))
+            .overlay(
+              RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(session.accentColor.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
           }
-          .foregroundColor(session.textPrimary)
-          .padding(.horizontal, 14)
-          .padding(.vertical, 8)
-          .background(session.cardBg)
-          .cornerRadius(10)
+          .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 4)
 
-        // Favorites
-        if !session.timerFavorites.isEmpty {
-          VStack(spacing: 4) {
-            Text("FAVORIS")
-              .font(.system(size: 7, weight: .heavy))
-              .foregroundColor(session.accentColor.opacity(0.6))
-              .tracking(1)
+        // Récents (style Apple : chips horizontaux)
+        if !session.timerRecents.isEmpty {
+          VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 4) {
+              Image(systemName: "clock.arrow.circlepath")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundColor(session.textSecondary)
+              Text("RÉCENTS")
+                .font(.system(size: 9, weight: .heavy))
+                .foregroundColor(session.textSecondary)
+                .tracking(1)
+            }
+            .padding(.horizontal, 4)
 
             ScrollView(.horizontal, showsIndicators: false) {
-              HStack(spacing: 6) {
+              HStack(spacing: 5) {
+                ForEach(session.timerRecents, id: \.self) { secs in
+                  Button {
+                    WKInterfaceDevice.current().play(.click)
+                    selectedPreset = secs
+                    session.setTimer(seconds: secs)
+                  } label: {
+                    Text(formatPresetLabel(secs))
+                      .font(.system(size: 11, weight: .bold, design: .rounded))
+                      .foregroundColor(session.textPrimary)
+                      .padding(.horizontal, 10)
+                      .padding(.vertical, 6)
+                      .background(session.cardBg)
+                      .clipShape(Capsule())
+                  }
+                  .buttonStyle(.plain)
+                }
+              }
+              .padding(.horizontal, 4)
+            }
+          }
+        }
+
+        // Favoris (étoile, séparé des récents)
+        if !session.timerFavorites.isEmpty {
+          VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 4) {
+              Image(systemName: "star.fill")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundColor(Color(red: 1.0, green: 0.80, blue: 0.2))
+              Text("FAVORIS")
+                .font(.system(size: 9, weight: .heavy))
+                .foregroundColor(Color(red: 1.0, green: 0.80, blue: 0.2))
+                .tracking(1)
+            }
+            .padding(.horizontal, 4)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+              HStack(spacing: 5) {
                 ForEach(session.timerFavorites, id: \.self) { fav in
-                  Button(action: {
+                  Button {
+                    WKInterfaceDevice.current().play(.click)
                     selectedPreset = fav
                     session.setTimer(seconds: fav)
-                  }) {
-                    HStack(spacing: 2) {
-                      Image(systemName: "star.fill")
-                        .font(.system(size: 5))
-                      Text(formatPresetLabel(fav))
-                        .font(.system(size: 9, weight: .bold))
-                    }
-                    .foregroundColor(session.accentColor)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(session.accentColor.opacity(0.1))
-                    .cornerRadius(8)
+                  } label: {
+                    Text(formatPresetLabel(fav))
+                      .font(.system(size: 11, weight: .bold, design: .rounded))
+                      .foregroundColor(Color(red: 1.0, green: 0.80, blue: 0.2))
+                      .padding(.horizontal, 10)
+                      .padding(.vertical, 6)
+                      .background(Color(red: 1.0, green: 0.80, blue: 0.2).opacity(0.15))
+                      .clipShape(Capsule())
                   }
                   .buttonStyle(.plain)
                 }
@@ -488,118 +542,164 @@ struct TimerDetailPage: View {
         }
       }
       .padding(.horizontal, 4)
+      .padding(.bottom, 8)
     }
   }
 
-  // MARK: - Full Screen Timer
+  // MARK: - Full Screen Timer (Apple-like)
+  // Design Apple Timer avec Yoroi touch : gros countdown, cercle progression,
+  // 2 boutons d'action (Annuler / Pause-Play), haptic tick sur les 5 dernières secondes
   private var timerFullScreen: some View {
-    ScrollView {
-      VStack(spacing: 8) {
-        // Circular countdown
-        ZStack {
-          Circle()
-            .stroke(session.dividerColor, lineWidth: 8)
+    let isLast10 = session.timerIsRunning && session.timerRemainingSeconds <= 10 && session.timerRemainingSeconds > 0
+    let gradient: LinearGradient = isLast10
+      ? LinearGradient(colors: [redColor, orangeColor], startPoint: .topLeading, endPoint: .bottomTrailing)
+      : LinearGradient(colors: [session.accentColor, session.accentColor.opacity(0.65)], startPoint: .topLeading, endPoint: .bottomTrailing)
 
+    return ScrollView {
+      VStack(spacing: 10) {
+        // Grand cercle de progression (style Apple)
+        ZStack {
+          // Fond du ring
+          Circle()
+            .stroke(session.dividerColor.opacity(0.4), lineWidth: 10)
+
+          // Progression
           Circle()
             .trim(from: 0, to: timerProgress)
-            .stroke(
-              session.timerRemainingSeconds <= 10 && session.timerIsRunning
-                ? LinearGradient(colors: [redColor, orangeColor], startPoint: .leading, endPoint: .trailing)
-                : LinearGradient(colors: [session.accentColor, session.accentColor.opacity(0.7)], startPoint: .leading, endPoint: .trailing),
-              style: StrokeStyle(lineWidth: 8, lineCap: .round)
-            )
+            .stroke(gradient, style: StrokeStyle(lineWidth: 10, lineCap: .round))
             .rotationEffect(.degrees(-90))
             .animation(.linear(duration: 1), value: session.timerRemainingSeconds)
+            .animation(.easeInOut(duration: 0.3), value: isLast10)
 
-          VStack(spacing: 2) {
+          // Bloc central : temps + libellé du preset
+          VStack(spacing: 0) {
             let displaySecs = (session.timerRemainingSeconds == 0 && !session.timerIsRunning)
               ? session.timerTotalSeconds
               : session.timerRemainingSeconds
+
             Text(session.formattedTime(displaySecs))
-              .font(.system(size: 28, weight: .bold, design: .monospaced))
-              .foregroundColor(session.textPrimary)
+              .font(.system(size: 30, weight: .heavy, design: .rounded))
+              .monospacedDigit()
+              .foregroundColor(isLast10 ? redColor : session.textPrimary)
+              .animation(.easeInOut(duration: 0.2), value: isLast10)
+              .onChange(of: session.timerRemainingSeconds) { _, newValue in
+                // Haptic tick chaque seconde dans les 5 dernières (alerte visuelle + tactile)
+                if session.timerIsRunning && newValue > 0 && newValue <= 5 {
+                  WKInterfaceDevice.current().play(.click)
+                }
+              }
+
+            Text(presetLabelForTotal(session.timerTotalSeconds))
+              .font(.system(size: 10, weight: .semibold))
+              .foregroundColor(session.textSecondary)
+              .padding(.top, 2)
           }
         }
-        .frame(width: 110, height: 110)
+        .frame(width: 120, height: 120)
+        .padding(.top, 4)
 
-        // Controls
-        HStack(spacing: 14) {
+        // Contrôles (style Apple : 2 gros boutons horizontalement)
+        HStack(spacing: 18) {
+          // Annuler (gauche)
+          Button {
+            WKInterfaceDevice.current().play(.click)
+            session.resetTimer()
+            selectedPreset = nil
+          } label: {
+            Image(systemName: "xmark")
+              .font(.system(size: 16, weight: .bold))
+              .foregroundColor(.white)
+              .frame(width: 44, height: 44)
+              .background(Color(red: 0.35, green: 0.10, blue: 0.10))
+              .clipShape(Circle())
+          }
+          .buttonStyle(.plain)
+
+          // Pause / Play (droite, accent)
           if session.timerIsRunning {
-            Button(action: { session.pauseTimer() }) {
+            Button {
+              WKInterfaceDevice.current().play(.click)
+              session.pauseTimer()
+            } label: {
               Image(systemName: "pause.fill")
-                .font(.system(size: 18))
+                .font(.system(size: 18, weight: .bold))
                 .foregroundColor(session.textOnAccent)
-                .frame(width: 42, height: 42)
+                .frame(width: 44, height: 44)
                 .background(session.accentColor)
                 .clipShape(Circle())
             }
             .buttonStyle(.plain)
           } else {
-            Button(action: { session.startTimer() }) {
+            Button {
+              WKInterfaceDevice.current().play(.start)
+              session.startTimer()
+            } label: {
               Image(systemName: "play.fill")
-                .font(.system(size: 18))
+                .font(.system(size: 18, weight: .bold))
                 .foregroundColor(session.textOnAccent)
-                .frame(width: 42, height: 42)
+                .frame(width: 44, height: 44)
                 .background(session.accentColor)
                 .clipShape(Circle())
             }
             .buttonStyle(.plain)
           }
-
-          if session.timerRemainingSeconds != session.timerTotalSeconds {
-            Button(action: { session.resetTimer() }) {
-              Image(systemName: "arrow.counterclockwise")
-                .font(.system(size: 14))
-                .foregroundColor(session.textPrimary)
-                .frame(width: 34, height: 34)
-                .background(session.cardBg)
-                .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
-          }
         }
 
-        // Back to presets (when not running)
-        if !session.timerIsRunning {
-          Button(action: {
-            selectedPreset = nil
-            session.resetTimer()
-          }) {
+        // Actions secondaires (quand en pause uniquement)
+        if !session.timerIsRunning && session.timerRemainingSeconds > 0 && session.timerRemainingSeconds != session.timerTotalSeconds {
+          Button {
+            WKInterfaceDevice.current().play(.click)
+            session.setTimer(seconds: session.timerTotalSeconds)
+          } label: {
             HStack(spacing: 4) {
-              Image(systemName: "chevron.left")
-                .font(.system(size: 8))
-              Text("Presets")
-                .font(.system(size: 10, weight: .semibold))
+              Image(systemName: "arrow.counterclockwise")
+                .font(.system(size: 10, weight: .bold))
+              Text("Réinitialiser")
+                .font(.system(size: 11, weight: .semibold))
             }
             .foregroundColor(session.textSecondary)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
             .background(session.cardBg)
-            .cornerRadius(8)
+            .clipShape(Capsule())
           }
           .buttonStyle(.plain)
+        }
 
-          // Save to favorites
-          if let preset = selectedPreset, !presets.map({ $0.0 }).contains(preset) {
-            Button(action: { session.addTimerFavorite(preset) }) {
-              HStack(spacing: 3) {
-                Image(systemName: "star.fill")
-                  .font(.system(size: 8))
-                Text("Sauvegarder")
-                  .font(.system(size: 8, weight: .semibold))
-              }
-              .foregroundColor(session.accentColor)
-              .padding(.horizontal, 8)
-              .padding(.vertical, 4)
-              .background(session.accentColor.opacity(0.15))
-              .cornerRadius(6)
+        // Bouton étoile pour ajouter aux favoris (si preset non déjà présent)
+        if !session.timerIsRunning,
+           let preset = selectedPreset,
+           !presets.map({ $0.0 }).contains(preset),
+           !session.timerFavorites.contains(preset) {
+          Button {
+            WKInterfaceDevice.current().play(.success)
+            session.addTimerFavorite(preset)
+          } label: {
+            HStack(spacing: 4) {
+              Image(systemName: "star.fill")
+                .font(.system(size: 9))
+              Text("Sauver dans favoris")
+                .font(.system(size: 10, weight: .semibold))
             }
-            .buttonStyle(.plain)
+            .foregroundColor(Color(red: 1.0, green: 0.80, blue: 0.2))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color(red: 1.0, green: 0.80, blue: 0.2).opacity(0.15))
+            .clipShape(Capsule())
           }
+          .buttonStyle(.plain)
         }
       }
       .padding(.horizontal, 4)
+      .padding(.bottom, 6)
     }
+  }
+
+  // Helper : label lisible du total (pour afficher sous le countdown)
+  private func presetLabelForTotal(_ seconds: Int) -> String {
+    let match = presets.first(where: { $0.0 == seconds })
+    if let m = match { return m.1 }
+    return formatPresetLabel(seconds)
   }
 
   // MARK: - Alarm Overlay (looping sound + vibration)
