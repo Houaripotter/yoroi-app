@@ -129,7 +129,8 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
 
   // MARK: - Onglets de navigation
   // Tab 0: Dashboard  Tab 1: Poids  Tab 2: Hydratation  Tab 3: Sommeil
-  // Tab 4: Séances    Tab 5: Carnet Tab 6: Compétition  Tab 7: Réglages
+  // Tab 4: Séances    Tab 5: Carnet Tab 6: Sparring
+  // Tab 7: Compétition  Tab 8: Réglages
   private enum Tab {
     static let dashboard   = 0
     static let weight      = 1
@@ -137,7 +138,8 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     static let sleep       = 3
     static let workout     = 4
     static let carnet      = 5
-    static let competition = 6
+    static let sparring    = 6
+    static let competition = 7
   }
 
   // MARK: - Descripteurs
@@ -232,7 +234,7 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
         identifier: "yoroi.sparring",
         displayName: "Sparring – Cette semaine",
         supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall, .modularSmall],
-        userInfo: ["tabIndex": Tab.carnet] as [AnyHashable: Any]
+        userInfo: ["tabIndex": Tab.sparring] as [AnyHashable: Any]
       ),
       CLKComplicationDescriptor(
         identifier: "yoroi.nextcompetition",

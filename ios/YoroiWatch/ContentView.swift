@@ -40,14 +40,21 @@ struct ContentView: View {
       .tag(5)
       .containerBackground(session.bgColor, for: .tabView)
 
-      // Tab 6 : Compétition (rang, corps, PRs)
+      // Tab 6 : Sparring (rounds semaine, winrate, V/D)
+      NavigationStack {
+        SparringPage()
+      }
+      .tag(6)
+      .containerBackground(session.bgColor, for: .tabView)
+
+      // Tab 7 : Compétition (rang, corps, PRs)
       CompetitionPage()
-        .tag(6)
+        .tag(7)
         .containerBackground(session.bgColor, for: .tabView)
 
-      // Tab 7 : Réglages
+      // Tab 8 : Réglages
       SettingsPage()
-        .tag(7)
+        .tag(8)
         .containerBackground(session.bgColor, for: .tabView)
     }
     .tabViewStyle(.page)
