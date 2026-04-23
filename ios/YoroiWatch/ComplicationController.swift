@@ -83,6 +83,14 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
   private var heartRateMin: Int     { ud.integer(forKey: "yoroi_heartRateMin") }
   private var heartRateMax: Int     { ud.integer(forKey: "yoroi_heartRateMax") }
   private var restingHR: Int        { ud.integer(forKey: "yoroi_restingHR") }
+  private var userAge: Int          { let v = ud.integer(forKey: "yoroi_userAge"); return v > 0 ? v : 30 }
+  // Charge d'entraînement de la semaine (0-2000 environ, 1000 = charge normale)
+  private var trainingLoadWeek: Int    { ud.integer(forKey: "yoroi_trainingLoadWeek") }
+  private var trainingLoadTarget: Int  { let v = ud.integer(forKey: "yoroi_trainingLoadTarget"); return v > 0 ? v : 1000 }
+  // Par jour pour le bar chart 7 jours (lundi → dimanche)
+  private var trainingLoadByDay: [Int] {
+    return (0..<7).map { ud.integer(forKey: "yoroi_trainingLoadDay\($0)") }
+  }
   private var spo2: Int             { ud.integer(forKey: "yoroi_spo2") }
   private var spo2Min: Int          { ud.integer(forKey: "yoroi_spo2Min") }
   private var spo2Max: Int          { ud.integer(forKey: "yoroi_spo2Max") }
@@ -242,6 +250,18 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
         supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall, .modularSmall],
         userInfo: ["tabIndex": Tab.competition] as [AnyHashable: Any]
       ),
+      CLKComplicationDescriptor(
+        identifier: "yoroi.hrzone",
+        displayName: "FC – Zone cardio",
+        supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall, .modularSmall],
+        userInfo: ["tabIndex": Tab.dashboard] as [AnyHashable: Any]
+      ),
+      CLKComplicationDescriptor(
+        identifier: "yoroi.trainingload",
+        displayName: "Charge d'entraînement",
+        supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall],
+        userInfo: ["tabIndex": Tab.workout] as [AnyHashable: Any]
+      ),
     ]
     handler(descriptors)
   }
@@ -346,6 +366,16 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
                                   start: .navyBlue, end: .orange, fill: 0.8,
                                   body1: "Open de Marseille", body2: "Dans 12 jours",
                                   flatText: "J-12", header: "🏆 Prochaine compétition")
+    case "yoroi.hrzone":
+      return sampleCircularGauge(family: family, center: "Z3", bottom: "TEMPO",
+                                  start: .forestGreen, end: .mint, fill: 0.55,
+                                  body1: "Zone 3 · Tempo", body2: "142 bpm · 75% FC max",
+                                  flatText: "Z3", header: "FC · Zone cardio")
+    case "yoroi.trainingload":
+      return sampleCircularGauge(family: family, center: "830", bottom: "/1000",
+                                  start: .deepOrange, end: .amber, fill: 0.83,
+                                  body1: "Charge 830/1000", body2: "Semaine soutenue",
+                                  flatText: "830", header: "Charge d'entraînement")
     default:
       return nil
     }
@@ -575,6 +605,8 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     case "yoroi.addexercice": return addExerciceTemplate(family: complication.family)
     case "yoroi.sparring":    return sparringTemplate(family: complication.family)
     case "yoroi.nextcompetition": return nextCompetitionTemplate(family: complication.family)
+    case "yoroi.hrzone":      return hrZoneTemplate(family: complication.family)
+    case "yoroi.trainingload": return trainingLoadTemplate(family: complication.family)
     default:                  return nil
     }
   }
@@ -1620,6 +1652,134 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
       let t = CLKComplicationTemplateModularSmallStackText()
       t.line1TextProvider = CLKSimpleTextProvider(text: "J-")
       t.line2TextProvider = CLKSimpleTextProvider(text: daysText)
+      return t
+
+    default: return nil
+    }
+  }
+
+  // MARK: - FC Zone (zones cardio entraînement, style Garmin/Polar)
+  /// Calcule la zone cardio (1-5) et sa couleur selon la FC actuelle et l'âge.
+  /// Zone 1: 50-60% maxHR (récup) · Zone 2: 60-70% (endurance) · Zone 3: 70-80% (tempo)
+  /// Zone 4: 80-90% (seuil) · Zone 5: 90-100% (max)
+  private func computeHRZone() -> (zone: Int, label: String, color: (UIColor, UIColor), pct: Float) {
+    let hr = heartRate
+    let maxHR = heartRateMax > 0 ? heartRateMax : (220 - userAge)
+    guard hr > 0, maxHR > 0 else {
+      return (0, "Repos", (.steel, .silver), 0.0)
+    }
+    let pct = Float(hr) / Float(maxHR)
+    if pct < 0.5 {
+      return (0, "Repos", (.steel, .silver), pct)
+    } else if pct < 0.6 {
+      return (1, "Récup", (.tealBlue, .mint), pct)
+    } else if pct < 0.7 {
+      return (2, "Endurance", (.forestGreen, .limeGreen), pct)
+    } else if pct < 0.8 {
+      return (3, "Tempo", (.deepOrange, .amber), pct)
+    } else if pct < 0.9 {
+      return (4, "Seuil", (.crimson, .orange), pct)
+    } else {
+      return (5, "Max", (.crimson, .coral), pct)
+    }
+  }
+
+  private func hrZoneTemplate(family: CLKComplicationFamily) -> CLKComplicationTemplate? {
+    let (zone, label, colors, pct) = computeHRZone()
+    let bpm = heartRate
+    let zoneLabel = zone == 0 ? "—" : "Z\(zone)"
+    let gauge = elegantGauge(from: colors.0, to: colors.1, fill: min(1.0, pct))
+
+    switch family {
+    case .graphicCircular:
+      let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
+      t.gaugeProvider = gauge
+      t.centerTextProvider = CLKSimpleTextProvider(text: zoneLabel)
+      return t
+
+    case .graphicCorner:
+      let t = CLKComplicationTemplateGraphicCornerGaugeText()
+      t.outerTextProvider = CLKSimpleTextProvider(text: "\(zoneLabel) · \(label)", shortText: zoneLabel)
+      t.gaugeProvider = gauge
+      return t
+
+    case .graphicRectangular:
+      let t = CLKComplicationTemplateGraphicRectangularTextGauge()
+      t.headerTextProvider = CLKSimpleTextProvider(text: "FC · \(label)")
+      t.body1TextProvider = CLKSimpleTextProvider(
+        text: bpm > 0 ? "\(bpm) bpm · Zone \(zone)" : "Pas de données FC"
+      )
+      t.gaugeProvider = gauge
+      return t
+
+    case .utilitarianSmall:
+      let t = CLKComplicationTemplateUtilitarianSmallFlat()
+      t.textProvider = CLKSimpleTextProvider(text: zoneLabel)
+      return t
+
+    case .modularSmall:
+      let t = CLKComplicationTemplateModularSmallRingText()
+      t.textProvider = CLKSimpleTextProvider(text: zoneLabel)
+      t.fillFraction = min(1.0, pct)
+      t.ringStyle = .closed
+      return t
+
+    default: return nil
+    }
+  }
+
+  // MARK: - Charge d'entraînement hebdo
+  /// Progression de la charge de la semaine par rapport à un target (par défaut 1000)
+  /// Style Garmin : charge Léger/Optimal/Soutenu/Surcharge
+  private func trainingLoadTemplate(family: CLKComplicationFamily) -> CLKComplicationTemplate? {
+    let load = trainingLoadWeek
+    let target = trainingLoadTarget
+    let pct = target > 0 ? min(1.2, Float(load) / Float(target)) : 0.0
+
+    let label: String
+    let colors: (UIColor, UIColor)
+    if load == 0 {
+      label = "Inactif"
+      colors = (.steel, .silver)
+    } else if pct < 0.5 {
+      label = "Léger"
+      colors = (.tealBlue, .mint)
+    } else if pct < 0.85 {
+      label = "Optimal"
+      colors = (.forestGreen, .limeGreen)
+    } else if pct < 1.05 {
+      label = "Soutenu"
+      colors = (.deepOrange, .amber)
+    } else {
+      label = "Surcharge"
+      colors = (.crimson, .coral)
+    }
+
+    let gauge = elegantGauge(from: colors.0, to: colors.1, fill: min(1.0, pct))
+
+    switch family {
+    case .graphicCircular:
+      let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
+      t.gaugeProvider = gauge
+      t.centerTextProvider = CLKSimpleTextProvider(text: "\(load)")
+      return t
+
+    case .graphicCorner:
+      let t = CLKComplicationTemplateGraphicCornerGaugeText()
+      t.outerTextProvider = CLKSimpleTextProvider(text: "Charge · \(label)", shortText: label)
+      t.gaugeProvider = gauge
+      return t
+
+    case .graphicRectangular:
+      let t = CLKComplicationTemplateGraphicRectangularTextGauge()
+      t.headerTextProvider = CLKSimpleTextProvider(text: "📊 Charge hebdo · \(label)")
+      t.body1TextProvider = CLKSimpleTextProvider(text: "\(load) / \(target) points")
+      t.gaugeProvider = gauge
+      return t
+
+    case .utilitarianSmall:
+      let t = CLKComplicationTemplateUtilitarianSmallFlat()
+      t.textProvider = CLKSimpleTextProvider(text: load >= 1000 ? "\(load/1000)k" : "\(load)")
       return t
 
     default: return nil

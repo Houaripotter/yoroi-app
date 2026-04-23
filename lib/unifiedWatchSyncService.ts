@@ -61,6 +61,13 @@ export interface EnrichedWatchPayload {
   // Prochaine compétition (pour complication Apple Watch countdown)
   nextCompetitionName?: string;
   nextCompetitionDate?: string; // ISO date string
+
+  // Age (calcul zones FC sur complication FC Zone)
+  userAge?: number;
+
+  // Charge d'entraînement hebdo (complication Training Load)
+  trainingLoadWeek?: number; // points (somme duration × RPE / 10 sur la semaine)
+  trainingLoadTarget?: number; // target (défaut 1000)
 }
 
 /**
@@ -217,6 +224,22 @@ export async function syncAllWatchesEnriched(): Promise<void> {
       }
     } catch { /* competitions non disponible */ }
 
+    // Age utilisateur (pour zones FC sur complication)
+    const userAge = profile?.age && profile.age > 0 ? profile.age : undefined;
+
+    // Charge d'entraînement hebdo : somme (duration_min × RPE) / 10 sur 7 derniers jours
+    // Convention inspirée Garmin : 1000 points = semaine soutenue normale
+    let trainingLoadWeek = 0;
+    for (const t of trainings) {
+      try {
+        if (new Date(t.date) < weekAgo) continue;
+        const dur = t.duration_minutes || 0;
+        const rpe = t.intensity || 5; // RPE par défaut 5 si pas renseigné
+        trainingLoadWeek += Math.round((dur * rpe) / 10);
+      } catch {}
+    }
+    const trainingLoadTarget = 1000;
+
     // Progression poids
     let weightProgress = 0;
     if (profile?.target_weight && latestWeight?.weight && weights.length > 1) {
@@ -260,6 +283,11 @@ export async function syncAllWatchesEnriched(): Promise<void> {
       // Prochaine compétition (complication Apple Watch)
       nextCompetitionName,
       nextCompetitionDate,
+      // Age (pour zones FC)
+      userAge,
+      // Charge d'entraînement hebdo (complication)
+      trainingLoadWeek,
+      trainingLoadTarget,
     };
 
     await pushEnrichedToWatches(payload);

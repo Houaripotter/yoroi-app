@@ -222,6 +222,17 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   @Published var nextCompetitionDate: Date? = nil {
     didSet { UserDefaults.standard.set(nextCompetitionDate, forKey: "yoroi_nextCompetitionDate"); reloadComplications() }
   }
+
+  // MARK: - Age user + charge d'entraînement (pour complications HR Zone / Training Load)
+  @Published var userAge: Int = 30 {
+    didSet { UserDefaults.standard.set(userAge, forKey: "yoroi_userAge"); reloadComplications() }
+  }
+  @Published var trainingLoadWeek: Int = 0 {
+    didSet { UserDefaults.standard.set(trainingLoadWeek, forKey: "yoroi_trainingLoadWeek"); reloadComplications() }
+  }
+  @Published var trainingLoadTarget: Int = 1000 {
+    didSet { UserDefaults.standard.set(trainingLoadTarget, forKey: "yoroi_trainingLoadTarget") }
+  }
   @Published var lastTrainingRating: Int = 0 {
     didSet { UserDefaults.standard.set(lastTrainingRating, forKey: "yoroi_lastTrainingRating") }
   }
@@ -1166,6 +1177,11 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     } else if let ncd = data["nextCompetitionDate"] as? TimeInterval {
       nextCompetitionDate = Date(timeIntervalSince1970: ncd)
     }
+
+    // Age utilisateur (pour calcul zones FC) + charge d'entraînement
+    if let a = intVal("userAge"), a > 0 { userAge = a }
+    if let tl = intVal("trainingLoadWeek") { trainingLoadWeek = tl }
+    if let tlt = intVal("trainingLoadTarget"), tlt > 0 { trainingLoadTarget = tlt }
 
     // Préférences (unités + timer)
     if let us = data["unitSystem"] as? String {

@@ -150,6 +150,23 @@ function RootLayoutContent() {
       .catch(() => {});
   }, []);
 
+  // Streak at risk : vérifie au lancement + à chaque foreground
+  // Envoie une notif si user a streak ≥ 3j, pas de séance aujourd'hui, et il est entre 19h-22h
+  useEffect(() => {
+    import('@/lib/streakAtRiskNotification')
+      .then(({ checkAndNotifyStreakAtRisk }) => checkAndNotifyStreakAtRisk())
+      .catch(() => {});
+
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        import('@/lib/streakAtRiskNotification')
+          .then(({ checkAndNotifyStreakAtRisk }) => checkAndNotifyStreakAtRisk())
+          .catch(() => {});
+      }
+    });
+    return () => sub.remove();
+  }, []);
+
   // Init crash reporter (no-op tant que Sentry n'est pas installé + DSN configuré)
   useEffect(() => {
     import('@/lib/crashReporter')
