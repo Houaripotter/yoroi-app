@@ -197,6 +197,31 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
   @Published var lastTrainingSport: String = "" {
     didSet { UserDefaults.standard.set(lastTrainingSport, forKey: "yoroi_lastTrainingSport") }
   }
+
+  // MARK: - Sparring Stats (semaine en cours)
+  @Published var sparringRoundsWeek: Int = 0 {
+    didSet { UserDefaults.standard.set(sparringRoundsWeek, forKey: "yoroi_sparring_roundsWeek"); reloadComplications() }
+  }
+  @Published var sparringRoundsGoal: Int = 30 {
+    didSet { UserDefaults.standard.set(sparringRoundsGoal, forKey: "yoroi_sparring_roundsGoal") }
+  }
+  @Published var sparringWinRate: Int = 0 { // 0-100
+    didSet { UserDefaults.standard.set(sparringWinRate, forKey: "yoroi_sparring_winRate"); reloadComplications() }
+  }
+  @Published var sparringWinsWeek: Int = 0 {
+    didSet { UserDefaults.standard.set(sparringWinsWeek, forKey: "yoroi_sparring_winsWeek") }
+  }
+  @Published var sparringLossesWeek: Int = 0 {
+    didSet { UserDefaults.standard.set(sparringLossesWeek, forKey: "yoroi_sparring_lossesWeek") }
+  }
+
+  // MARK: - Prochaine compétition
+  @Published var nextCompetitionName: String = "" {
+    didSet { UserDefaults.standard.set(nextCompetitionName, forKey: "yoroi_nextCompetitionName"); reloadComplications() }
+  }
+  @Published var nextCompetitionDate: Date? = nil {
+    didSet { UserDefaults.standard.set(nextCompetitionDate, forKey: "yoroi_nextCompetitionDate"); reloadComplications() }
+  }
   @Published var lastTrainingRating: Int = 0 {
     didSet { UserDefaults.standard.set(lastTrainingRating, forKey: "yoroi_lastTrainingRating") }
   }
@@ -1074,6 +1099,23 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     if let st = intVal("submissionsTakenThisMonth") { submissionsTakenMonth = st }
     if let cw = intVal("combatWinsThisMonth") { combatWinsMonth = cw }
     if let cl = intVal("combatLossesThisMonth") { combatLossesMonth = cl }
+
+    // Sparring de la semaine (pour complication Sparring)
+    if let sr = intVal("sparringRoundsWeek") { sparringRoundsWeek = sr }
+    if let srg = intVal("sparringRoundsGoal") { sparringRoundsGoal = srg }
+    if let swr = intVal("sparringWinRate") { sparringWinRate = swr }
+    if let sw = intVal("sparringWinsWeek") { sparringWinsWeek = sw }
+    if let sl = intVal("sparringLossesWeek") { sparringLossesWeek = sl }
+
+    // Prochaine compétition (pour complication countdown)
+    if let ncn = data["nextCompetitionName"] as? String { nextCompetitionName = ncn }
+    if let ncd = data["nextCompetitionDate"] as? String {
+      // Parse ISO date string
+      let formatter = ISO8601DateFormatter()
+      nextCompetitionDate = formatter.date(from: ncd)
+    } else if let ncd = data["nextCompetitionDate"] as? TimeInterval {
+      nextCompetitionDate = Date(timeIntervalSince1970: ncd)
+    }
 
     // Préférences (unités + timer)
     if let us = data["unitSystem"] as? String {
