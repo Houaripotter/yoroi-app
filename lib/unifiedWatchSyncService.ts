@@ -50,6 +50,17 @@ export interface EnrichedWatchPayload {
   submissionsTakenThisMonth?: number;
   combatWinsThisMonth?: number;
   combatLossesThisMonth?: number;
+
+  // Sparring de la semaine (pour complication Apple Watch Sparring)
+  sparringRoundsWeek?: number;
+  sparringRoundsGoal?: number;
+  sparringWinRate?: number; // 0-100
+  sparringWinsWeek?: number;
+  sparringLossesWeek?: number;
+
+  // Prochaine compétition (pour complication Apple Watch countdown)
+  nextCompetitionName?: string;
+  nextCompetitionDate?: string; // ISO date string
 }
 
 /**
@@ -165,6 +176,47 @@ export async function syncAllWatchesEnriched(): Promise<void> {
       }
     }
 
+    // Sparring de la semaine (lundi → dimanche)
+    const weekStart = new Date(now);
+    const day = weekStart.getDay(); // 0 dim, 1 lun…
+    const diff = day === 0 ? -6 : 1 - day;
+    weekStart.setDate(weekStart.getDate() + diff);
+    weekStart.setHours(0, 0, 0, 0);
+    let sparringRoundsWeek = 0, sparringWinsWeek = 0, sparringLossesWeek = 0;
+    for (const t of trainings) {
+      if (new Date(t.date) < weekStart) continue;
+      if (!Array.isArray(t.combat_rounds)) continue;
+      for (const r of t.combat_rounds) {
+        sparringRoundsWeek++;
+        if (r.result === 'win') sparringWinsWeek++;
+        else if (r.result === 'loss') sparringLossesWeek++;
+      }
+    }
+    const totalCounted = sparringWinsWeek + sparringLossesWeek;
+    const sparringWinRate = totalCounted > 0
+      ? Math.round((sparringWinsWeek / totalCounted) * 100)
+      : 0;
+    const sparringGoalStr = await AsyncStorage.getItem('@sparring_weekly_goal').catch(() => null);
+    const sparringRoundsGoal = sparringGoalStr ? parseInt(sparringGoalStr, 10) : 30;
+
+    // Prochaine compétition (date >= aujourd'hui)
+    let nextCompetitionName: string | undefined;
+    let nextCompetitionDate: string | undefined;
+    try {
+      const { getCompetitions } = await import('./database');
+      const competitions = await getCompetitions();
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const upcoming = competitions
+        .filter((c: any) => {
+          try { return new Date(c.date) >= today; } catch { return false; }
+        })
+        .sort((a: any, b: any) => a.date.localeCompare(b.date));
+      if (upcoming.length > 0) {
+        nextCompetitionName = upcoming[0].nom;
+        nextCompetitionDate = new Date(upcoming[0].date).toISOString();
+      }
+    } catch { /* competitions non disponible */ }
+
     // Progression poids
     let weightProgress = 0;
     if (profile?.target_weight && latestWeight?.weight && weights.length > 1) {
@@ -199,6 +251,15 @@ export async function syncAllWatchesEnriched(): Promise<void> {
       submissionsTakenThisMonth: subsTaken,
       combatWinsThisMonth: wins,
       combatLossesThisMonth: losses,
+      // Sparring semaine (complication Apple Watch)
+      sparringRoundsWeek,
+      sparringRoundsGoal,
+      sparringWinRate,
+      sparringWinsWeek,
+      sparringLossesWeek,
+      // Prochaine compétition (complication Apple Watch)
+      nextCompetitionName,
+      nextCompetitionDate,
     };
 
     await pushEnrichedToWatches(payload);
