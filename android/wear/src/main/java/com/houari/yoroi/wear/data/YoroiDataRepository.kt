@@ -369,6 +369,20 @@ class YoroiDataRepository(private val context: Context) {
         if (timerRemainingSeconds <= 0) return
         timerIsRunning = true
         acquireWakeLock()
+        // Persiste la date de fin absolue (millis) pour que la complication puisse
+        // afficher un countdown live natif via TimeDifferenceComplicationText.
+        val endMillis = System.currentTimeMillis() + (timerRemainingSeconds * 1000L)
+        prefs.edit().putLong("timerEndDateMillis", endMillis).apply()
+        // Notifier les complications de se rafraîchir
+        try {
+            androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
+                .create(
+                    context,
+                    android.content.ComponentName(context, "com.houari.yoroi.wear.complications.TimerComplication")
+                )
+                .requestUpdateAll()
+        } catch (_: Throwable) { /* ignore si classe pas encore initialisée */ }
+
         timerJob?.cancel()
         timerJob = CoroutineScope(Dispatchers.Main).launch {
             while (timerRemainingSeconds > 0 && timerIsRunning) {
@@ -378,6 +392,7 @@ class YoroiDataRepository(private val context: Context) {
             if (timerRemainingSeconds <= 0) {
                 timerIsRunning = false
                 releaseWakeLock()
+                prefs.edit().remove("timerEndDateMillis").apply()
                 // Vibrer a la fin
                 @Suppress("DEPRECATION")
                 (context.getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator)
@@ -392,12 +407,14 @@ class YoroiDataRepository(private val context: Context) {
         timerIsRunning = false
         timerJob?.cancel()
         releaseWakeLock()
+        prefs.edit().remove("timerEndDateMillis").apply()
     }
 
     fun resetTimer() {
         timerIsRunning = false
         timerJob?.cancel()
         releaseWakeLock()
+        prefs.edit().remove("timerEndDateMillis").apply()
         timerRemainingSeconds = timerTotalSeconds
     }
 

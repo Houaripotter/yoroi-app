@@ -161,7 +161,7 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
       CLKComplicationDescriptor(
         identifier: "yoroi.timer",
         displayName: "Timer YOROI",
-        supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall],
+        supportedFamilies: [.graphicCircular, .graphicCorner, .graphicRectangular, .utilitarianSmall, .modularSmall],
         userInfo: ["tabIndex": Tab.dashboard, "openTimer": true] as [AnyHashable: Any]
       ),
       CLKComplicationDescriptor(
@@ -742,10 +742,24 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     switch family {
 
     case .graphicCircular:
-      let t = CLKComplicationTemplateGraphicCircularImage()
-      t.imageProvider = CLKFullColorImageProvider(fullColorImage:
-        makeYoroiCircularImage(value: timeText, icon: "timer", fill: CGFloat(frac)))
-      return t
+      if running {
+        // LIVE countdown qui défile seconde par seconde, sans que l'app tourne
+        // Le rendu natif watchOS update le texte + la jauge en continu.
+        let t = CLKComplicationTemplateGraphicCircularClosedGaugeText()
+        t.gaugeProvider = gaugeProvider
+        t.centerTextProvider = CLKRelativeDateTextProvider(
+          date: endDate,
+          style: .timer,
+          units: [.minute, .second]
+        )
+        return t
+      } else {
+        // Timer à l'arrêt : image statique avec temps courant
+        let t = CLKComplicationTemplateGraphicCircularImage()
+        t.imageProvider = CLKFullColorImageProvider(fullColorImage:
+          makeYoroiCircularImage(value: timeText, icon: "timer", fill: CGFloat(frac)))
+        return t
+      }
 
     case .graphicCorner:
       let t = CLKComplicationTemplateGraphicCornerGaugeText()
@@ -756,11 +770,24 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
       return t
 
     case .graphicRectangular:
-      let t = CLKComplicationTemplateGraphicRectangularStandardBody()
-      t.headerTextProvider = CLKSimpleTextProvider(text: "Timer YOROI")
-      t.body1TextProvider  = centerProvider
-      t.body2TextProvider  = CLKSimpleTextProvider(text: statusText)
-      return t
+      if running {
+        // Body1 = countdown live qui défile
+        let t = CLKComplicationTemplateGraphicRectangularTextGauge()
+        t.headerTextProvider = CLKSimpleTextProvider(text: "Timer YOROI")
+        t.body1TextProvider = CLKRelativeDateTextProvider(
+          date: endDate,
+          style: .timer,
+          units: [.minute, .second]
+        )
+        t.gaugeProvider = gaugeProvider
+        return t
+      } else {
+        let t = CLKComplicationTemplateGraphicRectangularStandardBody()
+        t.headerTextProvider = CLKSimpleTextProvider(text: "Timer YOROI")
+        t.body1TextProvider  = centerProvider
+        t.body2TextProvider  = CLKSimpleTextProvider(text: statusText)
+        return t
+      }
 
     case .utilitarianSmall:
       let t = CLKComplicationTemplateUtilitarianSmallFlat()
@@ -768,6 +795,24 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
         ? CLKRelativeDateTextProvider(date: endDate, style: .timer, units: [.minute, .second])
         : CLKSimpleTextProvider(text: timeText, shortText: timeText)
       return t
+
+    case .modularSmall:
+      if running {
+        // Modular small avec countdown + anneau qui se vide
+        let t = CLKComplicationTemplateModularSmallRingText()
+        t.textProvider = CLKRelativeDateTextProvider(
+          date: endDate,
+          style: .timer,
+          units: [.minute, .second]
+        )
+        t.fillFraction = frac
+        t.ringStyle = .closed
+        return t
+      } else {
+        let t = CLKComplicationTemplateModularSmallSimpleText()
+        t.textProvider = CLKSimpleTextProvider(text: timeText)
+        return t
+      }
 
     default: return nil
     }

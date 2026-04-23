@@ -157,6 +157,23 @@
         </service>
 
         <service
+            android:name=".complications.TimerComplication"
+            android:label="Yoroi - Timer (countdown live)"
+            android:exported="true"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.watchface.complications.datasource.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="SHORT_TEXT,LONG_TEXT,RANGED_VALUE" />
+            <!-- 0 = pas de refresh periodique : TimeDifferenceComplicationText gere le rendu dynamique -->
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="0" />
+        </service>
+
+        <service
             android:name=".complications.TrainingsMonthComplication"
             android:label="Yoroi - Seances du mois"
             android:exported="true"
