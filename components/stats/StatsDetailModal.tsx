@@ -106,7 +106,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
   const [userHeight, setUserHeight] = useState<number | null>(null);
   const [missingProfile, setMissingProfile] = useState(false);
 
-  // Charger les paramètres utilisateur — mis en cache pour que les modals suivants s'ouvrent instantanément
+  // Charger les paramètres utilisateur · mis en cache pour que les modals suivants s'ouvrent instantanément
   React.useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -361,7 +361,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
               </View>
             )}
 
-            {/* Bouton Historique complet — pour les métriques corporelles */}
+            {/* Bouton Historique complet · pour les métriques corporelles */}
             {['weight', 'fat_percent', 'muscle', 'water_percent', 'bone_mass', 'visceral_fat',
               'metabolic_age', 'bmr', 'waist', 'hips', 'chest', 'shoulders', 'left_arm',
               'right_arm', 'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'neck', 'navel'].includes(metricKey ?? '') && (

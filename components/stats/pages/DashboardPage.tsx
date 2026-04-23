@@ -483,7 +483,7 @@ export const DashboardPage: React.FC = React.memo(() => {
     return () => handle.cancel();
   }, [selectedPeriod, customStart, customEnd]);
 
-  // Recharger si des données changent ailleurs dans l'app — invalide le cache
+  // Recharger si des données changent ailleurs dans l'app · invalide le cache
   // puis refresh silencieux + debounce 1.5s pour éviter les rafales d'events.
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout> | null = null;
@@ -544,7 +544,7 @@ export const DashboardPage: React.FC = React.memo(() => {
     }));
   }, [selectedMetric]);
 
-  // NOTE: on ne bloque PLUS le render pendant `loading` — la structure (header +
+  // NOTE: on ne bloque PLUS le render pendant `loading` · la structure (header +
   // sélecteur de période) s'affiche immédiatement, les cartes se remplissent au fur
   // et à mesure. C'est la clé pour que l'onglet apparaisse instantanément.
   return (
@@ -572,14 +572,14 @@ export const DashboardPage: React.FC = React.memo(() => {
         onCustomRangeChange={handleCustomRangeChange}
       />
 
-      {/* Onboarding contextuel — affiché 1 seule fois pour les nouveaux users */}
+      {/* Onboarding contextuel · affiché 1 seule fois pour les nouveaux users */}
       <OnboardingTooltip
         id="dashboard-period-dropdown"
         title="Choisis ta période"
         text="Touche le bandeau de période pour filtrer (7j, 30j, custom...)"
       />
 
-      {/* Streak séances (Duolingo-style) — tout en haut pour effet motivant */}
+      {/* Streak séances (Duolingo-style) · tout en haut pour effet motivant */}
       <StreakBadge items={allTrainingsForStreak} />
 
       {/* Bandeau insights contextuels (juste sous le header de période) */}
@@ -642,7 +642,7 @@ export const DashboardPage: React.FC = React.memo(() => {
       {/* Derniers badges débloqués (réutilise lib/badges existant) */}
       <RecentBadgesStrip />
 
-      {/* Comparaisons fun (carrousel horizontal — effet wow) */}
+      {/* Comparaisons fun (carrousel horizontal · effet wow) */}
       {funComparisons.length > 0 && (
         <FunComparisonsCard comparisons={funComparisons} title="Le saviez-vous ?" />
       )}

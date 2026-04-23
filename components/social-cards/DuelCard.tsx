@@ -1,5 +1,5 @@
 // ============================================
-// DUEL CARD — Carte de duel sparring (Format carré 375×375)
+// DUEL CARD · Carte de duel sparring (Format carré 375×375)
 // ============================================
 // Carte partageable Instagram montrant le bilan H2H
 // entre l'utilisateur et un adversaire spécifique
@@ -235,7 +235,7 @@ export const DuelCard = React.memo(
               </View>
             ) : null}
 
-            {/* HISTORIQUE — 8 dernières séances */}
+            {/* HISTORIQUE · 8 dernières séances */}
             {last8.length > 0 ? (
               <View style={styles.historyRow}>
                 <Text style={[styles.historyLabel, { color: textSecondary }]}>

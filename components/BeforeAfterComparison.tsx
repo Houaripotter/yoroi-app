@@ -571,7 +571,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                         {weightDifference > 0 ? '+' : ''}{weightDifference.toFixed(1)} kg
                       </Text>
                     ) : (
-                      <Text style={[styles.statValue, { color: colors.textMuted }]}>—</Text>
+                      <Text style={[styles.statValue, { color: colors.textMuted }]}>·</Text>
                     )}
                   </View>
 
@@ -585,7 +585,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                         {daysDifference === 0 ? 'Aujourd\'hui' : `${daysDifference} j`}
                       </Text>
                     ) : (
-                      <Text style={[styles.statValue, { color: colors.textMuted }]}>—</Text>
+                      <Text style={[styles.statValue, { color: colors.textMuted }]}>·</Text>
                     )}
                   </View>
                 </View>

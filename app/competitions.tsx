@@ -333,7 +333,7 @@ export default function CompetitionsScreen() {
                   borderWidth: 2, borderColor: urgencyColor,
                 }}>
                   <Text style={{ fontSize: 28, fontWeight: '900', color: urgencyColor, letterSpacing: -1 }}>
-                    {daysUntil >= 0 ? daysUntil : '—'}
+                    {daysUntil >= 0 ? daysUntil : '·'}
                   </Text>
                   <Text style={{ fontSize: 9, fontWeight: '800', color: urgencyColor, letterSpacing: 0.4 }}>
                     {daysUntil > 1 ? 'JOURS' : 'JOUR'}
@@ -376,7 +376,7 @@ export default function CompetitionsScreen() {
                 <View style={{ marginTop: 12, padding: 10, borderRadius: 10, backgroundColor: '#EF444415', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Text style={{ fontSize: 16 }}>⚡</Text>
                   <Text style={{ flex: 1, fontSize: 12, fontWeight: '700', color: '#EF4444' }}>
-                    Coupe de poids et revue technique en cours — bonne chance !
+                    Coupe de poids et revue technique en cours · bonne chance !
                   </Text>
                 </View>
               )}

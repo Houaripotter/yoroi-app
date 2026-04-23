@@ -98,6 +98,6 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Dismiss le clavier — utile sur onPress d'un bouton de submit par exemple.
+ * Dismiss le clavier · utile sur onPress d'un bouton de submit par exemple.
  */
 export const dismissKeyboard = () => Keyboard.dismiss();

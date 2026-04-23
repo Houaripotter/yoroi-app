@@ -1,5 +1,5 @@
 // ============================================
-// ONBOARDING TOUR — 4 écrans swipeables pour les nouveaux utilisateurs.
+// ONBOARDING TOUR · 4 écrans swipeables pour les nouveaux utilisateurs.
 // Présente les features clés : stats, sparring, sync, partage.
 // Affiché UNE seule fois (persisté via AsyncStorage).
 // Design : aligné sur le thème de l'app (dark marine) avec accent unique.
@@ -25,7 +25,7 @@ const STEPS = [
   {
     icon: BarChart2,
     title: 'Stats qui te motivent',
-    description: 'Suis ton poids, tes séances et ton sommeil avec des visualisations claires. Heatmap, streak, insights automatiques — tout pour voir ta progression d\'un coup d\'œil.',
+    description: 'Suis ton poids, tes séances et ton sommeil avec des visualisations claires. Heatmap, streak, insights automatiques · tout pour voir ta progression d\'un coup d\'œil.',
   },
   {
     icon: Swords,
@@ -40,7 +40,7 @@ const STEPS = [
   {
     icon: Share2,
     title: 'Partage tes progrès',
-    description: 'Génère des cartes Instagram-ready pour partager tes stats avec ta communauté. Confetti, streak, records — montre ton sérieux.',
+    description: 'Génère des cartes Instagram-ready pour partager tes stats avec ta communauté. Confetti, streak, records · montre ton sérieux.',
   },
 ];
 

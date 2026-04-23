@@ -493,7 +493,7 @@ function PartnerDetail({
           impactAsync(ImpactFeedbackStyle.Medium);
         }
       } else {
-        // GALERIE — on NE demande PAS la permission avant launchImageLibraryAsync
+        // GALERIE · on NE demande PAS la permission avant launchImageLibraryAsync
         // PHPickerViewController (iOS 14+) n'a PAS besoin de permission
         // et donne accès à TOUTES les photos de la bibliothèque
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -632,7 +632,7 @@ function PartnerDetail({
         </View>
       </View>
 
-      {/* Modal Briefing pré-combat — full screen, riche, scrollable */}
+      {/* Modal Briefing pré-combat · full screen, riche, scrollable */}
       <Modal visible={showBriefing} transparent={false} animationType="slide" onRequestClose={() => setShowBriefing(false)}>
         <View style={{ flex: 1, backgroundColor: isDark ? '#0F0F12' : '#F8FAFC' }}>
           {/* Header sticky */}
@@ -733,7 +733,7 @@ function PartnerDetail({
           </View>
 
           <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32 }} showsVerticalScrollIndicator={false}>
-            {/* OBJECTIF DU JOUR — gros bloc accent violet */}
+            {/* OBJECTIF DU JOUR · gros bloc accent violet */}
             {p.activeGoal?.text && (
               <View style={{
                 backgroundColor: '#8B5CF6', borderRadius: 16, padding: 16, marginBottom: 14,
@@ -764,7 +764,7 @@ function PartnerDetail({
               </View>
             )}
 
-            {/* DANGERS — ses forces (rouge) */}
+            {/* DANGERS · ses forces (rouge) */}
             {p.strengths.length > 0 && (
               <View style={{
                 backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
@@ -773,7 +773,7 @@ function PartnerDetail({
               }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                   <AlertCircle size={14} color="#EF4444" />
-                  <Text style={{ fontSize: 12, fontWeight: '900', color: '#EF4444', letterSpacing: 0.5 }}>DANGERS — SES POINTS FORTS</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '900', color: '#EF4444', letterSpacing: 0.5 }}>DANGERS · SES POINTS FORTS</Text>
                 </View>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                   {p.strengths.map((s, i) => (
@@ -799,7 +799,7 @@ function PartnerDetail({
               </View>
             )}
 
-            {/* OPPORTUNITÉS — ce qui marche (vert) */}
+            {/* OPPORTUNITÉS · ce qui marche (vert) */}
             {(p.whatWorks.length > 0 || topGiven.length > 0) && (
               <View style={{
                 backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
@@ -808,7 +808,7 @@ function PartnerDetail({
               }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                   <Zap size={14} color="#22C55E" />
-                  <Text style={{ fontSize: 12, fontWeight: '900', color: '#22C55E', letterSpacing: 0.5 }}>OPPORTUNITÉS — CE QUI MARCHE</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '900', color: '#22C55E', letterSpacing: 0.5 }}>OPPORTUNITÉS · CE QUI MARCHE</Text>
                 </View>
                 {p.whatWorks.length > 0 && (
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -844,7 +844,7 @@ function PartnerDetail({
               }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                   <Text style={{ fontSize: 13 }}>⚡</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '900', color: '#F59E0B', letterSpacing: 0.5 }}>SES FAIBLESSES — À EXPLOITER</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '900', color: '#F59E0B', letterSpacing: 0.5 }}>SES FAIBLESSES · À EXPLOITER</Text>
                 </View>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                   {p.weaknesses.map((s, i) => (
@@ -870,7 +870,7 @@ function PartnerDetail({
                 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                     <Text style={{ fontSize: 13 }}>📋</Text>
-                    <Text style={{ fontSize: 12, fontWeight: '900', color: '#3B82F6', letterSpacing: 0.5 }}>DERNIÈRE SESSION — DEBRIEF</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '900', color: '#3B82F6', letterSpacing: 0.5 }}>DERNIÈRE SESSION · DEBRIEF</Text>
                   </View>
                   {lastGP && (
                     <View style={{ marginBottom: 10 }}>
@@ -900,7 +900,7 @@ function PartnerDetail({
               );
             })()}
 
-            {/* PROGRESSION récente — mini timeline */}
+            {/* PROGRESSION récente · mini timeline */}
             {progressionBlocks.length > 0 && (
               <View style={{
                 backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
@@ -909,7 +909,7 @@ function PartnerDetail({
               }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                   <Text style={{ fontSize: 13 }}>📊</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '900', color: '#A855F7', letterSpacing: 0.5 }}>PROGRESSION — {progressionBlocks.length} DERNIÈRES SESSIONS</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '900', color: '#A855F7', letterSpacing: 0.5 }}>PROGRESSION · {progressionBlocks.length} DERNIÈRES SESSIONS</Text>
                 </View>
                 <View style={{ flexDirection: 'row', gap: 4, flexWrap: 'wrap' }}>
                   {progressionBlocks.slice(0, 20).map((b, i) => (
@@ -933,7 +933,7 @@ function PartnerDetail({
               </View>
             )}
 
-            {/* NOTES TACTIQUES — 3 dernières */}
+            {/* NOTES TACTIQUES · 3 dernières */}
             {p.notes.length > 0 && (
               <View style={{
                 backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
@@ -1022,7 +1022,7 @@ function PartnerDetail({
           contentInsetAdjustmentBehavior="automatic">
 
         {/* ════════════════════════════════════════════════
-            🥊 FIGHTER CARD — Hero stylée façon UFC / EA Sports
+            🥊 FIGHTER CARD · Hero stylée façon UFC / EA Sports
             ════════════════════════════════════════════════ */}
         <View style={{ borderRadius: 18, overflow: 'hidden', marginBottom: 12, backgroundColor: isDark ? '#0a0a0a' : '#1a1a1a', shadowColor: fighterTitle.color, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 18, elevation: 10 }}>
           {/* Photo + overlay */}
@@ -1140,7 +1140,7 @@ function PartnerDetail({
               </View>
               <View style={{ flex: 1.2, alignItems: 'center', paddingVertical: 14, backgroundColor: dbWinRate != null && dbWinRate >= 50 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)' }}>
                 <Text style={{ fontSize: 22, fontWeight: '900', color: dbWinRate != null && dbWinRate >= 50 ? '#22C55E' : '#EF4444' }}>
-                  {dbWinRate != null ? `${dbWinRate}%` : '—'}
+                  {dbWinRate != null ? `${dbWinRate}%` : '·'}
                 </Text>
                 <Text style={{ fontSize: 9, fontWeight: '800', color: 'rgba(255,255,255,0.6)', marginTop: 2, letterSpacing: 1 }}>WIN RATE</Text>
               </View>
@@ -1149,7 +1149,7 @@ function PartnerDetail({
         </View>
 
         {/* ════════════════════════════════════════════════
-            ⚔️ TALE OF THE TAPE — scorecard comparatif MOI vs LUI
+            ⚔️ TALE OF THE TAPE · scorecard comparatif MOI vs LUI
             ════════════════════════════════════════════════ */}
         {dbTotal > 0 && (() => {
           const rows = [
@@ -1244,7 +1244,7 @@ function PartnerDetail({
         })()}
 
         {/* ════════════════════════════════════════════════
-            🗡️ ARSENAL — détail des finitions (qui finit qui par quoi)
+            🗡️ ARSENAL · détail des finitions (qui finit qui par quoi)
             ════════════════════════════════════════════════ */}
         {dbTotal > 0 && (enrichedStats.topMethodsTaken.length > 0 || enrichedStats.topMethodsGiven.length > 0) && (
           <View style={cardStyle}>
@@ -1526,7 +1526,7 @@ function PartnerDetail({
           )}
         </View>
 
-        {/* Bilan sparring — calculé depuis les vraies séances */}
+        {/* Bilan sparring · calculé depuis les vraies séances */}
         <View style={cardStyle}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
             <TrendingUp size={14} color="#22C55E" />
@@ -1575,7 +1575,7 @@ function PartnerDetail({
           )}
         </View>
 
-        {/* ── HISTORIQUE DES NOTES — évolution niveau perçu ── */}
+        {/* ── HISTORIQUE DES NOTES · évolution niveau perçu ── */}
         {(() => {
           const ratings: { date: string; rating: number; roundNum: number }[] = [];
           for (const entry of [...sessionHistory].reverse()) {
@@ -1600,7 +1600,7 @@ function PartnerDetail({
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={{ fontSize: 16 }}>⭐</Text>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>Niveau perçu — par round</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>Niveau perçu · par round</Text>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: `${avgColor}18`, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
                   <Text style={{ fontSize: 11, fontWeight: '900', color: avgColor }}>Moy : {avgRounded}/10</Text>
@@ -1655,8 +1655,8 @@ function PartnerDetail({
               {/* Message interprétatif */}
               <View style={{ marginTop: 10, padding: 8, backgroundColor: `${avgColor}10`, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: avgColor }}>
                 <Text style={{ fontSize: 11, color: colors.text, lineHeight: 16 }}>
-                  {trend > 1 && `↑ Tu le perçois ${trend} pts plus fort qu'au début — il s'améliore.`}
-                  {trend < -1 && `↓ Tu le perçois ${Math.abs(trend)} pts moins fort qu'au début — tu progresses sur lui.`}
+                  {trend > 1 && `↑ Tu le perçois ${trend} pts plus fort qu'au début · il s'améliore.`}
+                  {trend < -1 && `↓ Tu le perçois ${Math.abs(trend)} pts moins fort qu'au début · tu progresses sur lui.`}
                   {trend === 0 && `→ Niveau stable à travers les rounds.`}
                   {trend === 1 && `↑ Légère montée en puissance.`}
                   {trend === -1 && `↓ Tu commences à le dominer légèrement.`}
@@ -1686,7 +1686,7 @@ function PartnerDetail({
               )}
             </View>
 
-            {/* Timeline de progression — dernier à gauche */}
+            {/* Timeline de progression · dernier à gauche */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }}>
               <View style={{ flexDirection: 'row', gap: 4, paddingVertical: 4 }}>
                 {progressionBlocks.map((b, i) => {
@@ -2156,7 +2156,7 @@ export default function SparringPartnersScreen() {
               onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setSelectedId(partner.id); }}
               activeOpacity={0.8}
             >
-              {/* Avatar — photo ou icône */}
+              {/* Avatar · photo ou icône */}
               <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#EF444418', justifyContent: 'center', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
                 {partner.photoUri ? (
                   <Image source={{ uri: partner.photoUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />

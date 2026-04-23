@@ -389,7 +389,7 @@ export default function DojoScreen() {
     };
   }, []);
 
-  // Compte à rebours défis — se remet à jour quand l'onglet change
+  // Compte à rebours défis · se remet à jour quand l'onglet change
   useEffect(() => {
     const getDeadline = () => {
       const now = new Date();
@@ -1297,7 +1297,7 @@ export default function DojoScreen() {
               </View>
               <Text style={[styles.defisExplainText, { color: colors.textMuted }]}>
                 Chaque défi complété te rapporte des <Text style={{ fontWeight: '800', color: isDark ? '#FFD700' : '#B8860B' }}>XP (points d'expérience)</Text>.
-                Les XP font monter ton rang dans le Dojo — de Ronin jusqu'à Shogun.
+                Les XP font monter ton rang dans le Dojo · de Ronin jusqu'à Shogun.
                 Plus ton rang est élevé, plus tu débloques d'avantages.
               </Text>
               <View style={styles.defisExplainGrid}>
@@ -2599,7 +2599,7 @@ const styles = StyleSheet.create({
   },
 
   // ═══════════════════════════════════════
-  // DÉFIS — EXPLICATION + COUNTDOWN
+  // DÉFIS · EXPLICATION + COUNTDOWN
   // ═══════════════════════════════════════
   defisExplainCard: {
     borderRadius: 14,

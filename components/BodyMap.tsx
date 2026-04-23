@@ -465,7 +465,7 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
         </View>
       )}
 
-      {/* ZONE IMAGE — wrappé dans GestureDetector pour pinch + pan zoom */}
+      {/* ZONE IMAGE · wrappé dans GestureDetector pour pinch + pan zoom */}
       <View style={styles.mainArea}>
         <GestureDetector gesture={composedGesture}>
           <View style={[styles.imageFrame, { aspectRatio: FORCED_ASPECT_RATIO, overflow: 'hidden' }]}>

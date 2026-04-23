@@ -424,7 +424,7 @@ export default function HomeScreen() {
     }
   }, [ctxRawSleepHistory]);
 
-  // Objectifs anneaux Apple + données hebdo — non-bloquant, en arrière-plan
+  // Objectifs anneaux Apple + données hebdo · non-bloquant, en arrière-plan
   useEffect(() => {
     const loadActivityGoals = async () => {
       try {
@@ -996,7 +996,7 @@ export default function HomeScreen() {
     }
   }, []);
 
-  // Auto-sync au montage — différé de 4s pour laisser loadData() se terminer en premier
+  // Auto-sync au montage · différé de 4s pour laisser loadData() se terminer en premier
   useEffect(() => {
     const t = setTimeout(() => performHealthSync(), 4000);
     return () => clearTimeout(t);
@@ -1320,7 +1320,7 @@ export default function HomeScreen() {
                 </View>
               </TouchableOpacity>
 
-              {/* Texte (Centre) — cliquable pour aller au profil.
+              {/* Texte (Centre) · cliquable pour aller au profil.
                   Le ViewModeSwitch enfant intercepte ses propres clics (responder RN). */}
               <TouchableOpacity
                 style={styles.headerText}

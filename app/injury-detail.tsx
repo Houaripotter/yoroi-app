@@ -755,7 +755,7 @@ export default function InjuryDetailScreen() {
               return (
                 <View style={{ marginTop: 12, gap: 8 }}>
                   <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 4 }}>
-                    Protocole estimé — ajuste selon ton ressenti et l'avis de ton médecin.
+                    Protocole estimé · ajuste selon ton ressenti et l'avis de ton médecin.
                   </Text>
                   {returnWeeks.map(w => (
                     <View key={w.week} style={{ flexDirection: 'row', gap: 10, padding: 10, borderRadius: 10, backgroundColor: `${w.color}10`, borderLeftWidth: 3, borderLeftColor: w.color }}>

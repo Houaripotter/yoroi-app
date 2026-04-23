@@ -1,5 +1,5 @@
 // ============================================
-// SPARRING TAB — Onglet Combat du Carnet
+// SPARRING TAB · Onglet Combat du Carnet
 // Analyse sparring : partenaires, techniques, finitions
 // ============================================
 
@@ -389,7 +389,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           partners.splice(newIdx > oldIdx ? newIdx : newIdx, 1);
         }
       } else if (newIdx >= 0) {
-        // Déjà une entrée avec le nouveau nom (tentative précédente) — la mettre à jour
+        // Déjà une entrée avec le nouveau nom (tentative précédente) · la mettre à jour
         partners[newIdx] = { ...partners[newIdx], name: newName, photoUri: photoToSave };
       } else {
         // Nouvelle entrée
@@ -423,7 +423,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
         } catch {}
       }
 
-      // 3. Mettre à jour le state local — garder les deux clés pour éviter
+      // 3. Mettre à jour le state local · garder les deux clés pour éviter
       //    une disparition de photo si le rename DB a échoué
       setPartnerPhotos(prev => {
         const next = { ...prev };
@@ -831,12 +831,12 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
     if (totals.winRate != null && (totals.wins + totals.losses) >= 3) {
       if (totals.winRate >= 70) out.push({
         Icon: Flame,
-        text: `${totals.winRate}% de victoires — tu domines. Cherche du plus dur.`,
+        text: `${totals.winRate}% de victoires · tu domines. Cherche du plus dur.`,
         color: '#22C55E',
       });
       else if (totals.winRate <= 30) out.push({
         Icon: Dumbbell,
-        text: `${totals.winRate}% de victoires — phase d'apprentissage. Concentre-toi sur 1 objectif par séance.`,
+        text: `${totals.winRate}% de victoires · phase d'apprentissage. Concentre-toi sur 1 objectif par séance.`,
         color: '#EF4444',
       });
     }
@@ -886,7 +886,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
   const trackBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)';
 
   if (loading) {
-    // Skeleton shimmer plutôt qu'un spinner blanc — perçu comme + rapide
+    // Skeleton shimmer plutôt qu'un spinner blanc · perçu comme + rapide
     return (
       <View style={{ flex: 1, backgroundColor: bgColor, paddingTop: 16 }}>
         <SkeletonGrid count={6} cardHeight={140} />
@@ -959,7 +959,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           </ScrollView>
         )}
 
-        {/* ── VIDE — empty state riche avec CTA ── */}
+        {/* ── VIDE · empty state riche avec CTA ── */}
         {isEmpty && (
           <StatsEmptyState
             icon={<Swords size={36} color={SPARRING_COLORS.win} strokeWidth={2} />}
@@ -980,7 +980,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           />
         )}
 
-        {/* Streak séances combat — motivant et viral */}
+        {/* Streak séances combat · motivant et viral */}
         {!isEmpty && (
           <StreakBadge
             items={trainings as any[]}
@@ -1001,7 +1001,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           return autoInsights.length > 0 ? <StatsInsightBanner insights={autoInsights} /> : null;
         })()}
 
-        {/* ── PODIUM TOP 3 — tout en haut ── */}
+        {/* ── PODIUM TOP 3 · tout en haut ── */}
         {partnerStats.length >= 2 && (
           <PodiumSection
             partners={partnerStats.slice(0, 3)}
@@ -1057,7 +1057,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder, marginBottom: 12 }]}>
             <View style={[styles.sectionHead, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
               <Lightbulb size={16} color={colors.text} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Coach — insights</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Coach · insights</Text>
             </View>
             <View style={{ gap: 8, marginTop: 6 }}>
               {insights.map((ins, i) => (
@@ -1072,7 +1072,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           </View>
         )}
 
-        {/* ── VUE D'ENSEMBLE — grille 2×2 ── */}
+        {/* ── VUE D'ENSEMBLE · grille 2×2 ── */}
         {!isEmpty && (
           <View style={styles.overviewGrid}>
             {/* Rounds */}
@@ -1090,7 +1090,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               <Text style={[styles.overviewValue, { color: '#F59E0B' }]}>{totals.techniques}</Text>
               <Text style={[styles.overviewLabel, { color: '#F59E0B' }]}>{t('sparring.techniques')}</Text>
             </View>
-            {/* Win rate — couleur dynamique */}
+            {/* Win rate · couleur dynamique */}
             {(() => {
               const wr = totals.winRate;
               const wrColor = wr == null ? '#6B7280' : wr >= 60 ? '#22C55E' : wr >= 40 ? '#F59E0B' : '#EF4444';
@@ -1281,7 +1281,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                 </View>
                 <Text style={{ fontSize: 11, color: colors.textMuted, textAlign: 'center', marginTop: 4 }}>
                   {t('sparring.lastWeeks', { count: weeklyBars.length })}{'  '}
-                  <Text style={{ color: '#F59E0B' }}>— {t('sparring.goal')} {weeklyGoal}</Text>
+                  <Text style={{ color: '#F59E0B' }}>· {t('sparring.goal')} {weeklyGoal}</Text>
                 </Text>
               </>
             )}
@@ -1363,7 +1363,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
             <View style={[styles.sectionHead, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
               <Shield size={16} color={colors.text} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Finitions reçues — à défendre</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Finitions reçues · à défendre</Text>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
               {topMethodsTaken.map(([name, count]) => (
@@ -1444,7 +1444,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                     delayLongPress={500}
                     activeOpacity={0.75}
                   >
-                    {/* Avatar — photo ou initiales */}
+                    {/* Avatar · photo ou initiales */}
                     <TouchableOpacity
                       onPress={() => {
                         Alert.alert(
@@ -1945,7 +1945,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                   return (
                     <View key={idx} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
                       <Text style={{ fontSize: 10, fontWeight: '900', color: wr !== null ? color : colors.textMuted }}>
-                        {wr !== null ? `${wr}%` : '—'}
+                        {wr !== null ? `${wr}%` : '·'}
                       </Text>
                       <View style={{
                         width: '70%',
@@ -1956,7 +1956,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                       }} />
                       <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, marginTop: 2 }}>{days[idx]}</Text>
                       <Text style={{ fontSize: 9, color: colors.textMuted, opacity: 0.7 }}>
-                        {d.sessions > 0 ? `${d.sessions}s` : '—'}
+                        {d.sessions > 0 ? `${d.sessions}s` : '·'}
                       </Text>
                     </View>
                   );
@@ -2063,7 +2063,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
             stats={[
               { label: 'Rounds', value: String(totals.rounds), color: SPARRING_COLORS.win },
               { label: 'Partenaires', value: String(totals.partners), color: '#3B82F6' },
-              { label: 'Win rate', value: totals.winRate !== null ? `${totals.winRate}%` : '—', color: '#A855F7' },
+              { label: 'Win rate', value: totals.winRate !== null ? `${totals.winRate}%` : '·', color: '#A855F7' },
               { label: 'Techniques', value: String(totals.techniques), color: '#F59E0B' },
             ]}
             tagline="Tatami life 🥋"
@@ -2139,13 +2139,13 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
       {/* ── MODAL ÉDITION NOM + PHOTO ── */}
       <Modal visible={editingPartner !== null} transparent animationType="slide" onRequestClose={() => setEditingPartner(null)}>
         <View style={{ flex: 1 }}>
-          {/* Backdrop — position absolue pour ne pas bloquer les touches sur le contenu */}
+          {/* Backdrop · position absolue pour ne pas bloquer les touches sur le contenu */}
           <TouchableOpacity
             style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.55)' }}
             activeOpacity={1}
             onPress={() => setEditingPartner(null)}
           />
-          {/* Contenu — KeyboardAvoidingView entoure uniquement le bas */}
+          {/* Contenu · KeyboardAvoidingView entoure uniquement le bas */}
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{ flex: 1, justifyContent: 'flex-end' }}
@@ -2628,7 +2628,7 @@ function PodiumSection({ partners, accent, colors, isDark, onSelect, partnerPhot
                   {winRate}%
                 </Text>
               ) : (
-                <Text style={[styles.podiumWinRate, { color: colors.textMuted }]}>—</Text>
+                <Text style={[styles.podiumWinRate, { color: colors.textMuted }]}>·</Text>
               )}
 
               {/* Étoiles niveau partenaire (rating 1-10 → 5 étoiles) */}
@@ -2746,7 +2746,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Vue d'ensemble — rangée compacte horizontale
+  // Vue d'ensemble · rangée compacte horizontale
   overviewGrid: {
     flexDirection: 'row',
     gap: 8,
@@ -2830,7 +2830,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // Séances récentes — cartes
+  // Séances récentes · cartes
   recentCard: {
     flexDirection: 'row',
     gap: 10,
@@ -2853,7 +2853,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
 
-  // Partenaires — cartes avatar
+  // Partenaires · cartes avatar
   partnerCard: {
     flexDirection: 'row',
     gap: 12,

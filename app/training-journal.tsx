@@ -94,7 +94,7 @@ import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 import { logger } from '@/lib/security/logger';
 
 // ============================================
-// SWIPEABLE ROW — swipe gauche pour révéler Supprimer
+// SWIPEABLE ROW · swipe gauche pour révéler Supprimer
 // ============================================
 const SwipeableCard = React.memo(function SwipeableCard({
   onDelete,
@@ -558,7 +558,7 @@ export default function TrainingJournalScreen() {
         return;
       }
 
-      // Cache instantané — afficher les données précédentes pendant le rechargement
+      // Cache instantané · afficher les données précédentes pendant le rechargement
       try {
         const cached = await AsyncStorage.getItem(JOURNAL_CACHE_KEY);
         if (cached) {
@@ -632,7 +632,7 @@ export default function TrainingJournalScreen() {
   };
 
   // Filter benchmarks (by global filter AND search query) - only show benchmarks WITH entries
-  // Poids de Corps (bodyweight) exclu — c'est le poids de l'utilisateur, pas pertinent ici
+  // Poids de Corps (bodyweight) exclu · c'est le poids de l'utilisateur, pas pertinent ici
   // Sorted by most recent entry first
   const filteredBenchmarks = benchmarks.filter(b => {
     const hasEntries = b.entries && b.entries.length > 0;
@@ -1563,7 +1563,7 @@ export default function TrainingJournalScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBackground, paddingTop: insets.top }]}>
-      {/* Tab Selector — identique à Planning/Stats */}
+      {/* Tab Selector · identique à Planning/Stats */}
       <View style={[styles.tabContainer, { backgroundColor: screenBackground }]}>
         <View style={styles.tabsRow}>
           {([
@@ -1646,10 +1646,10 @@ export default function TrainingJournalScreen() {
 
       {/* Info Banner supprimé - nettoyage disponible dans Menu */}
 
-      {/* Onglet Sparring — contenu inline, pas de recherche ni filtres */}
+      {/* Onglet Sparring · contenu inline, pas de recherche ni filtres */}
       {activeTab === 'combat' && <SparringTab />}
 
-      {/* Search Bar + Filtres — masqués en mode Sparring */}
+      {/* Search Bar + Filtres · masqués en mode Sparring */}
       {activeTab !== 'combat' && (
         <>
           <View style={[styles.searchContainer, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}>
@@ -1718,7 +1718,7 @@ export default function TrainingJournalScreen() {
         </>
       )}
 
-      {/* Légende des icônes — visible uniquement sur l'onglet Records */}
+      {/* Légende des icônes · visible uniquement sur l'onglet Records */}
       {activeTab === 'records' && (
         <View style={[styles.legendRow, { backgroundColor: isDark ? colors.background : '#FFFFFF', borderBottomColor: colors.border }]}>
           <View style={styles.legendItem}>
@@ -1750,7 +1750,7 @@ export default function TrainingJournalScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
         }
       >
-        {/* Stats Summary — chiffres animés count-up pour effet premium */}
+        {/* Stats Summary · chiffres animés count-up pour effet premium */}
         <View style={[styles.statsRow, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
           <View style={styles.statItem}>
             <AnimatedCounter
@@ -1836,7 +1836,7 @@ export default function TrainingJournalScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 9, fontWeight: '800', color: recordsStats.lastPR.color, letterSpacing: 0.4 }}>DERNIER PR</Text>
                       <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginTop: 1 }} numberOfLines={1}>
-                        {recordsStats.lastPR.name} — {recordsStats.lastPR.value} {recordsStats.lastPR.unit}
+                        {recordsStats.lastPR.name} · {recordsStats.lastPR.value} {recordsStats.lastPR.unit}
                       </Text>
                     </View>
                     <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>
@@ -2140,7 +2140,7 @@ export default function TrainingJournalScreen() {
           </>
         )}
 
-        {/* Bouton "Partager mes stats carnet" — carte Instagram-ready */}
+        {/* Bouton "Partager mes stats carnet" · carte Instagram-ready */}
         {(stats.totalPRs > 0 || stats.skillsMastered > 0) && (
           <ShareStatsButton
             title="Mon carnet Yoroi"
@@ -2515,7 +2515,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  // Tab styles — identique Planning/Stats
+  // Tab styles · identique Planning/Stats
   tabContainer: {
     paddingTop: 10,
     paddingBottom: 10,

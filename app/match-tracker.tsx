@@ -2,7 +2,7 @@
 // YOROI - MATCH TRACKER EN DIRECT
 // ============================================
 // Saisie rapide pendant/après un match de tournoi
-// Boutons 1 main — timeline reconstructible
+// Boutons 1 main · timeline reconstructible
 // ============================================
 
 import React, { useState, useRef, useCallback } from 'react';
@@ -379,7 +379,7 @@ export default function MatchTrackerScreen() {
           <Text style={{ fontSize: 22, fontWeight: '900', color: myWin ? '#22C55E' : oppWin ? '#EF4444' : colors.text }}>
             {myWin ? t('matchTracker.victory') : oppWin ? t('matchTracker.defeat') : t('matchTracker.draw')}
           </Text>
-          <Text style={{ fontSize: 32, fontWeight: '900', color: colors.text }}>{myScore} — {oppScore}</Text>
+          <Text style={{ fontSize: 32, fontWeight: '900', color: colors.text }}>{myScore} · {oppScore}</Text>
           {elapsed.current > 0 && (
             <Text style={{ fontSize: 13, color: colors.textMuted ?? '#888' }}>{t('matchTracker.duration')} {formatTime(elapsed.current)}</Text>
           )}

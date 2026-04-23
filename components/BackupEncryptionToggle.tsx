@@ -80,7 +80,7 @@ const BackupEncryptionToggleInner: React.FC = () => {
         setHasPassword(true);
         Alert.alert(
           '✅ Chiffrement activé',
-          'Tes prochains backups seront chiffrés avec AES-256. Garde ton mot de passe en lieu sûr — il sera demandé à la restauration.'
+          'Tes prochains backups seront chiffrés avec AES-256. Garde ton mot de passe en lieu sûr · il sera demandé à la restauration.'
         );
       } catch (e) {
         logger.error('[BackupEncryption] Erreur activation:', e);
@@ -136,7 +136,7 @@ const BackupEncryptionToggleInner: React.FC = () => {
           <Text style={[styles.sub, { color: colors.textMuted ?? '#888' }]}>
             {enabled
               ? 'Tes backups sont protégés par mot de passe'
-              : 'Backups en clair — quiconque peut les ouvrir'}
+              : 'Backups en clair · quiconque peut les ouvrir'}
           </Text>
         </View>
         <Switch

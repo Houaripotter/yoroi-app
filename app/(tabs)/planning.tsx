@@ -452,7 +452,7 @@ export default function PlanningScreen() {
   // Get all events from SQLite (async loaded)
   const [allCatalogEvents, setAllCatalogEvents] = useState<SportEvent[]>([]);
 
-  // Load events per region — only what's needed, max 500 par vue
+  // Load events per region · only what's needed, max 500 par vue
   const loadCatalogForRegion = useCallback(async (region: CatalogLocationFilter) => {
     setCatalogLoading(true);
     try {
@@ -1230,7 +1230,7 @@ export default function PlanningScreen() {
               />
             }
           >
-            {/* WEEKLY STATS BANNER — quick glance sur la semaine en cours */}
+            {/* WEEKLY STATS BANNER · quick glance sur la semaine en cours */}
             {(weeklyStats.sessionsDone > 0 || weeklyStats.sessionsPlanned > 0) && (
               <View
                 style={{
@@ -2841,7 +2841,7 @@ export default function PlanningScreen() {
         </View>
       </Modal>
 
-      {/* FAB ajouter une séance — visible uniquement sur Calendar et Seances */}
+      {/* FAB ajouter une séance · visible uniquement sur Calendar et Seances */}
       {(viewMode === 'calendar' || viewMode === 'seances') && (
         <TouchableOpacity
           onPress={() => {

@@ -1,5 +1,5 @@
 // ============================================
-// YOROI — Achievements Sparring
+// YOROI · Achievements Sparring
 // Grille de badges débloqués / à débloquer
 // ============================================
 

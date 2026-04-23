@@ -1,5 +1,5 @@
 // ============================================
-// YOROI — Modal bibliothèque de game plans
+// YOROI · Modal bibliothèque de game plans
 // Propose des templates pré-faits + templates perso
 // sauvegardés dans AsyncStorage
 // ============================================

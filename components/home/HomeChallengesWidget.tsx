@@ -154,7 +154,7 @@ export const HomeChallengesWidget: React.FC<HomeChallengesWidgetProps> = ({ onCo
   const [countdown, setCountdown] = useState('');
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Chargement — même source que le Dojo (lib/quests)
+  // Chargement · même source que le Dojo (lib/quests)
   const loadQuests = useCallback(async (tab: TabId) => {
     try {
       let result: { quests: QuestWithProgress[]; completed: number; total: number };
@@ -171,7 +171,7 @@ export const HomeChallengesWidget: React.FC<HomeChallengesWidgetProps> = ({ onCo
     loadQuests(activeTab);
   }, [activeTab]);
 
-  // Compte à rebours — mis à jour chaque seconde
+  // Compte à rebours · mis à jour chaque seconde
   useEffect(() => {
     const tick = () => {
       const remaining = getDeadline(activeTab).getTime() - Date.now();
@@ -293,7 +293,7 @@ export const HomeChallengesWidget: React.FC<HomeChallengesWidgetProps> = ({ onCo
 
       {/* ── Footer ── */}
       <View style={styles.footer}>
-        {/* Bouton réduire (carré accent) — affiché si onCollapse fourni */}
+        {/* Bouton réduire (carré accent) · affiché si onCollapse fourni */}
         {onCollapse && (
           <TouchableOpacity
             onPress={onCollapse}

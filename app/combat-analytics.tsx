@@ -264,9 +264,9 @@ export default function CombatAnalyticsScreen() {
     // Recommandation (ratio idéal drilling:sparring ~ 60:40 pour BJJ)
     let advice = '';
     if (total === 0) advice = '';
-    else if (drillingPct > 80) advice = 'Trop de drilling — augmente le sparring pour tester en conditions réelles.';
-    else if (drillingPct < 20) advice = 'Trop de sparring — intègre plus de drilling pour ancrer les techniques.';
-    else if (drillingPct >= 50 && drillingPct <= 70) advice = 'Ratio équilibré — bonne alternance drilling / sparring.';
+    else if (drillingPct > 80) advice = 'Trop de drilling · augmente le sparring pour tester en conditions réelles.';
+    else if (drillingPct < 20) advice = 'Trop de sparring · intègre plus de drilling pour ancrer les techniques.';
+    else if (drillingPct >= 50 && drillingPct <= 70) advice = 'Ratio équilibré · bonne alternance drilling / sparring.';
     else advice = `${drillingPct}% drilling / ${sparringPct}% sparring.`;
 
     return { months, totalDrilling, totalSparring, drillingPct, sparringPct, total, advice };
@@ -478,7 +478,7 @@ export default function CombatAnalyticsScreen() {
           </View>
         )}
 
-        {/* ── FINITIONS / SOUMISSIONS — FORCES VS FAILLES ── */}
+        {/* ── FINITIONS / SOUMISSIONS · FORCES VS FAILLES ── */}
         {submissionStats.length > 0 && (
           <View style={[cardStyle, { marginBottom: 20 }]}>
             <SectionTitle

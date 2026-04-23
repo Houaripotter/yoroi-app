@@ -62,7 +62,7 @@ export interface CombatRoundData {
   duration?: number; // durée en minutes (par round, si dispo)
 }
 
-// Constantes de layout — utiliser flex comme les autres cartes V2 (proportions exactes)
+// Constantes de layout · utiliser flex comme les autres cartes V2 (proportions exactes)
 const PHOTO_SECTION_FLEX = 6.5;   // 65%
 const STATS_SECTION_FLEX = 2.3;   // 23%
 const FOOTER_SECTION_FLEX = 1.2;  // 12%
@@ -287,7 +287,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
     return (
       <View ref={ref} style={[styles.card, cardStyle]} collapsable={false}>
 
-        {/* 1. SECTION PHOTO — prend tout l'espace restant */}
+        {/* 1. SECTION PHOTO · prend tout l'espace restant */}
         <View style={[styles.photoSection, { flex: 1, minHeight: Math.round(CARD_HEIGHT * 0.28) }]}>
           {backgroundImage ? (
             <Image key={backgroundImage} source={{ uri: backgroundImage }} style={styles.photoImage} resizeMode="cover" />
@@ -338,7 +338,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
           </View>
         </View>
 
-        {/* 2. SECTION STATS & EXERCICES — taille naturelle du contenu */}
+        {/* 2. SECTION STATS & EXERCICES · taille naturelle du contenu */}
         <View style={styles.statsSection}>
 
           {/* HEADER : Combat (si combat) ou Objectif annuel (autres sports) */}
@@ -361,7 +361,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
 
               {/* ── Ligne 1 : type de séance à gauche + durée à droite ── */}
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                {/* Type de séance — pill doré */}
+                {/* Type de séance · pill doré */}
                 {sessionLabels.length > 0 ? (
                   <View style={{ flexDirection: 'row', gap: 5, flexWrap: 'wrap' }}>
                     {sessionLabels.map((lbl, idx) => (
@@ -810,7 +810,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
           </View>}
         </View>
 
-        {/* 3. FOOTER — hauteur fixe proportionnelle */}
+        {/* 3. FOOTER · hauteur fixe proportionnelle */}
         <View style={[styles.footerSection, footerBorderStyle, { height: Math.round(CARD_HEIGHT * 0.12) }]}>
           <SocialCardFooter variant={isWhite ? "light" : "dark"} />
         </View>

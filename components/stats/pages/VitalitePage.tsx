@@ -61,7 +61,7 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
     handleConnectHealthKit,
   } = useStatsHealth();
 
-  // Tab actif — fixe si forcedTab est défini (chaque page PagerView est dédiée à un seul onglet)
+  // Tab actif · fixe si forcedTab est défini (chaque page PagerView est dédiée à un seul onglet)
   const [activeTab] = useState<SanteTab>(forcedTab || 'sommeil');
 
   // Modal de détail
@@ -168,7 +168,7 @@ export const VitalitePage: React.FC<VitalitePageProps> = React.memo(({ forcedTab
         onPeriodChange={setSelectedPeriod}
       />
 
-      {/* Barre de sous-onglets — masquée si forcedTab (chaque page PagerView = 1 onglet) */}
+      {/* Barre de sous-onglets · masquée si forcedTab (chaque page PagerView = 1 onglet) */}
       {!forcedTab && (
         <View style={styles.tabBarContainer}>
           <View style={[styles.tabBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF' }]}>

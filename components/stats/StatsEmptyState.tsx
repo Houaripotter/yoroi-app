@@ -12,7 +12,7 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 
 interface StatsEmptyStateProps {
-  /** Icône en tête (composant Lucide ou autre — passé en JSX) */
+  /** Icône en tête (composant Lucide ou autre · passé en JSX) */
   icon: React.ReactNode;
   /** Titre court et motivant */
   title: string;

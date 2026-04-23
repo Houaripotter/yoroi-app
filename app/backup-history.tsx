@@ -1,5 +1,5 @@
 // ============================================================
-// YOROI — Mes sauvegardes — Bibliothèque (v4)
+// YOROI · Mes sauvegardes · Bibliothèque (v4)
 // ============================================================
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
@@ -405,7 +405,7 @@ export default function BackupHistoryScreen() {
       for (const name of backupFiles) {
         const uri = `${dir}${name}`;
         try {
-          // `size: true` était une option déprécié — getInfoAsync retourne size par défaut
+          // `size: true` était une option déprécié · getInfoAsync retourne size par défaut
           const info = await FileSystem.getInfoAsync(uri) as any;
           if (!info.exists) continue;
           let version = '?', userName = '?';

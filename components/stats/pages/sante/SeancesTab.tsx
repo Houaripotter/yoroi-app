@@ -110,7 +110,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
     await loadData();
   }, [loadData]);
 
-  // Si le parent passe des données non vides, on les utilise — sinon on utilise les données locales
+  // Si le parent passe des données non vides, on les utilise · sinon on utilise les données locales
   const trainings = useMemo(() => {
     if (Array.isArray(propTrainings) && propTrainings.length > 0) return propTrainings;
     return localTrainings;
@@ -149,7 +149,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
     return cal.toLocaleString('fr-FR');
   };
 
-  // 3 KPI affichés en tête de l'onglet — version structurée pour AnimatedCounter
+  // 3 KPI affichés en tête de l'onglet · version structurée pour AnimatedCounter
   const summaryKpis = useMemo(() => [
     {
       key: 'sessions',
@@ -330,7 +330,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
             </TouchableOpacity>
           </View>
 
-          {/* Résumé en haut — chiffres animés count-up */}
+          {/* Résumé en haut · chiffres animés count-up */}
           <View style={styles.summaryRow}>
             {summaryKpis.map(kpi => (
               <View

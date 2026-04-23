@@ -1,7 +1,7 @@
 // ============================================
 // YOROI - LOG RAPIDE POST-SÉANCE
 // ============================================
-// Dicte ou tape 2 phrases — l'app parse les infos
+// Dicte ou tape 2 phrases · l'app parse les infos
 // et pré-remplit le formulaire d'ajout de séance.
 // Utilise la dictée vocale native iOS (micro clavier).
 // ============================================

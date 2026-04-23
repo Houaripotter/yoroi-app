@@ -632,7 +632,7 @@ export default function OnboardingScreen() {
         <Text style={s.formSubtitle}>Quelques infos pour personnaliser ton expérience</Text>
 
         {/* =========================================
-            SECTION 1 — À propos de toi
+            SECTION 1 · À propos de toi
             ========================================= */}
         <View style={s.sectionCard}>
           <View style={s.sectionHeaderRow}>
@@ -653,7 +653,7 @@ export default function OnboardingScreen() {
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
               <Text style={s.photoLabel}>{t('onboarding.profilePhoto')}</Text>
-              <Text style={s.photoHint}>Optionnel — aide à personnaliser ton avatar</Text>
+              <Text style={s.photoHint}>Optionnel · aide à personnaliser ton avatar</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                 <TouchableOpacity style={s.photoSmallBtn} onPress={pickFromGallery}>
                   <ImageIcon size={14} color={C.text} />
@@ -711,7 +711,7 @@ export default function OnboardingScreen() {
         </View>
 
         {/* =========================================
-            SECTION 2 — Tes mesures
+            SECTION 2 · Tes mesures
             ========================================= */}
         <View style={s.sectionCard}>
           <View style={s.sectionHeaderRow}>
@@ -802,7 +802,7 @@ export default function OnboardingScreen() {
         </View>
 
         {/* =========================================
-            SECTION 3 — Ton objectif
+            SECTION 3 · Ton objectif
             ========================================= */}
         <View style={s.sectionCard}>
           <View style={s.sectionHeaderRow}>
@@ -831,7 +831,7 @@ export default function OnboardingScreen() {
         </View>
 
         {/* =========================================
-            SECTION 4 — Ton profil sportif
+            SECTION 4 · Ton profil sportif
             ========================================= */}
         <View style={s.sectionCard}>
           <View style={s.sectionHeaderRow}>
@@ -1140,7 +1140,7 @@ export default function OnboardingScreen() {
     <View style={s.root}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
       <SafeAreaView style={{ flex: 1 }}>
-        {/* Bouton fermer en mode preview — positionné sous la barre de statut */}
+        {/* Bouton fermer en mode preview · positionné sous la barre de statut */}
         {isPreview && (
           <TouchableOpacity
             style={[s.previewCloseBtn, { top: insets.top + 10 }]}

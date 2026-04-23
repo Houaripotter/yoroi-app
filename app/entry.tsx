@@ -244,7 +244,7 @@ export default function EntryScreen() {
         backupReminderService.markReminderShown().catch(() => {});
         showPopup(
           '💾 Sauvegarder tes données ?',
-          'Tu as ajouté plusieurs entrées. Yoroi ne sauvegarde que sur ton téléphone — pense à faire un backup pour ne rien perdre !',
+          'Tu as ajouté plusieurs entrées. Yoroi ne sauvegarde que sur ton téléphone · pense à faire un backup pour ne rien perdre !',
           [
             { text: 'Plus tard', style: 'cancel', onPress: goBack },
             {

@@ -304,32 +304,32 @@ const SUBMISSIONS_MUAYTHAI = [
 // --- JUDO (30+ finitions) ---
 const SUBMISSIONS_JUDO = [
   // --- Projections (nage-waza) ---
-  'Ippon — O-goshi (hanche)',
-  'Ippon — Seoi-nage (épaule)',
-  'Ippon — Uchi-mata (intérieur cuisse)',
-  'Ippon — Harai-goshi (fauchage hanche)',
-  'Ippon — Tai-otoshi (chute du corps)',
-  'Ippon — Soto-gari (fauchage extérieur)',
-  'Ippon — O-uchi-gari (fauchage intérieur)',
-  'Ippon — Ko-uchi-gari (petit fauchage)',
-  'Ippon — Tomoe-nage (projection cercle)',
-  'Ippon — Tani-otoshi (chute vallée)',
-  'Ippon — Morote-seoi-nage',
-  'Ippon — Kata-guruma (roue épaule)',
-  'Ippon — Ura-nage (projection arrière)',
-  'Ippon — Sumi-gaeshi',
+  'Ippon · O-goshi (hanche)',
+  'Ippon · Seoi-nage (épaule)',
+  'Ippon · Uchi-mata (intérieur cuisse)',
+  'Ippon · Harai-goshi (fauchage hanche)',
+  'Ippon · Tai-otoshi (chute du corps)',
+  'Ippon · Soto-gari (fauchage extérieur)',
+  'Ippon · O-uchi-gari (fauchage intérieur)',
+  'Ippon · Ko-uchi-gari (petit fauchage)',
+  'Ippon · Tomoe-nage (projection cercle)',
+  'Ippon · Tani-otoshi (chute vallée)',
+  'Ippon · Morote-seoi-nage',
+  'Ippon · Kata-guruma (roue épaule)',
+  'Ippon · Ura-nage (projection arrière)',
+  'Ippon · Sumi-gaeshi',
   // --- Au sol (ne-waza) ---
-  'Ippon — Kesa-gatame (immobilisation)',
-  'Ippon — Kuzure-kesa-gatame',
-  'Ippon — Yoko-shiho-gatame',
-  'Ippon — Kami-shiho-gatame',
-  'Ippon — Tate-shiho-gatame',
-  'Ippon — Juji-gatame (armbar)',
-  'Ippon — Sangaku-jime (triangle)',
-  'Ippon — Okuri-eri-jime (étranglement)',
-  'Ippon — Hadaka-jime (RNC)',
-  'Ippon — Kata-ha-jime (étranglement)',
-  'Ippon — Sode-guruma-jime (Ezekiel)',
+  'Ippon · Kesa-gatame (immobilisation)',
+  'Ippon · Kuzure-kesa-gatame',
+  'Ippon · Yoko-shiho-gatame',
+  'Ippon · Kami-shiho-gatame',
+  'Ippon · Tate-shiho-gatame',
+  'Ippon · Juji-gatame (armbar)',
+  'Ippon · Sangaku-jime (triangle)',
+  'Ippon · Okuri-eri-jime (étranglement)',
+  'Ippon · Hadaka-jime (RNC)',
+  'Ippon · Kata-ha-jime (étranglement)',
+  'Ippon · Sode-guruma-jime (Ezekiel)',
   // --- Résultats ---
   'Waza-ari x2',
   'Yuko (points)',
@@ -340,9 +340,9 @@ const SUBMISSIONS_JUDO = [
 
 // --- LUTTE (20+ finitions) ---
 const SUBMISSIONS_LUTTE = [
-  'Tombé (pin) — grecque-romaine',
-  'Tombé (pin) — libre',
-  'Points — décision',
+  'Tombé (pin) · grecque-romaine',
+  'Tombé (pin) · libre',
+  'Points · décision',
   'Abandon (blessure)',
   'DQ (faute)',
   'Double leg takedown',
@@ -429,7 +429,7 @@ function getSubmissionsForSport(sportId: string): string[] {
   return SUBMISSIONS_STRIKING; // boxe, kickboxing, karate, taekwondo, etc.
 }
 
-// Chips rapides pour "Finitions données/reçues" — les plus courantes par sport
+// Chips rapides pour "Finitions données/reçues" · les plus courantes par sport
 const QUICK_FINS_GRAPPLING = ['RNC', 'Triangle', 'Armbar', 'Kimura', 'Guillotine', "D'Arce", 'Heel hook', 'Omoplata'];
 const QUICK_FINS_MMA       = ['KO', 'TKO', 'RNC', 'Armbar', 'Triangle', 'Guillotine', 'Kimura', 'Décision'];
 const QUICK_FINS_STRIKING  = ['KO', 'TKO', 'Points', 'Abandon', 'DQ', 'Crochet', 'Uppercut'];
@@ -897,11 +897,11 @@ const RoundCard = React.memo(function RoundCard({
   // Actions de score rapide BJJ/Grappling (points prédéfinis par action)
   const sport = COMBAT_SPORTS.find(s => s.id === sportId);
   // Score rapide IBJJF uniquement pour les sports qui utilisent ce système de points.
-  // Judo (ippon/waza-ari), Sumo, Hapkido, Aikido ont leurs propres règles — pas IBJJF.
+  // Judo (ippon/waza-ari), Sumo, Hapkido, Aikido ont leurs propres règles · pas IBJJF.
   const IBJJF_SPORTS = ['jjb', 'grappling', 'lutte', 'sambo', 'catch', 'lutte_olympique'];
   const isGrappling = IBJJF_SPORTS.includes(sportId.toLowerCase());
 
-  // Techniques standard IBJJF / CFJJB — organisées par groupe
+  // Techniques standard IBJJF / CFJJB · organisées par groupe
   const BJJ_SCORE_ACTIONS = isGrappling ? [
     // ─── TAKEDOWNS / PROJECTIONS (2 pts) ───
     { label: 'Single leg', pts: 2, group: 'Debout' },
@@ -936,7 +936,7 @@ const RoundCard = React.memo(function RoundCard({
     { label: 'Single leg X', pts: 2, group: 'Sol' },
     { label: '50/50 sweep', pts: 2, group: 'Sol' },
     { label: 'Renversement (autre)', pts: 2, group: 'Sol' },
-    // ─── GENOU SUR L'ESTOMAC (2 pts) — terme officiel CFJJB Art. 4.3 ───
+    // ─── GENOU SUR L'ESTOMAC (2 pts) · terme officiel CFJJB Art. 4.3 ───
     { label: "Genou sur l'estomac", pts: 2, group: 'Sol' },
     // ─── PASSAGES DE GARDE (3 pts) ───
     { label: 'Passage de garde', pts: 3, group: 'Sol' },
@@ -948,12 +948,12 @@ const RoundCard = React.memo(function RoundCard({
     { label: 'Stack pass', pts: 3, group: 'Sol' },
     { label: 'Bull fighter', pts: 3, group: 'Sol' },
     { label: 'Headquarters', pts: 3, group: 'Sol' },
-    // ─── POSITIONS DOMINANTES (4 pts) — Art. 4.4 CFJJB ───
+    // ─── POSITIONS DOMINANTES (4 pts) · Art. 4.4 CFJJB ───
     { label: 'Position montée', pts: 4, group: 'Dominant' },
     { label: 'Montée arrière', pts: 4, group: 'Dominant' },
     { label: 'Contrôle du dos', pts: 4, group: 'Dominant' },
     { label: 'Body triangle', pts: 4, group: 'Dominant' },
-    // ─── AVANTAGES (IBJJF) — tiebreaker, ne s'ajoutent pas aux points ───
+    // ─── AVANTAGES (IBJJF) · tiebreaker, ne s'ajoutent pas aux points ───
     { label: 'Avantage', pts: 1, group: 'Bonus' },
     { label: 'Quasi-soumission', pts: 1, group: 'Bonus' },
     { label: 'Quasi-sweep', pts: 1, group: 'Bonus' },
@@ -978,7 +978,7 @@ const RoundCard = React.memo(function RoundCard({
   const [showSubsGivenModal, setShowSubsGivenModal] = useState(false);
   const [showSubsTakenModal, setShowSubsTakenModal] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(true);
-  // Collapse par défaut les sections secondaires — seul Game plan est ouvert.
+  // Collapse par défaut les sections secondaires · seul Game plan est ouvert.
   // Les autres s'ouvrent quand l'user veut remplir, ou automatiquement si déjà un contenu.
   const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>({
     gamePlan: true,
@@ -1075,7 +1075,7 @@ const RoundCard = React.memo(function RoundCard({
           ) : null}
         </View>
 
-        {/* Suggestions de partenaires — affichées dès qu'on clique dans le champ.
+        {/* Suggestions de partenaires · affichées dès qu'on clique dans le champ.
             Filtre intelligent : si query vide → on montre les partenaires connus,
             sinon on filtre par query, et on laisse toujours la possibilité de créer un nouveau nom. */}
         {showPartnerSuggestions && partnerSuggestions.length > 0 && (() => {
@@ -1160,7 +1160,7 @@ const RoundCard = React.memo(function RoundCard({
       </View>
 
       {/* ════════════════════════════════════════════════
-          🧠 COACH BRIEF — briefing pré-round intelligent
+          🧠 COACH BRIEF · briefing pré-round intelligent
           Apparaît si partenaire saisi ET round pas encore débuté
           ════════════════════════════════════════════════ */}
       {(() => {
@@ -1411,7 +1411,7 @@ const RoundCard = React.memo(function RoundCard({
         })}
       </View>
 
-      {/* ── Body Map BJJ (silhouettes interactives) — remplace les chips finitions ── */}
+      {/* ── Body Map BJJ (silhouettes interactives) · remplace les chips finitions ── */}
       {isGrappling ? (
         <BJJBodyMap
           myName="MOI"
@@ -1461,7 +1461,7 @@ const RoundCard = React.memo(function RoundCard({
         </>
       )}
 
-      {/* Score rapide BJJ — masqué pour grappling (BJJBodyMap le remplace) */}
+      {/* Score rapide BJJ · masqué pour grappling (BJJBodyMap le remplace) */}
       {false && BJJ_SCORE_ACTIONS.length > 0 && (
         <View style={{ marginTop: 10 }}>
           <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted ?? '#888', marginBottom: 8, letterSpacing: 0.5 }}>
@@ -1478,8 +1478,8 @@ const RoundCard = React.memo(function RoundCard({
               Bonus: '#F59E0B',
             };
             const groupLabels: Record<string, string> = {
-              Debout: "DEBOUT — AMENÉE AU SOL (+2)",
-              Sol: "AU SOL — RENVERSEMENT (+2) · GENOU SUR L'ESTOMAC (+2) · PASSAGE DE GARDE (+3)",
+              Debout: "DEBOUT · AMENÉE AU SOL (+2)",
+              Sol: "AU SOL · RENVERSEMENT (+2) · GENOU SUR L'ESTOMAC (+2) · PASSAGE DE GARDE (+3)",
               Dominant: "MONTÉE / CONTRÔLE DU DOS (+4)",
               Bonus: 'AVANTAGES / PÉNALITÉS',
             };
@@ -1701,7 +1701,7 @@ const RoundCard = React.memo(function RoundCard({
       />
 
       {/* ════════════════════════════════════════════════
-          🎯 ANALYSE DU ROUND — module premium
+          🎯 ANALYSE DU ROUND · module premium
           ════════════════════════════════════════════════ */}
       {(() => {
         // ── Suggestions contextuelles calculées ──
@@ -1921,7 +1921,7 @@ const RoundCard = React.memo(function RoundCard({
                   </View>
                   {round.selfRating && (
                     <Text style={{ fontSize: 11, color: colors.textMuted ?? '#888', marginTop: 6, fontStyle: 'italic' }}>
-                      {round.selfRating <= 3 && "🥲 Round compliqué — pas grave, l'analyse t'aidera à progresser"}
+                      {round.selfRating <= 3 && "🥲 Round compliqué · pas grave, l'analyse t'aidera à progresser"}
                       {round.selfRating > 3 && round.selfRating <= 6 && "💪 Correct, mais tu peux mieux faire"}
                       {round.selfRating > 6 && round.selfRating <= 8 && "🔥 Beau round, continue comme ça !"}
                       {round.selfRating > 8 && "🏆 Round exceptionnel !"}
@@ -1990,7 +1990,7 @@ const RoundCard = React.memo(function RoundCard({
                   } else if (previousRound.result === 'win' && round.result === 'win') {
                     parts.push('2e victoire de suite');
                   } else if (previousRound.result === 'loss' && round.result === 'loss') {
-                    parts.push('2e défaite de suite — change de stratégie');
+                    parts.push('2e défaite de suite · change de stratégie');
                   }
                   if (parts.length === 0) return null;
                   const trendColor = round.selfRating && previousRound.selfRating && round.selfRating > previousRound.selfRating ? '#22C55E' : '#F59E0B';
@@ -2002,7 +2002,7 @@ const RoundCard = React.memo(function RoundCard({
                   );
                 })()}
 
-                {/* Bouton "Copier du round précédent" — seulement s'il existe un round précédent rempli */}
+                {/* Bouton "Copier du round précédent" · seulement s'il existe un round précédent rempli */}
                 {previousRound && (previousRound.gamePlan || previousRound.whatWorked || previousRound.improvement) && (
                   <TouchableOpacity
                     onPress={() => {
@@ -2080,7 +2080,7 @@ const RoundCard = React.memo(function RoundCard({
                       {/* Contenu expansé : bibliothèque + chips + text input */}
                       {isExpanded && (
                         <View style={{ padding: 10, gap: 8 }}>
-                          {/* Bouton Bibliothèque — version compacte */}
+                          {/* Bouton Bibliothèque · version compacte */}
                           <TouchableOpacity
                             onPress={() => {
                               impactAsync(ImpactFeedbackStyle.Medium);
@@ -2457,7 +2457,7 @@ export default function AddCombatSessionScreen() {
     return () => sub.remove();
   }, [loadPartners]);
 
-  // Charger les lieux récents depuis la base de données (requête SQL directe — plus précise que getTrainings)
+  // Charger les lieux récents depuis la base de données (requête SQL directe · plus précise que getTrainings)
   useEffect(() => {
     (async () => {
       try {
@@ -2474,7 +2474,7 @@ export default function AddCombatSessionScreen() {
         });
         setRecentLocations(unique.map((r) => ({ name: r.location_name, lat: r.location_lat, lon: r.location_lon })));
       } catch (_e) {
-        // Silently fail — recent locations are optional
+        // Silently fail · recent locations are optional
       }
     })();
   }, []);
@@ -2574,7 +2574,7 @@ export default function AddCombatSessionScreen() {
         // (format YYYY-MM-DD en DB) plutôt que `new Date(t.date)` qui peut échouer
         // selon le format (ex: "25/01/2026" FR → Invalid Date).
         // ET on filtre par sport pour refléter le discipline courante ("j'ai fait
-        // X séances de JJB cette année") — plus parlant que compter toutes séances.
+        // X séances de JJB cette année") · plus parlant que compter toutes séances.
         const yearPrefix = `${currentYear}-`;
         const monthPrefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-`;
         const weekStartIso = startOfWeek.toISOString().slice(0, 10);
@@ -2643,7 +2643,7 @@ export default function AddCombatSessionScreen() {
       setLocationSuggestions(localMatches);
       setShowLocationSuggestions(true);
     }
-    // Puis rechercher via Nominatim (OpenStreetMap) après debounce — gère les noms d'établissements
+    // Puis rechercher via Nominatim (OpenStreetMap) après debounce · gère les noms d'établissements
     locationSearchTimer.current = setTimeout(async () => {
       try {
         const encoded = encodeURIComponent(text.trim());
@@ -2717,7 +2717,7 @@ export default function AddCombatSessionScreen() {
     });
   }, []);
 
-  // Handlers stables par round — évite les re-renders inutiles de RoundCard
+  // Handlers stables par round · évite les re-renders inutiles de RoundCard
   // Ne se recréent que quand le nombre de rounds change
   const roundUpdateHandlers = useMemo(
     () => combatRounds.map((_, i) => (updates: Partial<CombatRound>) => {
@@ -3499,7 +3499,7 @@ export default function AddCombatSessionScreen() {
               </View>
 
               {/* ════════════════════════════════════════════════
-                  📄 PAGER ROUNDS — un round = une page
+                  📄 PAGER ROUNDS · un round = une page
                   ════════════════════════════════════════════════ */}
               {showRoundDetail && combatRounds.length > 0 && (() => {
                 const idx = Math.min(currentRoundIndex, combatRounds.length - 1);
@@ -3581,7 +3581,7 @@ export default function AddCombatSessionScreen() {
                         </TouchableOpacity>
                       </View>
 
-                      {/* Dots navigation — un par round, couleur selon état */}
+                      {/* Dots navigation · un par round, couleur selon état */}
                       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 2 }}>
                         {combatRounds.map((r, i) => {
                           const active = i === idx;
@@ -3697,7 +3697,7 @@ export default function AddCombatSessionScreen() {
                       <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#22C55E15', borderRadius: 12, paddingVertical: 14, borderWidth: 1.5, borderColor: '#22C55E' }}>
                         <Flag size={16} color="#22C55E" />
                         <Text style={{ fontSize: 13, fontWeight: '900', color: '#22C55E', letterSpacing: 0.5 }}>
-                          DERNIER ROUND — continue en bas pour terminer
+                          DERNIER ROUND · continue en bas pour terminer
                         </Text>
                       </View>
                     )}
@@ -4125,7 +4125,7 @@ const styles = StyleSheet.create({
   },
   stepperValueText: { fontSize: 15, fontWeight: '700' },
 
-  // Clubs — nouvelles cartes avec logo
+  // Clubs · nouvelles cartes avec logo
   clubCardBig: {
     width: 80,
     alignItems: 'center',

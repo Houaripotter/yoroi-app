@@ -81,7 +81,7 @@ const CloudSyncPromptInner: React.FC = () => {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
         Alert.alert(
           '✨ Synchronisation réussie',
-          'Tes données depuis ton autre appareil sont maintenant sur celui-ci.\n\nSi tu constates un problème, une sauvegarde de sécurité a été créée juste avant la synchro — tu peux revenir en arrière depuis Mes sauvegardes.'
+          'Tes données depuis ton autre appareil sont maintenant sur celui-ci.\n\nSi tu constates un problème, une sauvegarde de sécurité a été créée juste avant la synchro · tu peux revenir en arrière depuis Mes sauvegardes.'
         );
         setData(null);
       } else {

@@ -143,7 +143,7 @@ function RootLayoutContent() {
     }).catch(() => {});
   }, []);
 
-  // Notification hebdo récap (dimanche 19h) — s'assure qu'elle est planifiée
+  // Notification hebdo récap (dimanche 19h) · s'assure qu'elle est planifiée
   useEffect(() => {
     import('@/lib/weeklyRecapNotification')
       .then(({ ensureWeeklyRecapScheduled }) => ensureWeeklyRecapScheduled())
@@ -436,11 +436,11 @@ export default function RootLayout() {
             .catch(err => logger.error('Erreur PeerSync:', err)),
         ]);
 
-        // Auto-backup silent quotidien (ne ralentit pas le démarrage — delay 8s)
+        // Auto-backup silent quotidien (ne ralentit pas le démarrage · delay 8s)
         scheduleAutoBackupOnStartup();
         // Multi-device sync : check si un backup cloud plus récent existe (delay 12s)
         scheduleCloudSyncCheckOnStartup();
-        // Watch sync enrichi (Apple Watch + Wear OS) — débounced 3s après chaque modif
+        // Watch sync enrichi (Apple Watch + Wear OS) · débounced 3s après chaque modif
         initAutoWatchSync();
         // Première sync au démarrage (delay 10s)
         setTimeout(() => syncAllWatchesEnriched().catch(() => {}), 10000);

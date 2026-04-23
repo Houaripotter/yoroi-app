@@ -354,7 +354,7 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
             )}
 
             {/* ============================================ */}
-            {/* WEIGHT Exercise — Stepper pro poids + reps */}
+            {/* WEIGHT Exercise · Stepper pro poids + reps */}
             {/* ============================================ */}
             {isWeightExercise && (
               <>
@@ -496,7 +496,7 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
             )}
 
             {/* ============================================ */}
-            {/* BODYWEIGHT — stepper reps uniquement */}
+            {/* BODYWEIGHT · stepper reps uniquement */}
             {/* ============================================ */}
             {isBodyweightExercise && (
               <>

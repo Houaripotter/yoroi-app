@@ -585,7 +585,7 @@ export default function WeightManagerScreen() {
                 <TouchableOpacity style={styles.deleteSrcBtn} onPress={() => handleDeleteSource(filter)}>
                   <AlertTriangle size={13} color="#EF4444" />
                   <Text style={styles.deleteSrcText}>
-                    Tout supprimer — {getSourceConfig(filter).label} ({availableSources[filter] ?? 0})
+                    Tout supprimer · {getSourceConfig(filter).label} ({availableSources[filter] ?? 0})
                   </Text>
                 </TouchableOpacity>
               )}

@@ -282,7 +282,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
             </TouchableOpacity>
           </View>
 
-          {/* Séances récentes — horizontal — fusionnées dans la même carte */}
+          {/* Séances récentes · horizontal · fusionnées dans la même carte */}
           {allTrainingsData.length > 0 && (
             <View style={{ marginTop: 16 }}>
               <View style={styles.cardTitleRow}>
@@ -372,7 +372,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
         </View>
       </StatsSection>
 
-      {/* ========== INTENSITÉ / DURÉE — DualComparisonCard ========== */}
+      {/* ========== INTENSITÉ / DURÉE · DualComparisonCard ========== */}
       <View style={styles.sectionDivider} />
 
       <StatsSection>

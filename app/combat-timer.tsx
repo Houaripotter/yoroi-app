@@ -359,7 +359,7 @@ export default function CombatTimerScreen() {
       </View>
 
       {/* ============================================
-          PHASE 1 — SETUP
+          PHASE 1 · SETUP
       ============================================ */}
       {appPhase === 'setup' && (
         <ScrollView
@@ -518,7 +518,7 @@ export default function CombatTimerScreen() {
       )}
 
       {/* ============================================
-          PHASE 2 — TIMER ACTIF
+          PHASE 2 · TIMER ACTIF
       ============================================ */}
       {appPhase === 'active' && (
         <View style={{ flex: 1, paddingBottom: insets.bottom + 20 }}>
@@ -679,7 +679,7 @@ export default function CombatTimerScreen() {
               <Square size={22} color={colors.textSecondary} />
             </TouchableOpacity>
 
-            {/* Play / Pause — bouton principal */}
+            {/* Play / Pause · bouton principal */}
             <TouchableOpacity
               onPress={handlePlayPause}
               activeOpacity={0.85}
@@ -914,7 +914,7 @@ export default function CombatTimerScreen() {
                     {currentRound >= config.totalRounds
                       ? 'Terminer la session'
                       : config.restDuration > 0
-                      ? `Repos — ${config.restDuration} min`
+                      ? `Repos · ${config.restDuration} min`
                       : 'Round suivant'}
                   </Text>
                 </TouchableOpacity>
@@ -925,7 +925,7 @@ export default function CombatTimerScreen() {
       )}
 
       {/* ============================================
-          PHASE 3 — SUMMARY
+          PHASE 3 · SUMMARY
       ============================================ */}
       {appPhase === 'summary' && (
         <ScrollView
@@ -1017,7 +1017,7 @@ export default function CombatTimerScreen() {
                   N: 'Nul',
                 };
                 const col = entry.result ? resultColorMap[entry.result] : colors.textSecondary;
-                const label = entry.result ? resultLabelMap[entry.result] : '—';
+                const label = entry.result ? resultLabelMap[entry.result] : '·';
                 return (
                   <View
                     key={idx}

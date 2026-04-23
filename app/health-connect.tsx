@@ -330,7 +330,7 @@ export default function HealthConnectScreen() {
                 });
                 setImportProgress('');
                 if (result.healthkitFound === 0) {
-                  // HealthKit n'a trouvé aucune séance — probablement permissions manquantes
+                  // HealthKit n'a trouvé aucune séance · probablement permissions manquantes
                   showPopup(
                     'Aucune séance trouvée',
                     'Apple Santé n\'a retourné aucune séance.\n\nCause la plus fréquente : la permission "Entraînements" n\'est pas activée pour Yoroi.\n\nVa dans Réglages > Santé > Accès aux données et app > Yoroi et active "Entraînements".',
@@ -422,7 +422,7 @@ export default function HealthConnectScreen() {
                     lines.push('=> Seances Apple Watch NON accessibles meme apres re-auth');
                     lines.push('=> Voir details ci-dessous');
                   } else if (sources && !sources.toLowerCase().includes('yoroi') || (sources && sources.includes(','))) {
-                    lines.push('=> Seances multi-sources visibles — permissions OK !');
+                    lines.push('=> Seances multi-sources visibles · permissions OK !');
                   }
                 }
                 lines.push('');
@@ -434,7 +434,7 @@ export default function HealthConnectScreen() {
                 } else if (diag.nativeModuleTest === -2) {
                   lines.push('getWorkoutsAsJSON : ERREUR / module absent');
                 } else {
-                  lines.push(`getWorkoutsAsJSON : OK — ${diag.nativeModuleTest} seance(s) 365j`);
+                  lines.push(`getWorkoutsAsJSON : OK · ${diag.nativeModuleTest} seance(s) 365j`);
                 }
 
                 // 3 tests Gemini (nativeDiag)
@@ -443,7 +443,7 @@ export default function HealthConnectScreen() {
                   const authMap: Record<number, string> = { 0: 'notDetermined', 1: 'denied', 2: 'authorized' };
                   lines.push(`Auth OS (Swift) : ${authMap[nd.authStatus] ?? nd.authStatus}`);
 
-                  // Test A — sources
+                  // Test A · sources
                   if (nd.sourceError) {
                     lines.push(`TEST A sources : ERREUR ${nd.sourceError}`);
                   } else if (nd.sources?.length === 0) {
@@ -452,7 +452,7 @@ export default function HealthConnectScreen() {
                     lines.push(`TEST A sources : ${nd.sources?.join(', ')}`);
                   }
 
-                  // Test B — nuclear
+                  // Test B · nuclear
                   if (nd.nuclearError) {
                     lines.push(`TEST B nuclear : ERREUR ${nd.nuclearError}`);
                   } else {
@@ -462,7 +462,7 @@ export default function HealthConnectScreen() {
                     }
                   }
 
-                  // Test C — predicate 365j
+                  // Test C · predicate 365j
                   if (nd.predicateError) {
                     lines.push(`TEST C predicate : ERREUR ${nd.predicateError}`);
                   } else {
@@ -473,7 +473,7 @@ export default function HealthConnectScreen() {
                     }
                   }
 
-                  // Test D — séances hors-Yoroi (Apple Watch, Fitness...)
+                  // Test D · séances hors-Yoroi (Apple Watch, Fitness...)
                   if (nd.externalError) {
                     lines.push(`TEST D hors-Yoroi : ERREUR ${nd.externalError}`);
                   } else if (nd.externalTest !== undefined) {
@@ -508,11 +508,11 @@ export default function HealthConnectScreen() {
                     lines.push('=> Active "Entrainements" dans Reglages > Sante > Yoroi');
                   } else if (externalCount > 0) {
                     lines.push('');
-                    lines.push('Seances externes VISIBLES — les permissions sont OK.');
+                    lines.push('Seances externes VISIBLES · les permissions sont OK.');
                     lines.push('Le probleme vient du mapping/import JS.');
                   }
                 } else if (diag.nativeModuleTest !== -2) {
-                  lines.push('(diagnostic approfondi non disponible — rebuild requis)');
+                  lines.push('(diagnostic approfondi non disponible · rebuild requis)');
                 }
                 lines.push('');
 
@@ -524,12 +524,12 @@ export default function HealthConnectScreen() {
                   lines.push(`Permission workout : ${diag.authStatus}`);
                 }
                 if (diag.rawApiTest === -2) {
-                  lines.push(`queryWorkoutSamples : ERREUR — ${diag.rawApiError}`);
+                  lines.push(`queryWorkoutSamples : ERREUR · ${diag.rawApiError}`);
                 } else if (diag.rawApiTest >= 0) {
                   lines.push(`queryWorkoutSamples (10) : ${diag.rawApiTest} retournee(s)`);
                 }
                 if (diag.anchorApiTest === -2) {
-                  lines.push(`withAnchor : ERREUR — ${diag.anchorApiError}`);
+                  lines.push(`withAnchor : ERREUR · ${diag.anchorApiError}`);
                 } else if (diag.anchorApiTest >= 0) {
                   lines.push(`withAnchor (10) : ${diag.anchorApiTest} retournee(s)`);
                 }

@@ -200,7 +200,7 @@ function EntryModal({ visible, metric, entry, onClose, onSave, isDark }: {
               <View style={[mStyle.card, { backgroundColor: card }]}>
                 <View style={mStyle.hdr}>
                   <Text style={[mStyle.title, { color: text }]}>
-                    {entry ? 'Modifier' : 'Ajouter'} — {metric?.label}
+                    {entry ? 'Modifier' : 'Ajouter'} · {metric?.label}
                   </Text>
                   <TouchableOpacity onPress={() => { Keyboard.dismiss(); onClose(); }} hitSlop={{ top:16,bottom:16,left:16,right:16 }} style={{ padding: 4 }}>
                     <X size={22} color={sub} />
@@ -764,7 +764,7 @@ export default function BodyHistoryScreen() {
               <View style={[s.listHdr, { borderBottomColor: border }]}>
                 <Text style={[s.listHdrTxt, { color: sub }]}>
                   {entries.length > 0
-                    ? `${entries.length} entrée${entries.length > 1 ? 's' : ''} — du plus récent au plus ancien`
+                    ? `${entries.length} entrée${entries.length > 1 ? 's' : ''} · du plus récent au plus ancien`
                     : `Aucune donnée pour "${metric.label}"`}
                 </Text>
               </View>

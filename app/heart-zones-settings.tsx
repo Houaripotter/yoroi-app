@@ -118,7 +118,7 @@ export default function HeartZonesSettingsScreen() {
       setZ4min(String(zones.z3max));
       setZ4max(String(zones.z4max));
       setZ5min(String(zones.z4max));
-      setImportResult(`FC max ${fmax} bpm importée — zones identiques à Apple Watch. Ajuste si tu as personnalisé tes zones.`);
+      setImportResult(`FC max ${fmax} bpm importée · zones identiques à Apple Watch. Ajuste si tu as personnalisé tes zones.`);
       setCalcMode('manual');
     } catch {
       setImportResult('Erreur lors de la lecture Apple Santé.');
@@ -296,7 +296,7 @@ export default function HeartZonesSettingsScreen() {
               {fcmaxReady && (
                 <View style={[styles.karvonenPreview, { backgroundColor: isDark ? 'rgba(59,130,246,0.08)' : 'rgba(59,130,246,0.06)', borderColor: 'rgba(59,130,246,0.2)' }]}>
                   <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 6 }}>
-                    Formule Apple Watch — FC max : {parseInt(fcmax)} bpm
+                    Formule Apple Watch · FC max : {parseInt(fcmax)} bpm
                   </Text>
                   {[
                     { pct: 0.63, label: 'Z1 Récupération' },
@@ -363,7 +363,7 @@ export default function HeartZonesSettingsScreen() {
                   value={z.minVal}
                   onChangeText={z.setMin!}
                   keyboardType="number-pad"
-                  placeholder="—"
+                  placeholder="·"
                   placeholderTextColor={colors.textMuted}
                   maxLength={3}
                 />
@@ -381,7 +381,7 @@ export default function HeartZonesSettingsScreen() {
                     value={z.maxVal}
                     onChangeText={z.setMax!}
                     keyboardType="number-pad"
-                    placeholder="—"
+                    placeholder="·"
                     placeholderTextColor={colors.textMuted}
                     maxLength={3}
                   />
@@ -440,7 +440,7 @@ export default function HeartZonesSettingsScreen() {
             {/* Google Fit / Health Connect */}
             <Text style={[styles.infoSection, { color: colors.text }]}>Google Fit · Health Connect</Text>
             <Text style={[styles.infoText, { color: colors.textMuted }]}>
-              Ces plateformes sont des <Text style={{ fontWeight: '700', color: colors.text }}>agrégateurs</Text> — elles affichent les données de ton capteur. Configure tes zones directement dans l'app du fabricant de ta montre (Garmin Connect, Samsung Health, etc.).
+              Ces plateformes sont des <Text style={{ fontWeight: '700', color: colors.text }}>agrégateurs</Text> · elles affichent les données de ton capteur. Configure tes zones directement dans l'app du fabricant de ta montre (Garmin Connect, Samsung Health, etc.).
             </Text>
           </View>
 
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
 
-  // Zone row — style Apple Santé
+  // Zone row · style Apple Santé
   zoneRow: {
     flexDirection: 'row',
     alignItems: 'center',

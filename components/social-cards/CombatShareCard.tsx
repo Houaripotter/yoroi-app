@@ -1,5 +1,5 @@
 // ============================================
-// COMBAT SHARE CARD — Premium fight report card
+// COMBAT SHARE CARD · Premium fight report card
 // ============================================
 // Design sombre premium, données combat, partage réseaux sociaux
 // Format 9:16 (Story)

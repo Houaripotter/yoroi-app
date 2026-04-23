@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import LottieView from 'lottie-react-native';
 
 // ============================================
-// SamuraiCircleLoader — cercle blanc centré
+// SamuraiCircleLoader · cercle blanc centré
 // sur fond sombre, barre de progression 7s
 // ============================================
 export function SamuraiCircleLoader({ duration = 2000, bgColor = '#0a0a0a' }: { duration?: number; bgColor?: string }) {

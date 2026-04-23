@@ -238,7 +238,7 @@ export default function TimerScreen() {
 
   // Refs
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // Timer précision — basé sur timestamp réel pour éviter le drift de setInterval
+  // Timer précision · basé sur timestamp réel pour éviter le drift de setInterval
   const endTimestampRef = useRef<number>(0);
   const lastCountdownRef = useRef<number>(-1);
   const phaseEndedRef = useRef<boolean>(false);
@@ -747,7 +747,7 @@ export default function TimerScreen() {
     }
   };
 
-  // Timer logic — précision basée sur timestamp réel (évite le drift de setInterval)
+  // Timer logic · précision basée sur timestamp réel (évite le drift de setInterval)
   // IMPORTANT : ne dépend QUE de timerState pour éviter de recréer l'intervalle
   // à chaque transition de phase (cause du freeze). Toutes les valeurs de transition
   // sont lues depuis les refs miroir.
@@ -780,7 +780,7 @@ export default function TimerScreen() {
         // Tous les autres modes : décompte précis basé sur timestamp réel
         const realRemaining = Math.max(0, Math.ceil((endTimestampRef.current - Date.now()) / 1000));
 
-        // Sons countdown — joués une seule fois par seconde
+        // Sons countdown · joués une seule fois par seconde
         if (realRemaining !== lastCountdownRef.current) {
           if (realRemaining === 3 || realRemaining === 2 || realRemaining === 1) {
             lastCountdownRef.current = realRemaining;
@@ -1726,7 +1726,7 @@ export default function TimerScreen() {
               </TouchableOpacity>
             )}
 
-            {/* Bouton Stop — secondaire, visible seulement si actif */}
+            {/* Bouton Stop · secondaire, visible seulement si actif */}
             {timerState !== 'idle' && (
               <TouchableOpacity
                 style={styles.timerBtnStop}
@@ -2022,7 +2022,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Timer — layout horizontal : cercle + boutons côte à côte
+  // Timer · layout horizontal : cercle + boutons côte à côte
   timerContainer: {
     flexDirection: 'row',
     alignItems: 'center',

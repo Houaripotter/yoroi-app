@@ -44,7 +44,7 @@ const SafetyBackupRestoreButtonInner: React.FC = () => {
     const confirmed = await new Promise<boolean>((resolve) => {
       Alert.alert(
         '🛡️ Restaurer l\'état précédent ?',
-        `Tu vas revenir à l'état de tes données avant la dernière action risquée (${latest.label} · ${formatRelative(latest.date)}).\n\nLes modifications faites depuis seront remplacées.\n\nUne nouvelle sauvegarde de sécurité est créée avant la restauration — tu peux toujours revenir en arrière.`,
+        `Tu vas revenir à l'état de tes données avant la dernière action risquée (${latest.label} · ${formatRelative(latest.date)}).\n\nLes modifications faites depuis seront remplacées.\n\nUne nouvelle sauvegarde de sécurité est créée avant la restauration · tu peux toujours revenir en arrière.`,
         [
           { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
           { text: 'Restaurer', style: 'destructive', onPress: () => resolve(true) },

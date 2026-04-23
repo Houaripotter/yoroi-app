@@ -77,7 +77,7 @@ function getVal(row: MergedRow, key: string): string {
 }
 
 function fmt(v?: number | null): string {
-  if (v === undefined || v === null) return '—';
+  if (v === undefined || v === null) return '·';
   return String(v);
 }
 
@@ -163,7 +163,7 @@ function AddModal({ visible, colors, onClose, onSave }: AddModalProps) {
                   style={[styles.fieldInput, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.background }]}
                   value={vals[col.key] || ''}
                   onChangeText={v => setVals(prev => ({ ...prev, [col.key]: v }))}
-                  placeholder="—"
+                  placeholder="·"
                   placeholderTextColor={colors.textMuted}
                   keyboardType="decimal-pad"
                 />
@@ -432,7 +432,7 @@ export default function CompanionScreen() {
         </View>
         {COLUMNS.map(col => {
           const val = getVal(item, col.key);
-          const isEmpty = val === '—';
+          const isEmpty = val === '·';
           return (
             <View key={col.key} style={[styles.dataCell, { width: col.width, borderBottomColor: colors.border + '30' }]}>
               <Text style={[styles.dataText, { color: isEmpty ? colors.textMuted + '40' : colors.textPrimary }]}>

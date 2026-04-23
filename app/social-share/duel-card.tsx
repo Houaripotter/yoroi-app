@@ -279,7 +279,7 @@ export default function DuelCardScreen() {
       if (available) {
         await shareAsync(uri, {
           mimeType: 'image/png',
-          dialogTitle: `Carte de duel — ${opponentName}`,
+          dialogTitle: `Carte de duel · ${opponentName}`,
         });
       } else {
         const { status } = await requestPermissionsAsync();
@@ -337,7 +337,7 @@ export default function DuelCardScreen() {
   };
 
   // ============================================
-  // RENDER — LOADING
+  // RENDER · LOADING
   // ============================================
 
   if (isLoadingData) {
@@ -354,7 +354,7 @@ export default function DuelCardScreen() {
   }
 
   // ============================================
-  // RENDER — PRINCIPAL
+  // RENDER · PRINCIPAL
   // ============================================
 
   const templates: { key: BackgroundType; label: string; Icon: any }[] = [

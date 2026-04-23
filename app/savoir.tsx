@@ -357,7 +357,7 @@ const scienceData: ScienceCard[] = [
   },
 
   // ══════════════════════════════════════════════
-  // RÈGLES COMBAT — JJB / GRAPPLING (CFJJB)
+  // RÈGLES COMBAT · JJB / GRAPPLING (CFJJB)
   // ══════════════════════════════════════════════
   {
     id: 'c1',
@@ -367,8 +367,8 @@ const scienceData: ScienceCard[] = [
     content: {
       what: "Tableau officiel des points CFJJB. +2 pts : amenée au sol, renversement, genou sur l'estomac. +3 pts : passage de garde. +4 pts : montée, montée arrière, contrôle du dos. Soumission = victoire immédiate quelle que soit la différence de points.",
       why: "La hiérarchie des positions dicte ta stratégie de match. Une montée (4 pts) vaut deux takedowns. En fin de match serré, les avantages (tiebreaker) décident avant les pénalités.",
-      how: "Priorité stratégique : cherche les 4 pts (montée, dos) depuis le passage de garde (3 pts). En cas d'égalité, cumule les avantages. Ne sois jamais passif — les pénalités s'accumulent contre toi.",
-      sourceName: "Règlement Officiel CFJJB — Guide Général de Compétition",
+      how: "Priorité stratégique : cherche les 4 pts (montée, dos) depuis le passage de garde (3 pts). En cas d'égalité, cumule les avantages. Ne sois jamais passif · les pénalités s'accumulent contre toi.",
+      sourceName: "Règlement Officiel CFJJB · Guide Général de Compétition",
       sourceUrl: "https://cfjjb.com"
     }
   },
@@ -393,7 +393,7 @@ const scienceData: ScienceCard[] = [
     content: {
       what: "2 points pour placer son genou sur l'estomac/ventre de l'adversaire en position de contrôle. L'adversaire est au sol, tu es en appui avec ton genou posé sur son abdomen et ton autre pied au sol. Position maintenue 3 secondes minimum.",
       why: "Position de transition stratégique entre side control et montée. Elle force l'adversaire à réagir, créant des opportunités de finition ou de progression vers les 4 pts. Très efficace en no-gi pour dicter le rythme.",
-      how: "Chaîne classique : side control → genou sur l'estomac (2 pts) → montée (4 pts). Contrôle la ceinture + col/nuque pour maintenir la pression. Attention : le genou doit être SUR l'estomac — s'il glisse sur le côté, les points ne sont pas accordés.",
+      how: "Chaîne classique : side control → genou sur l'estomac (2 pts) → montée (4 pts). Contrôle la ceinture + col/nuque pour maintenir la pression. Attention : le genou doit être SUR l'estomac · s'il glisse sur le côté, les points ne sont pas accordés.",
       sourceName: "CFJJB Art. 4.3",
       sourceUrl: "https://cfjjb.com"
     }
@@ -405,8 +405,8 @@ const scienceData: ScienceCard[] = [
     category: "Combat",
     content: {
       what: "3 points pour dépasser la garde de l'adversaire et stabiliser une position de contrôle latéral (side control, north-south) pendant 3 secondes. L'adversaire ne doit plus être capable d'utiliser ses jambes pour protéger ou attaquer.",
-      why: "Action la plus fréquente en compétition — porte d'entrée vers les positions dominantes 4 pts. 3 pts vs 2 pts = avantage potentiellement décisif. En bas niveau, beaucoup de matchs se gagnent uniquement sur les passages de garde.",
-      how: "Techniques clés : toreando, leg drag, knee cut, smash pass, over-under, stack pass, bull fighter, headquarters. Clé : stabiliser 3 secondes complètes SANS que l'adversaire récupère sa garde — sinon les points sont refusés.",
+      why: "Action la plus fréquente en compétition · porte d'entrée vers les positions dominantes 4 pts. 3 pts vs 2 pts = avantage potentiellement décisif. En bas niveau, beaucoup de matchs se gagnent uniquement sur les passages de garde.",
+      how: "Techniques clés : toreando, leg drag, knee cut, smash pass, over-under, stack pass, bull fighter, headquarters. Clé : stabiliser 3 secondes complètes SANS que l'adversaire récupère sa garde · sinon les points sont refusés.",
       sourceName: "CFJJB Art. 4.5",
       sourceUrl: "https://cfjjb.com"
     }
@@ -417,8 +417,8 @@ const scienceData: ScienceCard[] = [
     icon: "shield",
     category: "Combat",
     content: {
-      what: "4 points — valeur maximale — pour deux positions distinctes. Montée : être assis sur le torse adverse, cuisses de chaque côté, face à sa tête. Contrôle du dos : être dans le dos de l'adversaire avec au minimum un crochet (hook) de jambe inséré. Montée arrière (4 pts aussi) : adversaire face sol, tu montes dans son dos.",
-      why: "Positions les plus haut cotées car elles offrent les meilleures opportunités de soumission. Une montée réussie oblige l'adversaire à dépenser énormément d'énergie pour défendre — même sans finition, c'est un avantage tactique massif.",
+      what: "4 points · valeur maximale · pour deux positions distinctes. Montée : être assis sur le torse adverse, cuisses de chaque côté, face à sa tête. Contrôle du dos : être dans le dos de l'adversaire avec au minimum un crochet (hook) de jambe inséré. Montée arrière (4 pts aussi) : adversaire face sol, tu montes dans son dos.",
+      why: "Positions les plus haut cotées car elles offrent les meilleures opportunités de soumission. Une montée réussie oblige l'adversaire à dépenser énormément d'énergie pour défendre · même sans finition, c'est un avantage tactique massif.",
       how: "Montée : depuis side control ou KoS → montée. Contrôle du dos : prise de dos depuis turtle, berimbolo, ou basculement depuis la montée. Minimum un crochet pour valider. Body triangle = variation du contrôle dos (4 pts identiques).",
       sourceName: "CFJJB Art. 4.4",
       sourceUrl: "https://cfjjb.com"
@@ -430,10 +430,10 @@ const scienceData: ScienceCard[] = [
     icon: "shield",
     category: "Combat",
     content: {
-      what: "L'avantage est un tiebreaker — il ne s'additionne PAS au score principal. Accordé pour quasi-actions non finalisées : quasi-soumission, quasi-renversement, quasi-passage de garde, quasi-takedown. Si égalité de points en fin de match, le joueur avec le plus d'avantages gagne.",
-      why: "Décisifs en compétition — beaucoup de matchs haut niveau se terminent à égalité de points. Un avantage obtenu à la 1ère minute peut décider du résultat à la dernière seconde. Ne jamais les négliger.",
+      what: "L'avantage est un tiebreaker · il ne s'additionne PAS au score principal. Accordé pour quasi-actions non finalisées : quasi-soumission, quasi-renversement, quasi-passage de garde, quasi-takedown. Si égalité de points en fin de match, le joueur avec le plus d'avantages gagne.",
+      why: "Décisifs en compétition · beaucoup de matchs haut niveau se terminent à égalité de points. Un avantage obtenu à la 1ère minute peut décider du résultat à la dernière seconde. Ne jamais les négliger.",
       how: "Obtenir un avantage : tenter une soumission (même ratée), menacer une passe de garde sans finaliser, quasi-sweep. Rappel : 2ème pénalité adversaire = +1 avantage pour toi. Stratégie fin de match : si tu as 1 avantage d'avance sur égalité, joue la montre légalement.",
-      sourceName: "CFJJB Art. 4.6 — Avantages",
+      sourceName: "CFJJB Art. 4.6 · Avantages",
       sourceUrl: "https://cfjjb.com"
     }
   },
@@ -444,9 +444,9 @@ const scienceData: ScienceCard[] = [
     category: "Combat",
     content: {
       what: "Système progressif en 4 niveaux. 1ère pénalité : avertissement simple (aucun point accordé). 2ème pénalité : +1 avantage accordé à l'adversaire. 3ème pénalité : +2 points accordés à l'adversaire. 4ème pénalité : disqualification (DQ) immédiate.",
-      why: "Conçues pour punir la passivité, la fuite, les prises dangereuses ou déloyales. Un compétiteur qui accumule 3 pénalités offre 2 pts à l'adversaire — ce qui peut inverser un match jusque-là gagné.",
-      how: "Éviter : passivité prolongée, fuir hors du tapis, retarder intentionnellement, techniques interdites à son grade. Surveiller les pénalités adversaire : à sa 2ème, tu gagnes un avantage — à sa 3ème, tu gagnes 2 pts. Adapte ta stratégie en conséquence.",
-      sourceName: "CFJJB Art. 6 — Pénalités",
+      why: "Conçues pour punir la passivité, la fuite, les prises dangereuses ou déloyales. Un compétiteur qui accumule 3 pénalités offre 2 pts à l'adversaire · ce qui peut inverser un match jusque-là gagné.",
+      how: "Éviter : passivité prolongée, fuir hors du tapis, retarder intentionnellement, techniques interdites à son grade. Surveiller les pénalités adversaire : à sa 2ème, tu gagnes un avantage · à sa 3ème, tu gagnes 2 pts. Adapte ta stratégie en conséquence.",
+      sourceName: "CFJJB Art. 6 · Pénalités",
       sourceUrl: "https://cfjjb.com"
     }
   },
@@ -458,8 +458,8 @@ const scienceData: ScienceCard[] = [
     content: {
       what: "Les techniques autorisées varient selon le grade. Blanche : étranglements + locks de bras uniquement (armbar, kimura, americana, omoplata). Bleue/Violette : + locks de genoux sans rotation (kneebar, toehold, ankle lock droit). Marron/Noire : + heel hooks (intérieur et extérieur, reaping autorisé).",
       why: "Appliquer une technique interdite à son grade = disqualification immédiate, même si c'est involontaire. En plus, certaines soumissions peuvent blesser un partenaire non préparé à les défendre.",
-      how: "Règle pratique : en blanc, reste bras + étranglements. Bleu+, les genoux sans rotation sont disponibles. Jamais de heel hook rotatif avant marron/noir. En no-gi les règles sont souvent différentes — vérifie toujours le règlement du tournoi avant de t'inscrire.",
-      sourceName: "CFJJB Annexe — Techniques autorisées par grade",
+      how: "Règle pratique : en blanc, reste bras + étranglements. Bleu+, les genoux sans rotation sont disponibles. Jamais de heel hook rotatif avant marron/noir. En no-gi les règles sont souvent différentes · vérifie toujours le règlement du tournoi avant de t'inscrire.",
+      sourceName: "CFJJB Annexe · Techniques autorisées par grade",
       sourceUrl: "https://cfjjb.com"
     }
   },

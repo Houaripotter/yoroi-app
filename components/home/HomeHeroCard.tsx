@@ -1,5 +1,5 @@
 // ============================================================
-// YOROI — HOME HERO CARD
+// YOROI · HOME HERO CARD
 // Une seule carte unifiée : Rang + Ghost + Défis
 // ============================================================
 
@@ -229,7 +229,7 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
   return (
     <View style={[styles.card, { backgroundColor: colors.backgroundCard, marginTop: sv(12), paddingTop: sv(14) }]}>
 
-      {/* ═══ SECTION 1 — RANG ═══════════════════════════════════════════════ */}
+      {/* ═══ SECTION 1 · RANG ═══════════════════════════════════════════════ */}
       <TouchableOpacity
         activeOpacity={0.88}
         onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/gamification'); }}
@@ -291,7 +291,7 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
         <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)' }]} />
       )}
 
-      {/* ═══ SECTION 2 — GHOST ══════════════════════════════════════════════ */}
+      {/* ═══ SECTION 2 · GHOST ══════════════════════════════════════════════ */}
       {showGhost && (
         <TouchableOpacity
           activeOpacity={0.88}
@@ -352,7 +352,7 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
       {/* ═══ SÉPARATEUR ════════════════════════════════════════════════════ */}
       <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)' }]} />
 
-      {/* ═══ SECTION 3 — DÉFIS ══════════════════════════════════════════════ */}
+      {/* ═══ SECTION 3 · DÉFIS ══════════════════════════════════════════════ */}
       <TouchableOpacity
         activeOpacity={0.88}
         onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/gamification?tab=défis' as any); }}

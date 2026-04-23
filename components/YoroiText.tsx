@@ -1,5 +1,5 @@
 /**
- * YoroiText — Remplacement global de React Native's Text
+ * YoroiText · Remplacement global de React Native's Text
  *
  * Ce fichier est injecté à la place de react-native/Libraries/Text/Text
  * via metro.config.js (resolveRequest).

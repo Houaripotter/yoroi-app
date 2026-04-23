@@ -250,7 +250,7 @@ export function DayDetailModal({
                           <View style={styles.sessionMeta}>
                             <Clock size={12} color={colors.textMuted} />
                             <Text style={[styles.sessionMetaText, { color: colors.textSecondary }]}>
-                              {session.start_time || '—'}
+                              {session.start_time || '·'}
                               {endTime ? ` - ${endTime}` : ''}
                               {' • '}
                               {formatDuration(session.duration_minutes)}

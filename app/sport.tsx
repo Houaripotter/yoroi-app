@@ -223,7 +223,7 @@ export default function SportScreen() {
       return { type: 'running', label: 'Course', clubId: 'running' };
     }
     
-    return { type: null, label: firstActivity || '—' };
+    return { type: null, label: firstActivity || '·' };
   };
 
   // Valider la séance d'aujourd'hui

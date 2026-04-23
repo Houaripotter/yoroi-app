@@ -285,7 +285,7 @@ export default function InfirmaryScreen() {
           </View>
         )}
 
-        {/* ── ZONE LA PLUS TOUCHÉE — insight contextuel ── */}
+        {/* ── ZONE LA PLUS TOUCHÉE · insight contextuel ── */}
         {stats && stats.mostAffectedZone && stats.totalInjuries >= 2 && (() => {
           const zoneName = getZoneDisplayName(stats.mostAffectedZone, 'front');
           // Compte d'injuries sur cette zone
@@ -320,7 +320,7 @@ export default function InfirmaryScreen() {
           );
         })()}
 
-        {/* ── BILAN MENSUEL — taux de récup ── */}
+        {/* ── BILAN MENSUEL · taux de récup ── */}
         {stats && stats.totalInjuries > 0 && (() => {
           const recoveryRate = stats.totalInjuries > 0
             ? Math.round((stats.healedInjuries / stats.totalInjuries) * 100)

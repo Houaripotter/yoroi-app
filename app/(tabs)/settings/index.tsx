@@ -160,7 +160,7 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
       { id: 'about', label: 'settings.items.about.label', sublabel: 'settings.items.about.sublabel', Icon: Info, iconColor: '#8B5CF6', handler: 'about' },
     ],
   },
-  // Zone sensible — séparée visuellement pour éviter les clics par erreur
+  // Zone sensible · séparée visuellement pour éviter les clics par erreur
   {
     title: '⚠️  Zone sensible',
     items: [
@@ -806,7 +806,7 @@ export default function SettingsScreen() {
             try {
               const deleted = await deduplicateTrainings();
               if (deleted === 0) {
-                showPopup('✅ Aucun doublon', 'Tes séances sont déjà propres — aucun doublon trouvé.', [{ text: 'OK', style: 'primary' }]);
+                showPopup('✅ Aucun doublon', 'Tes séances sont déjà propres · aucun doublon trouvé.', [{ text: 'OK', style: 'primary' }]);
               } else {
                 showPopup('✅ Nettoyage terminé', `${deleted} séance${deleted > 1 ? 's' : ''} en double supprimée${deleted > 1 ? 's' : ''}.\n\nTon journal d'entraînement est maintenant propre.`, [{ text: 'OK', style: 'primary' }]);
               }
@@ -846,7 +846,7 @@ export default function SettingsScreen() {
       case 'whats-new': setWhatsNewVisible(true); return;
       case 'share-app':
         Share.share({
-          message: 'J\'utilise YOROI pour tracker mes séances BJJ, mes stats et ma progression — 100% offline. Check ça : https://apps.apple.com/fr/app/yoroi-suivi-poids-sport/id6757306612',
+          message: 'J\'utilise YOROI pour tracker mes séances BJJ, mes stats et ma progression · 100% offline. Check ça : https://apps.apple.com/fr/app/yoroi-suivi-poids-sport/id6757306612',
         }).catch(() => {});
         return;
       case 'contact-dev':
@@ -991,7 +991,7 @@ export default function SettingsScreen() {
           <Text style={[styles.headerTitle, { color: screenText }]}>{t('settings.title')}</Text>
         </View>
 
-        {/* Hero profil — avatar + nom + chips + mini-stats, clic → profile */}
+        {/* Hero profil · avatar + nom + chips + mini-stats, clic → profile */}
         {profileName ? (
           <TouchableOpacity
             activeOpacity={0.85}
@@ -1102,7 +1102,7 @@ export default function SettingsScreen() {
                           impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
                           await setLanguage(lang.code);
                         } catch {
-                          // Fallback silencieux — ne pas bloquer l'UI
+                          // Fallback silencieux · ne pas bloquer l'UI
                         }
                       }}
                       activeOpacity={0.75}
@@ -1148,7 +1148,7 @@ export default function SettingsScreen() {
               {section.items.map((item, idx) =>
                 renderItem(item, idx === section.items.length - 1)
               )}
-              {/* Taille du texte — inline dans la section Apparence */}
+              {/* Taille du texte · inline dans la section Apparence */}
               {section.title === 'settings.sections.appearance' && (
                 <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 16, borderTopWidth: 1, borderTopColor: colors.border }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -1502,7 +1502,7 @@ export default function SettingsScreen() {
                 </View>
               ))}
               <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', fontStyle: 'italic', marginTop: 8, marginBottom: 8 }}>
-                Merci à tous ceux qui envoient leurs retours — continuez, c'est ce qui fait grandir l'app.
+                Merci à tous ceux qui envoient leurs retours · continuez, c'est ce qui fait grandir l'app.
               </Text>
             </ScrollView>
             <TouchableOpacity

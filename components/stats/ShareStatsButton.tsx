@@ -32,7 +32,7 @@ interface ShareStatsButtonProps {
   accentColor?: string;
 }
 
-// Card contenu — extrait pour réutilisation dans preview + hidden capture
+// Card contenu · extrait pour réutilisation dans preview + hidden capture
 const ShareCard: React.FC<{
   title: string;
   stats: ShareStat[];
@@ -202,7 +202,7 @@ const ShareStatsButtonInner: React.FC<ShareStatsButtonProps> = ({
         <Text style={styles.buttonText}>Voir et partager mes stats</Text>
       </TouchableOpacity>
 
-      {/* Modal PREVIEW — l'utilisateur voit la carte avant de partager */}
+      {/* Modal PREVIEW · l'utilisateur voit la carte avant de partager */}
       <Modal
         visible={previewOpen}
         transparent

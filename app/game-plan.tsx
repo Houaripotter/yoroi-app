@@ -1,5 +1,5 @@
 // ============================================
-// YOROI — MON GAME PLAN
+// YOROI · MON GAME PLAN
 // Playbook personnel : checklist prochaine séance,
 // ce qui marche, dangers à défendre, journal des game plans
 // ============================================
@@ -222,7 +222,7 @@ export default function GamePlanScreen() {
     const last = new Date(data.entries[0].date);
     const daysSince = Math.floor((Date.now() - last.getTime()) / 86400000);
     if (daysSince === 0) return "Aujourd'hui";
-    if (daysSince === 1) return 'Hier — prochaine séance';
+    if (daysSince === 1) return 'Hier · prochaine séance';
     return `Dernière séance il y a ${daysSince}j`;
   }, [data.entries]);
 
@@ -273,7 +273,7 @@ export default function GamePlanScreen() {
           </Text>
           <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 18 }}>
             {uncheckedCount > 0
-              ? `${uncheckedCount} objectif${uncheckedCount > 1 ? 's' : ''} en attente — coche quand c'est travaillé`
+              ? `${uncheckedCount} objectif${uncheckedCount > 1 ? 's' : ''} en attente · coche quand c'est travaillé`
               : data.checklist.length > 0
                 ? 'Checklist complète. Ajoute de nouveaux objectifs dans tes rounds.'
                 : 'Remplis tes analyses de round pour générer ta checklist automatiquement.'}
@@ -389,7 +389,7 @@ export default function GamePlanScreen() {
         )}
 
         {/* ════════════════════════════════════════════════
-            📈 FIABILITÉ DES GAME PLANS — % de réussite par plan
+            📈 FIABILITÉ DES GAME PLANS · % de réussite par plan
             ════════════════════════════════════════════════ */}
         {data.gpStats.length > 0 && (
           <View style={{ backgroundColor: cardBg, borderRadius: 16, borderWidth: 1, borderColor: border, padding: 14, marginBottom: 12 }}>
@@ -427,7 +427,7 @@ export default function GamePlanScreen() {
         )}
 
         {/* ════════════════════════════════════════════════
-            ⚡ PLAYBOOK — ce qui marche
+            ⚡ PLAYBOOK · ce qui marche
             ════════════════════════════════════════════════ */}
         {data.playbook.length > 0 && (
           <View style={{ backgroundColor: cardBg, borderRadius: 16, borderWidth: 1, borderColor: border, padding: 14, marginBottom: 12 }}>
@@ -437,7 +437,7 @@ export default function GamePlanScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 14, fontWeight: '900', color: colors.text }}>Mon Playbook</Text>
-                <Text style={{ fontSize: 11, color: colors.textMuted ?? '#888' }}>Ce qui fonctionne chez moi — à reproduire</Text>
+                <Text style={{ fontSize: 11, color: colors.textMuted ?? '#888' }}>Ce qui fonctionne chez moi · à reproduire</Text>
               </View>
             </View>
             <View style={{ gap: 7 }}>
@@ -462,7 +462,7 @@ export default function GamePlanScreen() {
         )}
 
         {/* ════════════════════════════════════════════════
-            🛡️ DANGERS — ce qui me pose problème
+            🛡️ DANGERS · ce qui me pose problème
             ════════════════════════════════════════════════ */}
         {data.dangers.length > 0 && (
           <View style={{ backgroundColor: cardBg, borderRadius: 16, borderWidth: 1, borderColor: border, padding: 14, marginBottom: 12 }}>
@@ -497,7 +497,7 @@ export default function GamePlanScreen() {
         )}
 
         {/* ════════════════════════════════════════════════
-            📖 JOURNAL — timeline de mes game plans
+            📖 JOURNAL · timeline de mes game plans
             ════════════════════════════════════════════════ */}
         {data.gamePlans.length > 0 && (
           <View style={{ backgroundColor: cardBg, borderRadius: 16, borderWidth: 1, borderColor: border, padding: 14, marginBottom: 12 }}>
@@ -514,7 +514,7 @@ export default function GamePlanScreen() {
             <View style={{ gap: 10 }}>
               {data.gamePlans.map((gp, i) => {
                 const resultColor = gp.result === 'win' ? '#22C55E' : gp.result === 'loss' ? '#EF4444' : gp.result === 'draw' ? '#F59E0B' : '#6B7280';
-                const resultLabel = gp.result === 'win' ? 'V' : gp.result === 'loss' ? 'D' : gp.result === 'draw' ? 'N' : '—';
+                const resultLabel = gp.result === 'win' ? 'V' : gp.result === 'loss' ? 'D' : gp.result === 'draw' ? 'N' : '·';
                 const hasExecuted = !!gp.whatWorked;
                 return (
                   <TouchableOpacity

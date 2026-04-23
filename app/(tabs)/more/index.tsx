@@ -91,7 +91,7 @@ const TOOL_SECTIONS: ToolSection[] = [
     items: [
       { id: 'add-training', label: 'Ajouter une séance', sublabel: 'Enregistrer un entraînement', Icon: Dumbbell, route: '/add-training', iconColor: '#EF4444' },
       { id: 'training-journal', label: "Carnet d'entraînement", sublabel: 'Records et PR par exercice', Icon: BookOpen, route: '/training-journal', iconColor: '#F97316' },
-      { id: 'history', label: 'Mes séances', sublabel: 'Toutes tes séances — GPS, FC, calories', Icon: Activity, route: '/history', iconColor: '#10B981' },
+      { id: 'history', label: 'Mes séances', sublabel: 'Toutes tes séances · GPS, FC, calories', Icon: Activity, route: '/history', iconColor: '#10B981' },
       { id: 'activity-history', label: 'Activité quotidienne', sublabel: 'Pas et calories du jour', Icon: History, route: '/activity-history', iconColor: '#6366F1' },
       { id: 'training-goals', label: 'Objectifs sportifs', sublabel: 'Definir et suivre tes objectifs', Icon: Target, route: '/training-goals', iconColor: '#10B981' },
       { id: 'records', label: 'Records personnels', sublabel: 'Tes meilleures performances', Icon: Trophy, route: '/records', iconColor: '#EF4444' },
@@ -277,7 +277,7 @@ export default function MoreScreen() {
   // Recents (derniers outils ouverts, ordre récent → ancien)
   const [recents, setRecents] = useState<string[]>([]);
 
-  // Premium status — pour décider d'afficher le badge PRO
+  // Premium status · pour décider d'afficher le badge PRO
   const [isPremium, setIsPremium] = useState<boolean>(false);
 
   // Sections repliées (set des titres de section actuellement collapsées)
@@ -374,7 +374,7 @@ export default function MoreScreen() {
     setRefreshing(false);
   }, [loadData]);
 
-  // Load favorites on mount — defaults pour le premier lancement
+  // Load favorites on mount · defaults pour le premier lancement
   const DEFAULT_FAVORITES = ['share-hub', 'timer', 'infirmary', 'photos', 'import-csv', 'savoir', 'partners', 'health-professionals'];
 
   // IDs à toujours injecter dans les favoris (même pour utilisateurs existants)
@@ -710,7 +710,7 @@ export default function MoreScreen() {
           </View>
         </View>
 
-        {/* SEARCH BAR — sticky en haut du scroll, masque le contenu derriere via screenBackground */}
+        {/* SEARCH BAR · sticky en haut du scroll, masque le contenu derriere via screenBackground */}
         <View style={{ marginHorizontal: -20, paddingHorizontal: 20, paddingBottom: 8, backgroundColor: screenBackground }}>
           <View style={[styles.searchBar, { backgroundColor: colors.backgroundCard, borderColor: colors.border, marginBottom: 0 }]}>
             <Search size={18} color={colors.textMuted} />
@@ -840,7 +840,7 @@ export default function MoreScreen() {
           </View>
         )}
 
-        {/* SECTIONS — clickables pour collapse/expand (sauf si recherche en cours) */}
+        {/* SECTIONS · clickables pour collapse/expand (sauf si recherche en cours) */}
         {filteredSections.map((section) => {
           const sectionMeta = SECTION_ICONS[section.title];
           const SectionIcon = sectionMeta?.Icon;

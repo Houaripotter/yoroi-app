@@ -50,7 +50,7 @@ const TestRestoreButtonInner: React.FC = () => {
           'Le fichier est un backup chiffré valide.\n\n' +
           `Taille : ${formatSize(size)}\n` +
           `Algorithme : ${parsed.yoroi_encrypted === '2.0' ? 'AES-256 + HMAC' : 'AES-256 (legacy)'}\n\n` +
-          'Pour voir le contenu, il faudrait le mot de passe — mais le chiffrement est valide et le fichier n\'a pas été altéré.', size);
+          'Pour voir le contenu, il faudrait le mot de passe · mais le chiffrement est valide et le fichier n\'a pas été altéré.', size);
         return;
       }
 
@@ -84,7 +84,7 @@ const TestRestoreButtonInner: React.FC = () => {
         `Version : ${parsed.version ?? 'inconnue'}\n` +
         `Checksum : ${checksumStatus}\n\n` +
         `Si tu le restaures maintenant :\n${formatDiffMessage(diff)}\n\n` +
-        `Aucune donnée modifiée — c'était juste un test.`, size);
+        `Aucune donnée modifiée · c'était juste un test.`, size);
     } catch (e) {
       logger.error('[TestRestore] Erreur:', e);
       Alert.alert('Erreur', 'Impossible de tester ce fichier.');

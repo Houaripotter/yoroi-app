@@ -146,7 +146,7 @@ export default function LastSessionScreen() {
           if (currentTraining) {
             let parsedOptions: any[] = [];
 
-            // 1. Exercices structurés de la DB (priorité — données complètes avec séries)
+            // 1. Exercices structurés de la DB (priorité · données complètes avec séries)
             if (currentTraining.exercises && currentTraining.exercises.length > 0) {
               parsedOptions = currentTraining.exercises.flatMap((ex: any) => {
                 // Si on a les séries détaillées, afficher chaque série
@@ -303,12 +303,12 @@ export default function LastSessionScreen() {
                       visible: true,
                       icon: '⚔️',
                       title: 'Séance parfaite !',
-                      subtitle: `${totalWins} victoires sur ${totalRounds} rounds\nAucune défaite — domination totale !`,
+                      subtitle: `${totalWins} victoires sur ${totalRounds} rounds\nAucune défaite · domination totale !`,
                     });
                   }
                 }
               } catch {
-                // combat_rounds malformé — ignorer
+                // combat_rounds malformé · ignorer
                 setCombatRoundsData(undefined);
               }
             } else {
@@ -396,7 +396,7 @@ export default function LastSessionScreen() {
     }
   };
 
-  // Réduit toute image à 1200px max — résout le bug d'affichage des photos 12MP+ iPhone
+  // Réduit toute image à 1200px max · résout le bug d'affichage des photos 12MP+ iPhone
   const resizeForCard = async (uri: string): Promise<string> => {
     try {
       const result = await ImageManipulator.manipulateAsync(
@@ -462,7 +462,7 @@ export default function LastSessionScreen() {
           dialogTitle: `${t('socialShare.share')} ma séance`,
         });
       } else {
-        // Sharing not available — save to gallery instead
+        // Sharing not available · save to gallery instead
         const { status } = await requestPermissionsAsync();
         if (status === 'granted') {
           await saveToLibraryAsync(uri);
@@ -652,7 +652,7 @@ export default function LastSessionScreen() {
             </View>
           </View>
 
-          {/* 2. PERSONNALISATION — Toggles d'affichage */}
+          {/* 2. PERSONNALISATION · Toggles d'affichage */}
           <View style={{ marginBottom: 20 }}>
             <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800', letterSpacing: 1.5, marginBottom: 10 }}>
               PERSONNALISER

@@ -168,7 +168,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
     return [];
   }, [selectedMetric, durationHistory, phaseHistories]);
 
-  // ── Gauge score sommeil — variables précalculées et memoizées (trigonométrie)
+  // ── Gauge score sommeil · variables précalculées et memoizées (trigonométrie)
   const gaugeData = useMemo(() => {
     const gaugeGW = 200, gaugeGH = 120;
     const gaugeGcx = gaugeGW / 2, gaugeGcy = gaugeGH - 2;
@@ -204,8 +204,8 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
         text: 'Bon sommeil, quelques axes d\'amélioration possibles.',
         tips: [
           avgHours < 7 ? 'Vise 7-9h de sommeil par nuit' : null,
-          sleepPhasesData.avgDeep < 60 ? 'Ton sommeil profond est un peu court — évite les écrans 1h avant de dormir' : null,
-          sleepPhasesData.avgRem < 90 ? 'Peu de sommeil REM — essaie de te coucher plus tôt' : null,
+          sleepPhasesData.avgDeep < 60 ? 'Ton sommeil profond est un peu court · évite les écrans 1h avant de dormir' : null,
+          sleepPhasesData.avgRem < 90 ? 'Peu de sommeil REM · essaie de te coucher plus tôt' : null,
         ].filter(Boolean) as string[],
       };
     }
@@ -213,7 +213,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
       return {
         text: 'Ton sommeil est insuffisant. Voici ce que tu peux améliorer :',
         tips: [
-          avgHours < 6 ? 'Tu dors trop peu — vise au minimum 7h par nuit' : null,
+          avgHours < 6 ? 'Tu dors trop peu · vise au minimum 7h par nuit' : null,
           'Couche-toi et lève-toi à des heures fixes chaque jour',
           'Évite la caféine après 14h et l\'alcool le soir',
           'Maintiens ta chambre fraîche (18-20°C) et sombre',
@@ -242,7 +242,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
 
   return (
     <View style={{ backgroundColor: sectionBg, borderRadius: 16, marginHorizontal: 0, paddingTop: 8, paddingBottom: 8 }}>
-      {/* ── Jauge score sommeil — JSX inline (pas de composant interne) */}
+      {/* ── Jauge score sommeil · JSX inline (pas de composant interne) */}
       {sleepScore && gaugeExplanation && (
         <StatsSection>
           <View style={[styles.gaugeCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
@@ -270,7 +270,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
                   {sleepScore.score}<Text style={{ fontSize: 16, fontWeight: '600' }}>/100</Text>
                 </Text>
                 <View style={[styles.gradeBigBadge, { backgroundColor: sleepScore.color + '18', borderColor: sleepScore.color + '40' }]}>
-                  <Text style={[styles.gradeBigText, { color: sleepScore.color }]}>{sleepScore.grade} — {sleepScore.label}</Text>
+                  <Text style={[styles.gradeBigText, { color: sleepScore.color }]}>{sleepScore.grade} · {sleepScore.label}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
                   {[{ label: 'D Insuffisant', color: '#EF4444' }, { label: 'C Moyen', color: '#F59E0B' }, { label: 'B Bon', color: '#3B82F6' }, { label: 'A Excellent', color: '#22C55E' }].map(c => (
@@ -473,7 +473,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
         </StatsSection>
       ) : null}
 
-      {/* ── Durée de sommeil — historique horizontal (plus récent à gauche) */}
+      {/* ── Durée de sommeil · historique horizontal (plus récent à gauche) */}
       {durationHistory.length > 0 && (
         <StatsSection>
           <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>

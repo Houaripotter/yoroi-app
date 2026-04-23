@@ -264,7 +264,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({
                 "La discipline est le pont entre les objectifs et l'accomplissement."
               </Text>
               <Text style={[styles.motivationAuthor, { color: isDark ? colors.accent : '#000000', fontWeight: '600' }]}>
-                — Proverbe japonais
+                · Proverbe japonais
               </Text>
             </View>
           </ScrollView>

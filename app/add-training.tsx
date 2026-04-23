@@ -259,13 +259,13 @@ export default function AddTrainingScreen() {
   const [scoreHome, setScoreHome] = useState<string>('');
   const [scoreAway, setScoreAway] = useState<string>('');
   const [userWeight, setUserWeight] = useState<number>(75); // Poids par défaut
-  // Musculation — perf précédente par exercice (label → data) pour affichage "Dernière fois"
+  // Musculation · perf précédente par exercice (label → data) pour affichage "Dernière fois"
   const [lastExercisePerf, setLastExercisePerf] = useState<Record<string, {
     date: string;
     sets: { weight: number; reps: number }[];
     best1RM: number;
   }>>({});
-  // Musculation — meilleur 1RM all-time par exercice (pour détection PR)
+  // Musculation · meilleur 1RM all-time par exercice (pour détection PR)
   const [allTimeBest1RM, setAllTimeBest1RM] = useState<Record<string, number>>({});
   const [userAvatar, setUserAvatar] = useState<any>(null);
   const [userRank, setUserRank] = useState<string>('Ashigaru');
@@ -340,7 +340,7 @@ export default function AddTrainingScreen() {
         }
 
         // Calculer les perfs précédentes de musculation (pour affichage "Dernière fois" + 1RM)
-        // allTrainings est trié DESC par date — la première occurrence d'un exo = la plus récente
+        // allTrainings est trié DESC par date · la première occurrence d'un exo = la plus récente
         const lastPerf: Record<string, { date: string; sets: { weight: number; reps: number }[]; best1RM: number }> = {};
         const allBest: Record<string, number> = {};
         const calc1RM = (w: number, r: number) => r > 1 && r <= 15 ? Math.round(w * (1 + r / 30) * 2) / 2 : 0;
@@ -474,7 +474,7 @@ export default function AddTrainingScreen() {
     };
 
     updateContextualData();
-  // JSON.stringify stabilise le tableau — évite les re-triggers quand la référence change sans que les valeurs changent
+  // JSON.stringify stabilise le tableau · évite les re-triggers quand la référence change sans que les valeurs changent
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClub?.id, JSON.stringify(selectedSports), primarySportForObjective]);
 
@@ -712,11 +712,11 @@ export default function AddTrainingScreen() {
   const locationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchLocationRef = useRef<((query: string) => Promise<void>) | undefined>(undefined);
 
-  // Recherche de lieu — TOUS les moteurs en PARALLÈLE (plus de fallbacks séquentiels)
-  // 1. Photon (komoot) — OSM full-text, biais France
-  // 2. Overpass API — clubs/salles sport OSM
-  // 3. MKLocalSearch natif iOS (Apple Maps) — excellent pour les salles françaises
-  // 4. Nominatim — OSM texte avec restriction France
+  // Recherche de lieu · TOUS les moteurs en PARALLÈLE (plus de fallbacks séquentiels)
+  // 1. Photon (komoot) · OSM full-text, biais France
+  // 2. Overpass API · clubs/salles sport OSM
+  // 3. MKLocalSearch natif iOS (Apple Maps) · excellent pour les salles françaises
+  // 4. Nominatim · OSM texte avec restriction France
   const searchLocation = async (query: string) => {
     if (!query.trim() || query.trim().length < 2) {
       setLocationSuggestions([]);
@@ -729,7 +729,7 @@ export default function AddTrainingScreen() {
       type Suggestion = { name: string; address: string; lat: number; lon: number };
       const encoded = encodeURIComponent(query.trim());
 
-      // Centre géographique de la France — biais Photon pour éviter les résultats hors-France
+      // Centre géographique de la France · biais Photon pour éviter les résultats hors-France
       const FRANCE_LAT = 46.2276;
       const FRANCE_LON = 2.2137;
 
@@ -743,7 +743,7 @@ export default function AddTrainingScreen() {
       // Photon avec biais France (lat/lon + location_bias_scale)
       const photonUrl = `https://photon.komoot.io/api/?q=${encoded}&limit=20&lang=fr&lat=${FRANCE_LAT}&lon=${FRANCE_LON}&location_bias_scale=0.5`;
 
-      // Overpass — salles de sport par nom
+      // Overpass · salles de sport par nom
       const safeQuery = query.trim().replace(/["\\\[\](){}^$.*+?|]/g, '\\$&');
       const overpassQuery = `[out:json][timeout:20];(node["name"~"${safeQuery}","i"]["leisure"~"sports_centre|fitness_centre"];node["name"~"${safeQuery}","i"]["amenity"~"gym|dojo|sports_hall"];node["name"~"${safeQuery}","i"]["sport"];way["name"~"${safeQuery}","i"]["leisure"~"sports_centre|fitness_centre"];way["name"~"${safeQuery}","i"]["amenity"~"gym|dojo|sports_hall"];);out center 30;`;
       const overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
@@ -751,7 +751,7 @@ export default function AddTrainingScreen() {
       // Nominatim avec restriction France
       const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=15&addressdetails=1&countrycodes=fr`;
 
-      // TOUS en parallèle — on n'attend pas qu'un moteur échoue avant d'essayer le suivant
+      // TOUS en parallèle · on n'attend pas qu'un moteur échoue avant d'essayer le suivant
       const [photonRes, overpassRes, nominatimRes, nativeResults] = await Promise.allSettled([
         fetch(photonUrl, { signal: photonController.signal }),
         fetch(overpassUrl, { signal: overpassController.signal }),
@@ -846,7 +846,7 @@ export default function AddTrainingScreen() {
         setLocationSuggestions(finalSuggestions);
         setLocationNoResults(false);
       } else {
-        // Dernier recours — geocodeur Apple natif
+        // Dernier recours · geocodeur Apple natif
         try {
           const geoResults = await Location.geocodeAsync(query.trim());
           if (geoResults.length > 0) {
@@ -1773,7 +1773,7 @@ export default function AddTrainingScreen() {
             if (!isMountedRef.current) return;
             showPopup(
               '💾 Sauvegarder tes données ?',
-              'Tu as ajouté plusieurs séances. Yoroi ne sauvegarde que sur ton téléphone — pense à faire un backup pour ne rien perdre !',
+              'Tu as ajouté plusieurs séances. Yoroi ne sauvegarde que sur ton téléphone · pense à faire un backup pour ne rien perdre !',
               [
                 { text: 'Plus tard', style: 'cancel' },
                 {
@@ -2036,7 +2036,7 @@ export default function AddTrainingScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const previewNotes = useMemo(() => getPreviewNotes(), [selectedSports, sportEntries, selectedOptions, customDescription, notes]);
 
-  // Objet training mémoïsé pour SessionCard — évite les re-renders à chaque keystroke
+  // Objet training mémoïsé pour SessionCard · évite les re-renders à chaque keystroke
   const sessionCardTraining = useMemo(() => ({
     sport: selectedSports.join(','),
     duration_minutes: duration,
@@ -2064,7 +2064,7 @@ export default function AddTrainingScreen() {
 
   return (
     <ScreenWrapper noPadding noContainer>
-      {/* Bloquer le swipe-to-dismiss — seulement la croix ferme l'écran */}
+      {/* Bloquer le swipe-to-dismiss · seulement la croix ferme l'écran */}
       <Stack.Screen options={{ gestureEnabled: false }} />
 
       {/* HEADER ÉTAPE - COLLÉ AU TOP */}
@@ -2079,7 +2079,7 @@ export default function AddTrainingScreen() {
         shadowOffset: { width: 0, height: 1 },
         shadowRadius: 4,
       }}>
-        {/* Bouton fermer — toujours visible */}
+        {/* Bouton fermer · toujours visible */}
         <TouchableOpacity
           style={{
             position: 'absolute', top: insets.top + 6, right: 12, zIndex: 10,
@@ -2141,7 +2141,7 @@ export default function AddTrainingScreen() {
           onScroll={(e) => { currentScrollY.current = e.nativeEvent.contentOffset.y; }}
         >
 
-        {/* Résumé sport — visible sur les étapes 2-4 */}
+        {/* Résumé sport · visible sur les étapes 2-4 */}
         {currentStep > 1 && selectedSports.length > 0 && (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18, alignItems: 'center', paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)' }}>
             {selectedSports.map(sportId => {
@@ -2575,7 +2575,7 @@ export default function AddTrainingScreen() {
           </View>
         )}
 
-        {/* Bouton Suivant — Étape 1 */}
+        {/* Bouton Suivant · Étape 1 */}
         {currentStep === 1 && selectedSports.length > 0 && (
           <TouchableOpacity
             style={{
@@ -2745,13 +2745,13 @@ export default function AddTrainingScreen() {
                                               Utiliser « {locationName.trim()} »
                                             </Text>
                                             <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 1 }}>
-                                              Lieu introuvable sur la carte — sauvegarder tel quel
+                                              Lieu introuvable sur la carte · sauvegarder tel quel
                                             </Text>
                                           </View>
                                         </TouchableOpacity>
                                       )}
 
-                                      {/* Suggestions de résultats — style Google/Apple Maps */}
+                                      {/* Suggestions de résultats · style Google/Apple Maps */}
                                       {locationSuggestions.length > 0 && (
                                         <View style={{
                                           borderRadius: 14,
@@ -3908,7 +3908,7 @@ export default function AddTrainingScreen() {
                   <View style={{ flex: 1, backgroundColor: colors.backgroundElevated, padding: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <TextInput
                       style={{ fontSize: 20, fontWeight: '700', color: '#F59E0B', flex: 1, textAlign: 'center' }}
-                      placeholder="—"
+                      placeholder="·"
                       placeholderTextColor={colors.textMuted}
                       keyboardType="number-pad"
                       value={calories}
@@ -3921,7 +3921,7 @@ export default function AddTrainingScreen() {
                   <View style={{ flex: 1, backgroundColor: colors.backgroundElevated, padding: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <TextInput
                       style={{ fontSize: 20, fontWeight: '700', color: '#EF4444', flex: 1, textAlign: 'center' }}
-                      placeholder="—"
+                      placeholder="·"
                       placeholderTextColor={colors.textMuted}
                       keyboardType="number-pad"
                       value={heartRate}
@@ -4669,7 +4669,7 @@ export default function AddTrainingScreen() {
         {/* Navigation Étapes 2-4 */}
         {currentStep > 1 && selectedSports.length > 0 && (
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 28 }}>
-            {/* Retour — toujours lisible : bordure + texte primaire */}
+            {/* Retour · toujours lisible : bordure + texte primaire */}
             <TouchableOpacity
               style={{
                 flex: 1, paddingVertical: 16, borderRadius: 16,
@@ -4682,7 +4682,7 @@ export default function AddTrainingScreen() {
               <Text style={{ fontWeight: '700', fontSize: 15, color: colors.textPrimary }}>{t('addTraining.back')}</Text>
             </TouchableOpacity>
 
-            {/* Suivant / Enregistrer — inversé : toujours contrasté dans tous les thèmes */}
+            {/* Suivant / Enregistrer · inversé : toujours contrasté dans tous les thèmes */}
             {currentStep < totalSteps ? (
               <TouchableOpacity
                 style={{

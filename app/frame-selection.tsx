@@ -2476,7 +2476,7 @@ export default function FrameSelectionScreen() {
         showsVerticalScrollIndicator={false}
         scrollEnabled={scrollEnabled}
       >
-        {/* Mini apercu sticky — juste la photo centree, sobre */}
+        {/* Mini apercu sticky · juste la photo centree, sobre */}
         <View style={[styles.miniPreviewBar, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
           <View style={styles.miniPreviewWrapper}>
             <View style={styles.miniPreviewInner}>

@@ -86,7 +86,7 @@ export const EnhancedCalendarView = React.memo(function EnhancedCalendarView({
     loadRestDays();
   }, [currentMonth, refreshKey]);
 
-  // Calendar logic — memoïsé pour éviter le recalcul à chaque re-render parent
+  // Calendar logic · memoïsé pour éviter le recalcul à chaque re-render parent
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
@@ -312,7 +312,7 @@ export const EnhancedCalendarView = React.memo(function EnhancedCalendarView({
                       </View>
                     )}
 
-                    {/* Lune cliquable — toggle jour de repos */}
+                    {/* Lune cliquable · toggle jour de repos */}
                     {isRest && (
                       <TouchableOpacity
                         onPress={() => onToggleRest?.(day)}

@@ -1,7 +1,7 @@
 // ============================================
-// UNIVERSAL SHARE CARD — YOROI  ★ PREMIUM
+// UNIVERSAL SHARE CARD · YOROI  ★ PREMIUM
 // ============================================
-// Format 9:16 — Instagram Stories / TikTok
+// Format 9:16 · Instagram Stories / TikTok
 // Rounds + techniques affichés · Branding complet
 // ============================================
 
@@ -67,7 +67,7 @@ function getCfg(sport?: string) {
 // ─── Formatters ─────────────────────────────────────────────────────────────
 
 function fmtDur(min?: number) {
-  if (!min) return '—';
+  if (!min) return '·';
   const h = Math.floor(min / 60), m = min % 60;
   return h === 0 ? `${m}min` : m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, '0')}`;
 }
@@ -330,7 +330,7 @@ export const UniversalShareCard = React.memo(
             </View>
           </View>
 
-          {/* ── COMBAT LOG — rounds détaillés ─────────────────────────── */}
+          {/* ── COMBAT LOG · rounds détaillés ─────────────────────────── */}
           {hasCombatRounds && (
             <View style={{ marginBottom: 10 * s }}>
               {/* Titre section */}
@@ -438,7 +438,7 @@ export const UniversalShareCard = React.memo(
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 * s, marginBottom: 10 * s }}>
               <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
               <Text style={{ color: 'rgba(255,255,255,0.30)', fontSize: 7 * s, fontWeight: '700', letterSpacing: 1 }}>
-                {`SÉANCE #${yearlyCount}${yearlyObjective ? ` SUR ${yearlyObjective}` : ''} — ${new Date().getFullYear()}`}
+                {`SÉANCE #${yearlyCount}${yearlyObjective ? ` SUR ${yearlyObjective}` : ''} · ${new Date().getFullYear()}`}
               </Text>
               <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
             </View>

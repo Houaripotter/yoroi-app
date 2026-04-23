@@ -48,7 +48,7 @@ interface MuscleMapCardProps {
   sport: string;
   sportName?: string;
   sportColor?: string;
-  /** Muscles saisis manuellement (ex: "pectoraux,biceps,abdominaux") — prioritaire sur le sport */
+  /** Muscles saisis manuellement (ex: "pectoraux,biceps,abdominaux") · prioritaire sur le sport */
   customMuscles?: string;
   /** ID de la séance pour sauvegarder le choix */
   trainingId?: number;
@@ -327,10 +327,10 @@ export const MuscleMapCard: React.FC<MuscleMapCardProps> = ({
         <Text style={[styles.title, { color: colors.textPrimary }]}>Muscles travaillés</Text>
       </View>
 
-      {/* Sélecteur individuel multi-choix — tous les sports */}
+      {/* Sélecteur individuel multi-choix · tous les sports */}
       <View style={[presetStyles.wrap, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)' }]}>
         <Text style={[presetStyles.hint, { color: colors.textMuted }]}>
-          Muscles travaillés{selected.size > 0 ? ` · ${selected.size} sélectionné${selected.size > 1 ? 's' : ''}` : ' — appuie pour sélectionner'}
+          Muscles travaillés{selected.size > 0 ? ` · ${selected.size} sélectionné${selected.size > 1 ? 's' : ''}` : ' · appuie pour sélectionner'}
         </Text>
         <View style={presetStyles.grid}>
           {ALL_MUSCLES.map(m => {

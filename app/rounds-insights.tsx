@@ -246,14 +246,14 @@ export default function RoundsInsightsScreen() {
           <KpiCard
             icon={<Award size={18} color="#F59E0B" />}
             label="Note moyenne"
-            value={stats.avgRating > 0 ? `${stats.avgRating.toFixed(1)}/10` : '—'}
+            value={stats.avgRating > 0 ? `${stats.avgRating.toFixed(1)}/10` : '·'}
             color="#F59E0B"
             isDark={isDark}
           />
           <KpiCard
             icon={<Flame size={18} color="#EF4444" />}
             label="Ressenti dominant"
-            value={stats.dominantMood ? `${stats.dominantMood.info.emoji}` : '—'}
+            value={stats.dominantMood ? `${stats.dominantMood.info.emoji}` : '·'}
             subValue={stats.dominantMood ? stats.dominantMood.info.label : ''}
             color="#EF4444"
             isDark={isDark}

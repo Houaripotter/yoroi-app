@@ -189,7 +189,7 @@ export default function ProfileScreen() {
   const { colors, isDark } = useTheme();
   const { t, language, setLanguage } = useI18n();
 
-  // 🔒 SÉCURITÉ: Protection contre les screenshots (désactivée sur le profil —
+  // 🔒 SÉCURITÉ: Protection contre les screenshots (désactivée sur le profil ·
   // l'utilisateur doit pouvoir prendre un screenshot de sa page profil)
   const { isBlurred, screenshotDetected } = useSensitiveScreen(false);
 
@@ -367,7 +367,7 @@ export default function ProfileScreen() {
       profile_photo: resized,
     });
     DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
-    // Pas de popup succès — la photo s'affiche instantanément, c'est suffisant
+    // Pas de popup succès · la photo s'affiche instantanément, c'est suffisant
   };
 
   const takeProfilePhoto = async () => {

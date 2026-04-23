@@ -145,7 +145,7 @@ function generateDemoDetails(training: Training): WorkoutDetails {
     }
   }
 
-  // Pas de route GPS simulée — on n'affiche la carte que si les vraies données HealthKit sont disponibles
+  // Pas de route GPS simulée · on n'affiche la carte que si les vraies données HealthKit sont disponibles
 
   return details;
 }
@@ -202,7 +202,7 @@ function formatDateHeader(date: string): string {
   } catch { return ''; }
 }
 
-// Noms lisibles pour les sources — masque les noms internes laids
+// Noms lisibles pour les sources · masque les noms internes laids
 function getSourceDisplayName(source: string): string | null {
   const map: Record<string, string> = {
     apple_watch: 'Apple Watch', apple_health: 'Apple Santé',
@@ -342,14 +342,14 @@ export default function WorkoutDetailScreen() {
   // Zones cardiaques
   // Priorité :
   //   1. Zones custom configurées → recalcul précis avec les samples
-  //   2. Zones HealthKit (calcul fait avec HKMaximumHeartRate réel de la montre) — le plus précis sans config
+  //   2. Zones HealthKit (calcul fait avec HKMaximumHeartRate réel de la montre) · le plus précis sans config
   //   3. Dernier recours : estimation depuis âge/défaut
   const hrZones = useMemo(() => {
     const hrSamples = details?.heartRateSamples;
 
     // Reconstitue les bornes temporelles de la séance (début/fin) pour que les
     // gaps début→1er sample et dernier sample→fin soient comptabilisés dans la
-    // bonne zone — c'est ce que fait Apple Santé. Sans ces bornes, Yoroi perdait
+    // bonne zone · c'est ce que fait Apple Santé. Sans ces bornes, Yoroi perdait
     // ~1-2 minutes (réparties surtout en Zone 1 et Zone 2).
     const dur = training?.duration_minutes ?? details?.durationMinutes;
     let workoutStartISO: string | undefined;
@@ -1701,7 +1701,7 @@ export default function WorkoutDetailScreen() {
 // ============================================
 
 // ============================================
-// MAP PIN VIEW — Carte avec point de départ + modal plein écran
+// MAP PIN VIEW · Carte avec point de départ + modal plein écran
 // ============================================
 
 const MapPinView: React.FC<{

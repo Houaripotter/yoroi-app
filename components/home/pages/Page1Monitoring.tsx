@@ -671,7 +671,7 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
         </Animated.View>
       )}
 
-      {/* FlatList-style scroll natif — ultra-fluide iOS */}
+      {/* FlatList-style scroll natif · ultra-fluide iOS */}
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -893,7 +893,7 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
 
       </ScrollView>
 
-      {/* Dot indicators — ronds noirs comme la carte Poids */}
+      {/* Dot indicators · ronds noirs comme la carte Poids */}
       <View style={hStyles.dots}>
         {[0, 1, 2].map(i => (
           <TouchableOpacity
@@ -1042,7 +1042,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const { s: rs, sv, isCompact } = useResponsive();
   const IS_SMALL_SCREEN = SCREEN_WIDTH < 375;
-  // La largeur des cards reste identique — on ne touche PAS aux marges horizontales.
+  // La largeur des cards reste identique · on ne touche PAS aux marges horizontales.
   // En mode compact, seul le gap vertical entre les rangées est réduit.
   const H_CARD_W = (SCREEN_WIDTH - CARD_PADDING * 2 - 12) / 2;
   const H_CARD_PAGE_W = H_CARD_W - CARD_BORDER_W * 2;
@@ -1576,7 +1576,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               </View>
             </View>
 
-            {/* ScrollView horizontal — scroll natif ultra-fluide */}
+            {/* ScrollView horizontal · scroll natif ultra-fluide */}
             <ScrollView
               horizontal
               pagingEnabled

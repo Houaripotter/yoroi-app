@@ -251,7 +251,7 @@ export default React.memo(function BenchmarkDetailModal({
                       )}
                     </View>
 
-                    {/* Running details — Strava style */}
+                    {/* Running details · Strava style */}
                     {isRunningCategory && (
                       <View style={styles.runningDetails}>
                         {distKm && (

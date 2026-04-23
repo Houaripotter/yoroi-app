@@ -116,7 +116,7 @@ export default function PremiumScreen() {
           <View style={[styles.statusCard, { backgroundColor: '#10B98115', borderColor: '#10B98140' }]}>
             <Check size={20} color="#10B981" strokeWidth={2.5} />
             <Text style={[styles.statusText, { color: '#10B981' }]}>
-              Premium actif — merci de ton soutien 🙏
+              Premium actif · merci de ton soutien 🙏
             </Text>
           </View>
         )}
@@ -143,7 +143,7 @@ export default function PremiumScreen() {
           })}
         </View>
 
-        {/* Plans — masqués si Premium actif */}
+        {/* Plans · masqués si Premium actif */}
         {!currentlyPremium && (
           <>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Choisis ton plan</Text>
