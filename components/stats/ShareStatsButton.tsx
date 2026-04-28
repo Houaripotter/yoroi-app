@@ -32,6 +32,8 @@ interface ShareStatsButtonProps {
   accentColor?: string;
 }
 
+export type ShareFormat = '1:1' | '9:16';
+
 // Card contenu · extrait pour réutilisation dans preview + hidden capture
 const ShareCard: React.FC<{
   title: string;
@@ -39,25 +41,34 @@ const ShareCard: React.FC<{
   tagline?: string;
   accent: string;
   dateStr: string;
-  fullSize?: boolean;  // true pour la version 1080×1080, false pour preview fitté à l'écran
-  scale?: number;       // pour scaling proportionnel
-}> = ({ title, stats, tagline, accent, dateStr, fullSize = false, scale = 1 }) => {
-  const size = fullSize ? 1080 : 320 * scale;
-  const padding = fullSize ? 80 : 24;
+  fullSize?: boolean;       // true pour la version HD (1080×1080 ou 1080×1920), false pour preview
+  scale?: number;            // pour scaling proportionnel (preview uniquement)
+  format?: ShareFormat;      // '1:1' (1080×1080) ou '9:16' (1080×1920)
+}> = ({ title, stats, tagline, accent, dateStr, fullSize = false, scale = 1, format = '1:1' }) => {
+  const isVertical = format === '9:16';
+  const baseWidthFull = 1080;
+  const baseHeightFull = isVertical ? 1920 : 1080;
+  const previewWidth = 320 * scale;
+  const previewHeight = isVertical ? (320 * 16 / 9) * scale : previewWidth;
+
+  const width = fullSize ? baseWidthFull : previewWidth;
+  const height = fullSize ? baseHeightFull : previewHeight;
+
+  const padding = fullSize ? (isVertical ? 72 : 80) : 24;
   const logoSize = fullSize ? 64 : 40;
-  const titleSize = fullSize ? 32 : 18;
+  const titleSize = fullSize ? (isVertical ? 38 : 32) : 18;
   const dateSize = fullSize ? 18 : 11;
-  const statValueSize = fullSize ? 64 : 30;
+  const statValueSize = fullSize ? (isVertical ? 72 : 64) : 30;
   const statLabelSize = fullSize ? 22 : 11;
-  const taglineSize = fullSize ? 26 : 14;
+  const taglineSize = fullSize ? (isVertical ? 32 : 26) : 14;
   const footerSize = fullSize ? 18 : 10;
-  const gridGap = fullSize ? 24 : 10;
+  const gridGap = fullSize ? (isVertical ? 20 : 24) : 10;
 
   return (
     <View
       style={{
-        width: size,
-        height: size,
+        width,
+        height,
         padding,
         backgroundColor: '#0F172A',
         justifyContent: 'space-between',
@@ -149,15 +160,18 @@ const ShareStatsButtonInner: React.FC<ShareStatsButtonProps> = ({
 }) => {
   const { colors } = useTheme();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const viewShotRef = useRef<ViewShot>(null);
+  const viewShotSquareRef = useRef<ViewShot>(null);
+  const viewShotStoryRef = useRef<ViewShot>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [shareFormat, setShareFormat] = useState<ShareFormat>('1:1');
   const accent = accentColor || colors.accent || '#3B82F6';
   const dateStr = format(new Date(), 'd MMMM yyyy', { locale: fr });
 
   // La preview affiche la carte scalée pour tenir à l'écran (max 340px de large)
   const PREVIEW_WIDTH = Math.min(340, SCREEN_WIDTH - 48);
   const PREVIEW_SCALE = PREVIEW_WIDTH / 320;
+  const PREVIEW_HEIGHT = shareFormat === '9:16' ? (PREVIEW_WIDTH * 16) / 9 : PREVIEW_WIDTH;
 
   const handleOpenPreview = () => {
     if (Platform.OS !== 'web') impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
@@ -169,7 +183,8 @@ const ShareStatsButtonInner: React.FC<ShareStatsButtonProps> = ({
     setSharing(true);
     if (Platform.OS !== 'web') impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
     try {
-      const uri = await viewShotRef.current?.capture?.();
+      const targetRef = shareFormat === '9:16' ? viewShotStoryRef : viewShotSquareRef;
+      const uri = await targetRef.current?.capture?.();
       if (!uri) throw new Error('Capture failed');
       const isAvailable = await Sharing.isAvailableAsync();
       if (!isAvailable) {
@@ -227,12 +242,42 @@ const ShareStatsButtonInner: React.FC<ShareStatsButtonProps> = ({
               </TouchableOpacity>
             </View>
 
+            {/* Format selector */}
+            <View style={styles.formatSelector}>
+              {(['1:1', '9:16'] as ShareFormat[]).map(f => {
+                const active = shareFormat === f;
+                return (
+                  <TouchableOpacity
+                    key={f}
+                    onPress={() => {
+                      if (Platform.OS !== 'web') impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+                      setShareFormat(f);
+                    }}
+                    activeOpacity={0.85}
+                    style={[
+                      styles.formatChip,
+                      { backgroundColor: active ? accent : 'rgba(255,255,255,0.08)' },
+                    ]}
+                  >
+                    <Text style={{
+                      color: active ? '#FFFFFF' : 'rgba(255,255,255,0.7)',
+                      fontSize: 12,
+                      fontWeight: '900',
+                      letterSpacing: 0.5,
+                    }}>
+                      {f === '1:1' ? 'CARRÉ 1:1' : 'STORY 9:16'}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
             {/* Preview scalée */}
             <View style={styles.previewWrap}>
               <View
                 style={{
                   width: PREVIEW_WIDTH,
-                  height: PREVIEW_WIDTH,
+                  height: PREVIEW_HEIGHT,
                   borderRadius: 16,
                   overflow: 'hidden',
                 }}
@@ -245,12 +290,15 @@ const ShareStatsButtonInner: React.FC<ShareStatsButtonProps> = ({
                   dateStr={dateStr}
                   fullSize={false}
                   scale={PREVIEW_SCALE}
+                  format={shareFormat}
                 />
               </View>
             </View>
 
             <Text style={styles.modalHint}>
-              Carte 1080×1080 parfaite pour Instagram, WhatsApp, etc.
+              {shareFormat === '1:1'
+                ? 'Carte 1080×1080 · parfaite pour Instagram, WhatsApp, Feed'
+                : 'Carte 1080×1920 · parfaite pour Stories, Reels, TikTok'}
             </Text>
 
             {/* Boutons action */}
@@ -282,10 +330,10 @@ const ShareStatsButtonInner: React.FC<ShareStatsButtonProps> = ({
         </Pressable>
       </Modal>
 
-      {/* Vue cachée 1080×1080 pour ViewShot (capture en HD pour partage) */}
+      {/* Vue cachée 1080×1080 (carré) */}
       <View style={styles.hiddenWrap} pointerEvents="none">
         <ViewShot
-          ref={viewShotRef}
+          ref={viewShotSquareRef}
           options={{ format: 'png', quality: 1, result: 'tmpfile' }}
         >
           <ShareCard
@@ -295,6 +343,25 @@ const ShareStatsButtonInner: React.FC<ShareStatsButtonProps> = ({
             accent={accent}
             dateStr={dateStr}
             fullSize
+            format="1:1"
+          />
+        </ViewShot>
+      </View>
+
+      {/* Vue cachée 1080×1920 (story) */}
+      <View style={styles.hiddenWrap} pointerEvents="none">
+        <ViewShot
+          ref={viewShotStoryRef}
+          options={{ format: 'png', quality: 1, result: 'tmpfile' }}
+        >
+          <ShareCard
+            title={title}
+            stats={stats}
+            tagline={tagline}
+            accent={accent}
+            dateStr={dateStr}
+            fullSize
+            format="9:16"
           />
         </ViewShot>
       </View>
@@ -362,6 +429,17 @@ const styles = StyleSheet.create({
   previewWrap: {
     alignItems: 'center',
     marginVertical: 8,
+  },
+  formatSelector: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 10,
+  },
+  formatChip: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   modalHint: {
     color: 'rgba(255,255,255,0.5)',

@@ -74,8 +74,9 @@ import Celebration from '@/components/Celebration';
 import { AnimatedCounter } from '@/components/stats/AnimatedCounter';
 import { StatsEmptyState } from '@/components/stats/StatsEmptyState';
 import { StatsInsightBanner } from '@/components/stats/StatsInsightBanner';
+import { StatsErrorBoundary } from '@/components/stats/StatsErrorBoundary';
 import { ShareStatsButton } from '@/components/stats/ShareStatsButton';
-import { Trophy as TrophyIcon, Brain } from 'lucide-react-native';
+import { Trophy as TrophyIcon, Brain, Lightbulb, Map as MapIcon, Shield as ShieldIcon, Activity as ActivityIcon, Zap as ZapIcon, Dumbbell as DumbbellIcon, Target as TargetIcon } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPendingVictory } from '@/lib/victoryTrigger';
 
@@ -87,6 +88,19 @@ import { getRelativeDate } from '@/lib/training-journal/utils/dateHelpers';
 import AddEntryModal from './training-journal/components/AddEntryModal';
 import BenchmarkDetailModal from './training-journal/components/BenchmarkDetailModal';
 import SparringTab from './training-journal/components/SparringTab';
+import CompetitionsTab from './training-journal/components/CompetitionsTab';
+import PositionsTab from './training-journal/components/PositionsTab';
+import SoumissionsTab from './training-journal/components/SoumissionsTab';
+import SortiesTab from './training-journal/components/SortiesTab';
+import AlluresTab from './training-journal/components/AlluresTab';
+import WODsTab from './training-journal/components/WODsTab';
+import StationsTab from './training-journal/components/StationsTab';
+import VoiesTab from './training-journal/components/VoiesTab';
+import SeancesMuscuTab from './training-journal/components/SeancesMuscuTab';
+import MusclesTab from './training-journal/components/MusclesTab';
+import ProgressionTab from './training-journal/components/ProgressionTab';
+import SportPackSwitcher from './training-journal/components/SportPackSwitcher';
+import { useSportPack } from '@/lib/SportPackContext';
 import SkillDetailModal from './training-journal/components/SkillDetailModal';
 import TrashModal from './training-journal/components/TrashModal';
 import AddBenchmarkModal from './training-journal/components/AddBenchmarkModal';
@@ -246,7 +260,29 @@ export default function TrainingJournalScreen() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Tab state for Records/Techniques
-  const [activeTab, setActiveTab] = useState<'records' | 'techniques' | 'combat'>('records');
+  const [activeTab, setActiveTab] = useState<'records' | 'techniques' | 'combat' | 'competitions' | 'positions' | 'submissions' | 'sorties' | 'allures' | 'wods' | 'stations' | 'voies' | 'seances_muscu' | 'muscles' | 'progression'>('records');
+  // Pack actif (Combat/Endurance/Force/Nature)
+  const { activePack } = useSportPack();
+
+  // Reset activeTab si l'onglet courant n'est pas dans le pack actif
+  useEffect(() => {
+    const universalTabs = ['records', 'techniques'];
+    const combatTabs = [...universalTabs, 'combat', 'competitions', 'positions', 'submissions'];
+    const enduranceTabs = [...universalTabs, 'sorties', 'allures', 'competitions'];
+    const forceTabs = [...universalTabs, 'wods', 'stations', 'competitions'];
+    const musculationTabs = [...universalTabs, 'seances_muscu', 'muscles', 'progression'];
+    const natureTabs = [...universalTabs, 'voies', 'competitions'];
+    const allowed =
+      activePack === 'combat' ? combatTabs
+      : activePack === 'endurance' ? enduranceTabs
+      : activePack === 'force' ? forceTabs
+      : activePack === 'musculation' ? musculationTabs
+      : activePack === 'nature' ? natureTabs
+      : universalTabs;
+    if (!allowed.includes(activeTab)) {
+      setActiveTab('records');
+    }
+  }, [activePack]);
 
   // New selection states for records (Mirroring Watch app)
   const [isSportPickerVisible, setIsSportPickerVisible] = useState(false);
@@ -1581,14 +1617,92 @@ export default function TrainingJournalScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBackground, paddingTop: insets.top }]}>
+      {/* Barre du haut : corbeille (gauche) + Sport Pack Switcher (scroll horizontal) */}
+      <View style={{ backgroundColor: screenBackground, flexDirection: 'row', alignItems: 'center', paddingTop: 4, paddingBottom: 4 }}>
+        {/* Corbeille à GAUCHE (hors zone de chips) */}
+        <TouchableOpacity
+          onPress={() => {
+            if (isModalProcessing) return;
+            executeModalOnce(async () => {
+              await loadTrashData();
+              setShowTrashModal(true);
+            });
+          }}
+          style={{
+            marginLeft: 12,
+            marginRight: 4,
+            width: 30, height: 30, borderRadius: 15,
+            borderWidth: 1,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.2)',
+            borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.35)',
+            justifyContent: 'center', alignItems: 'center',
+          }}
+          disabled={isModalProcessing}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Trash2 size={15} color={screenText} strokeWidth={2.5} />
+          {trashCount > 0 && (
+            <View style={styles.trashBadge}>
+              <Text style={styles.trashBadgeText}>{trashCount > 9 ? '9+' : trashCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+        {/* Switcher prend le reste · ScrollView horizontale scrolle si nécessaire */}
+        <View style={{ flex: 1 }}>
+          <SportPackSwitcher />
+        </View>
+      </View>
+
       {/* Tab Selector · identique à Planning/Stats */}
       <View style={[styles.tabContainer, { backgroundColor: screenBackground }]}>
-        <View style={styles.tabsRow}>
-          {([
-            { id: 'records',    label: t('journal.records'),   Icon: Dumbbell, count: benchmarksWithEntries.length },
-            { id: 'techniques', label: t('journal.skills'), Icon: BookOpen, count: skills.length },
-            { id: 'combat',     label: t('journal.sparring'),   Icon: Swords,  count: null },
-          ] as const).map(({ id, label, Icon, count }) => {
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabsRow}
+        >
+          {((): Array<{ id: string; label: string; Icon: any; count: number | null }> => {
+            const base = [
+              { id: 'records',    label: t('journal.records'),  Icon: Dumbbell, count: benchmarksWithEntries.length },
+              { id: 'techniques', label: t('journal.skills'),   Icon: BookOpen, count: skills.length },
+            ];
+            if (activePack === 'combat') {
+              return [...base,
+                { id: 'combat',       label: t('journal.sparring'),  Icon: Swords,     count: null },
+                { id: 'competitions', label: 'Compétitions',         Icon: TrophyIcon, count: null },
+                { id: 'positions',    label: 'Positions',            Icon: MapIcon,    count: null },
+                { id: 'submissions',  label: 'Soumissions',          Icon: ShieldIcon, count: null },
+              ];
+            }
+            if (activePack === 'endurance') {
+              return [...base,
+                { id: 'sorties',      label: 'Sorties',      Icon: ActivityIcon, count: null },
+                { id: 'allures',      label: 'Allures',      Icon: ZapIcon,      count: null },
+                { id: 'competitions', label: 'Courses',      Icon: TrophyIcon,   count: null },
+              ];
+            }
+            if (activePack === 'force') {
+              return [...base,
+                { id: 'wods',         label: 'WODs',         Icon: DumbbellIcon, count: null },
+                { id: 'stations',     label: 'Stations',     Icon: TargetIcon,   count: null },
+                { id: 'competitions', label: 'Compétitions', Icon: TrophyIcon,   count: null },
+              ];
+            }
+            if (activePack === 'musculation') {
+              return [...base,
+                { id: 'seances_muscu', label: 'Séances',      Icon: DumbbellIcon, count: null },
+                { id: 'muscles',       label: 'Muscles',      Icon: ZapIcon,      count: null },
+                { id: 'progression',   label: 'Progression',  Icon: TargetIcon,   count: null },
+              ];
+            }
+            if (activePack === 'nature') {
+              return [...base,
+                { id: 'voies',        label: 'Voies',        Icon: MapIcon,      count: null },
+                { id: 'competitions', label: 'Compétitions', Icon: TrophyIcon,   count: null },
+              ];
+            }
+            return base;
+          })().map(({ id, label, Icon, count }) => {
             const isActive = activeTab === id;
             return (
               <TouchableOpacity
@@ -1634,41 +1748,27 @@ export default function TrainingJournalScreen() {
               </TouchableOpacity>
             );
           })}
-        </View>
-
-        {/* Petit bouton poubelle */}
-        <TouchableOpacity
-          onPress={() => {
-            if (isModalProcessing) return;
-            executeModalOnce(async () => {
-              await loadTrashData();
-              setShowTrashModal(true);
-            });
-          }}
-          style={[styles.trashIconBtn, {
-            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.2)',
-            borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.35)',
-          }]}
-          disabled={isModalProcessing}
-          activeOpacity={0.7}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Trash2 size={15} color={screenText} strokeWidth={2.5} />
-          {trashCount > 0 && (
-            <View style={styles.trashBadge}>
-              <Text style={styles.trashBadgeText}>{trashCount > 9 ? '9+' : trashCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        </ScrollView>
       </View>
 
       {/* Info Banner supprimé - nettoyage disponible dans Menu */}
 
       {/* Onglet Sparring · contenu inline, pas de recherche ni filtres */}
-      {activeTab === 'combat' && <SparringTab />}
+      {activeTab === 'combat' && <StatsErrorBoundary tabName="Sparring"><SparringTab /></StatsErrorBoundary>}
+      {activeTab === 'competitions' && <StatsErrorBoundary tabName="Compétitions"><CompetitionsTab /></StatsErrorBoundary>}
+      {activeTab === 'positions' && <StatsErrorBoundary tabName="Positions"><PositionsTab /></StatsErrorBoundary>}
+      {activeTab === 'submissions' && <StatsErrorBoundary tabName="Soumissions"><SoumissionsTab /></StatsErrorBoundary>}
+      {activeTab === 'sorties' && <StatsErrorBoundary tabName="Sorties"><SortiesTab /></StatsErrorBoundary>}
+      {activeTab === 'allures' && <StatsErrorBoundary tabName="Allures"><AlluresTab /></StatsErrorBoundary>}
+      {activeTab === 'wods' && <StatsErrorBoundary tabName="WODs"><WODsTab /></StatsErrorBoundary>}
+      {activeTab === 'stations' && <StatsErrorBoundary tabName="Stations"><StationsTab /></StatsErrorBoundary>}
+      {activeTab === 'voies' && <StatsErrorBoundary tabName="Voies"><VoiesTab /></StatsErrorBoundary>}
+      {activeTab === 'seances_muscu' && <StatsErrorBoundary tabName="Séances"><SeancesMuscuTab /></StatsErrorBoundary>}
+      {activeTab === 'muscles' && <StatsErrorBoundary tabName="Muscles"><MusclesTab /></StatsErrorBoundary>}
+      {activeTab === 'progression' && <StatsErrorBoundary tabName="Progression"><ProgressionTab /></StatsErrorBoundary>}
 
       {/* Search Bar + Filtres · masqués en mode Sparring */}
-      {activeTab !== 'combat' && (
+      {(activeTab === 'records' || activeTab === 'techniques') && (
         <>
           <View style={[styles.searchContainer, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}>
             <View style={[styles.searchBar, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
@@ -1761,7 +1861,7 @@ export default function TrainingJournalScreen() {
         </View>
       )}
 
-      {activeTab !== 'combat' && <ScrollView
+      {(activeTab === 'records' || activeTab === 'techniques') && <ScrollView
         style={[styles.content, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -1911,7 +2011,7 @@ export default function TrainingJournalScreen() {
                   {t('journal.noRecordYet')}
                 </Text>
                 <Text style={[styles.emptyCompactText, { color: colors.textMuted, fontSize: 14, marginTop: 4, textAlign: 'center', paddingHorizontal: 20 }]}>
-                  t("journal.recordYourPersonalRecords")
+                  {t('journal.recordYourPersonalRecords')}
                 </Text>
                 <View style={[styles.emptyActionButton, { backgroundColor: colors.accent, marginTop: 12 }]}>
                   <Plus size={18} color={colors.textOnAccent || '#FFFFFF'} strokeWidth={2.5} />
@@ -2015,7 +2115,7 @@ export default function TrainingJournalScreen() {
                 {/* Suggestion : technique à drill */}
                 {skillsStats.suggestion && (
                   <View style={{ backgroundColor: '#A855F715', borderRadius: 10, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: skillsStats.recentMastered ? 8 : 0 }}>
-                    <Text style={{ fontSize: 18 }}>💡</Text>
+                    <Lightbulb size={20} color="#A855F7" fill="#A855F722" />
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 9, fontWeight: '800', color: '#A855F7', letterSpacing: 0.4 }}>SUGGESTION DU JOUR</Text>
                       <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginTop: 1 }} numberOfLines={1}>
@@ -2031,7 +2131,7 @@ export default function TrainingJournalScreen() {
                 {/* Recent mastered */}
                 {skillsStats.recentMastered && (
                   <View style={{ backgroundColor: '#22C55E15', borderRadius: 10, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <Text style={{ fontSize: 18 }}>🏆</Text>
+                    <TrophyIcon size={20} color="#22C55E" fill="#22C55E22" />
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 9, fontWeight: '800', color: '#22C55E', letterSpacing: 0.4 }}>DERNIÈRE MAÎTRISÉE</Text>
                       <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginTop: 1 }} numberOfLines={1}>
@@ -2168,7 +2268,7 @@ export default function TrainingJournalScreen() {
               { label: 'Reps', value: String(stats.totalDrills), color: '#F59E0B' },
               { label: 'Total skills', value: String(skills.length), color: '#8B5CF6' },
             ]}
-            tagline="Progression continue 🥋"
+            tagline="Progression continue"
             accentColor="#EF4444"
           />
         )}
@@ -2557,10 +2657,10 @@ const styles = StyleSheet.create({
   },
   tabsRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'flex-start',
-    gap: 28,
-    paddingHorizontal: 50,
+    gap: 24,
+    paddingLeft: 20,
+    paddingRight: 20, // corbeille déplacée dans le SportPackSwitcher row
   },
   trashIconBtn: {
     position: 'absolute',

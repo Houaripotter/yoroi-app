@@ -25,9 +25,18 @@ import {
   importData,
   resetDatabase,
   addInjury,
+  addEvaHistory,
+  addTreatment,
 } from './database';
 import { addCombat } from './fighterModeService';
 import { setGoal } from './trainingGoalsService';
+import {
+  DEMO_PROFILES,
+  periodToWeeks,
+  sessionsForPeriod,
+  type DemoProfile,
+  type DemoPeriod,
+} from './demoProfiles';
 
 // ============================================
 // BACKUP / RESTORE KEYS
@@ -99,6 +108,9 @@ const DEMO_ASYNC_KEYS = [
   '@yoroi_is_premium',
   '@yoroi_premium_expires_at',
   '@yoroi_premium_source',
+  '@yoroi_weekly_sparring_goal',
+  // NOTE : PAS @yoroi_dev_mode ni @yoroi_screenshot_menu_unlocked
+  // Ce sont des états de l'app, pas des données user. Doivent persister pendant la démo.
 ];
 
 // ============================================
@@ -805,11 +817,13 @@ export const restoreRealData = async (): Promise<boolean> => {
       logger.info('[DemoData] AsyncStorage + SecureStore data restored.');
     }
 
-    // 4. Clean up backup keys and flag
+    // 4. Clean up backup keys, flag et markers de profil
     await AsyncStorage.multiRemove([
       DEMO_ACTIVE_KEY,
       DEMO_BACKUP_SQLITE_KEY,
       DEMO_BACKUP_ASYNC_KEY,
+      '@yoroi_demo_profile_key',
+      '@yoroi_demo_period',
     ]);
 
     logger.info('[DemoData] Restore complete. Real data is back.');
@@ -1589,3 +1603,1798 @@ export const generateHenyDemoData = async (): Promise<{
     skills: skills.length,
   };
 };
+
+// ============================================
+// NEW · GENERATOR BASÉ SUR PROFIL + PÉRIODE
+// ============================================
+
+interface DemoGenerationResult {
+  workouts: number;
+  weights: number;
+  measurements: number;
+  combats: number;
+  partners: number;
+  skills: number;
+}
+
+/**
+ * Génère des données de démo pour un profil + période donnés.
+ * Utilisé par le mode créateur pour switcher entre 4 profils pré-configurés.
+ *
+ * @param profileKey - 'houari' | 'louis' | 'hedi' | 'yanis'
+ * @param period - '3mo' | '6mo' | '1y'
+ */
+export const generateDemoProfile = async (
+  profileKey: string,
+  period: DemoPeriod,
+): Promise<DemoGenerationResult> => {
+  const profile = DEMO_PROFILES[profileKey];
+  if (!profile) throw new Error(`Profil démo inconnu : ${profileKey}`);
+
+  await initDatabase();
+
+  // ======= BACKUP + RESET =======
+  const alreadyActive = await isDemoDataActive();
+  if (!alreadyActive) {
+    await backupRealData();
+  }
+
+  await resetDatabase();
+  for (const key of DEMO_ASYNC_KEYS) {
+    await AsyncStorage.removeItem(key);
+  }
+
+  const weeks = periodToWeeks(period);
+  const endDate = new Date();
+  endDate.setHours(0, 0, 0, 0);
+  const startDate = addDays(endDate, -weeks * 7);
+
+  // ========== PROFIL ==========
+  const age = new Date().getFullYear() - parseInt(profile.birthDate.slice(0, 4), 10);
+  await saveProfile({
+    name: profile.name,
+    height_cm: profile.heightCm,
+    target_weight: profile.targetWeight,
+    start_weight: profile.startWeight,
+    start_date: fmtDate(startDate),
+    avatar_gender: profile.gender === 'male' ? 'homme' : 'femme',
+    weight_goal: profile.currentWeight > profile.targetWeight ? 'lose' : (profile.currentWeight < profile.targetWeight ? 'gain' : 'maintain'),
+    age,
+    birth_date: profile.birthDate,
+  });
+
+  await AsyncStorage.setItem('@yoroi_user_settings', JSON.stringify({
+    username: profile.name,
+    height: profile.heightCm,
+    weight_unit: 'kg',
+    measurement_unit: 'cm',
+    goal: profile.currentWeight > profile.targetWeight ? 'lose_weight' : 'maintain_weight',
+    targetWeight: profile.targetWeight,
+    startWeight: profile.startWeight,
+    gender: profile.gender,
+    onboardingCompleted: true,
+    citationStyle: 'warrior',
+  }));
+  await AsyncStorage.setItem('@yoroi_user_height', String(profile.heightCm));
+  await AsyncStorage.setItem('@yoroi_user_sport', profile.sports[0] || 'jjb');
+  await AsyncStorage.setItem('@yoroi_user_mode', 'fighter');
+  await AsyncStorage.setItem('@yoroi_gender', profile.gender);
+  await AsyncStorage.setItem('@yoroi_belt', profile.belt);
+  await secureStorage.setItem('@yoroi_current_weight', String(profile.currentWeight));
+  await AsyncStorage.setItem('@yoroi_start_weight', String(profile.startWeight));
+  await secureStorage.setItem('@yoroi_target_weight', String(profile.targetWeight));
+  await AsyncStorage.setItem('@yoroi_first_use_date', startDate.toISOString());
+
+  // ========== CLUBS ==========
+  // Tous les profils au Gracie Barra Les Olives avec le logo officiel
+  const mainClubId = await addClub({
+    name: profile.club.name,
+    sport: 'jjb',
+    color: profile.club.color,
+    sessions_per_week: profile.baseSessionsPerWeek,
+    logo_uri: 'graciebarra',
+  });
+
+  let muscuClubId: number | null = null;
+  if (profile.sports.includes('musculation')) {
+    muscuClubId = await addClub({
+      name: profile.muscuGym.name,
+      sport: 'musculation',
+      color: profile.muscuGym.color,
+      sessions_per_week: 2,
+      logo_uri: '',
+    });
+  }
+
+  // ========== PARTENAIRES SPARRING ==========
+  const partnerData = generateProfilePartners(profile);
+  await AsyncStorage.setItem('@yoroi_sparring_partners', JSON.stringify(partnerData));
+
+  // ========== TRAININGS avec variance ==========
+  const trainings = generateTrainingsForProfile(profile, startDate, weeks);
+  let workoutCount = 0;
+  for (const tr of trainings) {
+    try {
+      await addTraining({
+        club_id: tr.sport === 'musculation' && muscuClubId ? muscuClubId : mainClubId,
+        sport: tr.sport,
+        session_type: tr.sessionType,
+        date: tr.date,
+        start_time: tr.startTime,
+        duration_minutes: tr.duration,
+        intensity: tr.intensity,
+        calories: tr.calories,
+        heart_rate: tr.hr,
+        max_heart_rate: tr.maxHr,
+        technical_theme: tr.theme,
+        rounds: tr.roundsCount,
+        round_duration: tr.roundDuration,
+        combat_rounds: tr.combatRounds, // addTraining fait le stringify lui-même
+        game_plan: tr.gamePlan,
+        what_worked: tr.whatWorked,
+        what_didnt_work: tr.whatDidnt,
+        session_rating: tr.rating,
+        distance: tr.distance,
+        pace: tr.pace,
+      } as any);
+      workoutCount++;
+    } catch (e) {
+      logger.warn('[DemoProfile] training insert error', e);
+    }
+  }
+
+  // ========== PESÉES (1-2/semaine avec progression) ==========
+  const weightEntries = generateWeightsForProfile(profile, startDate, weeks);
+  let weightCount = 0;
+  for (const w of weightEntries) {
+    try {
+      await addWeight({
+        weight: w.weight,
+        fat_percent: w.fat,
+        muscle_percent: w.muscle,
+        water_percent: w.water,
+        bone_mass: w.bone,
+        visceral_fat: w.visceral,
+        metabolic_age: w.metabolicAge,
+        bmr: w.bmr,
+        date: w.date,
+        source: 'manual',
+      });
+      weightCount++;
+    } catch (e) {
+      logger.warn('[DemoProfile] weight insert error', e);
+    }
+  }
+
+  // ========== MENSURATIONS (1/mois environ) ==========
+  const measurementEntries = generateMeasurementsForProfile(profile, startDate, weeks);
+  let measurementCount = 0;
+  for (const m of measurementEntries) {
+    try {
+      await addMeasurementRecord(m as any);
+      measurementCount++;
+    } catch (e) {
+      logger.warn('[DemoProfile] measurement insert error', e);
+    }
+  }
+
+  // ========== COMBATS PASSÉS (pour tous les profils — tous font des compétitions) ==========
+  let combatCount = 0;
+  const combats = generateCombatsForProfile(profile, startDate, weeks);
+  for (const c of combats) {
+    try {
+      await addCombat(c as any);
+      combatCount++;
+    } catch (e) {
+      logger.warn('[DemoProfile] combat insert error', e);
+    }
+  }
+
+  // ========== COMPÉTITIONS PASSÉES + FUTURES ==========
+  // On ajoute 1 compétition passée (déjà faite — ref pour les combats) + 1-2 futures
+  try {
+    const pastComp = {
+      nom: `Open ${profile.club.name.split(' ').pop() ?? 'Marseille'} ${new Date(endDate.getFullYear(), endDate.getMonth() - 2, 15).getFullYear()}`,
+      date: fmtDate(addDays(endDate, -60)),
+      lieu: 'Marseille',
+      sport: 'jjb',
+      categorie_poids: profile.currentWeight <= 70 ? 'Pluma' : profile.currentWeight <= 76 ? 'Pena' : profile.currentWeight <= 82 ? 'Leve' : 'Medio',
+      statut: 'passee' as const,
+    };
+    await addCompetition(pastComp as any);
+
+    // Future competition dans 2-6 semaines
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + randInt(14, 42));
+    const nextCompName = profile.key === 'houari' ? 'Marseille Open 2026'
+      : profile.key === 'louis' ? 'Paris Spring Grappling Challenge'
+      : profile.key === 'hedi' ? 'Gracie Barra Europeans'
+      : 'Atos Invitational Paris';
+    await addCompetition({
+      nom: nextCompName,
+      date: fmtDate(futureDate),
+      lieu: profile.key === 'houari' ? 'Marseille' : 'Paris',
+      sport: 'jjb',
+      categorie_poids: profile.currentWeight <= 70 ? 'Pluma' : profile.currentWeight <= 76 ? 'Pena' : profile.currentWeight <= 82 ? 'Leve' : 'Medio',
+      statut: 'a_venir' as const,
+    } as any);
+
+    // Pour Yanis (compétiteur actif) : 1 autre future
+    if (profile.key === 'yanis') {
+      const farFuture = new Date();
+      farFuture.setDate(farFuture.getDate() + randInt(60, 90));
+      await addCompetition({
+        nom: 'European Championship',
+        date: fmtDate(farFuture),
+        lieu: 'Lisbonne',
+        sport: 'jjb',
+        categorie_poids: 'Pluma',
+        statut: 'a_venir' as const,
+      } as any);
+    }
+  } catch (e) {
+    logger.warn('[DemoProfile] competitions insert error', e);
+  }
+
+  // ========== BLESSURES (historique infirmerie) ==========
+  try {
+    await generateInjuriesForProfile(profile, startDate);
+  } catch (e) {
+    logger.warn('[DemoProfile] injuries insert error', e);
+  }
+
+  // ========== SKILLS (techniques travaillées) ==========
+  const skills = generateSkillsForProfile(profile);
+  await AsyncStorage.setItem('yoroi_skills_v2', JSON.stringify(skills));
+
+  // ========== OBJECTIF HEBDO ==========
+  await AsyncStorage.setItem('@yoroi_weekly_sparring_goal', String(profile.baseSessionsPerWeek));
+
+  // ========== MARQUEUR DEMO ACTIVE ==========
+  await AsyncStorage.setItem(DEMO_ACTIVE_KEY, 'true');
+  await AsyncStorage.setItem('@yoroi_demo_profile_key', profileKey);
+  await AsyncStorage.setItem('@yoroi_demo_period', period);
+
+  logger.info(`[DemoProfile] ${profile.name} / ${period}: ${workoutCount} séances, ${weightCount} pesées, ${measurementCount} mensurations, ${combatCount} combats, ${partnerData.length} partenaires.`);
+
+  return {
+    workouts: workoutCount,
+    weights: weightCount,
+    measurements: measurementCount,
+    combats: combatCount,
+    partners: partnerData.length,
+    skills: skills.length,
+  };
+};
+
+// ============================================
+// GENERATEURS INTERNES POUR profil-spécifique
+// ============================================
+
+interface GeneratedTraining {
+  date: string;
+  startTime: string;
+  duration: number;
+  intensity: number;
+  sport: string;
+  sessionType: string;
+  calories: number;
+  hr: number;
+  maxHr: number;
+  theme: string;
+  distance?: number; // km (pour running/cycling)
+  pace?: string;      // "5:30/km" pour running
+  roundsCount?: number;
+  roundDuration?: number;
+  combatRounds?: any[];
+  gamePlan?: string;
+  whatWorked?: string;
+  whatDidnt?: string;
+  rating?: number;
+}
+
+// ============================================
+// GENERATEURS SPORT-SPÉCIFIQUES
+// ============================================
+
+/** Sortie running réaliste (Sarah marathonienne) */
+function generateRunningSession(
+  profile: DemoProfile,
+  sessionDate: Date,
+  dayOffset: number,
+  isWeekend: boolean,
+): GeneratedTraining | null {
+  // Pattern runner type : séances courtes en semaine, longue sortie weekend
+  // Lundi : repos ou renforcement (skip 30%)
+  if (dayOffset === 1 && Math.random() < 0.3) return null;
+
+  let sessionType: 'running' | 'marathon' | 'musculation' = 'running';
+  let distance: number;
+  let duration: number;
+  let theme: string;
+  let paceSecPerKm: number; // secondes par km
+
+  // Mardi : fractionné / VMA (court mais intense)
+  // Mercredi : footing récup
+  // Jeudi : seuil (30-45min)
+  // Vendredi : repos ou récup
+  // Samedi : sortie longue (marathon prep)
+  // Dimanche : sortie trail ou footing
+
+  if (dayOffset === 2) {
+    // Fractionné
+    distance = rand(6, 9, 1);
+    paceSecPerKm = randInt(270, 300); // 4:30 à 5:00 /km
+    duration = Math.round((distance * paceSecPerKm) / 60);
+    theme = pick(['Fractionné 400m × 10', 'VMA 30/30', 'Pyramide 200-400-600', 'Fractionné long 1000m']);
+  } else if (dayOffset === 3) {
+    // Footing récup
+    distance = rand(5, 8, 1);
+    paceSecPerKm = randInt(330, 380); // 5:30 à 6:20
+    duration = Math.round((distance * paceSecPerKm) / 60);
+    theme = 'Footing récupération · allure confort';
+  } else if (dayOffset === 4) {
+    // Seuil
+    distance = rand(8, 12, 1);
+    paceSecPerKm = randInt(280, 315);
+    duration = Math.round((distance * paceSecPerKm) / 60);
+    theme = pick(['Seuil lactique · 20min à 4:40', 'Tempo run 45min', 'Progressive (3 zones)']);
+  } else if (dayOffset === 5 && Math.random() < 0.3) {
+    // Vendredi renforcement PPG
+    sessionType = 'musculation';
+    distance = 0;
+    duration = randInt(30, 45);
+    paceSecPerKm = 0;
+    theme = pick(profile.muscuThemes);
+  } else if (dayOffset === 6 || (isWeekend && Math.random() < 0.7)) {
+    // Sortie longue weekend (prépa marathon)
+    const week = Math.floor((Date.now() - sessionDate.getTime()) / (7 * 86400000));
+    const inMarathonPrep = week < 12; // 12 semaines de prépa
+    distance = inMarathonPrep ? rand(18, 32, 1) : rand(10, 18, 1);
+    paceSecPerKm = randInt(310, 360);
+    duration = Math.round((distance * paceSecPerKm) / 60);
+    theme = distance >= 25
+      ? 'Sortie longue 30km · fuel strategy'
+      : distance >= 20
+        ? 'Sortie longue 20-25km'
+        : 'Sortie longue dimanche';
+    sessionType = distance >= 21 ? 'marathon' : 'running';
+  } else {
+    // Séance par défaut (footing classique)
+    distance = rand(7, 10, 1);
+    paceSecPerKm = randInt(310, 350);
+    duration = Math.round((distance * paceSecPerKm) / 60);
+    theme = pick(profile.themes);
+  }
+
+  const isRunning = sessionType !== 'musculation';
+  const intensity = isRunning
+    ? (paceSecPerKm < 290 ? randInt(8, 9) : paceSecPerKm < 330 ? randInt(6, 7) : randInt(4, 6))
+    : randInt(5, 7);
+  const hr = isRunning
+    ? (paceSecPerKm < 290 ? randInt(170, 185) : paceSecPerKm < 330 ? randInt(155, 170) : randInt(135, 155))
+    : randInt(115, 140);
+  const maxHr = hr + randInt(8, 18);
+  // Calories : runners ≈ 60-70 kcal/km
+  const calories = isRunning
+    ? Math.round(distance * randInt(58, 72))
+    : Math.round(duration * 7.2);
+
+  const paceMin = Math.floor(paceSecPerKm / 60);
+  const paceSec = paceSecPerKm % 60;
+  const paceStr = isRunning ? `${paceMin}:${String(paceSec).padStart(2, '0')}/km` : '';
+
+  return {
+    date: fmtDate(sessionDate),
+    startTime: isWeekend ? fmtTime(randInt(8, 10), 0) : fmtTime(randInt(18, 20), 0),
+    duration,
+    intensity,
+    sport: sessionType === 'musculation' ? 'musculation' : (sessionType === 'marathon' ? 'marathon' : 'running'),
+    sessionType: sessionType === 'musculation' ? 'musculation' : 'running',
+    calories,
+    hr,
+    maxHr,
+    theme,
+    distance: isRunning ? distance : undefined,
+    pace: paceStr || undefined,
+    gamePlan: isRunning ? `Objectif : ${theme}` : `Renforcement · ${theme}`,
+    whatWorked: isRunning ? pick([
+      'Allure stable maintenue',
+      'Bonne gestion de l\'effort',
+      'Foulée économique · cadence 180',
+      'Hydratation + fueling au top',
+      'Zone cardio cible tenue',
+    ]) : 'Bonne exécution technique',
+    whatDidnt: pick([
+      'Début trop rapide',
+      'Difficulté sur les derniers km',
+      'Crampe mollet droit en fin',
+      'Mental après 25km',
+      'Rien de majeur',
+    ]),
+    rating: randInt(6, 9),
+  };
+}
+
+/** Session Hyrox réaliste (Clément) */
+function generateHyroxSession(
+  profile: DemoProfile,
+  sessionDate: Date,
+  dayOffset: number,
+  isWeekend: boolean,
+): GeneratedTraining | null {
+  // Pattern Hyrox : 3 sessions Hyrox-spécifiques + 2 force + 1 running
+  if (dayOffset === 1 && Math.random() < 0.25) return null; // lundi repos parfois
+
+  let sport: string = 'hyrox';
+  let sessionType: string = 'hyrox';
+  let theme: string;
+  let duration: number;
+  let distance: number | undefined;
+  let paceStr: string | undefined;
+
+  if (dayOffset === 2 || dayOffset === 4) {
+    // Mardi/Jeudi : Hyrox simulation ou stations
+    sport = 'hyrox';
+    sessionType = 'hyrox';
+    theme = pick([
+      'Hyrox simulation × 8 stations',
+      'Sled push/pull intervals',
+      'Burpee broad jump + SkiErg',
+      'Compromised running · 1km + station',
+      'Farmer carry + wall balls',
+      'Stations weakness · focus sled',
+    ]);
+    duration = randInt(50, 75);
+  } else if (dayOffset === 3) {
+    // Mercredi : running (compromised)
+    sport = 'running';
+    sessionType = 'running';
+    distance = rand(6, 10, 1);
+    const paceSecPerKm = randInt(290, 340);
+    duration = Math.round((distance * paceSecPerKm) / 60);
+    const m = Math.floor(paceSecPerKm / 60);
+    const s = paceSecPerKm % 60;
+    paceStr = `${m}:${String(s).padStart(2, '0')}/km`;
+    theme = 'Running aérobie · zone 2';
+  } else if (dayOffset === 5) {
+    // Vendredi : force
+    sport = 'musculation';
+    sessionType = 'musculation';
+    theme = pick(profile.muscuThemes);
+    duration = randInt(55, 80);
+  } else if (dayOffset === 6) {
+    // Samedi : Hyrox Pro simulation (long)
+    sport = 'hyrox';
+    sessionType = 'hyrox';
+    theme = 'Hyrox full simulation (8 stations + 8km run)';
+    duration = randInt(65, 90);
+  } else {
+    sport = 'hyrox';
+    sessionType = 'hyrox';
+    theme = pick(profile.themes);
+    duration = randInt(45, 70);
+  }
+
+  const intensity = sport === 'hyrox' ? randInt(7, 9) : sport === 'running' ? randInt(6, 8) : randInt(6, 8);
+  const hr = sport === 'hyrox' ? randInt(155, 180) : sport === 'running' ? randInt(140, 165) : randInt(120, 145);
+  const maxHr = hr + randInt(10, 20);
+  const calories = sport === 'running' && distance
+    ? Math.round(distance * 65)
+    : Math.round(duration * (sport === 'hyrox' ? 10 : 7.5));
+
+  return {
+    date: fmtDate(sessionDate),
+    startTime: isWeekend ? fmtTime(randInt(9, 11), 0) : fmtTime(randInt(18, 20), 0),
+    duration,
+    intensity,
+    sport,
+    sessionType,
+    calories,
+    hr,
+    maxHr,
+    theme,
+    distance,
+    pace: paceStr,
+    gamePlan: `Focus : ${theme}`,
+    whatWorked: pick([
+      'Excellent chrono sur sled push',
+      'Wall balls : 100 reps sans casser',
+      'Bon rythme sur compromised running',
+      'Technique burpee broad jump améliorée',
+      'Transitions plus fluides',
+    ]),
+    whatDidnt: pick([
+      'Sled pull : fatigue avant-bras',
+      'Sandbag lunges : genou qui tape',
+      'Cardio récup insuffisant',
+      'Pacing trop offensif au début',
+    ]),
+    rating: randInt(7, 9),
+  };
+}
+
+/** Session CrossFit réaliste (Nina) */
+function generateCrossFitSession(
+  profile: DemoProfile,
+  sessionDate: Date,
+  dayOffset: number,
+  isWeekend: boolean,
+): GeneratedTraining | null {
+  if (dayOffset === 1 && Math.random() < 0.2) return null;
+
+  const sport = 'crossfit';
+  let theme: string;
+  let duration: number;
+
+  // Structure type : Strength + WOD
+  const strengthFocus = pick(['Strength block · Squat 5x5', 'Strength · Clean 5x3', 'Strength · Deadlift 3x3', 'Strength · Bench 5x5', 'Strength · Snatch 6x2']);
+  const wodName = pick([
+    'Fran (21-15-9 thrusters + pull-ups)',
+    'Cindy AMRAP 20min',
+    'Helen (3 rounds 400m + KB + pull-ups)',
+    'Grace (30 clean & jerks)',
+    'Jackie (1000m row + 50 thrusters + 30 pull-ups)',
+    'Murph partiel',
+    'Karen (150 wall balls for time)',
+    'DT (5 rounds 12 DL + 9 HP + 6 PJ)',
+    'Filthy Fifty',
+    'Hero WOD · Nate AMRAP 20',
+  ]);
+
+  if (dayOffset === 2 || dayOffset === 4) {
+    theme = `${strengthFocus} + WOD · ${wodName}`;
+    duration = randInt(55, 80);
+  } else if (dayOffset === 6) {
+    theme = `Partner WOD · ${wodName} + Cashout`;
+    duration = randInt(70, 100);
+  } else {
+    theme = Math.random() < 0.5 ? `WOD · ${wodName}` : strengthFocus;
+    duration = randInt(50, 75);
+  }
+
+  const intensity = randInt(7, 9);
+  const hr = randInt(150, 180);
+  const maxHr = hr + randInt(10, 20);
+  const calories = Math.round(duration * 9.5);
+
+  return {
+    date: fmtDate(sessionDate),
+    startTime: isWeekend ? fmtTime(randInt(9, 11), 0) : fmtTime(randInt(18, 20), 0),
+    duration,
+    intensity,
+    sport,
+    sessionType: 'crossfit',
+    calories,
+    hr,
+    maxHr,
+    theme,
+    gamePlan: `Focus : ${theme}`,
+    whatWorked: pick([
+      'PR Fran · 4:12',
+      'Unbroken sur les thrusters',
+      'Muscle-ups enchaînés par 5',
+      'Back squat 105kg × 3',
+      'Double unders 50 sans casser',
+      'Bon cycle de respiration',
+    ]),
+    whatDidnt: pick([
+      'Toes-to-bar : fatigue grip',
+      'Snatch technique à revoir',
+      'Pacing trop rapide sur 1er round',
+      'Handstand push-ups : épaules',
+    ]),
+    rating: randInt(7, 9),
+  };
+}
+
+function generateTrainingsForProfile(
+  profile: DemoProfile,
+  startDate: Date,
+  weeks: number,
+): GeneratedTraining[] {
+  const trainings: GeneratedTraining[] = [];
+  const now = new Date();
+
+  // Détecte le sport principal
+  const primarySport = profile.sports[0] || 'jjb';
+  const isRunnerProfile = ['running', 'marathon', 'trail', 'triathlon'].includes(primarySport);
+  const isHyroxProfile = primarySport === 'hyrox';
+  const isCrossFitProfile = primarySport === 'crossfit';
+
+  for (let w = 0; w < weeks; w++) {
+    // Variance naturelle
+    const roll = Math.random();
+    let sessionsThisWeek = profile.baseSessionsPerWeek;
+    if (roll < 0.12) sessionsThisWeek = 0;
+    else if (roll < 0.30) sessionsThisWeek = Math.max(1, profile.baseSessionsPerWeek - 2);
+    else if (roll < 0.45) sessionsThisWeek = profile.baseSessionsPerWeek + 2;
+    else sessionsThisWeek = profile.baseSessionsPerWeek + (Math.random() < 0.5 ? 0 : 1);
+
+    const typicalDays = [1, 2, 3, 4, 5, 6];
+    const shuffled = [...typicalDays].sort(() => Math.random() - 0.5);
+    const activeDays = shuffled.slice(0, Math.min(sessionsThisWeek, 6));
+
+    for (const dayOffset of activeDays) {
+      const sessionDate = addDays(startDate, w * 7 + dayOffset);
+      if (sessionDate > now) continue;
+
+      const isWeekend = dayOffset === 6 || dayOffset === 0;
+
+      // ========= BRANCH 1 : PROFIL RUNNER =========
+      if (isRunnerProfile) {
+        const t = generateRunningSession(profile, sessionDate, dayOffset, isWeekend);
+        if (t) trainings.push(t);
+        continue;
+      }
+
+      // ========= BRANCH 2 : PROFIL HYROX =========
+      if (isHyroxProfile) {
+        const t = generateHyroxSession(profile, sessionDate, dayOffset, isWeekend);
+        if (t) trainings.push(t);
+        continue;
+      }
+
+      // ========= BRANCH 3 : PROFIL CROSSFIT =========
+      if (isCrossFitProfile) {
+        const t = generateCrossFitSession(profile, sessionDate, dayOffset, isWeekend);
+        if (t) trainings.push(t);
+        continue;
+      }
+
+      // ========= BRANCH 4 : PROFIL JJB (par défaut) =========
+      let sport = 'jjb';
+      let sessionType: string = 'cours';
+      if (profile.sports.includes('musculation') && Math.random() < 0.25 && !isWeekend) {
+        sport = 'musculation';
+        sessionType = 'musculation';
+      } else if (isWeekend && Math.random() < 0.6) {
+        sport = 'jjb';
+        sessionType = 'open_mat';
+      } else {
+        sport = 'jjb';
+        sessionType = Math.random() < 0.55 ? 'sparring' : (Math.random() < 0.5 ? 'drilling' : 'cours');
+      }
+
+      const isCombat = sessionType === 'sparring' || sessionType === 'open_mat';
+      const roundsCount = isCombat ? (sessionType === 'open_mat' ? randInt(6, 9) : randInt(4, 7)) : undefined;
+      const roundDuration = isCombat ? pick([4, 5, 6]) : undefined;
+      const combatRounds = isCombat
+        ? buildCombatRoundsForProfile(profile, fmtDate(sessionDate))
+        : undefined;
+
+      const duration = sport === 'musculation' ? randInt(50, 80) : (sessionType === 'open_mat' ? randInt(90, 120) : randInt(75, 100));
+      const intensity = sessionType === 'sparring' ? randInt(7, 9) : (sessionType === 'drilling' ? randInt(5, 7) : (sport === 'musculation' ? randInt(6, 8) : randInt(6, 8)));
+      const hr = sport === 'musculation' ? randInt(115, 145) : randInt(130, 165);
+      const maxHr = hr + randInt(15, 30);
+      const calories = Math.round(duration * (sport === 'musculation' ? 7.2 : 9.5) + rand(-30, 30));
+
+      // Thème adapté au sport
+      const theme = sport === 'musculation' ? pick(profile.muscuThemes) : pick(profile.themes);
+
+      const gamePlan = isCombat ? pick([
+        `Travailler le ${theme.toLowerCase()}`,
+        `Focus sur le contrôle de posture`,
+        `Setup ${theme.toLowerCase()} puis soumission`,
+        `Pression et passage de garde`,
+      ]) : (sport === 'musculation' ? pick([
+        `${profile.muscuExercises[0]} + ${profile.muscuExercises[1]} en série`,
+        `Focus force · ${theme}`,
+        `Circuit ${theme}`,
+        `Session ${theme} progressive`,
+      ]) : undefined);
+
+      const whatWorked = isCombat ? pick([
+        'Bonne lecture des transitions',
+        `${pick(profile.submissions)} bien placé`,
+        'Grip fight solide',
+        'Bon timing sur les sweeps',
+      ]) : (sport === 'musculation' ? pick([
+        `PR sur ${pick(profile.muscuExercises)}`,
+        'Bonne exécution technique',
+        'Progression de charge',
+        'Bonne intensité maintenue',
+      ]) : undefined);
+
+      const whatDidnt = isCombat ? pick([
+        `Trop de ${pick(profile.weaknesses).toLowerCase()}`,
+        'Cardio en fin de session',
+        'Manque de réaction à la pression',
+        'Posture à améliorer en garde',
+      ]) : (sport === 'musculation' ? pick([
+        'Manque de cardio sur les dernières séries',
+        'Technique à revoir sur les compound',
+        'Charge un peu trop lourde',
+        'Récup entre séries trop longue',
+      ]) : undefined);
+
+      trainings.push({
+        date: fmtDate(sessionDate),
+        startTime: isWeekend ? fmtTime(randInt(10, 11), 0) : fmtTime(randInt(18, 20), 0),
+        duration,
+        intensity,
+        sport,
+        sessionType,
+        calories,
+        hr,
+        maxHr,
+        theme,
+        roundsCount,
+        roundDuration,
+        combatRounds,
+        gamePlan,
+        whatWorked,
+        whatDidnt,
+        rating: randInt(6, 9),
+      });
+    }
+  }
+
+  return trainings;
+}
+
+function buildCombatRoundsForProfile(profile: DemoProfile, dateStr: string): any[] {
+  const count = randInt(4, 7);
+  const rounds: any[] = [];
+  // Mixe les partenaires du roster : 2-4 partenaires par session
+  const nb = randInt(2, Math.min(4, profile.roster.length));
+  const sessionPool = [...profile.roster].sort(() => Math.random() - 0.5).slice(0, nb);
+
+  for (let i = 1; i <= count; i++) {
+    const partner = sessionPool[i % sessionPool.length];
+    const partnerBelt = partner.belt;
+
+    // Proba de gain selon ceinture adversaire et winRate profile
+    let winChance = profile.winRateBaseline;
+    if (partnerBelt === 'noire') winChance = 0.02;
+    else if (partnerBelt === 'marron') winChance = Math.max(0.15, profile.winRateBaseline - 0.35);
+    else if (partnerBelt === 'violette') winChance = Math.max(0.25, profile.winRateBaseline - 0.2);
+    else if (partnerBelt === 'bleue') winChance = profile.winRateBaseline;
+    else if (partnerBelt === 'blanche') winChance = Math.min(0.85, profile.winRateBaseline + 0.2);
+
+    const r = Math.random();
+    const result: 'win' | 'loss' | 'draw' =
+      r < winChance ? 'win' : r < winChance + 0.12 ? 'draw' : 'loss';
+
+    // Format CONFORME à CombatRound : methodsGiven/Taken = string[]
+    const methodsGiven: string[] = result === 'win'
+      ? [pick(profile.submissions)]
+      : [];
+    const methodsTaken: string[] = result === 'loss' && Math.random() < 0.6
+      ? [pick(profile.weaknesses)]
+      : [];
+
+    rounds.push({
+      number: i,                         // ✅ champ requis par CombatRound
+      partner: partner.name,             // ✅ string (pas partnerName)
+      partnerRating: partner.skill,
+      result,
+      methodsGiven,                      // ✅ string[]
+      methodsTaken,                      // ✅ string[]
+      submissionsGiven: methodsGiven.length,
+      submissionsTaken: methodsTaken.length,
+      roundIntensity: pick(['guerre', 'technique', 'detendu'] as const),
+      notes: result === 'win' ? 'Bon timing' : (result === 'loss' ? 'À retravailler' : 'Équilibré'),
+    });
+  }
+  return rounds;
+}
+
+function generateProfilePartners(profile: DemoProfile): any[] {
+  const partners: any[] = [];
+  const now = Date.now();
+
+  // Utilise le roster spécifique du profil (son club, son crew)
+  for (const t of profile.roster) {
+    // Eviter d'ajouter un partenaire qui porte le même nom que le profil
+    if (t.name.toLowerCase() === profile.name.toLowerCase()) continue;
+
+    // Nombre de matchs basé sur skill + winRate du profil
+    const totalMatches = randInt(15, 60);
+
+    // Proba de victoire selon ceinture adversaire (similaire à buildCombatRoundsForProfile)
+    let winChance = profile.winRateBaseline;
+    if (t.belt === 'noire') winChance = 0.03;
+    else if (t.belt === 'marron') winChance = Math.max(0.1, profile.winRateBaseline - 0.3);
+    else if (t.belt === 'violette') winChance = Math.max(0.2, profile.winRateBaseline - 0.15);
+    else if (t.belt === 'bleue') winChance = profile.winRateBaseline;
+    else if (t.belt === 'blanche') winChance = Math.min(0.85, profile.winRateBaseline + 0.25);
+
+    const wins = Math.round(totalMatches * winChance);
+    const drawChance = 0.12;
+    const draws = Math.round(totalMatches * drawChance);
+    const losses = totalMatches - wins - draws;
+
+    // Notes tactiques basées sur le roster du profil
+    const tacticNotes: any[] = [];
+    if (t.notes) {
+      tacticNotes.push({
+        id: `note-${now}-${partners.length}-1`,
+        date: new Date(Date.now() - randInt(30, 180) * 86400000).toISOString(),
+        content: t.notes,
+      });
+    }
+    // Note tactique adversaire
+    if (t.belt === 'noire' || t.belt === 'marron') {
+      tacticNotes.push({
+        id: `note-${now}-${partners.length}-2`,
+        date: new Date(Date.now() - randInt(10, 60) * 86400000).toISOString(),
+        content: `Travailler la défense contre ${pick(profile.weaknesses).toLowerCase()}`,
+      });
+    } else {
+      tacticNotes.push({
+        id: `note-${now}-${partners.length}-2`,
+        date: new Date(Date.now() - randInt(10, 60) * 86400000).toISOString(),
+        content: `Bien exécuter ${pick(profile.submissions).toLowerCase()} contre lui`,
+      });
+    }
+
+    partners.push({
+      id: `demo-${now}-${partners.length}-${t.name.toLowerCase().replace(/\s+/g, '-')}`,
+      name: t.name,
+      belt: t.belt,
+      weight: t.weight,
+      sport: 'jjb',
+      matchCount: totalMatches,
+      wins,
+      losses,
+      draws,
+      // Forces du partenaire = ce qu'il nous fait subir (nos faiblesses)
+      strengths: t.belt === 'noire' || t.belt === 'marron'
+        ? pickN(profile.weaknesses, 2)
+        : pickN([t.style, ...profile.weaknesses], 2),
+      // Faiblesses du partenaire = ce sur quoi on le bat
+      weaknesses: t.belt === 'blanche' || t.belt === 'bleue'
+        ? pickN(profile.submissions, 2)
+        : [],
+      whatWorks: t.belt === 'blanche' || t.belt === 'bleue'
+        ? [pick(profile.submissions)]
+        : [],
+      notes: tacticNotes,
+      createdAt: new Date(Date.now() - randInt(30, 365) * 86400000).toISOString(),
+    });
+  }
+
+  return partners;
+}
+
+function pickN<T>(arr: T[], n: number): T[] {
+  return [...arr].sort(() => Math.random() - 0.5).slice(0, Math.min(n, arr.length));
+}
+
+interface WeightEntry {
+  weight: number;
+  fat: number;
+  muscle: number;
+  water: number;
+  bone: number;
+  visceral: number;
+  metabolicAge: number;
+  bmr: number;
+  date: string;
+}
+
+function generateWeightsForProfile(
+  profile: DemoProfile,
+  startDate: Date,
+  weeks: number,
+): WeightEntry[] {
+  const entries: WeightEntry[] = [];
+  const now = new Date();
+  const totalWeightDelta = profile.currentWeight - profile.startWeight;
+
+  // Fat% initial réaliste selon le poids de départ
+  // Un gars à 103kg avec 178cm → IMC 32.5 → probablement 28-32% de gras
+  // Un gars à 86kg → IMC 27 → autour 20-24%
+  // Un gars à 74kg → IMC 23 → autour 15-18%
+  const startBmi = profile.startWeight / Math.pow(profile.heightCm / 100, 2);
+  const baseFat = profile.gender === 'male'
+    ? Math.min(34, Math.max(12, 8 + (startBmi - 18) * 1.3))  // range 12-34%
+    : Math.min(40, Math.max(18, 14 + (startBmi - 18) * 1.3));
+  // Fat cible selon poids cible
+  const targetBmi = profile.targetWeight / Math.pow(profile.heightCm / 100, 2);
+  const targetFat = profile.gender === 'male'
+    ? Math.min(24, Math.max(10, 6 + (targetBmi - 18) * 1.1))
+    : Math.min(30, Math.max(16, 12 + (targetBmi - 18) * 1.1));
+
+  // Muscle% : les "gros" ont souvent un muscle% bas au début (ratio gras)
+  const baseMuscle = profile.gender === 'male' ? Math.max(28, 44 - (baseFat - 15) * 0.5) : Math.max(22, 38 - (baseFat - 20) * 0.5);
+  const targetMuscle = profile.gender === 'male' ? 45 : 39;
+
+  for (let w = 0; w < weeks; w++) {
+    // 1-2 pesées par semaine
+    const count = Math.random() < 0.6 ? 1 : 2;
+    for (let j = 0; j < count; j++) {
+      const day = randInt(0, 6);
+      const date = addDays(startDate, w * 7 + day);
+      if (date > now) continue;
+
+      // Progression NON linéaire : plus rapide au début, plateau au milieu, steady à la fin
+      // Utilise une courbe ease-out pour les gros écarts de poids (plus réaliste)
+      const t = (w * 7 + day) / (weeks * 7);
+      // Courbe sigmoïde douce : rapide au début puis ralentit
+      let progress: number;
+      if (Math.abs(totalWeightDelta) >= 10) {
+        // Transformation importante → courbe en 3 phases : gros drop initial, plateau, steady
+        if (t < 0.25) {
+          // Phase motivation : 40% de la perte en 25% du temps
+          progress = t * 1.6;
+        } else if (t < 0.55) {
+          // Phase plateau : peu de progression
+          progress = 0.4 + (t - 0.25) * 0.5;
+        } else {
+          // Phase steady : rattrapage final
+          progress = 0.55 + (t - 0.55) * 1.0;
+        }
+      } else {
+        // Petite transformation → quasi linéaire
+        progress = t;
+      }
+      progress = Math.min(1, progress);
+
+      const baseWeight = profile.startWeight + totalWeightDelta * progress;
+      // Variance un peu plus grande pour donner du relief naturel au graphique
+      const weight = parseFloat((baseWeight + rand(-0.8, 0.8, 1)).toFixed(1));
+
+      const fat = parseFloat((baseFat + (targetFat - baseFat) * progress + rand(-0.6, 0.6, 1)).toFixed(1));
+      const muscle = parseFloat((baseMuscle + (targetMuscle - baseMuscle) * progress + rand(-0.4, 0.4, 1)).toFixed(1));
+
+      entries.push({
+        weight,
+        fat,
+        muscle,
+        water: parseFloat((55 + rand(-2, 2, 1)).toFixed(1)),
+        bone: parseFloat(rand(3.3, 3.8, 1).toFixed(1)),
+        visceral: Math.round(Math.max(4, 8 + (weight - 80) * 0.15 + rand(-1, 1, 0))),
+        metabolicAge: randInt(24, 34),
+        bmr: Math.round(1650 + (weight - 75) * 12),
+        date: fmtDate(date),
+      });
+    }
+  }
+
+  return entries;
+}
+
+interface MeasurementEntry {
+  chest: number;
+  waist: number;
+  hips: number;
+  left_arm: number;
+  right_arm: number;
+  left_thigh: number;
+  right_thigh: number;
+  left_calf: number;
+  right_calf: number;
+  shoulders: number;
+  neck: number;
+  navel: number;
+  date: string;
+}
+
+function generateMeasurementsForProfile(
+  profile: DemoProfile,
+  startDate: Date,
+  weeks: number,
+): MeasurementEntry[] {
+  const entries: MeasurementEntry[] = [];
+  const now = new Date();
+  const monthlyCount = Math.ceil(weeks / 4);
+
+  // Tour de taille selon poids de départ/arrivée (plus réaliste pour un ancien gros)
+  // Formule approx : tour taille ≈ 0.5 × poids + 40 pour homme en surpoids
+  const waistStart = profile.gender === 'male'
+    ? Math.min(120, 44 + profile.startWeight * 0.52)
+    : Math.min(110, 40 + profile.startWeight * 0.5);
+  const waistEnd = profile.gender === 'male'
+    ? Math.min(105, 42 + profile.currentWeight * 0.46)
+    : Math.min(95, 38 + profile.currentWeight * 0.46);
+
+  // Tour de poitrine : pour un ancien gros qui maigrit, il reste assez stable ou légèrement en hausse (muscle)
+  const chestStart = 96 + (profile.startWeight - 75) * 0.35;
+  const chestEnd = 102 + (profile.currentWeight - 75) * 0.25;
+
+  // Bras : augmente avec la musculation
+  const armStart = 32 + (profile.startWeight - 75) * 0.08;
+  const armEnd = 36 + (profile.currentWeight - 75) * 0.1;
+
+  for (let m = 0; m < monthlyCount; m++) {
+    const date = addDays(startDate, m * 30);
+    if (date > now) break;
+
+    const progress = m / Math.max(1, monthlyCount - 1);
+
+    const waist = Math.round((waistStart + (waistEnd - waistStart) * progress + rand(-0.5, 0.5, 0)) * 10) / 10;
+    const chest = Math.round((chestStart + (chestEnd - chestStart) * progress + rand(-0.8, 0.8, 0)) * 10) / 10;
+    const hips = Math.round((90 + profile.startWeight * 0.1 + (profile.currentWeight - profile.startWeight) * 0.1 * progress + rand(-1, 1, 0)) * 10) / 10;
+    const arm = armStart + (armEnd - armStart) * progress;
+
+    entries.push({
+      chest,
+      waist,
+      hips,
+      left_arm: parseFloat((arm + rand(-0.3, 0.3, 1)).toFixed(1)),
+      right_arm: parseFloat((arm + 0.5 + rand(-0.3, 0.3, 1)).toFixed(1)),
+      left_thigh: parseFloat((55 + (profile.startWeight - 75) * 0.15 + progress * 1.5 + rand(-0.5, 0.5, 1)).toFixed(1)),
+      right_thigh: parseFloat((55 + (profile.startWeight - 75) * 0.15 + 0.5 + progress * 1.5 + rand(-0.5, 0.5, 1)).toFixed(1)),
+      left_calf: parseFloat((37 + (profile.startWeight - 75) * 0.08 + rand(-0.5, 0.5, 1)).toFixed(1)),
+      right_calf: parseFloat((37 + (profile.startWeight - 75) * 0.08 + rand(-0.5, 0.5, 1)).toFixed(1)),
+      shoulders: Math.round((113 + (profile.startWeight - 75) * 0.18 + progress * 3 + rand(-1, 1, 0)) * 10) / 10,
+      neck: parseFloat((38 + (profile.startWeight - 75) * 0.1 - progress * 1.5 + rand(-0.5, 0.5, 1)).toFixed(1)),
+      navel: parseFloat((waist + rand(-1, 1, 1)).toFixed(1)),
+      date: fmtDate(date),
+    });
+  }
+
+  return entries;
+}
+
+function generateCombatsForProfile(
+  profile: DemoProfile,
+  startDate: Date,
+  weeks: number,
+): any[] {
+  const combats: any[] = [];
+  const competitions = Math.min(6, Math.ceil(weeks / 8));
+  const now = new Date();
+
+  // Utilise les adversaires de compétition spécifiques au profil
+  const opponents = profile.competitionOpponents;
+  if (opponents.length === 0) return combats;
+
+  // Shuffle une fois pour éviter les doublons
+  const shuffled = [...opponents].sort(() => Math.random() - 0.5);
+
+  for (let i = 0; i < competitions; i++) {
+    const date = addDays(startDate, Math.floor((weeks * 7) * (i + 1) / (competitions + 1)));
+    if (date > now) break;
+
+    const opp = shuffled[i % shuffled.length];
+    const roll = Math.random();
+    const isWin = roll < profile.winRateBaseline + 0.05;
+    const result = isWin ? 'victoire' : (roll < profile.winRateBaseline + 0.15 ? 'nul' : 'defaite');
+
+    combats.push({
+      id: `demo-combat-${Date.now()}-${i}`,
+      date: fmtDate(date),
+      resultat: result,
+      methode: result === 'victoire' ? pick(['soumission', 'points', 'décision']) : (result === 'defaite' ? pick(['soumission', 'points']) : 'décision'),
+      technique: result === 'victoire' ? pick(profile.submissions) : (result === 'defaite' ? pick(profile.weaknesses) : ''),
+      round: randInt(1, 2),
+      temps: `${randInt(0, 4)}:${String(randInt(0, 59)).padStart(2, '0')}`,
+      adversaire_nom: opp.name,
+      adversaire_club: opp.club,
+      poids_pesee: profile.currentWeight,
+      poids_jour_j: profile.currentWeight + rand(-0.5, 0.5, 1),
+      notes: result === 'victoire'
+        ? `Bon combat, ${pick(profile.submissions)} bien setup`
+        : result === 'defaite'
+          ? `À travailler : défense ${pick(profile.weaknesses).toLowerCase()}`
+          : 'Combat équilibré, pas de décision nette',
+    });
+  }
+
+  return combats;
+}
+
+// ============================================
+// GENERATION BLESSURES (INFIRMERIE)
+// Crée 3-5 blessures réalistes par profil avec historique EVA + traitements
+// ============================================
+
+interface InjuryTemplate {
+  zone_id: string;
+  zone_view: 'front' | 'back';
+  pain_type: string;
+  cause: string;
+  starting_eva: number;       // EVA au moment de la blessure
+  recovery_days: number;       // durée estimée de guérison
+  monthsAgo: number;           // il y a combien de mois
+  status: 'active' | 'healing' | 'healed';
+  treatments: { type: string; daysAfter: number; notes?: string }[];
+  notes?: string;
+}
+
+function getInjuryTemplates(profile: DemoProfile): InjuryTemplate[] {
+  // Blessures BJJ typiques selon profil + style
+  const base: Record<string, InjuryTemplate[]> = {
+    houari: [
+      // Poignet · vieille blessure guérie (6 mois)
+      {
+        zone_id: 'wrist_r', zone_view: 'front',
+        pain_type: 'Entorse', cause: 'Chute sur main tendue en sparring',
+        starting_eva: 7, recovery_days: 42, monthsAgo: 6, status: 'healed',
+        notes: 'Entorse poignet droit · chute lors d\'un takedown · résolu après kiné',
+        treatments: [
+          { type: 'Glace', daysAfter: 0, notes: '20min × 4/jour pendant 3 jours' },
+          { type: 'Kinésithérapie', daysAfter: 5, notes: '10 séances · renforcement' },
+          { type: 'Arrêt sparring', daysAfter: 0, notes: '3 semaines' },
+          { type: 'Reprise progressive', daysAfter: 28 },
+        ],
+      },
+      // Épaule gauche · tendinite en cours (3 mois, en cours de soin)
+      {
+        zone_id: 'shoulder_l', zone_view: 'front',
+        pain_type: 'Tendinite coiffe', cause: 'Pull-ups lestés trop lourds · surmenage',
+        starting_eva: 6, recovery_days: 60, monthsAgo: 3, status: 'healing',
+        notes: 'Tendinite coiffe des rotateurs · aggravée par les étranglements par-derrière',
+        treatments: [
+          { type: 'Anti-inflammatoires', daysAfter: 0, notes: 'Ibuprofène 600mg 3x/jour pendant 5j' },
+          { type: 'Glace', daysAfter: 0, notes: 'Après chaque séance' },
+          { type: 'Kinésithérapie', daysAfter: 7, notes: 'Travail coiffe + mobilité scapulaire' },
+          { type: 'Ostéopathie', daysAfter: 14 },
+          { type: 'Renforcement excentrique', daysAfter: 30, notes: 'Exercices maison quotidiens' },
+        ],
+      },
+      // Genou droit · ancienne blessure (11 mois, guérie)
+      {
+        zone_id: 'knee_r', zone_view: 'front',
+        pain_type: 'Contusion', cause: 'Coup au genou en sparring (heel hook tenté)',
+        starting_eva: 5, recovery_days: 21, monthsAgo: 11, status: 'healed',
+        notes: 'Contusion latérale · aucune lésion ligamentaire à l\'échographie',
+        treatments: [
+          { type: 'Glace', daysAfter: 0 },
+          { type: 'Échographie', daysAfter: 3, notes: 'RAS · juste contusion' },
+          { type: 'Repos', daysAfter: 0, notes: '10 jours sans sparring' },
+        ],
+      },
+      // Côtes gauches · récente (1 mois, en cours)
+      {
+        zone_id: 'ribs_l', zone_view: 'front',
+        pain_type: 'Fissure', cause: 'Pression en side control contre un lourd',
+        starting_eva: 8, recovery_days: 45, monthsAgo: 1, status: 'healing',
+        notes: 'Fissure confirmée à la radio · arrêt sparring 4 semaines',
+        treatments: [
+          { type: 'Radio', daysAfter: 2, notes: 'Confirme fissure côte 8' },
+          { type: 'Antalgiques', daysAfter: 0, notes: 'Paracétamol 1g 3x/jour' },
+          { type: 'Arrêt sparring', daysAfter: 0, notes: '4-6 semaines' },
+          { type: 'Respiration profonde', daysAfter: 3, notes: 'Éviter pneumonie' },
+        ],
+      },
+    ],
+    louis: [
+      // Doigt (main droite) · entorse (4 mois, guéri)
+      {
+        zone_id: 'hand_r', zone_view: 'front',
+        pain_type: 'Entorse doigt', cause: 'Grip trop serré · pouce pincé dans le gi',
+        starting_eva: 6, recovery_days: 30, monthsAgo: 4, status: 'healed',
+        notes: 'Majeur droit · classique du grappler',
+        treatments: [
+          { type: 'Buddy tape', daysAfter: 0, notes: 'Strappé au voisin pendant 3 semaines' },
+          { type: 'Glace', daysAfter: 0 },
+          { type: 'Mobilisation douce', daysAfter: 14 },
+        ],
+      },
+      // Épaule droite (luxation · 8 mois guérie)
+      {
+        zone_id: 'shoulder_r', zone_view: 'front',
+        pain_type: 'Luxation', cause: 'Kimura appliquée trop vite · je n\'ai pas tapé à temps',
+        starting_eva: 9, recovery_days: 90, monthsAgo: 8, status: 'healed',
+        notes: 'Luxation antérieure · réduite aux urgences · immobilisation 3 semaines',
+        treatments: [
+          { type: 'Urgences', daysAfter: 0, notes: 'Réduction sous anesthésie' },
+          { type: 'Immobilisation', daysAfter: 0, notes: 'Écharpe 3 semaines' },
+          { type: 'Kinésithérapie', daysAfter: 21, notes: '20 séances · récupération totale' },
+          { type: 'Renforcement', daysAfter: 60 },
+          { type: 'Reprise sparring', daysAfter: 90 },
+        ],
+      },
+      // Dos · contracture lombaire (actuelle, 2 semaines)
+      {
+        zone_id: 'lumbar', zone_view: 'back',
+        pain_type: 'Contracture', cause: 'Soulevé de terre mal placé · dos rond',
+        starting_eva: 5, recovery_days: 14, monthsAgo: 0.5, status: 'healing',
+        notes: 'Contracture paravertébrale gauche · amélioration progressive',
+        treatments: [
+          { type: 'Ostéopathie', daysAfter: 2 },
+          { type: 'Chaleur', daysAfter: 0, notes: 'Patch chauffant soir' },
+          { type: 'Étirements', daysAfter: 3, notes: 'Chat-vache + cobra tous les matins' },
+        ],
+      },
+    ],
+    hedi: [
+      // Genou droit · méniscale ancienne (12 mois, guéri)
+      {
+        zone_id: 'knee_r', zone_view: 'front',
+        pain_type: 'Entorse ligaments',
+        cause: 'Passage de garde forcé · rotation brutale',
+        starting_eva: 7, recovery_days: 75, monthsAgo: 12, status: 'healed',
+        notes: 'Entorse ligament latéral interne · IRM · pas de chirurgie',
+        treatments: [
+          { type: 'IRM', daysAfter: 7, notes: 'LLI étiré · pas de déchirure' },
+          { type: 'Genouillère', daysAfter: 0, notes: 'Port continu 4 semaines' },
+          { type: 'Kinésithérapie', daysAfter: 14, notes: '15 séances · renforcement quadri' },
+          { type: 'Proprioception', daysAfter: 45 },
+        ],
+      },
+      // Orteil gauche · cassé (5 mois, guéri)
+      {
+        zone_id: 'foot_l', zone_view: 'front',
+        pain_type: 'Fracture',
+        cause: 'Sweep mal timé · orteil pris dans le gi partenaire',
+        starting_eva: 8, recovery_days: 30, monthsAgo: 5, status: 'healed',
+        notes: 'Fracture P2 2e orteil gauche · strappé au voisin',
+        treatments: [
+          { type: 'Radio', daysAfter: 1 },
+          { type: 'Buddy tape', daysAfter: 0, notes: 'Strappé 4 semaines' },
+          { type: 'Chaussures rigides', daysAfter: 0 },
+        ],
+      },
+      // Cou · torticolis récurrent (en cours, 2 mois)
+      {
+        zone_id: 'neck_front', zone_view: 'front',
+        pain_type: 'Torticolis', cause: 'Étranglement arrière · position forcée',
+        starting_eva: 5, recovery_days: 21, monthsAgo: 2, status: 'healing',
+        notes: 'Récurrent · s\'aggrave après les open mats',
+        treatments: [
+          { type: 'Ostéopathie', daysAfter: 1 },
+          { type: 'Anti-inflammatoires', daysAfter: 0 },
+          { type: 'Étirements cou', daysAfter: 3, notes: 'Quotidiens matin + soir' },
+        ],
+      },
+      // Coude gauche · tendinite (en cours, 1 mois)
+      {
+        zone_id: 'elbow_l', zone_view: 'front',
+        pain_type: 'Tendinite', cause: 'Overuse · défense garde avec bras tendus',
+        starting_eva: 4, recovery_days: 30, monthsAgo: 1, status: 'healing',
+        notes: 'Épicondylite · commence à céder',
+        treatments: [
+          { type: 'Brace tennis elbow', daysAfter: 0 },
+          { type: 'Glace', daysAfter: 0, notes: 'Post-séance' },
+          { type: 'Kinésithérapie', daysAfter: 10, notes: '6 séances programmées' },
+        ],
+      },
+    ],
+    sarah: [
+      // Fracture de fatigue tibia (6 mois, guéri)
+      {
+        zone_id: 'shin_l', zone_view: 'front',
+        pain_type: 'Fracture de fatigue', cause: 'Augmentation trop rapide du kilométrage · +30% en 2 semaines',
+        starting_eva: 7, recovery_days: 60, monthsAgo: 6, status: 'healed',
+        notes: 'Périostite du tibia gauche · confirmée IRM · arrêt running 8 semaines',
+        treatments: [
+          { type: 'IRM', daysAfter: 7, notes: 'Fracture de fatigue grade 2' },
+          { type: 'Arrêt running', daysAfter: 0, notes: '8 semaines strict' },
+          { type: 'Vélo + natation', daysAfter: 10, notes: 'Cross-training pour maintenir VO2max' },
+          { type: 'Reprise progressive', daysAfter: 45, notes: '3min course / 2min marche × 5' },
+          { type: 'Semelles orthopédiques', daysAfter: 21 },
+        ],
+      },
+      // Tendinite achille (3 mois, en cours)
+      {
+        zone_id: 'ankle_r', zone_view: 'front',
+        pain_type: 'Tendinite achille', cause: 'Chaussures usées · drop trop faible pour ma foulée',
+        starting_eva: 5, recovery_days: 45, monthsAgo: 3, status: 'healing',
+        notes: 'Tendinopathie corporéale · exercices excentrique Alfredson',
+        treatments: [
+          { type: 'Kinésithérapie', daysAfter: 3, notes: 'Programme excentrique Alfredson · 12 séances' },
+          { type: 'Glace + compression', daysAfter: 0, notes: 'Après chaque sortie' },
+          { type: 'Nouvelles chaussures', daysAfter: 14, notes: 'Drop 8mm · max cushion' },
+          { type: 'Renforcement mollet', daysAfter: 7, notes: 'Heel raises 3×15 quotidien' },
+        ],
+      },
+      // Syndrome de l'essuie-glace (ITBS) genou droit (9 mois, guéri)
+      {
+        zone_id: 'knee_r', zone_view: 'front',
+        pain_type: 'Syndrome TFL', cause: 'Course penchée sur asphalte en descente',
+        starting_eva: 6, recovery_days: 35, monthsAgo: 9, status: 'healed',
+        notes: 'Syndrome bandelette ilio-tibiale · douleur externe genou',
+        treatments: [
+          { type: 'Ostéopathie', daysAfter: 2 },
+          { type: 'Foam rolling TFL', daysAfter: 0, notes: 'Quotidien' },
+          { type: 'Renforcement moyen fessier', daysAfter: 7 },
+          { type: 'Retour progressif', daysAfter: 21 },
+        ],
+      },
+      // Ampoule infection (14 jours, actif - résolution imminente)
+      {
+        zone_id: 'foot_l', zone_view: 'front',
+        pain_type: 'Ampoule infectée', cause: 'Sortie longue 32km · chaussettes neuves mal ajustées',
+        starting_eva: 3, recovery_days: 10, monthsAgo: 0.5, status: 'active',
+        notes: 'Ampoule ruptée puis infectée · antibio 5 jours',
+        treatments: [
+          { type: 'Désinfection', daysAfter: 0, notes: 'Betadine × 3/jour' },
+          { type: 'Antibiotiques', daysAfter: 3, notes: 'Amoxicilline 7 jours' },
+          { type: 'Repos total', daysAfter: 0 },
+        ],
+      },
+    ],
+    clement: [
+      // Épaule gauche (tendinite Hyrox) - 4 mois, en cours
+      {
+        zone_id: 'shoulder_l', zone_view: 'front',
+        pain_type: 'Tendinite coiffe', cause: 'Sled push + wall balls répétés · surcharge épaule',
+        starting_eva: 6, recovery_days: 60, monthsAgo: 4, status: 'healing',
+        notes: 'Tendinopathie sus-épineux · aggravée par wall balls',
+        treatments: [
+          { type: 'Kinésithérapie', daysAfter: 7, notes: 'Renforcement coiffe · 15 séances' },
+          { type: 'Anti-inflammatoires', daysAfter: 0, notes: 'Ibuprofène 3 jours' },
+          { type: 'Adaptation training', daysAfter: 0, notes: 'Wall balls 4kg au lieu de 6kg' },
+        ],
+      },
+      // Lombaires (soulevé de terre) - 7 mois, guéri
+      {
+        zone_id: 'lumbar', zone_view: 'back',
+        pain_type: 'Contracture', cause: 'Deadlift lourd mauvaise technique · lombaires arrondies',
+        starting_eva: 7, recovery_days: 21, monthsAgo: 7, status: 'healed',
+        notes: 'Contracture paravertébrale bilatérale',
+        treatments: [
+          { type: 'Ostéopathie', daysAfter: 2 },
+          { type: 'Chaleur + antalgiques', daysAfter: 0 },
+          { type: 'Cours de technique DL', daysAfter: 14, notes: 'Avec coach Julie' },
+          { type: 'Renforcement gainage', daysAfter: 10 },
+        ],
+      },
+      // Genou droit (sled push) - 12 mois, guéri
+      {
+        zone_id: 'knee_r', zone_view: 'front',
+        pain_type: 'Tendinite rotulienne', cause: 'Volume sled push trop élevé · surcharge tendon',
+        starting_eva: 5, recovery_days: 40, monthsAgo: 12, status: 'healed',
+        notes: 'Jumper knee · retour via isométrique',
+        treatments: [
+          { type: 'Kinésithérapie', daysAfter: 5, notes: '10 séances excentrique' },
+          { type: 'Squat isométrique', daysAfter: 3, notes: '3×45s × 5/semaine' },
+          { type: 'Strap infra-rotulien', daysAfter: 0 },
+        ],
+      },
+    ],
+    nina: [
+      // Poignet droit (gymnastics) - 2 mois, en cours
+      {
+        zone_id: 'wrist_r', zone_view: 'front',
+        pain_type: 'Tendinite', cause: 'Handstand push-ups + muscle-ups répétés',
+        starting_eva: 5, recovery_days: 45, monthsAgo: 2, status: 'healing',
+        notes: 'Tendinopathie fléchisseurs poignet · sangle handstand recommandée',
+        treatments: [
+          { type: 'Kinésithérapie', daysAfter: 5, notes: '8 séances' },
+          { type: 'Sangles handstand', daysAfter: 3 },
+          { type: 'Scaling HSPU', daysAfter: 0, notes: 'Démarrer pike push-ups' },
+        ],
+      },
+      // Épaule droite (olympic lifts) - 8 mois, guérie
+      {
+        zone_id: 'shoulder_r', zone_view: 'front',
+        pain_type: 'Conflit sous-acromial', cause: 'Snatch mauvaise réception · bras cassé',
+        starting_eva: 6, recovery_days: 60, monthsAgo: 8, status: 'healed',
+        notes: 'Conflit sous-acromial · retour via mobilité scapulaire',
+        treatments: [
+          { type: 'Ostéopathie', daysAfter: 3 },
+          { type: 'Kinésithérapie', daysAfter: 10, notes: '12 séances · stabilité scapulaire' },
+          { type: 'Travail technique snatch', daysAfter: 30, notes: 'Avec coach Mike · barre vide' },
+        ],
+      },
+      // Déchirure ischio gauche (squat 1RM) - 5 mois, guéri
+      {
+        zone_id: 'hamstring_l', zone_view: 'back',
+        pain_type: 'Déchirure grade 1', cause: '1RM back squat · position basse · ischio sollicité',
+        starting_eva: 7, recovery_days: 35, monthsAgo: 5, status: 'healed',
+        notes: 'Déchirure grade 1 · 3 semaines arrêt squat lourd',
+        treatments: [
+          { type: 'RICE 48h', daysAfter: 0 },
+          { type: 'Kinésithérapie', daysAfter: 7, notes: 'Reprise progressive en excentrique' },
+          { type: 'Nordic hamstring', daysAfter: 21, notes: '3×8 × 2/semaine préventif' },
+        ],
+      },
+      // Paume main (suites calleuse déchirée) - 20 jours, active
+      {
+        zone_id: 'hand_r', zone_view: 'front',
+        pain_type: 'Callosité arrachée', cause: '30 pull-ups enchaînés sur barre sèche',
+        starting_eva: 4, recovery_days: 14, monthsAgo: 0.7, status: 'active',
+        notes: 'Cal de la paume arraché · gants ou sangles obligatoires',
+        treatments: [
+          { type: 'Désinfection', daysAfter: 0 },
+          { type: 'Pansement hydrocolloïde', daysAfter: 1 },
+          { type: 'Gants de grip', daysAfter: 0 },
+          { type: 'Poncage mains', daysAfter: 7, notes: 'Prévention récidive' },
+        ],
+      },
+    ],
+    yanis: [
+      // Cheville droite · entorse (10 mois, guéri)
+      {
+        zone_id: 'ankle_r', zone_view: 'front',
+        pain_type: 'Entorse', cause: 'Heel hook mal défendu en compétition',
+        starting_eva: 8, recovery_days: 45, monthsAgo: 10, status: 'healed',
+        notes: 'Entorse grade 2 cheville droite · 6 semaines d\'arrêt compétition',
+        treatments: [
+          { type: 'Radio', daysAfter: 1, notes: 'Pas de fracture' },
+          { type: 'Botte de marche', daysAfter: 0, notes: '3 semaines' },
+          { type: 'Kinésithérapie', daysAfter: 14, notes: '12 séances · proprio intensive' },
+          { type: 'Reprise progressive', daysAfter: 30 },
+        ],
+      },
+      // Main droite (doigt crochet) · récurrent (7 mois, en cours)
+      {
+        zone_id: 'hand_r', zone_view: 'front',
+        pain_type: 'Doigt en crochet', cause: 'Grips répétés 3 ans · lésion chronique',
+        starting_eva: 3, recovery_days: 180, monthsAgo: 7, status: 'healing',
+        notes: 'Grappler finger (index droit) · déformation progressive · suivi ortho',
+        treatments: [
+          { type: 'Consultation ortho', daysAfter: 30 },
+          { type: 'Attelles nuit', daysAfter: 45 },
+          { type: 'Buddy tape systématique', daysAfter: 0, notes: 'À l\'entraînement' },
+        ],
+      },
+      // Oreille gauche · cauliflower (active, en traitement)
+      {
+        zone_id: 'head', zone_view: 'front',
+        pain_type: 'Othématome', cause: 'Friction répétée · pas de casque',
+        starting_eva: 4, recovery_days: 14, monthsAgo: 0.3, status: 'active',
+        notes: 'Oreille en chou-fleur · ponctionnée 2 fois · casque désormais obligatoire',
+        treatments: [
+          { type: 'Ponction médicale', daysAfter: 0, notes: 'Médecin sportif' },
+          { type: 'Compression', daysAfter: 0, notes: 'Bandage 48h post-ponction' },
+          { type: 'Ponction médicale', daysAfter: 5, notes: 'Récidive' },
+          { type: 'Casque obligatoire', daysAfter: 0 },
+        ],
+      },
+      // Dos · lumbago (guéri, 14 mois)
+      {
+        zone_id: 'lumbar', zone_view: 'back',
+        pain_type: 'Lumbago', cause: 'Camion de sparring de 90kg · pas maintenu le dos droit',
+        starting_eva: 8, recovery_days: 30, monthsAgo: 14, status: 'healed',
+        notes: 'Lumbago aigu · résolu complètement',
+        treatments: [
+          { type: 'Urgences', daysAfter: 0 },
+          { type: 'Ostéopathie', daysAfter: 3 },
+          { type: 'Arrêt sport', daysAfter: 0, notes: '2 semaines' },
+          { type: 'Renforcement lombaire', daysAfter: 21 },
+        ],
+      },
+    ],
+  };
+
+  return base[profile.key] || [];
+}
+
+async function generateInjuriesForProfile(profile: DemoProfile, startDate: Date): Promise<void> {
+  const templates = getInjuryTemplates(profile);
+  if (templates.length === 0) return;
+
+  const now = new Date();
+
+  for (const tpl of templates) {
+    // Date de la blessure : il y a X mois
+    const injuryDate = new Date(now);
+    injuryDate.setDate(injuryDate.getDate() - Math.round(tpl.monthsAgo * 30));
+    const injuryDateStr = fmtDate(injuryDate);
+
+    // Déterminer fit_for_duty selon EVA + status
+    const fitForDuty: 'operational' | 'restricted' | 'unfit' =
+      tpl.status === 'active' && tpl.starting_eva >= 6 ? 'unfit'
+      : tpl.status === 'healing' ? 'restricted'
+      : 'operational';
+
+    // EVA actuelle selon l'évolution
+    let currentEva: number;
+    if (tpl.status === 'healed') currentEva = 0;
+    else if (tpl.status === 'healing') currentEva = Math.max(1, Math.round(tpl.starting_eva * 0.3));
+    else currentEva = Math.round(tpl.starting_eva * 0.8);
+
+    // Insert l'injury principale
+    let injuryId: number;
+    try {
+      injuryId = await addInjury({
+        zone_id: tpl.zone_id,
+        zone_view: tpl.zone_view,
+        pain_type: tpl.pain_type,
+        cause: tpl.cause,
+        eva_score: currentEva,
+        notes: tpl.notes,
+        date: injuryDateStr,
+        status: tpl.status,
+        fit_for_duty: fitForDuty,
+        estimated_recovery_days: tpl.recovery_days,
+        healed_at: tpl.status === 'healed'
+          ? fmtDate(addDays(injuryDate, tpl.recovery_days))
+          : undefined,
+      });
+    } catch (e) {
+      logger.warn('[Injury] insert failed for', tpl.zone_id, e);
+      continue;
+    }
+
+    // Historique EVA : courbe de douleur décroissante (tous les 3-5 jours)
+    const steps = Math.min(12, Math.floor(tpl.recovery_days / 4));
+    for (let i = 0; i < steps; i++) {
+      const evaDate = addDays(injuryDate, Math.round((tpl.recovery_days / steps) * i));
+      if (evaDate > now) break;
+      const progress = i / Math.max(1, steps - 1);
+      // Courbe décroissante avec variance
+      const targetEva = tpl.status === 'healed' ? 0 : currentEva;
+      const eva = Math.max(0, Math.round(tpl.starting_eva + (targetEva - tpl.starting_eva) * progress + rand(-0.5, 0.5, 0)));
+      try {
+        await addEvaHistory({
+          injury_id: injuryId,
+          eva_score: eva,
+          date: fmtDate(evaDate),
+          notes: i === 0 ? 'Douleur initiale' : (eva === 0 ? 'Douleur disparue' : undefined),
+        });
+      } catch (e) { /* ignore */ }
+    }
+
+    // Traitements
+    for (const tr of tpl.treatments) {
+      const trDate = addDays(injuryDate, tr.daysAfter);
+      if (trDate > now) continue;
+      try {
+        await addTreatment({
+          injury_id: injuryId,
+          treatment_type: tr.type,
+          custom_description: tr.notes,
+          date: fmtDate(trDate),
+          completed: tpl.status === 'healed' || tr.daysAfter < (tpl.monthsAgo * 30 - 14),
+          notes: tr.notes,
+        });
+      } catch (e) { /* ignore */ }
+    }
+  }
+
+  logger.info(`[Injuries] ${templates.length} blessures générées pour ${profile.name}`);
+}
+
+function generateSkillsForProfile(profile: DemoProfile): any[] {
+  const skills: any[] = [];
+  const now = Date.now();
+
+  // Techniques maîtrisées (~40% des thèmes)
+  const masteredCount = Math.ceil(profile.themes.length * 0.4);
+  const masteredThemes = profile.themes.slice(0, masteredCount);
+  for (const theme of masteredThemes) {
+    skills.push({
+      id: `skill-${now}-${skills.length}`,
+      name: theme,
+      category: 'technique',
+      status: 'mastered',
+      drillCount: randInt(15, 40),
+      notes: [
+        { date: new Date(Date.now() - randInt(30, 180) * 86400000).toISOString(), content: `${theme} bien posée, à maintenir` },
+      ],
+      createdAt: new Date(Date.now() - randInt(90, 365) * 86400000).toISOString(),
+    });
+  }
+
+  // Techniques en cours
+  for (const theme of profile.themes.slice(masteredCount)) {
+    skills.push({
+      id: `skill-${now}-${skills.length}`,
+      name: theme,
+      category: 'technique',
+      status: 'in_progress',
+      drillCount: randInt(3, 12),
+      notes: [
+        { date: new Date(Date.now() - randInt(10, 90) * 86400000).toISOString(), content: `Travail en cours sur ${theme}` },
+      ],
+      createdAt: new Date(Date.now() - randInt(30, 180) * 86400000).toISOString(),
+    });
+  }
+
+  // À apprendre (futur)
+  const toLearn = profile.style === 'technique' ? ['Truck', 'Twister', 'Crucifix control'] : ['Heel hook inside', 'Buggy choke'];
+  for (const theme of toLearn) {
+    skills.push({
+      id: `skill-${now}-${skills.length}`,
+      name: theme,
+      category: 'technique',
+      status: 'to_learn',
+      drillCount: 0,
+      notes: [],
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  return skills;
+}
+
+/** Récupère le profil et période actuellement chargés en démo */
+export const getActiveDemoProfile = async (): Promise<{ profileKey: string; period: DemoPeriod } | null> => {
+  const active = await isDemoDataActive();
+  if (!active) return null;
+  const profileKey = await AsyncStorage.getItem('@yoroi_demo_profile_key');
+  const period = (await AsyncStorage.getItem('@yoroi_demo_period')) as DemoPeriod | null;
+  if (!profileKey || !period) return null;
+  return { profileKey, period };
+};
+
+// ============================================
+// SYSTÈME DE SNAPSHOTS PAR PROFIL
+// Chaque profil peut avoir son propre snapshot persistant.
+// Switch instantané entre les 4 profils sans régénérer.
+// ============================================
+
+const SNAPSHOT_PREFIX = '@yoroi_demo_snapshot_';
+const SNAPSHOT_META_PREFIX = '@yoroi_demo_snapshot_meta_';
+
+export interface ProfileSnapshotInfo {
+  exists: boolean;
+  period?: DemoPeriod;
+  generatedAt?: string;
+  stats?: DemoGenerationResult;
+}
+
+/** Sauvegarde l'état actuel de la DB + AsyncStorage comme snapshot d'un profil */
+const saveProfileSnapshot = async (
+  profileKey: string,
+  period: DemoPeriod,
+  stats: DemoGenerationResult,
+): Promise<void> => {
+  try {
+    // Export de la DB complète
+    const sqliteDump = await exportAllData();
+
+    // Export des clés AsyncStorage liées à la démo
+    const asyncEntries: Record<string, string | null> = {};
+    for (const key of DEMO_ASYNC_KEYS) {
+      asyncEntries[key] = await AsyncStorage.getItem(key);
+    }
+
+    // Export SecureStore
+    const secureEntries: Record<string, string | null> = {};
+    for (const key of DEMO_SECURE_KEYS) {
+      secureEntries[key] = await secureStorage.getItem(key);
+    }
+
+    const snapshot = {
+      version: 1,
+      profileKey,
+      period,
+      generatedAt: new Date().toISOString(),
+      stats,
+      sqlite: sqliteDump,
+      async: asyncEntries,
+      secure: secureEntries,
+    };
+
+    await AsyncStorage.setItem(SNAPSHOT_PREFIX + profileKey, JSON.stringify(snapshot));
+    await AsyncStorage.setItem(SNAPSHOT_META_PREFIX + profileKey, JSON.stringify({
+      period, generatedAt: snapshot.generatedAt, stats,
+    }));
+    logger.info(`[Snapshot] Saved for ${profileKey} (${period})`);
+  } catch (e) {
+    logger.error('[Snapshot] save error', e);
+  }
+};
+
+/** Charge un snapshot d'un profil : remplace la DB et AsyncStorage */
+export const loadProfileSnapshot = async (profileKey: string): Promise<boolean> => {
+  try {
+    const raw = await AsyncStorage.getItem(SNAPSHOT_PREFIX + profileKey);
+    if (!raw) return false;
+
+    const snapshot = JSON.parse(raw);
+    if (!snapshot || snapshot.version !== 1) {
+      logger.warn('[Snapshot] version invalide');
+      return false;
+    }
+
+    // Backup des vraies données si pas déjà en mode démo
+    const alreadyActive = await isDemoDataActive();
+    if (!alreadyActive) {
+      await backupRealData();
+    }
+
+    // Reset DB puis re-importe le snapshot
+    await resetDatabase();
+    for (const key of DEMO_ASYNC_KEYS) {
+      await AsyncStorage.removeItem(key);
+    }
+
+    await importData(JSON.stringify(snapshot.sqlite));
+
+    // Restaure AsyncStorage
+    if (snapshot.async) {
+      for (const [key, value] of Object.entries(snapshot.async)) {
+        if (value === null) {
+          await AsyncStorage.removeItem(key);
+        } else {
+          await AsyncStorage.setItem(key, value as string);
+        }
+      }
+    }
+
+    // Restaure SecureStore
+    if (snapshot.secure) {
+      for (const [key, value] of Object.entries(snapshot.secure)) {
+        if (value === null) {
+          await secureStorage.removeItem(key);
+        } else {
+          await secureStorage.setItem(key, value as string);
+        }
+      }
+    }
+
+    // Marque l'état démo
+    await AsyncStorage.setItem(DEMO_ACTIVE_KEY, 'true');
+    await AsyncStorage.setItem('@yoroi_demo_profile_key', profileKey);
+    await AsyncStorage.setItem('@yoroi_demo_period', snapshot.period);
+
+    logger.info(`[Snapshot] Loaded for ${profileKey}`);
+    return true;
+  } catch (e) {
+    logger.error('[Snapshot] load error', e);
+    return false;
+  }
+};
+
+/** Vérifie si un snapshot existe pour un profil et retourne les infos */
+export const getProfileSnapshotInfo = async (profileKey: string): Promise<ProfileSnapshotInfo> => {
+  try {
+    const raw = await AsyncStorage.getItem(SNAPSHOT_META_PREFIX + profileKey);
+    if (!raw) return { exists: false };
+    const meta = JSON.parse(raw);
+    return {
+      exists: true,
+      period: meta.period,
+      generatedAt: meta.generatedAt,
+      stats: meta.stats,
+    };
+  } catch {
+    return { exists: false };
+  }
+};
+
+/** Liste les snapshots existants pour tous les profils */
+export const listProfileSnapshots = async (): Promise<Record<string, ProfileSnapshotInfo>> => {
+  const result: Record<string, ProfileSnapshotInfo> = {};
+  for (const key of Object.keys(DEMO_PROFILES)) {
+    result[key] = await getProfileSnapshotInfo(key);
+  }
+  return result;
+};
+
+/** Supprime le snapshot d'un profil */
+export const deleteProfileSnapshot = async (profileKey: string): Promise<void> => {
+  await AsyncStorage.removeItem(SNAPSHOT_PREFIX + profileKey);
+  await AsyncStorage.removeItem(SNAPSHOT_META_PREFIX + profileKey);
+  logger.info(`[Snapshot] Deleted for ${profileKey}`);
+};
+
+/**
+ * Switch vers un profil :
+ * - Si snapshot existe → restore instantané
+ * - Sinon → génère puis sauvegarde le snapshot
+ */
+export const switchToProfile = async (
+  profileKey: string,
+  period: DemoPeriod,
+): Promise<{ fromSnapshot: boolean; stats: DemoGenerationResult }> => {
+  const info = await getProfileSnapshotInfo(profileKey);
+  if (info.exists && info.period === period) {
+    const ok = await loadProfileSnapshot(profileKey);
+    if (ok && info.stats) {
+      return { fromSnapshot: true, stats: info.stats };
+    }
+  }
+  // Régénère
+  const stats = await generateDemoProfile(profileKey, period);
+  await saveProfileSnapshot(profileKey, period, stats);
+  return { fromSnapshot: false, stats };
+};
+
+/** Régénère un profil et écrase son snapshot */
+export const regenerateProfile = async (
+  profileKey: string,
+  period: DemoPeriod,
+): Promise<DemoGenerationResult> => {
+  const stats = await generateDemoProfile(profileKey, period);
+  await saveProfileSnapshot(profileKey, period, stats);
+  return stats;
+};
+
+/** Génère les 4 profils en batch (fait l'actif = dernier généré) */
+export const generateAllProfiles = async (
+  period: DemoPeriod,
+  onProgress?: (profileKey: string, index: number, total: number) => void,
+): Promise<Record<string, DemoGenerationResult>> => {
+  const result: Record<string, DemoGenerationResult> = {};
+  const keys = Object.keys(DEMO_PROFILES);
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    onProgress?.(key, i + 1, keys.length);
+    const stats = await generateDemoProfile(key, period);
+    await saveProfileSnapshot(key, period, stats);
+    result[key] = stats;
+  }
+  return result;
+};
+

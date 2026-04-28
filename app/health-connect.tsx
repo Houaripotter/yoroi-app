@@ -100,6 +100,10 @@ export default function HealthConnectScreen() {
       if (success) {
         // Marquer comme connecté et lancer l'import complet en arrière-plan
         await AsyncStorage.setItem('@yoroi_healthkit_asked', 'true');
+        // Flag spécifique : HC vraiment connecté → utilisé au démarrage Android pour éviter le crash
+        if (Platform.OS === 'android') {
+          await AsyncStorage.setItem('@yoroi_healthconnect_connected', 'true').catch(() => {});
+        }
         await healthConnect.setupWorkoutObserver().catch(() => {});
         healthConnect.importFullHistory().catch(err => logger.error('[HealthConnect UI] Erreur import historique:', err));
         showPopup(
@@ -549,8 +553,8 @@ export default function HealthConnectScreen() {
                 const hasWorkouts = diag.nativeModuleTest > 0 || diag.healthkit30d > 0 || diag.rawApiTest > 0 || diag.anchorApiTest > 0;
                 if (diag.moduleLoaded && !hasWorkouts) {
                   lines.push('');
-                  lines.push('CAUSE PROBABLE : La permission "Entrainements" n\'est pas activee pour Yoroi dans Apple Sante.');
-                  lines.push('Appuie sur "Ouvrir Reglages" pour l\'activer.');
+                  lines.push('CAUSE PROBABLE : La permission "Entraînements" n\'est pas activée pour Yoroi dans Apple Santé.');
+                  lines.push('Appuie sur "Ouvrir Réglages" pour l\'activer.');
                 }
                 if (diag.error) lines.push(`\nErreur : ${diag.error}`);
 
@@ -559,7 +563,7 @@ export default function HealthConnectScreen() {
                 const buttons: any[] = [{ text: 'Fermer', style: 'cancel' }];
                 if (!hasWorkouts && (diag.moduleLoaded || diag.nativeModuleTest >= 0)) {
                   buttons.push({
-                    text: 'Ouvrir Reglages',
+                    text: 'Ouvrir Réglages',
                     style: 'primary',
                     onPress: () => safeOpenURL('App-Prefs:Privacy&path=HEALTH'),
                   });

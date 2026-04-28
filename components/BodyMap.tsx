@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 10 },
   iconBtn: { padding: 5 },
   mainArea: { flex: 1, justifyContent: 'center', alignItems: 'center', width: '100%' },
-  imageFrame: { width: '65%', maxWidth: 280, position: 'relative', alignSelf: 'center' },
+  imageFrame: { width: '92%', maxWidth: 420, position: 'relative', alignSelf: 'center' },
   image: { width: '100%', height: '100%' },
   zone: { position: 'absolute', borderRadius: 4 },
   // Marqueur de blessure

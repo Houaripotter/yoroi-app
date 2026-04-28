@@ -344,15 +344,16 @@ export const DashboardPage: React.FC = React.memo(() => {
       const prepareLineData = (data: any[], valueKey: string, color: string) => {
         if (!data || data.length === 0) return [];
         const filtered = data.filter(item => item[valueKey] != null);
-        const chronological = filtered.slice().reverse();
+        // Convention Yoroi : plus récent à GAUCHE (data déjà DESC depuis la DB)
+        const ordered = filtered.slice();
 
-        let sampled: any[] = chronological;
-        if (chronological.length > HARD_CAP) {
+        let sampled: any[] = ordered;
+        if (ordered.length > HARD_CAP) {
           sampled = [];
-          const step = (chronological.length - 1) / (HARD_CAP - 1);
+          const step = (ordered.length - 1) / (HARD_CAP - 1);
           for (let i = 0; i < HARD_CAP; i++) {
             const idx = Math.round(i * step);
-            sampled.push(chronological[idx]);
+            sampled.push(ordered[idx]);
           }
         }
 
@@ -369,10 +370,18 @@ export const DashboardPage: React.FC = React.memo(() => {
         });
       };
 
-      const getLatestValue = (data: any[], key: string, fallback: string = '--') => {
+      // Cherche la dernière valeur NON-NULL pour ce champ.
+      // data est en ordre DESC (plus récent en [0]) — si data[0][key] est null
+      // (ex : entrée poids seul sans composition), on remonte dans l'historique.
+      const getLatestValue = (data: any[], key: string, fallback: string = '--', decimals: number = 1) => {
         if (!data || data.length === 0) return fallback;
-        const val = data[0][key];
-        return val ? val.toFixed(1) : fallback;
+        for (const item of data) {
+          const val = item?.[key];
+          if (val != null && val !== 0) {
+            return typeof val === 'number' ? val.toFixed(decimals) : String(val);
+          }
+        }
+        return fallback;
       };
 
       // --- 1. CORPS ---
@@ -382,10 +391,10 @@ export const DashboardPage: React.FC = React.memo(() => {
       metricsList.push({ id: 'water_percent', metricKey: 'water_percent', theme: 'Corps', title: 'Eau', icon: <Waves size={16} color="#06B6D4" />, color: '#06B6D4', unit: '%', value: getLatestValue(effectiveWeights, 'water_percent'), data: prepareLineData(effectiveWeights, 'water_percent', '#06B6D4') });
 
       // --- 2. COMPOSITION ---
-      metricsList.push({ id: 'visceral_fat', metricKey: 'visceral_fat', theme: 'Composition', title: 'Gras Visc.', icon: <Target size={16} color="#EF4444" />, color: '#EF4444', unit: '', value: effectiveWeights?.[0]?.visceral_fat || '--', data: prepareLineData(effectiveWeights, 'visceral_fat', '#EF4444') });
+      metricsList.push({ id: 'visceral_fat', metricKey: 'visceral_fat', theme: 'Composition', title: 'Gras Visc.', icon: <Target size={16} color="#EF4444" />, color: '#EF4444', unit: '', value: getLatestValue(effectiveWeights, 'visceral_fat', '--', 0), data: prepareLineData(effectiveWeights, 'visceral_fat', '#EF4444') });
       metricsList.push({ id: 'bone_mass', metricKey: 'bone_mass', theme: 'Composition', title: 'Os', icon: <Bone size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: 'kg', value: getLatestValue(effectiveWeights, 'bone_mass'), data: prepareLineData(effectiveWeights, 'bone_mass', '#8B5CF6') });
-      metricsList.push({ id: 'bmr', metricKey: 'bmr', theme: 'Composition', title: 'BMR', icon: <Flame size={16} color="#F59E0B" />, color: '#F59E0B', unit: 'kcal', value: effectiveWeights?.[0]?.bmr || '--', data: prepareLineData(effectiveWeights, 'bmr', '#F59E0B') });
-      metricsList.push({ id: 'metabolic_age', metricKey: 'metabolic_age', theme: 'Composition', title: 'Âge Métab.', icon: <Calendar size={16} color="#06B6D4" />, color: '#06B6D4', unit: 'ans', value: effectiveWeights?.[0]?.metabolic_age || '--', data: prepareLineData(effectiveWeights, 'metabolic_age', '#06B6D4') });
+      metricsList.push({ id: 'bmr', metricKey: 'bmr', theme: 'Composition', title: 'BMR', icon: <Flame size={16} color="#F59E0B" />, color: '#F59E0B', unit: 'kcal', value: getLatestValue(effectiveWeights, 'bmr', '--', 0), data: prepareLineData(effectiveWeights, 'bmr', '#F59E0B') });
+      metricsList.push({ id: 'metabolic_age', metricKey: 'metabolic_age', theme: 'Composition', title: 'Âge Métab.', icon: <Calendar size={16} color="#06B6D4" />, color: '#06B6D4', unit: 'ans', value: getLatestValue(effectiveWeights, 'metabolic_age', '--', 0), data: prepareLineData(effectiveWeights, 'metabolic_age', '#06B6D4') });
 
       // --- 3. MENSURATIONS ---
       const mKeys = [
@@ -395,7 +404,7 @@ export const DashboardPage: React.FC = React.memo(() => {
         { key: 'left_thigh', title: 'Cuisse', color: '#8B5CF6' },
       ];
       mKeys.forEach(m => {
-        metricsList.push({ id: m.key, metricKey: m.key, theme: 'Mensures', title: m.title, icon: <Ruler size={16} color={m.color} />, color: m.color, unit: 'cm', value: getLatestValue(effectiveMeasurements, m.key), data: prepareLineData(effectiveMeasurements, m.key, m.color) });
+        metricsList.push({ id: m.key, metricKey: m.key, theme: 'Mensurations', title: m.title, icon: <Ruler size={16} color={m.color} />, color: m.color, unit: 'cm', value: getLatestValue(effectiveMeasurements, m.key), data: prepareLineData(effectiveMeasurements, m.key, m.color) });
       });
 
       // --- 4. DISCIPLINE ---
@@ -528,7 +537,7 @@ export const DashboardPage: React.FC = React.memo(() => {
   }, []);
 
   const groupedThemes = useMemo(() => {
-    const themes = ['Corps', 'Composition', 'Mensures', 'Discipline', 'Santé'];
+    const themes = ['Corps', 'Composition', 'Mensurations', 'Discipline', 'Santé'];
     return themes.map(theme => ({
       theme,
       metrics: allMetrics.filter(m => m.theme === theme),

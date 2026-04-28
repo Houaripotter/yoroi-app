@@ -22,7 +22,6 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { ZoneSelectionModal, Zone } from '@/components/ZoneSelectionModal';
 import {
   Injury,
-  getActiveInjuries,
   getInjuryStats,
 } from '@/lib/database';
 import {
@@ -52,37 +51,40 @@ export default function InfirmaryScreen() {
   const [overlappingZones, setOverlappingZones] = useState<Zone[]>([]);
   const [currentView, setCurrentView] = useState<'front' | 'back'>('front');
 
-  // Charger les données et vérifier le mode créateur
+  // Charger les données en parallèle pour un affichage plus rapide
   const loadData = async () => {
     try {
-      const activeInjuries = await getActiveInjuries();
-      const injuriesWithNames = await getInjuriesWithZoneNames('active');
+      // Lancer tous les appels DB en parallèle
+      const [injuriesWithNames, fitForDuty, injuryStats] = await Promise.all([
+        getInjuriesWithZoneNames('active'),
+        getFitForDutyInfo(),
+        getInjuryStats(),
+      ]);
+
+      // Mettre à jour l'UI dès que l'essentiel est prêt
       setInjuries(injuriesWithNames);
-
-      const fitForDuty = await getFitForDutyInfo();
       setFitForDutyStatus(fitForDuty);
-
-      const injuryStats = await getInjuryStats();
       setStats(injuryStats);
 
-      // Charger la charge d'entraînement pour la semaine de chaque blessure
-      try {
-        const allLoads = await getTrainingLoads();
-        const loadMap: Record<number, { totalLoad: number; riskLevel: string }> = {};
-        for (const inj of injuriesWithNames) {
-          if (!inj.id || !inj.date) continue;
-          const injDate = new Date(inj.date);
-          // Semaine : 7 jours précédant la blessure
-          const weekStart = new Date(injDate);
-          weekStart.setDate(injDate.getDate() - 7);
-          const weekStartStr = weekStart.toISOString().split('T')[0];
-          const injDateStr = injDate.toISOString().split('T')[0];
-          const weekLoads = allLoads.filter(l => l.date >= weekStartStr && l.date <= injDateStr);
-          const totalLoad = weekLoads.reduce((sum, l) => sum + l.load, 0);
-          loadMap[inj.id] = { totalLoad: Math.round(totalLoad), riskLevel: getRiskLevel(totalLoad) };
-        }
-        setInjuryLoadMap(loadMap);
-      } catch (_e) { /* pas critique */ }
+      // Charger la charge d'entraînement en tâche de fond (pas bloquant pour l'affichage)
+      (async () => {
+        try {
+          const allLoads = await getTrainingLoads();
+          const loadMap: Record<number, { totalLoad: number; riskLevel: string }> = {};
+          for (const inj of injuriesWithNames) {
+            if (!inj.id || !inj.date) continue;
+            const injDate = new Date(inj.date);
+            const weekStart = new Date(injDate);
+            weekStart.setDate(injDate.getDate() - 7);
+            const weekStartStr = weekStart.toISOString().split('T')[0];
+            const injDateStr = injDate.toISOString().split('T')[0];
+            const weekLoads = allLoads.filter(l => l.date >= weekStartStr && l.date <= injDateStr);
+            const totalLoad = weekLoads.reduce((sum, l) => sum + l.load, 0);
+            loadMap[inj.id] = { totalLoad: Math.round(totalLoad), riskLevel: getRiskLevel(totalLoad) };
+          }
+          setInjuryLoadMap(loadMap);
+        } catch (_e) { /* pas critique */ }
+      })();
 
     } catch (error) {
       logger.error('[Infirmary] Erreur chargement:', error);

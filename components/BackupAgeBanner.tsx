@@ -106,7 +106,7 @@ const BackupAgeBannerInner: React.FC = () => {
       onPress={handlePress}
       activeOpacity={0.75}
       disabled={triggering}
-      accessibilityLabel={`${message}. Tap pour ${cta.toLowerCase()}.`}
+      accessibilityLabel={`${message}. Appuie pour ${cta.toLowerCase()}.`}
       accessibilityRole="button"
     >
       <View style={[styles.iconWrap, { backgroundColor: `${color}20` }]}>

@@ -4,6 +4,7 @@
 // Débloque TOUTES les fonctionnalités Premium
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
+import { DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
 import logger from '@/lib/security/logger';
@@ -67,9 +68,13 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
   const [showCodeInput, setShowCodeInput] = useState(false);
   const [tapTimeoutId, setTapTimeoutId] = useState<ReturnType<typeof setTimeout> | null>(null);
 
-  // Charger l'état au démarrage
+  // Charger l'état au démarrage + écouter les events externes (settings peut l'activer)
   useEffect(() => {
     loadDevMode();
+    const sub = DeviceEventEmitter.addListener('YOROI_DEV_MODE_CHANGED', () => {
+      loadDevMode();
+    });
+    return () => sub.remove();
   }, []);
 
   // Charger le mode dev depuis le storage

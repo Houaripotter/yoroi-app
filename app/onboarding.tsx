@@ -1028,6 +1028,10 @@ export default function OnboardingScreen() {
       const connected = await healthConnect.connect();
       if (connected) {
         await AsyncStorage.setItem('@yoroi_healthkit_asked', 'true');
+        // Flag spécifique : l'utilisateur a VRAIMENT connecté HC (utilisé au démarrage sur Android)
+        if (Platform.OS === 'android') {
+          await AsyncStorage.setItem('@yoroi_healthconnect_connected', 'true').catch(() => {});
+        }
         await healthConnect.setupWorkoutObserver().catch(() => {});
         setHealthConnected(true);
         // Lancer l'import complet en arriere-plan sans bloquer la navigation

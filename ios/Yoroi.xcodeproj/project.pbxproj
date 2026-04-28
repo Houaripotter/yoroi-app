@@ -7,37 +7,134 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		083FE764C17EB8ADF82DB7E3 /* WeightPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D767F6BF1B2714353253616C /* WeightPage.swift */; };
+		0A5D19028469480DB02D69A3 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 14F08D3C04354160B9E8F92A /* PrivacyInfo.xcprivacy */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		2DD907D9AA574F3792F1FC99 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = FB367295EC1C499AA79A9B66 /* PrivacyInfo.xcprivacy */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		A1B2C3D4E5F6A1B2 /* YoroiHealthKitModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A1B3 /* YoroiHealthKitModule.swift */; };
-		A1B2C3D4E5F6A1B4 /* YoroiPlacesModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A1B5 /* YoroiPlacesModule.swift */; };
-		A1B2C3D4E5F6A1B6 /* YoroiHealthKitModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A1B7 /* YoroiHealthKitModuleBridge.m */; };
-		A1B2C3D4E5F6A1B8 /* YoroiPlacesModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A1B9 /* YoroiPlacesModuleBridge.m */; };
-		A28BC165B5B0AB0EE89798AD /* libPods-Yoroi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8EB7887D4271DF45AB5CA512 /* libPods-Yoroi.a */; };
+		48ACA1152E90E2DCBDFE9432 /* TimerPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D7686F63187236058925E1 /* TimerPage.swift */; };
+		4AA75C1F9F342509E6901E98 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E925914387B2F6992FA479C6 /* Foundation.framework */; };
+		5BA41E06B49FCA34D60842E5 /* WatchSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2F8EC010D7BFA66D009900F /* WatchSessionManager.swift */; };
+		730EA67E87BC7BBA1E7CC115 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2271CA4C6402AF138B83E3A4 /* ExpoModulesProvider.swift */; };
+		74AF98F55BC435F00568F69F /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C60C9F16AACE99230853813A /* WatchConnectivity.framework */; };
+		927D6FC93B28CD31C24811AF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 14F08D3C04354160B9E8F92A /* PrivacyInfo.xcprivacy */; };
+		95B176C8EA047BC42D7A75A0 /* HydrationPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 031A522046805E96B3836C90 /* HydrationPage.swift */; };
+		9866B757A0EBA38AAC1A36BC /* YoroiWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 6865ED75B31A3E0530F4354A /* YoroiWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9D55373C46EA8EAA5B91D0F2 /* libPods-Yoroi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 06EF6F10F8AF0BEA16A604EB /* libPods-Yoroi.a */; };
+		A1B2C3D400000001 /* TimerAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000010 /* TimerAttributes.swift */; };
+		A1B2C3D400000002 /* YoroiLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000020 /* YoroiLiveActivityManager.swift */; };
+		A1B2C3D400000003 /* YoroiLiveActivityManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000030 /* YoroiLiveActivityManager.m */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		BGTASK01OBJBUILDF000001 /* BackgroundTaskModule.m in Sources */ = {isa = PBXBuildFile; fileRef = BGTASK01OBJFILEREF000001 /* BackgroundTaskModule.m */; };
+		BGTASK01SWFBUILDF000001 /* BackgroundTaskModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = BGTASK01SWFFILEREF000001 /* BackgroundTaskModule.swift */; };
+		CARNETPAGE001BUILDF00001 /* CarnetPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CARNETPAGE001FILEREF0001 /* CarnetPage.swift */; };
+		COMPETPAGE01BUILDF000001 /* CompetitionPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = COMPETPAGE01FILEREF000001 /* CompetitionPage.swift */; };
+		COMPLICCNTRL01BUILDF0001 /* ComplicationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = COMPLICCNTRL01FILEREF0001 /* ComplicationController.swift */; };
+		D33204A0A2246F4E1F69529F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BDA7F51DE3199FA753FF4521 /* Assets.xcassets */; };
+		D6D98440C02A34740C0F71DA /* WatchConnectivityBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E49616A4A5F9C00ECDA0DD06 /* WatchConnectivityBridge.swift */; };
+		E11C770F9EC353BDED32219F /* WatchConnectivityBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 38DF121D8F7FCBF2DDD2D5B3 /* WatchConnectivityBridge.m */; };
+		E12B3E704553F83455514DC7 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000A32CBCA9E77D5A32EDFCD /* WatchConnectivity.framework */; };
+		E96EBC2B8285DFB53554E9F5 /* SleepPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 354ADA1C37DEB571464D64E1 /* SleepPage.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		FCB7094DB6D54FB5D57FC0C3 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FD75DB2075D1549D5547F03 /* ExpoModulesProvider.swift */; };
+		F1A2B3C4D5E6F70800SETTINGS /* SettingsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F70900SETTINGS /* SettingsPage.swift */; };
+		F744193774A505F6D079732E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F56E12FDA5FBF6C2FE9088F /* ContentView.swift */; };
+		FD7C9F57DFFF6CF797EF939D /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49841AC244D54BFE9CC6D2C4 /* HealthKit.framework */; };
+		FF32897EE0BEC2AECA52ABBF /* YoroiWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0F210D88915A040CE036D6 /* YoroiWatchApp.swift */; };
+		MULTIPEER01BUILDF00001 /* MultipeerBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = MULTIPEER01FILEREF00001 /* MultipeerBridge.swift */; };
+		MULTIPEER02BUILDF00001 /* MultipeerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = MULTIPEER02FILEREF00001 /* MultipeerBridge.m */; };
+		TIMERALRMVW1BUILDF000001 /* TimerAlarmNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIMERALRMVW1FILEREF000001 /* TimerAlarmNotificationView.swift */; };
+		TORCH001OBJBUILDF000001 /* TorchModule.m in Sources */ = {isa = PBXBuildFile; fileRef = TORCH001OBJFILEREF000001 /* TorchModule.m */; };
+		TORCH001SWFBUILDF000001 /* TorchModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = TORCH001SWFFILEREF00001 /* TorchModule.swift */; };
+		WATCHUTILS001BUILDF00001 /* WatchUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = WATCHUTILS001FILEREF00001 /* WatchUtils.swift */; };
+		WGTDATAOBJ001BUILDF00001 /* WidgetDataModule.m in Sources */ = {isa = PBXBuildFile; fileRef = WGTDATAOBJ001F1LEREF0001 /* WidgetDataModule.m */; };
+		WGTDATASWF001BUILDF00001 /* WidgetDataModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = WGTDATASWF001F1LEREF0001 /* WidgetDataModule.swift */; };
+		WIDGETKIT001FRAMBUILDF001 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = WIDGETKIT001FRAMFILEREF001 /* WidgetKit.framework */; };
+		WIZZ50UND0001F1LEREF0001 /* wizz-made-with-Voicemod.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */; };
+		WIZZM4IN0001BUILDF000001 /* wizz.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZM4IN0001F1LEREF0001 /* wizz.mp3 */; };
+		WIZZW4TCH001BUILDF000001 /* wizz.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZW4TCH001F1LEREF0001 /* wizz.mp3 */; };
+		WORKOUTPAG01BUILDF000001 /* WorkoutPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */; };
+		YOROIHK01OBJBUILDF000001 /* YoroiHealthKitModule.m in Sources */ = {isa = PBXBuildFile; fileRef = YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */; };
+		YOROIHK01SWFBUILDF000001 /* YoroiHealthKitModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		188FC207AB3602084BE442F3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F147DC6C7AC4E0D7FE4AA024;
+			remoteInfo = YoroiWatch;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		0D31F959E986F8C0DD1E35BC /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				9866B757A0EBA38AAC1A36BC /* YoroiWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		000A32CBCA9E77D5A32EDFCD /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/WatchConnectivity.framework; sourceTree = DEVELOPER_DIR; };
+		031A522046805E96B3836C90 /* HydrationPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HydrationPage.swift; sourceTree = "<group>"; };
+		06EF6F10F8AF0BEA16A604EB /* libPods-Yoroi.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Yoroi.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		0F56E12FDA5FBF6C2FE9088F /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* Yoroi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yoroi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Yoroi/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Yoroi/Info.plist; sourceTree = "<group>"; };
-		7B52AB5C4E1901572C477F2A /* Pods-Yoroi.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yoroi.release.xcconfig"; path = "Target Support Files/Pods-Yoroi/Pods-Yoroi.release.xcconfig"; sourceTree = "<group>"; };
-		8EB7887D4271DF45AB5CA512 /* libPods-Yoroi.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Yoroi.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		8FD75DB2075D1549D5547F03 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Yoroi/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		90081C64FDA987FFDE86FEF7 /* Pods-Yoroi.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yoroi.debug.xcconfig"; path = "Target Support Files/Pods-Yoroi/Pods-Yoroi.debug.xcconfig"; sourceTree = "<group>"; };
-		A1B2C3D4E5F6A1B3 /* YoroiHealthKitModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = YoroiHealthKitModule.swift; path = Yoroi/YoroiHealthKitModule.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F6A1B5 /* YoroiPlacesModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = YoroiPlacesModule.swift; path = Yoroi/YoroiPlacesModule.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F6A1B7 /* YoroiHealthKitModuleBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = YoroiHealthKitModuleBridge.m; path = Yoroi/YoroiHealthKitModuleBridge.m; sourceTree = "<group>"; };
-		A1B2C3D4E5F6A1B9 /* YoroiPlacesModuleBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = YoroiPlacesModuleBridge.m; path = Yoroi/YoroiPlacesModuleBridge.m; sourceTree = "<group>"; };
+		14F08D3C04354160B9E8F92A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = PrivacyInfo.xcprivacy; path = Yoroi/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		2271CA4C6402AF138B83E3A4 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Yoroi/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		354ADA1C37DEB571464D64E1 /* SleepPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SleepPage.swift; sourceTree = "<group>"; };
+		38DF121D8F7FCBF2DDD2D5B3 /* WatchConnectivityBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = WatchConnectivityBridge.m; sourceTree = "<group>"; };
+		4212EFECB655ED54B895DA96 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		46F1366910D3214FC92EAF70 /* Pods-Yoroi.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yoroi.debug.xcconfig"; path = "Target Support Files/Pods-Yoroi/Pods-Yoroi.debug.xcconfig"; sourceTree = "<group>"; };
+		49841AC244D54BFE9CC6D2C4 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/HealthKit.framework; sourceTree = DEVELOPER_DIR; };
+		5BA7DB08F3B62003BD145B10 /* Pods-Yoroi.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yoroi.release.xcconfig"; path = "Target Support Files/Pods-Yoroi/Pods-Yoroi.release.xcconfig"; sourceTree = "<group>"; };
+		6865ED75B31A3E0530F4354A /* YoroiWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YoroiWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		86D7686F63187236058925E1 /* TimerPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerPage.swift; sourceTree = "<group>"; };
+		A1B2C3D400000010 /* TimerAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TimerAttributes.swift; path = Yoroi/LiveActivity/TimerAttributes.swift; sourceTree = "<group>"; };
+		A1B2C3D400000020 /* YoroiLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = YoroiLiveActivityManager.swift; path = Yoroi/LiveActivity/YoroiLiveActivityManager.swift; sourceTree = "<group>"; };
+		A1B2C3D400000030 /* YoroiLiveActivityManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = YoroiLiveActivityManager.m; path = Yoroi/LiveActivity/YoroiLiveActivityManager.m; sourceTree = "<group>"; };
+		A2F8EC010D7BFA66D009900F /* WatchSessionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Yoroi/SplashScreen.storyboard; sourceTree = "<group>"; };
+		BA0F210D88915A040CE036D6 /* YoroiWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = YoroiWatchApp.swift; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
+		BDA7F51DE3199FA753FF4521 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		BGTASK01OBJFILEREF000001 /* BackgroundTaskModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BackgroundTaskModule.m; path = Yoroi/BackgroundTaskModule.m; sourceTree = "<group>"; };
+		BGTASK01SWFFILEREF000001 /* BackgroundTaskModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BackgroundTaskModule.swift; path = Yoroi/BackgroundTaskModule.swift; sourceTree = "<group>"; };
+		C60C9F16AACE99230853813A /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/WatchConnectivity.framework; sourceTree = DEVELOPER_DIR; };
+		CARNETPAGE001FILEREF0001 /* CarnetPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CarnetPage.swift; sourceTree = "<group>"; };
+		COMPETPAGE01FILEREF000001 /* CompetitionPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompetitionPage.swift; sourceTree = "<group>"; };
+		COMPLICCNTRL01FILEREF0001 /* ComplicationController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ComplicationController.swift; sourceTree = "<group>"; };
+		D767F6BF1B2714353253616C /* WeightPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WeightPage.swift; sourceTree = "<group>"; };
+		E49616A4A5F9C00ECDA0DD06 /* WatchConnectivityBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchConnectivityBridge.swift; sourceTree = "<group>"; };
+		E925914387B2F6992FA479C6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Yoroi/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Yoroi-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Yoroi-Bridging-Header.h"; path = "Yoroi/Yoroi-Bridging-Header.h"; sourceTree = "<group>"; };
-		FB367295EC1C499AA79A9B66 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = PrivacyInfo.xcprivacy; path = Yoroi/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F1A2B3C4D5E6F70900SETTINGS /* SettingsPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsPage.swift; sourceTree = "<group>"; };
+		MULTIPEER01FILEREF00001 /* MultipeerBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MultipeerBridge.swift; sourceTree = "<group>"; };
+		MULTIPEER02FILEREF00001 /* MultipeerBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MultipeerBridge.m; sourceTree = "<group>"; };
+		RCTPKGCNSTUB0FILEREF0001 /* RCTPackagerConnectionStub.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = RCTPackagerConnectionStub.m; sourceTree = SOURCE_ROOT; };
+		TIMERALRMVW1FILEREF000001 /* TimerAlarmNotificationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerAlarmNotificationView.swift; sourceTree = "<group>"; };
+		TORCH001OBJFILEREF000001 /* TorchModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = TorchModule.m; path = Yoroi/TorchModule.m; sourceTree = "<group>"; };
+		TORCH001SWFFILEREF00001 /* TorchModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TorchModule.swift; path = Yoroi/TorchModule.swift; sourceTree = "<group>"; };
+		WATCHUTILS001FILEREF00001 /* WatchUtils.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchUtils.swift; sourceTree = "<group>"; };
+		WGTDATAOBJ001F1LEREF0001 /* WidgetDataModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = WidgetDataModule.m; path = Yoroi/WidgetDataModule.m; sourceTree = "<group>"; };
+		WGTDATASWF001F1LEREF0001 /* WidgetDataModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WidgetDataModule.swift; path = Yoroi/WidgetDataModule.swift; sourceTree = "<group>"; };
+		WIDGETKIT001FRAMFILEREF001 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "wizz-made-with-Voicemod.mp3"; sourceTree = "<group>"; };
+		WIZZM4IN0001F1LEREF0001 /* wizz.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = wizz.mp3; path = Yoroi/wizz.mp3; sourceTree = "<group>"; };
+		WIZZW4TCH001F1LEREF0001 /* wizz.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = wizz.mp3; path = YoroiWatch/wizz.mp3; sourceTree = "<group>"; };
+		WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutPage.swift; sourceTree = "<group>"; };
+		YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = YoroiHealthKitModule.m; path = Yoroi/YoroiHealthKitModule.m; sourceTree = "<group>"; };
+		YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = YoroiHealthKitModule.swift; path = Yoroi/YoroiHealthKitModule.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,27 +142,74 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A28BC165B5B0AB0EE89798AD /* libPods-Yoroi.a in Frameworks */,
+				74AF98F55BC435F00568F69F /* WatchConnectivity.framework in Frameworks */,
+				9D55373C46EA8EAA5B91D0F2 /* libPods-Yoroi.a in Frameworks */,
+				WIDGETKIT001FRAMBUILDF001 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E7609FBF1BB8134BA6456C99 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4AA75C1F9F342509E6901E98 /* Foundation.framework in Frameworks */,
+				E12B3E704553F83455514DC7 /* WatchConnectivity.framework in Frameworks */,
+				FD7C9F57DFFF6CF797EF939D /* HealthKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0F9D029879076AFF1316972A /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				46F1366910D3214FC92EAF70 /* Pods-Yoroi.debug.xcconfig */,
+				5BA7DB08F3B62003BD145B10 /* Pods-Yoroi.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* Yoroi */ = {
 			isa = PBXGroup;
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
-				A1B2C3D4E5F6A1B3 /* YoroiHealthKitModule.swift */,
-				A1B2C3D4E5F6A1B7 /* YoroiHealthKitModuleBridge.m */,
-				A1B2C3D4E5F6A1B5 /* YoroiPlacesModule.swift */,
-				A1B2C3D4E5F6A1B9 /* YoroiPlacesModuleBridge.m */,
 				F11748442D0722820044C1D9 /* Yoroi-Bridging-Header.h */,
+				TORCH001SWFFILEREF00001 /* TorchModule.swift */,
+				TORCH001OBJFILEREF000001 /* TorchModule.m */,
+				BGTASK01SWFFILEREF000001 /* BackgroundTaskModule.swift */,
+				BGTASK01OBJFILEREF000001 /* BackgroundTaskModule.m */,
+				YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */,
+				YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */,
+				A1B2C3D400000010 /* TimerAttributes.swift */,
+				A1B2C3D400000020 /* YoroiLiveActivityManager.swift */,
+				A1B2C3D400000030 /* YoroiLiveActivityManager.m */,
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				FB367295EC1C499AA79A9B66 /* PrivacyInfo.xcprivacy */,
+				14F08D3C04354160B9E8F92A /* PrivacyInfo.xcprivacy */,
+				2013024F5B40FDE60BB3341A /* WatchConnectivity */,
+				MULTIPEER0GROUP0000001 /* Multipeer */,
+			);
+			name = Yoroi;
+			sourceTree = "<group>";
+		};
+		2013024F5B40FDE60BB3341A /* WatchConnectivity */ = {
+			isa = PBXGroup;
+			children = (
+				E49616A4A5F9C00ECDA0DD06 /* WatchConnectivityBridge.swift */,
+				38DF121D8F7FCBF2DDD2D5B3 /* WatchConnectivityBridge.m */,
+				RCTPKGCNSTUB0FILEREF0001 /* RCTPackagerConnectionStub.m */,
+			);
+			name = WatchConnectivity;
+			path = Yoroi/WatchConnectivity;
+			sourceTree = "<group>";
+		};
+		2402FBF98BE7C07171A62547 /* Yoroi */ = {
+			isa = PBXGroup;
+			children = (
+				2271CA4C6402AF138B83E3A4 /* ExpoModulesProvider.swift */,
 			);
 			name = Yoroi;
 			sourceTree = "<group>";
@@ -74,26 +218,51 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				8EB7887D4271DF45AB5CA512 /* libPods-Yoroi.a */,
+				DF0F3F808BF09B27127E0E65 /* watchOS */,
+				4A7AA71225D0F986E1A28135 /* iOS */,
+				06EF6F10F8AF0BEA16A604EB /* libPods-Yoroi.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		6A118D531F38D91545C17DEE /* Pods */ = {
+		4A7AA71225D0F986E1A28135 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
-				90081C64FDA987FFDE86FEF7 /* Pods-Yoroi.debug.xcconfig */,
-				7B52AB5C4E1901572C477F2A /* Pods-Yoroi.release.xcconfig */,
+				C60C9F16AACE99230853813A /* WatchConnectivity.framework */,
 			);
-			path = Pods;
+			name = iOS;
 			sourceTree = "<group>";
 		};
-		6E4FB23639286FFD265D7D7B /* Yoroi */ = {
+		4FE4F2E74120D82686D88DAD /* YoroiWatch */ = {
 			isa = PBXGroup;
 			children = (
-				8FD75DB2075D1549D5547F03 /* ExpoModulesProvider.swift */,
+				645BB2E80BF535B2FA7219CF /* Views */,
+				A73150D781D16EF168B0A900 /* Services */,
+				BDA7F51DE3199FA753FF4521 /* Assets.xcassets */,
+				4212EFECB655ED54B895DA96 /* Info.plist */,
+				BA0F210D88915A040CE036D6 /* YoroiWatchApp.swift */,
+				0F56E12FDA5FBF6C2FE9088F /* ContentView.swift */,
+				COMPLICCNTRL01FILEREF0001 /* ComplicationController.swift */,
+				WATCHUTILS001FILEREF00001 /* WatchUtils.swift */,
+				WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */,
 			);
-			name = Yoroi;
+			path = YoroiWatch;
+			sourceTree = SOURCE_ROOT;
+		};
+		645BB2E80BF535B2FA7219CF /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				86D7686F63187236058925E1 /* TimerPage.swift */,
+				D767F6BF1B2714353253616C /* WeightPage.swift */,
+				031A522046805E96B3836C90 /* HydrationPage.swift */,
+				354ADA1C37DEB571464D64E1 /* SleepPage.swift */,
+				F1A2B3C4D5E6F70900SETTINGS /* SettingsPage.swift */,
+				CARNETPAGE001FILEREF0001 /* CarnetPage.swift */,
+				COMPETPAGE01FILEREF000001 /* CompetitionPage.swift */,
+				WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */,
+				TIMERALRMVW1FILEREF000001 /* TimerAlarmNotificationView.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -110,8 +279,10 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				6A118D531F38D91545C17DEE /* Pods */,
-				A03C4DAE26FC6DAEECE85A81 /* ExpoModulesProviders */,
+				CA290EBA03C5E814675705EA /* ExpoModulesProviders */,
+				4FE4F2E74120D82686D88DAD /* YoroiWatch */,
+				0F9D029879076AFF1316972A /* Pods */,
+				9799841B2F812CD0008F5652 /* Recovered References */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -122,16 +293,29 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* Yoroi.app */,
+				6865ED75B31A3E0530F4354A /* YoroiWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		A03C4DAE26FC6DAEECE85A81 /* ExpoModulesProviders */ = {
+		9799841B2F812CD0008F5652 /* Recovered References */ = {
 			isa = PBXGroup;
 			children = (
-				6E4FB23639286FFD265D7D7B /* Yoroi */,
+				WGTDATASWF001F1LEREF0001 /* WidgetDataModule.swift */,
+				WGTDATAOBJ001F1LEREF0001 /* WidgetDataModule.m */,
+				WIDGETKIT001FRAMFILEREF001 /* WidgetKit.framework */,
+				WIZZM4IN0001F1LEREF0001 /* wizz.mp3 */,
+				WIZZW4TCH001F1LEREF0001 /* wizz.mp3 */,
 			);
-			name = ExpoModulesProviders;
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
+		A73150D781D16EF168B0A900 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A2F8EC010D7BFA66D009900F /* WatchSessionManager.swift */,
+			);
+			path = Services;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -143,6 +327,34 @@
 			path = Yoroi/Supporting;
 			sourceTree = "<group>";
 		};
+		CA290EBA03C5E814675705EA /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				2402FBF98BE7C07171A62547 /* Yoroi */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		DF0F3F808BF09B27127E0E65 /* watchOS */ = {
+			isa = PBXGroup;
+			children = (
+				E925914387B2F6992FA479C6 /* Foundation.framework */,
+				000A32CBCA9E77D5A32EDFCD /* WatchConnectivity.framework */,
+				49841AC244D54BFE9CC6D2C4 /* HealthKit.framework */,
+			);
+			name = watchOS;
+			sourceTree = "<group>";
+		};
+		MULTIPEER0GROUP0000001 /* Multipeer */ = {
+			isa = PBXGroup;
+			children = (
+				MULTIPEER01FILEREF00001 /* MultipeerBridge.swift */,
+				MULTIPEER02FILEREF00001 /* MultipeerBridge.m */,
+			);
+			name = Multipeer;
+			path = Yoroi/Multipeer;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -150,23 +362,41 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Yoroi" */;
 			buildPhases = (
-				3D338B05972906DFE38C2694 /* [CP] Check Pods Manifest.lock */,
-				A673EF6387543480E2A5CDE9 /* [Expo] Configure project */,
+				514EADF74B5E07AE5A4AC460 /* [CP] Check Pods Manifest.lock */,
+				45BCEB7A6B506616072BE95B /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				C49E1F318BC44C8FA855C970 /* [Expo Dev Launcher] Strip Local Network Keys for Release */,
-				7D561717207B38EED7D37188 /* [CP] Embed Pods Frameworks */,
-				73C823CFFACDBD2B9A314D78 /* [CP] Copy Pods Resources */,
+				0D31F959E986F8C0DD1E35BC /* Embed Watch Content */,
+				9B9D35BFD4765303AF79A3A1 /* [CP] Embed Pods Frameworks */,
+				1F905BDE4F1FF4893462EEEF /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CB2DE57E87CF08349BE97F1D /* PBXTargetDependency */,
+			);
+			name = Yoroi;
+			productName = Yoroi;
+			productReference = 13B07F961A680F5B00A75B9A /* Yoroi.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F147DC6C7AC4E0D7FE4AA024 /* YoroiWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E837EBB26EEE70447C6200D7 /* Build configuration list for PBXNativeTarget "YoroiWatch" */;
+			buildPhases = (
+				BDEC9A1658084D14AF992816 /* Sources */,
+				E7609FBF1BB8134BA6456C99 /* Frameworks */,
+				49FB9344FA3521CF45B66E14 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = Yoroi;
-			productName = Yoroi;
-			productReference = 13B07F961A680F5B00A75B9A /* Yoroi.app */;
+			name = YoroiWatch;
+			productName = YoroiWatch;
+			productReference = 6865ED75B31A3E0530F4354A /* YoroiWatch.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -176,10 +406,26 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2640;
+				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1250;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.HealthKit = {
+								enabled = 1;
+							};
+							com.apple.Push = {
+								enabled = 1;
+							};
+							com.apple.TimeSensitiveNotifications = {
+								enabled = 1;
+							};
+						};
+					};
+					F147DC6C7AC4E0D7FE4AA024 = {
+						DevelopmentTeam = VATB5W22UD;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -197,6 +443,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* Yoroi */,
+				F147DC6C7AC4E0D7FE4AA024 /* YoroiWatch */,
 			);
 		};
 /* End PBXProject section */
@@ -209,7 +456,19 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				2DD907D9AA574F3792F1FC99 /* PrivacyInfo.xcprivacy in Resources */,
+				0A5D19028469480DB02D69A3 /* PrivacyInfo.xcprivacy in Resources */,
+				WIZZM4IN0001BUILDF000001 /* wizz.mp3 in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		49FB9344FA3521CF45B66E14 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D33204A0A2246F4E1F69529F /* Assets.xcassets in Resources */,
+				927D6FC93B28CD31C24811AF /* PrivacyInfo.xcprivacy in Resources */,
+				WIZZ50UND0001F1LEREF0001 /* wizz-made-with-Voicemod.mp3 in Resources */,
+				WIZZW4TCH001BUILDF000001 /* wizz.mp3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -233,29 +492,7 @@
 			shellPath = /bin/sh;
 			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
 		};
-		3D338B05972906DFE38C2694 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-Yoroi-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		73C823CFFACDBD2B9A314D78 /* [CP] Copy Pods Resources */ = {
+		1F905BDE4F1FF4893462EEEF /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -307,29 +544,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yoroi/Pods-Yoroi-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		7D561717207B38EED7D37188 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Yoroi/Pods-Yoroi-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermesvm.framework/hermesvm",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermesvm.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yoroi/Pods-Yoroi-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		A673EF6387543480E2A5CDE9 /* [Expo] Configure project */ = {
+		45BCEB7A6B506616072BE95B /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -353,19 +568,49 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Yoroi/expo-configure-project.sh\"\n";
 		};
-		C49E1F318BC44C8FA855C970 /* [Expo Dev Launcher] Strip Local Network Keys for Release */ = {
+		514EADF74B5E07AE5A4AC460 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Yoroi-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		9B9D35BFD4765303AF79A3A1 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Yoroi/Pods-Yoroi-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermesvm.framework/hermesvm",
 			);
-			name = "[Expo Dev Launcher] Strip Local Network Keys for Release";
+			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermesvm.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Strip dev-launcher-specific local network permission keys from non-Debug builds\n# This only removes _expo._tcp Bonjour services and the dev-launcher usage description.\n# Other Bonjour services and custom descriptions are preserved for production use.\n\nif [ \"$CONFIGURATION\" != \"Debug\" ]; then\n  PLIST_PATH=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\n  if [ -f \"$PLIST_PATH\" ]; then\n    # Check if NSBonjourServices exists\n    if /usr/libexec/PlistBuddy -c \"Print :NSBonjourServices\" \"$PLIST_PATH\" >/dev/null 2>&1; then\n      # Get the count of services\n      COUNT=$(/usr/libexec/PlistBuddy -c \"Print :NSBonjourServices\" \"$PLIST_PATH\" 2>/dev/null | grep \"^    \" | wc -l | tr -d ' ')\n\n      # Remove _expo._tcp\n      for ((i=COUNT-1; i>=0; i--)); do\n        SERVICE=$(/usr/libexec/PlistBuddy -c \"Print :NSBonjourServices:$i\" \"$PLIST_PATH\" 2>/dev/null || echo \"\")\n        if echo \"$SERVICE\" | grep -q \"_expo._tcp\"; then\n          /usr/libexec/PlistBuddy -c \"Delete :NSBonjourServices:$i\" \"$PLIST_PATH\" 2>/dev/null || true\n        fi\n      done\n\n      # If the array is now empty, remove it entirely\n      REMAINING=$(/usr/libexec/PlistBuddy -c \"Print :NSBonjourServices\" \"$PLIST_PATH\" 2>/dev/null | grep \"^    \" | wc -l | tr -d ' ')\n      if [ \"$REMAINING\" -eq \"0\" ]; then\n        /usr/libexec/PlistBuddy -c \"Delete :NSBonjourServices\" \"$PLIST_PATH\" 2>/dev/null || true\n      fi\n    fi\n\n    # Only delete the description if it matches the dev-launcher default text\n    DESC=$(/usr/libexec/PlistBuddy -c \"Print :NSLocalNetworkUsageDescription\" \"$PLIST_PATH\" 2>/dev/null || echo \"\")\n    if echo \"$DESC\" | grep -q \"Expo Dev Launcher\"; then\n      /usr/libexec/PlistBuddy -c \"Delete :NSLocalNetworkUsageDescription\" \"$PLIST_PATH\" 2>/dev/null || true\n    fi\n  fi\nfi\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yoroi/Pods-Yoroi-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -375,27 +620,72 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				A1B2C3D4E5F6A1B2 /* YoroiHealthKitModule.swift in Sources */,
-				A1B2C3D4E5F6A1B6 /* YoroiHealthKitModuleBridge.m in Sources */,
-				A1B2C3D4E5F6A1B4 /* YoroiPlacesModule.swift in Sources */,
-				A1B2C3D4E5F6A1B8 /* YoroiPlacesModuleBridge.m in Sources */,
-				FCB7094DB6D54FB5D57FC0C3 /* ExpoModulesProvider.swift in Sources */,
+				730EA67E87BC7BBA1E7CC115 /* ExpoModulesProvider.swift in Sources */,
+				A1B2C3D400000001 /* TimerAttributes.swift in Sources */,
+				A1B2C3D400000002 /* YoroiLiveActivityManager.swift in Sources */,
+				A1B2C3D400000003 /* YoroiLiveActivityManager.m in Sources */,
+				D6D98440C02A34740C0F71DA /* WatchConnectivityBridge.swift in Sources */,
+				E11C770F9EC353BDED32219F /* WatchConnectivityBridge.m in Sources */,
+				MULTIPEER01BUILDF00001 /* MultipeerBridge.swift in Sources */,
+				MULTIPEER02BUILDF00001 /* MultipeerBridge.m in Sources */,
+				TORCH001SWFBUILDF000001 /* TorchModule.swift in Sources */,
+				TORCH001OBJBUILDF000001 /* TorchModule.m in Sources */,
+				BGTASK01SWFBUILDF000001 /* BackgroundTaskModule.swift in Sources */,
+				BGTASK01OBJBUILDF000001 /* BackgroundTaskModule.m in Sources */,
+				YOROIHK01SWFBUILDF000001 /* YoroiHealthKitModule.swift in Sources */,
+				YOROIHK01OBJBUILDF000001 /* YoroiHealthKitModule.m in Sources */,
+				WGTDATASWF001BUILDF00001 /* WidgetDataModule.swift in Sources */,
+				WGTDATAOBJ001BUILDF00001 /* WidgetDataModule.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BDEC9A1658084D14AF992816 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FF32897EE0BEC2AECA52ABBF /* YoroiWatchApp.swift in Sources */,
+				F744193774A505F6D079732E /* ContentView.swift in Sources */,
+				48ACA1152E90E2DCBDFE9432 /* TimerPage.swift in Sources */,
+				083FE764C17EB8ADF82DB7E3 /* WeightPage.swift in Sources */,
+				95B176C8EA047BC42D7A75A0 /* HydrationPage.swift in Sources */,
+				E96EBC2B8285DFB53554E9F5 /* SleepPage.swift in Sources */,
+				F1A2B3C4D5E6F70800SETTINGS /* SettingsPage.swift in Sources */,
+				5BA41E06B49FCA34D60842E5 /* WatchSessionManager.swift in Sources */,
+				CARNETPAGE001BUILDF00001 /* CarnetPage.swift in Sources */,
+				COMPETPAGE01BUILDF000001 /* CompetitionPage.swift in Sources */,
+				WORKOUTPAG01BUILDF000001 /* WorkoutPage.swift in Sources */,
+				TIMERALRMVW1BUILDF000001 /* TimerAlarmNotificationView.swift in Sources */,
+				COMPLICCNTRL01BUILDF0001 /* ComplicationController.swift in Sources */,
+				WATCHUTILS001BUILDF00001 /* WatchUtils.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		CB2DE57E87CF08349BE97F1D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = YoroiWatch;
+			target = F147DC6C7AC4E0D7FE4AA024 /* YoroiWatch */;
+			targetProxy = 188FC207AB3602084BE442F3 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 90081C64FDA987FFDE86FEF7 /* Pods-Yoroi.debug.xcconfig */;
+			baseConfigurationReference = 46F1366910D3214FC92EAF70 /* Pods-Yoroi.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "Logo1 Yoroi1 Yoroi2 Yoroi3 Yoroi4 Yoroi5 Yoroi6";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Yoroi/Yoroi.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 36;
+				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_BITCODE = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"FB_SONARKIT_ENABLED=1",
@@ -406,7 +696,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3.3;
+				MARKETING_VERSION = 2.4.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -425,20 +715,24 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7B52AB5C4E1901572C477F2A /* Pods-Yoroi.release.xcconfig */;
+			baseConfigurationReference = 5BA7DB08F3B62003BD145B10 /* Pods-Yoroi.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "Logo1 Yoroi1 Yoroi2 Yoroi3 Yoroi4 Yoroi5 Yoroi6";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Yoroi/Yoroi.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 36;
+				DEVELOPMENT_TEAM = LTMAN6D7GZ;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				INFOPLIST_FILE = Yoroi/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3.3;
+				MARKETING_VERSION = 2.4.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -453,6 +747,75 @@
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
+		};
+		1F829AED29C408FC9CC93136 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = YoroiWatch/YoroiWatch.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 36;
+				DEVELOPMENT_TEAM = LTMAN6D7GZ;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = YoroiWatch/Info.plist;
+				MARKETING_VERSION = 2.4.0;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = (
+					"-framework",
+					HealthKit,
+					"-framework",
+					WatchConnectivity,
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		2745046A66A974514F4A65EF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = YoroiWatch/YoroiWatch.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 36;
+				DEVELOPMENT_TEAM = LTMAN6D7GZ;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = YoroiWatch/Info.plist;
+				MARKETING_VERSION = 2.4.0;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = (
+					"-framework",
+					HealthKit,
+					"-framework",
+					WatchConnectivity,
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
 		};
 		83CBBA201A601CBA00E9B192 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -489,7 +852,7 @@
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -559,7 +922,7 @@
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -604,6 +967,15 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E837EBB26EEE70447C6200D7 /* Build configuration list for PBXNativeTarget "YoroiWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1F829AED29C408FC9CC93136 /* Release */,
+				2745046A66A974514F4A65EF /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

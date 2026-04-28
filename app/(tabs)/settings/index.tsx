@@ -66,7 +66,7 @@ import {
   AlertTriangle,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { Type } from 'lucide-react-native';
+import { Type, Flame, Shield } from 'lucide-react-native';
 import { FontSizeLevel, FONT_SIZE_LABELS } from '@/lib/fontScaleManager';
 import { useI18n, SUPPORTED_LANGUAGES } from '@/lib/I18nContext';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -80,7 +80,8 @@ import { resetAllData, resetDataOnly } from '@/lib/storage';
 import { resetDatabase, deduplicateTrainings } from '@/lib/database';
 import logger from '@/lib/security/logger';
 import { verifyDevCode } from '@/lib/DevModeContext';
-import { generateHenyDemoData, restoreRealData, isDemoDataActive } from '@/lib/demoDataService';
+import { generateHenyDemoData, restoreRealData, isDemoDataActive, switchToProfile } from '@/lib/demoDataService';
+import { DEMO_PROFILES } from '@/lib/demoProfiles';
 
 // ============================================
 // SECTION DATA
@@ -162,7 +163,7 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
   },
   // Zone sensible · séparée visuellement pour éviter les clics par erreur
   {
-    title: '⚠️  Zone sensible',
+    title: 'Zone sensible',
     items: [
       { id: 'clear-cache', label: 'settings.items.clearCache.label', sublabel: 'settings.items.clearCache.sublabel', Icon: Database, iconColor: '#F59E0B', handler: 'clear-cache' },
       { id: 'clean-uninstall', label: 'settings.items.cleanUninstall.label', sublabel: 'settings.items.cleanUninstall.sublabel', Icon: LogOut, iconColor: '#EF4444', handler: 'clean-uninstall', labelColor: '#EF4444' },
@@ -174,12 +175,23 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
 // Creator mode items as standard rows
 // Note : les toggles "Chirurgien" et "Stats Mock" sont retires car jamais consommes dans l'app.
 const CREATOR_ITEMS: SettingsItem[] = [
+  { id: 'creator-mode-v2', label: 'Mode Créateur · Hub complet', sublabel: 'Période, screenshot mode, marketing kit', Icon: Sparkles, iconColor: '#A855F7', handler: 'creator-mode-v2' },
+  // === 4 profils démo en accès rapide (6 mois par défaut) ===
+  { id: 'demo-houari',  label: 'Profil démo · Houari (BJJ)',      sublabel: '103 → 88 kg · blanche 4g · 18 mois · transformation', Icon: Sparkles, iconColor: '#DC2626', handler: 'demo-houari' },
+  { id: 'demo-louis',   label: 'Profil démo · Louis (BJJ)',       sublabel: '84 kg · blanche 4g · 14 mois · style offensif',       Icon: Sparkles, iconColor: '#2563EB', handler: 'demo-louis' },
+  { id: 'demo-hedi',    label: 'Profil démo · Hédi (BJJ)',        sublabel: '70 kg · blanche 4g · 16 mois · style défensif/garde', Icon: Sparkles, iconColor: '#7C3AED', handler: 'demo-hedi' },
+  { id: 'demo-yanis',   label: 'Profil démo · Yanis (BJJ)',       sublabel: '70 kg · bleue 2g · 3 ans · compétiteur technique',    Icon: Sparkles, iconColor: '#059669', handler: 'demo-yanis' },
+  { id: 'demo-sarah',   label: 'Profil démo · Sarah (Running)',   sublabel: 'Marathonienne · PR 3h42 · 4 ans · Paris Marathon prep', Icon: Sparkles, iconColor: '#10B981', handler: 'demo-sarah' },
+  { id: 'demo-clement', label: 'Profil démo · Clément (Hyrox)',   sublabel: 'Hyroxien · PR 1h03 · 2 ans · objectif sub-1h',        Icon: Sparkles, iconColor: '#F97316', handler: 'demo-clement' },
+  { id: 'demo-nina',    label: 'Profil démo · Nina (CrossFit)',   sublabel: 'CrossFit · Squat 105kg · DL 130kg · 3 ans',            Icon: Sparkles, iconColor: '#DC2626', handler: 'demo-nina' },
+  // === Autres outils créateur ===
   { id: 'creator-screenshot', label: 'Mode Screenshot', sublabel: 'Affiche les valeurs max pour captures App Store', Icon: Smartphone, iconColor: '#3B82F6', handler: 'toggle-screenshot' },
   { id: 'creator-journal', label: 'Mode Carnet', sublabel: 'Remplace le carnet par des donnees demo', Icon: BookOpen, iconColor: '#F97316', handler: 'toggle-journal' },
-  { id: 'creator-hery', label: 'Profil Demo Heny', sublabel: 'Injecte un profil BJJ realiste (187 seances, 25 techniques…)', Icon: Database, iconColor: '#10B981', handler: 'demo-hery' },
+  { id: 'creator-hery', label: 'Profil démo · Heny', sublabel: 'Ancien profil complet (187 seances, 25 techniques…)', Icon: Database, iconColor: '#10B981', handler: 'demo-hery' },
   { id: 'creator-onboarding', label: 'Voir Onboarding', sublabel: 'Previsualiser l\'ecran d\'accueil', Icon: Eye, iconColor: '#06B6D4', handler: 'preview-onboarding' },
   { id: 'creator-reset', label: 'Tout Desactiver', sublabel: 'Nettoyer les donnees de demo', Icon: Trash2, iconColor: '#EF4444', handler: 'reset-creator', labelColor: '#EF4444' },
   { id: 'creator-purge', label: 'PURGE FORCEE', sublabel: 'Efface poids + seances (SQLite direct)', Icon: Trash2, iconColor: '#FF0000', handler: 'purge-data', labelColor: '#FF0000' },
+  { id: 'lock-creator', label: 'Verrouiller le Mode Créateur', sublabel: 'Re-cache tout · le code 2022 sera redemandé', Icon: Shield, iconColor: '#6B7280', handler: 'lock-creator' },
 ];
 
 // ============================================
@@ -207,7 +219,7 @@ export default function SettingsScreen() {
   const [bestStreak, setBestStreak] = useState<number>(0);
   const [lastBackupAgo, setLastBackupAgo] = useState<string | null>(null);
   const [storageInfo, setStorageInfo] = useState<string | null>(null);
-  // Modal "Nouveautés 2.3.3"
+  // Modal "Nouveautés 2.4.0"
   const [whatsNewVisible, setWhatsNewVisible] = useState<boolean>(false);
 
   // Reset modal
@@ -673,16 +685,56 @@ export default function SettingsScreen() {
     const isValid = await verifyDevCode(secretCode);
     if (isValid) {
       notificationAsync(NotificationFeedbackType.Success);
+      // Active les DEUX systèmes (screenshot_menu_unlocked pour les items settings, dev_mode pour creator-mode.tsx)
       await AsyncStorage.setItem('@yoroi_screenshot_menu_unlocked', 'true');
+      await AsyncStorage.setItem('@yoroi_dev_mode', 'true');
       setScreenshotMenuUnlocked(true);
       setShowSecretCodeModal(false);
       setSecretCode('');
+      // Notifier le DevModeContext de se recharger
+      DeviceEventEmitter.emit('YOROI_DEV_MODE_CHANGED');
       await loadCreatorSettings();
     } else {
       notificationAsync(NotificationFeedbackType.Error);
       showPopup(t('settings.secretCodeModal.incorrect'), t('settings.secretCodeModal.incorrectMsg'), [{ text: t('settings.secretCodeModal.retry'), style: 'primary' }]);
       setSecretCode('');
     }
+  };
+
+  const handleDemoProfile = (profileKey: string) => {
+    const profile = DEMO_PROFILES[profileKey];
+    if (!profile) return;
+    showPopup(
+      `Charger ${profile.name} ?`,
+      `Période : 6 mois\n\n${profile.bio}\n\nTes vraies données seront sauvegardées et restaurables à tout moment.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Charger',
+          style: 'primary',
+          onPress: async () => {
+            setIsGenerating(true);
+            try {
+              const result = await switchToProfile(profileKey, '6mo');
+              setIsDemoActive(true);
+              DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+              DeviceEventEmitter.emit('YOROI_PARTNERS_CHANGED');
+              DeviceEventEmitter.emit('YOROI_PROFILE_CHANGED');
+              showPopup(
+                result.fromSnapshot ? 'Switch instantané' : 'Profil chargé',
+                `${profile.name} actif\n\n${result.stats.workouts} séances · ${result.stats.combats} combats · ${result.stats.partners} partenaires`,
+                [{ text: 'OK', style: 'primary' }],
+              );
+            } catch (e) {
+              logger.error('[Settings] demo profile error', e);
+              showPopup('Erreur', 'Impossible de charger ce profil', [{ text: 'OK', style: 'primary' }]);
+            } finally {
+              setIsGenerating(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleDemoHeny = () => {
@@ -794,7 +846,7 @@ export default function SettingsScreen() {
 
   const handleDeduplicateTrainings = useCallback(() => {
     showPopup(
-      '🔍 Nettoyer les doublons',
+      'Nettoyer les doublons',
       'Cette action va analyser toutes tes séances et supprimer les entrées en double provenant d\'Apple Santé.\n\nLes séances que tu as créées manuellement ne seront pas touchées.\n\nRecommandé : faire une sauvegarde avant.',
       [
         { text: 'Annuler', style: 'cancel' },
@@ -806,9 +858,9 @@ export default function SettingsScreen() {
             try {
               const deleted = await deduplicateTrainings();
               if (deleted === 0) {
-                showPopup('✅ Aucun doublon', 'Tes séances sont déjà propres · aucun doublon trouvé.', [{ text: 'OK', style: 'primary' }]);
+                showPopup('Aucun doublon', 'Tes séances sont déjà propres · aucun doublon trouvé.', [{ text: 'OK', style: 'primary' }]);
               } else {
-                showPopup('✅ Nettoyage terminé', `${deleted} séance${deleted > 1 ? 's' : ''} en double supprimée${deleted > 1 ? 's' : ''}.\n\nTon journal d'entraînement est maintenant propre.`, [{ text: 'OK', style: 'primary' }]);
+                showPopup('Nettoyage terminé', `${deleted} séance${deleted > 1 ? 's' : ''} en double supprimée${deleted > 1 ? 's' : ''}.\n\nTon journal d'entraînement est maintenant propre.`, [{ text: 'OK', style: 'primary' }]);
               }
             } catch (e) {
               logger.error('[Deduplicate] Erreur:', e);
@@ -850,17 +902,45 @@ export default function SettingsScreen() {
         }).catch(() => {});
         return;
       case 'contact-dev':
-        safeOpenURL('mailto:h_ouari@hotmail.com?subject=Feedback%20Yoroi%202.3.3&body=Salut%20Houari%2C%0A%0A');
+        safeOpenURL('mailto:h_ouari@hotmail.com?subject=Feedback%20Yoroi%202.4.0&body=Salut%20Houari%2C%0A%0A');
         return;
       // Creator mode toggles
       case 'toggle-screenshot': toggleGlobalScreenshotMode(!isGlobalScreenshotMode); return;
       case 'toggle-journal': toggleJournalScreenshotMode(!isJournalScreenshotMode); return;
       case 'toggle-surgeon': toggleSurgeonMode(!isSurgeonMode); return;
       case 'toggle-mock': toggleMockStatsMode(!isMockStatsMode); return;
+      case 'creator-mode-v2': router.push('/creator-mode' as any); return;
+      case 'demo-houari':  handleDemoProfile('houari'); return;
+      case 'demo-louis':   handleDemoProfile('louis'); return;
+      case 'demo-hedi':    handleDemoProfile('hedi'); return;
+      case 'demo-yanis':   handleDemoProfile('yanis'); return;
+      case 'demo-sarah':   handleDemoProfile('sarah'); return;
+      case 'demo-clement': handleDemoProfile('clement'); return;
+      case 'demo-nina':    handleDemoProfile('nina'); return;
       case 'demo-hery': handleDemoHeny(); return;
       case 'preview-onboarding': router.push({ pathname: '/onboarding', params: { preview: 'true' } } as any); return;
       case 'reset-creator': resetAllCreatorModes(); return;
       case 'purge-data': handleForceDeleteData(); return;
+      case 'lock-creator': {
+        showPopup(
+          'Verrouiller le Mode Créateur ?',
+          'Tous les outils créateur (profils démo, marketing kit, etc.) seront à nouveau cachés. Tu devras re-entrer le code 2022 pour y accéder.',
+          [
+            { text: 'Annuler', style: 'cancel' },
+            {
+              text: 'Verrouiller',
+              style: 'destructive',
+              onPress: async () => {
+                await AsyncStorage.multiRemove(['@yoroi_screenshot_menu_unlocked', '@yoroi_dev_mode']);
+                setScreenshotMenuUnlocked(false);
+                DeviceEventEmitter.emit('YOROI_DEV_MODE_CHANGED');
+                showPopup('Verrouillé', 'Le Mode Créateur est maintenant caché.', [{ text: 'OK', style: 'primary' }]);
+              },
+            },
+          ],
+        );
+        return;
+      }
       case 'clear-cache': handleClearCache(); return;
       case 'clean-uninstall': setCleanStep(0); setCleanUninstallVisible(true); return;
       case 'deduplicate': handleDeduplicateTrainings(); return;
@@ -1017,9 +1097,10 @@ export default function SettingsScreen() {
                     </View>
                   ) : null}
                   {profileStreak > 0 ? (
-                    <View style={[styles.heroChip, { backgroundColor: '#F9731615', borderColor: '#F9731640' }]}>
+                    <View style={[styles.heroChip, { backgroundColor: '#F9731615', borderColor: '#F9731640', flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                      <Flame size={12} color="#EA580C" fill="#EA580C" />
                       <Text style={[styles.heroChipText, { color: '#EA580C' }]}>
-                        🔥 {profileStreak} j
+                        {profileStreak} j
                       </Text>
                     </View>
                   ) : null}
@@ -1221,10 +1302,16 @@ export default function SettingsScreen() {
 
         {/* Version + footer */}
         <TouchableOpacity onPress={handleVersionTap} activeOpacity={1} style={styles.versionContainer}>
-          <Text style={[styles.versionText, { color: screenText, opacity: 0.5 }]}>YOROI v2.3.3</Text>
-          <Text style={[styles.versionSubtext, { color: screenText, opacity: 0.4 }]}>
-            Made with ❤️ in Marseille · 100% offline
-          </Text>
+          <Text style={[styles.versionText, { color: screenText, opacity: 0.5 }]}>YOROI v2.4.0</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+            <Text style={[styles.versionSubtext, { color: screenText, opacity: 0.4 }]}>
+              Made with
+            </Text>
+            <Heart size={14} color="#EF4444" fill="#EF4444" />
+            <Text style={[styles.versionSubtext, { color: screenText, opacity: 0.4 }]}>
+              in Marseille · 100% offline
+            </Text>
+          </View>
         </TouchableOpacity>
 
         <View style={{ height: 120 }} />
@@ -1466,7 +1553,7 @@ export default function SettingsScreen() {
                   <Sparkles size={18} color="#A855F7" />
                 </View>
                 <View>
-                  <Text style={{ fontSize: 17, fontWeight: '900', color: colors.textPrimary }}>Nouveautés v2.3.3</Text>
+                  <Text style={{ fontSize: 17, fontWeight: '900', color: colors.textPrimary }}>Nouveautés v2.4.0</Text>
                   <Text style={{ fontSize: 11, color: colors.textMuted }}>La plus grosse mise à jour de Yoroi</Text>
                 </View>
               </View>
@@ -1476,16 +1563,14 @@ export default function SettingsScreen() {
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
               {[
-                { title: 'STATS QUI TE MOTIVENT', items: ['Nouveau tableau de bord 7 catégories', 'Vue calendrier annuelle des séances', 'Streak de jours d\'affilée animé', 'Records personnels mis en avant', 'Insights intelligents auto', 'Comparaisons fun "Le saviez-vous ?"', 'Graphiques poids/muscle/sommeil avec tendance', 'Badges débloqués en bandeau'] },
-                { title: 'TRACKER COMBAT', items: ['Sparring round par round', 'Partenaires + clubs avec fiches', 'Analyse forces/faiblesses auto', 'BJJ, MMA, Boxe, K1, Judo, Lutte, Karaté', 'Palmarès & compétitions', 'Radar 5 dimensions Force/Cardio/Technique/Mental/Souplesse'] },
-                { title: 'SYNCHRONISATION', items: ['iPhone ↔ iPad direct sans internet', 'Aucun serveur, aucun cloud'] },
-                { title: 'NOUVEAU GUIDE D\'ACCUEIL', items: ['4 écrans clairs pour les premiers pas'] },
-                { title: 'PARTAGE INSTAGRAM', items: ['Partager mes stats / mes records', 'Cartes 1080×1080 prêtes à poster'] },
-                { title: 'INTERFACE', items: ['Tous les thèmes revus pour lisibilité parfaite', 'Cartes maintenant visibles sur tout fond', 'Petites bulles d\'aide mieux intégrées'] },
-                { title: 'iPAD AMÉLIORÉ', items: ['Barre de navigation mieux proportionnée', 'Plus de contenu caché derrière la barre du bas'] },
-                { title: 'SANTÉ', items: ['Connexion Apple Santé entièrement refaite', '27 types de données importés', 'FC moyenne et max sur chaque séance'] },
-                { title: 'AUTRES', items: ['App nettement plus rapide sur Stats', 'Sommeil bien plus fluide', 'Le clavier ne cache plus les champs', 'Mises à jour instantanées partout'] },
-                { title: 'CORRECTIONS', items: ['Plantage de l\'historique corrigé', 'Calendrier en mode sombre lisible', 'Plein de petits bugs chassés'] },
+                { title: 'CARNET MULTI-SPORT', items: ['Yoroi s\'adapte enfin à TOUS les sports', 'Pack Combat (sparring, soumissions, positions, compétitions)', 'Pack Course/Trail (sorties, allures)', 'Pack Hyrox (8 stations + WODs)', 'Pack CrossFit (Hero WODs, voies)', 'Pack Musculation (séances, muscles, progression)', 'Switcher de pack en haut du Carnet'] },
+                { title: 'STATS PARTENAIRES SPARRING', items: ['Matrice de confrontations complète', 'Tier list des partenaires (en français !)', 'Timeline head-to-head', 'Tendance winrate par partenaire', 'Heat map des défaites', 'Prédicteur de matchup', 'Audio notes par partenaire', 'Game plan & monthly mission'] },
+                { title: 'APPLE WATCH', items: ['Timer redesign façon Apple Timer + sauce Yoroi', 'Complication LIVE countdown', 'Page Sparring dédiée avec progression', 'Son d\'alarme custom (wizz.mp3)', 'Notifications critiques (passe le Ne pas déranger)', 'Cercle de progression rounds / objectif'] },
+                { title: 'MODE CRÉATEUR', items: ['Code secret 2022 → débloque les profils démo', '7 profils prêts pour screenshots marketing', 'Houari (BJJ, transformation 103→75kg)', 'Louis, Hédi, Yanis (BJJ Gracie Barra)', 'Sarah (marathon), Clément (Hyrox), Nina (CrossFit)', 'Switch instantané entre profils'] },
+                { title: 'STATS CORPS', items: ['Dernière valeur affichée correctement (Muscle, Gras, Eau...)', 'Graphiques avec le plus récent à GAUCHE', 'Section MENSURATIONS (au lieu de "Mensures")', 'Card Composition complète'] },
+                { title: 'LANGUE FRANÇAISE', items: ['Audit complet : "Reglages" → "Réglages"', '"Hello" → "Salut", "Training" → "Entraînement"', '"Body Fat" → "Masse grasse"', '"Score Readiness" → "Score de Forme"', '+ 30 corrections d\'accents et anglicismes'] },
+                { title: 'INTERFACE', items: ['Emojis remplacés par icônes Lucide pro', 'Tier list S/A/B/C remplacée par noms français', 'Trash icon repositionné dans le Carnet', 'Onglets adaptatifs selon le sport actif'] },
+                { title: 'CORRECTIONS', items: ['Onglets Carnet ne crashent plus (Sparring, Position...)', 'HealthKit permissions corrigées (module natif Swift)', 'Performances Infirmerie améliorées', 'BodyMap pleine largeur', 'StatsErrorBoundary sur tous les onglets'] },
               ].map((section, sIdx) => (
                 <View key={sIdx} style={{ marginBottom: 16 }}>
                   <Text style={{ fontSize: 12, fontWeight: '900', color: colors.accent, letterSpacing: 0.8, marginBottom: 8 }}>

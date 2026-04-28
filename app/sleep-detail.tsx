@@ -359,7 +359,7 @@ export default function SleepDetailScreen() {
   if (loading) {
     return (
       <ScreenWrapper>
-        <Header title="Detail Nuit" showBack />
+        <Header title="Détail Nuit" showBack />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#5856D6" />
         </View>
@@ -370,7 +370,7 @@ export default function SleepDetailScreen() {
   if (!entry) {
     return (
       <ScreenWrapper>
-        <Header title="Detail Nuit" showBack />
+        <Header title="Détail Nuit" showBack />
         <View style={styles.loadingContainer}>
           <Text style={[styles.emptyText, { color: MUTED }]}>Aucune donnee pour cette nuit</Text>
         </View>
@@ -393,7 +393,7 @@ export default function SleepDetailScreen() {
 
   return (
     <ScreenWrapper noPadding containerStyle={{ backgroundColor: BG }}>
-      <Header title="Detail Nuit" showBack />
+      <Header title="Détail Nuit" showBack />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}

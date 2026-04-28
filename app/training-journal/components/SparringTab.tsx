@@ -28,10 +28,10 @@ import { getTrainings, openDatabase } from '@/lib/database';
 import type { Training, CombatRound } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
 import {
-  Users, Zap, Target, TrendingUp, BarChart2, X, ChevronRight,
-  Calendar, Clock, CheckCircle, Circle, Flame, Settings, Star,
+  Users, Zap, Target, TrendingUp, BarChart2, BarChart3, X, ChevronRight,
+  Calendar, CalendarDays, Clock, CheckCircle, Circle, Flame, Settings, Star,
   Share2, Swords, Shield, AlertTriangle, Lightbulb, Dumbbell,
-  Trophy, ClipboardList, Plus, Edit2, Camera,
+  Trophy, ClipboardList, Plus, Edit2, Camera, Medal, Heart, Waves,
 } from 'lucide-react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -226,6 +226,16 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
 
   // Photos + noms des partenaires qui ont une fiche (depuis sparring-partners.tsx)
   const [partnerPhotos, setPartnerPhotos] = useState<Record<string, string>>({});
+  // URIs photos qui ont échoué à charger (fichier supprimé / chemin périmé)
+  const [failedPhotoUris, setFailedPhotoUris] = useState<Set<string>>(new Set());
+  const markPhotoFailed = useCallback((uri: string) => {
+    setFailedPhotoUris(prev => { const next = new Set(prev); next.add(uri); return next; });
+  }, []);
+  const getUsablePhotoUri = useCallback((uri: string | undefined): string | undefined => {
+    if (!uri) return undefined;
+    if (failedPhotoUris.has(uri)) return undefined;
+    return uri;
+  }, [failedPhotoUris]);
   // Noms des partenaires qui ont une fiche (même sans photo)
   const [partnerHasFiche, setPartnerHasFiche] = useState<Set<string>>(new Set());
 
@@ -491,6 +501,14 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
   // Recharger quand les données changent (ex: nouvel entraînement ajouté)
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => load(true));
+    return () => sub.remove();
+  }, []);
+
+  // Recharger photos/fiches partenaires quand elles changent ailleurs dans l'app
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_PARTNERS_CHANGED', () => {
+      loadPartnerPhotos();
+    });
     return () => sub.remove();
   }, []);
 
@@ -859,6 +877,40 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
 
   // ── Tri des partenaires ──
   const [partnerSortMode, setPartnerSortMode] = useState<'volume' | 'winrate' | 'recent' | 'level'>('volume');
+
+  // ── Mode du podium (volume / victoires / défaites / taux victoire / soumissions) ──
+  type PodiumMode = 'volume' | 'wins' | 'losses' | 'winrate' | 'subsGiven';
+  const [podiumMode, setPodiumMode] = useState<PodiumMode>('volume');
+  const podiumTop3 = useMemo(() => {
+    const arr = [...partnerStats];
+    switch (podiumMode) {
+      case 'wins':
+        return arr.sort((a, b) => b.wins - a.wins).slice(0, 3);
+      case 'losses':
+        return arr.sort((a, b) => b.losses - a.losses).slice(0, 3);
+      case 'winrate':
+        return arr
+          .filter(p => (p.wins + p.losses) >= 3) // min 3 rounds pour avoir du sens
+          .sort((a, b) => {
+            const wrA = a.wins / (a.wins + a.losses);
+            const wrB = b.wins / (b.wins + b.losses);
+            return wrB - wrA;
+          })
+          .slice(0, 3);
+      case 'subsGiven':
+        return arr.sort((a, b) => b.submissionsGiven - a.submissionsGiven).slice(0, 3);
+      default:
+        return arr.slice(0, 3); // volume (déjà trié par totalRounds desc)
+    }
+  }, [partnerStats, podiumMode]);
+
+  const PODIUM_MODES: { key: PodiumMode; label: string; title: string }[] = [
+    { key: 'volume',    label: 'Volume',        title: 'TOP SPARRING · PAR VOLUME' },
+    { key: 'wins',      label: 'Victoires',     title: 'TOP SPARRING · PAR VICTOIRES' },
+    { key: 'losses',    label: 'Défaites',      title: 'TOP SPARRING · PAR DÉFAITES' },
+    { key: 'winrate',   label: 'Taux victoire', title: 'TOP SPARRING · PAR TAUX DE VICTOIRE' },
+    { key: 'subsGiven', label: 'Soumissions',   title: 'TOP SPARRING · PAR SOUMISSIONS' },
+  ];
   const sortedPartners = useMemo(() => {
     const arr = [...partnerStats];
     switch (partnerSortMode) {
@@ -938,8 +990,8 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               <Grid3x3 size={16} color={accent} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text }}>Matrix</Text>
-              <Text style={{ fontSize: 10, color: colors.textMuted }} numberOfLines={1}>Grille volume/winrate</Text>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text }}>Matrice</Text>
+              <Text style={{ fontSize: 10, color: colors.textMuted }} numberOfLines={1}>Grille volume/victoires</Text>
             </View>
           </TouchableOpacity>
           <TouchableOpacity
@@ -961,8 +1013,8 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               <Crown size={16} color="#EF4444" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text }}>Tier List</Text>
-              <Text style={{ fontSize: 10, color: colors.textMuted }} numberOfLines={1}>S/A/B/C auto</Text>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text }}>Classement</Text>
+              <Text style={{ fontSize: 10, color: colors.textMuted }} numberOfLines={1}>Tes partenaires classés</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -1058,22 +1110,57 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           return autoInsights.length > 0 ? <StatsInsightBanner insights={autoInsights} /> : null;
         })()}
 
-        {/* ── PODIUM TOP 3 · tout en haut ── */}
-        {partnerStats.length >= 2 && (
-          <PodiumSection
-            partners={partnerStats.slice(0, 3)}
-            accent={accent}
-            colors={colors}
-            isDark={isDark}
-            onSelect={(p) => {
-              impactAsync(ImpactFeedbackStyle.Light);
-              router.push(`/sparring-partners?partnerName=${encodeURIComponent(p.name)}` as any);
-            }}
-            partnerPhotos={partnerPhotos}
-          />
-        )}
+        {/* ── PODIUM TOP 3 · avec sélecteur de mode ── */}
+        {partnerStats.length >= 2 && (() => {
+          const currentMode = PODIUM_MODES.find(m => m.key === podiumMode) ?? PODIUM_MODES[0];
+          return (
+            <View>
+              {/* Sélecteur de mode */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginBottom: 8 }}
+                contentContainerStyle={{ gap: 6, paddingHorizontal: 2 }}
+              >
+                {PODIUM_MODES.map(opt => {
+                  const active = podiumMode === opt.key;
+                  return (
+                    <TouchableOpacity
+                      key={opt.key}
+                      onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setPodiumMode(opt.key); }}
+                      style={{
+                        backgroundColor: active ? accent : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                        borderRadius: 8,
+                        paddingHorizontal: 12,
+                        paddingVertical: 7,
+                      }}
+                    >
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: active ? '#fff' : colors.textMuted, letterSpacing: 0.2 }}>
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
 
-        {/* ── ACCÈS RAPIDES : Game Plan + Achievements ── */}
+              <PodiumSection
+                partners={podiumTop3}
+                accent={accent}
+                colors={colors}
+                isDark={isDark}
+                title={currentMode.title}
+                mode={podiumMode}
+                onSelect={(p) => {
+                  impactAsync(ImpactFeedbackStyle.Light);
+                  router.push(`/sparring-partners?partnerName=${encodeURIComponent(p.name)}` as any);
+                }}
+                partnerPhotos={partnerPhotos}
+              />
+            </View>
+          );
+        })()}
+
+        {/* ── ACCÈS RAPIDES : Plan de jeu + Achievements ── */}
         {!isEmpty && (
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
             <TouchableOpacity
@@ -1088,7 +1175,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                 <Target size={20} color="#fff" />
                 <Text style={{ fontSize: 10, fontWeight: '900', color: 'rgba(255,255,255,0.7)', letterSpacing: 1 }}>PLAYBOOK</Text>
               </View>
-              <Text style={{ fontSize: 15, fontWeight: '900', color: '#fff', letterSpacing: 0.3 }}>Mon Game Plan</Text>
+              <Text style={{ fontSize: 15, fontWeight: '900', color: '#fff', letterSpacing: 0.3 }}>Mon plan de jeu</Text>
               <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>Checklist, playbook, journal</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -1317,7 +1404,14 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               <>
                 <View style={{ marginTop: 8, marginLeft: -8 }}>
                   <BarChart
-                    data={weeklyBars}
+                    data={weeklyBars.map(b => ({
+                      ...b,
+                      topLabelComponent: () => (
+                        <Text style={{ color: colors.text, fontSize: 9, fontWeight: '800', marginBottom: 2 }}>
+                          {b.value}
+                        </Text>
+                      ),
+                    }))}
                     barWidth={Math.min(40, Math.max(14, Math.floor((SCREEN_WIDTH - 80) / Math.max(weeklyBars.length, 8)) - 4))}
                     spacing={8}
                     roundedTop
@@ -1325,13 +1419,13 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                     hideAxesAndRules
                     xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 9, fontWeight: '600' }}
                     noOfSections={3}
-                    maxValue={Math.max(...weeklyBars.map(b => b.value), weeklyGoal, 1) + 1}
+                    maxValue={Math.max(...weeklyBars.map(b => b.value), weeklyGoal, 1) + 2}
                     yAxisThickness={0}
                     xAxisThickness={0}
                     isAnimated
                     animationDuration={600}
                     width={SCREEN_WIDTH - 80}
-                    height={100}
+                    height={110}
                     referenceLine1Config={{ color: '#F59E0B', dashWidth: 4, dashGap: 4, thickness: 1 }}
                     referenceLine1Position={weeklyGoal}
                   />
@@ -1451,7 +1545,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8, marginBottom: 4 }} contentContainerStyle={{ gap: 6 }}>
                 {([
                   { key: 'volume', label: 'Volume', Icon: BarChart2 },
-                  { key: 'winrate', label: 'Win rate', Icon: Trophy },
+                  { key: 'winrate', label: 'Taux victoire', Icon: Trophy },
                   { key: 'recent', label: 'Récent', Icon: Clock },
                   { key: 'level', label: 'Niveau', Icon: Star },
                 ] as { key: typeof partnerSortMode; label: string; Icon: React.ComponentType<{ size?: number; color?: string }> }[]).map(opt => {
@@ -1484,7 +1578,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                   : null;
                 const isTop = idx === 0;
 
-                const photoUri = partnerPhotos[p.name.trim().toLowerCase()];
+                const photoUri = getUsablePhotoUri(partnerPhotos[p.name.trim().toLowerCase()]);
 
                 return (
                   <TouchableOpacity
@@ -1522,7 +1616,12 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                       }]}
                     >
                       {photoUri ? (
-                        <Image source={{ uri: photoUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                        <Image
+                          source={{ uri: photoUri }}
+                          style={{ width: '100%', height: '100%' }}
+                          resizeMode="cover"
+                          onError={() => markPhotoFailed(photoUri)}
+                        />
                       ) : (
                         <Text style={{ fontSize: 14, fontWeight: '800', color: avatarColor }}>
                           {initials}
@@ -1740,7 +1839,6 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           // Ordre podium : 2e à gauche, 1er au centre, 3e à droite
           const podiumOrder = [top3[1], top3[0], top3[2]];
           const heights = [110, 140, 90];
-          const medals = ['🥈', '🥇', '🥉'];
           const colors_ = ['#A1A1AA', '#FBBF24', '#D97706'];
           return (
             <View style={{
@@ -1753,7 +1851,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               borderColor: cardBorder,
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
-                <Text style={{ fontSize: 14 }}>🏆</Text>
+                <Trophy size={14} color="#FBBF24" />
                 <Text style={{ fontSize: 13, fontWeight: '900', color: colors.text, letterSpacing: 0.3 }}>
                   TOP 3 PARTENAIRES SPARRING
                 </Text>
@@ -1761,7 +1859,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', gap: 8 }}>
                 {podiumOrder.map((p, i) => {
                   if (!p) return <View key={i} style={{ flex: 1 }} />;
-                  const photoUri = partnerPhotos[p.name.trim().toLowerCase()];
+                  const photoUri = getUsablePhotoUri(partnerPhotos[p.name.trim().toLowerCase()]);
                   const initial = p.name.charAt(0).toUpperCase();
                   return (
                     <View key={p.name} style={{ flex: 1, alignItems: 'center' }}>
@@ -1775,7 +1873,11 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                           marginBottom: 4,
                         }}>
                           {photoUri ? (
-                            <Image source={{ uri: photoUri }} style={{ width: '100%', height: '100%' }} />
+                            <Image
+                              source={{ uri: photoUri }}
+                              style={{ width: '100%', height: '100%' }}
+                              onError={() => markPhotoFailed(photoUri)}
+                            />
                           ) : (
                             <Text style={{ fontSize: 18, fontWeight: '900', color: colors_[i] }}>{initial}</Text>
                           )}
@@ -1796,7 +1898,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                         alignItems: 'center', justifyContent: 'flex-start',
                         paddingTop: 10,
                       }}>
-                        <Text style={{ fontSize: 28 }}>{medals[i]}</Text>
+                        <Medal size={28} color={colors_[i]} fill={colors_[i]} strokeWidth={2} />
                         <Text style={{ fontSize: 11, fontWeight: '900', color: colors_[i], marginTop: 4, letterSpacing: 0.5 }}>
                           {i === 0 ? '2ÈME' : i === 1 ? '1ER' : '3ÈME'}
                         </Text>
@@ -1843,7 +1945,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               borderColor: cardBorder,
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                <Text style={{ fontSize: 14 }}>⚡</Text>
+                <Zap size={14} color="#F59E0B" />
                 <Text style={{ fontSize: 13, fontWeight: '900', color: colors.text, letterSpacing: 0.3 }}>
                   TES RECORDS SPARRING
                 </Text>
@@ -1869,7 +1971,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                 )}
                 {bestWinRate.rate > 0 && (
                   <View style={{ flex: 1, backgroundColor: '#A855F715', borderRadius: 12, padding: 12, borderLeftWidth: 3, borderLeftColor: '#A855F7' }}>
-                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#A855F7', letterSpacing: 0.4, marginBottom: 4 }}>BEST WINRATE</Text>
+                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#A855F7', letterSpacing: 0.4, marginBottom: 4 }}>MEILLEUR TAUX</Text>
                     <Text style={{ fontSize: 22, fontWeight: '900', color: '#A855F7', letterSpacing: -0.5 }}>{Math.round(bestWinRate.rate)}%</Text>
                     <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
                       {bestWinRate.wins}/{bestWinRate.total} · {formatDateShort(bestWinRate.tr.date)}
@@ -1900,10 +2002,10 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
           }
           const totalAll = byIntensity.guerre.total + byIntensity.technique.total + byIntensity.detendu.total;
           if (totalAll === 0) return null;
-          const intensityMeta = [
-            { key: 'guerre', label: '🔥 Guerre', color: '#EF4444', desc: 'Rounds intenses' },
-            { key: 'technique', label: '🎯 Technique', color: '#3B82F6', desc: 'Travail technique' },
-            { key: 'detendu', label: '🌊 Détendu', color: '#22C55E', desc: 'Roll léger' },
+          const intensityMeta: { key: 'guerre' | 'technique' | 'detendu'; label: string; Icon: React.ComponentType<{ size?: number; color?: string }>; color: string; desc: string }[] = [
+            { key: 'guerre', label: 'Guerre', Icon: Flame, color: '#EF4444', desc: 'Rounds intenses' },
+            { key: 'technique', label: 'Technique', Icon: Target, color: '#3B82F6', desc: 'Travail technique' },
+            { key: 'detendu', label: 'Détendu', Icon: Waves, color: '#22C55E', desc: 'Sparring léger' },
           ];
           return (
             <View style={{
@@ -1916,7 +2018,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               borderColor: cardBorder,
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
-                <Text style={{ fontSize: 14 }}>📊</Text>
+                <BarChart3 size={14} color={accent} />
                 <Text style={{ fontSize: 13, fontWeight: '900', color: colors.text, letterSpacing: 0.3 }}>
                   PERFORMANCE PAR INTENSITÉ
                 </Text>
@@ -1931,7 +2033,8 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                   return (
                     <View key={m.key}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <m.Icon size={14} color={m.color} />
                           <Text style={{ fontSize: 13, fontWeight: '800', color: colors.text }}>{m.label}</Text>
                           <Text style={{ fontSize: 10, color: colors.textMuted, fontWeight: '600' }}>{m.desc}</Text>
                         </View>
@@ -1987,7 +2090,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               borderColor: cardBorder,
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
-                <Text style={{ fontSize: 14 }}>📅</Text>
+                <CalendarDays size={14} color={accent} />
                 <Text style={{ fontSize: 13, fontWeight: '900', color: colors.text, letterSpacing: 0.3 }}>
                   PERFORMANCE PAR JOUR
                 </Text>
@@ -2013,14 +2116,14 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                       }} />
                       <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, marginTop: 2 }}>{days[idx]}</Text>
                       <Text style={{ fontSize: 9, color: colors.textMuted, opacity: 0.7 }}>
-                        {d.sessions > 0 ? `${d.sessions}s` : '·'}
+                        {d.sessions > 0 ? `${d.sessions} séance${d.sessions > 1 ? 's' : ''}` : '·'}
                       </Text>
                     </View>
                   );
                 })}
               </View>
               <Text style={{ fontSize: 10, color: colors.textMuted, fontStyle: 'italic', marginTop: 10, textAlign: 'center' }}>
-                Hauteur = nb de sessions · Couleur = win rate · Vert ≥ 60% · Orange 40-60% · Rouge &lt; 40%
+                Hauteur = nb de séances · Couleur = taux de victoire · Vert ≥ 60% · Orange 40-60% · Rouge &lt; 40%
               </Text>
             </View>
           );
@@ -2052,7 +2155,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
               borderColor: cardBorder,
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
-                <Text style={{ fontSize: 14 }}>❤️</Text>
+                <Heart size={14} color="#EF4444" fill="#EF4444" />
                 <Text style={{ fontSize: 13, fontWeight: '900', color: colors.text, letterSpacing: 0.3 }}>
                   CARDIO & VOLUME SPARRING
                 </Text>
@@ -2120,10 +2223,10 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
             stats={[
               { label: 'Rounds', value: String(totals.rounds), color: SPARRING_COLORS.win },
               { label: 'Partenaires', value: String(totals.partners), color: '#3B82F6' },
-              { label: 'Win rate', value: totals.winRate !== null ? `${totals.winRate}%` : '·', color: '#A855F7' },
+              { label: 'Taux victoire', value: totals.winRate !== null ? `${totals.winRate}%` : '·', color: '#A855F7' },
               { label: 'Techniques', value: String(totals.techniques), color: '#F59E0B' },
             ]}
-            tagline="Tatami life 🥋"
+            tagline="Tatami life"
             accentColor={SPARRING_COLORS.win}
           />
         )}
@@ -2562,6 +2665,8 @@ const MEDAL_LABELS = ['1', '2', '3'];
 const PODIUM_HEIGHTS = [110, 80, 58];  // hauteur du socle (1er plus grand)
 const PODIUM_ORDER   = [1, 0, 2];      // affichage: 2ème | 1er | 3ème
 
+type PodiumSectionMode = 'volume' | 'wins' | 'losses' | 'winrate' | 'subsGiven';
+
 interface PodiumSectionProps {
   partners: PartnerStats[];
   accent: string;
@@ -2569,11 +2674,38 @@ interface PodiumSectionProps {
   isDark: boolean;
   onSelect: (p: PartnerStats) => void;
   partnerPhotos: Record<string, string>;
+  title?: string;
+  mode?: PodiumSectionMode;
 }
 
-function PodiumSection({ partners, accent, colors, isDark, onSelect, partnerPhotos }: PodiumSectionProps) {
+function PodiumSection({ partners, accent, colors, isDark, onSelect, partnerPhotos, title, mode = 'volume' }: PodiumSectionProps) {
   const { t } = useI18n();
   const displayOrder = PODIUM_ORDER.filter(i => i < partners.length);
+  const [failedUris, setFailedUris] = useState<Set<string>>(new Set());
+  const markFailed = (uri: string) => setFailedUris(prev => { const next = new Set(prev); next.add(uri); return next; });
+
+  // Calcule la valeur à mettre en avant selon le mode
+  const getModeValue = (p: PartnerStats): string => {
+    switch (mode) {
+      case 'wins':      return `${p.wins}V`;
+      case 'losses':    return `${p.losses}D`;
+      case 'winrate': {
+        const total = p.wins + p.losses;
+        if (total === 0) return '·';
+        return `${Math.round((p.wins / total) * 100)}%`;
+      }
+      case 'subsGiven': return `${p.submissionsGiven} sub`;
+      default:          return `${p.totalRounds} rounds`;
+    }
+  };
+
+  const modeColor: Record<PodiumSectionMode, string> = {
+    volume:    '#8B5CF6',
+    wins:      '#16A34A',
+    losses:    '#DC2626',
+    winrate:   '#A855F7',
+    subsGiven: '#F59E0B',
+  };
 
   return (
     <View style={[styles.podiumCard, {
@@ -2583,7 +2715,7 @@ function PodiumSection({ partners, accent, colors, isDark, onSelect, partnerPhot
       {/* ── Bande titre ── */}
       <View style={[styles.podiumTitleBar, { backgroundColor: `${accent}12` }]}>
         <View style={[styles.podiumTitleDot, { backgroundColor: accent }]} />
-        <Text style={[styles.podiumTitle, { color: accent }]}>TOP SPARRING · PAR VOLUME</Text>
+        <Text style={[styles.podiumTitle, { color: accent }]}>{title ?? 'TOP SPARRING · PAR VOLUME'}</Text>
         <View style={[styles.podiumTitleDot, { backgroundColor: accent }]} />
       </View>
 
@@ -2598,7 +2730,8 @@ function PodiumSection({ partners, accent, colors, isDark, onSelect, partnerPhot
           const isFirst    = rank === 0;
           const avatarColor = nameToColor(p.name);
           const firstName  = p.name.trim().split(/\s+/)[0];
-          const photoUri = partnerPhotos[p.name.trim().toLowerCase()];
+          const rawPhotoUri = partnerPhotos[p.name.trim().toLowerCase()];
+          const photoUri = rawPhotoUri && !failedUris.has(rawPhotoUri) ? rawPhotoUri : undefined;
           const winRate = (p.wins + p.losses) > 0
             ? Math.round((p.wins / (p.wins + p.losses)) * 100)
             : null;
@@ -2641,7 +2774,12 @@ function PodiumSection({ partners, accent, colors, isDark, onSelect, partnerPhot
                   },
                 ]}>
                   {photoUri ? (
-                    <Image source={{ uri: photoUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    <Image
+                      source={{ uri: photoUri }}
+                      style={{ width: '100%', height: '100%' }}
+                      resizeMode="cover"
+                      onError={() => rawPhotoUri && markFailed(rawPhotoUri)}
+                    />
                   ) : (
                     <Text
                       style={{
@@ -2720,10 +2858,16 @@ function PodiumSection({ partners, accent, colors, isDark, onSelect, partnerPhot
                   <Text style={{ fontSize: isFirst ? 13 : 11, fontWeight: '900', color: medalColor }}>
                     #{MEDAL_LABELS[rank]}
                   </Text>
-                  {p.wins > 0 && (
+                  {/* Valeur du mode courant — mise en avant */}
+                  {mode !== 'volume' && (
+                    <Text style={{ fontSize: isFirst ? 15 : 13, fontWeight: '900', color: modeColor[mode] }}>
+                      {getModeValue(p)}
+                    </Text>
+                  )}
+                  {p.wins > 0 && mode !== 'wins' && (
                     <Text style={{ fontSize: 11, fontWeight: '700', color: '#16A34A' }}>{p.wins}V</Text>
                   )}
-                  {p.losses > 0 && (
+                  {p.losses > 0 && mode !== 'losses' && (
                     <Text style={{ fontSize: 11, fontWeight: '700', color: '#DC2626' }}>{p.losses}D</Text>
                   )}
                   {p.draws > 0 && (

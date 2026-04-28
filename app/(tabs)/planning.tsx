@@ -1851,7 +1851,7 @@ export default function PlanningScreen() {
                   <Search size={16} color={colors.textMuted} />
                   <TextInput
                     style={[styles.eventsSearchInput, { color: colors.textPrimary }]}
-                    placeholder="Rechercher un evenement..."
+                    placeholder="Rechercher un événement..."
                     placeholderTextColor={colors.textMuted}
                     value={catalogSearchQuery}
                     onChangeText={setCatalogSearchQuery}

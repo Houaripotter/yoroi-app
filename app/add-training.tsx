@@ -5112,7 +5112,7 @@ export default function AddTrainingScreen() {
             </View>
 
             <Text style={{ fontSize: 22, fontWeight: '900', color: colors.textPrimary, marginBottom: 12, textAlign: 'center' }}>
-              Hello {userGender === 'female' ? 'Championne' : 'Champion'} {userName} !
+              Salut {userGender === 'female' ? 'Championne' : 'Champion'} {userName} !
             </Text>
 
             <Text style={{ fontSize: 15, color: colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 24 }}>

@@ -12,6 +12,9 @@ import { ThemeProvider, useTheme } from '@/lib/ThemeContext';
 import { BadgeProvider } from '@/lib/BadgeContext';
 import { I18nProvider } from '@/lib/I18nContext';
 import { DevModeProvider } from '@/lib/DevModeContext';
+import { ScreenshotModeProvider } from '@/lib/ScreenshotModeContext';
+import { SportPackProvider } from '@/lib/SportPackContext';
+import FakeStatusBar from '@/components/FakeStatusBar';
 import { WatchConnectivityProvider } from '@/lib/WatchConnectivityProvider';
 import { AvatarProvider } from '@/lib/AvatarContext';
 import DevCodeModal from '@/components/DevCodeModal';
@@ -364,6 +367,9 @@ function RootLayoutContent() {
         <Stack.Screen name="competitions" options={{ presentation: 'card' }} />
         <Stack.Screen name="add-competition" options={{ presentation: 'modal', animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="competition-detail" options={{ presentation: 'card' }} />
+        <Stack.Screen name="event-detail" options={{ presentation: 'card' }} />
+        <Stack.Screen name="creator-mode" options={{ presentation: 'card' }} />
+        <Stack.Screen name="marketing-kit" options={{ presentation: 'card' }} />
         <Stack.Screen name="add-combat" options={{ presentation: 'modal', animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="combat-detail" options={{ presentation: 'card' }} />
         <Stack.Screen name="palmares" options={{ presentation: 'card' }} />
@@ -454,6 +460,8 @@ function RootLayoutContent() {
           onClose={() => setCelebration(null)}
         />
       )}
+      {/* Fake status bar 09:41 (mode créateur / screenshot) */}
+      <FakeStatusBar />
     </View>
   );
 }
@@ -567,8 +575,13 @@ export default function RootLayout() {
         // Connect dès le premier lancement, ce qui cause un crash sur Android.
         if (Platform.OS === 'android') {
           try {
-            const hasAsked = await AsyncStorage.getItem('@yoroi_healthkit_asked');
-            if (hasAsked) {
+            // IMPORTANT : on utilise '@yoroi_healthconnect_connected' (mis à 'true' UNIQUEMENT
+            // si l'utilisateur a réussi à connecter Health Connect dans l'onboarding ou les réglages).
+            // NE PAS utiliser '@yoroi_healthkit_asked' ici : ce flag est mis à 'true' même si
+            // l'utilisateur a sauté la page Health, ce qui déclencherait connect() → requestPermission()
+            // au démarrage → crash sur certains Android.
+            const wasConnected = await AsyncStorage.getItem('@yoroi_healthconnect_connected');
+            if (wasConnected === 'true') {
               await healthConnect.initialize();
               const connected = await healthConnect.connect();
               if (connected) {
@@ -613,13 +626,17 @@ export default function RootLayout() {
         <I18nProvider>
           <ThemeProvider>
             <DevModeProvider>
-              <AvatarProvider>
-                <BadgeProvider>
-                  <WatchConnectivityProvider>
-                    <RootLayoutContent />
-                  </WatchConnectivityProvider>
-                </BadgeProvider>
-              </AvatarProvider>
+              <ScreenshotModeProvider>
+                <SportPackProvider>
+                  <AvatarProvider>
+                    <BadgeProvider>
+                      <WatchConnectivityProvider>
+                        <RootLayoutContent />
+                      </WatchConnectivityProvider>
+                    </BadgeProvider>
+                  </AvatarProvider>
+                </SportPackProvider>
+              </ScreenshotModeProvider>
             </DevModeProvider>
           </ThemeProvider>
         </I18nProvider>

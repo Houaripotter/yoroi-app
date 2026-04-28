@@ -901,7 +901,7 @@ export default function MoreScreen() {
 
           <TouchableOpacity onPress={handleVersionTap} activeOpacity={1}>
             <Text style={{ color: screenText, opacity: 0.5, fontSize: 12, marginTop: 12, textAlign: 'center', fontWeight: '700', letterSpacing: 0.4 }}>
-              YOROI v2.3.3
+              YOROI v2.4.0
             </Text>
           </TouchableOpacity>
         </View>

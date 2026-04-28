@@ -53,7 +53,7 @@ export function computeGlobalInsights(stats: PartnerStats[]): GlobalInsight[] {
     insights.push({
       id: 'worst_matchups',
       type: 'worst_matchups',
-      title: 'Tes matchups les plus difficiles',
+      title: 'Tes adversaires les plus difficiles',
       text: bad.map(b => `${b.name} (${b.winrate}%)`).join(' · '),
       color: '#EF4444',
       partnerIds: bad.map(b => b.id),
@@ -144,7 +144,7 @@ export function computeGlobalInsights(stats: PartnerStats[]): GlobalInsight[] {
       id: 'rival_of_month',
       type: 'rival_of_month',
       title: `Rival principal`,
-      text: `${top.name} : ${top.total} rounds. ${top.winrate != null ? `Winrate ${top.winrate}%.` : ''}`,
+      text: `${top.name} : ${top.total} rounds. ${top.winrate != null ? `Taux de victoire ${top.winrate}%.` : ''}`,
       color: '#D4AF37',
       partnerIds: [top.id],
     });

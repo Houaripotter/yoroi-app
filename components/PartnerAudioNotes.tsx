@@ -5,19 +5,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Mic, Square, Play, Pause, Trash2 } from 'lucide-react-native';
+import {
+  useAudioRecorder,
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  getRecordingPermissionsAsync,
+  setAudioModeAsync,
+  createAudioPlayer,
+  AudioModule,
+} from 'expo-audio';
 import { useTheme } from '@/lib/ThemeContext';
 import { lightHaptic, successHaptic, errorHaptic } from '@/lib/haptics';
 import logger from '@/lib/security/logger';
-
-// expo-audio est deja dans package.json. Import dynamique pour eviter crash
-// sur ancienne API.
-let ExpoAudio: any = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  ExpoAudio = require('expo-audio');
-} catch {
-  ExpoAudio = null;
-}
 
 interface AudioNote {
   id: string;
@@ -39,49 +38,56 @@ export const PartnerAudioNotes: React.FC<Props> = ({ notes, onChange }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const recorderRef = useRef<any>(null);
+
+  // Hook recorder (SDK 55+)
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const playerRef = useRef<any>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const playTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
     if (tickRef.current) clearInterval(tickRef.current);
-    if (recorderRef.current) {
-      try { recorderRef.current.stop?.(); } catch { /* ignore */ }
-    }
+    if (playTimeoutRef.current) clearTimeout(playTimeoutRef.current);
     if (playerRef.current) {
       try { playerRef.current.remove?.(); } catch { /* ignore */ }
     }
   }, []);
 
-  const startRecording = async () => {
-    if (!ExpoAudio) {
-      Alert.alert('Indisponible', 'expo-audio n\'est pas lie. Rebuild l\'app.');
-      return;
-    }
+  const ensurePermission = async (): Promise<boolean> => {
     try {
-      // Nouvelle API expo-audio (SDK 52+)
-      if (typeof ExpoAudio.setAudioModeAsync === 'function') {
-        await ExpoAudio.setAudioModeAsync({
-          allowsRecording: true,
-          playsInSilentMode: true,
-        });
+      const current = await getRecordingPermissionsAsync();
+      if (current.granted) return true;
+      if (!current.canAskAgain) {
+        Alert.alert(
+          'Microphone bloque',
+          'Active le micro pour YOROI dans Reglages > Confidentialite > Microphone.'
+        );
+        return false;
       }
-      // Compat : utiliser la methode disponible selon la version
-      let recorder: any;
-      if (typeof ExpoAudio.AudioRecorder === 'function') {
-        // Nouvelle API (SDK 52+)
-        recorder = new ExpoAudio.AudioRecorder(ExpoAudio.RecordingPresets?.HIGH_QUALITY || {});
-        await recorder.prepareToRecordAsync?.();
-        await recorder.record();
-      } else if (ExpoAudio.Recording) {
-        // Ancienne API
-        recorder = new ExpoAudio.Recording();
-        await recorder.prepareToRecordAsync(ExpoAudio.RecordingOptionsPresets?.HIGH_QUALITY || {});
-        await recorder.startAsync();
-      } else {
-        throw new Error('API audio non supportee');
+      const res = await requestRecordingPermissionsAsync();
+      return res.granted;
+    } catch (e) {
+      logger.warn('[AudioNote] permission error', e);
+      return false;
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const ok = await ensurePermission();
+      if (!ok) {
+        errorHaptic().catch(() => {});
+        return;
       }
-      recorderRef.current = recorder;
+
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
+      });
+
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+
       setIsRecording(true);
       setElapsed(0);
       lightHaptic().catch(() => {});
@@ -103,22 +109,20 @@ export const PartnerAudioNotes: React.FC<Props> = ({ notes, onChange }) => {
   };
 
   const stopRecording = async () => {
-    if (!recorderRef.current) return;
     try {
-      const rec = recorderRef.current;
-      let uri: string | null = null;
-      if (typeof rec.stop === 'function') {
-        await rec.stop();
-        uri = rec.uri ?? rec.getURI?.();
-      } else if (typeof rec.stopAndUnloadAsync === 'function') {
-        await rec.stopAndUnloadAsync();
-        uri = rec.getURI?.();
-      }
       if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
       const duration = elapsed;
+
+      await recorder.stop();
+      const uri = recorder.uri;
+
       setIsRecording(false);
       setElapsed(0);
-      recorderRef.current = null;
+
+      // Remettre le mode audio en lecture classique
+      try {
+        await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
+      } catch { /* ignore */ }
 
       if (uri) {
         const note: AudioNote = {
@@ -137,32 +141,35 @@ export const PartnerAudioNotes: React.FC<Props> = ({ notes, onChange }) => {
   };
 
   const playNote = async (note: AudioNote) => {
-    if (!ExpoAudio) return;
     try {
+      // Si on tape sur la note en cours de lecture → pause
+      if (playingId === note.id) {
+        try { playerRef.current?.pause?.(); } catch { /* ignore */ }
+        try { playerRef.current?.remove?.(); } catch { /* ignore */ }
+        playerRef.current = null;
+        setPlayingId(null);
+        if (playTimeoutRef.current) { clearTimeout(playTimeoutRef.current); playTimeoutRef.current = null; }
+        return;
+      }
+
+      // Nettoyer le precedent
       if (playerRef.current) {
         try { playerRef.current.pause?.(); playerRef.current.remove?.(); } catch { /* ignore */ }
         playerRef.current = null;
       }
-      if (playingId === note.id) {
-        setPlayingId(null);
-        return;
-      }
-      let player: any;
-      if (typeof ExpoAudio.AudioPlayer === 'function') {
-        player = new ExpoAudio.AudioPlayer({ uri: note.uri });
-        player.play();
-      } else if (ExpoAudio.Sound) {
-        const { sound } = await ExpoAudio.Sound.createAsync({ uri: note.uri });
-        player = sound;
-        await player.playAsync();
-      }
+      if (playTimeoutRef.current) { clearTimeout(playTimeoutRef.current); playTimeoutRef.current = null; }
+
+      const player = createAudioPlayer({ uri: note.uri });
       playerRef.current = player;
+      player.play();
       setPlayingId(note.id);
       lightHaptic().catch(() => {});
-      // Auto-stop apres la duree
-      setTimeout(() => {
+
+      playTimeoutRef.current = setTimeout(() => {
+        try { playerRef.current?.remove?.(); } catch { /* ignore */ }
+        playerRef.current = null;
         setPlayingId(prev => prev === note.id ? null : prev);
-      }, note.durationMs + 300);
+      }, note.durationMs + 400);
     } catch (e) {
       logger.warn('[AudioNote] play error', e);
     }

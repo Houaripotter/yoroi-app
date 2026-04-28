@@ -62,6 +62,15 @@ target 'Yoroi' do
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
 
+    # Fix C++ standard : React-jsi (jsi.h) utilise std::string::data() en mode mutable,
+    # ce qui requiert C++17 minimum. On force gnu++20 sur tous les pods pour éviter
+    # 'Cannot initialize char* with const value_type*' dans jsi.h::UUID::toString().
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'gnu++20'
+      end
+    end
+
     # Fix libavif : 'avif/internal.h' file not found
     # Fix ZXingObjC : 'ZXBitMatrix.h' file not found
     # Ces pods ont des sources qui incluent des headers relatifs sans que

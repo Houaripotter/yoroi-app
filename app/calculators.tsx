@@ -915,7 +915,7 @@ export default function CalculatorsScreen() {
       {/* ============================================ */}
       {/* MODAL POIDS IDEAL */}
       {/* ============================================ */}
-      <CalculatorModal visible={showIdealWeight} onClose={() => setShowIdealWeight(false)} title="Poids Ideal" colors={colors}>
+      <CalculatorModal visible={showIdealWeight} onClose={() => setShowIdealWeight(false)} title="Poids Idéal" colors={colors}>
         <GenderToggleComponent gender={gender} onSelect={setGender} colors={colors} />
         <DataInput
           label="Taille"
@@ -987,7 +987,7 @@ export default function CalculatorsScreen() {
       {/* ============================================ */}
       {/* MODAL MACROS */}
       {/* ============================================ */}
-      <CalculatorModal visible={showMacros} onClose={() => setShowMacros(false)} title="Repartition Macros" colors={colors}>
+      <CalculatorModal visible={showMacros} onClose={() => setShowMacros(false)} title="Répartition Macros" colors={colors}>
         <GenderToggleComponent gender={gender} onSelect={setGender} colors={colors} />
         <DataInput
           label="Poids"

@@ -25,12 +25,12 @@ interface TierPartner {
   tier: 'S' | 'A' | 'B' | 'C' | 'D';
 }
 
-const TIER_META: Record<TierPartner['tier'], { label: string; color: string; description: string }> = {
-  S: { label: 'S', color: '#EF4444', description: 'Betes noires · winrate bas, partenaires qui te testent' },
-  A: { label: 'A', color: '#F59E0B', description: 'Serieux challenges · equilibre difficile' },
-  B: { label: 'B', color: '#3B82F6', description: 'Partenaires solides · equilibre' },
-  C: { label: 'C', color: '#10B981', description: 'Tu maitrises · winrate > 65%' },
-  D: { label: 'D', color: '#6B7280', description: 'Pas assez de rounds pour evaluer' },
+const TIER_META: Record<TierPartner['tier'], { name: string; color: string; description: string }> = {
+  S: { name: 'BÊTES\nNOIRES',  color: '#EF4444', description: 'Tes cauchemars · taux de victoire bas, ils te testent' },
+  A: { name: 'DIFFICILES',     color: '#F59E0B', description: 'Gros challenges · équilibre difficile' },
+  B: { name: 'ÉQUILIBRÉS',     color: '#3B82F6', description: 'Partenaires solides · combat à armes égales' },
+  C: { name: 'DOMINÉS',        color: '#10B981', description: 'Tu maîtrises · taux de victoire supérieur à 65%' },
+  D: { name: 'À\nÉVALUER',     color: '#6B7280', description: 'Pas assez de rounds pour juger' },
 };
 
 function computeTier(winrate: number | null, total: number): TierPartner['tier'] {
@@ -85,7 +85,7 @@ export default function PartnersTierListScreen() {
           <ChevronLeft size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={{ alignItems: 'center' }}>
-          <Text style={[styles.title, { color: colors.text }]}>Tier List</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Classement</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
             Classement selon ta domination
           </Text>
@@ -102,7 +102,9 @@ export default function PartnersTierListScreen() {
             <View key={tier} style={[styles.tierRow, { borderColor: meta.color }]}>
               {/* Label tier */}
               <View style={[styles.tierLabelBox, { backgroundColor: meta.color }]}>
-                <Text style={styles.tierLabel}>{meta.label}</Text>
+                <Text style={styles.tierName} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.5}>
+                  {meta.name}
+                </Text>
               </View>
               {/* Partenaires */}
               <View style={styles.tierContent}>
@@ -124,7 +126,7 @@ export default function PartnersTierListScreen() {
                       <View>
                         <Text style={[styles.chipName, { color: colors.text }]} numberOfLines={1}>{p.name}</Text>
                         {p.winrate != null && (
-                          <Text style={[styles.chipStat, { color: meta.color }]}>{p.winrate}% · {p.total}r</Text>
+                          <Text style={[styles.chipStat, { color: meta.color }]}>{p.winrate}% · {p.total} rounds</Text>
                         )}
                       </View>
                     </TouchableOpacity>
@@ -168,15 +170,19 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   tierLabelBox: {
-    width: 64,
+    width: 110,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 8,
   },
-  tierLabel: {
+  tierName: {
     color: '#fff',
-    fontSize: 32,
+    fontSize: 14,
     fontWeight: '900',
-    letterSpacing: -1,
+    letterSpacing: 0.8,
+    textAlign: 'center',
+    lineHeight: 17,
   },
   tierContent: {
     flex: 1,
@@ -186,16 +192,16 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingLeft: 4,
-    paddingRight: 10,
-    paddingVertical: 4,
-    borderRadius: 14,
+    gap: 8,
+    paddingLeft: 5,
+    paddingRight: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
     borderWidth: 1,
-    maxWidth: 180,
+    maxWidth: 220,
   },
-  chipPhoto: { width: 26, height: 26, borderRadius: 13, overflow: 'hidden' },
-  chipName: { fontSize: 12, fontWeight: '800' },
-  chipStat: { fontSize: 10, fontWeight: '700', marginTop: 1 },
+  chipPhoto: { width: 28, height: 28, borderRadius: 14, overflow: 'hidden' },
+  chipName: { fontSize: 13, fontWeight: '800' },
+  chipStat: { fontSize: 11, fontWeight: '700', marginTop: 1 },
   tierDesc: { fontSize: 10, marginTop: 8, fontStyle: 'italic' },
 });

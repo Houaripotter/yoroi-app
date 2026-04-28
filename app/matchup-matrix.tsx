@@ -85,9 +85,9 @@ export default function MatchupMatrixScreen() {
           <ChevronLeft size={24} color={colors.text} />
         </TouchableOpacity>
         <View>
-          <Text style={[styles.title, { color: colors.text }]}>Matchup Matrix</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Matrice des confrontations</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            Taille = volume · couleur = winrate
+            Taille = volume · couleur = taux de victoire
           </Text>
         </View>
         <View style={{ width: 36 }} />
@@ -97,7 +97,7 @@ export default function MatchupMatrixScreen() {
       <View style={styles.filterRow}>
         {([
           { k: 'all', label: 'Tous' },
-          { k: 'beasts', label: 'Betes noires' },
+          { k: 'beasts', label: 'Bêtes noires' },
           { k: 'friends', label: 'Favorables' },
         ] as const).map(f => (
           <TouchableOpacity
@@ -137,7 +137,7 @@ export default function MatchupMatrixScreen() {
           <Info size={40} color={colors.textMuted} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucun match</Text>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            Log des sessions de sparring avec resultat pour voir la matrice.
+            Enregistre des séances de sparring avec résultat pour voir la matrice.
           </Text>
         </View>
       ) : (

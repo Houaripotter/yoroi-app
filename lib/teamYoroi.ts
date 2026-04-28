@@ -136,7 +136,7 @@ export const getGreeting = (name: string, hour: number, gender?: 'male' | 'femal
   }
 
   if (hour >= 12 && hour < 18) {
-    return `Hello ${title}, ${firstName}`;
+    return `Salut ${title}, ${firstName}`;
   }
 
   // Soir

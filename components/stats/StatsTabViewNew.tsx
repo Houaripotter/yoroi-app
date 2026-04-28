@@ -52,7 +52,7 @@ const PAGE_DEFS = [
   { id: 'dashboard', titleKey: 'Résumé',       icon: LayoutDashboard, component: DashboardPage },
   { id: 'seances',   titleKey: 'Séances',      icon: Dumbbell,        component: SeancesPage },
   { id: 'corps',     titleKey: 'Corps',        icon: Scale,           component: CorpsTabPage },
-  { id: 'training',  titleKey: 'Training',     icon: Flame,           component: TrainingTabPage },
+  { id: 'training',  titleKey: 'Entraînement', icon: Flame,           component: TrainingTabPage },
   { id: 'sommeil',   titleKey: 'Sommeil',      icon: Moon,            component: SommeilPage },
   { id: 'pas',       titleKey: 'Pas',          icon: Footprints,      component: PasPage },
   { id: 'signes',    titleKey: 'Signes Vitaux', icon: Activity,       component: SignesVitauxPage },

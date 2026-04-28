@@ -375,7 +375,7 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
               { label: 'Calories', value: totalCalories >= 1000 ? `${(totalCalories / 1000).toFixed(1)}k` : String(totalCalories), color: '#EF4444' },
               { label: 'Distance', value: `${totalDistanceKm.toFixed(0)} km`, color: '#22C55E' },
             ]}
-            tagline="La régularité paie 💪"
+            tagline="La régularité paie"
           />
         </View>
       }

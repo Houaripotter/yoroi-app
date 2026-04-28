@@ -47,7 +47,7 @@ export const APP_CONFIG = {
   appGroup: 'group.com.yoroi.app',
 
   // === VERSION ===
-  version: '2.3.0',
+  version: '2.4.0',
 
   // === DEVELOPER INFO ===
   developer: {

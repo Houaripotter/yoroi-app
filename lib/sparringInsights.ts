@@ -67,7 +67,7 @@ const bestPartnerInsight = (partners: PartnerStat[]): Insight | null => {
   if (top.totalRounds < 5) return null;
   return {
     id: 'spar-best-partner',
-    text: `${top.name} ton drilling partner (${top.totalRounds} rounds)`,
+    text: `${top.name} ton partenaire fétiche (${top.totalRounds} rounds)`,
     tone: 'positive',
     icon: 'trending-up',
   };

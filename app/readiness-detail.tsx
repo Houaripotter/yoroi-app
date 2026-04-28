@@ -211,7 +211,7 @@ export default function ReadinessDetailScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
-      <Header title="Score Readiness" showBack />
+      <Header title="Score de Forme" showBack />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32, gap: 16 }}

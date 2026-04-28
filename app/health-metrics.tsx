@@ -679,7 +679,7 @@ export default function HealthMetricsScreen() {
                     iconColor={colors.warning}
                     value={`${healthData.bodyComposition.bodyFatPercentage}`}
                     unit="%"
-                    subtitle="Body Fat"
+                    subtitle="Masse grasse"
                     colors={colors}
                   />
                 )}
@@ -691,7 +691,7 @@ export default function HealthMetricsScreen() {
                     iconColor={colors.success}
                     value={`${healthData.bodyComposition.leanBodyMass}`}
                     unit="kg"
-                    subtitle="Lean Mass"
+                    subtitle="Masse maigre"
                     colors={colors}
                   />
                 )}
