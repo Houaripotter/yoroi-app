@@ -143,7 +143,6 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
       { id: 'import', label: 'settings.items.importData.label', sublabel: 'settings.items.importData.sublabel', Icon: Upload, iconColor: '#14B8A6', handler: 'import' },
       { id: 'backup-history', label: 'Mes sauvegardes', sublabel: 'Retrouver et restaurer vos backups locaux', Icon: Archive, iconColor: '#14B8A6', route: '/backup-history' },
       { id: 'sync-devices', label: 'Synchronisation locale', sublabel: 'iPhone ↔ iPad sans internet (Bluetooth + WiFi)', Icon: Wifi, iconColor: '#3B82F6', route: '/sync-devices' },
-      { id: 'premium', label: 'Yoroi Premium', sublabel: 'Widget, insights, heatmap, partage HD…', Icon: Star, iconColor: '#A855F7', route: '/premium' },
       { id: 'deduplicate', label: 'Nettoyer les doublons', sublabel: 'Supprimer les séances en double (Apple Santé)', Icon: ShieldCheck, iconColor: '#F59E0B', handler: 'deduplicate' },
       { id: 'pdf', label: 'settings.items.pdf.label', sublabel: 'settings.items.pdf.sublabel', Icon: FileText, iconColor: '#6B7280', handler: 'pdf' },
       { id: 'privacy', label: 'settings.items.privacy.label', sublabel: 'settings.items.privacy.sublabel', Icon: ShieldCheck, iconColor: '#14B8A6', route: '/privacy-data' },
@@ -212,7 +211,6 @@ export default function SettingsScreen() {
   const [profileName, setProfileName] = useState<string>('');
   const [profileBelt, setProfileBelt] = useState<string>('');
   const [profileStreak, setProfileStreak] = useState<number>(0);
-  const [isPremium, setIsPremium] = useState<boolean>(false);
   // Stats hero + infos dynamiques sous-titres
   const [totalSessions, setTotalSessions] = useState<number>(0);
   const [weightLost, setWeightLost] = useState<number | null>(null);
@@ -273,11 +271,10 @@ export default function SettingsScreen() {
 
   const loadProfileHeader = async () => {
     try {
-      const [settingsRaw, belt, streakRaw, premiumRaw, bestStreakRaw, prRaw] = await Promise.all([
+      const [settingsRaw, belt, streakRaw, bestStreakRaw, prRaw] = await Promise.all([
         AsyncStorage.getItem('@yoroi_user_settings'),
         AsyncStorage.getItem('@yoroi_belt'),
         AsyncStorage.getItem('@yoroi_current_streak'),
-        AsyncStorage.getItem('@yoroi_is_premium'),
         AsyncStorage.getItem('@yoroi_best_streak'),
         AsyncStorage.getItem('@yoroi_personal_records'),
       ]);
@@ -297,7 +294,6 @@ export default function SettingsScreen() {
           if (typeof pr.totalWeightLoss === 'number') setWeightLost(pr.totalWeightLoss);
         } catch {}
       }
-      setIsPremium(premiumRaw === 'true');
     } catch {}
   };
 
@@ -985,7 +981,6 @@ export default function SettingsScreen() {
     const rawSublabel = t(item.sublabel);
     const translatedSublabel = getDynamicSublabel(item, rawSublabel);
     // Badge "actif" pour certains items avec état
-    const showPremiumActive = item.id === 'premium' && isPremium;
     const showDemoActive = item.id === 'creator-hery' && isDemoActive;
     // Couleur spéciale pour "Dernière sauvegarde : il y a X jours" quand vieille
     let sublabelColor = colors.textMuted;
@@ -1013,11 +1008,6 @@ export default function SettingsScreen() {
               <Text style={[styles.rowLabel, { color: item.labelColor || colors.textPrimary }]} numberOfLines={1}>
                 {translatedLabel}
               </Text>
-              {showPremiumActive ? (
-                <View style={{ backgroundColor: '#A855F7', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 }}>
-                  <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5 }}>ACTIF</Text>
-                </View>
-              ) : null}
               {showDemoActive ? (
                 <View style={{ backgroundColor: '#10B981', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 }}>
                   <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5 }}>ON</Text>
@@ -1101,13 +1091,6 @@ export default function SettingsScreen() {
                       <Flame size={12} color="#EA580C" fill="#EA580C" />
                       <Text style={[styles.heroChipText, { color: '#EA580C' }]}>
                         {profileStreak} j
-                      </Text>
-                    </View>
-                  ) : null}
-                  {isPremium ? (
-                    <View style={[styles.heroChip, { backgroundColor: '#A855F715', borderColor: '#A855F740' }]}>
-                      <Text style={[styles.heroChipText, { color: '#9333EA' }]}>
-                        PRO
                       </Text>
                     </View>
                   ) : null}

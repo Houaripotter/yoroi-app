@@ -29,6 +29,9 @@ import {
   METS_VALUES,
   getRPELabel,
   getRPEColor,
+  formatForceEntry,
+  formatValue,
+  getBenchmarkPR,
 } from '@/lib/carnetService';
 
 type HyroxEffortType = 'course' | 'station_force' | 'repetitions';
@@ -222,6 +225,43 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                 <Text style={styles.modalSaveTopText}>{isSubmitting ? '...' : 'Enregistrer'}</Text>
               </TouchableOpacity>
             </View>
+
+            {/* ============================================ */}
+            {/* HISTORIQUE DES DERNIÈRES SÉANCES */}
+            {/* ============================================ */}
+            {selectedBenchmark && selectedBenchmark.entries && selectedBenchmark.entries.length > 0 && (() => {
+              const pr = getBenchmarkPR(selectedBenchmark);
+              const sorted = [...selectedBenchmark.entries].sort(
+                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+              );
+              const last3 = sorted.slice(0, 3);
+              return (
+                <View style={[styles.historyContainer, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}>
+                  <Text style={[styles.historyTitle, { color: colors.textMuted }]}>DERNIÈRES SÉANCES</Text>
+                  {last3.map((entry, index) => {
+                    const isPR = pr && entry.id === pr.id;
+                    const formattedVal = isWeightExercise
+                      ? formatForceEntry(entry.value, selectedBenchmark.unit, entry.reps)
+                      : formatValue(entry.value, selectedBenchmark.unit);
+                    const dateStr = new Date(entry.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+                    return (
+                      <View key={entry.id} style={[styles.historyRow, index < last3.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border + '60' }]}>
+                        <Text style={[styles.historyDate, { color: colors.textMuted }]}>{dateStr}</Text>
+                        <Text style={[styles.historyValue, { color: isPR ? (selectedBenchmark.color || colors.accent) : colors.textPrimary }]}>
+                          {formattedVal}
+                        </Text>
+                        {isPR && (
+                          <View style={[styles.prBadge, { backgroundColor: (selectedBenchmark.color || colors.accent) + '20' }]}>
+                            <Text style={[styles.prBadgeText, { color: selectedBenchmark.color || colors.accent }]}>PR</Text>
+                          </View>
+                        )}
+                        {entry.rpe ? <Text style={[styles.historyRpe, { color: colors.textMuted }]}>RPE {entry.rpe}</Text> : null}
+                      </View>
+                    );
+                  })}
+                </View>
+              );
+            })()}
 
             {/* Date Picker */}
             <Text style={[styles.inputLabel, { color: colors.textPrimary, fontWeight: '700' }]}>Date de la séance</Text>
@@ -1092,6 +1132,49 @@ const styles = StyleSheet.create({
   summaryVolume: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  historyContainer: {
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 16,
+  },
+  historyTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginBottom: 8,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 7,
+    gap: 8,
+  },
+  historyDate: {
+    fontSize: 12,
+    fontWeight: '500',
+    width: 60,
+  },
+  historyValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    flex: 1,
+  },
+  prBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  prBadgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  historyRpe: {
+    fontSize: 11,
+    fontWeight: '500',
   },
   modalButton: {
     borderRadius: 16,

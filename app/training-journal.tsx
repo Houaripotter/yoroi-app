@@ -16,13 +16,17 @@ import {
   PanResponder,
   DeviceEventEmitter,
   RefreshControl,
+  ActivityIndicator,
+  ActionSheetIOS,
+  Platform,
+  Alert,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  Trash2, Search, Plus, Target, ChevronRight, Share2, Dumbbell, BookOpen, Award, FileText, Play, X, Check, ChevronLeft, TrendingUp, Flame, Timer, Swords
+  Trash2, Search, Plus, Target, ChevronRight, Share2, Dumbbell, BookOpen, Award, FileText, Play, X, Check, ChevronLeft, TrendingUp, Flame, Timer, Swords, Film
 } from 'lucide-react-native';
 import { useWatch } from '@/lib/WatchConnectivityProvider';
 import { useTheme } from '@/lib/ThemeContext';
@@ -107,6 +111,9 @@ import AddBenchmarkModal from './training-journal/components/AddBenchmarkModal';
 import AddSkillModal from './training-journal/components/AddSkillModal';
 import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 import { logger } from '@/lib/security/logger';
+import VideoLibraryModal from './training-journal/components/VideoLibraryModal';
+import { getVideos, ExerciseVideo } from '@/lib/videoLibraryService';
+import { SPORTS } from '@/lib/sports';
 
 // ============================================
 // SWIPEABLE ROW · swipe gauche pour révéler Supprimer
@@ -197,6 +204,292 @@ const swipeStyles = StyleSheet.create({
 });
 
 // ============================================
+// VIDEO LIBRARY TAB · toutes les vidéos groupées
+// ============================================
+
+const MUSCLE_OPTIONS = [
+  { label: 'Pectoraux', key: 'Pectoraux', color: '#DC2626' },
+  { label: 'Dos', key: 'Dos', color: '#3B82F6' },
+  { label: 'Épaules', key: 'Épaules', color: '#F59E0B' },
+  { label: 'Biceps', key: 'Biceps', color: '#8B5CF6' },
+  { label: 'Triceps', key: 'Triceps', color: '#EC4899' },
+  { label: 'Jambes', key: 'Jambes', color: '#10B981' },
+  { label: 'Fessiers', key: 'Fessiers', color: '#F97316' },
+  { label: 'Mollets', key: 'Mollets', color: '#06B6D4' },
+  { label: 'Abdos / Core', key: 'Abdos / Core', color: '#A855F7' },
+  { label: 'Avant-bras', key: 'Avant-bras', color: '#14B8A6' },
+];
+
+// Sports groupés par catégorie pour le picker
+const SPORT_CATEGORIES: { label: string; sports: { id: string; name: string; color: string }[] }[] = [
+  {
+    label: 'Combat · Frappe',
+    sports: SPORTS.filter(s => s.category === 'combat_striking').map(s => ({ id: s.id, name: s.name, color: s.color })),
+  },
+  {
+    label: 'Combat · Grappling',
+    sports: SPORTS.filter(s => s.category === 'combat_grappling').map(s => ({ id: s.id, name: s.name, color: s.color })),
+  },
+  {
+    label: 'Fitness / Musculation',
+    sports: SPORTS.filter(s => s.category === 'fitness').map(s => ({ id: s.id, name: s.name, color: s.color })),
+  },
+  {
+    label: 'Cardio / Endurance',
+    sports: SPORTS.filter(s => s.category === 'cardio').map(s => ({ id: s.id, name: s.name, color: s.color })),
+  },
+  {
+    label: 'Sports collectifs',
+    sports: SPORTS.filter(s => s.category === 'collectif').map(s => ({ id: s.id, name: s.name, color: s.color })),
+  },
+];
+
+// ─── Picker catégorie vidéo (type + muscle/sport) ──────────────────────────
+function CategoryPickerModal({ visible, onClose, onSelect }: {
+  visible: boolean;
+  onClose: () => void;
+  onSelect: (ctx: { muscleGroup?: string; muscleGroupLabel?: string; muscleGroupColor?: string; sport?: string; sportLabel?: string; sportColor?: string }) => void;
+}) {
+  const { colors, isDark } = useTheme();
+  const [step, setStep] = React.useState<'type' | 'muscle' | 'sport'>('type');
+  const bgCard = isDark ? colors.backgroundCard : '#FFF';
+
+  React.useEffect(() => { if (visible) setStep('type'); }, [visible]);
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: isDark ? colors.background : '#F2F2F7' }}>
+        {/* Header */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16 }}>
+          {step !== 'type' ? (
+            <TouchableOpacity onPress={() => setStep('type')} style={{ marginRight: 12 }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <ChevronLeft size={22} color={colors.textMuted} />
+            </TouchableOpacity>
+          ) : null}
+          <Text style={{ flex: 1, fontSize: 20, fontWeight: '800', color: colors.textPrimary }}>
+            {step === 'type' ? 'Catégorie de vidéo' : step === 'muscle' ? 'Groupe musculaire' : 'Sport'}
+          </Text>
+          <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <X size={22} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+
+        {/* STEP 1 · Type */}
+        {step === 'type' && (
+          <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }} showsVerticalScrollIndicator={false}>
+            {[
+              { key: 'muscle', label: 'Groupe musculaire', sub: 'Pectoraux, Dos, Jambes…', color: '#8B5CF6', icon: '💪' },
+              { key: 'sport',  label: 'Sport',             sub: 'Boxe, JJB, Musculation…',  color: '#F97316', icon: '🥊' },
+              { key: 'none',   label: 'Sans catégorie',    sub: 'Vidéo générale',           color: '#6B7280', icon: '📁' },
+            ].map(opt => (
+              <TouchableOpacity
+                key={opt.key}
+                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: bgCard, borderRadius: 16, padding: 16, gap: 14, borderWidth: 1.5, borderColor: opt.color + '30' }}
+                onPress={() => {
+                  if (opt.key === 'muscle') setStep('muscle');
+                  else if (opt.key === 'sport') setStep('sport');
+                  else { onSelect({}); onClose(); }
+                }}
+                activeOpacity={0.75}
+              >
+                <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: opt.color + '18', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 22 }}>{opt.icon}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.textPrimary }}>{opt.label}</Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>{opt.sub}</Text>
+                </View>
+                <ChevronRight size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+
+        {/* STEP 2 · Groupe musculaire */}
+        {step === 'muscle' && (
+          <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              {MUSCLE_OPTIONS.map(m => (
+                <TouchableOpacity
+                  key={m.key}
+                  style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24, borderWidth: 1.5, borderColor: m.color, backgroundColor: m.color + '15' }}
+                  onPress={() => { onSelect({ muscleGroup: m.key, muscleGroupLabel: m.label, muscleGroupColor: m.color }); onClose(); }}
+                  activeOpacity={0.75}
+                >
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: m.color }}>{m.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+        )}
+
+        {/* STEP 3 · Sport */}
+        {step === 'sport' && (
+          <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+            {SPORT_CATEGORIES.filter(cat => cat.sports.length > 0).map(cat => (
+              <View key={cat.label} style={{ marginBottom: 20 }}>
+                <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>{cat.label}</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {cat.sports.map(s => (
+                    <TouchableOpacity
+                      key={s.id}
+                      style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: s.color, backgroundColor: s.color + '15' }}
+                      onPress={() => { onSelect({ sport: s.id, sportLabel: s.name, sportColor: s.color }); onClose(); }}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: s.color }}>{s.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        )}
+      </View>
+    </Modal>
+  );
+}
+
+function VideoLibraryTab() {
+  const { colors, isDark } = useTheme();
+  const [videos, setVideos] = React.useState<ExerciseVideo[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [showCategoryPicker, setShowCategoryPicker] = React.useState(false);
+  const [openModal, setOpenModal] = React.useState<{
+    muscleGroup?: string; muscleGroupLabel?: string; muscleGroupColor?: string;
+    sport?: string; sportLabel?: string; sportColor?: string;
+    benchmarkId?: string; benchmarkName?: string; benchmarkColor?: string;
+  } | null>(null);
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    try { setVideos(await getVideos()); }
+    finally { setLoading(false); }
+  }, []);
+
+  React.useEffect(() => { load(); }, [load]);
+  React.useEffect(() => {
+    if (!openModal) load();
+  }, [openModal, load]);
+
+  // Grouper par muscleGroup, sport, ou benchmarkName
+  const groups = React.useMemo(() => {
+    const map = new Map<string, {
+      label: string; color?: string;
+      muscleGroup?: string; sport?: string; sportLabel?: string; sportColor?: string;
+      benchmarkId?: string; benchmarkName?: string;
+      type: 'muscle' | 'sport' | 'benchmark' | 'other';
+      count: number;
+    }>();
+    for (const v of videos) {
+      let key: string;
+      if (v.benchmarkId) {
+        key = `bench_${v.benchmarkId}`;
+        if (!map.has(key)) map.set(key, { label: v.benchmarkName || 'Exercice', benchmarkId: v.benchmarkId, benchmarkName: v.benchmarkName, type: 'benchmark', count: 0 });
+      } else if (v.sport) {
+        key = `sport_${v.sport}`;
+        if (!map.has(key)) map.set(key, { label: v.sportLabel || v.sport, color: v.sportColor, sport: v.sport, sportLabel: v.sportLabel, sportColor: v.sportColor, type: 'sport', count: 0 });
+      } else if (v.muscleGroup) {
+        key = `muscle_${v.muscleGroup}`;
+        const mc = MUSCLE_OPTIONS.find(m => m.key === v.muscleGroup);
+        if (!map.has(key)) map.set(key, { label: v.muscleGroup, color: mc?.color, muscleGroup: v.muscleGroup, type: 'muscle', count: 0 });
+      } else {
+        key = 'other';
+        if (!map.has(key)) map.set(key, { label: 'Sans catégorie', type: 'other', count: 0 });
+      }
+      map.get(key)!.count++;
+    }
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+  }, [videos]);
+
+  const bgColor = isDark ? colors.background : '#F2F2F7';
+
+  const handleAddVideoPress = () => setShowCategoryPicker(true);
+
+  const TYPE_LABELS: Record<string, string> = { muscle: 'Groupe musculaire', sport: 'Sport', benchmark: 'Exercice', other: 'Sans catégorie' };
+
+  if (loading) {
+    return <View style={{ flex: 1, backgroundColor: bgColor, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={colors.accent} /></View>;
+  }
+
+  return (
+    <>
+    <ScrollView style={{ flex: 1, backgroundColor: bgColor }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+      <TouchableOpacity
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.accent, borderRadius: 14, padding: 14, marginBottom: 20 }}
+        onPress={handleAddVideoPress}
+      >
+        <Film size={20} color="#FFF" />
+        <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 15 }}>Ajouter une vidéo</Text>
+      </TouchableOpacity>
+
+      {videos.length === 0 ? (
+        <View style={{ alignItems: 'center', paddingTop: 60, gap: 12 }}>
+          <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: colors.accent + '15', alignItems: 'center', justifyContent: 'center' }}>
+            <Film size={36} color={colors.accent} />
+          </View>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' }}>Aucune vidéo</Text>
+          <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center', paddingHorizontal: 32, lineHeight: 20 }}>
+            Ajoute tes vidéos de technique par groupe musculaire, sport ou exercice.
+          </Text>
+        </View>
+      ) : (
+        <>
+          <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
+            {videos.length} vidéo{videos.length > 1 ? 's' : ''} · {groups.length} catégorie{groups.length > 1 ? 's' : ''}
+          </Text>
+          {groups.map((g, i) => {
+            const dotColor = g.color || colors.accent;
+            return (
+              <TouchableOpacity
+                key={i}
+                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.backgroundCard, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: 14, marginBottom: 10, gap: 14 }}
+                onPress={() => setOpenModal({ muscleGroup: g.muscleGroup, muscleGroupLabel: g.label, muscleGroupColor: g.color, sport: g.sport, sportLabel: g.sportLabel, sportColor: g.sportColor, benchmarkId: g.benchmarkId, benchmarkName: g.benchmarkName })}
+                activeOpacity={0.7}
+              >
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: dotColor + '18', alignItems: 'center', justifyContent: 'center' }}>
+                  <Film size={20} color={dotColor} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}>{g.label}</Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>
+                    {g.count} vidéo{g.count > 1 ? 's' : ''} · {TYPE_LABELS[g.type]}
+                  </Text>
+                </View>
+                <ChevronRight size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            );
+          })}
+        </>
+      )}
+
+      {openModal !== null && (
+        <VideoLibraryModal
+          visible
+          onClose={() => setOpenModal(null)}
+          muscleGroup={openModal.muscleGroup}
+          muscleGroupLabel={openModal.muscleGroupLabel}
+          muscleGroupColor={openModal.muscleGroupColor}
+          sport={openModal.sport}
+          sportLabel={openModal.sportLabel}
+          sportColor={openModal.sportColor}
+          benchmarkId={openModal.benchmarkId}
+          benchmarkName={openModal.benchmarkName}
+          benchmarkColor={openModal.benchmarkColor}
+        />
+      )}
+    </ScrollView>
+
+    <CategoryPickerModal
+      visible={showCategoryPicker}
+      onClose={() => setShowCategoryPicker(false)}
+      onSelect={(ctx) => { setOpenModal(ctx); }}
+    />
+    </>
+  );
+}
+
+// ============================================
 // MAIN COMPONENT
 // ============================================
 
@@ -258,9 +551,10 @@ export default function TrainingJournalScreen() {
   // Filter state
   const [selectedSkillFilter, setSelectedSkillFilter] = useState<SkillStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchExpanded, setSearchExpanded] = useState(false);
 
   // Tab state for Records/Techniques
-  const [activeTab, setActiveTab] = useState<'records' | 'techniques' | 'combat' | 'competitions' | 'positions' | 'submissions' | 'sorties' | 'allures' | 'wods' | 'stations' | 'voies' | 'seances_muscu' | 'muscles' | 'progression'>('records');
+  const [activeTab, setActiveTab] = useState<'records' | 'techniques' | 'videos' | 'combat' | 'competitions' | 'positions' | 'submissions' | 'sorties' | 'allures' | 'wods' | 'stations' | 'voies' | 'seances_muscu' | 'muscles' | 'progression'>('records');
   // Pack actif (Combat/Endurance/Force/Nature)
   const { activePack } = useSportPack();
 
@@ -930,6 +1224,8 @@ export default function TrainingJournalScreen() {
     const isWeightExercise =
       selectedBenchmark.category === 'force' || selectedBenchmark.category === 'musculation';
     const isRunningOrCardio = ['running', 'trail', 'hyrox', 'cardio'].includes(selectedBenchmark.category);
+    // running/trail utilisent les champs H:M:S ; cardio/hyrox utilisent newEntryDuration (en minutes)
+    const isRunningWithHMS = ['running', 'trail'].includes(selectedBenchmark.category);
 
     // For running/cardio, the value comes from time fields (not newEntryValue)
     if (!isRunningOrCardio && !newEntryValue.trim()) return;
@@ -944,12 +1240,21 @@ export default function TrainingJournalScreen() {
       impactAsync(ImpactFeedbackStyle.Medium);
     let value: number;
 
-    if (isRunningOrCardio && selectedBenchmark.unit === 'time') {
-      // Compute total time in seconds from H:M:S fields
+    if (isRunningWithHMS && selectedBenchmark.unit === 'time') {
+      // running/trail : durée saisie en H:M:S
       const h = parseInt(runningTimeHours) || 0;
       const m = parseInt(runningTimeMinutes) || 0;
       const s = parseInt(runningTimeSeconds) || 0;
       value = h * 3600 + m * 60 + s;
+      if (value === 0) {
+        showPopup(t('common.error'), t('journal.indicateDuration'));
+        setIsSubmitting(false);
+        return;
+      }
+    } else if ((selectedBenchmark.category === 'cardio' || selectedBenchmark.category === 'hyrox') && selectedBenchmark.unit === 'time') {
+      // cardio/hyrox : durée saisie en minutes dans newEntryDuration
+      const durationMin = parseInt(newEntryDuration) || 0;
+      value = durationMin * 60;
       if (value === 0) {
         showPopup(t('common.error'), t('journal.indicateDuration'));
         setIsSubmitting(false);
@@ -1654,7 +1959,7 @@ export default function TrainingJournalScreen() {
         </View>
       </View>
 
-      {/* Tab Selector · identique à Planning/Stats */}
+      {/* Tab Selector · pills compactes */}
       <View style={[styles.tabContainer, { backgroundColor: screenBackground }]}>
         <ScrollView
           horizontal
@@ -1665,6 +1970,7 @@ export default function TrainingJournalScreen() {
             const base = [
               { id: 'records',    label: t('journal.records'),  Icon: Dumbbell, count: benchmarksWithEntries.length },
               { id: 'techniques', label: t('journal.skills'),   Icon: BookOpen, count: skills.length },
+              { id: 'videos',     label: 'Vidéos',              Icon: Film,     count: null },
             ];
             if (activePack === 'combat') {
               return [...base,
@@ -1707,44 +2013,43 @@ export default function TrainingJournalScreen() {
             return (
               <TouchableOpacity
                 key={id}
-                style={styles.circleTabWrapper}
-                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setActiveTab(id as any); }}
-                activeOpacity={0.7}
-              >
-                <View style={[
-                  styles.circleTab,
+                style={[
+                  styles.compactTab,
                   {
                     backgroundColor: isActive
                       ? (isDark ? colors.accent : '#FFFFFF')
-                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.18)'),
-                    borderWidth: isActive ? 0 : 1,
-                    borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.3)',
+                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)'),
+                    borderColor: isActive
+                      ? 'transparent'
+                      : (isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.3)'),
                   },
-                ]}>
-                  <Icon
-                    size={18}
-                    color={isActive
-                      ? (isDark ? '#FFFFFF' : colors.accent)
-                      : screenText}
-                    strokeWidth={2.5}
-                    style={{ opacity: isActive ? 1 : 0.7 }}
-                  />
-                  {count !== null && count > 0 && (
-                    <View style={styles.circleBadge}>
-                      <Text style={styles.circleBadgeText}>{count > 99 ? '99+' : count}</Text>
-                    </View>
-                  )}
-                </View>
+                ]}
+                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setActiveTab(id as any); }}
+                activeOpacity={0.7}
+              >
+                <Icon
+                  size={13}
+                  color={isActive ? (isDark ? '#FFFFFF' : colors.accent) : screenText}
+                  strokeWidth={2.5}
+                  style={{ opacity: isActive ? 1 : 0.75 }}
+                />
                 <Text style={[
-                  styles.circleTabLabel,
+                  styles.compactTabLabel,
                   {
-                    color: isActive ? (isDark ? colors.accent : '#FFFFFF') : screenText,
-                    opacity: isActive ? 1 : 0.7,
+                    color: isActive ? (isDark ? '#FFFFFF' : colors.accent) : screenText,
+                    opacity: isActive ? 1 : 0.75,
                     fontWeight: isActive ? '700' : '500',
                   },
                 ]}>
                   {label}
                 </Text>
+                {count !== null && count > 0 && (
+                  <View style={[styles.compactBadge, { backgroundColor: isActive ? (isDark ? 'rgba(255,255,255,0.3)' : colors.accent + '30') : 'rgba(255,255,255,0.25)' }]}>
+                    <Text style={[styles.compactBadgeText, { color: isActive ? (isDark ? '#FFF' : colors.accent) : screenText }]}>
+                      {count > 99 ? '99+' : count}
+                    </Text>
+                  </View>
+                )}
               </TouchableOpacity>
             );
           })}
@@ -1766,98 +2071,76 @@ export default function TrainingJournalScreen() {
       {activeTab === 'seances_muscu' && <StatsErrorBoundary tabName="Séances"><SeancesMuscuTab /></StatsErrorBoundary>}
       {activeTab === 'muscles' && <StatsErrorBoundary tabName="Muscles"><MusclesTab /></StatsErrorBoundary>}
       {activeTab === 'progression' && <StatsErrorBoundary tabName="Progression"><ProgressionTab /></StatsErrorBoundary>}
+      {activeTab === 'videos' && <StatsErrorBoundary tabName="Vidéos"><VideoLibraryTab /></StatsErrorBoundary>}
 
-      {/* Search Bar + Filtres · masqués en mode Sparring */}
+      {/* Barre recherche + filtres · compacte, 1 seule rangée */}
       {(activeTab === 'records' || activeTab === 'techniques') && (
-        <>
-          <View style={[styles.searchContainer, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}>
-            <View style={[styles.searchBar, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-              <Search size={20} color={colors.textMuted} />
+        <View style={[styles.filterRow, { backgroundColor: isDark ? colors.background : '#FFFFFF', borderBottomColor: colors.border }]}>
+          {searchExpanded ? (
+            /* Mode recherche — occupe toute la largeur */
+            <View style={[styles.searchBarInline, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+              <Search size={16} color={colors.textMuted} />
               <TextInput
-                style={[styles.searchInput, { color: colors.textPrimary }]}
+                style={[styles.searchInputInline, { color: colors.textPrimary }]}
                 placeholder={t('journal.searchExercise')}
                 placeholderTextColor={colors.textMuted}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
+                autoFocus
                 maxLength={100}
               />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => setSearchQuery('')}>
-                  <X size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity onPress={() => { setSearchExpanded(false); setSearchQuery(''); }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <X size={16} color={colors.textMuted} />
+              </TouchableOpacity>
             </View>
-          </View>
+          ) : (
+            /* Mode normal — icône recherche + filtres */
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
+              {/* Bouton recherche */}
+              <TouchableOpacity
+                style={[styles.filterSearchBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                onPress={() => setSearchExpanded(true)}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              >
+                <Search size={14} color={colors.textMuted} />
+              </TouchableOpacity>
 
-          {/* TASK 2: Global Filters - Force renamed to Musculation */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={[styles.globalFilterScroll, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}
-            contentContainerStyle={styles.globalFilterContent}
-          >
-            {[
-              { key: 'all' as GlobalFilter, label: t('journal.all'), iconName: 'bar-chart', color: colors.accent, textOnColor: '#FFFFFF' },
-              { key: 'musculation' as GlobalFilter, label: t('journal.weightTraining'), iconName: 'dumbbell', color: '#EF4444', textOnColor: '#FFFFFF' },
-              { key: 'running' as GlobalFilter, label: t('journal.running'), iconName: 'footprints', color: '#3B82F6', textOnColor: '#FFFFFF' },
-              { key: 'jjb' as GlobalFilter, label: t('journal.jjb'), iconName: 'swords', color: '#06B6D4', textOnColor: '#FFFFFF' },
-              { key: 'boxe' as GlobalFilter, label: t('journal.boxing'), iconName: 'zap', color: '#F59E0B', textOnColor: '#FFFFFF' },
-              { key: 'lutte' as GlobalFilter, label: t('journal.wrestling'), iconName: 'users', color: '#8B5CF6', textOnColor: '#FFFFFF' },
-              { key: 'grappling' as GlobalFilter, label: t('journal.grappling'), iconName: 'shield', color: '#10B981', textOnColor: '#FFFFFF' },
-              { key: 'autre' as GlobalFilter, label: t('journal.other'), iconName: 'target', color: '#6B7280', textOnColor: '#FFFFFF' },
-            ].map(filter => {
-              const isSelected = globalFilter === filter.key;
-              return (
-                <TouchableOpacity
-                  key={filter.key}
-                  style={[
-                    styles.globalFilterChip,
-                    {
-                      backgroundColor: isSelected ? filter.color : colors.backgroundCard,
-                      borderColor: isSelected ? filter.color : colors.border,
-                    }
-                  ]}
-                  onPress={() => {
-                    impactAsync(ImpactFeedbackStyle.Light);
-                    setGlobalFilter(filter.key);
-                  }}
-                >
-                  {renderIcon(filter.iconName, 16, isSelected ? filter.textOnColor : filter.color)}
-                  <Text style={[
-                    styles.globalFilterText,
-                    { color: isSelected ? filter.textOnColor : filter.color }
-                  ]}>
-                    {filter.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </>
-      )}
+              {/* Séparateur */}
+              <View style={[styles.filterDivider, { backgroundColor: colors.border }]} />
 
-      {/* Légende des icônes · visible uniquement sur l'onglet Records */}
-      {activeTab === 'records' && (
-        <View style={[styles.legendRow, { backgroundColor: isDark ? colors.background : '#FFFFFF', borderBottomColor: colors.border }]}>
-          <View style={styles.legendItem}>
-            <TrendingUp size={12} color="#10B981" strokeWidth={2.5} />
-            <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('journal.progression')}</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <TrendingUp size={12} color="#EF4444" strokeWidth={2.5} style={{ transform: [{ scaleY: -1 }] }} />
-            <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('journal.regression')}</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendPRBadge, { backgroundColor: '#EF4444' }]}>
-              <Text style={[styles.legendPRText, { color: colors.textOnAccent }]}>PR</Text>
-            </View>
-            <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('journal.personalRecord')}</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('journal.swipe')}</Text>
-            <Trash2 size={11} color={colors.textMuted} />
-            <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('journal.delete_short')}</Text>
-          </View>
+              {/* Chips filtres */}
+              {[
+                { key: 'all' as GlobalFilter,         label: t('journal.all'),          iconName: 'bar-chart', color: colors.accent },
+                { key: 'musculation' as GlobalFilter,  label: t('journal.weightTraining'), iconName: 'dumbbell', color: '#EF4444' },
+                { key: 'running' as GlobalFilter,      label: t('journal.running'),      iconName: 'footprints', color: '#3B82F6' },
+                { key: 'jjb' as GlobalFilter,          label: t('journal.jjb'),          iconName: 'swords',    color: '#06B6D4' },
+                { key: 'boxe' as GlobalFilter,         label: t('journal.boxing'),       iconName: 'zap',       color: '#F59E0B' },
+                { key: 'lutte' as GlobalFilter,        label: t('journal.wrestling'),    iconName: 'users',     color: '#8B5CF6' },
+                { key: 'grappling' as GlobalFilter,    label: t('journal.grappling'),    iconName: 'shield',    color: '#10B981' },
+                { key: 'autre' as GlobalFilter,        label: t('journal.other'),        iconName: 'target',    color: '#6B7280' },
+              ].map(filter => {
+                const isSelected = globalFilter === filter.key;
+                return (
+                  <TouchableOpacity
+                    key={filter.key}
+                    style={[
+                      styles.filterChip,
+                      {
+                        backgroundColor: isSelected ? filter.color : colors.backgroundCard,
+                        borderColor: isSelected ? filter.color : colors.border,
+                      },
+                    ]}
+                    onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setGlobalFilter(filter.key); }}
+                  >
+                    {renderIcon(filter.iconName, 13, isSelected ? '#FFFFFF' : filter.color)}
+                    <Text style={[styles.filterChipText, { color: isSelected ? '#FFFFFF' : filter.color }]}>
+                      {filter.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
         </View>
       )}
 
@@ -2651,16 +2934,16 @@ const styles = StyleSheet.create({
   },
   // Tab styles · identique Planning/Stats
   tabContainer: {
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingTop: 8,
+    paddingBottom: 8,
     position: 'relative',
   },
   tabsRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 24,
-    paddingLeft: 20,
-    paddingRight: 20, // corbeille déplacée dans le SportPackSwitcher row
+    alignItems: 'center',
+    gap: 7,
+    paddingLeft: 12,
+    paddingRight: 12,
   },
   trashIconBtn: {
     position: 'absolute',
@@ -2690,45 +2973,37 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFF',
   },
-  circleTabWrapper: {
+  // Compact pill tabs (remplace les anciens cercles)
+  compactTab: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
   },
-  circleTab: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
+  compactTabLabel: {
+    fontSize: 12,
+    letterSpacing: 0.1,
+  },
+  compactBadge: {
+    borderRadius: 8,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    minWidth: 16,
     alignItems: 'center',
   },
-  circleBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  circleBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#111827',
-  },
-  circleTabLabel: {
+  compactBadgeText: {
     fontSize: 9,
-    fontWeight: '600',
-    letterSpacing: 0.2,
-    textAlign: 'center',
+    fontWeight: '700',
   },
+  // Anciens styles gardés pour compatibilité (ne pas supprimer)
+  circleTabWrapper: { alignItems: 'center', gap: 4 },
+  circleTab: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
+  circleBadge: { position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 3 },
+  circleBadgeText: { fontSize: 10, fontWeight: '800', color: '#111827' },
+  circleTabLabel: { fontSize: 9, fontWeight: '600', letterSpacing: 0.2, textAlign: 'center' },
   // Anciens styles conservés pour compatibilité
   tabButton: {
     flex: 1,
@@ -2755,52 +3030,68 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
-  searchContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+  // Barre filtre compacte (remplace searchContainer + globalFilter*)
+  filterRow: {
+    borderBottomWidth: 1,
+    paddingVertical: 8,
   },
-  searchBar: {
+  filterScrollContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    gap: 7,
+  },
+  filterSearchBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    gap: 10,
+    flexShrink: 0,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    padding: 0,
+  filterDivider: {
+    width: 1,
+    height: 18,
+    marginHorizontal: 2,
+    flexShrink: 0,
   },
-
-  // TASK 1: Global Filter Styles
-  globalFilterScroll: {
-    maxHeight: 50,
-    marginBottom: 4,
-  },
-  globalFilterContent: {
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  globalFilterChip: {
+  filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    gap: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 5,
   },
-  globalFilterText: {
-    fontSize: 13,
+  filterChipText: {
+    fontSize: 12,
     fontWeight: '600',
   },
+  searchBarInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+  },
+  searchInputInline: {
+    flex: 1,
+    fontSize: 14,
+    padding: 0,
+  },
+  // Anciens styles gardés pour compatibilité
+  searchContainer: { paddingHorizontal: 16, paddingVertical: 12 },
+  searchBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 12, borderWidth: 1, gap: 10 },
+  searchInput: { flex: 1, fontSize: 16, padding: 0 },
+  globalFilterScroll: { maxHeight: 50, marginBottom: 4 },
+  globalFilterContent: { paddingHorizontal: 16, gap: 8 },
+  globalFilterChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1.5, gap: 6 },
+  globalFilterText: { fontSize: 13, fontWeight: '600' },
 
   // Toast Styles (NO EMOJI - uses Lucide Check icon)
   toast: {
@@ -2884,26 +3175,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // Filters
+  // Filters (anciens styles — doublons supprimés, voir filterChip/filterChipText ci-dessus)
   filterScroll: {
     marginBottom: 12,
   },
-  filterChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
-    borderWidth: 1,
-    gap: 4,
-  },
   filterChipIcon: {
     fontSize: 14,
-  },
-  filterChipText: {
-    fontSize: 13,
-    fontWeight: '600',
   },
 
   // Benchmarks

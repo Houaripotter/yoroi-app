@@ -5,9 +5,10 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, RefreshControl, DeviceEventEmitter,
+  View, Text, StyleSheet, ScrollView, RefreshControl, DeviceEventEmitter, TouchableOpacity,
 } from 'react-native';
-import { Zap, AlertCircle, CheckCircle2, TrendingUp } from 'lucide-react-native';
+import { Zap, AlertCircle, CheckCircle2, TrendingUp, Film } from 'lucide-react-native';
+import VideoLibraryModal from './VideoLibraryModal';
 import { useTheme } from '@/lib/ThemeContext';
 import { getTrainings } from '@/lib/database';
 import type { Training } from '@/lib/database';
@@ -38,6 +39,7 @@ export default function MusclesTab() {
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [videoLibraryGroup, setVideoLibraryGroup] = useState<{ key: string; label: string; color: string } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -117,6 +119,7 @@ export default function MusclesTab() {
   }
 
   return (
+    <>
     <ScrollView
       style={{ flex: 1, backgroundColor: bgColor }}
       contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
@@ -177,15 +180,22 @@ export default function MusclesTab() {
               const pct = (g.total / muscleData.maxTotal) * 100;
               return (
                 <View key={g.key}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                     <Text style={{ fontSize: 13, fontWeight: '800', color: g.color }}>{g.label}</Text>
-                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '700' }}>
                         {g.total} total
                       </Text>
                       <Text style={{ fontSize: 11, color: g.last30 >= 4 ? '#10B981' : colors.textMuted, fontWeight: '800' }}>
                         {g.last30} en 30j
                       </Text>
+                      <TouchableOpacity
+                        onPress={() => setVideoLibraryGroup({ key: g.label, label: g.label, color: g.color })}
+                        style={[styles.videoBtn, { backgroundColor: g.color + '20' }]}
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      >
+                        <Film size={12} color={g.color} />
+                      </TouchableOpacity>
                     </View>
                   </View>
                   <View style={[styles.track, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }]}>
@@ -203,6 +213,17 @@ export default function MusclesTab() {
       </View>
 
     </ScrollView>
+
+    {videoLibraryGroup && (
+      <VideoLibraryModal
+        visible={!!videoLibraryGroup}
+        onClose={() => setVideoLibraryGroup(null)}
+        muscleGroup={videoLibraryGroup.key}
+        muscleGroupLabel={videoLibraryGroup.label}
+        muscleGroupColor={videoLibraryGroup.color}
+      />
+    )}
+  </>
   );
 }
 
@@ -212,4 +233,5 @@ const styles = StyleSheet.create({
   title: { fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
   track: { height: 8, borderRadius: 4, overflow: 'hidden' },
   chip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, borderWidth: 1 },
+  videoBtn: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 });

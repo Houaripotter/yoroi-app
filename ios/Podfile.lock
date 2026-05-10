@@ -293,6 +293,8 @@ PODS:
     - ExpoModulesCore
   - ExpoSystemUI (55.0.16):
     - ExpoModulesCore
+  - ExpoVideo (55.0.16):
+    - ExpoModulesCore
   - ExpoWebBrowser (55.0.14):
     - ExpoModulesCore
   - EXUpdatesInterface (55.1.6):
@@ -2743,6 +2745,7 @@ DEPENDENCIES:
   - ExpoStoreReview (from `../node_modules/expo-store-review/ios`)
   - ExpoSymbols (from `../node_modules/expo-symbols/ios`)
   - ExpoSystemUI (from `../node_modules/expo-system-ui/ios`)
+  - ExpoVideo (from `../node_modules/expo-video/ios`)
   - ExpoWebBrowser (from `../node_modules/expo-web-browser/ios`)
   - EXUpdatesInterface (from `../node_modules/expo-updates-interface/ios`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
@@ -2945,6 +2948,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-symbols/ios"
   ExpoSystemUI:
     :path: "../node_modules/expo-system-ui/ios"
+  ExpoVideo:
+    :path: "../node_modules/expo-video/ios"
   ExpoWebBrowser:
     :path: "../node_modules/expo-web-browser/ios"
   EXUpdatesInterface:
@@ -3176,6 +3181,7 @@ SPEC CHECKSUMS:
   ExpoStoreReview: dab6e25f0641784bd6207f729f893423afbb6574
   ExpoSymbols: 8b63e859ba013df1f2fc666f535fddb3d5270569
   ExpoSystemUI: f0f31e6aea8f76b549a463483bdeeb1dcb8a5593
+  ExpoVideo: 9e10be01a10776a89ae1f0775445b4e4ba6b09f0
   ExpoWebBrowser: f88a3ba50a025b673236a46d2654a49b985953d6
   EXUpdatesInterface: 4c11f4d1594526258f14d09817dc407acbf24e3b
   FBLazyVector: 061f518bbd81677ed8a8317e2ae60b8779495808

@@ -230,19 +230,6 @@ const NEW_TOOL_IDS = new Set<string>([
   'benchmark',
 ]);
 
-// IDs d'outils nécessitant Premium (badge PRO affiché à droite)
-const PREMIUM_TOOL_IDS = new Set<string>([
-  'combat-analytics',
-  'rounds-insights',
-  'sparring-ranking',
-  'benchmark',
-  'competition-camp',
-  'game-plan',
-  'fighter-card',
-  'match-tracker',
-  'weight-cut',
-]);
-
 // Petite icône thématique par section pour visualisation rapide
 const SECTION_ICONS: Record<string, { Icon: LucideIcon; color: string }> = {
   'ENTRAÎNEMENT': { Icon: Dumbbell, color: '#EF4444' },
@@ -276,9 +263,6 @@ export default function MoreScreen() {
 
   // Recents (derniers outils ouverts, ordre récent → ancien)
   const [recents, setRecents] = useState<string[]>([]);
-
-  // Premium status · pour décider d'afficher le badge PRO
-  const [isPremium, setIsPremium] = useState<boolean>(false);
 
   // Sections repliées (set des titres de section actuellement collapsées)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
@@ -319,8 +303,6 @@ export default function MoreScreen() {
       if (collapsedRaw) {
         try { setCollapsedSections(new Set(JSON.parse(collapsedRaw))); } catch {}
       }
-      const premium = await AsyncStorage.getItem('@yoroi_is_premium');
-      setIsPremium(premium === 'true');
       const infoDismissed = await AsyncStorage.getItem('@yoroi_tool_info_dismissed');
       if (infoDismissed === 'true') setShowInfoCard(false);
       const mode = await AsyncStorage.getItem('@yoroi_screenshot_mode');
@@ -611,7 +593,6 @@ export default function MoreScreen() {
   const renderToolItem = useCallback((item: ToolItem) => {
     const IconComponent = item.Icon;
     const isFav = favorites.has(item.id);
-    const isPremiumLocked = PREMIUM_TOOL_IDS.has(item.id) && !isPremium;
     const isNew = NEW_TOOL_IDS.has(item.id);
 
     return (
@@ -634,11 +615,6 @@ export default function MoreScreen() {
                 <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.4 }}>NEW</Text>
               </View>
             ) : null}
-            {isPremiumLocked ? (
-              <View style={{ backgroundColor: '#A855F7', paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 5 }}>
-                <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.4 }}>PRO</Text>
-              </View>
-            ) : null}
           </View>
           <Text style={[styles.toolItemSublabel, { color: colors.textMuted }]} numberOfLines={1}>
             {item.sublabel}
@@ -659,7 +635,7 @@ export default function MoreScreen() {
         <ChevronRight size={16} color={colors.textMuted} />
       </TouchableOpacity>
     );
-  }, [favorites, colors, handleItemPress, toggleFavorite, isPremium]);
+  }, [favorites, colors, handleItemPress, toggleFavorite]);
 
   // ============================================
   // RENDER
@@ -746,57 +722,7 @@ export default function MoreScreen() {
           </TouchableOpacity>
         )}
 
-        {/* UPSELL PREMIUM (uniquement si pas premium et pas de recherche en cours) */}
-        {!isPremium && !searchText && (
-          <TouchableOpacity
-            onPress={() => router.push('/premium' as any)}
-            activeOpacity={0.88}
-            style={{
-              marginBottom: 16,
-              borderRadius: 18,
-              padding: 16,
-              backgroundColor: colors.card,
-              borderWidth: 1.5,
-              borderColor: '#A855F7' + '60',
-              shadowColor: '#A855F7',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.15,
-              shadowRadius: 12,
-              elevation: 4,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-              <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#A855F720', alignItems: 'center', justifyContent: 'center' }}>
-                <Star size={22} color="#A855F7" fill="#A855F7" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontWeight: '900', color: colors.textPrimary, letterSpacing: -0.2 }}>
-                  Yoroi Premium
-                </Text>
-                <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
-                  Débloque {PREMIUM_TOOL_IDS.size} outils PRO + widget + insights
-                </Text>
-              </View>
-              <ChevronRight size={18} color="#A855F7" />
-            </View>
-            {/* Preview des icônes locked */}
-            <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
-              {Array.from(PREMIUM_TOOL_IDS).slice(0, 6).map(id => {
-                const item = ALL_ITEMS_MAP.get(id);
-                if (!item) return null;
-                const I = item.Icon;
-                return (
-                  <View key={id} style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: item.iconColor + '20', alignItems: 'center', justifyContent: 'center' }}>
-                    <I size={14} color={item.iconColor} strokeWidth={2.2} />
-                  </View>
-                );
-              })}
-              <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#A855F7' + '15', alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 11, color: '#A855F7', fontWeight: '900' }}>+{PREMIUM_TOOL_IDS.size - 6}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
+        {/* UPSELL PREMIUM — désactivé, à réactiver quand l'app sera payante */}
 
         {/* FAVORITES SECTION */}
         {!searchText && favoriteItems.length > 0 && (

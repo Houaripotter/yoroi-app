@@ -494,6 +494,8 @@ const ALLOWED_URL_SCHEMES = [
   'instagram:',
   'twitter:',
   'fb:',
+  'file:',       // fichiers locaux (vidéos sélectionnées par l'utilisateur)
+  'content:',    // URIs Android (MediaStore, fichiers partagés)
 ];
 
 /**

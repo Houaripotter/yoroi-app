@@ -11,7 +11,7 @@
  * Extracted from training-journal.tsx (143 lines)
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -21,7 +21,8 @@ import {
   Modal,
   SafeAreaView,
 } from 'react-native';
-import { ChevronLeft, X, Plus, Trash2, Timer, MapPin, Zap, Flame, TrendingUp, Wind } from 'lucide-react-native';
+import VideoLibraryModal from './VideoLibraryModal';
+import { ChevronLeft, X, Plus, Trash2, Timer, MapPin, Zap, Flame, TrendingUp, Wind, Film } from 'lucide-react-native';
 import {
   Benchmark,
   BenchmarkEntry,
@@ -56,6 +57,7 @@ export default React.memo(function BenchmarkDetailModal({
   onDelete,
 }: BenchmarkDetailModalProps) {
   const { t } = useI18n();
+  const [showVideoLibrary, setShowVideoLibrary] = useState(false);
 
   if (!benchmark) return null;
 
@@ -97,6 +99,13 @@ export default React.memo(function BenchmarkDetailModal({
           <Text style={[styles.detailTitle, { color: colors.textPrimary }]} numberOfLines={1}>
             {benchmark.name}
           </Text>
+          <TouchableOpacity
+            onPress={() => setShowVideoLibrary(true)}
+            style={[styles.detailHeaderBtn, styles.videoHeaderBtn, { backgroundColor: benchmark.color + '20' }]}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Film size={18} color={benchmark.color} />
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={() => onDelete(benchmark.id)}
             style={styles.detailHeaderBtn}
@@ -329,6 +338,14 @@ export default React.memo(function BenchmarkDetailModal({
 
           <View style={{ height: 100 }} />
         </ScrollView>
+
+        <VideoLibraryModal
+          visible={showVideoLibrary}
+          onClose={() => setShowVideoLibrary(false)}
+          benchmarkId={benchmark.id}
+          benchmarkName={benchmark.name}
+          benchmarkColor={benchmark.color}
+        />
       </SafeAreaView>
     </Modal>
   );
@@ -346,6 +363,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   detailHeaderBtn: {
+    padding: 8,
+  },
+  videoHeaderBtn: {
+    borderRadius: 20,
     padding: 8,
   },
   detailTitle: {
