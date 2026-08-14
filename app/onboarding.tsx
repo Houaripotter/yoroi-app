@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useI18n } from '@/lib/I18nContext';
-import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import type { AudioPlayer } from 'expo-audio';
 import {
   View,
   Text,
@@ -274,23 +275,29 @@ export default function OnboardingScreen() {
     }
   }, [currentPage]);
 
-  // Musique d'intro en fond
-  const introPlayer = useAudioPlayer(require('@/assets/sounds/intro.mp3'));
+  // Musique d'intro en fond — player géré manuellement pour pouvoir le remove() complètement
+  const introPlayerRef = useRef<AudioPlayer | null>(null);
   useEffect(() => {
     let active = true;
     (async () => {
       try {
         await setAudioModeAsync({ playsInSilentMode: true });
         if (active) {
-          introPlayer.loop = true;
-          introPlayer.volume = 0.5;
-          introPlayer.play();
+          const player = createAudioPlayer(require('@/assets/sounds/intro.mp3'));
+          player.loop = true;
+          player.volume = 0.5;
+          player.play();
+          introPlayerRef.current = player;
         }
       } catch {}
     })();
     return () => {
       active = false;
-      try { introPlayer.pause(); } catch {}
+      try {
+        introPlayerRef.current?.pause();
+        introPlayerRef.current?.remove(); // libère complètement le player — évite qu'iOS le relance en arrière-plan
+        introPlayerRef.current = null;
+      } catch {}
     };
   }, []);
 

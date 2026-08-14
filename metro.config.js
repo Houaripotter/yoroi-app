@@ -18,6 +18,7 @@ const reactNativePath = path.dirname(require.resolve('react-native/package.json'
 const gestureHandlerPath = path.dirname(require.resolve('react-native-gesture-handler/package.json'));
 config.watchFolders = [
   ...(config.watchFolders || []),
+  '/private/tmp/yoroi_dir',
   path.join(reactNativePath, 'src'),
   path.join(gestureHandlerPath, 'src'),
 ];

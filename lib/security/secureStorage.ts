@@ -29,7 +29,7 @@ export const secureStorage = {
       }
 
       await SecureStore.setItemAsync(safeKey, stringValue, {
-        keychainAccessible: SecureStore.WHEN_UNLOCKED,
+        keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
       });
       return true;
     } catch (error) {

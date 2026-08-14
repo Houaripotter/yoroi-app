@@ -30,6 +30,7 @@ import {
   ChevronDown,
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system/legacy';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { Dimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
@@ -195,9 +196,14 @@ export default function VideoLibraryModal({
           if (!inputTitle?.trim()) return;
           setSaving(true);
           try {
+            // Copier le fichier dans documentDirectory pour qu'il survive entre les sessions
+            const ext = asset.uri.split('.').pop()?.split('?')[0] || 'mp4';
+            const fileName = `video_${Date.now()}.${ext}`;
+            const destUri = `${FileSystem.documentDirectory}${fileName}`;
+            await FileSystem.copyAsync({ from: asset.uri, to: destUri });
             await addVideo({
               title: inputTitle.trim(),
-              uri: asset.uri,
+              uri: destUri,
               isUrl: false,
               muscleGroup: isForBenchmark || isForSport ? undefined : muscleGroup,
               sport: isForBenchmark ? undefined : (isForSport ? sport : undefined),

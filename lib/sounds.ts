@@ -17,7 +17,6 @@ const SOUND_FILES: Record<string, number> = {
   wizz: require('@/assets/sounds/wizz.mp3'),
   levelup: require('@/assets/sounds/level-up.mp3'),
   ring: require('@/assets/sounds/ring.mp3'),
-  intro: require('@/assets/sounds/intro.mp3'),
   recovery: require('@/assets/sounds/recovery.mp3'),
   fanfare: require('@/assets/sounds/fanfare-badge.mp3'),
 };

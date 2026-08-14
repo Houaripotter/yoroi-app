@@ -12,6 +12,7 @@ import { ThemeProvider, useTheme } from '@/lib/ThemeContext';
 import { BadgeProvider } from '@/lib/BadgeContext';
 import { I18nProvider } from '@/lib/I18nContext';
 import { DevModeProvider } from '@/lib/DevModeContext';
+import { PremiumProvider } from '@/context/PremiumContext';
 import { ScreenshotModeProvider } from '@/lib/ScreenshotModeContext';
 import { SportPackProvider } from '@/lib/SportPackContext';
 import FakeStatusBar from '@/components/FakeStatusBar';
@@ -626,6 +627,7 @@ export default function RootLayout() {
         <I18nProvider>
           <ThemeProvider>
             <DevModeProvider>
+              <PremiumProvider>
               <ScreenshotModeProvider>
                 <SportPackProvider>
                   <AvatarProvider>
@@ -637,6 +639,7 @@ export default function RootLayout() {
                   </AvatarProvider>
                 </SportPackProvider>
               </ScreenshotModeProvider>
+              </PremiumProvider>
             </DevModeProvider>
           </ThemeProvider>
         </I18nProvider>

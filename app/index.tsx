@@ -42,7 +42,8 @@ export default function Index() {
         }
       } catch (error) {
         logger.error("Erreur verification etat app:", error);
-        setNeedsOnboarding(true);
+        // En cas d'erreur, NE PAS rediriger vers l'onboarding — l'utilisateur a déjà onboardé.
+        // On laisse l'app ouvrir normalement pour ne pas rejouer la musique d'intro.
       } finally {
         setIsLoading(false);
       }
