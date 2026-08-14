@@ -15,6 +15,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { getUserSettings } from '@/lib/storage';
 import logger from '@/lib/security/logger';
 import { useI18n } from '@/lib/I18nContext';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 // ============================================
 // CALCULATEUR ZONES FRÉQUENCE CARDIAQUE
@@ -79,6 +80,7 @@ export default function HeartZonesScreen() {
   const isValid = age && parseInt(age) > 0 && parseInt(age) < 120;
 
   return (
+    <PremiumGate featureTitle="Zones cardiaques">
     <ScreenWrapper>
       <Header title={t('heartZones.title')} showBack />
       <ScrollView
@@ -241,6 +243,7 @@ export default function HeartZonesScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
     </ScreenWrapper>
+    </PremiumGate>
   );
 }
 

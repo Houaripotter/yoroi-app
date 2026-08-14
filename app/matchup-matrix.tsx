@@ -14,6 +14,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { winrateColor, ARCHETYPE_META, type Archetype } from '@/lib/partnerModel';
 import { lightHaptic } from '@/lib/haptics';
 import logger from '@/lib/security/logger';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 const PARTNERS_KEY = '@yoroi_sparring_partners';
 
@@ -78,6 +79,7 @@ export default function MatchupMatrixScreen() {
   const maxTotal = Math.max(1, ...partners.map(p => p.total));
 
   return (
+    <PremiumGate featureTitle="Matchup Matrix">
     <View style={[styles.wrap, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
@@ -181,6 +183,7 @@ export default function MatchupMatrixScreen() {
         </ScrollView>
       )}
     </View>
+    </PremiumGate>
   );
 }
 

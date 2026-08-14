@@ -29,6 +29,7 @@ import {
 } from 'lucide-react-native';
 import { getTrainingsByPartnerName, Training, CombatRound } from '@/lib/database';
 import logger from '@/lib/security/logger';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 // ============================================
 // TYPES
@@ -342,6 +343,7 @@ export default function SparringRankingScreen() {
   // ============================================
 
   return (
+    <PremiumGate featureTitle="Classement sparring">
     <View style={{ flex: 1, backgroundColor: colors.background }}>
 
       {/* Header */}
@@ -571,5 +573,6 @@ export default function SparringRankingScreen() {
         </ScrollView>
       )}
     </View>
+    </PremiumGate>
   );
 }

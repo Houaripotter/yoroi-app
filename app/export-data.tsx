@@ -36,6 +36,7 @@ import {
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { BlurView } from 'expo-blur';
 import logger from '@/lib/security/logger';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 import { shareExportCSV, shareFilteredTrainingsCSV } from '@/lib/csvTemplates';
 import { SPORTS } from '@/lib/sports';
 import { TextInput as RNTextInput } from 'react-native';
@@ -174,6 +175,7 @@ export default function ExportDataScreen() {
   };
 
   return (
+    <PremiumGate featureTitle="Export des donnees">
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
@@ -478,6 +480,7 @@ export default function ExportDataScreen() {
       )}
       <PopupComponent />
     </View>
+    </PremiumGate>
   );
 }
 

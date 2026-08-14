@@ -29,6 +29,7 @@ import {
 } from '@/lib/nutrition';
 import { SPACING } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 export default function NutritionPlanScreen() {
   const { t } = useI18n();
@@ -106,6 +107,7 @@ export default function NutritionPlanScreen() {
   const mealPlan = results ? getMealCalories(results.goalCalories) : [];
 
   return (
+    <PremiumGate featureTitle="Plan nutritionnel">
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scrollView}
@@ -703,6 +705,7 @@ export default function NutritionPlanScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
     </View>
+    </PremiumGate>
   );
 }
 

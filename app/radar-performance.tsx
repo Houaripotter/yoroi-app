@@ -27,6 +27,7 @@ import {
   RadarEvolution,
   RadarInsight,
 } from '@/lib/radarService';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 export default function RadarPerformanceScreen() {
   const insets = useSafeAreaInsets();
@@ -168,6 +169,7 @@ export default function RadarPerformanceScreen() {
   const trendColor = evolution && evolution.average > 5 ? '#10B981' : evolution && evolution.average < -5 ? '#EF4444' : colors.textMuted;
 
   return (
+    <PremiumGate featureTitle="Radar performance">
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
@@ -454,6 +456,7 @@ export default function RadarPerformanceScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
+    </PremiumGate>
   );
 }
 

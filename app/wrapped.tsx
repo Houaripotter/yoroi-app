@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { heavyHaptic, lightHaptic, successHaptic } from '@/lib/haptics';
 import { generateWrappedStats, type WrappedStats } from '@/lib/yoroiWrappedService';
 import logger from '@/lib/security/logger';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 const { width: W, height: H } = Dimensions.get('window');
 const STORY_DURATION = 5000; // 5s par slide
@@ -195,6 +196,7 @@ export default function WrappedScreen() {
   const contentOpacity = contentAnim;
 
   return (
+    <PremiumGate featureTitle="Yoroi Wrapped">
     <View style={styles.wrap}>
       <StatusBar barStyle="light-content" />
       <LinearGradient colors={slide.bg} style={StyleSheet.absoluteFill} />
@@ -257,6 +259,7 @@ export default function WrappedScreen() {
         </TouchableOpacity>
       )}
     </View>
+    </PremiumGate>
   );
 }
 

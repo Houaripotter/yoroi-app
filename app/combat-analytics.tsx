@@ -21,6 +21,7 @@ import { getTrainings } from '@/lib/database';
 import type { Training, CombatRound } from '@/lib/database';
 import { Users, Zap, Trophy, TrendingUp, Shield, Target, ChevronRight, Activity, BookOpen, MapPin, BarChart2 } from 'lucide-react-native';
 import { getMethodDisplayName } from '@/components/BJJBodyMap';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 // ============================================
 // TYPES
@@ -309,6 +310,7 @@ export default function CombatAnalyticsScreen() {
   const isEmpty = partnerStats.length === 0 && techniqueStats.length === 0;
 
   return (
+    <PremiumGate featureTitle="Analyse de combat">
     <View style={[styles.root, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
       <Header title={t('combatAnalytics.title')} showBack />
       <ScrollView
@@ -615,6 +617,7 @@ export default function CombatAnalyticsScreen() {
         )}
       </ScrollView>
     </View>
+    </PremiumGate>
   );
 }
 

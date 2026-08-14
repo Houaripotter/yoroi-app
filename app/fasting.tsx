@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useI18n } from '@/lib/I18nContext';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 import {
   Clock,
@@ -351,6 +352,7 @@ export default function FastingScreen() {
   }
 
   return (
+    <PremiumGate featureTitle="Jeune intermittent">
     <ScreenWrapper noPadding>
       <Header title={t('fasting.title')} showBack />
 
@@ -811,6 +813,7 @@ export default function FastingScreen() {
       </Modal>
       <PopupComponent />
     </ScreenWrapper>
+    </PremiumGate>
   );
 }
 

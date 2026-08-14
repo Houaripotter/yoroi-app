@@ -41,6 +41,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS, GRADIENTS, BODY_COMP_COLORS } from '@/constants/design';
 import logger from '@/lib/security/logger';
 import { useI18n } from '@/lib/I18nContext';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 // ============================================
 // COMPOSITION CORPORELLE - IMPÉDANCEMÈTRE
@@ -341,6 +342,7 @@ export default function BodyCompositionScreen() {
   const musclePercent = weightNum > 0 ? (muscleNum / weightNum) * 100 : 0;
 
   return (
+    <PremiumGate featureTitle="Composition corporelle">
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -513,6 +515,7 @@ export default function BodyCompositionScreen() {
       <PopupComponent />
     </View>
     </KeyboardAvoidingView>
+    </PremiumGate>
   );
 }
 

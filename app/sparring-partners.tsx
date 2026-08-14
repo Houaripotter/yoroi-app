@@ -63,6 +63,7 @@ import {
 import Svg, { Rect, Text as SvgText, Line } from 'react-native-svg';
 import { getTrainingsByPartnerName, Training, CombatRound } from '@/lib/database';
 import logger from '@/lib/security/logger';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 import * as FileSystem from 'expo-file-system/legacy';
 import { scheduleSparringReminders, requestNotificationPermissions } from '@/lib/sparringNotifications';
 
@@ -2320,6 +2321,7 @@ export default function SparringPartnersScreen() {
   }
 
   return (
+    <PremiumGate featureTitle="Partenaires sparring">
     <View style={{ flex: 1, backgroundColor: isDark ? colors.background : '#F2F2F7' }}>
       {/* Header */}
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -2476,5 +2478,6 @@ export default function SparringPartnersScreen() {
         })}
       </ScrollView>
     </View>
+    </PremiumGate>
   );
 }

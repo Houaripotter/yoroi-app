@@ -20,6 +20,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Photo, getPhotosFromStorage } from '@/lib/storage';
 import logger from '@/lib/security/logger';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 // ============================================
 // MA TRANSFORMATION - COMPARAISON AVANT/APRES
@@ -206,6 +207,7 @@ export default function TransformationScreen() {
   }
 
   return (
+    <PremiumGate featureTitle="Transformation photos">
     <ScreenWrapper noPadding>
       <Header
         title={t('transformation.title')}
@@ -505,6 +507,7 @@ export default function TransformationScreen() {
       </ScrollView>
       <PopupComponent />
     </ScreenWrapper>
+    </PremiumGate>
   );
 }
 

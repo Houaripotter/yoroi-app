@@ -19,6 +19,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { ChevronLeft, Calendar, Zap, Target, TrendingUp, TrendingDown, Minus as MinusIcon } from 'lucide-react-native';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 // ============================================
 // TYPES
@@ -215,6 +216,7 @@ export default function CompetitionCampScreen() {
   };
 
   return (
+    <PremiumGate featureTitle="Camp de competition">
     <View style={[styles.root, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
@@ -339,6 +341,7 @@ export default function CompetitionCampScreen() {
         )}
       </ScrollView>
     </View>
+    </PremiumGate>
   );
 }
 

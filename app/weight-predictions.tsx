@@ -7,6 +7,7 @@ import { useI18n } from '@/lib/I18nContext';
 import { ArrowLeft, TrendingUp, BookOpen, ExternalLink, Target, Calendar } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 // ============================================
 // PAGE PRÉDICTION DE POIDS - Études Scientifiques
@@ -30,6 +31,7 @@ export default function WeightPredictionsScreen() {
   };
 
   return (
+    <PremiumGate featureTitle="Predictions de poids">
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
@@ -246,6 +248,7 @@ export default function WeightPredictionsScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
+    </PremiumGate>
   );
 }
 
