@@ -174,7 +174,7 @@
         "android.permission.health.WRITE_SLEEP",
         "android.permission.health.WRITE_EXERCISE"
       ],
-      "versionCode": 48
+      "versionCode": 49
     },
     "extra": {
       "router": {},
