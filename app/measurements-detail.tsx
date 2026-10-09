@@ -19,12 +19,18 @@ import { ArrowLeft, Ruler, TrendingDown, TrendingUp, Minus } from 'lucide-react-
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
+import { parseISO } from 'date-fns';
+
+// Parse date sûr : 'yyyy-MM-dd' en local (évite le jour précédent à l'ouest d'UTC)
+const toLocalDate = (v: any): Date =>
+  typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? parseISO(v) : new Date(v);
 import { getMeasurements, Measurement } from '@/lib/database';
 // 🔒 SÉCURITÉ: Protection contre les screenshots
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { BlurView } from 'expo-blur';
 import logger from '@/lib/security/logger';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 type Period = '30d' | '90d' | '6m' | 'all';
 type MeasurementType = 'waist' | 'chest' | 'arms' | 'thighs' | 'hips';
@@ -82,8 +88,8 @@ export default function MeasurementsDetailScreen() {
     const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
     return measurements
-      .filter(m => new Date(m.date) >= cutoff)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      .filter(m => toLocalDate(m.date) >= cutoff)
+      .sort((a, b) => toLocalDate(a.date).getTime() - toLocalDate(b.date).getTime());
   };
 
   const filteredMeasurements = getFilteredData();
@@ -93,7 +99,8 @@ export default function MeasurementsDetailScreen() {
     return filteredMeasurements
       .filter(m => m[type] != null)
       .map(m => ({
-        date: new Date(m.date).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' }),
+        // Le graphique lit `label` (pas `date`)
+        label: toLocalDate(m.date).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' }),
         value: m[type] as number,
       }));
   };
@@ -120,6 +127,7 @@ export default function MeasurementsDetailScreen() {
   const hipsStats = getStats('hips');
 
   return (
+    <PremiumGate featureTitle="Courbes des mensurations">
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
@@ -353,6 +361,7 @@ export default function MeasurementsDetailScreen() {
         />
       )}
     </View>
+    </PremiumGate>
   );
 }
 

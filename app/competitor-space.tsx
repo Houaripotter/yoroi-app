@@ -22,6 +22,7 @@ import {
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 // ============================================
 // ESPACE COMPÉTITEUR - Page dédiée
@@ -99,6 +100,7 @@ export default function CompetitorSpaceScreen() {
   const { colors, isDark } = useTheme();
 
   return (
+    <PremiumGate featureTitle="Espace Compétiteur">
     <ScreenWrapper>
       <ScrollView
         style={styles.container}
@@ -181,6 +183,7 @@ export default function CompetitorSpaceScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
     </ScreenWrapper>
+    </PremiumGate>
   );
 }
 

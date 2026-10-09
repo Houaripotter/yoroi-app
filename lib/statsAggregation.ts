@@ -90,7 +90,8 @@ export const aggregateWeightData = async (period: Period): Promise<AggregatedSta
     const days = getPeriodDays(period);
     // Cap 1000 lignes : largement suffisant pour calculer min/max/avg/trend
     // (avant : full-scan jusqu'à 6699 lignes, freeze)
-    const filtered = await getWeights(days, 1000);
+    // Exclut les entrées composition seule (poids 0)
+    const filtered = (await getWeights(days, 1000))?.filter(w => (w.weight ?? 0) > 0);
 
     if (!filtered || filtered.length === 0) return null;
 

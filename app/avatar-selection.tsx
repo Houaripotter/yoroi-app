@@ -581,7 +581,7 @@ export default function AvatarSelectionScreen() {
                 </View>
 
                 <Text style={[styles.progressInfo, { color: colors.textSecondary }]}>
-                  {progress.daysToNext} jours restants pour atteindre{' '}
+                  {progress.daysToNext} jour{progress.daysToNext > 1 ? 's' : ''} restant{progress.daysToNext > 1 ? 's' : ''} pour atteindre{' '}
                   {levelToRankName(progress.nextLevel)}
                 </Text>
               </>

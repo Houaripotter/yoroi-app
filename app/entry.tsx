@@ -128,7 +128,8 @@ export default function EntryScreen() {
     try {
       const measurements = await getAllMeasurements();
       if (measurements.length > 0) {
-        setLastWeight(measurements[measurements.length - 1].weight);
+        // getAllMeasurements trie du plus récent au plus ancien
+        setLastWeight(measurements[0].weight);
       }
       const settings = await getUserSettings();
       if (settings?.weight_goal) {
@@ -209,8 +210,9 @@ export default function EntryScreen() {
 
       try {
         const allWeights = await getAllMeasurements();
+        // Tri du plus récent au plus ancien : [0] = pesée qui vient d'être ajoutée, [1] = précédente
         const previousWeight = allWeights.length > 1
-          ? allWeights[allWeights.length - 2]?.weight
+          ? allWeights[1]?.weight
           : undefined;
         await updateWidget(weightData.weight, previousWeight, date);
       } catch (widgetError) {

@@ -13,10 +13,11 @@ interface TrendLineChartProps {
   unit: string;
   colors: any;
   goal?: number;
+  decimals?: number; // 0 = entier, 1 = 1 décimale (défaut), etc.
   onPress?: () => void;
 }
 
-export function TrendLineChart({ title, data, color, unit, colors, goal, onPress }: TrendLineChartProps) {
+export function TrendLineChart({ title, data, color, unit, colors, goal, decimals = 1, onPress }: TrendLineChartProps) {
   const { width: screenWidth } = useWindowDimensions();
   if (!data || data.length === 0) {
     return (
@@ -45,6 +46,9 @@ export function TrendLineChart({ title, data, color, unit, colors, goal, onPress
   const avg = values.reduce((a, b) => a + b, 0) / values.length;
   const change = current - first;
   const changePercent = ((change / first) * 100);
+
+  // Formater un nombre selon le nombre de décimales souhaité
+  const fmt = (n: number) => decimals === 0 ? Math.round(n).toString() : n.toFixed(decimals);
 
   // Formater les données pour SmoothLineChart avec dates lisibles
   const chartData = data.map(item => {
@@ -84,7 +88,7 @@ export function TrendLineChart({ title, data, color, unit, colors, goal, onPress
           <View style={styles.stat}>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>Actuel</Text>
             <Text style={[styles.statValue, { color: colors.textSecondary }]}>
-              {current.toFixed(1)} {unit}
+              {fmt(current)} {unit}
             </Text>
           </View>
           <View style={styles.stat}>
@@ -102,7 +106,7 @@ export function TrendLineChart({ title, data, color, unit, colors, goal, onPress
                 ]}
               >
                 {change >= 0 ? '+' : ''}
-                {change.toFixed(1)} {unit}
+                {fmt(Math.abs(change))} {unit}
               </Text>
             </View>
           </View>
@@ -131,19 +135,19 @@ export function TrendLineChart({ title, data, color, unit, colors, goal, onPress
         <View style={styles.footerStat}>
           <Text style={[styles.footerLabel, { color: colors.textMuted }]}>Min</Text>
           <Text style={[styles.footerValue, { color: colors.textSecondary }]}>
-            {min.toFixed(1)} {unit}
+            {fmt(min)} {unit}
           </Text>
         </View>
         <View style={styles.footerStat}>
           <Text style={[styles.footerLabel, { color: colors.textMuted }]}>Moy</Text>
           <Text style={[styles.footerValue, { color: colors.textSecondary }]}>
-            {avg.toFixed(1)} {unit}
+            {fmt(avg)} {unit}
           </Text>
         </View>
         <View style={styles.footerStat}>
           <Text style={[styles.footerLabel, { color: colors.textMuted }]}>Max</Text>
           <Text style={[styles.footerValue, { color: colors.textSecondary }]}>
-            {max.toFixed(1)} {unit}
+            {fmt(max)} {unit}
           </Text>
         </View>
       </View>

@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { ScrollView, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { StatsHeader, Period } from '../StatsHeader';
@@ -12,6 +12,7 @@ import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
+import { SkeletonGrid } from '../SkeletonCard';
 import { getLatestMeasurement, getMeasurements } from '@/lib/database';
 import { Ruler } from 'lucide-react-native';
 import { format } from 'date-fns';
@@ -26,7 +27,7 @@ export const MensurationsPage: React.FC = () => {
   const { t, language } = useI18n();
   const { handleScroll: onScrollContext } = useScrollContext();
   const dateLocale = language === 'fr' ? fr : enUS;
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('tout');
   const [latestMeasurement, setLatestMeasurement] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [allMeasurementsData, setAllMeasurementsData] = useState<any[]>([]);
@@ -138,8 +139,9 @@ export const MensurationsPage: React.FC = () => {
   const getModalData = () => {
     if (!selectedMetric || !allMeasurementsData.length) return [];
 
+    // Règle 3 : plus récent à GAUCHE → tri DESC
     const sortedMeasurements = [...allMeasurementsData].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
 
     // Filtrer les mesures qui ont une valeur pour ce champ
@@ -149,14 +151,15 @@ export const MensurationsPage: React.FC = () => {
 
     return filteredMeasurements.map((m) => ({
       value: m[selectedMetric.key],
-      label: format(new Date(m.date), 'd MMM', { locale: dateLocale }),
+      // Règle 4 : deux lignes (jour+mois / année)
+      label: `${format(new Date(m.date), 'd MMM', { locale: dateLocale })}\n${format(new Date(m.date), 'yyyy')}`,
       date: m.date,
     }));
   };
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ padding: 16 }}>
         <StatsHeader
           title={t('statsPages.measurements.title')}
           description={t('statsPages.measurements.description')}
@@ -164,10 +167,8 @@ export const MensurationsPage: React.FC = () => {
           onPeriodChange={setSelectedPeriod}
           showPeriodSelector={true}
         />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-        </View>
-      </View>
+        <SkeletonGrid count={4} cardHeight={160} />
+      </ScrollView>
     );
   };
 
@@ -603,12 +604,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 250,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 100,
   },
   grid: {
     flexDirection: 'row',

@@ -298,7 +298,7 @@ export default function HealthConnectScreen() {
               >
                 <RefreshCw 
                   size={16} 
-                  color="#FFFFFF" 
+                  color={colors.textOnAccent} 
                   style={isSyncing ? { transform: [{ rotate: '45deg' }] } : undefined}
                 />
               </TouchableOpacity>
@@ -789,7 +789,7 @@ export default function HealthConnectScreen() {
             {
               brand: 'Apple Watch',
               emoji: '\u2328\uFE0F',
-              color: '#333333',
+              color: '#8E8E93', // visible en sombre
               steps: [
                 'Automatique ! Les données sont déjà dans Apple Santé.',
                 'Connecte YOROI à Apple Santé ci-dessus.',
@@ -900,7 +900,7 @@ export default function HealthConnectScreen() {
             >
               <View style={styles.watchBrandHeader}>
                 <View style={[styles.watchBrandDot, { backgroundColor: watch.color }]}>
-                  <Text style={[styles.watchBrandEmoji, { color: colors.textOnAccent }]}>{watch.emoji}</Text>
+                  <Text style={[styles.watchBrandEmoji, { color: '#FFFFFF' }]}>{watch.emoji}</Text>
                 </View>
                 <Text style={[styles.watchBrandName, { color: colors.textPrimary }]}>
                   {watch.brand}

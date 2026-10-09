@@ -41,6 +41,10 @@ import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedba
 import { getAllWeights, deleteWeight, updateWeight, deleteWeightsBySource, addWeight, Weight } from '@/lib/database';
 import { useCustomPopup } from '@/components/CustomPopup';
 import logger from '@/lib/security/logger';
+import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
+import { usePremium } from '@/context/PremiumContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Lock } from 'lucide-react-native';
 
 // ============================================
 // SOURCES
@@ -354,6 +358,7 @@ export default function WeightManagerScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { isPremium } = usePremium();
 
   const [weights, setWeights] = useState<Weight[]>([]);
   const [loading, setLoading] = useState(true);
@@ -517,12 +522,18 @@ export default function WeightManagerScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.loader}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+        <View style={{ flex: 1, padding: 16 }}>
+          <SkeletonCard height={56} width="100%" marginBottom={12} />
+          <SkeletonCard height={64} width="100%" marginBottom={8} />
+          <SkeletonCard height={64} width="100%" marginBottom={8} />
+          <SkeletonCard height={64} width="100%" marginBottom={8} />
+          <SkeletonCard height={64} width="100%" marginBottom={8} />
+          <SkeletonCard height={64} width="100%" marginBottom={8} />
+          <SkeletonMessage />
         </View>
       ) : (
         <FlatList
-          data={filtered}
+          data={isPremium ? filtered : filtered.slice(0, 2)}
           keyExtractor={(item) => String(item.id ?? item.date)}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
@@ -604,6 +615,42 @@ export default function WeightManagerScreen() {
               <Text style={[styles.emptyText, { color: subColor }]}>Aucune pesée</Text>
             </View>
           }
+          ListFooterComponent={
+            !isPremium && filtered.length > 2 ? (
+              <View style={{ position: 'relative' }}>
+                {filtered.slice(2, 6).map((item, index) => (
+                  <View key={String(item.id ?? item.date) + '_locked'} style={{ opacity: 0.4, position: 'relative' }}>
+                    <WeightRow
+                      item={item}
+                      prev={filtered[2 + index + 1] ?? null}
+                      textColor={textColor}
+                      subColor={subColor}
+                      card={card}
+                      borderColor={borderColor}
+                      onEdit={() => router.push('/paywall' as never)}
+                      onDelete={() => router.push('/paywall' as never)}
+                    />
+                    <View style={{ position: 'absolute', right: 16, top: 0, bottom: 0, justifyContent: 'center' }}>
+                      <Lock size={13} color="#9CA3AF" strokeWidth={2} />
+                    </View>
+                  </View>
+                ))}
+                <LinearGradient
+                  colors={['transparent', bg]}
+                  style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 100 }}
+                  pointerEvents="none"
+                />
+                <TouchableOpacity
+                  style={[styles.lockCta, { backgroundColor: '#3B82F6' }]}
+                  onPress={() => router.push('/paywall' as never)}
+                  activeOpacity={0.85}
+                >
+                  <Lock size={14} color="#FFFFFF" strokeWidth={2.5} />
+                  <Text style={styles.lockCtaText}>Voir tout l'historique</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null
+          }
         />
       )}
 
@@ -670,4 +717,10 @@ const styles = StyleSheet.create({
   listHeaderText: { fontSize: 11, fontStyle: 'italic' },
   empty: { alignItems: 'center', paddingTop: 80, gap: 12 },
   emptyText: { fontSize: 16 },
+  lockCta: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    marginHorizontal: 16, marginVertical: 12, paddingVertical: 14,
+    borderRadius: 14,
+  },
+  lockCtaText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
 });

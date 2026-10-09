@@ -5,7 +5,7 @@
 // - Refresh HealthKit en arrière-plan sans bloquer l'affichage
 // ============================================
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   InteractionManager,
   unstable_batchedUpdates,
@@ -20,6 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { healthConnect } from '@/lib/healthConnect';
 import { isHealthKitAvailable } from '@/lib/healthKit.wrapper';
 import { getTrainings } from '@/lib/database';
+import { getSleepEntries } from '@/lib/sleepService';
 import { logger } from '@/lib/security/logger';
 import { safeOpenURL } from '@/lib/security/validators';
 import { useI18n } from '@/lib/I18nContext';
@@ -115,7 +116,7 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [refreshing, setRefreshing] = useState(false);
   const [tabLoading, setTabLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('tout');
   const [healthData, setHealthData] = useState<any | null>(null);
   const [todaySteps, setTodaySteps] = useState(0);
   const [todayCalories, setTodayCalories] = useState(0);
@@ -137,7 +138,7 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const loadIdRef = useRef(0);
   const isHealthKitConnectedRef = useRef(false);
   const loadingRef = useRef(true);
-  const selectedPeriodRef = useRef<Period>('30j');
+  const selectedPeriodRef = useRef<Period>('tout');
   const retryAfterSettingsRef = useRef(false);
   // Empêche les double-chargements concurrents par onglet
   const loadingTabsRef = useRef<Set<string>>(new Set());
@@ -337,48 +338,94 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const period = selectedPeriodRef.current;
     const daysMap: Record<string, number> = {
       '7j': 7, '14j': 14, '30j': 30, '60j': 60, '90j': 90,
-      '6m': 180, '9m': 270, '1a': 365, '2a': 730, 'tout': 3650, 'custom': 3650,
+      '6m': 180, '9m': 270, '1a': 365, '2a': 730, 'tout': 1095, 'custom': 730,
     };
     const days = daysMap[period] ?? 30;
-    // Timeout équilibré : 10s max. 5s était trop court — certains iPhones mettent
-    // 6-8s pour la première sync HealthKit → le user voyait des données incomplètes.
-    const timeoutMs = 10000;
+    // Timeout adapté : plus long pour les grandes périodes (1 an = ~20s sur iPhone lent)
+    const timeoutMs = days <= 90 ? 10000 : days <= 180 ? 15000 : 25000;
     const currentLoadId = ++loadIdRef.current;
 
     setTabLoading(true);
     try {
       switch (tab) {
         case 'sommeil': {
-          const [sleepHistory, sleepComparison] = await withTimeout(
-            Promise.all([
-              healthConnect.getSleepHistory?.(days) || Promise.resolve([]),
-              healthConnect.getSleepComparisonData?.(days) || Promise.resolve({}),
-            ]),
-            timeoutMs, [[], {}]
-          );
+          // ── SQLite (durée/liste) + HealthKit (phases) en parallèle ──
+          const fromDate = new Date();
+          fromDate.setDate(fromDate.getDate() - days);
+          fromDate.setHours(0, 0, 0, 0);
+          const fromStr = fromDate.toISOString().split('T')[0];
 
-          const validSleep = Array.isArray(sleepHistory) ? sleepHistory.filter((s: any) => {
+          const [allEntries, hkSleepRaw, sleepComparison] = await Promise.all([
+            getSleepEntries(),
+            // HealthKit pour les phases (Apple Watch) – timeout adapté
+            isHealthKitConnectedRef.current
+              ? withTimeout(
+                  (healthConnect.getSleepHistory?.(days) as Promise<any[]>) || Promise.resolve([]),
+                  timeoutMs, []
+                )
+              : Promise.resolve([]),
+            withTimeout(
+              healthConnect.getSleepComparisonData?.(days) || Promise.resolve({}),
+              timeoutMs, {}
+            ),
+          ]);
+
+          // SQLite → liste de base (durée, bedTime, wakeTime)
+          const sleepHistory = allEntries
+            .filter((s: any) => s.date >= fromStr)
+            .map((s: any) => ({
+              ...s,
+              total: s.duration,
+              deep: s.phases?.deep || s.deep || 0,
+              rem: s.phases?.rem || s.rem || 0,
+              core: s.phases?.core || s.core || 0,
+              awake: s.phases?.awake || s.awake || 0,
+            }));
+
+          const validSleep = sleepHistory.filter((s: any) => {
             const h = (s.duration || s.total || 0) / 60;
-            return h >= 3 && h <= 16;
-          }) : [];
+            return h >= 1 && h <= 16; // 1h min (was 3h — rejetait les nuits courtes)
+          });
+
+          // HealthKit → phases détaillées (Apple Watch) ; fallback SQLite si timeout
+          const hkFiltered = Array.isArray(hkSleepRaw)
+            ? (hkSleepRaw as any[]).filter((s: any) => {
+                if (!s?.date || s.date < fromStr) return false;
+                const h = (s.total || s.duration || 0) / 60;
+                return h >= 1 && h <= 16; // 1h min (was 3h)
+              })
+            : [];
+          const rawSleepForPhases = hkFiltered.length > 0 ? hkFiltered : validSleep;
+
+          // Sync HealthKit en arrière-plan pour corriger les heures stockées en SQLite
+          if (isHealthKitConnectedRef.current && healthConnect.syncSleepHistory) {
+            healthConnect.syncSleepHistory(Math.min(days, 730)).catch((e: any) =>
+              logger.warn('[StatsHealth] Sync sommeil background:', e)
+            );
+          }
 
           let newSleepPhases = EMPTY_SLEEP;
-          if (validSleep.length > 0) {
-            const withPhases = validSleep.filter((s: any) => s.deep > 0 || s.rem > 0 || s.core > 0);
+          const sourceForPhases = rawSleepForPhases.length > 0 ? rawSleepForPhases : validSleep;
+          if (sourceForPhases.length > 0) {
+            const withPhases = sourceForPhases.filter((s: any) => s.deep > 0 || s.rem > 0 || s.core > 0);
             const count = withPhases.length || 1;
             newSleepPhases = {
               avgAwake: Math.round(withPhases.reduce((s: number, x: any) => s + (x.awake || 0), 0) / count),
               avgRem: Math.round(withPhases.reduce((s: number, x: any) => s + (x.rem || 0), 0) / count),
               avgCore: Math.round(withPhases.reduce((s: number, x: any) => s + (x.core || 0), 0) / count),
               avgDeep: Math.round(withPhases.reduce((s: number, x: any) => s + (x.deep || 0), 0) / count),
-              totalSleepMin: Math.round(validSleep.reduce((s: number, x: any) => s + (x.total || x.duration || 0), 0) / validSleep.length),
+              totalSleepMin: Math.round(sourceForPhases.reduce((s: number, x: any) => s + (x.total || x.duration || 0), 0) / sourceForPhases.length),
               nightsCount: validSleep.length,
             };
           }
-          const sleepVH = validSleep.map((s: any) => ({ date: s.date, value: (s.duration || s.total || 0) / 60 })).reverse();
+          // validSleep est DESC → slice(0, days) = nuits de la période → reverse() = ASC pour VitalitePage
+          const sleepVH = validSleep
+            .slice(0, days)
+            .map((s: any) => ({ date: s.date, value: (s.duration || s.total || 0) / 60 }))
+            .reverse();
 
           unstable_batchedUpdates(() => {
-            setRawSleepHistory(validSleep);
+            setRawSleepHistory(rawSleepForPhases.length > 0 ? rawSleepForPhases : validSleep);
             setSleepPhasesData(newSleepPhases);
             if (sleepComparison) setSleepComparisonData(sleepComparison);
             setVitalHistory(prev => ({ ...prev, sleep: sleepVH }));
@@ -485,6 +532,9 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   // -------------------------------------------------------
   const checkHealthKitConnection = useCallback(async () => {
     try {
+      // Charger le statut sauvegardé AVANT de le lire (sinon il vaut toujours "non connecté"
+      // et on redemandait les permissions Santé à chaque ouverture)
+      if (!(healthConnect as any).isInitialized) await healthConnect.initialize().catch(() => false);
       const syncStatus = healthConnect.getSyncStatus();
       let isConnected = syncStatus.isConnected;
       const { failureReason } = syncStatus;
@@ -492,7 +542,9 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
         failureReason === 'MODULE_NOT_LOADED' ||
         (failureReason === 'DEVICE_NOT_SUPPORTED' && !isHealthKitAvailable);
 
-      if (!isConnected && !isDefinitiveFailure && isHealthKitAvailable) {
+      // Reconnexion silencieuse uniquement pour les utilisateurs déjà connectés auparavant.
+      // Ceux qui ont passé l'étape Santé ne doivent pas recevoir la demande de permission.
+      if (!isConnected && syncStatus.lastSync && !isDefinitiveFailure && isHealthKitAvailable) {
         try {
           const success = await healthConnect.connect();
           if (success) isConnected = true;
@@ -700,14 +752,21 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [loadHealthData, t]);
 
-  const value: StatsHealthContextValue = {
+  const value: StatsHealthContextValue = useMemo(() => ({
     isHealthKitConnected, loading, refreshing, tabLoading, connecting,
     selectedPeriod, setSelectedPeriod,
     healthData, todaySteps, todayCalories, todayDistance, todayExerciseMinutes,
     todayStandHours, todayFloors, todayMindfulMinutes, todayHydration, todayBodyTemp, todayBloodGlucose,
     vitalHistory, sleepPhasesData, sleepComparisonData, rawSleepHistory,
     loadedTabs, requestTabData, handleRefresh, handleConnectHealthKit,
-  };
+  }), [
+    isHealthKitConnected, loading, refreshing, tabLoading, connecting,
+    selectedPeriod, setSelectedPeriod,
+    healthData, todaySteps, todayCalories, todayDistance, todayExerciseMinutes,
+    todayStandHours, todayFloors, todayMindfulMinutes, todayHydration, todayBodyTemp, todayBloodGlucose,
+    vitalHistory, sleepPhasesData, sleepComparisonData, rawSleepHistory,
+    loadedTabs, requestTabData, handleRefresh, handleConnectHealthKit,
+  ]);
 
   return (
     <StatsHealthContext.Provider value={value}>

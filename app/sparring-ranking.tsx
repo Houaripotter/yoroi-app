@@ -11,7 +11,6 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -30,6 +29,7 @@ import {
 import { getTrainingsByPartnerName, Training, CombatRound } from '@/lib/database';
 import logger from '@/lib/security/logger';
 import { PremiumGate } from '@/components/premium/PremiumGate';
+import { SkeletonGrid } from '@/components/stats/SkeletonCard';
 
 // ============================================
 // TYPES
@@ -130,7 +130,7 @@ const computeTrend = (trainings: Training[], partnerName: string): { trend: 'up'
   }
 
   if (sessionWinRates.length < 2) {
-    return { trend: 'stable', progressionScore: sessionWinRates[0] ?? 0 };
+    return { trend: 'stable', progressionScore: Math.round((sessionWinRates[0] ?? 0) * 100) }; // échelle 0-100
   }
 
   const recent = sessionWinRates.slice(-3);
@@ -410,11 +410,8 @@ export default function SparringRankingScreen() {
 
       {/* Content */}
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={ACCENT_COLOR} />
-          <Text style={{ color: colors.textSecondary, marginTop: 12, fontSize: 14 }}>
-            Calcul du classement…
-          </Text>
+        <View style={{ flex: 1, padding: 16 }}>
+          <SkeletonGrid count={5} cardHeight={120} />
         </View>
       ) : sorted.length === 0 ? (
         /* Empty State */

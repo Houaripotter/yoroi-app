@@ -367,6 +367,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - PurchasesHybridCommon (18.30.0):
+    - RevenueCat (= 5.83.1)
   - RCTDeprecation (0.83.4)
   - RCTRequired (0.83.4)
   - RCTSwiftUI (0.83.4)
@@ -2374,6 +2376,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RevenueCat (5.83.1)
   - RNCAsyncStorage (2.2.0):
     - hermes-engine
     - RCTRequired
@@ -2440,6 +2443,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNPurchases (10.7.1):
+    - PurchasesHybridCommon (= 18.30.0)
+    - React-Core
   - RNReanimated (4.2.1):
     - hermes-engine
     - RCTRequired
@@ -2832,6 +2838,7 @@ DEPENDENCIES:
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
+  - RNPurchases (from `../node_modules/react-native-purchases`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
@@ -2844,6 +2851,8 @@ SPEC REPOS:
     - libdav1d
     - libwebp
     - lottie-ios
+    - PurchasesHybridCommon
+    - RevenueCat
     - SDWebImage
     - SDWebImageAVIFCoder
     - SDWebImageSVGCoder
@@ -3121,6 +3130,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/datetimepicker"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
+  RNPurchases:
+    :path: "../node_modules/react-native-purchases"
   RNReanimated:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
@@ -3185,13 +3196,14 @@ SPEC CHECKSUMS:
   ExpoWebBrowser: f88a3ba50a025b673236a46d2654a49b985953d6
   EXUpdatesInterface: 4c11f4d1594526258f14d09817dc407acbf24e3b
   FBLazyVector: 061f518bbd81677ed8a8317e2ae60b8779495808
-  hermes-engine: ffd4d41e0b13b1281436e6b7a7d13141a22b9913
+  hermes-engine: f543119d15d83a6ea811bcd009da2692d70ea2a9
   libavif: 5f8e715bea24debec477006f21ef9e95432e254d
   libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   lottie-ios: 8f959969761e9c45d70353667d00af0e5b9cadb3
   lottie-react-native: 6a080b2f109ef611c75c503a33ebb8ea75db0c91
   NitroModules: 4623499842af916a6cb462950b024a47eef7d6ea
+  PurchasesHybridCommon: 6a2230d42f14de597e3f6a0633938992c2442133
   RCTDeprecation: 5045f20b2cc1239bf422764004338c720684a22f
   RCTRequired: b6b9724225dd780ac2989d2e575d5513c50fe04b
   RCTSwiftUI: 395b65655229fa2006415207adcfcb6e35dc78ed
@@ -3268,9 +3280,11 @@ SPEC CHECKSUMS:
   ReactCommon: c6e81cc1ae185fa84863f3ea1d58caac4be741d7
   ReactNativeDependencies: c9d740c641a3a75bdb388f66db93018e4061e2b1
   ReactNativeHealthkit: c1106ec34bde52359639f109fb49edcfcfbf3ec1
+  RevenueCat: 9a06074a6aebf09f749c19a73a96f0870ad477e6
   RNCAsyncStorage: 3a4f5e2777dae1688b781a487923a08569e27fe4
   RNDateTimePicker: 9c0a849bbe1c256f0854fea255734b715f5ea876
   RNGestureHandler: 0ea8153746a92b3744d4eaadade647debedf646e
+  RNPurchases: d756a69d648da879f7d6311a57cf7046a818c705
   RNReanimated: 86e5991396f1aa514db90d6c79d4c3e37a37bb10
   RNScreens: 02e62f995ceb94ea465864b3bf4d4767b87f0362
   RNSVG: 0bd149b873018bc6e0e3321e2f6435bdba294460
@@ -3283,6 +3297,6 @@ SPEC CHECKSUMS:
   Yoga: acd565934addf7423687593ec490bd4491b2a802
   ZXingObjC: 8898711ab495761b2dbbdec76d90164a6d7e14c5
 
-PODFILE CHECKSUM: ff68b2fc6113727a009772b74c5506389d5cd0cd
+PODFILE CHECKSUM: ba1f9bfb8d1ee5c748c0adfc7ec772fc6a3fc72b
 
 COCOAPODS: 1.16.2

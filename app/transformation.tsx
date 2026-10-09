@@ -6,10 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
   useWindowDimensions,
   DeviceEventEmitter,
 } from 'react-native';
+import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { Camera, ChevronRight, RefreshCw, ArrowRight, TrendingDown, TrendingUp, Calendar, Zap, Target, Award } from 'lucide-react-native';
@@ -196,11 +196,11 @@ export default function TransformationScreen() {
     return (
       <ScreenWrapper>
         <Header title={t('transformation.title')} showBack />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.gold} />
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            {t('common.loading')}
-          </Text>
+        <View style={{ padding: 16, gap: 12 }}>
+          <SkeletonCard height={320} width="100%" />
+          <SkeletonCard height={100} width="100%" />
+          <SkeletonCard height={100} width="100%" />
+          <SkeletonMessage />
         </View>
       </ScreenWrapper>
     );

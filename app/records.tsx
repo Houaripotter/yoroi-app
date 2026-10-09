@@ -42,6 +42,9 @@ import { successHaptic } from '@/lib/haptics';
 import { playSuccessSound } from '@/lib/soundManager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
+import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
+import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
+
 
 const RECORDS_CACHE_KEY = '@yoroi_records_cache_v1';
 const RECORDS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
@@ -224,23 +227,12 @@ export default function RecordsScreen() {
     </View>
   );
 
-  if (isLoading) {
-    return (
-      <ScreenWrapper noPadding>
-        <Header title={t('screens.records.title')} showBack />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-        </View>
-      </ScreenWrapper>
-    );
-  }
-
   // Empty state: aucune donnée
-  if (!records || (
+  if (!isLoading && (!records || (
     !records.lowestWeight &&
     !records.longestStreak &&
     records.totalWorkouts === 0
-  )) {
+  ))) {
     return (
       <ScreenWrapper noPadding>
         <Header title={t('screens.records.title')} showBack />
@@ -288,6 +280,17 @@ export default function RecordsScreen() {
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.accent} colors={[colors.accent]} />
         }
       >
+        {/* Skeleton chargement initial */}
+        {isLoading && (
+          <>
+            <SkeletonCard height={120} width="100%" marginBottom={16} />
+            <SkeletonCard height={120} width="100%" marginBottom={16} />
+            <SkeletonCard height={120} width="100%" marginBottom={16} />
+            <SkeletonCard height={120} width="100%" marginBottom={16} />
+            <SkeletonMessage />
+          </>
+        )}
+
         {/* HEADER */}
         <View style={styles.header}>
           <View style={[styles.trophyContainer, { backgroundColor: colors.goldMuted }]}>
@@ -413,113 +416,119 @@ export default function RecordsScreen() {
           />
         </RecordCard>
 
-        {/* SECTION MENSURATIONS */}
-        {(records?.lowestWaist || records?.totalWaistLoss) && (
-          <RecordCard
-            icon={Ruler}
-            iconColor="#A855F7"
-            iconBg="#F3E8FF"
-            title={t('screens.records.sections.measurements')}
-          >
-            {records?.lowestWaist && (
-              <RecordRow
+        {/* SECTIONS MENSURATIONS, ENTRAÎNEMENT, RÉGULARITÉ, ÉNERGIE */}
+        <View style={{ position: 'relative' }}>
+          <View>
+            {/* SECTION MENSURATIONS */}
+            {(records?.lowestWaist || records?.totalWaistLoss) && (
+              <RecordCard
                 icon={Ruler}
-                label={t('screens.records.lowestWaist')}
-                value={`${records.lowestWaist.value} cm`}
-                date={formatRecordDate(records.lowestWaist.date)}
-                isRecord
-                shareType="lowestWaist"
-                shareValue={records.lowestWaist.value}
-              />
+                iconColor="#A855F7"
+                iconBg="#F3E8FF"
+                title={t('screens.records.sections.measurements')}
+              >
+                {records?.lowestWaist && (
+                  <RecordRow
+                    icon={Ruler}
+                    label={t('screens.records.lowestWaist')}
+                    value={`${records.lowestWaist.value} cm`}
+                    date={formatRecordDate(records.lowestWaist.date)}
+                    isRecord
+                    shareType="lowestWaist"
+                    shareValue={records.lowestWaist.value}
+                  />
+                )}
+                {records && records.totalWaistLoss > 0 && (
+                  <RecordRow
+                    icon={Ruler}
+                    label={t('screens.records.totalWaistLoss')}
+                    value={`-${records.totalWaistLoss.toFixed(0)} cm`}
+                  />
+                )}
+              </RecordCard>
             )}
-            {records && records.totalWaistLoss > 0 && (
-              <RecordRow
-                icon={Ruler}
-                label={t('screens.records.totalWaistLoss')}
-                value={`-${records.totalWaistLoss.toFixed(0)} cm`}
-              />
-            )}
-          </RecordCard>
-        )}
 
-        {/* SECTION ENTRAÎNEMENT */}
-        {records && records.totalWorkouts && records.totalWorkouts > 0 && (
-          <RecordCard
-            icon={Dumbbell}
-            iconColor="#22C55E"
-            iconBg="#DCFCE7"
-            title={t('screens.records.sections.training')}
-          >
-            {records?.maxWeeklyWorkouts && (
-              <RecordRow
-                icon={undefined}
-                label={t('screens.records.maxWeeklyWorkouts')}
-                value={`${records.maxWeeklyWorkouts.value} ${t('screens.records.sessions')}`}
-                date={formatRecordDate(records.maxWeeklyWorkouts.date)}
-                isRecord
-                shareType="maxWeeklyWorkouts"
-                shareValue={records.maxWeeklyWorkouts.value}
-              />
+            {/* SECTION ENTRAÎNEMENT */}
+            {records && records.totalWorkouts && records.totalWorkouts > 0 && (
+              <RecordCard
+                icon={Dumbbell}
+                iconColor="#22C55E"
+                iconBg="#DCFCE7"
+                title={t('screens.records.sections.training')}
+              >
+                {records?.maxWeeklyWorkouts && (
+                  <RecordRow
+                    icon={undefined}
+                    label={t('screens.records.maxWeeklyWorkouts')}
+                    value={`${records.maxWeeklyWorkouts.value} ${t('screens.records.sessions')}`}
+                    date={formatRecordDate(records.maxWeeklyWorkouts.date)}
+                    isRecord
+                    shareType="maxWeeklyWorkouts"
+                    shareValue={records.maxWeeklyWorkouts.value}
+                  />
+                )}
+                <RecordRow
+                  icon={undefined}
+                  label={t('screens.records.totalSessions')}
+                  value={`${records.totalWorkouts}`}
+                />
+                {records?.favoriteSport && (
+                  <RecordRow
+                    icon={undefined}
+                    label={t('screens.records.favoriteSport')}
+                    value={`${getSportName(records.favoriteSport.type)} (${records.favoriteSport.count})`}
+                  />
+                )}
+              </RecordCard>
             )}
-            <RecordRow
-              icon={undefined}
-              label={t('screens.records.totalSessions')}
-              value={`${records.totalWorkouts}`}
-            />
-            {records?.favoriteSport && (
+
+            {/* SECTION RÉGULARITÉ */}
+            <RecordCard
+              icon={Calendar}
+              iconColor="#3B82F6"
+              iconBg="#DBEAFE"
+              title={t('screens.records.sections.regularity')}
+            >
+              {records?.bestMonthRegularity && (
+                <RecordRow
+                  icon={undefined}
+                  label={t('screens.records.bestMonth')}
+                  value={`${records.bestMonthRegularity.value}%`}
+                  date={records.bestMonthRegularity.label}
+                  isRecord
+                  shareType="bestMonthRegularity"
+                  shareValue={records.bestMonthRegularity.value}
+                />
+              )}
               <RecordRow
-                icon={undefined}
-                label={t('screens.records.favoriteSport')}
-                value={`${getSportName(records.favoriteSport.type)} (${records.favoriteSport.count})`}
+                icon={Scale}
+                label={t('screens.records.totalWeighings')}
+                value={`${records?.totalMeasurements || 0}`}
               />
+            </RecordCard>
+
+            {/* SECTION ÉNERGIE */}
+            {records?.bestEnergyStreak && (
+              <RecordCard
+                icon={Zap}
+                iconColor="#F59E0B"
+                iconBg="#FEF3C7"
+                title={t('screens.records.sections.energy')}
+              >
+                <RecordRow
+                  icon={undefined}
+                  label={t('screens.records.bestEnergyStreak')}
+                  value={`${records.bestEnergyStreak.value} ${t('screens.records.days')}`}
+                  date={formatRecordDate(records.bestEnergyStreak.date)}
+                  isRecord
+                  shareType="bestEnergyStreak"
+                  shareValue={records.bestEnergyStreak.value}
+                />
+              </RecordCard>
             )}
-          </RecordCard>
-        )}
+          </View>
 
-        {/* SECTION RÉGULARITÉ */}
-        <RecordCard
-          icon={Calendar}
-          iconColor="#3B82F6"
-          iconBg="#DBEAFE"
-          title={t('screens.records.sections.regularity')}
-        >
-          {records?.bestMonthRegularity && (
-            <RecordRow
-              icon={undefined}
-              label={t('screens.records.bestMonth')}
-              value={`${records.bestMonthRegularity.value}%`}
-              date={records.bestMonthRegularity.label}
-              isRecord
-              shareType="bestMonthRegularity"
-              shareValue={records.bestMonthRegularity.value}
-            />
-          )}
-          <RecordRow
-            icon={Scale}
-            label={t('screens.records.totalWeighings')}
-            value={`${records?.totalMeasurements || 0}`}
-          />
-        </RecordCard>
-
-        {/* SECTION ÉNERGIE */}
-        {records?.bestEnergyStreak && (
-          <RecordCard
-            icon={Zap}
-            iconColor="#F59E0B"
-            iconBg="#FEF3C7"
-            title={t('screens.records.sections.energy')}
-          >
-            <RecordRow
-              icon={undefined}
-              label={t('screens.records.bestEnergyStreak')}
-              value={`${records.bestEnergyStreak.value} ${t('screens.records.days')}`}
-              date={formatRecordDate(records.bestEnergyStreak.date)}
-              isRecord
-              shareType="bestEnergyStreak"
-              shareValue={records.bestEnergyStreak.value}
-            />
-          </RecordCard>
-        )}
+        </View>
 
         {/* MESSAGE MOTIVATION */}
         <View style={[styles.motivationCard, { backgroundColor: colors.card }]}>
@@ -530,6 +539,7 @@ export default function RecordsScreen() {
         </View>
 
         <View style={{ height: 100 }} />
+        <PremiumTeaser variant="detail" title="Évolution de tes records" />
       </ScrollView>
     </ScreenWrapper>
   );

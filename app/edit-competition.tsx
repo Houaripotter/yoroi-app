@@ -2,7 +2,7 @@
 // YOROI - MODIFIER UNE COMPÉTITION
 // ============================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -61,6 +61,8 @@ export default function EditCompetitionScreen() {
   const [lieu, setLieu] = useState('');
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  // Date avant ouverture du picker (restaurée sur Annuler iOS)
+  const dateBeforePickerRef = useRef<Date | null>(null);
   const [sport, setSport] = useState<Sport>('jjb');
   const [typeEvenement, setTypeEvenement] = useState('');
   const [showSportPicker, setShowSportPicker] = useState(false);
@@ -87,7 +89,8 @@ export default function EditCompetitionScreen() {
 
       setNom(comp.nom);
       setLieu(comp.lieu || '');
-      setDate(new Date(comp.date));
+      // Date seule : midi local pour éviter le décalage UTC
+      setDate(/^\d{4}-\d{2}-\d{2}$/.test(comp.date) ? new Date(`${comp.date}T12:00:00`) : new Date(comp.date));
       setSport(comp.sport);
       setTypeEvenement(comp.type_evenement || '');
 
@@ -147,7 +150,8 @@ export default function EditCompetitionScreen() {
       await updateCompetition(parseInt(competitionId), {
         nom: nom.trim(),
         lieu: lieu.trim() || undefined,
-        date: date.toISOString().split('T')[0],
+        // Date locale (toISOString décalerait d'un jour selon le fuseau)
+        date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
         sport,
         type_evenement: typeEvenement.trim() || undefined,
         categorie_poids: selectedCategory?.name,
@@ -304,7 +308,7 @@ export default function EditCompetitionScreen() {
           </Text>
           <TouchableOpacity
             style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => setShowDatePicker(true)}
+            onPress={() => { dateBeforePickerRef.current = date; setShowDatePicker(true); }}
             activeOpacity={0.7}
           >
             <Calendar size={20} color={colors.textMuted} />
@@ -323,7 +327,10 @@ export default function EditCompetitionScreen() {
           <View style={[styles.datePickerContainer, { backgroundColor: colors.backgroundCard }]}>
             <View style={[styles.datePickerHeader, { borderBottomColor: colors.border }]}>
               <TouchableOpacity
-                onPress={() => setShowDatePicker(false)}
+                onPress={() => {
+                  if (dateBeforePickerRef.current) setDate(dateBeforePickerRef.current);
+                  setShowDatePicker(false);
+                }}
                 style={styles.datePickerButton}
               >
                 <Text style={[styles.datePickerButtonText, { color: colors.textMuted }]}>
@@ -490,8 +497,8 @@ export default function EditCompetitionScreen() {
           disabled={isSaving}
           activeOpacity={0.8}
         >
-          <Save size={20} color="#FFFFFF" />
-          <Text style={styles.saveButtonText}>
+          <Save size={20} color={colors.textOnAccent} />
+          <Text style={[styles.saveButtonText, { color: colors.textOnAccent }]}>
             {isSaving ? 'Mise à jour...' : 'Mettre à jour'}
           </Text>
         </TouchableOpacity>

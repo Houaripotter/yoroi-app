@@ -1,19 +1,39 @@
 // ============================================
-// YOROI - PEER SYNC SERVICE
+// YOROI - PEER SYNC SERVICE (protocole v3)
 // ============================================
 // Synchronisation bidirectionnelle iPhone <-> iPad
-// via Multipeer Connectivity (Bluetooth + WiFi local)
+// via Multipeer Connectivity (Bluetooth + WiFi local), zéro serveur.
 //
-// PROTOCOLE :
-//   1. Connexion détectée -> HANDSHAKE (échange du dernier timestamp de sync)
-//   2. Chaque appareil envoie les enregistrements modifiés depuis ce timestamp
-//   3. Réception -> UPSERT (INSERT OR REPLACE si le record distant est plus récent)
-//   4. ACK mutuel -> sauvegarde du nouveau timestamp
+// POURQUOI UNE v3 :
+//   La v2 identifiait les enregistrements par leur id SQLite local (AUTOINCREMENT).
+//   Chaque appareil numérote ses lignes de son côté : l'id 7 de l'iPad et l'id 7
+//   de l'iPhone sont deux séances différentes, et INSERT OR REPLACE écrasait l'une
+//   par l'autre. Les modifications et suppressions n'étaient jamais transmises,
+//   et les clés étrangères (club, compétition, blessure...) pointaient vers de
+//   mauvaises lignes.
 //
-// ANTI-DOUBLONS :
-//   - Chaque enregistrement a un id + created_at
-//   - INSERT OR REPLACE sur la clé primaire
-//   - Si l'enregistrement local est plus récent, on l'ignore (on ne l'écrase pas)
+// PRINCIPES v3 :
+//   1. IDENTITÉ GLOBALE : chaque ligne reçoit un identifiant de synchro `sync_uid`,
+//      identique sur tous les appareils. Il est déterministe (calculé à partir du
+//      contenu ou d'une clé naturelle), donc deux appareils qui ont déjà les mêmes
+//      données (même sauvegarde restaurée, mêmes séances Apple Santé) les
+//      reconnaissent au lieu de les dupliquer.
+//   2. DÉTECTION AUTOMATIQUE DES CHANGEMENTS : une empreinte (hash) de chaque ligne
+//      est mémorisée dans `sync_state`. À chaque synchro, les lignes dont
+//      l'empreinte a changé sont marquées modifiées. Aucune modification de l'app
+//      n'est nécessaire pour que les éditions soient propagées.
+//   3. SUPPRESSIONS : une ligne disparue laisse une "pierre tombale"
+//      (`sync_tombstones`) transmise aux autres appareils. Garde-fou : une
+//      disparition massive (réinitialisation, bug) ne propage AUCUNE suppression.
+//   4. CONFLITS : la version la plus récente gagne (last write wins), comparée
+//      sur l'heure de modification d'origine.
+//   5. CLÉS ÉTRANGÈRES : transmises sous forme de sync_uid du parent, puis
+//      retraduites en id local à la réception.
+//   6. ENVOI PAR PAQUETS : les données partent en plusieurs messages (~200 Ko)
+//      adressés à un appareil précis, jamais un seul énorme message.
+//   7. COMPATIBILITÉ : un appareil encore en v2 ne reçoit que les réglages (clés
+//      AsyncStorage) ; ses données SQL ne sont jamais appliquées ici, et les nôtres
+//      ne peuvent pas être appliquées chez lui. Rien n'est écrasé.
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,47 +46,59 @@ import logger from './security/logger';
 // CONSTANTES
 // ============================================
 
-const LAST_SYNC_KEY = '@yoroi_peer_last_sync';
-// v2 : ajout de toutes les tables manquantes + sync des clés AsyncStorage (KV).
-// Les anciens devices v1 continuent de fonctionner (on ignore les champs inconnus).
-const PROTOCOL_VERSION = '2';
+const PROTOCOL_VERSION = '3';
+const LAST_SYNC_KEY = '@yoroi_peer_last_sync';          // affichage (dernière synchro réussie)
+const SINCE_MAP_KEY = '@yoroi_peer_since_v3';           // { deviceId: ts (horloge du pair) }
+const DEVICE_ID_KEY = '@yoroi_peer_device_id';          // identifiant unique de cet appareil
+const HAD_V2_KEY = '@yoroi_peer_had_v2';                // a déjà synchronisé avec l'ancienne version
+const CHUNK_MAX_BYTES = 200 * 1024;                     // taille max d'un message
+const MASS_DELETE_MIN = 10;                             // garde-fou suppressions massives
+const MASS_DELETE_RATIO = 0.5;
 
-// Tables synchronisées dans l'ordre (FK : clubs avant trainings, etc.)
-// v2 : version étendue qui couvre TOUTES les données utilisateur SQLite.
-const SYNC_TABLES = [
-  // Core user data
-  'profile',
-  'clubs',
-  'weights',
-  'measurements',
-  'trainings',
-  'body_compositions',
-  // Santé & bien-être
-  'sleep_entries',
-  'fasting_sessions',
-  // Planning & goals
-  'weekly_plan',
-  'slot_occurrences',
-  'training_goals',
-  // Compétition & combat
-  'competitions',
-  'combats',
-  'injuries',
-  'injury_eva_history',
-  'injury_treatments',
-  'treatment_reminders',
-  // Gamification
-  'achievements',
-  // Training Journal (v5.5)
-  'progression_items',
-  'practice_logs',
-] as const;
+interface TableSpec {
+  /** colonnes clé étrangère -> table parente */
+  fks?: Record<string, string>;
+  /** clé primaire texte (non AUTOINCREMENT) : l'id fait partie des données */
+  textPk?: boolean;
+  /** clé naturelle (identique sur tous les appareils) ; null = identifiant basé sur le contenu */
+  natural?: (d: Record<string, any>) => string | null;
+  /** une ligne sans parent n'a pas de sens : on ne l'insère pas */
+  requiresParent?: string[];
+}
 
-type SyncTable = typeof SYNC_TABLES[number];
+// Ordre important : parents avant enfants
+const TABLES: Array<[string, TableSpec]> = [
+  ['profile', { natural: () => 'profile' }],
+  ['clubs', {}],
+  ['weights', {}],
+  ['measurements', {}],
+  ['body_compositions', {}],
+  ['sleep_entries', {}],
+  ['fasting_sessions', {}],
+  ['weekly_plan', { fks: { club_id: 'clubs' } }],
+  ['trainings', {
+    fks: { club_id: 'clubs', weekly_plan_id: 'weekly_plan' },
+    natural: d => (d.healthkit_uuid ? `hk:${d.healthkit_uuid}` : null),
+  }],
+  ['training_goals', { natural: d => (d.sport_id ? `tg:${d.sport_id}` : null) }],
+  ['competitions', {}],
+  ['combats', { fks: { competition_id: 'competitions' }, requiresParent: ['competition_id'] }],
+  ['injuries', {}],
+  ['injury_eva_history', { fks: { injury_id: 'injuries' }, requiresParent: ['injury_id'] }],
+  ['injury_treatments', { fks: { injury_id: 'injuries' }, requiresParent: ['injury_id'] }],
+  ['treatment_reminders', { fks: { injury_id: 'injuries' }, requiresParent: ['injury_id'] }],
+  ['slot_occurrences', {
+    fks: { weekly_plan_id: 'weekly_plan', training_id: 'trainings', injury_id: 'injuries' },
+    natural: d => (d.weekly_plan_id && d.week_start ? `so:${d.weekly_plan_id}|${d.week_start}` : null),
+  }],
+  ['achievements', { textPk: true, natural: d => (d.id != null ? `ach:${d.id}` : null) }],
+  ['progression_items', {}],
+  ['practice_logs', { fks: { item_id: 'progression_items' }, requiresParent: ['item_id'] }],
+];
+const TABLE_ORDER = new Map(TABLES.map(([t], i) => [t, i]));
+const SPEC = new Map(TABLES);
 
-// Clés AsyncStorage synchronisées entre devices (v2)
-// → partenaires, templates game plans, records, etc. (tout ce qui n'est pas en SQLite)
-// Les valeurs sont des strings JSON, on les transfère telles quelles.
+// Clés AsyncStorage synchronisées (inchangé depuis la v2)
 const SYNC_KV_KEYS = [
   '@yoroi_sparring_partners',
   '@yoroi_playbook_custom_gamePlan',
@@ -85,7 +117,6 @@ const SYNC_KV_KEYS = [
   '@sparring_weekly_goal',
   'bjj_fav_submissions_v2',
   '@yoroi_photo_history',
-  // Apparence / personnalisation
   'yoroi_theme_color_v5',
   'yoroi_theme_mode_v5',
   '@yoroi_tab_order',
@@ -100,29 +131,36 @@ const SYNC_KV_KEYS = [
 // TYPES DU PROTOCOLE
 // ============================================
 
-type MessageType = 'HANDSHAKE' | 'SYNC_DATA' | 'SYNC_ACK';
+type KVDelta = Record<string, { value: string | null; updatedAt: string }>;
+
+interface SyncItem { t: string; uid: string; u: number; d: Record<string, any> }
+interface Tombstone { t: string; uid: string; u: number }
 
 interface SyncMessage {
-  type: MessageType;
-  v: string;           // version protocole
-  device: string;      // nom de l'appareil émetteur
-  // HANDSHAKE
-  lastSyncTs?: string;
-  // SYNC_DATA
-  tables?: Partial<Record<SyncTable, any[]>>;
-  kv?: Record<string, { value: string | null; updatedAt: string }>; // v2 : AsyncStorage clés
-  ts?: string;         // timestamp de cet envoi
-  // SYNC_ACK
-  ackTs?: string;
-}
-
-interface PeerState {
+  type: 'HANDSHAKE' | 'SYNC_DATA' | 'SYNC_ACK';
+  v: string;
   device: string;
-  lastSyncTs: string;
+  // v3
+  from?: string;
+  to?: string;
+  since?: Record<string, number>;
+  syncId?: string;
+  seq?: number;
+  last?: boolean;
+  rows?: SyncItem[];
+  tombs?: Tombstone[];
+  kv3?: KVDelta;
+  legacy?: boolean;    // l'expéditeur a déjà synchronisé en v2
+  // v2 (compatibilité)
+  lastSyncTs?: string;
+  tables?: Record<string, any[]>;
+  kv?: KVDelta;
+  ts?: string | number;
+  ackTs?: string | number;
 }
 
 // ============================================
-// ETAT DU SERVICE
+// ÉTAT DU SERVICE
 // ============================================
 
 export interface SyncStatus {
@@ -130,25 +168,59 @@ export interface SyncStatus {
   isSyncing: boolean;
   lastSyncTs: string | null;
   lastSyncDevice: string | null;
+  /** Nom d'un appareil connecté qui utilise une ancienne version de Yoroi */
+  outdatedPeer?: string | null;
 }
 
 let myDeviceName = 'Mon appareil';
-const peerStates = new Map<string, PeerState>();
+let myDeviceId = '';
 let subscriptions: Array<{ remove: () => void }> = [];
 let statusListeners: Array<(s: SyncStatus) => void> = [];
 let isRunning = false;
+let schemaReady = false;
 
 let status: SyncStatus = {
   connectedPeers: [],
   isSyncing: false,
   lastSyncTs: null,
   lastSyncDevice: null,
+  outdatedPeer: null,
 };
 
 const setStatus = (patch: Partial<SyncStatus>) => {
   status = { ...status, ...patch };
-  statusListeners.forEach(cb => cb(status));
+  statusListeners.forEach(cb => {
+    try { cb(status); } catch { /* ignore */ }
+  });
 };
+
+// File d'attente : scans, envois et imports ne se chevauchent jamais
+let queue: Promise<unknown> = Promise.resolve();
+const enqueue = <T>(label: string, fn: () => Promise<T>): Promise<T | undefined> => {
+  const run = queue.then(fn).catch(err => {
+    logger.error(`[PeerSync] Erreur ${label}:`, err);
+    return undefined;
+  });
+  queue = run;
+  return run;
+};
+
+let scanTimer: ReturnType<typeof setTimeout> | null = null;
+const scheduleBackgroundScan = () => {
+  if (scanTimer) clearTimeout(scanTimer);
+  if (Date.now() < suppressBackgroundScanUntil) return; // changement venant de la synchro elle-même
+  scanTimer = setTimeout(() => {
+    scanTimer = null;
+    if (status.isSyncing) return;
+    enqueue('détection des changements', async () => {
+      const db = await openDatabase();
+      await scanAll(db);
+    });
+  }, 15000);
+};
+
+// Réassemblage des paquets reçus (par synchro)
+const pendingIncoming = new Map<string, { from: string; device: string; failures: number }>();
 
 // ============================================
 // API PUBLIQUE
@@ -160,24 +232,33 @@ export const initPeerSync = async (): Promise<void> => {
 
   try {
     myDeviceName = await MultipeerBridge.getDeviceName();
+    myDeviceId = await getOrCreateDeviceId();
 
-    // Charger le dernier timestamp connu
     const raw = await AsyncStorage.getItem(LAST_SYNC_KEY);
     if (raw) {
-      const saved = JSON.parse(raw);
-      status.lastSyncTs    = saved.ts     ?? null;
-      status.lastSyncDevice = saved.device ?? null;
+      try {
+        const saved = JSON.parse(raw);
+        status.lastSyncTs = saved.ts ?? null;
+        status.lastSyncDevice = saved.device ?? null;
+        // Format v2 ("AAAA-MM-JJ HH:MM:SS", sans "T") : cet appareil a déjà synchronisé en v2
+        if (typeof saved.ts === 'string' && !saved.ts.includes('T')) {
+          await AsyncStorage.setItem(HAD_V2_KEY, 'true');
+        }
+      } catch { /* ignore */ }
     }
+    hadV2Sync = (await AsyncStorage.getItem(HAD_V2_KEY)) === 'true';
 
-    // Abonnements aux événements natifs
     subscriptions.push(
       MultipeerBridge.onPeerChanged(onPeerChanged),
       MultipeerBridge.onDataReceived(onDataReceived),
+      // Détecter les modifications peu après qu'elles ont lieu : l'heure retenue pour
+      // départager deux modifications concurrentes est ainsi proche de l'heure réelle
+      DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', scheduleBackgroundScan),
     );
 
     await MultipeerBridge.startDiscovery();
     isRunning = true;
-    logger.info('[PeerSync] Démarré sur', myDeviceName);
+    logger.info('[PeerSync] Démarré (v3) sur', myDeviceName);
   } catch (err) {
     logger.error('[PeerSync] Erreur init:', err);
   }
@@ -185,430 +266,27 @@ export const initPeerSync = async (): Promise<void> => {
 
 /** Arrête le service */
 export const stopPeerSync = async (): Promise<void> => {
+  if (scanTimer) { clearTimeout(scanTimer); scanTimer = null; }
   subscriptions.forEach(s => s.remove());
   subscriptions = [];
-  peerStates.clear();
+  pendingIncoming.clear();
   await MultipeerBridge.stopDiscovery();
   isRunning = false;
 };
 
 /** Abonne un composant aux mises à jour de statut */
-export const onSyncStatusChange = (
-  cb: (s: SyncStatus) => void
-): (() => void) => {
+export const onSyncStatusChange = (cb: (s: SyncStatus) => void): (() => void) => {
   statusListeners.push(cb);
-  cb(status); // état immédiat
+  cb(status);
   return () => { statusListeners = statusListeners.filter(l => l !== cb); };
 };
 
 /** Retourne le statut courant */
 export const getSyncStatus = (): SyncStatus => ({ ...status });
 
-// ============================================
-// GESTION DES CONNEXIONS
-// ============================================
-
-const onPeerChanged = async (event: PeerChangedEvent) => {
-  const { peer, state } = event;
-  logger.info(`[PeerSync] ${peer} -> ${state}`);
-
-  const peers = await MultipeerBridge.getConnectedPeers();
-  setStatus({ connectedPeers: peers });
-
-  if (state === 'connected') {
-    // Envoyer notre handshake pour démarrer la sync
-    await sendHandshake();
-  } else if (state === 'disconnected') {
-    peerStates.delete(peer);
-    setStatus({ isSyncing: false });
-  }
-};
-
-// ============================================
-// ENVOI DU HANDSHAKE
-// ============================================
-
-const sendHandshake = async () => {
-  const raw = await AsyncStorage.getItem(LAST_SYNC_KEY);
-  const lastSyncTs = raw
-    ? (JSON.parse(raw).ts ?? '1970-01-01 00:00:00')
-    : '1970-01-01 00:00:00';
-
-  await MultipeerBridge.sendData({
-    type: 'HANDSHAKE',
-    v: PROTOCOL_VERSION,
-    device: myDeviceName,
-    lastSyncTs,
-  } satisfies SyncMessage);
-};
-
-// ============================================
-// RECEPTION DES MESSAGES
-// ============================================
-
-const onDataReceived = async (event: DataReceivedEvent) => {
-  try {
-    const msg = JSON.parse(event.data) as SyncMessage;
-    switch (msg.type) {
-      case 'HANDSHAKE': await handleHandshake(event.peer, msg); break;
-      case 'SYNC_DATA':  await handleSyncData(event.peer, msg);  break;
-      case 'SYNC_ACK':   await handleSyncAck(event.peer, msg);   break;
-    }
-  } catch (err) {
-    logger.error('[PeerSync] Erreur réception:', err);
-  }
-};
-
-// ============================================
-// PHASE 1 : HANDSHAKE
-// ============================================
-
-const handleHandshake = async (peer: string, msg: SyncMessage) => {
-  const peerLastSyncTs = msg.lastSyncTs ?? '1970-01-01 00:00:00';
-
-  peerStates.set(peer, {
-    device: msg.device || peer,
-    lastSyncTs: peerLastSyncTs,
-  });
-
-  // Envoyer les données que le pair n'a pas encore
-  await sendDelta(peerLastSyncTs);
-};
-
-// ============================================
-// PHASE 2 : ENVOI DES DONNÉES (DELTA)
-// ============================================
-
-const sendDelta = async (sinceTs: string) => {
-  try {
-    setStatus({ isSyncing: true });
-
-    const db = await openDatabase();
-    const tables: Partial<Record<SyncTable, any[]>> = {};
-    let total = 0;
-
-    for (const table of SYNC_TABLES) {
-      try {
-        // Essaie d'utiliser created_at, fallback sur une simple lecture full-table
-        // pour les tables sans created_at (ex: achievements si c'est une table de mapping)
-        let rows: Record<string, unknown>[] = [];
-        try {
-          rows = (await db.getAllAsync(
-            `SELECT * FROM ${table} WHERE created_at > ? ORDER BY created_at ASC LIMIT 1000`,
-            [sinceTs]
-          )) as Record<string, unknown>[];
-        } catch {
-          // Colonne created_at absente → fallback : envoyer toute la table
-          // (utile pour les petites tables comme achievements, training_goals)
-          rows = (await db.getAllAsync(`SELECT * FROM ${table} LIMIT 1000`)) as Record<string, unknown>[];
-        }
-        if (rows.length > 0) {
-          tables[table] = rows.map(sanitizeForTransfer);
-          total += rows.length;
-        }
-      } catch {
-        // Table inexistante sur cette version -> ignorer silencieusement
-      }
-    }
-
-    // v2 : sync des clés AsyncStorage (partenaires, templates, records…)
-    const kv = await collectKVDelta(sinceTs);
-
-    const ts = nowTs();
-    await MultipeerBridge.sendData({
-      type: 'SYNC_DATA',
-      v: PROTOCOL_VERSION,
-      device: myDeviceName,
-      tables,
-      kv,
-      ts,
-    } satisfies SyncMessage);
-
-    const kvCount = Object.keys(kv).length;
-    logger.info(`[PeerSync] Envoi de ${total} enregistrements SQL + ${kvCount} clés KV (depuis ${sinceTs})`);
-  } catch (err) {
-    logger.error('[PeerSync] Erreur export delta:', err);
-    setStatus({ isSyncing: false });
-  }
-};
-
 /**
- * Collecte les valeurs AsyncStorage à envoyer au peer.
- *
- * DÉTECTION AUTOMATIQUE PAR HASH :
- * On stocke pour chaque clé un hash simple de sa dernière valeur synchronisée.
- * À chaque sync, on recalcule le hash. Si différent → la valeur a changé
- * quelque part et on l'inclut dans le delta. Pas besoin de brancher manuellement
- * une notification à chaque setItem dans l'app.
- */
-const KV_HASHES_KEY = '@yoroi_kv_hashes';        // hash de la dernière valeur connue
-const KV_TIMESTAMPS_KEY = '@yoroi_kv_timestamps'; // ts de la dernière modif détectée
-
-/** Hash simple (FNV-1a 32-bit) rapide sur une string. Suffit pour détecter les changements. */
-function fastHash(s: string): string {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return (h >>> 0).toString(16);
-}
-
-async function collectKVDelta(sinceTs: string): Promise<Record<string, { value: string | null; updatedAt: string }>> {
-  const result: Record<string, { value: string | null; updatedAt: string }> = {};
-  try {
-    const [hashesRaw, tsRaw] = await Promise.all([
-      AsyncStorage.getItem(KV_HASHES_KEY),
-      AsyncStorage.getItem(KV_TIMESTAMPS_KEY),
-    ]);
-    const hashes: Record<string, string> = hashesRaw ? JSON.parse(hashesRaw) : {};
-    const timestamps: Record<string, string> = tsRaw ? JSON.parse(tsRaw) : {};
-    const now = nowTs();
-    let anyChange = false;
-
-    for (const key of SYNC_KV_KEYS) {
-      const value = await AsyncStorage.getItem(key);
-      const currentHash = fastHash(value ?? '__null__');
-      const lastHash = hashes[key];
-
-      if (currentHash !== lastHash) {
-        // La valeur a changé depuis la dernière sync (ou jamais synchronisée)
-        hashes[key] = currentHash;
-        timestamps[key] = now;
-        anyChange = true;
-        result[key] = { value, updatedAt: now };
-      } else {
-        // Pas de changement, mais on envoie quand même si le ts > sinceTs
-        // (cas où on a déjà envoyé mais le peer ne l'a pas reçu)
-        const keyTs = timestamps[key] ?? '1970-01-01 00:00:00';
-        if (keyTs > sinceTs) {
-          result[key] = { value, updatedAt: keyTs };
-        }
-      }
-    }
-
-    if (anyChange) {
-      await Promise.all([
-        AsyncStorage.setItem(KV_HASHES_KEY, JSON.stringify(hashes)),
-        AsyncStorage.setItem(KV_TIMESTAMPS_KEY, JSON.stringify(timestamps)),
-      ]);
-    }
-  } catch (e) {
-    logger.warn('[PeerSync] Erreur collecte KV:', e);
-  }
-  return result;
-}
-
-/**
- * (Optionnel, pour force manuelle) : marque une clé comme modifiée sans attendre
- * la détection automatique par hash. Utile pour déclencher une sync immédiate.
- */
-export async function markKVKeyChanged(key: string): Promise<void> {
-  if (!(SYNC_KV_KEYS as readonly string[]).includes(key)) return;
-  try {
-    const tsRaw = await AsyncStorage.getItem(KV_TIMESTAMPS_KEY);
-    const timestamps: Record<string, string> = tsRaw ? JSON.parse(tsRaw) : {};
-    timestamps[key] = nowTs();
-    await AsyncStorage.setItem(KV_TIMESTAMPS_KEY, JSON.stringify(timestamps));
-    // On invalide aussi le hash pour forcer la détection au prochain collectKVDelta
-    const hashesRaw = await AsyncStorage.getItem(KV_HASHES_KEY);
-    const hashes: Record<string, string> = hashesRaw ? JSON.parse(hashesRaw) : {};
-    delete hashes[key];
-    await AsyncStorage.setItem(KV_HASHES_KEY, JSON.stringify(hashes));
-  } catch { /* silent */ }
-}
-
-/** Supprime les champs trop lourds (photos base64) avant l'envoi réseau */
-const sanitizeForTransfer = (row: Record<string, unknown>): Record<string, unknown> => {
-  const clean = { ...row };
-  // Photo de profil base64 pouvant peser plusieurs Mo
-  if (typeof clean.profile_photo === 'string' && clean.profile_photo.length > 500) {
-    delete clean.profile_photo;
-  }
-  return clean;
-};
-
-// ============================================
-// PHASE 3 : RECEPTION ET UPSERT
-// ============================================
-
-const handleSyncData = async (peer: string, msg: SyncMessage) => {
-  const { tables, kv, ts, device } = msg;
-  // Au moins tables ou kv doit être présent pour traiter le message
-  if (!tables && !kv) return;
-
-  setStatus({ isSyncing: true });
-
-  try {
-    const db = await openDatabase();
-    let imported = 0;
-    let skipped = 0;
-
-    // Applique les tables SQL
-    if (tables) {
-      for (const table of SYNC_TABLES) {
-        const rows = tables[table];
-        if (!rows || rows.length === 0) continue;
-
-        for (const row of rows) {
-          const inserted = await upsertRow(db, table, row);
-          if (inserted) imported++;
-          else skipped++;
-        }
-      }
-    }
-
-    // v2 : Applique les clés AsyncStorage reçues
-    let kvApplied = 0;
-    if (kv) {
-      await applyKVDelta(kv);
-      kvApplied = Object.keys(kv).length;
-    }
-
-    logger.info(`[PeerSync] Import depuis ${device || peer}: ${imported} SQL insérés, ${skipped} ignorés, ${kvApplied} clés KV appliquées`);
-
-    // Émet un event pour que les écrans écoutant les KV changés rafraîchissent
-    // (ex: autocomplete partenaires dans add-combat-session)
-    if (kvApplied > 0) {
-      DeviceEventEmitter.emit('YOROI_PARTNERS_CHANGED');
-      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
-    }
-
-    // Envoyer l'ACK
-    const ackTs = ts ?? nowTs();
-    await MultipeerBridge.sendData({
-      type: 'SYNC_ACK',
-      v: PROTOCOL_VERSION,
-      device: myDeviceName,
-      ackTs,
-    } satisfies SyncMessage);
-
-    await saveSyncTs(ackTs, device || peer);
-    setStatus({ isSyncing: false, lastSyncTs: ackTs, lastSyncDevice: device || peer });
-  } catch (err) {
-    logger.error('[PeerSync] Erreur import:', err);
-    setStatus({ isSyncing: false });
-  }
-};
-
-/**
- * Applique les valeurs KV reçues du peer.
- * Stratégie "last-write-wins" : on compare avec notre updatedAt local.
- * Si la valeur reçue est plus récente → on l'applique. Sinon on garde la nôtre.
- */
-async function applyKVDelta(kv: Record<string, { value: string | null; updatedAt: string }>): Promise<void> {
-  try {
-    const [tsRaw, hashesRaw] = await Promise.all([
-      AsyncStorage.getItem(KV_TIMESTAMPS_KEY),
-      AsyncStorage.getItem(KV_HASHES_KEY),
-    ]);
-    const timestamps: Record<string, string> = tsRaw ? JSON.parse(tsRaw) : {};
-    const hashes: Record<string, string> = hashesRaw ? JSON.parse(hashesRaw) : {};
-
-    for (const [key, payload] of Object.entries(kv)) {
-      if (!(SYNC_KV_KEYS as readonly string[]).includes(key)) continue;
-
-      const localTs = timestamps[key] ?? '1970-01-01 00:00:00';
-      const remoteTs = payload.updatedAt;
-
-      // Conflict resolution : plus récent gagne. En cas d'égalité : on garde local (pas de flicker).
-      if (remoteTs > localTs) {
-        if (payload.value === null) {
-          await AsyncStorage.removeItem(key);
-        } else {
-          await AsyncStorage.setItem(key, payload.value);
-        }
-        timestamps[key] = remoteTs;
-        // Met à jour le hash pour que la prochaine sync ne re-détecte pas ce changement comme local
-        hashes[key] = fastHash(payload.value ?? '__null__');
-      }
-    }
-
-    await Promise.all([
-      AsyncStorage.setItem(KV_TIMESTAMPS_KEY, JSON.stringify(timestamps)),
-      AsyncStorage.setItem(KV_HASHES_KEY, JSON.stringify(hashes)),
-    ]);
-  } catch (e) {
-    logger.warn('[PeerSync] Erreur apply KV:', e);
-  }
-}
-
-// ============================================
-// PHASE 4 : ACK
-// ============================================
-
-const handleSyncAck = async (peer: string, msg: SyncMessage) => {
-  const peerState = peerStates.get(peer);
-  const ackTs = msg.ackTs ?? nowTs();
-
-  await saveSyncTs(ackTs, peerState?.device || peer);
-  setStatus({
-    isSyncing: false,
-    lastSyncTs: ackTs,
-    lastSyncDevice: peerState?.device || peer,
-  });
-
-  logger.info(`[PeerSync] Sync complete avec ${peerState?.device || peer}`);
-};
-
-// ============================================
-// UPSERT SANS DOUBLONS
-// ============================================
-
-/**
- * Insère ou remplace un enregistrement dans la table.
- * - Si l'enregistrement local est plus récent (created_at >=), on l'ignore.
- * - Sinon, INSERT OR REPLACE (remplace par la clé primaire id).
- * Retourne true si inséré, false si ignoré.
- */
-const upsertRow = async (
-  db: any,
-  table: string,
-  row: Record<string, unknown>
-): Promise<boolean> => {
-  try {
-    // Vérifier si notre version locale est déjà plus récente
-    if (row.id !== undefined) {
-      const existing = (await db.getFirstAsync(
-        `SELECT created_at FROM ${table} WHERE id = ?`,
-        [row.id]
-      )) as { created_at: string } | null;
-      if (existing && existing.created_at >= ((row.created_at as string) ?? '')) {
-        return false; // Notre version est plus fraîche -> ignorer
-      }
-    }
-
-    // Construire INSERT OR REPLACE dynamique
-    const cols = Object.keys(row).join(', ');
-    const placeholders = Object.keys(row).map(() => '?').join(', ');
-    const values = Object.values(row);
-
-    await db.runAsync(
-      `INSERT OR REPLACE INTO ${table} (${cols}) VALUES (${placeholders})`,
-      values
-    );
-    return true;
-  } catch {
-    // Colonne inconnue (migration différente entre appareils) -> ignorer ce row
-    return false;
-  }
-};
-
-// ============================================
-// HELPERS
-// ============================================
-
-const nowTs = (): string =>
-  new Date().toISOString().replace('T', ' ').split('.')[0];
-
-const saveSyncTs = async (ts: string, device: string) => {
-  await AsyncStorage.setItem(LAST_SYNC_KEY, JSON.stringify({ ts, device }));
-};
-
-/**
- * Force une re-synchronisation manuelle avec tous les peers connectés.
- * Envoie un handshake fresh → déclenche un échange de delta si data changed.
- * Retourne le nombre de peers à qui le handshake a été envoyé.
+ * Force une re-synchronisation avec tous les appareils connectés.
+ * Retourne le nombre d'appareils contactés.
  */
 export const forceSync = async (): Promise<number> => {
   if (!MultipeerBridge.isAvailable) return 0;
@@ -628,5 +306,1075 @@ export const getMyDeviceName = (): string => myDeviceName;
 
 /** Indique si le module natif Multipeer est disponible (iOS + linké). */
 export const isPeerSyncAvailable = (): boolean => MultipeerBridge.isAvailable;
+
+// ============================================
+// CONNEXIONS
+// ============================================
+
+const onPeerChanged = async (event: PeerChangedEvent) => {
+  const { peer, state } = event;
+  logger.info(`[PeerSync] ${peer} -> ${state}`);
+
+  const peers = await MultipeerBridge.getConnectedPeers();
+  setStatus({ connectedPeers: peers });
+
+  if (state === 'connected') {
+    await sendHandshake();
+  } else if (state === 'disconnected') {
+    if (peers.length === 0) setStatus({ isSyncing: false, outdatedPeer: null });
+  }
+};
+
+const sendHandshake = async () => {
+  const since = await loadSinceMap();
+  const legacyRaw = await AsyncStorage.getItem(LAST_SYNC_KEY);
+  let lastSyncTs = '1970-01-01 00:00:00';
+  try { if (legacyRaw) lastSyncTs = JSON.parse(legacyRaw).legacyTs ?? lastSyncTs; } catch { /* ignore */ }
+
+  await MultipeerBridge.sendData({
+    type: 'HANDSHAKE',
+    v: PROTOCOL_VERSION,
+    device: myDeviceName,
+    from: myDeviceId,
+    since,
+    lastSyncTs, // lu par les appareils encore en v2
+  } satisfies SyncMessage);
+};
+
+// ============================================
+// RÉCEPTION
+// ============================================
+
+const onDataReceived = async (event: DataReceivedEvent) => {
+  let msg: SyncMessage;
+  try {
+    msg = JSON.parse(event.data) as SyncMessage;
+  } catch (err) {
+    logger.error('[PeerSync] Message illisible:', err);
+    return;
+  }
+
+  // Message v3 adressé à un autre appareil : ignorer
+  if (msg.v === PROTOCOL_VERSION && msg.to && msg.to !== myDeviceId) return;
+
+  try {
+    switch (msg.type) {
+      case 'HANDSHAKE':
+        if (msg.v === PROTOCOL_VERSION) {
+          enqueue('envoi delta', () => sendDeltaTo(msg));
+        } else {
+          setStatus({ outdatedPeer: msg.device || event.peer });
+          enqueue('envoi réglages v2', () => sendLegacyKV(msg));
+        }
+        break;
+      case 'SYNC_DATA':
+        if (msg.v === PROTOCOL_VERSION) {
+          enqueue('import', () => handleSyncData(msg));
+        } else {
+          setStatus({ outdatedPeer: msg.device || event.peer });
+          enqueue('import réglages v2', () => handleLegacySyncData(event.peer, msg));
+        }
+        break;
+      case 'SYNC_ACK':
+        if (msg.v === PROTOCOL_VERSION) await handleAck(msg);
+        break;
+    }
+  } catch (err) {
+    logger.error('[PeerSync] Erreur réception:', err);
+  }
+};
+
+// ============================================
+// ENVOI DU DELTA (v3)
+// ============================================
+
+const sendDeltaTo = async (hs: SyncMessage) => {
+  const peerId = hs.from;
+  if (!peerId) return;
+  const sinceMs = Number(hs.since?.[myDeviceId] ?? 0) || 0;
+
+  setStatus({ isSyncing: true });
+  try {
+    const db = await openDatabase();
+    await ensureSchema(db);
+
+    // 1. Détecter toutes les modifications locales
+    const resolver = await scanAll(db);
+    const scanTs = Date.now();
+
+    // 2. Envoyer par paquets
+    const syncId = `${myDeviceId}-${scanTs}`;
+    let seq = 0;
+    let rows: SyncItem[] = [];
+    let tombs: Tombstone[] = [];
+    let size = 0;
+    let totalRows = 0;
+
+    const flush = async (last: boolean, kv3?: KVDelta) => {
+      await MultipeerBridge.sendData({
+        type: 'SYNC_DATA',
+        v: PROTOCOL_VERSION,
+        device: myDeviceName,
+        from: myDeviceId,
+        to: peerId,
+        syncId,
+        seq: seq++,
+        last,
+        rows,
+        tombs,
+        kv3,
+        legacy: hadV2Sync,
+        ts: scanTs,
+      } satisfies SyncMessage);
+      rows = [];
+      tombs = [];
+      size = 0;
+    };
+
+    const existing = await existingTables(db);
+    for (const [table] of TABLES) {
+      if (!existing.has(table)) continue;
+      const PAGE = 200;
+      // Pagination par rowid (et non OFFSET) : une suppression pendant l'envoi ne fait sauter aucune ligne
+      for (let lastRowid = -1; ;) {
+        const page = (await db.getAllAsync(
+          `SELECT t.rowid AS __rid, t.*, s.updated_at AS __u FROM ${table} t
+             JOIN sync_state s ON s.tbl = ? AND s.uid = t.sync_uid
+           WHERE s.changed_at > ? AND (s.src IS NULL OR s.src != ?) AND t.rowid > ?
+           ORDER BY t.rowid LIMIT ?`,
+          [table, sinceMs, peerId, lastRowid, PAGE]
+        )) as Record<string, any>[];
+        if (page.length === 0) break;
+        lastRowid = Number(page[page.length - 1].__rid);
+        for (const r of page) {
+          const u = Number(r.__u ?? 0) || 0;
+          const d = await buildPayload(table, r, resolver);
+          // id d'origine : permet de reconnaître une ligne déjà copiée par l'ancienne synchro (v2)
+          if (!SPEC.get(table)!.textPk && r.id != null) d.__oid = r.id;
+          const item: SyncItem = { t: table, uid: r.sync_uid, u, d };
+          const itemSize = JSON.stringify(item).length;
+          if (size > 0 && size + itemSize > CHUNK_MAX_BYTES) await flush(false);
+          rows.push(item);
+          size += itemSize;
+          totalRows++;
+        }
+        if (page.length < PAGE) break;
+      }
+    }
+
+    const tombRows = (await db.getAllAsync(
+      'SELECT tbl, uid, deleted_at FROM sync_tombstones WHERE changed_at > ? AND (src IS NULL OR src != ?) ORDER BY deleted_at ASC',
+      [sinceMs, peerId]
+    )) as Array<{ tbl: string; uid: string; deleted_at: number }>;
+    for (const tr of tombRows) {
+      const item: Tombstone = { t: tr.tbl, uid: tr.uid, u: Number(tr.deleted_at) };
+      const itemSize = 80 + tr.uid.length;
+      if (size > 0 && size + itemSize > CHUNK_MAX_BYTES) await flush(false);
+      tombs.push(item);
+      size += itemSize;
+    }
+
+    // Réglages (AsyncStorage) dans le dernier paquet
+    const kv3 = await collectKVDelta(formatKvTs(sinceMs));
+    await flush(true, kv3);
+
+    logger.info(`[PeerSync] Envoyé à ${hs.device}: ${totalRows} lignes, ${tombRows.length} suppressions, ${Object.keys(kv3).length} réglages (${seq} paquet(s))`);
+  } finally {
+    setStatus({ isSyncing: false });
+  }
+};
+
+// ============================================
+// IMPORT (v3)
+// ============================================
+
+let lastScanAt = 0;
+// L'appareil a-t-il déjà synchronisé avec l'ancienne version (v2) ? Et l'expéditeur aussi ?
+let hadV2Sync = false;
+let legacyMatching = false;
+let suppressBackgroundScanUntil = 0;
+
+const handleSyncData = async (msg: SyncMessage) => {
+  const from = msg.from;
+  if (!from || !msg.syncId) return;
+
+  setStatus({ isSyncing: true });
+  try {
+    const db = await openDatabase();
+    await ensureSchema(db);
+
+    // Au premier paquet d'une synchro : mettre à jour notre propre état local
+    // pour que les conflits soient jugés sur des informations à jour
+    if (!pendingIncoming.has(msg.syncId)) {
+      pendingIncoming.set(msg.syncId, { from, device: msg.device, failures: 0 });
+      if (Date.now() - lastScanAt > 3000) await scanAll(db);
+    }
+    const pending = pendingIncoming.get(msg.syncId)!;
+    legacyMatching = msg.legacy === true;
+
+    const existing = await existingTables(db);
+    const resolver = createResolver(db);
+    let applied = 0;
+
+    const items = (msg.rows ?? []).slice().sort(
+      (a, b) => (TABLE_ORDER.get(a.t) ?? 99) - (TABLE_ORDER.get(b.t) ?? 99)
+    );
+
+    // Un paquet = une transaction (beaucoup plus rapide sur iPhone).
+    // Si la transaction échoue, rien n'est perdu : la synchro sera rejouée.
+    let inTx = false;
+    try {
+      await db.execAsync('BEGIN');
+      inTx = true;
+    } catch {
+      inTx = false; // une autre transaction est en cours : on applique ligne par ligne
+    }
+
+    try {
+      for (const item of items) {
+        if (!SPEC.has(item.t) || !existing.has(item.t)) continue;
+        try {
+          if (await applyRow(db, item, resolver, from)) applied++;
+        } catch (err) {
+          pending.failures++;
+          logger.warn(`[PeerSync] Ligne non appliquée (${item.t}):`, err);
+        }
+      }
+      for (const tomb of msg.tombs ?? []) {
+        if (!SPEC.has(tomb.t) || !existing.has(tomb.t)) continue;
+        try {
+          if (await applyTombstone(db, tomb, from)) applied++;
+        } catch (err) {
+          pending.failures++;
+          logger.warn(`[PeerSync] Suppression non appliquée (${tomb.t}):`, err);
+        }
+      }
+      if (inTx) await db.execAsync('COMMIT');
+    } catch (err) {
+      pending.failures++;
+      if (inTx) {
+        try { await db.execAsync('ROLLBACK'); } catch { /* ignore */ }
+      }
+      logger.warn('[PeerSync] Paquet non appliqué, il sera renvoyé à la prochaine synchro:', err);
+    }
+
+    if (applied > 0) {
+      suppressBackgroundScanUntil = Date.now() + 20000;
+      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+    }
+
+    if (msg.last) {
+      pendingIncoming.delete(msg.syncId);
+
+      let kvApplied = 0;
+      if (msg.kv3) kvApplied = await applyKVDelta(msg.kv3);
+      if (kvApplied > 0) {
+        suppressBackgroundScanUntil = Date.now() + 20000;
+        DeviceEventEmitter.emit('YOROI_PARTNERS_CHANGED');
+        DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+      }
+
+      // Mémoriser jusqu'où on a reçu les données de ce pair (dans SON horloge).
+      // En cas d'échec partiel, on n'avance PAS : tout sera renvoyé la prochaine fois.
+      const peerTs = Number(msg.ts) || 0;
+      if (pending.failures === 0) {
+        const since = await loadSinceMap();
+        since[from] = Math.max(since[from] ?? 0, peerTs);
+        await AsyncStorage.setItem(SINCE_MAP_KEY, JSON.stringify(since));
+      } else {
+        logger.warn(`[PeerSync] ${pending.failures} élément(s) non appliqué(s) : la synchro avec ${msg.device} sera reprise`);
+      }
+
+      await MultipeerBridge.sendData({
+        type: 'SYNC_ACK',
+        v: PROTOCOL_VERSION,
+        device: myDeviceName,
+        from: myDeviceId,
+        to: from,
+        ackTs: peerTs,
+      } satisfies SyncMessage);
+
+      await markSynced(msg.device);
+      logger.info(`[PeerSync] Synchro reçue de ${msg.device} terminée`);
+    }
+  } finally {
+    setStatus({ isSyncing: false });
+  }
+};
+
+const handleAck = async (msg: SyncMessage) => {
+  await markSynced(msg.device);
+  logger.info(`[PeerSync] ${msg.device} a bien reçu nos données`);
+};
+
+const markSynced = async (device: string) => {
+  const iso = new Date().toISOString();
+  let saved: any = {};
+  try {
+    const raw = await AsyncStorage.getItem(LAST_SYNC_KEY);
+    saved = raw ? JSON.parse(raw) : {};
+  } catch { /* ignore */ }
+  await AsyncStorage.setItem(LAST_SYNC_KEY, JSON.stringify({ ...saved, ts: iso, device }));
+  setStatus({ isSyncing: false, lastSyncTs: iso, lastSyncDevice: device });
+};
+
+/** Clé naturelle locale : retrouve une ligne existante qui n'a pas encore le même sync_uid */
+async function findByNaturalKey(db: any, table: string, values: Record<string, any>, d: Record<string, any>): Promise<Record<string, any> | null> {
+  switch (table) {
+    case 'profile':
+      return (await db.getFirstAsync('SELECT * FROM profile ORDER BY id LIMIT 1')) as Record<string, any> | null;
+    case 'achievements':
+      return values.id != null
+        ? ((await db.getFirstAsync('SELECT * FROM achievements WHERE id = ? LIMIT 1', [values.id])) as Record<string, any> | null)
+        : null;
+    case 'training_goals':
+      return values.sport_id != null
+        ? ((await db.getFirstAsync('SELECT * FROM training_goals WHERE sport_id = ? LIMIT 1', [values.sport_id])) as Record<string, any> | null)
+        : null;
+    case 'slot_occurrences':
+      return values.weekly_plan_id != null && values.week_start != null
+        ? ((await db.getFirstAsync(
+            'SELECT * FROM slot_occurrences WHERE weekly_plan_id = ? AND week_start = ? LIMIT 1',
+            [values.weekly_plan_id, values.week_start]
+          )) as Record<string, any> | null)
+        : null;
+    case 'trainings':
+      if (d.healthkit_uuid) {
+        const r = (await db.getFirstAsync(
+          'SELECT * FROM trainings WHERE healthkit_uuid = ? LIMIT 1',
+          [d.healthkit_uuid]
+        )) as Record<string, any> | null;
+        if (r) return r;
+      }
+      break;
+  }
+  // Ligne déjà copiée par l'ancienne synchro (v2) : même id, même date de création (et même date).
+  // Uniquement si les DEUX appareils ont déjà synchronisé avec l'ancienne version.
+  if (legacyMatching && hadV2Sync && !SPEC.get(table)!.textPk && d.__oid != null && d.created_at) {
+    const r = (await db.getFirstAsync(
+      `SELECT * FROM ${table} WHERE id = ? AND created_at = ? LIMIT 1`,
+      [d.__oid, d.created_at]
+    )) as Record<string, any> | null;
+    const sameDate = !r || !('date' in r) || !('date' in d) || r.date === d.date;
+    if (r && sameDate && (!r.sync_uid || String(r.sync_uid).startsWith('c:'))) {
+      const st = r.sync_uid
+        ? ((await db.getFirstAsync('SELECT src FROM sync_state WHERE tbl = ? AND uid = ?', [table, r.sync_uid])) as { src: string | null } | null)
+        : null;
+      if (!st || st.src == null) return r;
+    }
+  }
+  return null;
+}
+
+/**
+ * Faut-il remplacer la version locale par la version reçue ?
+ * La plus récente gagne. À égalité : règle déterministe (identique sur les deux appareils).
+ */
+async function remoteWins(
+  db: any, table: string, uid: string, remoteTs: number,
+  d: Record<string, any>, local: Record<string, any>, resolver: Resolver
+): Promise<boolean> {
+  const st = (await db.getFirstAsync(
+    'SELECT updated_at FROM sync_state WHERE tbl = ? AND uid = ?',
+    [table, uid]
+  )) as { updated_at: number } | null;
+  const localTs = st ? Number(st.updated_at) || 0 : 0;
+
+  // Créneau du planning : un "à faire" généré automatiquement n'écrase jamais un créneau déjà renseigné
+  if (table === 'slot_occurrences' && d.status === 'pending' && !d.training_id && local.status && local.status !== 'pending') {
+    return false;
+  }
+
+  if (remoteTs !== localTs) return remoteTs > localTs;
+
+  // Égalité
+  if (table === 'profile' && d.created_at && local.created_at && d.created_at !== local.created_at) {
+    return String(d.created_at) < String(local.created_at); // le profil le plus ancien (établi) gagne
+  }
+  const localPayload = await buildPayload(table, local, resolver);
+  const hr = hashPayload(d);
+  const hl = hashPayload(localPayload);
+  return hr > hl; // identiques : rien à faire ; différentes : même choix des deux côtés
+}
+
+/** Applique une ligne reçue. Retourne true si la base locale a changé. */
+async function applyRow(db: any, item: SyncItem, resolver: Resolver, src: string): Promise<boolean> {
+  const { t: table, uid, u: remoteTs, d } = item;
+  const spec = SPEC.get(table)!;
+
+  // Supprimée ici plus récemment : ne pas la ressusciter
+  const tomb = (await db.getFirstAsync(
+    'SELECT deleted_at FROM sync_tombstones WHERE tbl = ? AND uid = ?',
+    [table, uid]
+  )) as { deleted_at: number } | null;
+  if (tomb && Number(tomb.deleted_at) >= remoteTs) return false;
+
+  // Colonnes (seulement celles qui existent ici) avec clés étrangères retraduites
+  const cols = await tableColumns(db, table);
+  const values: Record<string, any> = {};
+  for (const [key, value] of Object.entries(d)) {
+    if (key.startsWith('__') || !cols.has(key) || key === 'sync_uid') continue;
+    if (key === 'id' && !spec.textPk) continue;
+    const parentTable = spec.fks?.[key];
+    if (parentTable) {
+      const localParentId = value ? await resolver.idForUid(parentTable, String(value)) : null;
+      if (!localParentId && spec.requiresParent?.includes(key)) return false; // orphelin : ignoré
+      values[key] = localParentId ?? null;
+    } else {
+      values[key] = value;
+    }
+  }
+
+  let local = (await db.getFirstAsync(
+    `SELECT * FROM ${table} WHERE sync_uid = ? LIMIT 1`,
+    [uid]
+  )) as Record<string, any> | null;
+
+  if (!local) {
+    local = await findByNaturalKey(db, table, values, d);
+    if (local) await adoptUid(db, table, local, uid);
+  }
+
+  if (local && !(await remoteWins(db, table, uid, remoteTs, d, local, resolver))) return false;
+
+  let localId: any;
+  if (local) {
+    const keys = Object.keys(values).filter(k => k !== 'id');
+    if (keys.length > 0) {
+      await db.runAsync(
+        `UPDATE ${table} SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE rowid = ?`,
+        [...keys.map(k => values[k]), local.__rowid ?? (await rowidOf(db, table, local))]
+      );
+    }
+    localId = local.id;
+  } else {
+    const keys = [...Object.keys(values), 'sync_uid'];
+    const vals = [...Object.keys(values).map(k => values[k]), uid];
+    const res = await db.runAsync(
+      `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`,
+      vals
+    );
+    localId = spec.textPk ? values.id : res?.lastInsertRowId;
+    resolver.remember(table, localId, uid);
+  }
+
+  // Mémoriser l'empreinte LOCALE de la ligne écrite, datée de la version distante :
+  // la prochaine détection ne la considérera pas comme une modification locale (pas d'écho)
+  const written = (await db.getFirstAsync(
+    `SELECT ${await scanColumns(db, table)} FROM ${table} WHERE sync_uid = ? LIMIT 1`,
+    [uid]
+  )) as Record<string, any> | null;
+  if (written) {
+    await db.runAsync(
+      'INSERT OR REPLACE INTO sync_state (tbl, uid, hash, updated_at, changed_at, src) VALUES (?, ?, ?, ?, ?, ?)',
+      [table, uid, hashLocalRow(table, written), remoteTs, Date.now(), src]
+    );
+  }
+  if (tomb) await db.runAsync('DELETE FROM sync_tombstones WHERE tbl = ? AND uid = ?', [table, uid]);
+  return true;
+}
+
+async function rowidOf(db: any, table: string, local: Record<string, any>): Promise<any> {
+  const r = (await db.getFirstAsync(
+    `SELECT rowid AS r FROM ${table} WHERE sync_uid = ? LIMIT 1`,
+    [local.sync_uid]
+  )) as { r: any } | null;
+  return r?.r;
+}
+
+/** Applique une suppression reçue. Retourne true si une ligne a été supprimée. */
+async function applyTombstone(db: any, tomb: Tombstone, src: string): Promise<boolean> {
+  const { t: table, uid, u: deletedAt } = tomb;
+  const st = (await db.getFirstAsync(
+    'SELECT updated_at FROM sync_state WHERE tbl = ? AND uid = ?',
+    [table, uid]
+  )) as { updated_at: number } | null;
+
+  // Modifiée ici APRÈS la suppression sur l'autre appareil : on garde notre version
+  if (st && Number(st.updated_at) > deletedAt) return false;
+
+  const res = await db.runAsync(`DELETE FROM ${table} WHERE sync_uid = ?`, [uid]);
+  await db.runAsync('DELETE FROM sync_state WHERE tbl = ? AND uid = ?', [table, uid]);
+  await db.runAsync(
+    `INSERT INTO sync_tombstones (tbl, uid, deleted_at, changed_at, src) VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(tbl, uid) DO UPDATE SET deleted_at = MAX(deleted_at, excluded.deleted_at), changed_at = excluded.changed_at, src = excluded.src`,
+    [table, uid, deletedAt, Date.now(), src]
+  );
+  return (res?.changes ?? 0) > 0;
+}
+
+/** Remplace l'identifiant de synchro d'une ligne locale, sans créer de fausse suppression */
+async function adoptUid(db: any, table: string, local: Record<string, any>, newUid: string) {
+  const oldUid = local.sync_uid;
+  const rid = await (async () => {
+    if (oldUid) return rowidOf(db, table, local);
+    const r = (await db.getFirstAsync(
+      `SELECT rowid AS r FROM ${table} WHERE ${SPEC.get(table)!.textPk ? 'id = ?' : 'id = ?'} LIMIT 1`,
+      [local.id]
+    )) as { r: any } | null;
+    return r?.r;
+  })();
+  await db.runAsync(`UPDATE ${table} SET sync_uid = ? WHERE rowid = ?`, [newUid, rid]);
+  if (oldUid && oldUid !== newUid) {
+    await db.runAsync(
+      'UPDATE OR REPLACE sync_state SET uid = ? WHERE tbl = ? AND uid = ?',
+      [newUid, table, oldUid]
+    );
+  }
+  local.sync_uid = newUid;
+  local.__rowid = rid;
+}
+
+// ============================================
+// DÉTECTION DES CHANGEMENTS (scan)
+// ============================================
+
+/**
+ * Parcourt toutes les tables synchronisées :
+ *  - attribue un sync_uid aux nouvelles lignes
+ *  - marque comme modifiées les lignes dont l'empreinte a changé
+ *  - crée une pierre tombale pour les lignes disparues (sauf disparition massive)
+ */
+async function scanAll(db: any): Promise<Resolver> {
+  // Tables/colonnes créées depuis la dernière synchro (écrans ouverts entre-temps)
+  tablesCache = null;
+  columnsCache.clear();
+  scanColumnsCache.clear();
+  schemaReady = false;
+  await ensureSchema(db);
+  const resolver = createResolver(db);
+  const existing = await existingTables(db);
+  for (const [table] of TABLES) {
+    if (!existing.has(table)) continue;
+    try {
+      await scanTable(db, table, resolver);
+    } catch (err) {
+      logger.warn(`[PeerSync] Scan ${table} impossible:`, err);
+    }
+  }
+  lastScanAt = Date.now();
+  return resolver;
+}
+
+async function scanTable(db: any, table: string, resolver: Resolver) {
+  const spec = SPEC.get(table)!;
+  const now = Date.now();
+
+  const stateRows = (await db.getAllAsync(
+    'SELECT uid, hash FROM sync_state WHERE tbl = ?',
+    [table]
+  )) as Array<{ uid: string; hash: string }>;
+  const states = new Map(stateRows.map(r => [r.uid, r.hash]));
+
+  const uidRows = (await db.getAllAsync(
+    `SELECT sync_uid FROM ${table} WHERE sync_uid IS NOT NULL`
+  )) as Array<{ sync_uid: string }>;
+  const usedUids = new Set(uidRows.map(r => r.sync_uid));
+
+  const tombUids = new Set(((await db.getAllAsync(
+    'SELECT uid FROM sync_tombstones WHERE tbl = ?',
+    [table]
+  )) as Array<{ uid: string }>).map(r => r.uid));
+
+  const present = new Set<string>();
+  const uidUpdates: Array<[any, string]> = [];
+  // [uid, hash, updated_at]
+  const stateUpserts: Array<[string, string, number]> = [];
+  const selectCols = await scanColumns(db, table);
+
+  const PAGE = 300;
+  // Pagination par rowid : une suppression pendant le scan ne fait sauter aucune ligne
+  for (let lastRowid = -1; ;) {
+    const rows = (await db.getAllAsync(
+      `SELECT ${selectCols} FROM ${table} WHERE rowid > ? ORDER BY rowid LIMIT ?`,
+      [lastRowid, PAGE]
+    )) as Record<string, any>[];
+    if (rows.length === 0) break;
+    lastRowid = Number(rows[rows.length - 1].__rowid);
+
+    for (const row of rows) {
+      let uid: string = row.sync_uid;
+
+      if (!uid) {
+        const payload = await buildPayload(table, row, resolver);
+        const base = spec.natural?.(payload) ?? `c:${hash64(stableStringify(contentForUid(payload)))}`;
+        uid = base;
+        let n = 0;
+        while (usedUids.has(uid)) uid = `${base}#${++n}`;
+        usedUids.add(uid);
+        uidUpdates.push([row.__rowid, uid]);
+      }
+      resolver.remember(table, row.id, uid);
+      present.add(uid);
+
+      const h = hashLocalRow(table, row);
+      const known = states.get(uid);
+      if (known === undefined) {
+        // Première fois qu'on voit cette ligne : on ne sait pas quand elle a été modifiée.
+        // Date 0 : elle ne pourra jamais écraser une modification réelle faite ailleurs.
+        // Exception : une ligne supprimée puis recréée (corbeille) est une action récente.
+        stateUpserts.push([uid, h, tombUids.has(uid) ? now : 0]);
+      } else if (known !== h) {
+        stateUpserts.push([uid, h, now]);
+      }
+    }
+    if (rows.length < PAGE) break;
+  }
+
+  // Écritures groupées (rapide même avec des milliers de lignes)
+  for (const part of chunk(uidUpdates, 200)) {
+    await db.runAsync(
+      `UPDATE ${table} SET sync_uid = CASE rowid ${part.map(() => 'WHEN ? THEN ?').join(' ')} END
+       WHERE rowid IN (${part.map(() => '?').join(', ')})`,
+      [...part.flatMap(([rid, uid]) => [rid, uid]), ...part.map(([rid]) => rid)]
+    );
+  }
+  for (const part of chunk(stateUpserts, 150)) {
+    await db.runAsync(
+      `INSERT OR REPLACE INTO sync_state (tbl, uid, hash, updated_at, changed_at, src) VALUES ${part.map(() => '(?, ?, ?, ?, ?, NULL)').join(', ')}`,
+      part.flatMap(([uid, h, u]) => [table, uid, h, u, now])
+    );
+  }
+
+  // Une ligne réapparue (restauration depuis la corbeille, etc.) annule sa pierre tombale
+  if (present.size > 0) {
+    const revived = [...tombUids].filter(u => present.has(u));
+    for (const part of chunk(revived, 300)) {
+      await db.runAsync(
+        `DELETE FROM sync_tombstones WHERE tbl = ? AND uid IN (${part.map(() => '?').join(', ')})`,
+        [table, ...part]
+      );
+    }
+  }
+
+  // Lignes disparues
+  const missing = [...states.keys()].filter(u => !present.has(u));
+  if (missing.length === 0) return;
+
+  const massive = missing.length >= MASS_DELETE_MIN && missing.length >= states.size * MASS_DELETE_RATIO;
+  if (massive) {
+    // Réinitialisation ou incident : on NE propage PAS ces suppressions aux autres appareils
+    logger.warn(`[PeerSync] ${table}: ${missing.length}/${states.size} lignes disparues d'un coup, suppressions non propagées (sécurité)`);
+  }
+  for (const part of chunk(missing, 300)) {
+    if (!massive) {
+      await db.runAsync(
+        `INSERT OR REPLACE INTO sync_tombstones (tbl, uid, deleted_at, changed_at, src) VALUES ${part.map(() => '(?, ?, ?, ?, NULL)').join(', ')}`,
+        part.flatMap(u => [table, u, now, now])
+      );
+    }
+    await db.runAsync(
+      `DELETE FROM sync_state WHERE tbl = ? AND uid IN (${part.map(() => '?').join(', ')})`,
+      [table, ...part]
+    );
+  }
+}
+
+// Colonnes lues pendant le scan : tout sauf les détails GPS/FC (lourds), remplacés par leur longueur
+const HEAVY_COLUMNS = new Set(['workout_details_json']);
+const scanColumnsCache = new Map<string, string>();
+async function scanColumns(db: any, table: string): Promise<string> {
+  if (scanColumnsCache.has(table)) return scanColumnsCache.get(table)!;
+  const cols = [...(await tableColumns(db, table))];
+  const parts = ['rowid AS __rowid'];
+  for (const c of cols) {
+    if (HEAVY_COLUMNS.has(c)) parts.push(`length(${c}) AS __len_${c}`);
+    else parts.push(c);
+  }
+  const sql = parts.join(', ');
+  scanColumnsCache.set(table, sql);
+  return sql;
+}
+
+/**
+ * Empreinte de changement calculée sur la ligne LOCALE (clés étrangères = ids locaux).
+ * Ainsi, la suppression d'un club ne fait pas passer toutes ses séances pour "modifiées".
+ */
+function hashLocalRow(table: string, row: Record<string, any>): string {
+  const spec = SPEC.get(table)!;
+  const out: Record<string, any> = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (key === '__rowid' || key === 'sync_uid' || key === 'created_at') continue;
+    if (key === 'id' && !spec.textPk) continue;
+    if (HEAVY_COLUMNS.has(key)) continue;
+    if (isLocalPathColumn(key)) continue;
+    out[key] = value;
+  }
+  return hash64(stableStringify(out));
+}
+
+// ============================================
+// CONVERSION LIGNE <-> DONNÉES TRANSFÉRÉES
+// ============================================
+
+interface Resolver {
+  uidForId(table: string, id: any): Promise<string | null>;
+  idForUid(table: string, uid: string): Promise<any | null>;
+  remember(table: string, id: any, uid: string): void;
+}
+
+function createResolver(db: any): Resolver {
+  const idToUid = new Map<string, string>();
+  const uidToId = new Map<string, any>();
+  return {
+    async uidForId(table, id) {
+      if (id === null || id === undefined || id === '') return null;
+      const k = `${table}|${id}`;
+      if (idToUid.has(k)) return idToUid.get(k)!;
+      try {
+        const r = (await db.getFirstAsync(`SELECT sync_uid FROM ${table} WHERE id = ?`, [id])) as { sync_uid: string | null } | null;
+        if (r?.sync_uid) {
+          idToUid.set(k, r.sync_uid);
+          uidToId.set(`${table}|${r.sync_uid}`, id);
+          return r.sync_uid;
+        }
+      } catch { /* table absente */ }
+      return null;
+    },
+    async idForUid(table, uid) {
+      const k = `${table}|${uid}`;
+      if (uidToId.has(k)) return uidToId.get(k);
+      try {
+        const r = (await db.getFirstAsync(`SELECT id FROM ${table} WHERE sync_uid = ? LIMIT 1`, [uid])) as { id: any } | null;
+        if (r) {
+          uidToId.set(k, r.id);
+          idToUid.set(`${table}|${r.id}`, uid);
+          return r.id;
+        }
+      } catch { /* table absente */ }
+      return null;
+    },
+    remember(table, id, uid) {
+      if (id === null || id === undefined) return;
+      idToUid.set(`${table}|${id}`, uid);
+      uidToId.set(`${table}|${uid}`, id);
+    },
+  };
+}
+
+/** Colonnes qui contiennent un chemin de fichier propre à l'appareil (photo, logo...) */
+const isLocalPathColumn = (key: string): boolean => /photo|logo|uri|image|avatar|path/i.test(key);
+
+/** Valeur de chemin local inutilisable sur un autre appareil */
+const isLocalPathValue = (v: unknown): boolean =>
+  typeof v === 'string' &&
+  (v.startsWith('file:') || v.startsWith('/') || v.startsWith('ph://') || v.startsWith('content:') || v.startsWith('assets-library:'));
+
+/** Données transférables d'une ligne : sans id local, sans chemins locaux, FK -> sync_uid */
+async function buildPayload(table: string, row: Record<string, any>, resolver: Resolver): Promise<Record<string, any>> {
+  const spec = SPEC.get(table)!;
+  const out: Record<string, any> = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (key.startsWith('__') || key === 'sync_uid') continue;
+    if (key === 'id' && !spec.textPk) continue;
+    if (isLocalPathColumn(key) && isLocalPathValue(value)) continue;
+    // Photo de profil en base64 : trop lourde pour la synchro
+    if (key === 'profile_photo' && typeof value === 'string' && value.length > 500) continue;
+    const parentTable = spec.fks?.[key];
+    out[key] = parentTable ? await resolver.uidForId(parentTable, value) : value;
+  }
+  return out;
+}
+
+/** Empreinte du contenu transféré (utilisée pour départager deux versions de même date) */
+function hashPayload(payload: Record<string, any>): string {
+  const rest: Record<string, any> = {};
+  for (const [k, v] of Object.entries(payload)) {
+    if (k === 'created_at' || k.startsWith('__') || HEAVY_COLUMNS.has(k)) continue;
+    rest[k] = v;
+  }
+  return hash64(stableStringify(rest));
+}
+
+/** Contenu servant à l'identifiant : stable, sans données annexes volumineuses */
+function contentForUid(payload: Record<string, any>): Record<string, any> {
+  const rest: Record<string, any> = {};
+  for (const [k, v] of Object.entries(payload)) {
+    if (k === 'created_at' || k.startsWith('__') || HEAVY_COLUMNS.has(k)) continue;
+    rest[k] = v;
+  }
+  return rest;
+}
+
+function stableStringify(obj: Record<string, any>): string {
+  const keys = Object.keys(obj).sort();
+  return JSON.stringify(keys.map(k => [k, obj[k] === undefined ? null : obj[k]]));
+}
+
+/** Hash 64 bits (deux FNV-1a 32 bits indépendants) : collisions négligeables */
+function hash64(s: string): string {
+  let h1 = 0x811c9dc5;
+  let h2 = 0x01000193 ^ 0x5bd1e995;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    h1 ^= c;
+    h1 = Math.imul(h1, 16777619);
+    h2 ^= c;
+    h2 = Math.imul(h2, 0x5bd1e995);
+    h2 ^= h2 >>> 15;
+  }
+  return (h1 >>> 0).toString(16).padStart(8, '0') + (h2 >>> 0).toString(16).padStart(8, '0');
+}
+
+// ============================================
+// SCHÉMA DE SYNCHRO
+// ============================================
+
+async function ensureSchema(db: any) {
+  if (schemaReady) return;
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS sync_state (
+      tbl TEXT NOT NULL,
+      uid TEXT NOT NULL,
+      hash TEXT NOT NULL,
+      updated_at INTEGER NOT NULL,
+      changed_at INTEGER NOT NULL,
+      src TEXT,
+      PRIMARY KEY (tbl, uid)
+    );
+    CREATE INDEX IF NOT EXISTS idx_sync_state_changed ON sync_state(changed_at);
+    CREATE TABLE IF NOT EXISTS sync_tombstones (
+      tbl TEXT NOT NULL,
+      uid TEXT NOT NULL,
+      deleted_at INTEGER NOT NULL,
+      changed_at INTEGER NOT NULL,
+      src TEXT,
+      PRIMARY KEY (tbl, uid)
+    );
+    CREATE INDEX IF NOT EXISTS idx_sync_tombstones_changed ON sync_tombstones(changed_at);
+  `);
+  const existing = await existingTables(db);
+  for (const [table] of TABLES) {
+    if (!existing.has(table)) continue;
+    const cols = await tableColumns(db, table);
+    if (!cols.has('sync_uid')) {
+      try {
+        await db.execAsync(`ALTER TABLE ${table} ADD COLUMN sync_uid TEXT`);
+        columnsCache.delete(table);
+      } catch (e) {
+        logger.warn(`[PeerSync] Ajout sync_uid sur ${table} impossible:`, e);
+      }
+    }
+    try {
+      await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_${table}_sync_uid ON ${table}(sync_uid)`);
+    } catch { /* ignore */ }
+  }
+  schemaReady = true;
+}
+
+let tablesCache: Set<string> | null = null;
+async function existingTables(db: any): Promise<Set<string>> {
+  if (tablesCache) return tablesCache;
+  const rows = (await db.getAllAsync("SELECT name FROM sqlite_master WHERE type = 'table'")) as Array<{ name: string }>;
+  tablesCache = new Set(rows.map(r => r.name));
+  return tablesCache;
+}
+
+const columnsCache = new Map<string, Set<string>>();
+async function tableColumns(db: any, table: string): Promise<Set<string>> {
+  if (columnsCache.has(table)) return columnsCache.get(table)!;
+  const rows = (await db.getAllAsync(`PRAGMA table_info(${table})`)) as Array<{ name: string }>;
+  const set = new Set(rows.map(r => r.name));
+  columnsCache.set(table, set);
+  return set;
+}
+
+// ============================================
+// COMPATIBILITÉ AVEC LES APPAREILS EN v2
+// ============================================
+
+/** Un appareil v2 ne reçoit que les réglages (format v2) : ses tables ne sont jamais touchées */
+const sendLegacyKV = async (hs: SyncMessage) => {
+  const kv = await collectKVDelta(hs.lastSyncTs ?? '1970-01-01 00:00:00');
+  await MultipeerBridge.sendData({
+    type: 'SYNC_DATA',
+    v: '2',
+    device: myDeviceName,
+    kv,
+    ts: formatKvTs(Date.now()),
+  } satisfies SyncMessage);
+};
+
+/** Données reçues d'un appareil v2 : on applique uniquement les réglages, jamais les tables */
+const handleLegacySyncData = async (peer: string, msg: SyncMessage) => {
+  if (msg.tables) {
+    logger.warn(`[PeerSync] ${msg.device || peer} utilise une ancienne version : données SQL ignorées (mettre à jour Yoroi sur cet appareil)`);
+  }
+  if (msg.kv) {
+    const n = await applyKVDelta(msg.kv);
+    if (n > 0) {
+      DeviceEventEmitter.emit('YOROI_PARTNERS_CHANGED');
+      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+    }
+  }
+  const ackTs = typeof msg.ts === 'string' ? msg.ts : formatKvTs(Date.now());
+  await MultipeerBridge.sendData({ type: 'SYNC_ACK', v: '2', device: myDeviceName, ackTs } satisfies SyncMessage);
+  // Pour les prochains échanges v2 : jusqu'où on a reçu
+  const raw = await AsyncStorage.getItem(LAST_SYNC_KEY);
+  let saved: any = {};
+  try { saved = raw ? JSON.parse(raw) : {}; } catch { /* ignore */ }
+  await AsyncStorage.setItem(LAST_SYNC_KEY, JSON.stringify({ ...saved, legacyTs: ackTs }));
+};
+
+// ============================================
+// RÉGLAGES (AsyncStorage)
+// ============================================
+// Détection automatique par hash de chaque clé ; la plus récente gagne.
+
+const KV_HASHES_KEY = '@yoroi_kv_hashes';
+const KV_TIMESTAMPS_KEY = '@yoroi_kv_timestamps';
+
+function fastHash(s: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(16);
+}
+
+/** Format des horodatages KV ("AAAA-MM-JJ HH:MM:SS.mmm", UTC), comparable avec l'ancien format sans ms */
+const formatKvTs = (ms: number): string =>
+  new Date(ms || 0).toISOString().replace('T', ' ').replace('Z', '');
+
+async function collectKVDelta(sinceTs: string): Promise<KVDelta> {
+  const result: KVDelta = {};
+  try {
+    const [hashesRaw, tsRaw] = await Promise.all([
+      AsyncStorage.getItem(KV_HASHES_KEY),
+      AsyncStorage.getItem(KV_TIMESTAMPS_KEY),
+    ]);
+    const hashes: Record<string, string> = hashesRaw ? JSON.parse(hashesRaw) : {};
+    const timestamps: Record<string, string> = tsRaw ? JSON.parse(tsRaw) : {};
+    const now = formatKvTs(Date.now());
+    let anyChange = false;
+
+    for (const key of SYNC_KV_KEYS) {
+      const value = await AsyncStorage.getItem(key);
+      const currentHash = fastHash(value ?? '__null__');
+      // Clé jamais vue et absente sur cet appareil : ce n'est pas une modification
+      // (sinon ce "vide" pouvait écraser la vraie valeur de l'autre appareil)
+      if (hashes[key] === undefined && value === null) {
+        hashes[key] = currentHash;
+        anyChange = true;
+        continue;
+      }
+      if (currentHash !== hashes[key]) {
+        hashes[key] = currentHash;
+        timestamps[key] = now;
+        anyChange = true;
+        result[key] = { value, updatedAt: now };
+      } else {
+        const keyTs = timestamps[key] ?? '1970-01-01 00:00:00';
+        if (keyTs > sinceTs) result[key] = { value, updatedAt: keyTs };
+      }
+    }
+
+    if (anyChange) {
+      await Promise.all([
+        AsyncStorage.setItem(KV_HASHES_KEY, JSON.stringify(hashes)),
+        AsyncStorage.setItem(KV_TIMESTAMPS_KEY, JSON.stringify(timestamps)),
+      ]);
+    }
+  } catch (e) {
+    logger.warn('[PeerSync] Erreur collecte réglages:', e);
+  }
+  return result;
+}
+
+/** Applique les réglages reçus. Retourne le nombre de clés modifiées. */
+async function applyKVDelta(kv: KVDelta): Promise<number> {
+  let applied = 0;
+  try {
+    const [tsRaw, hashesRaw] = await Promise.all([
+      AsyncStorage.getItem(KV_TIMESTAMPS_KEY),
+      AsyncStorage.getItem(KV_HASHES_KEY),
+    ]);
+    const timestamps: Record<string, string> = tsRaw ? JSON.parse(tsRaw) : {};
+    const hashes: Record<string, string> = hashesRaw ? JSON.parse(hashesRaw) : {};
+
+    for (const [key, payload] of Object.entries(kv)) {
+      if (!(SYNC_KV_KEYS as readonly string[]).includes(key)) continue;
+      const localTs = timestamps[key] ?? '1970-01-01 00:00:00';
+      if (payload.updatedAt > localTs) {
+        if (payload.value === null) await AsyncStorage.removeItem(key);
+        else await AsyncStorage.setItem(key, payload.value);
+        timestamps[key] = payload.updatedAt;
+        hashes[key] = fastHash(payload.value ?? '__null__');
+        applied++;
+      }
+    }
+
+    await Promise.all([
+      AsyncStorage.setItem(KV_TIMESTAMPS_KEY, JSON.stringify(timestamps)),
+      AsyncStorage.setItem(KV_HASHES_KEY, JSON.stringify(hashes)),
+    ]);
+  } catch (e) {
+    logger.warn('[PeerSync] Erreur application réglages:', e);
+  }
+  return applied;
+}
+
+/**
+ * Marque une clé de réglage comme modifiée sans attendre la détection automatique.
+ */
+export async function markKVKeyChanged(key: string): Promise<void> {
+  if (!(SYNC_KV_KEYS as readonly string[]).includes(key)) return;
+  try {
+    const tsRaw = await AsyncStorage.getItem(KV_TIMESTAMPS_KEY);
+    const timestamps: Record<string, string> = tsRaw ? JSON.parse(tsRaw) : {};
+    timestamps[key] = formatKvTs(Date.now());
+    await AsyncStorage.setItem(KV_TIMESTAMPS_KEY, JSON.stringify(timestamps));
+    const hashesRaw = await AsyncStorage.getItem(KV_HASHES_KEY);
+    const hashes: Record<string, string> = hashesRaw ? JSON.parse(hashesRaw) : {};
+    delete hashes[key];
+    await AsyncStorage.setItem(KV_HASHES_KEY, JSON.stringify(hashes));
+  } catch { /* silent */ }
+}
+
+// ============================================
+// HELPERS
+// ============================================
+
+async function getOrCreateDeviceId(): Promise<string> {
+  try {
+    const existing = await AsyncStorage.getItem(DEVICE_ID_KEY);
+    if (existing) return existing;
+  } catch { /* ignore */ }
+  const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}-${Math.random().toString(36).slice(2, 10)}`;
+  try { await AsyncStorage.setItem(DEVICE_ID_KEY, id); } catch { /* ignore */ }
+  return id;
+}
+
+async function loadSinceMap(): Promise<Record<string, number>> {
+  try {
+    const raw = await AsyncStorage.getItem(SINCE_MAP_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+// Exposé pour les tests uniquement
+export const __test__ = {
+  scanAll,
+  applyRow,
+  applyTombstone,
+  ensureSchema,
+  buildPayload,
+  createResolver,
+  hash64,
+  resetCaches: () => { schemaReady = false; tablesCache = null; columnsCache.clear(); },
+  handleSyncData,
+  sendDeltaTo,
+  setDeviceId: (id: string) => { myDeviceId = id; },
+};
 
 export default { initPeerSync, stopPeerSync, onSyncStatusChange, getSyncStatus, forceSync, getMyDeviceName, isPeerSyncAvailable };

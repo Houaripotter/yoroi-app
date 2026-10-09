@@ -8,6 +8,7 @@ import { MultiLineComparisonCard } from '../../charts/MultiLineComparisonCard';
 import { DualComparisonCard } from '../../charts/DualComparisonCard';
 import { Footprints, Route, Timer, PersonStanding, Flame, Building2, Target, Droplets } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
+import { formatDurationHM } from '@/lib/formatDuration';
 import { fr } from 'date-fns/locale';
 import Svg, { Circle as SvgCircle, Path } from 'react-native-svg';
 
@@ -82,13 +83,15 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
 
   const getModalData = useCallback(() => {
     if (!selectedMetric) return [];
-    const formatDate = (d: string) => { try { return format(parseISO(d), 'd MMM', { locale: fr }); } catch { return d; } };
+    // Règle 4 : deux lignes (jour+mois / année)
+    const fmtLabel = (d: string) => { try { return `${format(parseISO(d), 'd MMM', { locale: fr })}\n${format(parseISO(d), 'yyyy')}`; } catch { return d; } };
+    // Règle 3 : plus récent à GAUCHE → inverser l'ordre ASC en DESC
     switch (selectedMetric.key) {
-      case 'steps': return safeStepsHistory.map(h => ({ value: h.value, label: formatDate(h.date), date: h.date }));
-      case 'calories': return safeCaloriesHistory.map(h => ({ value: h.value, label: formatDate(h.date), date: h.date }));
-      case 'distance': return safeDistanceHistory.map(h => ({ value: h.value, label: formatDate(h.date), date: h.date }));
-      case 'exercise': return safeExerciseHistory.map(h => ({ value: h.value, label: formatDate(h.date), date: h.date }));
-      case 'stand': return safeStandHistory.map(h => ({ value: h.value, label: formatDate(h.date), date: h.date }));
+      case 'steps': return [...safeStepsHistory].reverse().map(h => ({ value: h.value, label: fmtLabel(h.date), date: h.date }));
+      case 'calories': return [...safeCaloriesHistory].reverse().map(h => ({ value: h.value, label: fmtLabel(h.date), date: h.date }));
+      case 'distance': return [...safeDistanceHistory].reverse().map(h => ({ value: h.value, label: fmtLabel(h.date), date: h.date }));
+      case 'exercise': return [...safeExerciseHistory].reverse().map(h => ({ value: h.value, label: fmtLabel(h.date), date: h.date }));
+      case 'stand': return [...safeStandHistory].reverse().map(h => ({ value: h.value, label: fmtLabel(h.date), date: h.date }));
       default: return [];
     }
   }, [selectedMetric, safeStepsHistory, safeCaloriesHistory, safeDistanceHistory, safeExerciseHistory, safeStandHistory]);
@@ -218,7 +221,7 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
               ...(safeStepsHistory.length > 0 ? [{
                 label: 'Pas',
                 color: '#6366F1',
-                history: safeStepsHistory,
+                history: [...safeStepsHistory].reverse(),
                 currentValue: steps,
                 unit: 'pas',
                 onPress: () => setSelectedMetric({ key: 'steps', label: 'Pas quotidiens', color: '#6366F1', unit: 'pas', icon: <Footprints size={18} color="#6366F1" strokeWidth={2.5} /> }),
@@ -226,7 +229,7 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
               ...(safeCaloriesHistory.length > 0 ? [{
                 label: 'Calories',
                 color: '#F97316',
-                history: safeCaloriesHistory,
+                history: [...safeCaloriesHistory].reverse(),
                 currentValue: calories,
                 unit: 'kcal',
                 onPress: () => setSelectedMetric({ key: 'calories', label: 'Calories brûlées', color: '#F97316', unit: 'kcal', icon: <Flame size={18} color="#F97316" strokeWidth={2.5} /> }),
@@ -234,7 +237,7 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
               ...(safeDistanceHistory.length > 0 ? [{
                 label: 'Distance',
                 color: '#3B82F6',
-                history: safeDistanceHistory,
+                history: [...safeDistanceHistory].reverse(),
                 currentValue: distance,
                 unit: 'km',
                 onPress: () => setSelectedMetric({ key: 'distance', label: 'Distance parcourue', color: '#3B82F6', unit: 'km', icon: <Route size={18} color="#3B82F6" strokeWidth={2.5} /> }),
@@ -253,8 +256,8 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
             rightLabel="Heures debout"
             leftColor="#22C55E"
             rightColor="#06B6D4"
-            leftHistory={safeExerciseHistory}
-            rightHistory={safeStandHistory}
+            leftHistory={[...safeExerciseHistory].reverse()}
+            rightHistory={[...safeStandHistory].reverse()}
             leftValue={exerciseMinutes}
             rightValue={standHours}
             unit=""
@@ -380,6 +383,7 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
           unit={selectedMetric.unit}
           icon={selectedMetric.icon}
           metricKey={selectedMetric.key}
+          formatValue={selectedMetric.key === 'exercise' ? (v: number) => formatDurationHM(v) : undefined}
         />
       )}
     </View>

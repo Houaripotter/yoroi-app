@@ -2,7 +2,7 @@
 // YOROI - HOME TAB VIEW (iOS Style Horizontal Navigation)
 // ============================================
 
-import React, { useRef, useState, useEffect, memo, useMemo } from 'react';
+import React, { useRef, useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { View, ScrollView, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text, Modal, Animated, SafeAreaView, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -127,18 +127,18 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
 }) => {
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
   const styles = useMemo(() => createStyles(SCREEN_WIDTH, SCREEN_HEIGHT), [SCREEN_WIDTH, SCREEN_HEIGHT]);
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, screenBackground } = useTheme();
   const { t } = useI18n();
   const scrollViewRef = useRef<ScrollView>(null);
   const tabScrollRef = useRef<ScrollView>(null);
   const [currentPage, setCurrentPage] = useState(0);
 
-  // Create default pages with translations
-  const getDefaultPages = (): PageItem[] => [
+  // Create default pages with translations — mémoïsé pour éviter de recréer à chaque render
+  const getDefaultPages = useCallback((): PageItem[] => [
     { id: 'home', title: t('home.title'), icon: '', description: t('home.dashboard') },
-  ];
+  ], [t]);
 
-  const [pageOrder, setPageOrder] = useState<PageItem[]>(getDefaultPages());
+  const [pageOrder, setPageOrder] = useState<PageItem[]>(() => getDefaultPages());
   const [editMode, setEditMode] = useState(false);
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
@@ -151,12 +151,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
         return defaultPage ? { ...page, title: defaultPage.title, description: defaultPage.description } : page;
       });
     });
-  }, [t]);
-
-  // Charger l'ordre des pages au montage
-  useEffect(() => {
-    loadPageOrder();
-  }, []);
+  }, [getDefaultPages]);
 
   // Animation de tremblement en mode édition
   useEffect(() => {
@@ -182,7 +177,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
     };
   }, [editMode]);
 
-  const loadPageOrder = async () => {
+  const loadPageOrder = useCallback(async () => {
     try {
       const defaultPages = getDefaultPages();
       const saved = await AsyncStorage.getItem(PAGE_ORDER_KEY);
@@ -211,18 +206,23 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
     } catch (error) {
       logger.error('Error loading page order:', error);
     }
-  };
+  }, [getDefaultPages]);
 
-  const savePageOrder = async (order: PageItem[]) => {
+  // Charger l'ordre des pages au montage
+  useEffect(() => {
+    loadPageOrder();
+  }, [loadPageOrder]);
+
+  const savePageOrder = useCallback(async (order: PageItem[]) => {
     try {
       await AsyncStorage.setItem(PAGE_ORDER_KEY, JSON.stringify(order));
       setPageOrder(order);
     } catch (error) {
       logger.error('Error saving page order:', error);
     }
-  };
+  }, []);
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = event.nativeEvent.contentOffset.x;
     const page = SCREEN_WIDTH > 0 ? Math.round(offsetX / SCREEN_WIDTH) : 0;
     if (page !== currentPage) {
@@ -245,28 +245,28 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
         animated: true,
       });
     }
-  };
+  }, [SCREEN_WIDTH, currentPage, pageOrder.length]);
 
-  const scrollToPage = (pageIndex: number) => {
+  const scrollToPage = useCallback((pageIndex: number) => {
     scrollViewRef.current?.scrollTo({
       x: pageIndex * SCREEN_WIDTH,
       animated: true,
     });
     impactAsync(ImpactFeedbackStyle.Light);
-  };
+  }, [SCREEN_WIDTH]);
 
-  const handleLongPressDot = () => {
+  const handleLongPressDot = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Medium);
     setEditMode(true);
-  };
+  }, []);
 
-  const handleDoneEditing = () => {
+  const handleDoneEditing = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
     setEditMode(false);
     savePageOrder(pageOrder);
-  };
+  }, [savePageOrder, pageOrder]);
 
-  const renderPage = (pageId: string) => {
+  const renderPage = useCallback((pageId: string) => {
     switch (pageId) {
       case 'home':
         return (
@@ -309,7 +309,14 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
       default:
         return null;
     }
-  };
+  }, [
+    userName, profilePhoto, dailyQuote, steps, calories, streak, totalPoints,
+    level, rankName, rankColor, currentWeight, targetWeight, startWeight,
+    weightHistory, weightTrend, hydration, hydrationGoal, sleepHours, sleepDebt,
+    sleepGoal, sleepDate, sleepWeeklyAvg, workloadStatus, onAddWeight,
+    refreshTrigger, onRefresh, onAddWater, bodyFat, muscleMass, waterPercentage,
+    heightCm, unreadNotifCount, onNotifCountChange,
+  ]);
 
   // Calculer si tous les onglets rentrent dans l'écran
   const tabWidth = 44;
@@ -318,7 +325,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
   const allTabsFit = totalTabsWidth <= SCREEN_WIDTH;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: screenBackground }]}>
       {/* Dots indicateurs */}
       {pageOrder.length > 1 && (
         <View style={styles.dotsContainer}>

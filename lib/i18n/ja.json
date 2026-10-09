@@ -372,7 +372,12 @@
     "selectDate": "日付を選択",
     "selectTime": "時間を選択",
     "sport": "スポーツ",
-    "visceralFat": "内臓脂肪"
+    "visceralFat": "内臓脂肪",
+    "moodAmazing": "最高",
+    "moodGood": "良い",
+    "moodOkay": "普通",
+    "moodTired": "疲れた",
+    "moodBad": "悪い"
   },
   "activity": {
     "activeCalories": "アクティブカロリー",
@@ -970,7 +975,11 @@
     "sessionCount": "{{count}} セッション",
     "success": "インポート成功",
     "starting": "開始中...",
-    "importDoneFull": "インポート完了！"
+    "importDoneFull": "インポート完了！",
+    "successMessage": "{{count}}件のセッションをインポートしました",
+    "activitiesFound": "{{count}}件のアクティビティが見つかりました",
+    "importButton": "インポート ({{count}})",
+    "importDoneMessage": "{{count}}件のセッションを履歴に追加しました"
   },
   "privacy": {
     "deleteAll": "すべて削除",
@@ -993,7 +1002,21 @@
     "noDataShared": "データの共有なし",
     "onDevice": "デバイス上",
     "shareAnonymous": "匿名で共有",
-    "yourDataIsYours": "データはあなたのものです"
+    "yourDataIsYours": "データはあなたのものです",
+    "retentionDays": "{{days}}日間",
+    "entries": "{{count}}件",
+    "dataCategory": {
+      "weights": "体重・測定値",
+      "workouts": "トレーニングセッション",
+      "sleep": "睡眠",
+      "hydration": "水分補給",
+      "photos": "変身写真",
+      "injuries": "ケガ",
+      "mood": "気分",
+      "badges": "バッジと報酬",
+      "fasting": "断食"
+    },
+    "deleteCategoryConfirm": "「{{category}}」のデータをすべて削除しますか？この操作は元に戻せません。"
   },
   "radar": {
     "cardio": "カーディオ",
@@ -1125,7 +1148,10 @@
       "errorChangingTheme": "テーマ変更エラー",
       "light": "ライト",
       "themeLocked": "テーマがロックされています",
-      "warriorThemes": "ウォリアーテーマ"
+      "warriorThemes": "ウォリアーテーマ",
+      "unlockThemeMessage": "このテーマは{{xp}} XPで解放されます。現在{{currentXp}} XPです。",
+      "unlockedCount": "{{unlocked}}/{{total}} テーマ解放 · {{xp}} XP",
+      "nextUnlock": "次: {{name}} まで {{xp}} XP"
     },
     "history": {
       "noHistory": "履歴なし",
@@ -1566,7 +1592,8 @@
     "in1Month": "1ヶ月後",
     "in3Months": "3ヶ月後",
     "in6Months": "6ヶ月後",
-    "in1Year": "1年後"
+    "in1Year": "1年後",
+    "targetMessage": "約{{weeks}}週間で目標{{targetWeight}} kgに到達"
   },
   "workoutDetail": {
     "airQuality": "空気品質",
@@ -1675,7 +1702,9 @@
     "date": "日付",
     "location": "場所",
     "notes": "メモ",
-    "weight": "体重"
+    "weight": "体重",
+    "addFirst": "最初の大会を追加",
+    "inDay": "{{days}}日後"
   },
   "fasting": {
     "title": "断食モード",

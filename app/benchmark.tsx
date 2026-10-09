@@ -23,6 +23,8 @@ import { getTrainings } from '@/lib/database';
 import type { Training } from '@/lib/database';
 import { ChevronLeft, TrendingUp, TrendingDown, Minus, ChevronDown, Award } from 'lucide-react-native';
 import { useI18n } from '@/lib/I18nContext';
+import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 // ============================================
 // RÉFÉRENTIELS PAR NIVEAU
@@ -313,6 +315,7 @@ export default function BenchmarkScreen() {
   };
 
   return (
+    <PremiumGate featureTitle="Benchmark">
     <View style={{ flex: 1, backgroundColor: isDark ? colors.background : '#F2F2F7' }}>
       {/* Header */}
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -391,6 +394,7 @@ export default function BenchmarkScreen() {
             {t('benchmark.transparencyNote')}
           </Text>
         </View>
+        <PremiumTeaser variant="detail" title="Benchmarks avancés" />
       </ScrollView>
 
       {/* Picker modal */}
@@ -424,5 +428,6 @@ export default function BenchmarkScreen() {
         </View>
       </Modal>
     </View>
+    </PremiumGate>
   );
 }

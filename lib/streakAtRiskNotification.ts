@@ -108,12 +108,9 @@ export async function checkAndNotifyStreakAtRisk(): Promise<void> {
           body: `Ta séance d'aujourd'hui préserve ta série. T'as le temps.`,
         };
 
-    // Demander l'autorisation si pas encore
+    // Pas de demande d'autorisation surprise : on n'envoie que si déjà autorisé
     const { status } = await Notifications.getPermissionsAsync();
-    if (status !== 'granted') {
-      const req = await Notifications.requestPermissionsAsync();
-      if (req.status !== 'granted') return;
-    }
+    if (status !== 'granted') return;
 
     await Notifications.scheduleNotificationAsync({
       content: {

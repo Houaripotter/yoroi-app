@@ -655,6 +655,17 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
   const successRate = last7.length > 0 ? Math.round((successDays / last7.length) * 100) : 0;
   const avgAmount = last7.length > 0 ? last7.reduce((a, d) => a + d.amount, 0) / last7.length : 0;
   const dayLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+  // Dates locales (YYYY-MM-DD) de la semaine en cours, lundi en premier
+  const weekDates = (() => {
+    const monday = new Date();
+    monday.setHours(0, 0, 0, 0);
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    return dayLabels.map((_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    });
+  })();
 
   return (
     <View style={[hStyles.card, { backgroundColor: cardBg, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
@@ -824,7 +835,7 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
             {/* Bar chart 7 jours */}
             <View style={hStyles.weekBars}>
               {dayLabels.map((day, i) => {
-                const dayData = last7[6 - i];
+                const dayData = history.find(d => d.date === weekDates[i]);
                 const dayPct = dayData ? Math.min((dayData.amount / dayData.goal) * 100, 100) : 0;
                 const isToday = i === new Date().getDay() - 1 || (i === 6 && new Date().getDay() === 0);
                 return (
@@ -1047,7 +1058,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   const H_CARD_W = (SCREEN_WIDTH - CARD_PADDING * 2 - 12) / 2;
   const H_CARD_PAGE_W = H_CARD_W - CARD_BORDER_W * 2;
   const styles = useMemo(() => createStyles(IS_SMALL_SCREEN, SCREEN_WIDTH), [IS_SMALL_SCREEN, SCREEN_WIDTH]);
-  const { colors, isDark, themeColor } = useTheme();
+  const { colors, isDark, themeColor, screenBackground, screenText, screenTextMuted } = useTheme();
   const { t, locale } = useI18n();
   const { avatarImage: contextAvatarImage } = useAvatar();
   const [userGoal, setUserGoal] = useState<'lose' | 'maintain' | 'gain'>(propUserGoal || 'lose');
@@ -1359,6 +1370,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   // Fonction pour calculer les prédictions avec limites
   const calculatePrediction = (months: number) => {
     const predicted = currentWeight - (monthlyLossRate * months);
+    // Prise de masse : plafonner à l'objectif (min 40kg)
+    if (userGoal === 'gain' && targetWeight > 0) {
+      return Math.max(40, Math.min(predicted, targetWeight));
+    }
     // Limites: minimum 40kg ET ne pas descendre sous l'objectif
     const minWeight = Math.max(40, targetWeight);
     return Math.max(predicted, minWeight);
@@ -1405,7 +1420,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   return (
     <ScrollView
       ref={scrollViewRef}
-      style={[styles.container, { backgroundColor: isDark ? colors.accentDark : colors.accent, overflow: 'visible' }]}
+      style={[styles.container, { backgroundColor: screenBackground, overflow: 'visible' }]}
       contentContainerStyle={[styles.scrollContent, { overflow: 'visible' }]}
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled={true}
@@ -1446,8 +1461,6 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               <FramedProfilePhoto
                 uri={profilePhoto}
                 size={70}
-                borderColor="transparent"
-                borderWidth={0}
                 placeholderIconSize={34}
               />
             </View>
@@ -1455,10 +1468,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
           {/* CENTRE - Texte */}
           <View style={styles.centerSection}>
-            <Text style={[styles.greetingClean, { color: colors.textOnAccent }]}>
+            <Text style={[styles.greetingClean, { color: themeColor === 'blanc' ? screenTextMuted : colors.textOnAccent }]}>
               {getGreeting()}
             </Text>
-            <Text style={[styles.nameClean, { color: colors.textOnAccent }]}>
+            <Text style={[styles.nameClean, { color: themeColor === 'blanc' ? screenText : colors.textOnAccent }]}>
               {userName || t('home.defaultName')}
             </Text>
           </View>
@@ -1466,24 +1479,24 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           {/* DROITE - Cloche + Reglages */}
           <View style={styles.rightButtons}>
             <View style={[styles.settingsBtn, {
-              backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.25)',
-              borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)',
+              backgroundColor: themeColor === 'blanc' ? 'rgba(0,0,0,0.06)' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.25)'),
+              borderColor: themeColor === 'blanc' ? 'rgba(0,0,0,0.12)' : (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)'),
             }]}>
               <NotificationBellPopup
                 unreadCount={unreadNotifCount}
                 onCountChange={onNotifCountChange}
-                variant="light"
+                variant={themeColor === 'blanc' ? 'dark' : 'light'}
               />
             </View>
             <TouchableOpacity
               style={[styles.settingsBtn, {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.25)',
-                borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)',
+                backgroundColor: themeColor === 'blanc' ? 'rgba(0,0,0,0.06)' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.25)'),
+                borderColor: themeColor === 'blanc' ? 'rgba(0,0,0,0.12)' : (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)'),
               }]}
               onPress={navToSettings}
               activeOpacity={0.7}
             >
-              <Settings size={20} color="#FFFFFF" strokeWidth={2} />
+              <Settings size={20} color={themeColor === 'blanc' ? colors.textPrimary : '#FFFFFF'} strokeWidth={2} />
             </TouchableOpacity>
           </View>
 
@@ -1600,7 +1613,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               >
                 {(() => {
                   // Calcul progression - seulement si objectif defini
-                  const hasGoal = targetWeight > 0 && targetWeight !== currentWeight;
+                  const hasGoal = targetWeight > 0 && currentWeight > 0 && targetWeight !== currentWeight;
                   const totalToLose = hasGoal ? Math.abs(startWeight - targetWeight) : 0;
                   const lost = hasGoal
                     ? (userGoal === 'gain'
@@ -1788,9 +1801,6 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                     >
                       {last15.map((w, index) => {
                         const pct = 30 + ((w - minW) / range) * 60;
-                        const today = new Date();
-                        const d = new Date(today);
-                        d.setDate(d.getDate() - index);
                         return (
                           <View key={`mc-${index}`} style={{ width: 30, alignItems: 'center', gap: 2 }}>
                             <Text style={{ fontSize: 7, fontWeight: '700', color: colors.textPrimary }}>{w.toFixed(1)}</Text>
@@ -1801,7 +1811,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                                 style={{ width: '100%', height: `${pct}%`, borderRadius: 3, minHeight: 4 }}
                               />
                             </View>
-                            <Text style={{ fontSize: 7, fontWeight: '600', color: colors.textMuted }}>{d.getDate()}</Text>
+                            {/* Pas de date réelle disponible : pas de libellé de jour */}
                           </View>
                         );
                       })}
@@ -2187,7 +2197,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                   <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Heart size={16} color="#EC4899" />
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#EC4899' }}>{healthData.heartRate ? `${healthData.heartRate.min}-${healthData.heartRate.max}` : '--'}</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#EC4899' }}>{healthData.heartRate ? `${Math.round(healthData.heartRate.min)}-${Math.round(healthData.heartRate.max)}` : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.bpm')}</Text>
                     </View>
                   </TouchableOpacity>
@@ -2201,7 +2211,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                   <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Wind size={16} color="#8B5CF6" />
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#8B5CF6' }}>{healthData.respiratory != null ? `${healthData.respiratory}` : '--'}</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#8B5CF6' }}>{healthData.respiratory != null ? `${Math.round(healthData.respiratory)}` : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.respPerMin')}</Text>
                     </View>
                   </TouchableOpacity>

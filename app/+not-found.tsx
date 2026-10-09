@@ -35,9 +35,9 @@ export default function NotFoundScreen() {
             style={[styles.primaryBtn, { backgroundColor: colors.accent }]}
             activeOpacity={0.85}
           >
-            <Home size={18} color="#FFFFFF" strokeWidth={2.5} />
-            <Text style={styles.primaryBtnText}>Retour à l'accueil</Text>
-            <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
+            <Home size={18} color={colors.textOnAccent} strokeWidth={2.5} />
+            <Text style={[styles.primaryBtnText, { color: colors.textOnAccent }]}>Retour à l'accueil</Text>
+            <ChevronRight size={18} color={colors.textOnAccent} strokeWidth={2.5} />
           </TouchableOpacity>
         </Link>
 

@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { secureStorage } from '@/lib/security/secureStorage';
 // Demo data removed - DEMO_MODE is disabled for production
 import logger from '@/lib/security/logger';
-import { getNativeWorkouts, runNativeDiagnostic, NativeDiagnosticResult, requestAllHealthPermissionsNative, getTodayActivityRingsNative, getWorkoutEffortScoreNative } from './yoroiHealthKit';
+import { getNativeWorkouts, runNativeDiagnostic, NativeDiagnosticResult, requestAllHealthPermissionsNative, getTodayActivityRingsNative, getWorkoutEffortScoreNative, getNativeSleepSamples, getNativeSteps } from './yoroiHealthKit';
 import { saveHealthDataBatch, saveHealthData, addWeight, addTraining, updateTrainingDetails, getExistingHealthkitUUIDs, getTrainingsCount } from './database';
 import type { HealthDataRecord, Training } from './database';
 import { addSleepEntryFromHealthKit } from './sleepService';
@@ -744,6 +744,10 @@ const getWorkoutLabel = (activityType: string): string => {
   return labels[mapped] || 'Séance';
 };
 
+// Date locale AAAA-MM-JJ (toISOString donne la date UTC : décalage d'un jour la nuit ou hors d'Europe)
+const localDateKey = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 class HealthConnectService {
   private isInitialized = false;
   private syncStatus: SyncStatus = {
@@ -1297,6 +1301,8 @@ class HealthConnectService {
     };
     if (cleanOptions.limit !== undefined) result.limit = cleanOptions.limit;
     if (cleanOptions.ascending !== undefined) result.ascending = cleanOptions.ascending;
+    // Unité explicite (sinon HealthKit renvoie l'unité préférée de l'utilisateur, ex : livres)
+    if (cleanOptions.unit) result.unit = cleanOptions.unit;
     return result;
   }
 
@@ -1361,6 +1367,7 @@ class HealthConnectService {
       const queryOptions = this.createQueryOptions(fromDate, new Date(), {
         limit: 1,
         ascending: false,
+        unit: 'kg',
       });
       if (!queryOptions) {
         return null;
@@ -1387,6 +1394,21 @@ class HealthConnectService {
       today.setHours(0, 0, 0, 0);
 
       try {
+        // 1. Chemin natif Swift en PRIORITÉ (HKStatisticsCollectionQuery, dédoublonné,
+        //    fiable sur iOS 26 — même pattern que getNativeWorkouts)
+        const nativeSteps = await getNativeSteps(1).catch(() => null);
+        if (nativeSteps !== null && nativeSteps.length > 0) {
+          const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+          const todayEntry = nativeSteps.find(d => d.date === todayKey);
+          if (todayEntry && todayEntry.steps > 0) {
+            logger.info('[HealthKit] Pas via Swift natif:', todayEntry.steps);
+            return {
+              count: Math.min(todayEntry.steps, 100000),
+              date: today.toISOString(),
+            };
+          }
+        }
+
         if (!HealthKit) {
           logger.info('[HealthKit] Module HealthKit non disponible sur ce device');
           return null;
@@ -1472,6 +1494,45 @@ class HealthConnectService {
     }, 'steps');
   }
 
+  /**
+   * Récupère les échantillons de sommeil : Swift natif en PRIORITÉ (fiable sur iOS 26),
+   * fallback Nitro si le module natif est absent (build sans rebuild natif).
+   * Retourne les samples au format Nitro pour compatibilité avec le code existant.
+   */
+  private async querySleepSamplesUnified(fromDate: Date, toDate: Date, limit: number = 5000): Promise<any[] | null> {
+    // 1. Chemin natif Swift — même pattern que getNativeWorkouts (bypass Nitro v13)
+    const daysSpan = Math.max(1, Math.ceil((Date.now() - fromDate.getTime()) / 86400000));
+    const native = await getNativeSleepSamples(daysSpan).catch(() => null);
+    if (native !== null) {
+      const fromMs = fromDate.getTime();
+      const toMs = toDate.getTime();
+      const mapped = native
+        .filter(s => s.endDate >= fromMs && s.startDate <= toMs)
+        .map(s => ({
+          startDate: new Date(s.startDate),
+          endDate: new Date(s.endDate),
+          value: s.value,
+          sourceRevision: { source: { name: s.sourceName, bundleIdentifier: s.sourceBundleId } },
+          device: { name: s.deviceName },
+        }));
+      logger.info('[HealthKit] Sommeil via Swift natif:', mapped.length, 'échantillons');
+      return mapped;
+    }
+
+    // 2. Fallback Nitro (ancien chemin — peut échouer silencieusement sur iOS 26)
+    logger.warn('[HealthKit] Module natif sommeil absent, fallback Nitro');
+    if (!HealthKit) return null;
+    const options = this.createQueryOptions(fromDate, toDate, { limit });
+    if (!options) return null;
+    try {
+      const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', options);
+      return samples ? [...samples] : null;
+    } catch (e) {
+      logger.warn('[HealthKit] Fallback Nitro sommeil échoué:', e);
+      return null;
+    }
+  }
+
   private async getIOSSleep(): Promise<HealthData['sleep'] | null> {
     return this.queryHealthKit(async () => {
       const now = new Date();
@@ -1480,12 +1541,7 @@ class HealthConnectService {
 
       logger.info('[HealthKit] Requête sommeil: de', twoDaysAgo.toISOString(), 'à', now.toISOString());
 
-      const sleepQueryOptions = this.createQueryOptions(twoDaysAgo, now, { limit: 500 });
-      if (!sleepQueryOptions) {
-        logger.error('[HealthKit] Impossible de créer les options de requête pour le sommeil');
-        return null;
-      }
-      const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', sleepQueryOptions);
+      const samples = await this.querySleepSamplesUnified(twoDaysAgo, now, 500);
 
       logger.info('[HealthKit] Échantillons sommeil bruts:', samples?.length || 0);
 
@@ -1541,8 +1597,13 @@ class HealthConnectService {
           return null;
         }
 
-        const startTime = finalSamples[0].startDate;
-        const endTime = finalSamples[finalSamples.length - 1].endDate;
+        // Pour l'heure de coucher : ignorer les échantillons "InBed" (value=0)
+        // et "Awake" (value=2) pour trouver quand l'utilisateur s'est vraiment endormi
+        const firstAsleepSample = finalSamples.find((s: any) => s.value !== 0 && s.value !== 2);
+        const startTime = firstAsleepSample ? firstAsleepSample.startDate : finalSamples[0].startDate;
+        // Pour l'heure de réveil : dernier échantillon endormi (pas InBed)
+        const lastAsleepSample = [...finalSamples].reverse().find((s: any) => s.value !== 0 && s.value !== 2);
+        const endTime = lastAsleepSample ? lastAsleepSample.endDate : finalSamples[finalSamples.length - 1].endDate;
 
         // Detecter si on a des phases detaillees (value=3,4,5) pour eviter le double comptage
         // Apple Health envoie soit value=1 (Asleep = total), soit value=3+4+5 (phases detaillees)
@@ -3735,7 +3796,7 @@ class HealthConnectService {
 
       logger.info('[HealthKit] getWeightHistory: depuis', fromDate.toISOString());
 
-      const queryOptions = this.createQueryOptions(fromDate, new Date(), { ascending: true, limit: 5000 });
+      const queryOptions = this.createQueryOptions(fromDate, new Date(), { ascending: true, limit: 5000, unit: 'kg' });
       if (!queryOptions) return [];
       const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyMass', queryOptions);
 
@@ -3766,14 +3827,10 @@ class HealthConnectService {
     total: number;
     duration?: number;
     source?: string; // NOUVEAU: Ajouter la source pour debug
+    startTime?: string; // ISO string — heure de coucher
+    endTime?: string;   // ISO string — heure de réveil
   }>> {
     // Demo mode disabled
-
-    // VÉRIFIER QUE HealthKit EST CHARGÉ
-    if (!HealthKit) {
-      logger.warn('[HealthKit] Module not loaded, cannot fetch sleep history');
-      return [];
-    }
 
     try {
       // days=0 → tout l'historique depuis l'an 2000 (illimité)
@@ -3783,12 +3840,8 @@ class HealthConnectService {
 
       logger.info('[HealthKit] getSleepHistory: depuis', fromDate.toISOString());
 
-      const sleepHistoryOptions = this.createQueryOptions(fromDate, new Date(), { limit: 5000 });
-      if (!sleepHistoryOptions) {
-        logger.error('[HealthKit] getSleepHistory: Impossible de créer les options de requête');
-        return [];
-      }
-      const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', sleepHistoryOptions);
+      // Swift natif en priorité (fiable sur iOS 26), fallback Nitro
+      const samples = await this.querySleepSamplesUnified(fromDate, new Date(), 5000);
 
       logger.info('[HealthKit] getSleepHistory: Échantillons bruts reçus:', samples?.length || 0);
 
@@ -4485,7 +4538,7 @@ class HealthConnectService {
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
-      const dupCheckOptions = this.createQueryOptions(today, tomorrow, { limit: 10 });
+      const dupCheckOptions = this.createQueryOptions(today, tomorrow, { limit: 10, unit: 'kg' });
       const existingWeights = dupCheckOptions
         ? await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyMass', dupCheckOptions)
         : [];
@@ -4985,7 +5038,7 @@ class HealthConnectService {
 
           try {
             const sport = mapWorkoutType(workout.activityType);
-            const trainingDate = new Date(workout.startDate).toISOString().split('T')[0];
+            const trainingDate = localDateKey(new Date(workout.startDate)); // date locale (pas UTC)
             const startTime = new Date(workout.startDate).toTimeString().slice(0, 5);
 
             // Generer des notes lisibles avec les vrais details du workout
@@ -5203,12 +5256,17 @@ class HealthConnectService {
         const sleepHistory = await this.getSleepHistory(); // illimité
         for (const night of sleepHistory) {
           try {
-            const bedHour = Math.max(0, 22 - Math.round(night.total / 60));
-            const wakeDate = new Date(`${night.date}T07:00:00`);
+            // Utiliser les vraies heures HealthKit (startTime/endTime en ISO UTC)
+            const toHHMM = (iso: string) => {
+              const d = new Date(iso);
+              return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            };
+            const bedTime = night.startTime ? toHHMM(night.startTime) : '22:00';
+            const wakeTime = night.endTime ? toHHMM(night.endTime) : '07:00';
             await addSleepEntryFromHealthKit({
               date: night.date,
-              bedTime: `${String(bedHour).padStart(2, '0')}:00`,
-              wakeTime: `${String(wakeDate.getHours()).padStart(2, '0')}:00`,
+              bedTime,
+              wakeTime,
               duration: night.total,
               quality: night.total >= 480 ? 5 : night.total >= 420 ? 4 : night.total >= 360 ? 3 : night.total >= 300 ? 2 : 1,
               phases: { deep: night.deep, rem: night.rem, core: night.core, awake: night.awake },
@@ -5297,7 +5355,7 @@ class HealthConnectService {
 
             try {
               const sport = mapWorkoutType(workout.activityType);
-              const trainingDate = new Date(workout.startDate).toISOString().split('T')[0];
+              const trainingDate = localDateKey(new Date(workout.startDate)); // date locale (pas UTC)
               const startTime = new Date(workout.startDate).toTimeString().slice(0, 5);
               const workoutLabel = getWorkoutLabel(workout.activityType);
               const noteParts: string[] = [];
@@ -5414,13 +5472,13 @@ class HealthConnectService {
     if (importedFingerprints.has(fingerprint)) return null;
 
     const sport = mapWorkoutType(workout.activityType);
-    const trainingDate = new Date(workout.startDate).toISOString().split('T')[0];
+    const trainingDate = localDateKey(new Date(workout.startDate)); // date locale (pas UTC)
     const startTime = new Date(workout.startDate).toTimeString().slice(0, 5);
 
     const workoutLabel = getWorkoutLabel(workout.activityType);
     const noteParts: string[] = [];
     if (workout.duration > 0) noteParts.push(`${Math.round(workout.duration)} min`);
-    if (workout.distance && workout.distance > 0) noteParts.push(`${(workout.distance / 1000).toFixed(2)} km`);
+    if (workout.distance && workout.distance > 0) noteParts.push(`${(workout.distance > 100 ? workout.distance / 1000 : workout.distance).toFixed(2)} km`);
     if (workout.calories && workout.calories > 0) noteParts.push(`${Math.round(workout.calories)} kcal`);
     if (workout.averageHeartRate && workout.averageHeartRate > 0) noteParts.push(`${Math.round(workout.averageHeartRate)} bpm`);
     const noteText = noteParts.length > 0 ? `${workoutLabel} (${noteParts.join(', ')})` : workoutLabel;
@@ -5749,14 +5807,18 @@ class HealthConnectService {
         else if (night.total >= 300 && (deepRemPct >= 12 || night.total >= 390)) qualityNum = 3; // 5h+ ou 6h30
         else if (night.total >= 240) qualityNum = 2;                      // 4h+
         else qualityNum = 1;                                               // < 4h
-        const totalHours = Math.floor(night.total / 60);
-        const bedHour = 24 - Math.min(totalHours, 10); // Estimation: coucher = minuit - durée
-        const wakeHour = bedHour + totalHours;
+        // Utiliser les vraies heures HealthKit
+        const toHHMM = (iso: string) => {
+          const d = new Date(iso);
+          return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        };
+        const bedTime = night.startTime ? toHHMM(night.startTime) : '22:00';
+        const wakeTime = night.endTime ? toHHMM(night.endTime) : '07:00';
 
         const result = await addSleepEntryFromHealthKit({
           date: night.date,
-          bedTime: `${(bedHour % 24).toString().padStart(2, '0')}:00`,
-          wakeTime: `${(wakeHour % 24).toString().padStart(2, '0')}:00`,
+          bedTime,
+          wakeTime,
           duration: night.total,
           quality: qualityNum,
           phases: {

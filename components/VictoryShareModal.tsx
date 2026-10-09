@@ -330,7 +330,7 @@ export default function VictoryShareModal({
         )}
 
         {/* Calories */}
-        {sessionData.calories && sessionData.calories > 0 && (
+        {!!sessionData.calories && sessionData.calories > 0 && (
           <View style={styles.runningStatRow}>
             <Flame size={16} color="#EF4444" />
             <Text style={[styles.runningCaloriesText, { color: textColor }, textShadow]}>
@@ -365,7 +365,7 @@ export default function VictoryShareModal({
 
         {/* Duration + Calories */}
         <View style={styles.statsRow}>
-          {sessionData.duration && sessionData.duration > 0 && (
+          {!!sessionData.duration && sessionData.duration > 0 && (
             <View style={styles.statItem}>
               <Clock size={14} color={textColor} />
               <Text style={[styles.statValue, { color: textColor }, textShadow]}>
@@ -373,7 +373,7 @@ export default function VictoryShareModal({
               </Text>
             </View>
           )}
-          {sessionData.calories && sessionData.calories > 0 && (
+          {!!sessionData.calories && sessionData.calories > 0 && (
             <View style={styles.statItem}>
               <Flame size={14} color="#EF4444" />
               <Text style={[styles.statValue, { color: textColor }, textShadow]}>
@@ -415,7 +415,7 @@ export default function VictoryShareModal({
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
-          {sessionData.duration && sessionData.duration > 0 && sessionData.performance && sessionData.performance !== '--' && (
+          {!!sessionData.duration && sessionData.duration > 0 && sessionData.performance && sessionData.performance !== '--' && (
             <View style={styles.statItem}>
               <Clock size={14} color={textColor} />
               <Text style={[styles.statValue, { color: textColor }, textShadow]}>
@@ -423,7 +423,7 @@ export default function VictoryShareModal({
               </Text>
             </View>
           )}
-          {sessionData.calories && sessionData.calories > 0 && (
+          {!!sessionData.calories && sessionData.calories > 0 && (
             <View style={styles.statItem}>
               <Flame size={14} color="#EF4444" />
               <Text style={[styles.statValue, { color: textColor }, textShadow]}>
@@ -500,7 +500,7 @@ export default function VictoryShareModal({
         </View>
 
         {/* PACE / ALLURE (Si disponible) */}
-        {sessionData.pace && (
+        {!!sessionData.pace && (
           <View style={[styles.runningStatRow, { marginTop: 4, opacity: 0.9 }]}>
             <Gauge size={16} color={textColor} />
             <Text style={[styles.statValue, { color: textColor, fontWeight: '700' }, textShadow]}>
@@ -511,7 +511,7 @@ export default function VictoryShareModal({
 
         {/* TIME + CALORIES */}
         <View style={[styles.statsRow, { marginTop: 8 }]}>
-          {sessionData.duration && (
+          {!!sessionData.duration && (
             <View style={styles.statItem}>
               <Clock size={16} color={textColor} />
               <Text style={[styles.statValue, { color: textColor, fontSize: 15 }, textShadow]}>
@@ -519,7 +519,7 @@ export default function VictoryShareModal({
               </Text>
             </View>
           )}
-          {sessionData.calories && (
+          {!!sessionData.calories && (
             <View style={styles.statItem}>
               <Flame size={16} color="#EF4444" fill="#EF4444" />
               <Text style={[styles.statValue, { color: textColor, fontSize: 15 }, textShadow]}>

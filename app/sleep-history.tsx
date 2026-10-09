@@ -21,7 +21,7 @@ import {
   Calendar,
   Trash2,
 } from 'lucide-react-native';
-import { format, Locale } from 'date-fns';
+import { format, Locale, parseISO } from 'date-fns';
 import { fr, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
@@ -37,6 +37,10 @@ import logger from '@/lib/security/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
+
+// Parse date sûr : 'yyyy-MM-dd' en local (évite le jour précédent à l'ouest d'UTC)
+const toLocalDate = (v: any): Date =>
+  typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? parseISO(v) : new Date(v);
 
 const getDurationColor = (minutes: number): string => {
   if (minutes < 300) return '#EF4444';
@@ -74,7 +78,7 @@ export default function SleepHistoryScreen() {
     impactAsync(ImpactFeedbackStyle.Medium);
     showPopup(
       t('common.delete'),
-      `${format(new Date(entry.date), 'EEEE d MMMM', { locale: dateLocale })} - ${formatSleepDuration(entry.duration)}`,
+      `${format(toLocalDate(entry.date), 'EEEE d MMMM', { locale: dateLocale })} - ${formatSleepDuration(entry.duration)}`,
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -98,7 +102,7 @@ export default function SleepHistoryScreen() {
   const groupedEntries: { month: string; entries: SleepEntry[] }[] = [];
   let currentMonth = '';
   for (const entry of entries) {
-    const month = format(new Date(entry.date), 'MMMM yyyy', { locale: dateLocale });
+    const month = format(toLocalDate(entry.date), 'MMMM yyyy', { locale: dateLocale });
     if (month !== currentMonth) {
       currentMonth = month;
       groupedEntries.push({ month, entries: [entry] });
@@ -204,7 +208,7 @@ export default function SleepHistoryScreen() {
                       {/* Ligne du haut */}
                       <View style={styles.entryTopRow}>
                         <Text style={[styles.entryDate, { color: '#E8ECF4' }]}>
-                          {format(new Date(entry.date), 'EEEE d', { locale: dateLocale })}
+                          {format(toLocalDate(entry.date), 'EEEE d', { locale: dateLocale })}
                         </Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                           <View style={{ flexDirection: 'row', gap: 2 }}>

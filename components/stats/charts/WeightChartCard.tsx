@@ -17,7 +17,7 @@ import Svg, {
   Defs, LinearGradient, Stop, G, Rect,
 } from 'react-native-svg';
 import { Scale, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { useI18n } from '@/lib/I18nContext';
 
@@ -40,6 +40,10 @@ const PAD_RIGHT = 16;
 const POINT_WIDTH = 70;
 
 type MetricKey = 'current' | 'min' | 'max' | 'avg';
+
+// Parse date sûr : 'yyyy-MM-dd' en local (évite le jour précédent à l'ouest d'UTC)
+const toLocalDate = (v: any): Date =>
+  typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? parseISO(v) : new Date(v);
 
 const smartFmt = (v: number): string =>
   Number.isInteger(v) ? String(v) : v.toFixed(1).replace(/\.0$/, '');
@@ -159,7 +163,7 @@ const WeightChartCardInner: React.FC<WeightChartCardProps> = ({
     const xLabels = data.map((d, i) => {
       const x = PAD_LEFT + (i / Math.max(data.length - 1, 1)) * plotW;
       let label = '';
-      try { if (d.date) label = format(new Date(d.date), 'd/MM', { locale: dateLocale }); } catch {}
+      try { if (d.date) label = format(toLocalDate(d.date), 'd/MM', { locale: dateLocale }); } catch {}
       return { x, label };
     });
 

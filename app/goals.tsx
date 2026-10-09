@@ -14,6 +14,11 @@ import { ChevronLeft, Target, Plus, Check, Trash2 } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '@/lib/security/logger';
+import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
+import { usePremium } from '@/context/PremiumContext';
+import { router as goalsRouter } from 'expo-router';
+
+const FREE_GOALS_LIMIT = 3;
 
 // ============================================
 // OBJECTIFS - MES BUTS PERSONNELS
@@ -33,6 +38,7 @@ const GOALS_STORAGE_KEY = '@yoroi_user_goals';
 
 export default function GoalsScreen() {
   const { colors, isDark } = useTheme();
+  const { isPremium } = usePremium();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newGoalTitle, setNewGoalTitle] = useState('');
@@ -65,6 +71,10 @@ export default function GoalsScreen() {
 
   const addGoal = () => {
     if (!newGoalTitle.trim()) return;
+    if (!isPremium && activeGoals.length >= FREE_GOALS_LIMIT) {
+      goalsRouter.push('/paywall' as never);
+      return;
+    }
 
     impactAsync(ImpactFeedbackStyle.Medium);
     const newGoal: Goal = {
@@ -107,13 +117,23 @@ export default function GoalsScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+          accessibilityLabel="Retour"
+          accessibilityRole="button"
         >
           <ChevronLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Mes Objectifs</Text>
         <TouchableOpacity
-          onPress={() => setShowAddForm(!showAddForm)}
+          onPress={() => {
+            if (!isPremium && activeGoals.length >= FREE_GOALS_LIMIT) {
+              goalsRouter.push('/paywall' as never);
+              return;
+            }
+            setShowAddForm(!showAddForm);
+          }}
           style={[styles.addButton, { backgroundColor: '#EF4444' }]}
+          accessibilityLabel="Ajouter un objectif"
+          accessibilityRole="button"
         >
           <Plus size={20} color="#FFFFFF" />
         </TouchableOpacity>
@@ -175,6 +195,8 @@ export default function GoalsScreen() {
                 <TouchableOpacity
                   style={[styles.checkbox, { borderColor: '#EF4444' }]}
                   onPress={() => toggleGoal(goal.id)}
+                  accessibilityLabel="Marquer comme complété"
+                  accessibilityRole="button"
                 >
                   {goal.completed && <Check size={16} color="#EF4444" />}
                 </TouchableOpacity>
@@ -188,7 +210,7 @@ export default function GoalsScreen() {
                     </Text>
                   )}
                 </View>
-                <TouchableOpacity onPress={() => deleteGoal(goal.id)}>
+                <TouchableOpacity onPress={() => deleteGoal(goal.id)} accessibilityLabel="Supprimer l'objectif" accessibilityRole="button">
                   <Trash2 size={18} color={colors.textMuted} />
                 </TouchableOpacity>
               </View>
@@ -210,6 +232,8 @@ export default function GoalsScreen() {
                 <TouchableOpacity
                   style={[styles.checkbox, styles.checkboxCompleted, { backgroundColor: '#10B981', borderColor: '#10B981' }]}
                   onPress={() => toggleGoal(goal.id)}
+                  accessibilityLabel="Marquer comme non complété"
+                  accessibilityRole="button"
                 >
                   <Check size={16} color="#FFFFFF" />
                 </TouchableOpacity>
@@ -218,7 +242,7 @@ export default function GoalsScreen() {
                     {goal.title}
                   </Text>
                 </View>
-                <TouchableOpacity onPress={() => deleteGoal(goal.id)}>
+                <TouchableOpacity onPress={() => deleteGoal(goal.id)} accessibilityLabel="Supprimer l'objectif" accessibilityRole="button">
                   <Trash2 size={18} color={colors.textMuted} />
                 </TouchableOpacity>
               </View>
@@ -235,6 +259,7 @@ export default function GoalsScreen() {
         )}
 
         <View style={{ height: 100 }} />
+        <PremiumTeaser variant="analytics" title="Suivi objectifs avancé" />
       </ScrollView>
     </SafeAreaView>
   );

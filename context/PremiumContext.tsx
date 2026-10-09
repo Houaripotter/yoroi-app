@@ -5,13 +5,15 @@
  * Concu pour fonctionner meme sans configuration RevenueCat :
  *  - cles API absentes ou module natif indisponible : etat premium lu depuis
  *    le cache local chiffre (SecureStore), achats desactives
- *  - le Mode Dev actif donne toujours acces Premium (proprietaire/testeurs)
+ *  - le Mode Dev ne donne acces Premium qu'en build de developpement (__DEV__) :
+ *    en production, le code Mode Dev etait trouvable et debloquait Premium gratuitement.
+ *    Pour tester Premium en production : achat sandbox / TestFlight ou entitlement
+ *    promotionnel accorde depuis le dashboard RevenueCat.
  */
 
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo, type ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { useDevMode } from '@/lib/DevModeContext';
-import { getUserSettings } from '@/lib/storage';
 import {
   RC_API_KEY,
   PREMIUM_ENTITLEMENT_ID,
@@ -19,10 +21,6 @@ import {
 
 // Cache local du statut premium pour un demarrage instantane et hors-ligne
 const PREMIUM_CACHE_KEY = 'yoroi_premium_cache_v1';
-
-// Grand-perisage : les utilisateurs qui avaient deja l'app avant le passage
-// en freemium gardent l'acces complet gratuitement.
-const LEGACY_FREE_KEY = 'yoroi_legacy_free_v1';
 
 export interface PremiumPackage {
   identifier: string;
@@ -32,19 +30,22 @@ export interface PremiumPackage {
 }
 
 interface PremiumContextValue {
-  /** Acces premium effectif (abonnement actif OU mode dev OU utilisateur historique) */
+  /** Acces premium effectif (abonnement actif OU mode dev, sauf si simulateFreeUser) */
   isPremium: boolean;
   /** Abonnement store reellement actif (hors mode dev) */
   hasActiveSubscription: boolean;
-  /** Utilisateur historique : acces complet conserve */
-  isLegacyFree: boolean;
   isLoading: boolean;
   /** RevenueCat configure et operationnel */
   isStoreReady: boolean;
   packages: PremiumPackage[];
+  /** Mode dev uniquement : simule un utilisateur gratuit pour voir les gates premium */
+  simulateFreeUser: boolean;
+  toggleSimulateFreeUser: () => void;
   purchase: (pkg: PremiumPackage) => Promise<{ success: boolean; error?: string }>;
   restore: () => Promise<{ success: boolean; restored: boolean; error?: string }>;
   refresh: () => Promise<void>;
+  /** Identifiant RevenueCat de l'appareil (pour accorder un Premium promotionnel depuis le dashboard) */
+  appUserId: string | null;
 }
 
 const PremiumContext = createContext<PremiumContextValue | null>(null);
@@ -61,7 +62,7 @@ function getPurchasesModule(): typeof import('react-native-purchases').default |
 }
 
 function periodLabelFor(identifier: string, packageType?: string): string {
-  const id = (packageType ?? identifier ?? '').toUpperCase();
+  const id = `${packageType ?? ''} ${identifier ?? ''}`.toUpperCase();
   if (id.includes('ANNUAL') || id.includes('YEAR')) return 'par an';
   if (id.includes('MONTH')) return 'par mois';
   if (id.includes('LIFETIME')) return 'a vie';
@@ -70,11 +71,14 @@ function periodLabelFor(identifier: string, packageType?: string): string {
 
 export function PremiumProvider({ children }: { children: ReactNode }) {
   const { isDevMode } = useDevMode();
-  const [isLegacyFree, setIsLegacyFree] = useState(false);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isStoreReady, setIsStoreReady] = useState(false);
   const [packages, setPackages] = useState<PremiumPackage[]>([]);
+  const customerInfoListenerRef = useRef<((info: any) => void) | null>(null);
+  const [appUserId, setAppUserId] = useState<string | null>(null);
+  const [simulateFreeUser, setSimulateFreeUser] = useState(false);
+  const toggleSimulateFreeUser = useCallback(() => setSimulateFreeUser(v => !v), []);
 
   const applyEntitlement = useCallback(async (active: boolean) => {
     setHasActiveSubscription(active);
@@ -93,7 +97,7 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
       const pkgs: PremiumPackage[] = current.availablePackages.map((p) => ({
         identifier: p.identifier,
         priceString: p.product.priceString,
-        periodLabel: periodLabelFor(p.identifier, String(p.packageType)),
+        periodLabel: periodLabelFor(`${p.identifier} ${p.product?.identifier ?? ''}`, String(p.packageType)),
         raw: p,
       }));
       setPackages(pkgs);
@@ -119,17 +123,26 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
       if (RC_API_KEY && Purchases) {
         try {
           Purchases.configure({ apiKey: RC_API_KEY });
-          const info = await Purchases.getCustomerInfo();
+          // La boutique est prête dès la configuration : achat et restauration restent
+          // possibles même si getCustomerInfo échoue au démarrage (réseau instable)
           if (cancelled) return;
           setIsStoreReady(true);
+          if (!customerInfoListenerRef.current) {
+            const listener = (updated: any) => {
+              const nowActive = Boolean(updated.entitlements.active[PREMIUM_ENTITLEMENT_ID]);
+              void applyEntitlement(nowActive);
+            };
+            Purchases.addCustomerInfoUpdateListener(listener);
+            customerInfoListenerRef.current = listener;
+          }
+          void loadOfferings(Purchases);
+          Promise.resolve(Purchases.getAppUserID?.()).then((id: any) => {
+            if (!cancelled && typeof id === 'string') setAppUserId(id);
+          }).catch(() => {});
+          const info = await Purchases.getCustomerInfo();
+          if (cancelled) return;
           const active = Boolean(info.entitlements.active[PREMIUM_ENTITLEMENT_ID]);
           await applyEntitlement(active);
-          await loadOfferings(Purchases);
-
-          Purchases.addCustomerInfoUpdateListener((updated) => {
-            const nowActive = Boolean(updated.entitlements.active[PREMIUM_ENTITLEMENT_ID]);
-            void applyEntitlement(nowActive);
-          });
         } catch {
           // pas de reseau ou configuration invalide : on reste sur le cache
         }
@@ -141,6 +154,11 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
     void init();
     return () => {
       cancelled = true;
+      const listener = customerInfoListenerRef.current;
+      if (listener) {
+        try { getPurchasesModule()?.removeCustomerInfoUpdateListener?.(listener); } catch {}
+        customerInfoListenerRef.current = null;
+      }
     };
   }, [applyEntitlement, loadOfferings]);
 
@@ -182,6 +200,7 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     const Purchases = getPurchasesModule();
     if (!Purchases || !isStoreReady) return;
+    if (packages.length === 0) await loadOfferings(Purchases);
     try {
       const info = await Purchases.getCustomerInfo();
       const active = Boolean(info.entitlements.active[PREMIUM_ENTITLEMENT_ID]);
@@ -189,47 +208,33 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
     } catch {
       // hors-ligne : on garde le cache
     }
-  }, [isStoreReady, applyEntitlement]);
+  }, [isStoreReady, applyEntitlement, packages.length, loadOfferings]);
 
-  // Grand-perisage : les utilisateurs qui avaient deja un profil avant le freemium
-  // gardent l'acces complet gratuitement.
-  useEffect(() => {
-    let cancelled = false;
-    const decide = async () => {
-      try {
-        const stored = await SecureStore.getItemAsync(LEGACY_FREE_KEY);
-        if (cancelled) return;
-        if (stored === '1') {
-          setIsLegacyFree(true);
-          return;
-        }
-        if (stored === '0') return;
-        // Premiere execution de cette version : verifier si l'utilisateur a deja un profil
-        const settings = await getUserSettings();
-        const hasProfile = Boolean(settings.username);
-        setIsLegacyFree(hasProfile);
-        await SecureStore.setItemAsync(LEGACY_FREE_KEY, hasProfile ? '1' : '0');
-      } catch {
-        // non bloquant : par defaut, pas d'acces historique
-      }
-    };
-    void decide();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const value: PremiumContextValue = {
-    isPremium: hasActiveSubscription || isDevMode || isLegacyFree,
+  const value: PremiumContextValue = useMemo(() => ({
+    isPremium: !simulateFreeUser && (hasActiveSubscription || (__DEV__ && isDevMode)),
     hasActiveSubscription,
-    isLegacyFree,
     isLoading,
     isStoreReady,
     packages,
+    simulateFreeUser,
+    toggleSimulateFreeUser,
     purchase,
     restore,
     refresh,
-  };
+    appUserId,
+  }), [
+    appUserId,
+    simulateFreeUser,
+    hasActiveSubscription,
+    isDevMode,
+    isLoading,
+    isStoreReady,
+    packages,
+    toggleSimulateFreeUser,
+    purchase,
+    restore,
+    refresh,
+  ]);
 
   return <PremiumContext.Provider value={value}>{children}</PremiumContext.Provider>;
 }

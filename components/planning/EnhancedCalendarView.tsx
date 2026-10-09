@@ -56,7 +56,7 @@ export const EnhancedCalendarView = React.memo(function EnhancedCalendarView({
   onToggleRest,
   refreshKey,
 }: EnhancedCalendarViewProps) {
-  const { colors } = useTheme();
+  const { colors, themeColor } = useTheme();
   const { t } = useI18n();
   const [restDays, setRestDays] = useState<Set<string>>(new Set());
 
@@ -237,7 +237,7 @@ export const EnhancedCalendarView = React.memo(function EnhancedCalendarView({
                           color: colors.accent,
                           fontWeight: '700',
                         },
-                        isSelected && { color: '#FFFFFF', fontWeight: '700' },
+                        isSelected && { color: themeColor === 'blanc' ? colors.textPrimary : '#FFFFFF', fontWeight: '700' },
                         !isCurrentMonth && styles.otherMonthNumber,
                       ]}
                     >
@@ -255,7 +255,10 @@ export const EnhancedCalendarView = React.memo(function EnhancedCalendarView({
                               source={display.source}
                               style={[
                                 styles.calendarClubLogo,
-                                { marginLeft: i > 0 ? -8 : 0 },
+                                {
+                                  marginLeft: i > 0 ? -8 : 0,
+                                  borderColor: themeColor === 'blanc' ? colors.background : '#FFFFFF',
+                                },
                               ]}
                             />
                           ) : (
@@ -266,6 +269,7 @@ export const EnhancedCalendarView = React.memo(function EnhancedCalendarView({
                                 {
                                   backgroundColor: display.color,
                                   marginLeft: i > 0 ? -4 : 0,
+                                  borderColor: themeColor === 'blanc' ? colors.background : '#FFFFFF',
                                 },
                               ]}
                             />
@@ -284,6 +288,7 @@ export const EnhancedCalendarView = React.memo(function EnhancedCalendarView({
                                 {
                                   backgroundColor: `${sportColor}30`,
                                   marginLeft: offset > 0 ? -4 : 0,
+                                  borderColor: themeColor === 'blanc' ? colors.background : '#FFFFFF',
                                 },
                               ]}
                             >

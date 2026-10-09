@@ -17,6 +17,10 @@ interface ModernLineChartProps {
   label?: string;
   compact?: boolean;
   maxDataPoints?: number;
+  /** Formateur personnalisé pour les labels des points. Ex: (v) => `7h10` */
+  valueFormat?: (value: number) => string;
+  /** Formateur personnalisé pour l'axe Y. Ex: (v) => `7h10` */
+  yAxisFormat?: (value: number) => string;
 }
 
 export const ModernLineChart: React.FC<ModernLineChartProps> = React.memo(({
@@ -28,6 +32,8 @@ export const ModernLineChart: React.FC<ModernLineChartProps> = React.memo(({
   label,
   compact = false,
   maxDataPoints,
+  valueFormat,
+  yAxisFormat,
 }) => {
   const { colors, isDark } = useTheme();
 
@@ -90,6 +96,8 @@ export const ModernLineChart: React.FC<ModernLineChartProps> = React.memo(({
         color={color}
         height={compact ? 100 : height}
         compact={compact}
+        valueFormat={valueFormat}
+        yAxisFormat={yAxisFormat}
       />
 
       {/* Stats MIN/MOY/MAX - Seulement en mode complet */}
@@ -97,15 +105,15 @@ export const ModernLineChart: React.FC<ModernLineChartProps> = React.memo(({
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>MIN</Text>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{Number.isInteger(min) ? min : min.toFixed(1)}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{valueFormat ? valueFormat(min) : (Number.isInteger(min) ? min : min.toFixed(1))}</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>MOY</Text>
-            <Text style={[styles.statValue, { color: color, fontWeight: '800' }]}>{Number.isInteger(avg) ? avg : avg.toFixed(1)}</Text>
+            <Text style={[styles.statValue, { color: color, fontWeight: '800' }]}>{valueFormat ? valueFormat(avg) : (Number.isInteger(avg) ? avg : avg.toFixed(1))}</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>MAX</Text>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{Number.isInteger(max) ? max : max.toFixed(1)}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{valueFormat ? valueFormat(max) : (Number.isInteger(max) ? max : max.toFixed(1))}</Text>
           </View>
         </View>
       )}

@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View, StyleSheet, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
+import { ScrollView, View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { useScrollContext } from '@/lib/ScrollContext';
@@ -16,6 +16,7 @@ import { SimpleMetricCard } from '../charts/SimpleMetricCard';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
 import { ScrollableLineChart } from '../charts/ScrollableLineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
+import { SkeletonGrid } from '../SkeletonCard';
 import { getLatestWeight, getAllWeights, getWeights, getProfile } from '@/lib/database';
 import { Activity, Droplet, Bone, Zap, Flame } from 'lucide-react-native';
 import {
@@ -37,7 +38,7 @@ export const CompositionPage: React.FC = () => {
   const { colors } = useTheme();
   const { t, language } = useI18n();
   const { handleScroll: onScrollContext } = useScrollContext();
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('tout');
   const dateLocale = language === 'fr' ? fr : enUS;
   const [latestWeight, setLatestWeight] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -146,9 +147,12 @@ export const CompositionPage: React.FC = () => {
   const getModalData = () => {
     if (!selectedMetric || !allWeightsData.length) return [];
 
+    // Règle 3 : plus récent à GAUCHE → tri DESC
     const sortedWeights = [...allWeightsData].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
+    // Règle 4 : deux lignes (jour+mois / année)
+    const fmtLabel = (d: Date) => `${format(d, 'd MMM', { locale: dateLocale })}\n${format(d, 'yyyy')}`;
 
     switch (selectedMetric.key) {
       case 'fat_percent':
@@ -156,7 +160,7 @@ export const CompositionPage: React.FC = () => {
           .filter((w) => w.fat_percent > 0)
           .map((w) => ({
             value: w.fat_percent,
-            label: format(new Date(w.date), 'd MMM', { locale: dateLocale }),
+            label: fmtLabel(new Date(w.date)),
             date: w.date,
           }));
 
@@ -165,7 +169,7 @@ export const CompositionPage: React.FC = () => {
           .filter((w) => w.muscle_percent > 0)
           .map((w) => ({
             value: w.muscle_percent,
-            label: format(new Date(w.date), 'd MMM', { locale: dateLocale }),
+            label: fmtLabel(new Date(w.date)),
             date: w.date,
           }));
 
@@ -174,7 +178,7 @@ export const CompositionPage: React.FC = () => {
           .filter((w) => w.water_percent > 0)
           .map((w) => ({
             value: w.water_percent,
-            label: format(new Date(w.date), 'd MMM', { locale: dateLocale }),
+            label: fmtLabel(new Date(w.date)),
             date: w.date,
           }));
 
@@ -183,7 +187,7 @@ export const CompositionPage: React.FC = () => {
           .filter((w) => w.bone_mass > 0)
           .map((w) => ({
             value: w.bone_mass,
-            label: format(new Date(w.date), 'd MMM', { locale: dateLocale }),
+            label: fmtLabel(new Date(w.date)),
             date: w.date,
           }));
 
@@ -192,7 +196,7 @@ export const CompositionPage: React.FC = () => {
           .filter((w) => w.visceral_fat > 0)
           .map((w) => ({
             value: w.visceral_fat,
-            label: format(new Date(w.date), 'd MMM', { locale: dateLocale }),
+            label: fmtLabel(new Date(w.date)),
             date: w.date,
           }));
 
@@ -201,7 +205,7 @@ export const CompositionPage: React.FC = () => {
           .filter((w) => w.bmr > 0)
           .map((w) => ({
             value: w.bmr,
-            label: format(new Date(w.date), 'd MMM', { locale: dateLocale }),
+            label: fmtLabel(new Date(w.date)),
             date: w.date,
           }));
 
@@ -210,7 +214,7 @@ export const CompositionPage: React.FC = () => {
           .filter((w) => w.metabolic_age > 0)
           .map((w) => ({
             value: w.metabolic_age,
-            label: format(new Date(w.date), 'd MMM', { locale: dateLocale }),
+            label: fmtLabel(new Date(w.date)),
             date: w.date,
           }));
 
@@ -221,7 +225,7 @@ export const CompositionPage: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ padding: 16 }}>
         <StatsHeader
           title={t('statsPages.composition.title')}
           description={t('statsPages.composition.description')}
@@ -229,10 +233,8 @@ export const CompositionPage: React.FC = () => {
           onPeriodChange={setSelectedPeriod}
           showPeriodSelector={false}
         />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-        </View>
-      </View>
+        <SkeletonGrid count={4} cardHeight={160} />
+      </ScrollView>
     );
   }
 
@@ -658,12 +660,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 250,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 100,
   },
   emptyState: {
     alignItems: 'center',

@@ -60,7 +60,7 @@ function InlineVideoPlayer({ uri, onClose, accentColor }: { uri: string; onClose
       <VideoView
         player={player}
         style={playerStyles.video}
-        allowsFullscreen
+        fullscreenOptions={{ enable: true }}
         allowsPictureInPicture
         contentFit="contain"
         nativeControls

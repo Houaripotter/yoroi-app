@@ -10,7 +10,7 @@ import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent, ScrollView
 import { useTheme } from '@/lib/ThemeContext';
 import Svg, { Path, Circle as SvgCircle, Line, Text as SvgText, Defs, LinearGradient, Stop, G, Rect } from 'react-native-svg';
 import { ArrowLeftRight, TrendingUp, TrendingDown, Minus, Maximize2, X } from 'lucide-react-native';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useI18n } from '@/lib/I18nContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -30,6 +30,8 @@ interface DualComparisonCardProps {
   rightUnit?: string; // unité optionnelle spécifique droite
   onPressLeft?: () => void;
   onPressRight?: () => void;
+  leftLowerIsBetter?: boolean;  // baisse = positif (vert)
+  rightLowerIsBetter?: boolean;
 }
 
 const CHART_HEIGHT = 220;
@@ -67,6 +69,17 @@ const sampleLine = (history: { date: string; value: number }[]) => {
   return sampled;
 };
 
+// Parse date sûr : 'yyyy-MM-dd' en local (évite le décalage UTC)
+const toLocalDate = (v: any): Date =>
+  typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? parseISO(v) : new Date(v);
+
+// Tri récent → ancien (récent à gauche), ordre d'entrée conservé si date invalide
+const sortNewestFirst = (history: { date: string; value: number }[]) =>
+  history
+    .map((h, i) => ({ h, i, t: toLocalDate(h.date).getTime() }))
+    .sort((a, b) => (isNaN(a.t) || isNaN(b.t) ? a.i - b.i : b.t - a.t))
+    .map(x => x.h);
+
 const DualComparisonCardInner: React.FC<DualComparisonCardProps> = ({
   title,
   leftLabel,
@@ -82,10 +95,12 @@ const DualComparisonCardInner: React.FC<DualComparisonCardProps> = ({
   rightUnit,
   onPressLeft,
   onPressRight,
+  leftLowerIsBetter = false,
+  rightLowerIsBetter = false,
 }) => {
-  // Sampling UNIQUE au changement de data, pas à chaque render
-  const leftHistory = useMemo(() => sampleLine(rawLeftHistory), [rawLeftHistory]);
-  const rightHistory = useMemo(() => sampleLine(rawRightHistory), [rawRightHistory]);
+  // Sampling UNIQUE au changement de data, pas à chaque render (trié récent à gauche)
+  const leftHistory = useMemo(() => sampleLine(sortNewestFirst(rawLeftHistory)), [rawLeftHistory]);
+  const rightHistory = useMemo(() => sampleLine(sortNewestFirst(rawRightHistory)), [rawRightHistory]);
   const { colors, isDark } = useTheme();
   const { language } = useI18n();
   const { width: SCREEN_WIDTH, height: screenHeight } = useWindowDimensions();
@@ -146,7 +161,9 @@ const DualComparisonCardInner: React.FC<DualComparisonCardProps> = ({
     const dataMin = Math.min(...allValues);
     const dataMax = Math.max(...allValues);
     const range = dataMax - dataMin || 1;
-    const yMin = dataMin - range * 0.15;
+    // Si toutes les valeurs sont >= 0, jamais descendre sous 0 sur l'axe Y
+    const rawYMin = dataMin - range * 0.15;
+    const yMin = dataMin >= 0 ? Math.max(0, rawYMin) : rawYMin;
     const yMax = dataMax + range * 0.15;
     const yRange = yMax - yMin;
     const plotBottom = PAD_TOP + plotH;
@@ -172,7 +189,8 @@ const DualComparisonCardInner: React.FC<DualComparisonCardProps> = ({
     const ySteps = 4;
     const yLabels = Array.from({ length: ySteps + 1 }, (_, i) => {
       const val = yMin + (yRange / ySteps) * i;
-      return { val: Math.round(val * 10) / 10, y: PAD_TOP + plotH - (plotH / ySteps) * i };
+      // 1 décimale si petite plage (évite les labels répétés)
+      return { val: yRange < 5 ? Math.round(val * 10) / 10 : Math.round(val), y: PAD_TOP + plotH - (plotH / ySteps) * i };
     });
 
     const longestHistory = (activeLeft ? leftHistory.length : 0) >= (activeRight ? rightHistory.length : 0)
@@ -182,7 +200,7 @@ const DualComparisonCardInner: React.FC<DualComparisonCardProps> = ({
     const xLabels = longestHistory.map((h, i) => {
       const x = PAD_LEFT + (i / Math.max(longestHistory.length - 1, 1)) * plotW;
       let label = '';
-      try { label = format(new Date(h.date), 'd/MM', { locale: dateLocale }); } catch { label = ''; }
+      try { label = format(toLocalDate(h.date), 'd/MM', { locale: dateLocale }); } catch { label = ''; }
       return { x, label };
     });
 
@@ -204,12 +222,17 @@ const DualComparisonCardInner: React.FC<DualComparisonCardProps> = ({
     }
   }, []);
 
+  // Historique trié récent en premier : [0] = dernier, [1] = précédent
   const leftTrend = leftHistory.length >= 2
-    ? (leftHistory[leftHistory.length - 1].value > leftHistory[leftHistory.length - 2].value ? 'up' : leftHistory[leftHistory.length - 1].value < leftHistory[leftHistory.length - 2].value ? 'down' : 'stable')
+    ? (leftHistory[0].value > leftHistory[1].value ? 'up' : leftHistory[0].value < leftHistory[1].value ? 'down' : 'stable')
     : 'stable';
   const rightTrend = rightHistory.length >= 2
-    ? (rightHistory[rightHistory.length - 1].value > rightHistory[rightHistory.length - 2].value ? 'up' : rightHistory[rightHistory.length - 1].value < rightHistory[rightHistory.length - 2].value ? 'down' : 'stable')
+    ? (rightHistory[0].value > rightHistory[1].value ? 'up' : rightHistory[0].value < rightHistory[1].value ? 'down' : 'stable')
     : 'stable';
+  const leftUpColor = leftLowerIsBetter ? '#EF4444' : '#10B981';
+  const leftDownColor = leftLowerIsBetter ? '#10B981' : '#EF4444';
+  const rightUpColor = rightLowerIsBetter ? '#EF4444' : '#10B981';
+  const rightDownColor = rightLowerIsBetter ? '#10B981' : '#EF4444';
 
   const leftBarWidth = maxValue > 0 ? (leftValue / maxValue) * 100 : 0;
   const rightBarWidth = maxValue > 0 ? (rightValue / maxValue) * 100 : 0;
@@ -307,8 +330,12 @@ const DualComparisonCardInner: React.FC<DualComparisonCardProps> = ({
                 <Line key={`hg-${i}`} x1={PAD_LEFT} y1={yl.y} x2={chartData.svgWidth - PAD_RIGHT} y2={yl.y} stroke={gridColor} strokeWidth={1} strokeDasharray="4,6" />
               ))}
               {chartData.yLabels.map((yl, i) => (
-                <SvgText key={`yl-${i}`} x={PAD_LEFT - 8} y={yl.y + 4} fontSize={9} fontWeight="700" fill={textMuted} textAnchor="end">{yl.val.toFixed(1)}</SvgText>
+                <SvgText key={`yl-${i}`} x={PAD_LEFT - 8} y={yl.y + 4} fontSize={9} fontWeight="700" fill={textMuted} textAnchor="end">{String(yl.val)}</SvgText>
               ))}
+              {/* Label unité axe Y */}
+              {(leftUnit || unit) ? <SvgText x={PAD_LEFT - 8} y={PAD_TOP - 6} fontSize={8} fontWeight="600" fill={textMuted} textAnchor="end">{leftUnit || unit}</SvgText> : null}
+              {/* Label axe X — décalé à gauche sous le label min Y pour éviter le chevauchement avec les années */}
+              <SvgText x={PAD_LEFT - 8} y={chartData.chartHeight - PAD_BOTTOM + 14} fontSize={8} fontWeight="600" fill={textMuted} textAnchor="end">Date</SvgText>
               {chartData.xLabels.map((xl, i) => {
                 if (chartData.xLabels.length > chartData.maxXLabels) {
                   const step = Math.ceil(chartData.xLabels.length / chartData.maxXLabels);
@@ -457,7 +484,7 @@ const DualComparisonCardInner: React.FC<DualComparisonCardProps> = ({
                     <Line key={`fshg-${i}`} x1={PAD_LEFT} y1={yl.y} x2={fsData.svgWidth - PAD_RIGHT} y2={yl.y} stroke={gridColor} strokeWidth={1} strokeDasharray="4,6" />
                   ))}
                   {fsData.yLabels.map((yl, i) => (
-                    <SvgText key={`fsyl-${i}`} x={PAD_LEFT - 8} y={yl.y + 4} fontSize={9} fontWeight="700" fill={textMuted} textAnchor="end">{yl.val.toFixed(1)}</SvgText>
+                    <SvgText key={`fsyl-${i}`} x={PAD_LEFT - 8} y={yl.y + 4} fontSize={9} fontWeight="700" fill={textMuted} textAnchor="end">{String(yl.val)}</SvgText>
                   ))}
                   {fsData.leftArea && <Path d={fsData.leftArea} fill="url(#dualGrad-left-fs)" />}
                   {fsData.leftLine && <Path d={fsData.leftLine} fill="none" stroke={leftColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />}
@@ -510,8 +537,8 @@ const DualComparisonCardInner: React.FC<DualComparisonCardProps> = ({
           <View style={styles.metricHeader}>
             <View style={[styles.metricDot, { backgroundColor: leftColor }]} />
             <Text style={[styles.metricLabel, { color: colors.textSecondary }]} numberOfLines={1}>{leftLabel}</Text>
-            {leftTrend === 'up' && <TrendingUp size={12} color="#10B981" strokeWidth={2.5} />}
-            {leftTrend === 'down' && <TrendingDown size={12} color="#EF4444" strokeWidth={2.5} />}
+            {leftTrend === 'up' && <TrendingUp size={12} color={leftUpColor} strokeWidth={2.5} />}
+            {leftTrend === 'down' && <TrendingDown size={12} color={leftDownColor} strokeWidth={2.5} />}
             {leftTrend === 'stable' && <Minus size={12} color={colors.textMuted} strokeWidth={2.5} />}
           </View>
           <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
@@ -531,8 +558,8 @@ const DualComparisonCardInner: React.FC<DualComparisonCardProps> = ({
           <View style={styles.metricHeader}>
             <View style={[styles.metricDot, { backgroundColor: rightColor }]} />
             <Text style={[styles.metricLabel, { color: colors.textSecondary }]} numberOfLines={1}>{rightLabel}</Text>
-            {rightTrend === 'up' && <TrendingUp size={12} color="#10B981" strokeWidth={2.5} />}
-            {rightTrend === 'down' && <TrendingDown size={12} color="#EF4444" strokeWidth={2.5} />}
+            {rightTrend === 'up' && <TrendingUp size={12} color={rightUpColor} strokeWidth={2.5} />}
+            {rightTrend === 'down' && <TrendingDown size={12} color={rightDownColor} strokeWidth={2.5} />}
             {rightTrend === 'stable' && <Minus size={12} color={colors.textMuted} strokeWidth={2.5} />}
           </View>
           <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
@@ -557,6 +584,7 @@ const areDualEqual = (prev: DualComparisonCardProps, next: DualComparisonCardPro
   if (prev.leftLabel !== next.leftLabel || prev.rightLabel !== next.rightLabel) return false;
   if (prev.leftColor !== next.leftColor || prev.rightColor !== next.rightColor) return false;
   if (prev.leftValue !== next.leftValue || prev.rightValue !== next.rightValue) return false;
+  if (prev.leftLowerIsBetter !== next.leftLowerIsBetter || prev.rightLowerIsBetter !== next.rightLowerIsBetter) return false;
   if (prev.leftHistory.length !== next.leftHistory.length) return false;
   if (prev.rightHistory.length !== next.rightHistory.length) return false;
   const lA = prev.leftHistory[prev.leftHistory.length - 1];

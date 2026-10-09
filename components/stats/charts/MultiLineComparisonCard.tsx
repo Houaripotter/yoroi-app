@@ -9,7 +9,7 @@ import { View, Text, StyleSheet, TouchableOpacity, LayoutChangeEvent, ScrollView
 import { useTheme } from '@/lib/ThemeContext';
 import Svg, { Path, Circle as SvgCircle, Line, Text as SvgText, Defs, LinearGradient, Stop, G, Rect } from 'react-native-svg';
 import { ArrowLeftRight, TrendingUp, TrendingDown, Minus, Maximize2, X } from 'lucide-react-native';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useI18n } from '@/lib/I18nContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -21,17 +21,19 @@ interface LineSeries {
   currentValue: number;
   onPress?: () => void;
   unit?: string; // unité spécifique à cette ligne (override le unit global)
+  lowerIsBetter?: boolean; // baisse = positif (vert)
 }
 
 interface MultiLineComparisonCardProps {
   title: string;
   lines: LineSeries[];
   unit: string;
+  formatValue?: (v: number) => string; // formateur personnalisé pour les labels (ex: minutes → "7h10")
 }
 
 const CHART_HEIGHT = 220;
 const PAD_TOP = 46;
-const PAD_BOTTOM = 35;
+const PAD_BOTTOM = 45;
 const PAD_LEFT = 50;
 const PAD_RIGHT = 16;
 const POINT_WIDTH = 70;
@@ -65,10 +67,22 @@ const sampleLine = (history: { date: string; value: number }[]) => {
   return sampled;
 };
 
+// Parse date sûr : 'yyyy-MM-dd' en local (évite le décalage UTC)
+const toLocalDate = (v: any): Date =>
+  typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? parseISO(v) : new Date(v);
+
+// Tri récent → ancien (récent à gauche), ordre d'entrée conservé si date invalide
+const sortNewestFirst = (history: { date: string; value: number }[]) =>
+  history
+    .map((h, i) => ({ h, i, t: toLocalDate(h.date).getTime() }))
+    .sort((a, b) => (isNaN(a.t) || isNaN(b.t) ? a.i - b.i : b.t - a.t))
+    .map(x => x.h);
+
 const MultiLineComparisonCardInner: React.FC<MultiLineComparisonCardProps> = ({
   title,
   lines,
   unit,
+  formatValue,
 }) => {
   const { colors, isDark } = useTheme();
   const { language } = useI18n();
@@ -117,7 +131,7 @@ const MultiLineComparisonCardInner: React.FC<MultiLineComparisonCardProps> = ({
   // → le useMemo de `chartData` perdait sa mémoïsation → tout le SVG (1500 éléments)
   // se recalculait à chaque tap sur une pill.
   const sampledLines = useMemo(
-    () => lines.map(l => ({ ...l, history: sampleLine(l.history) })),
+    () => lines.map(l => ({ ...l, history: sampleLine(sortNewestFirst(l.history)) })),
     [lines],
   );
 
@@ -152,7 +166,9 @@ const MultiLineComparisonCardInner: React.FC<MultiLineComparisonCardProps> = ({
     const dataMin = Math.min(...allValues);
     const dataMax = Math.max(...allValues);
     const range = dataMax - dataMin || 1;
-    const yMin = dataMin - range * 0.15;
+    // Si toutes les valeurs sont >= 0, jamais descendre sous 0 sur l'axe Y
+    const rawYMin = dataMin - range * 0.15;
+    const yMin = dataMin >= 0 ? Math.max(0, rawYMin) : rawYMin;
     const yMax = dataMax + range * 0.15;
     const yRange = yMax - yMin;
     const plotBottom = PAD_TOP + plotH;
@@ -176,16 +192,22 @@ const MultiLineComparisonCardInner: React.FC<MultiLineComparisonCardProps> = ({
     const ySteps = 4;
     const yLabels = Array.from({ length: ySteps + 1 }, (_, i) => {
       const val = yMin + (yRange / ySteps) * i;
-      return { val: Math.round(val * 10) / 10, y: PAD_TOP + plotH - (plotH / ySteps) * i };
+      // 1 décimale si petite plage (évite les labels répétés)
+      return { val: yRange < 5 ? Math.round(val * 10) / 10 : Math.round(val), y: PAD_TOP + plotH - (plotH / ySteps) * i };
     });
 
     const longestHistory = visibleLines.reduce((a, b) => a.history.length >= b.history.length ? a : b).history;
     const maxXLabels = Math.floor(svgWidth / 60);
     const xLabels = longestHistory.map((h, i) => {
       const x = PAD_LEFT + (i / Math.max(longestHistory.length - 1, 1)) * plotW;
-      let label = '';
-      try { label = format(new Date(h.date), 'd/MM', { locale: dateLocale }); } catch { label = ''; }
-      return { x, label };
+      let line1 = '';
+      let line2 = '';
+      try {
+        const d = toLocalDate(h.date);
+        line1 = format(d, 'd MMM', { locale: dateLocale });
+        line2 = format(d, 'yyyy');
+      } catch { line1 = ''; line2 = ''; }
+      return { x, line1, line2 };
     });
 
     return { svgWidth, lineData, yLabels, xLabels, maxXLabels, plotBottom, chartHeight };
@@ -214,15 +236,26 @@ const MultiLineComparisonCardInner: React.FC<MultiLineComparisonCardProps> = ({
           <Line key={`hg-${i}`} x1={PAD_LEFT} y1={yl.y} x2={data.svgWidth - PAD_RIGHT} y2={yl.y} stroke={gridColor} strokeWidth={1} strokeDasharray="4,6" />
         ))}
         {data.yLabels.map((yl, i) => (
-          <SvgText key={`yl-${i}`} x={PAD_LEFT - 8} y={yl.y + 4} fontSize={9} fontWeight="700" fill={textMuted} textAnchor="end">{yl.val.toFixed(1)}</SvgText>
+          <SvgText key={`yl-${i}`} x={PAD_LEFT - 8} y={yl.y + 4} fontSize={9} fontWeight="700" fill={textMuted} textAnchor="end">{formatValue ? formatValue(yl.val) : smartFormat(yl.val)}</SvgText>
         ))}
+        {/* Label unité axe Y en haut à gauche */}
+        {unit ? <SvgText x={PAD_LEFT - 8} y={PAD_TOP - 6} fontSize={8} fontWeight="600" fill={textMuted} textAnchor="end">{unit}</SvgText> : null}
+        {/* Label axe X — décalé à gauche sous le label min Y pour éviter le chevauchement avec les années */}
+        <SvgText x={PAD_LEFT - 8} y={data.chartHeight - PAD_BOTTOM + 14} fontSize={8} fontWeight="600" fill={textMuted} textAnchor="end">Date</SvgText>
         {data.xLabels.map((xl, i) => {
           if (data.xLabels.length > data.maxXLabels) {
             const step = Math.ceil(data.xLabels.length / data.maxXLabels);
             if (i % step !== 0 && i !== data.xLabels.length - 1) return null;
           }
           const isFirst = i === 0; const isLast = i === data.xLabels.length - 1;
-          return <SvgText key={`xl-${i}`} x={isFirst ? xl.x + 2 : isLast ? xl.x - 2 : xl.x} y={height - 6} textAnchor={isFirst ? 'start' : isLast ? 'end' : 'middle'} fontSize={9} fontWeight="600" fill={textMuted}>{xl.label}</SvgText>;
+          const xPos = isFirst ? xl.x + 2 : isLast ? xl.x - 2 : xl.x;
+          const anchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
+          return (
+            <G key={`xl-${i}`}>
+              <SvgText x={xPos} y={height - 14} textAnchor={anchor} fontSize={9} fontWeight="600" fill={textMuted}>{xl.line1}</SvgText>
+              {xl.line2 ? <SvgText x={xPos} y={height - 3} textAnchor={anchor} fontSize={8} fontWeight="500" fill={textMuted} opacity={0.6}>{xl.line2}</SvgText> : null}
+            </G>
+          );
         })}
 
         {/* Aires + courbes en premier (sous les labels) */}
@@ -261,7 +294,7 @@ const MultiLineComparisonCardInner: React.FC<MultiLineComparisonCardProps> = ({
             const isFirst = idx === 0; const isLast = idx === total - 1;
             const anchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
             const lx = isFirst ? pt.x + 2 : isLast ? pt.x - 2 : pt.x;
-            const label = smartFormat(pt.value);
+            const label = formatValue ? formatValue(pt.value) : smartFormat(pt.value);
             const w = label.length * 6 + 10;
             // Décalage vertical selon l'index de ligne pour limiter chevauchement
             // ligne 0 = au-dessus du point, ligne 1 = en-dessous, ligne 2 = au-dessus +éloigné
@@ -385,9 +418,13 @@ const MultiLineComparisonCardInner: React.FC<MultiLineComparisonCardProps> = ({
       {/* Metric Cards */}
       <View style={styles.metricsGrid}>
         {lines.map((line, i) => {
-          const trend = line.history.length >= 2
-            ? (line.history[line.history.length - 1].value > line.history[line.history.length - 2].value ? 'up' : line.history[line.history.length - 1].value < line.history[line.history.length - 2].value ? 'down' : 'stable')
+          // Historique trié récent en premier : [0] = dernier, [1] = précédent
+          const h = sortNewestFirst(line.history ?? []); // historique complet (pas l'échantillon du graphique)
+          const trend = h.length >= 2
+            ? (h[0].value > h[1].value ? 'up' : h[0].value < h[1].value ? 'down' : 'stable')
             : 'stable';
+          const upColor = line.lowerIsBetter ? '#EF4444' : '#10B981';
+          const downColor = line.lowerIsBetter ? '#10B981' : '#EF4444';
           const barWidth = maxValue > 0 ? (line.currentValue / maxValue) * 100 : 0;
 
           return (
@@ -404,13 +441,13 @@ const MultiLineComparisonCardInner: React.FC<MultiLineComparisonCardProps> = ({
               <View style={styles.metricHeader}>
                 <View style={[styles.metricDot, { backgroundColor: line.color }]} />
                 <Text style={[styles.metricLabel, { color: colors.textSecondary }]} numberOfLines={1}>{line.label}</Text>
-                {trend === 'up' && <TrendingUp size={12} color="#10B981" strokeWidth={2.5} />}
-                {trend === 'down' && <TrendingDown size={12} color="#EF4444" strokeWidth={2.5} />}
+                {trend === 'up' && <TrendingUp size={12} color={upColor} strokeWidth={2.5} />}
+                {trend === 'down' && <TrendingDown size={12} color={downColor} strokeWidth={2.5} />}
                 {trend === 'stable' && <Minus size={12} color={colors.textMuted} strokeWidth={2.5} />}
               </View>
               <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
-                {line.currentValue > 0 ? smartFormat(line.currentValue) : '\u2014'}
-                <Text style={[styles.metricUnit, { color: colors.textSecondary }]}> {line.unit !== undefined ? line.unit : unit}</Text>
+                {line.currentValue > 0 ? (formatValue ? formatValue(line.currentValue) : smartFormat(line.currentValue)) : '\u2014'}
+                {!formatValue && <Text style={[styles.metricUnit, { color: colors.textSecondary }]}> {line.unit !== undefined ? line.unit : unit}</Text>}
               </Text>
               <View style={[styles.progressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
                 <View style={[styles.progressFill, { width: `${barWidth}%`, backgroundColor: line.color }]} />
@@ -469,12 +506,14 @@ const MultiLineComparisonCardInner: React.FC<MultiLineComparisonCardProps> = ({
 const areLinesEqual = (prev: MultiLineComparisonCardProps, next: MultiLineComparisonCardProps) => {
   if (prev.title !== next.title) return false;
   if (prev.unit !== next.unit) return false;
+  if (prev.formatValue !== next.formatValue) return false;
   if (prev.lines.length !== next.lines.length) return false;
   for (let i = 0; i < prev.lines.length; i++) {
     const a = prev.lines[i], b = next.lines[i];
     if (a.label !== b.label) return false;
     if (a.color !== b.color) return false;
     if (a.currentValue !== b.currentValue) return false;
+    if (a.lowerIsBetter !== b.lowerIsBetter) return false;
     if (a.history.length !== b.history.length) return false;
     // Heuristique rapide : si len identique + dernière entrée identique, on considère égal
     const la = a.history[a.history.length - 1];

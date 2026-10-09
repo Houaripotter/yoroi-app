@@ -112,7 +112,7 @@ export default function PartnersTierListScreen() {
                   {list.map(p => (
                     <TouchableOpacity
                       key={p.id}
-                      onPress={() => { lightHaptic().catch(() => {}); router.push(`/sparring-partners?focus=${p.id}` as any); }}
+                      onPress={() => { lightHaptic().catch(() => {}); router.push(`/sparring-partners?partnerName=${encodeURIComponent(p.name)}` as any); }}
                       activeOpacity={0.85}
                       style={[styles.chip, { backgroundColor: meta.color + '20', borderColor: meta.color + '60' }]}
                     >

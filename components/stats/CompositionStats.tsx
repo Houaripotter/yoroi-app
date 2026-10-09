@@ -292,9 +292,10 @@ export const CompositionStats: React.FC<CompositionStatsProps> = ({ data }) => {
           onClose={() => setSelectedMetric(null)}
           title={selectedMetric.label}
           subtitle="Derniers 30 jours"
-          data={data.slice(-30).map((entry, index) => ({
+          data={[...data].slice(-30).reverse().map((entry, index) => ({
             value: (entry as any)[selectedMetric.key] || 0,
-            label: format(new Date(entry.date), 'd MMM', { locale: fr }),
+            // Règle 3 : plus récent à GAUCHE (reverse) | Règle 4 : deux lignes (jour+mois / année)
+            label: `${format(new Date(entry.date), 'd MMM', { locale: fr })}\n${format(new Date(entry.date), 'yyyy')}`,
             date: entry.date,
           })).filter(d => d.value > 0)}
           color={selectedMetric.color}

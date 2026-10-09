@@ -35,6 +35,7 @@ import {
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { getWeights, Weight } from '@/lib/database';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 // ============================================
 // TYPES & CONSTANTS
@@ -289,6 +290,7 @@ export default function WeightCutScreen() {
   };
 
   return (
+    <PremiumGate featureTitle="Simulateur Weight Cut">
     <ScreenWrapper>
       {/* Header */}
       <View style={styles.header}>
@@ -712,6 +714,8 @@ export default function WeightCutScreen() {
             // Poids hebdomadaires (dernier pesée par semaine)
             const weekMap: Record<string, number> = {};
             for (const w of weightHistory) {
+              // Ignore les entrées composition seule (poids 0)
+              if (!(w.weight > 0)) continue;
               const d = new Date(w.date);
               const week = `${d.getFullYear()}-${Math.floor(d.getTime() / (7 * 86400000))}`;
               if (!weekMap[week]) weekMap[week] = w.weight;
@@ -792,6 +796,7 @@ export default function WeightCutScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
     </ScreenWrapper>
+    </PremiumGate>
   );
 }
 

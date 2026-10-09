@@ -224,6 +224,68 @@ export async function getWorkoutEffortScoreNative(workoutUUID: string): Promise<
   }
 }
 
+export interface NativeSleepSample {
+  startDate: number;       // timestamp ms
+  endDate: number;         // timestamp ms
+  value: number;           // HKCategoryValueSleepAnalysis: 0=InBed, 1=Asleep, 2=Awake, 3=Core, 4=Deep, 5=REM
+  sourceName: string;
+  sourceBundleId: string;
+  deviceName: string;
+}
+
+/**
+ * Récupère les échantillons de sommeil via Swift natif (bypass Nitro v13).
+ * Même pattern que getNativeWorkouts — Nitro échoue silencieusement sur iOS 26.
+ * @param days - Nombre de jours d'historique (0 = tout l'historique)
+ */
+export async function getNativeSleepSamples(days: number = 0): Promise<NativeSleepSample[] | null> {
+  if (Platform.OS !== 'ios') return null;
+
+  if (!YoroiHealthKitModule?.getSleepSamplesAsJSON) {
+    logger.warn('[YoroiHK-JS] getSleepSamplesAsJSON non disponible — rebuild requis');
+    return null; // null = module absent, l'appelant peut fallback sur Nitro
+  }
+
+  try {
+    const jsonString: string = await YoroiHealthKitModule.getSleepSamplesAsJSON(days);
+    const parsed = JSON.parse(jsonString) as NativeSleepSample[];
+    logger.info('[YoroiHK-JS] Sommeil natif:', parsed.length, 'échantillons');
+    return parsed;
+  } catch (e: any) {
+    logger.warn('[YoroiHK-JS] ERREUR getSleepSamplesAsJSON:', e?.message);
+    return null;
+  }
+}
+
+export interface NativeStepsDay {
+  date: string;   // YYYY-MM-DD
+  steps: number;
+}
+
+/**
+ * Récupère les pas par jour via HKStatisticsCollectionQuery natif (bypass Nitro).
+ * Évite le double-comptage iPhone + Watch (même méthode qu'Apple Santé).
+ * @param days - Nombre de jours (1 = aujourd'hui seulement)
+ */
+export async function getNativeSteps(days: number = 1): Promise<NativeStepsDay[] | null> {
+  if (Platform.OS !== 'ios') return null;
+
+  if (!YoroiHealthKitModule?.getStepsAsJSON) {
+    logger.warn('[YoroiHK-JS] getStepsAsJSON non disponible — rebuild requis');
+    return null;
+  }
+
+  try {
+    const jsonString: string = await YoroiHealthKitModule.getStepsAsJSON(days);
+    const parsed = JSON.parse(jsonString) as NativeStepsDay[];
+    logger.info('[YoroiHK-JS] Pas natifs:', parsed.length, 'jours');
+    return parsed;
+  } catch (e: any) {
+    logger.warn('[YoroiHK-JS] ERREUR getStepsAsJSON:', e?.message);
+    return null;
+  }
+}
+
 /**
  * Lance le diagnostic approfondi Swift (3 tests Gemini) :
  * - TEST A : HKSourceQuery — quelles apps ont des workouts ?

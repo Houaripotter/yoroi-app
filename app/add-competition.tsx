@@ -2,7 +2,7 @@
 // YOROI - AJOUTER UNE COMPÉTITION
 // ============================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -40,6 +40,8 @@ export default function AddCompetitionScreen() {
   const [lieu, setLieu] = useState('');
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  // Date avant ouverture du picker (restaurée sur Annuler iOS)
+  const dateBeforePickerRef = useRef<Date | null>(null);
   const [sport, setSport] = useState<Sport>('jjb');
   const [typeEvenement, setTypeEvenement] = useState('');
   const [categoriePoidsId, setCategoriePoidsId] = useState('');
@@ -94,7 +96,8 @@ export default function AddCompetitionScreen() {
       await addCompetition({
         nom: nom.trim(),
         lieu: lieu.trim() || undefined,
-        date: date.toISOString().split('T')[0],
+        // Date locale (toISOString décalerait d'un jour selon le fuseau)
+        date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
         sport,
         type_evenement: typeEvenement.trim() || undefined,
         categorie_poids: selectedCategory?.name,
@@ -236,7 +239,7 @@ export default function AddCompetitionScreen() {
           </Text>
           <TouchableOpacity
             style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => setShowDatePicker(true)}
+            onPress={() => { dateBeforePickerRef.current = date; setShowDatePicker(true); }}
             activeOpacity={0.7}
           >
             <Calendar size={20} color={colors.textMuted} />
@@ -255,7 +258,10 @@ export default function AddCompetitionScreen() {
           <View style={[styles.datePickerContainer, { backgroundColor: colors.backgroundCard }]}>
             <View style={[styles.datePickerHeader, { borderBottomColor: colors.border }]}>
               <TouchableOpacity
-                onPress={() => setShowDatePicker(false)}
+                onPress={() => {
+                  if (dateBeforePickerRef.current) setDate(dateBeforePickerRef.current);
+                  setShowDatePicker(false);
+                }}
                 style={styles.datePickerButton}
               >
                 <Text style={[styles.datePickerButtonText, { color: colors.textMuted }]}>

@@ -203,20 +203,29 @@ export const useCustomPopup = () => {
     }
   };
 
-  const hidePopup = () => {
+  const hidePopup = React.useCallback(() => {
     setPopupState((prev) => ({ ...prev, visible: false }));
-  };
+  }, []);
 
-  const PopupComponent = () => (
-    <CustomPopup
-      visible={popupState.visible}
-      title={popupState.title}
-      message={popupState.message}
-      buttons={popupState.buttons}
-      onClose={hidePopup}
-      icon={popupState.icon}
-    />
-  );
+  // Ref vers l'état courant, mise à jour à chaque rendu de l'écran hôte
+  const popupStateRef = React.useRef(popupState);
+  popupStateRef.current = popupState;
+
+  // Type de composant STABLE : la Modal n'est plus démontée à chaque re-render de l'hôte.
+  // Non mémoïsé (pas de React.memo) → se re-rend avec l'hôte et lit l'état à jour via la ref.
+  const PopupComponent = React.useCallback(() => {
+    const state = popupStateRef.current;
+    return (
+      <CustomPopup
+        visible={state.visible}
+        title={state.title}
+        message={state.message}
+        buttons={state.buttons}
+        onClose={hidePopup}
+        icon={state.icon}
+      />
+    );
+  }, [hidePopup]);
 
   return { showPopup, hidePopup, PopupComponent };
 };

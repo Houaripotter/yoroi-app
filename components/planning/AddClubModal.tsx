@@ -538,7 +538,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
                               </Text>
                               {isSelected && (
                                 <View style={[styles.sportGridCheck, { backgroundColor: colors.gold }]}>
-                                  <Check size={12} color="#FFFFFF" strokeWidth={3} />
+                                  <Check size={12} color={colors.textOnGold} strokeWidth={3} />
                                 </View>
                               )}
                             </TouchableOpacity>

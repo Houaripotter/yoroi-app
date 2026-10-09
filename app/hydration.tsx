@@ -37,10 +37,14 @@ import {
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { notificationService, requestNotificationPermissions } from '@/lib/notificationService';
 import logger from '@/lib/security/logger';
+import { usePremium } from '@/context/PremiumContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Lock } from 'lucide-react-native';
 import AnimatedWaterBottle from '@/components/AnimatedWaterBottle';
 import { useWatch } from '@/lib/WatchConnectivityProvider';
 import { saveDietaryWaterNative } from '@/lib/yoroiHealthKit';
 import secureStorage from '@/lib/security/secureStorage';
+import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
 
 const HYDRATION_KEY = '@yoroi_hydration_today';
 const HYDRATION_GOAL_KEY = '@yoroi_hydration_goal';
@@ -58,6 +62,7 @@ export default function HydrationScreen() {
   const { showPopup, PopupComponent } = useCustomPopup();
   const { t } = useI18n();
   const { syncHydration, isWatchAvailable } = useWatch();
+  const { isPremium } = usePremium();
 
   const [currentAmount, setCurrentAmount] = useState(0);
   const [goal, setGoal] = useState(2.5);
@@ -89,10 +94,12 @@ export default function HydrationScreen() {
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
     try {
-      const todayISO = new Date().toISOString().split('T')[0];
+      const _now = new Date();
+      const todayISO = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`; // date locale, comme l'accueil
       const [amountStr, homeKeyStr, goalStr, historyStr] = await Promise.all([
         AsyncStorage.getItem(HYDRATION_KEY),
         AsyncStorage.getItem(`${HYDRATION_KEY}_${todayISO}`),
@@ -164,6 +171,8 @@ export default function HydrationScreen() {
       setEveningEnabled(slots?.evening?.enabled ?? true);
     } catch (error) {
       logger.error('Erreur chargement hydratation:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -196,7 +205,8 @@ export default function HydrationScreen() {
       await AsyncStorage.setItem(HYDRATION_KEY, JSON.stringify({ date: today, amount }));
 
       // Sync avec l'accueil : sauvegarder aussi au format que l'accueil attend (ml, clé avec date ISO)
-      const todayISO = new Date().toISOString().split('T')[0];
+      const _now = new Date();
+      const todayISO = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`; // date locale, comme l'accueil
       const amountMl = Math.round(amount * 1000);
       await AsyncStorage.setItem(`${HYDRATION_KEY}_${todayISO}`, amountMl.toString());
 
@@ -275,6 +285,11 @@ export default function HydrationScreen() {
   };
 
   const saveGoal = async (newGoal: number) => {
+    // Objectif en litres : refuser un champ vide (NaN) ou une valeur absurde (ex : 50 saisi en litres)
+    if (!Number.isFinite(newGoal) || newGoal < 0.5 || newGoal > 10) {
+      showPopup('Objectif invalide', 'Entre un objectif entre 0,5 et 10 litres.', [{ text: 'OK', style: 'primary' }]);
+      return;
+    }
     try {
       await AsyncStorage.setItem(HYDRATION_GOAL_KEY, newGoal.toString());
       setGoal(newGoal);
@@ -389,7 +404,15 @@ export default function HydrationScreen() {
   const percentage = Math.min((currentAmount / goal) * 100, 100);
 
   // Statistiques
-  const last7Days = history.slice(0, 7);
+  // 7 derniers jours calendaires (clé date locale yyyy-MM-dd), aujourd'hui en dernier
+  const WEEKDAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+  const last7Calendar = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return { key, letter: WEEKDAY_LETTERS[d.getDay()], data: history.find(h => h.date === key) };
+  });
+  const last7Days = last7Calendar.map(c => c.data).filter((d): d is DayData => !!d);
   const successDays = last7Days.filter(d => d.amount >= d.goal).length;
   const successRate = last7Days.length > 0 ? Math.round((successDays / last7Days.length) * 100) : 0;
   const avgAmount = last7Days.length > 0
@@ -418,6 +441,18 @@ export default function HydrationScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
         }
       >
+        {/* Skeleton pendant le chargement initial */}
+        {loading && (
+          <View style={{ paddingHorizontal: 16, paddingTop: 16, gap: 12 }}>
+            <SkeletonCard height={280} width="100%" />
+            <SkeletonCard height={80} width="100%" />
+            <SkeletonCard height={140} width="100%" />
+            <SkeletonCard height={160} width="100%" />
+            <SkeletonMessage />
+          </View>
+        )}
+        {!loading && (
+        <>
         {/* Grande bouteille animée */}
         <Animated.View style={[styles.bottleCard, { backgroundColor: colors.backgroundCard, transform: [{ scale: scaleAnim }] }]}>
           {/* Bouteille animée avec vagues et bulles (comme Apple Watch) */}
@@ -793,8 +828,7 @@ export default function HydrationScreen() {
 
           {/* Barres 7 jours */}
           <View style={styles.weekBars}>
-            {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((day, i) => {
-              const dayData = last7Days[6 - i];
+            {last7Calendar.map(({ letter: day, data: dayData }, i) => {
               const dayPercentage = dayData ? Math.min((dayData.amount / dayData.goal) * 100, 100) : 0;
               const isToday = i === 6;
 
@@ -824,7 +858,71 @@ export default function HydrationScreen() {
           </View>
         </View>
 
+        {/* Historique détaillé — teaser pour free, complet pour premium */}
+        {history.length > 0 && (() => {
+          const sortedHistory = [...history].sort((a, b) => b.date.localeCompare(a.date));
+          const FREE_VISIBLE = 2;
+          const visibleItems = isPremium ? sortedHistory : sortedHistory.slice(0, FREE_VISIBLE);
+          const lockedItems = isPremium ? [] : sortedHistory.slice(FREE_VISIBLE, FREE_VISIBLE + 4);
+
+          return (
+            <View style={[hydStyles.histCard, { backgroundColor: colors.backgroundCard }]}>
+              <Text style={[hydStyles.histTitle, { color: colors.textPrimary }]}>Historique détaillé</Text>
+              {visibleItems.map((day) => {
+                const pct = Math.min((day.amount / day.goal) * 100, 100);
+                const reached = day.amount >= day.goal;
+                return (
+                  <View key={day.date} style={[hydStyles.histRow, { borderBottomColor: colors.border }]}>
+                    <Text style={[hydStyles.histDate, { color: colors.textMuted }]}>{day.date}</Text>
+                    <View style={[hydStyles.histBar, { backgroundColor: colors.background }]}>
+                      <View style={[hydStyles.histBarFill, { width: `${pct}%`, backgroundColor: reached ? '#10B981' : '#0EA5E9' }]} />
+                    </View>
+                    <Text style={[hydStyles.histAmount, { color: reached ? '#10B981' : colors.textPrimary }]}>
+                      {parseFloat(day.amount.toFixed(2))}L
+                    </Text>
+                  </View>
+                );
+              })}
+              {lockedItems.length > 0 && (
+                <View style={{ position: 'relative' }}>
+                  {lockedItems.map((day) => {
+                    const pct = Math.min((day.amount / day.goal) * 100, 100);
+                    const reached = day.amount >= day.goal;
+                    return (
+                      <View key={day.date + '_locked'} style={[hydStyles.histRow, { borderBottomColor: colors.border, opacity: 0.4 }]}>
+                        <Text style={[hydStyles.histDate, { color: colors.textMuted }]}>{day.date}</Text>
+                        <View style={[hydStyles.histBar, { backgroundColor: colors.background }]}>
+                          <View style={[hydStyles.histBarFill, { width: `${pct}%`, backgroundColor: reached ? '#10B981' : '#0EA5E9' }]} />
+                        </View>
+                        <Text style={[hydStyles.histAmount, { color: reached ? '#10B981' : colors.textPrimary }]}>
+                          {parseFloat(day.amount.toFixed(2))}L
+                        </Text>
+                        <Lock size={13} color="#9CA3AF" strokeWidth={2} />
+                      </View>
+                    );
+                  })}
+                  <LinearGradient
+                    colors={['transparent', colors.backgroundCard ?? colors.background]}
+                    style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 80 }}
+                    pointerEvents="none"
+                  />
+                  <TouchableOpacity
+                    style={hydStyles.lockCta}
+                    onPress={() => router.push('/paywall' as never)}
+                    activeOpacity={0.85}
+                  >
+                    <Lock size={14} color="#FFFFFF" strokeWidth={2.5} />
+                    <Text style={hydStyles.lockCtaText}>Voir tout l'historique</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          );
+        })()}
+
         <View style={{ height: 100 }} />
+        </>
+        )}
       </ScrollView>
       <PopupComponent />
     </View>
@@ -1195,5 +1293,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+});
+
+const hydStyles = StyleSheet.create({
+  histCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  histTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  histRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  histDate: {
+    fontSize: 12,
+    fontWeight: '500',
+    width: 80,
+  },
+  histBar: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  histBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  histAmount: {
+    fontSize: 13,
+    fontWeight: '700',
+    minWidth: 40,
+    textAlign: 'right',
+  },
+  lockCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 8,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: '#0EA5E9',
+  },
+  lockCtaText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

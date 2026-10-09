@@ -11,6 +11,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  DeviceEventEmitter,
 } from 'react-native';
 import {
   Gamepad2,
@@ -162,9 +163,18 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
   const [dailyQuests, setDailyQuests] = useState<QuestWithProgress[]>([]);
   const [weeklyQuests, setWeeklyQuests] = useState<QuestWithProgress[]>([]);
   const [monthlyQuests, setMonthlyQuests] = useState<QuestWithProgress[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     loadQuests();
+    // Recharger quand les données changent ailleurs dans l'app
+    // Anti-rafale : la synchro Santé émet plusieurs événements d'affilée
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => { loadQuests(); }, 500);
+    });
+    return () => { sub.remove(); if (timer) clearTimeout(timer); };
   }, []);
 
   const loadQuests = async () => {
@@ -184,6 +194,8 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
       setTotalXP(xp);
     } catch (e) {
       logger.error('Erreur chargement quetes:', e);
+    } finally {
+      setLoaded(true);
     }
   };
 
@@ -408,7 +420,7 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
       {/* CHALLENGES LIST */}
       <View style={styles.challengesList}>
         {currentQuests.length === 0
-          ? <Text style={[styles.emptyText, { color: colors.textMuted }]}>Chargement...</Text>
+          ? <Text style={[styles.emptyText, { color: colors.textMuted }]}>{loaded ? 'Aucun défi disponible' : 'Chargement...'}</Text>
           : currentQuests.map(renderQuest)
         }
       </View>

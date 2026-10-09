@@ -300,7 +300,7 @@ const ProgressRing: React.FC<{
 
 export default function DojoScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, themeColor } = useTheme();
   const { t } = useI18n();
   const { tab } = useLocalSearchParams<{ tab?: string }>();
   const { avatarImage } = useAvatar();
@@ -948,7 +948,7 @@ export default function DojoScreen() {
                           ? `+${chestBonusXp} XP bonus gagnes !`
                           : chestOpenedThisWeek
                             ? 'Prochain coffre lundi'
-                            : `Serie de ${streak} jours - Ouvre ton coffre !`
+                            : `Serie de ${streak} jour${streak > 1 ? 's' : ''} - Ouvre ton coffre !`
                         }
                       </Text>
                     </View>
@@ -1440,8 +1440,8 @@ export default function DojoScreen() {
                         )}
                       </View>
                       <View style={[styles.questXP, { backgroundColor: quest.completed ? '#10B98130' : '#FFD700' }]}>
-                        <Text style={[styles.questXPText, { color: quest.completed ? '#FFFFFF' : '#000000' }]}>
-                          {quest.completed ? <Check size={12} color="#FFFFFF" strokeWidth={3} /> : `+${quest.xp}`}
+                        <Text style={[styles.questXPText, { color: quest.completed ? (themeColor === 'blanc' ? '#10B981' : '#FFFFFF') : '#000000' }]}>
+                          {quest.completed ? <Check size={12} color={themeColor === 'blanc' ? '#10B981' : '#FFFFFF'} strokeWidth={3} /> : `+${quest.xp}`}
                         </Text>
                       </View>
                     </Pressable>
@@ -1472,8 +1472,9 @@ export default function DojoScreen() {
                         })}
                       </View>
                       <View style={[styles.previewXpBadge, { backgroundColor: '#FFD700' }]}>
-                        <Zap size={14} color={colors.textPrimary} fill={colors.textPrimary} />
-                        <Text style={[styles.previewXpText, { color: colors.textPrimary }]}>+{previewQuest.xp} XP</Text>
+                        {/* Fond or fixe → texte noir */}
+                        <Zap size={14} color="#000" fill="#000" />
+                        <Text style={[styles.previewXpText, { color: '#000' }]}>+{previewQuest.xp} XP</Text>
                       </View>
                     </View>
 

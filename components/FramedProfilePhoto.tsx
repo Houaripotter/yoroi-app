@@ -60,6 +60,7 @@ const FramedProfilePhoto: React.FC<FramedProfilePhotoProps> = memo(({
 
   // Calcul couleur et epaisseur effectives
   const resolvedBorderColor = (() => {
+    if (borderColorId === 'theme') return colors.accent;
     const found = BORDER_COLORS.find(c => c.id === borderColorId);
     if (!found || !found.color) return borderColor; // fallback = prop
     return found.color;

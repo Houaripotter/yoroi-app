@@ -524,8 +524,12 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
                     return index % step === 0 || index === chartData.length - 1;
                   }).map((point, index) => (
                     <View key={index} style={[styles.xLabelWrapper, { left: point.x - 30 }]}>
+                      {/* Règle 4 : deux lignes (jour+mois / année) */}
                       <Text style={[styles.xLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
                         {format(parseISO(point.date), 'd MMM', { locale: fr })}
+                      </Text>
+                      <Text style={[styles.xLabel, { color: isDark ? 'rgba(255,255,255,0.5)' : colors.textMuted, opacity: 0.7 }]}>
+                        {format(parseISO(point.date), 'yyyy')}
                       </Text>
                     </View>
                   ))}
@@ -666,9 +670,10 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
           onClose={() => setSelectedStat(null)}
           title={selectedStat.label}
           subtitle="Évolution du poids"
-          data={filteredData.map((entry, index) => ({
+          data={[...filteredData].reverse().map((entry, index) => ({
             value: entry.weight,
-            label: format(parseISO(entry.date), 'd MMM', { locale: fr }),
+            // Règle 3 : plus récent à GAUCHE (reverse) | Règle 4 : deux lignes (jour+mois / année)
+            label: `${format(parseISO(entry.date), 'd MMM', { locale: fr })}\n${format(parseISO(entry.date), 'yyyy')}`,
             date: entry.date,
           }))}
           color={selectedStat.color}

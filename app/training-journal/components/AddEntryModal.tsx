@@ -334,7 +334,7 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
                     style={[styles.datePickerDoneBtn, { backgroundColor: colors.accent }]}
                     onPress={() => setShowDatePicker(false)}
                   >
-                    <Text style={styles.datePickerDoneText}>Valider</Text>
+                    <Text style={[styles.datePickerDoneText, { color: colors.textOnAccent }]}>Valider</Text>
                   </TouchableOpacity>
                 )}
               </View>

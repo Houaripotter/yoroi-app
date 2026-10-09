@@ -245,7 +245,7 @@ export const PhotoCropModal: React.FC<Props> = ({
   const imgTop = SCREEN_H / 2 - dh / 2;
 
   return (
-    <Modal visible={visible} animationType="fade" statusBarTranslucent>
+    <Modal visible={visible} animationType="fade" statusBarTranslucent onRequestClose={onCancel}>
       <View style={styles.container}>
         {/* Image avec gestures */}
         <View style={StyleSheet.absoluteFill} {...panResponder.panHandlers}>

@@ -58,3 +58,25 @@ src/data/events.json
 supabase/
 scrapers/
 __tests__/
+
+# builds locaux et sauvegardes de donnees personnelles (jamais dans git)
+*.ipa
+*.aab
+*.apk
+yoroi_backup_*.json
+
+# dossiers de travail des agents et sauvegardes d'audit
+.backup-*/
+.claude-audit/
+.claude/worktrees/
+**/.claude/settings.local.json
+.playwright-mcp/
+android/.kotlin/
+
+# illustrations sources lourdes (originaux et detourees, gardees hors du depot)
+assets/avatars/collection/
+assets/avatars/collection_detoure/
+
+# scripts de debug locaux
+test-gfs.js
+test-metro-resolver.js

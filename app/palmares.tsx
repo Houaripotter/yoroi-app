@@ -33,16 +33,25 @@ import { getCombats } from '@/lib/fighterModeService';
 import { Combat, calculateRecord } from '@/lib/fighterMode';
 import { SPACING, RADIUS, SHADOWS } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
+import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
+import { usePremium } from '@/context/PremiumContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router as expRouter } from 'expo-router';
+import { SkeletonGrid } from '@/components/stats/SkeletonCard';
+
+const FREE_COMBATS_LIMIT = 3;
 
 type FilterType = 'all' | 'victoire' | 'defaite' | 'nul';
 
 export default function PalmaresScreen() {
   const { colors } = useTheme();
+  const { isPremium } = usePremium();
   const { locale, t } = useI18n();
   const [combats, setCombats] = useState<Combat[]>([]);
   const [filteredCombats, setFilteredCombats] = useState<Combat[]>([]);
   const [filter, setFilter] = useState<FilterType>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => { loadCombats(); }, []);
@@ -59,6 +68,8 @@ export default function PalmaresScreen() {
       applyFilter(allCombats, filter);
     } catch (error) {
       logger.error('Error loading combats:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -84,6 +95,10 @@ export default function PalmaresScreen() {
 
   const handleAddCombat = () => {
     impactAsync(ImpactFeedbackStyle.Medium);
+    if (!isPremium && combats.length >= FREE_COMBATS_LIMIT) {
+      router.push('/paywall' as never);
+      return;
+    }
     router.push('/add-combat');
   };
 
@@ -150,6 +165,17 @@ export default function PalmaresScreen() {
       }))
       .sort((a, b) => b.count - a.count);
   })();
+
+  if (loading) {
+    return (
+      <ScreenWrapper>
+        <Header title={t('palmares.title')} showBack />
+        <View style={{ flex: 1, padding: 16 }}>
+          <SkeletonGrid count={4} cardHeight={140} />
+        </View>
+      </ScreenWrapper>
+    );
+  }
 
   return (
     <ScreenWrapper>
@@ -285,7 +311,7 @@ export default function PalmaresScreen() {
                         if (days === 1) return 'hier';
                         if (days < 7) return `il y a ${days}j`;
                         if (days < 30) return `il y a ${Math.floor(days / 7)}sem`;
-                        return `il y a ${Math.floor(days / 30)}mois`;
+                        return `il y a ${Math.floor(days / 30)} mois`;
                       } catch { return ''; }
                     })()}
                   </Text>
@@ -387,7 +413,7 @@ export default function PalmaresScreen() {
             <Text
               style={[
                 styles.filterText,
-                { color: filter === 'all' ? '#FFFFFF' : colors.textPrimary },
+                { color: filter === 'all' ? colors.textOnAccent : colors.textPrimary },
               ]}
             >
               {t('palmares.filter.all', { count: combats.length })}
@@ -564,9 +590,11 @@ export default function PalmaresScreen() {
                 <TouchableOpacity
                   style={[styles.emptyStateButton, { backgroundColor: colors.accent }]}
                   onPress={handleAddCombat}
+                  accessibilityLabel="Ajouter un combat"
+                  accessibilityRole="button"
                 >
-                  <Plus size={20} color="#FFF" />
-                  <Text style={styles.emptyStateButtonText}>{t('palmares.empty.button')}</Text>
+                  <Plus size={20} color={colors.textOnAccent} />
+                  <Text style={[styles.emptyStateButtonText, { color: colors.textOnAccent }]}>{t('palmares.empty.button')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -574,6 +602,7 @@ export default function PalmaresScreen() {
         </View>
 
         <View style={{ height: 100 }} />
+        <PremiumTeaser variant="detail" title="Palmarès complet" />
       </ScrollView>
 
       {/* FAB */}
@@ -581,6 +610,8 @@ export default function PalmaresScreen() {
         style={[styles.fab, { backgroundColor: colors.accent }]}
         onPress={handleAddCombat}
         activeOpacity={0.8}
+        accessibilityLabel="Ajouter un combat"
+        accessibilityRole="button"
       >
         <Plus size={24} color={colors.textOnAccent} />
       </TouchableOpacity>

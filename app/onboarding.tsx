@@ -16,6 +16,7 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   ActivityIndicator,
+  AppState,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -275,27 +276,49 @@ export default function OnboardingScreen() {
     }
   }, [currentPage]);
 
-  // Musique d'intro en fond — player géré manuellement pour pouvoir le remove() complètement
+  // Musique d'intro en fond : player géré manuellement pour pouvoir le remove() complètement.
+  // La musique ne joue QUE si l'app est réellement au premier plan : iOS peut lancer Yoroi
+  // en arrière-plan (HealthKit, Watch), et elle ne doit jamais démarrer toute seule.
   const introPlayerRef = useRef<AudioPlayer | null>(null);
   useEffect(() => {
     let active = true;
-    (async () => {
+
+    const startMusic = async () => {
+      if (!active || AppState.currentState !== 'active') return;
       try {
-        await setAudioModeAsync({ playsInSilentMode: true });
-        if (active) {
-          const player = createAudioPlayer(require('@/assets/sounds/intro.mp3'));
-          player.loop = true;
-          player.volume = 0.5;
-          player.play();
-          introPlayerRef.current = player;
+        if (introPlayerRef.current) {
+          introPlayerRef.current.play();
+          return;
         }
+        await setAudioModeAsync({ playsInSilentMode: true });
+        if (!active || AppState.currentState !== 'active' || introPlayerRef.current) return;
+        const player = createAudioPlayer(require('@/assets/sounds/intro.mp3'));
+        player.loop = true;
+        player.volume = 0.5;
+        player.play();
+        introPlayerRef.current = player;
       } catch {}
-    })();
-    return () => {
-      active = false;
+    };
+
+    const pauseMusic = () => {
       try {
         introPlayerRef.current?.pause();
-        introPlayerRef.current?.remove(); // libère complètement le player — évite qu'iOS le relance en arrière-plan
+      } catch {}
+    };
+
+    startMusic();
+
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') startMusic();
+      else pauseMusic();
+    });
+
+    return () => {
+      active = false;
+      sub.remove();
+      try {
+        introPlayerRef.current?.pause();
+        introPlayerRef.current?.remove(); // libère complètement le player, évite qu'iOS le relance en arrière-plan
         introPlayerRef.current = null;
       } catch {}
     };
@@ -392,6 +415,8 @@ export default function OnboardingScreen() {
       try {
         await saveUserSettings({ onboardingCompleted: true });
       } catch {}
+      // Utilisateur existant qui restaure sa sauvegarde : pas de tour de découverte
+      await AsyncStorage.setItem('@yoroi_onboarding_tour_done', 'true').catch(() => {});
       logger.info('Onboarding completed via backup restore');
       router.replace('/(tabs)');
     } catch (error) {
@@ -737,7 +762,7 @@ export default function OnboardingScreen() {
                   placeholder="175"
                   placeholderTextColor={C.textMuted}
                   value={heightCm}
-                  onChangeText={setHeightCm}
+                  onChangeText={(v) => setHeightCm(v.replace(',', '.'))}
                   keyboardType="decimal-pad"
                   maxLength={5}
                 />
@@ -756,7 +781,7 @@ export default function OnboardingScreen() {
                   placeholder="80"
                   placeholderTextColor={C.textMuted}
                   value={targetWeight}
-                  onChangeText={setTargetWeight}
+                  onChangeText={(v) => setTargetWeight(v.replace(',', '.'))}
                   keyboardType="decimal-pad"
                   maxLength={5}
                 />
@@ -1021,11 +1046,13 @@ export default function OnboardingScreen() {
   // =============================================
 
   const finishOnboarding = async () => {
-    try { introPlayer.pause(); } catch {}
+    try { introPlayerRef.current?.pause(); } catch {}
     // Marquer l'onboarding comme terminé pour que le reconnect Health Connect
     // fonctionne au prochain démarrage (même si l'utilisateur a passé l'étape)
     await AsyncStorage.setItem('@yoroi_healthkit_asked', 'true').catch(() => {});
-    router.replace('/(tabs)');
+    // Nouvel utilisateur : enchaîner sur le tour de découverte (une seule fois)
+    const tourDone = await AsyncStorage.getItem('@yoroi_onboarding_tour_done').catch(() => null);
+    router.replace((tourDone === 'true' ? '/(tabs)' : '/onboarding-tour') as any);
   };
 
   const handleHealthConnect = async () => {

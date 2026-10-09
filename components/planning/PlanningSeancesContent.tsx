@@ -249,6 +249,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
     // Guard : ne lancer le diagnostic auto qu'une seule fois par session
     if (diagRanRef.current) return;
     if (Platform.OS !== 'ios') return;
+    let safetyTimer: ReturnType<typeof setTimeout> | null = null;
     const timer = setTimeout(async () => {
       diagRanRef.current = true;
       setDiagStatus('checking');
@@ -260,13 +261,16 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
           setDiagStatus('ok');
           healthConnect.importFullHistory().catch(() => setDiagStatus('idle'));
           // Timeout de sécurité : retour idle après 60s même si l'import ne répond pas
-          setTimeout(() => setDiagStatus(prev => prev === 'ok' ? 'idle' : prev), 60000);
+          safetyTimer = setTimeout(() => setDiagStatus(prev => prev === 'ok' ? 'idle' : prev), 60000);
         }
       } catch {
         setDiagStatus('idle');
       }
     }, 2000);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (safetyTimer !== null) clearTimeout(safetyTimer);
+    };
   }, [workouts.length, isImporting]);
 
   // Animation shimmer pour les skeletons

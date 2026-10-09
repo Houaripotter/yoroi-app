@@ -180,10 +180,13 @@ let appStateSubscription: { remove: () => void } | null = null;
 
 export function scheduleAutoBackupOnStartup(): void {
   if (autoBackupTimer !== null) return; // déjà scheduled
-  autoBackupTimer = setTimeout(() => {
-    runAutoBackupIfDue().catch(e => logger.error('[AutoBackup] Erreur startup:', e));
-    autoBackupTimer = null;
-  }, STARTUP_DELAY_MS);
+  // Pas de backup lourd si iOS a réveillé l'app en arrière-plan (risque de kill mémoire)
+  if (AppState.currentState === 'active') {
+    autoBackupTimer = setTimeout(() => {
+      runAutoBackupIfDue().catch(e => logger.error('[AutoBackup] Erreur startup:', e));
+      autoBackupTimer = null;
+    }, STARTUP_DELAY_MS);
+  }
 
   // Observe AppState pour annuler si background (et re-schedule à active)
   if (!appStateSubscription) {

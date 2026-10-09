@@ -70,7 +70,9 @@ const _openDB = async (): Promise<SQLite.SQLiteDatabase> => {
 // Ouvrir la base de données (s'assure que l'init est faite, même si initDatabase() n'a pas encore été appelé)
 export const openDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   if (!_initPromise) {
-    _initPromise = _performInit();
+    // En cas d'échec, on remet à null pour réessayer au prochain appel
+    // (sinon la base reste inutilisable jusqu'au redémarrage de l'app)
+    _initPromise = _performInit().catch((e) => { _initPromise = null; throw e; });
   }
   await _initPromise;
   return _openDB();
@@ -83,7 +85,7 @@ export const openDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
 export const initDatabase = async () => {
   // Idempotent : si déjà en cours ou terminé, retourner la même promise
   if (_initPromise) return _initPromise;
-  _initPromise = _performInit();
+  _initPromise = _performInit().catch((e) => { _initPromise = null; throw e; });
   return _initPromise;
 };
 
@@ -207,6 +209,18 @@ const _performInit = async () => {
   await safeAddColumn(database, 'trainings', 'max_heart_rate', 'INTEGER');
   await safeAddColumn(database, 'trainings', 'source', 'TEXT');
   await safeAddColumn(database, 'trainings', 'combat_rounds', 'TEXT');
+  // Colonnes présentes dans database.ts mais qui manquaient sur mobile :
+  // sans elles, le débrief, le lieu et la FC min étaient perdus et la restauration
+  // depuis la corbeille échouait ("no column named location_lat")
+  await safeAddColumn(database, 'trainings', 'min_heart_rate', 'INTEGER');
+  await safeAddColumn(database, 'trainings', 'location_lat', 'REAL');
+  await safeAddColumn(database, 'trainings', 'location_lon', 'REAL');
+  await safeAddColumn(database, 'trainings', 'location_name', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'game_plan', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'what_worked', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'what_didnt_work', 'TEXT');
+  await safeAddColumn(database, 'trainings', 'session_rating', 'INTEGER');
+  await safeAddColumn(database, 'trainings', 'session_mood', 'TEXT');
 
   // Table Planning Semaine Type
   await database.execAsync(`
@@ -872,6 +886,16 @@ export const saveProfile = async (profile: Profile): Promise<void> => {
 
 export const addWeight = async (data: Weight): Promise<number> => {
   const database = await openDatabase();
+  // Anti-doublon pour les imports automatiques (Apple Santé, Health Connect, Watch) :
+  // la même pesée était réinsérée à chaque synchronisation
+  const source = data.source || 'manual';
+  if (source !== 'manual') {
+    const dup = await database.getFirstAsync<{ id: number }>(
+      'SELECT id FROM weights WHERE date = ? AND source = ? AND ABS(weight - ?) < 0.05 LIMIT 1',
+      [data.date, source, data.weight]
+    );
+    if (dup?.id) return dup.id;
+  }
   const result = await database.runAsync(
     `INSERT INTO weights (weight, fat_percent, muscle_percent, water_percent, bone_mass,
      visceral_fat, metabolic_age, bmr, note, source, date)
@@ -930,13 +954,38 @@ export const deleteWeight = async (id: number): Promise<void> => {
 // FONCTIONS CRUD - ENTRAÎNEMENTS
 // ============================================
 
-export const addTraining = async (data: Training): Promise<number> => {
+export const addTraining = async (input: Training): Promise<number> => {
+  const data = input as Training & Record<string, any>;
   const database = await openDatabase();
+  // Anti-doublon : une séance Santé déjà importée (même identifiant) n'est pas réinsérée
+  if (data.healthkit_uuid) {
+    const existing = await database.getFirstAsync<{ id: number }>(
+      'SELECT id FROM trainings WHERE healthkit_uuid = ? LIMIT 1',
+      [data.healthkit_uuid]
+    );
+    if (existing?.id) {
+      // Compléter les infos manquantes (ex : séance détectée d'abord sans calories ni distance)
+      await database.runAsync(
+        `UPDATE trainings SET
+          distance = COALESCE(distance, ?),
+          calories = COALESCE(calories, ?),
+          heart_rate = COALESCE(heart_rate, ?),
+          max_heart_rate = COALESCE(max_heart_rate, ?),
+          min_heart_rate = COALESCE(min_heart_rate, ?),
+          workout_details_json = COALESCE(workout_details_json, ?)
+        WHERE id = ?`,
+        [data.distance || null, data.calories || null, data.heart_rate || null,
+         data.max_heart_rate || null, data.min_heart_rate || null,
+         data.workout_details_json || null, existing.id]
+      );
+      return existing.id;
+    }
+  }
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const combatRoundsJson = data.combat_rounds ? JSON.stringify(data.combat_rounds) : null;
   const result = await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, healthkit_uuid, workout_details_json, heart_rate, max_heart_rate, source, combat_rounds, weekly_plan_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, healthkit_uuid, workout_details_json, heart_rate, min_heart_rate, max_heart_rate, source, combat_rounds, weekly_plan_id, location_lat, location_lon, location_name, game_plan, what_worked, what_didnt_work, session_rating, session_mood)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.club_id || null, data.sport, data.session_type || null, data.date,
      data.start_time || null, data.duration_minutes || null,
      data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null,
@@ -944,7 +993,10 @@ export const addTraining = async (data: Training): Promise<number> => {
      data.intensity || null, data.rounds || null, data.round_duration || null,
      data.pente || null, data.speed || null, data.resistance || null, data.watts || null, data.cadence || null,
      data.healthkit_uuid || null, data.workout_details_json || null, data.heart_rate || null,
-     data.max_heart_rate || null, data.source || null, combatRoundsJson, data.weekly_plan_id || null]
+     data.min_heart_rate || null, data.max_heart_rate || null, data.source || null, combatRoundsJson, data.weekly_plan_id || null,
+     data.location_lat || null, data.location_lon || null, data.location_name || null,
+     data.game_plan || null, data.what_worked || null, data.what_didnt_work || null,
+     data.session_rating ?? null, data.session_mood || null]
   );
   if (!result?.lastInsertRowId) {
     throw new Error('Failed to insert training record');
@@ -973,12 +1025,13 @@ export const getTrainingById = async (id: number): Promise<Training | null> => {
   return { ...result, exercises, combat_rounds };
 };
 
-export const updateTraining = async (id: number, data: Partial<Training>): Promise<void> => {
+export const updateTraining = async (id: number, input: Partial<Training>): Promise<void> => {
+  const data = input as Partial<Training> & Record<string, any>;
   const database = await openDatabase();
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const combatRoundsJson = data.combat_rounds ? JSON.stringify(data.combat_rounds) : null;
   await database.runAsync(
-    `UPDATE trainings SET club_id = ?, sport = ?, session_type = ?, date = ?, start_time = ?, duration_minutes = ?, notes = ?, muscles = ?, exercises = ?, technique_rating = ?, is_outdoor = ?, distance = ?, calories = ?, intensity = ?, rounds = ?, round_duration = ?, pente = ?, speed = ?, resistance = ?, watts = ?, cadence = ?, heart_rate = ?, max_heart_rate = ?, source = ?, combat_rounds = ?
+    `UPDATE trainings SET club_id = ?, sport = ?, session_type = ?, date = ?, start_time = ?, duration_minutes = ?, notes = ?, muscles = ?, exercises = ?, technique_rating = ?, is_outdoor = ?, distance = ?, calories = ?, intensity = ?, rounds = ?, round_duration = ?, pente = ?, speed = ?, resistance = ?, watts = ?, cadence = ?, heart_rate = ?, min_heart_rate = ?, max_heart_rate = ?, source = ?, combat_rounds = ?, location_lat = ?, location_lon = ?, location_name = ?, game_plan = ?, what_worked = ?, what_didnt_work = ?, session_rating = ?, session_mood = ?
      WHERE id = ?`,
     [data.club_id || null, data.sport || null, data.session_type || null, data.date || null,
      data.start_time || null, data.duration_minutes || null,
@@ -986,7 +1039,10 @@ export const updateTraining = async (id: number, data: Partial<Training>): Promi
      data.is_outdoor ? 1 : 0, data.distance || null, data.calories || null,
      data.intensity || null, data.rounds || null, data.round_duration || null,
      data.pente || null, data.speed || null, data.resistance || null, data.watts || null, data.cadence || null,
-     data.heart_rate || null, data.max_heart_rate || null, data.source || null, combatRoundsJson, id]
+     data.heart_rate || null, data.min_heart_rate || null, data.max_heart_rate || null, data.source || null, combatRoundsJson,
+     data.location_lat || null, data.location_lon || null, data.location_name || null,
+     data.game_plan || null, data.what_worked || null, data.what_didnt_work || null,
+     data.session_rating ?? null, data.session_mood || null, id]
   );
 };
 
@@ -1930,6 +1986,9 @@ export const resetDatabase = async (): Promise<void> => {
 
     // Supprimer toutes les données de chaque table
     // Tables principales
+    // Réinitialisation : l'état de synchro iPhone/iPad repart de zéro (aucune suppression propagée aux autres appareils)
+    try { await database.execAsync('DELETE FROM sync_state;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM sync_tombstones;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM weights;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM trainings;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM measurements;'); } catch (e) { /* table peut ne pas exister */ }
@@ -1968,6 +2027,9 @@ export const resetDatabaseKeepPhotos = async (): Promise<void> => {
     const database = await openDatabase();
 
     // Tables principales (sans photos)
+    // Réinitialisation : l'état de synchro iPhone/iPad repart de zéro (aucune suppression propagée aux autres appareils)
+    try { await database.execAsync('DELETE FROM sync_state;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM sync_tombstones;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM weights;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM trainings;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM measurements;'); } catch (e) { /* table peut ne pas exister */ }
@@ -2035,7 +2097,16 @@ export const saveHealthData = async (record: HealthDataRecord): Promise<void> =>
 /**
  * Sauvegarder plusieurs données de santé en une seule transaction
  */
-export const saveHealthDataBatch = async (records: HealthDataRecord[]): Promise<number> => {
+// Les lots sont exécutés l'un après l'autre : deux synchros Santé simultanées
+// ouvraient deux transactions sur la même connexion et s'annulaient mutuellement
+let _healthBatchChain: Promise<unknown> = Promise.resolve();
+export const saveHealthDataBatch = (records: HealthDataRecord[]): Promise<number> => {
+  const run = _healthBatchChain.catch(() => {}).then(() => _saveHealthDataBatch(records));
+  _healthBatchChain = run;
+  return run;
+};
+
+const _saveHealthDataBatch = async (records: HealthDataRecord[]): Promise<number> => {
   if (records.length === 0) return 0;
   const database = await openDatabase();
   let saved = 0;
@@ -2054,7 +2125,7 @@ export const saveHealthDataBatch = async (records: HealthDataRecord[]): Promise<
     }
     await database.execAsync('COMMIT;');
   } catch (error) {
-    await database.execAsync('ROLLBACK;');
+    try { await database.execAsync('ROLLBACK;'); } catch {}
     throw error;
   }
   return saved;
@@ -2250,4 +2321,308 @@ export default {
   openDatabase,
   resetDatabase,
   resetDatabaseKeepPhotos,
+};
+
+// ============================================
+// FONCTIONS PRÉSENTES DANS database.ts MAIS ABSENTES SUR MOBILE
+// (appelées par body-history, weight-manager, sparring, réglages, import CSV :
+// elles plantaient avec "undefined is not a function")
+// ============================================
+
+/**
+ * Compte les doublons sans les supprimer (utile pour prévisualiser le nettoyage).
+ */
+export const countWeightDuplicates = async (): Promise<number> => {
+  const database = await openDatabase();
+  const rows = await database.getAllAsync<any>('SELECT date, source FROM weights');
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const key = `${row.date}|${row.source || 'manual'}`;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  let duplicates = 0;
+  for (const c of counts.values()) {
+    if (c > 1) duplicates += c - 1;
+  }
+  return duplicates;
+};
+
+/**
+ * Supprime les séances en double importées depuis Apple Santé.
+ * Stratégie :
+ *   1. Doublons par healthkit_uuid identique → garder celui qui a le plus de données (workout_details_json, calories…)
+ *   2. Doublons par empreinte date+heure+durée+sport (même séance sans UUID) → garder le plus ancien id
+ * Retourne le nombre de lignes supprimées.
+ */
+export const deduplicateTrainings = async (): Promise<number> => {
+  const database = await openDatabase();
+  let deleted = 0;
+
+  // ── 1. Doublons par UUID HealthKit ──────────────────────────────────────
+  // Pour chaque UUID, garder l'id avec workout_details_json non null (le plus enrichi),
+  // sinon garder le MIN(id) (le plus ancien).
+  const uuidDuplicates = await database.getAllAsync<{ keep_id: number; remove_ids: string }>(
+    `SELECT
+       COALESCE(
+         MIN(CASE WHEN workout_details_json IS NOT NULL THEN id END),
+         MIN(id)
+       ) AS keep_id,
+       GROUP_CONCAT(id) AS all_ids
+     FROM trainings
+     WHERE healthkit_uuid IS NOT NULL
+     GROUP BY healthkit_uuid
+     HAVING COUNT(*) > 1`
+  );
+
+  for (const row of uuidDuplicates) {
+    const allIds: number[] = (row as any).all_ids.split(',').map(Number);
+    const toDelete = allIds.filter(id => id !== row.keep_id);
+    for (const id of toDelete) {
+      await database.runAsync(`DELETE FROM trainings WHERE id = ?`, [id]);
+      deleted++;
+    }
+  }
+
+  // ── 2. Doublons par empreinte (date + start_time + duration + sport) ────
+  // Seulement pour les séances Apple Health (source contient 'apple' ou 'health' ou 'watch')
+  // qui n'ont pas de UUID (sinon déjà traités ci-dessus).
+  const fingerprintDuplicates = await database.getAllAsync<{ keep_id: number; all_ids: string }>(
+    `SELECT
+       MIN(id) AS keep_id,
+       GROUP_CONCAT(id) AS all_ids
+     FROM trainings
+     WHERE healthkit_uuid IS NULL
+       AND (
+         LOWER(source) LIKE '%apple%' OR
+         LOWER(source) LIKE '%health%' OR
+         LOWER(source) LIKE '%watch%'
+       )
+     GROUP BY date, COALESCE(start_time,''), CAST(ROUND(duration_minutes) AS INTEGER), sport
+     HAVING COUNT(*) > 1`
+  );
+
+  for (const row of fingerprintDuplicates) {
+    const allIds: number[] = row.all_ids.split(',').map(Number);
+    const toDelete = allIds.filter(id => id !== row.keep_id);
+    for (const id of toDelete) {
+      await database.runAsync(`DELETE FROM trainings WHERE id = ?`, [id]);
+      deleted++;
+    }
+  }
+
+  return deleted;
+};
+
+/**
+ * Supprime les doublons dans la table `weights`.
+ * Deux entrées sont considérées doublons si elles ont la même `date` ET la même `source`.
+ * Stratégie : pour chaque groupe, on fusionne les valeurs (on garde la première valeur
+ * non-null rencontrée pour chaque colonne) sur l'entrée avec l'id le plus bas,
+ * puis on supprime les autres.
+ *
+ * @returns { removed: nombre d'entrées supprimées, kept: nombre d'entrées restantes }
+ */
+export const deduplicateWeights = async (): Promise<{ removed: number; kept: number }> => {
+  const database = await openDatabase();
+  const rows = await database.getAllAsync<any>('SELECT * FROM weights ORDER BY id ASC');
+
+  // Grouper par (date, source)
+  const groups = new Map<string, any[]>();
+  for (const row of rows) {
+    const key = `${row.date}|${row.source || 'manual'}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(row);
+  }
+
+  const columns = ['weight', 'fat_percent', 'muscle_percent', 'water_percent',
+                   'bone_mass', 'visceral_fat', 'metabolic_age', 'bmr', 'note'];
+  let removed = 0;
+
+  for (const group of groups.values()) {
+    if (group.length <= 1) continue;
+
+    // Fusionner : garder la meilleure valeur (première non-null) pour chaque colonne
+    const merged: any = { ...group[0] };
+    for (const row of group.slice(1)) {
+      for (const col of columns) {
+        if ((merged[col] == null || merged[col] === '') && row[col] != null && row[col] !== '') {
+          merged[col] = row[col];
+        }
+      }
+    }
+
+    // Mettre à jour l'entrée conservée (id le plus bas)
+    await database.runAsync(
+      `UPDATE weights SET weight = ?, fat_percent = ?, muscle_percent = ?, water_percent = ?,
+       bone_mass = ?, visceral_fat = ?, metabolic_age = ?, bmr = ?, note = ? WHERE id = ?`,
+      [merged.weight, merged.fat_percent ?? null, merged.muscle_percent ?? null,
+       merged.water_percent ?? null, merged.bone_mass ?? null, merged.visceral_fat ?? null,
+       merged.metabolic_age ?? null, merged.bmr ?? null, merged.note ?? null, merged.id]
+    );
+
+    // Supprimer les doublons (toutes les entrées sauf la première)
+    const idsToDelete = group.slice(1).map(r => r.id);
+    const placeholders = idsToDelete.map(() => '?').join(',');
+    await database.runAsync(`DELETE FROM weights WHERE id IN (${placeholders})`, idsToDelete);
+    removed += idsToDelete.length;
+  }
+
+  return { removed, kept: rows.length - removed };
+};
+
+export const deleteMeasurementRecord = async (id: number): Promise<void> => {
+  const database = await openDatabase();
+  await database.runAsync('DELETE FROM measurements WHERE id = ?', [id]);
+};
+
+export const deleteWeightsBySource = async (source: string): Promise<number> => {
+  const database = await openDatabase();
+  const countResult = await database.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM weights WHERE source = ?', [source]
+  );
+  await database.runAsync('DELETE FROM weights WHERE source = ?', [source]);
+  return countResult?.count || 0;
+};
+
+export const getTrainingsByPartnerName = async (partnerName: string): Promise<Training[]> => {
+  const database = await openDatabase();
+  const rows = await database.getAllAsync<any>(
+    `SELECT * FROM trainings WHERE combat_rounds IS NOT NULL AND combat_rounds != '[]' ORDER BY date DESC`
+  );
+  const nameLower = partnerName.toLowerCase().trim();
+  const matched: Training[] = [];
+  for (const r of rows) {
+    try {
+      const rounds: CombatRound[] = JSON.parse(r.combat_rounds || '[]');
+      const hasPartner = rounds.some(rd => rd.partner && rd.partner.toLowerCase().includes(nameLower));
+      if (!hasPartner) continue;
+      let exercises;
+      if (r.exercises) { try { exercises = JSON.parse(r.exercises); } catch { exercises = undefined; } }
+      let combat_rounds: CombatRound[] | undefined;
+      try { combat_rounds = JSON.parse(r.combat_rounds); } catch { combat_rounds = undefined; }
+      matched.push({
+        ...r,
+        exercises,
+        combat_rounds,
+        is_outdoor: !!r.is_outdoor,
+      });
+    } catch { /* skip malformed */ }
+  }
+  return matched;
+};
+
+export const updateMeasurementRecord = async (id: number, data: Partial<Measurement>): Promise<void> => {
+  const database = await openDatabase();
+  await database.runAsync(
+    `UPDATE measurements SET
+      chest = COALESCE(?, chest),
+      waist = COALESCE(?, waist),
+      navel = COALESCE(?, navel),
+      hips = COALESCE(?, hips),
+      left_arm = COALESCE(?, left_arm),
+      right_arm = COALESCE(?, right_arm),
+      left_thigh = COALESCE(?, left_thigh),
+      right_thigh = COALESCE(?, right_thigh),
+      left_calf = COALESCE(?, left_calf),
+      right_calf = COALESCE(?, right_calf),
+      shoulders = COALESCE(?, shoulders),
+      neck = COALESCE(?, neck),
+      date = COALESCE(?, date)
+    WHERE id = ?`,
+    [
+      data.chest ?? null, data.waist ?? null, data.navel ?? null,
+      data.hips ?? null, data.left_arm ?? null, data.right_arm ?? null,
+      data.left_thigh ?? null, data.right_thigh ?? null,
+      data.left_calf ?? null, data.right_calf ?? null,
+      data.shoulders ?? null, data.neck ?? null,
+      data.date ?? null, id,
+    ]
+  );
+};
+
+export const updateWeight = async (id: number, data: Partial<Weight>): Promise<void> => {
+  const database = await openDatabase();
+  await database.runAsync(
+    `UPDATE weights SET
+      weight = COALESCE(?, weight),
+      fat_percent = ?,
+      muscle_percent = ?,
+      water_percent = ?,
+      bone_mass = ?,
+      visceral_fat = ?,
+      metabolic_age = ?,
+      bmr = ?,
+      note = ?,
+      date = COALESCE(?, date)
+    WHERE id = ?`,
+    [
+      data.weight ?? null,
+      data.fat_percent ?? null,
+      data.muscle_percent ?? null,
+      data.water_percent ?? null,
+      data.bone_mass ?? null,
+      data.visceral_fat ?? null,
+      data.metabolic_age ?? null,
+      data.bmr ?? null,
+      data.note ?? null,
+      data.date ?? null,
+      id,
+    ]
+  );
+};
+
+/**
+ * Insère ou met à jour une entrée de poids de manière idempotente.
+ * Utilisé par l'import CSV pour éviter les doublons quand l'utilisateur
+ * importe plusieurs fois le même fichier (ou un fichier avec des lignes dupliquées).
+ * Une entrée existante est repérée par (date, source). Si trouvée, on met à jour
+ * les colonnes non-nulles du nouveau enregistrement. Sinon, on insère.
+ *
+ * @returns { action: 'inserted' | 'updated', id: number }
+ */
+export const upsertWeight = async (
+  data: Weight
+): Promise<{ action: 'inserted' | 'updated'; id: number }> => {
+  const database = await openDatabase();
+  const source = data.source || 'manual';
+
+  const existing = await database.getFirstAsync<{ id: number }>(
+    'SELECT id FROM weights WHERE date = ? AND source = ? LIMIT 1',
+    [data.date, source]
+  );
+
+  if (existing?.id) {
+    // UPDATE : ne remplace que les colonnes non-nulles du nouveau record
+    const updates: string[] = [];
+    const values: any[] = [];
+    const cols: Array<[string, any]> = [
+      ['weight', data.weight],
+      ['fat_percent', data.fat_percent],
+      ['muscle_percent', data.muscle_percent],
+      ['water_percent', data.water_percent],
+      ['bone_mass', data.bone_mass],
+      ['visceral_fat', data.visceral_fat],
+      ['metabolic_age', data.metabolic_age],
+      ['bmr', data.bmr],
+      ['note', data.note],
+    ];
+    for (const [col, val] of cols) {
+      if (val != null && val !== '') {
+        updates.push(`${col} = ?`);
+        values.push(val);
+      }
+    }
+    if (updates.length > 0) {
+      values.push(existing.id);
+      await database.runAsync(
+        `UPDATE weights SET ${updates.join(', ')} WHERE id = ?`,
+        values
+      );
+    }
+    return { action: 'updated', id: existing.id };
+  }
+
+  // INSERT
+  const id = await addWeight(data);
+  return { action: 'inserted', id };
 };

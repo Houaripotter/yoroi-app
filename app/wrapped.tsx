@@ -70,7 +70,7 @@ export default function WrappedScreen() {
       bg: ['#3B82F6', '#1E3A8A'] as const,
       icon: Target,
       label: 'TON SPORT',
-      bigText: stats.topSport.toUpperCase() || '—',
+      bigText: stats.topSport.toUpperCase() || ',',
       subtitle: `${stats.topSportCount} sessions`,
       footer: stats.topSport ? `Ton arme de predilection en ${stats.year}` : '',
     },

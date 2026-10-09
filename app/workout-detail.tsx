@@ -16,7 +16,6 @@ import {
   Platform,
   TouchableOpacity,
   Modal,
-  ActivityIndicator,
 } from 'react-native';
 import Svg, { Rect, Line } from 'react-native-svg';
 import { MuscleMapCard } from '@/components/MuscleMapCard';
@@ -34,6 +33,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Header } from '@/components/ui/Header';
+import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
 import { HeartRateZonesBar } from '@/components/stats/HeartRateZonesBar';
 import { WorkoutMapRoute } from '@/components/WorkoutMapRoute';
 import { getTrainingById as _getTrainingById, updateTrainingDetails, updateTraining, getTrainings } from '@/lib/database';
@@ -550,8 +550,12 @@ export default function WorkoutDetailScreen() {
     return (
       <View style={[styles.screenRoot, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
         <Header title="" showBack />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
+        <View style={{ flex: 1, padding: 16 }}>
+          <SkeletonCard height={160} width="100%" marginBottom={12} />
+          <SkeletonCard height={100} width="100%" marginBottom={12} />
+          <SkeletonCard height={120} width="100%" marginBottom={12} />
+          <SkeletonCard height={120} width="100%" marginBottom={12} />
+          <SkeletonMessage />
         </View>
       </View>
     );
@@ -701,7 +705,7 @@ export default function WorkoutDetailScreen() {
                 <>
                   <View style={styles.heroMetricDivider} />
                   <View style={styles.heroMetricItem}>
-                    <Text style={[styles.heroMetricValue, { color: colors.textOnAccent }]}>{avgHR}</Text>
+                    <Text style={[styles.heroMetricValue, { color: colors.textOnAccent }]}>{Math.round(avgHR ?? 0)}</Text>
                     <Text style={styles.heroMetricLabel}>bpm</Text>
                   </View>
                 </>
@@ -805,7 +809,7 @@ export default function WorkoutDetailScreen() {
                     <View style={styles.appleDetailCell}>
                       <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Fréq. cardiaque moy.</Text>
                       <Text style={[styles.appleDetailValue, { color: '#EF4444' }]}>
-                        {avgHR}
+                        {Math.round(avgHR ?? 0)}
                         <Text style={styles.appleDetailUnit}> BPM</Text>
                       </Text>
                     </View>
@@ -828,7 +832,7 @@ export default function WorkoutDetailScreen() {
                   <View style={styles.appleDetailCell}>
                     <Text style={[styles.appleDetailLabel, { color: colors.textMuted }]}>Fréq. cardiaque max</Text>
                     <Text style={[styles.appleDetailValue, { color: '#EF4444' }]}>
-                      {details?.maxHeartRate || training.max_heart_rate || '-'}
+                      {details?.maxHeartRate ? Math.round(details.maxHeartRate) : training.max_heart_rate ? Math.round(training.max_heart_rate) : '-'}
                       <Text style={styles.appleDetailUnit}> BPM</Text>
                     </Text>
                   </View>

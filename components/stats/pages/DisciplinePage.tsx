@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
+import { ScrollView, View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import Svg, { Path, G } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -13,6 +13,7 @@ import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { StatsDetailModal } from '../StatsDetailModal';
+import { SkeletonGrid } from '../SkeletonCard';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
 import { ScrollableLineChart } from '../charts/ScrollableLineChart';
 import { StrainGauge } from '../advanced/StrainGauge';
@@ -44,7 +45,7 @@ export const DisciplinePage: React.FC = () => {
     ],
   };
 
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('tout');
   const [trainingData, setTrainingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [allTrainingsData, setAllTrainingsData] = useState<any[]>([]);
@@ -172,9 +173,12 @@ export const DisciplinePage: React.FC = () => {
   const getModalData = () => {
     if (!selectedMetric || !allTrainingsData.length) return [];
 
+    // Règle 3 : plus récent à GAUCHE → tri DESC
     const sortedTrainings = [...allTrainingsData].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
+    // Règle 4 : deux lignes (jour+mois / année)
+    const fmtLabel = (d: Date) => `${format(d, 'd MMM', { locale: dateLocale })}\n${format(d, 'yyyy')}`;
 
     switch (selectedMetric.key) {
       case 'intensity':
@@ -182,7 +186,7 @@ export const DisciplinePage: React.FC = () => {
           .filter(t => t.intensity && t.intensity > 0)
           .map((t) => ({
             value: t.intensity,
-            label: format(new Date(t.date), 'd MMM', { locale: dateLocale }),
+            label: fmtLabel(new Date(t.date)),
             date: t.date,
           }));
 
@@ -191,7 +195,7 @@ export const DisciplinePage: React.FC = () => {
           .filter(t => t.duration && t.duration > 0)
           .map((t) => ({
             value: t.duration,
-            label: format(new Date(t.date), 'd MMM', { locale: dateLocale }),
+            label: fmtLabel(new Date(t.date)),
             date: t.date,
           }));
 
@@ -200,7 +204,7 @@ export const DisciplinePage: React.FC = () => {
           .filter(t => t.intensity && t.duration)
           .map((t) => ({
             value: (t.intensity * t.duration) / 60,
-            label: format(new Date(t.date), 'd MMM', { locale: dateLocale }),
+            label: fmtLabel(new Date(t.date)),
             date: t.date,
           }));
 
@@ -237,17 +241,15 @@ export const DisciplinePage: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ padding: 16 }}>
         <StatsHeader
           title={t('statsPages.discipline.title')}
           description={t('statsPages.discipline.description')}
           selectedPeriod={selectedPeriod}
           onPeriodChange={setSelectedPeriod}
         />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-        </View>
-      </View>
+        <SkeletonGrid count={4} cardHeight={160} />
+      </ScrollView>
     );
   }
 
@@ -562,12 +564,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 250,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 100,
   },
   grid: {
     flexDirection: 'row',

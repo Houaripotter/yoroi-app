@@ -55,6 +55,9 @@ import { exportDataToJSON, exportDataToCSV } from '@/lib/exportService';
 import { draftService, WeightDraft } from '@/lib/draftService';
 import logger from '@/lib/security/logger';
 import HealthConnect from '@/lib/healthConnect';
+import { usePremium } from '@/context/PremiumContext';
+import { PremiumModal } from '@/components/premium/PremiumModal';
+import { getWeightCountThisMonth, incrementWeightCountThisMonth } from '@/lib/premiumTabGuard';
 import { useWatch } from '@/lib/WatchConnectivityProvider';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
@@ -154,11 +157,15 @@ const InputRow = ({
 export default function AddScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, isDark, screenBackground } = useTheme();
+  const { colors, isDark, screenBackground, screenText, themeColor } = useTheme();
   const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { syncWeight: syncWeightToWatch, isWatchAvailable } = useWatch();
+  const { isPremium } = usePremium();
   const dateLocale = fr;
+
+  // Modal premium limite entrées poids
+  const [showWeightLimitModal, setShowWeightLimitModal] = useState(false);
 
   // Weight input ref - Isolé pour éviter les re-renders
   const weightInputRef = useRef<WeightInputHandle>(null);
@@ -166,6 +173,8 @@ export default function AddScreen() {
   // Date state
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  // Date avant ouverture du picker iOS (restaurée sur "Annuler")
+  const dateBeforePickerRef = useRef<Date>(new Date());
 
   // Composition state - Composition corporelle complète
   const [fatPercent, setFatPercent] = useState('');
@@ -421,7 +430,19 @@ export default function AddScreen() {
     }
   };
 
+  // Verrou anti double-tap : un deuxième appui pendant l'enregistrement créait un doublon
+  const savingRef = useRef(false);
   const handleSave = async () => {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    try {
+      await handleSaveInner();
+    } finally {
+      savingRef.current = false;
+    }
+  };
+
+  const handleSaveInner = async () => {
     const weight = weightInputRef.current?.getValue();
 
     // Vérifier si au moins une donnée est remplie (poids OU mensurations OU composition)
@@ -435,6 +456,26 @@ export default function AddScreen() {
         [{ text: t('add.ok'), style: 'primary' }]
       );
       return;
+    }
+
+    // La composition corporelle est enregistrée avec la pesée : sans poids, rien n'était sauvegardé
+    // alors que le message de succès s'affichait
+    if (!weight && hasComposition && !hasMeasurements) {
+      showPopup(
+        t('add.noData'),
+        'Entre ton poids pour enregistrer la composition corporelle.',
+        [{ text: t('add.ok'), style: 'primary' }]
+      );
+      return;
+    }
+
+    // Limite freemium : 2 entrées poids par mois pour les utilisateurs gratuits
+    if (!isPremium && weight && weight > 0) {
+      const count = await getWeightCountThisMonth();
+      if (count >= 2) {
+        setShowWeightLimitModal(true);
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -467,6 +508,10 @@ export default function AddScreen() {
           metabolic_age: safeInt(metabolicAge),
           bmr: safeInt(bmr),
         });
+        // Comptabiliser pour la limite freemium
+        if (!isPremium) {
+          await incrementWeightCountThisMonth();
+        }
       }
 
       // Sauvegarder les mensurations si renseignees
@@ -636,7 +681,7 @@ export default function AddScreen() {
       style={[styles.container, { backgroundColor: screenBackground }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={isDark || screenText === '#FFFFFF' ? 'light-content' : 'dark-content'} />
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + SPACING.md }]}>
@@ -649,7 +694,7 @@ export default function AddScreen() {
         >
           <X size={24} color={colors.textSecondary} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? colors.textPrimary : '#FFFFFF' }]}>{t('add.title')}</Text>
+        <Text style={[styles.headerTitle, { color: themeColor === 'blanc' ? colors.textPrimary : (isDark ? colors.textPrimary : '#FFFFFF') }]}>{t('add.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -665,7 +710,7 @@ export default function AddScreen() {
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 150 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="none"
@@ -680,7 +725,7 @@ export default function AddScreen() {
           activeOpacity={0.7}
         >
           <View style={[styles.trainingQuickIcon, { backgroundColor: colors.accent }]}>
-            <Dumbbell size={24} color="#FFFFFF" />
+            <Dumbbell size={24} color={colors.textOnAccent} />
           </View>
           <View style={styles.trainingQuickContent}>
             <Text style={[styles.trainingQuickTitle, { color: colors.textPrimary }]}>
@@ -698,6 +743,7 @@ export default function AddScreen() {
           style={[styles.dateSelector, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
           onPress={() => {
             triggerHaptic();
+            dateBeforePickerRef.current = selectedDate;
             setShowDatePicker(true);
           }}
         >
@@ -1195,7 +1241,7 @@ export default function AddScreen() {
             <View style={styles.datePickerModal}>
               <View style={[styles.datePickerContainer, { backgroundColor: colors.backgroundCard }]}>
                 <View style={styles.datePickerHeader}>
-                  <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                  <TouchableOpacity onPress={() => { setSelectedDate(dateBeforePickerRef.current); setShowDatePicker(false); }}>
                     <Text style={[styles.datePickerButton, { color: isDark ? colors.accent : '#000000' }]}>{t('add.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setShowDatePicker(false)}>
@@ -1246,12 +1292,14 @@ export default function AddScreen() {
 
             {/* Détails */}
             <View style={styles.successDetails}>
-              <View style={styles.successDetailRow}>
-                <Scale size={18} color={colors.accentText} />
-                <Text style={[styles.successDetailText, { color: colors.textSecondary }]}>
-                  {t('add.weight')} : <Text style={{ fontWeight: '700', color: colors.textPrimary }}>{savedWeight} kg</Text>
-                </Text>
-              </View>
+              {savedWeight != null && (
+                <View style={styles.successDetailRow}>
+                  <Scale size={18} color={colors.accentText} />
+                  <Text style={[styles.successDetailText, { color: colors.textSecondary }]}>
+                    {t('add.weight')} : <Text style={{ fontWeight: '700', color: colors.textPrimary }}>{savedWeight} kg</Text>
+                  </Text>
+                </View>
+              )}
               <View style={styles.successDetailRow}>
                 <Calendar size={18} color={colors.accentText} />
                 <Text style={[styles.successDetailText, { color: colors.textSecondary }]}>
@@ -1301,6 +1349,22 @@ export default function AddScreen() {
         onClose={handleRatingClose}
         onRated={handleRated}
         actionType="weight"
+      />
+
+      {/* Modal premium — limite 2 entrées poids par mois */}
+      <PremiumModal
+        visible={showWeightLimitModal}
+        onClose={() => setShowWeightLimitModal(false)}
+        Icon={Scale}
+        gradientColors={['#1E3A5F', '#1D4ED8', '#3B82F6']}
+        title="Limite atteinte"
+        description="Tu as utilisé tes 2 entrées poids gratuites ce mois-ci"
+        features={[
+          'Entrées poids illimitées chaque mois',
+          'Courbe de progression sans restriction',
+          'Suivi de composition corporelle complet',
+          'Historique et export de toutes tes données',
+        ]}
       />
 
       <PopupComponent />

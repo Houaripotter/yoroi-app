@@ -35,8 +35,10 @@ const migrateFastingToSecureStorage = async (): Promise<void> => {
     if (oldData) {
       const parsed = JSON.parse(oldData);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        await secureStorage.setItem('@yoroi_fasting_history', parsed);
-        await AsyncStorage.removeItem('@yoroi_fasting_history');
+        // Ne supprimer l'ancienne copie que si l'écriture chiffrée a réussi (sinon perte de données)
+        if (await secureStorage.setItem('@yoroi_fasting_history', parsed)) {
+          await AsyncStorage.removeItem('@yoroi_fasting_history');
+        }
         logger.info('[Fasting] Migration historique jeûne vers SecureStorage réussie');
       }
     }

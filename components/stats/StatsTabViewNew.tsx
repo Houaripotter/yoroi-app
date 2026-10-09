@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useRef, useState, useMemo, useCallback, memo } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Text, useWindowDimensions } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Text, useWindowDimensions, DeviceEventEmitter } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -64,7 +64,7 @@ interface StatsTabViewNewProps {
 
 export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) => {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const { colors, isDark, screenBackground, screenText, screenTextMuted } = useTheme();
+  const { colors, isDark, themeColor, screenBackground, screenText, screenTextMuted } = useTheme();
   const { t } = useI18n();
 
   // Memoize pages to avoid new object references on every render
@@ -112,6 +112,9 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
       return next;
     });
 
+    // Notifie les pages du changement d'onglet actif
+    DeviceEventEmitter.emit('YOROI_STATS_PAGE_FOCUS', { pageId: PAGE_DEFS[page]?.id });
+
     // Auto-scroll tabs if they don't fit
     if (totalTabsWidth > SCREEN_WIDTH) {
       const scrollOffset = page * (tabWidth + tabGap) - SCREEN_WIDTH / 2 + (tabWidth / 2) + 16;
@@ -124,6 +127,15 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
 
   const scrollToPage = useCallback((pageIndex: number) => {
     pagerRef.current?.setPage(pageIndex);
+    // Mettre à jour immédiatement sans attendre onPageSelected (qui peut ne pas se déclencher)
+    setCurrentPage(pageIndex);
+    setVisitedPages(prev => {
+      if (prev.has(pageIndex)) return prev;
+      const next = new Set(prev);
+      next.add(pageIndex);
+      return next;
+    });
+    DeviceEventEmitter.emit('YOROI_STATS_PAGE_FOCUS', { pageId: PAGE_DEFS[pageIndex]?.id });
     impactAsync(ImpactFeedbackStyle.Light);
   }, []);
 
@@ -143,7 +155,8 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
             ref={tabScrollRef}
             horizontal
             showsHorizontalScrollIndicator={false}
-            scrollEnabled={true}
+            scrollEnabled={!allTabsFit}
+            keyboardShouldPersistTaps="handled"
             contentContainerStyle={[
               styles.tabsContent,
               allTabsFit ? styles.tabsContentCentered : null
@@ -154,20 +167,23 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
               const Icon = page.icon;
               const isActive = currentPage === index;
               // Theme-safe : screenText pour l'icone et le label inactifs, opacity pour la nuance
-              const inactiveCircleBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.18)';
-              const inactiveCircleBorder = isDark ? (colors.companion + '40') : 'rgba(255,255,255,0.3)';
+              // Thème blanc : fond clair → cercles inactifs visibles avec bordure foncée
+              const isBlancTheme = themeColor === 'blanc';
+              const inactiveCircleBg = isDark ? 'rgba(255,255,255,0.1)' : (isBlancTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.18)');
+              const inactiveCircleBorder = isDark ? (colors.companion + '40') : (isBlancTheme ? colors.border : 'rgba(255,255,255,0.3)');
               return (
                 <TouchableOpacity
                   key={page.id}
                   style={styles.tabWrapper}
                   onPress={() => scrollToPage(index)}
                   activeOpacity={0.7}
+                  hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                 >
                   <View style={[
                     styles.circleTab,
                     {
                       backgroundColor: isActive
-                        ? (isDark ? colors.accent : '#FFFFFF')
+                        ? (isBlancTheme ? colors.accent : (isDark ? colors.accent : '#FFFFFF'))
                         : inactiveCircleBg,
                       borderWidth: isActive ? 0 : 1,
                       borderColor: isActive ? 'transparent' : inactiveCircleBorder,
@@ -175,7 +191,9 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
                   ]}>
                     <Icon
                       size={18}
-                      color={isActive ? (isDark ? colors.textOnAccent : colors.accent) : screenText}
+                      color={isActive
+                        ? (isBlancTheme ? colors.textOnAccent : (isDark ? colors.textOnAccent : colors.accent))
+                        : screenText}
                       strokeWidth={2.5}
                       style={{ opacity: isActive ? 1 : 0.7 }}
                     />
@@ -183,7 +201,9 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
                   <Text style={[
                     styles.tabLabel,
                     {
-                      color: isActive ? (isDark ? colors.accent : '#FFFFFF') : screenText,
+                      color: isActive
+                        ? (isBlancTheme ? colors.accent : (isDark ? colors.accent : '#FFFFFF'))
+                        : screenText,
                       opacity: isActive ? 1 : 0.7,
                     },
                   ]}>
@@ -247,6 +267,7 @@ const styles = StyleSheet.create({
   tabWrapper: {
     alignItems: 'center',
     gap: 4,
+    minWidth: 44,
   },
   circleTab: {
     width: 44,

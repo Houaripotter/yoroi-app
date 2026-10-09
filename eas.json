@@ -36,7 +36,7 @@
   "submit": {
     "production": {
       "ios": {
-        "ascAppId": "6745892310",
+        "ascAppId": "6757306612",
         "bundleIdentifier": "com.houari.yoroi"
       },
       "android": {

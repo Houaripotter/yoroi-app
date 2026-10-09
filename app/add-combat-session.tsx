@@ -672,9 +672,9 @@ function Stepper({
 
 // Item mémoïsé pour éviter les re-renders en cascade
 const SubItem = React.memo(({
-  item, isSelected, screenBg, cardBg, textColor, borderColor, onPress,
+  item, isSelected, screenBg, screenTxt, cardBg, textColor, borderColor, onPress,
 }: {
-  item: string; isSelected: boolean; screenBg: string; cardBg: string;
+  item: string; isSelected: boolean; screenBg: string; screenTxt: string; cardBg: string;
   textColor: string; borderColor: string; onPress: (item: string) => void;
 }) => (
   <TouchableOpacity
@@ -689,7 +689,7 @@ const SubItem = React.memo(({
     </Text>
     {isSelected && (
       <View style={[styles.subItemCheck, { backgroundColor: screenBg }]}>
-        <Check size={12} color="#fff" />
+        <Check size={12} color={screenTxt} />
       </View>
     )}
   </TouchableOpacity>
@@ -710,7 +710,7 @@ function SubmissionsModal({
   onToggle: (sub: string) => void;
   title: string;
 }) {
-  const { colors, screenBackground } = useTheme();
+  const { colors, screenBackground, screenText, themeColor } = useTheme();
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
 
@@ -737,12 +737,13 @@ function SubmissionsModal({
       item={item}
       isSelected={selectedSet.has(item)}
       screenBg={screenBackground}
+      screenTxt={screenText}
       cardBg={colors.card}
       textColor={colors.text}
       borderColor={colors.border ?? '#2a2a2a'}
       onPress={handlePress}
     />
-  ), [selectedSet, screenBackground, colors.card, colors.text, colors.border, handlePress]);
+  ), [selectedSet, screenBackground, screenText, colors.card, colors.text, colors.border, handlePress]);
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -804,8 +805,8 @@ function SubmissionsModal({
                     style={[styles.selectedTag, { backgroundColor: screenBackground }]}
                     onPress={() => onToggle(sub)}
                   >
-                    <Text style={styles.selectedTagText}>{sub}</Text>
-                    <X size={10} color="#fff" />
+                    <Text style={[styles.selectedTagText, { color: screenText }]}>{sub}</Text>
+                    <X size={10} color={screenText} />
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -842,7 +843,7 @@ function SubmissionsModal({
               style={[styles.modalConfirmBtn, { backgroundColor: screenBackground }]}
               onPress={onClose}
             >
-              <Text style={styles.modalConfirmBtnText}>
+              <Text style={[styles.modalConfirmBtnText, { color: screenText }]}>
                 {selected.length > 0 ? `Valider (${selected.length})` : 'Fermer'}
               </Text>
             </TouchableOpacity>
@@ -2306,6 +2307,25 @@ const RoundCard = React.memo(function RoundCard({
 // ÉCRAN PRINCIPAL
 // ============================================
 
+// "2026-09-25" lu par new Date() = minuit UTC : mauvaise heure (02:00 en France) voire mauvais jour.
+// On lit la date en heure locale, avec l'heure de début si connue, sinon l'heure actuelle.
+const parseLocalDate = (value: string, startTime?: string | null): Date => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value.slice(0, 10)) || value.length > 10) {
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? new Date() : d;
+  }
+  const [y, m, day] = value.split('-').map(Number);
+  const now = new Date();
+  let hours = now.getHours();
+  let minutes = now.getMinutes();
+  if (startTime && /^\d{1,2}:\d{2}/.test(startTime)) {
+    const [h, mi] = startTime.split(':').map(Number);
+    hours = h; minutes = mi;
+  }
+  const r = new Date(y, m - 1, day, hours, minutes);
+  return isNaN(r.getTime()) ? new Date() : r;
+};
+
 export default function AddCombatSessionScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -2314,7 +2334,7 @@ export default function AddCombatSessionScreen() {
     date?: string;
     clubId?: string;
   }>();
-  const { colors, screenBackground, isDark } = useTheme();
+  const { colors, screenBackground, screenText, themeColor, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const keyboardHeight = useKeyboardHeight();
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -2332,7 +2352,7 @@ export default function AddCombatSessionScreen() {
   const [step, setStep] = useState(1);
   const [sessionType, setSessionType] = useState<SessionTypeId>('entrainement');
   const [date, setDate] = useState(() => {
-    if (params.date) return new Date(params.date);
+    if (params.date) return parseLocalDate(String(params.date));
     return new Date();
   });
   const [durationHours, setDurationHours] = useState(1);
@@ -2485,7 +2505,7 @@ export default function AddCombatSessionScreen() {
       if (!training) return;
       if (training.sport) setSelectedSport(training.sport);
       if (training.session_type) setSessionType(training.session_type as SessionTypeId);
-      if (training.date) setDate(new Date(training.date));
+      if (training.date) setDate(parseLocalDate(training.date, training.start_time));
       if (training.duration_minutes) {
         setDurationHours(Math.floor(training.duration_minutes / 60));
         setDurationMinutes(training.duration_minutes % 60);
@@ -2900,9 +2920,9 @@ export default function AddCombatSessionScreen() {
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           {step > 1 ? (
-            <ChevronLeft size={24} color="#fff" />
+            <ChevronLeft size={24} color={screenText} />
           ) : (
-            <X size={22} color="#fff" />
+            <X size={22} color={screenText} />
           )}
         </TouchableOpacity>
 
@@ -2912,38 +2932,38 @@ export default function AddCombatSessionScreen() {
               <MaterialCommunityIcons
                 name={currentSport.icon as any}
                 size={15}
-                color="rgba(255,255,255,0.8)"
+                color={themeColor === 'blanc' ? colors.textMuted : 'rgba(255,255,255,0.8)'}
               />
             )}
-            <Text style={styles.headerTitle} numberOfLines={1}>
+            <Text style={[styles.headerTitle, { color: screenText }]} numberOfLines={1}>
               {sportDisplayName}
             </Text>
           </View>
-          <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 10, fontWeight: '700', letterSpacing: 0.5, marginTop: 1 }}>
+          <Text style={{ color: themeColor === 'blanc' ? colors.textMuted : 'rgba(255,255,255,0.55)', fontSize: 10, fontWeight: '700', letterSpacing: 0.5, marginTop: 1 }}>
             ÉTAPE {step} / 4
           </Text>
         </View>
 
         {step < 4 ? (
           <TouchableOpacity
-            style={styles.headerSaveBtn}
+            style={[styles.headerSaveBtn, { backgroundColor: themeColor === 'blanc' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.22)' }]}
             onPress={() => {
               impactAsync(ImpactFeedbackStyle.Light);
               setStep(step + 1);
             }}
           >
-            <Text style={styles.headerSaveBtnText}>Suivant →</Text>
+            <Text style={[styles.headerSaveBtnText, { color: screenText }]}>Suivant →</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={styles.headerSaveBtn}
+            style={[styles.headerSaveBtn, { backgroundColor: themeColor === 'blanc' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.22)' }]}
             onPress={handleSave}
             disabled={saving}
           >
             {saving ? (
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color={screenText} />
             ) : (
-              <Text style={styles.headerSaveBtnText}>
+              <Text style={[styles.headerSaveBtnText, { color: screenText }]}>
                 {params.editId ? 'Mettre à jour' : 'Enregistrer'}
               </Text>
             )}
@@ -3015,7 +3035,8 @@ export default function AddCombatSessionScreen() {
               {clubs.map((club) => {
                 const isSelected = selectedClubId === club.id;
                 const logoSource = club.logo_uri ? getClubLogoSource(club.logo_uri) : null;
-                const accentCol = club.color ?? screenBackground;
+                const accentCol = club.color ?? (themeColor === 'blanc' ? colors.accent : screenBackground);
+                const accentColText = club.color ? '#FFFFFF' : screenText;
                 return (
                   <TouchableOpacity
                     key={club.id}
@@ -3037,7 +3058,7 @@ export default function AddCombatSessionScreen() {
                       />
                     ) : (
                       <View style={[styles.clubCardBigIcon, { backgroundColor: accentCol }]}>
-                        <Swords size={22} color="#FFFFFF" />
+                        <Swords size={22} color={accentColText} />
                       </View>
                     )}
                     <Text style={[styles.clubCardBigName, { color: isSelected ? accentCol : colors.text }]} numberOfLines={1}>
@@ -3045,7 +3066,7 @@ export default function AddCombatSessionScreen() {
                     </Text>
                     {isSelected && (
                       <View style={[styles.clubCardBigCheck, { backgroundColor: accentCol }]}>
-                        <Check size={9} color="#fff" strokeWidth={3} />
+                        <Check size={9} color={accentColText} strokeWidth={3} />
                       </View>
                     )}
                   </TouchableOpacity>
@@ -3218,9 +3239,9 @@ export default function AddCombatSessionScreen() {
                   disabled={isLoadingLocation}
                 >
                   {isLoadingLocation ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={screenText} />
                   ) : (
-                    <Navigation size={15} color="#fff" />
+                    <Navigation size={15} color={screenText} />
                   )}
                 </TouchableOpacity>
 
@@ -3348,7 +3369,8 @@ export default function AddCombatSessionScreen() {
                   {selectedThemeTags.map(tag => {
                     // Retrouver la couleur de la catégorie du tag
                     const tagCat = getThemeCategoriesForSport(selectedSport).find(c => c.themes.includes(tag));
-                    const tagColor = tagCat?.color ?? screenBackground;
+                    const tagColor = tagCat?.color ?? (themeColor === 'blanc' ? colors.accent : screenBackground);
+                    const tagTextColor = tagCat?.color ? '#fff' : screenText;
                     return (
                       <TouchableOpacity
                         key={tag}
@@ -3364,8 +3386,8 @@ export default function AddCombatSessionScreen() {
                           borderRadius: 20, paddingHorizontal: 11, paddingVertical: 6,
                         }}
                       >
-                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{tag}</Text>
-                        <X size={10} color="rgba(255,255,255,0.85)" />
+                        <Text style={{ color: tagTextColor, fontSize: 12, fontWeight: '700' }}>{tag}</Text>
+                        <X size={10} color={tagCat?.color ? 'rgba(255,255,255,0.85)' : screenText} />
                       </TouchableOpacity>
                     );
                   })}
@@ -3689,7 +3711,7 @@ export default function AddCombatSessionScreen() {
                         onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); setCurrentRoundIndex(i => i + 1); }}
                         style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: screenBackground, borderRadius: 12, paddingVertical: 14 }}
                       >
-                        <Text style={{ fontSize: 14, fontWeight: '900', color: '#fff', letterSpacing: 0.5 }}>
+                        <Text style={{ fontSize: 14, fontWeight: '900', color: screenText, letterSpacing: 0.5 }}>
                           Round {idx + 2} →
                         </Text>
                       </TouchableOpacity>
@@ -3940,9 +3962,9 @@ export default function AddCombatSessionScreen() {
             disabled={saving}
           >
             {saving ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={screenText} />
             ) : (
-              <Text style={styles.saveBtnText}>
+              <Text style={[styles.saveBtnText, { color: screenText }]}>
                 {params.editId ? 'METTRE À JOUR' : 'ENREGISTRER LA SÉANCE'}
               </Text>
             )}

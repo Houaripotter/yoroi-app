@@ -31,7 +31,7 @@ import {
 import { Scale, Target, TrendingUp, TrendingDown, BarChart3, Activity, Droplet, Bone, Zap, Flame, Ruler, ClipboardList } from 'lucide-react-native';
 import { router } from 'expo-router';
 import Svg, { Path, Circle as SvgCircle, Line as SvgLine, Text as SvgText } from 'react-native-svg';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { logger } from '@/lib/security/logger';
 import { buildCacheKey, getCached, setCached, invalidateCachePrefix } from '@/lib/statsMemoryCache';
@@ -39,13 +39,21 @@ import { StatsEmptyState } from '../StatsEmptyState';
 import { StatsInsightBanner } from '../StatsInsightBanner';
 import { StreakBadge } from '../StreakBadge';
 import { generateInsights, type Insight } from '@/lib/statsInsights';
+import { SkeletonGrid } from '../SkeletonCard';
+
+// Parse date sûr : 'yyyy-MM-dd' en local (évite le jour précédent à l'ouest d'UTC)
+const toLocalDate = (v: any): Date =>
+  typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? parseISO(v) : new Date(v);
+
+// Dernière valeur d'un historique trié ancien → récent
+const lastVal = (arr: { value: number }[]): number => arr.length ? arr[arr.length - 1].value : 0;
 
 export const CorpsTabPage: React.FC = React.memo(() => {
   const { colors, screenBackground } = useTheme();
   const { t } = useI18n();
   const { handleScroll: onScrollContext } = useScrollContext();
   const dateLocale = fr;
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('tout');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -182,7 +190,8 @@ export const CorpsTabPage: React.FC = React.memo(() => {
       if (periodWeights?.length > 0) {
         // Un seul passage pour construire toutes les séries (au lieu de 7 filter/map séparés)
         const reversed = periodWeights.slice().reverse();
-        weightHistoryVal = reversed.map((w: any) => ({ date: w.date, value: w.weight }));
+        // Exclut les entrées composition seule (poids 0)
+        weightHistoryVal = reversed.filter((w: any) => w.weight > 0).map((w: any) => ({ date: w.date, value: w.weight }));
         const bodyFat: any[] = [], muscle: any[] = [], water: any[] = [];
         const bone: any[] = [], visceral: any[] = [], bmr: any[] = [], metabolicAge: any[] = [];
         for (const w of reversed as any[]) {
@@ -315,26 +324,41 @@ export const CorpsTabPage: React.FC = React.memo(() => {
   const getModalData = useCallback(() => {
     if (!selectedMetric) return [];
 
+    // Règle 3 : plus récent à GAUCHE → tri DESC | Règle 4 : deux lignes
+    const fmtLabel = (d: Date) => `${format(d, 'd MMM', { locale: dateLocale })}\n${format(d, 'yyyy')}`;
+
     if (selectedMetric.source === 'weight') {
-      const sorted = [...allWeightsData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      // Règle 3 : tri DESC
+      // Exclut les entrées composition seule (poids 0)
+      const sorted = allWeightsData.filter(w => w.weight > 0).sort((a, b) => toLocalDate(b.date).getTime() - toLocalDate(a.date).getTime());
       switch (selectedMetric.key) {
-        case 'weight': return sorted.map(w => ({ value: w.weight, label: format(new Date(w.date), 'd MMM', { locale: dateLocale }), date: w.date }));
-        case 'bmi': if (!heightCm) return []; const hM = heightCm / 100; return sorted.map(w => ({ value: w.weight / (hM * hM), label: format(new Date(w.date), 'd MMM', { locale: dateLocale }), date: w.date }));
-        case 'evolution': const first = sorted[0]?.weight || 0; return sorted.map(w => ({ value: first ? ((w.weight - first) / first) * 100 : 0, label: format(new Date(w.date), 'd MMM', { locale: dateLocale }), date: w.date }));
-        case 'average': return sorted.map((w, i) => { const start = Math.max(0, i - 6); const slice = sorted.slice(start, i + 1); const avg = slice.reduce((s, x) => s + x.weight, 0) / slice.length; return { value: avg, label: format(new Date(w.date), 'd MMM', { locale: dateLocale }), date: w.date }; });
-        case 'target': return sorted.map(w => ({ value: w.weight, label: format(new Date(w.date), 'd MMM', { locale: dateLocale }), date: w.date }));
+        case 'weight': return sorted.map(w => ({ value: w.weight, label: fmtLabel(toLocalDate(w.date)), date: w.date }));
+        case 'bmi': if (!heightCm) return []; const hM = heightCm / 100; return sorted.map(w => ({ value: w.weight / (hM * hM), label: fmtLabel(toLocalDate(w.date)), date: w.date }));
+        case 'evolution': {
+          // Référence = le plus ancien = dernier élément en DESC
+          const refWeight = sorted[sorted.length - 1]?.weight || 0;
+          return sorted.map(w => ({ value: refWeight ? ((w.weight - refWeight) / refWeight) * 100 : 0, label: fmtLabel(toLocalDate(w.date)), date: w.date }));
+        }
+        case 'average': {
+          // Moyenne mobile calculée sur ASC, puis inversée
+          const asc = [...sorted].reverse();
+          return asc.map((w, i) => { const start = Math.max(0, i - 6); const slice = asc.slice(start, i + 1); const avg = slice.reduce((s, x) => s + x.weight, 0) / slice.length; return { value: avg, label: fmtLabel(toLocalDate(w.date)), date: w.date }; }).reverse();
+        }
+        case 'target': return sorted.map(w => ({ value: w.weight, label: fmtLabel(toLocalDate(w.date)), date: w.date }));
         default: return [];
       }
     }
 
     if (selectedMetric.source === 'composition') {
-      const sorted = [...allWeightsData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      return sorted.filter(w => w[selectedMetric.key] > 0).map(w => ({ value: w[selectedMetric.key], label: format(new Date(w.date), 'd MMM', { locale: dateLocale }), date: w.date }));
+      // Règle 3 : tri DESC
+      const sorted = [...allWeightsData].sort((a, b) => toLocalDate(b.date).getTime() - toLocalDate(a.date).getTime());
+      return sorted.filter(w => w[selectedMetric.key] > 0).map(w => ({ value: w[selectedMetric.key], label: fmtLabel(toLocalDate(w.date)), date: w.date }));
     }
 
     if (selectedMetric.source === 'measurement') {
-      const sorted = [...allMeasurementsData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      return sorted.filter(m => m[selectedMetric.key] && m[selectedMetric.key] > 0).map(m => ({ value: m[selectedMetric.key], label: format(new Date(m.date), 'd MMM', { locale: dateLocale }), date: m.date }));
+      // Règle 3 : tri DESC
+      const sorted = [...allMeasurementsData].sort((a, b) => toLocalDate(b.date).getTime() - toLocalDate(a.date).getTime());
+      return sorted.filter(m => m[selectedMetric.key] && m[selectedMetric.key] > 0).map(m => ({ value: m[selectedMetric.key], label: fmtLabel(toLocalDate(m.date)), date: m.date }));
     }
 
     return [];
@@ -400,13 +424,18 @@ export const CorpsTabPage: React.FC = React.memo(() => {
 
   const currentWeight = weightData?.values?.[weightData.values.length - 1]?.value || 0;
   const bmiStatus = bmi ? getMetricStatus(bmi, translatedBMIRanges) : null;
-  const fatPercent = latestWeight?.fat_percent || 0;
-  const musclePercent = latestWeight?.muscle_percent || 0;
-  const waterPercent = latestWeight?.water_percent || 0;
-  const boneMass = latestWeight?.bone_mass || 0;
-  const visceralFat = latestWeight?.visceral_fat || 0;
-  const bmrValue = latestWeight?.bmr || 0;
-  const metabolicAge = latestWeight?.metabolic_age || 0;
+  // Repli sur la dernière valeur connue si la dernière pesée n'a pas le champ
+  const fatPercent = latestWeight?.fat_percent || lastVal(compositionHistory.bodyFat);
+  const musclePercent = latestWeight?.muscle_percent || lastVal(compositionHistory.muscle);
+  const waterPercent = latestWeight?.water_percent || lastVal(compositionHistory.water);
+  const boneMass = latestWeight?.bone_mass || lastVal(compositionAdvancedHistory.bone);
+  const visceralFat = latestWeight?.visceral_fat || lastVal(compositionAdvancedHistory.visceral);
+  const bmrValue = latestWeight?.bmr || lastVal(compositionAdvancedHistory.bmr);
+  const metabolicAge = latestWeight?.metabolic_age || lastVal(compositionAdvancedHistory.metabolicAge);
+  // Mensuration : dernière valeur non nulle (dernière mesure puis historique)
+  const mVal = (k: keyof typeof measurementHistory): number => latestMeasurement?.[k] || lastVal(measurementHistory[k]);
+  // Évolution : signe réel du changement (pas le trend à seuil 5%)
+  const evoUp = (weightData?.changePercent || 0) > 0;
 
   const getHealthRangeForModal = () => {
     if (!selectedMetric) return undefined;
@@ -447,6 +476,8 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         onPeriodChange={setSelectedPeriod}
       />
 
+      {loading && <SkeletonGrid count={4} cardHeight={160} />}
+      {!loading && (<>
       {/* Streak pesées (motivant pour suivi régulier) */}
       <StreakBadge
         items={allWeightsData}
@@ -538,7 +569,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
                       </View>
                     )}
                     <Text style={[styles.historyCardDate, { color: colors.textMuted }]}>
-                      {format(new Date(entry.date), 'd MMM yyyy', { locale: fr })}
+                      {format(toLocalDate(entry.date), 'd MMM yyyy', { locale: fr })}
                     </Text>
                     <Text style={[styles.historyCardWeight, { color: isFirst ? '#3B82F6' : colors.textPrimary }]}>
                       {entry.weight?.toFixed(1)} <Text style={styles.historyCardUnit}>kg</Text>
@@ -614,9 +645,9 @@ export const CorpsTabPage: React.FC = React.memo(() => {
             <TouchableOpacity
               style={styles.gridItem}
               activeOpacity={0.7}
-              onPress={() => setSelectedMetric({ key: 'evolution', label: t('statsPages.weight.evolution'), color: weightData?.trend === 'up' ? '#F59E0B' : '#10B981', unit: '%', icon: weightData?.trend === 'up' ? <TrendingUp size={18} color="#F59E0B" strokeWidth={2.5} /> : <TrendingDown size={18} color="#10B981" strokeWidth={2.5} />, source: 'weight' })}
+              onPress={() => setSelectedMetric({ key: 'evolution', label: t('statsPages.weight.evolution'), color: evoUp ? '#F59E0B' : '#10B981', unit: '%', icon: evoUp ? <TrendingUp size={18} color="#F59E0B" strokeWidth={2.5} /> : <TrendingDown size={18} color="#10B981" strokeWidth={2.5} />, source: 'weight' })}
             >
-              <MetricCard label={t('statsPages.weight.evolution')} value={Math.abs(weightData?.changePercent || 0)} unit="%" icon={weightData?.trend === 'up' ? <TrendingUp size={24} color="#F59E0B" strokeWidth={2.5} /> : <TrendingDown size={24} color="#10B981" strokeWidth={2.5} />} color={weightData?.trend === 'up' ? '#F59E0B' : '#10B981'} trend={weightData?.trend} sparklineData={evolutionSparkline} />
+              <MetricCard label={t('statsPages.weight.evolution')} value={Math.abs(weightData?.changePercent || 0)} unit="%" icon={evoUp ? <TrendingUp size={24} color="#F59E0B" strokeWidth={2.5} /> : <TrendingDown size={24} color="#10B981" strokeWidth={2.5} />} color={evoUp ? '#F59E0B' : '#10B981'} sparklineData={evolutionSparkline} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.gridItem}
@@ -643,6 +674,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
               color: '#F59E0B',
               history: compositionHistory.bodyFat,
               currentValue: fatPercent,
+              lowerIsBetter: true,
               onPress: () => setSelectedMetric({ key: 'fat_percent', label: t('statsPages.composition.bodyFat'), color: '#F59E0B', unit: '%', icon: <Flame size={18} color="#F59E0B" strokeWidth={2.5} />, source: 'composition' }),
             },
             {
@@ -679,6 +711,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
           leftUnit="kg"
           rightUnit="/20"
           onPressLeft={() => setSelectedMetric({ key: 'bone_mass', label: t('statsPages.composition.boneMass'), color: '#8B5CF6', unit: 'kg', icon: <Bone size={18} color="#8B5CF6" strokeWidth={2.5} />, source: 'composition' })}
+          rightLowerIsBetter
           onPressRight={() => setSelectedMetric({ key: 'visceral_fat', label: t('statsPages.composition.visceralFat'), color: '#EF4444', unit: '/20', icon: <Activity size={18} color="#EF4444" strokeWidth={2.5} />, source: 'composition' })}
         />
       </StatsSection>
@@ -699,6 +732,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
           leftUnit="kcal"
           rightUnit={t('statsPages.composition.years')}
           onPressLeft={() => setSelectedMetric({ key: 'bmr', label: t('statsPages.composition.bmr'), color: '#F97316', unit: 'kcal', icon: <Flame size={18} color="#F97316" strokeWidth={2.5} />, source: 'composition' })}
+          rightLowerIsBetter
           onPressRight={() => setSelectedMetric({ key: 'metabolic_age', label: t('statsPages.composition.metabolicAge'), color: '#6366F1', unit: t('statsPages.composition.years'), icon: <Zap size={18} color="#6366F1" strokeWidth={2.5} />, source: 'composition' })}
         />
       </StatsSection>
@@ -716,21 +750,21 @@ export const CorpsTabPage: React.FC = React.memo(() => {
               label: t('statsPages.measurements.neck'),
               color: '#F59E0B',
               history: measurementHistory.neck,
-              currentValue: latestMeasurement?.neck || 0,
+              currentValue: mVal('neck'),
               onPress: () => setSelectedMetric({ key: 'neck', label: t('statsPages.measurements.neck'), color: '#F59E0B', unit: 'cm', icon: <Ruler size={18} color="#F59E0B" strokeWidth={2.5} />, source: 'measurement' }),
             },
             {
               label: t('statsPages.measurements.shoulders'),
               color: '#10B981',
               history: measurementHistory.shoulders,
-              currentValue: latestMeasurement?.shoulders || 0,
+              currentValue: mVal('shoulders'),
               onPress: () => setSelectedMetric({ key: 'shoulders', label: t('statsPages.measurements.shoulders'), color: '#10B981', unit: 'cm', icon: <Ruler size={18} color="#10B981" strokeWidth={2.5} />, source: 'measurement' }),
             },
             {
               label: t('statsPages.measurements.chest'),
               color: '#3B82F6',
               history: measurementHistory.chest,
-              currentValue: latestMeasurement?.chest || 0,
+              currentValue: mVal('chest'),
               onPress: () => setSelectedMetric({ key: 'chest', label: t('statsPages.measurements.chest'), color: '#3B82F6', unit: 'cm', icon: <Ruler size={18} color="#3B82F6" strokeWidth={2.5} />, source: 'measurement' }),
             },
           ]}
@@ -747,21 +781,23 @@ export const CorpsTabPage: React.FC = React.memo(() => {
               label: 'Nombril',
               color: '#06B6D4',
               history: measurementHistory.navel,
-              currentValue: latestMeasurement?.navel || 0,
+              currentValue: mVal('navel'),
+              lowerIsBetter: true,
               onPress: () => setSelectedMetric({ key: 'navel', label: 'Nombril', color: '#06B6D4', unit: 'cm', icon: <Ruler size={18} color="#06B6D4" strokeWidth={2.5} />, source: 'measurement' }),
             },
             {
               label: t('statsPages.measurements.hips'),
               color: '#8B5CF6',
               history: measurementHistory.hips,
-              currentValue: latestMeasurement?.hips || 0,
+              currentValue: mVal('hips'),
               onPress: () => setSelectedMetric({ key: 'hips', label: t('statsPages.measurements.hips'), color: '#8B5CF6', unit: 'cm', icon: <Ruler size={18} color="#8B5CF6" strokeWidth={2.5} />, source: 'measurement' }),
             },
             {
               label: t('statsPages.measurements.waist'),
               color: '#EF4444',
               history: measurementHistory.waist,
-              currentValue: latestMeasurement?.waist || 0,
+              currentValue: mVal('waist'),
+              lowerIsBetter: true,
               onPress: () => setSelectedMetric({ key: 'waist', label: t('statsPages.measurements.waist'), color: '#EF4444', unit: 'cm', icon: <Ruler size={18} color="#EF4444" strokeWidth={2.5} />, source: 'measurement' }),
             },
           ]}
@@ -778,8 +814,8 @@ export const CorpsTabPage: React.FC = React.memo(() => {
           rightColor="#3B82F6"
           leftHistory={measurementHistory.left_arm}
           rightHistory={measurementHistory.right_arm}
-          leftValue={latestMeasurement?.left_arm || 0}
-          rightValue={latestMeasurement?.right_arm || 0}
+          leftValue={mVal('left_arm')}
+          rightValue={mVal('right_arm')}
           unit="cm"
           onPressLeft={() => setSelectedMetric({ key: 'left_arm', label: t('statsPages.measurements.leftArm'), color: '#EF4444', unit: 'cm', icon: <Ruler size={18} color="#EF4444" strokeWidth={2.5} />, source: 'measurement' })}
           onPressRight={() => setSelectedMetric({ key: 'right_arm', label: t('statsPages.measurements.rightArm'), color: '#3B82F6', unit: 'cm', icon: <Ruler size={18} color="#3B82F6" strokeWidth={2.5} />, source: 'measurement' })}
@@ -796,8 +832,8 @@ export const CorpsTabPage: React.FC = React.memo(() => {
           rightColor="#8B5CF6"
           leftHistory={measurementHistory.left_thigh}
           rightHistory={measurementHistory.right_thigh}
-          leftValue={latestMeasurement?.left_thigh || 0}
-          rightValue={latestMeasurement?.right_thigh || 0}
+          leftValue={mVal('left_thigh')}
+          rightValue={mVal('right_thigh')}
           unit="cm"
           onPressLeft={() => setSelectedMetric({ key: 'left_thigh', label: t('statsPages.measurements.leftThigh'), color: '#06B6D4', unit: 'cm', icon: <Ruler size={18} color="#06B6D4" strokeWidth={2.5} />, source: 'measurement' })}
           onPressRight={() => setSelectedMetric({ key: 'right_thigh', label: t('statsPages.measurements.rightThigh'), color: '#8B5CF6', unit: 'cm', icon: <Ruler size={18} color="#8B5CF6" strokeWidth={2.5} />, source: 'measurement' })}
@@ -814,8 +850,8 @@ export const CorpsTabPage: React.FC = React.memo(() => {
           rightColor="#10B981"
           leftHistory={measurementHistory.left_calf}
           rightHistory={measurementHistory.right_calf}
-          leftValue={latestMeasurement?.left_calf || 0}
-          rightValue={latestMeasurement?.right_calf || 0}
+          leftValue={mVal('left_calf')}
+          rightValue={mVal('right_calf')}
           unit="cm"
           onPressLeft={() => setSelectedMetric({ key: 'left_calf', label: t('statsPages.measurements.leftCalf'), color: '#F59E0B', unit: 'cm', icon: <Ruler size={18} color="#F59E0B" strokeWidth={2.5} />, source: 'measurement' })}
           onPressRight={() => setSelectedMetric({ key: 'right_calf', label: t('statsPages.measurements.rightCalf'), color: '#10B981', unit: 'cm', icon: <Ruler size={18} color="#10B981" strokeWidth={2.5} />, source: 'measurement' })}
@@ -839,6 +875,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
           healthRange={getHealthRangeForModal()}
         />
       )}
+      </>)}
     </ScrollView>
   );
 });

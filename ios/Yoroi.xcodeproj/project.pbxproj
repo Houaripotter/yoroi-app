@@ -41,6 +41,7 @@
 		FF32897EE0BEC2AECA52ABBF /* YoroiWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0F210D88915A040CE036D6 /* YoroiWatchApp.swift */; };
 		MULTIPEER01BUILDF00001 /* MultipeerBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = MULTIPEER01FILEREF00001 /* MultipeerBridge.swift */; };
 		MULTIPEER02BUILDF00001 /* MultipeerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = MULTIPEER02FILEREF00001 /* MultipeerBridge.m */; };
+		SCENEDELEG01BUILDF000001 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = SCENEDELEG01FILEREF000001 /* SceneDelegate.swift */; };
 		TIMERALRMVW1BUILDF000001 /* TimerAlarmNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIMERALRMVW1FILEREF000001 /* TimerAlarmNotificationView.swift */; };
 		TORCH001OBJBUILDF000001 /* TorchModule.m in Sources */ = {isa = PBXBuildFile; fileRef = TORCH001OBJFILEREF000001 /* TorchModule.m */; };
 		TORCH001SWFBUILDF000001 /* TorchModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = TORCH001SWFFILEREF00001 /* TorchModule.swift */; };
@@ -122,6 +123,7 @@
 		MULTIPEER01FILEREF00001 /* MultipeerBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MultipeerBridge.swift; sourceTree = "<group>"; };
 		MULTIPEER02FILEREF00001 /* MultipeerBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MultipeerBridge.m; sourceTree = "<group>"; };
 		RCTPKGCNSTUB0FILEREF0001 /* RCTPackagerConnectionStub.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = RCTPackagerConnectionStub.m; sourceTree = SOURCE_ROOT; };
+		SCENEDELEG01FILEREF000001 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SceneDelegate.swift; path = Yoroi/SceneDelegate.swift; sourceTree = "<group>"; };
 		TIMERALRMVW1FILEREF000001 /* TimerAlarmNotificationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerAlarmNotificationView.swift; sourceTree = "<group>"; };
 		TORCH001OBJFILEREF000001 /* TorchModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = TorchModule.m; path = Yoroi/TorchModule.m; sourceTree = "<group>"; };
 		TORCH001SWFFILEREF00001 /* TorchModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TorchModule.swift; path = Yoroi/TorchModule.swift; sourceTree = "<group>"; };
@@ -174,6 +176,7 @@
 			isa = PBXGroup;
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
+				SCENEDELEG01FILEREF000001 /* SceneDelegate.swift */,
 				F11748442D0722820044C1D9 /* Yoroi-Bridging-Header.h */,
 				TORCH001SWFFILEREF00001 /* TorchModule.swift */,
 				TORCH001OBJFILEREF000001 /* TorchModule.m */,
@@ -508,10 +511,12 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoMediaLibrary/ExpoMediaLibrary_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoNotifications/ExpoNotifications_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSystemUI/ExpoSystemUI_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/PurchasesHybridCommon/PurchasesHybridCommon.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RevenueCat/RevenueCat.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
@@ -529,10 +534,12 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoMediaLibrary_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoNotifications_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoSystemUI_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/PurchasesHybridCommon.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RevenueCat.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",
@@ -620,6 +627,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
+				SCENEDELEG01BUILDF000001 /* SceneDelegate.swift in Sources */,
 				730EA67E87BC7BBA1E7CC115 /* ExpoModulesProvider.swift in Sources */,
 				A1B2C3D400000001 /* TimerAttributes.swift in Sources */,
 				A1B2C3D400000002 /* YoroiLiveActivityManager.swift in Sources */,

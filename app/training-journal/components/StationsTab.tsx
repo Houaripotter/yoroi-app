@@ -75,7 +75,7 @@ function matchesStation(name: string, keywords: string[]): boolean {
 }
 
 function formatSec(seconds: number): string {
-  if (!isFinite(seconds) || seconds <= 0) return '—';
+  if (!isFinite(seconds) || seconds <= 0) return ',';
   const m = Math.floor(seconds / 60);
   const s = Math.round(seconds % 60);
   return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}s`;
@@ -231,7 +231,7 @@ export default function StationsTab() {
                   </Text>
                 </View>
               ) : (
-                <Text style={{ fontSize: 12, color: colors.textMuted, fontStyle: 'italic' }}>—</Text>
+                <Text style={{ fontSize: 12, color: colors.textMuted, fontStyle: 'italic' }}>,</Text>
               )}
             </View>
           ))}

@@ -109,7 +109,7 @@ export const THEMES_JJB: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Soumissions — bras/épaule',
+    label: 'Soumissions, bras/épaule',
     color: '#EF4444',
     themes: [
       'Armbar (juji gatame)', 'Armbar depuis la garde', 'Armbar depuis le mount',
@@ -120,7 +120,7 @@ export const THEMES_JJB: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Soumissions — cou',
+    label: 'Soumissions, cou',
     color: '#DC2626',
     themes: [
       'Triangle', 'Triangle depuis la garde', 'Triangle depuis le mount', 'Triangle inversé',
@@ -142,7 +142,7 @@ export const THEMES_JJB: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Soumissions — jambes',
+    label: 'Soumissions, jambes',
     color: '#B91C1C',
     themes: [
       'Clé de cheville', 'Heel hook', 'Heel hook inversé',
@@ -273,7 +273,7 @@ export const THEMES_JUDO: ThemeCategory[] = [
 // ─────────────────────────────────────────────────────────────────────
 export const THEMES_LUTTE: ThemeCategory[] = [
   {
-    label: 'Debout — attaques',
+    label: 'Debout, attaques',
     color: '#3B82F6',
     themes: [
       'Single leg', 'Double leg', 'High crotch', 'Ankle pick', 'Low single',
@@ -850,7 +850,7 @@ export const THEMES_BOXE_FRANCAISE: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Pieds — techniques de base',
+    label: 'Pieds, techniques de base',
     color: '#8B5CF6',
     themes: [
       'Fouetté bas', 'Fouetté médian', 'Fouetté figure',
@@ -859,7 +859,7 @@ export const THEMES_BOXE_FRANCAISE: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Pieds — techniques avancées',
+    label: 'Pieds, techniques avancées',
     color: '#F97316',
     themes: [
       'Double fouetté', 'Fouetté revers', 'Chassé retourné',

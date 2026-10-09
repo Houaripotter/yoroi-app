@@ -28,14 +28,15 @@ export const ScreenWrapper: React.FC<ScreenWrapperProps> = memo(({
   noContainer = false,
   containerStyle,
 }) => {
-  const { isDark, screenBackground, containerBackground } = useTheme();
+  const { isDark, screenBackground, containerBackground, screenText } = useTheme();
   const insets = useSafeAreaInsets();
 
   // Toujours utiliser le système 2 couches
   return (
     <View style={[styles.layer1, { backgroundColor: screenBackground }]}>
       <StatusBar
-        barStyle="light-content"
+        // Contenu clair seulement si fond sombre
+        barStyle={isDark || screenText === '#FFFFFF' ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
         translucent
       />

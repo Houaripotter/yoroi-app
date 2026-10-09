@@ -93,7 +93,7 @@ const trainingsWeekly = (trainings: TrainingLike[]): Insight | null => {
   if (last7 === 0) {
     return {
       id: 'trainings-zero',
-      text: `Aucune séance cette semaine — reprends doucement`,
+      text: `Aucune séance cette semaine, reprends doucement`,
       tone: 'warning',
       icon: 'alert-circle',
     };

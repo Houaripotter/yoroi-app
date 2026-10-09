@@ -10,6 +10,7 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -109,6 +110,15 @@ export default function InjuryDetailScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showReturnPlan, setShowReturnPlan] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  // Retour sûr (modal sans geste)
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/infirmary');
+  };
+  // Prévenir l'infirmerie
+  const notifyChanged = () => DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
 
   const loadData = async () => {
     // Validation du paramètre
@@ -117,8 +127,9 @@ export default function InjuryDetailScreen() {
         title: 'Erreur',
         message: 'Blessure non trouvée',
         type: 'error',
-        buttons: [{ text: 'OK', onPress: () => router.back() }],
+        buttons: [{ text: 'OK', onPress: goBack }],
       });
+      setLoaded(true);
       return;
     }
 
@@ -157,6 +168,8 @@ export default function InjuryDetailScreen() {
       }
     } catch (error) {
       logger.error('[InjuryDetail] Erreur:', error);
+    } finally {
+      setLoaded(true);
     }
   };
 
@@ -170,6 +183,7 @@ export default function InjuryDetailScreen() {
       await updateInjuryEva(injuryId, newEva, evaNote || undefined);
       notificationAsync(NotificationFeedbackType.Success);
       setEvaNote('');
+      notifyChanged();
       loadData();
     } catch (error) {
       showPopup({
@@ -197,7 +211,8 @@ export default function InjuryDetailScreen() {
             try {
               await markInjuryAsHealed(injuryId);
               notificationAsync(NotificationFeedbackType.Success);
-              router.back();
+              notifyChanged();
+              goBack();
             } catch (error) {
               showPopup({
                 title: 'Erreur',
@@ -231,7 +246,8 @@ export default function InjuryDetailScreen() {
             try {
               await deleteInjury(injuryId);
               notificationAsync(NotificationFeedbackType.Success);
-              router.back();
+              notifyChanged();
+              goBack();
             } catch (error) {
               showPopup({
                 title: 'Erreur',
@@ -263,6 +279,7 @@ export default function InjuryDetailScreen() {
                 treatment_type: treatmentType,
               });
               notificationAsync(NotificationFeedbackType.Success);
+              notifyChanged();
               loadData();
             } catch (error) {
               showPopup({
@@ -281,10 +298,18 @@ export default function InjuryDetailScreen() {
     return (
       <ScreenWrapper>
         <View style={[styles.container, { backgroundColor: colors.background }]}>
+          <TouchableOpacity
+            style={[styles.backButton, { backgroundColor: colors.backgroundCard, margin: SPACING.lg }]}
+            onPress={goBack}
+            activeOpacity={0.7}
+          >
+            <ArrowLeft size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
           <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-            Chargement...
+            {loaded ? 'Blessure introuvable' : 'Chargement...'}
           </Text>
         </View>
+        <PopupComponent />
       </ScreenWrapper>
     );
   }
@@ -322,7 +347,7 @@ export default function InjuryDetailScreen() {
             style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
               impactAsync(ImpactFeedbackStyle.Light);
-              router.back();
+              goBack();
             }}
             activeOpacity={0.7}
           >
@@ -338,7 +363,7 @@ export default function InjuryDetailScreen() {
                 Détail blessure
               </Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                Depuis {daysSince} jours
+                Depuis {daysSince} jour{daysSince > 1 ? 's' : ''}
               </Text>
             </View>
           </View>
@@ -801,6 +826,7 @@ export default function InjuryDetailScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

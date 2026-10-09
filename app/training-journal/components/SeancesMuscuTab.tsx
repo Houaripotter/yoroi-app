@@ -209,9 +209,9 @@ export default function SeancesMuscuTab() {
                     </Text>
                   )}
                   <View style={{ flexDirection: 'row', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
-                    {s.duration_minutes && <Metric icon={<Clock size={10} color="#8B5CF6" />} label={formatDuration(s.duration_minutes)} color="#8B5CF6" />}
-                    {s.intensity && <Metric icon={<Flame size={10} color="#DC2626" />} label={`${s.intensity}/10`} color="#DC2626" />}
-                    {s.calories && <Metric icon={<TrendingUp size={10} color="#F59E0B" />} label={`${s.calories} kcal`} color="#F59E0B" />}
+                    {!!s.duration_minutes && <Metric icon={<Clock size={10} color="#8B5CF6" />} label={formatDuration(s.duration_minutes)} color="#8B5CF6" />}
+                    {!!s.intensity && <Metric icon={<Flame size={10} color="#DC2626" />} label={`${s.intensity}/10`} color="#DC2626" />}
+                    {!!s.calories && <Metric icon={<TrendingUp size={10} color="#F59E0B" />} label={`${s.calories} kcal`} color="#F59E0B" />}
                   </View>
                 </View>
               </View>

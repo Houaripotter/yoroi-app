@@ -234,7 +234,7 @@ export default function CitationsScreen() {
                     </View>
                     {isSelected && (
                       <View style={[styles.activeIndicator, { backgroundColor: colors.accent }]}>
-                        <Check size={12} color="#fff" strokeWidth={3} />
+                        <Check size={12} color={colors.textOnAccent} strokeWidth={3} />
                       </View>
                     )}
                   </View>

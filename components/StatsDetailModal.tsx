@@ -27,6 +27,7 @@ interface StatsDetailModalProps {
   color: string;
   unit: string;
   icon?: React.ReactNode;
+  formatValue?: (value: number) => string;
 }
 
 type Period = '7j' | '30j' | '90j' | 'all';
@@ -40,6 +41,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
   color,
   unit,
   icon,
+  formatValue,
 }) => {
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
   const IS_SMALL_SCREEN = SCREEN_WIDTH < 375 || SCREEN_HEIGHT < 700;
@@ -198,25 +200,25 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
               <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
                 <Text style={[styles.statCardLabel, { color: colors.textMuted }]}>Actuel</Text>
                 <Text style={[styles.statCardValue, { color }]}>
-                  {currentValue.toFixed(1)} {unit}
+                  {formatValue ? formatValue(currentValue) : `${currentValue.toFixed(1)} ${unit}`}
                 </Text>
               </View>
               <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
                 <Text style={[styles.statCardLabel, { color: colors.textMuted }]}>Minimum</Text>
                 <Text style={[styles.statCardValue, { color: '#22C55E' }]}>
-                  {minValue.toFixed(1)} {unit}
+                  {formatValue ? formatValue(minValue) : `${minValue.toFixed(1)} ${unit}`}
                 </Text>
               </View>
               <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
                 <Text style={[styles.statCardLabel, { color: colors.textMuted }]}>Maximum</Text>
                 <Text style={[styles.statCardValue, { color: '#EF4444' }]}>
-                  {maxValue.toFixed(1)} {unit}
+                  {formatValue ? formatValue(maxValue) : `${maxValue.toFixed(1)} ${unit}`}
                 </Text>
               </View>
               <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
                 <Text style={[styles.statCardLabel, { color: colors.textMuted }]}>Moyenne</Text>
                 <Text style={[styles.statCardValue, { color: colors.textPrimary }]}>
-                  {avgValue.toFixed(1)} {unit}
+                  {formatValue ? formatValue(avgValue) : `${avgValue.toFixed(1)} ${unit}`}
                 </Text>
               </View>
             </View>
@@ -228,7 +230,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
               <Text style={[styles.evolutionText, {
                 color: change >= 0 ? '#EF4444' : '#22C55E',
               }]}>
-                {change >= 0 ? '+' : ''}{change.toFixed(1)} {unit} ({changePercent >= 0 ? '+' : ''}{changePercent.toFixed(1)}%)
+                {formatValue ? `${change >= 0 ? '+' : ''}${change.toFixed(1)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(1)}%)` : `${change >= 0 ? '+' : ''}${change.toFixed(1)} ${unit} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(1)}%)`}
               </Text>
             </View>
 
@@ -310,7 +312,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                   {chartData.map((point, index) => (
                     <View key={index} style={[styles.valueLabel, { left: point.x - 25, top: point.y - 32 }]}>
                       <Text style={[styles.valueLabelText, { color, backgroundColor: 'rgba(255,255,255,0.95)' }]}>
-                        {point.value.toFixed(1)}
+                        {formatValue ? formatValue(point.value) : point.value.toFixed(1)}
                       </Text>
                     </View>
                   ))}
@@ -319,7 +321,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                   <View style={styles.xLabelsContainer}>
                     {chartData.map((point, index) => (
                       <View key={index} style={[styles.xLabelWrapper, { left: point.x - 30 }]}>
-                        <Text style={[styles.xLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]} numberOfLines={1}>
+                        <Text style={[styles.xLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]} numberOfLines={2}>
                           {point.label || point.date || index + 1}
                         </Text>
                       </View>
@@ -349,7 +351,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                     {entry.label || entry.date || `Point ${filteredData.length - index}`}
                   </Text>
                   <Text style={[styles.valueListValue, { color: colors.textPrimary }]}>
-                    {entry.value.toFixed(1)} {unit}
+                    {formatValue ? formatValue(entry.value) : `${entry.value.toFixed(1)} ${unit}`}
                   </Text>
                 </View>
               ))}

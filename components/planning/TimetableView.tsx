@@ -37,7 +37,7 @@ export const TimetableView: React.FC<TimetableViewProps> = memo(({
   refreshTrigger,
   weeklySlots,
 }) => {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, themeColor } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { weekSchedule, loading, refresh } = useWeekSchedule();
 
@@ -331,12 +331,14 @@ export const TimetableView: React.FC<TimetableViewProps> = memo(({
                               <View style={styles.sessionLogosContainer}>
                                 {sessions.slice(0, 4).map((session, idx) => {
                                   const logoSource = session.clubLogo ? getClubLogoSource(session.clubLogo) : null;
+                                  const logoBorderColor = themeColor === 'blanc' ? colors.background : '#FFFFFF';
                                   return logoSource ? (
                                     <Image
                                       key={idx}
                                       source={logoSource}
                                       style={[
                                         styles.sessionLogoOnly,
+                                        { borderColor: logoBorderColor },
                                         idx > 0 && { marginTop: -12 }
                                       ]}
                                       resizeMode="cover"
@@ -346,7 +348,7 @@ export const TimetableView: React.FC<TimetableViewProps> = memo(({
                                       key={idx}
                                       style={[
                                         styles.sessionDotOnly,
-                                        { backgroundColor: session.clubColor },
+                                        { backgroundColor: session.clubColor, borderColor: logoBorderColor },
                                         idx > 0 && { marginTop: -12 }
                                       ]}
                                     />
@@ -790,7 +792,7 @@ export const TimetableView: React.FC<TimetableViewProps> = memo(({
                   }
                 }}
               >
-                <Plus size={24} color="#FFFFFF" />
+                <Plus size={24} color={colors.textOnAccent} />
                 <Text style={[styles.addMenuButtonText, { color: colors.textOnAccent }]}>Ajouter entraînement</Text>
               </TouchableOpacity>
 
@@ -804,8 +806,9 @@ export const TimetableView: React.FC<TimetableViewProps> = memo(({
                   }
                 }}
               >
-                <Moon size={24} color={colors.textPrimary} fill={colors.textPrimary} />
-                <Text style={[styles.addMenuButtonText, { color: colors.textPrimary }]}>Marquer repos</Text>
+                {/* Fond or fixe : texte noir */}
+                <Moon size={24} color="#000" fill="#000" />
+                <Text style={[styles.addMenuButtonText, { color: '#000' }]}>Marquer repos</Text>
               </TouchableOpacity>
             </View>
 

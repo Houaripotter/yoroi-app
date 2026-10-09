@@ -33,6 +33,10 @@ import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { themeColors, getTheme, ThemeColor } from '@/constants/themes';
 
 // VERSIONING
+// Date locale AAAA-MM-JJ, identique à l'écran Hydratation et à l'accueil (toISOString = date UTC)
+const localISODate = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 const APP_VERSION = '2.0.0';
 const MIN_WATCH_VERSION = '1.5.0';
 const DATA_FORMAT_VERSION = '2.0';
@@ -373,6 +377,18 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
 
       logSync('retrieveWatchData - Context reçu', { keys: Object.keys(context) });
 
+      // La Watch renvoie toujours le même dernier contexte tant qu'elle n'en envoie pas un nouveau :
+      // sans ce contrôle, poids et séances étaient réimportés à chaque ouverture
+      let contextFp: string | null = null;
+      try {
+        contextFp = JSON.stringify(context);
+        const lastFp = await AsyncStorage.getItem('@yoroi_watch_last_ctx_fp');
+        if (contextFp === lastFp) {
+          logSync('retrieveWatchData - Contexte déjà traité');
+          return;
+        }
+      } catch { /* non bloquant */ }
+
       // Traiter workouts en attente
       if (context.pendingWorkouts && Array.isArray(context.pendingWorkouts)) {
         for (const workout of context.pendingWorkouts) {
@@ -388,6 +404,11 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
 
       if (context.hydration) {
         await handleWatchMessage({ hydrationUpdate: context.hydration });
+      }
+
+      // Marquer le contexte comme traité seulement APRÈS un traitement réussi
+      if (contextFp) {
+        try { await AsyncStorage.setItem('@yoroi_watch_last_ctx_fp', contextFp); } catch { /* non bloquant */ }
       }
 
       // Vérifier version Watch
@@ -472,7 +493,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           if (weight > 0 && weight <= 300) {
             await addWeight({
               weight,
-              date: new Date().toISOString().split('T')[0],
+              date: localISODate(new Date()),
               source: 'apple',
             });
             await secureStorage.setItem('@yoroi_current_weight', String(weight));
@@ -530,7 +551,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
             try {
               // 1. Lire le total actuel depuis TOUTES les sources et prendre le MAX
               // (le téléphone sauvegarde dans AsyncStorage, pas dans secureStorage)
-              const todayISO = new Date().toISOString().split('T')[0];
+              const todayISO = localISODate(new Date());
               const [currentSecureStr, currentTodayMlStr, currentHydrationStr] = await Promise.all([
                 secureStorage.getItem('@yoroi_water_intake'),
                 AsyncStorage.getItem(`@yoroi_hydration_today_${todayISO}`),
@@ -626,7 +647,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           if (weight > 0 && weight <= 300) {
             await addWeight({
               weight,
-              date: new Date().toISOString().split('T')[0],
+              date: localISODate(new Date()),
               source: 'apple',
             });
             await secureStorage.setItem('@yoroi_current_weight', String(weight));
@@ -711,7 +732,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       logSync('syncProfileToWatch - Début');
 
       const profile = await getProfile();
-      const todayISOProfile = new Date().toISOString().split('T')[0];
+      const todayISOProfile = localISODate(new Date());
       const [avatarConfig, level, rank, waterIntakeSecureP, waterIntakeTodayP, profileThemeColor, profileThemeMode] = await Promise.all([
         AsyncStorage.getItem('@yoroi_avatar_config'),
         AsyncStorage.getItem('@yoroi_level'),
@@ -1057,7 +1078,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       // 1. Récupérer données
       const { getSleepStats, getSleepGoal, getTodaySleep } = require('@/lib/sleepService');
       const { getWeights, getTrainings } = require('@/lib/database');
-      const todayISOForHydration = new Date().toISOString().split('T')[0];
+      const todayISOForHydration = localISODate(new Date());
       const [profile, weight, waterIntakeSecure, waterIntakeToday, streak, avatarConfig, level, rank, benchmarksList, savedThemeColor, savedStepsGoal, savedHydrationGoal, sleepStatsData, sleepGoalData, todaySleep, savedThemeMode, savedSettings, savedTimerPreset, weightEntries, recentTrainings] = await Promise.all([
         getProfile(),
         secureStorage.getItem('@yoroi_current_weight'),
@@ -1211,14 +1232,16 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       } catch { /* non bloquant */ }
 
       // Build hydration weekly data for Watch (last 7 days) — batch fetch
+      // L'objectif est stocké en litres ("2.5") : parseInt donnait 2 ml
+      const _hydGoalRaw = savedHydrationGoal ? parseFloat(savedHydrationGoal) : 2.5;
+      const hydGoalMl = !Number.isFinite(_hydGoalRaw) ? 2500 : (_hydGoalRaw < 20 ? Math.round(_hydGoalRaw * 1000) : Math.round(_hydGoalRaw));
       let hydrationWeeklyData: { day: string; amount: number; goal: number }[] = [];
       try {
-        const hydGoalMl = savedHydrationGoal ? parseInt(savedHydrationGoal) : 2500;
         const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
         const days = Array.from({ length: 7 }, (_, i) => {
           const d = new Date();
           d.setDate(d.getDate() - (6 - i));
-          return { iso: d.toISOString().split('T')[0], dayName: dayNames[d.getDay()] };
+          return { iso: localISODate(d), dayName: dayNames[d.getDay()] };
         });
         const keys = days.map(({ iso }) => `@yoroi_hydration_today_${iso}`);
         const results = await AsyncStorage.multiGet(keys);
@@ -1251,7 +1274,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         benchmarks: watchBenchmarks.length > 0 ? watchBenchmarks : undefined,
         // Objectifs (read from saved values)
         stepsGoal: savedStepsGoal ? parseInt(savedStepsGoal) : 10000,
-        hydrationGoal: savedHydrationGoal ? parseInt(savedHydrationGoal) : 2500,
+        hydrationGoal: hydGoalMl,
         caloriesGoal: 500,
         distanceGoal: 5.0,
         // Préférences
@@ -1364,7 +1387,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       // Envoyer la bibliothèque d'exercices une fois par jour (background, pas de limite de taille)
       try {
         const exSyncKey = '@yoroi_exercises_sent_to_watch_date';
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = localISODate(new Date());
         const lastSent = await AsyncStorage.getItem(exSyncKey);
         if (lastSent !== todayStr) {
           const { EXERCISE_LIBRARY } = require('@/constants/exerciseLibrary');

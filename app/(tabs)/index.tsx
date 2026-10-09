@@ -135,7 +135,10 @@ const HOME_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, isDark, screenBackground, screenText, screenTextMuted } = useTheme();
+  const { colors, isDark, themeColor, screenBackground, screenText, screenTextMuted } = useTheme();
+  // Blanc : fond blanc → texte forcé en foncé (pas blanc sur blanc)
+  const headerText = themeColor === 'blanc' ? colors.textPrimary : screenText;
+  const headerTextMuted = themeColor === 'blanc' ? colors.textMuted : screenTextMuted;
   const { t } = useI18n();
   const params = useLocalSearchParams();
 
@@ -200,6 +203,28 @@ export default function HomeScreen() {
       if (timer) clearTimeout(timer);
     };
   }, [params.showRating]);
+
+  // Affichage automatique "Quoi de neuf ?" au premier lancement d'une nouvelle version
+  useEffect(() => {
+    const CURRENT_VERSION = '2.4.2';
+    const WHATS_NEW_KEY = '@yoroi_whats_new_seen_v' + CURRENT_VERSION;
+    let whatsNewTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const checkWhatsNew = async () => {
+      const seen = await AsyncStorage.getItem(WHATS_NEW_KEY);
+      if (!seen) {
+        // Attendre 1.5s après le chargement pour afficher
+        whatsNewTimer = setTimeout(() => {
+          DeviceEventEmitter.emit('SHOW_WHATS_NEW');
+        }, 1500);
+        await AsyncStorage.setItem(WHATS_NEW_KEY, 'true');
+      }
+    };
+    checkWhatsNew();
+    return () => {
+      if (whatsNewTimer !== null) clearTimeout(whatsNewTimer);
+    };
+  }, []);
 
   // Indicateur Watch : écouter les changements de statut en temps réel
   const [watchAvailable, setWatchAvailable] = useState(false);
@@ -1290,15 +1315,19 @@ export default function HomeScreen() {
               <TouchableOpacity
                 onPress={() => router.push('/settings')}
                 activeOpacity={0.8}
-                style={styles.headerIconBtn}
+                style={[styles.headerIconBtn, { backgroundColor: colors.backgroundCard }]}
+                accessibilityLabel="Réglages"
+                accessibilityRole="button"
               >
-                <Settings size={20} color="#1A1A1E" strokeWidth={2} />
+                <Settings size={20} color={colors.textPrimary} strokeWidth={2} />
               </TouchableOpacity>
 
               {/* Photo de profil (Gauche) - Design élégant */}
               <TouchableOpacity
                 onPress={handleNavigateProfile}
                 activeOpacity={0.8}
+                accessibilityLabel="Photo de profil"
+                accessibilityRole="button"
               >
                 <View style={[styles.profilePhotoWrapper, { borderColor: colors.accent }]}>
                   <View style={[styles.profilePhotoContainer, { backgroundColor: colors.backgroundCard }]}>
@@ -1329,20 +1358,20 @@ export default function HomeScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.greetingRow}>
-                  <Text style={[styles.greeting, { color: screenTextMuted }]}>{getGreeting()}</Text>
+                  <Text style={[styles.greeting, { color: headerTextMuted }]}>{getGreeting()}</Text>
                 </View>
                 <View style={styles.userNameRow}>
-                  <Text style={[styles.userName, { color: screenText }]}>{profile?.name || t('index.defaultName')}</Text>
+                  <Text style={[styles.userName, { color: headerText }]}>{profile?.name || t('index.defaultName')}</Text>
                   <ViewModeSwitch mode={mode} onToggle={toggleMode} />
                 </View>
               </TouchableOpacity>
 
               {/* Cloche notifications (popup) */}
-              <View style={styles.headerIconBtn}>
+              <View style={[styles.headerIconBtn, { backgroundColor: colors.backgroundCard }]}>
                 <NotificationBellPopup
                   unreadCount={unreadNotifCount}
                   onCountChange={setUnreadNotifCount}
-                  variant="dark"
+                  variant={isDark ? "dark" : "light"}
                 />
               </View>
 
@@ -1351,6 +1380,8 @@ export default function HomeScreen() {
                 style={styles.avatarWrapper}
                 onPress={handleNavigateAvatarSelection}
                 activeOpacity={0.8}
+                accessibilityLabel="Personnaliser l'avatar"
+                accessibilityRole="button"
               >
                 <View style={[styles.avatarFrame, {
                   backgroundColor: colors.backgroundCard,
@@ -1385,14 +1416,14 @@ export default function HomeScreen() {
       case 'stats_compact':
         return (
           <View style={styles.statsRowCompact} key={sectionId}>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateActivityDetail}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]} onPress={handleNavigateActivityDetail} accessibilityLabel="Voir l'activité" accessibilityRole="button">
               <MaterialCommunityIcons name="walk" size={14} color="#3B82F6" />
               <View style={styles.statTextColumn}>
                 <AnimatedCounter value={steps} style={[styles.statValueCompactHorizontal, { color: '#3B82F6' }]} duration={800} />
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>{t('index.steps')}</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateGamification}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]} onPress={handleNavigateGamification} accessibilityLabel="Voir la série d'entraînement" accessibilityRole="button">
               <Animated.View style={{ transform: [{ scale: streakFlameAnim }] }}>
                 <Flame size={14} color="#F97316" />
               </Animated.View>
@@ -1401,14 +1432,14 @@ export default function HomeScreen() {
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>{t('index.days')}</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateGamification}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]} onPress={handleNavigateGamification} accessibilityLabel="Voir le niveau" accessibilityRole="button">
               <Zap size={14} color={isDark ? colors.accent : '#000000'} />
               <View style={styles.statTextColumn}>
                 <AnimatedCounter value={rankLevel} style={[styles.statValueCompactHorizontal, { color: isDark ? colors.accent : '#000000' }]} duration={800} />
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>{t('index.level')}</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]} onPress={handleNavigateGamification}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]} onPress={handleNavigateGamification} accessibilityLabel="Voir le rang" accessibilityRole="button">
               <Trophy size={14} color={displayRankColor} />
               <View style={styles.statTextColumn}>
                 <AnimatedRank rank={displayRankName?.split(' ')[0] ?? ''} color={displayRankColor} style={styles.statValueCompactHorizontal} delay={300} />
@@ -1455,7 +1486,7 @@ export default function HomeScreen() {
         return (
           <View style={styles.quickToolsContainer} key={sectionId}>
             <TouchableOpacity
-              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
               onPress={handleNavigateTrainingJournal}
               activeOpacity={0.8}
             >
@@ -1464,7 +1495,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
               onPress={handleNavigateInfirmary}
               activeOpacity={0.8}
             >
@@ -1476,7 +1507,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
               onPress={handleNavigateChallenges}
               activeOpacity={0.8}
             >
@@ -1564,7 +1595,7 @@ export default function HomeScreen() {
         return (
           <View style={styles.batteryToolsRowSingle} key={sectionId}>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
               onPress={handleNavigateTrainingJournal}
               activeOpacity={0.85}
             >
@@ -1573,7 +1604,7 @@ export default function HomeScreen() {
               <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.journalSubtitle')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
               onPress={handleNavigateTimer}
               activeOpacity={0.85}
             >
@@ -1582,7 +1613,7 @@ export default function HomeScreen() {
               <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.timerSubtitle')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
               onPress={handleNavigatePlanning}
               activeOpacity={0.85}
             >
@@ -1591,7 +1622,7 @@ export default function HomeScreen() {
               <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('planning.title')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
               onPress={handleNavigateProgramme}
               activeOpacity={0.85}
             >
@@ -1607,7 +1638,7 @@ export default function HomeScreen() {
         return (
           <TouchableOpacity
             key={sectionId}
-            style={[styles.blessuresBanner, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+            style={[styles.blessuresBanner, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
             onPress={handleNavigateInfirmary}
             activeOpacity={0.85}
           >
@@ -1630,7 +1661,7 @@ export default function HomeScreen() {
         return (
           <View style={styles.batteryToolsRowSingle} key={sectionId}>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
               onPress={handleNavigateEnergy}
               activeOpacity={0.85}
             >
@@ -1659,7 +1690,7 @@ export default function HomeScreen() {
               <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>{t('index.energy')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
               onPress={handleNavigateSavoir}
               activeOpacity={0.85}
             >
@@ -1668,7 +1699,7 @@ export default function HomeScreen() {
               <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.generalKnowledge')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
               onPress={handleNavigateCalculators}
               activeOpacity={0.85}
             >
@@ -1684,7 +1715,7 @@ export default function HomeScreen() {
         return (
           <View key={sectionId} style={styles.batteryToolsRowSingle}>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, flex: 1, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, flex: 1, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
               onPress={() => handleNavigate('/partners')}
               activeOpacity={0.85}
             >
@@ -1693,7 +1724,7 @@ export default function HomeScreen() {
               <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.partnersSubtitle')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, flex: 1, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, flex: 1, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
               onPress={() => handleNavigate('/health-professionals')}
               activeOpacity={0.85}
             >
@@ -1752,7 +1783,7 @@ export default function HomeScreen() {
                 </View>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
                 onPress={handleNavigateFasting}
                 activeOpacity={0.85}
               >
@@ -1761,7 +1792,7 @@ export default function HomeScreen() {
                 <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.intermittent')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
                 onPress={handleNavigatePhotos}
                 activeOpacity={0.85}
               >
@@ -1775,7 +1806,7 @@ export default function HomeScreen() {
             {isCompetitorMode && (
               <View style={[styles.batteryToolsRowSingle, { marginTop: 8 }]}>
                 <TouchableOpacity
-                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
                   onPress={handleNavigateCutMode}
                   activeOpacity={0.85}
                 >
@@ -1784,7 +1815,7 @@ export default function HomeScreen() {
                   <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.weightLoss')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
                   onPress={handleNavigatePalmares}
                   activeOpacity={0.85}
                 >
@@ -1793,7 +1824,7 @@ export default function HomeScreen() {
                   <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.results')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
                   onPress={handleNavigateHydration}
                   activeOpacity={0.85}
                 >
@@ -1802,7 +1833,7 @@ export default function HomeScreen() {
                   <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>{t('index.waterTracking')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
                   onPress={handleNavigateBodyComposition}
                   activeOpacity={0.85}
                 >
@@ -1829,7 +1860,7 @@ export default function HomeScreen() {
             {/* Ligne 1 : Match Tracker · Drill Tracker · Camp de compét */}
             <View style={styles.batteryToolsRowSingle}>
               <TouchableOpacity
-                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
                 onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); handleNavigate('/match-tracker'); }}
                 activeOpacity={0.85}
               >
@@ -1838,7 +1869,7 @@ export default function HomeScreen() {
                 <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Tracker live</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
                 onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); handleNavigate('/drill-tracker'); }}
                 activeOpacity={0.85}
               >
@@ -1847,7 +1878,7 @@ export default function HomeScreen() {
                 <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Compteur reps</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
                 onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); handleNavigate('/competition-camp'); }}
                 activeOpacity={0.85}
               >
@@ -1860,7 +1891,7 @@ export default function HomeScreen() {
             {/* Ligne 2 : Partenaires · BJJ Positions · Benchmark */}
             <View style={styles.batteryToolsRowSingle}>
               <TouchableOpacity
-                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
                 onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); handleNavigate('/sparring-partners'); }}
                 activeOpacity={0.85}
               >
@@ -1869,7 +1900,7 @@ export default function HomeScreen() {
                 <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Notes tactiques</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
                 onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); handleNavigate('/bjj-positions'); }}
                 activeOpacity={0.85}
               >
@@ -1878,7 +1909,7 @@ export default function HomeScreen() {
                 <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Heatmap</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' }]}
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border }]}
                 onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); handleNavigate('/benchmark'); }}
                 activeOpacity={0.85}
               >
@@ -1957,6 +1988,8 @@ export default function HomeScreen() {
     nextEvent,
     toggleAnim,
     batteryPercent,
+    headerText,
+    headerTextMuted,
   ]);
 
   // Défis du jour formatés
@@ -2045,7 +2078,7 @@ export default function HomeScreen() {
 
       {/* FAB Log rapide vocal */}
       <TouchableOpacity
-        style={[styles.quickLogFab, { backgroundColor: '#8B5CF6' }]}
+        style={[styles.quickLogFab, { backgroundColor: '#8B5CF6' }, Platform.OS === 'android' && { bottom: 100 + insets.bottom }]}
         onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); handleNavigate('/quick-log'); }}
         activeOpacity={0.85}
       >

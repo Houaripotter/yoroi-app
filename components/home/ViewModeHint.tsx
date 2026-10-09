@@ -29,25 +29,6 @@ export const ViewModeHint: React.FC<ViewModeHintProps> = ({ onDismiss }) => {
   const slideAnim = useRef(new Animated.Value(-20)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  useEffect(() => {
-    checkIfShouldShow();
-  }, []);
-
-  const checkIfShouldShow = async () => {
-    try {
-      const hasShown = await AsyncStorage.getItem(VIEW_MODE_HINT_SHOWN_KEY);
-      if (!hasShown) {
-        setShouldShow(true);
-        // Délai avant d'afficher le hint pour laisser le temps à l'UI de se charger
-        setTimeout(() => {
-          showHint();
-        }, 1500);
-      }
-    } catch (error) {
-      // En cas d'erreur, ne pas afficher le hint
-    }
-  };
-
   const showHint = () => {
     // Animation d'entrée
     Animated.parallel([
@@ -88,6 +69,30 @@ export const ViewModeHint: React.FC<ViewModeHintProps> = ({ onDismiss }) => {
 
     // Ne plus auto-dismiss - l'utilisateur doit cliquer pour fermer
   };
+
+  useEffect(() => {
+    let cancelled = false;
+    let delayTimer: ReturnType<typeof setTimeout> | null = null;
+    const check = async () => {
+      try {
+        const hasShown = await AsyncStorage.getItem(VIEW_MODE_HINT_SHOWN_KEY);
+        if (!hasShown && !cancelled) {
+          setShouldShow(true);
+          // Délai avant d'afficher le hint pour laisser le temps à l'UI de se charger
+          delayTimer = setTimeout(() => {
+            if (!cancelled) showHint();
+          }, 1500);
+        }
+      } catch (error) {
+        // En cas d'erreur, ne pas afficher le hint
+      }
+    };
+    check();
+    return () => {
+      cancelled = true;
+      if (delayTimer !== null) clearTimeout(delayTimer);
+    };
+  }, []);
 
   const dismissHint = async () => {
     impactAsync(ImpactFeedbackStyle.Light);

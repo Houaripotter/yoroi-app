@@ -10,6 +10,7 @@ import {
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
+import { Header } from '@/components/ui/Header';
 import { useTheme } from '@/lib/ThemeContext';
 import { Trophy, User, Weight, Award, ChevronRight, Check } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -145,6 +146,8 @@ export default function CompetitorProfileScreen() {
 
   return (
     <ScreenWrapper>
+      {/* Bouton retour */}
+      <Header showBack />
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={[styles.header, { backgroundColor: colors.backgroundCard }]}>
@@ -376,7 +379,7 @@ export default function CompetitorProfileScreen() {
 
             <TouchableOpacity
               style={[styles.goToCompetitionsButton, { backgroundColor: colors.accent }]}
-              onPress={() => router.push('/planning?tab=competitions')}
+              onPress={() => router.push('/competitions')}
             >
               <Text style={[styles.goToCompetitionsText, { color: colors.textOnGold }]}>{t('competitorProfile.viewCompetitions')}</Text>
               <ChevronRight size={20} color={colors.textOnGold} />

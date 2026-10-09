@@ -143,7 +143,7 @@ export default function BackupStepScreen() {
                 shadowOffset: { width: 0, height: 6 },
                 elevation: 12,
               }}>
-                <ShieldCheck size={36} color="#fff" strokeWidth={2} />
+                <ShieldCheck size={36} color={colors.textOnAccent} strokeWidth={2} />
               </View>
             </View>
           </View>
@@ -183,8 +183,8 @@ export default function BackupStepScreen() {
           onPress={handleExport}
           disabled={isExporting}
         >
-          <Download size={24} color="#FFFFFF" />
-          <Text style={styles.exportBtnText}>
+          <Download size={24} color={colors.textOnAccent} />
+          <Text style={[styles.exportBtnText, { color: colors.textOnAccent }]}>
             {isExporting ? t('backupStep.generating') : t('backupStep.generate')}
           </Text>
         </TouchableOpacity>

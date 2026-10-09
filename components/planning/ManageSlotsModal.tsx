@@ -394,8 +394,8 @@ export const ManageSlotsModal: React.FC<ManageSlotsModalProps> = ({
               setShowAddModal(true);
             }}
           >
-            <Plus size={22} color="#FFFFFF" strokeWidth={3} />
-            <Text style={styles.addButtonText}>Ajouter un creneau</Text>
+            <Plus size={22} color={colors.textOnAccent} strokeWidth={3} />
+            <Text style={[styles.addButtonText, { color: colors.textOnAccent }]}>Ajouter un creneau</Text>
           </TouchableOpacity>
         )}
 

@@ -41,6 +41,11 @@ import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { BlurView } from 'expo-blur';
 import logger from '@/lib/security/logger';
 import { useI18n } from '@/lib/I18nContext';
+import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
+import { usePremium } from '@/context/PremiumContext';
+import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
+
+const FREE_MEASUREMENTS_LIMIT = 3;
 
 const CHART_HEIGHT = 120;
 
@@ -254,6 +259,7 @@ export default function MeasurementsScreen() {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { isPremium } = usePremium();
 
   // 🔒 SÉCURITÉ: Protection contre les screenshots
   const { isProtected, isBlurred, screenshotDetected } = useSensitiveScreen();
@@ -272,6 +278,7 @@ export default function MeasurementsScreen() {
   const [lastMeasurement, setLastMeasurement] = useState<BodyMeasurement | null>(null);
   const [allMeasurements, setAllMeasurements] = useState<BodyMeasurement[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     try {
@@ -282,6 +289,8 @@ export default function MeasurementsScreen() {
       setAllMeasurements(all);
     } catch (error) {
       logger.error('Error loading data:', error);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -303,10 +312,11 @@ export default function MeasurementsScreen() {
 
   // Get chart data for a specific measurement
   const getChartData = (key: keyof BodyMeasurement): number[] => {
+    const limit = isPremium ? 10 : 3;
     return allMeasurements
       .filter(m => m[key] !== undefined)
       .map(m => m[key] as number)
-      .slice(0, 10)
+      .slice(0, limit)
       .reverse();
   };
 
@@ -317,6 +327,11 @@ export default function MeasurementsScreen() {
       showPopup('Erreur', 'Entre au moins une mesure', [
         { text: 'OK', style: 'primary' },
       ]);
+      return;
+    }
+
+    if (!isPremium && allMeasurements.length >= FREE_MEASUREMENTS_LIMIT) {
+      router.push('/paywall' as never);
       return;
     }
 
@@ -390,6 +405,17 @@ export default function MeasurementsScreen() {
           </View>
         )}
 
+        {/* Skeleton pendant le chargement initial */}
+        {isLoading && (
+          <View style={{ gap: 12, paddingVertical: 8 }}>
+            <SkeletonCard height={260} width="100%" />
+            <SkeletonCard height={140} width="100%" />
+            <SkeletonCard height={120} width="100%" />
+            <SkeletonMessage />
+          </View>
+        )}
+        {!isLoading && (
+        <>
         {/* Body Illustration */}
         <BodyIllustration
           measurements={{
@@ -495,9 +521,34 @@ export default function MeasurementsScreen() {
           </View>
         </View>
 
+        {/* Bannière limite freemium */}
+        {!isPremium && allMeasurements.length >= FREE_MEASUREMENTS_LIMIT && (
+          <View style={{ borderRadius: 16, overflow: 'hidden', marginTop: 24, marginBottom: 8 }}>
+            <LinearGradient
+              colors={['#EF4444', '#B91C1C']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ padding: 16, alignItems: 'center', gap: 8 }}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '800', textAlign: 'center' }}>
+                Limite atteinte ({FREE_MEASUREMENTS_LIMIT}/{FREE_MEASUREMENTS_LIMIT} sessions)
+              </Text>
+              <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, textAlign: 'center' }}>
+                Passe à Premium pour enregistrer des mensurations illimitées et voir l'évolution complète.
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.push('/paywall' as never)}
+                style={{ backgroundColor: '#FFFFFF', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 24, marginTop: 4 }}
+              >
+                <Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '800' }}>Débloquer Premium</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        )}
+
         {/* Save Button */}
         <TouchableOpacity
-          style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]}
+          style={[styles.saveButton, (isSubmitting || (!isPremium && allMeasurements.length >= FREE_MEASUREMENTS_LIMIT)) && styles.saveButtonDisabled]}
           onPress={handleSave}
           disabled={isSubmitting}
           activeOpacity={0.8}
@@ -516,6 +567,9 @@ export default function MeasurementsScreen() {
         </TouchableOpacity>
 
         <View style={{ height: 100 }} />
+        <PremiumTeaser variant="history" title="Évolution mesures complète" />
+        </>
+        )}
       </ScrollView>
 
       {/* 🔒 SÉCURITÉ: Flou quand l'app est en background */}

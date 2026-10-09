@@ -31,7 +31,7 @@ const STANDARD_DISTANCES: PbDistance[] = [
 ];
 
 function formatPace(paceSecPerKm: number): string {
-  if (!isFinite(paceSecPerKm) || paceSecPerKm <= 0) return '—';
+  if (!isFinite(paceSecPerKm) || paceSecPerKm <= 0) return ',';
   const m = Math.floor(paceSecPerKm / 60);
   const s = Math.round(paceSecPerKm % 60);
   return `${m}:${String(s).padStart(2, '0')}`;
@@ -186,7 +186,7 @@ export default function AlluresTab() {
                 </Text>
                 {pr.bestPace ? (
                   <Text style={[styles.prTime, { color: colors.text }]}>
-                    {pr.bestTime !== null ? formatTime(pr.bestTime) : '—'}
+                    {pr.bestTime !== null ? formatTime(pr.bestTime) : ','}
                   </Text>
                 ) : (
                   <Text style={{ fontSize: 13, color: colors.textMuted, fontStyle: 'italic', marginTop: 4 }}>

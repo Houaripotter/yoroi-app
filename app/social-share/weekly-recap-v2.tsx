@@ -429,11 +429,11 @@ export default function WeeklyRecapV2Screen() {
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={colors.textOnAccent} />
             ) : (
               <>
-                <Share2 size={20} color="#FFFFFF" />
-                <Text style={styles.shareBtnText}>{t('socialShare.share')}</Text>
+                <Share2 size={20} color={colors.textOnAccent} />
+                <Text style={[styles.shareBtnText, { color: colors.textOnAccent }]}>{t('socialShare.share')}</Text>
               </>
             )}
           </TouchableOpacity>

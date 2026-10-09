@@ -307,7 +307,8 @@ function computeStreak(dates: string[]): number {
   const cursor = new Date();
   cursor.setHours(0, 0, 0, 0);
   for (let i = 0; i < 365; i++) {
-    const key = cursor.toISOString().split('T')[0];
+    // Date locale (toISOString décalait d'un jour en France)
+    const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
     if (days.has(key)) {
       streak++;
     } else if (i > 0) {

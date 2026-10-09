@@ -4,6 +4,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { formatHoursHM } from '@/lib/formatDuration';
 import { router } from 'expo-router';
 import { safeOpenURL } from '@/lib/security/validators';
 import { useTheme } from '@/lib/ThemeContext';
@@ -17,6 +18,17 @@ import { getUserSettings } from '@/lib/storage';
 import { getProfile } from '@/lib/database';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { logger } from '@/lib/security/logger';
+import { parseISO } from 'date-fns';
+
+// Métriques où une baisse est positive (vert)
+const LOWER_IS_BETTER = ['weight', 'fat_percent', 'visceral_fat', 'metabolic_age', 'bmi', 'waist', 'resting_hr', 'heart_rate'];
+
+// Parse date sûr : 'yyyy-MM-dd' en local (évite le décalage UTC)
+const toTime = (v?: string): number => {
+  if (!v) return NaN;
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(v) ? parseISO(v) : new Date(v);
+  return d.getTime();
+};
 
 const sf = (v: number): string => Number.isInteger(v) ? String(v) : v.toFixed(1).replace(/\.0$/, '');
 
@@ -82,6 +94,7 @@ interface StatsDetailModalProps {
   metricKey?: string;
   healthRange?: MetricRange; // Range directement passé (comme HistoryScrollCard)
   sleepData?: SleepData; // Données enrichies pour le sommeil
+  formatValue?: (v: number) => string; // Formateur personnalisé pour les valeurs affichées
 }
 
 export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
@@ -99,7 +112,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('tout');
   const [userGender, setUserGender] = useState<'male' | 'female'>('male');
   const [userAge, setUserAge] = useState(30);
   const [userWeight, setUserWeight] = useState(75);
@@ -152,10 +165,16 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
-    return data.filter(item => {
+    const cutoff = cutoffDate.getTime();
+    const filtered = data.filter(item => {
       if (!item.date) return true;
-      return new Date(item.date) >= cutoffDate;
+      return toTime(item.date) >= cutoff;
     });
+    // Tri plus récent en premier (index 0 = actuel, affiché à gauche)
+    return filtered
+      .map((item, i) => ({ item, i, t: toTime(item.date) }))
+      .sort((a, b) => (isNaN(a.t) || isNaN(b.t) ? a.i - b.i : b.t - a.t))
+      .map(x => x.item);
   }, [data, selectedPeriod]);
 
   // Calculer les statistiques
@@ -163,8 +182,9 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
     if (filteredData.length === 0) return null;
 
     const values = filteredData.map(d => d.value);
-    const latest = values[values.length - 1];
-    const first = values[0];
+    // filteredData trié du plus récent au plus ancien
+    const latest = values[0];
+    const first = values[values.length - 1];
     const min = Math.min(...values);
     const max = Math.max(...values);
     const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
@@ -190,8 +210,8 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
 
     const previousData = data.filter(item => {
       if (!item.date) return false;
-      const d = new Date(item.date);
-      return d >= previousStart && d < currentStart;
+      const d = toTime(item.date);
+      return d >= previousStart.getTime() && d < currentStart.getTime();
     });
     if (previousData.length === 0 || filteredData.length === 0) return null;
     const avgCurrent = filteredData.reduce((s, x) => s + x.value, 0) / filteredData.length;
@@ -251,14 +271,20 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
     }
   };
 
+  const lowerIsBetter = LOWER_IS_BETTER.includes(metricKey ?? '');
+  const GOOD = '#2BCBBA';
+  const BAD = '#FC5C65';
+  const upColor = lowerIsBetter ? BAD : GOOD;
+  const downColor = lowerIsBetter ? GOOD : BAD;
+
   const getTrendIcon = () => {
     if (!stats) return null;
     const iconSize = 16;
     switch (stats.trend) {
       case 'up':
-        return <TrendingUp size={iconSize} color="#2BCBBA" strokeWidth={2.5} />;
+        return <TrendingUp size={iconSize} color={upColor} strokeWidth={2.5} />;
       case 'down':
-        return <TrendingDown size={iconSize} color="#FC5C65" strokeWidth={2.5} />;
+        return <TrendingDown size={iconSize} color={downColor} strokeWidth={2.5} />;
       default:
         return <Minus size={iconSize} color={colors.textMuted} strokeWidth={2.5} />;
     }
@@ -339,7 +365,10 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
             contentContainerStyle={styles.scrollContent}
           >
             {/* Valeur actuelle avec tendance */}
-            {stats && (
+            {stats && (() => {
+              const isSleep = metricKey === 'sleep' || metricKey === 'sleep_quality';
+              const fmtStat = (v: number) => isSleep ? formatHoursHM(v) : sf(v);
+              return (
               <View style={[styles.currentValueCard, { backgroundColor: colors.backgroundCard }]}>
                 <View style={styles.currentValueRow}>
                   <View>
@@ -347,19 +376,20 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                       {t('statsModal.currentValue')}
                     </Text>
                     <Text style={[styles.currentValue, { color: color }]}>
-                      {sf(stats.latest)}
-                      <Text style={[styles.currentValueUnit, { color: colors.textMuted }]}> {unit}</Text>
+                      {fmtStat(stats.latest)}
+                      {!isSleep && <Text style={[styles.currentValueUnit, { color: colors.textMuted }]}> {unit}</Text>}
                     </Text>
                   </View>
-                  <View style={[styles.trendBadge, { backgroundColor: stats.trend === 'up' ? '#2BCBBA20' : stats.trend === 'down' ? '#FC5C6520' : colors.border }]}>
+                  <View style={[styles.trendBadge, { backgroundColor: stats.trend === 'up' ? upColor + '20' : stats.trend === 'down' ? downColor + '20' : colors.border }]}>
                     {getTrendIcon()}
-                    <Text style={[styles.trendText, { color: stats.trend === 'up' ? '#2BCBBA' : stats.trend === 'down' ? '#FC5C65' : colors.textMuted }]}>
-                      {stats.change >= 0 ? '+' : ''}{sf(stats.change)} {unit}
+                    <Text style={[styles.trendText, { color: stats.trend === 'up' ? upColor : stats.trend === 'down' ? downColor : colors.textMuted }]}>
+                      {stats.change >= 0 ? '+' : ''}{isSleep ? formatHoursHM(Math.abs(stats.change)) : sf(stats.change)} {!isSleep ? unit : ''}
                     </Text>
                   </View>
                 </View>
               </View>
-            )}
+              );
+            })()}
 
             {/* Bouton Historique complet · pour les métriques corporelles */}
             {['weight', 'fat_percent', 'muscle', 'water_percent', 'bone_mass', 'visceral_fat',
@@ -448,9 +478,8 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
               </Text>
               {filteredData.length > 0 ? (
                 <ModernLineChart
-                  // Slice AVANT reverse pour éviter l'array op sur 6699 items :
-                  // on prend au max les 500 derniers puis on inverse.
-                  data={filteredData.slice(-500).reverse()}
+                  // Déjà trié récent → ancien : garde les 500 plus récents, récent à gauche
+                  data={filteredData.slice(0, 500)}
                   color={color}
                   height={260}
                   showGrid={true}
@@ -465,6 +494,8 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                     selectedPeriod === '60j' ? 35 :
                     30
                   }
+                  valueFormat={(metricKey === 'sleep' || metricKey === 'sleep_quality') ? formatHoursHM : undefined}
+                  yAxisFormat={(metricKey === 'sleep' || metricKey === 'sleep_quality') ? formatHoursHM : undefined}
                 />
               ) : (
                 <View style={styles.noDataContainer}>
@@ -478,10 +509,11 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
             {/* Comparaison vs période précédente */}
             {periodComparison && periodComparison.hasEnoughData && (
               (() => {
+                const isSleep = metricKey === 'sleep' || metricKey === 'sleep_quality';
                 const isUp = periodComparison.deltaPct > 0;
                 const isFlat = Math.abs(periodComparison.deltaPct) < 1;
                 const arrow = isFlat ? '→' : isUp ? '↑' : '↓';
-                const cmpColor = isFlat ? '#9CA3AF' : isUp ? '#10B981' : '#EF4444';
+                const cmpColor = isFlat ? '#9CA3AF' : (isUp !== lowerIsBetter) ? '#10B981' : '#EF4444';
                 const sign = isUp ? '+' : '';
                 return (
                   <View style={[styles.compareBadge, { backgroundColor: '#FFFFFF', borderColor: cmpColor + '55' }]}>
@@ -489,7 +521,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                       {arrow} {sign}{periodComparison.deltaPct.toFixed(1)}% vs période précédente
                     </Text>
                     <Text style={[styles.compareSub, { color: '#64748B' }]}>
-                      Moy. {periodComparison.avgCurrent.toFixed(1)} (vs {periodComparison.avgPrevious.toFixed(1)})
+                      Moy. {isSleep ? formatHoursHM(periodComparison.avgCurrent) : periodComparison.avgCurrent.toFixed(1)} (vs {isSleep ? formatHoursHM(periodComparison.avgPrevious) : periodComparison.avgPrevious.toFixed(1)})
                     </Text>
                   </View>
                 );
@@ -497,7 +529,10 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
             )}
 
             {/* Stats supplémentaires */}
-            {stats && (
+            {stats && (() => {
+              const isSleep = metricKey === 'sleep' || metricKey === 'sleep_quality';
+              const fmtStat = (v: number) => isSleep ? formatHoursHM(v) : sf(v);
+              return (
               <View style={[styles.statsCard, { backgroundColor: colors.backgroundCard }]}>
                 <Text style={[styles.statsTitle, { color: colors.textPrimary }]}>
                   {t('statsModal.detailedStats')}
@@ -506,19 +541,19 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                   <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
                     <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('statsModal.min')}</Text>
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                      {sf(stats.min)} {unit}
+                      {fmtStat(stats.min)}{!isSleep ? ` ${unit}` : ''}
                     </Text>
                   </View>
                   <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
                     <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('statsModal.max')}</Text>
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                      {sf(stats.max)} {unit}
+                      {fmtStat(stats.max)}{!isSleep ? ` ${unit}` : ''}
                     </Text>
                   </View>
                   <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
                     <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('statsModal.avg')}</Text>
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                      {sf(stats.avg)} {unit}
+                      {fmtStat(stats.avg)}{!isSleep ? ` ${unit}` : ''}
                     </Text>
                   </View>
                   <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
@@ -529,7 +564,8 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                   </View>
                 </View>
               </View>
-            )}
+              );
+            })()}
           </ScrollView>
         </View>
       </View>

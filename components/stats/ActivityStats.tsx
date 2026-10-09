@@ -503,8 +503,9 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
                       <Text style={[styles.xLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
                         {format(point.weekStart, 'd MMM', { locale: fr })}
                       </Text>
+                      {/* Règle 4 : année en ligne 2 */}
                       <Text style={[styles.xLabelSub, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
-                        S{format(point.weekStart, 'ww', { locale: fr })}
+                        {format(point.weekStart, 'yyyy')}
                       </Text>
                     </View>
                   ))}
@@ -713,9 +714,10 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
           onClose={() => setShowModal(false)}
           title="Entraînements par semaine"
           subtitle={period === '7j' ? '7 derniers jours' : period === '30j' ? '30 derniers jours' : period === '90j' ? '90 derniers jours' : 'Année complète'}
-          data={weeklyData.map((entry) => ({
+          data={[...weeklyData].reverse().map((entry) => ({
             value: entry.count,
-            label: format(entry.weekStart, 'd MMM', { locale: fr }),
+            // Règle 3 : plus récent à GAUCHE (reverse) | Règle 4 : deux lignes (jour+mois / année)
+            label: `${format(entry.weekStart, 'd MMM', { locale: fr })}\n${format(entry.weekStart, 'yyyy')}`,
             date: format(entry.weekStart, 'yyyy-MM-dd'),
           }))}
           color={colors.accent}

@@ -560,9 +560,9 @@ export default function ConnectedDevicesScreen() {
                 disabled={isSyncing}
               >
                 {isSyncing ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={colors.textOnAccent} />
                 ) : (
-                  <RefreshCw size={16} color="#FFFFFF" />
+                  <RefreshCw size={16} color={colors.textOnAccent} />
                 )}
               </TouchableOpacity>
             )}

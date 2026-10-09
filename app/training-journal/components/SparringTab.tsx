@@ -52,6 +52,19 @@ import PartnerInsightsBanner from '@/components/PartnerInsightsBanner';
 import { Grid3x3, Crown } from 'lucide-react-native';
 import { TechniqueHeatmap } from '@/components/stats/TechniqueHeatmap';
 import { MethodsTimeline } from '@/components/stats/MethodsTimeline';
+import * as FileSystem from 'expo-file-system/legacy';
+
+// Copie la photo (cache ImagePicker) dans le dossier permanent
+const saveImagePermanently = async (tempUri: string): Promise<string> => {
+  try {
+    const ext = tempUri.split('.').pop()?.split('?')[0] ?? 'jpg';
+    const destUri = `${FileSystem.documentDirectory}sparring_photo_${Date.now()}.${ext}`;
+    await FileSystem.copyAsync({ from: tempUri, to: destUri });
+    return destUri;
+  } catch {
+    return tempUri;
+  }
+};
 
 const WEEKLY_GOAL_KEY = '@sparring_weekly_goal';
 const SPARRING_PARTNERS_KEY = '@yoroi_sparring_partners';
@@ -314,7 +327,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
         quality: 0.8,
       });
       if (!result.canceled && result.assets?.[0]?.uri) {
-        await savePartnerPhoto(partnerName, result.assets[0].uri);
+        await savePartnerPhoto(partnerName, await saveImagePermanently(result.assets[0].uri));
       }
     } catch (e) {
       Alert.alert('Erreur', `Impossible d'ouvrir la galerie : ${e instanceof Error ? e.message : String(e)}`);
@@ -341,7 +354,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
         quality: 0.8,
       });
       if (!result.canceled && result.assets?.[0]?.uri) {
-        setEditPhoto(result.assets[0].uri);
+        setEditPhoto(await saveImagePermanently(result.assets[0].uri));
       }
     } catch (e) {
       Alert.alert('Erreur', `Impossible d'ouvrir la galerie : ${e instanceof Error ? e.message : String(e)}`);
@@ -2195,7 +2208,7 @@ export default function SparringTab({ refreshTrigger }: SparringTabProps) {
                 {maxHR !== null && maxHR > 0 && (
                   <View style={{ flex: 1, minWidth: '45%', backgroundColor: '#DC262615', borderRadius: 12, padding: 12, borderLeftWidth: 3, borderLeftColor: '#DC2626' }}>
                     <Text style={{ fontSize: 9, fontWeight: '800', color: '#DC2626', letterSpacing: 0.4, marginBottom: 4 }}>FC MAX ATTEINTE</Text>
-                    <Text style={{ fontSize: 22, fontWeight: '900', color: '#DC2626', letterSpacing: -0.5 }}>{maxHR}</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: '#DC2626', letterSpacing: -0.5 }}>{Math.round(maxHR)}</Text>
                     <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2, fontWeight: '600' }}>
                       bpm record
                     </Text>

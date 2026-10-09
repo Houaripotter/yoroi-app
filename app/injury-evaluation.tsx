@@ -293,12 +293,12 @@ export default function InjuryEvaluationScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.optionIconContainer}>
-                  {renderIcon(type.icon, painType === type.id ? '#FFFFFF' : colors.textPrimary, 22)}
+                  {renderIcon(type.icon, painType === type.id ? colors.textOnAccent : colors.textPrimary, 22)}
                 </View>
                 <Text
                   style={[
                     styles.optionLabel,
-                    { color: painType === type.id ? '#FFFFFF' : colors.textPrimary },
+                    { color: painType === type.id ? colors.textOnAccent : colors.textPrimary },
                   ]}
                 >
                   {type.label}
@@ -329,12 +329,12 @@ export default function InjuryEvaluationScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.optionIconContainer}>
-                  {renderIcon(causeItem.icon, cause === causeItem.id ? '#FFFFFF' : colors.textPrimary, 22)}
+                  {renderIcon(causeItem.icon, cause === causeItem.id ? colors.textOnAccent : colors.textPrimary, 22)}
                 </View>
                 <Text
                   style={[
                     styles.optionLabel,
-                    { color: cause === causeItem.id ? '#FFFFFF' : colors.textPrimary },
+                    { color: cause === causeItem.id ? colors.textOnAccent : colors.textPrimary },
                   ]}
                 >
                   {causeItem.label}
@@ -447,7 +447,7 @@ export default function InjuryEvaluationScreen() {
                   style={[
                     styles.presetButtonText,
                     {
-                      color: estimatedRecoveryDays === days ? '#FFFFFF' : colors.textSecondary,
+                      color: estimatedRecoveryDays === days ? colors.textOnAccent : colors.textSecondary,
                     },
                   ]}
                 >
@@ -469,8 +469,8 @@ export default function InjuryEvaluationScreen() {
           disabled={isSubmitting}
           activeOpacity={0.7}
         >
-          <Save size={20} color="#FFFFFF" />
-          <Text style={styles.submitButtonText}>
+          <Save size={20} color={colors.textOnAccent} />
+          <Text style={[styles.submitButtonText, { color: colors.textOnAccent }]}>
             {isSubmitting
               ? isEditMode
                 ? 'Modification...'

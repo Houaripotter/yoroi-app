@@ -136,12 +136,13 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
   const barAnim = useRef(new Animated.Value(0)).current;
   const hasBarAnimated = useRef(false);
   useEffect(() => {
-    if (hasBarAnimated.current) return;
+    // Anime à chaque changement : 1re fois lente, ensuite rapide
+    const first = !hasBarAnimated.current;
     hasBarAnimated.current = true;
     Animated.timing(barAnim, {
       toValue: progress,
-      duration: 900,
-      delay: 300,
+      duration: first ? 900 : 400,
+      delay: first ? 300 : 0,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
@@ -161,9 +162,10 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
           getWeights(365),
         ]);
         const weekStart = new Date();
-        weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+        // Lundi de la semaine (dimanche inclus) en date locale
+        weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
         weekStart.setHours(0, 0, 0, 0);
-        const weekStartStr = weekStart.toISOString().split('T')[0];
+        const weekStartStr = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
         const trainingsThisWeek = allTrainings.filter((t: any) => t.date >= weekStartStr).length;
         const weightsThisWeek   = allWeights.filter((w: any) => w.date >= weekStartStr).length;
         await updateCurrentWeek(trainingsThisWeek, weightsThisWeek, 0);
@@ -441,7 +443,7 @@ export const HomeHeroCard: React.FC<Props> = ({ streak, totalPoints, avatarUri, 
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               style={[styles.collapseBtn, { backgroundColor: colors.accent }]}
             >
-              <ChevronUp size={16} color="#fff" />
+              <ChevronUp size={16} color={colors.textOnAccent} />
             </TouchableOpacity>
           )}
           <View style={styles.footerRight}>

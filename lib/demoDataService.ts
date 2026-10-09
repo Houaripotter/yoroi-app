@@ -364,7 +364,7 @@ const PARTNER_SCOUTING_REPORTS: Record<string, {
       'Back take depuis n\'importe quelle position',
     ],
     weaknesses: [
-      '(aucune vraie faiblesse — ceinture noire 3e degré)',
+      '(aucune vraie faiblesse, ceinture noire 3e degré)',
     ],
     whatWorks: [
       'Rester calme et ne pas paniquer quand il prend la position',
@@ -390,7 +390,7 @@ const PARTNER_SCOUTING_REPORTS: Record<string, {
       'Calme absolu, ne se précipite jamais',
     ],
     weaknesses: [
-      '(ceinture noire — cherche pas de faiblesses)',
+      '(ceinture noire, cherche pas de faiblesses)',
     ],
     whatWorks: [
       'Le frame précoce avant qu\'il ne pose la pression',
@@ -422,7 +422,7 @@ const PARTNER_SCOUTING_REPORTS: Record<string, {
     ],
     whatWorks: [
       'Jouer la garde ouverte tôt pour l\'empêcher de poser la pression',
-      'Bouger constamment en bottom — un Larbi statique = un Larbi qui passe',
+      'Bouger constamment en bottom, un Larbi statique = un Larbi qui passe',
       'Défendre préventivement les étranglements arrière (main sur le cou)',
     ],
     tacticalNotes: [
@@ -444,7 +444,7 @@ const PARTNER_SCOUTING_REPORTS: Record<string, {
       'Bonne lecture du timing',
     ],
     weaknesses: [
-      'Cardio moyen — gaz après 6 rounds',
+      'Cardio moyen, gaz après 6 rounds',
       'Wrestling presque inexistant',
       'Parfois trop passif en top position',
     ],
@@ -471,7 +471,7 @@ const PARTNER_SCOUTING_REPORTS: Record<string, {
       'Jeu top avec beaucoup d\'énergie',
     ],
     weaknesses: [
-      'Très peu de jeu de garde — se fait passer facilement',
+      'Très peu de jeu de garde, se fait passer facilement',
       'Étranglements subis facilement',
       'Gestion du cardio médiocre',
       'Pas patient, il force tout',
@@ -504,7 +504,7 @@ const PARTNER_SCOUTING_REPORTS: Record<string, {
     ],
     whatWorks: [
       'Le calmer dès le premier round en imposant un rythme technique',
-      'Attendre ses erreurs — il en fait beaucoup',
+      'Attendre ses erreurs, il en fait beaucoup',
       'Le pousser en défense tôt, avant qu\'il ne se sente confortable',
     ],
     tacticalNotes: [

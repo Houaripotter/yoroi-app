@@ -175,8 +175,8 @@ export function WorkoutSummaryModal({
                 style={[styles.saveButton, { backgroundColor: colors.accent }]}
                 onPress={onSave}
               >
-                <Check size={20} color="#FFFFFF" />
-                <Text style={styles.saveText}>Enregistrer</Text>
+                <Check size={20} color={colors.textOnAccent} />
+                <Text style={[styles.saveText, { color: colors.textOnAccent }]}>Enregistrer</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>

@@ -62,7 +62,8 @@ export async function refreshWidgetsFromDB(): Promise<void> {
     // Hydratation (stockée en litres, on convertit en verres de 250ml)
     const waterStr = await AsyncStorage.getItem('@yoroi_hydration_today');
     const waterData = waterStr ? JSON.parse(waterStr) : null;
-    const waterLiters: number = waterData?.amount ?? 0;
+    // Uniquement la quantité d'aujourd'hui (sinon le widget affichait celle d'hier)
+    const waterLiters: number = waterData?.date === new Date().toDateString() ? (waterData?.amount ?? 0) : 0;
     const waterCups: number = Math.round(waterLiters / 0.25);
 
     const waterGoalStr = await AsyncStorage.getItem('@yoroi_hydration_goal');

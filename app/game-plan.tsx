@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -35,6 +36,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { getTrainings, Training, CombatRound } from '@/lib/database';
 import logger from '@/lib/security/logger';
 import { getMethodDisplayName } from '@/components/BJJBodyMap';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 const CHECKED_KEY = '@yoroi_gameplan_checked';
 
@@ -232,6 +234,7 @@ export default function GamePlanScreen() {
   const border = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
 
   return (
+    <PremiumGate featureTitle="Mon Game Plan">
     <View style={{ flex: 1, backgroundColor: bgColor }}>
       {/* ── Header ── */}
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -255,6 +258,18 @@ export default function GamePlanScreen() {
         keyboardDismissMode="interactive"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(true); }} />}
       >
+        {/* Skeleton pendant le chargement initial */}
+        {loading && (
+          <View style={{ gap: 12 }}>
+            <SkeletonCard height={130} width="100%" />
+            <SkeletonCard height={180} width="100%" />
+            <SkeletonCard height={180} width="100%" />
+            <SkeletonCard height={150} width="100%" />
+            <SkeletonMessage />
+          </View>
+        )}
+        {!loading && (
+        <>
         {/* ════════════════════════════════════════════════
             🔥 HERO "PROCHAINE SÉANCE"
             ════════════════════════════════════════════════ */}
@@ -590,7 +605,10 @@ export default function GamePlanScreen() {
             </TouchableOpacity>
           </View>
         )}
+        </>
+        )}
       </ScrollView>
     </View>
+    </PremiumGate>
   );
 }

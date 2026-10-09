@@ -6,6 +6,8 @@ import { Ruler, TrendingDown, TrendingUp, Maximize2 } from 'lucide-react-native'
 import { SparklineChart } from '../charts/SparklineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { scale, isIPad, getHistoryDays } from '@/constants/responsive';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 const STATS_COLUMNS = isIPad() ? 4 : 2;
 const STATS_GAP = 12;
@@ -173,9 +175,11 @@ export const MeasurementsStats: React.FC<MeasurementsStatsProps> = ({ data }) =>
           onClose={() => setSelectedMeasurement(null)}
           title={selectedMeasurement.label}
           subtitle="Évolution complète"
-          data={getFullHistory(selectedMeasurement.id).map((entry) => ({
+          data={[...getFullHistory(selectedMeasurement.id)].reverse().map((entry) => ({
             value: entry.value,
-            label: new Date(entry.date).toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
+            // Règle 3 : plus récent à GAUCHE (reverse) | Règle 4 : deux lignes (jour+mois / année)
+            label: `${format(new Date(entry.date), 'd MMM', { locale: fr })}\n${format(new Date(entry.date), 'yyyy')}`,
+            date: entry.date,
           }))}
           color={selectedMeasurement.color}
           unit="cm"

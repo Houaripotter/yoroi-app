@@ -8,10 +8,10 @@ import {
   Modal,
   TextInput,
   DeviceEventEmitter,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useI18n } from '@/lib/I18nContext';
 import { PremiumGate } from '@/components/premium/PremiumGate';
@@ -92,7 +92,7 @@ const getIconComponent = (iconName: string, size: number = 24, color: string = '
 // ============================================
 
 export default function FastingScreen() {
-  const { colors } = useTheme();
+  const { colors, themeColor } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { t } = useI18n();
 
@@ -344,8 +344,12 @@ export default function FastingScreen() {
     return (
       <ScreenWrapper noPadding>
         <Header title={t('fasting.title')} showBack />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
+        <View style={{ padding: 16, gap: 12 }}>
+          <SkeletonCard height={220} width="100%" />
+          <SkeletonCard height={120} width="100%" />
+          <SkeletonCard height={100} width="100%" />
+          <SkeletonCard height={100} width="100%" />
+          <SkeletonMessage />
         </View>
       </ScreenWrapper>
     );
@@ -529,7 +533,7 @@ export default function FastingScreen() {
                       {getIconComponent(mode.icon, 28, colorScheme.icon)}
                     </View>
                     <View style={styles.modeTextContainer}>
-                      <Text style={[styles.religiousModeTitle, { color: '#FFFFFF' }]}>
+                      <Text style={[styles.religiousModeTitle, { color: themeColor === 'blanc' ? colors.textPrimary : '#FFFFFF' }]}>
                         {mode.name}
                       </Text>
                       <Text style={[styles.religiousModeDesc, { color: '#9ca3af' }]} numberOfLines={1}>

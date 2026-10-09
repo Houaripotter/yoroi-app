@@ -6,6 +6,7 @@ import Celebration from '@/components/Celebration';
 import BiometricLockOverlay from '@/components/BiometricLockOverlay';
 import { SamuraiSplash } from '@/components/SamuraiLoader';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { ThemeProvider, useTheme } from '@/lib/ThemeContext';
@@ -179,14 +180,14 @@ function RootLayoutContent() {
   // Sync widget iOS au démarrage + à chaque changement de données.
   // No-op silencieux sur Android ou si le widget n'est pas linké en Xcode.
   useEffect(() => {
+    let sub: { remove: () => void } | null = null;
+    let cancelled = false;
     import('@/lib/widgetSync').then(({ syncWidget }) => {
+      if (cancelled) return;
       syncWidget(); // initial sync
-      const sub = require('react-native').DeviceEventEmitter.addListener(
-        'YOROI_DATA_CHANGED',
-        () => syncWidget(),
-      );
-      return () => sub.remove();
+      sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => syncWidget());
     }).catch(() => {});
+    return () => { cancelled = true; sub?.remove(); };
   }, []);
 
   // Notification hebdo récap (dimanche 19h) · s'assure qu'elle est planifiée
@@ -255,9 +256,9 @@ function RootLayoutContent() {
       if (validatedData.workoutId) {
         setTimeout(() => router.push(`/social-share/last-session?id=${validatedData.workoutId}` as any), 1500);
       } else if (validatedData.screen) {
-        const url = validatedData.autoShare
-          ? `/${validatedData.screen}?autoShare=1`
-          : `/${validatedData.screen}`;
+        // 'home' n'est pas une route : l'accueil est /(tabs)
+        const base = validatedData.screen === 'home' ? '/(tabs)' : `/${validatedData.screen}`;
+        const url = validatedData.autoShare ? `${base}?autoShare=1` : base;
         setTimeout(() => router.push(url as any), 1500);
       }
     };
@@ -584,7 +585,8 @@ export default function RootLayout() {
             const wasConnected = await AsyncStorage.getItem('@yoroi_healthconnect_connected');
             if (wasConnected === 'true') {
               await healthConnect.initialize();
-              const connected = await healthConnect.connect();
+              // Reconnexion silencieuse : pas de fenêtre de permission ni de sync lourde à chaque lancement
+              const connected = await (healthConnect as any).connect({ silent: true });
               if (connected) {
                 await healthConnect.setupWorkoutObserver();
                 logger.info('[HealthConnect] Observer workout Android actif');
@@ -622,6 +624,7 @@ export default function RootLayout() {
   }
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <ErrorBoundary>
       <SafeAreaProvider>
         <I18nProvider>
@@ -645,5 +648,6 @@ export default function RootLayout() {
         </I18nProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
+    </GestureHandlerRootView>
   );
 }

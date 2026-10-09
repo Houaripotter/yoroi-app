@@ -233,7 +233,7 @@ export const AddSlotModal: React.FC<AddSlotModalProps> = ({
                 <Text
                   style={[
                     styles.dayText,
-                    { color: dayOfWeek === i ? '#FFFFFF' : colors.textPrimary },
+                    { color: dayOfWeek === i ? colors.textOnAccent : colors.textPrimary },
                   ]}
                 >
                   {d}
@@ -241,7 +241,7 @@ export const AddSlotModal: React.FC<AddSlotModalProps> = ({
                 <Text
                   style={[
                     styles.dayLabel,
-                    { color: dayOfWeek === i ? '#FFFFFF90' : colors.textMuted },
+                    { color: dayOfWeek === i ? colors.textOnAccent + '90' : colors.textMuted },
                   ]}
                 >
                   {DAY_LABELS[i].substring(0, 3)}
@@ -342,7 +342,7 @@ export const AddSlotModal: React.FC<AddSlotModalProps> = ({
                               </Text>
                               {isSelected && (
                                 <View style={[styles.sportGridCheck, { backgroundColor: colors.accent }]}>
-                                  <Check size={10} color="#FFFFFF" strokeWidth={3} />
+                                  <Check size={10} color={colors.textOnAccent} strokeWidth={3} />
                                 </View>
                               )}
                             </TouchableOpacity>
@@ -458,7 +458,7 @@ export const AddSlotModal: React.FC<AddSlotModalProps> = ({
                 <Text
                   style={[
                     styles.durationChipText,
-                    { color: durationMinutes === d ? '#FFFFFF' : colors.textPrimary },
+                    { color: durationMinutes === d ? colors.textOnAccent : colors.textPrimary },
                   ]}
                 >
                   {d}
@@ -528,7 +528,7 @@ export const AddSlotModal: React.FC<AddSlotModalProps> = ({
             onPress={handleSave}
             disabled={isSubmitting}
           >
-            <Text style={styles.saveButtonText}>
+            <Text style={[styles.saveButtonText, { color: colors.textOnAccent }]}>
               {editingSlot ? 'Modifier' : 'Ajouter le creneau'}
             </Text>
           </TouchableOpacity>

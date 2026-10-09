@@ -1,247 +1,371 @@
 /**
  * PREMIUM GATE - YOROI
  *
- * Enveloppe un ecran de contenu premium. Si l'utilisateur n'a pas l'acces,
- * affiche un ecran de deverrouillage menant au paywall.
+ * Enveloppe un écran de contenu premium. Si l'utilisateur n'a pas l'accès,
+ * affiche un écran de blocage menant au paywall.
+ * Design percutant qui donne vraiment envie de s'abonner.
  */
 
 import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Star, ArrowRight, Check, Dumbbell, BarChart2, Trophy, Upload, Lock } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useTheme } from '@/lib/ThemeContext';
 import { usePremium } from '@/context/PremiumContext';
 import type { ReactNode } from 'react';
 
-const PRIMARY = '#2872A1';
-const GOLD = '#F59E0B';
-
-const PERKS: { icon: keyof typeof Ionicons.glyphMap; label: string; color: string; bg: string }[] = [
-  { icon: 'barbell', label: 'Seances et historique illimites', color: PRIMARY, bg: 'rgba(40,114,161,0.10)' },
-  { icon: 'analytics', label: 'Stats avancees et analyses', color: '#7C5CE0', bg: 'rgba(124,92,224,0.10)' },
-  { icon: 'trophy', label: 'Competitions, palmares, records', color: '#E6953A', bg: 'rgba(230,149,58,0.10)' },
-  { icon: 'cloud-upload', label: 'Export et sauvegarde des donnees', color: '#0E9AA7', bg: 'rgba(14,154,167,0.10)' },
+const PERKS: { Icon: any; label: string; desc: string; color: string; bg: string }[] = [
+  {
+    Icon: Dumbbell,
+    label: 'Séances & historique illimités',
+    desc: 'Toutes tes données sans limite de temps',
+    color: '#6366F1',
+    bg: 'rgba(99,102,241,0.10)',
+  },
+  {
+    Icon: BarChart2,
+    label: 'Stats avancées & analyses',
+    desc: 'Tendances, patterns, comparaisons profondes',
+    color: '#F97316',
+    bg: 'rgba(249,115,22,0.10)',
+  },
+  {
+    Icon: Trophy,
+    label: 'Compétitions, palmarès, records',
+    desc: 'Suis ta progression sur le long terme',
+    color: '#F59E0B',
+    bg: 'rgba(245,158,11,0.10)',
+  },
+  {
+    Icon: Upload,
+    label: 'Export & sauvegarde des données',
+    desc: 'PDF, CSV, backup automatique inclus',
+    color: '#10B981',
+    bg: 'rgba(16,185,129,0.10)',
+  },
 ];
-
-const SPECTRUM = [PRIMARY, '#7C5CE0', '#E6953A', '#0E9AA7', '#D9486B'];
 
 interface PremiumGateProps {
   children: ReactNode;
-  /** Titre de la fonctionnalite verrouillee, affiche sur l'ecran de blocage */
+  /** Titre de la fonctionnalité verrouillée, affiché sur l'écran de blocage */
   featureTitle?: string;
 }
 
 export function PremiumGate({ children, featureTitle }: PremiumGateProps) {
   const { isPremium, isLoading } = usePremium();
 
+  // Premium d'abord : un abonné (cache local) accède tout de suite au contenu
+  if (isPremium) return <>{children}</>;
+
   if (isLoading) {
     return <View style={{ flex: 1 }} />;
   }
 
-  if (isPremium) return <>{children}</>;
   return <PremiumLockScreen featureTitle={featureTitle} />;
 }
 
 export function PremiumLockScreen({ featureTitle }: { featureTitle?: string }) {
-  const { colors, isDark } = useTheme();
   const router = useRouter();
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: colors.background }}
+      style={styles.scroll}
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
     >
-      {/* Cadenas dore */}
-      <View style={[styles.lockOuter, { backgroundColor: isDark ? 'rgba(245,158,11,0.10)' : 'rgba(245,158,11,0.10)' }]}>
-        <View style={styles.lockInner}>
-          <Ionicons name="lock-closed" size={34} color="#FFFFFF" />
-        </View>
-      </View>
-
-      <Text style={[styles.title, { color: colors.text }]}>Fonctionnalite Premium</Text>
-
-      {/* Barre spectre */}
-      <View style={styles.spectrumRow}>
-        {SPECTRUM.map((col, i) => (
-          <View key={i} style={[styles.spectrumSeg, { backgroundColor: col }]} />
-        ))}
-      </View>
-
-      {featureTitle ? (
-        <View style={[styles.chip, { backgroundColor: isDark ? colors.surface : 'rgba(40,114,161,0.08)' }]}>
-          <Ionicons name="star-outline" size={13} color={colors.textSecondary} />
-          <Text style={[styles.chipText, { color: colors.textSecondary }]} numberOfLines={1}>
-            {featureTitle}
-          </Text>
-        </View>
-      ) : null}
-
-      <Text style={[styles.body, { color: colors.textSecondary }]}>
-        Cette fonctionnalite est reservee aux abonnes Yoroi Premium.
-        Debloquez tout le potentiel de votre suivi sport et combat.
-      </Text>
-
-      {/* Avantages */}
-      <View style={[styles.perksCard, { backgroundColor: colors.surface, borderColor: isDark ? colors.border : '#DAE8F2' }]}>
-        {PERKS.map((perk, i) => (
-          <View key={perk.label}>
-            <View style={styles.perkRow}>
-              <View style={[styles.perkIcon, { backgroundColor: perk.bg }]}>
-                <Ionicons name={perk.icon} size={16} color={perk.color} />
-              </View>
-              <Text style={[styles.perkText, { color: colors.text }]}>{perk.label}</Text>
-              <Ionicons name="checkmark-circle" size={16} color={perk.color} />
-            </View>
-            {i < PERKS.length - 1 && (
-              <View style={[styles.perkDivider, { backgroundColor: isDark ? colors.border : '#EDF3F8' }]} />
-            )}
-          </View>
-        ))}
-      </View>
-
-      {/* CTA */}
-      <TouchableOpacity
-        style={styles.cta}
-        activeOpacity={0.85}
-        onPress={() => router.push('/paywall' as never)}
+      {/* ── Hero gradient */}
+      <LinearGradient
+        colors={['#0F0C29', '#302B63', '#24243E']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.hero}
       >
-        <Ionicons name="star" size={18} color="#FFFFFF" />
-        <Text style={styles.ctaText}>Decouvrir Yoroi Premium</Text>
-        <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-      </TouchableOpacity>
+        {/* Badge */}
+        <View style={styles.heroBadge}>
+          <Star size={10} color="#FBBF24" fill="#FBBF24" strokeWidth={0} />
+          <Text style={styles.heroBadgeText}>YOROI PREMIUM</Text>
+        </View>
 
-      <TouchableOpacity onPress={() => router.back()} style={styles.backLink}>
-        <Text style={[styles.backText, { color: colors.textSecondary }]}>Retour</Text>
-      </TouchableOpacity>
+        {/* Icône centrale */}
+        <View style={styles.lockOuter}>
+          <View style={styles.lockInner}>
+            <Lock size={32} color="#FFFFFF" strokeWidth={2} />
+          </View>
+        </View>
+
+        <Text style={styles.heroTitle}>Fonctionnalité{'\n'}Premium</Text>
+
+        {featureTitle && (
+          <View style={styles.featureChip}>
+            <Star size={11} color="#FBBF24" fill="#FBBF24" strokeWidth={0} />
+            <Text style={styles.featureChipText} numberOfLines={1}>{featureTitle}</Text>
+          </View>
+        )}
+
+        <Text style={styles.heroDesc}>
+          Cette fonctionnalité est réservée aux abonnés Yoroi Premium.{'\n'}
+          Rejoins des milliers d'athlètes qui progressent plus vite.
+        </Text>
+      </LinearGradient>
+
+      {/* ── Avantages */}
+      <View style={styles.perksSection}>
+        <Text style={styles.perksLabel}>Tout ce que tu débloque :</Text>
+        <View style={styles.perksCard}>
+          {PERKS.map((perk, i) => (
+            <View key={perk.label}>
+              <View style={styles.perkRow}>
+                <View style={[styles.perkIcon, { backgroundColor: perk.bg }]}>
+                  <perk.Icon size={16} color={perk.color} strokeWidth={2} />
+                </View>
+                <View style={styles.perkTextBlock}>
+                  <Text style={styles.perkTitle}>{perk.label}</Text>
+                  <Text style={styles.perkDesc}>{perk.desc}</Text>
+                </View>
+                <View style={[styles.checkCircle, { backgroundColor: perk.color + '22' }]}>
+                  <Check size={11} color={perk.color} strokeWidth={3} />
+                </View>
+              </View>
+              {i < PERKS.length - 1 && <View style={styles.perkDivider} />}
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* ── CTA */}
+      <View style={styles.ctaSection}>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => router.push('/paywall' as never)}
+          style={styles.ctaTouchable}
+        >
+          <LinearGradient
+            colors={['#F59E0B', '#EF4444']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.cta}
+          >
+            <Star size={17} color="#FFF" fill="#FFF" strokeWidth={0} />
+            <View style={{ alignItems: 'center' }}>
+              <Text style={styles.ctaText}>Passer Premium maintenant</Text>
+              <Text style={styles.ctaSubtext}>Sans engagement • Annulable à tout moment</Text>
+            </View>
+            <ArrowRight size={17} color="#FFF" strokeWidth={2.5} />
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backLink}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.backText}>Retour à la version gratuite</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
   container: {
     flexGrow: 1,
+  },
+  // ── Hero
+  hero: {
+    paddingTop: 60,
+    paddingBottom: 36,
+    paddingHorizontal: 24,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
+    gap: 12,
+  },
+  heroBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+    marginBottom: 6,
+  },
+  heroBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 1.5,
   },
   lockOuter: {
-    width: 104,
-    height: 104,
+    width: 100,
+    height: 100,
     borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.20)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
-    borderWidth: 1.5,
-    borderColor: 'rgba(245,158,11,0.35)',
   },
   lockInner: {
-    width: 72,
-    height: 72,
+    width: 68,
+    height: 68,
     borderRadius: 22,
-    backgroundColor: GOLD,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: GOLD,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 0,
   },
-  title: {
-    fontSize: 26,
+  heroTitle: {
+    fontSize: 30,
     fontWeight: '900',
-    letterSpacing: -0.4,
-    marginBottom: 10,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    letterSpacing: -0.8,
+    lineHeight: 36,
+    marginTop: 4,
   },
-  spectrumRow: {
-    flexDirection: 'row',
-    gap: 4,
-    marginBottom: 14,
-  },
-  spectrumSeg: {
-    width: 22,
-    height: 4,
-    borderRadius: 2,
-  },
-  chip: {
+  featureChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
-    marginBottom: 14,
     maxWidth: 300,
   },
-  chipText: {
+  featureChipText: {
     fontSize: 13,
     fontWeight: '600',
+    color: '#FFFFFF',
     flexShrink: 1,
   },
-  body: {
+  heroDesc: {
     fontSize: 14,
-    lineHeight: 20,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.70)',
     textAlign: 'center',
-    marginBottom: 20,
-    maxWidth: 320,
+    lineHeight: 21,
+    maxWidth: 310,
+  },
+  // ── Perks
+  perksSection: {
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 8,
+  },
+  perksLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#9CA3AF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 12,
+    marginLeft: 4,
   },
   perksCard: {
-    width: '100%',
-    maxWidth: 360,
-    borderRadius: 18,
-    paddingVertical: 6,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 4,
     paddingHorizontal: 14,
-    marginBottom: 24,
-    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
   perkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 11,
+    gap: 12,
+    paddingVertical: 13,
   },
   perkIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
+    width: 36,
+    height: 36,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
-  perkText: {
-    fontSize: 13.5,
-    fontWeight: '600',
+  perkTextBlock: {
     flex: 1,
+  },
+  perkTitle: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 2,
+  },
+  perkDesc: {
+    fontSize: 11.5,
+    fontWeight: '400',
+    color: '#6B7280',
+    lineHeight: 16,
+  },
+  checkCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   perkDivider: {
     height: StyleSheet.hairlineWidth,
-    marginLeft: 40,
+    backgroundColor: '#F3F4F6',
+    marginLeft: 48,
+  },
+  // ── CTA
+  ctaSection: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 40,
+    gap: 12,
+    alignItems: 'center',
+  },
+  ctaTouchable: {
+    width: '100%',
+    borderRadius: 18,
+    overflow: 'hidden',
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    elevation: 8,
   },
   cta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: PRIMARY,
-    paddingVertical: 15,
-    paddingHorizontal: 28,
-    borderRadius: 16,
-    shadowColor: PRIMARY,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 0,
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 17,
+    paddingHorizontal: 24,
   },
   ctaText: {
-    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+  },
+  ctaSubtext: {
+    fontSize: 10.5,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 1,
   },
   backLink: {
-    marginTop: 16,
-    padding: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
   backText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
+    color: '#9CA3AF',
+    textDecorationLine: 'underline',
+    textAlign: 'center',
   },
 });

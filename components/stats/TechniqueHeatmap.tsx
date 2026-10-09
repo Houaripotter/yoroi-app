@@ -33,7 +33,7 @@ const TechniqueHeatmapInner: React.FC<TechniqueHeatmapProps> = ({
   givenColor = SPARRING_COLORS.win,
   takenColor = SPARRING_COLORS.loss,
 }) => {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, themeColor } = useTheme();
 
   const { rows, maxCount } = useMemo(() => {
     const sorted = [...methods].sort((a, b) => (b.given + b.taken) - (a.given + a.taken));
@@ -91,7 +91,10 @@ const TechniqueHeatmapInner: React.FC<TechniqueHeatmapProps> = ({
                 { backgroundColor: givenColor, opacity: opacityFor(row.given) },
               ]}
             >
-              <Text style={styles.countText}>{row.given}</Text>
+              <Text style={[
+                styles.countText,
+                { color: (themeColor === 'blanc' && row.given === 0) ? colors.textMuted : '#FFFFFF' },
+              ]}>{row.given}</Text>
             </View>
             <View
               style={[
@@ -99,7 +102,10 @@ const TechniqueHeatmapInner: React.FC<TechniqueHeatmapProps> = ({
                 { backgroundColor: takenColor, opacity: opacityFor(row.taken) },
               ]}
             >
-              <Text style={styles.countText}>{row.taken}</Text>
+              <Text style={[
+                styles.countText,
+                { color: (themeColor === 'blanc' && row.taken === 0) ? colors.textMuted : '#FFFFFF' },
+              ]}>{row.taken}</Text>
             </View>
           </View>
         ))}

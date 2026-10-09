@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +18,9 @@ import { useTheme } from '@/lib/ThemeContext';
 import { getTrainings, Training, CombatRound } from '@/lib/database';
 import { SPORTS, getSportName } from '@/lib/sports';
 import logger from '@/lib/security/logger';
+import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
+import { PremiumGate } from '@/components/premium/PremiumGate';
+import { SkeletonGrid } from '@/components/stats/SkeletonCard';
 
 // ─── Moods de référence (mêmes que dans add-combat-session) ──────────────────
 const MOODS: Record<string, { emoji: string; label: string; color: string }> = {
@@ -171,8 +174,8 @@ export default function RoundsInsightsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.accent ?? '#8B5CF6'} />
+      <View style={[styles.container, { backgroundColor: colors.background, padding: 16 }]}>
+        <SkeletonGrid count={4} cardHeight={140} />
       </View>
     );
   }
@@ -197,7 +200,7 @@ export default function RoundsInsightsScreen() {
             onPress={() => router.push('/add-combat-session')}
             style={[styles.ctaBtn, { backgroundColor: colors.accent ?? '#8B5CF6' }]}
           >
-            <Text style={styles.ctaBtnText}>Ajouter une séance de combat</Text>
+            <Text style={[styles.ctaBtnText, { color: colors.textOnAccent ?? '#FFFFFF' }]}>Ajouter une séance de combat</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -206,6 +209,7 @@ export default function RoundsInsightsScreen() {
 
   // ─── Rendu ────────────────────────────────────────────────────────────────
   return (
+    <PremiumGate featureTitle="Analyse des rounds">
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center' }}>
@@ -308,8 +312,10 @@ export default function RoundsInsightsScreen() {
             <TopList items={stats.topObjectives} color="#8B5CF6" colors={colors} showAlerts />
           </Card>
         )}
+        <PremiumTeaser variant="analytics" title="Insights rounds complets" />
       </ScrollView>
     </View>
+    </PremiumGate>
   );
 }
 

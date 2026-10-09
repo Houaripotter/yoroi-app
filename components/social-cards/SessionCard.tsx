@@ -641,16 +641,16 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
                                 <Text style={[styles.paceText, paceTextStyle]}>{opt.sets}s</Text>
                               </View>
                             )}
-                            {opt.distance && renderStyledStat(opt.distance, 'KM')}
-                            {opt.duration && renderStyledStat(opt.duration, 'MIN')}
-                            {opt.watts && renderStyledStat(opt.watts, 'W')}
+                            {!!opt.distance && renderStyledStat(opt.distance, 'KM')}
+                            {!!opt.duration && renderStyledStat(opt.duration, 'MIN')}
+                            {!!opt.watts && renderStyledStat(opt.watts, 'W')}
                             {opt.resistance && renderStyledStat(opt.resistance, 'NV')}
-                            {opt.speed && renderStyledStat(opt.speed, 'KM/H')}
+                            {!!opt.speed && renderStyledStat(opt.speed, 'KM/H')}
                             {manualPace && <Text style={[styles.paceText, paceTextStyle]}>({manualPace})</Text>}
                             {paceWithUnit && <Text style={[styles.paceText, paceTextStyle]}>({paceWithUnit}/km)</Text>}
                             {opt.pente && renderStyledStat(opt.pente, '%')}
                             {opt.stairs && renderStyledStat(opt.stairs, 'ÉT.')}
-                            {opt.calories && renderStyledStat(opt.calories, 'KCAL')}
+                            {!!opt.calories && renderStyledStat(opt.calories, 'KCAL')}
                           </View>
                         </View>
                       </React.Fragment>

@@ -20,6 +20,10 @@ interface ScrollableLineChartProps {
   unit?: string;
   title?: string;
   onPress?: () => void;
+  /** Formateur personnalisé pour les labels de l'axe Y. Ex: (v) => `${Math.round(v)}min` */
+  yAxisFormat?: (value: number) => string;
+  /** Formateur personnalisé pour les labels des points de données. Ex: (v) => `7h10` */
+  valueFormat?: (value: number) => string;
 }
 
 
@@ -43,6 +47,8 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
   unit = '',
   title,
   onPress,
+  yAxisFormat,
+  valueFormat,
 }) => {
   const { colors, isDark } = useTheme();
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
@@ -74,7 +80,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
     const chartWidth = Math.max(SCREEN_WIDTH - 16, data.length * POINT_WIDTH);
     const chartHeight = compact ? 140 : height;
     const paddingTop = compact ? 48 : 60;
-    const paddingBottom = 45;
+    const paddingBottom = 55;
     const paddingLeft = 60;
     const paddingRight = 30;
     const graphHeight = chartHeight - paddingTop - paddingBottom;
@@ -104,16 +110,16 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
     for (let i = 0; i < numYLabels; i++) {
       const value = yMin + (yRange * i) / (numYLabels - 1);
       const y = paddingTop + graphHeight - (i / (numYLabels - 1)) * graphHeight;
-      yLabels.push({ value: Number.isInteger(value) ? String(Math.round(value)) : value.toFixed(1).replace(/\.0$/, ''), y });
+      yLabels.push({ value: yAxisFormat ? yAxisFormat(value) : (Number.isInteger(value) ? String(Math.round(value)) : value.toFixed(1).replace(/\.0$/, '')), y });
     }
 
     const labels = data.map((d, index) => {
-      if (!d.date) return `J${index + 1}`;
+      if (!d.date) return { line1: `J${index + 1}`, line2: '' };
       try {
         const date = typeof d.date === 'string' ? parseISO(d.date) : d.date;
-        return format(date, 'd/MM', { locale: dateLocale });
+        return { line1: format(date, 'd MMM', { locale: dateLocale }), line2: format(date, 'yyyy') };
       } catch (e) {
-        return `J${index + 1}`;
+        return { line1: `J${index + 1}`, line2: '' };
       }
     });
 
@@ -137,7 +143,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
     const chartWidth = Math.max(SCREEN_WIDTH - 16, data.length * POINT_WIDTH);
     const chartHeight = SCREEN_HEIGHT * 0.6;
     const paddingTop = 70;
-    const paddingBottom = 60;
+    const paddingBottom = 70;
     const paddingLeft = 65;
     const paddingRight = 30;
     const graphHeight = chartHeight - paddingTop - paddingBottom;
@@ -166,16 +172,16 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
     for (let i = 0; i < 6; i++) {
       const value = yMin + (yRange * i) / 5;
       const y = paddingTop + graphHeight - (i / 5) * graphHeight;
-      yLabels.push({ value: Number.isInteger(value) ? String(Math.round(value)) : value.toFixed(1).replace(/\.0$/, ''), y });
+      yLabels.push({ value: yAxisFormat ? yAxisFormat(value) : (Number.isInteger(value) ? String(Math.round(value)) : value.toFixed(1).replace(/\.0$/, '')), y });
     }
 
     const labels = data.map((d, index) => {
-      if (!d.date) return `J${index + 1}`;
+      if (!d.date) return { line1: `J${index + 1}`, line2: '' };
       try {
         const date = typeof d.date === 'string' ? parseISO(d.date) : d.date;
-        return format(date, 'd MMM', { locale: dateLocale });
+        return { line1: format(date, 'd MMM', { locale: dateLocale }), line2: format(date, 'yyyy') };
       } catch (e) {
-        return `J${index + 1}`;
+        return { line1: `J${index + 1}`, line2: '' };
       }
     });
 
@@ -274,7 +280,9 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
           const valueAnchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
           const valueX = isFirst ? point.x + 2 : isLast ? point.x - 2 : point.x;
 
-          const valueLabel = `${Number.isInteger(point.value) ? Math.round(point.value) : point.value.toFixed(1).replace(/\.0$/, '')}${unit ? ` ${unit}` : ''}`;
+          const valueLabel = valueFormat
+            ? valueFormat(point.value)
+            : `${Number.isInteger(point.value) ? Math.round(point.value) : point.value.toFixed(1).replace(/\.0$/, '')}${unit ? ` ${unit}` : ''}`;
           const labelW = valueLabel.length * (isFullscreenMode ? 7.5 : 6) + 10;
           const rectX = valueAnchor === 'start' ? valueX : valueAnchor === 'end' ? valueX - labelW : valueX - labelW / 2;
 
@@ -329,18 +337,32 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = React.mem
               {valueLabel}
             </SvgText>
 
-            {/* Date */}
+            {/* Date ligne 1 : jour + mois */}
             <SvgText
               x={dateX}
-              y={chartInfo.chartHeight - (isFullscreenMode ? 15 : 10)}
+              y={chartInfo.chartHeight - (isFullscreenMode ? 26 : 20)}
               fill={lineColor}
               fontSize={fontSize.date}
               fontWeight="700"
               textAnchor={dateAnchor}
               opacity={0.8}
             >
-              {chartInfo.labels[index]}
+              {chartInfo.labels[index].line1}
             </SvgText>
+            {/* Date ligne 2 : année */}
+            {chartInfo.labels[index].line2 ? (
+              <SvgText
+                x={dateX}
+                y={chartInfo.chartHeight - (isFullscreenMode ? 11 : 7)}
+                fill={lineColor}
+                fontSize={fontSize.date - 1}
+                fontWeight="600"
+                textAnchor={dateAnchor}
+                opacity={0.5}
+              >
+                {chartInfo.labels[index].line2}
+              </SvgText>
+            ) : null}
           </G>
           );
         })}

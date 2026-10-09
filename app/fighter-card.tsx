@@ -125,19 +125,20 @@ export default function FighterCardScreen() {
       joinDate.setMonth(joinDate.getMonth() - 3);
 
       // Poids perdu
-      const startWeight = profile?.start_weight || latestMeasurement?.weight || 75;
-      const currentWeight = latestMeasurement?.weight || 75;
-      const weightLost = Math.max(0, startWeight - currentWeight);
+      // Pas de valeur fictive : 0 = inconnu
+      const currentWeight = latestMeasurement?.weight || 0;
+      const startWeight = profile?.start_weight || currentWeight;
+      const weightLost = currentWeight > 0 ? Math.max(0, startWeight - currentWeight) : 0;
 
       setStats({
         name: profile?.name || settings.username || 'Guerrier Yoroi',
         nickname: undefined,
         weight: currentWeight,
         targetWeight: settings.targetWeight || profile?.target_weight,
-        height: settings.height || profile?.height_cm || 175,
+        height: settings.height || profile?.height_cm || 0,
         rank: rank.name,
         rankLevel: RANKS.findIndex(r => r.id === rank.id) + 1,
-        xp: streakData || 0,
+        xp: totalPoints || 0, // points totaux (pas la série)
         streak: streakData || 0,
         totalTrainings,
         totalMinutes: Math.round(totalMinutes),
@@ -246,9 +247,22 @@ export default function FighterCardScreen() {
   if (isLoading || !stats) {
     return (
       <ScreenWrapper>
+        {/* Header avec retour (si le chargement échoue) */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={[styles.backButton, { backgroundColor: colors.card }]}
+            onPress={() => router.back()}
+          >
+            <ChevronLeft size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+            FICHE COMBATTANT
+          </Text>
+          <View style={{ width: 44 }} />
+        </View>
         <View style={styles.loadingContainer}>
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            Chargement de ta fiche...
+            {isLoading ? 'Chargement de ta fiche...' : 'Impossible de charger ta fiche'}
           </Text>
         </View>
       </ScreenWrapper>
@@ -315,7 +329,9 @@ export default function FighterCardScreen() {
                       <Castle size={42} color="#D4AF37" />
                     ) : stats.rank.includes('Bushi') ? (
                       <Swords size={42} color="#D4AF37" />
-                    ) : null}
+                    ) : (
+                      <Award size={42} color="#D4AF37" />
+                    )}
                   </View>
                 </LinearGradient>
               </View>
@@ -336,13 +352,13 @@ export default function FighterCardScreen() {
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
                   <Target size={16} color="#D4AF37" />
-                  <Text style={styles.statValue}>{stats.weight} kg</Text>
+                  <Text style={styles.statValue}>{stats.weight > 0 ? `${stats.weight} kg` : '-'}</Text>
                   <Text style={styles.statLabel}>Poids</Text>
                 </View>
                 <View style={styles.statDivider} />
                 <View style={styles.statItem}>
                   <TrendingUp size={16} color="#D4AF37" />
-                  <Text style={styles.statValue}>{stats.height} cm</Text>
+                  <Text style={styles.statValue}>{stats.height > 0 ? `${stats.height} cm` : '-'}</Text>
                   <Text style={styles.statLabel}>Taille</Text>
                 </View>
                 <View style={styles.statDivider} />

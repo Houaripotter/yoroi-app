@@ -33,7 +33,24 @@ export interface WarriorTheme {
 }
 
 export const WARRIOR_THEMES: WarriorTheme[] = [
-  // ── Thèmes combo existants ──
+  // ── Thèmes gratuits (en premier) ──
+  {
+    id: 'classic',
+    name: 'Classic',
+    themeColor: 'classic',
+    description: 'Monochrome',
+    unlockXP: 0,
+    icon: '',
+  },
+  {
+    id: 'blanc',
+    name: 'Blanc',
+    themeColor: 'blanc',
+    description: 'Épuré & Minimal',
+    unlockXP: 0,
+    icon: '',
+  },
+  // ── Thèmes premium ──
   {
     id: 'charcoal',
     name: 'Charcoal',
@@ -155,14 +172,6 @@ export const WARRIOR_THEMES: WarriorTheme[] = [
     icon: '',
   },
   // ── Nouveaux thèmes couleur pure ──
-  {
-    id: 'classic',
-    name: 'Classic',
-    themeColor: 'classic',
-    description: 'Monochrome',
-    unlockXP: 0,
-    icon: '',
-  },
   {
     id: 'volt',
     name: 'Volt',

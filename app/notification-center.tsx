@@ -196,7 +196,7 @@ export default function NotificationCenterScreen() {
     }
     // Navigation selon l'écran cible ou le type
     if (item.data?.screen) {
-      router.push(`/${item.data.screen}` as any);
+      router.push((item.data.screen === 'home' ? '/(tabs)' : `/${item.data.screen}`) as any);
     } else {
       switch (item.type) {
         case 'training':
@@ -221,7 +221,7 @@ export default function NotificationCenterScreen() {
         case 'smart_missed':
         case 'smart_rest':
         case 'smart_frequency':
-          router.push('/weekly-report' as any);
+          router.push('/(tabs)' as any);
           break;
         default:
           break;

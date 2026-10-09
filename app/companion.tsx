@@ -182,7 +182,7 @@ function AddModal({ visible, colors, onClose, onSave }: AddModalProps) {
               style={[styles.modalBtn, { backgroundColor: colors.accent }]}
               onPress={handleSave}
             >
-              <Text style={[styles.modalBtnText, { color: '#FFF' }]}>{t('companion.save')}</Text>
+              <Text style={[styles.modalBtnText, { color: colors.textOnAccent }]}>{t('companion.save')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -675,7 +675,7 @@ export default function CompanionScreen() {
         style={[styles.fab, { backgroundColor: colors.accent, bottom: insets.bottom + 20 }]}
         onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); setShowAdd(true); }}
       >
-        <Plus size={24} color="#FFF" strokeWidth={2.5} />
+        <Plus size={24} color={colors.textOnAccent} strokeWidth={2.5} />
       </TouchableOpacity>
 
       {/* Modal ajout */}

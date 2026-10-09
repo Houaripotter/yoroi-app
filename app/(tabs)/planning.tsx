@@ -18,6 +18,7 @@ import {
   RefreshControl,
   DeviceEventEmitter,
   InteractionManager,
+  Platform,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { safeOpenURL } from '@/lib/security/validators';
@@ -72,6 +73,8 @@ import { healthConnect as healthConnectService } from '@/lib/healthConnect';
 import { triggerVictoryModal, createCalendarVictoryData } from '@/lib/victoryTrigger';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
+import { PremiumModal } from '@/components/premium/PremiumModal';
+import { CalendarDays } from 'lucide-react-native';
 
 // ============================================
 // PLANNING SCREEN - SWIPEABLE VIEWS
@@ -165,6 +168,7 @@ export default function PlanningScreen() {
   // CATALOG STATE (for "Trouver" feature)
   // ============================================
   const [eventsTabMode, setEventsTabMode] = useState<EventsTabMode>('catalog'); // Trouver par défaut
+  const [showCatalogPremiumModal, setShowCatalogPremiumModal] = useState(false);
   const [savedExternalEvents, setSavedExternalEvents] = useState<SportEvent[]>([]);
   const [savedExternalEventIds, setSavedExternalEventIds] = useState<Set<string>>(new Set());
   const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
@@ -1039,6 +1043,7 @@ export default function PlanningScreen() {
     impactAsync(ImpactFeedbackStyle.Light);
 
     setViewMode(tab);
+    if (tab === 'competitions') setShowCatalogPremiumModal(true);
 
     // Scroller vers la page correspondante
     horizontalScrollRef.current?.scrollTo({
@@ -1059,6 +1064,7 @@ export default function PlanningScreen() {
         isScrollingRef.current = true;
 
         setViewMode(newTab);
+        if (newTab === 'competitions') setShowCatalogPremiumModal(true);
         impactAsync(ImpactFeedbackStyle.Light);
 
         // Reset le flag après un délai
@@ -1090,7 +1096,7 @@ export default function PlanningScreen() {
   return (
     <ErrorBoundary>
       <View style={[styles.container, { backgroundColor: screenBackground }]}>
-        <StatusBar barStyle="light-content" backgroundColor={screenBackground} />
+        <StatusBar barStyle={isDark || screenText === '#FFFFFF' ? 'light-content' : 'dark-content'} backgroundColor={screenBackground} />
 
       {/* Header avec tabs circulaires - zIndex élevé pour rester visible */}
       <View style={[styles.tabsHeader, { backgroundColor: screenBackground, zIndex: 100, elevation: 10 }]}>
@@ -1123,8 +1129,8 @@ export default function PlanningScreen() {
             // Theme-safe : sur fond accent (light), texte blanc ; sur fond sombre, screenText
             const inactiveTextColor = screenText;
             const inactiveTextOpacity = 0.65;
-            const inactiveCircleBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.18)';
-            const inactiveCircleBorder = isDark ? (colors.companion + '40') : 'rgba(255,255,255,0.3)';
+            const inactiveCircleBg = themeColor === 'blanc' ? 'rgba(0,0,0,0.06)' : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.18)');
+            const inactiveCircleBorder = themeColor === 'blanc' ? colors.border : (isDark ? (colors.companion + '40') : 'rgba(255,255,255,0.3)');
             return (
               <TouchableOpacity
                 key={tab.key}
@@ -1136,7 +1142,7 @@ export default function PlanningScreen() {
                   styles.circleTab,
                   {
                     backgroundColor: isActive
-                      ? (isDark ? colors.accent : '#FFFFFF')
+                      ? (themeColor === 'blanc' ? colors.accent : (isDark ? colors.accent : '#FFFFFF'))
                       : inactiveCircleBg,
                     borderWidth: isActive ? 0 : 1,
                     borderColor: isActive ? 'transparent' : inactiveCircleBorder,
@@ -1144,12 +1150,12 @@ export default function PlanningScreen() {
                 ]}>
                   <Icon
                     size={18}
-                    color={isActive ? (isDark ? colors.textOnAccent : colors.accent) : inactiveTextColor}
+                    color={isActive ? (themeColor === 'blanc' ? colors.textOnAccent : (isDark ? colors.textOnAccent : colors.accent)) : inactiveTextColor}
                     strokeWidth={2.5}
                     style={{ opacity: isActive ? 1 : inactiveTextOpacity }}
                   />
                   {/* Badge compteur (uniquement competitions à venir) */}
-                  {tab.badge && tab.badge > 0 ? (
+                  {tab.badge != null && tab.badge > 0 ? (
                     <View style={{
                       position: 'absolute', top: -3, right: -3,
                       minWidth: 18, height: 18, borderRadius: 9,
@@ -1168,7 +1174,7 @@ export default function PlanningScreen() {
                 <Text style={[
                   styles.tabTitle,
                   {
-                    color: isActive ? (isDark ? colors.accent : '#FFFFFF') : inactiveTextColor,
+                    color: isActive ? (themeColor === 'blanc' ? colors.accent : (isDark ? colors.accent : '#FFFFFF')) : inactiveTextColor,
                     opacity: isActive ? 1 : inactiveTextOpacity,
                   }
                 ]}>
@@ -1182,8 +1188,12 @@ export default function PlanningScreen() {
           {/* Trash icon - small, theme-safe */}
           <TouchableOpacity
             style={[styles.trashIconButton, {
-              backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.2)',
-              borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)',
+              backgroundColor: themeColor === 'blanc'
+                ? 'rgba(0,0,0,0.06)'
+                : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.2)'),
+              borderColor: themeColor === 'blanc'
+                ? colors.border
+                : (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)'),
               borderWidth: 1,
             }]}
             onPress={() => showPopup(t('planning.trash'), t('planning.trashDescription'), [{ text: t('planning.ok'), style: 'primary' }])}
@@ -1219,7 +1229,7 @@ export default function PlanningScreen() {
         <View style={styles.page}>
           <ScrollView
             style={[styles.scrollView, !isDark && { backgroundColor: colors.background }]}
-            contentContainerStyle={styles.content}
+            contentContainerStyle={[styles.content, { paddingBottom: 150 + (Platform.OS === 'android' ? insets.bottom : 0) }]}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
@@ -1268,7 +1278,7 @@ export default function PlanningScreen() {
                   </Text>
                   <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted, marginTop: 2 }}>
                     {weeklyStats.sessionsDone === 0
-                      ? (weeklyStats.sessionsPlanned > 0 ? `${weeklyStats.sessionsPlanned} séances prévues` : 'Aucune séance pour le moment')
+                      ? (weeklyStats.sessionsPlanned > 0 ? `${weeklyStats.sessionsPlanned} séance${weeklyStats.sessionsPlanned > 1 ? 's' : ''} prévue${weeklyStats.sessionsPlanned > 1 ? 's' : ''}` : 'Aucune séance pour le moment')
                       : weeklyStats.sessionsPlanned > 0
                         ? (weeklyStats.sessionsDone >= weeklyStats.sessionsPlanned ? '✓ Objectif atteint, beau boulot' : `Plus que ${weeklyStats.sessionsPlanned - weeklyStats.sessionsDone} pour ton objectif`)
                         : `${weeklyStats.sessionsDone} séance${weeklyStats.sessionsDone > 1 ? 's' : ''} cette semaine`}
@@ -1379,7 +1389,7 @@ export default function PlanningScreen() {
         <View style={styles.page}>
           <ScrollView
             style={[styles.scrollView, !isDark && { backgroundColor: colors.background }]}
-            contentContainerStyle={styles.content}
+            contentContainerStyle={[styles.content, { paddingBottom: 150 + (Platform.OS === 'android' ? insets.bottom : 0) }]}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
@@ -1399,7 +1409,7 @@ export default function PlanningScreen() {
         <View style={styles.page}>
           <ScrollView
             style={[styles.scrollView, !isDark && { backgroundColor: colors.background }]}
-            contentContainerStyle={styles.content}
+            contentContainerStyle={[styles.content, { paddingBottom: 150 + (Platform.OS === 'android' ? insets.bottom : 0) }]}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
@@ -1598,7 +1608,7 @@ export default function PlanningScreen() {
         <View style={styles.page}>
           <ScrollView
             style={[styles.scrollView, !isDark && { backgroundColor: colors.background }]}
-            contentContainerStyle={styles.content}
+            contentContainerStyle={[styles.content, { paddingBottom: 150 + (Platform.OS === 'android' ? insets.bottom : 0) }]}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
@@ -1881,14 +1891,14 @@ export default function PlanningScreen() {
                     >
                       <View style={[styles.filterModalHeader, { backgroundColor: colors.accent }]}>
                         <View style={styles.filterModalHeaderContent}>
-                          <Filter size={22} color="#FFFFFF" />
-                          <Text style={styles.filterModalTitle}>{t('planning.filters')}</Text>
+                          <Filter size={22} color={colors.textOnAccent} />
+                          <Text style={[styles.filterModalTitle, { color: colors.textOnAccent }]}>{t('planning.filters')}</Text>
                         </View>
                         <TouchableOpacity
                           style={styles.filterModalCloseBtn}
                           onPress={() => setShowFiltersModal(false)}
                         >
-                          <X size={20} color="#FFFFFF" />
+                          <X size={20} color={colors.textOnAccent} />
                         </TouchableOpacity>
                       </View>
 
@@ -2281,8 +2291,8 @@ export default function PlanningScreen() {
                             setShowFiltersModal(false);
                           }}
                         >
-                          <Check size={18} color="#FFFFFF" strokeWidth={3} />
-                          <Text style={styles.filterApplyBtnText}>{t('planning.apply')} ({filteredCatalogEvents.length})</Text>
+                          <Check size={18} color={colors.textOnAccent} strokeWidth={3} />
+                          <Text style={[styles.filterApplyBtnText, { color: colors.textOnAccent }]}>{t('planning.apply')} ({filteredCatalogEvents.length})</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -2661,6 +2671,8 @@ export default function PlanningScreen() {
               </>
             )}
 
+            {/* Modal premium déjà monté en dehors du ScrollView */}
+
             <View style={{ height: 120 }} />
           </ScrollView>
 
@@ -2676,6 +2688,22 @@ export default function PlanningScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* ── Modal Premium Compétitions */}
+      <PremiumModal
+        visible={showCatalogPremiumModal}
+        onClose={() => setShowCatalogPremiumModal(false)}
+        Icon={CalendarDays}
+        gradientColors={['#1C0A00', '#78350F', '#D97706']}
+        title="Catalogue de compétitions"
+        description="Découvre et inscris-toi à des centaines d'événements sportifs partout dans le monde."
+        features={[
+          '500+ compétitions en France, Europe et monde',
+          'Filtres avancés par sport, distance et niveau',
+          'Alertes inscription et dates limites',
+          'Ajout direct à ton calendrier',
+        ]}
+      />
 
       {/* MODALS */}
       <DayDetailModal

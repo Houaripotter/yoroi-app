@@ -49,8 +49,8 @@ export const CITATIONS_MOTIVANTES = [
   "Sois le changement que tu veux voir.",
   "L'honneur ne se donne pas, il se gagne.",
   "Chaque respiration est une nouvelle chance de devenir meilleur·e.",
-  "Pour se mettre en marche, il suffit d'avoir 5% de réponses à ses questions ; les 95% restants viennent le long du chemin. — Mike Horn",
-  "La volonté est la seule chose qui ne dépend que de nous. — Mike Horn",
-  "On a tous deux vies. La deuxième commence quand on réalise qu'on n'en a qu'une. — Mike Horn",
-  "Ne rêve pas ta vie, vis tes rêves. — Mike Horn"
+  "Pour se mettre en marche, il suffit d'avoir 5% de réponses à ses questions ; les 95% restants viennent le long du chemin. Mike Horn",
+  "La volonté est la seule chose qui ne dépend que de nous. Mike Horn",
+  "On a tous deux vies. La deuxième commence quand on réalise qu'on n'en a qu'une. Mike Horn",
+  "Ne rêve pas ta vie, vis tes rêves. Mike Horn"
 ];

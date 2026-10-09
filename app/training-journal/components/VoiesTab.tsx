@@ -81,7 +81,7 @@ export default function VoiesTab() {
     // Parser les "theme" pour extraire la cotation (ex: "voie 6b+" ou "6c flash")
     const byGrade: Record<string, number> = {};
     let bestGradeVal = 0;
-    let bestGrade = '—';
+    let bestGrade = ',';
     for (const t of trainings) {
       const theme = (t.technical_theme || '').toLowerCase();
       for (const g of GRADES) {
@@ -96,7 +96,7 @@ export default function VoiesTab() {
       }
     }
     const gradeDist = Object.entries(byGrade)
-      .map(([grade, count]) => ({ grade, count, ...gradeMeta(grade) }))
+      .map(([grade, count]) => ({ count, ...gradeMeta(grade) }))
       .sort((a, b) => a.val - b.val);
     return { totalSessions, totalMin, bestGrade, bestGradeVal, gradeDist };
   }, [trainings]);

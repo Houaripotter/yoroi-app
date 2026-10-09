@@ -57,9 +57,9 @@ const SparklineChartInner: React.FC<SparklineChartProps> = ({
   const max = Math.max(...values);
   const range = max - min || 1;
 
-  // En mode labels, on réserve de l'espace haut (valeur) + bas (date)
+  // En mode labels, on réserve de l'espace haut (valeur) + bas (date × 2 lignes)
   const padTop = showLabels ? 16 : 2;
-  const padBottom = showLabels ? 14 : 2;
+  const padBottom = showLabels ? 26 : 2; // 26px pour 2 lignes (jour+mois / année)
   const padX = showLabels ? 14 : 0;
   const plotH = height - padTop - padBottom;
   const plotW = width - padX * 2;
@@ -84,12 +84,15 @@ const SparklineChartInner: React.FC<SparklineChartProps> = ({
     if (Number.isInteger(v)) return String(v);
     return v.toFixed(1);
   };
-  const formatDate = (iso?: string): string => {
-    if (!iso) return '';
+  const formatDate = (iso?: string): { line1: string; line2: string } => {
+    if (!iso) return { line1: '', line2: '' };
     try {
-      return format(parseISO(iso), 'd MMM', { locale: fr }).toUpperCase();
+      return {
+        line1: format(parseISO(iso), 'd MMM', { locale: fr }).toUpperCase(), // Règle 4 : ligne 1 = jour+mois
+        line2: format(parseISO(iso), 'yyyy'),                                  // Règle 4 : ligne 2 = année
+      };
     } catch {
-      return '';
+      return { line1: '', line2: '' };
     }
   };
 
@@ -123,7 +126,7 @@ const SparklineChartInner: React.FC<SparklineChartProps> = ({
       {/* Valeurs au-dessus + dates en-dessous (overlay text pour propre rendu) */}
       {showLabels && coords.map((c, i) => {
         const valStr = formatVal(c.value);
-        const dateStr = formatDate(c.date);
+        const dateFmt = formatDate(c.date);
         const isFirst = i === 0;
         const isLast = i === coords.length - 1;
         const align: 'flex-start' | 'flex-end' | 'center' =
@@ -144,10 +147,16 @@ const SparklineChartInner: React.FC<SparklineChartProps> = ({
             <Text style={[styles.valueText, { top: Math.max(c.y - padTop - 4, 0) }]}>
               {valStr}
             </Text>
-            {dateStr ? (
-              <Text style={[styles.dateText, { top: height - padBottom }]} numberOfLines={1}>
-                {dateStr}
-              </Text>
+            {dateFmt.line1 ? (
+              <>
+                {/* Règle 4 : ligne 1 = jour+mois, ligne 2 = année */}
+                <Text style={[styles.dateText, { top: height - padBottom }]} numberOfLines={1}>
+                  {dateFmt.line1}
+                </Text>
+                <Text style={[styles.dateText, { top: height - padBottom + 12, opacity: 0.7 }]} numberOfLines={1}>
+                  {dateFmt.line2}
+                </Text>
+              </>
             ) : null}
           </View>
         );

@@ -345,7 +345,7 @@ export default function ChallengesScreen() {
           // XP non réclamé sur les complétés
           const unclaimedXP = currentList
             .filter(c => c?.progress?.completed && !c?.progress?.claimed)
-            .reduce((sum, c) => sum + (c?.xpReward || 0), 0);
+            .reduce((sum, c) => sum + (c?.reward?.xp || 0), 0);
           const tabColor = activeTab === 'daily' ? '#3B82F6' : activeTab === 'weekly' ? '#8B5CF6' : '#F59E0B';
           const tabLabel = activeTab === 'daily' ? 'aujourd\'hui' : activeTab === 'weekly' ? 'cette semaine' : 'ce mois';
           return (
@@ -473,8 +473,8 @@ export default function ChallengesScreen() {
                     }]}>{challenge.title}</Text>
                     {justClaimedId === challenge.id && (
                       <View style={[styles.justClaimedBadge, { backgroundColor: colors.accent }]}>
-                        <CheckCircle2 size={10} color="#FFFFFF" />
-                        <Text style={styles.justClaimedText}>VALIDE</Text>
+                        <CheckCircle2 size={10} color={colors.textOnAccent} />
+                        <Text style={[styles.justClaimedText, { color: colors.textOnAccent }]}>VALIDE</Text>
                       </View>
                     )}
                   </View>
@@ -609,8 +609,8 @@ export default function ChallengesScreen() {
                       onPress={handleQuickActionSave}
                       disabled={isSavingAction}
                     >
-                      <Scale size={18} color="#FFFFFF" />
-                      <Text style={styles.modalSaveBtnText}>{t('challenges.saveWeight')}</Text>
+                      <Scale size={18} color={colors.textOnAccent} />
+                      <Text style={[styles.modalSaveBtnText, { color: colors.textOnAccent }]}>{t('challenges.saveWeight')}</Text>
                     </TouchableOpacity>
                     {/* Options supplémentaires */}
                     <View style={[styles.extraOptionsLabel, { borderTopColor: colors.border }]}>

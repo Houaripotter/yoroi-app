@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
+import { ScrollView, View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { useScrollContext } from '@/lib/ScrollContext';
@@ -15,6 +15,7 @@ import { ScrollableLineChart } from '../charts/ScrollableLineChart';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
 import { SimpleMetricCard } from '../charts/SimpleMetricCard';
 import { StatsDetailModal } from '../StatsDetailModal';
+import { SkeletonGrid } from '../SkeletonCard';
 import { aggregateWeightData } from '@/lib/statsAggregation';
 import { Target, TrendingUp, TrendingDown, Scale, BarChart3 } from 'lucide-react-native';
 import { BMI_RANGES, getMetricStatus } from '@/lib/healthRanges';
@@ -24,12 +25,13 @@ import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { StatsExplanation } from '../StatsExplanation';
 import { logger } from '@/lib/security/logger';
+import { PremiumModal } from '@/components/premium/PremiumModal';
 
 export const PoidsPage: React.FC = () => {
-  const { colors } = useTheme();
+  const { colors, screenBackground } = useTheme();
   const { t, language } = useI18n();
   const { handleScroll: onScrollContext } = useScrollContext();
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('tout');
 
   // Get locale for date formatting
   const dateLocale = language === 'fr' ? fr : enUS;
@@ -59,6 +61,8 @@ export const PoidsPage: React.FC = () => {
   const [targetWeight, setTargetWeight] = useState<number | null>(null);
 
   // État pour le modal
+  const [showPremiumModal, setShowPremiumModal] = useState(true);
+
   const [selectedMetric, setSelectedMetric] = useState<{
     key: string;
     label: string;
@@ -122,9 +126,10 @@ export const PoidsPage: React.FC = () => {
         const days = daysMap[selectedPeriod] || 30;
         const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
+        // allWeights est déjà trié DESC (newest first depuis la DB)
+        // Ne pas inverser : le plus récent doit rester à l'index 0 (gauche dans le scroll horizontal)
         const filtered = allWeights
-          .filter((w: any) => new Date(w.date) >= cutoffDate)
-          .reverse();
+          .filter((w: any) => new Date(w.date) >= cutoffDate);
 
         setWeightHistory(
           filtered.map((w: any) => ({
@@ -154,15 +159,18 @@ export const PoidsPage: React.FC = () => {
   const getModalData = () => {
     if (!selectedMetric || !allWeightsData.length) return [];
 
+    // Règle 3 : plus récent à GAUCHE → tri DESC
     const sortedWeights = [...allWeightsData].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
+    // Helper Règle 4 : deux lignes (jour+mois / année)
+    const fmtLabel = (d: Date) => `${format(d, 'd MMM', { locale: dateLocale })}\n${format(d, 'yyyy')}`;
 
     switch (selectedMetric.key) {
       case 'weight':
         return sortedWeights.map((w) => ({
           value: w.weight,
-          label: format(new Date(w.date), 'd MMM', { locale: dateLocale }),
+          label: fmtLabel(new Date(w.date)),
           date: w.date,
         }));
 
@@ -171,37 +179,39 @@ export const PoidsPage: React.FC = () => {
         const heightM = heightCm / 100;
         return sortedWeights.map((w) => ({
           value: w.weight / (heightM * heightM),
-          label: format(new Date(w.date), 'd MMM', { locale: dateLocale }),
+          label: fmtLabel(new Date(w.date)),
           date: w.date,
         }));
 
       case 'evolution':
-        // Calculer l'évolution par rapport au premier poids
-        const firstWeight = sortedWeights[0]?.weight || 0;
+        // Calculer l'évolution par rapport au premier poids (le plus récent est à index 0 maintenant)
+        // On utilise le dernier élément (le plus ancien) comme référence
+        const firstWeight = sortedWeights[sortedWeights.length - 1]?.weight || 0;
         return sortedWeights.map((w) => ({
           value: firstWeight ? ((w.weight - firstWeight) / firstWeight) * 100 : 0,
-          label: format(new Date(w.date), 'd MMM', { locale: dateLocale }),
+          label: fmtLabel(new Date(w.date)),
           date: w.date,
         }));
 
       case 'average':
-        // Moyenne mobile sur 7 jours
-        return sortedWeights.map((w, index) => {
+        // Moyenne mobile sur 7 jours (calculée sur données ASC puis inversée)
+        const ascWeights = [...sortedWeights].reverse();
+        return ascWeights.map((w, index) => {
           const start = Math.max(0, index - 6);
-          const slice = sortedWeights.slice(start, index + 1);
+          const slice = ascWeights.slice(start, index + 1);
           const avg = slice.reduce((sum, s) => sum + s.weight, 0) / slice.length;
           return {
             value: avg,
-            label: format(new Date(w.date), 'd MMM', { locale: dateLocale }),
+            label: fmtLabel(new Date(w.date)),
             date: w.date,
           };
-        });
+        }).reverse(); // Règle 3 : plus récent à GAUCHE
 
       case 'target':
         // Ligne constante pour l'objectif avec le poids actuel superposé
         return sortedWeights.map((w) => ({
           value: w.weight,
-          label: format(new Date(w.date), 'd MMM', { locale: dateLocale }),
+          label: fmtLabel(new Date(w.date)),
           date: w.date,
         }));
 
@@ -225,17 +235,15 @@ export const PoidsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView style={[styles.container, { backgroundColor: screenBackground }]} contentContainerStyle={{ padding: 16 }}>
         <StatsHeader
           title={t('statsPages.weight.title')}
           description={t('statsPages.weight.description')}
           selectedPeriod={selectedPeriod}
           onPeriodChange={setSelectedPeriod}
         />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-        </View>
-      </View>
+        <SkeletonGrid count={4} cardHeight={180} />
+      </ScrollView>
     );
   }
 
@@ -244,7 +252,7 @@ export const PoidsPage: React.FC = () => {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[styles.container, { backgroundColor: screenBackground }]}
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled={true}
       contentContainerStyle={styles.content}
@@ -440,6 +448,22 @@ export const PoidsPage: React.FC = () => {
         </View>
       </StatsSection>
 
+      {/* ── Modal Premium poids */}
+      <PremiumModal
+        visible={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        Icon={Scale}
+        gradientColors={['#1E3A5F', '#1D4ED8', '#3B82F6']}
+        title="Courbe de poids illimitée"
+        description="Tu vois tes 7 derniers jours. Passe Premium pour voir ta vraie progression."
+        features={[
+          'Historique illimité sur 1 an et plus',
+          'Courbe lissée et tendances long terme',
+          'Prédictions pour atteindre ton objectif',
+          'Comparaisons semaine par semaine',
+        ]}
+      />
+
       <View style={{ height: 40 }} />
 
       {/* Modal de détail */}
@@ -467,12 +491,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 250,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 100,
   },
   grid: {
     flexDirection: 'row',

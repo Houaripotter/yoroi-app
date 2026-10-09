@@ -247,10 +247,10 @@ export default function CompetitionDetailScreen() {
           {/* Countdown */}
           {isUpcoming && (
             <View style={[styles.countdownCard, { backgroundColor: colors.accent }]}>
-              <Clock size={32} color="#FFFFFF" />
+              <Clock size={32} color={colors.textOnAccent} />
               <View style={styles.countdownText}>
-                <Text style={styles.countdownLabel}>Dans</Text>
-                <Text style={styles.countdownValue}>
+                <Text style={[styles.countdownLabel, { color: colors.textOnAccent, opacity: 0.8 }]}>Dans</Text>
+                <Text style={[styles.countdownValue, { color: colors.textOnAccent }]}>
                   {daysUntil === 0 ? "Aujourd'hui !" : `${daysUntil} jour${daysUntil > 1 ? 's' : ''}`}
                 </Text>
               </View>
@@ -403,8 +403,8 @@ export default function CompetitionDetailScreen() {
             onPress={handleAddFight}
             activeOpacity={0.8}
           >
-            <Plus size={20} color="#FFFFFF" />
-            <Text style={styles.addFightText}>Ajouter un combat</Text>
+            <Plus size={20} color={colors.textOnAccent} />
+            <Text style={[styles.addFightText, { color: colors.textOnAccent }]}>Ajouter un combat</Text>
           </TouchableOpacity>
         </View>
 

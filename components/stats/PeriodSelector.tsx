@@ -15,11 +15,16 @@ import {
   ScrollView,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ChevronDown, Calendar, Check } from 'lucide-react-native';
+import { ChevronDown, Calendar, Check, Lock } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { usePremium } from '@/context/PremiumContext';
+import { router } from 'expo-router';
+
+// Périodes accessibles sans premium
+const FREE_PERIODS: Period[] = ['7j', '14j'];
 
 export type Period =
   | '7j'
@@ -63,6 +68,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
   onCustomRangeChange,
 }) => {
   const { colors, isDark } = useTheme();
+  const { isPremium } = usePremium();
   const [modalOpen, setModalOpen] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
   const [pickerMode, setPickerMode] = useState<'start' | 'end' | null>(null);
@@ -88,15 +94,25 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
 
   const handleSelectPreset = useCallback((value: Period) => {
     haptic();
+    if (!isPremium && !FREE_PERIODS.includes(value)) {
+      setModalOpen(false);
+      router.push('/paywall' as never);
+      return;
+    }
     onChange(value);
     setModalOpen(false);
-  }, [onChange, haptic]);
+  }, [onChange, haptic, isPremium]);
 
   const handleOpenCustom = useCallback(() => {
     haptic();
+    if (!isPremium) {
+      setModalOpen(false);
+      router.push('/paywall' as never);
+      return;
+    }
     setModalOpen(false);
     setCustomOpen(true);
-  }, [haptic]);
+  }, [haptic, isPremium]);
 
   const handleConfirmCustom = useCallback(() => {
     haptic();
@@ -148,6 +164,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
             <ScrollView style={{ maxHeight: 460 }} showsVerticalScrollIndicator={false}>
               {PRESETS.map(p => {
                 const isActive = selected === p.value;
+                const isLocked = !isPremium && !FREE_PERIODS.includes(p.value);
                 return (
                   <TouchableOpacity
                     key={p.value}
@@ -156,6 +173,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
                     style={[
                       styles.row,
                       isActive && { backgroundColor: colors.accent + '18' },
+                      isLocked && { opacity: 0.55 },
                     ]}
                   >
                     <Text style={[
@@ -165,7 +183,11 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
                     ]}>
                       {p.label}
                     </Text>
-                    {isActive && <Check size={18} color={colors.accent} />}
+                    {isLocked ? (
+                      <Lock size={14} color={colors.textMuted} />
+                    ) : isActive ? (
+                      <Check size={18} color={colors.accent} />
+                    ) : null}
                   </TouchableOpacity>
                 );
               })}
@@ -178,6 +200,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
                 style={[
                   styles.row,
                   selected === 'custom' && { backgroundColor: colors.accent + '18' },
+                  !isPremium && { opacity: 0.55 },
                 ]}
               >
                 <View style={styles.customLabelRow}>
@@ -190,7 +213,11 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
                     Période personnalisée
                   </Text>
                 </View>
-                {selected === 'custom' && <Check size={18} color={colors.accent} />}
+                {!isPremium ? (
+                  <Lock size={14} color={colors.textMuted} />
+                ) : selected === 'custom' ? (
+                  <Check size={18} color={colors.accent} />
+                ) : null}
               </TouchableOpacity>
             </ScrollView>
           </Pressable>

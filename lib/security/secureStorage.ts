@@ -63,6 +63,26 @@ export const secureStorage = {
   },
 
   /**
+   * Comme getItem, mais LANCE l'erreur au lieu de renvoyer null.
+   * Indispensable pour distinguer "aucune donnée" de "lecture impossible"
+   * (ex : trousseau iOS verrouillé lors d'un réveil en arrière-plan par HealthKit).
+   * Utilisé par la décision d'afficher ou non l'onboarding.
+   */
+  getItemStrict: async (key: string): Promise<any | null> => {
+    const safeKey = sanitizeKey(key);
+    if (Platform.OS === 'web') {
+      return localStorage.getItem(safeKey);
+    }
+    const value = await SecureStore.getItemAsync(safeKey);
+    if (!value) return null;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  },
+
+  /**
    * Supprime une donnée
    */
   removeItem: async (key: string): Promise<boolean> => {

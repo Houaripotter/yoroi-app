@@ -111,6 +111,8 @@ import AddBenchmarkModal from './training-journal/components/AddBenchmarkModal';
 import AddSkillModal from './training-journal/components/AddSkillModal';
 import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 import { logger } from '@/lib/security/logger';
+import { PremiumModal } from '@/components/premium/PremiumModal';
+import { usePremium } from '@/context/PremiumContext';
 import VideoLibraryModal from './training-journal/components/VideoLibraryModal';
 import { getVideos, ExerciseVideo } from '@/lib/videoLibraryService';
 import { SPORTS } from '@/lib/sports';
@@ -419,8 +421,8 @@ function VideoLibraryTab() {
         style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.accent, borderRadius: 14, padding: 14, marginBottom: 20 }}
         onPress={handleAddVideoPress}
       >
-        <Film size={20} color="#FFF" />
-        <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 15 }}>Ajouter une vidéo</Text>
+        <Film size={20} color={colors.textOnAccent} />
+        <Text style={{ color: colors.textOnAccent, fontWeight: '700', fontSize: 15 }}>Ajouter une vidéo</Text>
       </TouchableOpacity>
 
       {videos.length === 0 ? (
@@ -495,7 +497,7 @@ function VideoLibraryTab() {
 
 export default function TrainingJournalScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, isDark, screenBackground, screenText } = useTheme();
+  const { colors, isDark, screenBackground, screenText, themeColor } = useTheme();
   const { t, locale } = useI18n();
   const { isWatchAvailable, syncRecords } = useWatch();
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -557,6 +559,9 @@ export default function TrainingJournalScreen() {
   const [activeTab, setActiveTab] = useState<'records' | 'techniques' | 'videos' | 'combat' | 'competitions' | 'positions' | 'submissions' | 'sorties' | 'allures' | 'wods' | 'stations' | 'voies' | 'seances_muscu' | 'muscles' | 'progression'>('records');
   // Pack actif (Combat/Endurance/Force/Nature)
   const { activePack } = useSportPack();
+  const { isPremium } = usePremium();
+  const [showVideosPremiumModal, setShowVideosPremiumModal] = useState(false);
+  const [showProgressionPremiumModal, setShowProgressionPremiumModal] = useState(false);
 
   // Reset activeTab si l'onglet courant n'est pas dans le pack actif
   useEffect(() => {
@@ -968,7 +973,9 @@ export default function TrainingJournalScreen() {
   // Filter benchmarks (by global filter AND search query) - only show benchmarks WITH entries
   // Poids de Corps (bodyweight) exclu · c'est le poids de l'utilisateur, pas pertinent ici
   // Sorted by most recent entry first
-  const filteredBenchmarks = benchmarks.filter(b => {
+  // IMPORTANT: useMemo obligatoire pour éviter un nouveau tableau à chaque render,
+  // ce qui causait une boucle de re-renders → freeze après 2 records.
+  const filteredBenchmarks = useMemo(() => benchmarks.filter(b => {
     const hasEntries = b.entries && b.entries.length > 0;
     const isBodyweight = b.category === 'bodyweight';
     const matchesGlobal = matchesGlobalFilter(b.category, null);
@@ -981,33 +988,34 @@ export default function TrainingJournalScreen() {
     if (!lastA) return 1;
     if (!lastB) return -1;
     return new Date(lastB.date).getTime() - new Date(lastA.date).getTime();
-  });
+  }), [benchmarks, globalFilter, searchQuery]);
 
   // Group benchmarks by category and sub-group muscu by muscle
   const groupedBenchmarks = useMemo(() => {
     const groups: Record<string, Record<string, Benchmark[]>> = {};
-    
+
     filteredBenchmarks.forEach(b => {
       const catLabel = BENCHMARK_CATEGORIES[b.category]?.label || 'AUTRE';
       const muscle = b.muscleGroup || 'GÉNÉRAL';
-      
+
       if (!groups[catLabel]) groups[catLabel] = {};
       if (!groups[catLabel][muscle]) groups[catLabel][muscle] = [];
-      
+
       groups[catLabel][muscle].push(b);
     });
-    
+
     return groups;
   }, [filteredBenchmarks]);
 
   // Filter skills (by global filter, status AND search query)
-  const filteredSkills = skills.filter(s => {
+  // useMemo pour la même raison : éviter un nouveau tableau à chaque render.
+  const filteredSkills = useMemo(() => skills.filter(s => {
     const matchesGlobal = matchesGlobalFilter(null, s.category);
     const matchesStatus = selectedSkillFilter === 'all' || s.status === selectedSkillFilter;
     const matchesSearch = searchQuery.trim() === '' ||
       s.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesGlobal && matchesStatus && matchesSearch;
-  });
+  }), [skills, globalFilter, selectedSkillFilter, searchQuery]);
 
   // Get the actual date for entry
   const getEntryDate = (): Date => {
@@ -1048,9 +1056,44 @@ export default function TrainingJournalScreen() {
     }
   };
 
+  const FREE_BENCHMARKS_LIMIT = 3;
+  const FREE_SKILLS_LIMIT = 5;
+
+  // Helpers d'ouverture avec vérification premium AVANT d'afficher le formulaire
+  const openAddBenchmark = () => {
+    if (!isPremium && benchmarks.length >= FREE_BENCHMARKS_LIMIT) {
+      router.push('/paywall' as never);
+      return;
+    }
+    setIsSportPickerVisible(true);
+  };
+
+  const openAddSkill = () => {
+    if (!isPremium && skills.length >= FREE_SKILLS_LIMIT) {
+      router.push('/paywall' as never);
+      return;
+    }
+    if (isModalProcessing) return;
+    executeModalOnce(async () => setShowAddSkillModal(true));
+  };
+
   const handleAddBenchmark = async () => {
     // Protection anti-spam dès le début
     if (isSubmitting) return;
+
+    if (!isPremium && benchmarks.length >= FREE_BENCHMARKS_LIMIT) {
+      setShowVideosPremiumModal(false);
+      setShowProgressionPremiumModal(false);
+      showPopup({
+        title: 'Limite atteinte',
+        message: `Tu as atteint la limite de ${FREE_BENCHMARKS_LIMIT} trackings en version gratuite. Passe à Premium pour en créer autant que tu veux.`,
+        buttons: [
+          { text: 'Annuler', style: 'default' },
+          { text: 'Débloquer Premium', style: 'default', onPress: () => router.push('/paywall' as never) },
+        ],
+      });
+      return;
+    }
 
     if (!newBenchmarkName.trim()) {
       showPopup({
@@ -1165,6 +1208,19 @@ export default function TrainingJournalScreen() {
 
   const handleAddSkill = async () => {
     if (isSubmitting) return; // Anti-spam protection
+
+    if (!isPremium && skills.length >= FREE_SKILLS_LIMIT) {
+      showPopup({
+        title: 'Limite atteinte',
+        message: `Tu as atteint la limite de ${FREE_SKILLS_LIMIT} techniques en version gratuite. Passe à Premium pour en ajouter autant que tu veux.`,
+        buttons: [
+          { text: 'Annuler', style: 'default' },
+          { text: 'Débloquer Premium', style: 'default', onPress: () => router.push('/paywall' as never) },
+        ],
+      });
+      return;
+    }
+
     if (!newSkillName.trim()) {
       showPopup({title: t('common.error'), message: t('journal.enterSkillName'), buttons: [{ text: 'OK', style: 'default' }]});
       return;
@@ -1890,7 +1946,7 @@ export default function TrainingJournalScreen() {
             style={[styles.fabMenuItem, { backgroundColor: '#EF4444' }]}
             onPress={() => {
               setShowFabMenu(false);
-              setIsSportPickerVisible(true);
+              openAddBenchmark();
             }}
           >
             <Dumbbell size={22} color={colors.textOnAccent} />
@@ -1900,11 +1956,8 @@ export default function TrainingJournalScreen() {
           <TouchableOpacity
             style={[styles.fabMenuItem, { backgroundColor: '#8B5CF6' }]}
             onPress={() => {
-              if (isModalProcessing) return;
-              executeModalOnce(async () => {
-                setShowFabMenu(false);
-                setShowAddSkillModal(true);
-              });
+              setShowFabMenu(false);
+              openAddSkill();
             }}
             disabled={isModalProcessing}
           >
@@ -2017,26 +2070,33 @@ export default function TrainingJournalScreen() {
                   styles.compactTab,
                   {
                     backgroundColor: isActive
-                      ? (isDark ? colors.accent : '#FFFFFF')
-                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)'),
+                      ? (isDark ? colors.accent : (themeColor === 'blanc' ? colors.accent : '#FFFFFF'))
+                      : (isDark ? 'rgba(255,255,255,0.08)' : (themeColor === 'blanc' ? colors.backgroundCard : 'rgba(255,255,255,0.15)')),
                     borderColor: isActive
                       ? 'transparent'
-                      : (isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.3)'),
+                      : (isDark ? 'rgba(255,255,255,0.18)' : (themeColor === 'blanc' ? colors.border : 'rgba(255,255,255,0.3)')),
                   },
                 ]}
-                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setActiveTab(id as any); }}
+                onPress={() => {
+                  impactAsync(ImpactFeedbackStyle.Light);
+                  setActiveTab(id as any);
+                  if (!isPremium) {
+                    if (id === 'videos') setShowVideosPremiumModal(true);
+                    if (id === 'progression') setShowProgressionPremiumModal(true);
+                  }
+                }}
                 activeOpacity={0.7}
               >
                 <Icon
                   size={13}
-                  color={isActive ? (isDark ? '#FFFFFF' : colors.accent) : screenText}
+                  color={isActive ? (isDark ? '#FFFFFF' : (themeColor === 'blanc' ? '#FFFFFF' : colors.accent)) : screenText}
                   strokeWidth={2.5}
                   style={{ opacity: isActive ? 1 : 0.75 }}
                 />
                 <Text style={[
                   styles.compactTabLabel,
                   {
-                    color: isActive ? (isDark ? '#FFFFFF' : colors.accent) : screenText,
+                    color: isActive ? (isDark ? '#FFFFFF' : (themeColor === 'blanc' ? '#FFFFFF' : colors.accent)) : screenText,
                     opacity: isActive ? 1 : 0.75,
                     fontWeight: isActive ? '700' : '500',
                   },
@@ -2044,8 +2104,8 @@ export default function TrainingJournalScreen() {
                   {label}
                 </Text>
                 {count !== null && count > 0 && (
-                  <View style={[styles.compactBadge, { backgroundColor: isActive ? (isDark ? 'rgba(255,255,255,0.3)' : colors.accent + '30') : 'rgba(255,255,255,0.25)' }]}>
-                    <Text style={[styles.compactBadgeText, { color: isActive ? (isDark ? '#FFF' : colors.accent) : screenText }]}>
+                  <View style={[styles.compactBadge, { backgroundColor: isActive ? (isDark ? 'rgba(255,255,255,0.3)' : (themeColor === 'blanc' ? 'rgba(255,255,255,0.35)' : colors.accent + '30')) : (themeColor === 'blanc' ? colors.border : 'rgba(255,255,255,0.25)') }]}>
+                    <Text style={[styles.compactBadgeText, { color: isActive ? (isDark ? '#FFF' : (themeColor === 'blanc' ? '#FFFFFF' : colors.accent)) : screenText }]}>
                       {count > 99 ? '99+' : count}
                     </Text>
                   </View>
@@ -2070,8 +2130,8 @@ export default function TrainingJournalScreen() {
       {activeTab === 'voies' && <StatsErrorBoundary tabName="Voies"><VoiesTab /></StatsErrorBoundary>}
       {activeTab === 'seances_muscu' && <StatsErrorBoundary tabName="Séances"><SeancesMuscuTab /></StatsErrorBoundary>}
       {activeTab === 'muscles' && <StatsErrorBoundary tabName="Muscles"><MusclesTab /></StatsErrorBoundary>}
-      {activeTab === 'progression' && <StatsErrorBoundary tabName="Progression"><ProgressionTab /></StatsErrorBoundary>}
-      {activeTab === 'videos' && <StatsErrorBoundary tabName="Vidéos"><VideoLibraryTab /></StatsErrorBoundary>}
+      {activeTab === 'progression' && isPremium && <StatsErrorBoundary tabName="Progression"><ProgressionTab /></StatsErrorBoundary>}
+      {activeTab === 'videos' && isPremium && <StatsErrorBoundary tabName="Vidéos"><VideoLibraryTab /></StatsErrorBoundary>}
 
       {/* Barre recherche + filtres · compacte, 1 seule rangée */}
       {(activeTab === 'records' || activeTab === 'techniques') && (
@@ -2264,7 +2324,7 @@ export default function TrainingJournalScreen() {
               </View>
               <TouchableOpacity
                 style={[styles.addSectionBtn, { backgroundColor: '#EF444420' }]}
-                onPress={() => setIsSportPickerVisible(true)}
+                onPress={openAddBenchmark}
               >
                 <Plus size={16} color="#EF4444" strokeWidth={3} />
               </TouchableOpacity>
@@ -2286,7 +2346,7 @@ export default function TrainingJournalScreen() {
                 style={[styles.emptyCompactCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                 onPress={() => {
                   impactAsync(ImpactFeedbackStyle.Medium);
-                  setIsSportPickerVisible(true);
+                  openAddBenchmark();
                 }}
               >
                 <TrendingUp size={32} color={colors.textMuted} />
@@ -2436,10 +2496,7 @@ export default function TrainingJournalScreen() {
               </View>
               <TouchableOpacity
                 style={[styles.addSectionBtn, { backgroundColor: '#8B5CF620' }]}
-                onPress={() => {
-                  if (isModalProcessing) return;
-                  executeModalOnce(async () => setShowAddSkillModal(true));
-                }}
+                onPress={openAddSkill}
                 disabled={isModalProcessing}
               >
                 <Plus size={16} color="#8B5CF6" strokeWidth={3} />
@@ -2920,6 +2977,36 @@ export default function TrainingJournalScreen() {
       </Modal>
 
       <PopupComponent />
+
+      {/* ── Modals Premium */}
+      <PremiumModal
+        visible={showVideosPremiumModal}
+        onClose={() => setShowVideosPremiumModal(false)}
+        Icon={Play}
+        gradientColors={['#042F2E', '#065F46', '#059669']}
+        title="Vidéothèque Premium"
+        description="Accède à des centaines de vidéos d'exercices classées par muscle, sport et benchmark."
+        features={[
+          'Centaines de vidéos techniques',
+          'Classées par muscle, sport et exercice',
+          'Ajoute tes propres vidéos illimitées',
+          'Accès hors ligne inclus',
+        ]}
+      />
+      <PremiumModal
+        visible={showProgressionPremiumModal}
+        onClose={() => setShowProgressionPremiumModal(false)}
+        Icon={TrendingUp}
+        gradientColors={['#1E1B4B', '#4338CA', '#7C3AED']}
+        title="Graphique de progression"
+        description="Visualise ta courbe de force, d'endurance et de volume sur 1 an."
+        features={[
+          'Courbe de progression sur 1 an',
+          'Force, endurance et volume analysés',
+          'Détection automatique des records',
+          'Comparaisons entre périodes',
+        ]}
+      />
     </View>
   );
 }

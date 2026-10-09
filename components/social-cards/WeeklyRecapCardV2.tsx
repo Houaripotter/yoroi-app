@@ -39,7 +39,7 @@ export const WeeklyRecapCardV2 = React.memo(forwardRef<View, WeeklyRecapCardV2Pr
     username, userAvatar, profilePhoto, rank, userLevel
   }, ref) => {
     const { width: screenWidth } = useWindowDimensions();
-    const CARD_WIDTH = screenWidth - 40;
+    const CARD_WIDTH = Math.min(screenWidth - 40, 400); // limite iPad
     const isStories = format === 'stories';
     const cardHeight = isStories ? CARD_WIDTH * (16 / 9) : CARD_WIDTH;
     const keepPhotoClear = !!backgroundImage;

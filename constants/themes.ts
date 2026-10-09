@@ -3,7 +3,7 @@
 // 10 couleurs × 2 modes (Dark/Light)
 // ===================================================
 
-export type ThemeColor = 'charcoal' | 'mint' | 'royal' | 'ocean' | 'pumpkin' | 'vista' | 'lavender' | 'peach' | 'fizz' | 'cadet' | 'tiffany' | 'obsidian' | 'sakura' | 'emerald' | 'amber' | 'slate' | 'ambersmoke' | 'dreamy' | 'lavendar' | 'chartreuse' | 'classic' | 'volt' | 'magma' | 'matrix' | 'blaze' | 'phantom' | 'ghost' | 'indigo' | 'gold' | 'sunset';
+export type ThemeColor = 'charcoal' | 'mint' | 'royal' | 'ocean' | 'pumpkin' | 'vista' | 'lavender' | 'peach' | 'fizz' | 'cadet' | 'tiffany' | 'obsidian' | 'sakura' | 'emerald' | 'amber' | 'slate' | 'ambersmoke' | 'dreamy' | 'lavendar' | 'chartreuse' | 'classic' | 'blanc' | 'volt' | 'magma' | 'matrix' | 'blaze' | 'phantom' | 'ghost' | 'indigo' | 'gold' | 'sunset';
 export type ThemeMode = 'dark' | 'light' | 'auto';
 
 export interface ThemeColors {
@@ -1553,6 +1553,69 @@ export const themes: Record<string, Theme> = {
   },
 
   // ─────────────────────────────────────────────
+  // BLANC - Épuré Blanc/Bleu
+  // Accent: #E8F0FF (dark) | #4B7BEC (light)
+  // ─────────────────────────────────────────────
+
+  blanc_dark: {
+    id: 'blanc_dark',
+    colorId: 'blanc',
+    mode: 'dark',
+    name: 'Blanc',
+    icon: '',
+    kanji: '白',
+    colors: createThemeColors({
+      background: '#F7F7F7',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#ECECEC',
+      backgroundLight: '#E0E0E0',
+      accent: '#111111',
+      accentDark: '#000000',
+      accentLight: '#444444',
+      companion: '#6B7280',
+      textPrimary: '#0A0A0A',
+      textSecondary: '#2D2D2D',
+      textMuted: '#6B7280',
+      textOnAccent: '#FFFFFF',
+      border: '#DEDEDE',
+      borderLight: '#EDEDED',
+      glow: 'rgba(0, 0, 0, 0.06)',
+      glowStrong: 'rgba(0, 0, 0, 0.14)',
+    }, false),
+  },
+
+  blanc_light: {
+    id: 'blanc_light',
+    colorId: 'blanc',
+    mode: 'light',
+    name: 'Blanc',
+    icon: '',
+    kanji: '白',
+    colors: createThemeColors({
+      // Page légèrement gris clair → cards blanches se détachent naturellement
+      background: '#F2F4F7',
+      backgroundCard: '#FFFFFF',
+      backgroundElevated: '#F8F8F8',
+      backgroundLight: '#EFEFEF',
+      // accent noir/dark → icônes et éléments visibles sur fond blanc
+      // La pill tab bar est forcée blanche dans _layout.tsx (indépendant de accent)
+      accent: '#111111',
+      accentDark: '#000000',
+      accentLight: '#3A3A3A',
+      accentText: '#111111',
+      companion: '#444444',
+      textPrimary: '#111111',
+      textSecondary: '#3A3A3A',
+      textMuted: '#8A8A8A',
+      textOnAccent: '#FFFFFF',
+      border: '#E2E2E8',
+      borderLight: '#EEEEEF',
+      glow: 'rgba(0, 0, 0, 0.06)',
+      glowStrong: 'rgba(0, 0, 0, 0.14)',
+    }, false),
+  },
+
+  // ─────────────────────────────────────────────
   // VOLT - Jaune Electrique
   // Accent: #C8FF00
   // ─────────────────────────────────────────────
@@ -2095,6 +2158,7 @@ export const themes: Record<string, Theme> = {
 // ===================================================
 
 export const themeColors: { id: ThemeColor; name: string; icon: string; kanji: string; color: string; companion: string }[] = [
+  { id: 'blanc', name: 'Blanc', icon: '', kanji: '白', color: '#FFFFFF', companion: '#E2E8F0' },
   { id: 'ocean', name: 'Ocean', icon: '', kanji: '海', color: '#2872A1', companion: '#CBDDE9' },
   { id: 'fizz', name: 'Fizz', icon: '', kanji: '泡', color: '#3E4260', companion: '#FFEAD7' },
   { id: 'charcoal', name: 'Charcoal', icon: '', kanji: '炭', color: '#D2042D', companion: '#FAF9F6' },
@@ -2141,15 +2205,17 @@ export const getThemeKey = (colorId: ThemeColor, mode: 'dark' | 'light'): string
 };
 
 // Thème par défaut
-export const defaultThemeColor: ThemeColor = 'fizz';
+export const defaultThemeColor: ThemeColor = 'blanc';
 export const defaultThemeMode: ThemeMode = 'light';
 
-// Tous les thèmes sont gratuits
-export const premiumThemeColors: ThemeColor[] = [];
-export const freeThemeColors: ThemeColor[] = ['charcoal', 'mint', 'royal', 'ocean', 'pumpkin', 'vista', 'lavender', 'peach', 'fizz', 'cadet', 'tiffany', 'obsidian', 'sakura', 'emerald', 'amber', 'slate', 'ambersmoke', 'dreamy', 'lavendar', 'chartreuse', 'classic', 'volt', 'magma', 'matrix', 'blaze', 'phantom', 'ghost', 'indigo', 'gold', 'sunset'];
+// Thèmes gratuits : Classic (sombre) + Blanc (clair)
+export const freeThemeColors: ThemeColor[] = ['classic', 'blanc'];
 
-export const isPremiumTheme = (_colorId: ThemeColor): boolean => {
-  return false;
+// Tous les autres thèmes nécessitent un abonnement premium
+export const premiumThemeColors: ThemeColor[] = ['charcoal', 'mint', 'royal', 'ocean', 'pumpkin', 'vista', 'lavender', 'peach', 'fizz', 'cadet', 'tiffany', 'obsidian', 'sakura', 'emerald', 'amber', 'slate', 'ambersmoke', 'dreamy', 'lavendar', 'chartreuse', 'volt', 'magma', 'matrix', 'blaze', 'phantom', 'ghost', 'indigo', 'gold', 'sunset'];
+
+export const isPremiumTheme = (colorId: ThemeColor): boolean => {
+  return !['classic', 'blanc'].includes(colorId);
 };
 
 // ===================================================

@@ -316,7 +316,7 @@ export default function ImportCSVScreen() {
 
             <View style={[styles.stepCard, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}>
               <View style={[styles.stepNumber, { backgroundColor: colors.accent }]}>
-                <Text style={styles.stepNumberText}>1</Text>
+                <Text style={[styles.stepNumberText, { color: colors.textOnAccent }]}>1</Text>
               </View>
               <View style={styles.stepContent}>
                 <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
@@ -330,7 +330,7 @@ export default function ImportCSVScreen() {
 
             <View style={[styles.stepCard, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}>
               <View style={[styles.stepNumber, { backgroundColor: colors.accent }]}>
-                <Text style={styles.stepNumberText}>2</Text>
+                <Text style={[styles.stepNumberText, { color: colors.textOnAccent }]}>2</Text>
               </View>
               <View style={styles.stepContent}>
                 <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
@@ -344,7 +344,7 @@ export default function ImportCSVScreen() {
 
             <View style={[styles.stepCard, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}>
               <View style={[styles.stepNumber, { backgroundColor: colors.accent }]}>
-                <Text style={styles.stepNumberText}>3</Text>
+                <Text style={[styles.stepNumberText, { color: colors.textOnAccent }]}>3</Text>
               </View>
               <View style={styles.stepContent}>
                 <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
@@ -375,11 +375,11 @@ export default function ImportCSVScreen() {
                 disabled={isParsing}
               >
                 {isParsing ? (
-                  <ActivityIndicator color="#FFF" />
+                  <ActivityIndicator color={colors.textOnAccent} />
                 ) : (
                   <>
-                    <FileUp size={24} color="#FFF" />
-                    <Text style={styles.pickButtonText}>Selectionner mon fichier CSV</Text>
+                    <FileUp size={24} color={colors.textOnAccent} />
+                    <Text style={[styles.pickButtonText, { color: colors.textOnAccent }]}>Selectionner mon fichier CSV</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -520,11 +520,11 @@ export default function ImportCSVScreen() {
               disabled={parseResult.validCount === 0 || isImporting}
             >
               {isImporting ? (
-                <ActivityIndicator color="#FFF" />
+                <ActivityIndicator color={colors.textOnAccent} />
               ) : (
                 <>
-                  <CheckCircle size={20} color="#FFF" />
-                  <Text style={styles.importButtonText}>
+                  <CheckCircle size={20} color={parseResult.validCount > 0 ? colors.textOnAccent : colors.textMuted} />
+                  <Text style={[styles.importButtonText, { color: parseResult.validCount > 0 ? colors.textOnAccent : colors.textMuted }]}>
                     Importer {parseResult.validCount} ligne{parseResult.validCount > 1 ? 's' : ''}
                   </Text>
                 </>
@@ -597,7 +597,7 @@ export default function ImportCSVScreen() {
               style={[styles.importButton, { backgroundColor: colors.accent }]}
               onPress={() => router.back()}
             >
-              <Text style={styles.importButtonText}>Termine</Text>
+              <Text style={[styles.importButtonText, { color: colors.textOnAccent }]}>Termine</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.secondaryButton} onPress={resetAll}>

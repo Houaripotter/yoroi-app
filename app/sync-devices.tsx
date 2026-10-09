@@ -171,7 +171,11 @@ export default function SyncDevicesScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.rowValue, { color: colors.textPrimary }]}>{peer}</Text>
-                  <Text style={[styles.rowSub, { color: '#22C55E' }]}>Connecté</Text>
+                  {status.outdatedPeer === peer ? (
+                    <Text style={[styles.rowSub, { color: '#F59E0B' }]}>Mets à jour Yoroi sur cet appareil pour synchroniser tes données</Text>
+                  ) : (
+                    <Text style={[styles.rowSub, { color: '#22C55E' }]}>Connecté</Text>
+                  )}
                 </View>
                 <CheckCircle2 size={18} color="#22C55E" />
               </View>

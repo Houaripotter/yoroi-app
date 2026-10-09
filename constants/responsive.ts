@@ -243,8 +243,9 @@ export function useResponsive() {
   // Sur iPad portrait : on veut ~60% de la largeur (~450-500px)
   // Sur iPad landscape : on veut max 500px (pas 0.7 × 1366 = 956px, ce serait énorme)
   // Sur iPhone : width - 24
-  const pillWidth = pad
-    ? Math.min(width * 0.55, 520)
+  // Tablette (>= 600) : 70% borné [460, 560] pour loger 6 onglets + le bouton +
+  const pillWidth = pad && width >= 600
+    ? Math.min(Math.max(width * 0.7, 460), 560, width - 24)
     : width - 24;
 
   return {

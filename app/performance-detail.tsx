@@ -31,7 +31,7 @@ export default function PerformanceDetailScreen() {
   const { locale } = useI18n();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
-  const [period, setPeriod] = useState<Period>('30d');
+  const [period, setPeriod] = useState<Period>('all');
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [loading, setLoading] = useState(true);
 

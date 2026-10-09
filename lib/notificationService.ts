@@ -336,8 +336,23 @@ class NotificationService {
   // ============================================
 
   async scheduleAllNotifications(): Promise<void> {
-    // Annuler toutes les notifications existantes
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    // Annuler UNIQUEMENT les notifications gérées par ce service.
+    // Avant, cancelAll effaçait aussi le récap hebdo, les rappels de weight cut,
+    // de sparring et du timer à chaque lancement de l'app.
+    const OWN_TYPES = new Set([
+      'training', 'hydration', 'weighing', 'streak', 'sleep',
+      'social_card_weekly', 'social_card_monthly', 'briefing', 'smart_check',
+    ]);
+    try {
+      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+      await Promise.all(
+        scheduled
+          .filter(n => OWN_TYPES.has((n.content?.data as any)?.type))
+          .map(n => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {}))
+      );
+    } catch (e) {
+      logger.warn('Annulation ciblée des notifications impossible:', e);
+    }
 
     if (!this.settings.enabled) return;
 

@@ -29,20 +29,23 @@ export function RepsWeightModal({
   onSkip,
 }: RepsWeightModalProps) {
   const { colors } = useTheme();
-  const [reps, setReps] = useState(10);
-  const [weight, setWeight] = useState(0);
+  // Brouillons texte : permet décimales et champ vide, parsé à l'enregistrement
+  const [repsText, setRepsText] = useState('10');
+  const [weightText, setWeightText] = useState('0');
+  const parseReps = (t: string) => Math.max(0, parseInt(t, 10) || 0);
+  const parseWeight = (t: string) => Math.max(0, parseFloat(t.replace(',', '.')) || 0);
 
   const handleSave = () => {
-    onSave(reps, weight);
+    onSave(parseReps(repsText), parseWeight(weightText));
     // Reset pour la prochaine fois
-    setReps(10);
-    setWeight(0);
+    setRepsText('10');
+    setWeightText('0');
   };
 
   const handleSkip = () => {
     onSkip();
-    setReps(10);
-    setWeight(0);
+    setRepsText('10');
+    setWeightText('0');
   };
 
   return (
@@ -81,24 +84,21 @@ export function RepsWeightModal({
             <View style={styles.controls}>
               <TouchableOpacity
                 style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
-                onPress={() => setReps(r => Math.max(1, r - 1))}
+                onPress={() => setRepsText(t => String(Math.max(1, parseReps(t) - 1)))}
               >
                 <Minus size={20} color={colors.textPrimary} />
               </TouchableOpacity>
               <TextInput
                 style={[styles.input, { color: colors.textPrimary, borderColor: colors.border }]}
-                value={reps.toString()}
-                onChangeText={(text) => {
-                  const num = parseInt(text) || 0;
-                  setReps(Math.max(0, num));
-                }}
+                value={repsText}
+                onChangeText={(text) => setRepsText(text.replace(/[^0-9]/g, ''))}
                 keyboardType="number-pad"
                 selectTextOnFocus
                 maxLength={4}
               />
               <TouchableOpacity
                 style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
-                onPress={() => setReps(r => r + 1)}
+                onPress={() => setRepsText(t => String(parseReps(t) + 1))}
               >
                 <Plus size={20} color={colors.textPrimary} />
               </TouchableOpacity>
@@ -113,24 +113,21 @@ export function RepsWeightModal({
             <View style={styles.controls}>
               <TouchableOpacity
                 style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
-                onPress={() => setWeight(w => Math.max(0, w - 2.5))}
+                onPress={() => setWeightText(t => String(Math.max(0, parseWeight(t) - 2.5)))}
               >
                 <Minus size={20} color={colors.textPrimary} />
               </TouchableOpacity>
               <TextInput
                 style={[styles.input, { color: colors.textPrimary, borderColor: colors.border }]}
-                value={weight.toString()}
-                onChangeText={(text) => {
-                  const num = parseFloat(text.replace(',', '.')) || 0;
-                  setWeight(Math.max(0, num));
-                }}
+                value={weightText}
+                onChangeText={(text) => setWeightText(text.replace(/[^0-9.,]/g, ''))}
                 keyboardType="decimal-pad"
                 selectTextOnFocus
                 maxLength={6}
               />
               <TouchableOpacity
                 style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
-                onPress={() => setWeight(w => w + 2.5)}
+                onPress={() => setWeightText(t => String(parseWeight(t) + 2.5))}
               >
                 <Plus size={20} color={colors.textPrimary} />
               </TouchableOpacity>
@@ -152,8 +149,8 @@ export function RepsWeightModal({
               onPress={handleSave}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Check size={14} color="#fff" strokeWidth={3} />
-                <Text style={styles.saveText}>Enregistrer</Text>
+                <Check size={14} color={colors.textOnAccent} strokeWidth={3} />
+                <Text style={[styles.saveText, { color: colors.textOnAccent }]}>Enregistrer</Text>
               </View>
             </TouchableOpacity>
           </View>

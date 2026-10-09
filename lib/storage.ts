@@ -443,9 +443,10 @@ const migrateMeasurementsToSecureStorage = async (): Promise<void> => {
       const parsed = JSON.parse(oldData);
       if (Array.isArray(parsed) && parsed.length > 0) {
         // Migrer vers SecureStorage
-        await secureStorage.setItem(STORAGE_KEYS.MEASUREMENTS, parsed);
-        // Supprimer les anciennes données
-        await AsyncStorage.removeItem(STORAGE_KEYS.MEASUREMENTS);
+        // Ne supprimer l'ancienne copie que si l'écriture chiffrée a réussi (sinon perte de données)
+        if (await secureStorage.setItem(STORAGE_KEYS.MEASUREMENTS, parsed)) {
+          await AsyncStorage.removeItem(STORAGE_KEYS.MEASUREMENTS);
+        }
         logger.info('[Storage] Migration mesures vers SecureStorage réussie');
       }
     }
@@ -474,6 +475,16 @@ const getSecureMeasurements = async (): Promise<Measurement[]> => {
 };
 
 /**
+ * Lecture STRICTE avant une écriture : si la lecture échoue, on lance une erreur
+ * au lieu de renvoyer [] (sinon on réécrivait [nouvelle mesure] par-dessus tout l'historique).
+ */
+const getSecureMeasurementsForWrite = async (): Promise<Measurement[]> => {
+  await migrateMeasurementsToSecureStorage();
+  const data = await secureStorage.getItemStrict(STORAGE_KEYS.MEASUREMENTS);
+  return Array.isArray(data) ? data : [];
+};
+
+/**
  * Sauvegarde les données de mesures dans SecureStorage
  */
 const saveSecureMeasurements = async (data: Measurement[]): Promise<boolean> => {
@@ -487,59 +498,61 @@ const saveSecureMeasurements = async (data: Measurement[]): Promise<boolean> => 
 };
 
 // ============================================
-// SECURE STORAGE HELPERS FOR PHOTOS
+// STORAGE HELPERS FOR PHOTOS
 // ============================================
 
+// Clé AsyncStorage v2 (sans limite de taille, contrairement à SecureStore 2KB)
+const PHOTOS_ASYNC_KEY = '@yoroi_photos_v2';
+
 /**
- * Migre les métadonnées photos de AsyncStorage vers SecureStorage (une seule fois)
- * Note : les fichiers images restent sur disque (file_uri), seules les métadonnées migrent
+ * Récupère les photos : AsyncStorage v2 en priorité, puis récupère depuis SecureStore (ancienne migration)
  */
-const migratePhotosToSecureStorage = async (): Promise<void> => {
-  if (photosMigrationDone) return;
-
-  try {
-    const secureData = await secureStorage.getItem(STORAGE_KEYS.PHOTOS);
-    if (secureData && Array.isArray(secureData) && secureData.length > 0) {
-      photosMigrationDone = true;
-      return;
-    }
-
-    const oldData = await AsyncStorage.getItem(STORAGE_KEYS.PHOTOS);
-    if (oldData) {
-      const parsed = JSON.parse(oldData);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // Nettoyer les éventuels base64 résiduels avant migration
-        const clean = parsed.map(({ base64, ...rest }: Photo & { base64?: string }) => rest);
-        await secureStorage.setItem(STORAGE_KEYS.PHOTOS, clean);
-        await AsyncStorage.removeItem(STORAGE_KEYS.PHOTOS);
-        logger.info('[Storage] Migration photos vers SecureStorage réussie');
-      }
-    }
-  } catch (error) {
-    logger.error('[Storage] Erreur migration photos:', error);
-  }
-
-  photosMigrationDone = true;
-};
-
 const getSecurePhotos = async (): Promise<Photo[]> => {
   try {
-    await migratePhotosToSecureStorage();
-    const data = await secureStorage.getItem(STORAGE_KEYS.PHOTOS);
-    return Array.isArray(data) ? data : [];
+    // 1. Lire depuis AsyncStorage (pas de limite de taille)
+    const asyncRaw = await AsyncStorage.getItem(PHOTOS_ASYNC_KEY);
+    if (asyncRaw) {
+      const parsed = JSON.parse(asyncRaw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+
+    // 2. Fallback : récupérer depuis SecureStore (ancienne version) et migrer
+    if (!photosMigrationDone) {
+      photosMigrationDone = true;
+      const secureData = await secureStorage.getItem(STORAGE_KEYS.PHOTOS);
+      if (Array.isArray(secureData) && secureData.length > 0) {
+        const clean = secureData.map(({ base64, ...rest }: Photo & { base64?: string }) => rest);
+        await AsyncStorage.setItem(PHOTOS_ASYNC_KEY, JSON.stringify(clean));
+        await secureStorage.removeItem(STORAGE_KEYS.PHOTOS);
+        logger.info('[Storage] Photos migrées SecureStore → AsyncStorage');
+        return clean;
+      }
+      // Essayer aussi l'ancienne clé AsyncStorage
+      const oldRaw = await AsyncStorage.getItem(STORAGE_KEYS.PHOTOS);
+      if (oldRaw) {
+        const parsed = JSON.parse(oldRaw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const clean = parsed.map(({ base64, ...rest }: Photo & { base64?: string }) => rest);
+          await AsyncStorage.setItem(PHOTOS_ASYNC_KEY, JSON.stringify(clean));
+          await AsyncStorage.removeItem(STORAGE_KEYS.PHOTOS);
+          return clean;
+        }
+      }
+    }
+
+    return [];
   } catch (error) {
-    logger.warn('ERREUR CRITIQUE - Lecture stockage sécurisé photos:', error);
-    logger.error('Erreur secureStorage.getItem (photos):', error);
+    logger.error('Erreur lecture photos:', error);
     return [];
   }
 };
 
 const saveSecurePhotos = async (data: Photo[]): Promise<boolean> => {
   try {
-    return await secureStorage.setItem(STORAGE_KEYS.PHOTOS, data);
+    await AsyncStorage.setItem(PHOTOS_ASYNC_KEY, JSON.stringify(data));
+    return true;
   } catch (error) {
-    logger.warn('ERREUR CRITIQUE - Sauvegarde stockage sécurisé photos:', error);
-    logger.error('Erreur secureStorage.setItem (photos):', error);
+    logger.error('Erreur sauvegarde photos:', error);
     return false;
   }
 };
@@ -566,7 +579,7 @@ export const getMeasurementsByPeriod = async (days: number): Promise<Measurement
 };
 
 export const addMeasurement = async (measurement: Omit<Measurement, 'id' | 'created_at'>): Promise<Measurement> => {
-  const measurements = await getSecureMeasurements();
+  const measurements = await getSecureMeasurementsForWrite();
 
   const newMeasurement: Measurement = {
     ...measurement,
@@ -581,7 +594,7 @@ export const addMeasurement = async (measurement: Omit<Measurement, 'id' | 'crea
 };
 
 export const updateMeasurement = async (id: string, updates: Partial<Measurement>): Promise<boolean> => {
-  const measurements = await getSecureMeasurements();
+  const measurements = await getSecureMeasurementsForWrite();
   const index = measurements.findIndex(m => m.id === id);
 
   if (index === -1) return false;
@@ -591,7 +604,7 @@ export const updateMeasurement = async (id: string, updates: Partial<Measurement
 };
 
 export const deleteMeasurement = async (id: string): Promise<boolean> => {
-  const measurements = await getSecureMeasurements();
+  const measurements = await getSecureMeasurementsForWrite();
   const filtered = measurements.filter(m => m.id !== id);
   return await saveSecureMeasurements(filtered);
 };
@@ -799,6 +812,20 @@ export const getUserSettings = async (): Promise<UserSettings> => {
       theme: 'classic',
     };
   }
+};
+
+/**
+ * Version stricte de getUserSettings : LANCE une erreur si la lecture échoue
+ * (trousseau verrouillé, etc.) au lieu de renvoyer des réglages par défaut.
+ * Utilisée uniquement pour décider s'il faut afficher l'onboarding.
+ */
+export const getUserSettingsStrict = async (): Promise<UserSettings> => {
+  const data = await secureStorage.getItemStrict(STORAGE_KEYS.USER_SETTINGS);
+  return data || {
+    weight_unit: 'kg',
+    measurement_unit: 'cm',
+    theme: 'classic',
+  };
 };
 
 export const saveUserSettings = async (settings: Partial<UserSettings>): Promise<boolean> => {
@@ -1010,8 +1037,10 @@ const migrateBodyStatusToSecureStorage = async (): Promise<void> => {
     if (oldData) {
       const parsed = JSON.parse(oldData);
       if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-        await secureStorage.setItem(STORAGE_KEYS.USER_BODY_STATUS, parsed);
-        await AsyncStorage.removeItem(STORAGE_KEYS.USER_BODY_STATUS);
+        // Ne supprimer l'ancienne copie que si l'écriture chiffrée a réussi (sinon perte de données)
+        if (await secureStorage.setItem(STORAGE_KEYS.USER_BODY_STATUS, parsed)) {
+          await AsyncStorage.removeItem(STORAGE_KEYS.USER_BODY_STATUS);
+        }
         logger.info('[Storage] Migration body status vers SecureStorage réussie');
       }
     }
@@ -1235,6 +1264,12 @@ export const importData = async (): Promise<boolean> => {
   }
 };
 
+const RESET_SECURE_KEYS = [
+  '@yoroi_measurements', '@yoroi_mood_log', '@yoroi_fasting_history', '@yoroi_body_composition',
+  '@yoroi_user_settings', '@yoroi_user_body_status', '@yoroi_hydration_settings',
+  '@yoroi_current_weight', '@yoroi_target_weight', '@yoroi_water_intake',
+];
+
 export const resetAllData = async (): Promise<boolean> => {
   try {
     // Supprimer d'abord les photos physiques
@@ -1287,6 +1322,10 @@ export const resetAllData = async (): Promise<boolean> => {
       await AsyncStorage.multiRemove(yoroiKeys);
     }
 
+    // Données chiffrées (SecureStore) : elles survivaient à la réinitialisation
+    // et réapparaissaient ensuite (mesures, humeur, jeûne, réglages...)
+    await Promise.all(RESET_SECURE_KEYS.map(k => secureStorage.removeItem(k).catch(() => false)));
+
 
     return true;
   } catch (error) {
@@ -1312,7 +1351,7 @@ export const resetDataOnly = async (): Promise<boolean> => {
     // Filtrer les clés YOROI SAUF celles liées aux photos
     const yoroiKeys = allKeys.filter(key => {
       // Exclure les clés photos
-      if (key === '@yoroi_photos' || key === '@yoroi_photo_history' || key === 'photos') {
+      if (key === '@yoroi_photos' || key === '@yoroi_photos_v2' || key === '@yoroi_photo_history' || key === 'photos') {
         return false;
       }
       return (
@@ -1349,6 +1388,10 @@ export const resetDataOnly = async (): Promise<boolean> => {
     if (yoroiKeys.length > 0) {
       await AsyncStorage.multiRemove(yoroiKeys);
     }
+
+    // Données chiffrées (SecureStore) : elles survivaient à la réinitialisation
+    // et réapparaissaient ensuite (mesures, humeur, jeûne, réglages...)
+    await Promise.all(RESET_SECURE_KEYS.map(k => secureStorage.removeItem(k).catch(() => false)));
 
     return true;
   } catch (error) {
@@ -1510,8 +1553,10 @@ const migrateHydrationSettingsToSecureStorage = async (): Promise<void> => {
     if (oldData) {
       const parsed = JSON.parse(oldData);
       if (parsed) {
-        await secureStorage.setItem(STORAGE_KEYS.HYDRATION_SETTINGS, parsed);
-        await AsyncStorage.removeItem(STORAGE_KEYS.HYDRATION_SETTINGS);
+        // Ne supprimer l'ancienne copie que si l'écriture chiffrée a réussi (sinon perte de données)
+        if (await secureStorage.setItem(STORAGE_KEYS.HYDRATION_SETTINGS, parsed)) {
+          await AsyncStorage.removeItem(STORAGE_KEYS.HYDRATION_SETTINGS);
+        }
         logger.info('[Storage] Migration paramètres hydratation vers SecureStorage réussie');
       }
     }
@@ -1759,8 +1804,10 @@ const migrateMoodToSecureStorage = async (): Promise<void> => {
     if (oldData) {
       const parsed = JSON.parse(oldData);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        await secureStorage.setItem(STORAGE_KEYS.MOOD_LOG, parsed);
-        await AsyncStorage.removeItem(STORAGE_KEYS.MOOD_LOG);
+        // Ne supprimer l'ancienne copie que si l'écriture chiffrée a réussi (sinon perte de données)
+        if (await secureStorage.setItem(STORAGE_KEYS.MOOD_LOG, parsed)) {
+          await AsyncStorage.removeItem(STORAGE_KEYS.MOOD_LOG);
+        }
         logger.info('[Storage] Migration mood vers SecureStorage réussie');
       }
     }

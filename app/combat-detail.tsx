@@ -69,6 +69,10 @@ export default function CombatDetailScreen() {
     try {
       const fightData = await getCombatById(parseInt(combatId));
       setCombat(fightData);
+      // Combat supprimé / introuvable
+      if (!fightData) {
+        showPopup('Erreur', 'Combat non trouvé', [{ text: 'OK', style: 'primary', onPress: () => router.back() }]);
+      }
 
       if (fightData?.competition_id) {
         const compData = await getCompetitionById(fightData.competition_id);
@@ -115,7 +119,8 @@ export default function CombatDetailScreen() {
   if (loading || !combat) {
     return (
       <ScreenWrapper>
-        <Header title="Chargement..." showBack />
+        <Header title={loading ? 'Chargement...' : 'Combat introuvable'} showBack />
+        <PopupComponent />
       </ScreenWrapper>
     );
   }

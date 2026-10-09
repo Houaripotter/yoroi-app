@@ -48,8 +48,10 @@ import {
 import { FontSizeLevel, FONT_SIZE_LABELS } from '@/lib/fontScaleManager';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
-import { ThemeMode, themeColors } from '@/constants/themes';
+import { ThemeMode, themeColors, isPremiumTheme } from '@/constants/themes';
 import { appearanceService, WARRIOR_THEMES } from '@/lib/appearanceService';
+import { usePremium } from '@/context/PremiumContext';
+import { PremiumModal } from '@/components/premium/PremiumModal';
 import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { SPACING, RADIUS } from '@/constants/appTheme';
@@ -132,6 +134,8 @@ const getThemeIcon = (themeColorId: string, color: string, size: number = 28) =>
       return <Wand {...iconProps} />;
     case 'chartreuse':
       return <Citrus {...iconProps} />;
+    case 'blanc':
+      return <Sun {...iconProps} />;
     default:
       return <Circle {...iconProps} fill={color} />;
   }
@@ -141,8 +145,10 @@ export default function ThemesScreen() {
   const { colors, themeColor, themeMode, setThemeColor, setThemeMode, fontSizeLevel, setFontSizeLevel } = useTheme();
   const { t } = useI18n();
   const { isDevMode: creatorModeActive } = useDevMode();
+  const { isPremium } = usePremium();
   const [userXP, setUserXP] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   const { showPopup, PopupComponent } = useCustomPopup();
 
@@ -174,6 +180,12 @@ export default function ThemesScreen() {
   const handleThemeChange = async (warriorThemeId: string) => {
     const warriorTheme = WARRIOR_THEMES.find((t) => t.id === warriorThemeId);
     if (!warriorTheme) return;
+
+    // Vérification premium pour les thèmes non-gratuits
+    if (!isPremium && isPremiumTheme(warriorTheme.themeColor)) {
+      setShowPremiumModal(true);
+      return;
+    }
 
     if (!appearanceService.isWarriorThemeUnlocked(warriorThemeId, userXP)) {
       showPopup(
@@ -404,7 +416,7 @@ export default function ThemesScreen() {
 
           <View style={styles.themesGrid}>
             {WARRIOR_THEMES.map((theme) => {
-              const isUnlocked = appearanceService.isWarriorThemeUnlocked(theme.id, userXP);
+              const isUnlocked = isPremium || !isPremiumTheme(theme.themeColor);
               const isActive = currentWarriorTheme?.id === theme.id;
               const themeAccentColor = getThemeColor(theme.themeColor);
               const themeCompanionColor = getThemeCompanion(theme.themeColor);
@@ -435,7 +447,7 @@ export default function ThemesScreen() {
                     !isUnlocked && { opacity: 0.5 },
                   ]}
                   onPress={() => handleThemeChange(theme.id)}
-                  disabled={!isUnlocked}
+                  disabled={false}
                   activeOpacity={0.7}
                 >
                   {/* Banniere couleur unique */}
@@ -445,6 +457,11 @@ export default function ThemesScreen() {
                         styles.colorBanner,
                         { backgroundColor: themeAccentColor },
                         isActive && { borderTopLeftRadius: 11, borderTopRightRadius: 11 },
+                        // Bordure pour les thèmes très clairs (ex: Blanc) pour qu'ils restent visibles
+                        getTextColorForBackground(themeAccentColor) === '#000000' && {
+                          borderWidth: 1,
+                          borderColor: 'rgba(0,0,0,0.10)',
+                        },
                       ]}
                     />
                   </View>
@@ -457,11 +474,18 @@ export default function ThemesScreen() {
                     {isUnlocked ? (
                       /* Un seul cercle couleur */
                       <View style={styles.colorCirclesRow}>
-                        <View style={[styles.colorCircle, { backgroundColor: themeAccentColor }]} />
+                        <View style={[
+                          styles.colorCircle,
+                          { backgroundColor: themeAccentColor },
+                          getTextColorForBackground(themeAccentColor) === '#000000' && {
+                            borderWidth: 1.5,
+                            borderColor: 'rgba(0,0,0,0.15)',
+                          },
+                        ]} />
                       </View>
                     ) : (
-                      <Text style={[styles.themeDescription, { color: colors.textMuted }]}>
-                        {`${theme.unlockXP} XP`}
+                      <Text style={[styles.themeDescription, { color: '#F59E0B', fontWeight: '700' }]}>
+                        Premium
                       </Text>
                     )}
                   </View>
@@ -496,6 +520,21 @@ export default function ThemesScreen() {
           )}
         </View>
       </ScrollView>
+
+      <PremiumModal
+        visible={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        Icon={Palette}
+        gradientColors={['#1E1B4B', '#4338CA', '#6366F1']}
+        title="Thèmes premium"
+        description="Personnalise ton app avec les thèmes exclusifs"
+        features={[
+          'Plus de 28 thèmes couleur au choix',
+          'Thèmes exclusifs (Volt, Magma, Matrix...)',
+          'Mises à jour avec de nouveaux thèmes',
+          "Parfait accord avec tout le design de l'app",
+        ]}
+      />
 
       <PopupComponent />
     </ScreenWrapper>

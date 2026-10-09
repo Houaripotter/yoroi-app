@@ -49,6 +49,30 @@ class AppDelegate: ExpoAppDelegate {
     let result = RCTLinkingManager.application(application, continue: userActivity, restorationHandler: restorationHandler)
     return super.application(application, continue: userActivity, restorationHandler: restorationHandler) || result
   }
+
+  // Scene lifecycle — iOS 13+ requires these methods to be implemented.
+  // Without them, iOS 26 raises EXC_BREAKPOINT (SIGTRAP) via
+  // ___UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption.
+  @available(iOS 13.0, *)
+  public func application(
+    _ application: UIApplication,
+    configurationForConnecting connectingSceneSession: UISceneSession,
+    options: UIScene.ConnectionOptions
+  ) -> UISceneConfiguration {
+    let config = UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+    // Set SceneDelegate so the UIWindow (created by React Native in didFinishLaunchingWithOptions)
+    // gets its windowScene set → becomes visible on iOS 13+.
+    config.delegateClass = SceneDelegate.self
+    return config
+  }
+
+  @available(iOS 13.0, *)
+  public func application(
+    _ application: UIApplication,
+    didDiscardSceneSessions sceneSessions: Set<UISceneSession>
+  ) {
+    // Sessions are discarded by the user — nothing to clean up.
+  }
 }
 
 class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {

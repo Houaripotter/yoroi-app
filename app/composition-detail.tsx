@@ -38,6 +38,7 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
 import { useI18n } from '@/lib/I18nContext';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 const CHART_HEIGHT = 250;
 
@@ -138,7 +139,7 @@ export default function CompositionDetailScreen() {
 
   // État
   const [selectedMetric, setSelectedMetric] = useState(initialMetric);
-  const [selectedPeriod, setSelectedPeriod] = useState('30d');
+  const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [compositionData, setCompositionData] = useState<BodyComposition[]>([]);
 
   // Charger les données
@@ -183,7 +184,7 @@ export default function CompositionDetailScreen() {
         const value = item[activeMetric.dataKey];
         return {
           value: typeof value === 'number' ? value : 0,
-          label: item.date ? format(parseISO(item.date), 'd MMM', { locale: fr }) : '',
+          label: item.date ? format(parseISO(item.date), 'd MMM yyyy', { locale: fr }) : '',
         };
       })
       .filter((item) => item.value > 0);
@@ -215,6 +216,7 @@ export default function CompositionDetailScreen() {
   const styles = createStyles(colors, activeMetric.color);
 
   return (
+    <PremiumGate featureTitle="Courbes de composition">
     <View style={styles.container}>
       {/* Header */}
       <View  style={styles.header}>
@@ -446,6 +448,7 @@ export default function CompositionDetailScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
     </View>
+    </PremiumGate>
   );
 }
 

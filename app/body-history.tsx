@@ -27,6 +27,10 @@ import {
 import { getAllBodyCompositions, deleteBodyComposition, updateBodyComposition, BodyComposition } from '@/lib/bodyComposition';
 import { useCustomPopup } from '@/components/CustomPopup';
 import logger from '@/lib/security/logger';
+import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
+import { usePremium } from '@/context/PremiumContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Lock } from 'lucide-react-native';
 
 // ============================================
 // DÉFINITION DES MÉTRIQUES
@@ -347,6 +351,7 @@ export default function BodyHistoryScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { isPremium } = usePremium();
 
   const bg = isDark ? '#000' : '#F2F2F7';
   const card = isDark ? '#1C1C1E' : '#FFF';
@@ -735,10 +740,18 @@ export default function BodyHistoryScreen() {
       </ScrollView>
 
       {loading ? (
-        <View style={s.loader}><ActivityIndicator size="large" color={metric.color} /></View>
+        <View style={{ flex: 1, padding: 16 }}>
+          <SkeletonCard height={56} width="100%" marginBottom={12} />
+          <SkeletonCard height={64} width="100%" marginBottom={8} />
+          <SkeletonCard height={64} width="100%" marginBottom={8} />
+          <SkeletonCard height={64} width="100%" marginBottom={8} />
+          <SkeletonCard height={64} width="100%" marginBottom={8} />
+          <SkeletonCard height={64} width="100%" marginBottom={8} />
+          <SkeletonMessage />
+        </View>
       ) : (
         <FlatList
-          data={entries}
+          data={isPremium ? entries : entries.slice(0, 2)}
           keyExtractor={item => item.id}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
@@ -780,6 +793,63 @@ export default function BodyHistoryScreen() {
                 <Text style={s.emptyAddTxt}>Ajouter la première mesure</Text>
               </TouchableOpacity>
             </View>
+          }
+          ListFooterComponent={
+            !isPremium && entries.length > 2 ? (
+              <View style={{ position: 'relative' }}>
+                {entries.slice(2, 6).map((item, index) => {
+                  const prev = entries[2 + index + 1] ?? null;
+                  const diff = prev ? item.value - prev.value : null;
+                  const diffAbs = diff !== null ? Math.abs(diff) : null;
+                  const diffColor = diff === null ? sub
+                    : diff < -0.05 ? '#10B981'
+                    : diff > 0.05 ? '#EF4444'
+                    : sub;
+                  const DiffIcon = diff === null ? null : diff < -0.05 ? TrendingDown : diff > 0.05 ? TrendingUp : Minus;
+                  const cfg = src(item.source);
+                  return (
+                    <View key={item.id + '_locked'} style={{ opacity: 0.4 }}>
+                      <View style={[row.wrap, { backgroundColor: card }]}>
+                        <View style={[row.iconWrap, { backgroundColor: cfg.bgColor }]}>
+                          <cfg.Icon size={16} color={cfg.color} />
+                        </View>
+                        <View style={row.info}>
+                          <Text style={[row.date, { color: text }]}>{isoToFr(item.date)}</Text>
+                          <SourceBadge source={item.source} />
+                        </View>
+                        <View style={row.valBlock}>
+                          <Text style={[row.val, { color: metric.color }]}>
+                            {item.value}<Text style={[row.unit, { color: sub }]}> {metric.unit}</Text>
+                          </Text>
+                          {DiffIcon && diffAbs !== null && (
+                            <View style={row.diffWrap}>
+                              <DiffIcon size={11} color={diffColor} />
+                              <Text style={[row.diff, { color: diffColor }]}>
+                                {diffAbs < 0.05 ? '=' : `${diffAbs.toFixed(1)} ${metric.unit}`}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                        <Lock size={13} color="#9CA3AF" strokeWidth={2} />
+                      </View>
+                    </View>
+                  );
+                })}
+                <LinearGradient
+                  colors={['transparent', bg]}
+                  style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 100 }}
+                  pointerEvents="none"
+                />
+                <TouchableOpacity
+                  style={[s.lockCta, { backgroundColor: metric.color }]}
+                  onPress={() => router.push('/paywall' as never)}
+                  activeOpacity={0.85}
+                >
+                  <Lock size={14} color="#FFFFFF" strokeWidth={2.5} />
+                  <Text style={s.lockCtaText}>Voir tout l'historique</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null
           }
         />
       )}
@@ -842,4 +912,6 @@ const s = StyleSheet.create({
   emptyTxt: { fontSize:16 },
   emptyAdd: { flexDirection:'row', alignItems:'center', gap:8, paddingHorizontal:20, paddingVertical:12, borderRadius:14, marginTop:8 },
   emptyAddTxt: { color:'#FFF', fontSize:14, fontWeight:'700' },
+  lockCta: { flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, marginHorizontal:16, marginVertical:12, paddingVertical:14, borderRadius:14 },
+  lockCtaText: { color:'#FFFFFF', fontSize:15, fontWeight:'700' },
 });

@@ -3,8 +3,14 @@ const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
-// Désactiver Watchman (problème de priorité nice_value=5 sur ce Mac)
-config.watchman = false;
+// Watchman activé — le mode sans watchman bloque sur les projets avec beaucoup de fichiers
+// (ex: lucide-react-native a 3274 icônes, le crawler JS natif deadlocke).
+// config.watchman = false; // NE PAS désactiver watchman
+
+// Forcer 1 worker (séquentiel) pour éviter le deadlock des worker threads Metro.
+// Avec plusieurs workers, tous se retrouvent en attente d'un module partagé → deadlock.
+// 1 worker est plus lent mais ne deadlocke jamais.
+config.maxWorkers = 1;
 
 // Disable enablePackageExports to fix resolution issues with packages that have
 // non-standard main fields or self-imports without exports fields
@@ -46,5 +52,17 @@ const existing = config.resolver.blockList;
 config.resolver.blockList = existing
   ? [...(Array.isArray(existing) ? existing : [existing]), ...blockListEntries]
   : blockListEntries;
+
+// Rediriger lucide-react-native vers le barrel optimisé (233 icônes au lieu de 3274).
+// lucide-react-native v0.544.0 utilise le champ "react-native" → ESM → 3274 fichiers
+// individuels → Metro deadlocke avec les worker threads. Ce resolver charge seulement
+// les icônes réellement utilisées dans l'app.
+const lucideOptimizedPath = path.resolve(__dirname, 'lib/lucide-optimized.js');
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === 'lucide-react-native') {
+    return { filePath: lucideOptimizedPath, type: 'sourceFile' };
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
 
 module.exports = config;

@@ -24,7 +24,7 @@ import {
   saveMood,
 } from './storage';
 import { getSleepEntries, getSleepGoal } from './sleepService';
-import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs, addClub, addMeasurementRecord, saveProfile, getInjuries, addInjury, getCompetitions, addCompetition, getWeeklyPlan, addWeeklyPlanItem, openDatabase } from './database';
+import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs, addClub, addMeasurementRecord, saveProfile, getInjuries, addInjury, getCompetitions, addCompetition, getWeeklyPlan, addWeeklyPlanItem, openDatabase, getMeasurements as getSqlMeasurements } from './database';
 import { getAllBodyCompositions, addBodyComposition } from './bodyComposition';
 import { getUnlockedBadges, unlockBadge } from './badges';
 import { getAllGoals, setGoal } from './trainingGoalsService';
@@ -48,7 +48,8 @@ function sanitizeImportRecord<T extends Record<string, any>>(record: T): T {
     const rule = VALIDATION_RULES[key];
     if (!rule) {
       // Champ inconnu : tronquer si string très longue, sinon passer tel quel
-      if (typeof value === 'string' && value.length > 2000) {
+      // Les champs *_json (tracé GPS, FC...) ne sont jamais tronqués : un JSON coupé est inutilisable
+      if (typeof value === 'string' && value.length > 2000 && !key.endsWith('_json')) {
         sanitized[key] = value.slice(0, 2000);
       } else {
         sanitized[key] = value;
@@ -57,7 +58,12 @@ function sanitizeImportRecord<T extends Record<string, any>>(record: T): T {
     }
     const result = validate(key, value);
     // Si valide → valeur nettoyée ; si invalide → null (champ facultatif neutralisé)
-    sanitized[key] = result.valid ? result.value : null;
+    // Notes trop longues : on tronque plutôt que de tout effacer
+    if (!result.valid && typeof value === 'string' && (key === 'notes' || key === 'note')) {
+      sanitized[key] = value.slice(0, 1000);
+    } else {
+      sanitized[key] = result.valid ? result.value : null;
+    }
   }
   return sanitized as T;
 }
@@ -403,7 +409,9 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
       trainings,
       bodyCompositions,
       clubs: clubsWithLogos,
-      measurements,
+      // Mensurations : liste historique + table SQLite (saisies via l'onglet +, body-history),
+      // qui n'étaient jusqu'ici jamais sauvegardées
+      measurements: [...(measurements || []), ...(await getSqlMeasurements().catch(() => []))],
       userSettings,
       unlockedBadges,
       photos: photosWithBase64,
@@ -476,7 +484,9 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
 
     // Créer le fichier JSON avec date ET heure pour éviter les écrasements
     const now = new Date();
-    const dateStr = now.toISOString().split('T')[0]; // 2026-04-18
+    // Date LOCALE (comme l'heure) : mélanger date UTC et heure locale faussait l'ordre des backups
+    // et la rotation supprimait les plus récents
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; // 2026-04-18
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const fileName = `yoroi_backup_${dateStr}_${hours}h${minutes}.json`; // yoroi_backup_2026-04-18_14h30.json
@@ -523,7 +533,8 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
       JSON.stringify(finalPayload, null, 2),
       { encoding: FileSystem.EncodingType.UTF8 }
     );
-    // Move atomique tmp → final
+    // Move atomique tmp → final (supprimer un éventuel fichier du même nom : sur iOS, move échoue sinon)
+    await FileSystem.deleteAsync(fileUri, { idempotent: true }).catch(() => {});
     await FileSystem.moveAsync({ from: tmpUri, to: fileUri });
 
     logger.info('Fichier JSON créé (atomique):', fileName);
@@ -854,7 +865,12 @@ export const importDataFromJSON = async (): Promise<boolean> => {
 
     // Importer les poids
     if (importedData.weights && Array.isArray(importedData.weights)) {
+      // Anti-doublon : une restauration (ou une synchro entre appareils) ne doit pas
+      // dupliquer les pesées déjà présentes
+      const weightKey = (w: any) => `${String(w.date).slice(0, 10)}|${Number(w.weight).toFixed(2)}|${w.source || 'manual'}`;
+      const seenWeights = new Set((await getWeights().catch(() => [])).map(weightKey));
       for (const raw of importedData.weights) {
+        if (raw && seenWeights.has(weightKey(raw))) continue;
         try {
           const weight = sanitizeImportRecord(raw);
           // weight.weight est requis — si null après sanitize, on saute le record
@@ -882,7 +898,13 @@ export const importDataFromJSON = async (): Promise<boolean> => {
 
     // Importer les entraînements (COMPLET avec tous les champs)
     if (importedData.trainings && Array.isArray(importedData.trainings)) {
+      // Anti-doublon séances (l'identifiant Santé est aussi contrôlé dans addTraining)
+      const trainingKey = (t: any) => t.healthkit_uuid
+        ? `uuid|${t.healthkit_uuid}`
+        : `${String(t.date).slice(0, 10)}|${t.start_time ?? ''}|${t.sport ?? t.discipline ?? ''}|${t.duration_minutes ?? ''}`;
+      const seenTrainings = new Set((await getTrainings().catch(() => [])).map(trainingKey));
       for (const raw of importedData.trainings) {
+        if (raw && seenTrainings.has(trainingKey(raw))) continue;
         const training = sanitizeImportRecord(raw);
         try {
           await addTraining({
@@ -980,7 +1002,12 @@ export const importDataFromJSON = async (): Promise<boolean> => {
 
     // Importer les mensurations
     if (importedData.measurements && Array.isArray(importedData.measurements)) {
+      // Anti-doublon : ne pas réinsérer une mensuration déjà présente en base
+      const MEAS_FIELDS = ['chest', 'waist', 'navel', 'hips', 'left_arm', 'right_arm', 'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'shoulders', 'neck'];
+      const measKey = (m: any) => `${String(m?.date).slice(0, 10)}|${MEAS_FIELDS.map(f => (m?.[f] == null ? '' : Number(m[f]))).join('|')}`;
+      const seenMeasurements = new Set((await getSqlMeasurements().catch(() => [])).map(measKey));
       for (const raw of importedData.measurements) {
+        if (raw && seenMeasurements.has(measKey(raw))) continue;
         try {
           const m = sanitizeImportRecord(raw);
           await addMeasurementRecord({
@@ -1050,12 +1077,14 @@ export const importDataFromJSON = async (): Promise<boolean> => {
     // Importer les entrées de sommeil
     if (importedData.sleepEntries && Array.isArray(importedData.sleepEntries)) {
       try {
-        const existingEntries: any[] = (await secureStorage.getItem('@yoroi_sleep_entries')) ?? [];
+        // Le sommeil est stocké dans AsyncStorage (SecureStore n'est plus lu après migration)
+        const _sleepRaw = await AsyncStorage.getItem('@yoroi_sleep_entries');
+        const existingEntries: any[] = _sleepRaw ? JSON.parse(_sleepRaw) : [];
         const existingIds = new Set(existingEntries.map((e: any) => e.id));
         const newEntries = importedData.sleepEntries.filter((e: any) => !existingIds.has(e.id));
         if (newEntries.length > 0) {
           const merged = [...existingEntries, ...newEntries];
-          await secureStorage.setItem('@yoroi_sleep_entries', merged);
+          await AsyncStorage.setItem('@yoroi_sleep_entries', JSON.stringify(merged));
           importedCount += newEntries.length;
         }
       } catch (error) {
@@ -1129,13 +1158,15 @@ export const importDataFromJSON = async (): Promise<boolean> => {
 
           // Restaurer l'image base64 vers un fichier local
           if (photo.image_base64) {
-            const ext = (photo.uri || 'photo.jpg').split('.').pop() || 'jpg';
+            const ext = (photo.file_uri || photo.uri || 'photo.jpg').split('.').pop() || 'jpg';
             const photoUri = await base64ToImage(
               photo.image_base64,
               `photo_${photo.id || Date.now()}.${ext}`
             );
             if (photoUri) {
-              photoData.uri = photoUri;
+              // Champ officiel : file_uri (cf. Photo dans lib/storage.ts)
+              photoData.file_uri = photoUri;
+              delete photoData.uri;
               imagesRestored++;
             }
           }
@@ -1143,7 +1174,8 @@ export const importDataFromJSON = async (): Promise<boolean> => {
           restoredPhotos.push(photoData);
         }
 
-        await secureStorage.setItem('@yoroi_photos', restoredPhotos);
+        // La clé lue par l'app est @yoroi_photos_v2 (AsyncStorage) : SecureStore n'était plus lu
+        await AsyncStorage.setItem('@yoroi_photos_v2', JSON.stringify(restoredPhotos));
         importedCount++;
       } catch (error) {
         logger.error('Erreur import photos:', error);
@@ -1271,7 +1303,7 @@ export const importDataFromJSON = async (): Promise<boolean> => {
         if (c.drillTracker)       tasks.push(AsyncStorage.setItem('@yoroi_drill_tracker', c.drillTracker));
         if (c.sparringWeeklyGoal) tasks.push(AsyncStorage.setItem('@sparring_weekly_goal', c.sparringWeeklyGoal));
         if (c.bjjFavSubmissions)  tasks.push(AsyncStorage.setItem('bjj_fav_submissions_v2', c.bjjFavSubmissions));
-        if (c.toolFavorites)      tasks.push(AsyncStorage.setItem('@yoroi_tool_favorites', c.toolFavorites));
+        if (c.toolFavorites)      tasks.push(AsyncStorage.setItem('@yoroi_tool_favorites', typeof c.toolFavorites === 'string' ? c.toolFavorites : JSON.stringify(c.toolFavorites)));
         await Promise.all(tasks);
         importedCount++;
         logger.info('Combat Lab restauré : partenaires, playbook, drills, favoris');
@@ -1533,7 +1565,12 @@ export const importDataFromBackupObject = async (importedData: any): Promise<boo
 
     // Importer les poids
     if (importedData.weights && Array.isArray(importedData.weights)) {
+      // Anti-doublon : une restauration (ou une synchro entre appareils) ne doit pas
+      // dupliquer les pesées déjà présentes
+      const weightKey = (w: any) => `${String(w.date).slice(0, 10)}|${Number(w.weight).toFixed(2)}|${w.source || 'manual'}`;
+      const seenWeights = new Set((await getWeights().catch(() => [])).map(weightKey));
       for (const raw of importedData.weights) {
+        if (raw && seenWeights.has(weightKey(raw))) continue;
         try {
           const weight = sanitizeImportRecord(raw);
           if (weight.weight == null || isNaN(Number(weight.weight))) continue;
@@ -1557,7 +1594,13 @@ export const importDataFromBackupObject = async (importedData: any): Promise<boo
 
     // Importer les entraînements
     if (importedData.trainings && Array.isArray(importedData.trainings)) {
+      // Anti-doublon séances (l'identifiant Santé est aussi contrôlé dans addTraining)
+      const trainingKey = (t: any) => t.healthkit_uuid
+        ? `uuid|${t.healthkit_uuid}`
+        : `${String(t.date).slice(0, 10)}|${t.start_time ?? ''}|${t.sport ?? t.discipline ?? ''}|${t.duration_minutes ?? ''}`;
+      const seenTrainings = new Set((await getTrainings().catch(() => [])).map(trainingKey));
       for (const raw of importedData.trainings) {
+        if (raw && seenTrainings.has(trainingKey(raw))) continue;
         const training = sanitizeImportRecord(raw);
         try {
           await addTraining({
@@ -1651,7 +1694,12 @@ export const importDataFromBackupObject = async (importedData: any): Promise<boo
 
     // Importer les mensurations
     if (importedData.measurements && Array.isArray(importedData.measurements)) {
+      // Anti-doublon : ne pas réinsérer une mensuration déjà présente en base
+      const MEAS_FIELDS = ['chest', 'waist', 'navel', 'hips', 'left_arm', 'right_arm', 'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'shoulders', 'neck'];
+      const measKey = (m: any) => `${String(m?.date).slice(0, 10)}|${MEAS_FIELDS.map(f => (m?.[f] == null ? '' : Number(m[f]))).join('|')}`;
+      const seenMeasurements = new Set((await getSqlMeasurements().catch(() => [])).map(measKey));
       for (const raw of importedData.measurements) {
+        if (raw && seenMeasurements.has(measKey(raw))) continue;
         try {
           const m = sanitizeImportRecord(raw);
           await addMeasurementRecord({
@@ -1691,11 +1739,13 @@ export const importDataFromBackupObject = async (importedData: any): Promise<boo
     // Importer les entrées de sommeil
     if (importedData.sleepEntries && Array.isArray(importedData.sleepEntries)) {
       try {
-        const existingEntries: any[] = (await secureStorage.getItem('@yoroi_sleep_entries')) ?? [];
+        // Le sommeil est stocké dans AsyncStorage (SecureStore n'est plus lu après migration)
+        const _sleepRaw = await AsyncStorage.getItem('@yoroi_sleep_entries');
+        const existingEntries: any[] = _sleepRaw ? JSON.parse(_sleepRaw) : [];
         const existingIds = new Set(existingEntries.map((e: any) => e.id));
         const newEntries = importedData.sleepEntries.filter((e: any) => !existingIds.has(e.id));
         if (newEntries.length > 0) {
-          await secureStorage.setItem('@yoroi_sleep_entries', [...existingEntries, ...newEntries]);
+          await AsyncStorage.setItem('@yoroi_sleep_entries', JSON.stringify([...existingEntries, ...newEntries]));
           importedCount += newEntries.length;
         }
       } catch { /* ignore */ }
@@ -1759,7 +1809,8 @@ export const importDataFromBackupObject = async (importedData: any): Promise<boo
           }
           restoredPhotos.push(photoData);
         }
-        await secureStorage.setItem('@yoroi_photos', restoredPhotos);
+        // La clé lue par l'app est @yoroi_photos_v2 (AsyncStorage) : SecureStore n'était plus lu
+        await AsyncStorage.setItem('@yoroi_photos_v2', JSON.stringify(restoredPhotos));
         importedCount++;
       } catch { /* ignore */ }
     }
@@ -1863,7 +1914,7 @@ export const importDataFromBackupObject = async (importedData: any): Promise<boo
         if (c.drillTracker)       tasks.push(AsyncStorage.setItem('@yoroi_drill_tracker', c.drillTracker));
         if (c.sparringWeeklyGoal) tasks.push(AsyncStorage.setItem('@sparring_weekly_goal', c.sparringWeeklyGoal));
         if (c.bjjFavSubmissions)  tasks.push(AsyncStorage.setItem('bjj_fav_submissions_v2', c.bjjFavSubmissions));
-        if (c.toolFavorites)      tasks.push(AsyncStorage.setItem('@yoroi_tool_favorites', c.toolFavorites));
+        if (c.toolFavorites)      tasks.push(AsyncStorage.setItem('@yoroi_tool_favorites', typeof c.toolFavorites === 'string' ? c.toolFavorites : JSON.stringify(c.toolFavorites)));
         await Promise.all(tasks);
         importedCount++;
       } catch { /* ignore */ }

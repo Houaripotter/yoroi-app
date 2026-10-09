@@ -10,7 +10,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useI18n } from '@/lib/I18nContext';
@@ -22,6 +21,7 @@ import type { Training, CombatRound } from '@/lib/database';
 import { Users, Zap, Trophy, TrendingUp, Shield, Target, ChevronRight, Activity, BookOpen, MapPin, BarChart2 } from 'lucide-react-native';
 import { getMethodDisplayName } from '@/components/BJJBodyMap';
 import { PremiumGate } from '@/components/premium/PremiumGate';
+import { SkeletonGrid } from '@/components/stats/SkeletonCard';
 
 // ============================================
 // TYPES
@@ -300,8 +300,8 @@ export default function CombatAnalyticsScreen() {
     return (
       <View style={[styles.root, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
         <Header title={t('combatAnalytics.title')} showBack />
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#8B5CF6" />
+        <View style={{ flex: 1, padding: 16 }}>
+          <SkeletonGrid count={4} cardHeight={140} />
         </View>
       </View>
     );

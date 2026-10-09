@@ -32,7 +32,7 @@ import {
   Target,
 } from 'lucide-react-native';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 import { useTheme } from '@/lib/ThemeContext';
@@ -50,11 +50,18 @@ import {
 import { notificationService, requestNotificationPermissions } from '@/lib/notificationService';
 import HealthConnect from '@/lib/healthConnect';
 import logger from '@/lib/security/logger';
+import { usePremium } from '@/context/PremiumContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Lock } from 'lucide-react-native';
 
 // Map des locales date-fns par langue
 
 
 // Couleur de qualité
+// Parse date sûr : 'yyyy-MM-dd' en local (évite le jour précédent à l'ouest d'UTC)
+const toLocalDate = (v: any): Date =>
+  typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? parseISO(v) : new Date(v);
+
 const getQualityColor = (quality: number): string => {
   if (quality <= 1) return '#EF4444';
   if (quality <= 2) return '#F97316';
@@ -76,6 +83,7 @@ export default function SleepScreen() {
   const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { t } = useI18n();
+  const { isPremium } = usePremium();
   const dateLocale = fr;
 
   const [entries, setEntries] = useState<SleepEntry[]>([]);
@@ -228,11 +236,13 @@ export default function SleepScreen() {
 
   const hasPhases = hkLastNight && (hkLastNight.deep + hkLastNight.rem + hkLastNight.core) > 0;
 
-  const formatHHMM = (isoString?: string): string => {
-    if (!isoString) return '--:--';
-    const d = new Date(isoString);
-    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-  };
+  // Heures coucher/réveil : SQLite en priorité (déjà en HH:MM local, toujours juste)
+  // HealthKit donne des ISO UTC qui peuvent être décalés selon le fuseau
+  // entries[0] = plus récent car addSleepEntry() utilise .unshift()
+  const lastEntry = entries.length > 0 ? entries[0] : null;
+  const displayBedTime = lastEntry?.bedTime || '--:--';
+  const displayWakeTime = lastEntry?.wakeTime || '--:--';
+  const hasSleepTimes = !!(lastEntry?.bedTime && lastEntry?.wakeTime);
 
   // Couleurs theme-aware : on respecte le mode (clair/sombre) de l'utilisateur.
   // En mode clair → fonds blanc/gris doux, lisible et joyeux.
@@ -291,11 +301,11 @@ export default function SleepScreen() {
               <Text style={[styles.lastNightDuration, { color: getDurationColor(lastNightTotal) }]}>
                 {formatSleepDuration(lastNightTotal)}
               </Text>
-              {(hkLastNight?.startTime || hkLastNight?.endTime) && (
+              {hasSleepTimes && (
                 <View style={styles.lastNightTimes}>
                   <Moon size={12} color="#7B8DB5" />
                   <Text style={styles.lastNightTimeText}>
-                    {formatHHMM(hkLastNight?.startTime)} → {formatHHMM(hkLastNight?.endTime)}
+                    {displayBedTime} → {displayWakeTime}
                   </Text>
                 </View>
               )}
@@ -310,35 +320,35 @@ export default function SleepScreen() {
               return (
                 <View style={styles.phaseBarContainer}>
                   <View style={styles.phaseBar}>
-                    {deep > 0 && <View style={[styles.phaseSegment, { width: pct(deep), backgroundColor: '#1E40AF' }]} />}
-                    {rem > 0 && <View style={[styles.phaseSegment, { width: pct(rem), backgroundColor: '#7C3AED' }]} />}
-                    {core > 0 && <View style={[styles.phaseSegment, { width: pct(core), backgroundColor: '#3B82F6' }]} />}
-                    {awake > 0 && <View style={[styles.phaseSegment, { width: pct(awake), backgroundColor: '#374151' }]} />}
+                    {deep > 0 && <View style={[styles.phaseSegment, { width: pct(deep), backgroundColor: '#5856D6' }]} />}
+                    {rem > 0 && <View style={[styles.phaseSegment, { width: pct(rem), backgroundColor: '#34D399' }]} />}
+                    {core > 0 && <View style={[styles.phaseSegment, { width: pct(core), backgroundColor: '#60A5FA' }]} />}
+                    {awake > 0 && <View style={[styles.phaseSegment, { width: pct(awake), backgroundColor: '#F97316' }]} />}
                   </View>
 
                   {/* Stats par phase */}
                   <View style={styles.phaseGrid}>
                     {deep > 0 && (
-                      <View style={[styles.phaseCell, { borderLeftColor: '#1E40AF' }]}>
-                        <Text style={[styles.phaseCellValue, { color: '#60A5FA' }]}>{formatSleepDuration(deep)}</Text>
+                      <View style={[styles.phaseCell, { borderLeftColor: '#5856D6' }]}>
+                        <Text style={[styles.phaseCellValue, { color: '#5856D6' }]}>{formatSleepDuration(deep)}</Text>
                         <Text style={styles.phaseCellLabel}>{t('sleep.deepSleep')}</Text>
                       </View>
                     )}
                     {rem > 0 && (
-                      <View style={[styles.phaseCell, { borderLeftColor: '#7C3AED' }]}>
-                        <Text style={[styles.phaseCellValue, { color: '#A78BFA' }]}>{formatSleepDuration(rem)}</Text>
+                      <View style={[styles.phaseCell, { borderLeftColor: '#34D399' }]}>
+                        <Text style={[styles.phaseCellValue, { color: '#34D399' }]}>{formatSleepDuration(rem)}</Text>
                         <Text style={styles.phaseCellLabel}>{t('sleep.remSleep')}</Text>
                       </View>
                     )}
                     {core > 0 && (
-                      <View style={[styles.phaseCell, { borderLeftColor: '#3B82F6' }]}>
-                        <Text style={[styles.phaseCellValue, { color: '#93C5FD' }]}>{formatSleepDuration(core)}</Text>
+                      <View style={[styles.phaseCell, { borderLeftColor: '#60A5FA' }]}>
+                        <Text style={[styles.phaseCellValue, { color: '#60A5FA' }]}>{formatSleepDuration(core)}</Text>
                         <Text style={styles.phaseCellLabel}>{t('sleep.lightSleep')}</Text>
                       </View>
                     )}
                     {awake > 0 && (
-                      <View style={[styles.phaseCell, { borderLeftColor: '#374151' }]}>
-                        <Text style={[styles.phaseCellValue, { color: '#9CA3AF' }]}>{formatSleepDuration(awake)}</Text>
+                      <View style={[styles.phaseCell, { borderLeftColor: '#F97316' }]}>
+                        <Text style={[styles.phaseCellValue, { color: '#F97316' }]}>{formatSleepDuration(awake)}</Text>
                         <Text style={styles.phaseCellLabel}>{t('sleep.awake')}</Text>
                       </View>
                     )}
@@ -525,53 +535,98 @@ export default function SleepScreen() {
           <Text style={styles.addBtnText}>{t('sleep.recordMyNight')}</Text>
         </TouchableOpacity>
 
-        {/* Aperçu historique + lien vers écran dédié */}
-        <TouchableOpacity
-          style={[styles.historyCard, { backgroundColor: nightCard }]}
-          onPress={() => router.push('/sleep-history')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.historyHeader}>
-            <View style={[styles.historySectionIcon, { backgroundColor: '#8B5CF615' }]}>
-              <Calendar size={18} color="#8B5CF6" strokeWidth={2.5} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.historyTitle, { color: inputText }]}>{t('sleep.history')}</Text>
-              <Text style={[styles.historySubtitle, { color: colors.textMuted || '#7B8DB5' }]}>
-                {entries.length > 0
-                  ? t('sleep.nightsRecorded', { count: entries.length })
-                  : t('sleep.noNightsRecorded')}
-              </Text>
-            </View>
-            <View style={[styles.historyArrow, { backgroundColor: '#8B5CF615' }]}>
-              <ArrowLeft size={16} color="#8B5CF6" strokeWidth={2.5} style={{ transform: [{ rotate: '180deg' }] }} />
-            </View>
-          </View>
+        {/* Historique sommeil — teaser pour free, complet pour premium */}
+        {(() => {
+          const sortedEntries = [...entries].sort((a, b) => b.date.localeCompare(a.date));
+          const FREE_VISIBLE = 2;
+          const visibleEntries = isPremium ? sortedEntries : sortedEntries.slice(0, FREE_VISIBLE);
+          const lockedEntries = isPremium ? [] : sortedEntries.slice(FREE_VISIBLE, FREE_VISIBLE + 4);
 
-          {/* Aperçu des 3 dernières nuits (du plus récent au plus ancien) */}
-          {entries.length > 0 && (
-            <View style={styles.historyPreview}>
-              {[...entries].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3).map((entry) => {
-                const dColor = getDurationColor(entry.duration);
-                return (
-                  <View key={entry.id} style={[styles.previewEntry, { borderLeftColor: dColor }]}>
-                    <Text style={[styles.previewDate, { color: colors.textMuted || '#7B8DB5' }]}>
-                      {format(new Date(entry.date), 'EEE d', { locale: dateLocale })}
-                    </Text>
-                    <Text style={[styles.previewDuration, { color: dColor }]}>
-                      {formatSleepDuration(entry.duration)}
-                    </Text>
-                    <View style={{ flexDirection: 'row', gap: 1 }}>
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} size={8} color={i <= entry.quality ? '#F59E0B' : surfaceMuted} fill={i <= entry.quality ? '#F59E0B' : 'transparent'} />
-                      ))}
+          const renderEntry = (entry: SleepEntry, locked = false) => {
+            const dColor = locked ? '#9CA3AF' : getDurationColor(entry.duration);
+            return (
+              <TouchableOpacity
+                key={entry.id}
+                activeOpacity={locked ? 0.7 : 0.85}
+                onPress={() => locked ? router.push('/paywall' as never) : router.push('/sleep-history' as never)}
+                style={[
+                  styles.previewEntry,
+                  { borderLeftColor: dColor, opacity: locked ? 0.45 : 1 },
+                ]}
+              >
+                <Text style={[styles.previewDate, { color: colors.textMuted || '#7B8DB5' }]}>
+                  {format(toLocalDate(entry.date), 'EEE d', { locale: dateLocale })}
+                </Text>
+                <Text style={[styles.previewDuration, { color: dColor }]}>
+                  {formatSleepDuration(entry.duration)}
+                </Text>
+                <View style={{ flexDirection: 'row', gap: 1 }}>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Star key={i} size={8} color={i <= entry.quality ? '#F59E0B' : surfaceMuted} fill={i <= entry.quality ? '#F59E0B' : 'transparent'} />
+                  ))}
+                </View>
+                {locked && (
+                  <Lock size={13} color="#9CA3AF" strokeWidth={2} style={{ marginLeft: 'auto' }} />
+                )}
+              </TouchableOpacity>
+            );
+          };
+
+          return (
+            <View style={[styles.historyCard, { backgroundColor: nightCard }]}>
+              {/* Header */}
+              <TouchableOpacity
+                style={styles.historyHeader}
+                onPress={() => isPremium ? router.push('/sleep-history' as never) : router.push('/paywall' as never)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.historySectionIcon, { backgroundColor: '#8B5CF615' }]}>
+                  <Calendar size={18} color="#8B5CF6" strokeWidth={2.5} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.historyTitle, { color: inputText }]}>{t('sleep.history')}</Text>
+                  <Text style={[styles.historySubtitle, { color: colors.textMuted || '#7B8DB5' }]}>
+                    {entries.length > 0
+                      ? t('sleep.nightsRecorded', { count: entries.length })
+                      : t('sleep.noNightsRecorded')}
+                  </Text>
+                </View>
+                <View style={[styles.historyArrow, { backgroundColor: '#8B5CF615' }]}>
+                  <ArrowLeft size={16} color="#8B5CF6" strokeWidth={2.5} style={{ transform: [{ rotate: '180deg' }] }} />
+                </View>
+              </TouchableOpacity>
+
+              {/* Entrées visibles */}
+              {entries.length > 0 && (
+                <View style={styles.historyPreview}>
+                  {visibleEntries.map(e => renderEntry(e, false))}
+
+                  {/* Entrées verrouillées (free users) */}
+                  {lockedEntries.length > 0 && (
+                    <View style={{ position: 'relative' }}>
+                      {lockedEntries.map(e => renderEntry(e, true))}
+
+                      {/* Gradient + CTA premium */}
+                      <LinearGradient
+                        colors={['transparent', nightCard]}
+                        style={styles.lockGradient}
+                        pointerEvents="none"
+                      />
+                      <TouchableOpacity
+                        style={styles.lockCta}
+                        onPress={() => router.push('/paywall' as never)}
+                        activeOpacity={0.85}
+                      >
+                        <Lock size={14} color="#FFFFFF" strokeWidth={2.5} />
+                        <Text style={styles.lockCtaText}>Voir tout l'historique</Text>
+                      </TouchableOpacity>
                     </View>
-                  </View>
-                );
-              })}
+                  )}
+                </View>
+              )}
             </View>
-          )}
-        </TouchableOpacity>
+          );
+        })()}
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -728,18 +783,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   historyPreview: {
-    flexDirection: 'row',
-    gap: 10,
+    flexDirection: 'column',
+    gap: 8,
     marginTop: 14,
     paddingTop: 14,
     borderTopWidth: 1,
     borderTopColor: 'rgba(139, 92, 246, 0.1)',
   },
   previewEntry: {
-    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     borderLeftWidth: 3,
-    paddingLeft: 8,
-    gap: 2,
+    paddingLeft: 10,
+    paddingVertical: 6,
   },
   previewDate: {
     fontSize: 10,
@@ -751,6 +808,30 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '900',
     letterSpacing: -0.3,
+  },
+  lockGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  lockCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#8B5CF6',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  lockCtaText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.2,
   },
 
   // Notifications

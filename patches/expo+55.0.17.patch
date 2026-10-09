@@ -1,0 +1,14 @@
+diff --git a/node_modules/expo/AppEntry.js b/node_modules/expo/AppEntry.js
+--- a/node_modules/expo/AppEntry.js
++++ b/node_modules/expo/AppEntry.js
+@@ -1,5 +1,6 @@
+-import registerRootComponent from 'expo/src/launch/registerRootComponent';
+-
+-import App from '../../App';
+-
+-registerRootComponent(App);
++// Redirected to expo-router entry for Expo Router projects.
++// expo/AppEntry is sometimes served by the dev manifest even when package.json
++// defines "main": "expo-router/entry". This redirect ensures Expo Router
++// registers the root component correctly regardless.
++import 'expo-router/entry-classic';

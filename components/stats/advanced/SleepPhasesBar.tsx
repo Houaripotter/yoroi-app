@@ -85,8 +85,9 @@ export const SleepPhasesBar: React.FC<SleepPhasesBarProps> = ({
 
           if (totalMinutes === 0) return null;
 
-          const hours = Math.floor(totalMinutes / 60);
-          const minutes = totalMinutes % 60;
+          const roundedTotal = Math.round(totalMinutes);
+          const hours = Math.floor(roundedTotal / 60);
+          const minutes = roundedTotal % 60;
           const timeStr = hours > 0
             ? `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`
             : `${minutes}m`;

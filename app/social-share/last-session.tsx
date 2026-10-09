@@ -60,7 +60,7 @@ export default function LastSessionScreen() {
   const { avatarImage: contextAvatar } = useAvatar();
   const insets = useSafeAreaInsets();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const CARD_WIDTH = SCREEN_WIDTH - 40;
+  const CARD_WIDTH = Math.min(SCREEN_WIDTH - 40, 400); // limite iPad
   const CARD_HEIGHT_PORTRAIT = CARD_WIDTH * (16 / 9);
   const CARD_HEIGHT_LANDSCAPE = CARD_WIDTH * (9 / 16);
   const styles = useMemo(() => createStyles(CARD_WIDTH), [CARD_WIDTH]);

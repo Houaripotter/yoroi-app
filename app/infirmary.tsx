@@ -33,6 +33,7 @@ import {
 } from '@/lib/infirmaryService';
 import logger from '@/lib/security/logger';
 import { useI18n } from '@/lib/I18nContext';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 import { getTrainingLoads, getRiskLevel } from '@/lib/trainingLoadService';
 
 
@@ -197,6 +198,7 @@ export default function InfirmaryScreen() {
   }));
 
   return (
+    <PremiumGate featureTitle="Suivi Blessures">
     <ScreenWrapper>
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -396,7 +398,7 @@ export default function InfirmaryScreen() {
 
                 <View style={styles.injuryCardFooter}>
                   <Text style={[styles.injuryDays, { color: colors.textSecondary }]}>
-                    Depuis {getDaysSinceInjury(injury.date)} jours
+                    Depuis {getDaysSinceInjury(injury.date)} jour{getDaysSinceInjury(injury.date) > 1 ? 's' : ''}
                   </Text>
                   <TrendingDown size={16} color={colors.textMuted} />
                 </View>
@@ -463,6 +465,7 @@ export default function InfirmaryScreen() {
         onClose={() => setShowZoneModal(false)}
       />
     </ScreenWrapper>
+    </PremiumGate>
   );
 }
 

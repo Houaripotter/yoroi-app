@@ -47,6 +47,7 @@ import { timerNotifications } from '@/lib/timerNotifications';
 import { flashService } from '@/lib/flashService';
 import { backgroundTaskService } from '@/lib/backgroundTaskService';
 import logger from '@/lib/security/logger';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ============================================
 // MINUTEUR YOROI COMPLET
@@ -58,7 +59,7 @@ import logger from '@/lib/security/logger';
 
 type TimerMode = 'musculation' | 'combat' | 'tabata' | 'emom' | 'amrap' | 'fortime';
 type TimerState = 'idle' | 'running' | 'paused' | 'rest' | 'finished';
-type CombatPreset = 'jjb' | 'mma' | 'boxe' | 'muaythai' | 'kickboxing' | 'lutte' | 'grappling' | 'custom';
+type CombatPreset = 'jjb' | 'mma' | 'boxe' | 'sac' | 'muaythai' | 'kickboxing' | 'lutte' | 'grappling' | 'custom';
 
 // Presets repos musculation (secondes)
 const MUSCULATION_PRESETS = [
@@ -98,6 +99,14 @@ const COMBAT_PRESETS: Record<CombatPreset, {
     restTime: 60,
     rounds: 10,
     description: 'Format Pro',
+  },
+  sac: {
+    name: 'Sac de frappe',
+    icon: Target,
+    roundTime: 3 * 60,
+    restTime: 60,
+    rounds: 6,
+    description: 'Rounds au sac',
   },
   muaythai: {
     name: 'Muay Thai',
@@ -157,6 +166,8 @@ export default function TimerScreen() {
 
   // Dynamic Island
   const { startActivity, stopActivity, updateActivity, isAvailable: isIslandAvailable } = useLiveActivity();
+  const stopActivityRef = useRef(stopActivity);
+  stopActivityRef.current = stopActivity;
 
   // Ronin Mode (mode focus ultra-minimaliste)
   const [isRoninMode, setIsRoninMode] = useState(false);
@@ -272,6 +283,26 @@ export default function TimerScreen() {
 
   // Synchroniser les refs avec le state à chaque render
   useEffect(() => { modeRef.current = mode; }, [mode]);
+
+  // Mémoriser les réglages combat (durée des rounds, repos, nombre) d'une séance à l'autre
+  const COMBAT_SETTINGS_KEY = '@yoroi_timer_combat_settings';
+  const combatSettingsLoaded = useRef(false);
+  useEffect(() => {
+    AsyncStorage.getItem(COMBAT_SETTINGS_KEY).then(raw => {
+      if (!raw) return;
+      try {
+        const s = JSON.parse(raw);
+        if (s.preset && COMBAT_PRESETS[s.preset as CombatPreset]) setCombatPreset(s.preset);
+        if (Number.isFinite(s.roundDuration)) setRoundDuration(s.roundDuration);
+        if (Number.isFinite(s.restDuration)) setRestDuration(s.restDuration);
+        if (Number.isFinite(s.totalRounds)) setTotalRounds(s.totalRounds);
+      } catch { /* réglages illisibles : valeurs par défaut */ }
+    }).catch(() => {}).finally(() => { combatSettingsLoaded.current = true; });
+  }, []);
+  useEffect(() => {
+    if (!combatSettingsLoaded.current) return;
+    AsyncStorage.setItem(COMBAT_SETTINGS_KEY, JSON.stringify({ preset: combatPreset, roundDuration, restDuration, totalRounds })).catch(() => {});
+  }, [combatPreset, roundDuration, restDuration, totalRounds]);
   useEffect(() => { isInRestRef.current = isInRest; }, [isInRest]);
   useEffect(() => { currentRoundRef.current = currentRound; }, [currentRound]);
   useEffect(() => { totalRoundsRef.current = totalRounds; }, [totalRounds]);
@@ -302,6 +333,11 @@ export default function TimerScreen() {
     return () => {
       soundManager.cleanup();
       deactivateKeepAwake();
+      // Quitter l'écran pendant un timer : annuler la notif de fin, la tâche de fond
+      // et la Live Activity (avant, elles restaient actives)
+      timerNotifications.cancelNotification().catch(() => {});
+      try { backgroundTaskService.end(); } catch {}
+      stopActivityRef.current?.().catch(() => {});
     };
   }, []);
 
@@ -799,8 +835,10 @@ export default function TimerScreen() {
           if (phaseEndedRef.current) return;
           phaseEndedRef.current = true;
 
-          // Son de fin + vibrations
-          soundManager.playWizz();
+          // Son de fin + vibrations : en mode combat, coup de gong à chaque changement
+          // (fin du round -> repos, fin du repos -> round suivant), comme sur un ring
+          if (modeRef.current === 'combat') soundManager.playGong();
+          else soundManager.playWizz();
           triggerHaptic('heavy');
           Vibration.vibrate([0, 500, 200, 500, 200, 500]);
           flashService.alarm();
@@ -1195,9 +1233,9 @@ export default function TimerScreen() {
                   <TouchableOpacity
                     style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
                     onPress={() => {
-                      setRoundDuration(d => Math.max(60, d - 30));
+                      setRoundDuration(d => Math.max(30, d - 30));
                       if (timerState === 'idle') {
-                        setTimeRemaining(Math.max(60, roundDuration - 30));
+                        setTimeRemaining(Math.max(30, roundDuration - 30));
                       }
                     }}
                   >
@@ -1230,7 +1268,7 @@ export default function TimerScreen() {
                   <Text style={[styles.settingValue, { color: colors.textPrimary }]}>{totalRounds}</Text>
                   <TouchableOpacity
                     style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
-                    onPress={() => setTotalRounds(r => Math.min(12, r + 1))}
+                    onPress={() => setTotalRounds(r => Math.min(20, r + 1))}
                   >
                     <Plus size={16} color={colors.textPrimary} />
                   </TouchableOpacity>
@@ -1249,7 +1287,7 @@ export default function TimerScreen() {
                   <Text style={[styles.settingValue, { color: colors.textPrimary }]}>{formatTime(restDuration)}</Text>
                   <TouchableOpacity
                     style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
-                    onPress={() => setRestDuration(d => Math.min(180, d + 15))}
+                    onPress={() => setRestDuration(d => Math.min(300, d + 15))}
                   >
                     <Plus size={16} color={colors.textPrimary} />
                   </TouchableOpacity>

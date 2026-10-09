@@ -135,7 +135,7 @@ export default React.memo(function BenchmarkDetailModal({
               </Text>
               {pr && isRunningCategory && (
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                  {pr.distance && (
+                  {!!pr.distance && (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
                       <MapPin size={11} color={colors.textMuted} />
                       <Text style={{ color: colors.textMuted, fontSize: 11 }}>{pr.distance} km</Text>
@@ -147,7 +147,7 @@ export default React.memo(function BenchmarkDetailModal({
                       <Text style={{ color: colors.textMuted, fontSize: 11 }}>{getEntryPace(pr)} /km</Text>
                     </View>
                   )}
-                  {pr.calories && (
+                  {!!pr.calories && (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
                       <Flame size={11} color={colors.textMuted} />
                       <Text style={{ color: colors.textMuted, fontSize: 11 }}>{pr.calories} kcal</Text>
@@ -284,14 +284,14 @@ export default React.memo(function BenchmarkDetailModal({
                             <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>{t('benchmark.pace')}</Text>
                           </View>
                         )}
-                        {entry.speed && (
+                        {!!entry.speed && (
                           <View style={styles.runningMetric}>
                             <Wind size={11} color={benchmark.color} />
                             <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{entry.speed} km/h</Text>
                             <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>{t('benchmark.speed')}</Text>
                           </View>
                         )}
-                        {entry.calories && (
+                        {!!entry.calories && (
                           <View style={styles.runningMetric}>
                             <Flame size={11} color={benchmark.color} />
                             <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{entry.calories}</Text>
@@ -305,7 +305,7 @@ export default React.memo(function BenchmarkDetailModal({
                             <Text style={[styles.runningMetricLabel, { color: colors.textMuted }]}>{t('benchmark.incline')}</Text>
                           </View>
                         )}
-                        {entry.watts && (
+                        {!!entry.watts && (
                           <View style={styles.runningMetric}>
                             <Zap size={11} color={benchmark.color} />
                             <Text style={[styles.runningMetricValue, { color: colors.textPrimary }]}>{entry.watts} W</Text>

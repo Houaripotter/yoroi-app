@@ -29,6 +29,7 @@ import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
+import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
 // 🔒 SÉCURITÉ: Protection contre les screenshots
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import logger from '@/lib/security/logger';
@@ -272,9 +273,21 @@ export default function PhotosScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered, { backgroundColor: themeColors.background }]}>
-        <ActivityIndicator size="large" color={themeColors.accent} />
-      </View>
+      <ScreenWrapper noPadding>
+        <Header title={t('photos.title')} showBack />
+        <View style={{ flex: 1, padding: 16 }}>
+          <SkeletonCard height={48} width="100%" marginBottom={16} />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <SkeletonCard height={120} width="30%" marginBottom={8} />
+            <SkeletonCard height={120} width="30%" marginBottom={8} />
+            <SkeletonCard height={120} width="30%" marginBottom={8} />
+            <SkeletonCard height={120} width="30%" marginBottom={8} />
+            <SkeletonCard height={120} width="30%" marginBottom={8} />
+            <SkeletonCard height={120} width="30%" marginBottom={8} />
+          </View>
+          <SkeletonMessage />
+        </View>
+      </ScreenWrapper>
     );
   }
 

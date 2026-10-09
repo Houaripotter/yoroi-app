@@ -301,7 +301,7 @@ export const HomeChallengesWidget: React.FC<HomeChallengesWidgetProps> = ({ onCo
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             style={[styles.collapseSquare, { backgroundColor: colors.accent }]}
           >
-            <ChevronUp size={13} color="#fff" strokeWidth={2.5} />
+            <ChevronUp size={13} color={colors.textOnAccent} strokeWidth={2.5} />
           </TouchableOpacity>
         )}
         <View style={styles.footerRight}>

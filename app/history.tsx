@@ -9,11 +9,11 @@ import {
   TouchableOpacity,
   Platform,
   Image,
-  ActivityIndicator,
   DeviceEventEmitter,
 } from 'react-native';
 import { LineChart, BarChart } from 'react-native-gifted-charts';
-import { Calendar, Dna, ChevronLeft, ChevronRight, Plus, List, MapPin, Flame, Clock, Heart } from 'lucide-react-native';
+import { Calendar, Dna, ChevronLeft, ChevronRight, Plus, List, MapPin, Flame, Clock, Heart, Lock } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getAllMeasurements, Measurement } from '@/lib/storage';
 import { router } from 'expo-router';
@@ -23,10 +23,14 @@ import { getTrainings, Training } from '@/lib/database';
 import { getSportById } from '@/lib/sports';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
+import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 import { useDevMode } from '@/lib/DevModeContext';
+import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
+import { PremiumLockSection } from '@/components/premium/PremiumLockSection';
+import { usePremium } from '@/context/PremiumContext';
 
 const HISTORY_CACHE_KEY = '@yoroi_history_cache_v1';
 const HISTORY_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
@@ -85,6 +89,7 @@ export default function HistoryScreen() {
   const { colors: themeColors } = useTheme();
   const { t, formatDate, locale } = useI18n();
   const { isDevMode } = useDevMode();
+  const { isPremium } = usePremium();
   const { width: screenWidth } = useWindowDimensions();
   const styles = useMemo(() => createStyles(screenWidth), [screenWidth]);
 
@@ -193,7 +198,7 @@ export default function HistoryScreen() {
 
   const getTrainingsForDate = (date: Date | null): Training[] => {
     if (!date || !(date instanceof Date) || isNaN(date.getTime())) return [];
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; // date locale (pas UTC)
     return trainings.filter(t => t.date === dateString);
   };
 
@@ -209,7 +214,7 @@ export default function HistoryScreen() {
     if (isProcessing) return;
 
     executeOnce(async () => {
-      const dateString = date.toISOString().split('T')[0];
+      const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; // date locale (pas UTC)
       const dayTrainings = trainings.filter(t => t.date === dateString);
       if (dayTrainings.length === 0) {
         router.push({ pathname: '/add-training', params: { date: dateString } });
@@ -247,7 +252,10 @@ export default function HistoryScreen() {
         }
         return {
           value,
-          label: record.date && !isNaN(new Date(record.date).getTime()) ? new Date(record.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' }) : '·',
+          // Règle 4 : deux lignes (jour+mois / année)
+          label: record.date && !isNaN(new Date(record.date).getTime())
+            ? `${new Date(record.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}\n${new Date(record.date).getFullYear()}`
+            : '·',
           date: record.date,
           frontColor: index % 2 === 0 ? '#1A1A2E' : '#FFFFFF', // Barres alternées noir/blanc
         };
@@ -294,7 +302,10 @@ export default function HistoryScreen() {
         
         return {
           value,
-          label: record.date && !isNaN(new Date(record.date).getTime()) ? new Date(record.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' }) : '·',
+          // Règle 4 : deux lignes (jour+mois / année)
+          label: record.date && !isNaN(new Date(record.date).getTime())
+            ? `${new Date(record.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}\n${new Date(record.date).getFullYear()}`
+            : '·',
           date: record.date,
         };
       })
@@ -363,14 +374,6 @@ export default function HistoryScreen() {
     }).filter(item => item !== null) as { metric: MeasurementMetricOption; data: { value: number; label: string; date: string }[] }[];
   }, [filteredRecords]);
 
-  if (loading) {
-    return (
-      <View style={[styles.loadingContainer, { backgroundColor: themeColors.background }]}>
-        <ActivityIndicator size="large" color={themeColors.accent} />
-      </View>
-    );
-  }
-
   return (
     <>
     <ScreenWrapper noPadding>
@@ -392,6 +395,18 @@ export default function HistoryScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+
+        {/* Skeleton chargement initial */}
+        {loading && (
+          <>
+            <SkeletonCard height={100} width="100%" marginBottom={12} />
+            <SkeletonCard height={52} width="100%" marginBottom={12} />
+            <SkeletonCard height={100} width="100%" marginBottom={8} />
+            <SkeletonCard height={100} width="100%" marginBottom={8} />
+            <SkeletonCard height={100} width="100%" marginBottom={8} />
+            <SkeletonMessage />
+          </>
+        )}
 
         {/* Summary Card - Always Visible */}
         <View style={[styles.summaryCard, { backgroundColor: themeColors.card }]}>
@@ -489,7 +504,8 @@ export default function HistoryScreen() {
                 <Text style={{ color: themeColors.textSecondary, fontSize: 13, marginTop: 6, textAlign: 'center' }}>Ajoute ta première séance depuis le menu +</Text>
               </View>
             ) : (
-              trainings.map((t, i) => {
+              <>
+              {trainings.map((t, i) => {
                 const sportInfo = getSportById(t.sport);
                 const sportColor = sportInfo?.color || themeColors.gold;
                 const sportIcon = sportInfo?.icon || 'trophy';
@@ -539,7 +555,7 @@ export default function HistoryScreen() {
                         {t.heart_rate ? (
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                             <Heart size={12} color="#EF4444" strokeWidth={2} />
-                            <Text style={{ fontSize: 12, color: themeColors.textSecondary }}>{t.heart_rate} bpm</Text>
+                            <Text style={{ fontSize: 12, color: themeColors.textSecondary }}>{Math.round(t.heart_rate)} bpm</Text>
                           </View>
                         ) : null}
                       </View>
@@ -571,7 +587,9 @@ export default function HistoryScreen() {
                     <ChevronRight size={18} color={themeColors.textSecondary} strokeWidth={2} />
                   </TouchableOpacity>
                 );
-              })
+              })}
+
+              </>
             )}
           </View>
         )}
@@ -925,6 +943,7 @@ export default function HistoryScreen() {
         )}
 
         <View style={styles.bottomSpacer} />
+        <PremiumLockSection title="Historique complet" description="Tu vois tes 7 derniers jours. Débloque des mois de données pour analyser ta vraie progression." />
       </ScrollView>
     </ScreenWrapper>
       {/* Modal sélection séance quand plusieurs dans la même journée */}

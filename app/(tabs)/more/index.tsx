@@ -8,6 +8,7 @@ import {
   Modal,
   TextInput,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { CheckCircle, AlertCircle,
@@ -54,6 +55,7 @@ import { CheckCircle, AlertCircle,
   TrendingUp,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
@@ -642,10 +644,11 @@ export default function MoreScreen() {
   // ============================================
 
   return (
-    <View style={[styles.screen, { backgroundColor: screenBackground }]}>
+    // paddingTop sur le conteneur : la recherche sticky reste sous la barre de statut
+    <View style={[styles.screen, { backgroundColor: screenBackground, paddingTop: insets.top }]}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
+        contentContainerStyle={[styles.content, { paddingTop: 16 }]}
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[1]}
         refreshControl={
@@ -729,7 +732,7 @@ export default function MoreScreen() {
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Star size={14} color="#FBBF24" fill="#FBBF24" />
-              <Text style={[styles.sectionTitle, { color: '#FBBF24' }]}>FAVORIS · {favoriteItems.length}</Text>
+              <Text style={[styles.sectionTitle, { color: screenText }]}>FAVORIS · {favoriteItems.length}</Text>
             </View>
             {favoriteItems.map(renderToolItem)}
           </View>
@@ -740,7 +743,7 @@ export default function MoreScreen() {
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Clock size={14} color="#06B6D4" />
-              <Text style={[styles.sectionTitle, { color: '#06B6D4' }]}>RÉCEMMENT UTILISÉS · {recentItems.length}</Text>
+              <Text style={[styles.sectionTitle, { color: screenText }]}>RÉCEMMENT UTILISÉS · {recentItems.length}</Text>
             </View>
             {recentItems.map(renderToolItem)}
           </View>
@@ -758,10 +761,11 @@ export default function MoreScreen() {
             </Text>
             <TouchableOpacity
               onPress={() => setSearchText('')}
-              style={{ backgroundColor: colors.accent, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12 }}
+              style={{ backgroundColor: screenText, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12 }}
               activeOpacity={0.85}
             >
-              <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800' }}>Effacer la recherche</Text>
+              {/* Couleurs inversées de l'écran : contraste garanti */}
+              <Text style={{ color: screenBackground, fontSize: 13, fontWeight: '800' }}>Effacer la recherche</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -783,7 +787,7 @@ export default function MoreScreen() {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   {SectionIcon ? <SectionIcon size={14} color={sectionColor} /> : null}
-                  <Text style={[styles.sectionTitle, { color: SectionIcon ? sectionColor : screenTextMuted }]}>
+                  <Text style={[styles.sectionTitle, { color: screenText }]}>
                     {section.title} · {section.items.length}
                   </Text>
                 </View>
@@ -827,12 +831,13 @@ export default function MoreScreen() {
 
           <TouchableOpacity onPress={handleVersionTap} activeOpacity={1}>
             <Text style={{ color: screenText, opacity: 0.5, fontSize: 12, marginTop: 12, textAlign: 'center', fontWeight: '700', letterSpacing: 0.4 }}>
-              YOROI v2.4.0
+              YOROI v{Constants.expoConfig?.version ?? ''}
             </Text>
           </TouchableOpacity>
         </View>
 
-        <View style={{ height: 120 }} />
+        {/* Espace sous la barre d'onglets (plus haute sur Android avec la barre de navigation système) */}
+        <View style={{ height: 130 + (Platform.OS === 'android' ? insets.bottom : 0) }} />
       </ScrollView>
 
       {/* Modal - Reset */}

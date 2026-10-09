@@ -45,9 +45,10 @@ const migrateBodyCompFromAsyncStorage = async (): Promise<void> => {
       const parsed = JSON.parse(oldData);
       if (Array.isArray(parsed) && parsed.length > 0) {
         // Migrer vers SecureStorage
-        await secureStorage.setItem(BODY_COMP_KEY, parsed);
-        // Supprimer les anciennes données
-        await AsyncStorage.removeItem(BODY_COMP_KEY);
+        // Ne supprimer l'ancienne copie que si l'écriture chiffrée a réussi (sinon perte de données)
+        if (await secureStorage.setItem(BODY_COMP_KEY, parsed)) {
+          await AsyncStorage.removeItem(BODY_COMP_KEY);
+        }
         logger.info('[BodyComposition] Migration vers SecureStorage réussie');
       }
     }
@@ -78,9 +79,10 @@ const migrateMeasurementsFromAsyncStorage = async (): Promise<void> => {
       const parsed = JSON.parse(oldData);
       if (Array.isArray(parsed) && parsed.length > 0) {
         // Migrer vers SecureStorage
-        await secureStorage.setItem(MEASUREMENTS_KEY, parsed);
-        // Supprimer les anciennes données
-        await AsyncStorage.removeItem(MEASUREMENTS_KEY);
+        // Ne supprimer l'ancienne copie que si l'écriture chiffrée a réussi (sinon perte de données)
+        if (await secureStorage.setItem(MEASUREMENTS_KEY, parsed)) {
+          await AsyncStorage.removeItem(MEASUREMENTS_KEY);
+        }
         logger.info('[BodyComposition] Migration mensurations vers SecureStorage réussie');
       }
     }

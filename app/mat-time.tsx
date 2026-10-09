@@ -26,9 +26,12 @@ import {
 import Svg, { Circle } from 'react-native-svg';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
 import { getTrainings, getTrainingStats } from '@/lib/database';
 import logger from '@/lib/security/logger';
+import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
 import { useI18n } from '@/lib/I18nContext';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 // ============================================
 // TYPES
@@ -221,10 +224,12 @@ export default function MatTimeScreen() {
   if (isLoading || !stats) {
     return (
       <ScreenWrapper>
-        <View style={styles.loadingContainer}>
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            {t('matTime.loading')}
-          </Text>
+        <View style={{ flex: 1, padding: 16 }}>
+          <SkeletonCard height={180} width="100%" marginBottom={12} />
+          <SkeletonCard height={120} width="100%" marginBottom={12} />
+          <SkeletonCard height={120} width="100%" marginBottom={12} />
+          <SkeletonCard height={120} width="100%" marginBottom={12} />
+          <SkeletonMessage />
         </View>
       </ScreenWrapper>
     );
@@ -233,6 +238,7 @@ export default function MatTimeScreen() {
   const weekProgress = weeklyGoal > 0 ? (stats.thisWeekMinutes / weeklyGoal) * 100 : 0;
 
   return (
+    <PremiumGate featureTitle="Temps sur le tatami">
     <ScreenWrapper>
       {/* Header */}
       <View style={styles.header}>
@@ -381,7 +387,7 @@ export default function MatTimeScreen() {
             </View>
 
             {stats.byDiscipline.map((discipline, index) => {
-              const percent = (discipline.minutes / stats.totalMinutes) * 100;
+              const percent = stats.totalMinutes > 0 ? (discipline.minutes / stats.totalMinutes) * 100 : 0; // évite NaN%
 
               return (
                 <View key={discipline.name} style={styles.disciplineRow}>
@@ -490,8 +496,10 @@ export default function MatTimeScreen() {
         </View>
 
         <View style={{ height: 40 }} />
+        <PremiumTeaser variant="analytics" title="Analyse mat time complète" />
       </ScrollView>
     </ScreenWrapper>
+    </PremiumGate>
   );
 }
 

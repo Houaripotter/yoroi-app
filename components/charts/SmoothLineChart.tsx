@@ -46,7 +46,7 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
 }) => {
   const { width: screenWidth } = useWindowDimensions();
   const chartWidth = propWidth ?? (screenWidth - 60);
-  const padding = { top: 20, right: 10, bottom: 30, left: 40 };
+  const padding = { top: 20, right: 10, bottom: 40, left: 40 }; // bottom 40 pour 2 lignes de label X
   const innerWidth = chartWidth - padding.left - padding.right;
   const innerHeight = height - padding.top - padding.bottom;
 
@@ -56,13 +56,15 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
   const maxValue = propMaxValue ?? dataMaxValue;
   const minValue = Math.min(...data.map(d => d.value));
   const range = maxValue - minValue || 1;
+  // X d'un point : centré si un seul point (évite NaN)
+  const xAt = (i: number) => data.length > 1 ? (i / (data.length - 1)) * innerWidth : innerWidth / 2;
 
   // Créer le path pour la ligne
   const createSmoothPath = (): string => {
     if (data.length < 2) return '';
 
     const points = data.map((d, i) => {
-      const x = (i / (data.length - 1)) * innerWidth;
+      const x = xAt(i);
       const y = innerHeight - ((d.value - minValue) / range) * innerHeight;
       return { x, y };
     });
@@ -85,7 +87,8 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
   const linePath = createSmoothPath();
 
   // Créer le path pour le gradient
-  const gradientPath = linePath + ` L ${innerWidth} ${innerHeight} L 0 ${innerHeight} Z`;
+  // Pas de ligne → pas de gradient (un path sans M est invalide)
+  const gradientPath = linePath ? linePath + ` L ${innerWidth} ${innerHeight} L 0 ${innerHeight} Z` : '';
 
   return (
     <View style={styles.container}>
@@ -113,7 +116,8 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
 
           {/* Y-axis labels */}
           {[0, 1, 2, 3, 4].map(i => {
-            const value = maxValue - (range * i) / 4;
+            // Cohérent avec le placement des points (min en bas)
+            const value = minValue + (range * (4 - i)) / 4;
             return (
               <SvgText
                 key={i}
@@ -142,7 +146,7 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
           )}
 
           {/* Gradient fill */}
-          {showGradient && (
+          {showGradient && !!gradientPath && (
             <Path d={gradientPath} fill="url(#gradient)" />
           )}
 
@@ -158,7 +162,7 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
 
           {/* Dots and Values */}
           {showDots && data.map((d, i) => {
-            const x = (i / (data.length - 1)) * innerWidth;
+            const x = xAt(i);
             const y = innerHeight - ((d.value - minValue) / range) * innerHeight;
             return (
               <G key={i}>
@@ -184,27 +188,33 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
             );
           })}
 
-          {/* X-axis labels */}
+          {/* X-axis labels — Règle 4 : deux lignes si label contient \n */}
           {data.length > 1 && (
             <>
-              <SvgText
-                x={0}
-                y={innerHeight + 20}
-                fontSize={10}
-                fill="#666"
-                textAnchor="start"
-              >
-                {data[0].label || ''}
-              </SvgText>
-              <SvgText
-                x={innerWidth}
-                y={innerHeight + 20}
-                fontSize={10}
-                fill="#666"
-                textAnchor="end"
-              >
-                {data[data.length - 1].label || ''}
-              </SvgText>
+              {(data[0].label || '').split('\n').map((part, idx) => (
+                <SvgText
+                  key={`xl0-${idx}`}
+                  x={0}
+                  y={innerHeight + 14 + idx * 12}
+                  fontSize={10}
+                  fill="#666"
+                  textAnchor="start"
+                >
+                  {part}
+                </SvgText>
+              ))}
+              {(data[data.length - 1].label || '').split('\n').map((part, idx) => (
+                <SvgText
+                  key={`xln-${idx}`}
+                  x={innerWidth}
+                  y={innerHeight + 14 + idx * 12}
+                  fontSize={10}
+                  fill="#666"
+                  textAnchor="end"
+                >
+                  {part}
+                </SvgText>
+              ))}
             </>
           )}
         </G>

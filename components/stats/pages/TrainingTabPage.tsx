@@ -23,10 +23,11 @@ import { getSportById } from '@/lib/sports';
 import { Flame, Target, Calendar, Award, Timer } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { format } from 'date-fns';
+import { format, parseISO, startOfWeek, getISOWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { logger } from '@/lib/security/logger';
 import { ImportProgressBanner } from '@/components/ImportProgressBanner';
+import { SkeletonGrid } from '../SkeletonCard';
 import { buildCacheKey, getCached, setCached, invalidateCachePrefix } from '@/lib/statsMemoryCache';
 import { StatsEmptyState } from '../StatsEmptyState';
 import { StatsInsightBanner } from '../StatsInsightBanner';
@@ -34,11 +35,20 @@ import { StreakBadge } from '../StreakBadge';
 import { FunComparisonsCard } from '../FunComparisonsCard';
 import { generateInsights, type Insight } from '@/lib/statsInsights';
 import { generateFunComparisons, type FunComparison } from '@/lib/funComparisons';
+import { PremiumModal } from '@/components/premium/PremiumModal';
+import { BarChart2, Lock } from 'lucide-react-native';
+import { usePremium } from '@/context/PremiumContext';
+import { LinearGradient } from 'expo-linear-gradient';
+
+// Parse date sûr : 'yyyy-MM-dd' en local (évite le jour précédent à l'ouest d'UTC)
+const toLocalDate = (v: any): Date =>
+  typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? parseISO(v) : new Date(v);
 
 export const TrainingTabPage: React.FC = React.memo(() => {
   const { colors, isDark, screenBackground } = useTheme();
   const { t } = useI18n();
   const { handleScroll: onScrollContext } = useScrollContext();
+  const { isPremium } = usePremium();
   const dateLocale = fr;
 
   const INTENSITY_RANGES = {
@@ -54,7 +64,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
     ],
   };
 
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('tout');
   const [trainingData, setTrainingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -62,6 +72,8 @@ export const TrainingTabPage: React.FC = React.memo(() => {
   const [allTrainingsData, setAllTrainingsData] = useState<any[]>([]);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [funComparisons, setFunComparisons] = useState<FunComparison[]>([]);
+
+  const [showPremiumModal, setShowPremiumModal] = useState(true);
 
   const [selectedMetric, setSelectedMetric] = useState<{
     key: string;
@@ -115,9 +127,10 @@ export const TrainingTabPage: React.FC = React.memo(() => {
         setAllTrainingsData(periodTrainings);
 
         // Un seul passage pour construire les 3 séries
-        const reversed = periodTrainings.slice().reverse();
+        // periodTrainings est déjà trié DESC (newest first depuis la DB)
+        // Ne pas inverser : le plus récent doit rester à l'index 0 (gauche dans le scroll horizontal)
         const intensity: any[] = [], duration: any[] = [], load: any[] = [];
-        for (const t of reversed) {
+        for (const t of periodTrainings) {
           if (t.intensity && t.intensity > 0) intensity.push({ date: t.date, value: t.intensity });
           if (t.duration && t.duration > 0) duration.push({ date: t.date, value: t.duration });
           if (t.intensity && t.duration) load.push({ date: t.date, value: (t.intensity * t.duration) / 60 });
@@ -189,7 +202,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
     if (trainingHistory.duration.length < 2) return [];
     const weekMap: Record<string, number> = {};
     allTrainingsData.forEach(t => {
-      const week = format(new Date(t.date), 'w-yyyy');
+      const week = format(toLocalDate(t.date), 'w-yyyy');
       weekMap[week] = (weekMap[week] || 0) + 1;
     });
     return Object.values(weekMap).map(v => ({ value: v }));
@@ -197,22 +210,27 @@ export const TrainingTabPage: React.FC = React.memo(() => {
 
   const getModalData = useCallback(() => {
     if (!selectedMetric || !allTrainingsData.length) return [];
-    const sortedTrainings = [...allTrainingsData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    // Règle 3 : plus récent à GAUCHE → tri DESC
+    const sortedTrainings = [...allTrainingsData].sort((a, b) => toLocalDate(b.date).getTime() - toLocalDate(a.date).getTime());
+    // Règle 4 : deux lignes (jour+mois / année)
+    const fmtLabel = (d: Date) => `${format(d, 'd MMM', { locale: dateLocale })}\n${format(d, 'yyyy')}`;
+    // Clé semaine = lundi au format yyyy-MM-dd (utilisable comme date)
+    const weekKey = (d: any) => format(startOfWeek(toLocalDate(d), { weekStartsOn: 1 }), 'yyyy-MM-dd');
     switch (selectedMetric.key) {
       case 'intensity':
-        return sortedTrainings.filter(t => t.intensity && t.intensity > 0).map(t => ({ value: t.intensity, label: format(new Date(t.date), 'd MMM', { locale: dateLocale }), date: t.date }));
+        return sortedTrainings.filter(t => t.intensity && t.intensity > 0).map(t => ({ value: t.intensity, label: fmtLabel(toLocalDate(t.date)), date: t.date }));
       case 'duration':
-        return sortedTrainings.filter(t => t.duration && t.duration > 0).map(t => ({ value: t.duration, label: format(new Date(t.date), 'd MMM', { locale: dateLocale }), date: t.date }));
+        return sortedTrainings.filter(t => t.duration && t.duration > 0).map(t => ({ value: t.duration, label: fmtLabel(toLocalDate(t.date)), date: t.date }));
       case 'load':
-        return sortedTrainings.filter(t => t.intensity && t.duration).map(t => ({ value: (t.intensity * t.duration) / 60, label: format(new Date(t.date), 'd MMM', { locale: dateLocale }), date: t.date }));
+        return sortedTrainings.filter(t => t.intensity && t.duration).map(t => ({ value: (t.intensity * t.duration) / 60, label: fmtLabel(toLocalDate(t.date)), date: t.date }));
       case 'sessions':
         const weeklyData: { [key: string]: number } = {};
-        sortedTrainings.forEach(t => { const ws = format(new Date(t.date), 'w-yyyy'); weeklyData[ws] = (weeklyData[ws] || 0) + 1; });
-        return Object.entries(weeklyData).map(([week, count]) => ({ value: count, label: `S${week.split('-')[0]}`, date: week }));
+        sortedTrainings.forEach(t => { const ws = weekKey(t.date); weeklyData[ws] = (weeklyData[ws] || 0) + 1; });
+        return Object.entries(weeklyData).map(([week, count]) => ({ value: count, label: `S${getISOWeek(parseISO(week))}`, date: week }));
       case 'total_duration':
         const weeklyDuration: { [key: string]: number } = {};
-        sortedTrainings.forEach(t => { const ws = format(new Date(t.date), 'w-yyyy'); weeklyDuration[ws] = (weeklyDuration[ws] || 0) + (t.duration || 0); });
-        return Object.entries(weeklyDuration).map(([week, dur]) => ({ value: dur / 60, label: `S${week.split('-')[0]}`, date: week }));
+        sortedTrainings.forEach(t => { const ws = weekKey(t.date); weeklyDuration[ws] = (weeklyDuration[ws] || 0) + (t.duration || 0); });
+        return Object.entries(weeklyDuration).map(([week, dur]) => ({ value: dur / 60, label: `S${getISOWeek(parseISO(week))}`, date: week }));
       default:
         return [];
     }
@@ -245,6 +263,8 @@ export const TrainingTabPage: React.FC = React.memo(() => {
 
       <ImportProgressBanner />
 
+      {loading && <SkeletonGrid count={4} cardHeight={160} />}
+      {!loading && (<>
       {/* Streak séances pour cette page training */}
       <StreakBadge items={allTrainingsData} />
 
@@ -283,68 +303,71 @@ export const TrainingTabPage: React.FC = React.memo(() => {
           </View>
 
           {/* Séances récentes · horizontal · fusionnées dans la même carte */}
-          {allTrainingsData.length > 0 && (
-            <View style={{ marginTop: 16 }}>
-              <View style={styles.cardTitleRow}>
-                <View style={[styles.cardTitleDash, { backgroundColor: '#10B981', opacity: 0.3 }]} />
-                <Text style={[styles.cardSubtitleText, { color: colors.textMuted }]}>SÉANCES RÉCENTES ({allTrainingsData.length})</Text>
-                <View style={[styles.cardTitleDash, { backgroundColor: '#10B981', opacity: 0.3 }]} />
-              </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.historyScrollContent}
-              >
-                {allTrainingsData.map((entry, index) => {
-                  const isFirst = index === 0;
-                  const sportInfo = getSportById(entry.sport);
-                  const sportColor = sportInfo?.color || '#10B981';
-                  const sportIcon = sportInfo?.icon || 'trophy';
-                  const intensityZone = entry.intensity ? getIntensityStatus(entry.intensity) : null;
-                  return (
-                    <TouchableOpacity
-                      key={entry.id || index}
-                      activeOpacity={0.7}
-                      onPress={() => entry.id && router.push({ pathname: '/workout-detail', params: { id: entry.id.toString() } })}
-                      style={[
-                        styles.historyCard,
-                        { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderColor: isFirst ? sportColor : colors.border },
-                        isFirst && styles.historyCardRecent,
-                      ]}
-                    >
-                      {/* Sport icon + name */}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                        <MaterialCommunityIcons name={sportIcon as any} size={16} color={sportColor} />
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: sportColor, textTransform: 'uppercase', letterSpacing: 0.5 }} numberOfLines={1}>
-                          {sportInfo?.name || entry.sport}
-                        </Text>
-                      </View>
-                      <Text style={[styles.historyCardDate, { color: colors.textMuted }]}>
-                        {format(new Date(entry.date), 'd MMM yyyy', { locale: fr })}
-                      </Text>
-                      {entry.duration > 0 && (
-                        <Text style={[styles.historyCardMain, { color: isFirst ? sportColor : colors.textPrimary }]}>
-                          {entry.duration}<Text style={styles.historyCardUnit}> min</Text>
-                        </Text>
-                      )}
-                      {entry.calories > 0 && (
-                        <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2 }}>
-                          {entry.calories} kcal
-                        </Text>
-                      )}
-                      {intensityZone && entry.intensity > 0 && (
-                        <View style={[styles.historyCardBadge, { backgroundColor: `${intensityZone.color}20`, marginTop: 4 }]}>
-                          <Text style={[styles.historyCardBadgeText, { color: intensityZone.color }]}>
-                            RPE {entry.intensity}/10
+          {allTrainingsData.length > 0 && (() => {
+            return (
+              <View style={{ marginTop: 16 }}>
+                <View style={styles.cardTitleRow}>
+                  <View style={[styles.cardTitleDash, { backgroundColor: '#10B981', opacity: 0.3 }]} />
+                  <Text style={[styles.cardSubtitleText, { color: colors.textMuted }]}>SÉANCES RÉCENTES ({allTrainingsData.length})</Text>
+                  <View style={[styles.cardTitleDash, { backgroundColor: '#10B981', opacity: 0.3 }]} />
+                </View>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.historyScrollContent}
+                >
+                  {allTrainingsData.map((entry, index) => {
+                    const isFirst = index === 0;
+                    const sportInfo = getSportById(entry.sport);
+                    const sportColor = sportInfo?.color || '#10B981';
+                    const sportIcon = sportInfo?.icon || 'trophy';
+                    const intensityZone = entry.intensity ? getIntensityStatus(entry.intensity) : null;
+                    return (
+                      <TouchableOpacity
+                        key={entry.id || index}
+                        activeOpacity={0.7}
+                        onPress={() => entry.id && router.push({ pathname: '/workout-detail', params: { id: entry.id.toString() } })}
+                        style={[
+                          styles.historyCard,
+                          { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderColor: isFirst ? sportColor : colors.border },
+                          isFirst && styles.historyCardRecent,
+                        ]}
+                      >
+                        {/* Sport icon + name */}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                          <MaterialCommunityIcons name={sportIcon as any} size={16} color={sportColor} />
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: sportColor, textTransform: 'uppercase', letterSpacing: 0.5 }} numberOfLines={1}>
+                            {sportInfo?.name || entry.sport}
                           </Text>
                         </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          )}
+                        <Text style={[styles.historyCardDate, { color: colors.textMuted }]}>
+                          {format(toLocalDate(entry.date), 'd MMM yyyy', { locale: fr })}
+                        </Text>
+                        {entry.duration > 0 && (
+                          <Text style={[styles.historyCardMain, { color: isFirst ? sportColor : colors.textPrimary }]}>
+                            {entry.duration}<Text style={styles.historyCardUnit}> min</Text>
+                          </Text>
+                        )}
+                        {entry.calories > 0 && (
+                          <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2 }}>
+                            {entry.calories} kcal
+                          </Text>
+                        )}
+                        {intensityZone && entry.intensity > 0 && (
+                          <View style={[styles.historyCardBadge, { backgroundColor: `${intensityZone.color}20`, marginTop: 4 }]}>
+                            <Text style={[styles.historyCardBadgeText, { color: intensityZone.color }]}>
+                              RPE {entry.intensity}/10
+                            </Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+
+                </ScrollView>
+              </View>
+            );
+          })()}
         </View>
       </StatsSection>
 
@@ -453,6 +476,22 @@ export const TrainingTabPage: React.FC = React.memo(() => {
         <FunComparisonsCard comparisons={funComparisons} title="Le saviez-vous ?" />
       )}
 
+      {/* ── Modal Premium analytics entraînements */}
+      <PremiumModal
+        visible={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        Icon={BarChart2}
+        gradientColors={['#1C0A00', '#92400E', '#D97706']}
+        title="Analytics entraînements complets"
+        description="Tu vois tes séances récentes. Passe Premium pour des analyses approfondies."
+        features={[
+          'Charge d\'entraînement sur 90 jours',
+          'Tendances et récupération optimisée',
+          'Records historiques et progressions',
+          'Comparaisons semaine par semaine',
+        ]}
+      />
+
       <View style={{ height: 40 }} />
 
       {/* Modal de detail */}
@@ -469,6 +508,7 @@ export const TrainingTabPage: React.FC = React.memo(() => {
           metricKey={selectedMetric.key}
         />
       )}
+      </>)}
     </ScrollView>
   );
 });

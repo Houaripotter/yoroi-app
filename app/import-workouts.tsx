@@ -244,11 +244,11 @@ export default function ImportWorkoutsScreen() {
               disabled={isParsing}
             >
               {isParsing ? (
-                <ActivityIndicator color="#FFF" />
+                <ActivityIndicator color={colors.textOnAccent} />
               ) : (
                 <>
-                  <FileUp size={24} color="#FFF" />
-                  <Text style={styles.pickButtonText}>{t('import.selectFile')}</Text>
+                  <FileUp size={24} color={colors.textOnAccent} />
+                  <Text style={[styles.pickButtonText, { color: colors.textOnAccent }]}>{t('import.selectFile')}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -430,11 +430,11 @@ export default function ImportWorkoutsScreen() {
               disabled={selectedCount === 0 || isImporting}
             >
               {isImporting ? (
-                <ActivityIndicator color="#FFF" />
+                <ActivityIndicator color={colors.textOnAccent} />
               ) : (
                 <>
-                  <Check size={20} color="#FFF" />
-                  <Text style={styles.importButtonText}>
+                  <Check size={20} color={selectedCount > 0 ? colors.textOnAccent : colors.textMuted} />
+                  <Text style={[styles.importButtonText, { color: selectedCount > 0 ? colors.textOnAccent : colors.textMuted }]}>
                     {t('import.importButton', { count: selectedCount })}
                   </Text>
                 </>
@@ -472,7 +472,7 @@ export default function ImportWorkoutsScreen() {
               style={[styles.importButton, { backgroundColor: colors.accent }]}
               onPress={() => router.back()}
             >
-              <Text style={styles.importButtonText}>{t('common.done')}</Text>
+              <Text style={[styles.importButtonText, { color: colors.textOnAccent }]}>{t('common.done')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

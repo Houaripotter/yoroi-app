@@ -8,7 +8,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
+  TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
@@ -16,11 +16,15 @@ import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Moon, Clock, Bed, AlarmClock, Heart, Wind,
-  Thermometer, Star,
+  Thermometer, Star, Lock,
 } from 'lucide-react-native';
 import { useI18n } from '@/lib/I18nContext';
+import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { usePremium } from '@/context/PremiumContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
+import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
 import { SleepPhasesBar } from '@/components/stats/advanced/SleepPhasesBar';
 import { getSleepEntriesByDate } from '@/lib/sleepService';
 import type { SleepEntry } from '@/lib/sleepService';
@@ -47,19 +51,19 @@ const PHASE_COLORS = {
 const PHASE_DESCRIPTIONS: Record<string, { title: string; desc: string }> = {
   deep: {
     title: 'Sommeil profond',
-    desc:  'La phase la plus restauratrice. Le corps repare les muscles, renforce le systeme immunitaire et consolide la memoire. Idealement 13-23% du sommeil total.',
+    desc:  'La phase la plus restauratrice. Le corps répare les muscles, renforce le système immunitaire et consolide la mémoire. Idéalement 13-23% du sommeil total.',
   },
   rem: {
     title: 'Sommeil paradoxal (REM)',
-    desc:  'Rapid Eye Movement. Le cerveau est tres actif, les reves surviennent. Essentiel pour la memoire emotionnelle, la creativite et l\'apprentissage. Idealement 20-25%.',
+    desc:  'Rapid Eye Movement. Le cerveau est très actif, les rêves surviennent. Essentiel pour la mémoire émotionnelle, la créativité et l\'apprentissage. Idéalement 20-25%.',
   },
   core: {
-    title: 'Sommeil leger',
-    desc:  'Phase de transition entre l\'eveil et le sommeil profond. Le corps se detend, la temperature baisse. Représente generalement 50-60% du sommeil.',
+    title: 'Sommeil léger',
+    desc:  'Phase de transition entre l\'éveil et le sommeil profond. Le corps se détend, la température baisse. Représente généralement 50-60% du sommeil.',
   },
   awake: {
-    title: 'Eveils nocturnes',
-    desc:  'Brefs eveils normaux entre les cycles de sommeil. Quelques minutes par nuit sont tout a fait normaux et n\'affectent pas la qualite si ils sont courts.',
+    title: 'Éveils nocturnes',
+    desc:  'Brefs éveils normaux entre les cycles de sommeil. Quelques minutes par nuit sont tout à fait normaux et n\'affectent pas la qualité s\'ils sont courts.',
   },
 };
 
@@ -132,7 +136,9 @@ const computeSleepQuality = (
 const formatDuration = (minutes: number): string => {
   const h = Math.floor(minutes / 60);
   const m = Math.round(minutes % 60);
-  return `${h}h ${m.toString().padStart(2, '0')}min`;
+  if (h > 0 && m > 0) return `${h}h ${m.toString().padStart(2, '0')}min`;
+  if (h > 0) return `${h}h`;
+  return `${m}min`;
 };
 
 const formatDurationShort = (minutes: number): string => {
@@ -196,6 +202,8 @@ interface SleepDetailExtra {
 export default function SleepDetailScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useI18n();
+  const router = useRouter();
+  const { isPremium } = usePremium();
   const params = useLocalSearchParams<{ date?: string }>();
 
   const [entry, setEntry] = useState<SleepEntry | null>(null);
@@ -233,6 +241,9 @@ export default function SleepDetailScreen() {
             const sleepMin = Math.round((deepPct / 100 * duration) + (remPct / 100 * duration) + (corePct / 100 * duration));
             const inBedMin = sleepMin + 15;
             const efficiency = inBedMin > 0 ? Math.round((sleepMin / inBedMin) * 100) : 0;
+            // PAS de valeurs simulées (BPM, respiration, température) : on n'affiche
+            // que ce qui vient de vraies données. Les vitals réels sont chargés
+            // ensuite via loadVitalsFromHealthKit().
             setEntry({
               id: `demo_${target}`,
               date: target,
@@ -247,13 +258,10 @@ export default function SleepDetailScreen() {
                 awake: 15,
               },
               efficiency,
-              interruptions: Math.floor(Math.random() * 3) + 1,
-              sleepHeartRate: { min: 48 + Math.floor(Math.random() * 8), max: 62 + Math.floor(Math.random() * 10), avg: 54 + Math.floor(Math.random() * 6) },
-              respiratoryRate: { min: 12 + Math.floor(Math.random() * 2), max: 16 + Math.floor(Math.random() * 3) },
-              wristTemperature: parseFloat((Math.random() * 1.2 - 0.4).toFixed(1)),
               source: 'healthkit',
             } as SleepEntry);
-            setExtra({ efficiency, interruptions: 2, inBedMinutes: inBedMin });
+            setExtra({ efficiency, interruptions: 0, inBedMinutes: inBedMin });
+            loadVitalsFromHealthKit(target);
             return;
           }
         }
@@ -358,10 +366,14 @@ export default function SleepDetailScreen() {
 
   if (loading) {
     return (
-      <ScreenWrapper>
+      <ScreenWrapper noPadding containerStyle={{ backgroundColor: BG }}>
         <Header title="Détail Nuit" showBack />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#5856D6" />
+        <View style={{ flex: 1, padding: 16 }}>
+          <SkeletonCard height={100} width="100%" marginBottom={12} />
+          <SkeletonCard height={100} width="100%" marginBottom={12} />
+          <SkeletonCard height={180} width="100%" marginBottom={12} />
+          <SkeletonCard height={160} width="100%" marginBottom={12} />
+          <SkeletonMessage />
         </View>
       </ScreenWrapper>
     );
@@ -372,7 +384,7 @@ export default function SleepDetailScreen() {
       <ScreenWrapper>
         <Header title="Détail Nuit" showBack />
         <View style={styles.loadingContainer}>
-          <Text style={[styles.emptyText, { color: MUTED }]}>Aucune donnee pour cette nuit</Text>
+          <Text style={[styles.emptyText, { color: MUTED }]}>Aucune donnée pour cette nuit</Text>
         </View>
       </ScreenWrapper>
     );
@@ -440,7 +452,7 @@ export default function SleepDetailScreen() {
                 <Bed size={20} color="#5856D6" />
               </View>
               <Text style={[styles.timeValue, { color: TEXT }]}>{entry.bedTime || '--:--'}</Text>
-              <Text style={[styles.timeLabel, { color: MUTED }]}>Coucher</Text>
+              <Text style={[styles.timeLabel, { color: MUTED }]}>Couché</Text>
             </View>
             <View style={styles.timeDivider}>
               <View style={[styles.timeLine, { backgroundColor: BORDER }]} />
@@ -457,7 +469,7 @@ export default function SleepDetailScreen() {
                 <AlarmClock size={20} color="#F59E0B" />
               </View>
               <Text style={[styles.timeValue, { color: TEXT }]}>{entry.wakeTime || '--:--'}</Text>
-              <Text style={[styles.timeLabel, { color: MUTED }]}>Reveil</Text>
+              <Text style={[styles.timeLabel, { color: MUTED }]}>Réveil</Text>
             </View>
           </View>
         </View>
@@ -470,7 +482,7 @@ export default function SleepDetailScreen() {
               Repartition de la nuit par type de sommeil
             </Text>
 
-            {/* Barre de phases colorees */}
+            {/* Barre de phases colorees — toujours visible */}
             <View style={{ marginBottom: 16 }}>
               <SleepPhasesBar
                 phases={[
@@ -483,34 +495,60 @@ export default function SleepDetailScreen() {
               />
             </View>
 
-            {/* Timeline */}
-            <SleepPhasesTimeline
-              phases={entry.phases}
-              bedTime={entry.bedTime}
-              wakeTime={entry.wakeTime}
-            />
+            {/* Timeline + détail des phases : teaser pour les utilisateurs gratuits */}
+            <View style={{ position: 'relative' }}>
+              <View style={!isPremium ? { opacity: 0.4 } : {}}>
+                {/* Timeline */}
+                <SleepPhasesTimeline
+                  phases={entry.phases}
+                  bedTime={entry.bedTime}
+                  wakeTime={entry.wakeTime}
+                />
 
-            {/* Detail des phases avec descriptions */}
-            <View style={styles.phasesGrid}>
-              {(() => {
-                const totalInBed = entry.duration + (entry.phases?.awake || 0);
-                return (
-                  <>
-                    {entry.phases.deep > 0 && (
-                      <PhaseItem phaseKey="deep" minutes={entry.phases.deep} total={totalInBed} />
-                    )}
-                    {entry.phases.core > 0 && (
-                      <PhaseItem phaseKey="core" minutes={entry.phases.core} total={totalInBed} />
-                    )}
-                    {entry.phases.rem > 0 && (
-                      <PhaseItem phaseKey="rem" minutes={entry.phases.rem} total={totalInBed} />
-                    )}
-                    {(entry.phases.awake || 0) > 0 && (
-                      <PhaseItem phaseKey="awake" minutes={entry.phases.awake || 0} total={totalInBed} />
-                    )}
-                  </>
-                );
-              })()}
+                {/* Detail des phases avec descriptions */}
+                <View style={styles.phasesGrid}>
+                  {(() => {
+                    const totalInBed = entry.duration + (entry.phases?.awake || 0);
+                    return (
+                      <>
+                        {entry.phases.deep > 0 && (
+                          <PhaseItem phaseKey="deep" minutes={entry.phases.deep} total={totalInBed} />
+                        )}
+                        {entry.phases.core > 0 && (
+                          <PhaseItem phaseKey="core" minutes={entry.phases.core} total={totalInBed} />
+                        )}
+                        {entry.phases.rem > 0 && (
+                          <PhaseItem phaseKey="rem" minutes={entry.phases.rem} total={totalInBed} />
+                        )}
+                        {(entry.phases.awake || 0) > 0 && (
+                          <PhaseItem phaseKey="awake" minutes={entry.phases.awake || 0} total={totalInBed} />
+                        )}
+                      </>
+                    );
+                  })()}
+                </View>
+              </View>
+
+              {/* Overlay teaser pour les utilisateurs gratuits */}
+              {!isPremium && (
+                <>
+                  <LinearGradient
+                    colors={['transparent', CARD]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={styles.phasesLockedGradient}
+                    pointerEvents="none"
+                  />
+                  <TouchableOpacity
+                    style={styles.phasesLockedCTA}
+                    onPress={() => router.push('/paywall' as never)}
+                    activeOpacity={0.85}
+                  >
+                    <Lock size={14} color="#5856D6" />
+                    <Text style={styles.phasesLockedCTAText}>Voir tout l'historique</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
         )}
@@ -546,8 +584,8 @@ export default function SleepDetailScreen() {
                 color={goalReached ? '#22C55E' : '#F59E0B'}
               />
               <ValueCell
-                label="Efficacite"
-                value={efficiency != null ? `${efficiency}%` : '-'}
+                label="Efficacité"
+                value={efficiency != null ? `${Math.round(efficiency)}%` : '-'}
                 sub={efficiency != null ? (efficiency >= 90 ? 'Excellent' : efficiency >= 80 ? 'Bon' : 'A ameliorer') : ''}
                 subColor={efficiency != null ? getEfficiencyColor(efficiency) : MUTED}
                 color={efficiency != null ? getEfficiencyColor(efficiency) : MUTED}
@@ -559,15 +597,15 @@ export default function SleepDetailScreen() {
                 <View style={[styles.valuesSep, { backgroundColor: BORDER }]} />
                 <View style={styles.valuesRow}>
                   <ValueCell
-                    label="Eveils nocturnes"
-                    value={`${interruptions}`}
+                    label="Éveils nocturnes"
+                    value={`${Math.round(interruptions)}`}
                     sub={interruptions <= 2 ? 'Normal' : interruptions <= 5 ? 'Modere' : 'Eleve'}
                     subColor={interruptions <= 2 ? '#22C55E' : interruptions <= 5 ? '#F59E0B' : '#EF4444'}
                     color={interruptions <= 2 ? '#22C55E' : interruptions <= 5 ? '#F59E0B' : '#EF4444'}
                   />
                   <ValueCell
                     label="Source"
-                    value={extra?.source || (entry.source === 'healthkit' ? 'Apple Sante' : 'Manuel')}
+                    value={extra?.source || (entry.source === 'healthkit' ? 'Apple Santé' : 'Manuel')}
                     color={MUTED}
                     hasBorder
                   />
@@ -581,51 +619,83 @@ export default function SleepDetailScreen() {
         {hasVitals && (
           <View style={styles.card}>
             <Text style={[styles.sectionTitle, { color: TEXT }]}>Signes vitaux pendant le sommeil</Text>
-            <View style={styles.vitalsGrid}>
+
+            {/* Pour les utilisateurs gratuits : aperçu du premier vital, le reste flou */}
+            <View style={{ position: 'relative' }}>
+              {/* Premier vital visible pour tous */}
               {entry.sleepHeartRate && (
                 <VitalCard
                   icon={<Heart size={20} color="#EF4444" />}
-                  label="Frequence cardiaque"
-                  desc="FC enregistree pendant le sommeil par l'Apple Watch"
-                  mainValue={`${entry.sleepHeartRate.avg}`}
+                  label="Fréquence cardiaque"
+                  desc="FC enregistrée pendant le sommeil par l'Apple Watch"
+                  mainValue={`${Math.round(entry.sleepHeartRate.avg)}`}
                   mainUnit="bpm"
                   mainLabel="Moyenne"
                   details={[
-                    { label: 'Minimum', value: `${entry.sleepHeartRate.min} bpm`, color: '#3B82F6' },
-                    { label: 'Maximum', value: `${entry.sleepHeartRate.max} bpm`, color: '#EF4444' },
+                    { label: 'Minimum', value: `${Math.round(entry.sleepHeartRate.min)} bpm`, color: '#3B82F6' },
+                    { label: 'Maximum', value: `${Math.round(entry.sleepHeartRate.max)} bpm`, color: '#EF4444' },
                   ]}
                   accentColor="#EF4444"
                 />
               )}
-              {entry.respiratoryRate && (
-                <VitalCard
-                  icon={<Wind size={20} color="#06B6D4" />}
-                  label="Frequence respiratoire"
-                  desc="Nombre de respirations par minute pendant le sommeil"
-                  mainValue={typeof entry.respiratoryRate === 'object' && 'avg' in entry.respiratoryRate
-                    ? `${(entry.respiratoryRate as any).avg}`
-                    : `${entry.respiratoryRate.min}-${entry.respiratoryRate.max}`}
-                  mainUnit="resp/min"
-                  mainLabel={typeof entry.respiratoryRate === 'object' && 'avg' in entry.respiratoryRate ? 'Moyenne' : 'Plage'}
-                  details={[
-                    { label: 'Minimum', value: `${entry.respiratoryRate.min}`, color: '#3B82F6' },
-                    { label: 'Maximum', value: `${entry.respiratoryRate.max}`, color: '#F97316' },
-                  ]}
-                  accentColor="#06B6D4"
-                />
+
+              {/* Vitaux supplémentaires : floutés pour les utilisateurs gratuits */}
+              {(entry.respiratoryRate || entry.wristTemperature != null) && (
+                <View style={!isPremium ? { opacity: 0.4 } : {}}>
+                  {entry.respiratoryRate && (
+                    <VitalCard
+                      icon={<Wind size={20} color="#06B6D4" />}
+                      label="Fréquence respiratoire"
+                      desc="Nombre de respirations par minute pendant le sommeil"
+                      mainValue={typeof entry.respiratoryRate === 'object' && 'avg' in entry.respiratoryRate
+                        ? `${Math.round((entry.respiratoryRate as any).avg)}`
+                        : `${Math.round(entry.respiratoryRate.min)}-${Math.round(entry.respiratoryRate.max)}`}
+                      mainUnit="resp/min"
+                      mainLabel={typeof entry.respiratoryRate === 'object' && 'avg' in entry.respiratoryRate ? 'Moyenne' : 'Plage'}
+                      details={[
+                        { label: 'Minimum', value: `${Math.round(entry.respiratoryRate.min)}`, color: '#3B82F6' },
+                        { label: 'Maximum', value: `${Math.round(entry.respiratoryRate.max)}`, color: '#F97316' },
+                      ]}
+                      accentColor="#06B6D4"
+                    />
+                  )}
+                  {entry.wristTemperature != null && (
+                    <VitalCard
+                      icon={<Thermometer size={20} color="#F59E0B" />}
+                      label="Temperature au poignet"
+                      desc="Ecart de temperature par rapport a ta baseline habituelle"
+                      mainValue={entry.wristTemperature > 0
+                        ? `+${entry.wristTemperature.toFixed(1)}`
+                        : entry.wristTemperature.toFixed(1)}
+                      mainUnit="°C"
+                      mainLabel="vs baseline"
+                      accentColor="#F59E0B"
+                    />
+                  )}
+                </View>
               )}
-              {entry.wristTemperature != null && (
-                <VitalCard
-                  icon={<Thermometer size={20} color="#F59E0B" />}
-                  label="Temperature au poignet"
-                  desc="Ecart de temperature par rapport a ta baseline habituelle"
-                  mainValue={entry.wristTemperature > 0
-                    ? `+${entry.wristTemperature.toFixed(1)}`
-                    : entry.wristTemperature.toFixed(1)}
-                  mainUnit="°C"
-                  mainLabel="vs baseline"
-                  accentColor="#F59E0B"
-                />
+
+              {/* Teaser gradient + CTA pour les utilisateurs gratuits */}
+              {!isPremium && (entry.respiratoryRate || entry.wristTemperature != null) && (
+                <>
+                  <LinearGradient
+                    colors={['transparent', CARD]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={styles.vitalsLockedGradient}
+                    pointerEvents="none"
+                  />
+                  <TouchableOpacity
+                    style={styles.vitalsLockedCTA}
+                    onPress={() => router.push('/paywall' as never)}
+                    activeOpacity={0.85}
+                  >
+                    <Lock size={14} color="#EF4444" />
+                    <Text style={[styles.vitalsLockedCTAText, { color: '#EF4444' }]}>
+                      Voir tout l'historique
+                    </Text>
+                  </TouchableOpacity>
+                </>
               )}
             </View>
           </View>
@@ -717,7 +787,7 @@ const SleepPhasesTimeline: React.FC<{
   return (
     <View style={styles.timelineContainer}>
       <View style={styles.timelineYLabels}>
-        {['Eveille', 'REM', 'Leger', 'Profond'].map(label => (
+        {['Éveillé', 'REM', 'Léger', 'Profond'].map(label => (
           <Text key={label} style={[styles.timelineYLabel, { color: MUTED }]}>{label}</Text>
         ))}
       </View>
@@ -906,4 +976,57 @@ const styles = StyleSheet.create({
 
   // Notes
   notesText: { fontSize: 14, lineHeight: 20 },
+
+  // Teaser premium - phases
+  phasesLockedGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 52,
+    height: 80,
+  },
+  phasesLockedCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    marginTop: 8,
+    backgroundColor: '#5856D610',
+    borderWidth: 1,
+    borderColor: '#5856D630',
+  },
+  phasesLockedCTAText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#5856D6',
+  },
+
+  // Teaser premium - vitaux
+  vitalsLockedGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 52,
+    height: 80,
+  },
+  vitalsLockedCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    marginTop: 8,
+    backgroundColor: '#EF444410',
+    borderWidth: 1,
+    borderColor: '#EF444430',
+  },
+  vitalsLockedCTAText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
 });

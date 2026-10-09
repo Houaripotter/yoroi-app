@@ -125,7 +125,13 @@ export async function checkForCloudSync(): Promise<void> {
       cloudBackupSize: latest.size,
     });
 
-    // Notification locale : l'user est alerté même si l'app tourne en background
+    // Notification locale : une seule fois par sauvegarde (avant, elle revenait à chaque ouverture)
+    const NOTIFIED_KEY = '@yoroi_cloud_sync_notified_fp';
+    const notifFingerprint = `${latest.name}|${latest.modifiedAt}`;
+    try {
+      if ((await AsyncStorage.getItem(NOTIFIED_KEY)) === notifFingerprint) return;
+      await AsyncStorage.setItem(NOTIFIED_KEY, notifFingerprint);
+    } catch {}
     try {
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -192,10 +198,13 @@ let syncAppStateSub: { remove: () => void } | null = null;
 
 export function scheduleCloudSyncCheckOnStartup(): void {
   if (scheduledTimer !== null) return;
-  scheduledTimer = setTimeout(() => {
-    checkForCloudSync().catch(e => logger.error('[MultiDeviceSync] Erreur startup:', e));
-    scheduledTimer = null;
-  }, STARTUP_CHECK_DELAY_MS);
+  // Pas de vérification si iOS a réveillé l'app en arrière-plan (HealthKit, Watch)
+  if (AppState.currentState === 'active') {
+    scheduledTimer = setTimeout(() => {
+      checkForCloudSync().catch(e => logger.error('[MultiDeviceSync] Erreur startup:', e));
+      scheduledTimer = null;
+    }, STARTUP_CHECK_DELAY_MS);
+  }
 
   if (!syncAppStateSub) {
     syncAppStateSub = AppState.addEventListener('change', (next: AppStateStatus) => {

@@ -97,13 +97,16 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
 
   const getModalData = useCallback(() => {
     if (!selectedMetric) return [];
-    const formatDate = (d: string) => { try { return format(parseISO(d), 'd MMM', { locale: fr }); } catch { return d; } };
+    // Règle 4 : deux lignes (jour+mois / année)
+    const formatLabel = (d: string) => { try { return `${format(parseISO(d), 'd MMM', { locale: fr })}\n${format(parseISO(d), 'yyyy')}`; } catch { return d; } };
+    // Règle 3 : plus récent à GAUCHE → données en DESC (on renverse l'ordre ASC)
+    const toDesc = <T,>(arr: T[]) => [...arr].reverse();
     switch (selectedMetric.key) {
-      case 'heart_rate': return safeHRHistory.map(h => ({ value: h.value, label: formatDate(h.date), date: h.date }));
-      case 'hrv': return safeHRVHistory.map(h => ({ value: h.value, label: formatDate(h.date), date: h.date }));
-      case 'spo2': return safeSpo2History.map(h => ({ value: h.value, label: formatDate(h.date), date: h.date }));
-      case 'respiratory_rate': return safeRespHistory.map(h => ({ value: h.value, label: formatDate(h.date), date: h.date }));
-      case 'vo2max': return safeVo2maxHistory.map(h => ({ value: h.value, label: formatDate(h.date), date: h.date }));
+      case 'heart_rate': return toDesc(safeHRHistory).map(h => ({ value: h.value, label: formatLabel(h.date), date: h.date }));
+      case 'hrv': return toDesc(safeHRVHistory).map(h => ({ value: h.value, label: formatLabel(h.date), date: h.date }));
+      case 'spo2': return toDesc(safeSpo2History).map(h => ({ value: h.value, label: formatLabel(h.date), date: h.date }));
+      case 'respiratory_rate': return toDesc(safeRespHistory).map(h => ({ value: h.value, label: formatLabel(h.date), date: h.date }));
+      case 'vo2max': return toDesc(safeVo2maxHistory).map(h => ({ value: h.value, label: formatLabel(h.date), date: h.date }));
       default: return [];
     }
   }, [selectedMetric, safeHRHistory, safeHRVHistory, safeSpo2History, safeRespHistory, safeVo2maxHistory]);
@@ -185,7 +188,7 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
                 </Svg>
               </View>
               <Text style={{ fontSize: 32, fontWeight: '900', color: colors.textPrimary, letterSpacing: -1, marginTop: 4 }}>
-                {displayHR}<Text style={{ fontSize: 16, fontWeight: '600' }}> bpm</Text>
+                {Math.round(displayHR)}<Text style={{ fontSize: 16, fontWeight: '600' }}> bpm</Text>
               </Text>
               <Text style={{ fontSize: 14, fontWeight: '800', color: hrStatusColor, marginTop: 2 }}>{hrStatusLabel}</Text>
               <Text style={{ fontSize: 12, fontWeight: '500', color: colors.textMuted, marginTop: 2 }}>
@@ -197,19 +200,19 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
                 <View style={styles.gaugeSubRow}>
                   {restingHR > 0 && currentHR > 0 && currentHR !== restingHR && (
                     <View style={styles.gaugeSubItem}>
-                      <Text style={[styles.gaugeSubValue, { color: colors.textPrimary }]}>{currentHR}</Text>
+                      <Text style={[styles.gaugeSubValue, { color: colors.textPrimary }]}>{Math.round(currentHR)}</Text>
                       <Text style={[styles.gaugeSubLabel, { color: colors.textMuted }]}>Actuelle</Text>
                     </View>
                   )}
                   {minHR > 0 && (
                     <View style={styles.gaugeSubItem}>
-                      <Text style={[styles.gaugeSubValue, { color: '#22C55E' }]}>{minHR}</Text>
+                      <Text style={[styles.gaugeSubValue, { color: '#22C55E' }]}>{Math.round(minHR)}</Text>
                       <Text style={[styles.gaugeSubLabel, { color: colors.textMuted }]}>Min</Text>
                     </View>
                   )}
                   {maxHR > 0 && (
                     <View style={styles.gaugeSubItem}>
-                      <Text style={[styles.gaugeSubValue, { color: '#EF4444' }]}>{maxHR}</Text>
+                      <Text style={[styles.gaugeSubValue, { color: '#EF4444' }]}>{Math.round(maxHR)}</Text>
                       <Text style={[styles.gaugeSubLabel, { color: colors.textMuted }]}>Max</Text>
                     </View>
                   )}
@@ -239,7 +242,7 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
               ...(safeHRHistory.length > 0 ? [{
                 label: 'FC',
                 color: '#EC4899',
-                history: safeHRHistory,
+                history: [...safeHRHistory].reverse(),
                 currentValue: displayHR,
                 unit: 'bpm',
                 onPress: () => setSelectedMetric({ key: 'heart_rate', label: 'Fréquence cardiaque', color: '#EC4899', unit: 'bpm', icon: <Heart size={18} color="#EC4899" strokeWidth={2.5} /> }),
@@ -247,7 +250,7 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
               ...(safeHRVHistory.length > 0 ? [{
                 label: 'VRC',
                 color: '#10B981',
-                history: safeHRVHistory,
+                history: [...safeHRVHistory].reverse(),
                 currentValue: hrvValue,
                 unit: 'ms',
                 onPress: () => setSelectedMetric({ key: 'hrv', label: 'Variabilité cardiaque', color: '#10B981', unit: 'ms', icon: <Zap size={18} color="#10B981" strokeWidth={2.5} /> }),
@@ -297,8 +300,8 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
               rightLabel="Fréq. resp."
               leftColor="#3B82F6"
               rightColor="#8B5CF6"
-              leftHistory={safeSpo2History}
-              rightHistory={safeRespHistory}
+              leftHistory={[...safeSpo2History].reverse()}
+              rightHistory={[...safeRespHistory].reverse()}
               leftValue={Math.round(spO2Value)}
               rightValue={Math.round(respRate)}
               unit=""

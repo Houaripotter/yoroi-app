@@ -79,7 +79,8 @@ import { generateProgressPDF } from '@/lib/pdfExport';
 import { resetAllData, resetDataOnly } from '@/lib/storage';
 import { resetDatabase, deduplicateTrainings } from '@/lib/database';
 import logger from '@/lib/security/logger';
-import { verifyDevCode } from '@/lib/DevModeContext';
+import { verifyDevCode, useDevMode } from '@/lib/DevModeContext';
+import { usePremium } from '@/context/PremiumContext';
 import { generateHenyDemoData, restoreRealData, isDemoDataActive, switchToProfile } from '@/lib/demoDataService';
 import { DEMO_PROFILES } from '@/lib/demoProfiles';
 
@@ -143,8 +144,6 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
       { id: 'import', label: 'settings.items.importData.label', sublabel: 'settings.items.importData.sublabel', Icon: Upload, iconColor: '#14B8A6', handler: 'import' },
       { id: 'backup-history', label: 'Mes sauvegardes', sublabel: 'Retrouver et restaurer vos backups locaux', Icon: Archive, iconColor: '#14B8A6', route: '/backup-history' },
       { id: 'sync-devices', label: 'Synchronisation locale', sublabel: 'iPhone ↔ iPad sans internet (Bluetooth + WiFi)', Icon: Wifi, iconColor: '#3B82F6', route: '/sync-devices' },
-      { id: 'deduplicate', label: 'Nettoyer les doublons', sublabel: 'Supprimer les séances en double (Apple Santé)', Icon: ShieldCheck, iconColor: '#F59E0B', handler: 'deduplicate' },
-      { id: 'pdf', label: 'settings.items.pdf.label', sublabel: 'settings.items.pdf.sublabel', Icon: FileText, iconColor: '#6B7280', handler: 'pdf' },
       { id: 'privacy', label: 'settings.items.privacy.label', sublabel: 'settings.items.privacy.sublabel', Icon: ShieldCheck, iconColor: '#14B8A6', route: '/privacy-data' },
       { id: 'privacy-policy', label: 'settings.items.privacyPolicy.label', sublabel: 'settings.items.privacyPolicy.sublabel', Icon: Lock, iconColor: '#6B7280', handler: 'privacy-policy' },
     ],
@@ -164,7 +163,6 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
   {
     title: 'Zone sensible',
     items: [
-      { id: 'clear-cache', label: 'settings.items.clearCache.label', sublabel: 'settings.items.clearCache.sublabel', Icon: Database, iconColor: '#F59E0B', handler: 'clear-cache' },
       { id: 'clean-uninstall', label: 'settings.items.cleanUninstall.label', sublabel: 'settings.items.cleanUninstall.sublabel', Icon: LogOut, iconColor: '#EF4444', handler: 'clean-uninstall', labelColor: '#EF4444' },
       { id: 'reset', label: 'settings.items.reset.label', sublabel: 'settings.items.reset.sublabel', Icon: Trash2, iconColor: '#EF4444', handler: 'reset', labelColor: '#EF4444' },
     ],
@@ -190,8 +188,33 @@ const CREATOR_ITEMS: SettingsItem[] = [
   { id: 'creator-onboarding', label: 'Voir Onboarding', sublabel: 'Previsualiser l\'ecran d\'accueil', Icon: Eye, iconColor: '#06B6D4', handler: 'preview-onboarding' },
   { id: 'creator-reset', label: 'Tout Desactiver', sublabel: 'Nettoyer les donnees de demo', Icon: Trash2, iconColor: '#EF4444', handler: 'reset-creator', labelColor: '#EF4444' },
   { id: 'creator-purge', label: 'PURGE FORCEE', sublabel: 'Efface poids + seances (SQLite direct)', Icon: Trash2, iconColor: '#FF0000', handler: 'purge-data', labelColor: '#FF0000' },
+  { id: 'creator-simulate-free', label: 'Simuler utilisateur gratuit', sublabel: 'Voir les écrans premium avec le cadenas', Icon: Lock, iconColor: '#EF4444', handler: 'toggle-simulate-free' },
   { id: 'lock-creator', label: 'Verrouiller le Mode Créateur', sublabel: 'Re-cache tout · le code 2022 sera redemandé', Icon: Shield, iconColor: '#6B7280', handler: 'lock-creator' },
 ];
+
+// ============================================
+// MAPPING IDs → ONGLETS (défini au niveau module = stable)
+// ============================================
+
+const TAB_MOI_IDS = new Set([
+  'profile', 'avatar', 'frame', 'logos', 'units',
+]);
+const TAB_APPARENCE_IDS = new Set([
+  'themes', 'navbar', 'citations',
+]);
+const TAB_DATA_IDS = new Set([
+  'notifications', 'health-data', 'heart-zones',
+  'companion', 'sync-devices', 'export', 'import',
+  'backup-history',
+  'privacy', 'privacy-policy',
+]);
+
+const getTabIndexForItem = (id: string): number => {
+  if (TAB_MOI_IDS.has(id)) return 0;
+  if (TAB_APPARENCE_IDS.has(id)) return 1;
+  if (TAB_DATA_IDS.has(id)) return 2;
+  return 3; // Support + zone sensible
+};
 
 // ============================================
 // COMPONENT
@@ -203,6 +226,11 @@ export default function SettingsScreen() {
   const { colors, isDark, screenBackground, screenText, screenTextMuted, fontSizeLevel, setFontSizeLevel, themeName } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { language, setLanguage, t } = useI18n();
+  const { isDevMode } = useDevMode();
+  const { simulateFreeUser, toggleSimulateFreeUser, appUserId, hasActiveSubscription } = usePremium();
+
+  // Onglets de navigation
+  const [activeTab, setActiveTab] = useState(0);
 
   // Search
   const [searchText, setSearchText] = useState('');
@@ -266,6 +294,14 @@ export default function SettingsScreen() {
     isDemoDataActive().then(setIsDemoActive);
     // Listener : recharge la hero card quand le profil change
     const sub = DeviceEventEmitter.addListener('YOROI_PROFILE_CHANGED', loadProfileHeader);
+    return () => sub.remove();
+  }, []);
+
+  // Écouter l'event d'affichage automatique des nouveautés (émis depuis l'écran Accueil)
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('SHOW_WHATS_NEW', () => {
+      setWhatsNewVisible(true);
+    });
     return () => sub.remove();
   }, []);
 
@@ -499,36 +535,56 @@ export default function SettingsScreen() {
           return { ...item, sublabel: isDemoActive ? t('settings.creatorMode.demoActive') : t('settings.creatorMode.injectData') };
         case 'creator-reset':
           return { ...item, sublabel: isDemoActive ? t('settings.creatorMode.restoreData') : t('settings.creatorMode.clearDemo') };
+        case 'creator-simulate-free':
+          return { ...item, sublabel: simulateFreeUser ? 'Actif · tu vois les cadenas premium' : 'Inactif · tu as accès à tout (mode dev)' };
         default:
           return item;
       }
     });
-  }, [isGlobalScreenshotMode, isJournalScreenshotMode, isSurgeonMode, isMockStatsMode, isDemoActive, t]);
+  }, [isGlobalScreenshotMode, isJournalScreenshotMode, isSurgeonMode, isMockStatsMode, isDemoActive, simulateFreeUser, t]);
 
-  // Filtered sections based on search
+  // Filtered sections based on search + active tab
   const filteredSections = useMemo((): SettingsSection[] => {
     const query = searchText.trim().toLowerCase();
-    if (!query) return SETTINGS_SECTIONS;
+    // En mode recherche on ignore les onglets et on cherche partout
+    if (query) {
+      return SETTINGS_SECTIONS.map(section => ({
+        ...section,
+        items: section.items.filter(
+          item =>
+            t(item.label).toLowerCase().includes(query) ||
+            t(item.sublabel).toLowerCase().includes(query)
+        ),
+      })).filter(section => section.items.length > 0);
+    }
+    // Filtrage par onglet actif
     return SETTINGS_SECTIONS.map(section => ({
       ...section,
-      items: section.items.filter(
-        item =>
-          t(item.label).toLowerCase().includes(query) ||
-          t(item.sublabel).toLowerCase().includes(query)
-      ),
+      items: section.items.filter(item => getTabIndexForItem(item.id) === activeTab),
     })).filter(section => section.items.length > 0);
-  }, [searchText, t]);
+  }, [searchText, t, activeTab]);
 
-  // Filtered creator items based on search
+  // Filtered creator items based on search + active tab (tab 3 uniquement)
   const filteredCreatorItems = useMemo((): SettingsItem[] => {
     const query = searchText.trim().toLowerCase();
-    if (!query) return creatorItems;
-    return creatorItems.filter(
-      item =>
-        item.label.toLowerCase().includes(query) ||
-        item.sublabel.toLowerCase().includes(query)
-    );
-  }, [searchText, creatorItems]);
+    const items = query
+      ? creatorItems.filter(
+          item =>
+            item.label.toLowerCase().includes(query) ||
+            item.sublabel.toLowerCase().includes(query)
+        )
+      : creatorItems;
+    // Creator visible uniquement en mode recherche OU onglet Support
+    if (!query && activeTab !== 3) return [];
+    return items;
+  }, [searchText, creatorItems, activeTab]);
+
+  // Langue visible dans onglet "Moi" (tab 0) ou en mode recherche
+  const showLanguageSection = useMemo(() => {
+    const query = searchText.trim().toLowerCase();
+    if (query) return true;
+    return activeTab === 0;
+  }, [searchText, activeTab]);
 
   // ============================================
   // HANDLERS
@@ -890,7 +946,7 @@ export default function SettingsScreen() {
           safeOpenURL('https://apps.apple.com/fr/app/yoroi-suivi-poids-sport/id6757306612');
         }
         return;
-      case 'privacy-policy': safeOpenURL('https://easy-woodwind-a70.notion.site/Yoroi-App-2d950188283880dbbd44d7e5abefecbb'); return;
+      case 'privacy-policy': router.push('/privacy-policy'); return;
       case 'whats-new': setWhatsNewVisible(true); return;
       case 'share-app':
         Share.share({
@@ -898,7 +954,7 @@ export default function SettingsScreen() {
         }).catch(() => {});
         return;
       case 'contact-dev':
-        safeOpenURL('mailto:h_ouari@hotmail.com?subject=Feedback%20Yoroi%202.4.0&body=Salut%20Houari%2C%0A%0A');
+        safeOpenURL('mailto:yoroiapp@gmail.com?subject=Feedback%20Yoroi%202.4.0&body=Salut%20Houari%2C%0A%0A');
         return;
       // Creator mode toggles
       case 'toggle-screenshot': toggleGlobalScreenshotMode(!isGlobalScreenshotMode); return;
@@ -917,6 +973,7 @@ export default function SettingsScreen() {
       case 'preview-onboarding': router.push({ pathname: '/onboarding', params: { preview: 'true' } } as any); return;
       case 'reset-creator': resetAllCreatorModes(); return;
       case 'purge-data': handleForceDeleteData(); return;
+      case 'toggle-simulate-free': toggleSimulateFreeUser(); return;
       case 'lock-creator': {
         showPopup(
           'Verrouiller le Mode Créateur ?',
@@ -999,6 +1056,8 @@ export default function SettingsScreen() {
           style={styles.row}
           onPress={() => handleItemPress(item)}
           activeOpacity={0.6}
+          accessibilityLabel={translatedLabel}
+          accessibilityRole="button"
         >
           <View style={[styles.iconBox, { backgroundColor: item.iconColor + '18' }]}>
             <IconComp size={20} color={item.iconColor} strokeWidth={2} />
@@ -1039,6 +1098,17 @@ export default function SettingsScreen() {
     );
   };
 
+  // ============================================
+  // DÉFINITION DES ONGLETS
+  // ============================================
+
+  const TABS = [
+    { label: 'Moi',       Icon: UserRound },
+    { label: 'Apparence', Icon: Palette   },
+    { label: 'Data',      Icon: Database  },
+    { label: 'Support',   Icon: Heart     },
+  ] as const;
+
   return (
     <View style={[styles.container, { backgroundColor: screenBackground }]}>
       {/* Loading overlay for demo generation */}
@@ -1052,7 +1122,10 @@ export default function SettingsScreen() {
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 12 }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: insets.top - 6 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
@@ -1067,6 +1140,8 @@ export default function SettingsScreen() {
             activeOpacity={0.85}
             onPress={() => router.push('/profile' as any)}
             style={[styles.heroCard, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}
+            accessibilityLabel="Voir mon profil"
+            accessibilityRole="button"
           >
             <View style={styles.heroTop}>
               <View style={[styles.heroAvatar, { backgroundColor: colors.accent + '20', borderColor: colors.accent }]}>
@@ -1141,7 +1216,57 @@ export default function SettingsScreen() {
           />
         </View>
 
-        {/* Language Selector */}
+        {/* ────── BARRE D'ONGLETS ────── */}
+        {!searchText.trim() && (
+          <View
+            style={[
+              styles.tabBar,
+              {
+                backgroundColor: isDark ? colors.backgroundCard ?? colors.card : '#FFFFFF',
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            {TABS.map((tab, idx) => {
+              const isActive = activeTab === idx;
+              const IconComp = tab.Icon;
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  style={[
+                    styles.tabItem,
+                    isActive && { backgroundColor: colors.accent },
+                  ]}
+                  onPress={() => {
+                    impactAsync(ImpactFeedbackStyle.Light);
+                    setActiveTab(idx);
+                  }}
+                  accessibilityLabel={tab.label}
+                  accessibilityRole="tab"
+                  activeOpacity={0.75}
+                >
+                  <IconComp
+                    size={18}
+                    color={isActive ? colors.textOnAccent : colors.textMuted}
+                    strokeWidth={isActive ? 2.5 : 2}
+                  />
+                  <Text
+                    style={[
+                      styles.tabLabel,
+                      { color: isActive ? colors.textOnAccent : colors.textMuted },
+                      isActive && { fontWeight: '800' },
+                    ]}
+                  >
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Language Selector — uniquement onglet "Moi" ou mode recherche */}
+        {showLanguageSection && (
         <View style={styles.sectionContainer}>
           <Text style={[styles.sectionTitle, { color: screenText, opacity: 0.7 }]}>{t('settings.language').toUpperCase()}</Text>
           <View style={[styles.card, { backgroundColor: isDark ? colors.card : '#FFFFFF' }]}>
@@ -1170,6 +1295,8 @@ export default function SettingsScreen() {
                         }
                       }}
                       activeOpacity={0.75}
+                      accessibilityLabel={`Langue : ${lang.nativeName}`}
+                      accessibilityRole="button"
                       style={{
                         flex: 1,
                         flexDirection: 'column',
@@ -1203,6 +1330,7 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
+        )}
 
         {/* Sections */}
         {filteredSections.map((section) => (
@@ -1249,6 +1377,8 @@ export default function SettingsScreen() {
                             setFontSizeLevel(level);
                           }}
                           activeOpacity={0.75}
+                          accessibilityLabel={`Taille de texte ${level === 1 ? 'petite' : level === 2 ? 'normale' : level === 3 ? 'grande' : 'très grande'}`}
+                          accessibilityRole="button"
                         >
                           <Text style={{ fontSize: previewSize, fontWeight: '800', color: isActive ? '#FFFFFF' : colors.textPrimary, lineHeight: previewSize + 4 }}>
                             Aa
@@ -1283,9 +1413,57 @@ export default function SettingsScreen() {
           </View>
         )}
 
+
+        {/* Bouton dev : simuler utilisateur gratuit (visible uniquement en mode dev) */}
+        {isDevMode && (
+          <TouchableOpacity
+            onPress={toggleSimulateFreeUser}
+            activeOpacity={0.7}
+            style={{
+              marginHorizontal: 20, marginBottom: 16, borderRadius: 12,
+              backgroundColor: simulateFreeUser ? '#EF4444' : '#1F2937',
+              padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10,
+            }}
+          >
+            <Lock size={16} color="#FFFFFF" strokeWidth={2} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>
+                {simulateFreeUser ? 'Simulation gratuit ACTIVE' : 'Simuler utilisateur gratuit'}
+              </Text>
+              <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }}>
+                {simulateFreeUser ? 'Tu vois les cadenas · tape pour reprendre accès' : 'Tape pour voir les restrictions premium'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {/* Mode dev : identifiant RevenueCat à copier pour s'accorder Premium depuis le dashboard */}
+        {isDevMode && (
+          <TouchableOpacity
+            onPress={async () => {
+              if (!appUserId) return;
+              try {
+                const Clipboard = await import('expo-clipboard');
+                await Clipboard.setStringAsync(appUserId);
+                showPopup('Copié', 'Identifiant RevenueCat copié. Colle-le dans RevenueCat > Customers pour t\'accorder Premium.', [{ text: 'OK', style: 'primary' }]);
+              } catch {}
+            }}
+            activeOpacity={0.7}
+            style={{ marginHorizontal: 20, marginBottom: 16, borderRadius: 12, backgroundColor: '#1F2937', padding: 14 }}
+          >
+            <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>
+              {hasActiveSubscription ? 'Premium actif (abonnement ou promo)' : 'Pas d\'abonnement Premium actif'}
+            </Text>
+            <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 2 }} numberOfLines={1}>
+              {appUserId ? `ID RevenueCat : ${appUserId} · tape pour copier` : 'ID RevenueCat indisponible (boutique non connectée)'}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* Version + footer */}
         <TouchableOpacity onPress={handleVersionTap} activeOpacity={1} style={styles.versionContainer}>
-          <Text style={[styles.versionText, { color: screenText, opacity: 0.5 }]}>YOROI v2.4.0</Text>
+          <Text style={[styles.versionText, { color: screenText, opacity: 0.7 }]}>Yoroi</Text>
+          <Text style={[styles.versionSubtext, { color: screenText, opacity: 0.45, fontSize: 13, fontWeight: '600', marginTop: 2, marginBottom: 6 }]}>Version 2.4.2</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
             <Text style={[styles.versionSubtext, { color: screenText, opacity: 0.4 }]}>
               Made with
@@ -1345,7 +1523,7 @@ export default function SettingsScreen() {
               style={[styles.modalSaveBtn, { backgroundColor: colors.accent }]}
               onPress={() => { setUnitsModalVisible(false); notificationAsync(NotificationFeedbackType.Success); }}
             >
-              <Text style={styles.modalSaveBtnText}>OK</Text>
+              <Text style={[styles.modalSaveBtnText, { color: colors.textOnAccent }]}>OK</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1519,67 +1697,104 @@ export default function SettingsScreen() {
                 onPress={handleSecretCodeSubmit}
                 disabled={secretCode.length !== 4}
               >
-                <Text style={[styles.modalSaveBtnText, { color: secretCode.length === 4 ? '#FFF' : colors.textMuted }]}>{t('settings.secretCodeModal.unlock')}</Text>
+                <Text style={[styles.modalSaveBtnText, { color: secretCode.length === 4 ? colors.textOnAccent : colors.textMuted }]}>{t('settings.secretCodeModal.unlock')}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* Modal "Nouveautés de la version" */}
-      <Modal visible={whatsNewVisible} transparent animationType="fade" onRequestClose={() => setWhatsNewVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card, maxHeight: '80%' }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#A855F720', alignItems: 'center', justifyContent: 'center' }}>
-                  <Sparkles size={18} color="#A855F7" />
-                </View>
-                <View>
-                  <Text style={{ fontSize: 17, fontWeight: '900', color: colors.textPrimary }}>Nouveautés v2.4.0</Text>
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}>La plus grosse mise à jour de Yoroi</Text>
-                </View>
-              </View>
-              <TouchableOpacity onPress={() => setWhatsNewVisible(false)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-                <X size={22} color={colors.textMuted} />
-              </TouchableOpacity>
+      {/* Modal "Quoi de neuf ?" — Style Apple What's New (bottom sheet) */}
+      <Modal visible={whatsNewVisible} transparent animationType="slide" onRequestClose={() => setWhatsNewVisible(false)}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' }}>
+          <View style={{ backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden', maxHeight: '88%' }}>
+
+            {/* Header coloré */}
+            <View style={{ backgroundColor: colors.accent, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 32, paddingBottom: 28, alignItems: 'center', paddingHorizontal: 24 }}>
+              <Text style={{ fontSize: 48, marginBottom: 10 }}>✨</Text>
+              <Text style={{ fontSize: 24, fontWeight: '900', color: colors.textOnAccent, textAlign: 'center', letterSpacing: 0.3 }}>Quoi de neuf ?</Text>
+              <Text style={{ fontSize: 14, color: colors.textOnAccent, opacity: 0.75, marginTop: 4, fontWeight: '600' }}>Version 2.4.2</Text>
             </View>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {[
-                { title: 'CARNET MULTI-SPORT', items: ['Yoroi s\'adapte enfin à TOUS les sports', 'Pack Combat (sparring, soumissions, positions, compétitions)', 'Pack Course/Trail (sorties, allures)', 'Pack Hyrox (8 stations + WODs)', 'Pack CrossFit (Hero WODs, voies)', 'Pack Musculation (séances, muscles, progression)', 'Switcher de pack en haut du Carnet'] },
-                { title: 'STATS PARTENAIRES SPARRING', items: ['Matrice de confrontations complète', 'Tier list des partenaires (en français !)', 'Timeline head-to-head', 'Tendance winrate par partenaire', 'Heat map des défaites', 'Prédicteur de matchup', 'Audio notes par partenaire', 'Game plan & monthly mission'] },
-                { title: 'APPLE WATCH', items: ['Timer redesign façon Apple Timer + sauce Yoroi', 'Complication LIVE countdown', 'Page Sparring dédiée avec progression', 'Son d\'alarme custom (wizz.mp3)', 'Notifications critiques (passe le Ne pas déranger)', 'Cercle de progression rounds / objectif'] },
-                { title: 'MODE CRÉATEUR', items: ['Code secret 2022 → débloque les profils démo', '7 profils prêts pour screenshots marketing', 'Houari (BJJ, transformation 103→75kg)', 'Louis, Hédi, Yanis (BJJ Gracie Barra)', 'Sarah (marathon), Clément (Hyrox), Nina (CrossFit)', 'Switch instantané entre profils'] },
-                { title: 'STATS CORPS', items: ['Dernière valeur affichée correctement (Muscle, Gras, Eau...)', 'Graphiques avec le plus récent à GAUCHE', 'Section MENSURATIONS (au lieu de "Mensures")', 'Card Composition complète'] },
-                { title: 'LANGUE FRANÇAISE', items: ['Audit complet : "Reglages" → "Réglages"', '"Hello" → "Salut", "Training" → "Entraînement"', '"Body Fat" → "Masse grasse"', '"Score Readiness" → "Score de Forme"', '+ 30 corrections d\'accents et anglicismes'] },
-                { title: 'INTERFACE', items: ['Emojis remplacés par icônes Lucide pro', 'Tier list S/A/B/C remplacée par noms français', 'Trash icon repositionné dans le Carnet', 'Onglets adaptatifs selon le sport actif'] },
-                { title: 'CORRECTIONS', items: ['Onglets Carnet ne crashent plus (Sparring, Position...)', 'HealthKit permissions corrigées (module natif Swift)', 'Performances Infirmerie améliorées', 'BodyMap pleine largeur', 'StatsErrorBoundary sur tous les onglets'] },
-              ].map((section, sIdx) => (
-                <View key={sIdx} style={{ marginBottom: 16 }}>
-                  <Text style={{ fontSize: 12, fontWeight: '900', color: colors.accent, letterSpacing: 0.8, marginBottom: 8 }}>
-                    {section.title}
-                  </Text>
-                  {section.items.map((it, iIdx) => (
-                    <View key={iIdx} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
-                      <Text style={{ fontSize: 13, color: colors.accent, marginTop: 1 }}>•</Text>
-                      <Text style={{ fontSize: 13, color: colors.textSecondary, flex: 1, lineHeight: 18 }}>
-                        {it}
-                      </Text>
-                    </View>
-                  ))}
+
+            {/* Contenu scrollable */}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ padding: 20, paddingBottom: 8 }}
+            >
+              {/* Section Premium */}
+              <View style={{ backgroundColor: '#FFFBEB', borderRadius: 16, padding: 16, marginBottom: 14 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <Text style={{ fontSize: 22 }}>⭐</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#F59E0B' }}>Premium</Text>
                 </View>
-              ))}
-              <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', fontStyle: 'italic', marginTop: 8, marginBottom: 8 }}>
-                Merci à tous ceux qui envoient leurs retours · continuez, c'est ce qui fait grandir l'app.
+                {[
+                  'Yoroi devient freemium, téléchargement toujours gratuit',
+                  'Abonnement mensuel ou annuel avec essai gratuit',
+                  'Stats avancées, carnet illimité, tous les outils',
+                  'Restauration des achats depuis ton compte App Store',
+                ].map((item, i) => (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
+                    <Text style={{ fontSize: 13, color: '#F59E0B', marginTop: 1, fontWeight: '700' }}>›</Text>
+                    <Text style={{ fontSize: 13, color: '#78350F', flex: 1, lineHeight: 19 }}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* Section Corrections */}
+              <View style={{ backgroundColor: '#ECFDF5', borderRadius: 16, padding: 16, marginBottom: 14 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <Text style={{ fontSize: 22 }}>🔧</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#10B981' }}>Corrections</Text>
+                </View>
+                {[
+                  'Crash au démarrage sur certains appareils, corrigé',
+                  'Carnet : onglets Vidéos et Progression plus stables',
+                  'Gestures de navigation corrigés',
+                  'Doublons dans les imports HealthKit réglés',
+                ].map((item, i) => (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
+                    <Text style={{ fontSize: 13, color: '#10B981', marginTop: 1, fontWeight: '700' }}>›</Text>
+                    <Text style={{ fontSize: 13, color: '#064E3B', flex: 1, lineHeight: 19 }}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* Section Améliorations */}
+              <View style={{ backgroundColor: '#F5F3FF', borderRadius: 16, padding: 16, marginBottom: 14 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <Text style={{ fontSize: 22 }}>🚀</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#8B5CF6' }}>Améliorations</Text>
+                </View>
+                {[
+                  'Réglages reorganisés en 4 onglets clairs',
+                  'Navigation entre onglets plus fluide',
+                  'Thème Blanc amélioré, tout est visible',
+                  'Interface nettoyée pour le lancement officiel',
+                ].map((item, i) => (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
+                    <Text style={{ fontSize: 13, color: '#8B5CF6', marginTop: 1, fontWeight: '700' }}>›</Text>
+                    <Text style={{ fontSize: 13, color: '#2E1065', flex: 1, lineHeight: 19 }}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* Message de remerciement */}
+              <Text style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'center', fontStyle: 'italic', marginTop: 4, marginBottom: 16, lineHeight: 18, paddingHorizontal: 8 }}>
+                Merci à tous ceux qui envoient leurs retours, continuez, c'est ce qui fait grandir l'app.
               </Text>
             </ScrollView>
-            <TouchableOpacity
-              onPress={() => setWhatsNewVisible(false)}
-              style={{ backgroundColor: colors.accent, paddingVertical: 14, borderRadius: 14, alignItems: 'center', marginTop: 12 }}
-              activeOpacity={0.85}
-            >
-              <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 0.3 }}>C'est noté</Text>
-            </TouchableOpacity>
+
+            {/* Bouton fermeture */}
+            <View style={{ paddingHorizontal: 20, paddingBottom: 34, paddingTop: 8 }}>
+              <TouchableOpacity
+                onPress={() => setWhatsNewVisible(false)}
+                style={{ backgroundColor: colors.accent, paddingVertical: 16, borderRadius: 16, alignItems: 'center' }}
+                activeOpacity={0.85}
+              >
+                <Text style={{ color: colors.textOnAccent, fontSize: 16, fontWeight: '900', letterSpacing: 0.3 }}>Super, merci !</Text>
+              </TouchableOpacity>
+            </View>
+
           </View>
         </View>
       </Modal>
@@ -1602,12 +1817,43 @@ const styles = StyleSheet.create({
     paddingBottom: 200,
   },
 
+  // Barre d'onglets
+  tabBar: {
+    flexDirection: 'row',
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 4,
+    gap: 4,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  tabItem: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 14,
+  },
+  tabLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+
   // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingVertical: 16,
+    paddingTop: 4,
+    paddingBottom: 10,
   },
   headerTitle: {
     fontSize: 24,

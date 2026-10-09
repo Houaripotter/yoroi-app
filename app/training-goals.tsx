@@ -68,6 +68,7 @@ import {
   TrainingGoal,
 } from '@/lib/trainingGoalsService';
 import { logger } from '@/lib/security/logger';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 // Icone par type d'objectif
 const TypeIcon = ({ type, size, color }: { type: ObjectiveType; size: number; color: string }) => {
@@ -315,6 +316,7 @@ export default function TrainingGoalsScreen() {
   // ============================================
 
   return (
+    <PremiumGate featureTitle="Mes Objectifs">
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
@@ -1048,6 +1050,7 @@ export default function TrainingGoalsScreen() {
       </KeyboardAvoidingView>
       <PopupComponent />
     </SafeAreaView>
+    </PremiumGate>
   );
 }
 

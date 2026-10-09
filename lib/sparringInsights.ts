@@ -83,7 +83,7 @@ const winRateInsight = (partners: PartnerStat[]): Insight | null => {
   if (rate >= 65) {
     return {
       id: 'spar-dominant',
-      text: `Win rate ${rate}% — tu domines le tatami 🔥`,
+      text: `Win rate ${rate}%, tu domines le tatami 🔥`,
       tone: 'celebration',
       icon: 'fire',
     };
@@ -91,14 +91,14 @@ const winRateInsight = (partners: PartnerStat[]): Insight | null => {
   if (rate >= 50) {
     return {
       id: 'spar-solid',
-      text: `Win rate ${rate}% — niveau solide`,
+      text: `Win rate ${rate}%, niveau solide`,
       tone: 'positive',
       icon: 'trending-up',
     };
   }
   return {
     id: 'spar-growing',
-    text: `Win rate ${rate}% — chaque loss est une leçon`,
+    text: `Win rate ${rate}%, chaque loss est une leçon`,
     tone: 'neutral',
     icon: 'trending-up',
   };
@@ -130,7 +130,7 @@ const streakInsight = (trainings: SparringTraining[]): Insight | null => {
   if (last14 === 0) {
     return {
       id: 'spar-pause',
-      text: `Aucun sparring récent — reprends doucement`,
+      text: `Aucun sparring récent, reprends doucement`,
       tone: 'warning',
       icon: 'alert-circle',
     };
@@ -162,7 +162,7 @@ const monthDeltaInsight = (trainings: SparringTraining[]): Insight | null => {
   if (prev30 === 0) {
     return {
       id: 'spar-starting',
-      text: `${last30} rounds ce mois — bon démarrage`,
+      text: `${last30} rounds ce mois, bon démarrage`,
       tone: 'positive',
       icon: 'trending-up',
     };

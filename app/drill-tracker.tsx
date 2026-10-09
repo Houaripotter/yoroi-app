@@ -22,6 +22,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { Plus, Minus, Trash2, ChevronLeft, Target, Flame, Award } from 'lucide-react-native';
 import logger from '@/lib/security/logger';
+import { PremiumGate } from '@/components/premium/PremiumGate';
+import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
 
 // ============================================
 // TYPES & STORAGE
@@ -252,6 +254,7 @@ export default function DrillTrackerScreen() {
   const completedGoals = techniques.filter(t => t.weekReps >= t.weekGoal).length;
 
   return (
+    <PremiumGate featureTitle="Drill Tracker">
     <View style={[styles.root, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
@@ -294,6 +297,16 @@ export default function DrillTrackerScreen() {
         contentContainerStyle={{ padding: 16, paddingTop: 0, paddingBottom: insets.bottom + 32, gap: 12 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Skeleton pendant le chargement initial */}
+        {loading && (
+          <>
+            <SkeletonCard height={100} width="100%" />
+            <SkeletonCard height={100} width="100%" />
+            <SkeletonCard height={100} width="100%" />
+            <SkeletonCard height={100} width="100%" />
+            <SkeletonMessage />
+          </>
+        )}
         {/* Formulaire ajout */}
         {showAdd && (
           <View style={[styles.card, {
@@ -358,6 +371,7 @@ export default function DrillTrackerScreen() {
         )}
       </ScrollView>
     </View>
+    </PremiumGate>
   );
 }
 

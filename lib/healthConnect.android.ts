@@ -661,7 +661,7 @@ class HealthConnectService {
   // PERMISSIONS
   // ============================================
 
-  private async requestAndroidPermissions(): Promise<HealthPermissions> {
+  private async requestAndroidPermissions(silent = false): Promise<HealthPermissions> {
     const HC = getHealthConnect();
     if (!HC) {
       return this.syncStatus.permissions;
@@ -710,7 +710,8 @@ class HealthConnectService {
       // Filtrer pour ne demander que les permissions pas encore accordées
       const toRequest = allPermissions.filter((p: any) => !existingTypes.has(p.recordType));
 
-      if (toRequest.length > 0) {
+      // En mode silencieux (reconnexion au lancement) : pas de fenêtre de permission
+      if (toRequest.length > 0 && !silent) {
         // requestPermission peut planter si Health Connect n'est pas à jour ou permission non déclarée
         await HC.requestPermission(toRequest as any).catch((e: any) => {
           logger.warn('[HealthConnect Android] requestPermission erreur (certaines permissions ignorées):', e);
@@ -783,7 +784,7 @@ class HealthConnectService {
   // CONNEXION
   // ============================================
 
-  async connect(): Promise<boolean> {
+  async connect(opts?: { silent?: boolean }): Promise<boolean> {
     try {
       // Vérifier si Health Connect est installé
       const installed = await this.isHealthConnectInstalled();
@@ -804,7 +805,7 @@ class HealthConnectService {
       }
 
       // Demander les permissions
-      const permissions = await this.requestAndroidPermissions();
+      const permissions = await this.requestAndroidPermissions(opts?.silent === true);
 
       // Vérifier qu'au moins une permission a été accordée
       const hasAnyPermission = Object.values(permissions).some(p => p);
@@ -823,8 +824,8 @@ class HealthConnectService {
 
       logger.info('[HealthConnect Android] Connexion réussie');
 
-      // Lancer une première synchronisation
-      await this.syncWithRetry();
+      // Lancer une première synchronisation (pas au lancement silencieux : l'import planifié s'en charge)
+      if (!opts?.silent) await this.syncWithRetry();
 
       return true;
     } catch (error) {
@@ -3048,7 +3049,8 @@ class HealthConnectService {
               date: trainingDate,
               start_time: startTime,
               duration_minutes: workout.duration,
-              distance: workout.distance ? parseFloat((workout.distance / 1000).toFixed(2)) : undefined,
+              // workout.distance est déjà en km (getAndroidWorkouts) : ne pas rediviser par 1000
+              distance: workout.distance ? parseFloat(workout.distance.toFixed(2)) : undefined,
               calories: workout.calories,
               heart_rate: workout.averageHeartRate,
               max_heart_rate: workout.maxHeartRate,
@@ -3205,6 +3207,28 @@ class HealthConnectService {
    * on poll donc toutes les 2 minutes pour detecter les séances
    * en provenance de Garmin, Fitbit, Samsung, Polar, Suunto, COROS, Withings, etc.
    */
+  /**
+   * Import complet de l'historique. Existait uniquement sur iOS : sur Android l'appel
+   * plantait ("not a function") et bloquait l'utilisateur à l'étape Santé de l'onboarding.
+   * Sur Android, syncAll couvre déjà l'historique disponible.
+   */
+  async importFullHistory(
+    onProgress?: (step: string, current: number, total: number) => void
+  ): Promise<{ weights: number; sleep: number; steps: number; calories: number; heartRate: number; distance: number; workouts: number; healthkitFound: number; insertErrors: number }> {
+    const result = { weights: 0, sleep: 0, steps: 0, calories: 0, heartRate: 0, distance: 0, workouts: 0, healthkitFound: 0, insertErrors: 0 };
+    DeviceEventEmitter.emit('YOROI_IMPORT_START');
+    try {
+      onProgress?.('Synchronisation', 1, 1);
+      await this.syncAll();
+    } catch (e) {
+      logger.warn('[HealthConnect Android] importFullHistory:', e);
+    } finally {
+      DeviceEventEmitter.emit('YOROI_IMPORT_DONE', result);
+      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+    }
+    return result;
+  }
+
   async setupWorkoutObserver(): Promise<void> {
     if (this.workoutPollingInterval) return; // Deja en cours
 
@@ -3289,6 +3313,8 @@ class HealthConnectService {
           duration_minutes: durationMin,
           source,
           notes: noteText,
+          // Identifiant Health Connect : évite que syncAll réimporte la même séance
+          healthkit_uuid: s.metadata?.id,
         };
 
         const trainingId = await addTraining(training);

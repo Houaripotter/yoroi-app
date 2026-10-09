@@ -28,6 +28,12 @@ interface PrepStep {
 
 const CHECKLIST_KEY_PREFIX = '@yoroi_comp_checklist_';
 
+// Parse 'yyyy-MM-dd' en date locale (évite le décalage UTC)
+const parseLocalDate = (d: string): Date => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(d);
+};
+
 export default function CompetitionCountdownScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -40,12 +46,15 @@ export default function CompetitionCountdownScreen() {
     (async () => {
       const list = await getCompetitions().catch(() => [] as Competition[]);
       // Choisir la competition ciblee ou la prochaine a venir
-      const now = Date.now();
+      // Début de journée locale : le jour J reste "à venir"
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const now = startOfToday.getTime();
       const target =
         (params.compId && list.find(c => String(c.id) === params.compId)) ||
         list
-          .filter(c => new Date(c.date).getTime() >= now)
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] ||
+          .filter(c => parseLocalDate(c.date).getTime() >= now)
+          .sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime())[0] ||
         null;
       setComp(target || null);
       if (target) {
@@ -59,14 +68,14 @@ export default function CompetitionCountdownScreen() {
     if (!comp) return 0;
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-    const target = new Date(comp.date);
+    const target = parseLocalDate(comp.date);
     target.setHours(0, 0, 0, 0);
     return Math.round((target.getTime() - now.getTime()) / 86400000);
   }, [comp]);
 
   const hoursLeft = useMemo(() => {
     if (!comp) return 0;
-    return Math.max(0, Math.round((new Date(comp.date).getTime() - Date.now()) / 3600000));
+    return Math.max(0, Math.round((parseLocalDate(comp.date).getTime() - Date.now()) / 3600000));
   }, [comp]);
 
   const toggleStep = async (stepId: string) => {
@@ -147,7 +156,7 @@ export default function CompetitionCountdownScreen() {
           <View style={styles.metaRow}>
             <Calendar size={14} color={colors.textMuted} />
             <Text style={[styles.metaText, { color: colors.textMuted }]}>
-              {new Date(comp.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+              {parseLocalDate(comp.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
             </Text>
             {comp.lieu ? (
               <>

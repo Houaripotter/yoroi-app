@@ -17,7 +17,7 @@ import logger from '@/lib/security/logger';
 
 // Format allure mm:ss/km
 function formatPace(paceSecPerKm: number): string {
-  if (!isFinite(paceSecPerKm) || paceSecPerKm <= 0) return '—';
+  if (!isFinite(paceSecPerKm) || paceSecPerKm <= 0) return ',';
   const m = Math.floor(paceSecPerKm / 60);
   const s = Math.round(paceSecPerKm % 60);
   return `${m}:${String(s).padStart(2, '0')}`;
@@ -275,7 +275,7 @@ export default function SortiesTab() {
                     {km > 0 && <Metric icon={<MapPin size={10} color={color} />} label={`${km} km`} color={color} />}
                     {min > 0 && <Metric icon={<Clock size={10} color="#8B5CF6" />} label={formatDuration(min)} color="#8B5CF6" />}
                     {pace && <Metric icon={<TrendingUp size={10} color="#F59E0B" />} label={`${formatPace(pace)}/km`} color="#F59E0B" />}
-                    {s.calories && <Metric icon={<Flame size={10} color="#EF4444" />} label={`${s.calories} kcal`} color="#EF4444" />}
+                    {!!s.calories && <Metric icon={<Flame size={10} color="#EF4444" />} label={`${s.calories} kcal`} color="#EF4444" />}
                   </View>
                 </View>
               </View>

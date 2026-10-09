@@ -16,7 +16,8 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { getCombats } from '@/lib/fighterModeService';
 import { getCompetitions } from '@/lib/database';
-import type { Combat, Competition } from '@/lib/fighterMode';
+import type { Combat } from '@/lib/fighterMode';
+import type { Competition } from '@/lib/database';
 import { StatsEmptyState } from '@/components/stats/StatsEmptyState';
 import { SkeletonGrid } from '@/components/stats/SkeletonCard';
 import logger from '@/lib/security/logger';
@@ -244,7 +245,7 @@ export default function CompetitionsTab() {
               )}
               {(lastCombat.methode || lastCombat.technique) && (
                 <Text style={[styles.lastCombatMeta, { color: colors.textMuted }]}>
-                  {lastCombat.methode === 'soumission' ? 'Soumission' : lastCombat.methode === 'points' ? 'Points' : lastCombat.methode === 'décision' ? 'Décision' : lastCombat.methode ?? ''}
+                  {lastCombat.methode === 'soumission' ? 'Soumission' : lastCombat.methode === 'points' ? 'Points' : lastCombat.methode === 'decision' ? 'Décision' : lastCombat.methode ?? ''}
                   {lastCombat.technique ? ` · ${lastCombat.technique}` : ''}
                 </Text>
               )}

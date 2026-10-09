@@ -105,7 +105,7 @@ export default function AddTrainingScreen() {
   const styles = useMemo(() => createStyles(IS_SMALL_SCREEN), [IS_SMALL_SCREEN]);
   const insets = useSafeAreaInsets();
   const keyboardHeight = useKeyboardHeight();
-  const { colors, isDark, screenText } = useTheme();
+  const { colors, isDark, screenText, themeColor } = useTheme();
   const { t } = useI18n();
   const { avatarImage: contextAvatar } = useAvatar();
   const router = useRouter();
@@ -237,6 +237,8 @@ export default function AddTrainingScreen() {
 
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  // Brouillons texte des champs décimaux (clé `${idx}-${champ}`) pour garder '72.' ou ''
+  const [exerciseDrafts, setExerciseDrafts] = useState<Record<string, string>>({});
   const [customExerciseName, setCustomExerciseName] = useState('');
   const [techniqueRating, setTechniqueRating] = useState<number | null>(null);
   const [showExerciseModal, setShowExerciseModal] = useState(false);
@@ -2682,8 +2684,8 @@ export default function AddTrainingScreen() {
                                           onPress={() => searchLocation(locationName)}
                                         >
                                           {locationLoading
-                                            ? <ActivityIndicator size="small" color="#FFF" />
-                                            : <MaterialCommunityIcons name="magnify" size={22} color="#FFF" />
+                                            ? <ActivityIndicator size="small" color={colors.textPrimary} />
+                                            : <MaterialCommunityIcons name="magnify" size={22} color={colors.textOnAccent} />
                                           }
                                         </TouchableOpacity>
                                       </View>
@@ -2934,7 +2936,7 @@ export default function AddTrainingScreen() {
                                       <MaterialCommunityIcons
                                         name={getSportIcon(club.sport || 'autre') as any}
                                         size={24}
-                                        color="#FFFFFF"
+                                        color={club.color ? '#FFFFFF' : (themeColor === 'blanc' ? colors.textPrimary : '#FFFFFF')}
                                       />
                                     </View>
                                   );
@@ -3650,6 +3652,8 @@ export default function AddTrainingScreen() {
                                 <Text style={{ fontWeight: '700', color: colors.textPrimary, fontSize: 14 }}>{ex.name}</Text>
                                 <TouchableOpacity onPress={() => {
                                   setExercises(prev => prev.filter((_, i) => i !== idx));
+                                  // Indices décalés : on vide les brouillons
+                                  setExerciseDrafts({});
                                   selectionAsync();
                                 }}>
                                   <X size={18} color={colors.textMuted} />
@@ -3665,8 +3669,9 @@ export default function AddTrainingScreen() {
                                                                       placeholder="0"
                                                                       placeholderTextColor={colors.textMuted}
                                                                       keyboardType="decimal-pad"
-                                                                      value={ex.weight?.toString() || ''}
+                                                                      value={exerciseDrafts[`${idx}-weight`] ?? (ex.weight?.toString() || '')}
                                                                       onChangeText={(val) => {
+                                                                        setExerciseDrafts(prev => ({ ...prev, [`${idx}-weight`]: val }));
                                                                         const w = parseFloat(val.replace(',', '.')) || 0;
                                                                         setExercises(prev => prev.map((e, i) => i === idx ? { ...e, weight: w } : e));
                                                                       }}
@@ -3711,8 +3716,9 @@ export default function AddTrainingScreen() {
                                                                       placeholder="0"
                                                                       placeholderTextColor={colors.textMuted}
                                                                       keyboardType="decimal-pad"
-                                                                      value={ex.distance?.toString() || ''}
+                                                                      value={exerciseDrafts[`${idx}-distance`] ?? (ex.distance?.toString() || '')}
                                                                       onChangeText={(val) => {
+                                                                        setExerciseDrafts(prev => ({ ...prev, [`${idx}-distance`]: val }));
                                                                         const d = parseFloat(val.replace(',', '.')) || 0;
                                                                         setExercises(prev => prev.map((e, i) => i === idx ? { ...e, distance: d } : e));
                                                                       }}
@@ -3725,8 +3731,9 @@ export default function AddTrainingScreen() {
                                                                                                           placeholder="0"
                                                                                                           placeholderTextColor={colors.textMuted}
                                                                                                           keyboardType="decimal-pad"
-                                                                                                          value={ex.duration?.toString() || ''}
+                                                                                                          value={exerciseDrafts[`${idx}-duration`] ?? (ex.duration?.toString() || '')}
                                                                                                           onChangeText={(val) => {
+                                                                                                            setExerciseDrafts(prev => ({ ...prev, [`${idx}-duration`]: val }));
                                                                                                             const d = parseFloat(val.replace(',', '.')) || 0;
                                                                                                             setExercises(prev => prev.map((e, i) => i === idx ? { ...e, duration: d } : e));
                                                                                                           }}
@@ -4732,6 +4739,7 @@ export default function AddTrainingScreen() {
                                       visible={showValidationModal}
                                       transparent
                                       animationType="fade"
+                                      onRequestClose={() => setShowValidationModal(false)}
                                     >
                                       <View style={{ flex: 1, backgroundColor: '#F2F2F7', paddingTop: insets.top }}>
                                         {/* key=lastSavedTrainingId force le remontage à chaque nouvelle séance → relance les confettis */}
@@ -4990,6 +4998,7 @@ export default function AddTrainingScreen() {
                           transparent
                           animationType="fade"
                           statusBarTranslucent
+                          onRequestClose={() => setShowPhotoChoiceModal(false)}
                         >
                           <TouchableOpacity
                             style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 }}
@@ -5098,6 +5107,7 @@ export default function AddTrainingScreen() {
         visible={showHouariRateModal}
         transparent
         animationType="slide"
+        onRequestClose={handleCloseHouariModal}
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' }}>
           <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: colors.border }}>

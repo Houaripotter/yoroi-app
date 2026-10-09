@@ -90,7 +90,12 @@
     "selectDate": "Select a date",
     "selectTime": "Select time",
     "sport": "Sport",
-    "visceralFat": "Visceral fat"
+    "visceralFat": "Visceral fat",
+    "moodAmazing": "Amazing",
+    "moodGood": "Good",
+    "moodOkay": "Okay",
+    "moodTired": "Tired",
+    "moodBad": "Bad"
   },
   "badges": {
     "badgeUnlocked": "Badge unlocked!",
@@ -308,7 +313,11 @@
     "sessionCount": "{{count}} session(s)",
     "success": "Import successful",
     "starting": "Starting...",
-    "importDoneFull": "Import complete!"
+    "importDoneFull": "Import complete!",
+    "successMessage": "{{count}} session(s) imported successfully",
+    "activitiesFound": "{{count}} activity(ies) found",
+    "importButton": "Import ({{count}})",
+    "importDoneMessage": "{{count}} session(s) added to your history"
   },
   "menu": {
     "allDataDeleted": "All data has been deleted",
@@ -440,7 +449,21 @@
     "noDataShared": "No data shared",
     "onDevice": "On device",
     "shareAnonymous": "Share anonymously",
-    "yourDataIsYours": "Your data belongs to you"
+    "yourDataIsYours": "Your data belongs to you",
+    "retentionDays": "{{days}} days",
+    "entries": "{{count}} entry(ies)",
+    "dataCategory": {
+      "weights": "Weight & measurements",
+      "workouts": "Training sessions",
+      "sleep": "Sleep",
+      "hydration": "Hydration",
+      "photos": "Transformation photos",
+      "injuries": "Injuries",
+      "mood": "Mood",
+      "badges": "Badges & rewards",
+      "fasting": "Intermittent fasting"
+    },
+    "deleteCategoryConfirm": "Do you really want to delete all “{{category}}” data? This action cannot be undone."
   },
   "profile": {
     "age": "Age",
@@ -630,7 +653,10 @@
       "errorChangingTheme": "Error changing theme",
       "light": "Light",
       "themeLocked": "Theme locked",
-      "warriorThemes": "Warrior themes"
+      "warriorThemes": "Warrior themes",
+      "unlockThemeMessage": "This theme unlocks at {{xp}} XP. You currently have {{currentXp}} XP.",
+      "unlockedCount": "{{unlocked}}/{{total}} themes unlocked · {{xp}} XP",
+      "nextUnlock": "Next: {{name}} in {{xp}} XP"
     },
     "history": {
       "noHistory": "No history",
@@ -1356,7 +1382,8 @@
     "in1Month": "In 1 month",
     "in3Months": "In 3 months",
     "in6Months": "In 6 months",
-    "in1Year": "In 1 year"
+    "in1Year": "In 1 year",
+    "targetMessage": "{{targetWeight}} kg goal reached in about {{weeks}} weeks"
   },
   "workoutDetail": {
     "airQuality": "Air quality",
@@ -1465,7 +1492,9 @@
     "date": "Date",
     "location": "Location",
     "notes": "Notes",
-    "weight": "Weight"
+    "weight": "Weight",
+    "addFirst": "Add my first competition",
+    "inDay": "In {{days}} day"
   },
   "fasting": {
     "title": "Fasting Mode",

@@ -23,6 +23,7 @@ import {
   Moon,
   TrendingUp,
   Dumbbell,
+  Lock,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -42,6 +43,10 @@ import { StatsDetailModal } from '@/components/StatsDetailModal';
 import { HealthInsightsGenerator } from '@/lib/healthInsights';
 import { getProfile } from '@/lib/database';
 import logger from '@/lib/security/logger';
+import { formatDurationHM, formatHoursHM } from '@/lib/formatDuration';
+import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
+import { PremiumLockSection } from '@/components/premium/PremiumLockSection';
+import { usePremium } from '@/context/PremiumContext';
 
 
 // ============================================
@@ -88,6 +93,7 @@ export default function HealthMetricsScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { locale, t } = useI18n();
+  const { isPremium } = usePremium();
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -124,10 +130,11 @@ export default function HealthMetricsScreen() {
   const [selectedModal, setSelectedModal] = useState<{
     type: 'hrv' | 'restingHR' | 'heartRate' | 'spo2' | 'temperature' | 'weight' | 'vo2max' | 'sleep' | 'calories' | null;
     title: string;
-    data: { date: string; value: number }[];
+    data: { date: string; value: number; label?: string }[];
     color: string;
     unit: string;
     icon?: React.ReactNode;
+    formatValue?: (value: number) => string;
   } | null>(null);
 
   const loadHealthData = useCallback(async () => {
@@ -363,21 +370,26 @@ export default function HealthMetricsScreen() {
                 {
                   backgroundColor: period === 30 ? colors.gold : colors.glass,
                   borderColor: period === 30 ? colors.gold : colors.glassBorder,
+                  opacity: isPremium ? 1 : 0.5,
                 },
               ]}
               onPress={() => {
+                if (!isPremium) { router.push('/paywall' as never); return; }
                 impactAsync(ImpactFeedbackStyle.Light);
                 setPeriod(30);
               }}
             >
-              <Text
-                style={[
-                  styles.periodButtonText,
-                  { color: period === 30 ? colors.textOnAccent : colors.textSecondary },
-                ]}
-              >
-                {t('healthMetrics.period30')}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                {!isPremium && <Lock size={10} color={colors.textSecondary} />}
+                <Text
+                  style={[
+                    styles.periodButtonText,
+                    { color: period === 30 ? colors.textOnAccent : colors.textSecondary },
+                  ]}
+                >
+                  {t('healthMetrics.period30')}
+                </Text>
+              </View>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
@@ -385,21 +397,26 @@ export default function HealthMetricsScreen() {
                 {
                   backgroundColor: period === 90 ? colors.gold : colors.glass,
                   borderColor: period === 90 ? colors.gold : colors.glassBorder,
+                  opacity: isPremium ? 1 : 0.5,
                 },
               ]}
               onPress={() => {
+                if (!isPremium) { router.push('/paywall' as never); return; }
                 impactAsync(ImpactFeedbackStyle.Light);
                 setPeriod(90);
               }}
             >
-              <Text
-                style={[
-                  styles.periodButtonText,
-                  { color: period === 90 ? colors.textOnAccent : colors.textSecondary },
-                ]}
-              >
-                {t('healthMetrics.period90')}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                {!isPremium && <Lock size={10} color={colors.textSecondary} />}
+                <Text
+                  style={[
+                    styles.periodButtonText,
+                    { color: period === 90 ? colors.textOnAccent : colors.textSecondary },
+                  ]}
+                >
+                  {t('healthMetrics.period90')}
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
 
@@ -474,6 +491,7 @@ export default function HealthMetricsScreen() {
                   data={hrvHistory}
                   color={colors.purple}
                   unit="ms"
+                  decimals={0}
                   colors={colors}
                   onPress={() => setSelectedModal({
                     type: 'hrv',
@@ -497,6 +515,7 @@ export default function HealthMetricsScreen() {
                 data={restingHRHistory}
                 color={colors.danger}
                 unit="BPM"
+                decimals={0}
                 colors={colors}
                 onPress={() => setSelectedModal({
                   type: 'restingHR',
@@ -516,6 +535,7 @@ export default function HealthMetricsScreen() {
                 data={heartRateHistory}
                 color={colors.danger}
                 unit="BPM"
+                decimals={0}
                 colors={colors}
                 onPress={() => setSelectedModal({
                   type: 'heartRate',
@@ -535,7 +555,7 @@ export default function HealthMetricsScreen() {
                   title={t('healthMetrics.heartRate')}
                   icon={Heart}
                   iconColor={colors.danger}
-                  value={`${healthData.heartRate.current || healthData.heartRate.average}`}
+                  value={`${Math.round(healthData.heartRate.current || healthData.heartRate.average)}`}
                   unit="BPM"
                   subtitle={t('healthMetrics.restingHR', { resting: healthData.heartRate.resting })}
                   details={t('healthMetrics.heartRateRange', { min: healthData.heartRate.min, max: healthData.heartRate.max })}
@@ -550,7 +570,7 @@ export default function HealthMetricsScreen() {
                   title={t('healthMetrics.hrv')}
                   icon={Activity}
                   iconColor={colors.purple}
-                  value={`${healthData.heartRateVariability.value}`}
+                  value={`${Math.round(healthData.heartRateVariability.value)}`}
                   unit="ms"
                   subtitle={t('healthMetrics.hrvSubtitle')}
                   details={t('healthMetrics.hrvDetails')}
@@ -606,7 +626,7 @@ export default function HealthMetricsScreen() {
                   title={t('healthMetrics.respiratoryRate')}
                   icon={Wind}
                   iconColor={colors.info}
-                  value={`${healthData.respiratoryRate.value}`}
+                  value={`${Math.round(healthData.respiratoryRate.value)}`}
                   unit="rpm"
                   subtitle={t('healthMetrics.breathsPerMin')}
                   colors={colors}
@@ -621,7 +641,7 @@ export default function HealthMetricsScreen() {
                   title={t('healthMetrics.vo2Max')}
                   icon={Zap}
                   iconColor={colors.warning}
-                  value={`${healthData.vo2Max.value}`}
+                  value={`${healthData.vo2Max.value.toFixed(1)}`}
                   unit="ml/kg/min"
                   subtitle={t('healthMetrics.aerobicCapacity')}
                   badge={getVO2MaxBadge(healthData.vo2Max.value)}
@@ -648,12 +668,13 @@ export default function HealthMetricsScreen() {
                     type: 'sleep',
                     title: t('healthMetrics.sleepHistory'),
                     data: sleepHistory.map(s => ({
-                      value: s.total / 60, // Convertir en heures
+                      value: (s.total || 0) / 60, // Heures (7.17 au lieu de 430)
                       date: s.date,
                       label: new Date(s.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' })
                     })),
                     color: colors.purple,
-                    unit: 'h',
+                    unit: '',
+                    formatValue: (h: number) => formatHoursHM(h),
                     icon: <Moon size={20} color={colors.purple} />,
                   })}
                 />
@@ -726,7 +747,7 @@ export default function HealthMetricsScreen() {
                 />
               )}
 
-              {healthData.calories && (
+              {!!healthData.calories && (
                 <View style={styles.row}>
                   <MetricCard
                     title={t('healthMetrics.activeCalories')}
@@ -751,7 +772,7 @@ export default function HealthMetricsScreen() {
               )}
 
               <View style={styles.row}>
-                {healthData.distance && (
+                {!!healthData.distance && (
                   <MetricCard
                     title={t('healthMetrics.distance')}
                     icon={Activity}
@@ -763,7 +784,7 @@ export default function HealthMetricsScreen() {
                   />
                 )}
 
-                {healthData.steps && (
+                {!!healthData.steps && (
                   <MetricCard
                     title={t('healthMetrics.steps')}
                     icon={Activity}
@@ -810,7 +831,7 @@ export default function HealthMetricsScreen() {
                     title={t('healthMetrics.temperature')}
                     icon={Thermometer}
                     iconColor={colors.warning}
-                    value={`${healthData.bodyTemperature.value}`}
+                    value={`${healthData.bodyTemperature.value.toFixed(1)}`}
                     unit="°C"
                     subtitle={t('healthMetrics.bodily')}
                     colors={colors}
@@ -827,13 +848,57 @@ export default function HealthMetricsScreen() {
                 {t('healthMetrics.recentWorkouts')}
               </Text>
 
-              {healthData.workouts.slice(0, 5).map((workout, index) => (
+              {/* Entraînements visibles (2 pour free, tous pour premium) */}
+              {(isPremium ? healthData.workouts.slice(0, 5) : healthData.workouts.slice(0, 2)).map((workout, index) => (
                 <WorkoutCard key={index} workout={workout} colors={colors} locale={locale} />
               ))}
+
+              {/* Teaser : entraînements floutés pour les utilisateurs gratuits */}
+              {!isPremium && healthData.workouts.length > 2 && (
+                <View style={{ position: 'relative' }}>
+                  {/* Items floutés */}
+                  {healthData.workouts.slice(2, 6).map((workout, index) => (
+                    <TouchableOpacity
+                      key={`locked-${index}`}
+                      activeOpacity={0.8}
+                      onPress={() => router.push('/paywall' as never)}
+                    >
+                      <View style={{ opacity: 0.4, pointerEvents: 'none' }}>
+                        <WorkoutCard workout={workout} colors={colors} locale={locale} />
+                      </View>
+                      <View style={[styles.lockOverlay]}>
+                        <Lock size={14} color={colors.textSecondary} />
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+
+                  {/* Dégradé masquant */}
+                  <LinearGradient
+                    colors={['transparent', colors.background]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={styles.lockedGradient}
+                    pointerEvents="none"
+                  />
+
+                  {/* CTA */}
+                  <TouchableOpacity
+                    style={[styles.lockedCTA, { backgroundColor: colors.gold }]}
+                    onPress={() => router.push('/paywall' as never)}
+                    activeOpacity={0.85}
+                  >
+                    <Lock size={14} color={colors.textOnAccent} />
+                    <Text style={[styles.lockedCTAText, { color: colors.textOnAccent }]}>
+                      Voir tout l'historique
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           )}
 
           <View style={{ height: 40 }} />
+          <PremiumLockSection title="Analyses santé avancées" description="Zones cardiaques, VO2max, variabilité, tendances sur 90 jours. Tout ce qu'il faut pour optimiser tes performances." />
         </View>
       </ScrollView>
 
@@ -847,6 +912,7 @@ export default function HealthMetricsScreen() {
           color={selectedModal.color}
           unit={selectedModal.unit}
           icon={selectedModal.icon}
+          formatValue={selectedModal.formatValue}
         />
       )}
     </View>
@@ -1127,14 +1193,14 @@ function WorkoutCard({ workout, colors, locale }: { workout: any; colors: any; l
 
       <View style={styles.workoutStats}>
         <WorkoutStat label="Durée" value={`${workout.duration}min`} colors={colors} />
-        {workout.distance && (
+        {!!workout.distance && (
           <WorkoutStat label="Distance" value={`${workout.distance}km`} colors={colors} />
         )}
-        {workout.calories && (
+        {!!workout.calories && (
           <WorkoutStat label="Calories" value={`${workout.calories}kcal`} colors={colors} />
         )}
-        {workout.averageHeartRate && (
-          <WorkoutStat label="FC Moy" value={`${workout.averageHeartRate}bpm`} colors={colors} />
+        {!!workout.averageHeartRate && (
+          <WorkoutStat label="FC Moy" value={`${Math.round(workout.averageHeartRate)}bpm`} colors={colors} />
         )}
       </View>
     </View>
@@ -1454,5 +1520,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.md,
     marginTop: -SPACING.sm,
+  },
+  lockOverlay: {
+    position: 'absolute',
+    right: SPACING.md,
+    top: '50%',
+    marginTop: -10,
+  },
+  lockedGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 48,
+    height: 80,
+  },
+  lockedCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    marginTop: SPACING.sm,
+  },
+  lockedCTAText: {
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

@@ -23,8 +23,8 @@ import {
 } from '@/lib/fontScaleManager';
 
 // ===================================================
-// YOROI THEME CONTEXT - 18 THÈMES PREMIUM
-// 9 couleurs × 2 modes (Dark/Light) + Auto
+// YOROI THEME CONTEXT - THÈMES PREMIUM + BLANC
+// couleurs × 2 modes (Dark/Light) + Auto
 // ===================================================
 
 const STORAGE_KEY_COLOR = 'yoroi_theme_color_v5';
@@ -164,9 +164,12 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const [fontSizeLevel, setFontSizeLevelState] = useState<FontSizeLevel>(2);
 
   // Déterminer le mode réel (résolution de auto)
-  const actualMode: 'dark' | 'light' = themeMode === 'auto'
-    ? (systemColorScheme === 'light' ? 'light' : 'dark')
-    : themeMode;
+  // Exception : le thème "Blanc" est toujours forcé en light pour rester clair
+  const actualMode: 'dark' | 'light' = themeColor === 'blanc'
+    ? 'light'
+    : (themeMode === 'auto'
+      ? (systemColorScheme === 'light' ? 'light' : 'dark')
+      : themeMode);
 
   // Obtenir le thème actuel (MÉMOÏSÉ pour éviter re-calcul)
   const theme = useMemo(() => getTheme(themeColor, actualMode), [themeColor, actualMode]);
@@ -275,14 +278,18 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   // En light mode, le screenBackground = accent → on choisit blanc ou noir selon la clarté.
   const screenTextComputed = useMemo(() => {
     if (actualMode === 'dark') return colors.textPrimary;
+    // Blanc : fond blanc → texte foncé (l'accent est sombre pour les icônes, pas le fond)
+    if (themeColor === 'blanc') return colors.textPrimary;
     // Light mode : screenBackground = accent. Si accent clair (luminance > 150), texte sombre.
     return getLuminance(colors.accent) > 150 ? '#0F172A' : '#FFFFFF';
-  }, [actualMode, colors.accent, colors.textPrimary]);
+  }, [actualMode, colors.accent, colors.textPrimary, themeColor]);
 
   const screenTextMutedComputed = useMemo(() => {
     if (actualMode === 'dark') return colors.textMuted;
+    // Blanc : fond blanc → texte muted foncé
+    if (themeColor === 'blanc') return colors.textMuted;
     return getLuminance(colors.accent) > 150 ? 'rgba(15,23,42,0.65)' : 'rgba(255,255,255,0.7)';
-  }, [actualMode, colors.accent, colors.textMuted]);
+  }, [actualMode, colors.accent, colors.textMuted, themeColor]);
 
   // Mémoïser la value du Provider pour éviter les re-renders en cascade
   // IMPORTANT: Doit être AVANT le return conditionnel (Rules of Hooks)
@@ -297,10 +304,12 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setThemeColor,
     setThemeMode,
     themeColors,
-    screenBackground: actualMode === 'dark' ? colors.background : colors.accent,
+    // Blanc : fond blanc pur (background), pas accent (qui est foncé pour les icônes)
+    screenBackground: themeColor === 'blanc' ? colors.background : (actualMode === 'dark' ? colors.background : colors.accent),
     containerBackground: colors.backgroundCard,
-    screenText: screenTextComputed,
-    screenTextMuted: screenTextMutedComputed,
+    // Blanc : texte foncé sur fond blanc
+    screenText: themeColor === 'blanc' ? colors.textPrimary : screenTextComputed,
+    screenTextMuted: themeColor === 'blanc' ? colors.textMuted : screenTextMutedComputed,
     glowShadow,
     gradients: GRADIENTS,
     themeName: `${themeColor}_${actualMode}`,

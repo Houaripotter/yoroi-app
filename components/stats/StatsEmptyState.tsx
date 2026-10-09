@@ -49,7 +49,7 @@ const StatsEmptyStateInner: React.FC<StatsEmptyStateProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
       <View style={[styles.iconCircle, { backgroundColor: accentColor + '15' }]}>
         {icon}
       </View>
@@ -73,11 +73,19 @@ const StatsEmptyStateInner: React.FC<StatsEmptyStateProps> = ({
 export const StatsEmptyState = React.memo(StatsEmptyStateInner);
 
 const styles = StyleSheet.create({
-  container: {
+  card: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 48,
-    paddingHorizontal: 32,
+    paddingVertical: 40,
+    paddingHorizontal: 28,
+    marginHorizontal: 16,
+    marginVertical: 12,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
   },
   iconCircle: {
     width: 80,

@@ -28,3 +28,129 @@ index 1ccc1a2..7ba5f61 100644
 -#define REACT_NATIVE_DEBUG
 -#endif
  #endif
+diff --git a/node_modules/react-native/scripts/codegen/codegen-utils.js b/node_modules/react-native/scripts/codegen/codegen-utils.js
+index 2fc48a1..58dc431 100644
+--- a/node_modules/react-native/scripts/codegen/codegen-utils.js
++++ b/node_modules/react-native/scripts/codegen/codegen-utils.js
+@@ -10,6 +10,12 @@
+ 
+ 'use strict';
+ 
++const path = require('path');
++
++// Resolve @react-native/codegen from the app root (5 levels up) to avoid
++// picking up the nested/older version in react-native/node_modules/
++const appRoot = path.resolve(__dirname, '..', '..', '..', '..', '..');
++
+ /**
+  * Wrapper required to abstract away from the actual codegen.
+  * This is needed because, when running tests in Sandcastle, not everything is setup as usually.
+@@ -27,7 +33,8 @@
+     RNCodegen = require('../../packages/react-native-codegen/lib/generators/RNCodegen.js');
+   } catch (e) {
+     // $FlowFixMe[cannot-resolve-module]
+-    RNCodegen = require('@react-native/codegen/lib/generators/RNCodegen.js');
++    const resolvedPath = require.resolve('@react-native/codegen/lib/generators/RNCodegen.js', {paths: [appRoot]});
++    RNCodegen = require(resolvedPath);
+   }
+   if (!RNCodegen) {
+     throw new Error('RNCodegen not found.');
+@@ -42,7 +49,8 @@
+     combineJSToSchema = require('../../packages/react-native-codegen/lib/cli/combine/combine-js-to-schema.js');
+   } catch (e) {
+     // $FlowFixMe[cannot-resolve-module]
+-    combineJSToSchema = require('@react-native/codegen/lib/cli/combine/combine-js-to-schema.js');
++    const resolvedPath = require.resolve('@react-native/codegen/lib/cli/combine/combine-js-to-schema.js', {paths: [appRoot]});
++    combineJSToSchema = require(resolvedPath);
+   }
+   if (!combineJSToSchema) {
+     throw new Error('combine-js-to-schema not found.');
+diff --git a/node_modules/react-native/scripts/codegen/generate-artifacts-executor/constants.js b/node_modules/react-native/scripts/codegen/generate-artifacts-executor/constants.js
+index 8fc50a9..0716dda 100644
+--- a/node_modules/react-native/scripts/codegen/generate-artifacts-executor/constants.js
++++ b/node_modules/react-native/scripts/codegen/generate-artifacts-executor/constants.js
+@@ -54,7 +54,18 @@
+ );
+ 
+ // $FlowFixMe[signature-verification-failure]
+-const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
++// Retry loop guards against transient EMFILE errors in Xcode's parallel build environment
++let packageJson = {name: 'react-native'};
++for (let attempt = 0; attempt < 5; attempt++) {
++  try {
++    packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
++    break;
++  } catch (e) {
++    if (attempt === 4) {
++      // Last attempt: use safe default so module doesn't throw
++    }
++  }
++}
+ const REACT_NATIVE = packageJson.name;
+ 
+ const TEMPLATES_FOLDER_PATH /*: string */ = path.join(
+diff --git a/node_modules/react-native/scripts/codegen/generate-artifacts-executor/index.js b/node_modules/react-native/scripts/codegen/generate-artifacts-executor/index.js
+index 4d41c5c..6544991 100644
+--- a/node_modules/react-native/scripts/codegen/generate-artifacts-executor/index.js
++++ b/node_modules/react-native/scripts/codegen/generate-artifacts-executor/index.js
+@@ -32,17 +32,26 @@
+ const {
+   generateUnstableModulesRequiringMainQueueSetupProvider,
+ } = require('./generateUnstableModulesRequiringMainQueueSetupProvider');
++const _utils = require('./utils');
+ const {
+   buildCodegenIfNeeded,
+   cleanupEmptyFilesAndFolders,
+-  codegenLog,
+   findCodegenEnabledLibraries,
+   findDisabledLibrariesByPlatform,
+   findReactNativeRootPath,
+   pkgJsonIncludesGeneratedCode,
+   readPkgJsonInDirectory,
+   readReactNativeConfig,
+-} = require('./utils');
++} = _utils;
++// Local fallback in case utils.js fails to export codegenLog (e.g. transient EMFILE in Xcode)
++const codegenLog = _utils.codegenLog || function(text /*: string */, info /*: boolean */ = false) {
++  const reset = '\x1b[0m';
++  const cyan = '\x1b[36m';
++  const yellow = '\x1b[33m';
++  const bold = '\x1b[1m';
++  const color = info ? yellow : '';
++  console.log(`${cyan}${bold}[Codegen]${reset} ${color}${text}${reset}`);
++};
+ const path = require('path');
+ 
+ /**
+@@ -182,11 +191,13 @@
+       cleanupEmptyFilesAndFolders(outputPath);
+     }
+   } catch (err) {
+-    codegenLog(err);
++    const log = typeof codegenLog === 'function' ? codegenLog : (msg) => console.error('[Codegen]', msg);
++    log(err);
+     process.exitCode = 1;
+   }
+ 
+-  codegenLog('Done.', true);
++  const _doneLog = typeof codegenLog === 'function' ? codegenLog : (msg) => console.log('[Codegen]', msg);
++  _doneLog('Done.', true);
+   return;
+ }
+ 
+diff --git a/node_modules/react-native/scripts/codegen/generate-artifacts-executor/generateSchemaInfos.js b/node_modules/react-native/scripts/codegen/generate-artifacts-executor/generateSchemaInfos.js
+index abc1234..def5678 100644
+--- a/node_modules/react-native/scripts/codegen/generate-artifacts-executor/generateSchemaInfos.js
++++ b/node_modules/react-native/scripts/codegen/generate-artifacts-executor/generateSchemaInfos.js
+@@ -13,7 +13,6 @@
+ 'use strict';
+ 
+ const CodegenUtils = require('../codegen-utils');
+ const {codegenLog} = require('./utils');
+ const fs = require('fs');
+-const glob = require('glob');
+ const path = require('path');
+@@ -57,7 +56,7 @@
+   codegenLog('Searching for podspec in the project dependencies.', true);
+-  const podspecs = glob.sync('*.podspec', {cwd: dependencyPath});
++  const podspecs = fs.readdirSync(dependencyPath).filter(f => f.endsWith('.podspec'));

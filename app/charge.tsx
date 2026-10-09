@@ -26,6 +26,7 @@ import {
 } from 'lucide-react-native';
 import { getWeeklyLoad, getRiskLevel, formatLoad } from '@/lib/trainingLoadService';
 import logger from '@/lib/security/logger';
+import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
 
 export default function ChargeScreen() {
   const { colors, isDark } = useTheme();
@@ -248,6 +249,7 @@ export default function ChargeScreen() {
         </View>
 
         <View style={{ height: 40 }} />
+        <PremiumTeaser variant="analytics" title="Analyse de charge complète" />
       </ScrollView>
     </View>
   );

@@ -183,7 +183,12 @@
     "selectDate": "Sélectionner une date",
     "selectTime": "Sélectionner l'heure",
     "sport": "Sport",
-    "visceralFat": "Graisse viscérale"
+    "visceralFat": "Graisse viscérale",
+    "moodAmazing": "Au top",
+    "moodGood": "Bien",
+    "moodOkay": "Moyen",
+    "moodTired": "Fatigué",
+    "moodBad": "Mauvais"
   },
   "badges": {
     "badgeUnlocked": "Badge débloqué !",
@@ -376,7 +381,7 @@
   "import": {
     "changeFile": "Changer le fichier",
     "distance": "Distance",
-    "duration": "Duration",
+    "duration": "Durée",
     "formatInfo": "Formats supportés : GPX, TCX, FIT",
     "importAnother": "Importer un autre fichier",
     "importDone": "Import terminé",
@@ -401,7 +406,11 @@
     "sessionCount": "{{count}} séance(s)",
     "success": "Import réussi",
     "starting": "Démarrage...",
-    "importDoneFull": "Import terminé !"
+    "importDoneFull": "Import terminé !",
+    "successMessage": "{{count}} séance(s) importée(s) avec succès",
+    "activitiesFound": "{{count}} activité(s) trouvée(s)",
+    "importButton": "Importer ({{count}})",
+    "importDoneMessage": "{{count}} séance(s) ajoutée(s) à ton historique"
   },
   "menu": {
     "allDataDeleted": "Toutes les données ont été supprimées",
@@ -533,7 +542,21 @@
     "noDataShared": "Aucune donnée partagée",
     "onDevice": "Sur l'appareil",
     "shareAnonymous": "Partager anonymement",
-    "yourDataIsYours": "Vos données vous appartiennent"
+    "yourDataIsYours": "Vos données vous appartiennent",
+    "retentionDays": "{{days}} jours",
+    "entries": "{{count}} entrée(s)",
+    "dataCategory": {
+      "weights": "Poids & mensurations",
+      "workouts": "Séances d'entraînement",
+      "sleep": "Sommeil",
+      "hydration": "Hydratation",
+      "photos": "Photos de transformation",
+      "injuries": "Blessures",
+      "mood": "Humeur",
+      "badges": "Badges & récompenses",
+      "fasting": "Jeûne intermittent"
+    },
+    "deleteCategoryConfirm": "Voulez-vous vraiment supprimer toutes les données « {{category}} » ? Cette action est irréversible."
   },
   "profile": {
     "age": "Âge",
@@ -723,7 +746,10 @@
       "errorChangingTheme": "Erreur lors du changement de thème",
       "light": "Clair",
       "themeLocked": "Thème verrouillé",
-      "warriorThemes": "Thèmes warrior"
+      "warriorThemes": "Thèmes warrior",
+      "unlockThemeMessage": "Ce thème se débloque à {{xp}} XP. Tu as actuellement {{currentXp}} XP.",
+      "unlockedCount": "{{unlocked}}/{{total}} thèmes débloqués · {{xp}} XP",
+      "nextUnlock": "Prochain : {{name}} dans {{xp}} XP"
     },
     "history": {
       "noHistory": "Aucun historique",
@@ -1449,7 +1475,8 @@
     "in1Month": "Dans 1 mois",
     "in3Months": "Dans 3 mois",
     "in6Months": "Dans 6 mois",
-    "in1Year": "Dans 1 an"
+    "in1Year": "Dans 1 an",
+    "targetMessage": "Objectif de {{targetWeight}} kg atteint dans environ {{weeks}} semaines"
   },
   "workoutDetail": {
     "airQuality": "Qualité de l'air",
@@ -1558,7 +1585,9 @@
     "date": "Date",
     "location": "Lieu",
     "notes": "Notes",
-    "weight": "Poids"
+    "weight": "Poids",
+    "addFirst": "Ajouter ma première compétition",
+    "inDay": "Dans {{days}} jour"
   },
   "fasting": {
     "title": "Mode Jeûne",

@@ -32,6 +32,9 @@ import { calculateStreak, getTrainings, Training } from '@/lib/database';
 import { getSleepStats, formatSleepDuration, SleepStats } from '@/lib/sleepService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
+import { usePremium } from '@/context/PremiumContext';
+import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
+import { Lock } from 'lucide-react-native';
 
 const HYDRATION_KEY = '@yoroi_hydration_today';
 const HYDRATION_GOAL = 2500;
@@ -44,6 +47,7 @@ export default function EnergyScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const { isPremium } = usePremium();
 
   const [batteryPercent, setBatteryPercent] = useState(0);
   const [hydration, setHydration] = useState(0);
@@ -354,6 +358,69 @@ export default function EnergyScreen() {
           <Text style={styles.goButtonText}>{t('energy.button.goTraining')}</Text>
         </TouchableOpacity>
 
+        {/* Historique séances récentes — teaser pour free, complet pour premium */}
+        {trainings.length > 0 && (() => {
+          const sortedTrainings = [...trainings].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
+          const FREE_VISIBLE = 2;
+          const visibleItems = isPremium ? sortedTrainings : sortedTrainings.slice(0, FREE_VISIBLE);
+          const lockedItems = isPremium ? [] : sortedTrainings.slice(FREE_VISIBLE, FREE_VISIBLE + 4);
+
+          return (
+            <View style={[energyHistStyles.card, { backgroundColor: colors.backgroundCard }]}>
+              <Text style={[energyHistStyles.title, { color: colors.textPrimary }]}>Séances récentes</Text>
+              {visibleItems.map((training) => (
+                <View key={training.id} style={[energyHistStyles.row, { borderBottomColor: colors.border }]}>
+                  <Dumbbell size={16} color={colors.accentText} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[energyHistStyles.trainingName, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {training.sport ?? 'Entraînement'}
+                    </Text>
+                    <Text style={[energyHistStyles.trainingDate, { color: colors.textMuted }]}>
+                      {training.date ?? ''}
+                    </Text>
+                  </View>
+                  {(training.duration_minutes ?? training.duration) ? (
+                    <Text style={[energyHistStyles.trainingDuration, { color: colors.accentText }]}>
+                      {training.duration_minutes ?? training.duration} min
+                    </Text>
+                  ) : null}
+                </View>
+              ))}
+              {lockedItems.length > 0 && (
+                <View style={{ position: 'relative' }}>
+                  {lockedItems.map((training) => (
+                    <View key={String(training.id) + '_locked'} style={[energyHistStyles.row, { borderBottomColor: colors.border, opacity: 0.4 }]}>
+                      <Dumbbell size={16} color={colors.accentText} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[energyHistStyles.trainingName, { color: colors.textPrimary }]} numberOfLines={1}>
+                          {training.sport ?? 'Entraînement'}
+                        </Text>
+                        <Text style={[energyHistStyles.trainingDate, { color: colors.textMuted }]}>
+                          {training.date ?? ''}
+                        </Text>
+                      </View>
+                      <Lock size={13} color="#9CA3AF" strokeWidth={2} />
+                    </View>
+                  ))}
+                  <ExpoLinearGradient
+                    colors={['transparent', colors.backgroundCard ?? colors.background]}
+                    style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 80 }}
+                    pointerEvents="none"
+                  />
+                  <TouchableOpacity
+                    style={energyHistStyles.lockCta}
+                    onPress={() => router.push('/paywall' as never)}
+                    activeOpacity={0.85}
+                  >
+                    <Lock size={14} color="#FFFFFF" strokeWidth={2.5} />
+                    <Text style={energyHistStyles.lockCtaText}>Voir tout l'historique</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          );
+        })()}
+
         <View style={{ height: 100 }} />
       </ScrollView>
     </View>
@@ -425,5 +492,22 @@ const styles = StyleSheet.create({
   // Go Button
   goButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 18, borderRadius: 16, marginTop: 16 },
   goButtonText: { fontSize: 18, fontWeight: '900', color: '#FFFFFF' },
+});
+
+const energyHistStyles = StyleSheet.create({
+  card: { borderRadius: 16, padding: 16, marginBottom: 16 },
+  title: { fontSize: 15, fontWeight: '700', marginBottom: 12 },
+  row: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  trainingName: { fontSize: 13, fontWeight: '600' },
+  trainingDate: { fontSize: 11, marginTop: 2 },
+  trainingDuration: { fontSize: 13, fontWeight: '700' },
+  lockCta: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    marginTop: 8, paddingVertical: 14, borderRadius: 14, backgroundColor: '#8B5CF6',
+  },
+  lockCtaText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
 });
 

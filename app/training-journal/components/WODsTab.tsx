@@ -262,13 +262,13 @@ export default function WODsTab() {
                     )}
                   </View>
                   <View style={{ flexDirection: 'row', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
-                    {s.duration_minutes && (
+                    {!!s.duration_minutes && (
                       <Metric icon={<Clock size={10} color="#8B5CF6" />} label={formatDuration(s.duration_minutes)} color="#8B5CF6" />
                     )}
-                    {s.intensity && (
+                    {!!s.intensity && (
                       <Metric icon={<Flame size={10} color="#DC2626" />} label={`${s.intensity}/10`} color="#DC2626" />
                     )}
-                    {s.calories && (
+                    {!!s.calories && (
                       <Metric icon={<Zap size={10} color="#EF4444" />} label={`${s.calories} kcal`} color="#EF4444" />
                     )}
                   </View>

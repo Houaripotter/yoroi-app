@@ -83,7 +83,7 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise, sport }: 
     onAddExercise({
       name: selectedExercise.name,
       sets: parseInt(sets) || 0,
-      reps: parseInt(reps) || 0,
+      reps: parseFloat(reps) || 0, // KM décimal possible
       weight: parseFloat(weight) || 0,
       muscle_group: selectedExercise.muscle || selectedExercise.category,
     });
@@ -182,7 +182,7 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise, sport }: 
               ]}
               onPress={() => { setSelectedCategory(null); setSelectedMuscle(null); }}
             >
-              <Text style={[styles.filterChipText, { color: !selectedCategory ? '#FFF' : colors.textPrimary }]}>
+              <Text style={[styles.filterChipText, { color: !selectedCategory ? colors.textOnAccent : colors.textPrimary }]}>
                 Tous
               </Text>
             </TouchableOpacity>
@@ -201,7 +201,7 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise, sport }: 
                 <Text
                   style={[
                     styles.filterChipText,
-                    { color: selectedCategory === cat.id ? '#FFF' : colors.textPrimary },
+                    { color: selectedCategory === cat.id ? colors.textOnAccent : colors.textPrimary },
                   ]}
                 >
                   {cat.name}
@@ -227,7 +227,7 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise, sport }: 
                   ]}
                   onPress={() => setSelectedMuscle(null)}
                 >
-                  <Text style={[styles.filterChipText, { color: !selectedMuscle ? '#FFF' : colors.textPrimary }]}>
+                  <Text style={[styles.filterChipText, { color: !selectedMuscle ? colors.textOnAccent : colors.textPrimary }]}>
                     Tous
                   </Text>
                 </TouchableOpacity>
@@ -246,7 +246,7 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise, sport }: 
                     <Text
                       style={[
                         styles.filterChipText,
-                        { color: selectedMuscle === muscle.id ? '#FFF' : colors.textPrimary },
+                        { color: selectedMuscle === muscle.id ? colors.textOnAccent : colors.textPrimary },
                       ]}
                     >
                       {muscle.name}
@@ -270,7 +270,7 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise, sport }: 
           </View>
 
           {/* Exercises list */}
-          <ScrollView style={styles.exercisesList} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.exercisesList} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {filteredExercises.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={[styles.emptyText, { color: colors.textMuted }]}>
@@ -364,8 +364,8 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise, sport }: 
               style={[styles.addButton, { backgroundColor: colors.gold }]}
               onPress={handleAdd}
             >
-              <Plus size={20} color="#FFF" />
-              <Text style={styles.addButtonText}>Ajouter l'exercice</Text>
+              <Plus size={20} color={colors.textOnAccent} />
+              <Text style={[styles.addButtonText, { color: colors.textOnAccent }]}>Ajouter l'exercice</Text>
             </TouchableOpacity>
           )}
         </Pressable>

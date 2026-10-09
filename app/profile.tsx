@@ -11,6 +11,7 @@ import {
   Keyboard,
   DeviceEventEmitter,
   Platform,
+  Linking,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter } from 'expo-router';
@@ -227,19 +228,27 @@ export default function ProfileScreen() {
 
   // Redimensionne une photo à max 800x800 et la copie en zone PERMANENTE
   const resizePhoto = async (uri: string): Promise<string> => {
+    const fileName = `profile_photo_${Date.now()}.jpg`;
+    const permanentUri = `${FileSystem.documentDirectory}${fileName}`;
     try {
       const result = await ImageManipulator.manipulateAsync(
         uri,
         [{ resize: { width: 800 } }],
-        { compress: 0.95, format: ImageManipulator.SaveFormat.JPEG }
+        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
       );
       // Copier dans documentDirectory pour que la photo survive aux sauvegardes
-      const fileName = `profile_photo_${Date.now()}.jpg`;
-      const permanentUri = `${FileSystem.documentDirectory}${fileName}`;
       await FileSystem.copyAsync({ from: result.uri, to: permanentUri });
       return permanentUri;
     } catch {
-      return uri; // fallback : image originale si erreur
+      // Si ImageManipulator échoue (ex: photo HEIC très lourde),
+      // on copie quand même l'original en zone permanente pour éviter
+      // de sauvegarder un chemin temporaire qui deviendra invalide.
+      try {
+        await FileSystem.copyAsync({ from: uri, to: permanentUri });
+        return permanentUri;
+      } catch {
+        return uri; // dernier recours
+      }
     }
   };
 
@@ -268,6 +277,22 @@ export default function ProfileScreen() {
   };
 
   const calculatedAge = calculateAge(birthDate);
+
+  // Normalise JJ/MM/AAAA ou yyyy-MM-dd en yyyy-MM-dd (null si invalide)
+  const normalizeBirthDate = (dateStr: string): string | null => {
+    const str = dateStr.trim();
+    let y: number, m: number, d: number;
+    const fr = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    const iso = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (fr) { d = +fr[1]; m = +fr[2]; y = +fr[3]; }
+    else if (iso) { y = +iso[1]; m = +iso[2]; d = +iso[3]; }
+    else return null;
+    const dt = new Date(y, m - 1, d);
+    // Rejette les dates inexistantes (ex: 31/02)
+    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    const normalized = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    return calculateAge(`${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`) ? normalized : null;
+  };
 
   const loadData = useCallback(async () => {
     try {
@@ -327,6 +352,17 @@ export default function ProfileScreen() {
       return;
     }
 
+    // Date de naissance : valider et normaliser
+    let normalizedBirthDate: string | undefined;
+    if (birthDate.trim()) {
+      const n = normalizeBirthDate(birthDate);
+      if (!n) {
+        showPopup('Erreur', 'Date de naissance invalide. Format attendu : JJ/MM/AAAA');
+        return;
+      }
+      normalizedBirthDate = n;
+    }
+
     setIsSaving(true);
     try {
       await saveProfile({
@@ -337,7 +373,7 @@ export default function ProfileScreen() {
         start_date: profile?.start_date || format(new Date(), 'yyyy-MM-dd'),
         avatar_gender: profile?.avatar_gender || 'homme',
         profile_photo: profilePhoto,
-        birth_date: birthDate || undefined,
+        birth_date: normalizedBirthDate,
         weight_goal: weightGoal,
         age: calculatedAge || undefined,
       });
@@ -406,8 +442,21 @@ export default function ProfileScreen() {
     setIsPickingPhoto(true);
     try {
       const { status } = await requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        showPopup('Permission refusée', 'Accès à la galerie requis pour choisir une photo.');
+      // 'limited' = accès accordé mais restreint à certaines photos seulement
+      // On accepte 'granted' ET 'limited' pour pouvoir ouvrir la galerie
+      if (status !== 'granted' && (status as string) !== 'limited') {
+        showPopup(
+          'Permission refusée',
+          'Pour choisir une photo depuis ta galerie, autorise l\'accès dans Réglages > Confidentialité > Photos > Yoroi.',
+          [
+            {
+              text: 'Ouvrir les Réglages',
+              style: 'primary',
+              onPress: () => Linking.openSettings()
+            },
+            { text: 'Annuler', style: 'cancel' }
+          ]
+        );
         return;
       }
       const result = await launchImageLibraryAsync({
@@ -467,12 +516,14 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors?.background ?? '#000000' }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors?.background ?? '#000000'} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors?.background ?? '#000000'} />
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[styles.content, { paddingTop: insets?.top ?? 0 }]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
       >
         {/* Header */}
         <View style={styles.header}>

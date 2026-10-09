@@ -834,4 +834,165 @@ class YoroiHealthKitModule: NSObject {
     }
     healthStore.execute(workoutQuery)
   }
+
+  // ============================================================
+  // MÉTHODE 9 — Lire le sommeil (bypass Nitro, même pattern que workouts)
+  // ============================================================
+  // Retourne un JSON array de samples bruts :
+  // [{ startDate: ms, endDate: ms, value: Int, sourceName, sourceBundleId, deviceName }]
+  // Le regroupement par nuit / déduplication reste côté JS (getSleepHistory).
+  @objc func getSleepSamplesAsJSON(
+    _ days: Double,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    NSLog("[YoroiHK] getSleepSamplesAsJSON appelé, days=\(days)")
+
+    guard HKHealthStore.isHealthDataAvailable() else {
+      resolve("[]")
+      return
+    }
+
+    guard let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
+      resolve("[]")
+      return
+    }
+
+    var predicate: NSPredicate? = nil
+    if days > 0 {
+      let fromDate = Date(timeIntervalSinceNow: -days * 86400)
+      predicate = HKQuery.predicateForSamples(withStart: fromDate, end: Date(), options: [])
+      NSLog("[YoroiHK] Sleep predicate from: %@", fromDate as CVarArg)
+    }
+
+    let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+
+    let query = HKSampleQuery(
+      sampleType: sleepType,
+      predicate: predicate,
+      limit: HKObjectQueryNoLimit,
+      sortDescriptors: [sortDescriptor]
+    ) { _, samples, error in
+
+      if let error = error {
+        NSLog("[YoroiHK] ERREUR sleep query: \(error.localizedDescription)")
+        reject("HEALTHKIT_ERROR", error.localizedDescription, error)
+        return
+      }
+
+      guard let rawSamples = samples, !rawSamples.isEmpty else {
+        NSLog("[YoroiHK] Sommeil: aucun échantillon (période vide ou permission refusée)")
+        resolve("[]")
+        return
+      }
+
+      NSLog("[YoroiHK] Sommeil: \(rawSamples.count) échantillons bruts")
+
+      var result: [[String: Any]] = []
+      for sample in rawSamples {
+        guard let cat = sample as? HKCategorySample else { continue }
+        var dict: [String: Any] = [:]
+        dict["startDate"]      = cat.startDate.timeIntervalSince1970 * 1000
+        dict["endDate"]        = cat.endDate.timeIntervalSince1970 * 1000
+        dict["value"]          = cat.value
+        dict["sourceName"]     = cat.sourceRevision.source.name
+        dict["sourceBundleId"] = cat.sourceRevision.source.bundleIdentifier
+        dict["deviceName"]     = cat.device?.name ?? ""
+        result.append(dict)
+      }
+
+      do {
+        let jsonData   = try JSONSerialization.data(withJSONObject: result, options: [])
+        let jsonString = String(data: jsonData, encoding: .utf8) ?? "[]"
+        NSLog("[YoroiHK] Sommeil JSON OK: \(result.count) samples")
+        resolve(jsonString)
+      } catch {
+        reject("JSON_ERROR", "Impossible de sérialiser le sommeil", error)
+      }
+    }
+
+    healthStore.execute(query)
+  }
+
+  // ============================================================
+  // MÉTHODE 10 — Lire les pas par jour (bypass Nitro)
+  // ============================================================
+  // Utilise HKStatisticsCollectionQuery (comme Apple Santé) pour éviter
+  // le double-comptage iPhone + Watch.
+  // Retourne: [{ date: "YYYY-MM-DD", steps: Int }]
+  @objc func getStepsAsJSON(
+    _ days: Double,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    NSLog("[YoroiHK] getStepsAsJSON appelé, days=\(days)")
+
+    guard HKHealthStore.isHealthDataAvailable() else {
+      resolve("[]")
+      return
+    }
+
+    guard let stepsType = HKObjectType.quantityType(forIdentifier: .stepCount) else {
+      resolve("[]")
+      return
+    }
+
+    let calendar = Calendar.current
+    let now = Date()
+    let daysBack = days > 0 ? Int(days) : 1
+    let startOfToday = calendar.startOfDay(for: now)
+    guard let fromDate = calendar.date(byAdding: .day, value: -(daysBack - 1), to: startOfToday) else {
+      resolve("[]")
+      return
+    }
+
+    let predicate = HKQuery.predicateForSamples(withStart: fromDate, end: now, options: .strictStartDate)
+    var interval = DateComponents()
+    interval.day = 1
+
+    let query = HKStatisticsCollectionQuery(
+      quantityType: stepsType,
+      quantitySamplePredicate: predicate,
+      options: .cumulativeSum,
+      anchorDate: startOfToday,
+      intervalComponents: interval
+    )
+
+    query.initialResultsHandler = { _, results, error in
+      if let error = error {
+        NSLog("[YoroiHK] ERREUR steps query: \(error.localizedDescription)")
+        reject("HEALTHKIT_ERROR", error.localizedDescription, error)
+        return
+      }
+
+      guard let results = results else {
+        resolve("[]")
+        return
+      }
+
+      let formatter = DateFormatter()
+      formatter.dateFormat = "yyyy-MM-dd"
+      formatter.timeZone = TimeZone.current
+
+      var result: [[String: Any]] = []
+      results.enumerateStatistics(from: fromDate, to: now) { stats, _ in
+        let steps = stats.sumQuantity()?.doubleValue(for: .count()) ?? 0
+        result.append([
+          "date": formatter.string(from: stats.startDate),
+          "steps": Int(steps),
+        ])
+      }
+
+      do {
+        let jsonData   = try JSONSerialization.data(withJSONObject: result, options: [])
+        let jsonString = String(data: jsonData, encoding: .utf8) ?? "[]"
+        NSLog("[YoroiHK] Pas JSON OK: \(result.count) jours")
+        resolve(jsonString)
+      } catch {
+        reject("JSON_ERROR", "Impossible de sérialiser les pas", error)
+      }
+    }
+
+    healthStore.execute(query)
+  }
 }

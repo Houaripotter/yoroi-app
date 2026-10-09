@@ -23,8 +23,10 @@ const PACK_ICONS: Record<SportPack, React.ComponentType<{ size?: number; color?:
 };
 
 export default function SportPackSwitcher() {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, themeColor } = useTheme();
   const { activePack, setActivePack } = useSportPack();
+
+  const isBlancTheme = themeColor === 'blanc';
 
   return (
     <View style={styles.wrap}>
@@ -37,22 +39,34 @@ export default function SportPackSwitcher() {
           const meta = PACK_META[key];
           const Icon = PACK_ICONS[key];
           const active = activePack === key;
+
+          // Thème blanc : fond sombre (accent) pour actif, backgroundCard + bordure visible pour inactif
+          const chipBackground = active
+            ? (isBlancTheme ? colors.accent : '#FFFFFF')
+            : (isBlancTheme ? colors.backgroundCard : 'rgba(255,255,255,0.18)');
+          const chipBorder = active
+            ? (isBlancTheme ? colors.accent : '#FFFFFF')
+            : (isBlancTheme ? colors.border : 'rgba(255,255,255,0.4)');
+          const chipTextColor = active
+            ? (isBlancTheme ? '#FFFFFF' : meta.color)
+            : (isBlancTheme ? colors.textPrimary : '#FFFFFF');
+
           return (
             <TouchableOpacity
               key={key}
               onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setActivePack(key); }}
               activeOpacity={0.8}
               style={[styles.chip, {
-                backgroundColor: active ? '#FFFFFF' : 'rgba(255,255,255,0.18)',
-                borderColor: active ? '#FFFFFF' : 'rgba(255,255,255,0.4)',
+                backgroundColor: chipBackground,
+                borderColor: chipBorder,
                 borderWidth: 1,
               }]}
             >
-              <Icon size={13} color={active ? meta.color : '#FFFFFF'} />
+              <Icon size={13} color={chipTextColor} />
               <Text style={{
                 fontSize: 11,
                 fontWeight: '900',
-                color: active ? meta.color : '#FFFFFF',
+                color: chipTextColor,
                 letterSpacing: 0.3,
               }}>
                 {meta.label}

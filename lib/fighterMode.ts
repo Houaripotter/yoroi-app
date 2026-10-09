@@ -252,12 +252,13 @@ export interface UserProfile {
 // ============================================
 
 export function calculateDaysUntil(targetDate: string): number {
-  const target = new Date(targetDate);
+  // Date "AAAA-MM-JJ" lue en heure locale (new Date() la lirait en UTC : décalage d'un jour)
+  const target = /^\d{4}-\d{2}-\d{2}$/.test(targetDate) ? new Date(`${targetDate}T00:00:00`) : new Date(targetDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   target.setHours(0, 0, 0, 0);
   const diffTime = target.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)); // round : robuste au changement d'heure
   return diffDays;
 }
 

@@ -30,7 +30,7 @@ export async function addTestCompositionData() {
 }
 
 // Exécuter si appelé directement
-if (require.main === module) {
+if (process.argv[1] === __filename) {
   addTestCompositionData()
     .then(() => {
       console.log('Terminé!');

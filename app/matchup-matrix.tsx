@@ -153,7 +153,7 @@ export default function MatchupMatrixScreen() {
                 <TouchableOpacity
                   key={p.id}
                   activeOpacity={0.85}
-                  onPress={() => { lightHaptic().catch(() => {}); router.push(`/sparring-partners?focus=${p.id}` as any); }}
+                  onPress={() => { lightHaptic().catch(() => {}); router.push(`/sparring-partners?partnerName=${encodeURIComponent(p.name)}` as any); }}
                   style={[
                     styles.cell,
                     {
@@ -174,7 +174,7 @@ export default function MatchupMatrixScreen() {
                   <View style={styles.cellOverlay}>
                     <Text style={styles.cellName} numberOfLines={1}>{p.name}</Text>
                     <Text style={styles.cellStats}>
-                      {p.winrate != null ? `${p.winrate}%` : '—'} · {p.total}
+                      {p.winrate != null ? `${p.winrate}%` : ','} · {p.total}
                     </Text>
                   </View>
                 </TouchableOpacity>

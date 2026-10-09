@@ -15,6 +15,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   Keyboard,
+  AppState,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
@@ -40,6 +41,7 @@ import {
 } from 'lucide-react-native';
 import logger from '@/lib/security/logger';
 import { startLiveActivity, updateLiveActivity, endLiveActivity } from '@/lib/liveActivityBridge';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 
 // ============================================
 // TYPES
@@ -114,11 +116,45 @@ export default function CombatTimerScreen() {
   const progressAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // Nettoyage interval au démontage
+  // Nettoyage au démontage (y compris retour par geste) : interval + Live Activity
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      endLiveActivity().catch(() => {});
     };
+  }, []);
+
+  // Écran allumé pendant les rounds : sinon le verrouillage auto figeait le chrono
+  useEffect(() => {
+    if (appPhase === 'active') {
+      activateKeepAwakeAsync('combat-timer').catch(() => {});
+    } else {
+      deactivateKeepAwake('combat-timer');
+    }
+    return () => { deactivateKeepAwake('combat-timer'); };
+  }, [appPhase]);
+
+  // Rattrapage du temps passé en arrière-plan (interval figé)
+  const isRunningRef = useRef(false);
+  isRunningRef.current = isRunning;
+  const secondsLeftRef = useRef(0);
+  secondsLeftRef.current = secondsLeft;
+  const backgroundAtRef = useRef<{ at: number; left: number } | null>(null);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        const bg = backgroundAtRef.current;
+        backgroundAtRef.current = null;
+        if (bg != null && isRunningRef.current) {
+          // Valeur absolue : si le chrono a continué à tourner entre-temps, on ne compte pas deux fois
+          const expected = Math.max(0, bg.left - Math.floor((Date.now() - bg.at) / 1000));
+          setSecondsLeft((prev) => Math.min(prev, expected));
+        }
+      } else if (isRunningRef.current && backgroundAtRef.current == null) {
+        backgroundAtRef.current = { at: Date.now(), left: secondsLeftRef.current };
+      }
+    });
+    return () => sub.remove();
   }, []);
 
   // ---- PULSE ANIMATION (quand le timer tourne) ----

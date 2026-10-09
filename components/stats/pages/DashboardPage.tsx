@@ -76,8 +76,9 @@ const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady, colu
     let trendData: { dir: 'up' | 'down' | 'flat'; pct: number } | null = null;
     if (values.length >= 2) {
       const half = Math.max(1, Math.floor(values.length / 2));
-      const firstHalf = values.slice(0, half);
-      const secondHalf = values.slice(values.length - half);
+      // Données DESC (récent en premier) : 1ère moitié = récente
+      const secondHalf = values.slice(0, half);
+      const firstHalf = values.slice(values.length - half);
       const avgFirst = firstHalf.reduce((s: number, v: number) => s + v, 0) / firstHalf.length;
       const avgSecond = secondHalf.reduce((s: number, v: number) => s + v, 0) / secondHalf.length;
       if (avgFirst !== 0) {
@@ -166,7 +167,7 @@ const MiniCard = React.memo(({ metric, colors, isDark, onPress, chartReady, colu
               hideAxesAndRules
               hideYAxisText
               xAxisThickness={0}
-              xAxisLabelsHeight={22}
+              xAxisLabelsHeight={32}
               curved
               thickness={3.5}
               color={metric.color}
@@ -343,7 +344,8 @@ export const DashboardPage: React.FC = React.memo(() => {
       const HARD_CAP = 30;
       const prepareLineData = (data: any[], valueKey: string, color: string) => {
         if (!data || data.length === 0) return [];
-        const filtered = data.filter(item => item[valueKey] != null);
+        // Poids 0 = entrée composition seule → exclue
+        const filtered = data.filter(item => item[valueKey] != null && (valueKey !== 'weight' || item[valueKey] > 0));
         // Convention Yoroi : plus récent à GAUCHE (data déjà DESC depuis la DB)
         const ordered = filtered.slice();
 
@@ -363,7 +365,7 @@ export const DashboardPage: React.FC = React.memo(() => {
             value: val,
             date: item.date,
             dataPointText: val.toFixed(1),
-            label: format(parseISO(item.date), 'd MMM', { locale: fr }).toUpperCase(),
+            label: `${format(parseISO(item.date), 'd MMM', { locale: fr }).toUpperCase()}\n${format(parseISO(item.date), 'yyyy')}`,
             labelTextStyle: { color: colors.textMuted, fontSize: 8, fontWeight: '900' as const },
             dataPointColor: color,
           };
@@ -490,7 +492,7 @@ export const DashboardPage: React.FC = React.memo(() => {
       loadAllData(selectedPeriod, customStart, customEnd);
     });
     return () => handle.cancel();
-  }, [selectedPeriod, customStart, customEnd]);
+  }, [selectedPeriod, customStart, customEnd, loadAllData]);
 
   // Recharger si des données changent ailleurs dans l'app · invalide le cache
   // puis refresh silencieux + debounce 1.5s pour éviter les rafales d'events.
@@ -617,7 +619,7 @@ export const DashboardPage: React.FC = React.memo(() => {
         <View key={theme}>
           {/* Séparateur couleur thème entre les sections */}
           {sectionIdx > 0 && (
-            <View style={[styles.themeSeparator, { backgroundColor: colors.accent }]} />
+            <View style={[styles.themeSeparator, { backgroundColor: isDark ? colors.accent : 'rgba(255,255,255,0.4)' }]} />
           )}
           <View style={[styles.themeSection, {
             backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',

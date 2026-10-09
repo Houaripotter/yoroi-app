@@ -11,6 +11,7 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Svg, { Path, Line as SvgLine, Circle as SvgCircle, Text as SvgText } from 'react-native-svg';
 import { SLEEP_DURATION_RANGES } from '@/lib/healthRanges';
+import { formatHoursHM } from '@/lib/formatDuration';
 import { useI18n } from '@/lib/I18nContext';
 
 interface SommeilTabProps {
@@ -111,8 +112,9 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
       .filter(item => {
         if (!item?.date) return false;
         const total = item.total || item.duration || 0;
-        if (total > 0 && total < 180) {
-          if (!item.startTime) return false;
+        // Rejeter comme sieste seulement si < 3h ET on sait que c'est entre 9h-21h
+        // Si pas de startTime → on ne sait pas → garder la nuit
+        if (total > 0 && total < 180 && item.startTime) {
           const hour = new Date(item.startTime).getHours();
           if (hour >= 9 && hour <= 21) return false;
         }
@@ -128,7 +130,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
         if (!item?.date) return false;
         const total = item.total || item.duration || 0;
         if (total <= 0 || total >= 180) return false;
-        if (!item.startTime) return true;
+        if (!item.startTime) return false; // pas de startTime → on ne sait pas → pas une sieste
         const hour = new Date(item.startTime).getHours();
         return hour >= 9 && hour <= 21;
       })
@@ -140,7 +142,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
   const phaseHistories = useMemo(() => {
     const sorted = [...safeSleepHistory_]
       .filter(n => n?.date && (n.deep > 0 || n.rem > 0 || n.core > 0))
-      .sort((a, b) => a.date.localeCompare(b.date));
+      .sort((a, b) => b.date.localeCompare(a.date)); // DESC → plus récent à gauche dans le chart
     return {
       deep: sorted.filter(n => n.deep > 0).map(n => ({ date: n.date, value: Math.round(n.deep) })),
       rem: sorted.filter(n => n.rem > 0).map(n => ({ date: n.date, value: Math.round(n.rem) })),
@@ -156,15 +158,18 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
   // Données modal
   const getModalData = useCallback(() => {
     if (!selectedMetric) return [];
+    // Règle 4 : deux lignes (jour+mois / année)
+    const fmtLabel = (d: string) => { try { return `${format(parseISO(d), 'd MMM', { locale: fr })}\n${format(parseISO(d), 'yyyy')}`; } catch { return d; } };
+    // Règle 3 : plus récent à GAUCHE → inverser l'ordre ASC en DESC
     if (selectedMetric.key === 'sleep') {
-      return durationHistory.map(h => ({
+      return [...durationHistory].reverse().map(h => ({
         value: h.value,
-        label: (() => { try { return format(parseISO(h.date), 'd MMM', { locale: fr }); } catch { return h.date; } })(),
+        label: fmtLabel(h.date),
         date: h.date,
       }));
     }
-    if (selectedMetric.key === 'deep') return phaseHistories.deep.map(h => ({ value: h.value, label: (() => { try { return format(parseISO(h.date), 'd MMM', { locale: fr }); } catch { return h.date; } })(), date: h.date }));
-    if (selectedMetric.key === 'rem') return phaseHistories.rem.map(h => ({ value: h.value, label: (() => { try { return format(parseISO(h.date), 'd MMM', { locale: fr }); } catch { return h.date; } })(), date: h.date }));
+    if (selectedMetric.key === 'deep') return [...phaseHistories.deep].map(h => ({ value: h.value, label: fmtLabel(h.date), date: h.date }));
+    if (selectedMetric.key === 'rem') return [...phaseHistories.rem].map(h => ({ value: h.value, label: fmtLabel(h.date), date: h.date }));
     return [];
   }, [selectedMetric, durationHistory, phaseHistories]);
 
@@ -358,6 +363,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
           <MultiLineComparisonCard
             title="Phases de sommeil"
             unit="min"
+            formatValue={formatMinutes}
             lines={[
               {
                 label: 'Profond',
@@ -597,6 +603,7 @@ export const SommeilTab: React.FC<SommeilTabProps> = React.memo(({
           icon={selectedMetric.icon}
           metricKey={selectedMetric.key}
           healthRange={selectedMetric.key === 'sleep' ? SLEEP_DURATION_RANGES : undefined}
+          formatValue={selectedMetric.key === 'sleep' ? (h: number) => formatHoursHM(h) : undefined}
         />
       )}
     </View>

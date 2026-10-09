@@ -137,8 +137,8 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
                 onPress={handleReview}
                 activeOpacity={0.8}
               >
-                <Star size={18} color="#FFFFFF" fill="#FFFFFF" />
-                <Text style={styles.buttonPrimaryText}>{t('review.rateButton')}</Text>
+                <Star size={18} color={colors.textOnAccent} fill={colors.textOnAccent} />
+                <Text style={[styles.buttonPrimaryText, { color: colors.textOnAccent }]}>{t('review.rateButton')}</Text>
               </TouchableOpacity>
 
               {/* Bouton secondaire: C'est deja fait */}

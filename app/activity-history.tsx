@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Flame, Target, TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react-native';
+import { ArrowLeft, Flame, Target, TrendingUp, TrendingDown, Minus, Calendar, Lock } from 'lucide-react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -24,8 +24,11 @@ import { healthConnect } from '@/lib/healthConnect';
 import { LinearGradient } from 'expo-linear-gradient';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import logger from '@/lib/security/logger';
+import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
+import { PremiumLockSection } from '@/components/premium/PremiumLockSection';
+import { usePremium } from '@/context/PremiumContext';
 
-type Period = '7d' | '30d' | '90d';
+type Period = '7d' | '30d' | '90d' | 'all';
 type Tab = 'steps' | 'calories';
 
 export default function ActivityHistoryScreen() {
@@ -37,8 +40,9 @@ export default function ActivityHistoryScreen() {
 
   // Safe parameter extraction with validation
   const initialTab: Tab = (params.tab === 'steps' || params.tab === 'calories') ? params.tab : 'steps';
+  const { isPremium } = usePremium();
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
-  const [period, setPeriod] = useState<Period>('30d');
+  const [period, setPeriod] = useState<Period>('all');
   const [isLoading, setIsLoading] = useState(false);
 
   // Steps data
@@ -59,55 +63,57 @@ export default function ActivityHistoryScreen() {
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const daysMap = { '7d': 7, '30d': 30, '90d': 90 };
+      const daysMap: Record<Period, number> = { '7d': 7, '30d': 30, '90d': 90, 'all': 3650 };
       const days = daysMap[period];
 
-      // Load steps history from Apple Health
+      // Load steps history from Apple Health (source: ASC = ancien → récent)
       const stepsHist = await healthConnect.getStepsHistory(days);
-      const formattedSteps = stepsHist.map(item => ({
+      const stepsAsc = stepsHist.map(item => ({
         date: new Date(item.date).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' }),
         value: item.value,
       }));
-      setStepsHistory(formattedSteps);
+      // Règle 3 : plus récent à GAUCHE → inverser en DESC pour le chart
+      setStepsHistory([...stepsAsc].reverse());
 
-      // Load calories history from Apple Health
+      // Load calories history from Apple Health (source: ASC = ancien → récent)
       const caloriesHist = await healthConnect.getCaloriesHistory(days);
-      const formattedCalories = caloriesHist.map(item => ({
+      const caloriesAsc = caloriesHist.map(item => ({
         date: new Date(item.date).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' }),
         value: item.active,
       }));
-      setCaloriesHistory(formattedCalories);
+      // Règle 3 : plus récent à GAUCHE → inverser en DESC pour le chart
+      setCaloriesHistory([...caloriesAsc].reverse());
 
-      // Calculate stats for steps
-      if (formattedSteps.length > 0) {
-        const total = formattedSteps.reduce((sum, d) => sum + d.value, 0);
-        const avg = total / formattedSteps.length;
-        setTodaySteps(formattedSteps[formattedSteps.length - 1]?.value || 0);
+      // Calculate stats for steps (sur données ASC originales)
+      if (stepsAsc.length > 0) {
+        const total = stepsAsc.reduce((sum, d) => sum + d.value, 0);
+        const avg = total / stepsAsc.length;
+        setTodaySteps(stepsAsc[stepsAsc.length - 1]?.value || 0); // le plus récent = dernier en ASC
         setAvgSteps(Math.round(avg));
         setTotalSteps(total);
 
         // Calculate trend (compare last 3 days to previous 3 days)
-        if (formattedSteps.length >= 6) {
-          const recent = formattedSteps.slice(-3).reduce((sum, d) => sum + d.value, 0) / 3;
-          const previous = formattedSteps.slice(-6, -3).reduce((sum, d) => sum + d.value, 0) / 3;
+        if (stepsAsc.length >= 6) {
+          const recent = stepsAsc.slice(-3).reduce((sum, d) => sum + d.value, 0) / 3;
+          const previous = stepsAsc.slice(-6, -3).reduce((sum, d) => sum + d.value, 0) / 3;
           if (recent > previous * 1.1) setStepsTrend('up');
           else if (recent < previous * 0.9) setStepsTrend('down');
           else setStepsTrend('stable');
         }
       }
 
-      // Calculate stats for calories
-      if (formattedCalories.length > 0) {
-        const total = formattedCalories.reduce((sum, d) => sum + d.value, 0);
-        const avg = total / formattedCalories.length;
-        setTodayCalories(formattedCalories[formattedCalories.length - 1]?.value || 0);
+      // Calculate stats for calories (sur données ASC originales)
+      if (caloriesAsc.length > 0) {
+        const total = caloriesAsc.reduce((sum, d) => sum + d.value, 0);
+        const avg = total / caloriesAsc.length;
+        setTodayCalories(caloriesAsc[caloriesAsc.length - 1]?.value || 0); // le plus récent = dernier en ASC
         setAvgCalories(Math.round(avg));
         setTotalCalories(total);
 
         // Calculate trend
-        if (formattedCalories.length >= 6) {
-          const recent = formattedCalories.slice(-3).reduce((sum, d) => sum + d.value, 0) / 3;
-          const previous = formattedCalories.slice(-6, -3).reduce((sum, d) => sum + d.value, 0) / 3;
+        if (caloriesAsc.length >= 6) {
+          const recent = caloriesAsc.slice(-3).reduce((sum, d) => sum + d.value, 0) / 3;
+          const previous = caloriesAsc.slice(-6, -3).reduce((sum, d) => sum + d.value, 0) / 3;
           if (recent > previous * 1.1) setCaloriesTrend('up');
           else if (recent < previous * 0.9) setCaloriesTrend('down');
           else setCaloriesTrend('stable');
@@ -206,7 +212,7 @@ export default function ActivityHistoryScreen() {
 
       {/* Filtres de période */}
       <View style={styles.periodFilters}>
-        {(['7d', '30d', '90d'] as Period[]).map((p) => (
+        {(['7d', '30d', '90d', 'all'] as Period[]).map((p) => (
           <TouchableOpacity
             key={p}
             style={[
@@ -228,7 +234,7 @@ export default function ActivityHistoryScreen() {
                 { color: period === p ? '#FFFFFF' : colors.textPrimary },
               ]}
             >
-              {p === '7d' ? '7 jours' : p === '30d' ? '30 jours' : '3 mois'}
+              {p === '7d' ? '7 jours' : p === '30d' ? '30 jours' : p === '90d' ? '3 mois' : 'Tout'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -330,32 +336,55 @@ export default function ActivityHistoryScreen() {
                   </Text>
                 </View>
                 <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-                  {period === '7d' ? 'Derniers 7 jours' : period === '30d' ? 'Dernier mois' : 'Derniers 3 mois'}
+                  {isPremium
+                    ? (period === '7d' ? 'Derniers 7 jours' : period === '30d' ? 'Dernier mois' : period === '90d' ? 'Derniers 3 mois' : 'Tout l\'historique')
+                    : 'Derniers 7 jours (gratuit)'}
                 </Text>
               </View>
-              {stepsHistory.length > 0 ? (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <SmoothLineChart
-                    data={stepsHistory}
-                    width={Math.max(SCREEN_WIDTH - 72, stepsHistory.length * 50)}
-                    height={220}
-                    color="#3B82F6"
-                    showGrid
-                    showDots
-                    animated
-                  />
-                </ScrollView>
-              ) : (
-                <View style={styles.emptyState}>
-                  <MaterialCommunityIcons name="walk" size={48} color={colors.textMuted} />
-                  <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                    {t('activity.noStepsData') || 'Aucune donnée de pas disponible'}
-                  </Text>
-                  <Text style={[styles.emptyHint, { color: colors.textMuted }]}>
-                    {t('activity.connectHealth') || "Connectez l'app Santé pour voir vos données"}
-                  </Text>
-                </View>
-              )}
+              {/* Données limitées à 7 entrées pour les utilisateurs gratuits */}
+              {(() => {
+                const visibleSteps = isPremium ? stepsHistory : stepsHistory.slice(0, 7);
+                const hasLockedSteps = !isPremium && stepsHistory.length > 7;
+                return (
+                  <>
+                    {visibleSteps.length > 0 ? (
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <SmoothLineChart
+                          data={visibleSteps}
+                          width={Math.max(SCREEN_WIDTH - 72, visibleSteps.length * 50)}
+                          height={220}
+                          color="#3B82F6"
+                          showGrid
+                          showDots
+                          animated
+                        />
+                      </ScrollView>
+                    ) : (
+                      <View style={styles.emptyState}>
+                        <MaterialCommunityIcons name="walk" size={48} color={colors.textMuted} />
+                        <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                          {t('activity.noStepsData') || 'Aucune donnée de pas disponible'}
+                        </Text>
+                        <Text style={[styles.emptyHint, { color: colors.textMuted }]}>
+                          {t('activity.connectHealth') || "Connectez l'app Santé pour voir vos données"}
+                        </Text>
+                      </View>
+                    )}
+                    {hasLockedSteps && (
+                      <TouchableOpacity
+                        style={styles.chartLockedBanner}
+                        onPress={() => router.push('/paywall' as never)}
+                        activeOpacity={0.85}
+                      >
+                        <Lock size={14} color="#3B82F6" />
+                        <Text style={[styles.chartLockedText, { color: '#3B82F6' }]}>
+                          {stepsHistory.length - 7} jours supplémentaires — Voir tout l'historique
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </>
+                );
+              })()}
             </View>
           </>
         )}
@@ -432,37 +461,61 @@ export default function ActivityHistoryScreen() {
                   </Text>
                 </View>
                 <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-                  {period === '7d' ? 'Derniers 7 jours' : period === '30d' ? 'Dernier mois' : 'Derniers 3 mois'}
+                  {isPremium
+                    ? (period === '7d' ? 'Derniers 7 jours' : period === '30d' ? 'Dernier mois' : period === '90d' ? 'Derniers 3 mois' : 'Tout l\'historique')
+                    : 'Derniers 7 jours (gratuit)'}
                 </Text>
               </View>
-              {caloriesHistory.length > 0 ? (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <SmoothLineChart
-                    data={caloriesHistory}
-                    width={Math.max(SCREEN_WIDTH - 72, caloriesHistory.length * 50)}
-                    height={220}
-                    color="#F97316"
-                    showGrid
-                    showDots
-                    animated
-                  />
-                </ScrollView>
-              ) : (
-                <View style={styles.emptyState}>
-                  <Flame size={48} color={colors.textMuted} />
-                  <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                    {t('activity.noCaloriesData') || 'Aucune donnée de calories disponible'}
-                  </Text>
-                  <Text style={[styles.emptyHint, { color: colors.textMuted }]}>
-                    {t('activity.connectHealth') || "Connectez l'app Santé pour voir vos données"}
-                  </Text>
-                </View>
-              )}
+              {/* Données limitées à 7 entrées pour les utilisateurs gratuits */}
+              {(() => {
+                const visibleCalories = isPremium ? caloriesHistory : caloriesHistory.slice(0, 7);
+                const hasLockedCalories = !isPremium && caloriesHistory.length > 7;
+                return (
+                  <>
+                    {visibleCalories.length > 0 ? (
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <SmoothLineChart
+                          data={visibleCalories}
+                          width={Math.max(SCREEN_WIDTH - 72, visibleCalories.length * 50)}
+                          height={220}
+                          color="#F97316"
+                          showGrid
+                          showDots
+                          animated
+                        />
+                      </ScrollView>
+                    ) : (
+                      <View style={styles.emptyState}>
+                        <Flame size={48} color={colors.textMuted} />
+                        <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                          {t('activity.noCaloriesData') || 'Aucune donnée de calories disponible'}
+                        </Text>
+                        <Text style={[styles.emptyHint, { color: colors.textMuted }]}>
+                          {t('activity.connectHealth') || "Connectez l'app Santé pour voir vos données"}
+                        </Text>
+                      </View>
+                    )}
+                    {hasLockedCalories && (
+                      <TouchableOpacity
+                        style={styles.chartLockedBanner}
+                        onPress={() => router.push('/paywall' as never)}
+                        activeOpacity={0.85}
+                      >
+                        <Lock size={14} color="#F97316" />
+                        <Text style={[styles.chartLockedText, { color: '#F97316' }]}>
+                          {caloriesHistory.length - 7} jours supplémentaires — Voir tout l'historique
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </>
+                );
+              })()}
             </View>
           </>
         )}
 
         <View style={{ height: 40 }} />
+        <PremiumLockSection title="Historique activités complet" description="Vois toutes tes séances, pas seulement les 7 derniers jours. Tendances, records et progression sur la durée." />
       </ScrollView>
     </View>
   );
@@ -693,5 +746,22 @@ const styles = StyleSheet.create({
   emptyHint: {
     fontSize: 12,
     textAlign: 'center',
+  },
+  chartLockedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    marginTop: 12,
+    backgroundColor: 'rgba(99,102,241,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(99,102,241,0.18)',
+  },
+  chartLockedText: {
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
   },
 });

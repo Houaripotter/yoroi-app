@@ -26,6 +26,12 @@ import { importAllCompetitions, getAvailableCompetitionsCount } from '@/lib/impo
 import { useCustomPopup } from '@/components/CustomPopup';
 import logger from '@/lib/security/logger';
 
+// Parse 'yyyy-MM-dd' en date locale (évite le décalage UTC)
+const parseLocalDate = (d: string): Date => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(d);
+};
+
 export default function CompetitionsScreen() {
   const { colors } = useTheme();
   const { locale, t } = useI18n();
@@ -47,7 +53,9 @@ export default function CompetitionsScreen() {
       setCompetitions(all);
       setUpcomingCompetitions(upcoming);
 
-      const today = new Date().toISOString().split('T')[0];
+      // Date locale (toISOString = UTC)
+      const n = new Date();
+      const today = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
       // Toutes les compétitions passées (quel que soit le statut) + terminées futures
       const past = all.filter(c => c.date < today || c.statut === 'terminee');
       // Compétitions annulées non encore passées (dates futures annulées)
@@ -192,7 +200,7 @@ export default function CompetitionsScreen() {
         <View style={styles.cardDate}>
           <Calendar size={16} color={colors.accent} />
           <Text style={[styles.dateText, { color: colors.textPrimary }]}>
-            {new Date(competition.date).toLocaleDateString(locale, {
+            {parseLocalDate(competition.date).toLocaleDateString(locale, {
               weekday: 'long',
               day: 'numeric',
               month: 'long',
@@ -236,7 +244,7 @@ export default function CompetitionsScreen() {
                 ? daysUntil === 0
                   ? t('competitions.today')
                   : daysUntil > 0
-                  ? t('competitions.inDays', { days: daysUntil })
+                  ? t(daysUntil === 1 ? 'competitions.inDay' : 'competitions.inDays', { days: daysUntil })
                   : t('competitions.upcoming')
                 : competition.statut === 'terminee'
                 ? t('competitions.completed')
@@ -356,7 +364,7 @@ export default function CompetitionsScreen() {
                     <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>
                       {(() => {
                         try {
-                          return new Date(next.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                          return parseLocalDate(next.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                         } catch { return next.date; }
                       })()}
                     </Text>

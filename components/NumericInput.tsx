@@ -132,9 +132,13 @@ export const NumericInput: React.FC<NumericInputProps> = ({
       }
     }
 
-    // Mettre à jour l'état LOCAL seulement (pas de callback parent ici)
     setLocalValue(filtered);
-  }, [allowDecimal, maxDecimals]);
+    // Sans validation : propager à chaque frappe (Save tapé clavier ouvert)
+    if (validationType === 'none') {
+      prevValueRef.current = filtered;
+      onValueChange(filtered);
+    }
+  }, [allowDecimal, maxDecimals, validationType, onValueChange]);
 
   const handleEndEditing = useCallback(() => {
     // Appeler le parent SEULEMENT quand l'utilisateur a fini de taper
@@ -156,12 +160,14 @@ export const NumericInput: React.FC<NumericInputProps> = ({
             setError(null);
             // Envoyer la valeur sanitizée si disponible
             const sanitizedValue = validation.sanitized?.toString() || localValue;
+            prevValueRef.current = sanitizedValue;
             onValueChange(sanitizedValue);
             return;
           }
         }
       }
       setError(null);
+      prevValueRef.current = localValue;
       onValueChange(localValue);
     }
   }, [localValue, value, onValueChange, validationType, validateValue]);
@@ -190,7 +196,7 @@ export const NumericInput: React.FC<NumericInputProps> = ({
             onEndEditing={handleEndEditing}
             onBlur={handleEndEditing}
             placeholder={placeholder}
-            placeholderTextColor={colors.border}
+            placeholderTextColor={colors.textMuted}
             keyboardType="decimal-pad"
             returnKeyType="done"
             maxLength={maxLength}
@@ -232,7 +238,7 @@ export const NumericInput: React.FC<NumericInputProps> = ({
           onEndEditing={handleEndEditing}
           onBlur={handleEndEditing}
           placeholder={placeholder}
-          placeholderTextColor={colors.border}
+          placeholderTextColor={colors.textMuted}
           keyboardType="decimal-pad"
           returnKeyType="done"
           maxLength={maxLength}
