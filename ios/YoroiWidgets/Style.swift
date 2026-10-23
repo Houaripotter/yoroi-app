@@ -75,7 +75,8 @@ extension Font {
 }
 
 enum Fmt {
-  private static let fr = Locale(identifier: "fr_FR")
+  // 23 octobre 2026 : dates et nombres dans la langue affichée par le widget
+  private static let fr = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "fr")
 
   private static func nombre(_ chiffres: Int) -> NumberFormatter {
     let f = NumberFormatter()
@@ -91,14 +92,14 @@ enum Fmt {
 
   private static let formatJourMois: DateFormatter = {
     let f = DateFormatter()
-    f.locale = Locale(identifier: "fr_FR")
+    f.locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "fr")
     f.setLocalizedDateFormatFromTemplate("d MMM")
     return f
   }()
 
   private static let formatJourLong: DateFormatter = {
     let f = DateFormatter()
-    f.locale = Locale(identifier: "fr_FR")
+    f.locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "fr")
     f.setLocalizedDateFormatFromTemplate("EEEE d MMMM")
     return f
   }()
@@ -143,8 +144,8 @@ enum Fmt {
   static func jourRelatif(_ iso: String, _ maintenant: Date) -> String {
     guard let d = Jours.lire(iso) else { return iso }
     let n = Jours.ecart(de: d, a: maintenant)
-    if n == 0 { return "Aujourd'hui" }
-    if n == 1 { return "Hier" }
+    if n == 0 { return NSLocalizedString("Aujourd'hui", comment: "") }
+    if n == 1 { return NSLocalizedString("Hier", comment: "") }
     return formatJourMois.string(from: d)
   }
 
@@ -167,7 +168,7 @@ enum Fmt {
   }
 
   /// "J-12", "Jour J"
-  static func jMoins(_ n: Int) -> String { n == 0 ? "Jour J" : "J-\(n)" }
+  static func jMoins(_ n: Int) -> String { n == 0 ? NSLocalizedString("Jour J", comment: "") : String(format: NSLocalizedString("J-%@", comment: ""), "\(n)") }
 }
 
 // MARK: - Liens profonds : un seul format yoroi://w/<cible>, traduit par l'app (lib/v2/widgets/liens.ts)

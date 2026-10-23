@@ -72,9 +72,9 @@ enum ChronoTextes {
   /// Nom de la phase en clair
   static func phase(_ s: ChronoAttributs.ContentState) -> String {
     switch s.phase {
-    case "repos": return "Repos"
-    case "prepa": return "Préparation"
-    default: return s.rounds > 0 ? "Round" : (s.libelle.isEmpty ? "Effort" : s.libelle)
+    case "repos": return NSLocalizedString("Repos", comment: "")
+    case "prepa": return NSLocalizedString("Préparation", comment: "")
+    default: return s.rounds > 0 ? NSLocalizedString("Round", comment: "") : (s.libelle.isEmpty ? NSLocalizedString("Effort", comment: "") : s.libelle)
     }
   }
 }

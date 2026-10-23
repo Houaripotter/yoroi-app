@@ -279,7 +279,7 @@ struct PointsW: View {
   var taille: CGFloat = 12
   var lettres = true
 
-  static let initiales = ["L", "M", "M", "J", "V", "S", "D"]
+  static let initiales: [String] = { var c = Calendar(identifier: .gregorian); c.locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "fr"); let s = c.veryShortStandaloneWeekdaySymbols; return Array(s[1...]) + [s[0]] }()
 
   var body: some View {
     HStack(spacing: taille * (pal.style == .b ? 0.28 : 0.42)) {

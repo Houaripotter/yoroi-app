@@ -17,10 +17,10 @@ enum PhaseChrono: Equatable {
 
   var titre: String {
     switch self {
-    case .preparation: return "Préparation"
-    case .round: return "Round"
-    case .repos: return "Repos"
-    case .fini: return "Terminé"
+    case .preparation: return NSLocalizedString("Préparation", comment: "")
+    case .round: return NSLocalizedString("Round", comment: "")
+    case .repos: return NSLocalizedString("Repos", comment: "")
+    case .fini: return NSLocalizedString("Terminé", comment: "")
     }
   }
 }
@@ -306,14 +306,14 @@ final class ChronoMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
       let contenu = UNMutableNotificationContent()
       switch s.phase {
       case .preparation:
-        contenu.title = "C'est parti"
-        contenu.body = "Round 1"
+        contenu.title = NSLocalizedString("C'est parti", comment: "")
+        contenu.body = NSLocalizedString("Round 1", comment: "")
       case .round(let k):
-        contenu.title = k >= nombreRounds ? "Chrono terminé" : "Fin du round \(k)"
-        contenu.body = k >= nombreRounds ? "Bien joué" : "Repos"
+        contenu.title = k >= nombreRounds ? NSLocalizedString("Chrono terminé", comment: "") : String(format: NSLocalizedString("Fin du round %@", comment: ""), "\(k)")
+        contenu.body = k >= nombreRounds ? NSLocalizedString("Bien joué", comment: "") : NSLocalizedString("Repos", comment: "")
       case .repos(let k):
-        contenu.title = "Round \(k + 1)"
-        contenu.body = "C'est reparti"
+        contenu.title = String(format: NSLocalizedString("Round %@", comment: ""), "\(k + 1)")
+        contenu.body = NSLocalizedString("C'est reparti", comment: "")
       case .fini:
         continue
       }

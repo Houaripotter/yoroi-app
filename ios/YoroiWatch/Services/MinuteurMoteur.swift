@@ -84,8 +84,8 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   static func configurerNotifications(delegue: UNUserNotificationCenterDelegate) {
     let centre = UNUserNotificationCenter.current()
     centre.delegate = delegue
-    let arreter = UNNotificationAction(identifier: actionArreter, title: "Arrêter", options: [])
-    let relancer = UNNotificationAction(identifier: actionRelancer, title: "Répéter", options: [.foreground])
+    let arreter = UNNotificationAction(identifier: actionArreter, title: NSLocalizedString("Arrêter", comment: ""), options: [])
+    let relancer = UNNotificationAction(identifier: actionRelancer, title: NSLocalizedString("Répéter", comment: ""), options: [.foreground])
     let categorie = UNNotificationCategory(
       identifier: categorieNotif,
       actions: [arreter, relancer],
@@ -420,19 +420,19 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     }
     // L'alarme vibre vraiment : la notification de secours ne doit pas sonner en plus.
     if let c = cibleAlarme ?? sonnerie { annulerNotification(c.id) }
-    noterAlarme("a sonné à \(Format.heure(Date()))")
+    noterAlarme(String(format: NSLocalizedString("a sonné à %@", comment: ""), "\(Format.heure(Date()))"))
   }
 
   /// Raison lisible d'un refus de la session d'alarme.
   private static func libelle(_ e: NSError) -> String {
-    guard let c = WKExtendedRuntimeSessionErrorCode(rawValue: e.code) else { return "erreur \(e.code)" }
+    guard let c = WKExtendedRuntimeSessionErrorCode(rawValue: e.code) else { return String(format: NSLocalizedString("erreur %@", comment: ""), "\(e.code)") }
     switch c {
-    case .barDisabled: return "actualisation en arrière-plan coupée"
-    case .mustBeActiveToStartOrSchedule: return "app pas au premier plan"
-    case .notApprovedToStartSession, .notApprovedToSchedule: return "mode Smart Alarm absent"
-    case .exceededResourceLimits: return "trop de calcul"
-    case .scheduledTooFarInAdvance: return "trop lointaine"
-    default: return "erreur \(e.code)"
+    case .barDisabled: return NSLocalizedString("actualisation en arrière-plan coupée", comment: "")
+    case .mustBeActiveToStartOrSchedule: return NSLocalizedString("app pas au premier plan", comment: "")
+    case .notApprovedToStartSession, .notApprovedToSchedule: return NSLocalizedString("mode Smart Alarm absent", comment: "")
+    case .exceededResourceLimits: return NSLocalizedString("trop de calcul", comment: "")
+    case .scheduledTooFarInAdvance: return NSLocalizedString("trop lointaine", comment: "")
+    default: return String(format: NSLocalizedString("erreur %@", comment: ""), "\(e.code)")
     }
   }
 
@@ -469,7 +469,7 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     sessionAlarme = s
     cibleAlarme = c
     memoriserCible(c)
-    noterAlarme("programmée pour \(Format.heure(fin))")
+    noterAlarme(String(format: NSLocalizedString("programmée pour %@", comment: ""), "\(Format.heure(fin))"))
   }
 
   /// Annule la session d'alarme (planifiee ou en cours) et ce qui l'attend.
@@ -525,8 +525,8 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     annulerNotification(a.id)
     guard let f = a.fin, f > maintenant else { return }
     let contenu = UNMutableNotificationContent()
-    contenu.title = "Minuteur terminé"
-    contenu.body = "Minuteur de \(Format.dureeCourte(a.dureeS))"
+    contenu.title = NSLocalizedString("Minuteur terminé", comment: "")
+    contenu.body = String(format: NSLocalizedString("Minuteur de %@", comment: ""), "\(Format.dureeCourte(a.dureeS))")
     // Son critique seulement si l'autorisation existe (droit Apple a part), sinon le son normal.
     contenu.sound = alertesCritiques ? .defaultCritical : .default
     contenu.interruptionLevel = .timeSensitive
@@ -556,7 +556,7 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
       // La notification de secours reste planifiee (2 s apres la fin) : elle n'est retiree
       // qu'au moment ou l'alarme vibre vraiment (vibrerParSession). Avant, elle etait retiree ici,
       // et si l'alarme ne s'affichait pas ensuite, plus rien ne prevenait.
-      self.noterAlarme("démarrée")
+      self.noterAlarme(NSLocalizedString("démarrée", comment: ""))
       self.etat = StockMinuteurs.lire()
       if !self.etat.actifs.isEmpty { self.demarrerMinuterie() }
       let attente = max(0, (cible?.fin ?? Date()).timeIntervalSinceNow)
@@ -580,11 +580,11 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
       // Fermee par watchOS (refus, fin du temps) ou par Arreter dans l'alerte d'alarme du systeme.
       // Si elle a ete refusee avant de demarrer, la notification de filet est toujours planifiee.
       if let e = error as NSError? {
-        self.noterAlarme("refusée : \(MinuteurMoteur.libelle(e))")
+        self.noterAlarme(String(format: NSLocalizedString("refusée : %@", comment: ""), "\(MinuteurMoteur.libelle(e))"))
       } else if !self.sessionNotifiee {
-        self.noterAlarme("fermée avant de sonner (raison \(reason.rawValue))")
+        self.noterAlarme(String(format: NSLocalizedString("fermée avant de sonner (raison %@)", comment: ""), "\(reason.rawValue)"))
       } else {
-        self.noterAlarme("arrêtée")
+        self.noterAlarme(NSLocalizedString("arrêtée", comment: ""))
       }
       self.sessionAlarme = nil
       self.minuterieAlarme?.invalidate()

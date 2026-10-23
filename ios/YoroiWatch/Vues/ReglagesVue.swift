@@ -32,14 +32,14 @@ struct ReglagesVue: View {
     var t: String
     if let d = synchro.derniereSynchro {
       let f = DateFormatter()
-      f.locale = Locale(identifier: "fr_FR")
+      f.locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "fr")
       f.dateStyle = .short
       f.timeStyle = .short
-      t = "Dernière synchro le \(f.string(from: d))."
+      t = String(format: NSLocalizedString("Dernière synchro le %@.", comment: ""), "\(f.string(from: d))")
     } else {
-      t = "Pas encore de synchro avec ton iPhone."
+      t = NSLocalizedString("Pas encore de synchro avec ton iPhone.", comment: "")
     }
-    if attente > 0 { t += attente > 1 ? " \(attente) envois en attente." : " 1 envoi en attente." }
+    if attente > 0 { t += attente > 1 ? " " + String(format: NSLocalizedString("%@ envois en attente.", comment: ""), "\(attente)") : " " + NSLocalizedString("1 envoi en attente.", comment: "") }
     return t
   }
 }

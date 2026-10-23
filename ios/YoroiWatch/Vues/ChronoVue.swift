@@ -22,10 +22,10 @@ struct ChronoVue: View {
 
   private var titrePhase: String {
     switch moteur.phase {
-    case .preparation: return "Préparation"
-    case .round(let n): return "Round \(n) sur \(moteur.nombreRounds)"
-    case .repos(let n): return "Repos, round \(n + 1) ensuite"
-    case .fini: return "Terminé"
+    case .preparation: return NSLocalizedString("Préparation", comment: "")
+    case .round(let n): return String(format: NSLocalizedString("Round %@ sur %@", comment: ""), "\(n)", "\(moteur.nombreRounds)")
+    case .repos(let n): return String(format: NSLocalizedString("Repos, round %@ ensuite", comment: ""), "\(n + 1)")
+    case .fini: return NSLocalizedString("Terminé", comment: "")
     }
   }
 

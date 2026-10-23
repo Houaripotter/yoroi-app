@@ -18,14 +18,14 @@ struct MinuteursVue: View {
       ScrollView {
         VStack(alignment: .leading, spacing: TailleTuile.ecart) {
           if !moteur.actifs.isEmpty && !edition {
-            section("En cours")
+            section(NSLocalizedString("En cours", comment: ""))
             ForEach(moteur.actifs) { a in
               LigneMinuteurActif(actif: a) { routeur.chemin.append(.minuteur(a.id)) }
             }
           }
 
           if !moteur.etat.epingles.isEmpty {
-            section("Épinglés")
+            section(NSLocalizedString("Épinglés", comment: ""))
             LazyVGrid(columns: colonnes, spacing: TailleTuile.ecart) {
               ForEach(moteur.etat.epingles, id: \.self) { s in
                 RondMinuteur(
@@ -41,7 +41,7 @@ struct MinuteursVue: View {
           }
 
           if !moteur.recentsAffiches.isEmpty {
-            section("Récents")
+            section(NSLocalizedString("Récents", comment: ""))
             LazyVGrid(columns: colonnes, spacing: TailleTuile.ecart) {
               ForEach(moteur.recentsAffiches, id: \.self) { s in
                 RondMinuteur(secondes: s, badge: edition ? "xmark" : nil, couleurBadge: Teinte.texte, taille: t) {
@@ -51,7 +51,7 @@ struct MinuteursVue: View {
             }
           }
 
-          section("Tous")
+          section(NSLocalizedString("Tous", comment: ""))
           LazyVGrid(columns: colonnes, spacing: TailleTuile.ecart) {
             ForEach(EtatMinuteurs.tous, id: \.self) { s in
               let epingle = moteur.estEpingle(s)
@@ -73,7 +73,7 @@ struct MinuteursVue: View {
             edition.toggle()
             Haptique.cran()
           } label: {
-            Text(edition ? "OK" : "Modifier")
+            Text(edition ? NSLocalizedString("OK", comment: "") : NSLocalizedString("Modifier", comment: ""))
               .font(.system(size: 15, weight: .bold, design: .rounded))
               .frame(maxWidth: .infinity, minHeight: 44)
               .background(edition ? Teinte.accent : Teinte.carte, in: Capsule())
@@ -241,7 +241,7 @@ struct MinuteurVue: View {
               .font(.chiffre(m.tailleTemps, .bold))
               .foregroundStyle(a.enPause ? Teinte.texteDoux : Teinte.texte)
             if m.libelleBas {
-              Text(a.enPause ? "En pause" : "fin à \(Format.heure(a.fin ?? Date()))")
+              Text(a.enPause ? NSLocalizedString("En pause", comment: "") : String(format: NSLocalizedString("fin à %@", comment: ""), "\(Format.heure(a.fin ?? Date()))"))
                 .font(.system(size: m.tailleLibelle, weight: .bold, design: .rounded))
                 .foregroundStyle(Teinte.texteDoux)
             }
@@ -265,7 +265,7 @@ struct MinuteurVue: View {
           boutonRond(icone: a.enPause ? "play.fill" : "pause.fill", fond: Teinte.minuteur(a.dureeS), texte: Color.black, largeur: 64) {
             moteur.basculerPause(a.id)
           }
-          .accessibilityLabel(a.enPause ? "Reprendre" : "Pause")
+          .accessibilityLabel(a.enPause ? NSLocalizedString("Reprendre", comment: "") : NSLocalizedString("Pause", comment: ""))
           Spacer(minLength: 4)
           Button {
             moteur.ajouter30(a.id)
@@ -441,7 +441,7 @@ struct MinuteurLibreVue: View {
         .font(.system(size: 12, weight: .semibold, design: .rounded))
         .foregroundStyle(Teinte.texteDoux)
       Spacer(minLength: 0)
-      BoutonPlein(titre: "Lancer", icone: "play.fill") {
+      BoutonPlein(titre: NSLocalizedString("Lancer", comment: ""), icone: "play.fill") {
         let id = MinuteurMoteur.shared.lancer(secondes: secondes)
         routeur.chemin = [.minuteurs, .minuteur(id)]
       }

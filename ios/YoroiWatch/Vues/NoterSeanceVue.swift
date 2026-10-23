@@ -59,7 +59,7 @@ struct NoterSeanceVue: View {
       Text("Tourne la couronne")
         .font(.system(size: 13, design: .rounded))
         .foregroundStyle(Teinte.texteDoux)
-      BoutonPlein(titre: "Suivant") { etape = .ressenti }
+      BoutonPlein(titre: NSLocalizedString("Suivant", comment: "")) { etape = .ressenti }
     }
     .onAppear { couronne = true }
   }
@@ -67,7 +67,7 @@ struct NoterSeanceVue: View {
   private var choixRessenti: some View {
     VStack(spacing: 6) {
       ChoixRessenti(valeur: $rpe)
-      BoutonPlein(titre: envoye ? "Enregistré" : "Valider", icone: envoye ? "checkmark" : nil) {
+      BoutonPlein(titre: envoye ? NSLocalizedString("Enregistré", comment: "") : NSLocalizedString("Valider", comment: ""), icone: envoye ? "checkmark" : nil) {
         valider()
       }
       .disabled(envoye)

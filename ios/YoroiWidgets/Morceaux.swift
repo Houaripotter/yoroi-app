@@ -8,14 +8,14 @@ import WidgetKit
 enum Textes {
   /// "2 sur 4" ou "2 séances"
   static func semaine(_ e: EtatYoroi) -> String {
-    if let o = e.objectifSemaine { return "\(e.faites) sur \(o)" }
-    if e.faites == 0 { return "Aucune séance" }
-    return e.faites == 1 ? "1 séance" : "\(e.faites) séances"
+    if let o = e.objectifSemaine { return String(format: NSLocalizedString("%@ sur %@", comment: ""), "\(e.faites)", "\(o)") }
+    if e.faites == 0 { return NSLocalizedString("Aucune séance", comment: "") }
+    return e.faites == 1 ? NSLocalizedString("1 séance", comment: "") : String(format: NSLocalizedString("%@ séances", comment: ""), "\(e.faites)")
   }
 
   /// "1,2 L sur 2 L" ou "1,2 L"
   static func eau(_ e: EtatYoroi) -> String {
-    if let o = e.eauObjectif { return "\(Fmt.eau(e.eauMl)) sur \(Fmt.eau(o))" }
+    if let o = e.eauObjectif { return String(format: NSLocalizedString("%@ sur %@", comment: ""), "\(Fmt.eau(e.eauMl))", "\(Fmt.eau(o))") }
     return Fmt.eau(e.eauMl)
   }
 
@@ -27,37 +27,37 @@ enum Textes {
 
   /// ("Arrivée prévue", "du 12 nov. au 3 déc.") ou ("Objectif", "78,0 kg"), nil sans rien
   static func arriveeParts(_ e: EtatYoroi) -> (String, String)? {
-    if let a = e.poids.arrivee { return ("Arrivée prévue", "du \(Fmt.jourCourt(a.du)) au \(Fmt.jourCourt(a.au))") }
-    if let c = e.poids.cap { return ("Objectif", "\(Fmt.poids(c, e.livres)) \(Fmt.unite(e.livres))") }
+    if let a = e.poids.arrivee { return (NSLocalizedString("Arrivée prévue", comment: ""), String(format: NSLocalizedString("du %@ au %@", comment: ""), "\(Fmt.jourCourt(a.du))", "\(Fmt.jourCourt(a.au))")) }
+    if let c = e.poids.cap { return (NSLocalizedString("Objectif", comment: ""), "\(Fmt.poids(c, e.livres)) \(Fmt.unite(e.livres))") }
     return nil
   }
 
   /// La place de ta pesee par rapport au rythme prevu, en mots
   static func statut(_ s: String) -> String? {
     switch s {
-    case "allure": return "dans l'allure"
-    case "dessus": return "au-dessus du rythme"
-    case "vite": return "plus vite que prévu"
+    case "allure": return NSLocalizedString("dans l'allure", comment: "")
+    case "dessus": return NSLocalizedString("au-dessus du rythme", comment: "")
+    case "vite": return NSLocalizedString("plus vite que prévu", comment: "")
     default: return nil
     }
   }
 
   /// "5 x 5 min, repos 1 min"
   static func chrono(_ c: ChronoI?) -> String {
-    guard let c, c.rounds > 0, c.roundS > 0 else { return "Ouvre ton chrono" }
+    guard let c, c.rounds > 0, c.roundS > 0 else { return NSLocalizedString("Ouvre ton chrono", comment: "") }
     let base = "\(c.rounds) x \(Fmt.duree(c.roundS))"
-    return c.reposS > 0 ? "\(base), repos \(Fmt.duree(c.reposS))" : base
+    return c.reposS > 0 ? String(format: NSLocalizedString("%@, repos %@", comment: ""), "\(base)", "\(Fmt.duree(c.reposS))") : base
   }
 
   /// "5 x 5 min" (ou "6 min" pour un seul round)
   static func chronoCourt(_ c: ChronoI?) -> String {
-    guard let c, c.rounds > 0, c.roundS > 0 else { return "Ouvre ton chrono" }
+    guard let c, c.rounds > 0, c.roundS > 0 else { return NSLocalizedString("Ouvre ton chrono", comment: "") }
     return c.rounds > 1 ? "\(c.rounds) x \(Fmt.duree(c.roundS))" : Fmt.duree(c.roundS)
   }
 
   /// Le nom de ton dernier reglage ("MMA"), ou "Chrono"
   static func chronoNom(_ c: ChronoI?) -> String {
-    guard let n = c?.nom.trimmingCharacters(in: .whitespacesAndNewlines), !n.isEmpty else { return "Chrono" }
+    guard let n = c?.nom.trimmingCharacters(in: .whitespacesAndNewlines), !n.isEmpty else { return NSLocalizedString("Chrono", comment: "") }
     return n
   }
 
@@ -69,20 +69,20 @@ enum Textes {
   /// "Encore 2,3 kg" ou "Dans ta catégorie", nil sans categorie
   static func resteCombat(_ c: CombatI, _ livres: Bool) -> (String, Bool)? {
     guard let ec = c.ecartKg else { return nil }
-    if ec > 0.05 { return ("Encore \(Fmt.poids(ec, livres)) \(Fmt.unite(livres))", false) }
-    return ("Dans ta catégorie", true)
+    if ec > 0.05 { return (String(format: NSLocalizedString("Encore %@ %@", comment: ""), "\(Fmt.poids(ec, livres))", "\(Fmt.unite(livres))"), false) }
+    return (NSLocalizedString("Dans ta catégorie", comment: ""), true)
   }
 
   static func categorie(_ c: CombatI, _ livres: Bool) -> String? {
     guard let k = c.categorieKg else { return nil }
-    return "Catégorie \(Fmt.poids(k, livres)) \(Fmt.unite(livres))"
+    return String(format: NSLocalizedString("Catégorie %@ %@", comment: ""), "\(Fmt.poids(k, livres))", "\(Fmt.unite(livres))")
   }
 
   /// "aujourd'hui", "hier" ou "12 oct." (en coin de widget)
   static func jourDiscret(_ iso: String, _ maintenant: Date) -> String {
     let t = Fmt.jourRelatif(iso, maintenant)
-    if t == "Aujourd'hui" { return "aujourd'hui" }
-    if t == "Hier" { return "hier" }
+    if t == "Aujourd'hui" || t == NSLocalizedString("Aujourd'hui", comment: "") { return NSLocalizedString("aujourd'hui", comment: "") }
+    if t == "Hier" || t == NSLocalizedString("Hier", comment: "") { return NSLocalizedString("hier", comment: "") }
     return t
   }
 }

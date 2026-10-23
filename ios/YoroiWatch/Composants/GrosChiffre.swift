@@ -47,7 +47,7 @@ struct BoutonPlein: View {
 /// Ecran vide propre quand l'iPhone n'a encore rien envoye.
 struct EcranVide: View {
   var icone: String = "iphone"
-  var texte: String = "Ouvre Yoroi sur ton iPhone pour commencer"
+  var texte: String = NSLocalizedString("Ouvre Yoroi sur ton iPhone pour commencer", comment: "")
 
   var body: some View {
     VStack(spacing: 10) {

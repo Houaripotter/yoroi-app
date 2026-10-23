@@ -1,0 +1,12 @@
+/* YOROI : phrases Siri en nl. Clé = phrase du code Swift. */
+"Démarrer le chrono ${applicationName}" = "Start de ${applicationName} timer";
+"Lance le chrono ${applicationName}" = "Zet de ${applicationName} timer aan";
+"Noter mon poids dans ${applicationName}" = "Mijn gewicht noteren in ${applicationName}";
+"Pesée ${applicationName}" = "${applicationName} weging";
+"Noter un verre d'eau dans ${applicationName}" = "Een glas water noteren in ${applicationName}";
+"Un verre d'eau ${applicationName}" = "Een glas water ${applicationName}";
+"Lance un minuteur de ${duree} dans ${applicationName}" = "Start een timer van ${duree} in ${applicationName}";
+"Minuteur de ${duree} ${applicationName}" = "Timer van ${duree} ${applicationName}";
+"Lance un minuteur ${applicationName}" = "Start een timer in ${applicationName}";
+"Ouvre les minuteurs ${applicationName}" = "Open de ${applicationName} timers";
+"Mes minuteurs ${applicationName}" = "Mijn ${applicationName} timers";

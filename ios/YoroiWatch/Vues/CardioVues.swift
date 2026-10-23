@@ -15,11 +15,11 @@ struct CardioVue: View {
     ScrollView {
       VStack(spacing: 8) {
         CarteMesure(
-          titre: "Cœur", icone: "heart.fill", unite: "bpm", couleur: Teinte.coeur,
+          titre: NSLocalizedString("Cœur", comment: ""), icone: "heart.fill", unite: "bpm", couleur: Teinte.coeur,
           mesure: cardio.etat?.fc, enPoints: false
         ) { routeur.ouvrir(.coeur) }
         CarteMesure(
-          titre: "Oxygène", icone: "lungs.fill", unite: "%", couleur: Teinte.oxygene,
+          titre: NSLocalizedString("Oxygène", comment: ""), icone: "lungs.fill", unite: "%", couleur: Teinte.oxygene,
           mesure: cardio.etat?.oxygene, enPoints: true, bas: 90, haut: 100, fenetre: FenetreMesure.oxygene
         ) { routeur.ouvrir(.oxygene) }
       }
@@ -93,11 +93,11 @@ struct CarteMesure: View {
   }
 
   private func ligneBas(_ maintenant: Date) -> String {
-    guard let m = mesure else { return "Pas encore de mesure" }
+    guard let m = mesure else { return NSLocalizedString("Pas encore de mesure", comment: "") }
     if let a = m.miniDuJour(maintenant), let b = m.maxiDuJour(maintenant) {
-      return "\(Format.entier(a)) à \(Format.entier(b)) aujourd'hui"
+      return String(format: NSLocalizedString("%@ à %@ aujourd'hui", comment: ""), "\(Format.entier(a))", "\(Format.entier(b))")
     }
-    return "Dernière mesure \(Format.quand(m.date, maintenant: maintenant))"
+    return String(format: NSLocalizedString("Dernière mesure %@", comment: ""), "\(Format.quand(m.date, maintenant: maintenant))")
   }
 }
 
@@ -106,10 +106,10 @@ struct CoeurVue: View {
 
   var body: some View {
     MesureDetailVue(
-      titre: "Cœur", icone: "heart.fill", unite: "bpm", couleur: Teinte.coeur,
+      titre: NSLocalizedString("Cœur", comment: ""), icone: "heart.fill", unite: "bpm", couleur: Teinte.coeur,
       mesure: cardio.etat?.fc, enPoints: false,
       repos: cardio.etat?.repos, variabilite: cardio.etat?.variabilite, respiration: cardio.etat?.respiration,
-      texteVide: "Pas encore de fréquence cardiaque. Autorise Yoroi dans Santé sur ton iPhone : Réglages, Santé, Accès aux données et appareils."
+      texteVide: NSLocalizedString("Pas encore de fréquence cardiaque. Autorise Yoroi dans Santé sur ton iPhone : Réglages, Santé, Accès aux données et appareils.", comment: "")
     )
     .task { await cardio.actualiser() }
   }
@@ -120,9 +120,9 @@ struct OxygeneVue: View {
 
   var body: some View {
     MesureDetailVue(
-      titre: "Oxygène", icone: "lungs.fill", unite: "%", couleur: Teinte.oxygene,
+      titre: NSLocalizedString("Oxygène", comment: ""), icone: "lungs.fill", unite: "%", couleur: Teinte.oxygene,
       mesure: cardio.etat?.oxygene, enPoints: true, bas: 90, haut: 100, fenetre: FenetreMesure.oxygene,
-      texteVide: "Pas de mesure d'oxygène. Ta montre doit la mesurer et Yoroi doit y avoir accès dans Santé."
+      texteVide: NSLocalizedString("Pas de mesure d'oxygène. Ta montre doit la mesurer et Yoroi doit y avoir accès dans Santé.", comment: "")
     )
     .task { await cardio.actualiser() }
   }
@@ -185,17 +185,17 @@ struct MesureDetailVue: View {
             }
 
             HStack(spacing: 8) {
-              tuile("Mini", m.miniDuJour(maintenant), unite: unite, couleur: Teinte.texte)
-              tuile("Maxi", m.maxiDuJour(maintenant), unite: unite, couleur: Teinte.texte)
+              tuile(NSLocalizedString("Mini", comment: ""), m.miniDuJour(maintenant), unite: unite, couleur: Teinte.texte)
+              tuile(NSLocalizedString("Maxi", comment: ""), m.maxiDuJour(maintenant), unite: unite, couleur: Teinte.texte)
             }
             if let r = repos {
-              tuileLarge("Au repos", r, unite: "bpm", maintenant: maintenant)
+              tuileLarge(NSLocalizedString("Au repos", comment: ""), r, unite: "bpm", maintenant: maintenant)
             }
             if let v = variabilite {
-              tuileLarge("Variabilité", v, unite: "ms", maintenant: maintenant)
+              tuileLarge(NSLocalizedString("Variabilité", comment: ""), v, unite: "ms", maintenant: maintenant)
             }
             if let r = respiration {
-              tuileLarge("Respiration", r, unite: "/min", maintenant: maintenant)
+              tuileLarge(NSLocalizedString("Respiration", comment: ""), r, unite: "/min", maintenant: maintenant)
             }
             Text("Chiffres d'Apple Santé, mis à jour à chaque nouvelle mesure.")
               .font(.system(size: 11, weight: .medium, design: .rounded))

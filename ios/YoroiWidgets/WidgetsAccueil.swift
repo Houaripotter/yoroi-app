@@ -66,7 +66,7 @@ struct VuePoids: View {
         }
       case .accessoryRectangular:
         VStack(alignment: .leading, spacing: 1) {
-          TitreVerrou(style: entree.style, texte: "Poids")
+          TitreVerrou(style: entree.style, texte: NSLocalizedString("Poids", comment: ""))
           HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text("\(Fmt.poids(d.kg, etat.livres)) \(Fmt.unite(etat.livres))")
               .font(chiffreVerrou(entree.style, 20))
@@ -106,12 +106,12 @@ struct VuePoids: View {
         }
       case .accessoryRectangular:
         VStack(alignment: .leading, spacing: 2) {
-          TitreVerrou(style: entree.style, texte: "Poids")
+          TitreVerrou(style: entree.style, texte: NSLocalizedString("Poids", comment: ""))
           Text("Ouvre Yoroi pour commencer").font(legendeVerrou(13)).lineLimit(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
       default:
-        VideW(pal: pal, titre: "Poids", compact: famille == .systemSmall)
+        VideW(pal: pal, titre: NSLocalizedString("Poids", comment: ""), compact: famille == .systemSmall)
       }
     }
   }
@@ -132,7 +132,7 @@ struct VuePoids: View {
 
   private func petit(_ pal: Palette, _ d: DernierI) -> some View {
     VStack(alignment: .leading, spacing: 3) {
-      EnteteW(pal: pal, titre: "Poids", coin: Textes.jourDiscret(d.date, etat.maintenant))
+      EnteteW(pal: pal, titre: NSLocalizedString("Poids", comment: ""), coin: Textes.jourDiscret(d.date, etat.maintenant))
       Spacer(minLength: 0)
       HStack(alignment: .top, spacing: 2) {
         GrosPoidsW(pal: pal, kg: d.kg, livres: etat.livres, taille: 40)
@@ -150,7 +150,7 @@ struct VuePoids: View {
 
   private func moyen(_ pal: Palette, _ d: DernierI) -> some View {
     VStack(alignment: .leading, spacing: 4) {
-      EnteteW(pal: pal, titre: "Poids", coin: Textes.jourDiscret(d.date, etat.maintenant))
+      EnteteW(pal: pal, titre: NSLocalizedString("Poids", comment: ""), coin: Textes.jourDiscret(d.date, etat.maintenant))
       HStack(alignment: .center, spacing: 10) {
         VStack(alignment: .leading, spacing: 2) {
           GrosPoidsW(pal: pal, kg: d.kg, livres: etat.livres, taille: 38)
@@ -169,7 +169,7 @@ struct VuePoids: View {
 
   private func grand(_ pal: Palette, _ d: DernierI) -> some View {
     VStack(alignment: .leading, spacing: 8) {
-      EnteteW(pal: pal, titre: "Poids", coin: Textes.jourDiscret(d.date, etat.maintenant))
+      EnteteW(pal: pal, titre: NSLocalizedString("Poids", comment: ""), coin: Textes.jourDiscret(d.date, etat.maintenant))
       HStack(alignment: .firstTextBaseline) {
         GrosPoidsW(pal: pal, kg: d.kg, livres: etat.livres, taille: 44)
         Spacer(minLength: 8)
@@ -244,7 +244,7 @@ struct VueSemaine: View {
             Text("\(etat.faites)")
               .font(chiffreVerrou(entree.style, 18))
               .widgetAccentable()
-            Text(etat.objectifSemaine.map { "sur \($0)" } ?? (etat.faites > 1 ? "séances" : "séance"))
+            Text(etat.objectifSemaine.map { String(format: NSLocalizedString("sur %@", comment: ""), "\($0)") } ?? (etat.faites > 1 ? NSLocalizedString("séances", comment: "") : NSLocalizedString("séance", comment: "")))
               .font(legendeVerrou(9))
               .lineLimit(1)
               .minimumScaleFactor(0.6)
@@ -252,7 +252,7 @@ struct VueSemaine: View {
         }
       case .accessoryRectangular:
         VStack(alignment: .leading, spacing: 3) {
-          TitreVerrou(style: entree.style, texte: "Ta semaine")
+          TitreVerrou(style: entree.style, texte: NSLocalizedString("Ta semaine", comment: ""))
           Text(Textes.semaine(etat))
             .font(chiffreVerrou(entree.style, 17))
             .lineLimit(1)
@@ -275,12 +275,12 @@ struct VueSemaine: View {
         }
       case .accessoryRectangular:
         VStack(alignment: .leading, spacing: 2) {
-          TitreVerrou(style: entree.style, texte: "Ta semaine")
+          TitreVerrou(style: entree.style, texte: NSLocalizedString("Ta semaine", comment: ""))
           Text("Ouvre Yoroi pour commencer").font(legendeVerrou(13)).lineLimit(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
       default:
-        VideW(pal: pal, titre: "Ta semaine", compact: famille == .systemSmall)
+        VideW(pal: pal, titre: NSLocalizedString("Ta semaine", comment: ""), compact: famille == .systemSmall)
       }
     }
   }
@@ -291,7 +291,7 @@ struct VueSemaine: View {
         .font(pal.chiffre(38))
         .foregroundStyle(pal.texte)
         .widgetAccentable()
-      Text(etat.objectifSemaine.map { "sur \($0)" } ?? (etat.faites > 1 ? "séances" : "séance"))
+      Text(etat.objectifSemaine.map { String(format: NSLocalizedString("sur %@", comment: ""), "\($0)") } ?? (etat.faites > 1 ? NSLocalizedString("séances", comment: "") : NSLocalizedString("séance", comment: "")))
         .font(pal.fort(16, .semibold))
         .foregroundStyle(pal.doux)
     }
@@ -301,7 +301,7 @@ struct VueSemaine: View {
 
   private func petit(_ pal: Palette) -> some View {
     VStack(alignment: .leading, spacing: 5) {
-      TitreW(pal: pal, texte: "Ta semaine")
+      TitreW(pal: pal, texte: NSLocalizedString("Ta semaine", comment: ""))
       chiffre(pal)
       Spacer(minLength: 0)
       PointsW(pal: pal, jours: etat.jours, aujourdhui: etat.rangAujourdhui, taille: pal.style == .b ? 15 : 11)
@@ -313,10 +313,10 @@ struct VueSemaine: View {
   private func moyen(_ pal: Palette) -> some View {
     HStack(spacing: 14) {
       VStack(alignment: .leading, spacing: 4) {
-        TitreW(pal: pal, texte: "Ta semaine")
+        TitreW(pal: pal, texte: NSLocalizedString("Ta semaine", comment: ""))
         chiffre(pal)
         Spacer(minLength: 0)
-        Text(etat.objectifSemaine == nil ? "Choisis ton objectif dans Yoroi" : "Séances cette semaine")
+        Text(etat.objectifSemaine == nil ? NSLocalizedString("Choisis ton objectif dans Yoroi", comment: "") : NSLocalizedString("Séances cette semaine", comment: ""))
           .font(pal.legende(12, .medium))
           .foregroundStyle(pal.doux)
           .lineLimit(2)
@@ -363,8 +363,8 @@ struct VueEau: View {
   }
 
   private var sousTitre: String {
-    if let o = etat.eauObjectif { return "sur \(Fmt.eau(o))" }
-    return "aujourd'hui"
+    if let o = etat.eauObjectif { return String(format: NSLocalizedString("sur %@", comment: ""), "\(Fmt.eau(o))") }
+    return NSLocalizedString("aujourd'hui", comment: "")
   }
 
   /// "1,2" et "L", ou "750" et "ml"
@@ -392,7 +392,7 @@ struct VueEau: View {
         }
       case .accessoryRectangular:
         VStack(alignment: .leading, spacing: 3) {
-          TitreVerrou(style: entree.style, texte: "Eau")
+          TitreVerrou(style: entree.style, texte: NSLocalizedString("Eau", comment: ""))
           Text(Textes.eau(etat))
             .font(chiffreVerrou(entree.style, 17))
             .lineLimit(1)
@@ -418,12 +418,12 @@ struct VueEau: View {
         }
       case .accessoryRectangular:
         VStack(alignment: .leading, spacing: 2) {
-          TitreVerrou(style: entree.style, texte: "Eau")
+          TitreVerrou(style: entree.style, texte: NSLocalizedString("Eau", comment: ""))
           Text("Ouvre Yoroi pour commencer").font(legendeVerrou(13)).lineLimit(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
       default:
-        VideW(pal: pal, titre: "Eau", compact: famille == .systemSmall)
+        VideW(pal: pal, titre: NSLocalizedString("Eau", comment: ""), compact: famille == .systemSmall)
       }
     }
   }
@@ -444,7 +444,7 @@ struct VueEau: View {
 
   private func petit(_ pal: Palette) -> some View {
     VStack(alignment: .leading, spacing: 6) {
-      TitreW(pal: pal, texte: "Eau")
+      TitreW(pal: pal, texte: NSLocalizedString("Eau", comment: ""))
       HStack(spacing: 10) {
         GoutteW(pal: pal, part: etat.partEau ?? 0, taille: 50, epaisseur: 6)
         VStack(alignment: .leading, spacing: 1) {
@@ -466,7 +466,7 @@ struct VueEau: View {
     HStack(spacing: 14) {
       GoutteW(pal: pal, part: etat.partEau ?? 0, taille: 98, epaisseur: 10)
       VStack(alignment: .leading, spacing: 2) {
-        TitreW(pal: pal, texte: "Eau")
+        TitreW(pal: pal, texte: NSLocalizedString("Eau", comment: ""))
         grosChiffre(pal, 34)
         Text(sousTitre)
           .font(pal.legende(13, .medium))
@@ -527,16 +527,16 @@ struct VueCombat: View {
         }
       case .accessoryRectangular:
         VStack(alignment: .leading, spacing: 2) {
-          TitreVerrou(style: entree.style, texte: "Combat")
+          TitreVerrou(style: entree.style, texte: NSLocalizedString("Combat", comment: ""))
           Text("Ouvre Yoroi pour commencer").font(legendeVerrou(13)).lineLimit(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-      default: VideW(pal: pal, titre: "Combat", compact: famille == .systemSmall)
+      default: VideW(pal: pal, titre: NSLocalizedString("Combat", comment: ""), compact: famille == .systemSmall)
       }
     } else if let c = etat.combat, let n = etat.joursAvantCombat {
       switch famille {
       case .accessoryInline:
-        Text(n == 0 ? "Combat aujourd'hui" : "Combat \(Fmt.jMoins(n))")
+        Text(n == 0 ? NSLocalizedString("Combat aujourd'hui", comment: "") : String(format: NSLocalizedString("Combat %@", comment: ""), "\(Fmt.jMoins(n))"))
       case .accessoryCircular:
         RondW(style: entree.style) {
           VStack(spacing: 0) {
@@ -550,7 +550,8 @@ struct VueCombat: View {
         }
       case .accessoryRectangular:
         VStack(alignment: .leading, spacing: 1) {
-          TitreVerrou(style: entree.style, texte: n == 0 ? "Combat aujourd'hui" : (n == 1 ? "Combat demain" : "Combat dans \(n) jours"))
+          let titreCombat: String = n == 0 ? NSLocalizedString("Combat aujourd'hui", comment: "") : (n == 1 ? NSLocalizedString("Combat demain", comment: "") : String(format: NSLocalizedString("Combat dans %@ jours", comment: ""), "\(n)"))
+          TitreVerrou(style: entree.style, texte: titreCombat)
           if let cat = Textes.categorie(c, etat.livres) {
             Text(cat).font(legendeVerrou(12))
           }
@@ -575,13 +576,13 @@ struct VueCombat: View {
         }
       case .accessoryRectangular:
         VStack(alignment: .leading, spacing: 2) {
-          TitreVerrou(style: entree.style, texte: "Combat")
+          TitreVerrou(style: entree.style, texte: NSLocalizedString("Combat", comment: ""))
           Text("Ajoute ta prochaine compétition").font(legendeVerrou(13)).lineLimit(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
       default:
         VStack(alignment: .leading, spacing: 6) {
-          TitreW(pal: pal, texte: "Combat")
+          TitreW(pal: pal, texte: NSLocalizedString("Combat", comment: ""))
           Spacer(minLength: 0)
           Text("Aucune compétition prévue")
             .font(pal.fort(16, .semibold))
@@ -611,7 +612,7 @@ struct VueCombat: View {
 
   private func petit(_ pal: Palette, _ c: CombatI, _ n: Int) -> some View {
     VStack(alignment: .leading, spacing: 3) {
-      EnteteW(pal: pal, titre: "Combat", coin: Fmt.jourCourt(c.date))
+      EnteteW(pal: pal, titre: NSLocalizedString("Combat", comment: ""), coin: Fmt.jourCourt(c.date))
       Spacer(minLength: 0)
       Text(Fmt.jMoins(n))
         .font(pal.chiffre(42))
@@ -634,7 +635,7 @@ struct VueCombat: View {
   private func moyen(_ pal: Palette, _ c: CombatI, _ n: Int) -> some View {
     HStack(alignment: .center, spacing: 14) {
       VStack(alignment: .leading, spacing: 3) {
-        TitreW(pal: pal, texte: "Combat")
+        TitreW(pal: pal, texte: NSLocalizedString("Combat", comment: ""))
         Text(Fmt.jMoins(n))
           .font(pal.chiffre(48))
           .foregroundStyle(pal.texte)

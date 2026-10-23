@@ -37,18 +37,19 @@ enum DatesISO {
 }
 
 enum Format {
-  private static let francais = Locale(identifier: "fr_FR")
+  // 23 octobre 2026 : dates et nombres dans la langue affichée par la montre
+  private static let francais = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "fr")
 
   private static let jourMois: DateFormatter = {
     let f = DateFormatter()
-    f.locale = Locale(identifier: "fr_FR")
+    f.locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "fr")
     f.setLocalizedDateFormatFromTemplate("d MMM")
     return f
   }()
 
   private static let jourSemaine: DateFormatter = {
     let f = DateFormatter()
-    f.locale = Locale(identifier: "fr_FR")
+    f.locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "fr")
     f.setLocalizedDateFormatFromTemplate("EEEE d MMM")
     return f
   }()
@@ -100,8 +101,8 @@ enum Format {
   static func jourRelatif(_ iso: String, maintenant: Date = Date()) -> String {
     guard let d = DatesISO.lireJour(iso) else { return iso }
     let cal = Calendar.current
-    if cal.isDate(d, inSameDayAs: maintenant) { return "Aujourd'hui" }
-    if let hier = cal.date(byAdding: .day, value: -1, to: maintenant), cal.isDate(d, inSameDayAs: hier) { return "Hier" }
+    if cal.isDate(d, inSameDayAs: maintenant) { return NSLocalizedString("Aujourd'hui", comment: "") }
+    if let hier = cal.date(byAdding: .day, value: -1, to: maintenant), cal.isDate(d, inSameDayAs: hier) { return NSLocalizedString("Hier", comment: "") }
     return jourSemaine.string(from: d)
   }
 
@@ -154,11 +155,11 @@ enum Format {
   /// "à 14:02", "hier à 22:10" ou "12 oct. à 9:00"
   static func quand(_ d: Date, maintenant: Date = Date()) -> String {
     let cal = Calendar.current
-    if cal.isDate(d, inSameDayAs: maintenant) { return "à \(heure(d))" }
+    if cal.isDate(d, inSameDayAs: maintenant) { return String(format: NSLocalizedString("à %@", comment: ""), "\(heure(d))") }
     if let hier = cal.date(byAdding: .day, value: -1, to: maintenant), cal.isDate(d, inSameDayAs: hier) {
-      return "hier à \(heure(d))"
+      return String(format: NSLocalizedString("hier à %@", comment: ""), "\(heure(d))")
     }
-    return "\(jourMois.string(from: d)) à \(heure(d))"
+    return String(format: NSLocalizedString("%@ à %@", comment: ""), "\(jourMois.string(from: d))", "\(heure(d))")
   }
 
   /// "1,5 L" ou "750 ml"

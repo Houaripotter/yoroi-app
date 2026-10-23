@@ -12,7 +12,7 @@ private func titre(_ t: String) -> some View {
 
 private struct VideWidget: View {
   @Environment(\.widgetFamily) private var famille
-  var texte: String = "Ouvre Yoroi sur ton iPhone"
+  var texte: String = NSLocalizedString("Ouvre Yoroi sur ton iPhone", comment: "")
   /// Texte de la famille en ligne (une seule ligne courte autour du cadran).
   var ligne: String = "Yoroi"
 
@@ -127,9 +127,11 @@ struct VueSemaineWidget: View {
       let haut = Double(max(1, objectif, s.faites))
       switch famille {
       case .accessoryInline:
-        Text(objectif > 0
-          ? "\(s.faites) \(s.faites > 1 ? "séances" : "séance") sur \(objectif)"
-          : "\(s.faites) \(s.faites > 1 ? "séances" : "séance") cette semaine")
+        let cle: String = objectif > 0
+          ? (s.faites > 1 ? "%@ séances sur %@" : "%@ séance sur %@")
+          : (s.faites > 1 ? "%@ séances cette semaine" : "%@ séance cette semaine")
+        let ligne: String = String(format: NSLocalizedString(cle, comment: ""), "\(s.faites)", "\(objectif)")
+        Text(ligne)
       case .accessoryCircular:
         if objectif > 0 {
           Gauge(value: min(Double(s.faites), haut), in: 0...haut) {
@@ -166,9 +168,9 @@ struct VueSemaineWidget: View {
       default:
         VStack(alignment: .leading, spacing: 4) {
           HStack(alignment: .firstTextBaseline) {
-            titre("Ta semaine")
+            titre(NSLocalizedString("Ta semaine", comment: ""))
             Spacer()
-            Text(objectif > 0 ? "\(s.faites) sur \(objectif)" : "\(s.faites)")
+            Text(objectif > 0 ? String(format: NSLocalizedString("%@ sur %@", comment: ""), "\(s.faites)", "\(objectif)") : "\(s.faites)")
               .font(.chiffre(16))
           }
           HStack(spacing: 4) {
@@ -201,7 +203,7 @@ struct VueEauWidget: View {
       let haut = max(1, objectif, e.ml)
       switch famille {
       case .accessoryInline:
-        Text(objectif > 0 ? "Eau \(Format.eau(e.ml)) sur \(Format.eau(objectif))" : "Eau \(Format.eau(e.ml))")
+        Text(objectif > 0 ? String(format: NSLocalizedString("Eau %@ sur %@", comment: ""), "\(Format.eau(e.ml))", "\(Format.eau(objectif))") : String(format: NSLocalizedString("Eau %@", comment: ""), "\(Format.eau(e.ml))"))
       case .accessoryCircular:
         Gauge(value: min(e.ml, haut), in: 0...haut) {
           Image(systemName: "drop.fill")
@@ -226,7 +228,7 @@ struct VueEauWidget: View {
       default:
         VStack(alignment: .leading, spacing: 4) {
           HStack(alignment: .firstTextBaseline) {
-            titre("Eau")
+            titre(NSLocalizedString("Eau", comment: ""))
             Spacer()
             Text(Format.eau(e.ml)).font(.chiffre(16))
           }
@@ -280,7 +282,7 @@ struct VueChronoWidget: View {
         VStack(alignment: .leading, spacing: 1) {
           Text("Chrono combat")
             .font(.system(size: 15, weight: .semibold, design: .rounded))
-          Text(entree.dernierChrono ?? "Rounds et repos")
+          Text(entree.dernierChrono ?? NSLocalizedString("Rounds et repos", comment: ""))
             .font(.system(size: 13, design: .rounded))
             .foregroundStyle(Teinte.texteDoux)
             .lineLimit(1)
@@ -302,30 +304,30 @@ struct VueCombatWidget: View {
       let livres = c.profil.enLivres
       switch famille {
       case .accessoryInline:
-        Text(j == 0 ? "Combat aujourd'hui" : "Combat dans \(j) j")
+        Text(j == 0 ? NSLocalizedString("Combat aujourd'hui", comment: "") : String(format: NSLocalizedString("Combat dans %@ j", comment: ""), "\(j)"))
       case .accessoryCircular:
         ZStack {
           AccessoryWidgetBackground()
           VStack(spacing: -2) {
-            Text(j == 0 ? "Jour" : "\(j)")
+            Text(j == 0 ? NSLocalizedString("Jour", comment: "") : "\(j)")
               .font(.chiffre(j == 0 ? 14 : 20))
-            Text(j == 0 ? "J" : (j > 1 ? "jours" : "jour"))
+            Text(j == 0 ? NSLocalizedString("J", comment: "") : (j > 1 ? NSLocalizedString("jours", comment: "") : NSLocalizedString("jour", comment: "")))
               .font(.system(size: 10, design: .rounded))
           }
         }
       case .accessoryCorner:
-        Text(j == 0 ? "J" : "\(j)")
+        Text(j == 0 ? NSLocalizedString("J", comment: "") : "\(j)")
           .font(.chiffre(18))
           .lineLimit(1)
           .minimumScaleFactor(0.6)
           // Libelle court : le coin coupe vite un texte long le long du bord.
-          .widgetLabel(j == 0 ? "Combat" : (j > 1 ? "jours avant combat" : "jour avant combat"))
+          .widgetLabel(j == 0 ? NSLocalizedString("Combat", comment: "") : (j > 1 ? NSLocalizedString("jours avant combat", comment: "") : NSLocalizedString("jour avant combat", comment: "")))
       default:
         VStack(alignment: .leading, spacing: 2) {
           HStack(alignment: .firstTextBaseline) {
-            titre("Combat")
+            titre(NSLocalizedString("Combat", comment: ""))
             Spacer()
-            Text(j == 0 ? "Aujourd'hui" : "dans \(j) j")
+            Text(j == 0 ? NSLocalizedString("Aujourd'hui", comment: "") : String(format: NSLocalizedString("dans %@ j", comment: ""), "\(j)"))
               .font(.chiffre(16))
           }
           if let e = combat.ecartKg, e > 0.05 {
@@ -340,7 +342,7 @@ struct VueCombatWidget: View {
         }
       }
     } else {
-      VideWidget(texte: "Aucun combat prévu", ligne: "Aucun combat prévu")
+      VideWidget(texte: NSLocalizedString("Aucun combat prévu", comment: ""), ligne: NSLocalizedString("Aucun combat prévu", comment: ""))
     }
   }
 }

@@ -128,28 +128,28 @@ struct StyleMesure {
   }
 
   static let coeur = StyleMesure(
-    titre: "Cœur", court: "FC", icone: "heart.fill", unite: "bpm", plage: 40...180,
+    titre: NSLocalizedString("Cœur", comment: ""), court: NSLocalizedString("FC", comment: ""), icone: "heart.fill", unite: "bpm", plage: 40...180,
     couleur: Teinte.coeur, claire: Teinte.coeurClair, degrade: Teinte.degradeCoeur,
     enPoints: false, basCourbe: nil, hautCourbe: nil,
-    fenetre: FenetreMesure.coeur, vide: "Pas encore de mesure"
+    fenetre: FenetreMesure.coeur, vide: NSLocalizedString("Pas encore de mesure", comment: "")
   )
   static let oxygene = StyleMesure(
-    titre: "Oxygène", court: "O2", icone: "lungs.fill", unite: "%", plage: 90...100,
+    titre: NSLocalizedString("Oxygène", comment: ""), court: "O2", icone: "lungs.fill", unite: "%", plage: 90...100,
     couleur: Teinte.oxygene, claire: Teinte.oxygeneClair, degrade: Teinte.degradeOxygene,
     enPoints: true, basCourbe: 90, hautCourbe: 100,
-    fenetre: FenetreMesure.oxygene, vide: "Pas de mesure d'oxygène"
+    fenetre: FenetreMesure.oxygene, vide: NSLocalizedString("Pas de mesure d'oxygène", comment: "")
   )
   static let repos = StyleMesure(
-    titre: "Au repos", court: "Repos", icone: "bed.double.fill", unite: "bpm", plage: 40...100,
+    titre: NSLocalizedString("Au repos", comment: ""), court: NSLocalizedString("Repos", comment: ""), icone: "bed.double.fill", unite: "bpm", plage: 40...100,
     couleur: Teinte.coeur, claire: Teinte.coeurClair, degrade: Teinte.degradeCoeur,
     enPoints: false, basCourbe: nil, hautCourbe: nil,
-    fenetre: FenetreMesure.journaliere, vide: "Pas encore de FC au repos"
+    fenetre: FenetreMesure.journaliere, vide: NSLocalizedString("Pas encore de FC au repos", comment: "")
   )
   static let respiration = StyleMesure(
-    titre: "Respiration", court: "Resp.", icone: "wind", unite: "/min", plage: 8...24,
+    titre: NSLocalizedString("Respiration", comment: ""), court: NSLocalizedString("Resp.", comment: ""), icone: "wind", unite: "/min", plage: 8...24,
     couleur: Teinte.accentClair, claire: Teinte.oxygeneClair, degrade: Teinte.degradeOxygene,
     enPoints: false, basCourbe: nil, hautCourbe: nil,
-    fenetre: FenetreMesure.journaliere, vide: "Mesurée pendant ton sommeil"
+    fenetre: FenetreMesure.journaliere, vide: NSLocalizedString("Mesurée pendant ton sommeil", comment: "")
   )
 }
 
@@ -307,10 +307,10 @@ struct VueMesureWidget: View {
   private var ligneBas: String {
     if lecture.valeur == nil { return style.vide }
     if lecture.recente && lecture.mini != nil && lecture.maxi != nil {
-      return "mini \(lecture.texteMini)  maxi \(lecture.texteMaxi)"
+      return String(format: NSLocalizedString("mini %@  maxi %@", comment: ""), "\(lecture.texteMini)", "\(lecture.texteMaxi)")
     }
-    if let d = lecture.date { return "Mesure \(Format.quand(d))" }
-    return "Dernière mesure"
+    if let d = lecture.date { return String(format: NSLocalizedString("Mesure %@", comment: ""), "\(Format.quand(d))") }
+    return NSLocalizedString("Dernière mesure", comment: "")
   }
 }
 
@@ -336,8 +336,10 @@ private struct LigneCardio: View {
       }
       Spacer(minLength: 2)
       VStack(alignment: .trailing, spacing: 2) {
-        Text(lecture.valeur == nil ? "" : (lecture.recente && lecture.mini != nil && lecture.maxi != nil
-          ? "\(lecture.texteMini) à \(lecture.texteMaxi)" : (lecture.ancienne ? "ancienne, \(lecture.heure)" : "à \(lecture.heure)")))
+        let plage: String = String(format: NSLocalizedString("%1$@ à %2$@", comment: ""), "\(lecture.texteMini)", "\(lecture.texteMaxi)")
+        let quand: String = lecture.ancienne ? String(format: NSLocalizedString("ancienne, %@", comment: ""), "\(lecture.heure)") : String(format: NSLocalizedString("à %@", comment: ""), "\(lecture.heure)")
+        let basDroite: String = lecture.valeur == nil ? "" : (lecture.recente && lecture.mini != nil && lecture.maxi != nil ? plage : quand)
+        Text(basDroite)
           .font(.system(size: 11, weight: .bold, design: .rounded))
           .foregroundStyle(Teinte.texteDoux)
           .lineLimit(1)

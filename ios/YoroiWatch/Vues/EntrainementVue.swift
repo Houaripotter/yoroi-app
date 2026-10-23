@@ -7,16 +7,16 @@ struct EntrainementVue: View {
 
   var body: some View {
     VStack(spacing: 8) {
-      BoutonLigne(titre: "Chrono combat", icone: "timer", couleur: Teinte.accent) {
+      BoutonLigne(titre: NSLocalizedString("Chrono combat", comment: ""), icone: "timer", couleur: Teinte.accent) {
         routeur.ouvrir(.chronos)
       }
-      BoutonLigne(titre: "Minuteurs", icone: "hourglass", couleur: Teinte.ambre) {
+      BoutonLigne(titre: NSLocalizedString("Minuteurs", comment: ""), icone: "hourglass", couleur: Teinte.ambre) {
         routeur.ouvrirMinuteurs()
       }
-      BoutonLigne(titre: "Séance libre", icone: "figure.martial.arts", couleur: Teinte.vert) {
+      BoutonLigne(titre: NSLocalizedString("Séance libre", comment: ""), icone: "figure.martial.arts", couleur: Teinte.vert) {
         routeur.ouvrir(.seanceLibre)
       }
-      BoutonLigne(titre: "Noter une séance", icone: "square.and.pencil", couleur: Teinte.texteDoux) {
+      BoutonLigne(titre: NSLocalizedString("Noter une séance", comment: ""), icone: "square.and.pencil", couleur: Teinte.texteDoux) {
         routeur.ouvrir(.noter)
       }
     }
@@ -82,8 +82,8 @@ struct ChronoListeVue: View {
 
   /// "3 x 3 min, repos 1 min"
   static func resume(_ p: ChronoPreset) -> String {
-    var t = p.rounds > 1 ? "\(p.rounds) x \(Format.dureeCourte(p.roundS))" : Format.dureeCourte(p.roundS)
-    if p.reposS > 0 && p.rounds > 1 { t += ", repos \(Format.dureeCourte(p.reposS))" }
+    var t = p.rounds > 1 ? String(format: NSLocalizedString("%@ x %@", comment: ""), "\(p.rounds)", "\(Format.dureeCourte(p.roundS))") : Format.dureeCourte(p.roundS)
+    if p.reposS > 0 && p.rounds > 1 { t += String(format: NSLocalizedString(", repos %@", comment: ""), "\(Format.dureeCourte(p.reposS))") }
     return t
   }
 }
@@ -106,7 +106,7 @@ struct ChronoPrepaVue: View {
         VStack(spacing: 0) {
           Text("\(rounds)")
             .font(.chiffre(38))
-          Text(rounds > 1 ? "rounds" : "round")
+          Text(rounds > 1 ? NSLocalizedString("rounds", comment: "") : NSLocalizedString("round", comment: ""))
             .font(.system(size: 12, design: .rounded))
             .foregroundStyle(Teinte.texteDoux)
         }
@@ -118,7 +118,7 @@ struct ChronoPrepaVue: View {
         .foregroundStyle(Teinte.texteDoux)
         .multilineTextAlignment(.center)
         .lineLimit(2)
-      BoutonPlein(titre: "Démarrer", icone: "play.fill") {
+      BoutonPlein(titre: NSLocalizedString("Démarrer", comment: ""), icone: "play.fill") {
         var p = preset
         p.rounds = rounds
         routeur.lancerChrono(p)
@@ -130,10 +130,10 @@ struct ChronoPrepaVue: View {
 
   private var detail: String {
     var t = "\(Format.dureeCourte(preset.roundS))"
-    if preset.reposS > 0 { t += ", repos \(Format.dureeCourte(preset.reposS))" }
+    if preset.reposS > 0 { t += String(format: NSLocalizedString(", repos %@", comment: ""), "\(Format.dureeCourte(preset.reposS))") }
     var p = preset
     p.rounds = max(1, rounds)
-    t += ", total \(Format.dureeLongue(p.dureeTotaleS))"
+    t += String(format: NSLocalizedString(", total %@", comment: ""), "\(Format.dureeLongue(p.dureeTotaleS))")
     return t
   }
 }

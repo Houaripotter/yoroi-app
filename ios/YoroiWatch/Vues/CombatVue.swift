@@ -16,7 +16,7 @@ struct CombatVue: View {
             Text("Combat dans")
               .font(.system(size: 14, design: .rounded))
               .foregroundStyle(Teinte.texteDoux)
-            GrosChiffre(valeur: "\(j)", unite: j > 1 ? "jours" : "jour", taille: 52)
+            GrosChiffre(valeur: "\(j)", unite: j > 1 ? NSLocalizedString("jours", comment: "") : NSLocalizedString("jour", comment: ""), taille: 52)
           } else if j == 0 {
             Text("Combat")
               .font(.system(size: 14, design: .rounded))
@@ -49,7 +49,7 @@ struct CombatVue: View {
           }
         }
       } else {
-        EcranVide(icone: "calendar", texte: "Aucun combat prévu")
+        EcranVide(icone: "calendar", texte: NSLocalizedString("Aucun combat prévu", comment: ""))
       }
     }
     .navigationTitle("Combat")

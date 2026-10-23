@@ -267,7 +267,7 @@ class YoroiWidgetsModule: NSObject {
       guard let data = texte.data(using: .utf8),
             let o = (try? JSONSerialization.jsonObject(with: data, options: [])) as? [String: Any] else { return nil }
       func nombre(_ k: String) -> Double? { (o[k] as? NSNumber)?.doubleValue }
-      titre = (o["titre"] as? String) ?? "Chrono"
+      titre = (o["titre"] as? String) ?? NSLocalizedString("Chrono", comment: "")
       phase = (o["phase"] as? String) ?? "effort"
       libelle = (o["libelle"] as? String) ?? ""
       round = Int(nombre("round") ?? 0)

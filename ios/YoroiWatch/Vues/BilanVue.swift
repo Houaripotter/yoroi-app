@@ -42,18 +42,18 @@ struct BilanVue: View {
         Text("Séance terminée")
           .font(.system(size: 16, weight: .semibold, design: .rounded))
         if let b = bilan {
-          ligne("Durée", Format.chrono(b.dureeS))
-          if source == .chrono { ligne("Rounds", "\(rounds)") }
-          if let m = b.fcMoy { ligne("FC moyenne", "\(m)") }
-          if let x = b.fcMax { ligne("FC max", "\(x)") }
-          if let k = b.kcal { ligne("Calories", "\(k) kcal") }
+          ligne(NSLocalizedString("Durée", comment: ""), Format.chrono(b.dureeS))
+          if source == .chrono { ligne(NSLocalizedString("Rounds", comment: ""), "\(rounds)") }
+          if let m = b.fcMoy { ligne(NSLocalizedString("FC moyenne", comment: ""), "\(m)") }
+          if let x = b.fcMax { ligne(NSLocalizedString("FC max", comment: ""), "\(x)") }
+          if let k = b.kcal { ligne(NSLocalizedString("Calories", comment: ""), String(format: NSLocalizedString("%@ kcal", comment: ""), "\(k)")) }
           if b.fcMoy == nil && !Seance.shared.avecSante {
             Text("Autorise Yoroi dans Apple Santé pour avoir ta fréquence cardiaque.")
               .font(.system(size: 12, design: .rounded))
               .foregroundStyle(Teinte.texteDoux)
           }
         }
-        BoutonPlein(titre: "Continuer") {
+        BoutonPlein(titre: NSLocalizedString("Continuer", comment: "")) {
           etape = synchro.sports.count > 1 || (sport == nil && !synchro.sports.isEmpty) ? .sport : .ressenti
         }
         .padding(.top, 4)
@@ -101,7 +101,7 @@ struct BilanVue: View {
   private var ressenti: some View {
     VStack(spacing: 6) {
       ChoixRessenti(valeur: $rpe)
-      BoutonPlein(titre: enregistrement ? "Enregistré" : "Enregistrer", icone: enregistrement ? "checkmark" : nil) {
+      BoutonPlein(titre: enregistrement ? NSLocalizedString("Enregistré", comment: "") : NSLocalizedString("Enregistrer", comment: ""), icone: enregistrement ? "checkmark" : nil) {
         enregistrer()
       }
       .disabled(enregistrement)
@@ -150,10 +150,10 @@ struct ChoixRessenti: View {
 
   private var mot: String {
     switch note {
-    case ...3: return "Facile"
-    case 4...6: return "Moyen"
-    case 7...8: return "Dur"
-    default: return "Maximal"
+    case ...3: return NSLocalizedString("Facile", comment: "")
+    case 4...6: return NSLocalizedString("Moyen", comment: "")
+    case 7...8: return NSLocalizedString("Dur", comment: "")
+    default: return NSLocalizedString("Maximal", comment: "")
     }
   }
 

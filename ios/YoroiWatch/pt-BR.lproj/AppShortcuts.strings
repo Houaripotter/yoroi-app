@@ -1,0 +1,12 @@
+/* YOROI : phrases Siri en pt-BR. Clé = phrase du code Swift. */
+"Démarrer le chrono ${applicationName}" = "Iniciar o cronômetro do ${applicationName}";
+"Lance le chrono ${applicationName}" = "Ligar o cronômetro do ${applicationName}";
+"Noter mon poids dans ${applicationName}" = "Anotar meu peso no ${applicationName}";
+"Pesée ${applicationName}" = "Pesagem ${applicationName}";
+"Noter un verre d'eau dans ${applicationName}" = "Anotar um copo de água no ${applicationName}";
+"Un verre d'eau ${applicationName}" = "Um copo de água ${applicationName}";
+"Lance un minuteur de ${duree} dans ${applicationName}" = "Iniciar um timer de ${duree} no ${applicationName}";
+"Minuteur de ${duree} ${applicationName}" = "Timer de ${duree} ${applicationName}";
+"Lance un minuteur ${applicationName}" = "Iniciar um timer no ${applicationName}";
+"Ouvre les minuteurs ${applicationName}" = "Abrir os timers do ${applicationName}";
+"Mes minuteurs ${applicationName}" = "Meus timers do ${applicationName}";

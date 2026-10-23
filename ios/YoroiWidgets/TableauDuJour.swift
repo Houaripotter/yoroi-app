@@ -34,12 +34,12 @@ struct VueTableau: View {
     .widgetURL(Liens.accueil)
   }
 
-  private var titreTexte: String { etat.inst.prenom.isEmpty ? "Ton tableau du jour" : "Ton jour, \(etat.inst.prenom)" }
+  private var titreTexte: String { etat.inst.prenom.isEmpty ? NSLocalizedString("Ton tableau du jour", comment: "") : String(format: NSLocalizedString("Ton jour, %@", comment: ""), "\(etat.inst.prenom)") }
   private var dateTexte: String { Fmt.jourLong(Jours.ecrire(etat.maintenant)) }
 
   @ViewBuilder private func contenu(_ pal: Palette) -> some View {
     if !etat.present {
-      VideW(pal: pal, titre: "Tableau du jour")
+      VideW(pal: pal, titre: NSLocalizedString("Tableau du jour", comment: ""))
     } else if tresGrand {
       VStack(alignment: .leading, spacing: 12) {
         entete(pal)
@@ -166,7 +166,7 @@ struct VueTableau: View {
         if let p = Textes.arriveeParts(etat) {
           HStack(spacing: 6) {
             Torii().frame(width: 15, height: 13)
-            (Text(p.0 == "Arrivée prévue" ? "Arrivée" : p.0).font(pal.legende(12, .medium)).foregroundColor(ivoire.opacity(0.75))
+            (Text(p.0 == NSLocalizedString("Arrivée prévue", comment: "") ? NSLocalizedString("Arrivée", comment: "") : p.0).font(pal.legende(12, .medium)).foregroundColor(ivoire.opacity(0.75))
               + Text("  ")
               + Text(p.1).font(pal.legende(12.5, .bold)).foregroundColor(ivoire))
               .lineLimit(1)
@@ -201,7 +201,7 @@ struct VueTableau: View {
       VStack(alignment: .leading, spacing: 5) {
         HStack(alignment: .center, spacing: 12) {
           VStack(alignment: .leading, spacing: 2) {
-            TitreW(pal: pal, texte: "Poids")
+            TitreW(pal: pal, texte: NSLocalizedString("Poids", comment: ""))
             GrosPoidsW(pal: pal, kg: d.kg, livres: etat.livres, taille: 34)
             EcartW(pal: pal, etat: etat, taille: 13)
           }
@@ -216,7 +216,7 @@ struct VueTableau: View {
     } else {
       HStack {
         VStack(alignment: .leading, spacing: 2) {
-          TitreW(pal: pal, texte: "Poids")
+          TitreW(pal: pal, texte: NSLocalizedString("Poids", comment: ""))
           Text("Pèse toi dans Yoroi pour voir ta courbe")
             .font(pal.fort(14, .semibold))
             .foregroundStyle(pal.texte)

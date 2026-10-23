@@ -47,7 +47,7 @@ struct PeserVue: View {
 
       Spacer(minLength: 0)
 
-      BoutonPlein(titre: envoi ? "Enregistré" : "Valider", icone: envoi ? "checkmark" : nil) {
+      BoutonPlein(titre: envoi ? NSLocalizedString("Enregistré", comment: "") : NSLocalizedString("Valider", comment: ""), icone: envoi ? "checkmark" : nil) {
         valider()
       }
       .disabled(!pret || envoi)

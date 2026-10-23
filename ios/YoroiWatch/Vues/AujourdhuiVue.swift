@@ -16,13 +16,13 @@ struct AujourdhuiVue: View {
         contenu(dernier)
       } else if synchro.aRecuContexte {
         VStack(spacing: 10) {
-          EcranVide(icone: "scalemass", texte: "Pas encore de pesée")
-          BoutonPlein(titre: "Peser", icone: "plus") { routeur.ouvrir(.peser) }
+          EcranVide(icone: "scalemass", texte: NSLocalizedString("Pas encore de pesée", comment: ""))
+          BoutonPlein(titre: NSLocalizedString("Peser", comment: ""), icone: "plus") { routeur.ouvrir(.peser) }
         }
       } else {
         VStack(spacing: 8) {
           EcranVide()
-          BoutonPlein(titre: "Peser", icone: "plus") { routeur.ouvrir(.peser) }
+          BoutonPlein(titre: NSLocalizedString("Peser", comment: ""), icone: "plus") { routeur.ouvrir(.peser) }
         }
       }
     }

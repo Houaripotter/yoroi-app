@@ -49,7 +49,7 @@ struct SeanceLibreVue: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
-      Text(sport?.nom ?? "Entraînement")
+      Text(sport?.nom ?? NSLocalizedString("Entraînement", comment: ""))
         .font(.system(size: 14, weight: .semibold, design: .rounded))
         .foregroundStyle(Teinte.vert)
         .lineLimit(1)

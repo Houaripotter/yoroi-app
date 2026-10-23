@@ -6,3 +6,5 @@
 "Ouvre Yoroi sur l'écran d'ajout de pesée." = "Öffnet Yoroi auf dem Bildschirm zum Eintragen des Gewichts.";
 "Ouvre Yoroi sur le timer pour démarrer une séance." = "Öffnet Yoroi auf dem Timer, um eine Einheit zu starten.";
 "Ouvre le timer combat BJJ/MMA." = "Öffnet den BJJ/MMA Kampftimer.";
+/* Textes du code Swift (23 octobre 2026) */
+"Chrono" = "Timer";

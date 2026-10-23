@@ -6,7 +6,7 @@ struct SemaineVue: View {
   @State private var synchro = Synchro.shared
 
   private var semaine: SemaineCtx { synchro.contexte.semaine }
-  private let lettres = ["L", "M", "M", "J", "V", "S", "D"]
+  private let lettres: [String] = { var c = Calendar(identifier: .gregorian); c.locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "fr"); let s = c.veryShortStandaloneWeekdaySymbols; return Array(s[1...]) + [s[0]] }()
 
   private var indexAujourdhui: Int {
     let lundi = Contexte.lundiCourant()
@@ -28,7 +28,7 @@ struct SemaineVue: View {
                 .foregroundStyle(Teinte.texteDoux)
             }
           }
-          Text(semaine.faites > 1 ? "séances cette semaine" : "séance cette semaine")
+          Text(semaine.faites > 1 ? NSLocalizedString("séances cette semaine", comment: "") : NSLocalizedString("séance cette semaine", comment: ""))
             .font(.system(size: 13, design: .rounded))
             .foregroundStyle(Teinte.texteDoux)
 
